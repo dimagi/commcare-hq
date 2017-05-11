@@ -163,12 +163,16 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         gen = RegisterGenerator.generator_class_by_repeater_format(self.__class__, payload_format)
         return gen(self)
 
+    @property
+    @memoized
+    def generator(self):
+        return self.get_payload_generator(self.format_or_default_format())
+
     def payload_doc(self, repeat_record):
         raise NotImplementedError
 
     def get_payload(self, repeat_record):
-        generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.get_payload(repeat_record, self.payload_doc(repeat_record))
+        return self.generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
     def register(self, payload, next_check=None):
         if not self.allowed_to_forward(payload):
@@ -265,9 +269,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
 
     def get_headers(self, repeat_record):
         # to be overridden
-        generator = self.get_payload_generator(self.format_or_default_format())
-        headers = generator.get_headers()
-        return headers
+        return self.generator.get_headers()
 
     def _use_basic_auth(self):
         return self.auth_type == "basic"
@@ -322,22 +324,16 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             self.handle_failure(result, repeat_record)
 
     def handle_success(self, response, repeat_record):
-        """handle a successful post
-        """
-        generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.handle_success(response, self.payload_doc(repeat_record), repeat_record)
+        """handle a successful post"""
+        return self.generator.handle_success(response, self.payload_doc(repeat_record), repeat_record)
 
     def handle_failure(self, response, repeat_record):
-        """handle a failed post
-        """
-        generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.handle_failure(response, self.payload_doc(repeat_record), repeat_record)
+        """handle a failed post"""
+        return self.generator.handle_failure(response, self.payload_doc(repeat_record), repeat_record)
 
     def handle_exception(self, exception, repeat_record):
-        """handle an exception during a post
-        """
-        generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.handle_exception(exception, repeat_record)
+        """handle an exception during a post"""
+        return self.generator.handle_exception(exception, repeat_record)
 
 
 class FormRepeater(Repeater):
