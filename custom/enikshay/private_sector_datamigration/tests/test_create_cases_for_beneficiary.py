@@ -257,6 +257,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(person_case.dynamic_case_properties()['archive_reason'], 'cured')
         self.assertEqual(person_case.dynamic_case_properties()['is_active'], 'no')
         self.assertEqual(person_case.dynamic_case_properties()['last_owner'], self.pcp.location_id)
+        self.assertTrue('last_reason_to_close' not in person_case.dynamic_case_properties())
 
         occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
         self.assertEqual(1, len(occurrence_case_ids))
@@ -304,6 +305,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(person_case.dynamic_case_properties()['archive_reason'], 'died')
         self.assertEqual(person_case.dynamic_case_properties()['is_active'], 'no')
         self.assertEqual(person_case.dynamic_case_properties()['last_owner'], self.pcp.location_id)
+        self.assertEqual(person_case.dynamic_case_properties()['last_reason_to_close'], 'died')
 
         occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
         self.assertEqual(1, len(occurrence_case_ids))
