@@ -1197,5 +1197,6 @@ MOBIE_UCR_SYNC_DELAY_CONFIG = StaticToggle(
     "Show settings for configuring mobile UCR sync delay",
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
-    always_enabled={'icds-cas'}
+    always_enabled={'icds-cas'},
+    help_link="https://confluence.dimagi.com/display/ccinternal/Mobile+Reports+Sync+Delay"
 )
