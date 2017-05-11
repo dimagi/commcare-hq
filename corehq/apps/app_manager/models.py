@@ -5117,7 +5117,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     @property
     def advanced_app_builder(self):
         properties = (self.profile or {}).get('properties', {})
-        return properties.get('advanced_app_builder', 'false') == 'true'
+        return properties.get('advanced_app_builder', 'true') == 'true'
 
     @property
     def jad_settings(self):
