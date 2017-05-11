@@ -294,11 +294,11 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             response = simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth)
         except (Timeout, ConnectionError) as error:
             log_repeater_timeout_in_datadog(self.domain)
-            self.handle_response(RequestConnectionError(error), repeat_record)
+            return self.handle_response(RequestConnectionError(error), repeat_record)
         except Exception as e:
-            self.handle_response(e, repeat_record)
+            return self.handle_response(e, repeat_record)
         else:
-            self.handle_response(response, repeat_record)
+            return self.handle_response(response, repeat_record)
 
     def handle_response(self, result, repeat_record):
         """
@@ -315,7 +315,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         else:
             attempt = repeat_record.handle_failure(result)
             self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
-        repeat_record.add_attempt(attempt)
+        return attempt
 
 
 class FormRepeater(Repeater):
@@ -584,13 +584,14 @@ class RepeatRecord(Document):
         if self.try_now() or force_send:
             self.overall_tries += 1
             try:
-                self.repeater.fire_for_record(self)
+                attempt = self.repeater.fire_for_record(self)
             except Exception as e:
                 # todo: seems like this just does everything that handle_exception does but not as well.
                 # todo:   seems like they could be combined
                 self.handle_payload_exception(e)
                 raise
             else:
+                self.add_attempt(attempt)
                 self.save()
 
     def handle_success(self, response):
