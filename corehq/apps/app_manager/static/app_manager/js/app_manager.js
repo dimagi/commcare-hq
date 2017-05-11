@@ -300,13 +300,15 @@ hqDefine('app_manager/js/app_manager.js', function () {
         });
 
         if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
-            // TODO
             $(document).on('click', '.js-new-form', function (e) {
                 e.preventDefault();
                 var $a = $(this),
-                    $form = $a.siblings("form"),
+                    $popoverContent = $a.closest(".popover-content > *"),
+                    $form = $popoverContent.find("form"),
                     action = $a.data("case-action");
+                $form.attr("action", hqImport("hqwebapp/js/urllib.js").reverse("new_form", $popoverContent.data("module-id")));
                 $form.find("input[name='case_action']").val(action);
+                $form.find("input[name='form_type']").val($a.data("form-type"));
                 $form.find("input[name='name']").val(action === "update" ? "Followup" : "Survey");
                 if (!$form.data('clicked')) {
                     $form.data('clicked', 'true');
@@ -334,6 +336,10 @@ hqDefine('app_manager/js/app_manager.js', function () {
                     var slug = $(this).data("slug"),
                         types = $(this).data("types"),
                         $popover = $($('.js-popover-template-add-item-content[data-slug="' + slug + '"]').text());
+
+                    // Attach any data to the popover itself (strictly speaking, $popover
+                    // will end up being the lone child of .popover-content)
+                    $popover.data($(this).data());
 
                     // Remove irrelevant items
                     if (types && types.length) {

@@ -101,6 +101,7 @@
     {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
     {% initial_page_data 'app_subset' app_subset %}
     {% initial_page_data 'formdesigner' formdesigner %}
+    {% registerurl "new_form" domain app.id "---" %}
     {% registerurl "toggle_app_manager_v2" %}
     {% block pre_form_content %}{% endblock %}
     {% block form-view %}{% endblock %}
@@ -161,20 +162,29 @@
     <script type="text/html" class="js-popover-template-add-item-content" data-slug="form">
       <div>
           <div class="pull-left">
-              <button type="button" class="popover-additem-option new-module-form" data-type="survey">
+              <button type="button" class="popover-additem-option js-new-form"
+                      data-case-action="none" data-type="survey" data-form-type="form">
                 <i class="fa fa-file-o"></i> {% trans "Survey" %}
               </button>
           </div>
           <div class="pull-left">
-              <button type="button" class="popover-additem-option new-module-form" data-type="followup">
+              <button type="button" class="popover-additem-option js-new-form"
+                      data-case-action="update" data-type="followup" data-form-type="form">
                 <i class="fcc fcc-app-updateform"></i> {% trans "Followup" %}
               </button>
           </div>
           <div class="pull-left">
-            <button type="button" class="popover-additem-option new-module-form" data-type="shadow">
+            <button type="button" class="popover-additem-option js-new-form"
+                    data-case-action="update" data-type="shadow" data-form-type="shadow">
               <i class="fa fa-moon-o"></i> {% trans "Shadow Form" %}
             </button>
           </div>
+          <form method="post" class="hide">
+              {% csrf_token %}
+              <input type="hidden" name="case_action" />
+              <input type="hidden" name="form_type" />
+              <input type="hidden" name="name" />
+          </form>
       </div>
     </script>
 {% endblock %}
