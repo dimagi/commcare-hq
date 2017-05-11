@@ -222,4 +222,3 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     SHARED_TEMP_DIR_NAME = 'temp'
 
 BIGCOUCH = True
-BIGCOUCH_QUORUM_COUNT = 1
