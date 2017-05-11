@@ -590,13 +590,12 @@ class RepeatRecord(Document):
             try:
                 attempt = self.repeater.fire_for_record(self)
             except Exception as e:
-                # todo: seems like this just does everything that handle_exception does but not as well.
-                # todo:   seems like they could be combined
                 attempt = self.handle_payload_exception(e)
-                self.add_attempt(attempt)
-                self.save()
                 raise
-            else:
+            finally:
+                # pycharm warns attempt might not be defined.
+                # that'll only happen if fire_for_record raise a non-Exception exception (e.g. SIGINT)
+                # or handle_payload_exception raises an exception. I'm okay with that. -DMR
                 self.add_attempt(attempt)
                 self.save()
 
