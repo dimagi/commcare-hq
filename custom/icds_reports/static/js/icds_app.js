@@ -1,4 +1,4 @@
-angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize'])
+angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps'])
     .controller('MainController', function($scope, $route, $routeParams, $location) {
          $scope.$route = $route;
          $scope.$location = $location;
@@ -28,7 +28,7 @@ angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize'])
             template : "system_usage_tabular"
         })
         .when("/underweight_children", {
-            template : "underweight_children"
+            template : "<underweight-children-report></underweight-children-report>",
         })
         .when("/breastfeeding", {
             template : "breastfeeding"
