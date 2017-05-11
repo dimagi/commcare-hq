@@ -13,6 +13,7 @@ from django.db import transaction
 from django.utils.translation import string_concat, ugettext as _, ugettext_lazy
 
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -422,7 +423,9 @@ class NewLocationImporter(object):
             loc.lookup_old_collection_data(self.old_collection)
 
         type_objects = save_types(type_stubs, self.excel_importer)
-        save_locations(location_stubs, type_objects, self.domain, self.excel_importer, self.chunk_size)
+        types_changed = any(loc_type.needs_save for loc_type in type_stubs)
+        save_locations(location_stubs, type_objects, self.domain,
+                       types_changed, self.excel_importer, self.chunk_size)
         # Since we updated LocationType objects in bulk, some of the post-save logic
         #   that occurs inside LocationType.save needs to be explicitly called here
         for lt in type_stubs:
@@ -837,7 +840,7 @@ def save_types(type_stubs, excel_importer=None):
     return all_objs_by_code
 
 
-def save_locations(location_stubs, types_by_code, domain, excel_importer=None, chunk_size=100):
+def save_locations(location_stubs, types_by_code, domain, types_changed, excel_importer=None, chunk_size=100):
     """
     :param location_stubs: (list) List of LocationStub objects with
         attributes like 'db_object', 'needs_save', 'do_delete' set
@@ -871,7 +874,7 @@ def save_locations(location_stubs, types_by_code, domain, excel_importer=None, c
 
         return top_to_bottom_locations
 
-    def _process_locations(locs_to_process):
+    def _process_locations(locs_to_process, to_be_deleted):
         for loc in locs_to_process:
             if excel_importer:
                 excel_importer.add_progress()
@@ -896,30 +899,18 @@ def save_locations(location_stubs, types_by_code, domain, excel_importer=None, c
     to_be_deleted = []
 
     top_to_bottom_locations = order_by_location_type()
-    locs_to_process = []
-    for location in top_to_bottom_locations:
-        locs_to_process.append(location)
-        if len(locs_to_process) > chunk_size:
+    if not types_changed:
+        for locs in chunked(top_to_bottom_locations, chunk_size):
             with transaction.atomic():
                 with SQLLocation.objects.delay_mptt_updates():
-                    _process_locations(locs_to_process)
-            locs_to_process = []
-    if locs_to_process:
-        _process_locations(locs_to_process)
+                    _process_locations(locs, to_be_deleted)
+    else:
+        _process_locations(top_to_bottom_locations, to_be_deleted)
 
-    locs_to_delete = []
-    for l in reversed(to_be_deleted):
+    for locs in chunked(reversed(to_be_deleted), chunk_size):
         # Deletion has to happen bottom to top, otherwise mptt complains
         #   about missing parents
-        locs_to_delete.append(l)
-        if len(locs_to_delete) > chunk_size:
-            with transaction.atomic():
-                with SQLLocation.objects.delay_mptt_updates():
-                    for l in locs_to_delete:
-                        l.delete()
-            locs_to_delete = []
-    if locs_to_delete:
         with transaction.atomic():
             with SQLLocation.objects.delay_mptt_updates():
-                for l in locs_to_delete:
+                for l in locs:
                     l.delete()
