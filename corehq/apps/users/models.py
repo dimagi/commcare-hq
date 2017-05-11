@@ -1624,7 +1624,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             )
             deleted_forms.update(form_id_list)
 
-        tag_system_forms_as_deleted(self.domain, deleted_forms, deleted_cases, deletion_id, deletion_date)
+        tag_system_forms_as_deleted.delay(self.domain, deleted_forms, deleted_cases, deletion_id, deletion_date)
 
         try:
             django_user = self.get_django_user()
