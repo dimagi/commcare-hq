@@ -71,7 +71,7 @@ class HistoricalAdherenceReport(EnikshayReport):
         return False
 
     @classmethod
-    def show_in_webuser_permissions(cls, domain=None, project=None, user=None):
+    def show_in_user_roles(cls, domain=None, project=None, user=None):
         return True
 
     @property
