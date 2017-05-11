@@ -575,10 +575,14 @@ class RepeatRecord(Document):
         return self.repeater.get_payload(self)
 
     def handle_payload_exception(self, exception):
-        self.succeeded = False
-        self.failure_reason = unicode(exception)
-        self.cancel()
-        self.save()
+        now = datetime.utcnow()
+        return RepeatRecordAttempt(
+            cancelled=True,
+            datetime=now,
+            failure_reason=unicode(exception),
+            next_check=None,
+            succeeded=False,
+        )
 
     def fire(self, force_send=False):
         if self.try_now() or force_send:
@@ -588,7 +592,9 @@ class RepeatRecord(Document):
             except Exception as e:
                 # todo: seems like this just does everything that handle_exception does but not as well.
                 # todo:   seems like they could be combined
-                self.handle_payload_exception(e)
+                attempt = self.handle_payload_exception(e)
+                self.add_attempt(attempt)
+                self.save()
                 raise
             else:
                 self.add_attempt(attempt)
