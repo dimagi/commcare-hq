@@ -4,27 +4,34 @@ from corehq.apps.es import filters, queries, UserES
 from corehq.apps.locations.models import SQLLocation
 
 
-def login_as_user_query(domain, couch_user, search_string, limit, offset, can_access_all_locations=False):
+def login_as_user_query(
+        domain,
+        couch_user,
+        search_string,
+        limit,
+        offset,
+        can_access_all_locations=False,
+        user_data_fields=None):
     search_fields = ["base_username", "last_name", "first_name", "phone_numbers"]
 
     should_criteria_query = [
         queries.search_string_query(search_string, search_fields),
     ]
 
-    if toggles.ENIKSHAY.enabled(domain):
+    if user_data_fields:
+        or_criteria = []
+        for field in user_data_fields:
+            or_criteria.append(
+                filters.AND(
+                    filters.term('user_data_es.key', field),
+                    filters.term('user_data_es.value', search_string),
+                ),
+            )
+
         should_criteria_query.append(
             queries.nested_filter(
                 'user_data_es',
-                filters.OR(
-                    filters.AND(
-                        filters.term('user_data_es.key', 'id_issuer_body'),
-                        filters.term('user_data_es.value', search_string),
-                    ),
-                    filters.AND(
-                        filters.term('user_data_es.key', 'id_issuer_number'),
-                        filters.term('user_data_es.value', search_string),
-                    ),
-                )
+                filters.OR(*or_criteria)
             )
         )
 
