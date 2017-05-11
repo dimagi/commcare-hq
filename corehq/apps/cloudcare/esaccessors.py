@@ -1,5 +1,3 @@
-from corehq import toggles
-
 from corehq.apps.es import filters, queries, UserES
 from corehq.apps.locations.models import SQLLocation
 

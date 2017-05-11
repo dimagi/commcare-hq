@@ -14,7 +14,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.cache import cache_page
 from django.views.generic import View
-from django.views.generic.base import TemplateView, View
+from django.views.generic.base import TemplateView
 
 from couchdbkit import ResourceConflict
 
@@ -74,7 +74,6 @@ from corehq.apps.style.decorators import (
     use_jquery_ui,
 )
 from corehq.apps.users.models import CouchUser, CommCareUser
-from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
