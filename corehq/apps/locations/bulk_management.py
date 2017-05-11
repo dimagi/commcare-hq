@@ -280,7 +280,8 @@ class LocationStub(object):
         return False
 
     def _moved_to_root(self):
-        if not self.is_new and self.parent_code == ROOT_LOCATION_TYPE and self.db_object.parent.site_code !=  ROOT_LOCATION_TYPE:
+        old_parent = self.db_object.parent.site_code if self.db_object.parent else ROOT_LOCATION_TYPE
+        if not self.is_new and self.parent_code == ROOT_LOCATION_TYPE and old_parent !=  ROOT_LOCATION_TYPE:
             return True
         return False
 
@@ -432,7 +433,7 @@ class NewLocationImporter(object):
         type_objects = save_types(type_stubs, self.excel_importer)
         types_changed = any(loc_type.needs_save for loc_type in type_stubs)
         moved_to_root = any(loc.moved_to_root for loc in location_stubs)
-        delay_updates = types_changed or moved_to_root
+        delay_updates = not (types_changed or moved_to_root)
         save_locations(location_stubs, type_objects, self.domain,
                        delay_updates, self.excel_importer, self.chunk_size)
         # Since we updated LocationType objects in bulk, some of the post-save logic
@@ -908,7 +909,7 @@ def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_i
     to_be_deleted = []
 
     top_to_bottom_locations = order_by_location_type()
-    if not delay_updates:
+    if delay_updates:
         for locs in chunked(top_to_bottom_locations, chunk_size):
             with transaction.atomic():
                 with SQLLocation.objects.delay_mptt_updates():

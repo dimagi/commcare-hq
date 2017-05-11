@@ -1207,13 +1207,13 @@ class TestBulkManagement(TestCase):
         )
 
         upload = [
-             ('S1', 's1', 'city', 'county11', '', False) + extra_stub_args,
-             ('S2', 's2', 'city', 'county11', '', False) + extra_stub_args,
-             ('County11', 'county11', 'county', 'city111', '', False) + extra_stub_args,
-             ('County21', 'county21', 'county', 'city111', '', False) + extra_stub_args,
-             ('City111', 'city111', 'state', '', '', False) + extra_stub_args,
-             ('City112', 'city112', 'state', '', '', False) + extra_stub_args,
-             ('City211', 'city211', 'state', '', '', False) + extra_stub_args,
+            ('S1', 's1', 'city', 'county11', '', False) + extra_stub_args,
+            ('S2', 's2', 'city', 'county11', '', False) + extra_stub_args,
+            ('County11', 'county11', 'county', 'city111', '', False) + extra_stub_args,
+            ('County21', 'county21', 'county', 'city111', '', False) + extra_stub_args,
+            ('City111', 'city111', 'state', '', '', False) + extra_stub_args,
+            ('City112', 'city112', 'state', '', '', False) + extra_stub_args,
+            ('City211', 'city211', 'state', '', '', False) + extra_stub_args,
         ]
 
         result = self.bulk_update_locations(
