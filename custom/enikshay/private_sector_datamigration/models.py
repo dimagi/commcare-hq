@@ -119,6 +119,17 @@ class Beneficiary(models.Model):
         return self.fatherHusbandName or ''
 
     @property
+    def language_preference(self):
+        return {
+            '131': 'en',
+            '132': 'hin',
+            '133': 'bhoj',
+            '152': 'mar',
+            '153': 'guj',
+            None: '',
+        }[self.languagePreferences]
+
+    @property
     def referred_provider(self):
         return get_agency_by_motech_user_name(self.referredQP)
 
