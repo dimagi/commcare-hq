@@ -9,7 +9,7 @@ from django.db.models.aggregates import Avg, Sum
 
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import get_location, SQLLocation
 from custom.ilsgateway.tanzania.warehouse import const
 from custom.ilsgateway.tanzania.warehouse.alerts import populate_no_primary_alerts, \
     populate_facility_stockout_alerts, create_alert
@@ -107,7 +107,7 @@ def average_lead_time(facility_id, window_date):
 
 
 def needed_status_types(org_summary):
-    facility = Location.get(org_summary.location_id)
+    facility = get_location(org_summary.location_id)
     return [status_type for status_type in const.NEEDED_STATUS_TYPES if _is_valid_status(facility,
                                                                                    org_summary.date, status_type)]
 
@@ -347,7 +347,7 @@ def process_facility_statuses(facility_id, statuses, alerts=True):
     data warehouse tables. This should only be called on supply points
     that are facilities.
     """
-    facility = Location.get(facility_id)
+    facility = get_location(facility_id)
     for status in statuses:
         warehouse_date = _get_window_date(status.status_type, status.status_date)
         if _is_valid_status(facility, status.status_date, status.status_type):
