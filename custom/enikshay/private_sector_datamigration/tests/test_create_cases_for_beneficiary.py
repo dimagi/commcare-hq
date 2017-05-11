@@ -204,6 +204,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('new_retreatment', 'new'),
             ('nikshay_id', '02139-02215'),
             ('patient_type', 'new'),
+            ('private_sector_episode_pending_registration', 'no'),
             ('retreatment_reason', ''),
             ('rx_outcome_date', '2017-05-19'),
             ('site', 'extrapulmonary'),
