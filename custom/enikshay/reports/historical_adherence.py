@@ -70,6 +70,10 @@ class HistoricalAdherenceReport(EnikshayReport):
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return False
 
+    @classmethod
+    def show_in_webuser_permissions(cls, domain=None, project=None, user=None):
+        return True
+
     @property
     def episode_case_id(self):
         return self.request.GET.get("episode_id")

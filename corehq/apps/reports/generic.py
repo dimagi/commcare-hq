@@ -695,6 +695,14 @@ class GenericReportView(object):
         return True
 
     @classmethod
+    def show_in_webuser_permissions(cls, domain=None, project=None, user=None):
+        """
+        Web user roles can specify specific reports that users can view. Return True if this report should show in
+        the list of specific reports that can be viewed.
+        """
+        return cls.show_in_navigation(domain, project, user)
+
+    @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
         return False
 
