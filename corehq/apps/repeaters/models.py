@@ -466,6 +466,7 @@ class LocationRepeater(Repeater):
 
 class RepeatRecordAttempt(DocumentSchema):
     datetime = DateTimeProperty()
+    next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
     failure_reason = StringProperty()
 
@@ -532,7 +533,13 @@ class RepeatRecord(Document):
         ).one()
         return results['value'] if results else 0
 
-    def set_next_try(self):
+    def add_attempt(self, attempt):
+        self.last_checked = attempt.datetime
+        self.next_check = attempt.next_check
+        self.succeeded = attempt.succeeded
+        self.failure_reason = attempt.failure_reason
+
+    def make_set_next_try_attempt(self, failure_reason):
         # we use an exponential back-off to avoid submitting to bad urls
         # too frequently.
         assert self.succeeded is False
@@ -546,8 +553,13 @@ class RepeatRecord(Document):
         elif window > MAX_RETRY_WAIT:
             window = MAX_RETRY_WAIT
 
-        self.last_checked = datetime.utcnow()
-        self.next_check = self.last_checked + window
+        now = datetime.utcnow()
+        return RepeatRecordAttempt(
+            datetime=now,
+            next_check=now + window,
+            succeeded=False,
+            failure_reason=failure_reason,
+        )
 
     def try_now(self):
         # try when we haven't succeeded and either we've
@@ -597,17 +609,18 @@ class RepeatRecord(Document):
         self._fail(unicode(exception), None)
 
     def _fail(self, reason, response):
-        if self.repeater.allow_retries(response) and self.overall_tries < self.max_possible_tries:
-            self.set_next_try()
-        else:
-            self.last_checked = datetime.utcnow()
-            self.cancel()
-        self.failure_reason = reason
         datadog_counter(REPEATER_ERROR_COUNT, tags=[
             u'domain:{}'.format(self.domain),
             u'status_code:{}'.format(response.status_code if response else None),
             u'repeater_type:{}'.format(self.repeater_type),
         ])
+
+        if self.repeater.allow_retries(response) and self.overall_tries < self.max_possible_tries:
+            self.add_attempt(self.make_set_next_try_attempt(reason))
+        else:
+            self.last_checked = datetime.utcnow()
+            self.cancel()
+            self.failure_reason = reason
 
     def cancel(self):
         self.next_check = None
