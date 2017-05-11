@@ -545,11 +545,9 @@ class RepeatRecord(Document):
         return self.repeater.get_payload(self)
 
     def handle_payload_exception(self, exception):
-        # todo: this seems to just say that it failed but not actually cancel it
-        # todo:   or even change the last_checked or next_check
-        # todo:   so this will just get requeued indefinitely, right?
         self.succeeded = False
         self.failure_reason = unicode(exception)
+        self.cancel()
         self.save()
 
     def fire(self, force_send=False):
