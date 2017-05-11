@@ -2,15 +2,20 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 
-{# For APP BUILDER PROTOTYPE use only #}
-
 {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
 
   <a href="#"
      class="appnav-secondary js-add-new-item"
      data-slug="form"
      data-module-id="{{ module.id }}"
-     data-types='["{% if module.is_surveys %}survey{% else %}followup{% endif %}"{% if module.doc_type == "AdvancedModule" %},"shadow"{% endif %}]'>
+     {% if module.doc_type == "AdvancedModule" %}
+        data-types='["advanced","shadow"]'
+     {% elif module.is_surveys %}
+        data-types='["survey"]'
+     {% else %}
+        data-types='["followup"]'
+     {% endif %}
+  >
     <i class="fa fa-plus"></i>
   </a>
 
