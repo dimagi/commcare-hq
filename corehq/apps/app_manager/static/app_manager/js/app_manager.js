@@ -305,21 +305,23 @@ hqDefine('app_manager/js/app_manager.js', function () {
                 var $a = $(this),
                     $popoverContent = $a.closest(".popover-content > *"),
                     $form = $popoverContent.find("form"),
-                    action = $a.data("case-action");
-                $form.attr("action", hqImport("hqwebapp/js/urllib.js").reverse("new_form", $popoverContent.data("module-id")));
+                    action = $a.data("case-action"),
+                    moduleId = $popoverContent.data("module-id"),
+                    $trigger = $('.js-add-new-item[data-module-id="' + moduleId  + '"]');
+                $form.attr("action", hqImport("hqwebapp/js/urllib.js").reverse("new_form", moduleId));
                 $form.find("input[name='case_action']").val(action);
                 $form.find("input[name='form_type']").val($a.data("form-type"));
                 $form.find("input[name='name']").val(action === "update" ? "Followup" : "Survey");
                 if (!$form.data('clicked')) {
                     $form.data('clicked', 'true');
-                    $a.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh fa-spin");
+                    $trigger.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh fa-spin");
                     $form.submit();
                 }
             });
         }
 
         if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
-            $('.appnav-responsive').on('click', function (e) {
+            $(document).on('click', '.appnav-responsive', function (e) {
                 if (!e || (!e.metaKey && !e.ctrlKey && !e.which !== 2)) {
                     // TODO doesn't handle vellum with saved changes.
                     $('#js-appmanager-body.appmanager-settings-content').addClass('hide');

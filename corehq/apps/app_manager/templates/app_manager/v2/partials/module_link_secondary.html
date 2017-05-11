@@ -7,7 +7,8 @@
 {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
 
   <a href="#"
-     class="appnav-secondary appnav-responsive js-add-new-item" data-slug="form"
+     class="appnav-secondary js-add-new-item"
+     data-slug="form"
      data-module-id="{{ module.id }}"
      data-types='["{% if module.is_surveys %}survey{% else %}followup{% endif %}"{% if module.doc_type == "AdvancedModule" %},"shadow"{% endif %}]'>
     <i class="fa fa-plus"></i>
