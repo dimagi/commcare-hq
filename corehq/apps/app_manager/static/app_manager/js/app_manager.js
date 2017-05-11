@@ -348,7 +348,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
                         _.each($popover.find("[data-type]"), function(item) {
                             var $item = $(item);
                             if (!_.contains(types, $item.data("type"))) {
-                                $item.remove()
+                                $item.remove();
                             }
                         });
                     }
