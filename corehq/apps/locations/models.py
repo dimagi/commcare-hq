@@ -750,8 +750,6 @@ class SQLLocation(MPTTModel):
 
     @property
     def sql_location(self):
-        # For backwards compatability
-        notify_of_deprecation("'sql_location' was just called on a sql_location.  That's kinda silly.")
         return self
 
 
