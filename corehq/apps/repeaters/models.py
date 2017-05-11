@@ -315,25 +315,13 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         """
         if isinstance(result, Exception):
             repeat_record.handle_exception(result)
-            self.handle_exception(result, repeat_record)
+            self.generator.handle_exception(result, repeat_record)
         elif 200 <= result.status_code < 300:
             repeat_record.handle_success(result)
-            self.handle_success(result, repeat_record)
+            self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
         else:
             repeat_record.handle_failure(result)
-            self.handle_failure(result, repeat_record)
-
-    def handle_success(self, response, repeat_record):
-        """handle a successful post"""
-        return self.generator.handle_success(response, self.payload_doc(repeat_record), repeat_record)
-
-    def handle_failure(self, response, repeat_record):
-        """handle a failed post"""
-        return self.generator.handle_failure(response, self.payload_doc(repeat_record), repeat_record)
-
-    def handle_exception(self, exception, repeat_record):
-        """handle an exception during a post"""
-        return self.generator.handle_exception(exception, repeat_record)
+            self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
 
 
 class FormRepeater(Repeater):
