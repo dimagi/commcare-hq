@@ -154,21 +154,25 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     def get_cancelled_record_count(self):
         return get_cancelled_repeat_record_count(self.domain, self._id)
 
-    def format_or_default_format(self):
+    def _format_or_default_format(self):
         from corehq.apps.repeaters.repeater_generators import RegisterGenerator
         return self.format or RegisterGenerator.default_format_by_repeater(self.__class__)
 
-    def get_payload_generator(self, payload_format):
+    def _get_payload_generator(self, payload_format):
         from corehq.apps.repeaters.repeater_generators import RegisterGenerator
         gen = RegisterGenerator.generator_class_by_repeater_format(self.__class__, payload_format)
         return gen(self)
+
+    @property
+    @memoized
+    def generator(self):
+        return self._get_payload_generator(self._format_or_default_format())
 
     def payload_doc(self, repeat_record):
         raise NotImplementedError
 
     def get_payload(self, repeat_record):
-        generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.get_payload(repeat_record, self.payload_doc(repeat_record))
+        return self.generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
     def register(self, payload, next_check=None):
         if not self.allowed_to_forward(payload):
@@ -265,9 +269,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
 
     def get_headers(self, repeat_record):
         # to be overridden
-        generator = self.get_payload_generator(self.format_or_default_format())
-        headers = generator.get_headers()
-        return headers
+        return self.generator.get_headers()
 
     def _use_basic_auth(self):
         return self.auth_type == "basic"
@@ -313,31 +315,13 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         """
         if isinstance(result, Exception):
             repeat_record.handle_exception(result)
-            self.handle_exception(result, repeat_record)
+            self.generator.handle_exception(result, repeat_record)
         elif 200 <= result.status_code < 300:
             repeat_record.handle_success(result)
-            self.handle_success(result, repeat_record)
+            self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
         else:
             repeat_record.handle_failure(result)
-            self.handle_failure(result, repeat_record)
-
-    def handle_success(self, response, repeat_record):
-        """handle a successful post
-        """
-        generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.handle_success(response, self.payload_doc(repeat_record), repeat_record)
-
-    def handle_failure(self, response, repeat_record):
-        """handle a failed post
-        """
-        generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.handle_failure(response, self.payload_doc(repeat_record), repeat_record)
-
-    def handle_exception(self, exception, repeat_record):
-        """handle an exception during a post
-        """
-        generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.handle_exception(exception, repeat_record)
+            self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
 
 
 class FormRepeater(Repeater):
