@@ -1985,6 +1985,12 @@ DOMAIN_MODULE_MAP = {
     'enikshay-domain-copy-test': 'custom.enikshay',
     'enikshay-aks-audit': 'custom.enikshay',
     'np-migration-3': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-1': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-2': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-3': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-4': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-5': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-6': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 
