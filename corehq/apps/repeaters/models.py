@@ -600,17 +600,19 @@ class RepeatRecord(Document):
     def handle_failure(self, response):
         """Do something with the response if the repeater fails
         """
-        self._fail(
+        attempt = self._make_failure_attempt(
             u'{}: {}. {}'.format(response.status_code, response.reason, getattr(response, 'content', None)),
             response
         )
+        self.add_attempt(attempt)
 
     def handle_exception(self, exception):
         """handle internal exceptions
         """
-        self._fail(unicode(exception), None)
+        attempt = self._make_failure_attempt(unicode(exception), None)
+        self.add_attempt(attempt)
 
-    def _fail(self, reason, response):
+    def _make_failure_attempt(self, reason, response):
         datadog_counter(REPEATER_ERROR_COUNT, tags=[
             u'domain:{}'.format(self.domain),
             u'status_code:{}'.format(response.status_code if response else None),
@@ -618,16 +620,16 @@ class RepeatRecord(Document):
         ])
 
         if self.repeater.allow_retries(response) and self.overall_tries < self.max_possible_tries:
-            self.add_attempt(self.make_set_next_try_attempt(reason))
+            return self.make_set_next_try_attempt(reason)
         else:
             now = datetime.utcnow()
-            self.add_attempt(RepeatRecordAttempt(
+            return RepeatRecordAttempt(
                 datetime=now,
                 next_check=None,
                 cancelled=True,
                 succeeded=False,
                 failure_reason=reason,
-            ))
+            )
 
     def cancel(self):
         self.next_check = None
