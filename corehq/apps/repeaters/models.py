@@ -469,6 +469,7 @@ class RepeatRecordAttempt(DocumentSchema):
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
     failure_reason = StringProperty()
+    cancelled = BooleanProperty(default=False)
 
 
 class RepeatRecord(Document):
@@ -538,6 +539,7 @@ class RepeatRecord(Document):
         self.next_check = attempt.next_check
         self.succeeded = attempt.succeeded
         self.failure_reason = attempt.failure_reason
+        self.cancelled = attempt.cancelled
 
     def make_set_next_try_attempt(self, failure_reason):
         # we use an exponential back-off to avoid submitting to bad urls
@@ -618,9 +620,14 @@ class RepeatRecord(Document):
         if self.repeater.allow_retries(response) and self.overall_tries < self.max_possible_tries:
             self.add_attempt(self.make_set_next_try_attempt(reason))
         else:
-            self.last_checked = datetime.utcnow()
-            self.cancel()
-            self.failure_reason = reason
+            now = datetime.utcnow()
+            self.add_attempt(RepeatRecordAttempt(
+                datetime=now,
+                next_check=None,
+                cancelled=True,
+                succeeded=False,
+                failure_reason=reason,
+            ))
 
     def cancel(self):
         self.next_check = None
