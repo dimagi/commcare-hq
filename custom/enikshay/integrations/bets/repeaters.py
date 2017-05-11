@@ -81,6 +81,13 @@ class LabBETSVoucherRepeater(BaseBETSVoucherRepeater):
         return reverse(LabBETSVoucherRepeaterView.urlname, args=[domain])
 
 
+def _cast_to_int(string):
+    try:
+        return int(string)
+    except ValueError:
+        return 0
+
+
 class BETS180TreatmentRepeater(BaseBETSRepeater):
     friendly_name = _(
         "BETS - MBBS+ Providers: 180 days of private OR govt. "
@@ -92,19 +99,12 @@ class BETS180TreatmentRepeater(BaseBETSRepeater):
         from custom.enikshay.integrations.bets.views import BETS180TreatmentRepeaterView
         return reverse(BETS180TreatmentRepeaterView.urlname, args=[domain])
 
-    @staticmethod
-    def _cast_to_int(string):
-        try:
-            return int(string)
-        except ValueError:
-            return 0
-
     def allowed_to_forward(self, episode_case):
         if not self.case_types_and_users_allowed(episode_case):
             return False
 
         case_properties = episode_case.dynamic_case_properties()
-        prescription_total_days = self._cast_to_int(case_properties.get("prescription_total_days", 0))
+        prescription_total_days = _cast_to_int(case_properties.get("prescription_total_days", 0))
         treatment_options = case_properties.get("treatment_options")
         if treatment_options == "fdc":
             meets_days_threshold = prescription_total_days >= 168
@@ -204,11 +204,19 @@ class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
             return False
 
         case_properties = episode_case.dynamic_case_properties()
-        not_sent = case_properties.get("event_{}".format(SUCCESSFUL_TREATMENT_EVENT)) != "sent"
+        prescription_total_days = _cast_to_int(case_properties.get("prescription_total_days", 0))
+        treatment_options = case_properties.get("treatment_options")
+        if treatment_options == "fdc":
+            meets_days_threshold = prescription_total_days >= 168
+        else:
+            meets_days_threshold = prescription_total_days >= 180
+
         enrolled_in_private_sector = case_properties.get(ENROLLED_IN_PRIVATE) == 'true'
+        not_sent = case_properties.get("event_{}".format(SUCCESSFUL_TREATMENT_EVENT)) != "sent"
         return (
-            case_properties.get("treatment_outcome") in ("cured", "treatment_completed")
-            and case_properties_changed(episode_case, ["treatment_outcome"])
+            meets_days_threshold
+            and case_properties.get("treatment_outcome") in ("cured", "treatment_completed")
+            and case_properties_changed(episode_case, ['prescription_total_days', "treatment_outcome"])
             and not_sent
             and enrolled_in_private_sector
             and is_valid_archived_submission(episode_case)

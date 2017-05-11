@@ -170,6 +170,7 @@ class BETSSuccessfulTreatmentRepeaterTest(ENikshayLocationStructureMixin, ENiksh
             self.episode_id,
             {
                 'treatment_outcome': 'not_evaluated',
+                'prescription_total_days': 200,
                 ENROLLED_IN_PRIVATE: "true",
             },
         )
