@@ -170,24 +170,6 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         generator = self.get_payload_generator(self.format_or_default_format())
         return generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
-    def get_payload_and_handle_exception(self, repeat_record, save_failure=True):
-        try:
-            return self.get_payload(repeat_record)
-        except ResourceNotFound as e:
-            # this repeater is pointing at a missing document
-            # quarantine it and tell it to stop trying.
-            logging.exception(
-                u'Repeater {} in domain {} references a missing or deleted document!'.format(
-                    repeat_record._id, self.domain,
-                ))
-
-            if save_failure:
-                repeat_record.handle_payload_exception(e)
-        except Exception as e:
-            if save_failure:
-                repeat_record.handle_payload_exception(e)
-            raise
-
     def register(self, payload, next_check=None):
         if not self.allowed_to_forward(payload):
             return
@@ -303,7 +285,15 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     def fire_for_record(self, repeat_record):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
-        payload = self.get_payload_and_handle_exception(repeat_record)
+
+        try:
+            payload = self.get_payload(repeat_record)
+        except Exception as e:
+            # todo: seems like this just does everything that handle_exception does but not as well.
+            # todo:   seems like they could be combined
+            repeat_record.handle_payload_exception(e)
+            raise
+
         url = self.get_url(repeat_record)
         try:
             response = simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth)
@@ -581,14 +571,13 @@ class RepeatRecord(Document):
         # never checked, or it's time to check again
         return not self.succeeded
 
-    def get_payload(self, save_failure=True):
-        warnings.warn("RepeatRecord.get_payload is deprecated. Use Repeater.get_payload_and_handle_exception.",
-                      DeprecationWarning)
-        return self.repeater.get_payload_and_handle_exception(self, save_failure=save_failure)
+    def get_payload(self):
+        return self.repeater.get_payload(self)
 
     def handle_payload_exception(self, exception):
         self.succeeded = False
         self.failure_reason = unicode(exception)
+        self.cancel()
         self.save()
 
     def fire(self, force_send=False):
