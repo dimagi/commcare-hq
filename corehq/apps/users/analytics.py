@@ -64,7 +64,6 @@ def get_search_users_in_domain_es_query(domain, search_string, limit, offset):
     :param search_string: A query string that searches in the specified search fields
     :param limit: Number of records to return
     :param offset: Offset to start query
-    :param search_fields: An array of additional search fields to search
     """
     default_search_fields = ["base_username", "last_name", "first_name"]
 
