@@ -35,6 +35,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             age=25,
             caseId='3',
             caseStatus='patient',
+            configureAlert='Yes',
             creationDate=datetime(2017, 1, 1),
             dateOfRegn=datetime(2017, 4, 17),
             dob=datetime(1992, 1, 2),
@@ -142,6 +143,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('occupation', ''),
             ('phone_number', '5432109876'),
             ('secondary_phone', '1234567890'),
+            ('send_alerts', 'yes'),
             ('sex', 'male'),
         ]))
         self.assertEqual(len(person_case.xform_ids), 1)

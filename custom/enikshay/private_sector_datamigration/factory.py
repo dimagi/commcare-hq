@@ -69,6 +69,7 @@ class BeneficiaryCaseFactory(object):
                     'name': ' '.join([self.beneficiary.firstName, self.beneficiary.lastName]),
                     'occupation': '',
                     'phone_number': self.beneficiary.phoneNumber,
+                    'send_alerts': self.beneficiary.send_alerts,
                     'secondary_phone': self.beneficiary.emergencyContactNo,
 
                     'migration_created_case': 'true',

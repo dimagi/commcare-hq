@@ -123,6 +123,13 @@ class Beneficiary(models.Model):
         return get_agency_by_motech_user_name(self.referredQP)
 
     @property
+    def send_alerts(self):
+        return {
+            'Yes': 'yes',
+            'No': 'no',
+        }[self.configureAlert]
+
+    @property
     def sex(self):
         return {
             '4': 'male',
