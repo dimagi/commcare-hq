@@ -465,11 +465,11 @@ class LocationRepeater(Repeater):
 
 
 class RepeatRecordAttempt(DocumentSchema):
+    cancelled = BooleanProperty(default=False)
     datetime = DateTimeProperty()
+    failure_reason = StringProperty()
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
-    failure_reason = StringProperty()
-    cancelled = BooleanProperty(default=False)
 
 
 class RepeatRecord(Document):
@@ -558,10 +558,11 @@ class RepeatRecord(Document):
 
         now = datetime.utcnow()
         return RepeatRecordAttempt(
+            cancelled=False,
             datetime=now,
+            failure_reason=failure_reason,
             next_check=now + window,
             succeeded=False,
-            failure_reason=failure_reason,
         )
 
     def try_now(self):
@@ -596,11 +597,11 @@ class RepeatRecord(Document):
         """
         now = datetime.utcnow()
         attempt = RepeatRecordAttempt(
+            cancelled=False,
             datetime=now,
+            failure_reason=None,
             next_check=None,
             succeeded=True,
-            cancelled=False,
-            failure_reason=None,
         )
         self.add_attempt(attempt)
 
@@ -631,11 +632,11 @@ class RepeatRecord(Document):
         else:
             now = datetime.utcnow()
             return RepeatRecordAttempt(
-                datetime=now,
-                next_check=None,
                 cancelled=True,
-                succeeded=False,
+                datetime=now,
                 failure_reason=reason,
+                next_check=None,
+                succeeded=False,
             )
 
     def cancel(self):
