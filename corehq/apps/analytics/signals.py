@@ -13,6 +13,7 @@ from django.dispatch import receiver
 
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq.apps.accounting.models import (
+    DefaultProductPlan,
     ProBonoStatus,
     SoftwarePlanEdition,
     SoftwarePlanVisibility,
@@ -77,7 +78,11 @@ def get_subscription_properties_by_user(couch_user):
     subscribed_editions = []
     for domain_name in couch_user.domains:
         subscription = Subscription.get_active_subscription_by_domain(domain_name)
-        plan_version = subscription.plan_version
+        plan_version = (
+            subscription.plan_version
+            if subscription is not None
+            else DefaultProductPlan.get_default_plan_version()
+        )
         subscribed_editions.append(plan_version.plan.edition)
         if subscription is not None:
             all_subscriptions.append(subscription)
