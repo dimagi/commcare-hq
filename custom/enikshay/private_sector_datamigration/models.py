@@ -221,12 +221,6 @@ class Episode(models.Model):
     treatingQP = models.CharField(max_length=255, null=True)
     treatmentOutcomeId = models.CharField(max_length=255, null=True)
     treatmentPhase = models.CharField(max_length=255, null=True)
-    # [u'Select',
-    #  None,
-    #  u'Intensive Phase',
-    #  u'N/A',
-    #  u'Continuation Phase',
-    #  u'Extended IP']
     tsProviderType = models.CharField(max_length=255, null=True)
     unknownAdherencePct = models.DecimalField(decimal_places=10, max_digits=14)
     unresolvedMissedDosesPct = models.DecimalField(decimal_places=10, max_digits=14)
