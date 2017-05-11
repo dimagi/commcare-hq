@@ -62,7 +62,7 @@ redis==2.10.3
 twilio==5.6.0
 django-countries==4.0
 reportlab==3.0
-stripe==1.12.2
+stripe==1.46.0
 django-compressor==2.1
 django-angular==0.7.16
 Pycco==0.3.0
