@@ -1,7 +1,7 @@
 import json
 
 import jsonobject
-from datetime import datetime
+from datetime import datetime, date
 
 import pytz
 from pytz import timezone
@@ -17,7 +17,7 @@ from custom.enikshay.const import (
     FULFILLED_BY_ID,
     AMOUNT_APPROVED,
     TREATMENT_OUTCOME_DATE,
-)
+    PRESCRIPTION_TOTAL_DAYS_THRESHOLD, LAST_VOUCHER_CREATED_BY_ID, NOTIFYING_PROVIDER_USER_ID)
 from custom.enikshay.integrations.bets.const import (
     TREATMENT_180_EVENT,
     DRUG_REFILL_EVENT,
@@ -25,7 +25,7 @@ from custom.enikshay.integrations.bets.const import (
     DIAGNOSIS_AND_NOTIFICATION_EVENT,
     AYUSH_REFERRAL_EVENT,
     LOCATION_TYPE_MAP,
-    CHEMIST_VOUCHER_EVENT, LAB_VOUCHER_EVENT)
+    CHEMIST_VOUCHER_EVENT, LAB_VOUCHER_EVENT, TOTAL_DAY_THRESHOLDS)
 from custom.enikshay.exceptions import NikshayLocationNotFound
 from custom.enikshay.integrations.bets.repeaters import BETS180TreatmentRepeater, \
     BETSDrugRefillRepeater, BETSSuccessfulTreatmentRepeater, BETSDiagnosisAndNotificationRepeater, \
@@ -72,17 +72,17 @@ class IncentivePayload(BETSPayload):
         return cls(
             EventID=TREATMENT_180_EVENT,
             EventOccurDate=episode_case_properties.get(TREATMENT_OUTCOME_DATE),
-            BeneficiaryUUID=person_case.owner_id,
+            BeneficiaryUUID=episode_case_properties.get(LAST_VOUCHER_CREATED_BY_ID),
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
             Location=location.metadata["nikshay_code"],
         )
 
     @classmethod
-    def create_drug_refill_payload(cls, voucher_case):
-        voucher_case_properties = voucher_case.dynamic_case_properties()
-        person_case = get_person_case_from_voucher(voucher_case.domain, voucher_case.case_id)
-        episode_case = get_open_episode_case_from_person(person_case.domain, person_case.case_id)
+    def create_drug_refill_payload(cls, episode_case, n):
+        episode_case_properties = episode_case.dynamic_case_properties()
+        person_case = get_person_case_from_episode(episode_case.domain, episode_case.case_id)
+        event_date = episode_case_properties.get(PRESCRIPTION_TOTAL_DAYS_THRESHOLD.format(n))
 
         location = cls._get_location(
             person_case.owner_id,
@@ -93,7 +93,7 @@ class IncentivePayload(BETSPayload):
 
         return cls(
             EventID=DRUG_REFILL_EVENT,
-            EventOccurDate=voucher_case_properties.get("date_approved"),
+            EventOccurDate=event_date,
             BeneficiaryUUID=person_case.case_id,
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
@@ -141,7 +141,7 @@ class IncentivePayload(BETSPayload):
         return cls(
             EventID=DIAGNOSIS_AND_NOTIFICATION_EVENT,
             EventOccurDate=cls._india_now(),
-            BeneficiaryUUID=person_case.owner_id,
+            BeneficiaryUUID=episode_case.dynamic_case_properties().get(NOTIFYING_PROVIDER_USER_ID),
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type],
             EpisodeID=episode_case.case_id,
             Location=location.metadata["nikshay_code"],
@@ -150,29 +150,21 @@ class IncentivePayload(BETSPayload):
     @classmethod
     def create_ayush_referral_payload(cls, episode_case):
         episode_case_properties = episode_case.dynamic_case_properties()
-        person_case = get_person_case_from_episode(episode_case.domain, episode_case.case_id)
 
         location = cls._get_location(
-            episode_case_properties.get("presumptive_referral_by_ayush"),
-            field_name="presumptive_referral_by_ayush",
+            episode_case_properties.get("created_by_user_location_id"),
+            field_name="created_by_user_location_id",
             related_case_type="episode",
             related_case_id=episode_case.case_id,
-        )
-
-        person_owner_location = cls._get_location(
-            person_case.owner_id,
-            field_name="owner_id",
-            related_case_type="person",
-            related_case_id=person_case.case_id
         )
 
         return cls(
             EventID=AYUSH_REFERRAL_EVENT,
             EventOccurDate=cls._india_now(),
-            BeneficiaryUUID=episode_case_properties.get("presumptive_referral_by_ayush"),
-            BeneficiaryType=LOCATION_TYPE_MAP[location.location_type],
+            BeneficiaryUUID=episode_case_properties.get("created_by_user_id"),
+            BeneficiaryType='ayush_other',
             EpisodeID=episode_case.case_id,
-            Location=person_owner_location.metadata["nikshay_code"],
+            Location=location.metadata["nikshay_code"],
         )
 
 
@@ -307,8 +299,58 @@ class BETS180TreatmentPayloadGenerator(IncentivePayloadGenerator):
 class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
     event_id = DRUG_REFILL_EVENT
 
-    def get_payload(self, repeat_record, voucher_case):
-        return json.dumps(IncentivePayload.create_drug_refill_payload(voucher_case).to_json())
+    @staticmethod
+    def _get_prescription_threshold_to_send(episode_case_properties):
+        thresholds_to_send = [
+            n for n in TOTAL_DAY_THRESHOLDS
+            if BETSDrugRefillRepeater.prescription_total_days_threshold_in_trigger_state(
+                episode_case_properties, n
+            )
+        ]
+        assert len(thresholds_to_send) == 1, \
+            "Repeater should not have allowed to forward if there were more or less than one threshold to trigger"
+
+        return thresholds_to_send[0]
+
+    def get_payload(self, repeat_record, episode_case):
+        episode_case_properties = episode_case.dynamic_case_properties()
+        n = self._get_prescription_threshold_to_send(episode_case_properties)
+        return json.dumps(IncentivePayload.create_drug_refill_payload(episode_case, n).to_json())
+
+    def get_event_property_name(self, episode_case):
+        n = self._get_prescription_threshold_to_send(episode_case.dynamic_case_properties())
+        return "event_{}_{}".format(self.event_id, n)
+
+    def handle_success(self, response, case, repeat_record):
+        if response.status_code == 201:
+            event_property_name = self.get_event_property_name(case)
+            update_case(
+                case.domain,
+                case.case_id,
+                {
+                    event_property_name: "sent",
+                    "{}_sent_date".format(event_property_name): str(date.today()),
+                    "bets_{}_error".format(self.event_id): "",
+                }
+            )
+
+    def handle_failure(self, response, case, repeat_record):
+        if 400 <= response.status_code <= 500:
+            update_case(
+                case.domain,
+                case.case_id,
+                {
+                    self.get_event_property_name(case): (
+                        "error"
+                        if case.dynamic_case_properties().get(self.get_event_property_name(case)) != 'sent'
+                        else 'sent'
+                    ),
+                    "bets_{}_error".format(self.event_id): "{}: {}".format(
+                        response.status_code,
+                        response.json().get('error')
+                    ),
+                }
+            )
 
 
 @RegisterGenerator(BETSSuccessfulTreatmentRepeater, "case_json", "JSON", is_default=True)

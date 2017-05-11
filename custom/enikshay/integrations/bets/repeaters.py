@@ -1,3 +1,4 @@
+from dateutil.parser import parse
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.repeaters.models import CaseRepeater
@@ -9,9 +10,10 @@ from custom.enikshay.case_utils import (
     get_episode_case_from_voucher,
     get_approved_prescription_vouchers_from_episode,
 )
-from custom.enikshay.const import ENROLLED_IN_PRIVATE
+from custom.enikshay.const import ENROLLED_IN_PRIVATE, PRESCRIPTION_TOTAL_DAYS_THRESHOLD
 from custom.enikshay.integrations.bets.const import TREATMENT_180_EVENT, DRUG_REFILL_EVENT, SUCCESSFUL_TREATMENT_EVENT, \
-    DIAGNOSIS_AND_NOTIFICATION_EVENT, AYUSH_REFERRAL_EVENT, CHEMIST_VOUCHER_EVENT, LAB_VOUCHER_EVENT
+    DIAGNOSIS_AND_NOTIFICATION_EVENT, AYUSH_REFERRAL_EVENT, CHEMIST_VOUCHER_EVENT, LAB_VOUCHER_EVENT, \
+    TOTAL_DAY_THRESHOLDS
 from custom.enikshay.integrations.utils import case_properties_changed, is_valid_episode_submission, \
     is_valid_voucher_submission, is_valid_archived_submission
 
@@ -79,6 +81,13 @@ class LabBETSVoucherRepeater(BaseBETSVoucherRepeater):
         return reverse(LabBETSVoucherRepeaterView.urlname, args=[domain])
 
 
+def _cast_to_int(string):
+    try:
+        return int(string)
+    except ValueError:
+        return 0
+
+
 class BETS180TreatmentRepeater(BaseBETSRepeater):
     friendly_name = _(
         "BETS - MBBS+ Providers: 180 days of private OR govt. "
@@ -95,63 +104,91 @@ class BETS180TreatmentRepeater(BaseBETSRepeater):
             return False
 
         case_properties = episode_case.dynamic_case_properties()
-        treatment_outcome = case_properties.get('treatment_outcome', None)
-        treatment_outcome_transitioned = case_properties_changed(episode_case, ['treatment_outcome'])
-        enrolled_in_private_sector = case_properties.get(ENROLLED_IN_PRIVATE) == 'true'
-        episode_has_outcome = treatment_outcome and (treatment_outcome != 'not_evaluated')
-        adherence_total_doses_taken = case_properties.get('adherence_total_doses_taken', "0")
-        try:
-            adherence_total_doses_taken = int(adherence_total_doses_taken)
-        except ValueError:
-            adherence_total_doses_taken = 0
+        prescription_total_days = _cast_to_int(case_properties.get("prescription_total_days", 0))
+        treatment_options = case_properties.get("treatment_options")
+        if treatment_options == "fdc":
+            meets_days_threshold = prescription_total_days >= 168
+        else:
+            meets_days_threshold = prescription_total_days >= 180
 
+        enrolled_in_private_sector = case_properties.get(ENROLLED_IN_PRIVATE) == 'true'
         not_sent = case_properties.get("event_{}".format(TREATMENT_180_EVENT)) != "sent"
         return (
-            episode_has_outcome
-            and treatment_outcome_transitioned
+            meets_days_threshold
+            and case_properties_changed(episode_case, ['prescription_total_days'])
             and not_sent
-            and adherence_total_doses_taken >= 180
             and enrolled_in_private_sector
             and is_valid_episode_submission(episode_case)
         )
 
 
 class BETSDrugRefillRepeater(BaseBETSRepeater):
-    friendly_name = _("BETS - Patients: Cash transfer on subsequent drug refill (voucher case type)")
+    friendly_name = _("BETS - Patients: Cash transfer on subsequent drug refill (episode case type)")
 
     @classmethod
     def get_custom_url(cls, domain):
         from custom.enikshay.integrations.bets.views import BETSDrugRefillRepeaterView
         return reverse(BETSDrugRefillRepeaterView.urlname, args=[domain])
 
-    def allowed_to_forward(self, voucher_case):
-        if not self.case_types_and_users_allowed(voucher_case):
+    @staticmethod
+    def _list_items_unique(l):
+        return len(set(l)) == len(l)
+
+    @staticmethod
+    def _get_threshold_case_prop(n):
+        return PRESCRIPTION_TOTAL_DAYS_THRESHOLD.format(n)
+
+    @staticmethod
+    def _property_as_date(properties, property_name):
+        """
+        Parse the given value of the given property_name in the given property dict as a date.
+        If the property is not a date, return None
+        """
+        try:
+            return parse(properties.get(property_name, "nope"))
+        except ValueError:
+            return None
+
+    @staticmethod
+    def prescription_total_days_threshold_in_trigger_state(episode_case_properties, n):
+        threshold_case_prop = BETSDrugRefillRepeater._get_threshold_case_prop(n)
+        return bool(
+            BETSDrugRefillRepeater._property_as_date(episode_case_properties, threshold_case_prop)
+            and episode_case_properties.get("event_{}_{}".format(DRUG_REFILL_EVENT, n)) != "sent"
+        )
+
+    def allowed_to_forward(self, episode_case):
+        if not self.case_types_and_users_allowed(episode_case):
             return False
 
-        voucher_case_properties = voucher_case.dynamic_case_properties()
-        episode = get_episode_case_from_voucher(voucher_case.domain, voucher_case.case_id)
-        episode_case_properties = episode.dynamic_case_properties()
+        episode_case_properties = episode_case.dynamic_case_properties()
+        trigger_by_threshold = {}  # threshold -> boolean
+        threshold_prop_values_by_threshold = {}  # threshold -> date
 
-        def _get_voucher_count():
-            # This is an expensive operation, so only call this function if all other conditions are true.
-            voucher_count = episode_case_properties.get('approved_voucher_count', 0)
-            if voucher_count < 2:
-                voucher_count = len(
-                    get_approved_prescription_vouchers_from_episode(episode.domain, episode.case_id)
-                )
-            return voucher_count
+        for n in TOTAL_DAY_THRESHOLDS:
+            threshold_case_prop = self._get_threshold_case_prop(n)
+            threshold_prop_values_by_threshold[n] = self._property_as_date(
+                episode_case_properties, threshold_case_prop
+            )
+            trigger_for_n = bool(
+                self.prescription_total_days_threshold_in_trigger_state(episode_case_properties, n)
+                and case_properties_changed(episode_case, [threshold_case_prop])
+            )
+            trigger_by_threshold[n] = trigger_for_n
 
-        not_sent = voucher_case_properties.get("event_{}".format(DRUG_REFILL_EVENT)) != "sent"
+        trigger_dates_unique = self._list_items_unique(filter(None, threshold_prop_values_by_threshold.values()))
+        if not trigger_dates_unique:
+            self._flag_program_team()
 
         return (
-            # TODO: Confirm state == "fulfilled"
-            voucher_case_properties.get("state") == "fulfilled"
-            and voucher_case_properties.get("type") == "prescription"
-            and not_sent
-            and case_properties_changed(voucher_case, ['state'])
-            and is_valid_voucher_submission(voucher_case)
-            and _get_voucher_count() >= 2
+            trigger_dates_unique
+            and any(trigger_by_threshold.values())
+            and is_valid_episode_submission(episode_case)
         )
+
+    def _flag_program_team(self):
+        # TODO: Write me
+        pass
 
 
 class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
@@ -167,11 +204,19 @@ class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
             return False
 
         case_properties = episode_case.dynamic_case_properties()
-        not_sent = case_properties.get("event_{}".format(SUCCESSFUL_TREATMENT_EVENT)) != "sent"
+        prescription_total_days = _cast_to_int(case_properties.get("prescription_total_days", 0))
+        treatment_options = case_properties.get("treatment_options")
+        if treatment_options == "fdc":
+            meets_days_threshold = prescription_total_days >= 168
+        else:
+            meets_days_threshold = prescription_total_days >= 180
+
         enrolled_in_private_sector = case_properties.get(ENROLLED_IN_PRIVATE) == 'true'
+        not_sent = case_properties.get("event_{}".format(SUCCESSFUL_TREATMENT_EVENT)) != "sent"
         return (
-            case_properties.get("treatment_outcome") in ("cured", "treatment_completed")
-            and case_properties_changed(episode_case, ["treatment_outcome"])
+            meets_days_threshold
+            and case_properties.get("treatment_outcome") in ("cured", "treatment_completed")
+            and case_properties_changed(episode_case, ['prescription_total_days', "treatment_outcome"])
             and not_sent
             and enrolled_in_private_sector
             and is_valid_archived_submission(episode_case)
@@ -194,9 +239,8 @@ class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
         not_sent = case_properties.get("event_{}".format(DIAGNOSIS_AND_NOTIFICATION_EVENT)) != "sent"
         enrolled_in_private_sector = case_properties.get(ENROLLED_IN_PRIVATE) == 'true'
         return (
-            case_properties.get("pending_registration") == "no"
-            and case_properties.get("nikshay_registered") == 'true'
-            and case_properties_changed(episode_case, ['nikshay_registered'])
+            case_properties.get("bets_first_prescription_voucher_redeemed") == 'true'
+            and case_properties_changed(episode_case, ['bets_first_prescription_voucher_redeemed'])
             and not_sent
             and enrolled_in_private_sector
             and is_valid_episode_submission(episode_case)
@@ -216,16 +260,12 @@ class BETSAYUSHReferralRepeater(BaseBETSRepeater):
             return False
 
         case_properties = episode_case.dynamic_case_properties()
-        presumptive_referral_by_ayush = (
-            case_properties.get("presumptive_referral_by_ayush")
-            and case_properties.get("presumptive_referral_by_ayush") != "false"
-        )
         not_sent = case_properties.get("event_{}".format(AYUSH_REFERRAL_EVENT)) != "sent"
         enrolled_in_private_sector = case_properties.get(ENROLLED_IN_PRIVATE) == 'true'
         return (
-            presumptive_referral_by_ayush
-            and case_properties.get("nikshay_registered") == 'true'
-            and case_properties_changed(episode_case, ['nikshay_registered'])
+            case_properties.get("bets_first_prescription_voucher_redeemed") == 'true'
+            and case_properties_changed(episode_case, ['bets_first_prescription_voucher_redeemed'])
+            and case_properties.get("created_by_user_type") == "pac"
             and not_sent
             and enrolled_in_private_sector
             and is_valid_episode_submission(episode_case)
