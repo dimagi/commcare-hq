@@ -256,6 +256,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(person_case.owner_id, ARCHIVED_CASE_OWNER_ID)
         self.assertEqual(person_case.dynamic_case_properties()['archive_reason'], 'cured')
         self.assertEqual(person_case.dynamic_case_properties()['is_active'], 'no')
+        self.assertEqual(person_case.dynamic_case_properties()['last_owner'], self.pcp.location_id)
 
         occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
         self.assertEqual(1, len(occurrence_case_ids))
@@ -302,6 +303,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(person_case.owner_id, ARCHIVED_CASE_OWNER_ID)
         self.assertEqual(person_case.dynamic_case_properties()['archive_reason'], 'died')
         self.assertEqual(person_case.dynamic_case_properties()['is_active'], 'no')
+        self.assertEqual(person_case.dynamic_case_properties()['last_owner'], self.pcp.location_id)
 
         occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
         self.assertEqual(1, len(occurrence_case_ids))
