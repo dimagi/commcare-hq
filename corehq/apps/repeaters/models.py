@@ -639,7 +639,7 @@ class RepeatRecord(Document):
         """Do something with the response if the repeater fails
         """
         return self._make_failure_attempt(
-            u'{}: {}. {}'.format(response.status_code, response.reason, getattr(response, 'content', None)),
+            u'{}: {}.\n{}'.format(response.status_code, response.reason, getattr(response, 'content', None)),
             response
         )
 
