@@ -8,7 +8,6 @@ from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.es.fake.groups_fake import GroupESFake
 from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.groups.models import Group
-from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import ReportConfiguration

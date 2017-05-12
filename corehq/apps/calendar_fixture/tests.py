@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timedelta
 from django.test import TestCase
 from casexml.apps.case.xml import V2
+from casexml.apps.phone.tests.utils import call_fixture_generator
 from corehq.apps.calendar_fixture.fixture_provider import calendar_fixture_generator
 from corehq.apps.calendar_fixture.models import DEFAULT_DAYS_BEFORE, DEFAULT_DAYS_AFTER, CalendarFixtureSettings
 from corehq.apps.users.models import CommCareUser
@@ -12,12 +13,12 @@ class TestFixture(TestCase):
 
     def test_nothing(self):
         user = CommCareUser(_id=uuid.uuid4().hex, domain='not-enabled')
-        self.assertEqual([], calendar_fixture_generator(user, V2))
+        self.assertEqual([], call_fixture_generator(calendar_fixture_generator, user))
 
     @flag_enabled('CUSTOM_CALENDAR_FIXTURE')
     def test_fixture_defaults(self):
         user = CommCareUser(_id=uuid.uuid4().hex, domain='test-calendar-defaults')
-        fixture = calendar_fixture_generator(user, V2)[0]
+        fixture = call_fixture_generator(calendar_fixture_generator, user)[0]
         self.assertEqual(user._id, fixture.attrib['user_id'])
         today = datetime.today()
         self._check_first_date(fixture, today - timedelta(days=DEFAULT_DAYS_BEFORE))
@@ -33,7 +34,7 @@ class TestFixture(TestCase):
             days_before=days_before,
             days_after=days_after,
         )
-        fixture = calendar_fixture_generator(user, V2)[0]
+        fixture = call_fixture_generator(calendar_fixture_generator, user)[0]
         self.assertEqual(user._id, fixture.attrib['user_id'])
         today = datetime.today()
         self._check_first_date(fixture, today - timedelta(days=days_before))

@@ -1,4 +1,6 @@
 import datetime
+
+from corehq.util.datadog.utils import count_by_response_code
 from django.http import HttpResponse, HttpResponseNotFound
 from django.views.decorators.http import require_GET
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey, domain_admin_required
@@ -60,6 +62,7 @@ class FetchKeyRecords(object):
 
 @login_or_digest_or_basic_or_apikey()
 @require_GET
+@count_by_response_code('commcare.auth_keys.fetch.count')
 def fetch_key_records(request, domain):
     last_issued = request.GET.get('last_issued')
     if last_issued:

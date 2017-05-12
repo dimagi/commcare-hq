@@ -51,3 +51,5 @@ DAILY_SCHEDULE_ID = 'schedule_daily'
 SCHEDULE_ID_FIXTURE = 'id'
 # one of values of 'adherence_closure_reason' case property
 HISTORICAL_CLOSURE_REASON = 'historical'
+
+ENIKSHAY_TIMEZONE = 'Asia/Kolkata'

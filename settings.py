@@ -117,6 +117,7 @@ UCR_TIMING_FILE = "%s/%s" % (FILEPATH, "ucr.timing.log")
 UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
 UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
 NIKSHAY_DATAMIGRATION = "%s/%s" % (FILEPATH, "nikshay_datamigration.log")
+PRIVATE_SECTOR_DATAMIGRATION = "%s/%s" % (FILEPATH, "private_sector_datamigration.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -137,7 +138,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    'corehq.apps.hqwebapp.middleware.HQCsrfViewMiddleWare',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -336,6 +337,7 @@ HQ_APPS = (
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
     'corehq.apps.motech',
+    'corehq.apps.motech.openmrs',
 
     # custom reports
     'a5288',
@@ -377,6 +379,7 @@ ENIKSHAY_APPS = (
     'custom.enikshay',
     'custom.enikshay.integrations.ninetyninedots',
     'custom.enikshay.nikshay_datamigration',
+    'custom.enikshay.private_sector_datamigration',
     'custom.enikshay.integrations.nikshay'
 )
 
@@ -1013,7 +1016,7 @@ LOGGING = {
             'format': '%(asctime)s %(levelname)s %(module)s %(message)s'
         },
         'couch-request-formatter': {
-            'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(method)s %(status_code)s %(content_length)s %(path)s %(duration)s'
+            'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(database)s %(method)s %(status_code)s %(content_length)s %(path)s %(duration)s'
         },
         'datadog': {
             'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
@@ -1128,6 +1131,14 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
+        'private_sector_datamigration': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'verbose',
+            'filename': PRIVATE_SECTOR_DATAMIGRATION,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 20  # Backup 200 MB of logs
+        },
         'sentry': {
             'level': 'ERROR',
             'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
@@ -1221,6 +1232,11 @@ LOGGING = {
         },
         'nikshay_datamigration': {
             'handlers': ['nikshay_datamigration', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'private_sector_datamigration': {
+            'handlers': ['private_sector_datamigration', 'console'],
             'level': 'INFO',
             'propagate': False,
         },
@@ -1523,6 +1539,12 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "UCLA_SUBSTANCE_USE": "custom.ucla.api.substance_use_message_bank_content",
 }
 
+MAX_RULE_UPDATES_IN_ONE_RUN = 10000
+
+AVAILABLE_CUSTOM_RULE_CRITERIA = {}
+
+AVAILABLE_CUSTOM_RULE_ACTIONS = {}
+
 # These are custom templates which can wrap default the sms/chat.html template
 CUSTOM_CHAT_TEMPLATES = {
     "FRI": "fri/chat.html",
@@ -1632,22 +1654,6 @@ PILLOWTOPS = {
             }
         },
         {
-            'name': 'kafka-ucr-static-08',
-            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
-            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
-            'params': {
-                'ucr_division': '08'
-            }
-        },
-        {
-            'name': 'kafka-ucr-static-9f',
-            'class': 'corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow',
-            'instance': 'corehq.apps.userreports.pillow.get_kafka_ucr_static_pillow',
-            'params': {
-                'ucr_division': '9f'
-            }
-        },
-        {
             'name': 'ReportCaseToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.reportcase.get_report_case_to_elasticsearch_pillow',
@@ -1691,16 +1697,6 @@ PILLOWTOPS = {
         'custom.succeed.models.UCLAPatientFluffPillow',
     ],
     'experimental': [
-        {
-            'name': 'BlobDeletionPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.blobs.pillow.get_main_blob_deletion_pillow',
-        },
-        {
-            'name': 'ApplicationBlobDeletionPillow',
-            'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.blobs.pillow.get_application_blob_deletion_pillow',
-        },
         {
             'name': 'CaseSearchToElasticsearchPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
@@ -1750,6 +1746,9 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_lactating.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_pregnancies.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_4_6_infrastructure.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_block.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_district.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'hardware_individual.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_individual_issues.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_block.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'it_issues_by_ticket_level.json'),
@@ -1840,6 +1839,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'hardware_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'home_visit_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'household_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form.json'),
@@ -2050,3 +2050,5 @@ if _raven_config:
     RAVEN_CONFIG = _raven_config
     SENTRY_CONFIGURED = True
     SENTRY_CLIENT = 'corehq.util.sentry.HQSentryClient'
+
+CSRF_COOKIE_HTTPONLY = True

@@ -101,12 +101,6 @@
                 });
             }());
 
-        {% block case_management_js %}
-            /* form_requires needs to be a knockout observable so that
-            its value can be read by another UI (form filtering) */
-            var form_requires = ko.observable({{ form.requires|JSON }});
-        {% endblock %}
-
         {% if allow_form_filtering %}
 
         function formFilterMatches(filter, pattern_matches, substring_matches) {
@@ -230,8 +224,6 @@
         });
         {% endif %}
 
-        gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
-
         {% if allow_cloudcare %}
             // tag the 'preview in cloudcare' button with the right url
             // unfortunately, has to be done in javascript
@@ -327,7 +319,10 @@
     <div class="btn-group">
         {% if not form.form_type == "shadow_form" %}
             {% if not form.no_vellum %}
-            <a id="edit_label" href="{% url "form_source" domain app.id module.id form.id %}" class="btn btn-primary">
+            <a id="edit_label" class="btn btn-primary track-usage-link"
+               href="{% url "form_source" domain app.id module.id form.id %}"
+               data-category='App Builder' data-action='Open Form' data-label='Edit Label'
+            >
                 <i class="fa fa-pencil"></i>
                 {% trans "Edit" %}
             </a>
@@ -388,7 +383,7 @@
             {% endif %}
         </ul>
         <br>
-        {% include 'app_manager/v2/partials/case_config_ko_templates.html' %}
+        {% include 'app_manager/v1/partials/case_config_ko_templates.html' %}
         <div class="tab-content">
             {% if nav_form %}
                 {% include "app_manager/v1/partials/form_tab_settings.html" %}
@@ -541,7 +536,8 @@
     {{ block.super }}
     {% include 'app_manager/v1/partials/module_view_breadcrumbs.html' %}
     <li>
-        <a class="view-form" href="{% url "view_form" domain app.id module.id form.id %}">
+        <a class="track-usage-link" href="{% url "view_form" domain app.id module.id form.id %}"
+           data-category="App Builder" data-action="View Form" data-label="Breadcrumb">
             <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
         </a>
     </li>

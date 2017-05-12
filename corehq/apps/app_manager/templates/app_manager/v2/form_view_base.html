@@ -101,12 +101,6 @@
                 });
             }());
 
-        {% block case_management_js %}
-            /* form_requires needs to be a knockout observable so that
-            its value can be read by another UI (form filtering) */
-            var form_requires = ko.observable({{ form.requires|JSON }});
-        {% endblock %}
-
         {% if allow_form_filtering %}
 
         function formFilterMatches(filter, pattern_matches, substring_matches) {
@@ -225,8 +219,6 @@
             no_vellum: ko.observable({{ form.no_vellum|JSON }})
         });
         {% endif %}
-
-        gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
 
         {% if can_preview_form and allow_cloudcare %}
             // tag the 'preview in cloudcare' button with the right url
@@ -526,7 +518,8 @@
     {{ block.super }}
     {% include 'app_manager/v2/partials/module_view_breadcrumbs.html' %}
     <li>
-        <a class="view-form" href="{% url "view_form" domain app.id module.id form.id %}">
+        <a class="track-usage-link" href="{% url "view_form" domain app.id module.id form.id %}"
+           data-category="App Builder" data-action="View Form" data-label="Breadcrumb">
             <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
         </a>
     </li>

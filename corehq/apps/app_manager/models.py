@@ -49,6 +49,7 @@ from django.core.cache import cache
 from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
+from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
 from corehq.apps.app_manager.suite_xml.generator import SuiteGenerator, MediaSuiteGenerator
 from corehq.apps.app_manager.xpath_validator import validate_xpath
@@ -112,7 +113,6 @@ from corehq.apps.app_manager.dbaccessors import (
 from corehq.apps.app_manager.util import (
     split_path,
     save_xform,
-    ParentCasePropertyBuilder,
     is_usercase_in_use,
     actions_use_usercase,
     update_unique_ids,
@@ -935,7 +935,7 @@ class FormBase(DocumentSchema):
     def uses_cases(self):
         return (
             self.requires_case()
-            or self. get_action_type() == 'open'
+            or self.get_action_type() != 'none'
             or self.form_type == 'advanced_form'
         )
 
@@ -2281,8 +2281,9 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def get_app(self):
         return self._parent
 
-    def default_name(self):
-        app = self.get_app()
+    def default_name(self, app=None):
+        if not app:
+            app = self.get_app()
         return trans(
             self.name,
             [app.default_language] + app.langs,
@@ -4195,7 +4196,33 @@ class ReportAppConfig(DocumentSchema):
     xpath_description = StringProperty()
     use_xpath_description = BooleanProperty(default=False)
     show_data_table = BooleanProperty(default=True)
-    graph_configs = DictProperty(ReportGraphConfig)
+    graph_configs = DictProperty(ReportGraphConfig) # deprecated
+    complete_graph_configs = DictProperty(GraphConfiguration)
+
+    def migrate_graph_configs(self, domain):
+        if len(self.complete_graph_configs):
+            return
+
+        self.complete_graph_configs = {}
+        from corehq.apps.userreports.reports.specs import MultibarChartSpec
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import MobileSelectFilterHelpers
+        for chart_config in self.report(domain).charts:
+            if isinstance(chart_config, MultibarChartSpec):
+                limited_graph_config = self.graph_configs.get(chart_config.chart_id, ReportGraphConfig())
+                self.complete_graph_configs[chart_config.chart_id] = GraphConfiguration(
+                    graph_type=limited_graph_config.graph_type,
+                    config=limited_graph_config.config,
+                    series=[GraphSeries(
+                        config=limited_graph_config.series_configs.get(c.column_id, {}),
+                        locale_specific_config={},
+                        data_path="",
+                        x_function="",
+                        y_function="",
+                    ) for c in chart_config.y_axis_columns],
+                    locale_specific_config={},
+                    annotations=[]
+                )
+
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
 

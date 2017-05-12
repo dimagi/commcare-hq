@@ -200,7 +200,7 @@ def submit_case_block_from_template(domain, template, context, xmlns=None, user_
     kwargs = {}
     if xmlns:
         kwargs['xmlns'] = xmlns
-    submit_case_blocks(case_block, domain, user_id=user_id, **kwargs)
+    return submit_case_blocks(case_block, domain, user_id=user_id, **kwargs)
 
 
 def update_case(domain, case_id, case_properties=None, close=False, xmlns=None):
@@ -220,4 +220,4 @@ def update_case(domain, case_id, case_properties=None, close=False, xmlns=None):
         'case_properties': case_properties,
         'close': close,
     }
-    submit_case_block_from_template(domain, 'hqcase/xml/update_case.xml', context, xmlns=xmlns)
+    return submit_case_block_from_template(domain, 'hqcase/xml/update_case.xml', context, xmlns=xmlns)

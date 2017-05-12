@@ -1397,6 +1397,19 @@
                         "constant": ""
                     }
                 }
+            },
+            {
+                "filter": {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "migration_created_case"
+                    },
+                    "property_value": "true"
+                },
+                "type": "boolean",
+                "column_id": "case_created_by_migration"
             }
         ],
         "named_expressions": {

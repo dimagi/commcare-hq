@@ -25,12 +25,7 @@ def _get_rate_limit_key(exc_info):
 def _is_rate_limited(rate_limit_key):
     exponential_backoff_key = '{}_down'.format(rate_limit_key)
     ExponentialBackoff.increment(exponential_backoff_key)
-    if ExponentialBackoff.should_backoff(exponential_backoff_key):
-        datadog_counter('commcare.sentry.errors.rate_limited', tags=[
-            'service:{}'.format(rate_limit_key)
-        ])
-        return True
-    return False
+    return ExponentialBackoff.should_backoff(exponential_backoff_key)
 
 
 class HQSentryClient(DjangoClient):
@@ -45,5 +40,8 @@ class HQSentryClient(DjangoClient):
 
         rate_limit_key = _get_rate_limit_key(exc_info)
         if rate_limit_key:
+            datadog_counter('commcare.sentry.errors.rate_limited', tags=[
+                'service:{}'.format(rate_limit_key)
+            ])
             return not _is_rate_limited(rate_limit_key)
         return True

@@ -6,7 +6,7 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -29,7 +29,6 @@
+@@ -33,7 +33,6 @@
          commtrack_enabled: {{ app.commtrack_enabled|JSON }},
          commtrack_programs: {{ commtrack_programs|JSON }},
          propertyDescriptions: {{ property_descriptions|JSON }},
@@ -14,7 +14,7 @@
      });
      caseConfig.init();
  
-@@ -51,5 +50,5 @@
+@@ -56,5 +55,5 @@
  {% endblock %}
  
  {% block case_management_content %}

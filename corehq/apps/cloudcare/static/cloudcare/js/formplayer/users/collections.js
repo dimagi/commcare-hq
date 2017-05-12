@@ -28,7 +28,7 @@ FormplayerFrontend.module("Users.Collections", function(Collections, FormplayerF
             // Need to set these headers to allow access to @allow_remote_invocation
             options.beforeSend = function(xhr) {
                 xhr.setRequestHeader('DjNg-Remote-Method', 'get_pagination_data');
-                xhr.setRequestHeader("X-CSRFToken", $.cookie('csrftoken'));
+                xhr.setRequestHeader("X-CSRFToken", $("#csrfTokenContainer").val());
             };
             options.contentType = "application/json";
             options.data = options.data || JSON.stringify({});

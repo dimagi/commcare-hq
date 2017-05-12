@@ -5,6 +5,8 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
+    <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
+    <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
     <script src="{% static 'app_manager/js/report-module.js' %}"></script>
     <script src="{% static 'reports_core/js/choice-list-api.js' %}"></script>
     {% include "app_manager/v2/partials/xpathValidator.html" %}
@@ -20,6 +22,8 @@
 
 {% block modals %}{{ block.super }}
 {% include "app_manager/v2/partials/nav_menu_media_modals.html" %}
+{% include 'style/partials/key_value_mapping.html' %}
+{% include 'app_manager/v2/partials/graph_configuration_modal.html' %}
 {% endblock modals %}
 
 {% block breadcrumbs %}

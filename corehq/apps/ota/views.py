@@ -1,10 +1,12 @@
 from distutils.version import LooseVersion
+
+from django.http import JsonResponse
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_noop
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 
 from dimagi.utils.logging import notify_exception
 from django_prbac.utils import has_privilege
@@ -58,7 +60,6 @@ def restore(request, domain, app_id=None):
         update_device_id(request.couch_user, request.GET.get('device_id'))
     response, timing_context = get_restore_response(domain, request.couch_user, app_id, **get_restore_params(request))
     tags = [
-        u'domain:{}'.format(domain),
         u'status_code:{}'.format(response.status_code),
     ]
     datadog_counter('commcare.restores.count', tags=tags)
@@ -114,6 +115,10 @@ def search(request, domain):
 
     query_addition_id = criteria.pop(SEARCH_QUERY_ADDITION_KEY, None)
 
+    owner_id = criteria.pop('owner_id', False)
+    if owner_id:
+        search_es = search_es.owner(owner_id)
+
     fuzzies = config.config.get_fuzzy_properties_for_case_type(case_type)
     for key, value in criteria.items():
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
@@ -133,7 +138,7 @@ def search(request, domain):
     # Even if it's a SQL domain, we just need to render the results as cases, so CommCareCase.wrap will be fine
     cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
     fixtures = CaseDBFixture(cases).fixture
-    return HttpResponse(fixtures, content_type="text/xml")
+    return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
 
 def _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details):
@@ -370,3 +375,9 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
         download.save()
 
         return redirect('hq_soil_download', self.domain, download.download_id)
+
+
+@login_or_digest_or_basic_or_apikey()
+@require_GET
+def heartbeat(request, domain, id):
+    return JsonResponse({})

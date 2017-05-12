@@ -519,6 +519,61 @@ class GraphTemplate(Template):
     form = StringField('@form', choices=['graph'])
     graph = NodeField('graph', Graph)
 
+    @classmethod
+    def build(cls, form, graph, locale_config=None, locale_series_config=None, locale_annotation=None):
+        return cls(
+            form=form,
+            graph=Graph(
+                type=graph.graph_type,
+                series=[
+                    Series(
+                        nodeset=s.data_path,
+                        x_function=s.x_function,
+                        y_function=s.y_function,
+                        radius_function=s.radius_function,
+                        configuration=ConfigurationGroup(
+                            configs=(
+                                [
+                                    # TODO: It might be worth wrapping
+                                    #       these values in quotes (as appropriate)
+                                    #       to prevent the user from having to
+                                    #       figure out why their unquoted colors
+                                    #       aren't working.
+                                    ConfigurationItem(id=k, xpath_function=v)
+                                    for k, v in s.config.iteritems()
+                                ] + [
+                                    ConfigurationItem(id=k, locale_id=locale_series_config(index, k))
+                                    for k, v in s.locale_specific_config.iteritems()
+                                ]
+                            )
+                        )
+                    )
+                    for index, s in enumerate(graph.series)],
+                configuration=ConfigurationGroup(
+                    configs=(
+                        [
+                            ConfigurationItem(id=k, xpath_function=v)
+                            for k, v
+                            in graph.config.iteritems()
+                        ] + [
+                            ConfigurationItem(id=k, locale_id=locale_config(k))
+                            for k, v
+                            in graph.locale_specific_config.iteritems()
+                        ]
+                    )
+                ),
+                annotations=[
+                    Annotation(
+                        x=Text(xpath_function=a.x),
+                        y=Text(xpath_function=a.y),
+                        text=Text(locale_id=locale_annotation(i))
+                    )
+                    for i, a in enumerate(
+                        graph.annotations
+                    )]
+            )
+        )
+
 
 class Header(AbstractTemplate):
     ROOT_NAME = 'header'

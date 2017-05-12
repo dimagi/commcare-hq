@@ -2,9 +2,7 @@ import uuid
 import json
 import phonenumbers
 import jsonobject
-import pytz
-
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import parse_date
 
 from corehq.apps.repeaters.repeater_generators import (
     BasePayloadGenerator,
@@ -222,9 +220,7 @@ class AdherencePayloadGenerator(NinetyNineDotsBasePayloadGenerator):
             ).case_id
         )
         adherence_case_properties = adherence_case.dynamic_case_properties()
-        date = (parse_datetime(adherence_case.dynamic_case_properties().get('adherence_date'))
-                .astimezone(pytz.timezone('Asia/Kolkata'))
-                .date())
+        date = parse_date(adherence_case.dynamic_case_properties().get('adherence_date'))
         payload = {
             'beneficiary_id': person_case.case_id,
             'adherence_date': date.isoformat(),
