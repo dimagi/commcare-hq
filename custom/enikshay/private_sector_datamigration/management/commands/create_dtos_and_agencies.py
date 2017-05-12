@@ -55,7 +55,7 @@ class Command(BaseCommand):
             organisationId=org_id,
             stateId=state_code,
         ).values('agencyId').distinct()
-        return Agency.objects.filter(agencyId__in=agency_ids)
+        return Agency.objects.filter(agencyId__in=agency_ids).order_by('agencyId')
 
     @staticmethod
     def create_agency(domain, agency, dto, org_id):
