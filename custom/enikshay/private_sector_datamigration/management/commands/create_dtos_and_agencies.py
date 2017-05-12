@@ -24,6 +24,7 @@ class Command(BaseCommand):
                 agency_user = make_location_user(agency_loc)
                 agency_user.assigned_location_ids = [agency_loc.location_id]
                 agency_user.location_id = agency_loc.location_id
+                agency_user.user_data['commcare_location_id'] = agency_loc.location_id
                 agency_user.user_data['user_level'] = user_level
                 agency_user.user_data['usertype'] = self.get_usertype(agency_loc.location_type.code)
                 agency_user.user_location_id = agency_loc.location_id
