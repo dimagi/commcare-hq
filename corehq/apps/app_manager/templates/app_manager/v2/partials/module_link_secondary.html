@@ -8,13 +8,10 @@
      class="appnav-secondary js-add-new-item"
      data-slug="form"
      data-module-id="{{ module.id }}"
-     {% if module.doc_type == "AdvancedModule" %}
-        data-types='["advanced","shadow"]'
-     {% elif module.is_surveys %}
-        data-types='["survey"]'
-     {% else %}
-        data-types='["followup"]'
-     {% endif %}
+     data-show-survey="{% if module.is_surveys %}1{% endif %}"
+     data-show-followup="{% if not module.is_surveys and module.doc_type != "AdvancedModule" %}1{% endif %}"
+     data-show-advanced="{% if module.doc_type == "AdvancedModule" %}1{% endif %}"
+     data-show-shadow="{% if module.doc_type == "AdvancedModule" %}1{% endif %}"
   >
     <i class="fa fa-plus"></i>
   </a>
