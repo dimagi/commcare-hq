@@ -208,7 +208,7 @@
             });
         }
 
-        {% if request|toggle_enabled:'NO_VELLUM' %}
+        {% if request|toggle_enabled:'NO_VELLUM' and form.form_type != "shadow_form" %}
         $('#no-vellum').koApplyBindings({
             no_vellum: ko.observable({{ form.no_vellum|JSON }})
         });
