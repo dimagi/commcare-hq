@@ -10,7 +10,10 @@ MainController.$inject = ['$scope', '$route', '$routeParams', '$location'];
 
 window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap'])
     .controller('MainController', MainController)
-    .config(['$routeProvider', function($routeProvider) {
+    .config(['$interpolateProvider', '$routeProvider', function($interpolateProvider, $routeProvider) {
+        $interpolateProvider.startSymbol('{$');
+        $interpolateProvider.endSymbol('$}');
+
         var url = hqImport('hqwebapp/js/urllib.js').reverse;
         $routeProvider
             .when("/", {
@@ -34,6 +37,9 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
                 template : "system_usage_tabular",
             })
             .when("/underweight_children", {
+                redirectTo : "/underweight_children/1",
+            })
+            .when("/underweight_children/:step", {
                 template : "<underweight-children-report></underweight-children-report>",
             })
             .when("/breastfeeding", {
