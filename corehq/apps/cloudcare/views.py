@@ -457,6 +457,9 @@ class LoginAsUsers(View):
         })
 
     def _user_query(self, search_string, page, limit):
+        user_data_fields = []
+        if toggles.ENIKSHAY.enabled(self.domain):
+            user_data_fields = ['id_issuer_number']
         return login_as_user_query(
             self.domain,
             self.couch_user,
@@ -464,6 +467,7 @@ class LoginAsUsers(View):
             limit,
             page * limit,
             can_access_all_locations=self.can_access_all_locations,
+            user_data_fields=user_data_fields
         )
 
     def _format_user(self, user_json):
