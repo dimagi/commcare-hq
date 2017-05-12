@@ -17,9 +17,4 @@ class Migration(migrations.Migration):
             name='creationDate',
             field=models.DateTimeField(),
         ),
-        migrations.AlterField(
-            model_name='episode',
-            name='beneficiaryID',
-            field=models.CharField(max_length=18),
-        ),
     ]
