@@ -156,31 +156,39 @@
     </script>
 
     <script type="text/html" class="js-popover-template-add-item-content" data-slug="form">
-      <div>
-          <div class="pull-left">
-              <button type="button" class="popover-additem-option js-new-form appnav-responsive"
-                      data-case-action="none" data-type="survey" data-form-type="form">
-                <i class="fa fa-file-o"></i> {% trans "Survey" %}
-              </button>
-          </div>
-          <div class="pull-left">
-              <button type="button" class="popover-additem-option js-new-form appnav-responsive"
-                      data-case-action="update" data-type="followup" data-form-type="form">
-                <i class="fcc fcc-app-updateform"></i> {% trans "Followup" %}
-              </button>
-          </div>
-          <div class="pull-left">
-              <button type="button" class="popover-additem-option js-new-form appnav-responsive"
-                      data-type="advanced" data-form-type="form">
-                <i class="fa fa-file-o"></i> {% trans "Form" %}
-              </button>
-          </div>
-          <div class="pull-left">
-            <button type="button" class="popover-additem-option js-new-form appnav-responsive"
-                    data-case-action="update" data-type="shadow" data-form-type="shadow">
-              <i class="fa fa-moon-o"></i> {% trans "Shadow Form" %}
-            </button>
-          </div>
+      <div data-module-id="<%= moduleid %>">
+          <% if (showSurvey) { %>
+              <div class="pull-left">
+                  <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+                          data-case-action="none" data-type="survey" data-form-type="form">
+                      <i class="fa fa-file-o"></i> {% trans "Survey" %}
+                  </button>
+              </div>
+          <% } %>
+          <% if (showFollowup) { %>
+              <div class="pull-left">
+                  <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+                          data-case-action="update" data-type="followup" data-form-type="form">
+                    <i class="fcc fcc-app-updateform"></i> {% trans "Followup" %}
+                  </button>
+              </div>
+          <% } %>
+          <% if (showAdvanced) { %>
+              <div class="pull-left">
+                  <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+                          data-type="advanced" data-form-type="form">
+                    <i class="fa fa-file-o"></i> {% trans "Form" %}
+                  </button>
+              </div>
+          <% } %>
+          <% if (showShadow) { %>
+              <div class="pull-left">
+                <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+                        data-case-action="update" data-type="shadow" data-form-type="shadow">
+                  <i class="fa fa-moon-o"></i> {% trans "Shadow Form" %}
+                </button>
+              </div>
+          <% } %>
           <form method="post" class="hide">
               {% csrf_token %}
               <input type="hidden" name="case_action" />
