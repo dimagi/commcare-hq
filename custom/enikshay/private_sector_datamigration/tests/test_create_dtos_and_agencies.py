@@ -129,7 +129,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
                 'commcare_location_ids': agency.location_id,
                 'commcare_project': self.domain,
                 'user_level': 'dev',
-                'user_type': 'pcp',
+                'usertype': 'pcp',
             }
         )
         self.assertListEqual(user.assigned_location_ids, [agency.location_id])

@@ -25,7 +25,7 @@ class Command(BaseCommand):
                 agency_user.assigned_location_ids = [agency_loc.location_id]
                 agency_user.location_id = agency_loc.location_id
                 agency_user.user_data['user_level'] = user_level
-                agency_user.user_data['user_type'] = self.get_user_type(agency_loc.location_type.code)
+                agency_user.user_data['usertype'] = self.get_usertype(agency_loc.location_type.code)
                 agency_user.user_location_id = agency_loc.location_id
                 agency_user.save()
 
@@ -79,7 +79,7 @@ class Command(BaseCommand):
         )
 
     @staticmethod
-    def get_user_type(code):
+    def get_usertype(code):
         return {
             'pac': 'pac',
             'pcp': 'pcp',
