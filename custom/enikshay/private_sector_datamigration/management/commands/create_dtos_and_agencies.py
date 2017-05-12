@@ -21,14 +21,7 @@ class Command(BaseCommand):
             dto = self.create_dto(domain, state_code, district_code, dto_parent, org_id)
             for agency in self.get_agencies_by_state_district_org(state_code, district_code, org_id):
                 agency_loc = self.create_agency(domain, agency, dto, org_id)
-                agency_user = make_location_user(agency_loc)
-                agency_user.assigned_location_ids = [agency_loc.location_id]
-                agency_user.location_id = agency_loc.location_id
-                agency_user.user_data['commcare_location_id'] = agency_loc.location_id
-                agency_user.user_data['user_level'] = user_level
-                agency_user.user_data['usertype'] = self.get_usertype(agency_loc.location_type.code)
-                agency_user.user_location_id = agency_loc.location_id
-                agency_user.save()
+                self.create_user(agency_loc, user_level)
 
     def create_dto(self, domain, state_code, district_code, dto_parent, org_id):
         return SQLLocation.objects.create(
@@ -78,6 +71,17 @@ class Command(BaseCommand):
 
             },
         )
+
+    def create_user(self, agency_loc, user_level):
+        agency_loc_id = agency_loc.location_id
+        agency_user = make_location_user(agency_loc)
+        agency_user.assigned_location_ids = [agency_loc_id]
+        agency_user.location_id = agency_loc_id
+        agency_user.user_data['commcare_location_id'] = agency_loc_id
+        agency_user.user_data['user_level'] = user_level
+        agency_user.user_data['usertype'] = self.get_usertype(agency_loc.location_type.code)
+        agency_user.user_location_id = agency_loc_id
+        agency_user.save()
 
     @staticmethod
     def get_usertype(code):
