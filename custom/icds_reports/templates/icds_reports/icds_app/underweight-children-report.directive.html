@@ -1,3 +1,29 @@
 <div class="underweight-children-report-directive">
-    <indie-map></indie-map>
+    <div class="row">
+        <filters></filters>
+    </div>
+    <div class="col-md-12" ng-if="$ctrl.step === '1'">
+        <div class="row">
+            <div class="col-md-12">
+                <h2 class="dashboard-title">Prevalence of Undernutrition</h2>
+            </div>
+        </div>
+        <div class="row">
+            <indie-map></indie-map>
+        </div>
+    </div>
+    <div class="col-md-12" ng-if="$ctrl.step === '2'">
+        <div class="row">
+            Charts
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="dot-menu">
+            <div class="dot-menu-item pointer" ng-repeat="step in $ctrl.steps">
+                <dot-link label="{$ step.label $}" route="{$ step.route $}"></dot-link>
+            </div>
+        </div>
+    </div>
+
 </div>
