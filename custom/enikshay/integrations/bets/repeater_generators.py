@@ -9,8 +9,7 @@ from pytz import timezone
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.exceptions import RequestConnectionError
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator, BasePayloadGenerator
-from custom.enikshay.case_utils import update_case, get_person_case_from_episode, get_open_episode_case_from_person, \
-    get_person_case_from_voucher
+from custom.enikshay.case_utils import update_case, get_person_case_from_episode
 from custom.enikshay.const import (
     DATE_FULFILLED,
     VOUCHER_ID,
