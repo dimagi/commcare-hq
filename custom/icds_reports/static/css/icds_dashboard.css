@@ -151,3 +151,11 @@ h4 {
     margin: 0 auto;
     text-align: center;
 }
+
+.fa-arrow-down {
+    color: #c61400;
+}
+
+.fa-arrow-up {
+    color: #07c600;
+}

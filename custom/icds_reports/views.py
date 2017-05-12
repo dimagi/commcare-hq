@@ -1,7 +1,9 @@
 import requests
-
+from datetime import datetime
+from django.http.response import JsonResponse
+from django.db.models import Sum
 from django.utils.decorators import method_decorator
-from django.views.generic.base import TemplateView
+from django.views.generic.base import View, TemplateView
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -10,6 +12,7 @@ from corehq.apps.locations.permissions import location_safe
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
+from custom.icds_reports.models import AggDailyUsageView
 from . import const
 from .exceptions import TableauTokenException
 
@@ -161,3 +164,58 @@ class IcdsDynamicTemplateView(TemplateView):
 
     def get_template_names(self):
         return ['icds_reports/icds_app/%s.html' % self.kwargs['template']]
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class ProgramSummaryView(View):
+
+    def get(self, request, *args, **kwargs):
+        date_2 = datetime(2015, 9, 9)
+        date_1 = datetime(2015, 9, 10)
+        yesterday_records = AggDailyUsageView.objects.filter(
+            date=date_2, aggregation_level=1
+        ).values(
+            'aggregation_level'
+        ).annotate(
+            awcs=Sum('awc_count'),
+            daily_attendance=Sum('daily_attendance_open'),
+            num_forms=Sum('usage_num_forms'),
+            num_home_visits=Sum('usage_num_home_visit'),
+            num_gmp=Sum('usage_num_gmp'),
+            num_thr=Sum('usage_num_thr')
+        )
+        today_records = AggDailyUsageView.objects.filter(
+            date=date_1, aggregation_level=1
+        ).values(
+            'aggregation_level'
+        ).annotate(
+            awcs=Sum('awc_count'),
+            daily_attendance=Sum('daily_attendance_open'),
+            num_forms=Sum('usage_num_forms'),
+            num_home_visits=Sum('usage_num_home_visit'),
+            num_gmp=Sum('usage_num_gmp'),
+            num_thr=Sum('usage_num_thr')
+        )
+
+        def percent_increase(prop):
+            today = today_records[0][prop]
+            yesterday = yesterday_records[0][prop]
+            return (today - yesterday)/float(today) * 100
+
+        return JsonResponse(data={
+            'row_one': [
+                {
+                    'label': 'Number of AWCs Open yesterday',
+                    'help_text': 'Total Number of Angwanwadi Centers that were open yesterday by the AWW or the AWW helper',
+                    'percent': percent_increase('daily_attendance'),
+                    'value': today_records[0]['daily_attendance'],
+                    'all': today_records[0]['awcs']
+                }
+            ],
+            'row_second': [
+
+            ],
+            'row_third': [
+
+            ]
+        })
