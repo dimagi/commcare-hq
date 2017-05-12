@@ -16,8 +16,11 @@ TREATMENT_OUTCOME = 'treatment_outcome'
 TREATMENT_OUTCOME_DATE = 'treatment_outcome_date'
 EPISODE_PENDING_REGISTRATION = "episode_pending_registration"
 WEIGHT_BAND = 'weight_band'
+LAST_VOUCHER_CREATED_BY_ID = "bets_last_voucher_created_by_id"
+NOTIFYING_PROVIDER_USER_ID = "bets_notifying_provider_user_id"
 
 CURRENT_ADDRESS = 'current_address'
+ENROLLED_IN_PRIVATE = "enrolled_in_private"
 
 NINETYNINEDOTS_PERSON_PROPERTIES = [
     PRIMARY_PHONE_NUMBER,
@@ -51,5 +54,12 @@ DAILY_SCHEDULE_ID = 'schedule_daily'
 SCHEDULE_ID_FIXTURE = 'id'
 # one of values of 'adherence_closure_reason' case property
 HISTORICAL_CLOSURE_REASON = 'historical'
+PRESCRIPTION_TOTAL_DAYS_THRESHOLD = "prescription_total_days_threshold_{}"
+
+# Voucher Case Properties
+DATE_FULFILLED = "date_fulfilled"
+VOUCHER_ID = "voucher_id"
+FULFILLED_BY_ID = "fulfilled_by_id"
+AMOUNT_APPROVED = "amount_approved"
 
 ENIKSHAY_TIMEZONE = 'Asia/Kolkata'

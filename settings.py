@@ -379,8 +379,9 @@ ENIKSHAY_APPS = (
     'custom.enikshay',
     'custom.enikshay.integrations.ninetyninedots',
     'custom.enikshay.nikshay_datamigration',
+    'custom.enikshay.integrations.nikshay',
+    'custom.enikshay.integrations.bets',
     'custom.enikshay.private_sector_datamigration',
-    'custom.enikshay.integrations.nikshay'
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -1719,7 +1720,7 @@ BASE_REPEATERS = (
     'corehq.apps.repeaters.models.LocationRepeater',
 )
 
-CUSTOM_REPEATERS = (
+ENIKSHAY_REPEATERS = (
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsRegisterPatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsAdherenceRepeater',
@@ -1728,9 +1729,17 @@ CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayFollowupRepeater',
+    'custom.enikshay.integrations.bets.repeaters.ChemistBETSVoucherRepeater',
+    'custom.enikshay.integrations.bets.repeaters.LabBETSVoucherRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETS180TreatmentRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSDrugRefillRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSSuccessfulTreatmentRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSDiagnosisAndNotificationRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSAYUSHReferralRepeater',
+
 )
 
-REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS
+REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + ENIKSHAY_REPEATERS
 
 
 STATIC_UCR_REPORTS = [

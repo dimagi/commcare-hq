@@ -757,6 +757,13 @@ NIKSHAY_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+BETS_INTEGRATION = StaticToggle(
+    'bets_repeaters',
+    'Enable BETS data forwarders',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     'multiple_choice_custom_field',
     'Allow project to use multiple choice field in custom fields',
