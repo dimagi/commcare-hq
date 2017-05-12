@@ -560,8 +560,7 @@ class RepeatRecord(Document):
         self.next_check = attempt.next_check
         self.succeeded = attempt.succeeded
         self.cancelled = attempt.cancelled
-        if attempt.failure_reason is not None:
-            self.failure_reason = attempt.failure_reason
+        self.failure_reason = attempt.failure_reason
 
     def make_set_next_try_attempt(self, failure_reason):
         # we use an exponential back-off to avoid submitting to bad urls
