@@ -13,127 +13,36 @@
     </div>
     <div class="report-content">
         <div ng-show="$ctrl.step.slug === 'system_usage'">
-            <div class="row">
-                <div class="col-md-6">
+            <div class="row" ng-repeat="(section, values) in $ctrl.step.data">
+                <div class="col-md-6" ng-repeat="cell in values">
                     <div class="report-cell">
                         <div class="row">
                             <div class="col-md-1"
-                                 uib-popover="{% trans 'Total Number of Angwanwadi Centers that were open yesterday by the AWW or the AWW helper' %}"
+                                 uib-popover="1234"
                                  popover-placement="right"
                                  popover-trigger="'mouseenter'">
                                 <i class="fa fa-info-circle fa-2x margin10" ></i>
                             </div>
                             <div class="col-md-11 center">
                                 <div class="row">
-                                    <h4 class="margin-top10"></h4>
+                                    <h4 class="margin-top10" ng-bind="cell.label"></h4>
                                 </div>
                                 <div class="row">
-                                    <h2 class="margin-top10"></h2>
+                                    <h2 class="margin-top10"><span ng-bind="cell.value"></span>/<span ng-bind="cell.all"></span></h2>
                                 </div>
                                 <div class="row">
-                                    <p class="margin-top10"></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="report-cell">
-                        <div class="row">
-                            <div class="col-md-1"
-                                 uib-popover="{% trans 'Average number of household registration forms submitted by AWWs yesterday.' %}"
-                                 popover-placement="right"
-                                 popover-trigger="'mouseenter'">
-                                <i class="fa fa-info-circle fa-2x margin10" ></i>
-                            </div>
-                            <div class="col-md-11 center">
-                                <div class="row">
-                                    <h4 class="margin-top10"></h4>
-                                </div>
-                                <div class="row">
-                                    <h2 class="margin-top10"></h2>
-                                </div>
-                                <div class="row">
-                                    <p class="margin-top10"></p>
+                                    <p class="margin-top10">
+                                        <i class="fa" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0}"></i>
+                                        <span ng-bind="cell.percent | number:2"></span>
+                                        {% trans 'from the day before last' %}
+                                    </p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="report-cell">
-                        <div class="row">
-                            <div class="col-md-1"
-                                 uib-popover="{% trans 'Average number of home visit forms submitted yesterday. Home visit forms are Birth Preparedness, Delivery, Post Natal Care, Exclusive breastfeeding and Complementary feeding' %}"
-                                 popover-placement="right"
-                                 popover-trigger="'mouseenter'">
-                                <i class="fa fa-info-circle fa-2x margin10" ></i>
-                            </div>
-                            <div class="col-md-11 center">
-                                <div class="row">
-                                    <h4 class="margin-top10"></h4>
-                                </div>
-                                <div class="row">
-                                    <h2 class="margin-top10"></h2>
-                                </div>
-                                <div class="row">
-                                    <p class="margin-top10"></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="report-cell">
-                        <div class="row">
-                            <div class="col-md-1"
-                                 uib-popover="{% trans 'Average number of growth monitoring forms (GMP) submitted yesterday' %}"
-                                 popover-placement="right"
-                                 popover-trigger="'mouseenter'">
-                                <i class="fa fa-info-circle fa-2x margin10" ></i>
-                            </div>
-                            <div class="col-md-11 center">
-                                <div class="row">
-                                    <h4 class="margin-top10"></h4>
-                                </div>
-                                <div class="row">
-                                    <h2 class="margin-top10"></h2>
-                                </div>
-                                <div class="row">
-                                    <p class="margin-top10"></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="report-cell">
-                        <div class="row">
-                            <div class="col-md-1"
-                                 uib-popover="{% trans 'Average number of Take Home Rations (THR) forms submitted yesterday' %}"
-                                 popover-placement="right"
-                                 popover-trigger="'mouseenter'">
-                                <i class="fa fa-info-circle fa-2x margin10" ></i>
-                            </div>
-                            <div class="col-md-11 center">
-                                <div class="row">
-                                    <h4 class="margin-top10"></h4>
-                                </div>
-                                <div class="row">
-                                    <h2 class="margin-top10"></h2>
-                                </div>
-                                <div class="row">
-                                    <p class="margin-top10"></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
         </div>
         <div ng-show="$ctrl.step.slug === 'maternal_child'">Step 2</div>
         <div ng-show="$ctrl.step.slug === 'icds_cas_reach'">Step 3</div>

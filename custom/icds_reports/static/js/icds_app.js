@@ -3,6 +3,9 @@ angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui
          $scope.$route = $route;
          $scope.$location = $location;
          $scope.$routeParams = $routeParams;
+         $scope.systemUsageCollapsed = true;
+         $scope.healthCollapsed = true;
+
      })
     .config(function($routeProvider) {
         var url = hqImport('hqwebapp/js/urllib.js').reverse;

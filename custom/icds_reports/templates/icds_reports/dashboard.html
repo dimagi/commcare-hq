@@ -44,12 +44,12 @@
                     <li ng-class="{'active': $location.path() === '/'}">
                         <a href="#/"><i class="fa fa-home" aria-hidden="true"> {% trans "Program Summary" %}</i></a>
                     </li>
-                    <li class="nav-header"  data-toggle="collapse" data-target="#system_usage">
-                        <div class="pointer">
+                    <li class="nav-header">
+                        <div class="pointer" ng-click="systemUsageCollapsed = !systemUsageCollapsed">
                             <i class="fa fa-bar-chart" aria-hidden="true"> {% trans "System Usage" %}</i>
                             <span class="pull-right"><i class="fa fa-angle-down" aria-hidden="true"></i></span>
                         </div>
-                        <ul class="nav nav-list collapse" id="system_usage">
+                        <ul class="nav nav-list collapse" uib-collapse="systemUsageCollapsed">
                             <li ng-class="{'active': $location.path() === '/awc_opened'}"><a href="#awc_opened" class="fa">{% trans "AWCs Opened Yesterday" %}</a></li>
                             <li ng-class="{'active': $location.path() === '/active_awws'}"><a href="#active_awws" class="fa">{% trans "% Active AWWS" %}</a></li>
                             <li ng-class="{'active': $location.path() === '/submitted_yesterday'}"><a href="#submitted_yesterday" class="fa">{% trans "Any Submitted Yesterday" %}</a></li>
@@ -57,12 +57,12 @@
                             <li ng-class="{'active': $location.path() === '/system_usage_tabular'}"><a href="#system_usage_tabular" class="fa">{% trans "Tabular Report" %}</a></li>
                         </ul>
                     </li>
-                    <li class="nav-header"  data-toggle="collapse" data-target="#matenal_child">
-                        <div class="pointer">
+                    <li class="nav-header" >
+                        <div class="pointer" ng-click="healthCollapsed = !healthCollapsed">
                             <i class="fa fa-child" aria-hidden="true"> {% trans "Matenal & Child Health" %}</i>
                             <span class="pull-right"><i class="fa fa-angle-down" aria-hidden="true"></i></span>
                         </div>
-                        <ul class="nav nav-list collapse" id="matenal_child">
+                        <ul class="nav nav-list collapse" uib-collapse="healthCollapsed">
                             <li ng-class="{'active': $location.path() === '/underweight_children'}"><a href="#underweight_children" class="fa">{% trans "% Underweight Children" %}</a></li>
                             <li ng-class="{'active': $location.path() === '/breastfeeding'}"><a href="#breastfeeding" class="fa">{% trans "% Breastfeeding" %}</a></li>
                             <li ng-class="{'active': $location.path() === '/exclusive_bf'}"><a href="#exclusive_bf" class="fa">{% trans "% Exclusive BF" %}</a></li>
@@ -169,6 +169,7 @@
                 </div>
                 <div class="row">
                     {% registerurl 'icds-ng-template' domain '---' %}
+                    {% registerurl 'program_summary' domain '---' %}
                     <div class="ng-view"></div>
                 </div>
             </div>

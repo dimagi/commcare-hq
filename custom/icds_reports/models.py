@@ -2,7 +2,7 @@ from django.db import models
 
 
 class AwcLocation(models.Model):
-    doc_id = models.TextField()
+    doc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField()
@@ -26,7 +26,7 @@ class AwcLocation(models.Model):
 
 
 class AggAwcMonthly(models.Model):
-    awc_id = models.TextField(blank=True, null=True)
+    awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField(blank=True, null=True)
@@ -149,7 +149,7 @@ class AggAwcMonthly(models.Model):
 
 
 class AggCcsRecordMonthly(models.Model):
-    awc_id = models.TextField(blank=True, null=True)
+    awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField(blank=True, null=True)
@@ -212,7 +212,7 @@ class AggCcsRecordMonthly(models.Model):
 
 
 class AggChildHealthMonthly(models.Model):
-    awc_id = models.TextField(blank=True, null=True)
+    awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField(blank=True, null=True)
@@ -274,7 +274,7 @@ class AggChildHealthMonthly(models.Model):
 
 
 class AggDailyUsageView(models.Model):
-    awc_id = models.TextField(blank=True, null=True)
+    awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField(blank=True, null=True)
@@ -304,7 +304,7 @@ class AggDailyUsageView(models.Model):
 
 
 class AggThrMonthly(models.Model):
-    awc_id = models.TextField(blank=True, null=True)
+    awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField(blank=True, null=True)
@@ -335,7 +335,7 @@ class AggThrMonthly(models.Model):
 
 
 class AwcLocationMonths(models.Model):
-    awc_id = models.TextField(blank=True, null=True)
+    awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField(blank=True, null=True)
@@ -360,7 +360,7 @@ class AwcLocationMonths(models.Model):
 
 
 class DailyAttendanceView(models.Model):
-    awc_id = models.TextField(blank=True, null=True)
+    awc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
     awc_site_code = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField(blank=True, null=True)
