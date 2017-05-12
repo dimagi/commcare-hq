@@ -7,6 +7,12 @@ from custom.enikshay.case_utils import (
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 
 
+def case_was_created(case):
+    last_case_action = case.actions[-1]
+    if last_case_action.is_case_create:
+        return True
+
+
 def _is_submission_from_test_location(case_id, owner_id):
     try:
         phi_location = SQLLocation.objects.get(location_id=owner_id)

@@ -11,7 +11,11 @@ from corehq.apps.repeaters.signals import create_repeat_records
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case.xform import get_case_updates
 
-from custom.enikshay.integrations.utils import is_valid_person_submission, is_valid_episode_submission
+from custom.enikshay.integrations.utils import (
+    is_valid_person_submission,
+    is_valid_episode_submission,
+    case_was_created,
+)
 from custom.enikshay.case_utils import (
     get_open_episode_case_from_person,
     get_episode_case_from_adherence,
@@ -156,6 +160,7 @@ class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
             and registered
             and from_enikshay
             and not previously_updated
+            and case_was_created(adherence_case)
             and is_valid_episode_submission(episode_case)
         )
 
