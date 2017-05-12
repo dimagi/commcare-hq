@@ -53,6 +53,7 @@ branches:
   - gc/case-close-refactor # Giovanni 4/7
   - es/location-user  # Ethan 4/27
   - np/preview-list # Nick P Cinco de Mayo
+  - lwyszomi/icds_dashboard_v2 # Lukasz Wyszomirski new dashboard report for ICDS
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
