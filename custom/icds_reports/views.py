@@ -1,7 +1,6 @@
 import requests
 from datetime import datetime
 from django.http.response import JsonResponse
-from django.db.models import Sum
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView
 
@@ -12,7 +11,7 @@ from corehq.apps.locations.permissions import location_safe
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
-from custom.icds_reports.models import AggDailyUsageView
+from custom.icds_reports.utils import get_system_usage_data
 from . import const
 from .exceptions import TableauTokenException
 
@@ -170,52 +169,20 @@ class IcdsDynamicTemplateView(TemplateView):
 class ProgramSummaryView(View):
 
     def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+
+        # Hardcoded for local tests, in database we have data only for these two days
         date_2 = datetime(2015, 9, 9)
         date_1 = datetime(2015, 9, 10)
-        yesterday_records = AggDailyUsageView.objects.filter(
-            date=date_2, aggregation_level=1
-        ).values(
-            'aggregation_level'
-        ).annotate(
-            awcs=Sum('awc_count'),
-            daily_attendance=Sum('daily_attendance_open'),
-            num_forms=Sum('usage_num_forms'),
-            num_home_visits=Sum('usage_num_home_visit'),
-            num_gmp=Sum('usage_num_gmp'),
-            num_thr=Sum('usage_num_thr')
-        )
-        today_records = AggDailyUsageView.objects.filter(
-            date=date_1, aggregation_level=1
-        ).values(
-            'aggregation_level'
-        ).annotate(
-            awcs=Sum('awc_count'),
-            daily_attendance=Sum('daily_attendance_open'),
-            num_forms=Sum('usage_num_forms'),
-            num_home_visits=Sum('usage_num_home_visit'),
-            num_gmp=Sum('usage_num_gmp'),
-            num_thr=Sum('usage_num_thr')
-        )
 
-        def percent_increase(prop):
-            today = today_records[0][prop]
-            yesterday = yesterday_records[0][prop]
-            return (today - yesterday)/float(today) * 100
+        config = {
+            'yesterday': date_1,
+            'before_yesterday': date_2
+        }
+        data = {
+            'records': []
+        }
+        if step == 'system_usage':
+            data = get_system_usage_data(config)
 
-        return JsonResponse(data={
-            'row_one': [
-                {
-                    'label': 'Number of AWCs Open yesterday',
-                    'help_text': 'Total Number of Angwanwadi Centers that were open yesterday by the AWW or the AWW helper',
-                    'percent': percent_increase('daily_attendance'),
-                    'value': today_records[0]['daily_attendance'],
-                    'all': today_records[0]['awcs']
-                }
-            ],
-            'row_second': [
-
-            ],
-            'row_third': [
-
-            ]
-        })
+        return JsonResponse(data=data)

@@ -65,7 +65,7 @@
     "jsdiff": "~3.2.0",
     "datamaps": "^0.5.8",
     "angular-datamaps": "^0.1.2",
-    "topojson": "^3.0.0"
+    "topojson": "^3.0.0",
     "angular-bootstrap": "^2.5.0"
   },
   "devDependencies": {

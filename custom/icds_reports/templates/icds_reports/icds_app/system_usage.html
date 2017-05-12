@@ -13,28 +13,31 @@
     </div>
     <div class="report-content">
         <div ng-show="$ctrl.step.slug === 'system_usage'">
-            <div class="row" ng-repeat="(section, values) in $ctrl.step.data">
-                <div class="col-md-6" ng-repeat="cell in values">
+            <div class="row" ng-repeat="section in $ctrl.step.data">
+                <div class="col-md-6" ng-repeat="cell in section">
                     <div class="report-cell">
                         <div class="row">
                             <div class="col-md-1"
-                                 uib-popover="1234"
+                                 uib-popover-html="cell.help_text"
                                  popover-placement="right"
                                  popover-trigger="'mouseenter'">
-                                <i class="fa fa-info-circle fa-2x margin10" ></i>
+                                <i class="fa fa-info-circle fa-2x" ></i>
                             </div>
                             <div class="col-md-11 center">
                                 <div class="row">
-                                    <h4 class="margin-top10" ng-bind="cell.label"></h4>
+                                    <span class="title" ng-bind="cell.label"></span>
                                 </div>
                                 <div class="row">
-                                    <h2 class="margin-top10"><span ng-bind="cell.value"></span>/<span ng-bind="cell.all"></span></h2>
+                                    <div class="numbers">
+                                        <span ng-bind="cell.value"></span>/<span ng-bind="cell.all"></span>
+                                    </div>
                                 </div>
                                 <div class="row">
-                                    <p class="margin-top10">
+                                    <p>
                                         <i class="fa" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0}"></i>
                                         <span ng-bind="cell.percent | number:2"></span>
                                         {% trans 'from the day before last' %}
+                                        <i class="fa fa-ellipsis-h fa-2x" aria-hidden="true"></i>
                                     </p>
                                 </div>
                             </div>
