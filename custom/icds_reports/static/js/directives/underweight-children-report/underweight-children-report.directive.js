@@ -1,6 +1,8 @@
+/* global d3 */
+
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-angular.module('icdsApp').directive('underweightChildrenReport', function() {
+window.angular.module('icdsApp').directive('underweightChildrenReport', function() {
     return {
         restrict: 'E',
         templateUrl: url('icds-ng-template', 'underweight-children-report.directive'),
