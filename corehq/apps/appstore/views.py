@@ -188,7 +188,6 @@ class CommCareExchangeHomeView(BaseCommCareExchangeSectionView):
     def page_context(self):
         return {
             'apps': self.selected_snapshots,
-            'app_ids': [app.get_id for app in self.selected_snapshots],
             'page': self.page,
             'prev_page': (self.page - 1),
             'next_page': (self.page + 1),

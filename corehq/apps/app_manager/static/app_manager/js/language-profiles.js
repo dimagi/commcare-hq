@@ -1,11 +1,19 @@
 /* globals hqDefine, ko, COMMCAREHQ */
 hqDefine('app_manager/js/language-profiles.js', function () {
+    var _p = {};
+    _p.profileUrl = 'profiles/';
+
     function Profile(profile_langs, name, id) {
         this.id = id;
         this.langs = ko.observableArray(profile_langs);
         this.name = ko.observable(name);
         this.defaultLang = ko.observable(profile_langs[0]);
     }
+
+    function setProfileUrl(url) {
+        _p.profileUrl = url;
+    }
+
     function ProfileManager(app_profiles, app_langs) {
         var self = this;
         this.app_profiles = ko.observableArray([]);
@@ -26,7 +34,7 @@ hqDefine('app_manager/js/language-profiles.js', function () {
                     });
                 });
                 self.saveButton.ajax({
-                    url: 'profiles/', // this should resolve to LanguageProfilesView
+                    url: _p.profileUrl, // this should resolve to LanguageProfilesView
                     type: 'post',
                     data: JSON.stringify({'profiles': postProfiles}),
                     error: function() {
@@ -66,5 +74,8 @@ hqDefine('app_manager/js/language-profiles.js', function () {
             $('.language-select').select2();
         });
     }
-    return {ProfileManager: ProfileManager};
+    return {
+        ProfileManager: ProfileManager,
+        setProfileUrl: setProfileUrl
+    };
 });

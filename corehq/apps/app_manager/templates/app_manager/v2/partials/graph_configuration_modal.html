@@ -59,8 +59,17 @@
                                              data-bind="visible: showDataPath, css: {'has-warning': validateDataPath()}">
                                             <label class="col-sm-2 control-label">{% trans "Path" %}</label>
                                             <div class="col-sm-4">
-                                                <input type="text" class="form-control"
-                                                       data-bind="value: dataPath, attr: {placeholder: dataPathPlaceholder}" />
+                                                <div data-bind="css: {'input-group': !validateDataPath()}">
+                                                    <input type="text" class="form-control"
+                                                           data-bind="value: dataPath, attr: {placeholder: dataPathPlaceholder}" />
+                                                    <span class="input-group-btn" data-bind="visible: !validateDataPath()">
+                                                        <a class="btn btn-default"
+                                                           data-bind="click: copyPlaceholder,
+                                                                      attr: {'data-clipboard-text': dataPathPlaceholder}">
+                                                            <i class="fa fa-files-o"></i>
+                                                        </a>
+                                                    </span>
+                                                </div>
                                                 <span class="help-block" data-bind="text: validateDataPath"></span>
                                             </div>
                                         </div>
@@ -68,8 +77,17 @@
                                              data-bind="css: {'has-warning': validateX()}">
                                             <label class="col-sm-2 control-label" data-bind="text: xLabel"></label>
                                             <div class="col-sm-4">
-                                                <input type="text" class="form-control"
-                                                       data-bind="value: xFunction, attr: {placeholder: xPlaceholder}" />
+                                                <div data-bind="css: {'input-group': !validateX()}">
+                                                    <input type="text" class="form-control"
+                                                           data-bind="value: xFunction, attr: {placeholder: xPlaceholder}" />
+                                                    <span class="input-group-btn" data-bind="visible: !validateX()">
+                                                        <a class="btn btn-default"
+                                                           data-bind="click: copyPlaceholder,
+                                                                      attr: {'data-clipboard-text': xPlaceholder}">
+                                                            <i class="fa fa-files-o"></i>
+                                                        </a>
+                                                    </span>
+                                                </div>
                                                 <span class="help-block" data-bind="text: validateX"></span>
                                             </div>
                                         </div>
@@ -77,8 +95,17 @@
                                              data-bind="css: {'has-warning': validateY()}">
                                             <label class="col-sm-2 control-label" data-bind="text: yLabel"></label>
                                             <div class="col-sm-4">
-                                                <input type="text" class="form-control"
-                                                       data-bind="value: yFunction, attr: {placeholder: yPlaceholder}" />
+                                                <div data-bind="css: {'input-group': !validateY()}">
+                                                    <input type="text" class="form-control"
+                                                           data-bind="value: yFunction, attr: {placeholder: yPlaceholder}" />
+                                                    <span class="input-group-btn" data-bind="visible: !validateY()">
+                                                        <a class="btn btn-default"
+                                                           data-bind="click: copyPlaceholder,
+                                                                      attr: {'data-clipboard-text': yPlaceholder}">
+                                                            <i class="fa fa-files-o"></i>
+                                                        </a>
+                                                    </span>
+                                                </div>
                                                 <span class="help-block" data-bind="text: validateY"></span>
                                             </div>
                                         </div>

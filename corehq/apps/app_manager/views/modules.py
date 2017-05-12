@@ -100,10 +100,8 @@ def get_module_template(user, module):
 def get_module_view_context(app, module, lang=None):
     # shared context
     context = {
-        'edit_name_url': reverse(
-            'edit_module_attr',
-            args=[app.domain, app.id, module.id, 'name']
-        )
+        'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'name']),
+        'edit_case_label_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'case_label']),
     }
     module_brief = {
         'id': module.id,
@@ -294,7 +292,7 @@ def _get_report_module_context(app, module):
         {'slug': f.slug, 'description': f.short_description} for f in get_auto_filter_configurations()
 
     ]
-    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import COLUMN_XPATH_CLIENT_TEMPLATE
+    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import COLUMN_XPATH_CLIENT_TEMPLATE, get_data_path
     context = {
         'all_reports': [_report_to_config(r) for r in all_reports],
         'filter_choices': filter_choices,
@@ -303,10 +301,17 @@ def _get_report_module_context(app, module):
         'column_xpath_template': COLUMN_XPATH_CLIENT_TEMPLATE,
     }
     current_reports = []
+    data_path_placeholders = {}
     for r in module.report_configs:
         r.migrate_graph_configs(app.domain)
         current_reports.append(r.to_json())
-    context.update({'current_reports': current_reports})
+        data_path_placeholders[r.report_id] = {}
+        for chart_id in r.complete_graph_configs.keys():
+            data_path_placeholders[r.report_id][chart_id] = get_data_path(r, app.domain)
+    context.update({
+        'current_reports': current_reports,
+        'data_path_placeholders': data_path_placeholders,
+    })
     return context
 
 
@@ -669,8 +674,9 @@ def delete_module(request, domain, app_id, module_unique_id):
     if record is not None:
         messages.success(
             request,
-            'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse(
-                'undo_delete_module', args=[domain, record.get_id]
+            'You have deleted "%s". <a href="%s" class="post-link">Undo</a>' % (
+                record.module.default_name(app=app),
+                reverse('undo_delete_module', args=[domain, record.get_id])
             ),
             extra_tags='html'
         )

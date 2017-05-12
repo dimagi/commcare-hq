@@ -1,3 +1,4 @@
+/* global Clipboard */
 hqDefine('app_manager/js/graph-config.js', function () {
     /**
      * Create a view model that is bound to an "Edit graph" button. The ui property
@@ -521,6 +522,16 @@ hqDefine('app_manager/js/graph-config.js', function () {
         self.xPlaceholder = ko.observable(origOrDefault('xPlaceholder',""));
         self.yFunction = ko.observable(origOrDefault('yFunction',""));
         self.yPlaceholder = ko.observable(origOrDefault('yPlaceholder',""));
+        self.copyPlaceholder = function(series, e) {
+            var $button = $(e.currentTarget);
+            var clipboard = new Clipboard($button[0]);
+            $button.tooltip({ title: gettext('Copied!') });
+            clipboard.on('success', function() {
+                $button.tooltip('show');
+                window.setTimeout(function() { $button.tooltip('hide'); }, 1000);
+            });
+            clipboard.onClick(e);
+        };
 
         var seriesValidationWarning = gettext(
             "It is recommended that you leave this value blank. Future changes to your report's "

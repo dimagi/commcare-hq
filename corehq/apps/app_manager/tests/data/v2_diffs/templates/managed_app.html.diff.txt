@@ -20,7 +20,7 @@
  {% endblock %}
  
  {% block breadcrumbs %}
-@@ -25,273 +28,137 @@
+@@ -25,281 +28,167 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -98,28 +98,7 @@
 -                {% trans "Multimedia" %}
 -            </a>
 -        </li>
-+
-+      <div class="appnav-toggle-label">
-+          <div class="btn-group pull-right">
-+            <button type="button" class="btn btn-xs btn-default active">{% trans "On" %}</button>
-+            <button type="button"
-+                    class="btn btn-xs btn-default"
-+                    data-toggle="modal"
-+                    data-target="#rollout-revert-modal"
-+                    data-redirect="{% url "view_app" domain app.id %}"
-+            >{% trans "Off" %}</button>
-+          </div>
-+          {% trans "New App Builder" %}
-+          <span class="hq-help-template"
-+                data-title="New App Builder"
-+                data-content="{% trans "Turn off new app builder for now." %}"></span>
-+      </div>
-+
-+        {% if app.advanced_app_builder %}
-+          <div class="appnav-advanced-label">
-+            {% trans "Advanced App Builder" %}
-+          </div>
-         {% endif %}
+-        {% endif %}
 -        {% if app.get_doc_type != "LinkedApplication" %}
 -        <li>
 -            <a href="{% url "view_app" domain app.id %}languages/#languages-and-translations" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Languages" %}: {{ app.name }}"{% endif %}>
@@ -179,7 +158,22 @@
 -                            data-placement="top"
 -                            {% endif %}
 -                            ></i>
--
++      <div class="appnav-toggle-label">
++          <div class="btn-group pull-right">
++            <button type="button" class="btn btn-xs btn-default active">{% trans "On" %}</button>
++            <button type="button"
++                    class="btn btn-xs btn-default"
++                    data-toggle="modal"
++                    data-target="#rollout-revert-modal"
++                    data-redirect="{% url "view_app" domain app.id %}"
++            >{% trans "Off" %}</button>
++          </div>
++          {% trans "New App Builder" %}
++          <span class="hq-help-template"
++                data-title="New App Builder"
++                data-content="{% trans "Turn off new app builder for now." %}"></span>
++      </div>
+ 
 -                            <span {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
 -                                {{ module.name|html_trans:langs }}
 -
@@ -197,6 +191,10 @@
 -                                    <li class="edit-form-li{% ifequal form selected_form %} active{% endifequal %}" data-moduleid="{{ module.id }}" data-index="{{ form.id }}">
 -                                        <!--[F]-->
 -                                        <a id="view_form_{{ module.id }}_{{ form.id }}_sidebar"
+-                                           class="track-usage-link"
+-                                           data-category="App Builder"
+-                                           data-action="View Form"
+-                                           data-label="Sidebar"
 -                                           href="{% url "view_form" domain app.id module.id form.id %}">
 -                                            <i class="drag_handle"></i>
 -                                            {% if request|toggle_enabled:"SUPPORT" %}
@@ -220,7 +218,11 @@
 -                                        </a>
 -                                        {% if not form.no_vellum %}
 -                                            <div class="edit-form-pencil">
--                                                <a id="edit_pen_{{ module.id }}_{{ form.id }}" href="{% url "form_source" domain app.id module.id form.id %}">
+-                                                <a class="track-usage-link"
+-                                                   data-category="App Builder"
+-                                                   data-action="Open Form"
+-                                                   data-label="Edit Pen"
+-                                                   href="{% url "form_source" domain app.id module.id form.id %}">
 -                                                    <i class="fa fa-pencil"></i>
 -                                                </a>
 -                                            </div>
@@ -351,6 +353,7 @@
      {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
      {% initial_page_data 'app_subset' app_subset %}
      {% initial_page_data 'formdesigner' formdesigner %}
++    {% registerurl "new_form" domain app.id "---" %}
 +    {% registerurl "toggle_app_manager_v2" %}
 +    {% block pre_form_content %}{% endblock %}
      {% block form-view %}{% endblock %}
@@ -358,7 +361,7 @@
 +      <div class="popover popover-additem" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>
 +    </script>
 +
-+    <script type="text/html" id="js-popover-template-add-item-content">
++    <script type="text/html" class="js-popover-template-add-item-content" data-slug="module">
 +      <div>
 +        <div class="pull-left">
 +          <button type="button" class="popover-additem-option new-module" data-type="survey">
@@ -405,6 +408,41 @@
 +            </button>
 +          </div>
 +        {% endif %}
++      </div>
++    </script>
++
++    <script type="text/html" class="js-popover-template-add-item-content" data-slug="form">
++      <div>
++          <div class="pull-left">
++              <button type="button" class="popover-additem-option js-new-form appnav-responsive"
++                      data-case-action="none" data-type="survey" data-form-type="form">
++                <i class="fa fa-file-o"></i> {% trans "Survey" %}
++              </button>
++          </div>
++          <div class="pull-left">
++              <button type="button" class="popover-additem-option js-new-form appnav-responsive"
++                      data-case-action="update" data-type="followup" data-form-type="form">
++                <i class="fcc fcc-app-updateform"></i> {% trans "Followup" %}
++              </button>
++          </div>
++          <div class="pull-left">
++              <button type="button" class="popover-additem-option js-new-form appnav-responsive"
++                      data-type="advanced" data-form-type="form">
++                <i class="fa fa-file-o"></i> {% trans "Form" %}
++              </button>
++          </div>
++          <div class="pull-left">
++            <button type="button" class="popover-additem-option js-new-form appnav-responsive"
++                    data-case-action="update" data-type="shadow" data-form-type="shadow">
++              <i class="fa fa-moon-o"></i> {% trans "Shadow Form" %}
++            </button>
++          </div>
++          <form method="post" class="hide">
++              {% csrf_token %}
++              <input type="hidden" name="case_action" />
++              <input type="hidden" name="form_type" />
++              <input type="hidden" name="name" />
++          </form>
 +      </div>
 +    </script>
  {% endblock %}

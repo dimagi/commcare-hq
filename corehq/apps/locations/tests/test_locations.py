@@ -135,7 +135,7 @@ class LocationsTest(TestCase):
         # descendants
         compare(
             [test_state1, test_state2, test_village1, test_village2],
-            self.loc.descendants
+            self.loc.get_descendants()
         )
 
         # children

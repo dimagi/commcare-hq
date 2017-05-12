@@ -13,27 +13,27 @@ from .models import (CustomDataFieldsDefinition, is_system_key,
                      CUSTOM_DATA_FIELD_PREFIX)
 
 
-def add_prefix(field_dict):
+def add_prefix(field_dict, prefix):
     """
     Prefix all keys in the dict with the defined
     custom data prefix (such as data-field-whatevs).
     """
     return {
-        "{}-{}".format(CUSTOM_DATA_FIELD_PREFIX, k): v
+        "{}-{}".format(prefix, k): v
         for k, v in field_dict.iteritems()
     }
 
 
-def get_prefixed(field_dict):
+def get_prefixed(field_dict, prefix):
     """
     The inverse of add_prefix.
     Returns all prefixed elements of a dict with the prefices stripped.
     """
-    prefix_len = len(CUSTOM_DATA_FIELD_PREFIX) + 1
+    prefix_len = len(prefix) + 1
     return {
         k[prefix_len:]: v
         for k, v in field_dict.items()
-        if k.startswith(CUSTOM_DATA_FIELD_PREFIX)
+        if k.startswith(prefix)
     }
 
 
@@ -61,13 +61,14 @@ class CustomDataEditor(object):
     Tool to edit the data for a particular entity, like for an individual user.
     """
 
-    def __init__(self, field_view, domain, existing_custom_data=None,
-                 post_dict=None, required_only=False, angular_model=None):
+    def __init__(self, field_view, domain, existing_custom_data=None, post_dict=None,
+                 prefix=None, required_only=False, angular_model=None):
         self.field_view = field_view
         self.domain = domain
         self.existing_custom_data = existing_custom_data
         self.required_only = required_only
         self.angular_model = angular_model
+        self.prefix = prefix if prefix is not None else CUSTOM_DATA_FIELD_PREFIX
         self.form = self.init_form(post_dict)
 
     @property
@@ -84,10 +85,12 @@ class CustomDataEditor(object):
 
     @property
     def errors(self):
-        self.form.is_valid()
+        # form.errors calls full_clean if needed and is idempotent
         return self.form.errors
 
     def get_data_to_save(self):
+        if not self.is_valid():
+            raise AssertionError("Form is invalid, you can't call this yet.")
         cleaned_data = self.form.cleaned_data
         system_data = {
             k: v for k, v in self.existing_custom_data.items()
@@ -95,7 +98,7 @@ class CustomDataEditor(object):
         } if self.existing_custom_data else {}
         # reset form to clear uncategorized data
         self.existing_custom_data = None
-        self.form = self.init_form(add_prefix(cleaned_data))
+        self.form = self.init_form(add_prefix(cleaned_data, self.prefix))
         self.form.is_valid()
         return dict(cleaned_data, **system_data)
 
@@ -142,11 +145,11 @@ class CustomDataEditor(object):
         if post_dict:
             fields = post_dict
         elif self.existing_custom_data is not None:
-            fields = add_prefix(self.existing_custom_data)
+            fields = add_prefix(self.existing_custom_data, self.prefix)
         else:
             fields = None
 
-        self.form = CustomDataForm(fields, prefix=CUSTOM_DATA_FIELD_PREFIX)
+        self.form = CustomDataForm(fields, prefix=self.prefix)
         return self.form
 
     @property

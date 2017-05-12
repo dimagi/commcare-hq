@@ -454,13 +454,6 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     "Advanced Settings on the Organization Levels page and setting the Level to Expand From option."
 )
 
-FLAT_LOCATION_FIXTURE = StaticToggle(
-    'flat_location_fixture',
-    'Sync the location fixture in a flat format. ',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
-)
-
 HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
     'hierarchical_location_fixture',
     'Display Settings To Get Hierarchical Location Fixture',
@@ -1082,6 +1075,17 @@ USER_PROPERTY_EASY_REFS = StaticToggle(
     enabled_for_new_domains_after=datetime(2017, 5, 3, 20),  # 8pm UTC
 )
 
+LOCATION_USERS = StaticToggle(
+    'location_users',
+    'Autogenerate users for each location',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "This flag adds an option to the location types page (under 'advanced "
+        "mode') to create users for all locations of a specified type."
+    ),
+)
+
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',
@@ -1148,7 +1152,7 @@ BLOBDB_RESTORE = PredictablyRandomToggle(
     "Blobdb restore",
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0,
+    randomness=0.0,
 )
 
 SHOW_DEV_TOGGLE_INFO = StaticToggle(

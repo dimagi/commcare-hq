@@ -7,7 +7,6 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response
 from dimagi.ext import jsonobject

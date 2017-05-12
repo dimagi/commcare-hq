@@ -254,7 +254,6 @@ class BlobRestoreResponse(RestoreResponse):
         self.identifier = 'restore-response-{}'.format(uuid4().hex)
 
         self.response_body = tempfile.TemporaryFile('w+')
-        self.blobdb = get_blob_db()
 
     def get_filename(self, suffix=None):
         return "{identifier}{suffix}.{ext}".format(
@@ -296,13 +295,13 @@ class BlobRestoreResponse(RestoreResponse):
 
             response.write(self.closing_tag)
             response.seek(0)
-            self.blobdb.put(response, self.get_filename(), timeout=60)
+            get_blob_db().put(response, self.get_filename(), timeout=60)
 
         self.finalized = True
         self.close()
 
     def as_file(self):
-        return self.blobdb.get(self.get_filename())
+        return get_blob_db().get(self.get_filename())
 
     @classmethod
     def get_payload(cls, identifier):
@@ -317,14 +316,14 @@ class BlobRestoreResponse(RestoreResponse):
 
     def as_string(self):
         try:
-            blob = self.blobdb.get(self.get_filename())
+            blob = get_blob_db().get(self.get_filename())
             return blob.read()
         finally:
             blob.close()
 
     def get_http_response(self):
-        headers = {'Content-Length': self.blobdb.size(self.get_filename())}
-        return stream_response(self.blobdb.get(self.get_filename()), headers)
+        headers = {'Content-Length': get_blob_db().size(self.get_filename())}
+        return stream_response(get_blob_db().get(self.get_filename()), headers)
 
 
 class AsyncRestoreResponse(object):
@@ -636,8 +635,6 @@ class RestoreConfig(object):
             self.cache_settings.overwrite_cache
         )
 
-        self.asyc = async
-
         self.force_cache = self.cache_settings.force_cache or self.async
         self.cache_timeout = self.cache_settings.cache_timeout
         self.overwrite_cache = self.cache_settings.overwrite_cache
@@ -655,7 +652,13 @@ class RestoreConfig(object):
 
     @property
     def async_cache_key(self):
-        return restore_cache_key(self.domain, ASYNC_RESTORE_CACHE_KEY_PREFIX, self.restore_user.user_id)
+        return restore_cache_key(
+            self.domain,
+            ASYNC_RESTORE_CACHE_KEY_PREFIX,
+            self.restore_user.user_id,
+            sync_log_id=self.sync_log._id if self.sync_log else '',
+            device_id=self.params.device_id,
+        )
 
     @property
     def _restore_cache_key(self):

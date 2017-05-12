@@ -19,6 +19,7 @@
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
     <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
     {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
+        <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
         <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
     {% endif %}
     <script src="{% static 'app_manager/js/module-view.js' %}"></script>
@@ -154,7 +155,7 @@
 
         {% if not module.is_surveys %}
           {% for detail in details %}
-            <div class="tab-pane" id="{{ detail.type }}-detail-screen-config-tab">
+            <div class="tab-pane ko-template" id="{{ detail.type }}-detail-screen-config-tab">
               {% include 'app_manager/v2/partials/case_list.html' %}
             </div>
             {% if detail.long %}
