@@ -17,11 +17,4 @@ hqDefine('appstore/js/appstore_base.js', function () {
         assure_correct_spacing();
     }
     $(window).resize(assure_correct_spacing);
-
-    $(function(){
-        var app_ids = hqImport('hqwebapp/js/initial_page_data.js').get('app_ids');
-        _.each(app_ids, function(id) {
-            gaTrackLink($('#view_button_' + id), 'Exchange', 'View button', id);
-        });
-    });
 });

@@ -207,8 +207,6 @@ class PillowBase(object):
         if change.metadata is not None:
             tags = [
                 u'datasource:{}'.format(change.metadata.data_source_name),
-                u'document_type:{}'.format(change.metadata.document_type),
-                u'domain:{}'.format(change.metadata.domain),
                 u'is_deletion:{}'.format(change.metadata.is_deletion),
                 u'pillow_name:{}'.format(self.get_name()),
             ]

@@ -6,6 +6,7 @@ from datetime import datetime
 from django.core.management import BaseCommand, CommandError
 from corehq.blobs.migrate import MIGRATIONS
 from corehq.util.decorators import change_log_level
+from corehq.util.teeout import tee_output
 
 
 USAGE = """Usage: ./manage.py run_blob_migration [options] <slug>
@@ -57,10 +58,18 @@ class Command(BaseCommand):
         if log_dir is None:
             file = None
         else:
-            file = os.path.join(log_dir, "{}-blob-migration-{}.txt".format(
-                slug, datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
-            ))
-            assert not os.path.exists(file), file
-        total, skips = migrator.migrate(file, reset=reset, chunk_size=chunk_size)
-        if skips:
-            sys.exit(skips)
+            now = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+            summary_file = os.path.join(log_dir,
+                "{}-blob-migration-{}-summary.txt".format(slug, now))
+            log_file = os.path.join(log_dir,
+                "{}-blob-migration-{}.txt".format(slug, now))
+            assert not os.path.exists(summary_file), summary_file
+            assert not os.path.exists(log_file), log_file
+        with open(summary_file, "w") as fh, tee_output(fh):
+            total, skips = migrator.migrate(
+                log_file,
+                reset=reset,
+                chunk_size=chunk_size,
+            )
+            if skips:
+                sys.exit(skips)

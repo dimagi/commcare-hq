@@ -138,7 +138,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    'corehq.apps.hqwebapp.middleware.HQCsrfViewMiddleWare',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -1715,6 +1715,8 @@ BASE_REPEATERS = (
     'corehq.apps.repeaters.models.CaseRepeater',
     'corehq.apps.repeaters.models.ShortFormRepeater',
     'corehq.apps.repeaters.models.AppStructureRepeater',
+    'corehq.apps.repeaters.models.UserRepeater',
+    'corehq.apps.repeaters.models.LocationRepeater',
 )
 
 CUSTOM_REPEATERS = (
@@ -1985,6 +1987,12 @@ DOMAIN_MODULE_MAP = {
     'enikshay-domain-copy-test': 'custom.enikshay',
     'enikshay-aks-audit': 'custom.enikshay',
     'np-migration-3': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-1': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-2': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-3': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-4': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-5': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-6': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 
@@ -2050,3 +2058,5 @@ if _raven_config:
     RAVEN_CONFIG = _raven_config
     SENTRY_CONFIGURED = True
     SENTRY_CLIENT = 'corehq.util.sentry.HQSentryClient'
+
+CSRF_COOKIE_HTTPONLY = True

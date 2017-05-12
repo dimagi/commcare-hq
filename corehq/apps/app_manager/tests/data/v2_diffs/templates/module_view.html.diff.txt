@@ -6,12 +6,7 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -19,35 +19,34 @@
-     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
-     <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
-     {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
--        <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
-         <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+@@ -24,30 +24,30 @@
      {% endif %}
      <script src="{% static 'app_manager/js/module-view.js' %}"></script>
      <script src="{% static 'app_manager/js/case_list_setting.js' %}"></script>
@@ -55,7 +50,7 @@
  
      <script>
      var print_ref;
-@@ -101,78 +100,83 @@
+@@ -101,78 +101,83 @@
      </script>
  {% endblock %}
  
@@ -208,7 +203,7 @@
  <script type="text/html" id="module-forms-template">
      <div class="checkbox">
          <label>
-@@ -186,7 +190,7 @@
+@@ -186,7 +191,7 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
@@ -217,7 +212,7 @@
  {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
      {% with print_uploader as uploader %}
          {% include 'hqmedia/partials/multimedia_uploader.html' %}
-@@ -196,5 +200,5 @@
+@@ -196,5 +201,5 @@
  
  {% block breadcrumbs %}
      {{ block.super }}

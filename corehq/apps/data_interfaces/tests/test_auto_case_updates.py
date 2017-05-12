@@ -259,7 +259,7 @@ class AutomaticCaseUpdateTest(TestCase):
             self.rule2.add_criteria(
                 MatchPropertyDefinition,
                 property_name='last_visit_date',
-                property_value='30',
+                property_value='-30',
                 match_type=MatchPropertyDefinition.MATCH_DAYS_BEFORE,
             )
             # When the case property doesn't exist, it should not match
@@ -737,7 +737,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
         rule1.add_criteria(
             MatchPropertyDefinition,
             property_name='last_visit_date',
-            property_value='5',
+            property_value='-5',
             match_type=MatchPropertyDefinition.MATCH_DAYS_BEFORE,
         )
 
@@ -753,7 +753,7 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
         rule3.add_criteria(
             MatchPropertyDefinition,
             property_name='last_visit_date',
-            property_value='-5',
+            property_value='5',
             match_type=MatchPropertyDefinition.MATCH_DAYS_BEFORE,
         )
 

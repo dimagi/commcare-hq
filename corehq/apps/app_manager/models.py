@@ -2281,8 +2281,9 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def get_app(self):
         return self._parent
 
-    def default_name(self):
-        app = self.get_app()
+    def default_name(self, app=None):
+        if not app:
+            app = self.get_app()
         return trans(
             self.name,
             [app.default_language] + app.langs,
@@ -5116,7 +5117,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     @property
     def advanced_app_builder(self):
         properties = (self.profile or {}).get('properties', {})
-        return properties.get('advanced_app_builder', 'false') == 'true'
+        return properties.get('advanced_app_builder', 'true') == 'true'
 
     @property
     def jad_settings(self):

@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, date
 from django.test import TestCase, override_settings
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -400,9 +400,8 @@ class TestAdherencePayloadGenerator(TestPayloadGeneratorBase):
         return AdherencePayloadGenerator(None).get_payload(None, casedb['adherence'])
 
     def test_get_payload(self):
-        date = datetime(2017, 2, 20)
         cases = self.create_case_structure()
-        cases['adherence'] = self.create_adherence_cases([date])[0]
+        cases['adherence'] = self.create_adherence_cases([date(2017, 2, 20)])[0]
         expected_payload = json.dumps(
             {
                 "adherence_value": "unobserved_dose",
