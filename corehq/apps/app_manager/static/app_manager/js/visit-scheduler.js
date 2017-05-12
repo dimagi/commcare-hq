@@ -10,16 +10,18 @@ hqDefine('app_manager/js/visit-scheduler.js', function () {
 
         self.init = function () {
             _.defer(function () {
-                self.home.koApplyBindings(self);
-                self.home.on('textchange', 'input', self.change)
-                // all select2's are represented by an input[type="hidden"]
-                    .on('change', 'select, input[type="hidden"]', self.change)
-                    .on('click', 'a:not(.header)', self.change)
-                    .on('change', 'input[type="checkbox"]', self.change);
-
-                // https://gist.github.com/mkelly12/424774/#comment-92080
-                // textchange doesn't work with live event binding
-                $('#module-scheduler input').on('textchange', self.change);
+                if (self.home.length) {
+                    self.home.koApplyBindings(self);
+                    self.home.on('textchange', 'input', self.change)
+                    // all select2's are represented by an input[type="hidden"]
+                        .on('change', 'select, input[type="hidden"]', self.change)
+                        .on('click', 'a:not(.header)', self.change)
+                        .on('change', 'input[type="checkbox"]', self.change);
+ 
+                    // https://gist.github.com/mkelly12/424774/#comment-92080
+                    // textchange doesn't work with live event binding
+                    $('#module-scheduler input').on('textchange', self.change);
+                }
             });
         };
 
