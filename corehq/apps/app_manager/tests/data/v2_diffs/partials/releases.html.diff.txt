@@ -1,9 +1,13 @@
 --- 
 +++ 
-@@ -18,11 +18,11 @@
+@@ -17,12 +17,14 @@
+             '/a/' + '{{ domain }}' + '/apps/view/---/app_data/'
          )
          var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
-         var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
+-        var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
++        var profiles = hqImport('app_manager/js/language-profiles.js');
++        profiles.setProfileUrl('{{ application_profile_url }}');
++        var ProfileManager = profiles.ProfileManager;
 +        // init releases
          var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body')
          $('#recent-changes-btn').on('click', function (e) {
@@ -13,7 +17,7 @@
          {# The '___' in these urls will later be replaced by an app's _id ReleasesMain's url function #}
          var urls = {
              fetch: '{% url "paginate_releases" domain app.id %}',
-@@ -52,23 +52,51 @@
+@@ -52,23 +54,51 @@
              fetchLimit: {{ fetchLimit }},
          };
          var el = $('#releases-table');
@@ -72,7 +76,7 @@
  <div class="tabbable">
      <ul class="nav nav-tabs">
          <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
-@@ -95,176 +123,155 @@
+@@ -95,176 +125,155 @@
                          {% endblocktrans %}
                      </small></p>
                  </div>
@@ -388,7 +392,7 @@
      <script type="text/html" id="delete-build-modal-template">
          <div class="modal-dialog">
              <div class="modal-content">
-@@ -312,18 +319,19 @@
+@@ -312,18 +321,19 @@
          </div>
      </script>
      <script type="text/html" id="deploy-build-modal-template">
