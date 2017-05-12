@@ -12,15 +12,20 @@ class Command(BaseCommand):
         parser.add_argument('state_code')
         parser.add_argument('district_code')
         parser.add_argument('parent_loc_id')
+        parser.add_argument('user_level') # TODO add choices
         parser.add_argument('org_ids', metavar='org_id', nargs='*', type=int)
 
-    def handle(self, domain, state_code, district_code, parent_loc_id, org_ids, **options):
+    def handle(self, domain, state_code, district_code, parent_loc_id, user_level, org_ids, **options):
         dto_parent = SQLLocation.active_objects.get(location_id=parent_loc_id)
         for org_id in org_ids:
             dto = self.create_dto(domain, state_code, district_code, dto_parent, org_id)
             for agency in self.get_agencies_by_state_district_org(state_code, district_code, org_id):
                 agency_loc = self.create_agency(domain, agency, dto, org_id)
                 agency_user = make_location_user(agency_loc)
+                agency_user.assigned_location_ids = [agency_loc.location_id]
+                agency_user.location_id = agency_loc.location_id
+                agency_user.user_data['user_level'] = user_level
+                agency_user.user_data['user_type'] = self.get_user_type(agency_loc.location_type.code)
                 agency_user.user_location_id = agency_loc.location_id
                 agency_user.save()
 
@@ -72,6 +77,14 @@ class Command(BaseCommand):
 
             },
         )
+
+    @staticmethod
+    def get_user_type(code):
+        return {
+            'pac': 'pac',
+            'pcp': 'pcp',
+            'plc': 'plc',
+        }.get(code)  # TODO - finish
 
     @staticmethod
     def _get_org_name_by_id(org_id):

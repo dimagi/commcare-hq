@@ -19,7 +19,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
     def test_create_dtos(self):
         start_loc_count = SQLLocation.objects.filter(domain=self.domain).count()
 
-        call_command('create_dtos_and_agencies', self.domain, '154', '189', self.sto.location_id, 1, 4)
+        call_command('create_dtos_and_agencies', self.domain, '154', '189', self.sto.location_id, 'test', 1, 4)
 
         self.assertEqual(SQLLocation.objects.filter(domain=self.domain).count(), start_loc_count + 2)
 
@@ -54,9 +54,11 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
     def test_create_agencies(self):
         start_loc_count = SQLLocation.objects.filter(domain=self.domain).count()
 
+        agency_id = 100789
+
         UserDetail.objects.create(
             id=1,
-            agencyId=100789,
+            agencyId=agency_id,
             districtId='189',
             isPrimary=True,
             motechUserName='org123',
@@ -70,7 +72,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
         )
         Agency.objects.create(
             id=1,
-            agencyId=100789,
+            agencyId=agency_id,
             agencyName='Nicks Agency',
             agencyTypeId='ATPR',
             creationDate=datetime(2017, 5, 1),
@@ -82,7 +84,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
             subOrganisationId=4,
         )
 
-        call_command('create_dtos_and_agencies', self.domain, '154', '189', self.sto.location_id, 1)
+        call_command('create_dtos_and_agencies', self.domain, '154', '189', self.sto.location_id, 'dev', 1)
 
         self.assertEqual(SQLLocation.objects.filter(domain=self.domain).count(), start_loc_count + 2)
 
@@ -98,7 +100,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
                 'enikshay_enabled': 'yes',
                 'is_test': 'no',
                 'nikshay_code': '988765',
-                'private_sector_agency_id': 100789,
+                'private_sector_agency_id': agency_id,
                 'private_sector_org_id': 1,
 
             }
@@ -120,4 +122,16 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
         users = CommCareUser.by_domain(self.domain)
         self.assertEqual(len(users), 1)
         user = users[0]
+        self.assertEqual(user.username, '%d@%s.commcarehq.org' % (agency_id, self.domain))
+        self.assertDictEqual(
+            user.user_data,
+            {
+                'commcare_location_ids': agency.location_id,
+                'commcare_project': self.domain,
+                'user_level': 'dev',
+                'user_type': 'pcp',
+            }
+        )
+        self.assertListEqual(user.assigned_location_ids, [agency.location_id])
+        self.assertEqual(user.location_id, agency.location_id)
         self.assertEqual(user.user_location_id, agency.location_id)
