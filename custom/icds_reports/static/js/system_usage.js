@@ -14,12 +14,10 @@ angular.module('icdsApp').controller('SystemUsageController', function($http) {
             params: {}
         }).then(
             function (response) {
-                debugger;
-                step.data = response.data;
-                console.log(step.data)
+                step.data = response.data.records;
             },
             function (error) {
-                console.log(error)
+                console.log(error);
             });
     };
 

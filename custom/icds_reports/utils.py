@@ -5,7 +5,9 @@ from datetime import datetime, timedelta
 
 import operator
 
+from django.db.models.aggregates import Sum
 from django.template.loader import render_to_string
+from django.utils.translation import ugettext as _
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
@@ -14,6 +16,7 @@ from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from dimagi.utils.dates import DateSpan
 
+from custom.icds_reports.models import AggDailyUsageView
 
 OPERATORS = {
     "==": operator.eq,
@@ -176,3 +179,83 @@ class ICDSDataTableColumn(DataTablesColumn):
         return render_to_string("icds_reports/partials/column.html", dict(
             col=column_params
         ))
+
+
+def get_system_usage_data(filters):
+    yesterday_data = AggDailyUsageView.objects.filter(
+        date=filters['yesterday'], aggregation_level=1
+    ).values(
+        'aggregation_level'
+    ).annotate(
+        awcs=Sum('awc_count'),
+        daily_attendance=Sum('daily_attendance_open'),
+        num_forms=Sum('usage_num_forms'),
+        num_home_visits=Sum('usage_num_home_visit'),
+        num_gmp=Sum('usage_num_gmp'),
+        num_thr=Sum('usage_num_thr')
+    )
+    before_yesterday_data = AggDailyUsageView.objects.filter(
+        date=filters['before_yesterday'], aggregation_level=1
+    ).values(
+        'aggregation_level'
+    ).annotate(
+        awcs=Sum('awc_count'),
+        daily_attendance=Sum('daily_attendance_open'),
+        num_forms=Sum('usage_num_forms'),
+        num_home_visits=Sum('usage_num_home_visit'),
+        num_gmp=Sum('usage_num_gmp'),
+        num_thr=Sum('usage_num_thr')
+    )
+
+    def percent_increase(prop):
+        yesterday = yesterday_data[0][prop]
+        before_yesterday = before_yesterday_data[0][prop]
+        return (yesterday - before_yesterday) / float(yesterday) * 100
+
+    return {
+        'records': [
+            [
+                {
+                    'label': _('Number of AWCs Open yesterday'),
+                    'help_text': _("""Total Number of Angwanwadi Centers that were open yesterday
+                        by the AWW or the AWW helper"""),
+                    'percent': percent_increase('daily_attendance'),
+                    'value': yesterday_data[0]['daily_attendance'],
+                    'all': yesterday_data[0]['awcs']
+                },
+                {
+                    'label': _('Average number of forms hosuehold registration forms submitted yesterday'),
+                    'help_text': _('Average number of household registration forms submitted by AWWs yesterday.'),
+                    'percent': percent_increase('num_forms'),
+                    'value': yesterday_data[0]['num_forms'],
+                    'all': yesterday_data[0]['awcs']
+                }
+            ],
+            [
+                {
+                    'label': _('Average number of Home Visit forms submitted yesterday'),
+                    'help_text': _("""Average number of home visit forms submitted yesterday. Home visit forms are 
+                        Birth Preparedness, Delivery, Post Natal Care, 
+                        Exclusive breastfeeding and Complementary feeding"""),
+                    'percent': percent_increase('num_home_visits'),
+                    'value': yesterday_data[0]['num_home_visits'],
+                    'all': yesterday_data[0]['awcs']
+                },
+                {
+                    'label': _('Average number of Growth Monitoring forms submitted yesterday'),
+                    'help_text': _('Average number of growth monitoring forms (GMP) submitted yesterday'),
+                    'percent': percent_increase('num_gmp'),
+                    'value': yesterday_data[0]['num_gmp'],
+                    'all': yesterday_data[0]['awcs']
+                }
+            ], [
+                {
+                    'label': _('Average number of Take Home Ration forms submitted yesterday'),
+                    'help_text': _('Average number of Take Home Rations (THR) forms submitted yesterday'),
+                    'percent': percent_increase('num_thr'),
+                    'value': yesterday_data[0]['num_thr'],
+                    'all': yesterday_data[0]['awcs']
+                }
+            ]
+        ]
+    }
