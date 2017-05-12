@@ -10,16 +10,15 @@ angular.module('icdsApp').directive('underweightChildrenReport', function() {
                 scope: 'ind',
                 responsive: true,
                 setProjection: function(element) {
-                    var projection = d3.geo.equirectangular()
+                    var projection = d3.geo.mercator()
                         .center([80, 25])
-                        .scale(1600)
-                        .translate([element.offsetWidth / 2, element.offsetHeight / 2]);
+                        .scale(1200)
+                        .translate([element.offsetWidth / 2, element.offsetHeight / 4]);
                     var path = d3.geo.path()
                         .projection(projection);
 
                     return {path: path, projection: projection};
                 },
-                projection: 'mercator',
             };
         },
         controllerAs: '$ctrl',
