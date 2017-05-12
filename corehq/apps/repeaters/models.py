@@ -562,6 +562,11 @@ class RepeatRecord(Document):
         self.cancelled = attempt.cancelled
         self.failure_reason = attempt.failure_reason
 
+    def get_numbered_attempts(self):
+        offset = self.overall_tries - len(self.attempts)
+        for i, attempt in enumerate(self.attempts):
+            yield i + 1 + offset, attempt
+
     def make_set_next_try_attempt(self, failure_reason):
         # we use an exponential back-off to avoid submitting to bad urls
         # too frequently.
