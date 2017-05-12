@@ -104,11 +104,13 @@
                 </a>
             </li>
             {% if not enterprise_mode or not 500traceback %}
-            <li>
-                <a href="#modalReportIssue" data-toggle="modal" id="menuitem-issue">
-                    <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
-                </a>
-            </li>
+                {% if allow_report_an_issue %}
+                    <li>
+                        <a href="#modalReportIssue" data-toggle="modal" id="menuitem-issue">
+                            <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
+                        </a>
+                    </li>
+                {% endif %}
             {% endif %}
         </ul>
     </li>
