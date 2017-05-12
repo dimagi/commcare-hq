@@ -1623,6 +1623,8 @@ class FormExportListView(BaseExportListView):
                 _("Problem getting Create Export Form: {} {}").format(
                     e.__class__, e
                 ),
+                log_error=True,
+                exception=e,
             )
         return format_angular_success(response)
 

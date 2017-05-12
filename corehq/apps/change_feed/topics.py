@@ -109,7 +109,7 @@ def validate_offsets(expected_offsets):
     in the current kafka feed
     """
     if expected_offsets:
-        topics = [kafka_bytestring(x[0]) for x in expected_offsets.keys()]
+        topics = {kafka_bytestring(x[0]) for x in expected_offsets.keys()}
         available_offsets = get_multi_topic_first_available_offsets(topics)
         for topic_partition, offset in expected_offsets.items():
             topic, partition = topic_partition

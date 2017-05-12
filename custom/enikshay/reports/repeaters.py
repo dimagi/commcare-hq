@@ -54,7 +54,7 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
 
     def _make_row(self, record):
         try:
-            payload = record.get_payload(save_failure=False)
+            payload = record.get_payload()
         except ENikshayException as error:
             payload = u"Error: {}".format(error)
         row = [

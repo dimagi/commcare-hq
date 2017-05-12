@@ -208,7 +208,6 @@
 {% endblock %}
 
 {% block page_content %}
-{% initial_page_data 'app_ids' app_ids %}
 
 <h1>
     {% block store-header %}
@@ -251,9 +250,11 @@
                         {% endif %}
                     </a>
                     <p style="margin-top: .5em;">{% trans "Last updated" %}: {{ app.snapshot_time|date:"N j, Y" }}</p>
-                    <a class="btn btn-default"
+                    <a class="btn btn-default track-usage-link"
                        href="{% url "project_info" app.get_id %}"
-                       id="view_button_{{ app.get_id }}"
+                       data-category="Exchange"
+                       data-action="View button"
+                       data-label="{{ app.get_id }}"
                     >
                         {% trans "View" %} &raquo;
                     </a>

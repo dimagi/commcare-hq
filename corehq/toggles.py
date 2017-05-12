@@ -1068,6 +1068,17 @@ USER_PROPERTY_EASY_REFS = StaticToggle(
     enabled_for_new_domains_after=datetime(2017, 5, 3, 20),  # 8pm UTC
 )
 
+LOCATION_USERS = StaticToggle(
+    'location_users',
+    'Autogenerate users for each location',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "This flag adds an option to the location types page (under 'advanced "
+        "mode') to create users for all locations of a specified type."
+    ),
+)
+
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',
@@ -1134,7 +1145,7 @@ BLOBDB_RESTORE = PredictablyRandomToggle(
     "Blobdb restore",
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0,
+    randomness=0.0,
 )
 
 SHOW_DEV_TOGGLE_INFO = StaticToggle(

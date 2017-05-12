@@ -6,7 +6,7 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load reports_core_tags %}
-@@ -8,24 +8,24 @@
+@@ -9,24 +9,24 @@
      <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
      <script src="{% static 'app_manager/js/report-module.js' %}"></script>
      <script src="{% static 'reports_core/js/choice-list-api.js' %}"></script>
