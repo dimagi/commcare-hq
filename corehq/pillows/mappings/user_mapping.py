@@ -106,7 +106,7 @@ USER_MAPPING = {'_all': {'analyzer': 'standard'},
                         },
                         'value': {
                             'type': 'string',
-                            'index': 'not_analyzed',
+                            'index': 'analyzed',
                         }
                     }
                 },
