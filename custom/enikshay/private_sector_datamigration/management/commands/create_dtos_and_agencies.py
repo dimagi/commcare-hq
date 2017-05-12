@@ -12,7 +12,7 @@ class Command(BaseCommand):
         parser.add_argument('state_code')
         parser.add_argument('district_code')
         parser.add_argument('parent_loc_id')
-        parser.add_argument('user_level') # TODO add choices
+        parser.add_argument('user_level', choices=['dev', 'real', 'test'])
         parser.add_argument('org_ids', metavar='org_id', nargs='*', type=int)
 
     def handle(self, domain, state_code, district_code, parent_loc_id, user_level, org_ids, **options):
