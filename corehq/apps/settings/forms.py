@@ -10,16 +10,48 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
-from corehq.apps.domain.forms import clean_password
 from corehq.apps.users.models import CouchUser
 
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
+from django.contrib.auth import password_validation
+from django.core.exceptions import ValidationError
 
 from datetime import datetime
 
 
-class HQPasswordChangeForm(PasswordChangeForm):
+class EncodedPasswordChangeForm(object):
+    def clean_new_password1(self):
+        from corehq.apps.domain.forms import clean_password
+        from corehq.apps.hqwebapp.utils import decode_password
+        new_password = decode_password(self.cleaned_data.get('new_password1'))
+        if new_password == '':
+            raise ValidationError(
+                _("Password cannot be empty"), code='new_password1_empty',
+            )
+
+        return clean_password(new_password)
+
+    def clean_new_password2(self):
+        from corehq.apps.hqwebapp.utils import decode_password
+        password2 = decode_password(self.cleaned_data.get('new_password2'))
+        if password2 == '':
+            raise ValidationError(
+                _("Password cannot be empty"), code='new_password2_empty',
+            )
+
+        password1 = self.cleaned_data.get('new_password1')
+        if password1 and password2:
+            if password1 != password2:
+                raise forms.ValidationError(
+                    self.error_messages['password_mismatch'],
+                    code='password_mismatch',
+                )
+        password_validation.validate_password(password2, self.user)
+        return password2
+
+
+class HQPasswordChangeForm(EncodedPasswordChangeForm, PasswordChangeForm):
 
     new_password1 = forms.CharField(label=_("New password"),
                                     widget=forms.PasswordInput(),
@@ -54,8 +86,19 @@ class HQPasswordChangeForm(PasswordChangeForm):
             ),
         )
 
-    def clean_new_password1(self):
-        return clean_password(self.cleaned_data.get('new_password1'))
+    def clean_old_password(self):
+        from corehq.apps.hqwebapp.utils import decode_password
+        old_password = decode_password(self.cleaned_data['old_password'])
+        if old_password == '':
+            raise ValidationError(
+                _("Password cannot be empty"), code='password_empty',
+            )
+        if not self.user.check_password(old_password):
+            raise forms.ValidationError(
+                self.error_messages['password_incorrect'],
+                code='password_incorrect',
+            )
+        return old_password
 
     def save(self, commit=True):
         user = super(HQPasswordChangeForm, self).save(commit)

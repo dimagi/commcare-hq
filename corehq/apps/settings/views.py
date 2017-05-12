@@ -290,6 +290,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
         return {
             'form': self.password_change_form,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'implement_password_hashing': settings.ENABLE_PASSWORD_HASHING,
         }
 
     @method_decorator(sensitive_post_parameters())
