@@ -22,6 +22,7 @@ CASE_TYPE_PERSON = "person"
 CASE_TYPE_LAB_REFERRAL = "lab_referral"
 CASE_TYPE_DRTB_HIV_REFERRAL = "drtb-hiv-referral"
 CASE_TYPE_TEST = "test"
+CASE_TYPE_PRESCRIPTION = "prescription"
 CASE_TYPE_VOUCHER = "voucher"
 CASE_TYPE_PRESCRIPTION = "prescription"
 
@@ -198,6 +199,22 @@ def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_da
     ]
 
     return open_pertinent_adherence_cases
+
+
+def get_prescription_cases_from_episode(domain, episode_case_id):
+    indexed_cases = CaseAccessors(domain).get_reverse_indexed_cases([episode_case_id])
+    return [
+        case for case in indexed_cases
+        if not case.closed and case.type == CASE_TYPE_PRESCRIPTION
+    ]
+
+
+def get_voucher_cases_from_prescription(domain, prescription_case_id):
+    indexed_cases = CaseAccessors(domain).get_reverse_indexed_cases([prescription_case_id])
+    return [
+        case for case in indexed_cases
+        if not case.closed and case.type == CASE_TYPE_VOUCHER
+    ]
 
 
 def update_case(domain, case_id, updated_properties, external_id=None):
