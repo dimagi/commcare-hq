@@ -83,9 +83,11 @@ class Command(BaseCommand):
     def get_usertype(code):
         return {
             'pac': 'pac',
+            'pcc': 'pcc-chemist',
+            'pdr': 'deo',
             'pcp': 'pcp',
             'plc': 'plc',
-        }.get(code)  # TODO - finish
+        }[code]
 
     @staticmethod
     def _get_org_name_by_id(org_id):
