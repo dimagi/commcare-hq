@@ -336,24 +336,8 @@ hqDefine('app_manager/js/app_manager.js', function () {
                 container: 'body',
                 content: function () {
                     var slug = $(this).data("slug"),
-                        types = $(this).data("types"),
-                        $popover = $($('.js-popover-template-add-item-content[data-slug="' + slug + '"]').text());
-
-                    // Attach any data to the popover itself (strictly speaking, $popover
-                    // will end up being the lone child of .popover-content)
-                    $popover.data($(this).data());
-
-                    // Remove irrelevant items
-                    if (types && types.length) {
-                        _.each($popover.find("[data-type]"), function(item) {
-                            var $item = $(item);
-                            if (!_.contains(types, $item.data("type"))) {
-                                $item.remove();
-                            }
-                        });
-                    }
-
-                    return $popover;
+                        template = $('.js-popover-template-add-item-content[data-slug="' + slug + '"]').text();
+                    return _.template(template)($(this).data());
                 },
                 html: true,
                 trigger: 'manual',
