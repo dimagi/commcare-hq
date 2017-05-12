@@ -448,7 +448,7 @@ class LoginAsUsers(View):
 
         return json_response({
             'response': {
-                'itemList': map(lambda user: self._format_user(user), users_data.hits),
+                'itemList': map(self._format_user, users_data.hits),
                 'total': users_data.total,
                 'page': page,
                 'query': query,
