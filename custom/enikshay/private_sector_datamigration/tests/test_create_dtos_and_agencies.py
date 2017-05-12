@@ -4,6 +4,7 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
 from custom.enikshay.private_sector_datamigration.models import Agency, UserDetail
 from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
 
@@ -115,3 +116,8 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
                 'private_sector_org_id': 1,
             }
         )
+
+        users = CommCareUser.by_domain(self.domain)
+        self.assertEqual(len(users), 1)
+        user = users[0]
+        self.assertEqual(user.user_location_id, agency.location_id)

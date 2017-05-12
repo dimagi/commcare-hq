@@ -1,6 +1,7 @@
 from django.core.management import BaseCommand
 
 from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.tasks import make_location_user
 from custom.enikshay.private_sector_datamigration.models import Agency, UserDetail
 
 
@@ -18,7 +19,10 @@ class Command(BaseCommand):
         for org_id in org_ids:
             dto = self.create_dto(domain, state_code, district_code, dto_parent, org_id)
             for agency in self.get_agencies_by_state_district_org(state_code, district_code, org_id):
-                self.create_agency(domain, agency, dto, org_id)
+                agency_loc = self.create_agency(domain, agency, dto, org_id)
+                agency_user = make_location_user(agency_loc)
+                agency_user.user_location_id = agency_loc.location_id
+                agency_user.save()
 
     def create_dto(self, domain, state_code, district_code, dto_parent, org_id):
         return SQLLocation.objects.create(
@@ -50,7 +54,7 @@ class Command(BaseCommand):
 
     @staticmethod
     def create_agency(domain, agency, dto, org_id):
-        SQLLocation.objects.create(
+        return SQLLocation.objects.create(
             domain=domain,
             name=agency.agencyName,
             site_code=str(agency.agencyId),
