@@ -478,21 +478,22 @@ class RepeatRecord(Document):
     An record of a particular instance of something that needs to be forwarded
     with a link to the proper repeater object
     """
+
+    domain = StringProperty()
+    repeater_id = StringProperty()
+    repeater_type = StringProperty()
+    payload_id = StringProperty()
+
     overall_tries = IntegerProperty(default=0)
     max_possible_tries = IntegerProperty(default=3)
 
-    repeater_id = StringProperty()
-    repeater_type = StringProperty()
-    domain = StringProperty()
+    attempts = ListProperty(RepeatRecordAttempt)
 
+    cancelled = BooleanProperty(default=False)
     last_checked = DateTimeProperty()
+    failure_reason = StringProperty()
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
-    failure_reason = StringProperty()
-    cancelled = BooleanProperty(default=False)
-
-    payload_id = StringProperty()
-    attempts = ListProperty(RepeatRecordAttempt)
 
     @classmethod
     def wrap(cls, data):
