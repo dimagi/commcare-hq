@@ -446,9 +446,6 @@ class AppStructureRepeater(Repeater):
 class UserRepeater(Repeater):
     friendly_name = _("Forward Users")
 
-    class Meta(object):
-        app_label = 'repeaters'
-
     @memoized
     def payload_doc(self, repeat_record):
         return CommCareUser.get(repeat_record.payload_id)
@@ -459,9 +456,6 @@ class UserRepeater(Repeater):
 
 class LocationRepeater(Repeater):
     friendly_name = _("Forward Locations")
-
-    class Meta(object):
-        app_label = 'repeaters'
 
     @memoized
     def payload_doc(self, repeat_record):
