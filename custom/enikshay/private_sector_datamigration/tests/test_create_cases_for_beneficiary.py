@@ -443,6 +443,56 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='episode')), 1)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='adherence')), 2)
 
+    def test_skip_adherence(self):
+        episode = Episode.objects.create(
+            id=1,
+            adherenceScore=0.5,
+            alertFrequencyId=2,
+            basisOfDiagnosis='Clinical - Other',
+            beneficiaryID=self.beneficiary,
+            creationDate=datetime(2017, 4, 20),
+            dateOfDiagnosis=datetime(2017, 4, 18),
+            dstStatus='Rifampicin sensitive',
+            episodeDisplayID=3,
+            extraPulmonary='Abdomen',
+            hiv='Negative',
+            lastMonthAdherencePct=0.6,
+            lastTwoWeeksAdherencePct=0.7,
+            missedDosesPct=0.8,
+            newOrRetreatment='New',
+            nikshayID='02139-02215',
+            patientWeight=50,
+            rxStartDate=datetime(2017, 4, 19),
+            site='Extrapulmonary',
+            unknownAdherencePct=0.9,
+            unresolvedMissedDosesPct=0.1,
+        )
+        Adherence.objects.create(
+            adherenceId=1,
+            creationDate=datetime(2017, 4, 21),
+            dosageStatusId=0,
+            doseDate=datetime.utcnow(),
+            doseReasonId=3,
+            episodeId=episode,
+            reportingMechanismId=4,
+        )
+        Adherence.objects.create(
+            adherenceId=2,
+            creationDate=datetime(2017, 4, 21),
+            dosageStatusId=1,
+            doseDate=datetime.utcnow(),
+            doseReasonId=3,
+            episodeId=episode,
+            reportingMechanismId=4,
+        )
+
+        call_command('create_cases_by_beneficiary', self.domain, skip_adherence=True)
+
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='episode')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='adherence')), 0)
+
     def test_prescription(self):
         EpisodePrescription.objects.create(
             id=1,

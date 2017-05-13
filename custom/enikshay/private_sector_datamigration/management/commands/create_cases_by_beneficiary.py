@@ -55,6 +55,12 @@ class Command(BaseCommand):
             metavar='caseId',
             nargs='+',
         )
+        parser.add_argument(
+            '--skip-adherence',
+            action='store_true',
+            default=False,
+            dest='skip_adherence',
+        )
 
     @mock_ownership_cleanliness_checks()
     def handle(self, domain, **options):
@@ -104,7 +110,7 @@ class Command(BaseCommand):
             counter += 1
             try:
                 case_factory = BeneficiaryCaseFactory(domain, beneficiary)
-                case_structures.extend(case_factory.get_case_structures_to_create())
+                case_structures.extend(case_factory.get_case_structures_to_create(options['skip_adherence']))
             except Exception:
                 num_failed += 1
                 logger.error(
