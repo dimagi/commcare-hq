@@ -322,7 +322,7 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _adherences(self):
-        return list(Adherence.objects.filter(episodeId=self._episode)) if self._episode else []
+        return list(Adherence.objects.filter(episodeId=self._episode.episodeID)) if self._episode else []
 
     @property
     @memoized

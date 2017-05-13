@@ -405,7 +405,7 @@ class Adherence(models.Model):
     dosageStatusId = models.IntegerField()
     doseDate = models.DateTimeField()
     doseReasonId = models.IntegerField()
-    episodeId = models.ForeignKey(Episode, on_delete=models.CASCADE)
+    episodeId = models.CharField(max_length=8)
     modificationDate = models.DateTimeField(null=True)
     modifiedBy = models.CharField(max_length=255, null=True)
     owner = models.CharField(max_length=255, null=True)

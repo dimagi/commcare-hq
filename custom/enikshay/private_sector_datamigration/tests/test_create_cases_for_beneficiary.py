@@ -350,7 +350,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             dosageStatusId=0,
             doseDate=datetime(2017, 4, 22),
             doseReasonId=3,
-            episodeId=episode,
+            episodeId=episode.episodeID,
             reportingMechanismId=4,
         )
 
@@ -418,7 +418,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             dosageStatusId=0,
             doseDate=datetime.utcnow(),
             doseReasonId=3,
-            episodeId=episode,
+            episodeId=episode.episodeID,
             reportingMechanismId=4,
         )
         Adherence.objects.create(
@@ -427,7 +427,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             dosageStatusId=1,
             doseDate=datetime.utcnow(),
             doseReasonId=3,
-            episodeId=episode,
+            episodeId=episode.episodeID,
             reportingMechanismId=4,
         )
 
