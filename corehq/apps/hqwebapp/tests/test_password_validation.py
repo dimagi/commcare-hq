@@ -1,7 +1,6 @@
 from django.test import TestCase, override_settings
 from django.core.exceptions import ValidationError
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp.models import UsedPasswords
 from corehq.apps.hqwebapp.password_validation import UsedPasswordValidator
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import WebUser
@@ -19,9 +18,9 @@ class TestUsedPasswordsRestriction(TestCase):
     def tearDown(self):
         self.user.delete()
         self.domain.delete()
-        UsedPasswords.objects.all().delete()
 
     def test_used_password_reset(self):
+        # fails for reuse of password
         with override_settings(AUTH_PASSWORD_VALIDATORS=[{
             'NAME': 'corehq.apps.hqwebapp.password_validation.UsedPasswordValidator',
         }]):
@@ -33,6 +32,7 @@ class TestUsedPasswordsRestriction(TestCase):
                 self.user._password = self.password
                 self.user.save()
 
+            # successful for a password never used
             self.user._password = "123456"
             self.user.save()
 
@@ -46,3 +46,10 @@ class TestUsedPasswordsRestriction(TestCase):
                 # set as an old password
                 self.user._password = "123456"
                 self.user.save()
+
+            self.user._password = "987654"
+            self.user.save()
+
+            # successful for reuse of a password used beyond restricted attempts
+            self.user._password = "apassword"
+            self.user.save()
