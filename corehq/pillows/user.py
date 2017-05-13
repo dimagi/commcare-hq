@@ -50,6 +50,13 @@ def transform_user_for_elasticsearch(doc_dict):
     groups = Group.by_user(doc['_id'], wrap=False, include_names=True)
     doc['__group_ids'] = [group['group_id'] for group in groups]
     doc['__group_names'] = [group['name'] for group in groups]
+    doc['user_data_es'] = []
+    if 'user_data' in doc:
+        for key, value in doc['user_data'].iteritems():
+            doc['user_data_es'].append({
+                'key': key,
+                'value': value,
+            })
     return doc
 
 

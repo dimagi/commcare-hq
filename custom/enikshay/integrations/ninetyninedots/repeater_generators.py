@@ -92,6 +92,10 @@ class PatientPayload(jsonobject.JsonObject):
 
 
 class NinetyNineDotsBasePayloadGenerator(BasePayloadGenerator):
+    @property
+    def content_type(self):
+        return 'application/json'
+
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
             update_case(repeat_record.domain, repeat_record.payload_id, {
@@ -101,9 +105,6 @@ class NinetyNineDotsBasePayloadGenerator(BasePayloadGenerator):
 
 @RegisterGenerator(NinetyNineDotsRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
 class RegisterPatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
-    @property
-    def content_type(self):
-        return 'application/json'
 
     def get_test_payload(self, domain):
         return json.dumps(PatientPayload(
@@ -149,9 +150,6 @@ class RegisterPatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
 
 @RegisterGenerator(NinetyNineDotsUpdatePatientRepeater, 'case_json', 'JSON', is_default=True)
 class UpdatePatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
-    @property
-    def content_type(self):
-        return 'application/json'
 
     def get_test_payload(self, domain):
         return json.dumps(PatientPayload(
