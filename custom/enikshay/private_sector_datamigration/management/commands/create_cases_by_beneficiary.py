@@ -49,9 +49,11 @@ class Command(BaseCommand):
             type=int,
         )
         parser.add_argument(
-            '--nikshayId',
-            dest='nikshayId',
+            '--caseIds',
+            dest='caseIds',
             default=None,
+            metavar='caseId',
+            nargs='+',
         )
 
     @mock_ownership_cleanliness_checks()
@@ -60,8 +62,8 @@ class Command(BaseCommand):
             caseStatus__in=['suspect', 'patient', 'patient '],
         )
 
-        if options['nikshayId']:
-            base_query = base_query.filter(nikshayId=options['nikshayId'])
+        if options['caseIds']:
+            base_query = base_query.filter(caseId__in=options['caseIds'])
 
         start = options['start']
         limit = options['limit']
