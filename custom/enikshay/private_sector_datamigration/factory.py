@@ -347,7 +347,7 @@ class BeneficiaryCaseFactory(object):
     def _location_owner(self):
         return SQLLocation.active_objects.get(
             domain=self.domain,
-            site_code=self._agency.nikshayId,
+            site_code=str(self._agency.agencyId),
         )
 
     @property
