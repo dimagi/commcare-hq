@@ -35,20 +35,13 @@ def transform_case_for_elasticsearch(doc_dict):
     return doc_ret
 
 
-def remove_bad_cases(doc_dict):
-    # TODO: Remove this. It was added because a runaway repeater created lots
-    # of form submissions against this case, filling up the change feed
-    return doc_dict.get('_id') == '79f25f76-7828-4237-9f10-ca80909550f0'
-
-
 def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', **kwargs):
     assert pillow_id == 'CaseToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_INDEX_INFO)
     case_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_INDEX_INFO,
-        doc_prep_fn=transform_case_for_elasticsearch,
-        doc_filter_fn=remove_bad_cases,
+        doc_prep_fn=transform_case_for_elasticsearch
     )
     kafka_change_feed = KafkaChangeFeed(topics=topics.CASE_TOPICS, group_id='cases-to-es')
     return ConstructedPillow(

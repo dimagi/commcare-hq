@@ -25,8 +25,6 @@ from pillowtop.processors.elastic import ElasticProcessor
 from pillowtop.reindexer.change_providers.case import get_domain_case_change_provider
 from pillowtop.reindexer.reindexer import PillowChangeProviderReindexer
 
-from corehq.pillows.case import remove_bad_cases
-
 
 def transform_case_for_elasticsearch(doc_dict):
     doc = {
@@ -77,8 +75,7 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
     case_processor = CaseSearchPillowProcessor(
         elasticsearch=get_es_new(),
         index_info=CASE_SEARCH_INDEX_INFO,
-        doc_prep_fn=transform_case_for_elasticsearch,
-        doc_filter_fn=remove_bad_cases,
+        doc_prep_fn=transform_case_for_elasticsearch
     )
     change_feed = KafkaChangeFeed(topics=topics.CASE_TOPICS, group_id='cases-to-es')
     return ConstructedPillow(
