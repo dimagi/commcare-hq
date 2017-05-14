@@ -296,6 +296,11 @@ def get_apps_base_context(request, domain, app):
             'show_shadow_forms': show_advanced,
         })
 
+    if toggles.APP_MANAGER_V2.enabled(request.user.username):
+        rollout = toggles.APP_MANAGER_V2.enabled_for_new_users_after
+        if not toggles.was_user_created_after(request.user.username, rollout):
+            context.update({'allow_v2_opt_out': True})
+
     return context
 
 

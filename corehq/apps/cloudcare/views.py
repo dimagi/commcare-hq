@@ -24,6 +24,7 @@ from casexml.apps.phone.fixtures import generator
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import use_sqlite_backend
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base, json_handler
 from touchforms.formplayer.api import DjangoAuth, get_raw_instance, sync_db
@@ -58,6 +59,7 @@ from corehq.apps.cloudcare.api import (
     look_up_app_json,
 )
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_app_id_from_hash
+from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
@@ -72,6 +74,7 @@ from corehq.apps.style.decorators import (
     use_jquery_ui,
 )
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
@@ -404,6 +407,80 @@ class SingleAppLandingPageView(TemplateView):
             "maps_api_key": settings.GMAPS_API_KEY,
             "environment": WEB_APPS_ENVIRONMENT,
         })
+
+
+@location_safe
+class LoginAsUsers(View):
+
+    http_method_names = ['get']
+    urlname = 'login_as_users'
+
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
+    def dispatch(self, *args, **kwargs):
+        return super(LoginAsUsers, self).dispatch(*args, **kwargs)
+
+    @property
+    @memoized
+    def can_access_all_locations(self):
+        return self.couch_user.has_permission(self.domain, 'access_all_locations')
+
+    def get(self, request, domain, **kwargs):
+        self.domain = domain
+        self.couch_user = request.couch_user
+
+        try:
+            limit = int(request.GET.get('limit', 10))
+        except ValueError:
+            limit = 10
+
+        # front end pages start at one
+        try:
+            page = int(request.GET.get('page', 1))
+        except ValueError:
+            page = 1
+        query = request.GET.get('query')
+
+        users_query = self._user_query(query, page - 1, limit)
+        total_records = users_query.count()
+        users_data = users_query.run()
+
+        return json_response({
+            'response': {
+                'itemList': map(self._format_user, users_data.hits),
+                'total': users_data.total,
+                'page': page,
+                'query': query,
+                'total_records': total_records
+            },
+        })
+
+    def _user_query(self, search_string, page, limit):
+        user_data_fields = []
+        if toggles.ENIKSHAY.enabled(self.domain):
+            user_data_fields = ['id_issuer_number']
+        return login_as_user_query(
+            self.domain,
+            self.couch_user,
+            search_string,
+            limit,
+            page * limit,
+            can_access_all_locations=self.can_access_all_locations,
+            user_data_fields=user_data_fields
+        )
+
+    def _format_user(self, user_json):
+        user = CouchUser.wrap_correctly(user_json)
+        return {
+            'username': user.raw_username,
+            'customFields': user.user_data,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'phoneNumbers': user.phone_numbers,
+            'user_id': user.user_id,
+            'location': user.sql_location.to_json() if user.sql_location else None,
+        }
 
 
 @login_and_domain_required

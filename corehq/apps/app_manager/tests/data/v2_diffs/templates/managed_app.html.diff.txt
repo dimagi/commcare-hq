@@ -15,7 +15,12 @@
      <script src="{% static 'app_manager/js/app_manager.js' %}"></script>
      <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
      <script src="{% static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
-@@ -26,285 +28,175 @@
+     <script src="{% static 'app_manager/js/managed_app.js' %}"></script>
++    <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
+ {% endblock %}
+ 
+ {% block breadcrumbs %}
+@@ -25,281 +28,177 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -320,21 +325,23 @@
 +          </div>
 +        {% endif %}
 +
-+      <div class="appnav-toggle-label">
-+          <div class="btn-group pull-right">
-+            <button type="button" class="btn btn-xs btn-default active">{% trans "On" %}</button>
-+            <button type="button"
-+                    class="btn btn-xs btn-default"
-+                    data-toggle="modal"
-+                    data-target="#rollout-revert-modal"
-+                    data-redirect="{% url "view_app" domain app.id %}"
-+            >{% trans "Off" %}</button>
++        {% if allow_v2_opt_out %}
++          <div class="appnav-toggle-label">
++              <div class="btn-group pull-right">
++                <button type="button" class="btn btn-xs btn-default active">{% trans "On" %}</button>
++                <button type="button"
++                        class="btn btn-xs btn-default"
++                        data-toggle="modal"
++                        data-target="#rollout-revert-modal"
++                        data-redirect="{% url "view_app" domain app.id %}"
++                >{% trans "Off" %}</button>
++              </div>
++              {% trans "New App Builder" %}
++              <span class="hq-help-template"
++                    data-title="New App Builder"
++                    data-content="{% trans "Turn off new app builder for now." %}"></span>
 +          </div>
-+          {% trans "New App Builder" %}
-+          <span class="hq-help-template"
-+                data-title="New App Builder"
-+                data-content="{% trans "Turn off new app builder for now." %}"></span>
-+      </div>
++        {% endif %}
 +
 +        {% include 'app_manager/v2/partials/appnav_menu.html' %}
 +      {% endif %}
