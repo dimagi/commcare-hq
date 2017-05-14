@@ -1,7 +1,7 @@
 import logging
 import re
 import base64
-
+from datetime import timedelta
 from django.conf import settings
 from django.template.loader import render_to_string
 from Crypto.PublicKey import RSA
@@ -11,8 +11,10 @@ from django.templatetags.i18n import language_name
 from django.contrib.auth.hashers import get_hasher
 
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+
+from corehq.apps.hqwebapp.const import REDIS_LOGIN_ATTEMPTS_LIST_PREFIX, EXPIRE_LOGIN_ATTEMPTS_IN
 from corehq.apps.hqwebapp.forms import BulkUploadForm
-from corehq.apps.hqwebapp.models import HashedPasswordLoginAttempt
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
 from corehq.util.view_utils import get_request
@@ -139,21 +141,29 @@ def verify_password(password, password_salt):
     return PASSWORD_HASHER.verify(password, password_salt)
 
 
+def login_attempts_redis_key_for_user(username):
+    return REDIS_LOGIN_ATTEMPTS_LIST_PREFIX + username
+
+
+def get_login_attempts(username):
+    client = get_redis_client()
+    return client.get(login_attempts_redis_key_for_user(username), [])
+
+
 def decode_password(password_hash, username=None):
     def replay_attack():
         # Replay attack where the same hash used from previous login attempt
-        login_attempts = HashedPasswordLoginAttempt.objects.filter(
-            username=username,
-        )
+        login_attempts = get_login_attempts(username)
         for login_attempt in login_attempts:
-            if verify_password(password_hash, login_attempt.password_hash):
+            if verify_password(password_hash, login_attempt):
                 return True
 
     def record_login_attempt():
-        HashedPasswordLoginAttempt.objects.create(
-            username=username,
-            password_hash=hash_password(password_hash)
-        )
+        client = get_redis_client()
+        login_attempts = client.get(login_attempts_redis_key_for_user(username), [])
+        key_name = login_attempts_redis_key_for_user(username)
+        client.set(key_name, login_attempts + [hash_password(password_hash)])
+        client.expire(key_name, timedelta(EXPIRE_LOGIN_ATTEMPTS_IN))
 
     def _decode_password():
         # force check for replay attack and recording login attempt only for web sign in by checking for username

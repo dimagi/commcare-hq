@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from django.test import TestCase, override_settings, Client
 from django.urls import reverse
-from corehq.apps.hqwebapp.models import HashedPasswordLoginAttempt
-from corehq.apps.hqwebapp.utils import decode_password, extract_password, verify_password, hash_password
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from corehq.apps.hqwebapp.utils import extract_password, verify_password, get_login_attempts
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 
@@ -29,28 +29,33 @@ class TestDecodePassword(TestCase):
         cls.web_user.delete()
 
     def test_login_attempt(self):
+        get_redis_client().clear()
         with override_settings(ENABLE_PASSWORD_HASHING=True):
             password_hash = "sha256$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="
-            HashedPasswordLoginAttempt.objects.all().delete()
             client = Client(enforce_csrf_checks=False)
             form_data = {
                 'auth-username': self.username,
                 'auth-password': password_hash,
                 'hq_login_view-current_step': 'auth'
             }
+            # ensure that login attempt gets stored
+            login_attempts = get_login_attempts(self.username)
+            self.assertEqual(login_attempts, [])
             response = client.post(reverse('login'), form_data, follow=True)
             self.assertRedirects(response, '/domain/select/')
-            # ensure that login attempt was stored
+            login_attempts = get_login_attempts(self.username)
+
             self.assertTrue(
                 verify_password(
                     password_hash,
-                    HashedPasswordLoginAttempt.objects.filter(username=self.username).all()[0].password_hash
+                    login_attempts[0]
                 )
             )
             client.get(reverse('logout'))
 
             # test replay attack
             response = client.post(reverse('login'), form_data, follow=True)
+            self.assertContains(response, "Please enter a password")
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.request['PATH_INFO'], '/accounts/login/')
 

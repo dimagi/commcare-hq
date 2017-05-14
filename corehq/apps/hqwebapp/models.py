@@ -28,10 +28,4 @@ class MaintenanceAlert(models.Model):
     def html(self):
         return mark_up_urls(self.text)
 
-
-class HashedPasswordLoginAttempt(models.Model):
-    username = models.CharField(max_length=255, db_index=True)
-    password_hash = models.CharField(max_length=255)
-    used_at = models.DateTimeField(auto_now_add=True)
-
 from .signals import *
