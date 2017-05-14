@@ -1729,6 +1729,7 @@ ENIKSHAY_REPEATERS = (
     'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayFollowupRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPrivatePatientRepeater',
     'custom.enikshay.integrations.bets.repeaters.ChemistBETSVoucherRepeater',
     'custom.enikshay.integrations.bets.repeaters.LabBETSVoucherRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETS180TreatmentRepeater',
@@ -2069,3 +2070,6 @@ if _raven_config:
     SENTRY_CLIENT = 'corehq.util.sentry.HQSentryClient'
 
 CSRF_COOKIE_HTTPONLY = True
+
+ENIKSHAY_PRIVATE_API_USERS = {}
+ENIKSHAY_PRIVATE_API_PASSWORD = None

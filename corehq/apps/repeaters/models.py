@@ -27,7 +27,7 @@ from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.mixins import UnicodeMixIn
-from dimagi.utils.post import simple_post
+from dimagi.utils.post import simple_post, simple_xml_post
 
 from .dbaccessors import (
     get_pending_repeat_record_count,
@@ -130,6 +130,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     auth_type = StringProperty(choices=("basic", "digest"), required=False)
     username = StringProperty()
     password = StringProperty()
+    operation = StringProperty()
     friendly_name = _("Data")
 
     @classmethod
@@ -291,7 +292,10 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         url = self.get_url(repeat_record)
 
         try:
-            response = simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth)
+            if 'WSDL' in self.url.upper() and self.operation.strip():
+                response = simple_xml_post(payload, self.url, self.operation)
+            else:
+                response = simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth)
         except (Timeout, ConnectionError) as error:
             log_repeater_timeout_in_datadog(self.domain)
             return self.handle_response(RequestConnectionError(error), repeat_record)

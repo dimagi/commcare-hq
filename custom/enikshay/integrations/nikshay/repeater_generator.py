@@ -1,7 +1,7 @@
 import json
 import datetime
 import socket
-
+from django.conf import settings
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.exceptions import RequestConnectionError
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator, BasePayloadGenerator
@@ -28,9 +28,14 @@ from custom.enikshay.integrations.nikshay.repeaters import (
     NikshayHIVTestRepeater,
     NikshayTreatmentOutcomeRepeater,
     NikshayFollowupRepeater,
+    NikshayRegisterPrivatePatientRepeater,
 )
 from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
-from custom.enikshay.exceptions import NikshayLocationNotFound, NikshayRequiredValueMissing
+from custom.enikshay.exceptions import (
+    NikshayLocationNotFound,
+    NikshayRequiredValueMissing,
+    NikshayCodeNotFound,
+)
 from custom.enikshay.integrations.nikshay.field_mappings import (
     gender_mapping,
     occupation,
@@ -335,6 +340,98 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         if isinstance(exception, RequestConnectionError):
             _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception),
                                 "followup_nikshay_registered", "followup_nikshay_error")
+
+
+@RegisterGenerator(NikshayRegisterPrivatePatientRepeater, 'case_xml', 'XML', is_default=True)
+class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator):
+    def get_payload(self, repeat_record, episode_case):
+        person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
+        episode_case_properties = episode_case.dynamic_case_properties()
+        person_case_properties = person_case.dynamic_case_properties()
+
+        person_locations = get_person_locations(person_case)
+        tu_choice = person_case_properties.get('tu_choice')
+        try:
+            tu_location = SQLLocation.objects.get(location_id=tu_choice)
+        except SQLLocation.DoesNotExist:
+            raise NikshayLocationNotFound(
+                "Location with id {location_id} not found. This is the tu_choide for person with id: {person_id}"
+                .format(location_id=tu_choice, person_id=person_case.case_id)
+            )
+        try:
+            tu_code = tu_location.metadata['nikshay_code']
+        except (KeyError, AttributeError) as e:
+            raise NikshayCodeNotFound("Nikshay codes not found for location with id: {}: {}"
+                                      .format(tu_location.get_id, e))
+        episode_case_date = episode_case_properties.get('date_of_diagnosis', None)
+        if episode_case_date:
+            episode_date = datetime.datetime.strptime(episode_case_date, "%Y-%m-%d").date()
+        else:
+            episode_date = datetime.date.today()
+
+        return {
+            "Stocode": person_locations.sto,
+            "Dtocode": person_locations.dto,
+            "TBUcode": tu_code,
+            "HFIDNO": person_locations.phi,
+            "pname": person_case.name,
+            "fhname": person_case_properties.get('husband_father_name', ''),
+            "age": person_case_properties.get('age', ''),
+            "gender": person_case_properties.get('sex', '').capitalize(),
+            # API for Address with char ',' returns Invalid data format error
+            "Address": person_case_properties.get('current_address', '').replace(',', ''),
+            "pin": person_case_properties.get('current_address_postal_code', ''),
+            "lno": person_case_properties.get('phone', ''),
+            "mno": '0',
+            "tbdiagdate": str(episode_date),
+            "tbstdate": episode_case_properties.get(TREATMENT_START_DATE, str(datetime.date.today())),
+            "Type": disease_classification.get(episode_case_properties.get('pulmonary_extra_pulmonary', ''), ''),
+            "B_diagnosis": episode_case_properties.get('case_definition', ''),
+            "D_SUSTest": episode_case_properties.get('drug_susceptibility_test_status', ''),
+            "Treat_I": episode_case_properties.get('treatment_initiation_status', ''),
+            "usersid": settings.ENIKSHAY_PRIVATE_API_USERS.get(person_locations.sto, ''),
+            "password": settings.ENIKSHAY_PRIVATE_API_PASSWORD,
+            "Source": ENIKSHAY_ID,
+        }
+
+    def handle_success(self, response, payload_doc, repeat_record):
+        # A successful response returns a Nikshay ID like 00001
+        # Failures also return with status code 200 and some message like
+        # Dublicate Entry or Invalid data format
+        # (Dublicate is not a typo)
+        message = repeat_record.get_xml_message_response(response)
+        try:
+            if isinstance(message, basestring) and message.isdigit():
+                nikshay_id = message
+                update_case(
+                    payload_doc.domain,
+                    payload_doc.case_id,
+                    {
+                        "private_nikshay_registered": "true",
+                        "nikshay_id": nikshay_id,
+                        "private_nikshay_error": "",
+                    },
+                    external_id=nikshay_id,
+                )
+            else:
+                self.handle_failure(message, payload_doc, repeat_record)
+        except NikshayResponseException as e:
+            _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(e.message))
+
+    def handle_failure(self, response, payload_doc, repeat_record):
+        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.content),
+                            "private_nikshay_registered", "private_nikshay_error"
+                            )
+
+    def handle_exception(self, exception, repeat_record):
+        if isinstance(exception, RequestConnectionError):
+            update_case(
+                repeat_record.domain,
+                repeat_record.payload_id,
+                {
+                    "private_nikshay_error": unicode(exception)
+                }
+            )
 
 
 def _get_nikshay_id_from_response(response):

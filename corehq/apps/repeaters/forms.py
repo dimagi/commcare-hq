@@ -20,7 +20,7 @@ class GenericRepeaterForm(forms.Form):
     url = forms.URLField(
         required=True,
         label='URL to forward to',
-        help_text='Please enter the full url, like http://www.example.com/forwarding/',
+        help_text='Please enter the full url, like http://www.example.com/forwarding/. Enter wsdl link for SOAP',
         widget=forms.TextInput(attrs={"class": "url"})
     )
     auth_type = forms.ChoiceField(
@@ -40,6 +40,10 @@ class GenericRepeaterForm(forms.Form):
         required=False,
         label='Password',
         widget=forms.PasswordInput()
+    )
+    operation = forms.CharField(
+        required=False,
+        label='SOAP operation',
     )
 
     def __init__(self, *args, **kwargs):
@@ -94,6 +98,7 @@ class GenericRepeaterForm(forms.Form):
         form_fields.extend([
             "url",
             self.special_crispy_fields["test_link"],
+            "operation",
             self.special_crispy_fields["auth_type"],
             "username",
             "password"
