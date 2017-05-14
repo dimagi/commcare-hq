@@ -343,12 +343,3 @@
   default: "none"
   since: "2.24"
   force: true
-
-- name: "Use password obfuscation"
-  description: "Hash password submission requests to HQ"
-  id: "cc-use-pw-obfuscation"
-  values: ["no", "yes"]
-  value_names: ["No", "Yes"]
-  default: "no"
-  since: "2.35"
-  force: true
