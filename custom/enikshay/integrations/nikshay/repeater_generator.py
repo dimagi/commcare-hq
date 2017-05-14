@@ -52,6 +52,7 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     smear_result_grade,
 )
 from custom.enikshay.case_utils import update_case
+from dimagi.utils.post import get_message_from_xml_response
 
 ENIKSHAY_ID = 8
 NIKSHAY_NULL_DATE = '1900-01-01'
@@ -399,7 +400,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
         # Failures also return with status code 200 and some message like
         # Dublicate Entry or Invalid data format
         # (Dublicate is not a typo)
-        message = repeat_record.get_xml_message_response(response)
+        message = get_message_from_xml_response(repeat_record.repeater.url, repeat_record.repeater.operation, response)
         try:
             if isinstance(message, basestring) and message.isdigit():
                 nikshay_id = message
