@@ -3,14 +3,17 @@ from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.form_processor.models import CommCareCaseSQL
-from casexml.apps.case.models import CommCareCase
 
 from corehq.apps.repeaters.models import CaseRepeater
 from corehq.apps.repeaters.signals import create_repeat_records
 from casexml.apps.case.signals import case_post_save
 
-from custom.enikshay.integrations.utils import is_valid_person_submission, is_valid_episode_submission, \
+from custom.enikshay.integrations.utils import (
+    is_valid_person_submission,
+    is_valid_episode_submission,
+    case_was_created,
     case_properties_changed
+)
 from custom.enikshay.case_utils import (
     get_open_episode_case_from_person,
     get_episode_case_from_adherence,
@@ -155,6 +158,7 @@ class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
             and registered
             and from_enikshay
             and not previously_updated
+            and case_was_created(adherence_case)
             and is_valid_episode_submission(episode_case)
         )
 
