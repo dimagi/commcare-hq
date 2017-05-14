@@ -1,5 +1,5 @@
 from collections import namedtuple
-from django.contrib.auth.models import User
+
 from django.db import models
 
 from corehq.util.markup import mark_up_urls

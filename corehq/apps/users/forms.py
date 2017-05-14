@@ -16,7 +16,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop
 from django.template.loader import get_template
 from django.template import Context
 from django_countries.data import COUNTRIES
-from django.contrib.auth import password_validation
+
 from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
