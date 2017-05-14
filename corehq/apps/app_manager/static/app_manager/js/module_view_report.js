@@ -1,6 +1,4 @@
-{% load hq_shared_tags %}
-
-<script>
+hqDefine("app_manager/js/module_view_report.js", function() {
     $(function () {
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
         var initNavMenuMedia = hqImport('app_manager/js/app_manager_media.js').initNavMenuMedia;
@@ -72,4 +70,4 @@
             }));
         }
     });
-</script>
+});
