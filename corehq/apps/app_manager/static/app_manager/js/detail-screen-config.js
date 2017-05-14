@@ -1360,14 +1360,14 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         printTemplateUploader = printModule.getPrintTemplateUploader();
                     this.longScreen = addScreen(spec.state, "long");
                     this.printTemplateReference = _.extend(printRef, {
-                        removePrintTemplate: function(slug) {
+                        removePrintTemplate: function() {
                             $.post(
                                 hqImport("hqwebapp/js/urllib.js").reverse("hqmedia_remove_detail_print_template"),
                                 {
                                     module_unique_id: spec.moduleUniqueId,
                                 },
                                 function(data, status) {
-                                    if (status == 'success'){
+                                    if (status === 'success'){
                                         printRef.setObjReference({
                                             path: printRef.path,
                                         });
