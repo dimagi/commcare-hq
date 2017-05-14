@@ -24,7 +24,6 @@ from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_pro
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
 from corehq.apps.app_manager.views.notifications import notify_form_changed
 from corehq.apps.app_manager.views.schedules import get_schedule_context
-
 from corehq.apps.app_manager.views.utils import back_to_main, \
     CASE_TYPE_CONFLICT_MSG, get_langs
 
@@ -88,7 +87,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
-from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
+from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary, get_case_property_description_dict
 from corehq.apps.tour import tours
 
 
@@ -579,7 +578,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'nav_form': form,
         'xform_languages': languages,
         "xform_questions": xform_questions,
-        'valid_index_names': valid_index_names,
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
         'xform_validation_missing': xform_validation_missing,
@@ -670,6 +668,14 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             "app_manager/v2/form_view_advanced.html",
         )
     else:
+        case_config_options.update({
+            'actions': form.actions,
+            'allowUsercase': allow_usercase,
+            'valid_index_names': valid_index_names,
+            'usercasePropertiesMap': get_usercase_properties(app),
+            'propertyDescriptions': get_case_property_description_dict(domain),
+            'save_url': reverse("edit_form_actions", args=[app.domain, app.id, module.id, form.id]),
+        })
         context.update({
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled_for_request(request),
         })

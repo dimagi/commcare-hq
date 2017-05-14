@@ -13,21 +13,9 @@
     var CaseConfig = hqImport('app_manager/js/case-config-ui.js').CaseConfig;
     var caseConfig = new CaseConfig(_.extend({}, initial_page_data("case_config_options"), {
         home: $('#case-config-ko'),
-        save_url: hqImport("hqwebapp/js/urllib.js").reverse("edit_form_actions"),
         requires: form_requires,
-
-        actions: {{ form.actions|JSON }},
-        allowUsercase: {{ allow_usercase|JSON }},
-        propertyDescriptions: {{ property_descriptions|JSON }},
-        valid_index_names: {{ valid_index_names|JSON }},
-        usercasePropertiesMap: {{ usercase_properties|JSON }},
     }));
     caseConfig.init();
 </script>
 {% endif %}
-{% endblock %}
-
-{% block form-view %}
-    {% registerurl "edit_form_actions" app.domain app.id module.id nav_form.id %}
-    {{ block.super }}
 {% endblock %}
