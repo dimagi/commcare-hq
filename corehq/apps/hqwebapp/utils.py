@@ -93,14 +93,12 @@ def aliased_language_name(lang_code):
 
 def extract_password(password):
     # Passwords set with expected salts length and padding would respect this regex
-    reg_exp = r"^sha256\$([a-z|0-9|A-Z]{6})(.*)([a-z|0-9|A-Z]{6})=$"
+    reg_exp = r"^sha256\$([a-z0-9A-Z]{6})([a-zA-Z0-9=]*)([a-z0-9A-Z]{6})=$"
     match_result = re.match(reg_exp, password)
     # strip out outer level padding of salts/keys and ensure three matches
     if match_result and len(match_result.groups()) == 3:
-        match_groups = re.match(reg_exp, password).groups()
-        hash_left = match_groups[0]
-        hash_right = match_groups[2]
-        stripped_password = match_groups[1]
+        match_groups = match_result.groups()
+        hash_left, stripped_password, hash_right = match_groups
         # decode the stripped password to get internal block
         # decoded(salt1 + encoded_password + salt2)
         try:
@@ -114,7 +112,7 @@ def extract_password(password):
             # ensure the same hashes were used in the internal block as the outer
             if match_groups[0] == hash_left and match_groups[2] == hash_right:
                 # decode to get the real password
-                password_hash = re.match(reg_exp, decoded_password).groups()[1]
+                password_hash = match_groups[1]
                 # return password decoded for UTF-8 support
                 try:
                     return base64.b64decode(password_hash).decode('utf-8')
