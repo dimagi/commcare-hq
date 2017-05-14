@@ -10,16 +10,10 @@
 {% block js-inline %}{{ block.super }}
 <script>
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
-    var form_requires = ko.observable({{ form.requires|JSON }});
+    var form_requires = ko.observable(initial_page_data('form_requires'));
     var Careplan = hqImport('app_manager/js/careplan-config-ui.js').Careplan;
     var careplan = new Careplan(_.extend({}, initial_page_data("case_config_options"), {
         home: $('#case-config-ko'),
-        save_url: "{% url "edit_careplan_form_actions" app.domain app.id module.id nav_form.id %}",
-
-        case_preload: {{ case_preload|JSON }},
-        customCaseUpdates: {{ custom_case_properties|JSON }},
-        fixedQuestions: {{ fixed_questions|JSON }},
-        mode: "{{ mode }}",
     }));
     careplan.init();
 </script>

@@ -634,15 +634,16 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
 
     template = None
     if isinstance(form, CareplanForm):
-        context.update({
-            'mode': form.mode,
-            'fixed_questions': form.get_fixed_questions(),
-            'custom_case_properties': [
-                {'key': key, 'path': path} for key, path in form.custom_case_updates.items()
-            ],
+        case_config_options.update({
+            'save_url': reverse("edit_careplan_form_actions", args=[app.domain, app.id, module.id, form.id]),
             'case_preload': [
                 {'key': key, 'path': path} for key, path in form.case_preload.items()
             ],
+            'customCaseUpdates': [
+                {'key': key, 'path': path} for key, path in form.custom_case_updates.items()
+            ],
+            'fixedQuestions': form.get_fixed_questions(),
+            'mode': form.mode,
         })
         template = get_app_manager_template(
             request.user,
