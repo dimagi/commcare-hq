@@ -1,6 +1,6 @@
 import logging
 import re
-from django.core.management import BaseCommand, call_command
+from django.core.management import BaseCommand
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from toggle.models import Toggle
