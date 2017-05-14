@@ -296,13 +296,6 @@ def _get_report_module_context(app, module):
 
     ]
     from corehq.apps.app_manager.suite_xml.features.mobile_ucr import COLUMN_XPATH_CLIENT_TEMPLATE, get_data_path
-    context = {
-        'all_reports': [_report_to_config(r) for r in all_reports],
-        'filter_choices': filter_choices,
-        'auto_filter_choices': auto_filter_choices,
-        'daterange_choices': [choice._asdict() for choice in get_simple_dateranges()],
-        'column_xpath_template': COLUMN_XPATH_CLIENT_TEMPLATE,
-    }
     current_reports = []
     data_path_placeholders = {}
     for r in module.report_configs:
@@ -311,10 +304,23 @@ def _get_report_module_context(app, module):
         data_path_placeholders[r.report_id] = {}
         for chart_id in r.complete_graph_configs.keys():
             data_path_placeholders[r.report_id][chart_id] = get_data_path(r, app.domain)
-    context.update({
-        'current_reports': current_reports,
-        'data_path_placeholders': data_path_placeholders,
-    })
+
+    context = {
+        'report_module_options': {
+            'moduleName': module.name,
+            'moduleFilter': module.module_filter,
+            'availableReports': [_report_to_config(r) for r in all_reports],  # structure for all reports
+            'currentReports': current_reports,  # config data for app reports
+            'columnXpathTemplate': COLUMN_XPATH_CLIENT_TEMPLATE,
+            'dataPathPlaceholders': data_path_placeholders,
+            'languages': app.langs,
+        },
+        'static_data_options': {
+            'filterChoices': filter_choices,
+            'autoFilterChoices': auto_filter_choices,
+            'dateRangeOptions': [choice._asdict() for choice in get_simple_dateranges()],
+        },
+    }
     return context
 
 

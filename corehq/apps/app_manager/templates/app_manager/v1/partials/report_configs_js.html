@@ -1,41 +1,29 @@
 {% load hq_shared_tags %}
 
-{% include "app_manager/v1/partials/nav_menu_media_js_common.html" %}
-
 <script>
     $(function () {
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
         var initNavMenuMedia = hqImport('app_manager/js/app_manager_media.js').initNavMenuMedia;
         var select2Separator = hqImport('app_manager/js/report-module.js').select2Separator;
         var ReportModule = hqImport('app_manager/js/report-module.js').ReportModule;
         var StaticFilterData = hqImport('app_manager/js/report-module.js').StaticFilterData;
         var navMenuMedia = initNavMenuMedia(
                 "",
-                {{ multimedia.menu.menu_refs.image|JSON }},
-                {{ multimedia.menu.menu_refs.audio|JSON }},
-                {{ multimedia.object_map|JSON }},
-                {{ multimedia.menu.default_file_name|JSON }}
+                initial_page_data('menu_refs').image,
+                initial_page_data('menu_refs').audio,
+                initial_page_data('object_map'),
+                initial_page_data('default_file_name')
         );
-        var saveURL = "{% url "edit_report_module" domain app.id module.id %}";
-        var staticData = new StaticFilterData({
-            filterChoices: {{ filter_choices|JSON }},
-            dateRangeOptions: {{ daterange_choices|JSON }},
-            autoFilterChoices: {{ auto_filter_choices|JSON }},
-        });
-        var reportModule = new ReportModule({
+        var saveURL = hqImport("hqwebapp/js/urllib.js").reverse("edit_report_module");
+        var staticData = new StaticFilterData(initial_page_data('static_data_options'));
+        var reportModule = new ReportModule(_.extend({}, initial_page_data("report_module_options"), {
+            lang: initial_page_data('lang'),
             staticFilterData: staticData,
-            moduleName: {{ module.name|JSON }},
-            moduleFilter: "{{ module.module_filter|escapejs }}",
-            availableReports: {{ all_reports|JSON }}, // structure for all reports
-            currentReports: {{ current_reports|JSON }}, // config data for app reports
-            columnXpathTemplate: "{{ column_xpath_template|escapejs }}",
-            dataPathPlaceholders: {{ data_path_placeholders|JSON }},
             saveURL: saveURL,
-            lang: {{ lang|JSON }},
-            languages: {{ app.langs|JSON }},
             menuImage: navMenuMedia.menuImage,
             menuAudio: navMenuMedia.menuAudio,
-            containerId: "#settings"
-        });
+            containerId: "#settings",
+        }));
         _([
             $('#save-button'),
             $('#module-name'),
@@ -70,7 +58,7 @@
                 placeholder: " ",
                 ajax: {
                     // TODO - this is pretty hackish
-                    url: ("{% url 'choice_list_api' domain 'report_id' 'filter_id' %}".split('report_id')[0]
+                    url: (hqImport("hqwebapp/js/urllib.js").reverse("choice_list_api").split('report_id')[0]
                           + element.parent()[0].lastElementChild.value + "/"),
                     dataType: 'json',
                     quietMillis: 250,
