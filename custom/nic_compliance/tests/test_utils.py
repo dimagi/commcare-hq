@@ -42,7 +42,7 @@ class TestDecodePassword(TestCase):
             login_attempts = get_login_attempts(self.username)
             self.assertEqual(login_attempts, [])
             response = client.post(reverse('login'), form_data, follow=True)
-            self.assertRedirects(response, '/domain/select/')
+            self.assertRedirects(response, '/a/delhi/dashboard/apps/')
             login_attempts = get_login_attempts(self.username)
 
             self.assertTrue(
