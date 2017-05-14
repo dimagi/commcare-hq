@@ -1,7 +1,5 @@
 {% extends "style/base_page.html" %}
 {% load i18n %}
-{% load hq_shared_tags %}
-{% load compress %}
 
 {% block title %}{% trans "Log into CommCare HQ" %}{% endblock title %}
 
@@ -11,15 +9,9 @@
     {% endblock %}
 {% endblock page_content %}
 
-
 {% block js %}
     {{ block.super }}
     {% if implement_password_hashing %}
-    {% compress js %}
-        <script src="{% static 'nic_compliance/js/encoder.js' %}"></script>
-    {% endcompress %}
-    <script>
-        var hex_parser = hqImport('nic_compliance/js/encoder.js');
-    </script>
+        {% include "nic_compliance/password_encoder.html" %}
     {% endif %}
 {% endblock %}
