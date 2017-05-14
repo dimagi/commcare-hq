@@ -1,5 +1,4 @@
 from celery.task import task
-
 from django.conf import settings
 from django.core.mail import send_mail, mail_admins
 from corehq.util.log import send_HTML_email

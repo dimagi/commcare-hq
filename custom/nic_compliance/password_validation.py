@@ -2,12 +2,12 @@ from datetime import timedelta
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext as _
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from corehq.apps.hqwebapp.const import (
+from custom.nic_compliance.const import (
     RESTRICT_USED_PASSWORDS_NUM,
     REDIS_USED_PASSWORDS_LIST_PREFIX,
     EXPIRE_PASSWORD_ATTEMPTS_IN,
 )
-from corehq.apps.hqwebapp.utils import verify_password, hash_password
+from custom.nic_compliance.utils import verify_password, hash_password
 
 
 class UsedPasswordValidator(object):

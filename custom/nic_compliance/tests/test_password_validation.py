@@ -1,10 +1,11 @@
-from django.test import TestCase, override_settings
 from django.core.exceptions import ValidationError
+from django.test import TestCase, override_settings
+
 from corehq.apps.domain.models import Domain
-from corehq.apps.hqwebapp.password_validation import UsedPasswordValidator
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import WebUser
-from corehq.apps.hqwebapp.const import RESTRICT_USED_PASSWORDS_NUM
+from custom.nic_compliance.password_validation import UsedPasswordValidator
+from custom.nic_compliance.const import RESTRICT_USED_PASSWORDS_NUM
 
 
 class TestUsedPasswordsRestriction(TestCase):
@@ -22,7 +23,7 @@ class TestUsedPasswordsRestriction(TestCase):
     def test_used_password_reset(self):
         # fails for reuse of password
         with override_settings(AUTH_PASSWORD_VALIDATORS=[{
-            'NAME': 'corehq.apps.hqwebapp.password_validation.UsedPasswordValidator',
+            'NAME': 'custom.nic_compliance.password_validation.UsedPasswordValidator',
         }]):
             with self.assertRaisesMessage(
                     ValidationError,

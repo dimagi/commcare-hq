@@ -2,7 +2,7 @@
 from django.test import TestCase, override_settings, Client
 from django.urls import reverse
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from corehq.apps.hqwebapp.utils import extract_password, verify_password, get_login_attempts
+from custom.nic_compliance.utils import extract_password, verify_password, get_login_attempts
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 

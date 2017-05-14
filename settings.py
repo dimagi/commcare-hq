@@ -371,6 +371,7 @@ HQ_APPS = (
     'custom.icds',
     'custom.icds_reports',
     'custom.pnlppgi',
+    'custom.nic_compliance'
 )
 
 ENIKSHAY_APPS = (
@@ -2035,6 +2036,6 @@ CSRF_COOKIE_HTTPONLY = True
 if ENABLE_USED_PASSWORDS_CHECK:
     AUTH_PASSWORD_VALIDATORS = [
         {
-            'NAME': 'corehq.apps.hqwebapp.password_validation.UsedPasswordValidator',
+            'NAME': 'custom.nic_compliance.password_validation.UsedPasswordValidator',
         }
     ]
