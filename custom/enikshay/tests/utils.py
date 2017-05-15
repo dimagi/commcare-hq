@@ -376,9 +376,9 @@ class ENikshayCaseStructureMixin(object):
             get_prescription_case_structure(uuid.uuid4().hex, self.episode_id)
         )[0]
 
-    def create_voucher_case(self, prescription_id):
+    def create_voucher_case(self, prescription_id, extra_update=None):
         return self.factory.create_or_update_case(
-            get_voucher_case_structure(uuid.uuid4().hex, prescription_id)
+            get_voucher_case_structure(uuid.uuid4().hex, prescription_id, extra_update)
         )[0]
 
 

@@ -17,7 +17,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 
-from .case_utils import CASE_TYPE_EPISODE
+from .case_utils import CASE_TYPE_EPISODE, get_voucher_cases_from_episode
 from .const import (
     DOSE_TAKEN_INDICATORS,
     DAILY_SCHEDULE_FIXTURE_NAME,
@@ -63,8 +63,10 @@ class EpisodeUpdater(object):
         # iterate over all open 'episode' cases and set 'adherence' properties
         for episode in self._get_open_episode_cases():
             adherence_update = EpisodeAdherenceUpdate(episode, self)
+            voucher_update = EpisodeVoucherUpdate(self.domain, episode)
             try:
                 update_json = adherence_update.update_json()
+                update_json.update(voucher_update.update_json())
                 case_block = self._get_case_block(update_json, episode.case_id)
                 if case_block:
                     submit_case_blocks(
@@ -318,3 +320,27 @@ class EpisodeAdherenceUpdate(object):
                         "No fixture item found with schedule_id {}".format(adherence_schedule_id)
                     )
         return {'update': update, 'debug_data': debug_data}
+
+
+class EpisodeVoucherUpdate(object):
+    """
+    Class to capture voucher related calculations specific to an 'episode' case
+    """
+    def __init__(self, domain, episode_case):
+        """
+        Args:
+            episode_case: An 'episode' case object
+        """
+        self.domain = domain
+        self.episode = episode_case
+
+    def update_json(self):
+        prescription_total_days = 0
+        for voucher in get_voucher_cases_from_episode(self.domain, self.episode.case_id):
+            if (voucher.get_case_property('voucher_type') == 'prescription'
+                    and voucher.get_case_property('state') == 'fulfilled'):
+                raw_days_value = voucher.get_case_property('final_prescription_num_days')
+                prescription_total_days += int(raw_days_value) if raw_days_value else 0
+        return {
+            'prescription_total_days': prescription_total_days,
+        }
