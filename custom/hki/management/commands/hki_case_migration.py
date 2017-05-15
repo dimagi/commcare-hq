@@ -19,7 +19,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, log_file, **options):
-        print log_file
         self.domain = 'hki-nepal-suaahara-2'
         loc_mapping = {}
         locs = SQLLocation.objects.filter(domain=self.domain, level=4)
