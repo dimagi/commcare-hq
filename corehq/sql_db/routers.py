@@ -7,6 +7,7 @@ FORM_PROCESSOR_APP = 'form_processor'
 SQL_ACCESSORS_APP = 'sql_accessors'
 ICDS_REPORTS_APP = 'icds_reports'
 SCHEDULING_PARTITIONED_APP = 'scheduling_partitioned'
+WAREHOUSE_APP = 'warehouse'
 
 
 class PartitionRouter(object):
@@ -43,6 +44,8 @@ def allow_migrate(db, app_label):
         )
     elif app_label == SQL_ACCESSORS_APP:
         return db in partition_config.get_form_processing_dbs()
+    elif app_label == WAREHOUSE_APP:
+        return hasattr(settings, "WAREHOUSE_DATABASE_ALIAS") and db == settings.WAREHOUSE_DATABASE_ALIAS
     else:
         return db == partition_config.get_main_db()
 
@@ -54,5 +57,7 @@ def db_for_read_write(model):
     app_label = model._meta.app_label
     if app_label == FORM_PROCESSOR_APP:
         return partition_config.get_proxy_db()
+    elif app_label == WAREHOUSE_APP and hasattr(settings, "WAREHOUSE_DATABASE_ALIAS"):
+        return settings.WAREHOUSE_DATABASE_ALIAS
     else:
         return partition_config.get_main_db()
