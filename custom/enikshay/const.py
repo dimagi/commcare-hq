@@ -25,6 +25,7 @@ MERM_PROPERTIES = [
 
 ENROLLED_IN_PRIVATE = "enrolled_in_private"
 
+ENIKSHAY_ID = 'person_id'
 PERSON_FIRST_NAME = 'first_name'
 PERSON_LAST_NAME = 'last_name'
 
@@ -44,6 +45,7 @@ CURRENT_ADDRESS = 'current_address'
 ENROLLED_IN_PRIVATE = "enrolled_in_private"
 
 NINETYNINEDOTS_PERSON_PROPERTIES = [
+    ENIKSHAY_ID,
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
     OTHER_NUMBER,

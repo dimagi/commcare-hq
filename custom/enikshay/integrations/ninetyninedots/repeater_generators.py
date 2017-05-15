@@ -27,6 +27,7 @@ from custom.enikshay.case_utils import (
 )
 from custom.enikshay.const import (
     NINETYNINEDOTS_NUMBERS,
+    ENIKSHAY_ID,
     PERSON_FIRST_NAME,
     PERSON_LAST_NAME,
     TREATMENT_START_DATE,
@@ -66,6 +67,8 @@ class MermParams(jsonobject.JsonObject):
 
 class PatientPayload(jsonobject.JsonObject):
     beneficiary_id = jsonobject.StringProperty(required=True)
+    enikshay_id = jsonobject.StringProperty(required=False)
+
     first_name = jsonobject.StringProperty(required=False)
     last_name = jsonobject.StringProperty(required=False)
 
@@ -114,6 +117,7 @@ class PatientPayload(jsonobject.JsonObject):
 
         return cls(
             beneficiary_id=person_case.case_id,
+            enikshay_id=person_case_properties.get(ENIKSHAY_ID, None),
             first_name=person_case_properties.get(PERSON_FIRST_NAME, None),
             last_name=person_case_properties.get(PERSON_LAST_NAME, None),
             phone_numbers=_get_phone_numbers(person_case_properties),

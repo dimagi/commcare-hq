@@ -19,6 +19,7 @@ from custom.enikshay.case_utils import get_person_locations
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     MERM_ID,
+    ENIKSHAY_ID,
     PERSON_FIRST_NAME,
     PERSON_LAST_NAME,
     TREATMENT_START_DATE,
@@ -294,6 +295,7 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
         ) if expected_numbers is False else expected_numbers
         expected_payload = {
             u"beneficiary_id": self.person_id,
+            u"enikshay_id": person_case_properties.get(ENIKSHAY_ID, None),
             u"first_name": person_case_properties.get(PERSON_FIRST_NAME, None),
             u"last_name": person_case_properties.get(PERSON_LAST_NAME, None),
             u"phone_numbers": expected_numbers,
