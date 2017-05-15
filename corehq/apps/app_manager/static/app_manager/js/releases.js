@@ -261,7 +261,7 @@ hqDefine('app_manager/js/releases.js', function () {
         };
         self.app_error_url = function(app_id, version) {
             return self.reverse('project_report_dispatcher') + '?app=' + app_id + '&version_number=' + version;
-        }
+        };
         self.latestReleaseId = ko.computed(function () {
             for (var i = 0; i < self.savedApps().length; i++) {
                 var savedApp = self.savedApps()[i];
