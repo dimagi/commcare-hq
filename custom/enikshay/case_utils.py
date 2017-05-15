@@ -217,6 +217,14 @@ def get_voucher_cases_from_prescription(domain, prescription_case_id):
     ]
 
 
+def get_voucher_cases_from_episode(domain, episode_case_id):
+    return [
+        voucher
+        for prescription in get_prescription_cases_from_episode(domain, episode_case_id)
+        for voucher in get_voucher_cases_from_prescription(domain, prescription.case_id)
+    ]
+
+
 def update_case(domain, case_id, updated_properties, external_id=None):
     kwargs = {
         'case_id': case_id,

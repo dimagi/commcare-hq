@@ -21,6 +21,7 @@ from custom.enikshay.case_utils import (
     get_episode_case_from_adherence,
     get_prescription_cases_from_episode,
     get_voucher_cases_from_prescription,
+    get_voucher_cases_from_episode,
 )
 
 
@@ -143,6 +144,10 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
         self.assertItemsEqual(
             [voucher11, voucher12],
             get_voucher_cases_from_prescription(self.domain, prescription1.case_id)
+        )
+        self.assertItemsEqual(
+            [voucher11, voucher12, voucher21],
+            get_voucher_cases_from_episode(self.domain, self.episode_id)
         )
 
 
