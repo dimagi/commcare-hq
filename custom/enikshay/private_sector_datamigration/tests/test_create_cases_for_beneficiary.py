@@ -80,7 +80,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
     def setUp(self):
         super(TestCreateCasesByBeneficiary, self).setUp()
 
-        self.pcp.site_code = self.agency.nikshayId
+        self.pcp.site_code = str(self.agency.agencyId)
         self.pcp.save()
 
     @patch('custom.enikshay.private_sector_datamigration.factory.datetime')
