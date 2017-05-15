@@ -1,13 +1,14 @@
 from django.core.management import BaseCommand
 
 from corehq.apps.es import CaseES
-from corehq.apps.hqcase.utils import update_case, bulk_update_cases
+from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.util.log import with_progress_bar
 
 from dimagi.utils.chunked import chunked
+
 
 class Command(BaseCommand):
 
