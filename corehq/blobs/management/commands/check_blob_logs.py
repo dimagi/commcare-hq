@@ -1,15 +1,12 @@
 import json
 import logging
 
-import casexml.apps.case.models as cases
 import couchforms.models as xform
 from couchdbkit.exceptions import ResourceNotFound
 from couchexport.models import SavedBasicExport
 from django.core.management import BaseCommand, CommandError
 
 import corehq.apps.app_manager.models as apps
-from corehq.apps.case_importer.tracking.filestorage import BUCKET as CASE_UPLOAD_BUCKET
-from corehq.apps.case_importer.tracking.models import CaseUploadFileMeta
 from corehq.apps.export import models as exports
 from corehq.blobs import get_blob_db
 from corehq.blobs.migratingdb import MigratingBlobDB
