@@ -13,11 +13,11 @@ class BaseDim(models.Model):
 
 class UserDim(BaseDim):
     user_id = models.CharField(max_length=255)
-    username = models.CharField(max_length=255)
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
+    username = models.CharField(max_length=150)
+    first_name = models.CharField(max_length=30)
+    last_name = models.CharField(max_length=30)
     email = models.CharField(max_length=255)
-    user_type = models.CharField(max_length=255)
+    user_type = models.CharField(max_length=100)
 
     is_active = models.BooleanField()
     is_staff = models.BooleanField()
@@ -77,10 +77,10 @@ class DomainDim(BaseDim):
 
 
 class UserLocationDim(BaseDim):
-    location_id = models.CharField(max_length=100)
-    user_id = models.CharField(max_length=255)
+    user_dim = models.ForeignKey('UserDim')
+    location_dim = models.ForeignKey('LocationDim')
 
 
 class UserGroupDim(BaseDim):
-    group_id = models.CharField(max_length=255)
-    user_id = models.CharField(max_length=255)
+    user_dim = models.ForeignKey('UserDim')
+    group_dim = models.ForeignKey('GroupDim')
