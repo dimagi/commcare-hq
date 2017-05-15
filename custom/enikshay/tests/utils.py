@@ -321,56 +321,6 @@ class ENikshayCaseStructureMixin(object):
             })
         ])
 
-    def _get_prescription_structure(self):
-        prescription = CaseStructure(
-            case_id=self.prescription_id,
-            attrs={
-                "create": True,
-                "case_type": "prescription"
-            },
-
-            indices=[CaseIndex(
-                CaseStructure(case_id=self.episode.case_id, attrs={"create": False}),
-                identifier="episode_of_prescription",
-                relationship=CASE_INDEX_EXTENSION,
-                related_type="episode"
-            )]
-        )
-        return prescription
-
-    def create_prescription_voucher(self, extra_voucher_props=None):
-        """
-        Create a voucher related to the prescription. This shouldn't be called before create_prescription().
-        """
-        if not self._prescription_created:
-            prescription_structure = self._get_prescription_structure()
-        else:
-            prescription_structure = CaseStructure(case_id=self.prescription_id, attrs={"create": False})
-
-        voucher_props = {
-            "type": "prescription"
-        }
-        voucher_props.update(extra_voucher_props or {})
-
-        voucher = CaseStructure(
-            case_id=uuid.uuid4().hex,
-            attrs={
-                "create": True,
-                "case_type": "voucher",
-                "update": voucher_props
-            },
-            indices=[CaseIndex(
-                prescription_structure,
-                identifier="prescription_of_voucher",
-                relationship=CASE_INDEX_EXTENSION,
-                related_type="prescription"
-            )]
-        )
-
-        voucher = self.factory.create_or_update_cases([voucher])[0]
-        self._prescription_created = True
-        return voucher
-
     def create_prescription_case(self):
         return self.factory.create_or_update_case(
             get_prescription_case_structure(uuid.uuid4().hex, self.episode_id)
