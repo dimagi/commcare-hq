@@ -400,7 +400,11 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
         # Failures also return with status code 200 and some message like
         # Dublicate Entry or Invalid data format
         # (Dublicate is not a typo)
-        message = get_message_from_xml_response(repeat_record.repeater.url, repeat_record.repeater.operation, response)
+        message = get_message_from_xml_response(
+            repeat_record.repeater.url,
+            repeat_record.repeater.operation,
+            response
+        )
         try:
             if isinstance(message, basestring) and message.isdigit():
                 nikshay_id = message
