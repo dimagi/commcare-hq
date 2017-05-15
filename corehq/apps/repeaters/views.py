@@ -13,7 +13,7 @@ from corehq.apps.domain.views import AddRepeaterView
 from corehq.apps.style.decorators import use_select2
 from corehq.apps.repeaters.models import RepeatRecord
 from corehq.util.xml_utils import indent_xml
-from .forms import CaseRepeaterForm
+from .forms import CaseRepeaterForm, SOAPCaseRepeaterForm
 
 
 class AddCaseRepeaterView(AddRepeaterView):
@@ -33,6 +33,15 @@ class AddCaseRepeaterView(AddRepeaterView):
         repeater = super(AddCaseRepeaterView, self).make_repeater()
         repeater.white_listed_case_types = self.add_repeater_form.cleaned_data['white_listed_case_types']
         repeater.black_listed_users = self.add_repeater_form.cleaned_data['black_listed_users']
+        return repeater
+
+
+class AddCustomSOAPCaseRepeaterView(AddCaseRepeaterView):
+    repeater_form_class = SOAPCaseRepeaterForm
+
+    def make_repeater(self):
+        repeater = super(AddCaseRepeaterView, self).make_repeater()
+        repeater.operation = self.add_repeater_form.cleaned_data['operation']
         return repeater
 
 

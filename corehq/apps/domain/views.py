@@ -2519,8 +2519,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
             auth_type=self.add_repeater_form.cleaned_data['auth_type'] or None,
             username=self.add_repeater_form.cleaned_data['username'],
             password=self.add_repeater_form.cleaned_data['password'],
-            format=self.add_repeater_form.cleaned_data['format'],
-            operation=self.add_repeater_form.cleaned_data['operation'],
+            format=self.add_repeater_form.cleaned_data['format']
         )
         return repeater
 

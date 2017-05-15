@@ -20,7 +20,7 @@ class GenericRepeaterForm(forms.Form):
     url = forms.URLField(
         required=True,
         label='URL to forward to',
-        help_text='Please enter the full url, like http://www.example.com/forwarding/. Enter wsdl link for SOAP',
+        help_text='Please enter the full url, like http://www.example.com/forwarding/',
         widget=forms.TextInput(attrs={"class": "url"})
     )
     auth_type = forms.ChoiceField(
@@ -40,10 +40,6 @@ class GenericRepeaterForm(forms.Form):
         required=False,
         label='Password',
         widget=forms.PasswordInput()
-    )
-    operation = forms.CharField(
-        required=False,
-        label='SOAP operation',
     )
 
     def __init__(self, *args, **kwargs):
@@ -98,7 +94,6 @@ class GenericRepeaterForm(forms.Form):
         form_fields.extend([
             "url",
             self.special_crispy_fields["test_link"],
-            "operation",
             self.special_crispy_fields["auth_type"],
             "username",
             "password"
@@ -196,3 +191,14 @@ class CaseRepeaterForm(GenericRepeaterForm):
         if not set(black_listed_users).issubset([t[0] for t in self.user_choices]):
             raise ValidationError(_('Unknown user'))
         return cleaned_data
+
+
+class SOAPCaseRepeaterForm(CaseRepeaterForm):
+    operation = forms.CharField(
+        required=False,
+        label='SOAP operation',
+    )
+
+    def get_ordered_crispy_form_fields(self):
+        fields = super(SOAPCaseRepeaterForm, self).get_ordered_crispy_form_fields()
+        return fields + ['operation']
