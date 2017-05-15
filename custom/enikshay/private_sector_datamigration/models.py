@@ -130,6 +130,10 @@ class Beneficiary(models.Model):
         }[self.languagePreferences]
 
     @property
+    def name(self):
+        return ' '.join([self.firstName, self.lastName])
+
+    @property
     def referred_provider(self):
         return get_agency_by_motech_user_name(self.referredQP)
 
