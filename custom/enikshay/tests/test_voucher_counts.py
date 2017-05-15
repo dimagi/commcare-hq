@@ -1,10 +1,12 @@
 from datetime import datetime
+from mock import patch, MagicMock
 from django.test import TestCase, override_settings
-from ..tasks import EpisodeVoucherUpdate
-
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from ..tasks import EpisodeVoucherUpdate, EpisodeUpdater
 from .utils import ENikshayCaseStructureMixin
 
 
+@patch('corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider', MagicMock())
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
 
@@ -28,7 +30,7 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
         self.make_voucher(prescription2, 16, datetime(2017, 1, 2))
         self.make_voucher(prescription2, 10, datetime(2017, 1, 4))
         self.assertEqual(
-            EpisodeVoucherUpdate(self.domain, self.episode).update_json(),
+            EpisodeVoucherUpdate(self.domain, self.cases['episode']).update_json(),
             {
                 "prescription_total_days": 12 + 7 + 16 + 10,
                 "prescription_total_days_threshold_30": '2017-01-03T00:00:00.000000Z',
@@ -44,7 +46,7 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
         # This one should trigger both the 60 and 90 thresholds
         self.make_voucher(prescription, 70, datetime(2017, 1, 4))
         self.assertEqual(
-            EpisodeVoucherUpdate(self.domain, self.episode).update_json(),
+            EpisodeVoucherUpdate(self.domain, self.cases['episode']).update_json(),
             {
                 "prescription_total_days": 29 + 1 + 7 + 70,
                 "prescription_total_days_threshold_30": '2017-01-02T00:00:00.000000Z',
@@ -52,3 +54,24 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
                 "prescription_total_days_threshold_90": '2017-01-04T00:00:00.000000Z',
             }
         )
+
+    @patch('custom.enikshay.tasks.AdherenceDatastore', MagicMock())
+    def test_case_updates(self):
+        with patch('custom.enikshay.tasks.EpisodeAdherenceUpdate.update_json', MagicMock()) as adherence_update:
+            adherence_update.return_value = {'update': {}}
+
+            prescription = self.create_prescription_case()
+            self.make_voucher(prescription, 29, datetime(2017, 1, 2))
+            self.make_voucher(prescription, 11, datetime(2017, 1, 1))
+
+            # the updater should pickup the above changes
+            EpisodeUpdater(self.domain).run()
+
+            episode = CaseAccessors(self.domain).get_case(self.cases['episode'].case_id)
+            self.assertEqual(episode.get_case_property("prescription_total_days"), unicode(29 + 11))
+
+            # test that a subsequent update performs a noop
+            self.assertEqual(
+                EpisodeVoucherUpdate(self.domain, episode).update_json(),
+                {}
+            )
