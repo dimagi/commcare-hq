@@ -66,7 +66,6 @@ class TestCloudcareESAccessors(SimpleTestCase):
                 10,
                 0,
                 user_data_fields=['wild'],
-                can_access_all_locations=True,
             ).count(),
             1
         )
@@ -80,7 +79,6 @@ class TestCloudcareESAccessors(SimpleTestCase):
                 10,
                 0,
                 user_data_fields=['wild'],
-                can_access_all_locations=True,
             ).count(),
             0
         )
@@ -97,7 +95,6 @@ class TestCloudcareESAccessors(SimpleTestCase):
                 'super',
                 10,
                 0,
-                can_access_all_locations=True,
             ).count(),
             2,
         )
@@ -113,7 +110,6 @@ class TestCloudcareESAccessors(SimpleTestCase):
                 None,
                 10,
                 0,
-                can_access_all_locations=True,
             ).count(),
             2,
         )
