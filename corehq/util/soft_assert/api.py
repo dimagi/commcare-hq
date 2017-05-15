@@ -79,6 +79,9 @@ def soft_assert(to=None, notify_admins=False,
         )
 
     def send_to_admins(subject, message):
+        if settings.DEBUG:
+            return
+
         mail_admins_async.delay(
             subject=subject,
             message=message,
@@ -86,16 +89,14 @@ def soft_assert(to=None, notify_admins=False,
 
     if to and notify_admins:
         def send(info):
-            if not settings.DEBUG:
-                _send_message(info, backend=send_to_admins)
+            _send_message(info, backend=send_to_admins)
             _send_message(info, backend=send_to_recipients)
     elif to:
         def send(info):
             _send_message(info, backend=send_to_recipients)
     elif notify_admins:
         def send(info):
-            if not settings.DEBUG:
-                _send_message(info, backend=send_to_admins)
+            _send_message(info, backend=send_to_admins)
     else:
         raise ValueError('You must call soft assert with either a '
                          'list of recipients or notify_admins=True')
