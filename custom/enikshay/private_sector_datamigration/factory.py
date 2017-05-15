@@ -313,7 +313,7 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _episode(self):
-        episodes = Episode.objects.filter(beneficiaryID=self.beneficiary).order_by('-episodeDisplayID')
+        episodes = Episode.objects.filter(beneficiaryID=self.beneficiary.caseId).order_by('-episodeDisplayID')
         if episodes:
             return episodes[0]
         else:
@@ -322,7 +322,7 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _adherences(self):
-        return list(Adherence.objects.filter(episodeId=self._episode)) if self._episode else []
+        return list(Adherence.objects.filter(episodeId=self._episode.episodeID)) if self._episode else []
 
     @property
     @memoized
