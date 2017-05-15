@@ -88,7 +88,7 @@ class Command(BaseCommand):
         return {
             'pac': 'pac',
             'pcc': 'pcc-chemist',
-            'pdr': 'deo',
+            'pdr': 'ppia-do',
             'pcp': 'pcp',
             'plc': 'plc',
         }[code]
