@@ -14,11 +14,12 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--log-file',
+            'log_file',
             help="File path for log file",
         )
 
     def handle(self, log_file, **options):
+        print log_file
         self.domain = 'hki-nepal-suaahara-2'
         loc_mapping = {}
         locs = SQLLocation.objects.filter(domain=self.domain, level=4)
