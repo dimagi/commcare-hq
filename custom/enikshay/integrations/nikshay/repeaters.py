@@ -1,9 +1,7 @@
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 
-from dimagi.utils.post import simple_xml_post
-
-from corehq.apps.repeaters.models import CaseRepeater
+from corehq.apps.repeaters.models import CaseRepeater, SOAPRepeaterMixin
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import NIKSHAY_INTEGRATION
 from casexml.apps.case.xml.parser import CaseUpdateAction
@@ -178,7 +176,7 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
             return False
 
 
-class NikshayRegisterPrivatePatientRepeater(BaseNikshayRepeater):
+class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeater):
 
     class Meta(object):
         app_label = 'repeaters'
@@ -209,9 +207,6 @@ class NikshayRegisterPrivatePatientRepeater(BaseNikshayRepeater):
             episode_case_properties.get(PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
             is_valid_person_submission(person_case)
         )
-
-    def send_request(self, payload, url, headers, auth):
-        return simple_xml_post(payload, url, self.operation)
 
 
 def person_hiv_status_changed(case):
