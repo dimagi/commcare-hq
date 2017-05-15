@@ -67,9 +67,10 @@ class BeneficiaryCaseFactory(object):
                     'husband_father_name': self.beneficiary.husband_father_name,
                     'language_preference': self.beneficiary.language_preference,
                     'last_name': self.beneficiary.lastName,
-                    'name': ' '.join([self.beneficiary.firstName, self.beneficiary.lastName]),
+                    'name': self.beneficiary.name,
                     'person_occurrence_count': 1,
                     'phone_number': self.beneficiary.phoneNumber,
+                    'search_name': self.beneficiary.name,
                     'send_alerts': self.beneficiary.send_alerts,
                     'secondary_phone': self.beneficiary.emergencyContactNo,
 
