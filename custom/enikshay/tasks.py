@@ -334,13 +334,37 @@ class EpisodeVoucherUpdate(object):
         self.domain = domain
         self.episode = episode_case
 
-    def update_json(self):
-        prescription_total_days = 0
-        for voucher in get_voucher_cases_from_episode(self.domain, self.episode.case_id):
+    @staticmethod
+    def get_voucher_date(voucher):
+        # TODO Should this be voucher.modified_on, voucher.opened_on,
+        # or voucher.get_case_property('date_fulfilled')?
+        return voucher.get_case_property('date_fulfilled')
+
+    @property
+    @memoized
+    def vouchers(self):
+        all_vouchers = get_voucher_cases_from_episode(self.domain, self.episode.case_id)
+        relevant_vouchers = [
+            voucher for voucher in all_vouchers
             if (voucher.get_case_property('voucher_type') == 'prescription'
-                    and voucher.get_case_property('state') == 'fulfilled'):
-                raw_days_value = voucher.get_case_property('final_prescription_num_days')
-                prescription_total_days += int(raw_days_value) if raw_days_value else 0
-        return {
-            'prescription_total_days': prescription_total_days,
-        }
+                and voucher.get_case_property('state') == 'fulfilled')
+        ]
+        return sorted(relevant_vouchers, key=self.get_voucher_date)
+
+    def update_json(self):
+        output_json = {}
+
+        total_days = 0
+        for voucher in self.vouchers:
+            raw_days_value = voucher.get_case_property('final_prescription_num_days')
+            total_days += int(raw_days_value) if raw_days_value else 0
+
+            for num_days in (30, 60, 90, 120,):
+                if total_days >= num_days:
+                    prop = "prescription_total_days_threshold_{}".format(num_days)
+                    if prop not in output_json:
+                        output_json[prop] = self.get_voucher_date(voucher)
+
+        output_json['prescription_total_days'] = total_days
+
+        return output_json
