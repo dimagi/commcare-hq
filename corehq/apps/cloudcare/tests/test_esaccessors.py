@@ -16,19 +16,24 @@ from corehq.apps.cloudcare.esaccessors import login_as_user_query
 
 class TestCloudcareESAccessors(SimpleTestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super(TestCloudcareESAccessors, cls).setUpClass()
+        cls.username = 'superman'
+        cls.first_name = 'clark'
+        cls.last_name = 'kent'
+        cls.doc_type = 'CommCareUser'
+        cls.domain = 'user-esaccessors-test'
+        cls.es = get_es_new()
+
     def setUp(self):
-        super(TestCloudcareESAccessors, self).setUp()
-        self.username = 'superman'
-        self.first_name = 'clark'
-        self.last_name = 'kent'
-        self.doc_type = 'CommCareUser'
-        self.domain = 'user-esaccessors-test'
-        self.es = get_es_new()
         initialize_index_and_mapping(self.es, USER_INDEX_INFO)
+
+    def tearDown(self):
+        ensure_index_deleted(USER_INDEX)
 
     @classmethod
     def tearDownClass(cls):
-        ensure_index_deleted(USER_INDEX)
         super(TestCloudcareESAccessors, cls).tearDownClass()
 
     def _send_user_to_es(self, _id=None, username=None, user_data=None):
