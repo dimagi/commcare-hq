@@ -3,7 +3,7 @@ from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-USER_INDEX = es_index("hqusers_2017-04-13")
+USER_INDEX = es_index("hqusers_2017-05-11")
 USER_MAPPING = {'_all': {'analyzer': 'standard'},
  '_meta': {'created': None},
  'date_detection': False,
@@ -96,6 +96,7 @@ USER_MAPPING = {'_all': {'analyzer': 'standard'},
                                        },
                                        'type': 'object'},
                 'status': {'type': 'string'},
+                'user_data': {'type': 'object', 'enabled': False},
                 'user_data_es': {
                     'type': 'nested',
                     'dynamic': False,
