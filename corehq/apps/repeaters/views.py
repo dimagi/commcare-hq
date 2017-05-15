@@ -40,7 +40,7 @@ class AddCustomSOAPCaseRepeaterView(AddCaseRepeaterView):
     repeater_form_class = SOAPCaseRepeaterForm
 
     def make_repeater(self):
-        repeater = super(AddCaseRepeaterView, self).make_repeater()
+        repeater = super(AddCustomSOAPCaseRepeaterView, self).make_repeater()
         repeater.operation = self.add_repeater_form.cleaned_data['operation']
         return repeater
 
