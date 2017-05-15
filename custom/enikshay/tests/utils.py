@@ -160,7 +160,7 @@ def get_prescription_case_structure(case_id, indexed_episode_id, extra_update=No
             relationship=CASE_INDEX_EXTENSION,
             related_type='episode',
         )],
-        walk_related=False,  # TODO I'm not sure what this should be
+        walk_related=False,
     )
 
 
