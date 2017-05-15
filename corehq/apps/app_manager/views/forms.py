@@ -632,7 +632,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             for candidate_form in candidate_module.get_forms()
         ]
 
-    template = None
     if isinstance(form, CareplanForm):
         case_config_options.update({
             'save_url': reverse("edit_careplan_form_actions", args=[app.domain, app.id, module.id, form.id]),
@@ -645,11 +644,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             'fixedQuestions': form.get_fixed_questions(),
             'mode': form.mode,
         })
-        template = get_app_manager_template(
-            request.user,
-            "app_manager/v1/form_view_base.html",
-            "app_manager/v2/form_view_base.html",
-        )
     elif isinstance(form, AdvancedForm):
         def commtrack_programs():
             if app.commtrack_enabled:
@@ -677,12 +671,15 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
                 'isShadowForm': False,
             })
 
-        context.update(get_schedule_context(form))
-        template = get_app_manager_template(
-            request.user,
-            "app_manager/v1/form_view_advanced.html",
-            "app_manager/v2/form_view_advanced.html",
-        )
+        if module.has_schedule:
+            visit_scheduler_options = get_schedule_context(form)
+            visit_scheduler_options.update({
+                'questions': xform_questions,
+                'save_url': reverse("edit_visit_schedule", args=[app.domain, app.id, module.id, form.id]),
+                'schedule': form.schedule,
+                'phase': visit_scheduler_options['schedule_phase'],
+            })
+            context.update({'visit_scheduler_options': visit_scheduler_options})
     else:
         case_config_options.update({
             'actions': form.actions,
@@ -695,12 +692,12 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         context.update({
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled_for_request(request),
         })
-        template = get_app_manager_template(
-            request.user,
-            "app_manager/v1/form_view.html",
-            "app_manager/v2/form_view.html",
-        )
     context.update({'case_config_options': case_config_options})
+    template = get_app_manager_template(
+        request.user,
+        "app_manager/v1/form_view_base.html",
+        "app_manager/v2/form_view_base.html",
+    )
     return template, context
 
 
