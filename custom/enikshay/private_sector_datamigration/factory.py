@@ -70,6 +70,7 @@ class BeneficiaryCaseFactory(object):
                     'name': self.beneficiary.name,
                     'person_occurrence_count': 1,
                     'phone_number': self.beneficiary.phoneNumber,
+                    'search_name': self.beneficiary.name,
                     'send_alerts': self.beneficiary.send_alerts,
                     'secondary_phone': self.beneficiary.emergencyContactNo,
 
