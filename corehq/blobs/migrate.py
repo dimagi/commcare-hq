@@ -289,14 +289,15 @@ class BlobDbBackendMigrator(BaseDocMigrator):
             try:
                 content = self.db.old_db.get(meta.id, bucket)
             except NotFound:
-                super(BlobDbBackendMigrator, self)._backup_doc({
-                    "doc_type": obj.doc_type,
-                    "doc_id": obj._id,
-                    "blob_identifier": meta.id,
-                    "blob_bucket": bucket,
-                    "error": "not found",
-                })
-                self.not_found += 1
+                if not self.db.new_db.exists(meta.id, bucket):
+                    super(BlobDbBackendMigrator, self)._backup_doc({
+                        "doc_type": obj.doc_type,
+                        "doc_id": obj._id,
+                        "blob_identifier": meta.id,
+                        "blob_bucket": bucket,
+                        "error": "not found",
+                    })
+                    self.not_found += 1
             else:
                 with content:
                     self.db.copy_blob(content, meta.info, bucket)
