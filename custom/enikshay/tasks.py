@@ -17,7 +17,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 
-from .case_utils import CASE_TYPE_EPISODE, get_voucher_cases_from_episode
+from .case_utils import CASE_TYPE_EPISODE, get_approved_prescription_vouchers_from_episode
 from .const import (
     DOSE_TAKEN_INDICATORS,
     DAILY_SCHEDULE_FIXTURE_NAME,
@@ -338,7 +338,7 @@ class EpisodeVoucherUpdate(object):
         return voucher.get_case_property('date_fulfilled')
 
     def _get_vouchers(self):
-        all_vouchers = get_voucher_cases_from_episode(self.domain, self.episode.case_id)
+        all_vouchers = get_approved_prescription_vouchers_from_episode(self.domain, self.episode.case_id)
         relevant_vouchers = [
             voucher for voucher in all_vouchers
             if (voucher.get_case_property('voucher_type') == 'prescription'

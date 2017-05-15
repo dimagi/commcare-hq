@@ -19,9 +19,7 @@ from custom.enikshay.case_utils import (
     get_open_episode_case_from_occurrence,
     get_person_locations,
     get_episode_case_from_adherence,
-    get_prescription_cases_from_episode,
-    get_voucher_cases_from_prescription,
-    get_voucher_cases_from_episode,
+    get_approved_prescription_vouchers_from_episode,
 )
 
 
@@ -138,16 +136,8 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
         prescription2 = self.create_prescription_case()
         voucher21 = self.create_voucher_case(prescription2.case_id)
         self.assertItemsEqual(
-            [prescription1, prescription2],
-            get_prescription_cases_from_episode(self.domain, self.episode_id)
-        )
-        self.assertItemsEqual(
-            [voucher11, voucher12],
-            get_voucher_cases_from_prescription(self.domain, prescription1.case_id)
-        )
-        self.assertItemsEqual(
             [voucher11, voucher12, voucher21],
-            get_voucher_cases_from_episode(self.domain, self.episode_id)
+            get_approved_prescription_vouchers_from_episode(self.domain, self.episode_id)
         )
 
 

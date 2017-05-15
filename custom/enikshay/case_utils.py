@@ -201,30 +201,6 @@ def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_da
     return open_pertinent_adherence_cases
 
 
-def get_prescription_cases_from_episode(domain, episode_case_id):
-    indexed_cases = CaseAccessors(domain).get_reverse_indexed_cases([episode_case_id])
-    return [
-        case for case in indexed_cases
-        if not case.closed and case.type == CASE_TYPE_PRESCRIPTION
-    ]
-
-
-def get_voucher_cases_from_prescription(domain, prescription_case_id):
-    indexed_cases = CaseAccessors(domain).get_reverse_indexed_cases([prescription_case_id])
-    return [
-        case for case in indexed_cases
-        if not case.closed and case.type == CASE_TYPE_VOUCHER
-    ]
-
-
-def get_voucher_cases_from_episode(domain, episode_case_id):
-    return [
-        voucher
-        for prescription in get_prescription_cases_from_episode(domain, episode_case_id)
-        for voucher in get_voucher_cases_from_prescription(domain, prescription.case_id)
-    ]
-
-
 def update_case(domain, case_id, updated_properties, external_id=None):
     kwargs = {
         'case_id': case_id,
@@ -381,6 +357,6 @@ def get_approved_prescription_vouchers_from_episode(domain, episode_case_id):
     approved_prescription_vouchers = []
     for voucher in vouchers:
         voucher_props = voucher.dynamic_case_properties()
-        if voucher_props.get("type") == CASE_TYPE_PRESCRIPTION and voucher_props.get("state") == "fulfilled":
+        if voucher_props.get("voucher_type") == CASE_TYPE_PRESCRIPTION and voucher_props.get("state") == "fulfilled":
             approved_prescription_vouchers.append(voucher)
     return approved_prescription_vouchers
