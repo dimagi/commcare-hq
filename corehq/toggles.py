@@ -1033,7 +1033,7 @@ APP_MANAGER_V2 = StaticToggle(
     'Prototype for case management onboarding (App Manager V2)',
     TAG_PRODUCT_PATH,
     [NAMESPACE_USER],
-    enabled_for_new_users_after=datetime(2017, 5, 15, 20),  # 8pm UTC
+    enabled_for_new_users_after=datetime(2017, 5, 16, 20),  # 8pm UTC
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
