@@ -143,6 +143,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('last_name', 'P'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
+            ('person_id_legacy', '3'),
             ('person_occurrence_count', '1'),
             ('phone_number', '5432109876'),
             ('search_name', 'Nick P'),

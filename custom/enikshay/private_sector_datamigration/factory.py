@@ -68,6 +68,7 @@ class BeneficiaryCaseFactory(object):
                     'language_preference': self.beneficiary.language_preference,
                     'last_name': self.beneficiary.lastName,
                     'name': self.beneficiary.name,
+                    'person_id_legacy': self.beneficiary.caseId,
                     'person_occurrence_count': 1,
                     'phone_number': self.beneficiary.phoneNumber,
                     'search_name': self.beneficiary.name,
