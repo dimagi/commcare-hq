@@ -30,7 +30,8 @@ class Command(BaseCommand):
                 try:
                     xform, cases = bulk_update_cases(self.domain, cases_to_update)
                     fh.write(xform.form_id)
-                except LocalSubmissionError:
+                except LocalSubmissionError as e:
+                    print unicode(e)
                     failed_updates.extend(case[0] for case in cases_to_update)
             fh.write('--------Failed Cases--------------')
             for case_id in failed_updates:

@@ -223,18 +223,18 @@ def update_case(domain, case_id, case_properties=None, close=False, xmlns=None):
     return submit_case_block_from_template(domain, 'hqcase/xml/update_case.xml', context, xmlns=xmlns)
 
 
-def bulk_update_cases(domain, cases):
+def bulk_update_cases(domain, case_changes):
     """
-    Updates or closes a case (or both) by submitting a form.
-    domain - the case's domain
-    case_id - the case's id
-    case_properties - to update the case, pass in a dictionary of {name1: value1, ...}
-                      to ignore case updates, leave this argument out
-    close - True to close the case, False otherwise
-    xmlns - pass in an xmlns to use it instead of the default
+    Updates or closes a list of cases (or both) by submitting a form.
+    domain - the cases' domain
+    cases - a tuple in the form (case_id, case_properties, close)
+        case_id - id of the case to update
+        case_properties - to update the case, pass in a dictionary of {name1: value1, ...}
+                          to ignore case updates, leave this argument out
+        close - True to close the case, False otherwise
     """
     case_blocks = []
-    for case_id, case_properties, close in cases:
+    for case_id, case_properties, close in case_changes:
         context = {
             'case_id': case_id,
             'date_modified': json_format_datetime(datetime.datetime.utcnow()),
