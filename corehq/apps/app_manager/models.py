@@ -4222,6 +4222,7 @@ class ReportAppConfig(DocumentSchema):
                     locale_specific_config={},
                     annotations=[]
                 )
+        self.graph_configs = {}
 
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
