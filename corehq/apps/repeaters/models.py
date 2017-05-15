@@ -472,20 +472,39 @@ class RepeatRecord(Document):
     An record of a particular instance of something that needs to be forwarded
     with a link to the proper repeater object
     """
+
+    domain = StringProperty()
+    repeater_id = StringProperty()
+    repeater_type = StringProperty()
+    payload_id = StringProperty()
+
     overall_tries = IntegerProperty(default=0)
     max_possible_tries = IntegerProperty(default=3)
 
-    repeater_id = StringProperty()
-    repeater_type = StringProperty()
-    domain = StringProperty()
+    attempts = ListProperty(RepeatRecordAttempt)
 
+    cancelled = BooleanProperty(default=False)
     last_checked = DateTimeProperty()
+    failure_reason = StringProperty()
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
-    failure_reason = StringProperty()
-    cancelled = BooleanProperty(default=False)
 
-    payload_id = StringProperty()
+    @classmethod
+    def wrap(cls, data):
+        should_bootstrap_attempts = ('attempts' not in data)
+
+        self = super(RepeatRecord, cls).wrap(data)
+
+        if should_bootstrap_attempts and self.last_checked:
+            assert not self.attempts
+            self.attempts = [RepeatRecordAttempt(
+                cancelled=self.cancelled,
+                datetime=self.last_checked,
+                failure_reason=self.failure_reason,
+                next_check=self.next_check,
+                succeeded=self.succeeded,
+            )]
+        return self
 
     @property
     @memoized
@@ -530,12 +549,17 @@ class RepeatRecord(Document):
         return results['value'] if results else 0
 
     def add_attempt(self, attempt):
+        self.attempts.append(attempt)
         self.last_checked = attempt.datetime
         self.next_check = attempt.next_check
         self.succeeded = attempt.succeeded
         self.cancelled = attempt.cancelled
-        if attempt.failure_reason is not None:
-            self.failure_reason = attempt.failure_reason
+        self.failure_reason = attempt.failure_reason
+
+    def get_numbered_attempts(self):
+        offset = self.overall_tries - len(self.attempts)
+        for i, attempt in enumerate(self.attempts):
+            yield i + 1 + offset, attempt
 
     def make_set_next_try_attempt(self, failure_reason):
         # we use an exponential back-off to avoid submitting to bad urls
@@ -609,7 +633,7 @@ class RepeatRecord(Document):
         """Do something with the response if the repeater fails
         """
         return self._make_failure_attempt(
-            u'{}: {}. {}'.format(response.status_code, response.reason, getattr(response, 'content', None)),
+            u'{}: {}.\n{}'.format(response.status_code, response.reason, getattr(response, 'content', None)),
             response
         )
 
