@@ -10,6 +10,12 @@ function UnderweightChildrenReportController($routeParams, maternalChildService)
     ];
 
     vm.mapData = {};
+    vm.fills = {
+        '76%-100%': '#2171b5',
+        '51%-75%': '#6baed6',
+        '26%-50%': '#bcd6e7',
+        '0-25%': '#eef2ff',
+    };
 
     maternalChildService.getUnderweightChildrenData().then(function(response) {
         vm.mapData = response.data;
