@@ -35,7 +35,9 @@ function IndieMapController($scope) {
         customLegend: function() {
             var html = ['<h3>' + vm.legendTitle + '</h3><ul>'];
             for (var fillKey in this.options.fills) {
-                html.push('<li class="key"><div style="background-color: ' + this.options.fills[fillKey] + '; width: 45px; height: 45px;"></div><span>', fillKey, '</span></li>');
+                if (fillKey === 'defaultFill') continue;
+                html.push('<li class="key"><div style="background-color: ' + this.options.fills[fillKey] + '; width: 45px; height: 45px; display: inline-block"></div>',
+                          '<span style="padding-left: 10px;">', fillKey, '</span></li>');
             }
             html.push('</ul>');
             d3.select(this.options.element).append('div')
