@@ -80,7 +80,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
     def setUp(self):
         super(TestCreateCasesByBeneficiary, self).setUp()
 
-        self.pcp.site_code = self.agency.nikshayId
+        self.pcp.site_code = str(self.agency.agencyId)
         self.pcp.save()
 
     @patch('custom.enikshay.private_sector_datamigration.factory.datetime')
@@ -91,7 +91,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             adherenceScore=0.5,
             alertFrequencyId=2,
             basisOfDiagnosis='Clinical - Other',
-            beneficiaryID=self.beneficiary,
+            beneficiaryID=self.beneficiary.caseId,
             creationDate=datetime(2017, 4, 20),
             dateOfDiagnosis=datetime(2017, 4, 18),
             diabetes='Yes',
@@ -109,6 +109,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             rxStartDate=datetime(2017, 4, 19),
             rxOutcomeDate=datetime(2017, 5, 19),
             site='Extrapulmonary',
+            treatmentPhase='Continuation Phase',
             unknownAdherencePct=0.9,
             unresolvedMissedDosesPct=0.1,
         )
@@ -144,6 +145,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('migration_created_from_record', '3'),
             ('person_occurrence_count', '1'),
             ('phone_number', '5432109876'),
+            ('search_name', 'Nick P'),
             ('secondary_phone', '1234567890'),
             ('send_alerts', 'yes'),
             ('sex', 'male'),
@@ -189,6 +191,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('case_definition', 'clinical'),
             ('date_of_diagnosis', '2017-04-18'),
             ('date_of_mo_signature', '2017-04-17'),
+            ('diagnosing_facility_id', self.pcp.location_id),
             ('disease_classification', 'extrapulmonary'),
             ('dots_99_enabled', 'false'),
             ('dst_status', 'rif_sensitive'),
@@ -202,14 +205,16 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('new_retreatment', 'new'),
             ('nikshay_id', '02139-02215'),
             ('patient_type', 'new'),
+            ('private_sector_episode_pending_registration', 'no'),
             ('retreatment_reason', ''),
             ('rx_outcome_date', '2017-05-19'),
             ('site', 'extrapulmonary'),
             ('site_choice', 'abdominal'),
             ('transfer_in', ''),
             ('treatment_card_completed_date', '2017-04-20'),
-            ('treatment_initiated', 'yes_private'),
+            ('treatment_initiated', 'yes_pcp'),
             ('treatment_initiation_date', '2017-04-19'),
+            ('treatment_phase', 'continuation_phase_cp'),
             ('weight', '50'),
         ]))
         self.assertEqual(len(episode_case.indices), 1)
@@ -229,7 +234,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             adherenceScore=0.5,
             alertFrequencyId=2,
             basisOfDiagnosis='Clinical - Other',
-            beneficiaryID=self.beneficiary,
+            beneficiaryID=self.beneficiary.caseId,
             creationDate=datetime(2017, 4, 20),
             dateOfDiagnosis=datetime(2017, 4, 18),
             dstStatus='Rifampicin sensitive',
@@ -277,7 +282,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             adherenceScore=0.5,
             alertFrequencyId=2,
             basisOfDiagnosis='Clinical - Other',
-            beneficiaryID=self.beneficiary,
+            beneficiaryID=self.beneficiary.caseId,
             creationDate=datetime(2017, 4, 20),
             dateOfDiagnosis=datetime(2017, 4, 18),
             dstStatus='Rifampicin sensitive',
@@ -325,7 +330,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             adherenceScore=0.5,
             alertFrequencyId=2,
             basisOfDiagnosis='Clinical - Other',
-            beneficiaryID=self.beneficiary,
+            beneficiaryID=self.beneficiary.caseId,
             creationDate=datetime(2017, 4, 20),
             dateOfDiagnosis=datetime(2017, 4, 18),
             dstStatus='Rifampicin sensitive',
@@ -350,7 +355,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             dosageStatusId=0,
             doseDate=datetime(2017, 4, 22),
             doseReasonId=3,
-            episodeId=episode,
+            episodeId=episode.episodeID,
             reportingMechanismId=4,
         )
 
@@ -394,7 +399,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             adherenceScore=0.5,
             alertFrequencyId=2,
             basisOfDiagnosis='Clinical - Other',
-            beneficiaryID=self.beneficiary,
+            beneficiaryID=self.beneficiary.caseId,
             creationDate=datetime(2017, 4, 20),
             dateOfDiagnosis=datetime(2017, 4, 18),
             dstStatus='Rifampicin sensitive',
@@ -418,7 +423,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             dosageStatusId=0,
             doseDate=datetime.utcnow(),
             doseReasonId=3,
-            episodeId=episode,
+            episodeId=episode.episodeID,
             reportingMechanismId=4,
         )
         Adherence.objects.create(
@@ -427,7 +432,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             dosageStatusId=1,
             doseDate=datetime.utcnow(),
             doseReasonId=3,
-            episodeId=episode,
+            episodeId=episode.episodeID,
             reportingMechanismId=4,
         )
 
@@ -518,7 +523,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             adherenceScore=0.5,
             alertFrequencyId=2,
             basisOfDiagnosis='Clinical - Other',
-            beneficiaryID=self.beneficiary,
+            beneficiaryID=self.beneficiary.caseId,
             creationDate=datetime(2017, 4, 20),
             dateOfDiagnosis=datetime(2017, 4, 18),
             dstStatus='Rifampicin sensitive',
@@ -583,7 +588,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             adherenceScore=0.5,
             alertFrequencyId=2,
             basisOfDiagnosis='Clinical - Other',
-            beneficiaryID=self.beneficiary,
+            beneficiaryID=self.beneficiary.caseId,
             creationDate=datetime(2017, 4, 20),
             dateOfDiagnosis=datetime(2017, 4, 18),
             dstStatus='Rifampicin sensitive',

@@ -98,12 +98,16 @@
                     <i class="fa fa-comments icon-comments dropdown-icon"></i> {% trans "User Forum" %}
                 </a>
             </li>
-            <li>
-                <a href="#modalReportIssue" data-toggle="modal" class="track-usage-link"
-                   data-category="Nav Bar" data-action="Question Mark" data-label="Report an Issue">
-                    <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
-                </a>
-            </li>
+            {% if not enterprise_mode or not 500traceback %}
+                {% if allow_report_an_issue %}
+                    <li>
+                        <a href="#modalReportIssue" data-toggle="modal" class="track-usage-link"
+                           data-category="Nav Bar" data-action="Question Mark" data-label="Report an Issue">
+                            <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endif %}
         </ul>
     </li>
     {% if request.couch_user and request.couch_user.is_web_user %}

@@ -130,6 +130,10 @@ class Beneficiary(models.Model):
         }[self.languagePreferences]
 
     @property
+    def name(self):
+        return ' '.join([self.firstName, self.lastName])
+
+    @property
     def referred_provider(self):
         return get_agency_by_motech_user_name(self.referredQP)
 
@@ -172,7 +176,7 @@ class Episode(models.Model):
     associatedFO = models.CharField(max_length=255, null=True)
     bankName = models.CharField(max_length=255, null=True)
     basisOfDiagnosis = models.CharField(max_length=255, null=True)
-    beneficiaryID = models.ForeignKey(Beneficiary, on_delete=models.CASCADE)
+    beneficiaryID = models.CharField(max_length=18)
     branchName = models.CharField(max_length=255, null=True)
     creationDate = models.DateTimeField(null=True)
     creator = models.CharField(max_length=255, null=True)
@@ -221,12 +225,6 @@ class Episode(models.Model):
     treatingQP = models.CharField(max_length=255, null=True)
     treatmentOutcomeId = models.CharField(max_length=255, null=True)
     treatmentPhase = models.CharField(max_length=255, null=True)
-    # [u'Select',
-    #  None,
-    #  u'Intensive Phase',
-    #  u'N/A',
-    #  u'Continuation Phase',
-    #  u'Extended IP']
     tsProviderType = models.CharField(max_length=255, null=True)
     unknownAdherencePct = models.DecimalField(decimal_places=10, max_digits=14)
     unresolvedMissedDosesPct = models.DecimalField(decimal_places=10, max_digits=14)
@@ -368,6 +366,17 @@ class Episode(models.Model):
         return get_agency_by_motech_user_name(self.treatingQP)
 
     @property
+    def treatment_phase(self):
+        return {
+            'Intensive Phase': 'ip',
+            'Extended IP': 'extended_ip',
+            'Continuation Phase': 'continuation_phase_cp',
+            'N/A': '',
+            'Select': '',
+            None: '',
+        }[self.treatmentPhase]
+
+    @property
     def treatment_outcome(self):
         if self.treatmentOutcomeId is None:
             return None
@@ -405,7 +414,7 @@ class Adherence(models.Model):
     dosageStatusId = models.IntegerField()
     doseDate = models.DateTimeField()
     doseReasonId = models.IntegerField()
-    episodeId = models.ForeignKey(Episode, on_delete=models.CASCADE)
+    episodeId = models.CharField(max_length=8)
     modificationDate = models.DateTimeField(null=True)
     modifiedBy = models.CharField(max_length=255, null=True)
     owner = models.CharField(max_length=255, null=True)
