@@ -24,7 +24,6 @@ from casexml.apps.phone.fixtures import generator
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import use_sqlite_backend
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base, json_handler
 from touchforms.formplayer.api import DjangoAuth, get_raw_instance, sync_db
@@ -421,11 +420,6 @@ class LoginAsUsers(View):
     def dispatch(self, *args, **kwargs):
         return super(LoginAsUsers, self).dispatch(*args, **kwargs)
 
-    @property
-    @memoized
-    def can_access_all_locations(self):
-        return self.couch_user.has_permission(self.domain, 'access_all_locations')
-
     def get(self, request, domain, **kwargs):
         self.domain = domain
         self.couch_user = request.couch_user
@@ -466,7 +460,6 @@ class LoginAsUsers(View):
             search_string,
             limit,
             page * limit,
-            can_access_all_locations=self.can_access_all_locations,
             user_data_fields=user_data_fields
         )
 
