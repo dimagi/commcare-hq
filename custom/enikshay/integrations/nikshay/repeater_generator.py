@@ -356,7 +356,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
             tu_location = SQLLocation.objects.get(location_id=tu_choice)
         except SQLLocation.DoesNotExist:
             raise NikshayLocationNotFound(
-                "Location with id {location_id} not found. This is the tu_choide for person with id: {person_id}"
+                "Location with id {location_id} not found. This is the tu_choice for person with id: {person_id}"
                 .format(location_id=tu_choice, person_id=person_case.case_id)
             )
         try:
@@ -420,7 +420,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
             _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(e.message))
 
     def handle_failure(self, response, payload_doc, repeat_record):
-        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.content),
+        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response),
                             "private_nikshay_registered", "private_nikshay_error"
                             )
 

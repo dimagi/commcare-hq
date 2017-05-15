@@ -29,6 +29,7 @@ from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayTreatmentOutcomePayload,
     NikshayHIVTestPayloadGenerator,
     NikshayFollowupPayloadGenerator,
+    NikshayRegisterPrivatePatientPayloadGenerator,
     ENIKSHAY_ID,
 )
 from custom.enikshay.case_utils import update_case
@@ -40,6 +41,9 @@ from casexml.apps.case.tests.util import delete_all_cases
 
 DUMMY_NIKSHAY_ID = "DM-DMO-01-16-0137"
 
+MockNikshayRegisterPrivatePatientRepeater = namedtuple('MockRepeater', 'url operation')
+MockNikshayRegisterPrivatePatientRepeatRecord = namedtuple('MockRepeatRecord', 'repeater')
+
 
 class MockResponse(object):
     def __init__(self, status_code, json_data):
@@ -48,6 +52,25 @@ class MockResponse(object):
 
     def json(self):
         return self.json_data
+
+
+class MockSoapResponse(object):
+    def __init__(self, status_code, content):
+        self.status_code = status_code
+        self.content = content
+        self.headers = {'Content-Type': 'text/xml; charset=utf-8'}
+
+FAILURE_RESPONSE = (
+    '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" '
+    'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body>'
+    '<InsertHFIDPatient_UATBCResponse xmlns="http://tempuri.org/"><InsertHFIDPatient_UATBCResult>Invalid data format'
+    '</InsertHFIDPatient_UATBCResult></InsertHFIDPatient_UATBCResponse></soap:Body></soap:Envelope>')
+
+SUCCESSFUL_SOAP_RESPONSE = (
+    '<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" '
+    'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body>'
+    '<InsertHFIDPatient_UATBCResponse xmlns="http://tempuri.org/"><InsertHFIDPatient_UATBCResult>000001'
+    '</InsertHFIDPatient_UATBCResult></InsertHFIDPatient_UATBCResponse></soap:Body></soap:Envelope>')
 
 
 class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
@@ -96,6 +119,9 @@ class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
             }
         )
         self.create_case(nikshay_registered_case)
+
+    def _assert_case_property_equal(self, case, case_property, expected_value):
+        self.assertEqual(case.dynamic_case_properties().get(case_property), expected_value)
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -183,7 +209,7 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self.assertEqual(payload['pname'], u"Peregrine เՇร ค Շгคק")
         self.assertEqual(payload['page'], '20')
         self.assertEqual(payload['pgender'], 'M')
-        self.assertEqual(payload['paddress'], 'Mr. Everest')
+        self.assertEqual(payload['paddress'], 'Mt. Everest')
         self.assertEqual(payload['pmob'], self.primary_phone_number)
         self.assertEqual(payload['cname'], 'Mrs. Everestie')
         self.assertEqual(payload['caddress'], 'Mrs. Everestie')
@@ -202,9 +228,6 @@ class TestNikshayRegisterPatientPayloadGenerator(ENikshayLocationStructureMixin,
         self.assertEqual(payload['dotpType'], '5')
         self.assertEqual(payload['dotdesignation'], 'ngo_volunteer')
         self.assertEqual(payload['dateofInitiation'], '2015-03-03')
-
-    def _assert_case_property_equal(self, case, case_property, expected_value):
-        self.assertEqual(case.dynamic_case_properties().get(case_property), expected_value)
 
     def test_username_password(self):
         episode_case = self._create_nikshay_enabled_case()
@@ -982,3 +1005,84 @@ class TestNikshayRegisterPrivatePatientRepeater(ENikshayLocationStructureMixin, 
         self.assign_person_to_location(self.phi.location_id)
         self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
         self.assertEqual(1, len(self.repeat_records().all()))
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True, ENIKSHAY_PRIVATE_API_PASSWORD="123",
+                   ENIKSHAY_PRIVATE_API_USERS={'MH': 'ppia-mh14'})
+class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
+    def setUp(self):
+        super(TestNikshayRegisterPrivatePatientPayloadGenerator, self).setUp()
+        self.cases = self.create_case_structure()
+        self.assign_person_to_location(self.phi.location_id)
+        update_case(self.domain, self.person_id, {"tu_choice": self.phi.location_id})
+
+    def test_payload_properties(self):
+        episode_case = self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
+        payload = NikshayRegisterPrivatePatientPayloadGenerator(None).get_payload(None, episode_case)
+        self.assertEqual(payload['tbdiagdate'], '2014-09-09')
+        self.assertEqual(payload['HFIDNO'], '2')
+        self.assertEqual(payload['TBUcode'], '2')
+        self.assertEqual(payload['Address'], 'Mt. Everest')
+        self.assertEqual(payload['pin'], '110088')
+        self.assertEqual(payload['fhname'], 'Mr. Peregrine')
+        self.assertEqual(payload['age'], '20')
+        self.assertEqual(payload['Dtocode'], 'ABD')
+        self.assertEqual(payload['Treat_I'], 'F')
+        self.assertEqual(payload['B_diagnosis'], 'E')
+        self.assertEqual(payload['lno'], '27477587')
+        self.assertEqual(payload['tbstdate'], '2015-03-03')
+        self.assertEqual(payload['pname'], u"Peregrine เՇร ค Շгคק")
+        self.assertEqual(payload['D_SUSTest'], 'N')
+        self.assertEqual(payload['gender'], 'Male')
+        self.assertEqual(payload['Stocode'], 'MH')
+        self.assertEqual(payload['Type'], 'P')
+        self.assertEqual(payload['mno'], '0')
+        self.assertEqual(payload['password'], "123")
+        self.assertEqual(payload['usersid'], "ppia-mh14")
+        self.assertEqual(payload['Source'], ENIKSHAY_ID)
+
+    def test_handle_success(self):
+        nikshay_id = "000001"
+        self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
+        payload_generator = NikshayRegisterPrivatePatientPayloadGenerator(None)
+
+        repeat_record = MockNikshayRegisterPrivatePatientRepeatRecord(
+            MockNikshayRegisterPrivatePatientRepeater(
+                # using the actual WSDL link to fetch the xml structure. No data request is sent
+                url="http://nikshay.gov.in/mobileservice/webservice.asmx?WSDL",
+                operation='InsertHFIDPatient_UATBC')
+        )
+
+        payload_generator.handle_success(
+            MockSoapResponse(200, SUCCESSFUL_SOAP_RESPONSE),
+            self.cases[self.episode_id],
+            repeat_record,
+        )
+        updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
+        self._assert_case_property_equal(updated_episode_case, 'private_nikshay_registered', 'true')
+        self._assert_case_property_equal(updated_episode_case, 'private_nikshay_error', '')
+        self._assert_case_property_equal(updated_episode_case, 'nikshay_id', nikshay_id)
+        self.assertEqual(updated_episode_case.external_id, nikshay_id)
+
+    def test_handle_failure(self):
+        self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
+        payload_generator = NikshayRegisterPrivatePatientPayloadGenerator(None)
+
+        repeat_record = MockNikshayRegisterPrivatePatientRepeatRecord(
+            MockNikshayRegisterPrivatePatientRepeater(
+                # using the actual WSDL link to fetch the xml structure for dummy response parsing.
+                # No data request is sent
+                url="http://nikshay.gov.in/mobileservice/webservice.asmx?WSDL",
+                operation='InsertHFIDPatient_UATBC')
+        )
+
+        payload_generator.handle_success(
+            MockSoapResponse(200, FAILURE_RESPONSE),
+            self.cases[self.episode_id],
+            repeat_record,
+        )
+        updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
+        self._assert_case_property_equal(updated_episode_case, 'private_nikshay_registered', 'false')
+        self._assert_case_property_equal(updated_episode_case, 'private_nikshay_error', 'Invalid data format')
+        self._assert_case_property_equal(updated_episode_case, 'nikshay_id', None)
+        self.assertEqual(updated_episode_case.external_id, None)
