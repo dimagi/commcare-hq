@@ -454,6 +454,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             dateOfDiagnosis=datetime(2017, 4, 18),
             dstStatus='Rifampicin sensitive',
             episodeDisplayID=3,
+            episodeID='123',
             extraPulmonary='Abdomen',
             hiv='Negative',
             lastMonthAdherencePct=0.6,
@@ -473,7 +474,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             dosageStatusId=0,
             doseDate=datetime.utcnow(),
             doseReasonId=3,
-            episodeId=episode,
+            episodeId=episode.episodeID,
             reportingMechanismId=4,
         )
         Adherence.objects.create(
@@ -482,7 +483,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             dosageStatusId=1,
             doseDate=datetime.utcnow(),
             doseReasonId=3,
-            episodeId=episode,
+            episodeId=episode.episodeID,
             reportingMechanismId=4,
         )
 
