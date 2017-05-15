@@ -373,6 +373,7 @@ HQ_APPS = (
     'custom.icds',
     'custom.icds_reports',
     'custom.pnlppgi',
+    'custom.nic_compliance'
 )
 
 ENIKSHAY_APPS = (
@@ -896,6 +897,8 @@ SENTRY_PROJECT_ID = None
 SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
 SENTRY_API_KEY = None
 
+ENABLE_PASSWORD_HASHING = False
+ENABLE_USED_PASSWORDS_CHECK = False
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
 
 AUTHPROXY_URL = None
@@ -2069,3 +2072,9 @@ if _raven_config:
     SENTRY_CLIENT = 'corehq.util.sentry.HQSentryClient'
 
 CSRF_COOKIE_HTTPONLY = True
+if ENABLE_USED_PASSWORDS_CHECK:
+    AUTH_PASSWORD_VALIDATORS = [
+        {
+            'NAME': 'custom.nic_compliance.password_validation.UsedPasswordValidator',
+        }
+    ]

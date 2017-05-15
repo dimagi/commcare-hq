@@ -11,7 +11,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
-
+from custom.nic_compliance.utils import get_decoded_password
 
 logger = logging.getLogger(__name__)
 
@@ -81,3 +81,10 @@ def aliased_language_name(lang_code):
             if code == lang_code:
                 return name
         raise KeyError('Unknown language code %s' % lang_code)
+
+
+def decode_password(password_hash, username=None):
+    if settings.ENABLE_PASSWORD_HASHING:
+        return get_decoded_password(password_hash, username)
+    else:
+        return password_hash
