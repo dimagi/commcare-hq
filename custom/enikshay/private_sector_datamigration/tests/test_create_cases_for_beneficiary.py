@@ -211,7 +211,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('site_choice', 'abdominal'),
             ('transfer_in', ''),
             ('treatment_card_completed_date', '2017-04-20'),
-            ('treatment_initiated', 'yes_private'),
+            ('treatment_initiated', 'yes_pcp'),
             ('treatment_initiation_date', '2017-04-19'),
             ('treatment_phase', 'continuation_phase_cp'),
             ('weight', '50'),
