@@ -96,6 +96,7 @@ USER_MAPPING = {'_all': {'analyzer': 'standard'},
                                        },
                                        'type': 'object'},
                 'status': {'type': 'string'},
+                'user_data': {'type': 'object', 'enabled': False},
                 'user_data_es': {
                     'type': 'nested',
                     'dynamic': False,
