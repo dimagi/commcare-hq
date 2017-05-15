@@ -24,7 +24,6 @@ class TestCloudcareESAccessors(SimpleTestCase):
         self.doc_type = 'CommCareUser'
         self.domain = 'user-esaccessors-test'
         self.es = get_es_new()
-        ensure_index_deleted(USER_INDEX)
         initialize_index_and_mapping(self.es, USER_INDEX_INFO)
 
     @classmethod
