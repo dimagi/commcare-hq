@@ -4,14 +4,6 @@
 
 {% include 'app_manager/v2/partials/case_list_missing_warning.html' %}
 
-<div class="ko-inline-edit-with-help">
-    {% inline_edit_trans_v2 module.case_label langs edit_case_label_url containerClass='h4' saveValueName='case_label' %}
-    <span class="hq-help-template"
-          data-title="{% trans "Label on Phone" %}"
-          data-content="{% trans "This label will appear at the top of the phone's case select screen." %}"></span>
-</div>
-<div class="spacer"></div>
-
 <div data-bind="saveButton: shortScreen.saveButton"></div>
 
 <div data-bind="with: customXMLViewModel">
