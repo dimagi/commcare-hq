@@ -109,6 +109,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             rxStartDate=datetime(2017, 4, 19),
             rxOutcomeDate=datetime(2017, 5, 19),
             site='Extrapulmonary',
+            treatmentPhase='Continuation Phase',
             unknownAdherencePct=0.9,
             unresolvedMissedDosesPct=0.1,
         )
@@ -189,6 +190,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('case_definition', 'clinical'),
             ('date_of_diagnosis', '2017-04-18'),
             ('date_of_mo_signature', '2017-04-17'),
+            ('diagnosing_facility_id', self.pcp.location_id),
             ('disease_classification', 'extrapulmonary'),
             ('dots_99_enabled', 'false'),
             ('dst_status', 'rif_sensitive'),
@@ -202,6 +204,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('new_retreatment', 'new'),
             ('nikshay_id', '02139-02215'),
             ('patient_type', 'new'),
+            ('private_sector_episode_pending_registration', 'no'),
             ('retreatment_reason', ''),
             ('rx_outcome_date', '2017-05-19'),
             ('site', 'extrapulmonary'),
@@ -210,6 +213,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('treatment_card_completed_date', '2017-04-20'),
             ('treatment_initiated', 'yes_private'),
             ('treatment_initiation_date', '2017-04-19'),
+            ('treatment_phase', 'continuation_phase_cp'),
             ('weight', '50'),
         ]))
         self.assertEqual(len(episode_case.indices), 1)
