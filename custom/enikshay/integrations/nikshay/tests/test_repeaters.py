@@ -8,13 +8,19 @@ from django.test import TestCase, override_settings
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.test_utils import flag_enabled
-from custom.enikshay.const import TREATMENT_OUTCOME, TREATMENT_OUTCOME_DATE
+from custom.enikshay.const import (
+    TREATMENT_OUTCOME,
+    TREATMENT_OUTCOME_DATE,
+    EPISODE_PENDING_REGISTRATION,
+    PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION,
+)
 from custom.enikshay.exceptions import NikshayLocationNotFound, NikshayRequiredValueMissing
 from custom.enikshay.integrations.nikshay.repeaters import (
     NikshayRegisterPatientRepeater,
     NikshayHIVTestRepeater,
     NikshayTreatmentOutcomeRepeater,
     NikshayFollowupRepeater,
+    NikshayRegisterPrivatePatientRepeater,
 )
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin, ENikshayLocationStructureMixin
 
@@ -62,7 +68,7 @@ class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
     def repeat_records(self):
         return RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
 
-    def _create_nikshay_enabled_case(self, case_id=None):
+    def _create_nikshay_enabled_case(self, case_id=None, set_property=EPISODE_PENDING_REGISTRATION):
         if case_id is None:
             case_id = self.episode_id
 
@@ -70,9 +76,9 @@ class NikshayRepeaterTestBase(ENikshayCaseStructureMixin, TestCase):
             case_id=case_id,
             attrs={
                 "create": False,
-                "update": dict(
-                    episode_pending_registration='no',
-                )
+                "update": {
+                    set_property: 'no',
+                }
             }
         )
 
@@ -908,3 +914,71 @@ class TestNikshayFollowupPayloadGenerator(ENikshayLocationStructureMixin, Niksha
                         test_case_id=self.test_id)
         ):
             NikshayFollowupPayloadGenerator(None).get_payload(self.repeat_record, test_case)
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestNikshayRegisterPrivatePatientRepeater(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
+
+    def setUp(self):
+        super(TestNikshayRegisterPrivatePatientRepeater, self).setUp()
+
+        self.repeater = NikshayRegisterPrivatePatientRepeater(
+            domain=self.domain,
+            url='case-repeater-url?wsdl',
+            username='test-user'
+        )
+        self.repeater.white_listed_case_types = ['episode']
+        self.repeater.save()
+
+    def test_not_available_for_domain(self):
+        self.assertFalse(NikshayRegisterPrivatePatientRepeater.available_for_domain(self.domain))
+
+    @flag_enabled('NIKSHAY_INTEGRATION')
+    def test_available_for_domain(self):
+        self.assertTrue(NikshayRegisterPrivatePatientRepeater.available_for_domain(self.domain))
+
+    def test_trigger(self):
+        # nikshay not enabled
+        self.create_case(self.episode)
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        person = self.create_case(self.person)[0]
+        with self.assertRaisesMessage(
+                NikshayLocationNotFound,
+                "Location with id {location_id} not found. This is the owner for person with "
+                "id: {person_id}".format(location_id=person.owner_id, person_id=self.person_id)
+        ):
+            self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
+        # nikshay enabled, should register a repeat record
+        self.assign_person_to_location(self.phi.location_id)
+        self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
+        self.assertEqual(1, len(self.repeat_records().all()))
+        #
+        # set as registered, should not register a new repeat record
+        self._create_nikshay_registered_case()
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+    def test_trigger_different_case_type(self):
+        # different case type
+        self.create_case(self.person)
+        self._create_nikshay_enabled_case(
+            case_id=self.person_id,
+            set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION
+        )
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+    def test_trigger_test_submission(self):
+        self.phi.metadata['is_test'] = 'yes'
+        self.phi.save()
+        self.create_case(self.episode)
+        self.assign_person_to_location(self.phi.location_id)
+        self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+    def test_trigger_non_test_submission(self):
+        self.phi.metadata['is_test'] = 'no'
+        self.phi.save()
+        self.create_case(self.episode)
+        self.assign_person_to_location(self.phi.location_id)
+        self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
+        self.assertEqual(1, len(self.repeat_records().all()))
