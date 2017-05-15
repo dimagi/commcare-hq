@@ -92,6 +92,7 @@ class Permissions(DocumentSchema):
     view_report_list = StringListProperty(default=[])
 
     edit_billing = BooleanProperty(default=False)
+    report_an_issue = BooleanProperty(default=True)
 
     @classmethod
     def wrap(cls, data):
