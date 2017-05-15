@@ -188,14 +188,18 @@ class EntriesHelper(object):
                 for datum_meta in self.get_case_datums_basic_module(module):
                     e.datums.append(datum_meta.datum)
             elif isinstance(module, AdvancedModule):
+                detail_inline = self.get_detail_inline_attr(module, module, "case_short")
+                detail_confirm = None
+                if not detail_inline:
+                    detail_confirm = self.details_helper.get_detail_id_safe(module, 'case_long')
                 e.datums.append(SessionDatum(
                     id='case_id_case_%s' % module.case_type,
                     nodeset=(EntriesHelper.get_nodeset_xpath(module.case_type)),
                     value="./@case_id",
                     detail_select=self.details_helper.get_detail_id_safe(module, 'case_short'),
-                    detail_confirm=self.details_helper.get_detail_id_safe(module, 'case_long'),
+                    detail_confirm=detail_confirm,
                     detail_persistent=self.get_detail_persistent_attr(module, module, "case_short"),
-                    detail_inline=self.get_detail_inline_attr(module, module, "case_short"),
+                    detail_inline=detail_inline,
                     autoselect=module.auto_select_case,
                 ))
                 if self.app.commtrack_enabled:

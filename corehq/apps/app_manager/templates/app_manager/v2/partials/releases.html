@@ -17,7 +17,9 @@
             '/a/' + '{{ domain }}' + '/apps/view/---/app_data/'
         )
         var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
-        var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
+        var profiles = hqImport('app_manager/js/language-profiles.js');
+        profiles.setProfileUrl('{{ application_profile_url }}');
+        var ProfileManager = profiles.ProfileManager;
         // init releases
         var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body')
         $('#recent-changes-btn').on('click', function (e) {
@@ -74,11 +76,6 @@
     {% endif %}
 
     //analytics.workflow('Visited the Release Manager');
-</script>
-<script>
-    $(function () {
-        gaTrackLink('a.view-source-files-link', 'App Manager', 'Deploy Type', 'View Source Files');
-    });
 </script>
 
 {% if intro_only %}
@@ -255,6 +252,7 @@
             ">
                 {% trans "View Changes" %}
             </button>
+            {% endif %}
             <a class="btn"
                data-bind="
                 openModal: 'deploy-build-modal-template',
@@ -266,7 +264,6 @@
                 </span>
                 {% trans "Deploy Version" %}
             </a>
-            {% endif %}
           </div><!-- .panel-footer -->
         </div><!-- .panel-release -->
     </div> <!-- .releases-container -->

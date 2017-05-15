@@ -6,6 +6,7 @@ from django.test import TestCase, override_settings
 
 from mock import patch
 
+from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -34,15 +35,18 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             age=25,
             caseId='3',
             caseStatus='patient',
+            configureAlert='Yes',
             creationDate=datetime(2017, 1, 1),
             dateOfRegn=datetime(2017, 4, 17),
             dob=datetime(1992, 1, 2),
             emergencyContactNo='1234567890',
+            fatherHusbandName='Nick Sr.',
             firstName='Nick',
             gender='4',
             identificationNumber='98765',
             identificationTypeId='16',
             isActive=True,
+            languagePreferences='132',
             lastName='P',
             organisationId=2,
             phoneNumber='5432109876',
@@ -86,9 +90,12 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         Episode.objects.create(
             adherenceScore=0.5,
             alertFrequencyId=2,
-            beneficiaryID=self.beneficiary,
+            basisOfDiagnosis='Clinical - Other',
+            beneficiaryID=self.beneficiary.caseId,
             creationDate=datetime(2017, 4, 20),
             dateOfDiagnosis=datetime(2017, 4, 18),
+            diabetes='Yes',
+            dstStatus='Rifampicin sensitive',
             episodeDisplayID=3,
             episodeID=6,
             extraPulmonary='Abdomen',
@@ -100,7 +107,9 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             nikshayID='02139-02215',
             patientWeight=50,
             rxStartDate=datetime(2017, 4, 19),
+            rxOutcomeDate=datetime(2017, 5, 19),
             site='Extrapulmonary',
+            treatmentPhase='Continuation Phase',
             unknownAdherencePct=0.9,
             unresolvedMissedDosesPct=0.1,
         )
@@ -109,7 +118,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
         self.assertEqual(len(person_case_ids), 1)
         person_case = self.case_accessor.get_case(person_case_ids[0])
-        self.assertFalse(person_case.closed)  # TODO - update by outcome
+        self.assertFalse(person_case.closed)
         self.assertIsNone(person_case.external_id)
         self.assertEqual(person_case.name, 'Nick P')
         self.assertEqual(person_case.owner_id, self.pcp.location_id)
@@ -119,18 +128,25 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('age_entered', '25'),
             ('current_address', '585 Mass Ave, Suite 4'),
             ('current_episode_type', 'confirmed_tb'),
-            ('current_patient_type_choice', 'new'),
             ('dataset', 'real'),
+            ('diabetes_status', 'diabetic'),
             ('dob', '1992-01-02'),
+            ('dob_entered', '1992-01-02'),
             ('dob_known', 'yes'),
+            ('enrolled_in_private', 'true'),
+            ('facility_assigned_to', self.pcp.location_id),
             ('first_name', 'Nick'),
             ('hiv_status', 'non_reactive'),
+            ('husband_father_name', 'Nick Sr.'),
+            ('is_active', 'yes'),
+            ('language_preference', 'hin'),
             ('last_name', 'P'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
-            ('occupation', ''),
+            ('person_occurrence_count', '1'),
             ('phone_number', '5432109876'),
-            ('secondary_contact_phone_number', '1234567890'),
+            ('secondary_phone', '1234567890'),
+            ('send_alerts', 'yes'),
             ('sex', 'male'),
         ]))
         self.assertEqual(len(person_case.xform_ids), 1)
@@ -138,7 +154,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
         self.assertEqual(len(occurrence_case_ids), 1)
         occurrence_case = self.case_accessor.get_case(occurrence_case_ids[0])
-        self.assertFalse(occurrence_case.closed)  # TODO - update by outcome
+        self.assertFalse(occurrence_case.closed)
         self.assertIsNone(occurrence_case.external_id)
         self.assertEqual(occurrence_case.name, 'Occurrence #1')
         self.assertEqual(occurrence_case.owner_id, '-')
@@ -146,7 +162,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('current_episode_type', 'confirmed_tb'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
-            ('occurrence_id', '20160908010203004')
+            ('occurrence_episode_count', '1'),
+            ('occurrence_id', '20160908010203004'),
         ]))
         self.assertEqual(len(occurrence_case.indices), 1)
         self._assertIndexEqual(
@@ -163,29 +180,40 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
         self.assertEqual(len(episode_case_ids), 1)
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
-        self.assertFalse(episode_case.closed)  # TODO - update by outcome
+        self.assertFalse(episode_case.closed)
         self.assertEqual(episode_case.external_id, '02139-02215')
         self.assertEqual(episode_case.name, 'Episode #1: Confirmed TB (Patient)')
         self.assertEqual(episode_case.opened_on, datetime(2017, 4, 19))
         self.assertEqual(episode_case.owner_id, '-')
         self.assertEqual(episode_case.dynamic_case_properties(), OrderedDict([
-            ('adherence_schedule_date_start', '2017-04-19'),
-            ('adherence_schedule_id', 'schedule_mwf'),
+            ('basis_of_diagnosis', 'clinical_other'),
+            ('case_definition', 'clinical'),
             ('date_of_diagnosis', '2017-04-18'),
             ('date_of_mo_signature', '2017-04-17'),
-            ('disease_classification', 'extra_pulmonary'),
+            ('diagnosing_facility_id', self.pcp.location_id),
+            ('disease_classification', 'extrapulmonary'),
             ('dots_99_enabled', 'false'),
+            ('dst_status', 'rif_sensitive'),
+            ('enrolled_in_private', 'true'),
+            ('episode_details_complete', 'true'),
             ('episode_id', '20160908010203004'),
             ('episode_pending_registration', 'no'),
             ('episode_type', 'confirmed_tb'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
+            ('new_retreatment', 'new'),
             ('nikshay_id', '02139-02215'),
+            ('patient_type', 'new'),
+            ('private_sector_episode_pending_registration', 'no'),
+            ('retreatment_reason', ''),
+            ('rx_outcome_date', '2017-05-19'),
+            ('site', 'extrapulmonary'),
             ('site_choice', 'abdominal'),
             ('transfer_in', ''),
             ('treatment_card_completed_date', '2017-04-20'),
             ('treatment_initiated', 'yes_private'),
             ('treatment_initiation_date', '2017-04-19'),
+            ('treatment_phase', 'continuation_phase_cp'),
             ('weight', '50'),
         ]))
         self.assertEqual(len(episode_case.indices), 1)
@@ -200,13 +228,111 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         )
         self.assertEqual(len(episode_case.xform_ids), 1)
 
+    def test_beneficiary_cured(self):
+        Episode.objects.create(
+            adherenceScore=0.5,
+            alertFrequencyId=2,
+            basisOfDiagnosis='Clinical - Other',
+            beneficiaryID=self.beneficiary.caseId,
+            creationDate=datetime(2017, 4, 20),
+            dateOfDiagnosis=datetime(2017, 4, 18),
+            dstStatus='Rifampicin sensitive',
+            episodeDisplayID=3,
+            episodeID=6,
+            extraPulmonary='Abdomen',
+            hiv='Negative',
+            lastMonthAdherencePct=0.6,
+            lastTwoWeeksAdherencePct=0.7,
+            missedDosesPct=0.8,
+            newOrRetreatment='New',
+            nikshayID='02139-02215',
+            patientWeight=50,
+            rxStartDate=datetime(2017, 4, 19),
+            site='Extrapulmonary',
+            treatmentOutcomeId='Cured',
+            unknownAdherencePct=0.9,
+            unresolvedMissedDosesPct=0.1,
+        )
+        call_command('create_cases_by_beneficiary', self.domain)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(len(person_case_ids), 1)
+        person_case = self.case_accessor.get_case(person_case_ids[0])
+        self.assertFalse(person_case.closed)
+        self.assertEqual(person_case.owner_id, ARCHIVED_CASE_OWNER_ID)
+        self.assertEqual(person_case.dynamic_case_properties()['archive_reason'], 'cured')
+        self.assertEqual(person_case.dynamic_case_properties()['is_active'], 'no')
+        self.assertEqual(person_case.dynamic_case_properties()['last_owner'], self.pcp.location_id)
+        self.assertTrue('last_reason_to_close' not in person_case.dynamic_case_properties())
+
+        occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
+        self.assertEqual(1, len(occurrence_case_ids))
+        occurrence_case = self.case_accessor.get_case(occurrence_case_ids[0])
+        self.assertTrue(occurrence_case.closed)
+
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(len(episode_case_ids), 1)
+        episode_case = self.case_accessor.get_case(episode_case_ids[0])
+        self.assertTrue(episode_case.closed)
+        self.assertEqual(episode_case.dynamic_case_properties()['treatment_outcome'], 'cured')
+
+    def test_beneficiary_died(self):
+        Episode.objects.create(
+            adherenceScore=0.5,
+            alertFrequencyId=2,
+            basisOfDiagnosis='Clinical - Other',
+            beneficiaryID=self.beneficiary.caseId,
+            creationDate=datetime(2017, 4, 20),
+            dateOfDiagnosis=datetime(2017, 4, 18),
+            dstStatus='Rifampicin sensitive',
+            episodeDisplayID=3,
+            episodeID=6,
+            extraPulmonary='Abdomen',
+            hiv='Negative',
+            lastMonthAdherencePct=0.6,
+            lastTwoWeeksAdherencePct=0.7,
+            missedDosesPct=0.8,
+            newOrRetreatment='New',
+            nikshayID='02139-02215',
+            patientWeight=50,
+            rxStartDate=datetime(2017, 4, 19),
+            site='Extrapulmonary',
+            treatmentOutcomeId='Died',
+            unknownAdherencePct=0.9,
+            unresolvedMissedDosesPct=0.1,
+        )
+        call_command('create_cases_by_beneficiary', self.domain)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(len(person_case_ids), 1)
+        person_case = self.case_accessor.get_case(person_case_ids[0])
+        self.assertTrue(person_case.closed)
+        self.assertEqual(person_case.owner_id, ARCHIVED_CASE_OWNER_ID)
+        self.assertEqual(person_case.dynamic_case_properties()['archive_reason'], 'died')
+        self.assertEqual(person_case.dynamic_case_properties()['is_active'], 'no')
+        self.assertEqual(person_case.dynamic_case_properties()['last_owner'], self.pcp.location_id)
+        self.assertEqual(person_case.dynamic_case_properties()['last_reason_to_close'], 'died')
+
+        occurrence_case_ids = self.case_accessor.get_case_ids_in_domain(type='occurrence')
+        self.assertEqual(1, len(occurrence_case_ids))
+        occurrence_case = self.case_accessor.get_case(occurrence_case_ids[0])
+        self.assertTrue(occurrence_case.closed)
+
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(len(episode_case_ids), 1)
+        episode_case = self.case_accessor.get_case(episode_case_ids[0])
+        self.assertTrue(episode_case.closed)
+        self.assertEqual(episode_case.dynamic_case_properties()['treatment_outcome'], 'died')
+
     def test_adherence(self):
         episode = Episode.objects.create(
             adherenceScore=0.5,
             alertFrequencyId=2,
-            beneficiaryID=self.beneficiary,
+            basisOfDiagnosis='Clinical - Other',
+            beneficiaryID=self.beneficiary.caseId,
             creationDate=datetime(2017, 4, 20),
             dateOfDiagnosis=datetime(2017, 4, 18),
+            dstStatus='Rifampicin sensitive',
             episodeDisplayID=3,
             episodeID=1,
             extraPulmonary='Abdomen',
@@ -224,10 +350,11 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         )
         Adherence.objects.create(
             adherenceId=5,
+            creationDate=datetime(2017, 4, 21),
             dosageStatusId=0,
             doseDate=datetime(2017, 4, 22),
             doseReasonId=3,
-            episodeId=episode,
+            episodeId=episode.episodeID,
             reportingMechanismId=4,
         )
 
@@ -245,7 +372,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertFalse(adherence_case.closed)  # TODO
         self.assertIsNone(adherence_case.external_id)
         self.assertEqual(adherence_case.name, '2017-04-22')
-        # self.assertEqual(adherence_case.opened_on, '')  # TODO
+        self.assertEqual(adherence_case.opened_on, datetime(2017, 4, 21))
         self.assertEqual(adherence_case.owner_id, '-')
         self.assertEqual(adherence_case.dynamic_case_properties(), OrderedDict([
             ('adherence_date', '2017-04-22'),
@@ -270,9 +397,11 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             id=1,
             adherenceScore=0.5,
             alertFrequencyId=2,
-            beneficiaryID=self.beneficiary,
+            basisOfDiagnosis='Clinical - Other',
+            beneficiaryID=self.beneficiary.caseId,
             creationDate=datetime(2017, 4, 20),
             dateOfDiagnosis=datetime(2017, 4, 18),
+            dstStatus='Rifampicin sensitive',
             episodeDisplayID=3,
             extraPulmonary='Abdomen',
             hiv='Negative',
@@ -289,18 +418,20 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         )
         Adherence.objects.create(
             adherenceId=1,
+            creationDate=datetime(2017, 4, 21),
             dosageStatusId=0,
             doseDate=datetime.utcnow(),
             doseReasonId=3,
-            episodeId=episode,
+            episodeId=episode.episodeID,
             reportingMechanismId=4,
         )
         Adherence.objects.create(
             adherenceId=2,
+            creationDate=datetime(2017, 4, 21),
             dosageStatusId=1,
             doseDate=datetime.utcnow(),
             doseReasonId=3,
-            episodeId=episode,
+            episodeId=episode.episodeID,
             reportingMechanismId=4,
         )
 
@@ -348,7 +479,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self._assertIndexEqual(
             prescription_case.indices[0],
             CommCareCaseIndex(
-                identifier='host',
+                identifier='episode_of_prescription',
                 referenced_type='episode',
                 referenced_id=episode_case.get_id,
                 relationship='extension',
@@ -390,9 +521,11 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             id=1,
             adherenceScore=0.5,
             alertFrequencyId=2,
-            beneficiaryID=self.beneficiary,
+            basisOfDiagnosis='Clinical - Other',
+            beneficiaryID=self.beneficiary.caseId,
             creationDate=datetime(2017, 4, 20),
             dateOfDiagnosis=datetime(2017, 4, 18),
+            dstStatus='Rifampicin sensitive',
             episodeDisplayID=3,
             hiv='Negative',
             lastMonthAdherencePct=0.6,
@@ -453,9 +586,11 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             id=1,
             adherenceScore=0.5,
             alertFrequencyId=2,
-            beneficiaryID=self.beneficiary,
+            basisOfDiagnosis='Clinical - Other',
+            beneficiaryID=self.beneficiary.caseId,
             creationDate=datetime(2017, 4, 20),
             dateOfDiagnosis=datetime(2017, 4, 18),
+            dstStatus='Rifampicin sensitive',
             episodeDisplayID=3,
             hiv='Negative',
             lastMonthAdherencePct=0.6,

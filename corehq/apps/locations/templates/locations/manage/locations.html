@@ -154,10 +154,6 @@
         $('#location_tree').koApplyBindings(model);
         model.load(locs);
     });
-
-    gaTrackLink($('#edit-org-levels'), 'Organization Structure', 'Edit Organization Levels');
-
-    gaTrackLink($('#edit-loc-fields'), 'Organization Structure', 'Edit Location Fields');
 </script>
 {% endblock %}
 
@@ -216,10 +212,12 @@
             >
                 <i class="fa fa-cloud-upload"></i> {% trans 'Bulk Upload' %}
             </a>
-            <a class="btn btn-default" href="{% url "location_types" domain %}" id="edit-org-levels">
+            <a class="btn btn-default track-usage-link" href="{% url "location_types" domain %}"
+               data-category="Organization Structure" data-action="Edit Organization Levels">
                 {% trans "Edit Organization Levels" %}
             </a>
-            <a class="btn btn-default" href="{% url "location_fields_view" domain %}" id="edit-loc-fields">
+            <a class="btn btn-default track-usage-link" href="{% url "location_fields_view" domain %}"
+               data-category="Organization Structure" data-action="Edit Location Fields">
                 {% trans "Edit Location Fields" %}
             </a>
         </div>

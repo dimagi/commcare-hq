@@ -59,7 +59,7 @@
                     {% csrf_token %}
                     <input id="new-module-type" type="hidden" name="module_type" />
                 </form>
-                <a href="#" class="appnav-add" id="js-add-new-item">
+                <a href="#" class="appnav-add js-add-new-item" data-slug="module">
                     <i class="new-module-icon fa fa-plus"></i>
                     {% trans "Add..." %}
                 </a>

@@ -7,7 +7,7 @@ from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 from corehq.apps.users.models import UserRole, Permissions
 
-from ..models import Location, SQLLocation, LocationType
+from ..models import make_location, Location, SQLLocation, LocationType
 
 TEST_DOMAIN = 'locations-test'
 TEST_LOCATION_TYPE = 'location'
@@ -16,7 +16,7 @@ TEST_LOCATION_TYPE = 'location'
 def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE,
              parent=None, is_archived=False):
     name = name or code
-    loc = Location(
+    loc = make_location(
         site_code=code, name=name, domain=domain, location_type=type,
         parent=parent, is_archived=is_archived
     )
@@ -78,8 +78,8 @@ def setup_locations(domain, locations, location_types):
 
     def create_locations(locations, types, parent):
         for name, children in locations:
-            location = Location(domain=domain, name=name, parent=parent,
-                                location_type=types[0])
+            location = make_location(domain=domain, name=name, parent=parent,
+                                     location_type=types[0])
             location.save()
             locations_dict[name] = location.sql_location
             create_locations(children, types[1:], location)
@@ -100,8 +100,8 @@ def setup_locations_with_structure(domain, locations):
 
     def create_locations(locations, parent):
         for location in locations:
-            created_location = Location(domain=domain, name=location.name, parent=parent,
-                                        location_type=location.type)
+            created_location = make_location(domain=domain, name=location.name, parent=parent,
+                                             location_type=location.type)
             created_location.save()
             created_locations[location.name] = created_location.sql_location
             create_locations(location.children, created_location)
@@ -151,7 +151,6 @@ class LocationHierarchyTestCase(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        delete_all_locations()
         cls.domain_obj.delete()
         super(LocationHierarchyTestCase, cls).tearDownClass()
 
@@ -190,4 +189,3 @@ class LocationHierarchyPerTest(TestCase):
 
     def tearDown(self):
         self.domain_obj.delete()
-        delete_all_locations()

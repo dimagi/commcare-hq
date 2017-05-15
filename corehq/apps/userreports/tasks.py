@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
 from django.conf import settings
+from django.db.models import F
 from django.utils.translation import ugettext as _
 from restkit import RequestError
 
@@ -210,6 +211,9 @@ def queue_async_indicators():
     with CriticalSection(['queue-async-indicators'], timeout=time_for_crit_section):
         day_ago = datetime.utcnow() - timedelta(days=1)
         indicators = AsyncIndicator.objects.all()[:10000]
+        if indicators:
+            lag = (datetime.utcnow() - indicators[0].date_created).total_seconds()
+            datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
         indicators_by_domain_doc_type = defaultdict(list)
         for indicator in indicators:
             # don't requeue anything htat's be queued in the past day
@@ -285,4 +289,6 @@ def save_document(doc_ids):
                 processed_indicators.append(indicator.pk)
 
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
-        AsyncIndicator.objects.filter(pk__in=failed_indicators).update(date_queued=None)
+        AsyncIndicator.objects.filter(pk__in=failed_indicators).update(
+            date_queued=None, unsuccessful_attempts=F('unsuccessful_attempts') + 1
+        )

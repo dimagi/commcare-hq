@@ -115,8 +115,30 @@ class Beneficiary(models.Model):
         }[self.caseStatus.strip()]
 
     @property
+    def husband_father_name(self):
+        return self.fatherHusbandName or ''
+
+    @property
+    def language_preference(self):
+        return {
+            '131': 'en',
+            '132': 'hin',
+            '133': 'bhoj',
+            '152': 'mar',
+            '153': 'guj',
+            None: '',
+        }[self.languagePreferences]
+
+    @property
     def referred_provider(self):
         return get_agency_by_motech_user_name(self.referredQP)
+
+    @property
+    def send_alerts(self):
+        return {
+            'Yes': 'yes',
+            'No': 'no',
+        }[self.configureAlert]
 
     @property
     def sex(self):
@@ -150,7 +172,7 @@ class Episode(models.Model):
     associatedFO = models.CharField(max_length=255, null=True)
     bankName = models.CharField(max_length=255, null=True)
     basisOfDiagnosis = models.CharField(max_length=255, null=True)
-    beneficiaryID = models.ForeignKey(Beneficiary, on_delete=models.CASCADE)
+    beneficiaryID = models.CharField(max_length=18)
     branchName = models.CharField(max_length=255, null=True)
     creationDate = models.DateTimeField(null=True)
     creator = models.CharField(max_length=255, null=True)
@@ -199,12 +221,6 @@ class Episode(models.Model):
     treatingQP = models.CharField(max_length=255, null=True)
     treatmentOutcomeId = models.CharField(max_length=255, null=True)
     treatmentPhase = models.CharField(max_length=255, null=True)
-    # [u'Select',
-    #  None,
-    #  u'Intensive Phase',
-    #  u'N/A',
-    #  u'Continuation Phase',
-    #  u'Extended IP']
     tsProviderType = models.CharField(max_length=255, null=True)
     unknownAdherencePct = models.DecimalField(decimal_places=10, max_digits=14)
     unresolvedMissedDosesPct = models.DecimalField(decimal_places=10, max_digits=14)
@@ -214,29 +230,88 @@ class Episode(models.Model):
     adherenceSupportAssigned = models.CharField(max_length=255, null=True)
 
     @property
-    def current_patient_type_choice(self):
-        if self.newOrRetreatment == 'New':
-            return 'new'
-        elif self.newOrRetreatment == 'Retreatment':
-            if self.retreatmentReason in ['Recurrent', 'Relapse']:
-                return 'recurrent'
-            elif self.retreatmentReason == 'After Treatment Failure':
-                return 'treatment_after_failure'
-            elif self.retreatmentReason == 'After loss to follow-up':
-                return 'treatment_after_lfu'
-            elif self.retreatmentReason == 'Others':
-                return 'other_previously_treated'
-        return ''  # TODO - handle
+    def basis_of_diagnosis(self):
+        return {
+            'Clinical - Chest Xray': 'clinical_chest',
+            'Clinical - Other': 'clinical_other',
+            'Microbiologically Confirmed - Smear-positive': 'microbiological_smear',
+            'Microbiologically Confirmed - Xpert MTB/RIF TB-positive': 'microbiological_cbnaat',
+            'Microbiologically Confirmed - Xpert TB-positive': '', # TODO
+            'Microbiologically Confirmed - Culture-positive': 'microbiological_culture',
+            'Microbiologically Confirmed - PCR (including LPA)': 'microbiological_pcr',
+            'Microbiologically Confirmed - PCR(including LPA)': 'microbiological_pcr',
+            'Microbiologically Confirmed - Other': 'microbiological_other',
+        }[self.basisOfDiagnosis]
+
+    @property
+    def case_definition(self):
+        if self.basis_of_diagnosis in [
+            'clinical_chest',
+            'clinical_other',
+        ]:
+            return 'clinical'
+        else:
+            return 'microbiological'
+
+    @property
+    def patient_type(self):
+        return {
+            'new': 'new',
+            'retreatment': self.retreatment_reason,
+            '': '',
+        }[self.new_retreatment]
+
+    @property
+    def retreatment_reason(self):
+        if self.newOrRetreatment == 'Retreatment':
+            return {
+                'After loss to follow-up': 'treatment_after_lfu',
+                'After Treatment Failure': 'treatment_after_failure',
+                'Recurrent': 'recurrent',
+                'Relapse': 'recurrent',
+                'Select': '',
+                'None': '',
+            }
+        return ''
+
+    @property
+    def diabetes_status(self):
+        return {
+            'Yes': 'diabetic',
+            'No': 'non_diabetic',
+            'Not known': 'unknown',
+            None: 'unknown',
+            'Select': 'unknown',
+        }[self.diabetes]
+
+    @property
+    def site_property(self):
+        return {
+            'Pulmonary': 'pulmonary',
+            'Extrapulmonary': 'extrapulmonary',
+            'Pulmonary+Extrapulmonary': 'pulmonary_and_extrapulmonary',
+            'Select': 'na',
+            'N/A': 'na',
+        }[self.site]
 
     @property
     def disease_classification(self):
         return {
-            'Pulmonary': 'pulmonary',
-            'Extrapulmonary': 'extra_pulmonary',
-            'Pulmonary+Extrapulmonary': 'extra_pulmonary',
-            'Select': '',
-            'N/A': '',
-        }[self.site]
+            'na': 'na',
+            'extrapulmonary': 'extrapulmonary',
+            'pulmonary': 'pulmonary',
+            'pulmonary_and_extrapulmonary': 'pulmonary',
+        }[self.site_property]
+
+    @property
+    def dst_status(self):
+        return {
+            'DST Not done': 'not_done',
+            'Pending': 'pending',
+            'Rifampicin Resistant(MDR)': 'rif_resistant',
+            'Rifampicin sensitive': 'rif_sensitive',
+            'XDR': 'xdr',
+        }[self.dstStatus]
 
     @property
     def hiv_status(self):
@@ -249,26 +324,80 @@ class Episode(models.Model):
         }[self.hiv]
 
     @property
-    def site_choice(self):
+    def new_retreatment(self):
         return {
-            'Abdomen': 'abdominal',
-            'Bones And Joints': 'other',
-            'Brain': 'brain',
-            'Eye': 'other',
-            'Genitourinary': 'other',
-            'Intestines': 'other',
-            'Lymph Nodes': 'lymph_node',
-            'Other': 'other',
-            'Pleural effusion': 'pleural_effusion',
-            'Skin': 'other',
-            'Spine': 'spine',
-            None: '',
+            'New': 'new',
+            'Retreatment': 'retreatment',
+            'N/A': '',
             'Select': '',
-        }[self.extraPulmonary]
+            None: '',
+        }[self.newOrRetreatment]
+
+    @property
+    def site_choice(self):
+        if self.site_property in [
+            'extrapulmonary',
+            'pulmonary_and_extrapulmonary',
+        ]:
+            return {
+                'Abdomen': 'abdominal',
+                'Bones And Joints': 'bones_and_joints',
+                'Brain': 'brain',
+                'Eye': 'eye',
+                'Genitourinary': 'genitourinary',
+                'Intestines': 'intestines',
+                'Lymph Nodes': 'lymph_node',
+                'Other': 'other',
+                'Pleural effusion': 'pleural_effusion',
+                'Skin': 'skin',
+                'Spine': 'spine',
+                None: 'other',
+                'Select': 'other',
+            }[self.extraPulmonary]
+        else:
+            return ''
 
     @property
     def treating_provider(self):
         return get_agency_by_motech_user_name(self.treatingQP)
+
+    @property
+    def treatment_phase(self):
+        return {
+            'Intensive Phase': 'ip',
+            'Extended IP': 'extended_ip',
+            'Continuation Phase': 'continuation_phase_cp',
+            'N/A': '',
+            'Select': '',
+            None: '',
+        }[self.treatmentPhase]
+
+    @property
+    def treatment_outcome(self):
+        if self.treatmentOutcomeId is None:
+            return None
+        elif self.treatmentOutcomeId.startswith('Lost to follow-up'):
+            return 'loss_to_follow_up'
+        else:
+            return {
+                'Cured': 'cured',
+                'Died': 'died',
+                'died': 'died',
+                'Failure': 'failure',
+                'SWITCH TO CAT IV': 'regimen_changed',
+                'Switched to Category IV/V': 'regimen_changed',
+            }[self.treatmentOutcomeId]
+
+    @property
+    def is_treatment_ended(self):
+        return self.treatment_outcome in [
+            'cured',
+            'treatment_complete',
+            'died',
+            'failure',
+            'loss_to_follow_up',
+            'regimen_changed',
+        ]
 
 
 class Adherence(models.Model):
@@ -276,12 +405,12 @@ class Adherence(models.Model):
     adherenceId = models.CharField(max_length=18, primary_key=True)
     beneficiaryId = models.ForeignKey(Beneficiary, null=True, on_delete=models.CASCADE)
     commentId = models.CharField(max_length=8, null=True)
-    creationDate = models.DateTimeField(null=True)
+    creationDate = models.DateTimeField()
     creator = models.CharField(max_length=255, null=True)
     dosageStatusId = models.IntegerField()
     doseDate = models.DateTimeField()
     doseReasonId = models.IntegerField()
-    episodeId = models.ForeignKey(Episode, on_delete=models.CASCADE)
+    episodeId = models.CharField(max_length=8)
     modificationDate = models.DateTimeField(null=True)
     modifiedBy = models.CharField(max_length=255, null=True)
     owner = models.CharField(max_length=255, null=True)

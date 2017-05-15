@@ -167,18 +167,26 @@
                          </div>
                          <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_multimedia'}">
                              <div class="panel-body">
-@@ -302,11 +315,13 @@
+@@ -302,15 +315,17 @@
                      </div>
                  {% endif %}
                  {% if request.user.is_superuser %}
 -                    <div class="panel panel-default">
 +                    <div class="panel panel-appmanager">
                          <div class="panel-heading">
--                            <a data-bind="attr: {href: $root.url('source', id)}">
+-                            <a class="track-usage-link"
+-                               data-category="App Manager"
+-                               data-action="Deploy Type"
+-                               data-label="View Source Files"
+-                               data-bind="attr: {href: $root.url('source', id)}">
 -                                {% trans 'View Source Files' %}
 -                            </a>
 +                            <h4 class="panel-title">
-+                                <a data-bind="attr: {href: $root.url('source', id)}">
++                                <a class="track-usage-link"
++                                   data-category="App Manager"
++                                   data-action="Deploy Type"
++                                   data-label="View Source Files"
++                                   data-bind="attr: {href: $root.url('source', id)}">
 +                                    {% trans 'View Source Files' %}
 +                                </a>
 +                            </h4>

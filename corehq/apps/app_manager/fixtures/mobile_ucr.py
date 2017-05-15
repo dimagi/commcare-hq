@@ -6,8 +6,7 @@ import random
 from django.conf import settings
 from lxml.builder import E
 
-from casexml.apps.phone.models import OTARestoreUser
-
+from casexml.apps.phone.fixtures import FixtureProvider
 from corehq import toggles
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import is_valid_mobile_select_filter_type
@@ -24,18 +23,32 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 MOBILE_UCR_RANDOM_THRESHOLD = 10 ** 5
 
 
-class ReportFixturesProvider(object):
+def _should_sync(restore_state):
+    last_sync_log = restore_state.last_sync_log
+    if not last_sync_log or restore_state.overwrite_cache:
+        return True
+
+    sync_interval = restore_state.restore_user.get_mobile_ucr_sync_interval()
+    return (
+        not last_sync_log or
+        not sync_interval or
+        (datetime.utcnow() - last_sync_log.date).total_seconds() > sync_interval
+    )
+
+
+
+class ReportFixturesProvider(FixtureProvider):
     id = 'commcare:reports'
 
-    def __call__(self, restore_user, version, last_sync=None, app=None):
+    def __call__(self, restore_state):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        assert isinstance(restore_user, OTARestoreUser)
-
-        if not toggles.MOBILE_UCR.enabled(restore_user.domain):
+        restore_user = restore_state.restore_user
+        if not toggles.MOBILE_UCR.enabled(restore_user.domain) or not _should_sync(restore_state):
             return []
 
+        app = restore_state.params.app
         apps = [app] if app else [a for a in get_apps_in_domain(restore_user.domain, include_remote=False)]
         report_configs = [
             report_config

@@ -28,7 +28,6 @@ class CaseSearchView(DomainViewMixin, TemplateView):
         })
         return context
 
-
     @json_error
     @cls_require_superuser_or_developer
     def post(self, request, *args, **kwargs):
@@ -38,12 +37,15 @@ class CaseSearchView(DomainViewMixin, TemplateView):
 
         query = json.loads(request.POST.get('q'))
         case_type = query.get('type')
+        owner_id = query.get('owner_id')
         search_params = query.get('parameters', [])
         query_addition = query.get("customQueryAddition", None)
         search = CaseSearchES()
         search = search.domain(self.domain).is_closed(False)
         if case_type:
             search = search.case_type(case_type)
+        if owner_id:
+            search = search.owner(owner_id)
         for param in search_params:
             search = search.case_property_query(**param)
         if query_addition:

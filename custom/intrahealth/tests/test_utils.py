@@ -5,7 +5,7 @@ from django.conf import settings
 
 from casexml.apps.case.tests.util import delete_all_xforms
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.models import LocationType, Location
+from corehq.apps.locations.models import LocationType, make_location
 from corehq.apps.products.models import Product
 from corehq.apps.sms.tests.update_location_keyword_test import create_mobile_worker
 from corehq.sql_db.connections import connection_manager
@@ -35,13 +35,13 @@ class IntraHealthTestCase(TestCase):
         cls.district_type = LocationType.objects.create(domain=TEST_DOMAIN, name=u'District')
         cls.pps_type = LocationType.objects.create(domain=TEST_DOMAIN, name=u'PPS')
 
-        cls.region = Location(domain=TEST_DOMAIN, name='Test region', location_type=u'Région')
+        cls.region = make_location(domain=TEST_DOMAIN, name='Test region', location_type=u'Région')
         cls.region.save()
-        cls.district = Location(
+        cls.district = make_location(
             domain=TEST_DOMAIN, name='Test district', location_type=u'District', parent=cls.region
         )
         cls.district.save()
-        cls.pps = Location(domain=TEST_DOMAIN, name='Test PPS', location_type=u'PPS', parent=cls.district)
+        cls.pps = make_location(domain=TEST_DOMAIN, name='Test PPS', location_type=u'PPS', parent=cls.district)
         cls.pps.save()
 
         cls.mobile_worker = create_mobile_worker(
@@ -83,15 +83,6 @@ class IntraHealthTestCase(TestCase):
             cls.couverture_table.drop(connection, checkfirst=True)
 
         cls.engine.dispose()
-        cls.region.delete()
-        cls.district.delete()
-        cls.pps.delete()
-        cls.region_type.delete()
-        cls.district_type.delete()
-        cls.pps_type.delete()
-        cls.mobile_worker.delete()
-        cls.product.delete()
-        cls.product2.delete()
         cls.domain.delete()
         delete_all_xforms()
         super(IntraHealthTestCase, cls).tearDownClass()

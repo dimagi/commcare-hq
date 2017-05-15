@@ -24,6 +24,7 @@ CASE_TYPE_LAB_REFERRAL = "lab_referral"
 CASE_TYPE_DRTB_HIV_REFERRAL = "drtb-hiv-referral"
 CASE_TYPE_TEST = "test"
 CASE_TYPE_VOUCHER = "voucher"
+CASE_TYPE_PRESCRIPTION = "prescription"
 
 
 def get_all_parents_of_case(domain, case_id):
@@ -342,5 +343,70 @@ def get_person_case(domain, case_id):
         return get_person_case_from_occurrence(domain, occurrence_case.case_id).case_id
     elif case_type == CASE_TYPE_OCCURRENCE:
         return get_person_case_from_occurrence(domain, case.case_id).case_id
+    elif case_type == CASE_TYPE_VOUCHER:
+        return get_person_case_from_voucher(domain, case.case_id).case_id
     else:
         raise ENikshayCaseNotFound(u"Unknown case type: {}".format(case_type))
+
+
+def _get_voucher_parent(domain, voucher_case_id):
+    prescription = None
+    test = None
+
+    try:
+        prescription = get_first_parent_of_case(domain, voucher_case_id, CASE_TYPE_PRESCRIPTION)
+    except ENikshayCaseNotFound:
+        pass
+    try:
+        test = get_first_parent_of_case(domain, voucher_case_id, CASE_TYPE_TEST)
+    except ENikshayCaseNotFound:
+        pass
+    if not (prescription or test):
+        raise ENikshayCaseNotFound(
+            "Couldn't find any open parent prescription or test cases for id: {}".format(voucher_case_id)
+        )
+    assert not (prescription and test), "Didn't expect voucher to have prescription AND test parent"
+    return test or prescription
+
+
+def get_episode_case_from_voucher(domain, voucher_case_id):
+    voucher_parent = _get_voucher_parent(domain, voucher_case_id)
+    assert voucher_parent.type == CASE_TYPE_PRESCRIPTION
+    episode = get_first_parent_of_case(domain, voucher_parent.case_id, CASE_TYPE_EPISODE)
+    return episode
+
+
+def get_person_case_from_voucher(domain, voucher_case_id):
+    # Case structure could be one of these two things:
+    #   person <- occurrence <- episode <- prescription <- voucher
+    #   person <- occurrence <- test <- voucher
+    voucher_parent = _get_voucher_parent(domain, voucher_case_id)
+    if voucher_parent.type == CASE_TYPE_PRESCRIPTION:
+        episode = get_first_parent_of_case(domain, voucher_parent.case_id, CASE_TYPE_EPISODE)
+        return get_person_case_from_episode(domain, episode.case_id)
+    else:
+        assert voucher_parent.type == CASE_TYPE_TEST
+        occurrence = get_occurrence_case_from_test(domain, voucher_parent.case_id)
+        return get_person_case_from_occurrence(domain, occurrence.case_id)
+
+
+def get_prescription_vouchers_from_episode(domain, episode_case_id):
+    case_accessor = CaseAccessors(domain)
+    prescription_cases = [
+        case for case in case_accessor.get_reverse_indexed_cases([episode_case_id])
+        if case.type == CASE_TYPE_PRESCRIPTION
+    ]
+    return [
+        c for c in case_accessor.get_reverse_indexed_cases([case.case_id for case in prescription_cases])
+        if c.type == CASE_TYPE_VOUCHER
+    ]
+
+
+def get_approved_prescription_vouchers_from_episode(domain, episode_case_id):
+    vouchers = get_prescription_vouchers_from_episode(domain, episode_case_id)
+    approved_prescription_vouchers = []
+    for voucher in vouchers:
+        voucher_props = voucher.dynamic_case_properties()
+        if voucher_props.get("type") == CASE_TYPE_PRESCRIPTION and voucher_props.get("state") == "fulfilled":
+            approved_prescription_vouchers.append(voucher)
+    return approved_prescription_vouchers

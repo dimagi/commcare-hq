@@ -58,6 +58,7 @@ from corehq.apps.cloudcare.api import (
     look_up_app_json,
 )
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_app_id_from_hash
+from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
@@ -72,6 +73,7 @@ from corehq.apps.style.decorators import (
     use_jquery_ui,
 )
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
@@ -406,6 +408,74 @@ class SingleAppLandingPageView(TemplateView):
         })
 
 
+@location_safe
+class LoginAsUsers(View):
+
+    http_method_names = ['get']
+    urlname = 'login_as_users'
+
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
+    def dispatch(self, *args, **kwargs):
+        return super(LoginAsUsers, self).dispatch(*args, **kwargs)
+
+    def get(self, request, domain, **kwargs):
+        self.domain = domain
+        self.couch_user = request.couch_user
+
+        try:
+            limit = int(request.GET.get('limit', 10))
+        except ValueError:
+            limit = 10
+
+        # front end pages start at one
+        try:
+            page = int(request.GET.get('page', 1))
+        except ValueError:
+            page = 1
+        query = request.GET.get('query')
+
+        users_query = self._user_query(query, page - 1, limit)
+        total_records = users_query.count()
+        users_data = users_query.run()
+
+        return json_response({
+            'response': {
+                'itemList': map(self._format_user, users_data.hits),
+                'total': users_data.total,
+                'page': page,
+                'query': query,
+                'total_records': total_records
+            },
+        })
+
+    def _user_query(self, search_string, page, limit):
+        user_data_fields = []
+        if toggles.ENIKSHAY.enabled(self.domain):
+            user_data_fields = ['id_issuer_number']
+        return login_as_user_query(
+            self.domain,
+            self.couch_user,
+            search_string,
+            limit,
+            page * limit,
+            user_data_fields=user_data_fields
+        )
+
+    def _format_user(self, user_json):
+        user = CouchUser.wrap_correctly(user_json)
+        return {
+            'username': user.raw_username,
+            'customFields': user.user_data,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'phoneNumbers': user.phone_numbers,
+            'user_id': user.user_id,
+            'location': user.sql_location.to_json() if user.sql_location else None,
+        }
+
+
 @login_and_domain_required
 @requires_privilege_for_commcare_user(privileges.CLOUDCARE)
 def form_context(request, domain, app_id, module_id, form_id):
@@ -623,11 +693,11 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
     restore_user = user.to_ota_restore_user()
     if not fixture_id:
         ret = ElementTree.Element("fixtures")
-        for fixture in generator.get_fixtures(restore_user, version=V2):
+        for fixture in generator.get_fixtures(restore_user):
             ret.append(fixture)
         return HttpResponse(ElementTree.tostring(ret), content_type="text/xml")
     else:
-        fixture = generator.get_fixture_by_id(fixture_id, restore_user, version=V2)
+        fixture = generator.get_fixture_by_id(fixture_id, restore_user)
         if not fixture:
             raise Http404
         assert len(fixture.getchildren()) == 1, 'fixture {} expected 1 child but found {}'.format(

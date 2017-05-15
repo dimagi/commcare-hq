@@ -17,7 +17,10 @@
 {% block js-inline %}{{ block.super }}
 <script>
     $(function() {
-
+        $('#report-content').on('click', '.toggle-next-pre', function (e) {
+            $(this).nextAll('pre').toggle();
+            e.preventDefault();
+        });
         var codeMirror = null;
         $('#view-record-payload-modal').on('shown.bs.modal', function(event) {
             var recordData = $(event.relatedTarget).data(),

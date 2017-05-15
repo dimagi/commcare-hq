@@ -52,7 +52,8 @@ class StaticToggle(object):
 
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None, always_enabled=None,
-                 always_disabled=None, enabled_for_new_domains_after=None):
+                 always_disabled=None, enabled_for_new_domains_after=None,
+                 enabled_for_new_users_after=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -65,6 +66,7 @@ class StaticToggle(object):
         self.always_enabled = always_enabled or set()
         self.always_disabled = always_disabled or set()
         self.enabled_for_new_domains_after = enabled_for_new_domains_after
+        self.enabled_for_new_users_after = enabled_for_new_users_after
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
@@ -80,9 +82,13 @@ class StaticToggle(object):
             # short circuit if we're checking an item that isn't supported by this toggle
             return False
 
-        enabled_after = self.enabled_for_new_domains_after
-        if (enabled_after is not None and NAMESPACE_DOMAIN in self.namespaces
-            and was_domain_created_after(item, enabled_after)):
+        domain_enabled_after = self.enabled_for_new_domains_after
+        if (domain_enabled_after is not None and NAMESPACE_DOMAIN in self.namespaces
+            and was_domain_created_after(item, domain_enabled_after)):
+            return True
+
+        user_enabled_after = self.enabled_for_new_users_after
+        if (user_enabled_after is not None and was_user_created_after(item, user_enabled_after)):
             return True
 
         namespaces = self.namespaces if namespace is Ellipsis else [namespace]
@@ -153,6 +159,22 @@ def was_domain_created_after(domain, checkpoint):
         domain_obj is not None and
         domain_obj.date_created is not None and
         domain_obj.date_created > checkpoint
+    )
+
+
+def was_user_created_after(username, checkpoint):
+    """
+    Return true if user was created after checkpoint
+
+    :param username: Web User username (string).
+    :param checkpoint: datetime object.
+    """
+    from corehq.apps.users.models import WebUser
+    user = WebUser.get_by_username(username)
+    return (
+        user is not None and
+        user.created_on is not None and
+        user.created_on > checkpoint
     )
 
 
@@ -452,13 +474,6 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     description="Do not turn this feature flag. It is only used for providing compatability for old projects. "
     "We are actively trying to remove projects from this list. This functionality is now possible by using the "
     "Advanced Settings on the Organization Levels page and setting the Level to Expand From option."
-)
-
-FLAT_LOCATION_FIXTURE = StaticToggle(
-    'flat_location_fixture',
-    'Sync the location fixture in a flat format. ',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
 )
 
 HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
@@ -764,6 +779,13 @@ NIKSHAY_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+BETS_INTEGRATION = StaticToggle(
+    'bets_repeaters',
+    'Enable BETS data forwarders',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     'multiple_choice_custom_field',
     'Allow project to use multiple choice field in custom fields',
@@ -1010,7 +1032,8 @@ APP_MANAGER_V2 = StaticToggle(
     'app_manager_v2',
     'Prototype for case management onboarding (App Manager V2)',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
+    [NAMESPACE_USER],
+    enabled_for_new_users_after=datetime(2017, 5, 16, 20),  # 8pm UTC
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
@@ -1073,6 +1096,17 @@ USER_PROPERTY_EASY_REFS = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
     enabled_for_new_domains_after=datetime(2017, 5, 3, 20),  # 8pm UTC
+)
+
+LOCATION_USERS = StaticToggle(
+    'location_users',
+    'Autogenerate users for each location',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "This flag adds an option to the location types page (under 'advanced "
+        "mode') to create users for all locations of a specified type."
+    ),
 )
 
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
@@ -1141,7 +1175,7 @@ BLOBDB_RESTORE = PredictablyRandomToggle(
     "Blobdb restore",
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0,
+    randomness=0.0,
 )
 
 SHOW_DEV_TOGGLE_INFO = StaticToggle(
@@ -1184,6 +1218,14 @@ ENTERPRISE_OPTIMIZATIONS = StaticToggle(
     'enterprise_optimizations',
     'Used to enable specific optimizations for environments that only support a single domain e.g. ICDS',
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
+)
+
+MOBIE_UCR_SYNC_DELAY_CONFIG = StaticToggle(
+    'mobile_ucr_sync_delay',
+    "Show settings for configuring mobile UCR sync delay",
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
     always_enabled={'icds-cas'}
 )

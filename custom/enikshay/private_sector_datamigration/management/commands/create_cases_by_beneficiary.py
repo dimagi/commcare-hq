@@ -7,7 +7,11 @@ from casexml.apps.case.mock import CaseFactory
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_domain
 
 from custom.enikshay.private_sector_datamigration.factory import BeneficiaryCaseFactory
-from custom.enikshay.private_sector_datamigration.models import Beneficiary, Episode
+from custom.enikshay.private_sector_datamigration.models import (
+    Adherence,
+    Beneficiary,
+    Episode,
+)
 
 logger = logging.getLogger('private_sector_datamigration')
 
@@ -76,6 +80,7 @@ class Command(BaseCommand):
         assert not Episode.objects.filter(patientWeight__isnull=True).exists()
         assert not Episode.objects.filter(rxStartDate__isnull=True).exists()
         assert not Episode.objects.filter(site__isnull=True).exists()
+        assert not Adherence.objects.filter(creationDate__isnull=True).exists()
 
         # Assert always null
         assert not beneficiaries.filter(mdrTBSuspected__isnull=False).exists()

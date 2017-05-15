@@ -223,8 +223,8 @@ class DocumentProcessorController(object):
 
     def _update_progress(self):
         self.visited += 1
-        if self.visited + self.previously_visited > self.total:
-            self.total = self.visited + self.previously_visited
+        if self.visited > self.total:
+            self.total = self.visited
         if self.visited % self.chunk_size == 0:
             self.document_iterator.set_iterator_detail('progress',
                 {"visited": self.visited, "total": self.total})

@@ -100,10 +100,8 @@ def get_module_template(user, module):
 def get_module_view_context(app, module, lang=None):
     # shared context
     context = {
-        'edit_name_url': reverse(
-            'edit_module_attr',
-            args=[app.domain, app.id, module.id, 'name']
-        )
+        'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'name']),
+        'edit_case_label_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'case_label']),
     }
     module_brief = {
         'id': module.id,
@@ -112,6 +110,7 @@ def get_module_view_context(app, module, lang=None):
         'langs': app.langs,
         'module_type': module.module_type,
         'requires_case_details': module.requires_case_details(),
+        'unique_id': module.unique_id,
     }
     case_property_builder = _setup_case_property_builder(app)
     if isinstance(module, CareplanModule):
@@ -157,18 +156,20 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
         slug = 'module_%s_detail_print' % module.unique_id
         print_template = module.case_details.long.print_template
+        print_uploader = MultimediaHTMLUploadController(
+            slug,
+            reverse(
+                ProcessDetailPrintTemplateUploadView.name,
+                args=[app.domain, app.id, module.unique_id],
+            )
+        )
         if not print_template:
             print_template = {
                 'path': 'jr://file/commcare/text/%s.html' % slug,
             }
         context.update({
-            'print_uploader': MultimediaHTMLUploadController(
-                slug,
-                reverse(
-                    ProcessDetailPrintTemplateUploadView.name,
-                    args=[app.domain, app.id, module.unique_id],
-                )
-            ),
+            'print_uploader': print_uploader,
+            'print_uploader_js': print_uploader.js_options,
             'print_ref': ApplicationMediaReference(
                 print_template.get('path'),
                 media_class=CommCareMultimedia,
@@ -294,13 +295,33 @@ def _get_report_module_context(app, module):
         {'slug': f.slug, 'description': f.short_description} for f in get_auto_filter_configurations()
 
     ]
-    return {
-        'all_reports': [_report_to_config(r) for r in all_reports],
-        'current_reports': [r.to_json() for r in module.report_configs],
-        'filter_choices': filter_choices,
-        'auto_filter_choices': auto_filter_choices,
-        'daterange_choices': [choice._asdict() for choice in get_simple_dateranges()],
+    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import COLUMN_XPATH_CLIENT_TEMPLATE, get_data_path
+    current_reports = []
+    data_path_placeholders = {}
+    for r in module.report_configs:
+        r.migrate_graph_configs(app.domain)
+        current_reports.append(r.to_json())
+        data_path_placeholders[r.report_id] = {}
+        for chart_id in r.complete_graph_configs.keys():
+            data_path_placeholders[r.report_id][chart_id] = get_data_path(r, app.domain)
+
+    context = {
+        'report_module_options': {
+            'moduleName': module.name,
+            'moduleFilter': module.module_filter,
+            'availableReports': [_report_to_config(r) for r in all_reports],  # structure for all reports
+            'currentReports': current_reports,  # config data for app reports
+            'columnXpathTemplate': COLUMN_XPATH_CLIENT_TEMPLATE,
+            'dataPathPlaceholders': data_path_placeholders,
+            'languages': app.langs,
+        },
+        'static_data_options': {
+            'filterChoices': filter_choices,
+            'autoFilterChoices': auto_filter_choices,
+            'dateRangeOptions': [choice._asdict() for choice in get_simple_dateranges()],
+        },
     }
+    return context
 
 
 def _get_fixture_columns_by_type(domain):
@@ -662,8 +683,9 @@ def delete_module(request, domain, app_id, module_unique_id):
     if record is not None:
         messages.success(
             request,
-            'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse(
-                'undo_delete_module', args=[domain, record.get_id]
+            'You have deleted "%s". <a href="%s" class="post-link">Undo</a>' % (
+                record.module.default_name(app=app),
+                reverse('undo_delete_module', args=[domain, record.get_id])
             ),
             extra_tags='html'
         )

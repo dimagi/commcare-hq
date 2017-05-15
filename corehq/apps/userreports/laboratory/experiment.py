@@ -2,6 +2,7 @@ import json
 import logging
 import traceback
 
+from django.core.serializers.json import DjangoJSONEncoder
 import json_delta
 import laboratory
 
@@ -47,8 +48,8 @@ class UCRExperiment(laboratory.Experiment):
                 'domain': self.context['domain'],
                 'report_config_id': self.context['report_config_id'],
                 'filter_values': self.context['filter_values'],
-                'control': json.dumps(control_value),
-                'diff': json.dumps(diff)
+                'control': json.dumps(control_value, cls=DjangoJSONEncoder),
+                'diff': json.dumps(diff, cls=DjangoJSONEncoder)
             })
 
     def log_timing(self, control, candidate):

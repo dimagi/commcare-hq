@@ -160,13 +160,23 @@ def run_query(index_name, q, debug_host=None):
         es_meta = ES_META[index_name]
     except KeyError:
         from corehq.apps.userreports.util import is_ucr_table
-        # todo: figure out if we really need types
         if is_ucr_table(index_name):
             es_meta = EsMeta(index_name, 'indicator')
         else:
             raise
     try:
         return es_instance.search(es_meta.index, es_meta.type, body=q)
+    except ElasticsearchException as e:
+        raise ESError(e)
+
+
+def mget_query(index_name, ids, source):
+    es_instance = get_es_new()
+    es_meta = ES_META[index_name]
+    try:
+        return es_instance.mget(
+            index=es_meta.index, doc_type=es_meta.type, body={'ids': ids}, _source=source
+        )['docs']
     except ElasticsearchException as e:
         raise ESError(e)
 
