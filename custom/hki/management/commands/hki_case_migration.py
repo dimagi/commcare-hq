@@ -12,7 +12,13 @@ from dimagi.utils.chunked import chunked
 
 class Command(BaseCommand):
 
-    def handle(self, **options):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--log-file',
+            help="File path for log file",
+        )
+
+    def handle(self, log_file, **options):
         self.domain = 'hki-nepal-suaahara-2'
         loc_mapping = {}
         locs = SQLLocation.objects.filter(domain=self.domain, level=4)
@@ -23,7 +29,7 @@ class Command(BaseCommand):
         household_cases = CaseES().domain(self.domain).case_type('household').count()
         member_cases = CaseES().domain(self.domain).case_type('household_member').count()
         total_cases = household_cases + member_cases
-        with open('/home/cchq/hki_case_migration.log', "w") as fh:
+        with open(log_file, "w") as fh:
             fh.write('--------Successful Form Ids----------')
             for cases in chunked(with_progress_bar(self._get_cases_to_process(), total_cases), 100):
                 cases_to_update = self._process_cases(cases, failed_updates, loc_mapping)
