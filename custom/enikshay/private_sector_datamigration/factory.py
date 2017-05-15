@@ -6,11 +6,13 @@ from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex
 
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
 from custom.enikshay.private_sector_datamigration.models import (
     Adherence,
     Episode,
     EpisodePrescription,
     LabTest,
+    MigratedBeneficiaryCounter,
 )
 
 from dimagi.utils.decorators.memoized import memoized
@@ -65,6 +67,9 @@ class BeneficiaryCaseFactory(object):
                     'enrolled_in_private': 'true',
                     'first_name': self.beneficiary.firstName,
                     'husband_father_name': self.beneficiary.husband_father_name,
+                    'id_original_beneficiary_count': MigratedBeneficiaryCounter.get_next_counter(),
+                    'id_original_device_number': 0,
+                    'id_original_issuer_number': self._virtual_user.user_data['id_issuer_number'],
                     'language_preference': self.beneficiary.language_preference,
                     'last_name': self.beneficiary.lastName,
                     'name': self.beneficiary.name,
@@ -356,3 +361,8 @@ class BeneficiaryCaseFactory(object):
     @memoized
     def _location_owner_id(self):
         return self._location_owner.location_id
+
+    @property
+    @memoized
+    def _virtual_user(self):
+        return CommCareUser.get(self._location_owner.user_id)

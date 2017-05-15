@@ -9,6 +9,8 @@ from mock import patch
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
+from corehq.apps.locations.tasks import make_location_user
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.private_sector_datamigration.models import (
     Adherence,
@@ -17,9 +19,11 @@ from custom.enikshay.private_sector_datamigration.models import (
     EpisodePrescription,
     LabTest,
     Episode,
+    MigratedBeneficiaryCounter,
     UserDetail,
 )
 from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
+from custom.enikshay.user_setup import set_issuer_id
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -83,6 +87,17 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.pcp.site_code = str(self.agency.agencyId)
         self.pcp.save()
 
+        self.virtual_location_user = make_location_user(self.pcp)
+        self.virtual_location_user.save()
+        set_issuer_id(self.domain, self.virtual_location_user)
+
+        self.pcp.user_id = self.virtual_location_user._id
+        self.pcp.save()
+
+    def tearDown(self):
+        self.virtual_location_user.delete()
+        super(TestCreateCasesByBeneficiary, self).tearDown()
+
     @patch('custom.enikshay.private_sector_datamigration.factory.datetime')
     def test_create_cases_for_beneficiary(self, mock_datetime):
         mock_datetime.utcnow.return_value = datetime(2016, 9, 8, 1, 2, 3, 4123)
@@ -138,6 +153,9 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('first_name', 'Nick'),
             ('hiv_status', 'non_reactive'),
             ('husband_father_name', 'Nick Sr.'),
+            ('id_original_beneficiary_count', str(MigratedBeneficiaryCounter.objects.order_by('-id')[0].id)),
+            ('id_original_device_number', '0'),
+            ('id_original_issuer_number', str(self.virtual_location_user.user_data['id_issuer_number'])),
             ('is_active', 'yes'),
             ('language_preference', 'hin'),
             ('last_name', 'P'),
@@ -325,6 +343,19 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
         self.assertTrue(episode_case.closed)
         self.assertEqual(episode_case.dynamic_case_properties()['treatment_outcome'], 'died')
+
+    def test_id_original_beneficiary_count(self):
+        call_command('create_cases_by_beneficiary', self.domain)
+        call_command('create_cases_by_beneficiary', self.domain)
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(len(person_case_ids), 2)
+        self.assertEqual(
+            abs(int(self.case_accessor.get_case(
+                person_case_ids[0]).dynamic_case_properties()['id_original_beneficiary_count'])
+            - int(self.case_accessor.get_case(
+                person_case_ids[1]).dynamic_case_properties()['id_original_beneficiary_count'])),
+            1
+        )
 
     def test_adherence(self):
         episode = Episode.objects.create(

@@ -621,3 +621,12 @@ class UserDetail(models.Model):
     valid = models.BooleanField()
     villageTownCity = models.CharField(max_length=256, null=True)
     wardId = models.CharField(max_length=256, null=True)
+
+
+class MigratedBeneficiaryCounter(models.Model):
+    id = models.AutoField(primary_key=True)
+
+    @classmethod
+    def get_next_counter(cls):
+        counter = MigratedBeneficiaryCounter.objects.create()
+        return counter.id
