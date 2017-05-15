@@ -95,6 +95,12 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.pcp.user_id = self.virtual_location_user._id
         self.pcp.save()
 
+        self.sto.metadata['nikshay_code'] = 'MH'
+        self.sto.save()
+
+        self.dto.metadata['organization_id'] = '1'
+        self.dto.save()
+
     def tearDown(self):
         self.virtual_location_user.delete()
         super(TestCreateCasesByBeneficiary, self).tearDown()
@@ -146,6 +152,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('age', '25'),
             ('age_entered', '25'),
             ('current_address', '585 Mass Ave, Suite 4'),
+            ('current_address_district_choice', self.dto.location_id),
+            ('current_address_state_choice', self.sto.location_id),
             ('current_episode_type', 'confirmed_tb'),
             ('dataset', 'real'),
             ('diabetes_status', 'diabetic'),

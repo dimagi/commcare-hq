@@ -1,5 +1,6 @@
 from django.db import models
 
+from corehq.apps.locations.models import SQLLocation
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -110,6 +111,23 @@ class Beneficiary(models.Model):
         if not self.addressLineTwo:
             return self.addressLineOne or ''
         return ', '.join([self.addressLineOne, self.addressLineTwo])
+
+    def current_address_state_choice(self):
+        return self._state_loc().location_id
+
+    def current_address_district_choice(self):
+        for dto in SQLLocation.active_objects.filter(
+            location_type__code='dto',
+        ):
+            if dto.parent.parent == self._state_loc() and dto.metadata['organization_id'] == '1':
+                return dto.location_id
+
+    def _state_loc(self):
+        for sto in SQLLocation.active_objects.filter(
+            location_type__code='sto',
+        ):
+            if sto.metadata['nikshay_code'] == 'MH':
+                return sto
 
     @property
     def current_episode_type(self):

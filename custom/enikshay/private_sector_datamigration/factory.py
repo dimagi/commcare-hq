@@ -67,6 +67,8 @@ class BeneficiaryCaseFactory(object):
                 'create': True,
                 'update': {
                     'current_address': self.beneficiary.current_address,
+                    'current_address_district_choice': self.beneficiary.current_address_district_choice(),
+                    'current_address_state_choice': self.beneficiary.current_address_state_choice(),
                     'current_episode_type': self.beneficiary.current_episode_type,
                     'dataset': 'real',
                     'enrolled_in_private': 'true',
