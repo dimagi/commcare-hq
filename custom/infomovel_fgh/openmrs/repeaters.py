@@ -1,7 +1,9 @@
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
+import requests
 
-from corehq.motech.repeaters.models import CaseRepeater
+from corehq.motech.repeaters.models import CaseRepeater, RepeatRecordAttempt
+from corehq.motech.repeaters.repeater_generators import CaseRepeaterJsonPayloadGenerator
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import OPENMRS_INTEGRATION
 from casexml.apps.case.models import CommCareCase
@@ -30,7 +32,16 @@ class RegisterOpenmrsPatientRepeater(BaseOpenmrsRepeater):
         return reverse(RegisterOpenmrsPatientRepeaterView.urlname, args=[domain])
 
     def allowed_to_forward(self, case):
-        super(RegisterOpenmrsPatientRepeater, self).allowed_to_forward(case)
+        return super(RegisterOpenmrsPatientRepeater, self).allowed_to_forward(case)
+
+    @property
+    def generator(self):
+        return CaseRepeaterJsonPayloadGenerator(self)
+
+    def fire_for_record(self, repeat_record):
+        print self.get_payload(repeat_record)
+        print requests.get(self.url, auth=(self.username, self.password)).text
+        return repeat_record.handle_success(None)
 
 
 def create_case_repeat_records(sender, case, **kwargs):
