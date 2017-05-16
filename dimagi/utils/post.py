@@ -5,7 +5,8 @@ import tempfile
 from subprocess import PIPE
 import requests
 from restkit import Resource, BasicAuth
-from zeep import Client
+from zeep import Client, Transport
+from zeep.cache import InMemoryCache
 
 
 def post_authenticated_data(data, url, username, password):
@@ -65,8 +66,13 @@ def simple_post(data, url, content_type="text/xml", timeout=60, headers=None, au
     return requests.post(url, data, **kwargs)
 
 
+def get_SOAP_client(url):
+    transport = Transport(cache=InMemoryCache())
+    return Client(url, transport=transport)
+
+
 def perform_SOAP_operation(data, url, operation):
-    client = Client(url)
+    client = get_SOAP_client(url)
     # for just response message use
     # with client.options(raw_response=False) # explicitly set it to avoid caching mysteries
     #     return client.service[operation](**data)
@@ -76,7 +82,7 @@ def perform_SOAP_operation(data, url, operation):
 
 def parse_SOAP_response(url, operation, response):
     # parse the xml content on response object to return just the message
-    client = Client(url)
+    client = get_SOAP_client(url)
     binding = client.service[operation]._proxy._binding
     return binding.process_reply(client, binding.get(operation), response)
 
