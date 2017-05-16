@@ -224,8 +224,8 @@ def get_system_usage_data(filters):
             [
                 {
                     'label': _('Number of AWCs Open yesterday'),
-                    'help_text': _("""Total Number of Angwanwadi Centers that were open yesterday
-                        by the AWW or the AWW helper"""),
+                    'help_text': _(("Total Number of Angwanwadi Centers that were open yesterday "
+                                    "by the AWW or the AWW helper")),
                     'percent': percent_increase('daily_attendance', yesterday_data, before_yesterday_data),
                     'value': yesterday_data[0]['daily_attendance'],
                     'all': yesterday_data[0]['awcs'],
@@ -243,9 +243,11 @@ def get_system_usage_data(filters):
             [
                 {
                     'label': _('Average number of Home Visit forms submitted yesterday'),
-                    'help_text': _("""Average number of home visit forms submitted yesterday. 
-                    Home visit forms are Birth Preparedness, Delivery, Post Natal Care, 
-                    Exclusive breastfeeding and Complementary feeding"""),
+                    'help_text': _(
+                        ("Average number of home visit forms submitted yesterday. Home visit forms are "
+                         "Birth Preparedness, Delivery, Post Natal Care, Exclusive breastfeeding and "
+                         "Complementary feeding")
+                    ),
                     'percent': percent_increase('num_home_visits', yesterday_data, before_yesterday_data),
                     'value': yesterday_data[0]['num_home_visits'],
                     'all': yesterday_data[0]['awcs'],
@@ -325,9 +327,11 @@ def get_maternal_child_data(filters):
             [
                 {
                     'label': _('% Underweight Children'),
-                    'help_text': _("""Percentage of children with weight-for-age less than -2 standard 
-                    deviations of the WHO Child Growth Standards median. Children who are moderately 
-                    or severely underweight have a higher risk of mortality."""),
+                    'help_text': _((
+                        "Percentage of children with weight-for-age less than -2 standard deviations of "
+                        "the WHO Child Growth Standards median. Children who are moderately or severely "
+                        "underweight have a higher risk of mortality.")
+                    ),
                     'percent': percent_diff(
                         ['moderately_underweight', 'severely_underweight'],
                         this_month_data,
@@ -342,10 +346,13 @@ def get_maternal_child_data(filters):
                 },
                 {
                     'label': _('% Wasting'),
-                    'help_text': _("""Percentage of children (6-60 months) with weight-for-height below -3 
-                    standard deviations of the WHO Child Growth Standards median. Severe Acute Malnutrition 
-                    (SAM) or wasting in children is a symptom of acute undernutrition usually as a consequence
-                    of insufficient food intake or a high incidence of infectious diseases."""),
+                    'help_text': _((
+                        "Percentage of children (6-60 months) with weight-for-height below -3 standard "
+                        "deviations of the WHO Child Growth Standards median. Severe Acute Malnutrition "
+                        "(SAM) or wasting in children is a symptom of acute undernutrition usually as a "
+                        "consequence of insufficient food intake or a high incidence of infectious "
+                        "diseases.")
+                    ),
                     'percent': percent_diff(
                         ['wasting_mod', 'wasting_seve'],
                         this_month_data,
@@ -360,10 +367,11 @@ def get_maternal_child_data(filters):
             [
                 {
                     'label': _('% Stunting'),
-                    'help_text': _("""Percentage of children (6-60 months) with height-for-age below -2Z 
-                    standard deviations of the WHO Child Growth Standards median. Stunting in children is a 
-                    sign of chronic undernutrition and has long lasting harmful consequences on the growth of 
-                    a child"""),
+                    'help_text': _((
+                        "Percentage of children (6-60 months) with height-for-age below -2Z standard deviations "
+                        "of the WHO Child Growth Standards median. Stunting in children is a sign of chronic "
+                        "undernutrition and has long lasting harmful consequences on the growth of a child")
+                    ),
                     'percent': percent_diff(
                         ['stunting_mod', 'stunting_seve'],
                         this_month_data,
@@ -376,10 +384,11 @@ def get_maternal_child_data(filters):
                 },
                 {
                     'label': _('% Newborns with Low Birth Weight'),
-                    'help_text': _("""Percentage of newborns with born with birth weight less than 2500 grams. 
-                    Newborns with Low Birth Weight are closely associated with foetal and neonatal mortality 
-                    and morbidity, inhibited growth and cognitive development, and chronic 
-                    diseases later in life"""),
+                    'help_text': _((
+                        "Percentage of newborns with born with birth weight less than 2500 grams. Newborns with"
+                        " Low Birth Weight are closely associated with foetal and neonatal mortality and "
+                        "morbidity, inhibited growth and cognitive development, and chronic diseases later "
+                        "in life")),
                     'percent': percent_diff(
                         ['low_birth_weight'],
                         this_month_data,
@@ -394,9 +403,11 @@ def get_maternal_child_data(filters):
             [
                 {
                     'label': _('% Early Initiation of Breastfeeding'),
-                    'help_text': _("""Percentage of children breastfed within an hour of birth. Early initiation of 
-                    breastfeeding ensure the newborn recieves the "first milk" rich in nutrients and encourages 
-                    exclusive breastfeeding practic"""),
+                    'help_text': _((
+                        "Percentage of children breastfed within an hour of birth. Early initiation of "
+                        "breastfeeding ensure the newborn recieves the 'first milk' rich in nutrients "
+                        "and encourages exclusive breastfeeding practic")
+                    ),
                     'percent': percent_diff(
                         ['bf_birth'],
                         this_month_data,
@@ -409,9 +420,11 @@ def get_maternal_child_data(filters):
                 },
                 {
                     'label': _('% Exclusive breastfeeding'),
-                    'help_text': _("""Percentage of children between 0 - 6 months exclusively breastfed. An 
-                    infant is exclusively breastfed if they recieve only breastmilk with no additional food, 
-                    liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"""),
+                    'help_text': _((
+                        "Percentage of children between 0 - 6 months exclusively breastfed. An infant is "
+                        "exclusively breastfed if they recieve only breastmilk with no additional food, "
+                        "liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months")
+                    ),
                     'percent': percent_diff(
                         ['ebf'],
                         this_month_data,
@@ -426,9 +439,11 @@ def get_maternal_child_data(filters):
             [
                 {
                     'label': _('% Children initiated appropriate complementary feeding'),
-                    'help_text': _("""Percentage of children between 6 - 8 months given timely introduction 
-                    to solid or semi-solid food. Timely intiation of complementary feeding in addition to 
-                    breastmilk at 6 months of age is a key feeding practice to reduce malnutrition"""),
+                    'help_text': _((
+                        "Percentage of children between 6 - 8 months given timely introduction to solid or "
+                        "semi-solid food. Timely intiation of complementary feeding in addition to "
+                        "breastmilk at 6 months of age is a key feeding practice to reduce malnutrition")
+                    ),
                     'percent': percent_diff(
                         ['cf_initiation'],
                         this_month_data,
@@ -441,9 +456,11 @@ def get_maternal_child_data(filters):
                 },
                 {
                     'label': _('% Institutional deliveries'),
-                    'help_text': _("""Percentage of pregant women who delivered in a public or private medical
-                    facility in the last month. Delivery in medical instituitions is associated with a decrease
-                    maternal mortality rate"""),
+                    'help_text': _((
+                        "Percentage of pregant women who delivered in a public or private medical facility "
+                        "in the last month. Delivery in medical instituitions is associated with a "
+                        "decrease maternal mortality rate")
+                    ),
                     'percent': percent_diff(
                         ['institutional_delivery'],
                         deliveries_this_month,
@@ -482,7 +499,7 @@ def get_cas_reach_data(filters):
             [
                 {
                     'label': _('States/UTs covered'),
-                    'help_text': _("""Total States that have launched ICDS CAS"""),
+                    'help_text': _('Total States that have launched ICDS CAS'),
                     'percent': None,
                     'value': this_month_data[0]['states'],
                     'all': None,
@@ -490,7 +507,7 @@ def get_cas_reach_data(filters):
                 },
                 {
                     'label': _('Districts covered'),
-                    'help_text': _("""Total Districts that have launched ICDS CAS"""),
+                    'help_text': _('Total Districts that have launched ICDS CAS'),
                     'percent': None,
                     'value': this_month_data[0]['districts'],
                     'all': None,
@@ -500,7 +517,7 @@ def get_cas_reach_data(filters):
             [
                 {
                     'label': _('Block covered'),
-                    'help_text': _("""Total Blocks that have launched ICDS CAS"""),
+                    'help_text': _('Total Blocks that have launched ICDS CAS'),
                     'percent': None,
                     'value': this_month_data[0]['blocks'],
                     'all': None,
@@ -508,7 +525,7 @@ def get_cas_reach_data(filters):
                 },
                 {
                     'label': _('Sectors covered'),
-                    'help_text': _("""Total Sectors that have launched ICDS CAS"""),
+                    'help_text': _('Total Sectors that have launched ICDS CAS'),
                     'percent': None,
                     'value': this_month_data[0]['supervisors'],
                     'all': None,
@@ -518,7 +535,7 @@ def get_cas_reach_data(filters):
             [
                 {
                     'label': _('AWCs covered'),
-                    'help_text': _("""Total AWCs that have launched ICDS CAS"""),
+                    'help_text': _('Total AWCs that have launched ICDS CAS'),
                     'percent': percent_increase('awcs', this_month_data, prev_month_data),
                     'value': this_month_data[0]['awcs'],
                     'all': None,
@@ -553,7 +570,7 @@ def get_demographics_data(filters):
             [
                 {
                     'label': _('Registered Households'),
-                    'help_text': _("""Total number of households registered using ICDS CAS"""),
+                    'help_text': _('Total number of households registered using ICDS CAS'),
                     'percent': None,
                     'value': yesterday_data[0]['household'],
                     'all': None,
@@ -561,7 +578,7 @@ def get_demographics_data(filters):
                 },
                 {
                     'label': _('ICDS Beneficiary Households'),
-                    'help_text': _("""Total number of households that have consented to avail ICDS services"""),
+                    'help_text': _('Total number of households that have consented to avail ICDS services'),
                     'percent': 0,
                     'value': 0,
                     'all': 0,
@@ -571,7 +588,7 @@ def get_demographics_data(filters):
             [
                 {
                     'label': _('Children (0-6 years)'),
-                    'help_text': _("""Total number of children registered between the age of 0 - 6 years"""),
+                    'help_text': _('Total number of children registered between the age of 0 - 6 years'),
                     'percent': None,
                     'value': yesterday_data[0]['child_health'],
                     'all': None,
@@ -579,7 +596,7 @@ def get_demographics_data(filters):
                 },
                 {
                     'label': _('Pregnant Women'),
-                    'help_text': _("""Total number of pregnant women registered"""),
+                    'help_text': _('Total number of pregnant women registered'),
                     'percent': None,
                     'value': yesterday_data[0]['ccs_pregnant'],
                     'all': None,
@@ -588,7 +605,7 @@ def get_demographics_data(filters):
             ], [
                 {
                     'label': _('Lactating Mothers'),
-                    'help_text': _("""Total number of lactating women registered"""),
+                    'help_text': _('Total number of lactating women registered'),
                     'percent': None,
                     'value': yesterday_data[0]['css_lactating'],
                     'all': None,
@@ -596,7 +613,7 @@ def get_demographics_data(filters):
                 },
                 {
                     'label': _('Adolescent Girls (11-18 years)'),
-                    'help_text': _("""Total number of adolescent girls who are registered"""),
+                    'help_text': _('Total number of adolescent girls who are registered'),
                     'percent': None,
                     'value': yesterday_data[0]['person_adolescent'],
                     'all': None,
@@ -605,8 +622,9 @@ def get_demographics_data(filters):
             ], [
                 {
                     'label': _('% Adhaar seeded beneficaries'),
-                    'help_text': _("""Percentage of ICDS beneficiaries whose Adhaar 
-                    identification has been captured"""),
+                    'help_text': _((
+                        'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
+                    )),
                     'percent': percent_diff(
                         ['person_aadhaar'],
                         yesterday_data,
@@ -643,7 +661,7 @@ def get_awc_infrastructure_data(filters):
             [
                 {
                     'label': _('Total number of AWCs with a source of clean drinking water'),
-                    'help_text': _("""Percentage of AWCs with a source of clean drinking water"""),
+                    'help_text': _('Percentage of AWCs with a source of clean drinking water'),
                     'percent': percent_diff(
                         ['clean_water'],
                         this_month_data,
@@ -655,9 +673,11 @@ def get_awc_infrastructure_data(filters):
                     'format': 'percent_and_div'
                 },
                 {
-                    'label': _("""Total number of AWCs with a functional toilet (is a question in 
-                        infrastructure details form in AWC management module)"""),
-                    'help_text': _("""Percentage of AWCs with a functional toilet"""),
+                    'label': _((
+                        "Total number of AWCs with a functional toilet (is a question in infrastructure "
+                        "details form in AWC management module)")
+                    ),
+                    'help_text': _('Percentage of AWCs with a functional toilet'),
                     'percent': percent_diff(
                         ['functional_toilet'],
                         this_month_data,
@@ -672,7 +692,7 @@ def get_awc_infrastructure_data(filters):
             [
                 {
                     'label': _('Total number of AWCs with access to electricity'),
-                    'help_text': _("""Percentage of AWCs with access to electricity"""),
+                    'help_text': _('Percentage of AWCs with access to electricity'),
                     'percent': 0,
                     'value': 0,
                     'all': 0,
@@ -680,7 +700,7 @@ def get_awc_infrastructure_data(filters):
                 },
                 {
                     'label': _('Total number of AWCs with a Medicine Kit'),
-                    'help_text': _("""Percentage of AWCs with a Medicine Kit"""),
+                    'help_text': _('Percentage of AWCs with a Medicine Kit'),
                     'percent': percent_diff(
                         ['medicine_kits'],
                         this_month_data,
@@ -695,7 +715,7 @@ def get_awc_infrastructure_data(filters):
             [
                 {
                     'label': _('Total number of AWCs with an infantometer'),
-                    'help_text': _("""Percentage of AWCs with an Infantometer"""),
+                    'help_text': _('Percentage of AWCs with an Infantometer'),
                     'percent': 0,
                     'value': 0,
                     'all': 0,
@@ -703,7 +723,7 @@ def get_awc_infrastructure_data(filters):
                 },
                 {
                     'label': _('Total number of AWCs with a stadiometer'),
-                    'help_text': _("""Percentage of AWCs with a Stadiometer"""),
+                    'help_text': _('Percentage of AWCs with a Stadiometer'),
                     'percent': 0,
                     'value': 0,
                     'all': 0,
@@ -713,7 +733,7 @@ def get_awc_infrastructure_data(filters):
             [
                 {
                     'label': _('Total number of AWCs with a weighing scale'),
-                    'help_text': _("""Percentage of AWCs with a Weighing scale"""),
+                    'help_text': _('Percentage of AWCs with a Weighing scale'),
                     'percent': 0,
                     'value': 0,
                     'all': 0,
