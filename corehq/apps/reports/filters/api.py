@@ -271,16 +271,36 @@ class DeviceLogFilter(LoginAndDomainMixin, JSONResponseMixin, View):
     def get(self, request, domain):
         q = self.request.GET.get('q', None)
         field_filter = {self.field + "__startswith": q}
-        values = (
+        query_set = (
             DeviceReportEntry.objects
             .filter(domain=domain)
             .filter(**field_filter)
             .distinct(self.field)
             .values_list(self.field, flat=True)
-        )[:10]
+            .order_by(self.field)
+        )
+        values = query_set[self._offset():self._offset()+self._page_limit()]
         return self.render_json_response({
             'results': [{'id': v, 'text': v} for v in values],
+            'total': query_set.count(),
         })
+
+    def _page_limit(self):
+        page_limit = self.request.GET.get("page_limit", 10)
+        try:
+            return int(page_limit)
+        except ValueError:
+            return 10
+
+    def _page(self):
+        page = self.request.GET.get("page", 1)
+        try:
+            return int(page)
+        except ValueError:
+            return 1
+
+    def _offset(self):
+        return self._page_limit() * (self._page() - 1)
 
 
 class DeviceLogUsers(DeviceLogFilter):
