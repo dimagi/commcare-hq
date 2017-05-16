@@ -24,7 +24,6 @@ from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_pro
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
 from corehq.apps.app_manager.views.notifications import notify_form_changed
 from corehq.apps.app_manager.views.schedules import get_schedule_context
-
 from corehq.apps.app_manager.views.utils import back_to_main, \
     CASE_TYPE_CONFLICT_MSG, get_langs
 
@@ -88,7 +87,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
-from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
+from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary, get_case_property_description_dict
 from corehq.apps.tour import tours
 
 
@@ -568,13 +567,17 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         valid_index_names.append(USERCASE_PREFIX[0:-1])     # strip trailing slash
 
     form_has_schedule = isinstance(form, AdvancedForm) and form.get_module().has_schedule
+    case_config_options = {
+        'caseType': form.get_case_type(),
+        'moduleCaseTypes': module_case_types,
+        'propertiesMap': get_all_case_properties(app),
+        'questions': xform_questions,
+        'reserved_words': load_case_reserved_words(),
+    }
     context = {
         'nav_form': form,
         'xform_languages': languages,
         "xform_questions": xform_questions,
-        'case_reserved_words_json': load_case_reserved_words(),
-        'valid_index_names': valid_index_names,
-        'module_case_types': module_case_types,
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
         'xform_validation_missing': xform_validation_missing,
@@ -630,22 +633,17 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         ]
 
     if isinstance(form, CareplanForm):
-        context.update({
-            'mode': form.mode,
-            'fixed_questions': form.get_fixed_questions(),
-            'custom_case_properties': [
-                {'key': key, 'path': path} for key, path in form.custom_case_updates.items()
-            ],
+        case_config_options.update({
+            'save_url': reverse("edit_careplan_form_actions", args=[app.domain, app.id, module.id, form.id]),
             'case_preload': [
                 {'key': key, 'path': path} for key, path in form.case_preload.items()
             ],
+            'customCaseUpdates': [
+                {'key': key, 'path': path} for key, path in form.custom_case_updates.items()
+            ],
+            'fixedQuestions': form.get_fixed_questions(),
+            'mode': form.mode,
         })
-        template = get_app_manager_template(
-            request.user,
-            "app_manager/v1/form_view_careplan.html",
-            "app_manager/v2/form_view_careplan.html",
-        )
-        return template, context
     elif isinstance(form, AdvancedForm):
         def commtrack_programs():
             if app.commtrack_enabled:
@@ -655,26 +653,52 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
                 return []
 
         all_programs = [{'value': '', 'label': _('All Programs')}]
-        context.update({
+        case_config_options.update({
+            'save_url': reverse("edit_advanced_form_actions", args=[app.domain, app.id, module.id, form.id]),
+            'commtrack_enabled': app.commtrack_enabled,
             'commtrack_programs': all_programs + commtrack_programs(),
+            'module_id': module.unique_id,
+            'propertyDescriptions': get_case_property_description_dict(domain),
         })
-        context.update(get_schedule_context(form))
-        template = get_app_manager_template(
-            request.user,
-            "app_manager/v1/form_view_advanced.html",
-            "app_manager/v2/form_view_advanced.html",
-        )
-        return template, context
+        if form.form_type == "shadow_form":
+            case_config_options.update({
+                'actions': form.extra_actions,
+                'isShadowForm': True,
+            })
+        else:
+            case_config_options.update({
+                'actions': form.actions,
+                'isShadowForm': False,
+            })
+
+        if module.has_schedule:
+            visit_scheduler_options = get_schedule_context(form)
+            visit_scheduler_options.update({
+                'questions': xform_questions,
+                'save_url': reverse("edit_visit_schedule", args=[app.domain, app.id, module.id, form.id]),
+                'schedule': form.schedule,
+                'phase': visit_scheduler_options['schedule_phase'],
+            })
+            context.update({'visit_scheduler_options': visit_scheduler_options})
     else:
+        case_config_options.update({
+            'actions': form.actions,
+            'allowUsercase': allow_usercase,
+            'valid_index_names': valid_index_names,
+            'usercasePropertiesMap': get_usercase_properties(app),
+            'propertyDescriptions': get_case_property_description_dict(domain),
+            'save_url': reverse("edit_form_actions", args=[app.domain, app.id, module.id, form.id]),
+        })
         context.update({
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled_for_request(request),
         })
-        template = get_app_manager_template(
-            request.user,
-            "app_manager/v1/form_view.html",
-            "app_manager/v2/form_view.html",
-        )
-        return template, context
+    context.update({'case_config_options': case_config_options})
+    template = get_app_manager_template(
+        request.user,
+        "app_manager/v1/form_view.html",
+        "app_manager/v2/form_view.html",
+    )
+    return template, context
 
 
 @require_can_edit_apps
