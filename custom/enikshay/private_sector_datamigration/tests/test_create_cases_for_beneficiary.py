@@ -4,13 +4,12 @@ from datetime import datetime
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 
-from mock import patch
+from mock import Mock, patch
 
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
 from corehq.apps.locations.tasks import make_location_user
-from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.private_sector_datamigration.models import (
     Adherence,
@@ -19,7 +18,6 @@ from custom.enikshay.private_sector_datamigration.models import (
     EpisodePrescription,
     LabTest,
     Episode,
-    MigratedBeneficiaryCounter,
     UserDetail,
 )
 from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
@@ -81,7 +79,9 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             valid=True,
         )
 
-    def setUp(self):
+    @patch('custom.enikshay.user_setup.IssuerId.pk')
+    def setUp(self, mock_pk):
+        mock_pk.__get__ = Mock(return_value=7)
         super(TestCreateCasesByBeneficiary, self).setUp()
 
         self.pcp.site_code = str(self.agency.agencyId)
@@ -99,8 +99,11 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         super(TestCreateCasesByBeneficiary, self).tearDown()
 
     @patch('custom.enikshay.private_sector_datamigration.factory.datetime')
-    def test_create_cases_for_beneficiary(self, mock_datetime):
+    @patch('custom.enikshay.private_sector_datamigration.factory.MigratedBeneficiaryCounter')
+    def test_create_cases_for_beneficiary(self, mock_counter, mock_datetime):
+        mock_counter.get_next_counter.return_value = 4
         mock_datetime.utcnow.return_value = datetime(2016, 9, 8, 1, 2, 3, 4123)
+
 
         Episode.objects.create(
             adherenceScore=0.5,
@@ -153,14 +156,16 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('first_name', 'Nick'),
             ('hiv_status', 'non_reactive'),
             ('husband_father_name', 'Nick Sr.'),
-            ('id_original_beneficiary_count', str(MigratedBeneficiaryCounter.objects.order_by('-id')[0].id)),
+            ('id_original_beneficiary_count', '4'),
             ('id_original_device_number', '0'),
-            ('id_original_issuer_number', str(self.virtual_location_user.user_data['id_issuer_number'])),
+            ('id_original_issuer_number', '7'),
             ('is_active', 'yes'),
             ('language_preference', 'hin'),
             ('last_name', 'P'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
+            ('person_id', 'AAA-KAA-AF'),
+            ('person_id_flat', 'AAAKAAAF'),
             ('person_id_legacy', '3'),
             ('person_occurrence_count', '1'),
             ('phone_number', '5432109876'),

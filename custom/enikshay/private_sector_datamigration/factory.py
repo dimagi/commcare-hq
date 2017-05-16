@@ -14,6 +14,7 @@ from custom.enikshay.private_sector_datamigration.models import (
     LabTest,
     MigratedBeneficiaryCounter,
 )
+from custom.enikshay.user_setup import compress_nikshay_id
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -67,12 +68,14 @@ class BeneficiaryCaseFactory(object):
                     'enrolled_in_private': 'true',
                     'first_name': self.beneficiary.firstName,
                     'husband_father_name': self.beneficiary.husband_father_name,
-                    'id_original_beneficiary_count': MigratedBeneficiaryCounter.get_next_counter(),
+                    'id_original_beneficiary_count': self._serial_count,
                     'id_original_device_number': 0,
-                    'id_original_issuer_number': self._virtual_user.user_data['id_issuer_number'],
+                    'id_original_issuer_number': self._id_issuer_number,
                     'language_preference': self.beneficiary.language_preference,
                     'last_name': self.beneficiary.lastName,
                     'name': self.beneficiary.name,
+                    'person_id': self.person_id,
+                    'person_id_flat': self.person_id_flat,
                     'person_id_legacy': self.beneficiary.caseId,
                     'person_occurrence_count': 1,
                     'phone_number': self.beneficiary.phoneNumber,
@@ -366,3 +369,40 @@ class BeneficiaryCaseFactory(object):
     @memoized
     def _virtual_user(self):
         return CommCareUser.get(self._location_owner.user_id)
+
+    @property
+    @memoized
+    def _id_issuer_number(self):
+        return self._virtual_user.user_data['id_issuer_number']
+
+    @property
+    @memoized
+    def _id_issuer_body(self):
+        return self._virtual_user.user_data['id_issuer_body']
+
+    @property
+    def _id_device_body(self):
+        return compress_nikshay_id(0, 0)
+
+    @property
+    @memoized
+    def _serial_count(self):
+        return MigratedBeneficiaryCounter.get_next_counter()
+
+    @property
+    @memoized
+    def _serial_count_compressed(self):
+        return compress_nikshay_id(self._serial_count, 2)
+
+    @property
+    @memoized
+    def person_id_flat(self):
+        return self._id_issuer_body + self._id_device_body + self._serial_count_compressed
+
+    @property
+    def person_id(self):
+        num_chars_between_hyphens = 3
+        return '-'.join([
+            self.person_id_flat[i:i + num_chars_between_hyphens]
+            for i in range(0, len(self.person_id_flat), num_chars_between_hyphens)
+        ])
