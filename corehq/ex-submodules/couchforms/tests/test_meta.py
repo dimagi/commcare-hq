@@ -4,11 +4,10 @@ from datetime import date, datetime
 from django.test import TestCase
 from django.conf import settings
 
+from casexml.apps.case.tests.util import delete_all_xforms
+from corehq.form_processor.tests.utils import use_sql_backend, post_xform
 from corehq.util.test_utils import TestFileMixin
 from couchforms.datatypes import GeoPoint
-from couchforms.models import XFormInstance
-
-from corehq.form_processor.tests.utils import use_sql_backend, post_xform
 
 
 class TestMeta(TestCase, TestFileMixin):
@@ -17,7 +16,7 @@ class TestMeta(TestCase, TestFileMixin):
     maxDiff = None
 
     def tearDown(self):
-        XFormInstance.get_db().flush()
+        delete_all_xforms()
 
     def _check_metadata(self, xform, expected):
         if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
