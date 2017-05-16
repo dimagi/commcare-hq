@@ -21,7 +21,9 @@ from custom.enikshay.case_utils import (
     get_open_episode_case_from_occurrence,
     get_person_locations,
     get_episode_case_from_adherence,
-    get_open_referral_case_from_person)
+    get_open_referral_case_from_person,
+    get_approved_prescription_vouchers_from_episode,
+)
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -136,6 +138,17 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
         self.assertEqual(
             get_open_referral_case_from_person(self.domain, self.person_id).case_id,
             referral_case_id
+        )
+
+    def test_get_voucher_and_prescription(self):
+        prescription1 = self.create_prescription_case()
+        voucher11 = self.create_voucher_case(prescription1.case_id)
+        voucher12 = self.create_voucher_case(prescription1.case_id)
+        prescription2 = self.create_prescription_case()
+        voucher21 = self.create_voucher_case(prescription2.case_id)
+        self.assertItemsEqual(
+            [voucher11, voucher12, voucher21],
+            get_approved_prescription_vouchers_from_episode(self.domain, self.episode_id)
         )
 
 

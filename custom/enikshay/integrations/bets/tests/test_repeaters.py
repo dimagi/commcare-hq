@@ -34,10 +34,13 @@ class TestVoucherRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBa
         # voucher not approved
         self.create_case_structure()
         self.assign_person_to_location(self.phi.location_id)
-        voucher = self.create_prescription_voucher({
-            "voucher_type": "prescription",
-            'state': 'not approved'
-        })
+        prescription = self.create_prescription_case()
+        voucher = self.create_voucher_case(
+            prescription.case_id, {
+                "voucher_type": "prescription",
+                'state': 'not approved'
+            }
+        )
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # voucher approved
