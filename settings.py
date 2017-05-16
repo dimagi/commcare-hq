@@ -373,6 +373,7 @@ HQ_APPS = (
     'custom.icds',
     'custom.icds_reports',
     'custom.pnlppgi',
+    'custom.hki'
 )
 
 ENIKSHAY_APPS = (
