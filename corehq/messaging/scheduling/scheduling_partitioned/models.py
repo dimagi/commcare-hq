@@ -156,11 +156,11 @@ class ScheduleInstance(PartitionedModel):
         return self.schedule
 
 
-class AlertScheduleInstance(ScheduleInstance):
+class AbstractAlertScheduleInstance(ScheduleInstance):
     alert_schedule_id = models.UUIDField()
 
     class Meta(ScheduleInstance.Meta):
-        db_table = 'scheduling_alertscheduleinstance'
+        abstract = True
 
     @property
     def schedule(self):
@@ -174,12 +174,12 @@ class AlertScheduleInstance(ScheduleInstance):
         self.alert_schedule_id = value.schedule_id
 
 
-class TimedScheduleInstance(ScheduleInstance):
+class AbstractTimedScheduleInstance(ScheduleInstance):
     timed_schedule_id = models.UUIDField()
     start_date = models.DateField()
 
     class Meta(ScheduleInstance.Meta):
-        db_table = 'scheduling_timedscheduleinstance'
+        abstract = True
 
     @property
     def schedule(self):
@@ -201,3 +201,43 @@ class TimedScheduleInstance(ScheduleInstance):
             self.start_date = new_start_date
         schedule.set_first_event_due_timestamp(self, self.start_date)
         schedule.move_to_next_event_not_in_the_past(self)
+
+
+class AlertScheduleInstance(AbstractAlertScheduleInstance):
+
+    class Meta(AbstractAlertScheduleInstance.Meta):
+        db_table = 'scheduling_alertscheduleinstance'
+
+
+class TimedScheduleInstance(AbstractTimedScheduleInstance):
+
+    class Meta(AbstractTimedScheduleInstance.Meta):
+        db_table = 'scheduling_timedscheduleinstance'
+
+
+class CaseAlertScheduleInstance(AbstractAlertScheduleInstance):
+    # Points to the CommCareCase/SQL that spawned this schedule instance
+    case_id = models.CharField(max_length=255)
+
+    # Points to the AutomaticUpdateRule that spawned this schedule instance
+    rule_id = models.IntegerField()
+
+    class Meta(AbstractAlertScheduleInstance.Meta):
+        db_table = 'scheduling_casealertscheduleinstance'
+        index_together = AbstractAlertScheduleInstance.Meta.index_together + (
+            ('case_id', 'alert_schedule_id'),
+        )
+
+
+class CaseTimedScheduleInstance(AbstractTimedScheduleInstance):
+    # Points to the CommCareCase/SQL that spawned this schedule instance
+    case_id = models.CharField(max_length=255)
+
+    # Points to the AutomaticUpdateRule that spawned this schedule instance
+    rule_id = models.IntegerField()
+
+    class Meta(AbstractTimedScheduleInstance.Meta):
+        db_table = 'scheduling_casetimedscheduleinstance'
+        index_together = AbstractTimedScheduleInstance.Meta.index_together + (
+            ('case_id', 'timed_schedule_id'),
+        )
