@@ -35,7 +35,7 @@ function SystemUsageController($http, $log) {
         window.angular.forEach(vm.steps, function(value) {
             if (value.slug === s.slug) {
                 if (!value.data) {
-                    vm.getDataForStep(vm.steps[0]);
+                    vm.getDataForStep(value);
                 }
                 vm.step = value;
             }

@@ -1,5 +1,8 @@
 import requests
+
 from datetime import datetime
+
+from dateutil.relativedelta import relativedelta
 from django.http.response import JsonResponse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView
@@ -11,7 +14,8 @@ from corehq.apps.locations.permissions import location_safe
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
-from custom.icds_reports.utils import get_system_usage_data
+from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_data, get_cas_reach_data, \
+    get_demographics_data, get_awc_infrastructure_data
 from . import const
 from .exceptions import TableauTokenException
 
@@ -174,15 +178,25 @@ class ProgramSummaryView(View):
         # Hardcoded for local tests, in database we have data only for these two days
         date_2 = datetime(2015, 9, 9)
         date_1 = datetime(2015, 9, 10)
-
+        month = datetime(2015, 9, 1)
+        prev_month = datetime(2015, 9, 1) - relativedelta(month=1)
         config = {
-            'yesterday': date_1,
-            'before_yesterday': date_2
+            'yesterday': tuple(date_1.timetuple())[:3],
+            'before_yesterday': tuple(date_2.timetuple())[:3],
+            'month': tuple(month.timetuple())[:3],
+            'prev_month': tuple(prev_month.timetuple())[:3]
         }
         data = {
             'records': []
         }
         if step == 'system_usage':
             data = get_system_usage_data(config)
-
+        elif step == 'maternal_child':
+            data = get_maternal_child_data(config)
+        elif step == 'icds_cas_reach':
+            data = get_cas_reach_data(config)
+        elif step == 'demographics':
+            data = get_demographics_data(config)
+        elif step == 'awc_infrastructure':
+            data = get_awc_infrastructure_data(config)
         return JsonResponse(data=data)

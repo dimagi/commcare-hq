@@ -30,13 +30,19 @@
                                 <div class="numbers">
                                     <span ng-if="cell.format == 'div'"><span ng-bind="cell.value | number:0"></span>/<span ng-bind="cell.all | number:0"></span></span>
                                     <span ng-if="cell.format == 'number'" ng-bind="cell.value | number:0"></span>
+                                    <div ng-if="cell.format == 'percent_and_div'">
+                                        <div><span ng-bind="(cell.value / cell.all * 100) | number:2"></span> %</div>
+                                        <div>(<span ng-bind="cell.value"></span>/<span ng-bind="cell.all"></span>)</div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="row">
+                            <div class="row" >
                                 <p>
-                                    <i class="fa" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0}"></i>
-                                    <span ng-bind="cell.percent | number:2"></span>
-                                    {% trans '% from the day before last' %}
+                                    <span ng-show="cell.percent !== null">
+                                        <i class="fa" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0}"></i>
+                                        <span ng-bind="cell.percent | number:2"></span>
+                                        {% trans '% from the day before last' %}
+                                    </span>
                                     <i class="fa fa-ellipsis-h fa-2x" aria-hidden="true"></i>
                                 </p>
                             </div>
