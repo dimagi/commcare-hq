@@ -1,10 +1,10 @@
 import uuid
 from django.test import SimpleTestCase, TestCase
-from kafka import KeyedProducer
+from kafka import SimpleProducer
 from kafka.common import KafkaUnavailableError
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
 from corehq.apps.change_feed.producer import send_to_kafka
 from corehq.apps.change_feed.topics import get_multi_topic_first_available_offsets
@@ -36,7 +36,7 @@ class KafkaChangeFeedTest(SimpleTestCase):
     def test_multiple_topics_with_partial_checkpoint(self):
         feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], group_id='test-kafka-feed')
         self.assertEqual(0, len(list(feed.iter_changes(since=None, forever=False))))
-        offsets = {'form': feed.get_latest_offsets()['form']}
+        offsets = {('form', 0): feed.get_latest_offsets()[('form', 0)]}
         expected_metas = [publish_stub_change(topics.FORM), publish_stub_change(topics.CASE)]
         changes = list(feed.iter_changes(since=offsets, forever=False))
         # should include at least the form and the case (may have more than one case since not
@@ -49,9 +49,10 @@ class KafkaChangeFeedTest(SimpleTestCase):
     @trap_extra_setup(KafkaUnavailableError)
     def test_expired_checkpoint_iteration_strict(self):
         feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], group_id='test-kafka-feed', strict=True)
-        first_avaliable_offsets = get_multi_topic_first_available_offsets([topics.FORM, topics.CASE])
+        first_available_offsets = get_multi_topic_first_available_offsets([topics.FORM, topics.CASE])
         since = {
-            topic: first_available - 1 for topic, first_available in first_avaliable_offsets.items()
+            topic_partition: offset - 1
+            for topic_partition, offset in first_available_offsets.items()
         }
         with self.assertRaises(UnavailableKafkaOffset):
             feed.iter_changes(since=since, forever=False).next()
@@ -59,11 +60,8 @@ class KafkaChangeFeedTest(SimpleTestCase):
     @trap_extra_setup(KafkaUnavailableError)
     def test_non_expired_checkpoint_iteration_strict(self):
         feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], group_id='test-kafka-feed', strict=True)
-        first_avaliable_offsets = get_multi_topic_first_available_offsets([topics.FORM, topics.CASE])
-        since = {
-            topic: first_available for topic, first_available in first_avaliable_offsets.items()
-        }
-        feed.iter_changes(since=since, forever=False).next()
+        first_available_offsets = get_multi_topic_first_available_offsets([topics.FORM, topics.CASE])
+        feed.iter_changes(since=first_available_offsets, forever=False).next()
 
 
 class KafkaCheckpointTest(TestCase):
@@ -72,19 +70,19 @@ class KafkaCheckpointTest(TestCase):
     def test_checkpoint_with_multiple_topics(self):
         feed = KafkaChangeFeed(topics=[topics.FORM, topics.CASE], group_id='test-kafka-feed')
         pillow_name = 'test-multi-topic-checkpoints'
-        checkpoint = PillowCheckpoint(pillow_name)
+        checkpoint = PillowCheckpoint(pillow_name, feed.sequence_format)
         processor = CountingProcessor()
         pillow = ConstructedPillow(
             name=pillow_name,
             checkpoint=checkpoint,
             change_feed=feed,
             processor=processor,
-            change_processed_event_handler=MultiTopicCheckpointEventHandler(
+            change_processed_event_handler=KafkaCheckpointEventHandler(
                 checkpoint=checkpoint, checkpoint_frequency=1, change_feed=feed
             )
         )
         offsets = feed.get_latest_offsets()
-        self.assertEqual(set([topics.FORM, topics.CASE]), set(offsets.keys()))
+        self.assertEqual(set([(topics.FORM, 0), (topics.CASE, 0)]), set(offsets.keys()))
 
         # send a few changes to kafka so they should be picked up by the pillow
         publish_stub_change(topics.FORM)
@@ -107,7 +105,7 @@ class KafkaCheckpointTest(TestCase):
 
 @memoized
 def _get_producer():
-    return KeyedProducer(get_kafka_client_or_none())
+    return SimpleProducer(get_kafka_client_or_none())
 
 
 def publish_stub_change(topic):

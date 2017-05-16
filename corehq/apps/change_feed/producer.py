@@ -4,7 +4,7 @@ import time
 from django.conf import settings
 
 from corehq.util.soft_assert import soft_assert
-from kafka import KeyedProducer
+from kafka import SimpleProducer
 from kafka.common import LeaderNotAvailableError, FailedPayloadsError, KafkaUnavailableError
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
 
@@ -13,7 +13,6 @@ def send_to_kafka(producer, topic, change_meta):
     def _send_to_kafka():
         producer.send_messages(
             bytes(topic),
-            bytes(change_meta.domain.encode('utf-8') if change_meta.domain is not None else None),
             bytes(json.dumps(change_meta.to_json())),
         )
 
@@ -63,7 +62,7 @@ class ChangeProducer(object):
     def producer(self):
         if self._producer is None and not self._has_error:
             if self.kafka is not None:
-                self._producer = KeyedProducer(self._kafka)
+                self._producer = SimpleProducer(self._kafka)
             else:
                 # if self.kafka is None then we should be in an error state
                 assert self._has_error

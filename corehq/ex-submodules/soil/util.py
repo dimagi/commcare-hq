@@ -1,4 +1,4 @@
-from soil import DownloadBase, CachedDownload, FileDownload, MultipleTaskDownload
+from soil import DownloadBase, CachedDownload, FileDownload, MultipleTaskDownload, BlobDownload
 from soil.exceptions import TaskFailedError
 from soil.heartbeat import is_alive, heartbeat_enabled
 from soil.progress import get_task_status
@@ -23,6 +23,24 @@ def expose_file_download(path, **kwargs):
     Expose a file download object that potentially uses the external drive
     """
     ref = FileDownload.create(path, **kwargs)
+    ref.save()
+    return ref
+
+
+def expose_blob_download(
+        identifier,
+        mimetype='text/plain',
+        content_disposition=None,
+        download_id=None):
+    """
+    Expose a blob object for download
+    """
+    ref = BlobDownload.create(
+        identifier,
+        mimetype=mimetype,
+        content_disposition=content_disposition,
+        download_id=download_id,
+    )
     ref.save()
     return ref
 

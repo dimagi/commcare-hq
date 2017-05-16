@@ -1,5 +1,6 @@
 import copy
 import logging
+import time
 from collections import namedtuple
 from urllib import unquote
 from elasticsearch import Elasticsearch
@@ -7,6 +8,7 @@ from django.conf import settings
 from elasticsearch.exceptions import ElasticsearchException
 
 from corehq.apps.es.utils import flatten_field_dict
+from corehq.util.datadog.gauges import datadog_gauge
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
@@ -158,13 +160,23 @@ def run_query(index_name, q, debug_host=None):
         es_meta = ES_META[index_name]
     except KeyError:
         from corehq.apps.userreports.util import is_ucr_table
-        # todo: figure out if we really need types
         if is_ucr_table(index_name):
             es_meta = EsMeta(index_name, 'indicator')
         else:
             raise
     try:
         return es_instance.search(es_meta.index, es_meta.type, body=q)
+    except ElasticsearchException as e:
+        raise ESError(e)
+
+
+def mget_query(index_name, ids, source):
+    es_instance = get_es_new()
+    es_meta = ES_META[index_name]
+    try:
+        return es_instance.mget(
+            index=es_meta.index, doc_type=es_meta.type, body={'ids': ids}, _source=source
+        )['docs']
     except ElasticsearchException as e:
         raise ESError(e)
 
@@ -228,9 +240,15 @@ def scan(client, query=None, scroll='5m', **kwargs):
         scroll_id = resp.get('_scroll_id')
         if scroll_id is None:
             return
+        iteration = 0
 
         while True:
+
+            start = int(time.time() * 1000)
             resp = client.scroll(scroll_id, scroll=scroll)
+            datadog_gauge('commcare.es_scroll', (time.time() * 1000) - start, tags=[
+                u'iteration:{}'.format(iteration),
+            ])
 
             for hit in resp['hits']['hits']:
                 yield hit
@@ -246,6 +264,8 @@ def scan(client, query=None, scroll='5m', **kwargs):
             # end of scroll
             if scroll_id is None or not resp['hits']['hits']:
                 break
+
+            iteration += 1
 
     count = initial_resp.get("hits", {}).get("total", None)
     return ScanResult(count, fetch_all(initial_resp))

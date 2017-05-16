@@ -366,7 +366,7 @@
                                  {% endblocktrans %}
                              {% endif %}
                          {% case "invalid user property xpath reference" %}
-@@ -341,14 +334,14 @@
+@@ -353,14 +346,14 @@
                  </li>
              {% endfor %}
          </ul>

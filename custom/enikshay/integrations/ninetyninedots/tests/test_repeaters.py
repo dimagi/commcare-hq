@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, date
 from django.test import TestCase, override_settings
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -124,6 +124,10 @@ class TestRegisterPatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeat
         self._create_99dots_enabled_case()
         self.assertEqual(1, len(self.repeat_records().all()))
 
+        # updating some other random properties shouldn't create a new repeat record
+        self._update_case(self.episode_id, {'some_property': "changed"})
+        self.assertEqual(1, len(self.repeat_records().all()))
+
         # set as registered, shouldn't register a new repeat record
         self._create_99dots_registered_case()
         self.assertEqual(1, len(self.repeat_records().all()))
@@ -213,7 +217,11 @@ class TestAdherenceRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTest
         self.create_adherence_cases([datetime(2017, 2, 18)], adherence_source='enikshay')
         self.assertEqual(1, len(self.repeat_records().all()))
 
-        self.create_adherence_cases([datetime(2017, 2, 20)], adherence_source='enikshay')
+        case = self.create_adherence_cases([datetime(2017, 2, 20)], adherence_source='enikshay')
+        self.assertEqual(2, len(self.repeat_records().all()))
+
+        # Updating the case doesn't make a new repeat record
+        self._update_case(case[0].case_id, {'dots_99_error': "hello"})
         self.assertEqual(2, len(self.repeat_records().all()))
 
 
@@ -269,7 +277,7 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
             "phone_numbers": expected_numbers,
             "merm_id": person_case_properties.get(MERM_ID, None),
             "treatment_start_date": episode_case_properties.get(TREATMENT_START_DATE, None),
-            "treatment_supporter_name": "{} {}".format(
+            "treatment_supporter_name": u"{} {}".format(
                 episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
                 episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME, ''),
             ),
@@ -396,9 +404,8 @@ class TestAdherencePayloadGenerator(TestPayloadGeneratorBase):
         return AdherencePayloadGenerator(None).get_payload(None, casedb['adherence'])
 
     def test_get_payload(self):
-        date = datetime(2017, 2, 20)
         cases = self.create_case_structure()
-        cases['adherence'] = self.create_adherence_cases([date])[0]
+        cases['adherence'] = self.create_adherence_cases([date(2017, 2, 20)])[0]
         expected_payload = json.dumps(
             {
                 "adherence_value": "unobserved_dose",

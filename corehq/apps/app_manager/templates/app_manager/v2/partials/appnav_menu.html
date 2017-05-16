@@ -19,7 +19,7 @@
                   {% include 'app_manager/v2/partials/module_link_secondary.html' %}
                 </div>
 
-                <ul class="appnav-menu appnav-menu-nested see {% ifequal module.id selected_module.id %}selected{% endifequal %} sortable sortable-forms {% if module.is_surveys %}appnav-surveys{% else %}appnav-caselist{% endif %}">
+                <ul class="appnav-menu appnav-menu-nested see {% ifequal module.id selected_module.id %}selected{% endifequal %} sortable sortable-forms {% if module.is_surveys %}appnav-surveys{% else %}appnav-caselist{% endif %}" data-parentvar="moduleid">
                     <li class="sort-action">
                         <form method="post"
                               action="{% url "rearrange" domain app.id 'forms' %}">
@@ -59,7 +59,7 @@
                     {% csrf_token %}
                     <input id="new-module-type" type="hidden" name="module_type" />
                 </form>
-                <a href="#" class="appnav-add" id="js-add-new-item">
+                <a href="#" class="appnav-add js-add-new-item" data-slug="module">
                     <i class="new-module-icon fa fa-plus"></i>
                     {% trans "Add..." %}
                 </a>

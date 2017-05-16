@@ -44,9 +44,9 @@ class IndicatorLaboratoryAdapter(IndicatorAdapter):
     def get_distinct_values(self, column, limit):
         raise NotImplementedError
 
-    def best_effort_save(self, doc):
+    def best_effort_save(self, doc, eval_context=None):
         try:
-            indicator_rows = self.get_all_values(doc)
+            indicator_rows = self.get_all_values(doc, eval_context)
         except Exception as e:
             self.handle_exception(doc, e)
         else:

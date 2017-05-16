@@ -1,5 +1,6 @@
 import copy
 
+from corehq.util.quickcache import quickcache
 from dimagi.ext import jsonobject
 from django.db import models
 from jsonfield.fields import JSONField
@@ -153,6 +154,7 @@ def merge_queries(base_query, query_addition):
     return new_query
 
 
+@quickcache(['domain'], timeout=24 * 60 * 60, memoize_timeout=60)
 def case_search_enabled_for_domain(domain):
     try:
         CaseSearchConfig.objects.get(pk=domain, enabled=True)
@@ -168,6 +170,7 @@ def enable_case_search(domain):
     if not config.enabled:
         config.enabled = True
         config.save()
+        case_search_enabled_for_domain.clear(domain)
         reindex_case_search_for_domain.delay(domain)
 
 
@@ -181,6 +184,7 @@ def disable_case_search(domain):
     if config.enabled:
         config.enabled = False
         config.save()
+        case_search_enabled_for_domain.clear(domain)
         delete_case_search_cases_for_domain.delay(domain)
 
 

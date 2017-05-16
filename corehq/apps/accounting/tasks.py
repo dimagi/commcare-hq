@@ -682,6 +682,7 @@ def _downgrade_domain(subscription):
         DefaultProductPlan.get_default_plan_version(
             SoftwarePlanEdition.COMMUNITY
         ),
+        adjustment_method=SubscriptionAdjustmentMethod.AUTOMATIC_DOWNGRADE,
         note='Automatic downgrade to community for invoice 60 days late',
         internal_change=True
     )

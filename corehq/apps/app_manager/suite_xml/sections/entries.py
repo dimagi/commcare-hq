@@ -60,7 +60,7 @@ class EntriesHelper(object):
             module = form.get_module()
         if form.form_type == 'module_form':
             datums_meta = self.get_case_datums_basic_module(module, form)
-        elif form.form_type == 'advanced_form':
+        elif form.form_type == 'advanced_form' or form.form_type == "shadow_form":
             datums_meta, _ = self.get_datum_meta_assertions_advanced(module, form)
             datums_meta.extend(EntriesHelper.get_new_case_id_datums_meta(form))
         else:
@@ -146,6 +146,7 @@ class EntriesHelper(object):
             config_entry = {
                 'module_form': self.configure_entry_module_form,
                 'advanced_form': self.configure_entry_advanced_form,
+                'shadow_form': self.configure_entry_advanced_form,
                 'careplan_form': self.configure_entry_careplan_form,
             }[form.form_type]
             config_entry(module, e, form)
@@ -187,14 +188,18 @@ class EntriesHelper(object):
                 for datum_meta in self.get_case_datums_basic_module(module):
                     e.datums.append(datum_meta.datum)
             elif isinstance(module, AdvancedModule):
+                detail_inline = self.get_detail_inline_attr(module, module, "case_short")
+                detail_confirm = None
+                if not detail_inline:
+                    detail_confirm = self.details_helper.get_detail_id_safe(module, 'case_long')
                 e.datums.append(SessionDatum(
                     id='case_id_case_%s' % module.case_type,
                     nodeset=(EntriesHelper.get_nodeset_xpath(module.case_type)),
                     value="./@case_id",
                     detail_select=self.details_helper.get_detail_id_safe(module, 'case_short'),
-                    detail_confirm=self.details_helper.get_detail_id_safe(module, 'case_long'),
+                    detail_confirm=detail_confirm,
                     detail_persistent=self.get_detail_persistent_attr(module, module, "case_short"),
-                    detail_inline=self.get_detail_inline_attr(module, module, "case_short"),
+                    detail_inline=detail_inline,
                     autoselect=module.auto_select_case,
                 ))
                 if self.app.commtrack_enabled:
@@ -290,7 +295,7 @@ class EntriesHelper(object):
                             requires_selection=False,
                             action=subcase
                         ))
-        elif form.form_type == 'advanced_form':
+        elif form.form_type == 'advanced_form' or form.form_type == "shadow_form":
             for action in form.actions.get_open_actions():
                 if not action.repeat_context:
                     datums.append(FormDatumMeta(

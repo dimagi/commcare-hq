@@ -143,6 +143,10 @@
                                     <li class="edit-form-li{% ifequal form selected_form %} active{% endifequal %}" data-moduleid="{{ module.id }}" data-index="{{ form.id }}">
                                         <!--[F]-->
                                         <a id="view_form_{{ module.id }}_{{ form.id }}_sidebar"
+                                           class="track-usage-link"
+                                           data-category="App Builder"
+                                           data-action="View Form"
+                                           data-label="Sidebar"
                                            href="{% url "view_form" domain app.id module.id form.id %}">
                                             <i class="drag_handle"></i>
                                             {% if request|toggle_enabled:"SUPPORT" %}
@@ -166,7 +170,11 @@
                                         </a>
                                         {% if not form.no_vellum %}
                                             <div class="edit-form-pencil">
-                                                <a id="edit_pen_{{ module.id }}_{{ form.id }}" href="{% url "form_source" domain app.id module.id form.id %}">
+                                                <a class="track-usage-link"
+                                                   data-category="App Builder"
+                                                   data-action="Open Form"
+                                                   data-label="Edit Pen"
+                                                   href="{% url "form_source" domain app.id module.id form.id %}">
                                                     <i class="fa fa-pencil"></i>
                                                 </a>
                                             </div>
@@ -175,14 +183,36 @@
                                 {% endfor %}
                             {% endwith %}
                             <li class="sort-disabled">
-                                <form action="{% url "new_form" domain app.id module.id %}"
+                                <form id="form-to-create-new-form-for-module-{{ module.id }}" action="{% url "new_form" domain app.id module.id %}"
                                       method="post" class="hide">{% csrf_token %}
+                                    <input type="hidden" name="form_type">
                                 </form>
                                 {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
-                                <a class="submit_on_click" href="#">
-                                    <i class="fa fa-plus icon-blue"></i>
-                                    <span class="text-muted">{% trans "Form" %}</span>
-                                </a>
+                                    {% if show_shadow_forms and module.doc_type == "AdvancedModule" %}
+                                        <li class="sort-disabled dropdown">
+                                            <a href="#" data-toggle="dropdown">
+                                                <i class="new-form-icon-module-{{ module.id }} fa fa-plus icon-blue"></i>
+                                                <span class="text-muted">{% trans "Form" %}</span><span class="caret"></span>
+                                            </a>
+                                            <ul class="dropdown-menu" role="menu">
+                                                <li>
+                                                    <a href="#" class="new-form" data-type="form" data-module="{{ module.id }}">
+                                                        {% trans "New Form" %}
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="#" class="new-form" data-type="shadow" data-module="{{ module.id }}">
+                                                        {% trans "New Shadow Form" %}
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    {% else %}
+                                        <a class="submit_on_click" href="#">
+                                            <i class="fa fa-plus icon-blue"></i>
+                                            <span class="text-muted">{% trans "Form" %}</span>
+                                        </a>
+                                    {% endif %}
                                 {% endif %}
                             </li>
                         </ul>

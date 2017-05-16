@@ -70,6 +70,7 @@ FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Bac
         childViewContainer: 'tbody',
         template: '#restore-as-view-template',
         limit: 10,
+        maxPagesShown: 10,
         initialize: function(options) {
             this.model = new Backbone.Model({
                 page: options.page || 1,
@@ -98,6 +99,8 @@ FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Bac
             return {
                 total: this.collection.total,
                 totalPages: this.totalPages(),
+                // Subtract 1 from page so that it is 0 indexed
+                pagesToShow: Util.pagesToShow(this.model.get('page') - 1, this.totalPages(), this.maxPagesShown),
             };
         },
         navigate: function() {
@@ -113,11 +116,11 @@ FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Bac
         fetchUsers: function() {
             this.collection.fetch({
                 reset: true,
-                data: JSON.stringify({
+                data: {
                     query: this.model.get('query'),
                     limit: this.limit,
                     page: this.model.get('page'),
-                }),
+                },
             })
             .done(this.render.bind(this))
             .fail(function(xhr){
@@ -127,7 +130,7 @@ FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Bac
         onClickNext: function(e) {
             e.preventDefault();
             if (this.model.get('page') === this.totalPages()) {
-                console.warn('Attempted to non existant page');
+                window.console.warn('Attempted to non existant page');
                 return;
             }
             this.model.set('page', this.model.get('page') + 1);
@@ -135,7 +138,7 @@ FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Bac
         onClickPrev: function(e) {
             e.preventDefault();
             if (this.model.get('page') === 1) {
-                console.warn('Attempted to non existant page');
+                window.console.warn('Attempted to non existant page');
                 return;
             }
             this.model.set('page', this.model.get('page') - 1);

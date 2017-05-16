@@ -1,7 +1,6 @@
 .popover-additem {
   background-color: @cc-light-cool-accent-low;
-  width: 295px;
-  height: 215px;
+  max-width: 730px;
   .border-top-radius(0);
   .border-bottom-radius(0);
   color: @cc-light-cool-accent-hi;
@@ -20,11 +19,11 @@
 
 .popover-additem-option {
   width: 116px;
-  height: 162px;
   box-sizing: border-box;
   color: @cc-light-cool-accent-hi;
   border: none;
   background-color: transparent;
+  margin-bottom: 10px;
 
   text-transform: uppercase;
   display: block;
@@ -43,13 +42,14 @@
     background-color: darken(@cc-light-cool-accent-low, 10);
   }
 
-  > .fa {
+  > .fa, > .fcc {
     font-size: 4.5rem;
     display: block;
     text-align: center;
     width: 100%;
     margin-bottom: 10px;
   }
+
   p {
     text-transform: none;
     font-size: 13px;

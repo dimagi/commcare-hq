@@ -32,6 +32,12 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
         :return: Selected locations without their descendants
         """
         location_ids = self.request.GET.getlist(self.slug)
+
+        if len(location_ids) == 0 \
+                and not self.request.couch_user.has_permission(self.request.domain, 'access_all_locations'):
+            # Display the user's location in the filter if none is selected
+            location_ids = self.request.couch_user.get_location_ids(self.request.domain)
+
         choice_provider = LocationChoiceProvider(StubReport(domain=self.domain), None)
         # We don't include descendants here because they will show up in select box
         choice_provider.configure({'include_descendants': False})
@@ -49,10 +55,16 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
         selected = super(EnikshayLocationFilter, cls).get_value(request, domain)
         choice_provider = LocationChoiceProvider(StubReport(domain=domain), None)
         choice_provider.configure({'include_descendants': True})
-        return [
+        selected_locations = [
             choice.value
             for choice in choice_provider.get_choices_for_known_values(selected, request.couch_user)
         ]
+        if len(selected_locations) == 0 and not request.couch_user.has_permission(domain, 'access_all_locations'):
+            # Force the user to select their assigned locations, otherwise selecting no locations will result in
+            # all results being returned.
+            return request.couch_user.get_location_ids(domain)
+        return selected_locations
+
 
     @property
     def pagination_source(self):

@@ -3,23 +3,24 @@ from datetime import datetime, timedelta
 import logging
 import urllib
 import urlparse
+import warnings
 from django.utils.translation import ugettext_lazy as _
+from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 
 from requests.exceptions import Timeout, ConnectionError
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT
-from corehq.util.datadog.utils import log_counter
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.quickcache import quickcache
-from utils import get_repeater_auth_header
 
 from dimagi.ext.couchdbkit import *
 from couchdbkit.exceptions import ResourceNotFound
-from django.core.cache import cache
-import hashlib
 
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
-from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException, IgnoreDocument
+from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 
 from couchforms.const import DEVICE_LOG_XMLNS
@@ -47,34 +48,13 @@ from .exceptions import RequestConnectionError
 from .utils import get_all_repeater_types
 
 
-def simple_post_with_cached_timeout(data, url, expiry=60 * 60, force_send=False, *args, **kwargs):
-    # no control characters (e.g. '/') in keys
-    key = hashlib.md5(
-        '{0} timeout {1}'.format(__name__, url)
-    ).hexdigest()
-
-    cache_value = cache.get(key)
-
-    if cache_value and not force_send:
-        raise RequestConnectionError(cache_value)
-
-    try:
-        resp = simple_post(data, url, *args, **kwargs)
-    except (Timeout, ConnectionError) as e:
-        cache.set(key, e.message, expiry)
-        raise RequestConnectionError(e.message)
-
-    if not 200 <= resp.status_code < 300:
-        message = u'Status Code {}: {}. {}'.format(resp.status_code, resp.reason, getattr(resp, 'content', None))
-        cache.set(key, message, expiry)
-
-    return resp
+def log_repeater_timeout_in_datadog(domain):
+    datadog_counter('commcare.repeaters.timeout', tags=[u'domain:{}'.format(domain)])
 
 
 DELETED = "-Deleted"
 
 FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
-PostInfo = namedtuple('PostInfo', 'payload headers force_send max_tries')
 
 
 class GeneratorCollection(object):
@@ -147,7 +127,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     url = StringProperty()
     format = StringProperty()
 
-    use_basic_auth = BooleanProperty(default=False)
+    auth_type = StringProperty(choices=("basic", "digest"), required=False)
     username = StringProperty()
     password = StringProperty()
     friendly_name = _("Data")
@@ -174,21 +154,25 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     def get_cancelled_record_count(self):
         return get_cancelled_repeat_record_count(self.domain, self._id)
 
-    def format_or_default_format(self):
+    def _format_or_default_format(self):
         from corehq.apps.repeaters.repeater_generators import RegisterGenerator
         return self.format or RegisterGenerator.default_format_by_repeater(self.__class__)
 
-    def get_payload_generator(self, payload_format):
+    def _get_payload_generator(self, payload_format):
         from corehq.apps.repeaters.repeater_generators import RegisterGenerator
         gen = RegisterGenerator.generator_class_by_repeater_format(self.__class__, payload_format)
         return gen(self)
+
+    @property
+    @memoized
+    def generator(self):
+        return self._get_payload_generator(self._format_or_default_format())
 
     def payload_doc(self, repeat_record):
         raise NotImplementedError
 
     def get_payload(self, repeat_record):
-        generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.get_payload(repeat_record, self.payload_doc(repeat_record))
+        return self.generator.get_payload(repeat_record, self.payload_doc(repeat_record))
 
     def register(self, payload, next_check=None):
         if not self.allowed_to_forward(payload):
@@ -283,37 +267,55 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         """
         return True
 
-    def allow_immediate_retries(self, response):
-        """Whether to retry failed requests immediately a few times
-        """
-        return True
-
     def get_headers(self, repeat_record):
         # to be overridden
-        generator = self.get_payload_generator(self.format_or_default_format())
-        headers = generator.get_headers()
-        if self.use_basic_auth:
-            headers.update(get_repeater_auth_header(headers, self.username, self.password))
+        return self.generator.get_headers()
 
-        return headers
+    def _use_basic_auth(self):
+        return self.auth_type == "basic"
 
-    def handle_success(self, response, repeat_record):
-        """handle a successful post
+    def _use_digest_auth(self):
+        return self.auth_type == "digest"
+
+    def get_auth(self):
+        if self._use_basic_auth():
+            return HTTPBasicAuth(self.username, self.password)
+        elif self._use_digest_auth():
+            return HTTPDigestAuth(self.username, self.password)
+        return None
+
+    def fire_for_record(self, repeat_record):
+        headers = self.get_headers(repeat_record)
+        auth = self.get_auth()
+        payload = self.get_payload(repeat_record)
+        url = self.get_url(repeat_record)
+
+        try:
+            response = simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth)
+        except (Timeout, ConnectionError) as error:
+            log_repeater_timeout_in_datadog(self.domain)
+            return self.handle_response(RequestConnectionError(error), repeat_record)
+        except Exception as e:
+            return self.handle_response(e, repeat_record)
+        else:
+            return self.handle_response(response, repeat_record)
+
+    def handle_response(self, result, repeat_record):
         """
-        generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.handle_success(response, self.payload_doc(repeat_record), repeat_record)
+        route the result to the success, failure, or exception handlers
 
-    def handle_failure(self, response, repeat_record):
-        """handle a failed post
+        result may be either a response object or an exception
         """
-        generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.handle_failure(response, self.payload_doc(repeat_record), repeat_record)
-
-    def handle_exception(self, exception, repeat_record):
-        """handle an exception during a post
-        """
-        generator = self.get_payload_generator(self.format_or_default_format())
-        return generator.handle_exception(exception, repeat_record)
+        if isinstance(result, Exception):
+            attempt = repeat_record.handle_exception(result)
+            self.generator.handle_exception(result, repeat_record)
+        elif 200 <= result.status_code < 300:
+            attempt = repeat_record.handle_success(result)
+            self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
+        else:
+            attempt = repeat_record.handle_failure(result)
+            self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
+        return attempt
 
 
 class FormRepeater(Repeater):
@@ -344,7 +346,10 @@ class FormRepeater(Repeater):
             # adapted from http://stackoverflow.com/a/2506477/10840
             url_parts = list(urlparse.urlparse(url))
             query = urlparse.parse_qsl(url_parts[4])
-            query.append(("app_id", self.payload_doc(repeat_record).app_id))
+            try:
+                query.append(("app_id", self.payload_doc(repeat_record).app_id))
+            except (XFormNotFound, ResourceNotFound):
+                return None
             url_parts[4] = urllib.urlencode(query)
             return urlparse.urlunparse(url_parts)
 
@@ -432,25 +437,74 @@ class AppStructureRepeater(Repeater):
         return None
 
 
+class UserRepeater(Repeater):
+    friendly_name = _("Forward Users")
+
+    @memoized
+    def payload_doc(self, repeat_record):
+        return CommCareUser.get(repeat_record.payload_id)
+
+    def __unicode__(self):
+        return "forwarding users to: %s" % self.url
+
+
+class LocationRepeater(Repeater):
+    friendly_name = _("Forward Locations")
+
+    @memoized
+    def payload_doc(self, repeat_record):
+        return SQLLocation.objects.get(location_id=repeat_record.payload_id)
+
+    def __unicode__(self):
+        return "forwarding locations to: %s" % self.url
+
+
+class RepeatRecordAttempt(DocumentSchema):
+    cancelled = BooleanProperty(default=False)
+    datetime = DateTimeProperty()
+    failure_reason = StringProperty()
+    next_check = DateTimeProperty()
+    succeeded = BooleanProperty(default=False)
+
+
 class RepeatRecord(Document):
     """
     An record of a particular instance of something that needs to be forwarded
     with a link to the proper repeater object
     """
+
+    domain = StringProperty()
+    repeater_id = StringProperty()
+    repeater_type = StringProperty()
+    payload_id = StringProperty()
+
     overall_tries = IntegerProperty(default=0)
     max_possible_tries = IntegerProperty(default=3)
 
-    repeater_id = StringProperty()
-    repeater_type = StringProperty()
-    domain = StringProperty()
+    attempts = ListProperty(RepeatRecordAttempt)
 
+    cancelled = BooleanProperty(default=False)
     last_checked = DateTimeProperty()
+    failure_reason = StringProperty()
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
-    failure_reason = StringProperty()
-    cancelled = BooleanProperty(default=False)
 
-    payload_id = StringProperty()
+    @classmethod
+    def wrap(cls, data):
+        should_bootstrap_attempts = ('attempts' not in data)
+
+        self = super(RepeatRecord, cls).wrap(data)
+
+        if should_bootstrap_attempts and self.last_checked:
+            assert not self.attempts
+            self.attempts = [RepeatRecordAttempt(
+                cancelled=self.cancelled,
+                datetime=self.last_checked,
+                failure_reason=self.failure_reason,
+                next_check=self.next_check,
+                succeeded=self.succeeded,
+            )]
+        return self
 
     @property
     @memoized
@@ -459,10 +513,8 @@ class RepeatRecord(Document):
 
     @property
     def url(self):
-        try:
-            return self.repeater.get_url(self)
-        except (XFormNotFound, ResourceNotFound):
-            return None
+        warnings.warn("RepeatRecord.url is deprecated. Use Repeater.get_url instead", DeprecationWarning)
+        return self.repeater.get_url(self)
 
     @property
     def state(self):
@@ -496,26 +548,41 @@ class RepeatRecord(Document):
         ).one()
         return results['value'] if results else 0
 
-    def set_next_try(self, reason=None, requeue=False):
+    def add_attempt(self, attempt):
+        self.attempts.append(attempt)
+        self.last_checked = attempt.datetime
+        self.next_check = attempt.next_check
+        self.succeeded = attempt.succeeded
+        self.cancelled = attempt.cancelled
+        self.failure_reason = attempt.failure_reason
+
+    def get_numbered_attempts(self):
+        offset = self.overall_tries - len(self.attempts)
+        for i, attempt in enumerate(self.attempts):
+            yield i + 1 + offset, attempt
+
+    def make_set_next_try_attempt(self, failure_reason):
         # we use an exponential back-off to avoid submitting to bad urls
         # too frequently.
         assert self.succeeded is False
         assert self.next_check is not None
-        now = datetime.utcnow()
-        if requeue:
-            self.next_check = now
-        else:
-            window = timedelta(minutes=0)
-            if self.last_checked:
-                window = self.next_check - self.last_checked
-                window += (window // 2)  # window *= 1.5
-            if window < MIN_RETRY_WAIT:
-                window = MIN_RETRY_WAIT
-            elif window > MAX_RETRY_WAIT:
-                window = MAX_RETRY_WAIT
+        window = timedelta(minutes=0)
+        if self.last_checked:
+            window = self.next_check - self.last_checked
+            window += (window // 2)  # window *= 1.5
+        if window < MIN_RETRY_WAIT:
+            window = MIN_RETRY_WAIT
+        elif window > MAX_RETRY_WAIT:
+            window = MAX_RETRY_WAIT
 
-            self.last_checked = now
-            self.next_check = self.last_checked + window
+        now = datetime.utcnow()
+        return RepeatRecordAttempt(
+            cancelled=False,
+            datetime=now,
+            failure_reason=failure_reason,
+            next_check=now + window,
+            succeeded=False,
+        )
 
     def try_now(self):
         # try when we haven't succeeded and either we've
@@ -523,92 +590,76 @@ class RepeatRecord(Document):
         return not self.succeeded
 
     def get_payload(self):
-        try:
-            return self.repeater.get_payload(self)
-        except ResourceNotFound as e:
-            # this repeater is pointing at a missing document
-            # quarantine it and tell it to stop trying.
-            logging.exception(
-                u'Repeater {} in domain {} references a missing or deleted document!'.format(
-                    self._id, self.domain,
-                ))
+        return self.repeater.get_payload(self)
 
-            self._payload_exception(e, reraise=False)
-        except Exception as e:
-            self._payload_exception(e, reraise=True)
+    def handle_payload_exception(self, exception):
+        now = datetime.utcnow()
+        return RepeatRecordAttempt(
+            cancelled=True,
+            datetime=now,
+            failure_reason=unicode(exception),
+            next_check=None,
+            succeeded=False,
+        )
 
-    def _payload_exception(self, exception, reraise=False):
-        self.succeeded = False
-        self.failure_reason = unicode(exception)
-        self.save()
-        if reraise:
-            raise
-
-    def fire(self, max_tries=3, force_send=False):
-        headers = self.repeater.get_headers(self)
+    def fire(self, force_send=False):
         if self.try_now() or force_send:
             self.overall_tries += 1
-            tries = 0
-            post_info = PostInfo(self.get_payload(), headers, force_send, max_tries)
-            self.post(post_info, tries=tries)
-            self.save()
-
-    def post(self, post_info, tries=0):
-        tries += 1
-        try:
-            response = simple_post_with_cached_timeout(
-                post_info.payload,
-                self.url,
-                headers=post_info.headers,
-                force_send=post_info.force_send,
-                timeout=POST_TIMEOUT,
-            )
-        except Exception as e:
-            self.handle_exception(e)
-        else:
-            return self.handle_response(response, post_info, tries)
-
-    def handle_response(self, response, post_info, tries):
-        if 200 <= response.status_code < 300:
-            return self.handle_success(response)
-        else:
-            return self.handle_failure(response, post_info, tries)
+            try:
+                attempt = self.repeater.fire_for_record(self)
+            except Exception as e:
+                attempt = self.handle_payload_exception(e)
+                raise
+            finally:
+                # pycharm warns attempt might not be defined.
+                # that'll only happen if fire_for_record raise a non-Exception exception (e.g. SIGINT)
+                # or handle_payload_exception raises an exception. I'm okay with that. -DMR
+                self.add_attempt(attempt)
+                self.save()
 
     def handle_success(self, response):
         """Do something with the response if the repeater succeeds
         """
-        self.last_checked = datetime.utcnow()
-        self.next_check = None
-        self.succeeded = True
-        self.repeater.handle_success(response, self)
+        now = datetime.utcnow()
+        return RepeatRecordAttempt(
+            cancelled=False,
+            datetime=now,
+            failure_reason=None,
+            next_check=None,
+            succeeded=True,
+        )
 
-    def handle_failure(self, response, post_info, tries):
+    def handle_failure(self, response):
         """Do something with the response if the repeater fails
         """
-        if tries < post_info.max_tries and self.repeater.allow_immediate_retries(response):
-            return self.post(post_info, tries)
-        else:
-            self._fail(u'{}: {}'.format(response.status_code, response.reason), response)
-            self.repeater.handle_failure(response, self)
+        return self._make_failure_attempt(
+            u'{}: {}.\n{}'.format(response.status_code, response.reason, getattr(response, 'content', None)),
+            response
+        )
 
     def handle_exception(self, exception):
         """handle internal exceptions
         """
-        self._fail(unicode(exception), None)
-        self.repeater.handle_exception(exception, self)
+        return self._make_failure_attempt(unicode(exception), None)
 
-    def _fail(self, reason, response):
+    def _make_failure_attempt(self, reason, response):
+        datadog_counter(REPEATER_ERROR_COUNT, tags=[
+            u'domain:{}'.format(self.domain),
+            u'status_code:{}'.format(response.status_code if response else None),
+            u'repeater_type:{}'.format(self.repeater_type),
+        ])
+
         if self.repeater.allow_retries(response) and self.overall_tries < self.max_possible_tries:
-            self.set_next_try()
+            return self.make_set_next_try_attempt(reason)
         else:
-            self.last_checked = datetime.utcnow()
-            self.cancel()
-        self.failure_reason = reason
-        log_counter(REPEATER_ERROR_COUNT, {
-            '_id': self._id,
-            'reason': reason,
-            'target_url': self.url,
-        })
+            now = datetime.utcnow()
+            return RepeatRecordAttempt(
+                cancelled=True,
+                datetime=now,
+                failure_reason=reason,
+                next_check=None,
+                succeeded=False,
+            )
 
     def cancel(self):
         self.next_check = None
@@ -620,7 +671,6 @@ class RepeatRecord(Document):
         self.failure_reason = ''
         self.overall_tries = 0
         self.next_check = datetime.utcnow()
-        self.set_next_try(requeue=True)
 
 
 # import signals

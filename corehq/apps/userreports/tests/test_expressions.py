@@ -521,6 +521,79 @@ class NestedExpressionTest(SimpleTestCase):
         )
         self.assertEqual(3, expression({}))
 
+    def test_caching(self):
+        doc = {
+            "indices": [
+                {
+                    "doc_type": "CommCareCaseIndex",
+                    "identifier": "parent",
+                    "referenced_type": "pregnancy",
+                    "referenced_id": "my_parent_id"
+                },
+                {
+                    "doc_type": "CommCareCaseIndex",
+                    "identifier": "parent",
+                    "referenced_type": "pregnancy",
+                    "referenced_id": "my_parent_id2"
+                }
+            ]
+        }
+
+        named_expression = {
+            "type": "property_name",
+            "property_name": "referenced_id"
+        }
+
+        evaluation_context = EvaluationContext(doc)
+        factory_context = FactoryContext({
+            'test_named_expression': ExpressionFactory.from_spec(named_expression)
+        }, evaluation_context)
+
+        expression1 = ExpressionFactory.from_spec(
+            {
+                "type": "nested",
+                "argument_expression": {
+                    "type": "array_index",
+                    "array_expression": {
+                        "type": "property_name",
+                        "property_name": "indices"
+                    },
+                    "index_expression": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                },
+                "value_expression": {
+                    "type": "named",
+                    "name": "test_named_expression"
+                }
+            },
+            context=factory_context
+        )
+        expression2 = ExpressionFactory.from_spec(
+            {
+                "type": "nested",
+                "argument_expression": {
+                    "type": "array_index",
+                    "array_expression": {
+                        "type": "property_name",
+                        "property_name": "indices"
+                    },
+                    "index_expression": {
+                        "type": "constant",
+                        "constant": 1
+                    }
+                },
+                "value_expression": {
+                    "type": "named",
+                    "name": "test_named_expression"
+                }
+            },
+            context=factory_context
+        )
+        self.assertEqual(expression1(doc, evaluation_context), 'my_parent_id')
+        self.assertEqual(expression2(doc, evaluation_context), 'my_parent_id2')
+
 
 class IteratorExpressionTest(SimpleTestCase):
 

@@ -1,10 +1,10 @@
 from collections import namedtuple
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
-from corehq.apps.change_feed.document_types import GROUP
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.change_feed import topics
 from corehq.apps.groups.models import Group
 from corehq.elastic import stream_es_query, get_es_new, ES_META
 from corehq.pillows.mappings.user_mapping import USER_INDEX, USER_INDEX_INFO
-from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, get_checkpoint_for_elasticsearch_pillow
+from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
@@ -23,17 +23,18 @@ class GroupsToUsersProcessor(PillowProcessor):
             update_es_user_with_groups(change.get_document(), self._es)
 
 
-def get_group_to_user_pillow(pillow_id='GroupToUserPillow'):
+def get_group_to_user_pillow(pillow_id='GroupToUserPillow', **kwargs):
     assert pillow_id == 'GroupToUserPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO)
     processor = GroupsToUsersProcessor()
+    change_feed = KafkaChangeFeed(topics=[topics.GROUP], group_id='groups-to-users')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[GROUP], group_id='groups-to-users'),
+        change_feed=change_feed,
         processor=processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100,
+        change_processed_event_handler=KafkaCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
     )
 

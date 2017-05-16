@@ -1,12 +1,18 @@
 from django.conf.urls import url
 
 from .api import (
-    EmwfOptionsView, LocationRestrictedEmwfOptions, CaseListFilterOptions, DeviceLogUsers, DeviceLogIds
+    EmwfOptionsView,
+    LocationRestrictedEmwfOptions,
+    CaseListFilterOptions,
+    DeviceLogUsers,
+    DeviceLogIds,
+    MobileWorkersOptionsView,
 )
 from .location import LocationGroupFilterOptions
 
 urlpatterns = [
    url(r'^emwf_options/$', EmwfOptionsView.as_view(), name='emwf_options'),
+   url(r'^users_options/$', MobileWorkersOptionsView.as_view(), name=MobileWorkersOptionsView.urlname),
    url(r'^new_emwf_options/$', LocationRestrictedEmwfOptions.as_view(), name='new_emwf_options'),
    url(r'^case_list_options/$', CaseListFilterOptions.as_view(),
        name='case_list_options'

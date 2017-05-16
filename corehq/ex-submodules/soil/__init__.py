@@ -14,6 +14,7 @@ from django.http import HttpResponse, StreamingHttpResponse
 
 from django_transfer import TransferHttpResponse
 from soil.progress import get_task_progress, get_multiple_task_progress
+from corehq.blobs import DEFAULT_BUCKET, get_blob_db
 
 
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
@@ -257,3 +258,56 @@ class FileDownload(DownloadBase):
         additional arguments to pass through to the constructor.
         """
         return cls(filename=path, **kwargs)
+
+
+class BlobDownload(DownloadBase):
+    """
+    Download that lives in the blobdb
+    """
+    has_file = True
+
+    def __init__(self, identifier, mimetype="text/plain",
+                 content_disposition='attachment; filename="download.txt"',
+                 transfer_encoding=None, extras=None, download_id=None, cache_backend=SOIL_DEFAULT_CACHE,
+                 content_type=None, bucket=DEFAULT_BUCKET):
+
+        super(BlobDownload, self).__init__(
+            mimetype=content_type if content_type else mimetype,
+            content_disposition=content_disposition,
+            transfer_encoding=transfer_encoding,
+            extras=extras,
+            download_id=download_id,
+            cache_backend=cache_backend
+        )
+        self.identifier = identifier
+        self.bucket = bucket
+
+    def get_filename(self):
+        return self.identifier
+
+    def get_content(self):
+        raise NotImplementedError
+
+    def toHttpResponse(self):
+        blob_db = get_blob_db()
+        file_obj = blob_db.get(self.identifier, self.bucket)
+        blob_size = blob_db.size(self.identifier, self.bucket)
+
+        response = StreamingHttpResponse(
+            FileWrapper(file_obj, CHUNK_SIZE),
+            content_type=self.content_type
+        )
+
+        response['Content-Length'] = blob_size
+        response['Content-Disposition'] = self.content_disposition
+        for k, v in self.extras.items():
+            response[k] = v
+        return response
+
+    @classmethod
+    def create(cls, identifier, **kwargs):
+        """
+        Create a BlobDownload object from a payload, plus any
+        additional arguments to pass through to the constructor.
+        """
+        return cls(identifier=identifier, **kwargs)

@@ -4,6 +4,10 @@
     "icds-sql",
     "icds-cas"
   ],
+  "server_environment": [
+    "softlayer",
+    "icds"
+  ],
   "report_id": "static-it_issues_block",
   "data_source_table": "static-tech_issue_cases",
   "config": {
@@ -27,33 +31,12 @@
       },
       {
         "compare_as_string": false,
-        "show_all": true,
-        "datatype": "string",
-        "type": "dynamic_choice_list",
         "required": false,
-        "slug": "state_id",
-        "field": "state_id",
-        "choice_provider": {
-          "type": "location",
-          "order_by_hierarchy": true,
-          "show_full_path": true
-        },
-        "display": "Filter by State"
-      },
-      {
-        "compare_as_string": false,
-        "show_all": true,
         "datatype": "string",
-        "type": "dynamic_choice_list",
-        "required": false,
-        "slug": "district_id",
+        "display": "Filter by District",
         "field": "district_id",
-        "choice_provider": {
-          "type": "location",
-          "order_by_hierarchy": true,
-          "show_full_path": true
-        },
-        "display": "Filter by District"
+        "type": "location_drilldown",
+        "slug": "district_id"
       }
     ],
     "columns": [

@@ -103,7 +103,7 @@ def _related_doc_expression(spec, context):
 def _iterator_expression(spec, context):
     wrapped = IteratorExpressionSpec.wrap(spec)
     wrapped.configure(
-        expressions=[ExpressionFactory.from_spec(e) for e in wrapped.expressions],
+        expressions=[ExpressionFactory.from_spec(e, context) for e in wrapped.expressions],
         test=_make_filter(wrapped.test, context) if wrapped.test else None
     )
     return wrapped
@@ -120,7 +120,7 @@ def _nested_expression(spec, context):
 
 def _dict_expression(spec, context):
     wrapped = DictExpressionSpec.wrap(spec)
-    compiled_properties = {key: ExpressionFactory.from_spec(value) for key, value in wrapped.properties.items()}
+    compiled_properties = {key: ExpressionFactory.from_spec(value, context) for key, value in wrapped.properties.items()}
     wrapped.configure(
         compiled_properties=compiled_properties,
     )

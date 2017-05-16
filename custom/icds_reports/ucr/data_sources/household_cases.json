@@ -5,6 +5,10 @@
     "icds-cas",
     "icds-cas-sandbox"
   ],
+  "server_environment": [
+    "softlayer",
+    "icds"
+  ],
   "config": {
     "table_id": "static-household_cases",
     "display_name": "Cases - Household (Static)",
@@ -173,6 +177,9 @@
       }
     },
     "engine_id": "icds-ucr",
-    "backend_id": "LABORATORY"
+    "backend_id": "LABORATORY",
+    "es_index_settings": {
+      "number_of_shards": 5
+    }
   }
 }

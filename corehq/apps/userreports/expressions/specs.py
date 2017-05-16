@@ -1,20 +1,26 @@
 from __future__ import absolute_import
+import hashlib
+import json
+
+from django.core.serializers.json import DjangoJSONEncoder
+from jsonobject.base_properties import DefaultProperty
 from simpleeval import InvalidExpression
+import six
+
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
+from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.couch import get_db_by_doc_type
-from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
-from jsonobject.base_properties import DefaultProperty
 from corehq.apps.userreports.expressions.getters import transform_from_datatype, safe_recursive_lookup
 from corehq.apps.userreports.indicators.specs import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, DictProperty
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from .utils import eval_statements
-import six
 
 
 class IdentityExpressionSpec(JsonObject):
@@ -77,8 +83,19 @@ class NamedExpressionSpec(JsonObject):
             raise BadSpecError(u'Name {} not found in list of named expressions!'.format(self.name))
         self._context = context
 
+    def _context_cache_key(self, item):
+        item_hash = hashlib.md5(json.dumps(item, cls=DjangoJSONEncoder, sort_keys=True)).hexdigest()
+        return 'named_expression-{}-{}'.format(self.name, item_hash)
+
     def __call__(self, item, context=None):
-        return self._context.named_expressions[self.name](item, context)
+        key = self._context_cache_key(item)
+        if context and context.exists_in_cache(key):
+            return context.get_cache_value(key)
+
+        result = self._context.named_expressions[self.name](item, context)
+        if context:
+            context.set_iteration_cache_value(key, result)
+        return result
 
 
 class ConditionalExpressionSpec(JsonObject):
@@ -319,7 +336,7 @@ class FormsExpressionSpec(JsonObject):
         return xforms
 
     def _get_form_json(self, form, context):
-        cache_key = (self.__class__.__name__, 'xform', form.get_id)
+        cache_key = (XFORM_CACHE_KEY_PREFIX, form.get_id)
         if context.get_cache_value(cache_key) is not None:
             return context.get_cache_value(cache_key)
 

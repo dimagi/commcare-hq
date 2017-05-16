@@ -7,6 +7,7 @@ from django.utils.decorators import method_decorator
 import pytz
 from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
+from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_timepicker, use_select2
@@ -18,7 +19,6 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.app_manager.models import Form
-from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.hqwebapp.views import (CRUDPaginatedViewMixin,
     DataTablesAJAXPaginationMixin)
 from corehq import toggles
@@ -102,7 +102,7 @@ class ScheduledRemindersCalendarView(BaseMessagingSectionView):
         today = timezone_now.date()
 
         def adjust_next_fire_to_timezone(reminder_utc):
-            return ServerTime(reminder_utc.next_fire).user_time(timezone).done()
+            return ServerTime(reminder_utc.next_fire).user_time(timezone).done().replace(tzinfo=None)
 
         if reminders:
             start_date = adjust_next_fire_to_timezone(reminders[0]).date()
@@ -466,6 +466,8 @@ class EditScheduledReminderView(CreateScheduledReminderView):
         return reverse(self.urlname, args=[self.domain, self.handler_id])
 
     def process_schedule_form(self):
+        if self.schedule_form.cleaned_data['case_type'] != self.reminder_handler.case_type:
+            raise ValueError("Reminder case type is expected to be read only on edit")
         self.schedule_form.save(self.reminder_handler)
 
     def rule_in_progress(self):

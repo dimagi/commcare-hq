@@ -1,32 +1,36 @@
 from __future__ import absolute_import
-from datetime import datetime
+from collections import defaultdict
+from datetime import datetime, timedelta
 
 from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
 from django.conf import settings
-from django.core.paginator import Paginator
+from django.db.models import F
 from django.utils.translation import ugettext as _
+from restkit import RequestError
 
 from corehq import toggles
 from corehq.apps.userreports.const import (
     UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE,
-    ASYNC_INDICATOR_QUEUE_TIME,
+    ASYNC_INDICATOR_QUEUE_TIME, ASYNC_INDICATOR_CHUNK_SIZE
 )
 from corehq.apps.userreports.document_stores import get_document_store
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
+from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.models import (
     AsyncIndicator,
     DataSourceConfiguration,
     StaticDataSourceConfiguration,
     id_is_static,
-    ReportConfiguration,
+    get_report_config,
 )
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
+from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
-from corehq.util.couch import get_document_or_not_found
-from dimagi.utils.couch import CriticalSection, release_lock
-from dimagi.utils.couch.cache.cache_core import get_redis_client
+from corehq.util.datadog.gauges import datadog_gauge
+from corehq.util.quickcache import quickcache
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 
@@ -145,7 +149,7 @@ def iteratively_build_table(config, last_id=None, resume_helper=None, in_place=F
 
 
 @task(queue=UCR_CELERY_QUEUE)
-def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_order, params):
+def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, sort_order=None, params=None):
     from corehq.apps.userreports.laboratory.experiment import UCRExperiment
 
     def _run_report(backend_to_use):
@@ -156,8 +160,13 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
                 [(data_source.top_level_columns[int(sort_column)].column_id, sort_order.upper())]
             )
 
-        datatables_params = DatatablesParams.from_request_dict(params)
-        page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
+        if params:
+            datatables_params = DatatablesParams.from_request_dict(params)
+            start = datatables_params.start
+            limit = datatables_params.count
+        else:
+            start, limit = None, None
+        page = list(data_source.get_data(start=start, limit=limit))
         total_records = data_source.get_total_records()
         json_response = {
             'aaData': page,
@@ -168,7 +177,7 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
             json_response["total_row"] = total_row
         return json_response
 
-    spec = get_document_or_not_found(ReportConfiguration, domain, report_config_id)
+    spec, is_static = get_report_config(report_config_id, domain)
     experiment_context = {
         "domain": domain,
         "report_config_id": report_config_id,
@@ -194,43 +203,92 @@ def queue_async_indicators():
     cutoff = start + ASYNC_INDICATOR_QUEUE_TIME
     time_for_crit_section = ASYNC_INDICATOR_QUEUE_TIME.seconds - 10
 
+    oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
+    if oldest_indicator and oldest_indicator.date_queued:
+        lag = (datetime.utcnow() - oldest_indicator.date_queued).total_seconds()
+        datadog_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
+
     with CriticalSection(['queue-async-indicators'], timeout=time_for_crit_section):
-        redis_client = get_redis_client().client.get_client()
+        day_ago = datetime.utcnow() - timedelta(days=1)
         indicators = AsyncIndicator.objects.all()[:10000]
-        paginator = Paginator(indicators, 1000)
-        for page in paginator.page_range:
-            for indicator in paginator.page(page).object_list:
-                now = datetime.utcnow()
-                if now > cutoff:
-                    break
+        if indicators:
+            lag = (datetime.utcnow() - indicators[0].date_created).total_seconds()
+            datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
+        indicators_by_domain_doc_type = defaultdict(list)
+        for indicator in indicators:
+            # don't requeue anything htat's be queued in the past day
+            if not indicator.date_queued or indicator.date_queued < day_ago:
+                indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
 
-                lock_key = _get_indicator_queued_lock_key(indicator)
-                lock = redis_client.lock(lock_key, timeout=60 * 60 * 6)
-                if not lock.acquire(blocking=False):
-                    continue
+        for k, indicators in indicators_by_domain_doc_type.items():
+            now = datetime.utcnow()
+            if now > cutoff:
+                break
+            _queue_indicators(indicators)
 
-                save_document.delay(indicator.id, indicator.doc_id, indicator.pillow)
+
+def _queue_indicators(indicators):
+    def _queue_chunk(indicators):
+        now = datetime.utcnow()
+        indicator_doc_ids = [i.doc_id for i in indicators]
+        AsyncIndicator.objects.filter(doc_id__in=indicator_doc_ids).update(date_queued=now)
+        save_document.delay(indicator_doc_ids)
+
+    to_queue = []
+    for indicator in indicators:
+        to_queue.append(indicator)
+        if len(to_queue) >= ASYNC_INDICATOR_CHUNK_SIZE:
+            _queue_chunk(to_queue)
+            to_queue = []
+
+    if to_queue:
+        _queue_chunk(to_queue)
 
 
-def _get_indicator_queued_lock_key(indicator):
-    return 'async_indicator_queued-{}'.format(indicator.id)
+@quickcache(['config_id'])
+def _get_config(config_id):
+    # performance optimization for save_document. don't use elsewhere
+    return _get_config_by_id(config_id)
 
 
 @task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
-def save_document(async_indicator_id, doc_id, pillow):
-    lock_key = get_async_indicator_modify_lock_key(doc_id, pillow)
-    with CriticalSection([lock_key]):
-        indicator = AsyncIndicator.objects.get(pk=async_indicator_id)
-        doc_store = get_document_store(indicator.domain, indicator.doc_type)
-        doc = doc_store.get_document(indicator.doc_id)
+def save_document(doc_ids):
+    lock_keys = []
+    for doc_id in doc_ids:
+        lock_keys.append(get_async_indicator_modify_lock_key(doc_id))
 
-        for config_id in indicator.indicator_config_ids:
-            config = _get_config_by_id(config_id)
-            adapter = get_indicator_adapter(config, can_handle_laboratory=True)
-            adapter.best_effort_save(doc)
+    with CriticalSection(lock_keys):
+        indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids)
+        if not indicators:
+            return
 
-        redis_client = get_redis_client().client.get_client()
-        queued_lock_key = _get_indicator_queued_lock_key(indicator)
-        lock = redis_client.lock(queued_lock_key)
-        release_lock(lock, degrade_gracefully=True)
-        indicator.delete()
+        first_indicator = indicators[0]
+        processed_indicators = []
+        failed_indicators = []
+
+        for i in indicators:
+            assert i.domain == first_indicator.domain
+            assert i.doc_type == first_indicator.doc_type
+
+        indicator_by_doc_id = {i.doc_id: i for i in indicators}
+        doc_store = get_document_store(first_indicator.domain, first_indicator.doc_type)
+        for doc in doc_store.iter_documents(doc_ids):
+            indicator = indicator_by_doc_id[doc['_id']]
+
+            eval_context = EvaluationContext(doc)
+            try:
+                for config_id in indicator.indicator_config_ids:
+                    config = _get_config(config_id)
+                    adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+                    adapter.best_effort_save(doc, eval_context)
+                    eval_context.reset_iteration()
+            except (ESError, RequestError):
+                # couch or es had an issue
+                failed_indicators.append(indicator.pk)
+            else:
+                processed_indicators.append(indicator.pk)
+
+        AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
+        AsyncIndicator.objects.filter(pk__in=failed_indicators).update(
+            date_queued=None, unsuccessful_attempts=F('unsuccessful_attempts') + 1
+        )

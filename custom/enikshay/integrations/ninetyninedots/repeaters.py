@@ -3,15 +3,17 @@ from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.form_processor.models import CommCareCaseSQL
-from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.xml.parser import CaseUpdateAction
 
 from corehq.apps.repeaters.models import CaseRepeater
 from corehq.apps.repeaters.signals import create_repeat_records
 from casexml.apps.case.signals import case_post_save
-from casexml.apps.case.xform import get_case_updates
 
-from custom.enikshay.integrations.utils import is_valid_person_submission, is_valid_episode_submission
+from custom.enikshay.integrations.utils import (
+    is_valid_person_submission,
+    is_valid_episode_submission,
+    case_was_created,
+    case_properties_changed
+)
 from custom.enikshay.case_utils import (
     get_open_episode_case_from_person,
     get_episode_case_from_adherence,
@@ -33,11 +35,6 @@ class Base99DOTSRepeater(CaseRepeater):
     @classmethod
     def available_for_domain(cls, domain):
         return NINETYNINE_DOTS.enabled(domain)
-
-    def allow_retries(self, response):
-        if response is not None and response.status_code == 500:
-            return True
-        return False
 
 
 class NinetyNineDotsRegisterPatientRepeater(Base99DOTSRepeater):
@@ -69,7 +66,12 @@ class NinetyNineDotsRegisterPatientRepeater(Base99DOTSRepeater):
             case_properties.get('dots_99_registered') == 'false' or
             case_properties.get('dots_99_registered') is None
         )
-        return enabled and not_registered and is_valid_episode_submission(episode_case)
+        return (
+            enabled
+            and not_registered
+            and is_valid_episode_submission(episode_case)
+            and case_properties_changed(episode_case, ['dots_99_enabled'])
+        )
 
 
 class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
@@ -156,6 +158,7 @@ class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
             and registered
             and from_enikshay
             and not previously_updated
+            and case_was_created(adherence_case)
             and is_valid_episode_submission(episode_case)
         )
 
@@ -199,25 +202,6 @@ def episode_registered_with_99dots(episode):
     return episode.dynamic_case_properties().get('dots_99_registered', False) == 'true'
 
 
-def case_properties_changed(case, case_properties):
-    if isinstance(case_properties, basestring):
-        case_properties = [case_properties]
-
-    last_case_action = case.actions[-1]
-    if last_case_action.is_case_create:
-        return False
-
-    update_actions = [update.get_update_action() for update in get_case_updates(last_case_action.form)]
-    property_changed = any(
-        action for action in update_actions
-        if isinstance(action, CaseUpdateAction)
-        and any(
-            case_property in action.dynamic_properties for case_property in case_properties
-        )
-    )
-    return property_changed
-
-
 def create_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(NinetyNineDotsRegisterPatientRepeater, case)
     create_repeat_records(NinetyNineDotsUpdatePatientRepeater, case)
@@ -225,6 +209,3 @@ def create_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(NinetyNineDotsTreatmentOutcomeRepeater, case)
 
 case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
-
-# TODO: Remove this when eNikshay gets migrated to SQL
-case_post_save.connect(create_case_repeat_records, CommCareCase)

@@ -2,14 +2,13 @@ import uuid
 import json
 import phonenumbers
 import jsonobject
-import pytz
-
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import parse_date
 
 from corehq.apps.repeaters.repeater_generators import (
     BasePayloadGenerator,
     RegisterGenerator,
 )
+from corehq.apps.repeaters.exceptions import RequestConnectionError
 from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
     NinetyNineDotsUpdatePatientRepeater,
@@ -78,7 +77,7 @@ class PatientPayload(jsonobject.JsonObject):
             phone_numbers=_get_phone_numbers(person_case_properties),
             merm_id=person_case_properties.get(MERM_ID, None),
             treatment_start_date=episode_case_properties.get(TREATMENT_START_DATE, None),
-            treatment_supporter_name="{} {}".format(
+            treatment_supporter_name=u"{} {}".format(
                 episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
                 episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME, ''),
             ),
@@ -92,11 +91,20 @@ class PatientPayload(jsonobject.JsonObject):
         )
 
 
-@RegisterGenerator(NinetyNineDotsRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
-class RegisterPatientPayloadGenerator(BasePayloadGenerator):
+class NinetyNineDotsBasePayloadGenerator(BasePayloadGenerator):
     @property
     def content_type(self):
         return 'application/json'
+
+    def handle_exception(self, exception, repeat_record):
+        if isinstance(exception, RequestConnectionError):
+            update_case(repeat_record.domain, repeat_record.payload_id, {
+                "dots_99_error": u"RequestConnectionError: {}".format(unicode(exception))
+            })
+
+
+@RegisterGenerator(NinetyNineDotsRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
+class RegisterPatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
 
     def get_test_payload(self, domain):
         return json.dumps(PatientPayload(
@@ -141,10 +149,7 @@ class RegisterPatientPayloadGenerator(BasePayloadGenerator):
 
 
 @RegisterGenerator(NinetyNineDotsUpdatePatientRepeater, 'case_json', 'JSON', is_default=True)
-class UpdatePatientPayloadGenerator(BasePayloadGenerator):
-    @property
-    def content_type(self):
-        return 'application/json'
+class UpdatePatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
 
     def get_test_payload(self, domain):
         return json.dumps(PatientPayload(
@@ -203,7 +208,7 @@ class UpdatePatientPayloadGenerator(BasePayloadGenerator):
 
 
 @RegisterGenerator(NinetyNineDotsAdherenceRepeater, 'case_json', 'JSON', is_default=True)
-class AdherencePayloadGenerator(BasePayloadGenerator):
+class AdherencePayloadGenerator(NinetyNineDotsBasePayloadGenerator):
 
     def get_payload(self, repeat_record, adherence_case):
         domain = adherence_case.domain
@@ -213,9 +218,7 @@ class AdherencePayloadGenerator(BasePayloadGenerator):
             ).case_id
         )
         adherence_case_properties = adherence_case.dynamic_case_properties()
-        date = (parse_datetime(adherence_case.dynamic_case_properties().get('adherence_date'))
-                .astimezone(pytz.timezone('Asia/Kolkata'))
-                .date())
+        date = parse_date(adherence_case.dynamic_case_properties().get('adherence_date'))
         payload = {
             'beneficiary_id': person_case.case_id,
             'adherence_date': date.isoformat(),
@@ -255,7 +258,7 @@ class AdherencePayloadGenerator(BasePayloadGenerator):
 
 
 @RegisterGenerator(NinetyNineDotsTreatmentOutcomeRepeater, 'case_json', 'JSON', is_default=True)
-class TreatmentOutcomePayloadGenerator(BasePayloadGenerator):
+class TreatmentOutcomePayloadGenerator(NinetyNineDotsBasePayloadGenerator):
 
     def get_payload(self, repeat_record, episode_case):
         domain = episode_case.domain

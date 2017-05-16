@@ -74,7 +74,6 @@
   id: app-settings-advanced
   collapse: true
   settings:
-    - properties.advanced_app_builder
     - properties.log_prop_weekly  # Weekly Log Sending Frequency
     - properties.log_prop_daily  # Daily Log Sending Frequency
     - hq.secure_submissions

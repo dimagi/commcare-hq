@@ -1,5 +1,5 @@
 from corehq.apps.domain_migration_flags.exceptions import DomainMigrationProgressError
-from corehq.util.quickcache import skippable_quickcache
+from corehq.util.quickcache import quickcache
 from models import DomainMigrationProgress, MigrationStatus
 
 
@@ -41,7 +41,7 @@ def get_migration_complete(domain, slug):
     return get_migration_status(domain, slug) == MigrationStatus.COMPLETE
 
 
-@skippable_quickcache(['domain', 'slug'], skip_arg='strict')
+@quickcache(['domain', 'slug'], skip_arg='strict', timeout=60 * 60, memoize_timeout=60)
 def get_migration_status(domain, slug, strict=False):
     try:
         progress = DomainMigrationProgress.objects.get(domain=domain, migration_slug=slug)
@@ -54,7 +54,7 @@ def migration_in_progress(domain, slug):
     return get_migration_status(domain, slug) == MigrationStatus.IN_PROGRESS
 
 
-@skippable_quickcache(['domain'], skip_arg='strict')
+@quickcache(['domain'], skip_arg='strict', timeout=60 * 60, memoize_timeout=60)
 def any_migrations_in_progress(domain, strict=False):
     return DomainMigrationProgress.objects.filter(
         domain=domain, migration_status=MigrationStatus.IN_PROGRESS

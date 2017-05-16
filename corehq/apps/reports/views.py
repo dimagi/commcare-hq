@@ -111,7 +111,8 @@ from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.export import export_cases
 from corehq.apps.hqwebapp.utils import csrf_inline
-from corehq.apps.locations.permissions import can_edit_form_location, location_safe
+from corehq.apps.locations.permissions import can_edit_form_location, location_safe, \
+    location_restricted_exception, user_can_access_case
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.util import default_language as ucr_default_language
@@ -233,7 +234,7 @@ class BaseProjectReportSectionView(BaseDomainView):
 @location_safe
 class MySavedReportsView(BaseProjectReportSectionView):
     urlname = 'saved_reports'
-    page_title = _("My Saved Reports")
+    page_title = ugettext_noop("My Saved Reports")
     template_name = 'reports/reports_home.html'
 
     @use_jquery_ui
@@ -1228,6 +1229,7 @@ def view_scheduled_report(request, domain, scheduled_report_id):
     return render_full_report_notification(request, content)
 
 
+@location_safe
 class CaseDetailsView(BaseProjectReportSectionView):
     urlname = 'case_details'
     template_name = "reports/reportdata/case_details.html"
@@ -1242,6 +1244,9 @@ class CaseDetailsView(BaseProjectReportSectionView):
                           "Sorry, we couldn't find that case. If you think this "
                           "is a mistake please report an issue.")
             return HttpResponseRedirect(CaseListReport.get_url(domain=self.domain))
+        if not (request.can_access_all_locations or
+                user_can_access_case(self.domain, self.request.couch_user, self.case_instance)):
+            raise location_restricted_exception(request)
         return super(CaseDetailsView, self).dispatch(request, *args, **kwargs)
 
     @property
@@ -1289,15 +1294,20 @@ class CaseDetailsView(BaseProjectReportSectionView):
                     self.request.user.username),
             },
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
+            "can_edit_data": self.request.couch_user.can_edit_data,
             'is_usercase': self.case_instance.type == USERCASE_TYPE,
         }
 
 
+@location_safe
 @require_case_view_permission
 @login_and_domain_required
 @require_GET
 def case_forms(request, domain, case_id):
     case = _get_case_or_404(domain, case_id)
+    if not (request.can_access_all_locations or
+                user_can_access_case(domain, request.couch_user, case)):
+        raise location_restricted_exception(request)
     try:
         start_range = int(request.GET['start_range'])
         end_range = int(request.GET['end_range'])
@@ -1328,12 +1338,14 @@ def case_forms(request, domain, case_id):
     ])
 
 
+@location_safe
 class CaseAttachmentsView(CaseDetailsView):
     urlname = 'single_case_attachments'
     template_name = "reports/reportdata/case_attachments.html"
     page_title = ugettext_lazy("Case Attachments")
     http_method_names = ['get']
 
+    @method_decorator(login_and_domain_required)
     def dispatch(self, request, *args, **kwargs):
         if not can_view_attachments(request):
             return HttpResponseForbidden(_("You don't have permission to access this page."))
@@ -1761,7 +1773,7 @@ class EditFormInstance(View):
             edit_session_data[USERCASE_ID] = usercase_id
 
         case_blocks = extract_case_blocks(instance, include_path=True)
-        if form.form_type == 'advanced_form':
+        if form.form_type == 'advanced_form' or form.form_type == "shadow_form":
             datums = EntriesHelper(form.get_app()).get_datums_meta_for_form_generic(form)
             for case_block in case_blocks:
                 path = case_block.path[0]  # all case blocks in advanced forms are nested one level deep
@@ -1835,11 +1847,12 @@ def restore_edit(request, domain, instance_id):
 @login_or_digest
 @require_form_view_permission
 @require_GET
+@location_safe
 def download_attachment(request, domain, instance_id):
+    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     attachment = request.GET.get('attachment', False)
     if not attachment:
         return HttpResponseBadRequest("Invalid attachment.")
-    instance = _get_form_or_404(domain, instance_id)
     assert(domain == instance.domain)
 
     try:
@@ -1915,7 +1928,7 @@ def _get_cases_with_other_forms(domain, xform):
     cases_created = {u.id for u in get_case_updates(xform) if u.creates_case()}
     cases = {}
     for case in CaseAccessors(domain).iter_cases(list(cases_created)):
-        if case.xform_ids != [xform.form_id]:
+        if not case.is_deleted and case.xform_ids != [xform.form_id]:
             # case has other forms that need to be archived before this one
             cases[case.case_id] = case.name
     return cases

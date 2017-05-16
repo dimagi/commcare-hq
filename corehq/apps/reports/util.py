@@ -10,9 +10,12 @@ from django.conf import settings
 from django.http import Http404
 from django.utils import html, safestring
 from casexml.apps.case.models import CommCareCase
+
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.utils import use_new_exports, should_use_sql_backend
+from corehq.util.quickcache import quickcache
+from corehq.apps.reports.const import USER_QUERY_LIMIT
 
 from couchexport.util import SerializableFunction
 from couchforms.analytics import get_first_form_submission_received
@@ -375,7 +378,7 @@ def get_possible_reports(domain_name):
             else:
                 report_to_check_if_viewable = model
 
-            if report_to_check_if_viewable.show_in_navigation(domain=domain_name, project=domain):
+            if report_to_check_if_viewable.show_in_user_roles(domain=domain_name, project=domain):
                 reports.append({
                     'path': model.__module__ + '.' + model.__name__,
                     'name': model.name
@@ -471,3 +474,14 @@ def resync_case_to_es(domain, case):
         publish_case_saved(case)
     else:
         CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
+
+
+@quickcache(['domain', 'mobile_user_and_group_slugs'], timeout=10)
+def is_query_too_big(domain, mobile_user_and_group_slugs):
+    from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
+
+    user_es_query = ExpandedMobileWorkerFilter.user_es_query(
+        domain,
+        mobile_user_and_group_slugs,
+    )
+    return user_es_query.count() > USER_QUERY_LIMIT

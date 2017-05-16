@@ -58,15 +58,24 @@ hqDefine('app_manager/js/app_manager.js', function () {
             var r = $('input[name="' + name + '"]').first().val();
             return JSON.parse(r);
         }
+        function updateRelatedTags($elem, name, value) {
+            var relatedTags = $elem.find("[data-" + name +"]");
+            _.each(relatedTags, function (related) {
+                $(related).data(name, value);
+            });
+        }
         function resetIndexes($sortable) {
             if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+                var parentVar = $sortable.data('parentvar');
+                var parentValue = $sortable.closest("[data-indexVar='" + parentVar + "']").data('index');
                 _.each($sortable.find('> .js-sorted-li'), function (elem, i) {
                     $(elem).data('index', i);
                     var indexVar = $(elem).data('indexvar');
-                    var relatedTags = $(elem).find("[data-" + indexVar +"]");
-                    _.each(relatedTags, function (related) {
-                        $(related).data(indexVar, i);
-                    });
+                    updateRelatedTags($(elem), indexVar, i);
+                    if (parentVar) {
+                        $(elem).data(parentVar, parentValue);
+                        updateRelatedTags($(elem), parentVar, parentValue);
+                    }
                 });
                 _.each($('[data-updateprop]'), function (tag) {
                     var tagName = $(tag).data('updateprop'),
@@ -207,6 +216,11 @@ hqDefine('app_manager/js/app_manager.js', function () {
 
                             if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
                                 resetIndexes($sortable);
+                                if (from_module_id !== to_module_id) {
+                                    var $parentSortable = $sortable.parents(".sortable"),
+                                        $fromSortable = $parentSortable.find("[data-index=" + from_module_id + "] .sortable");
+                                    resetIndexes($fromSortable);
+                                }
                                 $.post($form.attr('action'), $form.serialize(), function (data) {});
                             } else {
                                 // disable sortable
@@ -272,52 +286,79 @@ hqDefine('app_manager/js/app_manager.js', function () {
             }
         });
 
+        $('.new-form').on('click', function (e) {
+            e.preventDefault();
+            var dataType = $(this).data("type");
+            var moduleId = $(this).data("module");
+            var form = $("#form-to-create-new-form-for-module-" + moduleId);
+            $("input[name=form_type]", form).val(dataType);
+            if (!form.data('clicked')) {
+                form.data('clicked', 'true');
+                $('.new-form-icon-module-' + moduleId).removeClass().addClass("fa fa-refresh fa-spin");
+                form.submit();
+            }
+        });
+
         if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
             $(document).on('click', '.js-new-form', function (e) {
                 e.preventDefault();
                 var $a = $(this),
-                    $form = $a.siblings("form"),
-                    action = $a.data("case-action");
+                    $popoverContent = $a.closest(".popover-content > *"),
+                    $form = $popoverContent.find("form"),
+                    action = $a.data("case-action"),
+                    moduleId = $popoverContent.data("module-id"),
+                    $trigger = $('.js-add-new-item[data-module-id="' + moduleId  + '"]');
+                $form.attr("action", hqImport("hqwebapp/js/urllib.js").reverse("new_form", moduleId));
                 $form.find("input[name='case_action']").val(action);
+                $form.find("input[name='form_type']").val($a.data("form-type"));
                 $form.find("input[name='name']").val(action === "update" ? "Followup" : "Survey");
                 if (!$form.data('clicked')) {
                     $form.data('clicked', 'true');
-                    $a.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh fa-spin");
+                    $trigger.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh fa-spin");
                     $form.submit();
                 }
             });
         }
 
         if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
-            $('.appnav-responsive').on('click', function () {
-                // TODO doesn't handle vellum with saved changes.
-                $('#js-appmanager-body.appmanager-settings-content').addClass('hide');
+            $(document).on('click', '.appnav-responsive', function (e) {
+                if (!e || (!e.metaKey && !e.ctrlKey && !e.which !== 2)) {
+                    // TODO doesn't handle vellum with saved changes.
+                    $('#js-appmanager-body.appmanager-settings-content').addClass('hide');
+                }
             });
         }
 
         if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
 
-            $('#js-add-new-item').popover({
+            $('.js-add-new-item').popover({
                 title: django.gettext("Add"),
                 container: 'body',
                 content: function () {
-                    return $('#js-popover-template-add-item-content').text();
+                    var slug = $(this).data("slug"),
+                        template = $('.js-popover-template-add-item-content[data-slug="' + slug + '"]').text();
+                    return _.template(template)($(this).data());
                 },
                 html: true,
                 trigger: 'manual',
                 placement: 'right',
                 template: $('#js-popover-template-add-item').text()
+            }).on('show.bs.popover', function () {
+                // Close any other open popover
+                $('.js-add-new-item').not($(this)).popover('hide');
             }).one('shown.bs.popover', function () {
                 var pop = this;
                 $('.popover-additem').on('click', function (e) {
                     $(pop).popover('hide');
                     var dataType = $(e.target).closest('button').data('type');
                     $('#new-module-type').val(dataType);
-                    var form = $('#new-module-form');
-                    if (!form.data('clicked')) {
-                        form.data('clicked', 'true');
-                        $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
-                        form.submit();
+                    if ($(e.target).closest('button').data('stopsubmit') !== 'yes') {
+                        var form = $('#new-module-form');
+                        if (!form.data('clicked')) {
+                            form.data('clicked', 'true');
+                            $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
+                            form.submit();
+                        }
                     }
                 });
             }).on('click', function (e) {
@@ -325,9 +366,10 @@ hqDefine('app_manager/js/app_manager.js', function () {
                 $(this).popover('show');
             });
 
+            // Close any open popover when user clicks elsewhere on the page
             $('body').click(function (event) {
                 if (!($(event.target).hasClass('appnav-add') || $(event.target).hasClass('popover-additem-option') || $(event.target).hasClass('fa'))) {
-                    $('#js-add-new-item').popover('hide');
+                    $('.js-add-new-item').popover('hide');
                 }
             });
 

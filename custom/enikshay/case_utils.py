@@ -19,10 +19,14 @@ CASE_TYPE_ADHERENCE = "adherence"
 CASE_TYPE_OCCURRENCE = "occurrence"
 CASE_TYPE_EPISODE = "episode"
 CASE_TYPE_PERSON = "person"
+CASE_TYPE_LAB_REFERRAL = "lab_referral"
 CASE_TYPE_DRTB_HIV_REFERRAL = "drtb-hiv-referral"
+CASE_TYPE_TEST = "test"
+CASE_TYPE_VOUCHER = "voucher"
+CASE_TYPE_PRESCRIPTION = "prescription"
 
 
-def get_parent_of_case(domain, case_id, parent_case_type):
+def get_all_parents_of_case(domain, case_id):
     case_accessor = CaseAccessors(domain)
     try:
         if not isinstance(case_id, basestring):
@@ -38,31 +42,51 @@ def get_parent_of_case(domain, case_id, parent_case_type):
         indexed_case.referenced_id for indexed_case in child_case.indices
     ]
     parent_cases = case_accessor.get_cases(parent_case_ids)
-    open_parent_cases = [
+
+    return parent_cases
+
+
+def get_parent_of_case(domain, case_id, parent_case_type):
+    parent_cases = get_all_parents_of_case(domain, case_id)
+    case_type_open_parent_cases = [
         parent_case for parent_case in parent_cases
         if not parent_case.closed and parent_case.type == parent_case_type
     ]
 
-    if not open_parent_cases:
+    if not case_type_open_parent_cases:
         raise ENikshayCaseNotFound(
             "Couldn't find any open {} cases for id: {}".format(parent_case_type, case_id)
         )
 
-    return open_parent_cases[0]
+    return case_type_open_parent_cases[0]
+
+
+def get_first_parent_of_case(domain, case_id, parent_case_type):
+    parent_cases = get_all_parents_of_case(domain, case_id)
+    case_type_parent_cases = [
+        parent_case for parent_case in parent_cases if parent_case.type == parent_case_type
+    ]
+
+    if not case_type_parent_cases:
+        raise ENikshayCaseNotFound(
+            "Couldn't find any {} cases for id: {}".format(parent_case_type, case_id)
+        )
+
+    return case_type_parent_cases[0]
 
 
 def get_occurrence_case_from_episode(domain, episode_case_id):
     """
-    Gets the first open occurrence case for an episode
+    Gets the first occurrence case for an episode
     """
-    return get_parent_of_case(domain, episode_case_id, CASE_TYPE_OCCURRENCE)
+    return get_first_parent_of_case(domain, episode_case_id, CASE_TYPE_OCCURRENCE)
 
 
 def get_person_case_from_occurrence(domain, occurrence_case_id):
     """
-    Gets the first open person case for an occurrence
+    Gets the first person case for an occurrence
     """
-    return get_parent_of_case(domain, occurrence_case_id, CASE_TYPE_PERSON)
+    return get_first_parent_of_case(domain, occurrence_case_id, CASE_TYPE_PERSON)
 
 
 def get_person_case_from_episode(domain, episode_case_id):
@@ -154,9 +178,16 @@ def get_episode_case_from_adherence(domain, adherence_case_id):
     return get_parent_of_case(domain, adherence_case_id, CASE_TYPE_EPISODE)
 
 
+def get_occurrence_case_from_test(domain, test_case_id):
+    """
+        Gets the first open occurrence case for a test
+        """
+    return get_parent_of_case(domain, test_case_id, CASE_TYPE_OCCURRENCE)
+
+
 def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_date):
-    case_accessor = CaseAccessors(domain)
     episode = get_open_episode_case_from_person(domain, person_case_id)
+    case_accessor = CaseAccessors(domain)
     indexed_cases = case_accessor.get_reverse_indexed_cases([episode.case_id])
     open_pertinent_adherence_cases = [
         case for case in indexed_cases
@@ -212,6 +243,18 @@ def get_person_locations(person_case):
         raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
 
 
+def get_lab_referral_from_test(domain, test_case_id):
+    case_accessor = CaseAccessors(domain)
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([test_case_id])
+    lab_referral_cases = [case for case in reverse_indexed_cases if case.type == CASE_TYPE_LAB_REFERRAL]
+    if lab_referral_cases:
+        return lab_referral_cases[0]
+    else:
+        raise ENikshayCaseNotFound(
+            "test with id: {} exists but has no lab referral cases".format(test_case_id)
+        )
+
+
 def get_adherence_cases_by_day(domain, episode_case_id):
     indexed_cases = CaseAccessors(domain).get_reverse_indexed_cases([episode_case_id])
     adherence_cases = [
@@ -227,3 +270,92 @@ def get_adherence_cases_by_day(domain, episode_case_id):
         adherence[adherence_datetime.date()].append(case)
 
     return adherence
+
+
+def get_person_case(domain, case_id):
+    try:
+        case = CaseAccessors(domain).get_case(case_id)
+    except CaseNotFound:
+        raise ENikshayCaseNotFound("Couldn't find case: {}".format(case_id))
+
+    case_type = case.type
+
+    if case_type == CASE_TYPE_PERSON:
+        return case_id
+    elif case_type == CASE_TYPE_EPISODE:
+        return get_person_case_from_episode(domain, case.case_id).case_id
+    elif case_type == CASE_TYPE_ADHERENCE:
+        episode_case = get_episode_case_from_adherence(domain, case.case_id)
+        return get_person_case_from_episode(domain, episode_case.case_id).case_id
+    elif case_type == CASE_TYPE_TEST:
+        occurrence_case = get_occurrence_case_from_test(domain, case.case_id)
+        return get_person_case_from_occurrence(domain, occurrence_case.case_id).case_id
+    elif case_type == CASE_TYPE_OCCURRENCE:
+        return get_person_case_from_occurrence(domain, case.case_id).case_id
+    elif case_type == CASE_TYPE_VOUCHER:
+        return get_person_case_from_voucher(domain, case.case_id).case_id
+    else:
+        raise ENikshayCaseNotFound(u"Unknown case type: {}".format(case_type))
+
+
+def _get_voucher_parent(domain, voucher_case_id):
+    prescription = None
+    test = None
+
+    try:
+        prescription = get_first_parent_of_case(domain, voucher_case_id, CASE_TYPE_PRESCRIPTION)
+    except ENikshayCaseNotFound:
+        pass
+    try:
+        test = get_first_parent_of_case(domain, voucher_case_id, CASE_TYPE_TEST)
+    except ENikshayCaseNotFound:
+        pass
+    if not (prescription or test):
+        raise ENikshayCaseNotFound(
+            "Couldn't find any open parent prescription or test cases for id: {}".format(voucher_case_id)
+        )
+    assert not (prescription and test), "Didn't expect voucher to have prescription AND test parent"
+    return test or prescription
+
+
+def get_episode_case_from_voucher(domain, voucher_case_id):
+    voucher_parent = _get_voucher_parent(domain, voucher_case_id)
+    assert voucher_parent.type == CASE_TYPE_PRESCRIPTION
+    episode = get_first_parent_of_case(domain, voucher_parent.case_id, CASE_TYPE_EPISODE)
+    return episode
+
+
+def get_person_case_from_voucher(domain, voucher_case_id):
+    # Case structure could be one of these two things:
+    #   person <- occurrence <- episode <- prescription <- voucher
+    #   person <- occurrence <- test <- voucher
+    voucher_parent = _get_voucher_parent(domain, voucher_case_id)
+    if voucher_parent.type == CASE_TYPE_PRESCRIPTION:
+        episode = get_first_parent_of_case(domain, voucher_parent.case_id, CASE_TYPE_EPISODE)
+        return get_person_case_from_episode(domain, episode.case_id)
+    else:
+        assert voucher_parent.type == CASE_TYPE_TEST
+        occurrence = get_occurrence_case_from_test(domain, voucher_parent.case_id)
+        return get_person_case_from_occurrence(domain, occurrence.case_id)
+
+
+def get_prescription_vouchers_from_episode(domain, episode_case_id):
+    case_accessor = CaseAccessors(domain)
+    prescription_cases = [
+        case for case in case_accessor.get_reverse_indexed_cases([episode_case_id])
+        if case.type == CASE_TYPE_PRESCRIPTION
+    ]
+    return [
+        c for c in case_accessor.get_reverse_indexed_cases([case.case_id for case in prescription_cases])
+        if c.type == CASE_TYPE_VOUCHER
+    ]
+
+
+def get_approved_prescription_vouchers_from_episode(domain, episode_case_id):
+    vouchers = get_prescription_vouchers_from_episode(domain, episode_case_id)
+    approved_prescription_vouchers = []
+    for voucher in vouchers:
+        voucher_props = voucher.dynamic_case_properties()
+        if voucher_props.get("type") == CASE_TYPE_PRESCRIPTION and voucher_props.get("state") == "fulfilled":
+            approved_prescription_vouchers.append(voucher)
+    return approved_prescription_vouchers

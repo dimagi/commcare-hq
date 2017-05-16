@@ -31,7 +31,7 @@ from dimagi.utils.logging import notify_exception, log_signal_errors
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
-from corehq.util.quickcache import skippable_quickcache, quickcache
+from corehq.util.quickcache import quickcache
 from casexml.apps.case.mock import CaseBlock
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.exceptions import CaseNotFound
@@ -44,6 +44,7 @@ from corehq.apps.domain.models import Domain, LicenseAgreement
 from corehq.apps.users.util import (
     user_display_string,
     user_location_data,
+    username_to_user_id,
 )
 from corehq.apps.users.tasks import tag_forms_as_deleted_rebuild_associated_cases, \
     tag_cases_as_deleted_and_remove_indices, tag_system_forms_as_deleted
@@ -55,6 +56,8 @@ from dimagi.utils.dates import force_to_datetime
 from xml.etree import ElementTree
 
 from couchdbkit.exceptions import ResourceConflict, NoResultFound, BadValueError
+
+from dimagi.utils.web import get_site_domain
 
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
@@ -89,6 +92,7 @@ class Permissions(DocumentSchema):
     view_report_list = StringListProperty(default=[])
 
     edit_billing = BooleanProperty(default=False)
+    report_an_issue = BooleanProperty(default=True)
 
     @classmethod
     def wrap(cls, data):
@@ -855,6 +859,26 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     class InvalidID(Exception):
         pass
 
+    def __repr__(self):
+        # copied from jsonobject/base.py
+        name = self.__class__.__name__
+        predefined_properties = set(self._properties_by_attr.keys())
+        predefined_property_keys = set(self._properties_by_attr[p].name
+                                       for p in predefined_properties)
+        dynamic_properties = (set(self._wrapped.keys())
+                              - predefined_property_keys)
+
+        # redact hashed password
+        properties = sorted(predefined_properties - {'password'}) + sorted(dynamic_properties - {'password'})
+
+        return u'{name}({keyword_args})'.format(
+            name=name,
+            keyword_args=', '.join('{key}={value!r}'.format(
+                key=key,
+                value=getattr(self, key)
+            ) for key in properties),
+        )
+
     @property
     def is_dimagi(self):
         return self.username.endswith('@dimagi.com')
@@ -1100,7 +1124,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def is_previewer(self):
         from django.conf import settings
         return (self.is_superuser or
-                re.compile(settings.PREVIEWER_RE).match(self.username))
+                bool(re.compile(settings.PREVIEWER_RE).match(self.username)))
 
     def sync_from_django_user(self, django_user):
         if not django_user:
@@ -1179,8 +1203,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         }[doc_type].wrap(source)
 
     @classmethod
-    @skippable_quickcache(['username'], skip_arg='strict')
+    @quickcache(['username'], skip_arg='strict')
     def get_by_username(cls, username, strict=True):
+        if not username:
+            return None
+
         def get(stale, raise_if_none):
             result = cls.get_db().view('users/by_username',
                 key=username,
@@ -1193,9 +1220,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             result = get(stale=settings.COUCH_STALE_QUERY, raise_if_none=True)
             if result['doc'] is None or result['doc']['username'] != username:
                 raise NoResultFound
-        except NoMoreData:
-            logging.exception('called get_by_username(%r) and it failed pretty bad' % username)
-            raise
         except NoResultFound:
             result = get(stale=None, raise_if_none=False)
 
@@ -1216,6 +1240,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
         self.get_by_username.clear(self.__class__, self.username)
         self.get_by_user_id.clear(self.__class__, self.user_id)
+        username_to_user_id.clear(self.username)
         domains = getattr(self, 'domains', None)
         if domains is None:
             domain = getattr(self, 'domain', None)
@@ -1421,7 +1446,13 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     is_demo_user = BooleanProperty(default=False)
     demo_restore_id = IntegerProperty()
 
+    # This means that this user represents a location, and has a 1-1 relationship
+    # with a location where location.location_type.has_user == True
+    user_location_id = StringProperty()
+
     is_anonymous = BooleanProperty(default=False)
+
+    mobile_ucr_sync_interval = IntegerProperty()
 
     @classmethod
     def wrap(cls, data):
@@ -1594,7 +1625,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             )
             deleted_forms.update(form_id_list)
 
-        tag_system_forms_as_deleted(self.domain, deleted_forms, deleted_cases, deletion_id, deletion_date)
+        tag_system_forms_as_deleted.delay(self.domain, deleted_forms, deleted_cases, deletion_id, deletion_date)
 
         try:
             django_user = self.get_django_user()
@@ -1673,13 +1704,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     @property
     @memoized
     def location(self):
-        from corehq.apps.locations.models import Location
-        if self.location_id:
-            try:
-                return Location.get(self.location_id)
-            except ResourceNotFound:
-                pass
-        return None
+        return self.sql_location
 
     @property
     def sql_location(self):
@@ -1716,7 +1741,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def get_sql_location(self, domain):
         return self.sql_location
 
-    def set_location(self, location):
+    def set_location(self, location, commit=True):
         """
         Set the primary location, and all important user data, for
         the user.
@@ -1724,6 +1749,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         :param location: may be a sql or couch location
         """
         from corehq.apps.fixtures.models import UserFixtureType
+
+        if not location.location_id:
+            raise AssertionError("You can't set an unsaved location")
 
         self.user_data['commcare_location_id'] = location.location_id
 
@@ -1750,7 +1778,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.assigned_location_ids.append(self.location_id)
             self.get_domain_membership(self.domain).assigned_location_ids.append(self.location_id)
             self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
-        self.save()
+        self.get_sql_location.reset_cache(self)
+        if commit:
+            self.save()
 
     def unset_location(self, fall_back_to_next=False):
         """
@@ -1783,6 +1813,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.clear_location_delegates()
             self.update_fixture_status(UserFixtureType.LOCATION)
             self.get_domain_membership(self.domain).location_id = None
+            self.get_sql_location.reset_cache(self)
             self.save()
 
     def unset_location_by_id(self, location_id, fall_back_to_next=False):
@@ -1958,7 +1989,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         """Returns all of the last modified times for each fixture type"""
         return self._get_fixture_statuses()
 
-    @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
+    @quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def _get_fixture_statuses(self):
         from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
         last_modifieds = {choice[0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED
@@ -1996,7 +2027,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def get_usercase(self):
         return CaseAccessors(self.domain).get_case_by_domain_hq_user_id(self._id, USERCASE_TYPE)
 
-    @skippable_quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
+    @quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
     def get_usercase_id(self):
         case = self.get_usercase()
         return case.case_id if case else None
@@ -2131,10 +2162,14 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         else:
             location_id = location_object_or_id.location_id
 
+        if not location_id:
+            raise AssertionError("You can't set an unsaved location")
+
         membership = self.get_domain_membership(domain)
         membership.location_id = location_id
         if self.location_id not in membership.assigned_location_ids:
             membership.assigned_location_ids.append(location_id)
+        self.get_sql_location.reset_cache(self)
         self.save()
 
     def unset_location(self, domain, fall_back_to_next=False):
@@ -2150,6 +2185,7 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
             membership.location_id = membership.assigned_location_ids[0]
         else:
             membership.location_id = None
+        self.get_sql_location.reset_cache(self)
         self.save()
 
     def unset_location_by_id(self, domain, location_id, fall_back_to_next=False):
@@ -2198,16 +2234,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         else:
             return SQLLocation.objects.none()
 
-    @memoized
     def get_location(self, domain):
-        from corehq.apps.locations.models import Location
-        loc_id = self.get_location_id(domain)
-        if loc_id:
-            try:
-                return Location.get(loc_id)
-            except ResourceNotFound:
-                pass
-        return None
+        return self.get_sql_location(domain)
 
     def is_locked_out(self):
         return self.login_attempts >= MAX_LOGIN_ATTEMPTS
@@ -2313,8 +2341,13 @@ class Invitation(QuickCachedDocumentMixin, Document):
     def send_activation_email(self, remaining_days=30):
         url = absolute_reverse("domain_accept_invitation",
                                args=[self.domain, self.get_id])
-        params = {"domain": self.domain, "url": url, 'days': remaining_days,
-                  "inviter": self.get_inviter().formatted_name}
+        params = {
+            "domain": self.domain,
+            "url": url,
+            'days': remaining_days,
+            "inviter": self.get_inviter().formatted_name,
+            'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+        }
 
         domain_request = DomainRequest.by_email(self.domain, self.email, is_approved=True)
         lang = guess_domain_language(self.domain)
@@ -2376,3 +2409,68 @@ class UserCache(object):
             user = CouchUser.get_by_user_id(user_id)
             self.cache[user_id] = user
             return user
+
+
+class AnonymousCouchUser(object):
+
+    username = "public_user"
+    doc_type = "CommCareUser"
+    _id = 'anonymous_couch_user'
+
+    @property
+    def get_id(self):
+        return self._id
+
+    @property
+    def is_active(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return True
+
+    def is_domain_admin(self):
+        return False
+
+    def is_member_of(self, domain):
+        return True
+
+    def has_permission(self, domain, perm=None, data=None):
+        return False
+
+    def can_view_report(self, domain, report):
+        return False
+
+    def can_view_some_reports(self, domain):
+        return False
+
+    @property
+    def analytics_enabled(self):
+        return False
+
+    def can_edit_data(self):
+        return False
+
+    def can_edit_apps(self):
+        return False
+
+    def is_eula_signed(self, version=None):
+        return True
+
+    def is_commcare_user(self):
+        return True
+
+    def is_web_user(self):
+        return False
+
+    def can_access_any_exports(self, domain):
+        return False
+
+    def can_edit_commcare_users(self):
+        return False
+
+    def can_edit_locations(self):
+        return False
+
+    def can_edit_web_users(self):
+        return False

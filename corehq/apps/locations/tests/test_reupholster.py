@@ -69,12 +69,12 @@ class TestNoCouchLocationTypes(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestNoCouchLocationTypes, cls).setUpClass()
-        create_domain('test-domain')
+        cls.domain_obj = create_domain('test-domain')
         LocationType.objects.create(domain='test-domain', name='test-type')
 
     @classmethod
     def tearDownClass(cls):
-        LocationType.objects.all().delete()
+        cls.domain_obj.delete()
         super(TestNoCouchLocationTypes, cls).tearDownClass()
 
     def setUp(self):

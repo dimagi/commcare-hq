@@ -1355,8 +1355,29 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     );
                 }
                 if (spec.state.long !== undefined) {
+                    var printModule = hqImport("app_manager/js/case_detail_print.js"),
+                        printRef = printModule.getPrintRef(),
+                        printTemplateUploader = printModule.getPrintTemplateUploader();
                     this.longScreen = addScreen(spec.state, "long");
-                    this.printTemplateReference = spec.print_ref;
+                    this.printTemplateReference = _.extend(printRef, {
+                        removePrintTemplate: function() {
+                            $.post(
+                                hqImport("hqwebapp/js/urllib.js").reverse("hqmedia_remove_detail_print_template"),
+                                {
+                                    module_unique_id: spec.moduleUniqueId,
+                                },
+                                function(data, status) {
+                                    if (status === 'success'){
+                                        printRef.setObjReference({
+                                            path: printRef.path,
+                                        });
+                                        printRef.is_matched(false);
+                                        printTemplateUploader.updateUploadFormUI();
+                                    }
+                                }
+                            );
+                        },
+                    });
                 }
             };
             DetailScreenConfig.init = function (spec) {

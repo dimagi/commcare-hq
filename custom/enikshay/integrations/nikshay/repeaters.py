@@ -12,15 +12,27 @@ from corehq.apps.repeaters.signals import create_repeat_records
 from custom.enikshay.case_utils import (
     get_person_case_from_episode,
     get_open_episode_case_from_person,
+    get_occurrence_case_from_test,
+    get_open_episode_case_from_occurrence,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.const import TREATMENT_OUTCOME, EPISODE_PENDING_REGISTRATION
-from custom.enikshay.integrations.utils import is_valid_person_submission, is_valid_episode_submission
-from custom.enikshay.integrations.ninetyninedots.repeaters import case_properties_changed
+from custom.enikshay.integrations.utils import (
+    is_valid_person_submission,
+    is_valid_test_submission,
+    is_valid_archived_submission,
+)
+
+
+from custom.enikshay.integrations.utils import case_properties_changed
 from custom.enikshay.integrations.nikshay.field_mappings import treatment_outcome
 
 
-class NikshayRegisterPatientRepeater(CaseRepeater):
+class BaseNikshayRepeater(CaseRepeater):
+    pass
+
+
+class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
     class Meta(object):
         app_label = 'repeaters'
 
@@ -58,12 +70,12 @@ class NikshayRegisterPatientRepeater(CaseRepeater):
             return False
 
 
-class NikshayHIVTestRepeater(CaseRepeater):
+class NikshayHIVTestRepeater(BaseNikshayRepeater):
     class Meta(object):
         app_label = 'repeaters'
 
     include_app_id_param = False
-    friendly_name = _("Forward eNikshay Patient's HIV Test to Nikshay")
+    friendly_name = _("Forward eNikshay Patient's HIV Test to Nikshay (person case type)")
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -99,7 +111,7 @@ class NikshayHIVTestRepeater(CaseRepeater):
             return False
 
 
-class NikshayTreatmentOutcomeRepeater(CaseRepeater):
+class NikshayTreatmentOutcomeRepeater(BaseNikshayRepeater):
     class Meta(object):
         app_label = 'repeaters'
 
@@ -124,8 +136,54 @@ class NikshayTreatmentOutcomeRepeater(CaseRepeater):
             episode_case_properties.get('nikshay_id', False) and
             case_properties_changed(episode_case, [TREATMENT_OUTCOME]) and
             episode_case_properties.get(TREATMENT_OUTCOME) in treatment_outcome.keys() and
-            is_valid_episode_submission(episode_case)
+            is_valid_archived_submission(episode_case)
         )
+
+
+class NikshayFollowupRepeater(BaseNikshayRepeater):
+    followup_for_tests = ['end_of_ip', 'end_of_cp']
+
+    class Meta(object):
+        app_label = 'repeaters'
+
+    include_app_id_param = False
+    friendly_name = _("Forward eNikshay Patient's Follow Ups to Nikshay (test case type)")
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        return NIKSHAY_INTEGRATION.enabled(domain)
+
+    @classmethod
+    def get_custom_url(cls, domain):
+        from custom.enikshay.integrations.nikshay.views import NikshayPatientFollowupRepeaterView
+        return reverse(NikshayPatientFollowupRepeaterView.urlname, args=[domain])
+
+    def allowed_to_forward(self, test_case):
+        # test.date_reported populates and test.nikshay_registered is false
+        # test.test_type_value = microscopy-zn or test.test_type_value = microscopy-fluorescent
+        # and episode.nikshay_registered is true
+        allowed_case_types_and_users = self._allowed_case_type(test_case) and self._allowed_user(test_case)
+        if allowed_case_types_and_users:
+            try:
+                occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
+                episode_case = get_open_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
+            except ENikshayCaseNotFound:
+                return False
+            test_case_properties = test_case.dynamic_case_properties()
+            episode_case_properties = episode_case.dynamic_case_properties()
+            return (
+                test_case_properties.get('nikshay_registered', 'false') == 'false' and
+                test_case_properties.get('test_type_value', '') in ['microscopy-zn', 'microscopy-fluorescent'] and
+                episode_case_properties.get('nikshay_id') and
+                (
+                    test_case_properties.get('purpose_of_testing') == 'diagnostic' or
+                    test_case_properties.get('follow_up_test_reason') in self.followup_for_tests
+                ) and
+                case_properties_changed(test_case, 'date_reported') and
+                not is_valid_test_submission(test_case)
+            )
+        else:
+            return False
 
 
 def person_hiv_status_changed(case):
@@ -151,7 +209,7 @@ def related_dates_changed(case):
         action for action in last_update_actions
         if isinstance(action, CaseUpdateAction) and (
             'art_initiation_date' in action.dynamic_properties or
-            'cpt_initiation_date' in action.dynamic_properties
+            'cpt_1_date' in action.dynamic_properties
         )
     )
     return value_changed
@@ -160,6 +218,7 @@ def related_dates_changed(case):
 def create_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(NikshayRegisterPatientRepeater, case)
     create_repeat_records(NikshayTreatmentOutcomeRepeater, case)
+    create_repeat_records(NikshayFollowupRepeater, case)
 
 
 def create_hiv_test_repeat_records(sender, case, **kwargs):
@@ -167,7 +226,3 @@ def create_hiv_test_repeat_records(sender, case, **kwargs):
 
 case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
 case_post_save.connect(create_hiv_test_repeat_records, CommCareCaseSQL)
-
-# TODO: Remove this when eNikshay gets migrated to SQL
-case_post_save.connect(create_case_repeat_records, CommCareCase)
-case_post_save.connect(create_hiv_test_repeat_records, CommCareCase)

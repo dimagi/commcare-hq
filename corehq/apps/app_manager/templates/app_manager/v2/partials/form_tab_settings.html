@@ -1,7 +1,7 @@
 {% load i18n %}
 {% load xforms_extras %}
 {% load hq_shared_tags %}
-<div class="tab-pane{% if not form.requires_case and not form.get_action_type == 'open' %} active{% endif %}" id="form-settings">
+<div class="tab-pane{% if not form.uses_cases %} active{% endif %}" id="form-settings">
     <form class="form-horizontal save-button-form" action="{% url "edit_form_attr" domain app.id form.get_unique_id 'all' %}">
         {% csrf_token %}
         <div class="save-button-holder clearfix"></div>
@@ -46,7 +46,7 @@
                         css: {error: hasError()}">
 
                         {% if allow_form_filtering %}
-                            {% include "app_manager/v2/partials/form_filter/form_filter.html" %}
+                            {% include "app_manager/v2/partials/form_filter.html" %}
                         {% else  %}
                             <div class="container-fluid">
                                 <div class="alert alert-info">{% trans 'Form filtering is disabled for this form' %}</div>
@@ -85,12 +85,11 @@
 
                     </div>
 
-                    {{ request|toggle_tag_info:"CUSTOM_INSTANCES" }}
-                    {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
-                        {% include "app_manager/v2/partials/custom_instances.html" %}
+                    {% if form.doc_type == "ShadowForm" %}
+                        {% include "app_manager/v2/partials/shadow_parent_select.html" %}
                     {% endif %}
 
-                    {% if request|toggle_enabled:'NO_VELLUM' %}
+                    {% if request|toggle_enabled:'NO_VELLUM' and form.form_type != "shadow_form"%}
                     <div class="form-group">
                         <label class="control-label col-sm-2">
                             {% trans "Disallow editing form in Form Builder" %}
@@ -106,7 +105,12 @@
                              <input type="hidden" name="no_vellum" data-bind="value: no_vellum"/>
                         </div>
                     </div>
-                  {% endif %}
+                    {% endif %}
+
+                    {{ request|toggle_tag_info:"CUSTOM_INSTANCES" }}
+                    {% if request|toggle_enabled:'CUSTOM_INSTANCES' %}
+                        {% include "app_manager/v2/partials/custom_instances.html" %}
+                    {% endif %}
                   </div>
               </div>
             </div>

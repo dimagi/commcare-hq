@@ -5,11 +5,6 @@
 {% load crispy_forms_tags %}
 
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'style/js/main.js' %}"></script>
-{% endblock %}
-
-
 {% block js-inline %}{{ block.super }}
 <script>
 (function (angular, initial) {
@@ -20,6 +15,7 @@
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        $httpProvider.defaults.headers.common["X-CSRFToken"] = $("#csrfTokenContainer").val();
     }]);
 
     autoUpdateRuleApp.config(function(djangoRMIProvider) {

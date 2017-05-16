@@ -30,6 +30,7 @@ EMPTY_CELL = {'sort_key': 0, 'html': '---'}
 class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
     slug = 'site_reporting_rates_report'
     name = u'Complétude et promptitude'
+    is_public = True
 
     report_template_path = 'pnlppgi/site_reporting.html'
 
@@ -159,6 +160,7 @@ class SiteReportingRatesReport(SqlTabularReport, CustomProjectReport, ProjectRep
 
 
 class MalariaReport(SqlTabularReport, CustomProjectReport, ProjectReportParametersMixin):
+    is_public = True
 
     @property
     def group_by(self):

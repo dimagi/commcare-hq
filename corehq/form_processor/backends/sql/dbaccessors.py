@@ -1,11 +1,11 @@
+import itertools
 import logging
 import struct
 from abc import ABCMeta, abstractproperty
 from abc import abstractmethod
-from itertools import groupby
 from datetime import datetime
-
-import itertools
+from itertools import groupby
+from uuid import UUID
 
 import csiphash
 import six
@@ -50,12 +50,11 @@ from corehq.form_processor.utils.sql import (
     case_index_adapter,
     case_attachment_adapter
 )
-from corehq.sql_db.config import partition_config
+from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
 from corehq.sql_db.routers import db_for_read_write
+from corehq.util.queries import fast_distinct_in_domain
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.chunked import chunked
-from uuid import UUID
-
 
 doc_type_to_state = {
     "XFormInstance": XFormInstanceSQL.NORMAL,
@@ -138,6 +137,8 @@ class ShardAccessor(object):
         :param doc_ids:
         :return: Dict of ``doc_id -> Django DB alias``
         """
+        assert settings.USE_PARTITIONED_DATABASE, """Partitioned DB not in use,
+        consider using `corehq.sql_db.get_db_alias_for_partitioned_doc` instead"""
         databases = {}
         shard_map = partition_config.get_django_shard_map()
         part_mask = len(shard_map) - 1
@@ -155,6 +156,8 @@ class ShardAccessor(object):
         """
         :return: Django DB alias in which the doc should be stored
         """
+        assert settings.USE_PARTITIONED_DATABASE, """Partitioned DB not in use,
+        consider using `corehq.sql_db.get_db_alias_for_partitioned_doc` instead"""
         shard_map = partition_config.get_django_shard_map()
         part_mask = len(shard_map) - 1
         hash_ = ShardAccessor.hash_doc_id_python(doc_id)
@@ -169,10 +172,16 @@ class ReindexAccessor(six.with_metaclass(ABCMeta)):
         """
         :return: True the django model is sharded, otherwise false.
         """
-        # TODO check for subclass of PartitionedModel when PR merged:
-        # https://github.com/dimagi/commcare-hq/pull/14852
         from corehq.form_processor.models import RestrictedManager
-        return isinstance(self.model_class.objects, RestrictedManager)
+        from corehq.sql_db.models import PartitionedModel
+        return (
+            isinstance(self.model_class.objects, RestrictedManager) or
+            issubclass(self.model_class, PartitionedModel)
+        )
+
+    @property
+    def sql_db_aliases(self):
+        return get_sql_db_aliases_in_use() if self.is_sharded() else ['default']
 
     @abstractproperty
     def model_class(self):
@@ -522,13 +531,6 @@ class FormAccessorSQL(AbstractFormAccessor):
             )
 
     @staticmethod
-    @unit_testing_only
-    @transaction.atomic
-    def delete_all_forms(domain=None, user_id=None):
-        with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute('SELECT delete_all_forms(%s, %s)', [domain, user_id])
-
-    @staticmethod
     def get_deleted_form_ids_for_user(domain, user_id):
         return FormAccessorSQL._get_form_ids_for_user(
             domain,
@@ -619,6 +621,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             cases = _order_list(case_ids, cases, 'case_id')
 
         return cases
+
+    @staticmethod
+    def case_exists(case_id):
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+        db = get_db_alias_for_partitioned_doc(case_id)
+        return CommCareCaseSQL.objects.using(db).filter(case_id=case_id).exists()
 
     @staticmethod
     def get_case_xform_ids(case_id):
@@ -778,12 +786,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=owner_ids, is_closed=closed)
 
     @staticmethod
-    @unit_testing_only
-    def delete_all_cases(domain=None):
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute('SELECT delete_all_cases(%s)', [domain])
-
-    @staticmethod
     @transaction.atomic
     def save_case(case):
         transactions_to_save = case.get_tracked_models_to_create(CaseTransaction)
@@ -828,9 +830,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     logging.debug(msg)
                 raise CaseSaveError(e)
             else:
-                case.clear_tracked_models()
                 for attachment in case.get_tracked_models_to_delete(CaseAttachmentSQL):
                     attachment.delete_content()
+                case.clear_tracked_models()
 
     @staticmethod
     def get_open_case_ids_for_owner(domain, owner_id):
@@ -940,6 +942,16 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             publish_case_deleted(domain, case_id)
 
         return affected_count
+
+    @staticmethod
+    def get_case_owner_ids(domain):
+        from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+        db_aliases = get_db_aliases_for_partitioned_query()
+        owner_ids = set()
+        for db_alias in db_aliases:
+            owner_ids.update(fast_distinct_in_domain(CommCareCaseSQL, 'owner_id', domain, using=db_alias))
+
+        return owner_ids
 
 
 class LedgerReindexAccessor(ReindexAccessor):

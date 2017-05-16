@@ -1,10 +1,11 @@
 import mock
+from datetime import datetime
 from django.test import TestCase, override_settings
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition, CustomDataEditor
 from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.forms import LocationForm
+from corehq.apps.locations.forms import LocationFormSet
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole, Permissions
@@ -12,7 +13,8 @@ from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_F
 from corehq.apps.users.forms import UpdateCommCareUserInfoForm
 from corehq.apps.users.signals import clean_commcare_user
 from .utils import setup_enikshay_locations
-from ..user_setup import validate_nikshay_code, LOC_TYPES_TO_USER_TYPES, set_user_role, validate_usertype
+from ..user_setup import (validate_nikshay_code, LOC_TYPES_TO_USER_TYPES,
+                          set_user_role, validate_usertype, get_site_code)
 from ..models import IssuerId
 
 
@@ -55,7 +57,11 @@ class TestUserSetupUtils(TestCase):
         super(TestUserSetupUtils, cls).tearDownClass()
 
     def assertValid(self, form):
-        msg = "{} has errors: \n{}".format(form.__class__.__name__, form.errors.as_text())
+        if isinstance(form, LocationFormSet):
+            errors = ", ".join(filter(None, [f.errors.as_text() for f in form.forms]))
+        else:
+            errors = form.errors.as_text()
+        msg = "{} has errors: \n{}".format(form.__class__.__name__, errors)
         self.assertTrue(form.is_valid(), msg)
 
     def assertInvalid(self, form):
@@ -93,12 +99,13 @@ class TestUserSetupUtils(TestCase):
         role.save()
         self.addCleanup(role.delete)
 
-    def make_new_location_form(self, name, parent, nikshay_code):
-        return LocationForm(
+    def make_new_location_form(self, name, location_type, parent, nikshay_code):
+        return LocationFormSet(
             location=SQLLocation(domain=self.domain, parent=parent),
             bound_data={'name': name,
-                  'data-field-nikshay_code': nikshay_code},
-            user=self.web_user,
+                        'location_type': self.location_types[location_type],
+                        'data-field-nikshay_code': nikshay_code},
+            request_user=self.web_user,
             is_new=True,
         )
 
@@ -113,16 +120,16 @@ class TestUserSetupUtils(TestCase):
             'location_type': location.location_type.code,
         }
         bound_data.update(data)
-        return LocationForm(
+        return LocationFormSet(
             location=None,
             bound_data=bound_data,
-            user=self.web_user,
+            request_user=self.web_user,
             is_new=False,
         )
 
     def test_validate_usertype(self):
         user = self.make_user('jon-snow@website', 'DTO')
-        loc = self.locations['DTO']
+        loc_type = self.location_types['dto'].code
 
         # Try submitting an invalid usertype
         custom_data = CustomDataEditor(
@@ -131,7 +138,7 @@ class TestUserSetupUtils(TestCase):
             existing_custom_data=user.user_data,
             post_dict={'data-field-usertype': ['sto']},
         )
-        validate_usertype(self.domain, loc, 'sto', custom_data)
+        validate_usertype(loc_type, 'sto', custom_data)
         self.assertInvalid(custom_data)
 
         # Try submitting a valid usertype
@@ -141,7 +148,7 @@ class TestUserSetupUtils(TestCase):
             existing_custom_data=user.user_data,
             post_dict={'data-field-usertype': ['deo']},  # invalid usertype
         )
-        validate_usertype(self.domain, loc, 'deo', custom_data)
+        validate_usertype(loc_type, 'deo', custom_data)
         self.assertValid(custom_data)
 
     @mock.patch('custom.enikshay.user_setup.set_user_role', mock.MagicMock)
@@ -224,22 +231,60 @@ class TestUserSetupUtils(TestCase):
 
     def test_validate_nikshay_code(self):
         parent = self.locations['CTO']
-        form = self.make_new_location_form('winterfell', parent=parent, nikshay_code='123')
-        self.assertValid(form)
-        validate_nikshay_code(self.domain, form)
+        form = self.make_new_location_form('winterfell', 'dto', parent=parent, nikshay_code='123')
         self.assertValid(form)
         form.save()
 
         # Making a new location with the same parent and nikshay_code should fail
-        form = self.make_new_location_form('castle_black', parent=parent, nikshay_code='123')
-        self.assertValid(form)
-        validate_nikshay_code(self.domain, form)
+        form = self.make_new_location_form('castle_black', 'dto', parent=parent, nikshay_code='123')
         self.assertInvalid(form)
 
     def test_issuer_id(self):
         areo = self.make_user('ahotah@martell.biz', 'DTO')
-        self.assertTrue(areo.user_data['issuer_id'])
+        areo_number = areo.user_data['id_issuer_number']
+        self.assertTrue(areo_number)
 
         # the next id should be 1 more than this ID
         arys = self.make_user('aoakheart@kingsguard.gov', 'DTO')
-        self.assertTrue(areo.user_data['issuer_id'] + 1 == arys.user_data['issuer_id'])
+        self.assertTrue(areo_number + 1 == arys.user_data['id_issuer_number'])
+
+    def test_device_id(self):
+        user = self.make_user('redviper@martell.biz', 'DTO')
+        user.update_device_id_last_used('rotary', datetime(1984, 1, 1))
+        user.update_device_id_last_used('palm-pilot', datetime(1997, 1, 1))
+        user.update_device_id_last_used('blackberry', datetime(2008, 1, 1))
+        user.save()
+        self.assertEqual(user.user_data['id_device_number'], 3)
+
+        # Oberyn uses the palm-pilot again, which was device #2
+        user.update_device_id_last_used('palm-pilot', datetime(2017, 1, 1))
+        user.save()
+        self.assertEqual(user.user_data['id_device_number'], 2)
+
+    def test_add_drtb_hiv_to_dto(self):
+        ellaria = self.make_user('esand@martell.biz', 'DRTB-HIV')
+        self.assertEqual(ellaria.location_id, self.locations['DRTB-HIV'].location_id)
+        self.assertItemsEqual(
+            [l.name for l in ellaria.get_sql_locations(self.domain)],
+            [self.locations['DRTB-HIV'].name, self.locations['DTO'].name]
+        )
+
+    def test_get_site_code(self):
+        for expected, name, nikshay_code, type_code, parent in [
+            ('sto_nikshaycode', 'mysto', 'nikshaycode', 'sto', self.locations['CTD']),
+            ('cdst_nikshaycode', 'mycdst', 'nikshaycode', 'cdst', self.locations['STO']),
+            ('cto_sto_mycto', 'mycto', 'nikshaycode', 'cto', self.locations['STO']),
+            ('drtbhiv_dto', 'mydrtb-hiv', 'nikshaycode', 'drtb-hiv', self.locations['DTO']),
+            ('dto_cto_nikshaycode', 'mydto', 'nikshaycode', 'dto', self.locations['CTO']),
+            ('tu_dto_nikshaycode', 'mytu', 'nikshaycode', 'tu', self.locations['DTO']),
+            ('phi_tu_nikshaycode', 'myphi', 'nikshaycode', 'phi', self.locations['TU']),
+            ('dmc_tu_nikshaycode', 'mydmc', 'nikshaycode', 'dmc', self.locations['TU']),
+
+            # remove spaces and lowercase from nikshay code
+            ('cdst_nikshay_code', 'mycdst', 'Nikshay Code', 'cdst', self.locations['STO']),
+            # single digit integer nikshay codes get prefixed with 0
+            ('cdst_01', 'mycdst', '1', 'cdst', self.locations['STO']),
+            # make name a slug
+            ('cto_sto_cra-z_nm3', 'cRa-Z n@m3', 'nikshaycode', 'cto', self.locations['STO']),
+        ]:
+            self.assertEqual(expected, get_site_code(name, nikshay_code, type_code, parent))

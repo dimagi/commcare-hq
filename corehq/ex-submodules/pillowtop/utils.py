@@ -1,7 +1,8 @@
 from __future__ import division
 from collections import namedtuple
+from copy import deepcopy
 from datetime import datetime
-
+import json
 import sys
 
 import simplejson
@@ -42,6 +43,14 @@ def get_couch_pillow_instances():
     ]
 
 
+def get_kafka_pillow_instances():
+    from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+    return [
+        pillow for pillow in get_all_pillow_instances()
+        if isinstance(pillow.get_change_feed(), KafkaChangeFeed)
+    ]
+
+
 def get_all_pillow_configs():
     return get_pillow_configs_from_settings_dict(getattr(settings, 'PILLOWTOPS', {}))
 
@@ -66,10 +75,12 @@ class PillowConfig(namedtuple('PillowConfig', ['section', 'name', 'class_name', 
     def get_class(self):
         return _import_class_or_function(self.class_name)
 
-    def get_instance(self):
+    def get_instance(self, **kwargs):
         if self.instance_generator:
             instance_generator_fn = _import_class_or_function(self.instance_generator)
-            return instance_generator_fn(self.name, **self.params)
+            params = deepcopy(self.params)  # parameters defined in settings file
+            params.update(kwargs)  # parameters passed in via run_ptop
+            return instance_generator_fn(self.name, **params)
         else:
             return _get_pillow_instance(self.class_name)
 
@@ -95,10 +106,10 @@ def get_pillow_config_from_setting(section, pillow_config_string_or_dict):
         )
 
 
-def get_pillow_by_name(pillow_class_name, instantiate=True, params=None):
-    params = params or {}
+def get_pillow_by_name(pillow_class_name, instantiate=True, **kwargs):
+    # todo(emord) get rid of instantiate (only needed in fluff reindex)
     config = get_pillow_config_by_name(pillow_class_name)
-    return config.get_instance() if instantiate else config.get_class()
+    return config.get_instance(**kwargs) if instantiate else config.get_class()
 
 
 def get_pillow_config_by_name(pillow_name):
@@ -156,16 +167,19 @@ def get_pillow_json(pillow_config):
     else:
         time_since_last = ''
         hours_since_last = None
-    offsets = pillow.get_change_feed().get_latest_offsets()
+    offsets = pillow.get_change_feed().get_latest_offsets_json()
 
-    def _couch_seq_to_int(checkpoint, seq):
-        return force_seq_int(seq) if checkpoint.sequence_format != 'json' else seq
+    def _seq_to_int(checkpoint, seq):
+        from pillowtop.models import kafka_seq_to_str
+        if checkpoint.sequence_format == 'json':
+            return json.loads(kafka_seq_to_str(seq))
+        else:
+            return force_seq_int(seq)
 
     return {
         'name': pillow_config.name,
         'seq_format': checkpoint.sequence_format,
-        'seq': _couch_seq_to_int(checkpoint, checkpoint.wrapped_sequence),
-        'old_seq': _couch_seq_to_int(checkpoint, checkpoint.old_sequence) or 0,
+        'seq': _seq_to_int(checkpoint, checkpoint.wrapped_sequence),
         'offsets': offsets,
         'time_since_last': time_since_last,
         'hours_since_last': hours_since_last

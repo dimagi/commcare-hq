@@ -116,6 +116,15 @@ def graph_configuration(module, detail_type, column, key):
     )
 
 
+@pattern('m%d.%s.graph.key.%s')
+def mobile_ucr_configuration(module, uuid, key):
+    return u"m{module.id}.{uuid}.graph.key.{key}".format(
+        module=module,
+        uuid=uuid,
+        key=key
+    )
+
+
 @pattern('m%d.%s.%s_%s_%s.graph.series_%d.key.%s')
 def graph_series_configuration(module, detail_type, column, series_index, key):
     field = column.field.replace('#', '')
@@ -130,6 +139,16 @@ def graph_series_configuration(module, detail_type, column, series_index, key):
     )
 
 
+@pattern('m%d.%s.graph.series_%d.key.%s')
+def mobile_ucr_series_configuration(module, uuid, series_index, key):
+    return u"m{module.id}.{uuid}.graph.series_{series_index}.key.{key}".format(
+        module=module,
+        uuid=uuid,
+        series_index=series_index,
+        key=key
+    )
+
+
 @pattern('m%d.%s.%s_%s_%s.graph.a.%d')
 def graph_annotation(module, detail_type, column, annotation_index):
     field = column.field.replace('#', '')
@@ -139,6 +158,15 @@ def graph_annotation(module, detail_type, column, annotation_index):
         d=column,
         field=field,
         d_id=column.id + 1,
+        a_id=annotation_index
+    )
+
+
+@pattern('m%d.%s.graph.a.%d')
+def mobile_ucr_annotation(module, uuid, annotation_index):
+    return u"m{module.id}.{uuid}.graph.a.{a_id}".format(
+        module=module,
+        uuid=uuid,
         a_id=annotation_index
     )
 

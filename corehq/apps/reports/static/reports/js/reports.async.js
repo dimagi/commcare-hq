@@ -137,9 +137,15 @@ var HQAsyncReport = function (o) {
                 }
             },
             error: function (data) {
+                var humanReadable;
                 self.reportRequest = null;
                 if (data.status != 0) {
-                    var humanReadable = self.humanReadableErrors[data.status];
+                    // If it is a BadRequest allow for report to specify text
+                    if (data.status === 400) {
+                        humanReadable = data.responseText || self.humanReadableErrors[data.status];
+                    } else {
+                        humanReadable = self.humanReadableErrors[data.status];
+                    }
                     self.loadingIssueModal.find('.report-error-status').html('<strong>'+data.status+'</strong> ' +
                         ((humanReadable) ? humanReadable : ""));
                     if (self.issueAttempts > 0)

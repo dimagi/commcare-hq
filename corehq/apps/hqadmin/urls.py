@@ -28,8 +28,7 @@ from corehq.apps.hqadmin.views import (
     system_ajax,
     pillow_operation_api,
     web_user_lookup,
-    top_five_projects_by_country,
-)
+    top_five_projects_by_country)
 from corehq.apps.reports.dispatcher import AdminReportDispatcher
 
 from corehq.apps.api.urls import admin_urlpatterns as admin_api_urlpatterns

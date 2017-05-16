@@ -154,8 +154,7 @@ def render_form(form, domain, options):
         user_info = get_doc_info_by_id(domain, meta_userID)
 
     user_can_edit = (
-        request and user and request.domain
-        and (user.can_edit_data() or user.is_commcare_user())
+        request and user and request.domain and user.can_edit_data()
     )
     show_edit_options = (
         user_can_edit

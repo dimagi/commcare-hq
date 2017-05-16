@@ -16,6 +16,7 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             'appId',
             'persistentCaseTile',
             'tiles',
+            'selections',
         ],
 
         entityProperties: [
@@ -28,14 +29,26 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             'numEntitiesPerRow',
             'maxWidth',
             'maxHeight',
+            'widthHints',
+            'useUniformUnits',
         ],
 
         commandProperties: [
             'layoutStyle',
         ],
 
+        detailProperties: [
+            'isPersistentDetail',
+        ],
+
         parse: function (response, request) {
             _.extend(this, _.pick(response, this.commonProperties));
+
+            if (response.selections) {
+                var urlObject = Util.currentUrlToObject();
+                urlObject.setSteps(response.selections);
+                Util.setUrlToObject(urlObject);
+            }
 
             if (response.commands) {
                 _.extend(this, _.pick(response, this.commandProperties));
@@ -46,6 +59,7 @@ FormplayerFrontend.module("Menus.Collections", function (Collections, Formplayer
             } else if (response.type === "query") {
                 return response.displays;
             } else if (response.details) {
+                _.extend(this, _.pick(response, this.detailProperties));
                 return response.details;
             } else if (response.tree){
                 // form entry time, doggy

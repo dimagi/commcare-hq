@@ -1,3 +1,4 @@
+from copy import deepcopy
 import datetime
 import logging
 import pytz
@@ -10,6 +11,20 @@ FILTER_TEMPLATE = """
         # called with args {args!r} and kwargs {kwargs!r}
         return self._filtered(lambda doc: ...)
 """
+
+
+def check_deep_copy(method):
+    """
+    When constructing a query the real ES query deep copies all filters.
+    This decorator should be used on any method that adds a new filter
+    """
+    def _check_deep_copy(*args, **kwargs):
+        for arg in args:
+            deepcopy(args)
+        for key, value in kwargs.items():
+            deepcopy(value)
+        return method(*args, **kwargs)
+    return _check_deep_copy
 
 
 class ESQueryFake(object):
@@ -74,6 +89,7 @@ class ESQueryFake(object):
     def values_list(self, *fields, **kwargs):
         return values_list(self.run().hits, *fields, **kwargs)
 
+    @check_deep_copy
     def search_string_query(self, search_string, default_fields=None):
         if not search_string:
             return self
@@ -84,16 +100,19 @@ class ESQueryFake(object):
         else:
             raise NotImplementedError("We'll cross that bridge when we get there")
 
+    @check_deep_copy
     def start(self, start):
         clone = self._clone()
         clone._start = start
         return clone
 
+    @check_deep_copy
     def size(self, size):
         clone = self._clone()
         clone._size = size
         return clone
 
+    @check_deep_copy
     def sort(self, field, desc=False):
         clone = self._clone()
         clone._sort_field = field
@@ -121,6 +140,7 @@ class ESQueryFake(object):
             },
         }, self)
 
+    @check_deep_copy
     def term(self, field, value):
         if isinstance(value, (list, tuple, set)):
             valid_terms = set(value)
@@ -134,6 +154,7 @@ class ESQueryFake(object):
 
         return self._filtered(_term_query)
 
+    @check_deep_copy
     def date_range(self, field, gt=None, gte=None, lt=None, lte=None):
         def format_time(t):
             if t:

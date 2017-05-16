@@ -11,6 +11,8 @@ import time
 from django.core import cache
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.db import connections
+from django.db.utils import OperationalError
 from restkit import Resource
 from celery import Celery
 import requests
@@ -157,10 +159,27 @@ def check_heartbeat():
 
 
 def check_postgres():
+    connected = True
+    status_str = ""
+    for db in settings.DATABASES:
+        db_conn = connections[db]
+        try:
+            c = db_conn.cursor()
+            c_status = 'OK'
+        except OperationalError:
+            c_status = 'FAIL'
+            connected = False
+        status_str += "%s:%s " % (settings.DATABASES[db]['NAME'], c_status)
+
     a_user = User.objects.first()
     if a_user is None:
-        return ServiceStatus(False, "No users found in postgres")
-    return ServiceStatus(True, "Successfully got a user from postgres")
+        status_str += "No users found in postgres"
+    else:
+        status_str += "Successfully got a user from postgres"
+
+    if a_user is None or not connected:
+        return ServiceStatus(False, status_str)
+    return ServiceStatus(True, status_str)
 
 
 def check_couch():
@@ -193,4 +212,5 @@ CHECKS = {
     'elasticsearch': check_elasticsearch,
     'blobdb': check_blobdb,
     'formplayer': check_formplayer,
+    'rabbitmq': check_rabbitmq,
 }

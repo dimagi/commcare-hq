@@ -1,10 +1,11 @@
 from __future__ import print_function
 
-import elasticsearch
 from django.core.management import BaseCommand
+import elasticsearch
+
+from corehq.apps.userreports.util import get_ucr_es_indices
 from corehq.elastic import get_es_new
 from corehq.pillows.utils import get_all_expected_es_indices
-from corehq.apps.userreports.util import get_ucr_es_indices
 
 
 class Command(BaseCommand):

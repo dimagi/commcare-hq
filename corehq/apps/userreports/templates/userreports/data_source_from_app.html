@@ -3,17 +3,11 @@
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        $(function () {
-            $("#data-source-config").koApplyBindings({
-                application: ko.observable(""),
-                sourceType: ko.observable(""),
-                sourcesMap: {{ sources_map|JSON }}
-            });
-        });
-    </script>
+{% block js %}{{ block.super }}
+    <script src="{% static "userreports/js/data_source_from_app.js" %}"></script>
 {% endblock %}
+
 {% block page_content %}
+    {% initial_page_data "sources_map" sources_map %}
     {% crispy form %}
 {% endblock %}

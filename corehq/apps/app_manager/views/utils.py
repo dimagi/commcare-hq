@@ -36,6 +36,7 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
     params = {}
 
     args = [domain]
+    form_view = 'form_source' if toggles.APP_MANAGER_V2.enabled(request.user.username) else 'view_form'
 
     if app_id is not None:
         args.append(app_id)
@@ -44,10 +45,15 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
             obj = app.get_form(unique_form_id, bare=False)
             module_id = obj['module'].id
             form_id = obj['form'].id
+            if obj['form'].no_vellum:
+                form_view = 'view_form'
         if module_id is not None:
             args.append(module_id)
             if form_id is not None:
                 args.append(form_id)
+                app = get_app(domain, app_id)
+                if app.get_module(module_id).get_form(form_id).no_vellum:
+                    form_view = 'view_form'
 
     if page:
         view_name = page
@@ -56,7 +62,7 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
             1: 'default_app',
             2: 'view_app',
             3: 'view_module',
-            4: 'form_source' if toggles.APP_MANAGER_V2.enabled(domain) else 'view_form',
+            4: form_view,
         }[len(args)]
 
     return HttpResponseRedirect(

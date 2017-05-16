@@ -10,7 +10,7 @@ from django.db import models
 from django.utils.translation import ugettext as _
 
 from corehq.sql_db.connections import UCR_ENGINE_ID
-from corehq.util.quickcache import quickcache, skippable_quickcache
+from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
@@ -55,6 +55,11 @@ from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.modules import to_function
 
 
+class ElasticSearchIndexSettings(DocumentSchema):
+    refresh_interval = StringProperty(default="5s")
+    number_of_shards = IntegerProperty(default=2)
+
+
 class DataSourceBuildInformation(DocumentSchema):
     """
     A class to encapsulate meta information about the process through which
@@ -86,6 +91,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     """
     domain = StringProperty(required=True)
     engine_id = StringProperty(default=UCR_ENGINE_ID)
+    es_index_settings = SchemaProperty(ElasticSearchIndexSettings)
     backend_id = StringProperty(default=UCR_SQL_BACKEND)
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)
@@ -251,12 +257,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     def get_columns(self):
         return self.indicators.get_columns()
 
-    def get_items(self, document):
+    def get_items(self, document, eval_context=None):
         if self.filter(document):
             if not self.base_item_expression:
                 return [document]
             else:
-                result = self.parsed_expression(document)
+                result = self.parsed_expression(document, eval_context)
                 if result is None:
                     return []
                 elif isinstance(result, list):
@@ -266,10 +272,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         else:
             return []
 
-    def get_all_values(self, doc):
+    def get_all_values(self, doc, eval_context=None):
+        if not eval_context:
+            eval_context = EvaluationContext(doc)
+
         rows = []
-        eval_context = EvaluationContext(doc)
-        for item in self.get_items(doc):
+        for item in self.get_items(doc, eval_context):
             indicators = self.indicators.get_values(item, eval_context)
             rows.append(indicators)
             eval_context.increment_iteration()
@@ -325,6 +333,11 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             self.is_deactivated = True
             self.save()
             get_indicator_adapter(self).drop_table()
+
+    def get_es_index_settings(self):
+        es_index_settings = self.es_index_settings.to_json()
+        es_index_settings.pop('doc_type')
+        return {"settings": es_index_settings}
 
 
 class ReportMeta(DocumentSchema):
@@ -503,6 +516,7 @@ class StaticDataSourceConfiguration(JsonObject):
     """
     _datasource_id_prefix = STATIC_PREFIX
     domains = ListProperty()
+    server_environment = ListProperty()
     config = DictProperty()
 
     @classmethod
@@ -510,7 +524,7 @@ class StaticDataSourceConfiguration(JsonObject):
         return '{}{}-{}'.format(cls._datasource_id_prefix, domain, table_id)
 
     @classmethod
-    @skippable_quickcache([], skip_arg='rebuild')
+    @quickcache([], skip_arg='rebuild')
     def by_id_mapping(cls, rebuild=False):
         mapping = {}
         for wrapped, path in cls._all():
@@ -531,8 +545,13 @@ class StaticDataSourceConfiguration(JsonObject):
                 yield wrapped, path
 
     @classmethod
-    def all(cls):
+    def all(cls, use_server_filter=True):
         for wrapped, path in cls._all():
+            if (use_server_filter and
+                    wrapped.server_environment and
+                    settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
+                continue
+
             for domain in wrapped.domains:
                 yield cls._get_datasource_config(wrapped, domain)
 
@@ -585,6 +604,7 @@ class StaticReportConfiguration(JsonObject):
     data_source_table = StringProperty()
     config = DictProperty()
     custom_configurable_report = StringProperty()
+    server_environment = ListProperty()
 
     @classmethod
     def get_doc_id(cls, domain, report_id, custom_configurable_report):
@@ -601,7 +621,7 @@ class StaticReportConfiguration(JsonObject):
                 yield cls.wrap(json.load(f)), path
 
     @classmethod
-    @skippable_quickcache([], skip_arg='rebuild')
+    @quickcache([], skip_arg='rebuild')
     def by_id_mapping(cls, rebuild=False):
         mapping = {}
         for wrapped, path in StaticReportConfiguration._all():
@@ -613,6 +633,10 @@ class StaticReportConfiguration(JsonObject):
     @classmethod
     def all(cls):
         for wrapped, path in StaticReportConfiguration._all():
+            if (wrapped.server_environment and
+                    settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
+                continue
+
             for domain in wrapped.domains:
                 yield cls._get_report_config(wrapped, domain)
 
@@ -697,27 +721,26 @@ class AsyncIndicator(models.Model):
     These indicators will be picked up by a queue and placed into celery to be
     saved. Once saved to the data sources, this record will be deleted
     """
-    doc_id = models.CharField(max_length=255, null=False, db_index=True)
+    doc_id = models.CharField(max_length=255, null=False, db_index=True, unique=True)
     doc_type = models.CharField(max_length=126, null=False)
     domain = models.CharField(max_length=126, null=False)
-    pillow = models.CharField(max_length=126, null=False)
     indicator_config_ids = ArrayField(
         models.CharField(max_length=126, null=True, blank=True),
         null=False
     )
     date_created = models.DateTimeField(auto_now_add=True, db_index=True)
+    date_queued = models.DateTimeField(null=True, db_index=True)
+    unsuccessful_attempts = models.IntegerField(default=0)
 
     class Meta(object):
-        unique_together = ('doc_id', 'pillow',)
         ordering = ["date_created"]
 
     @classmethod
-    def update_indicators(cls, change, pillow, config_ids):
+    def update_indicators(cls, change, config_ids):
         doc_id = change.id
-        pillow_id = pillow.pillow_id
-        with CriticalSection([get_async_indicator_modify_lock_key(doc_id, pillow_id)]):
+        with CriticalSection([get_async_indicator_modify_lock_key(doc_id)]):
             try:
-                indicator = cls.objects.get(doc_id=doc_id, pillow=pillow_id)
+                indicator = cls.objects.get(doc_id=doc_id)
             except cls.DoesNotExist:
                 doc_type = change.document['doc_type']
                 domain = change.document['domain']
@@ -725,7 +748,6 @@ class AsyncIndicator(models.Model):
                     doc_id=doc_id,
                     doc_type=doc_type,
                     domain=domain,
-                    pillow=pillow_id,
                     indicator_config_ids=config_ids
                 )
             else:
@@ -793,10 +815,13 @@ def get_report_configs(config_ids, domain):
         if config.domain != domain:
             raise ReportConfigurationNotFoundError
 
-    dynamic_report_configs = [
-        ReportConfiguration.wrap(doc) for doc in
-        get_docs(ReportConfiguration.get_db(), dynamic_report_config_ids)
-    ]
+    dynamic_report_configs = []
+    if dynamic_report_config_ids:
+        dynamic_report_configs = [
+            ReportConfiguration.wrap(doc) for doc in
+            get_docs(ReportConfiguration.get_db(), dynamic_report_config_ids)
+        ]
+
     if len(dynamic_report_configs) != len(dynamic_report_config_ids):
         raise ReportConfigurationNotFoundError
     for config in dynamic_report_configs:

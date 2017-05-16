@@ -52,7 +52,8 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_form_ids_having_multimedia,
     scroll_case_names,
     get_aggregated_ledger_values,
-    get_case_types_for_domain_es)
+    get_case_types_for_domain_es,
+)
 from corehq.apps.es.aggregations import MISSING_KEY
 from corehq.util.test_utils import make_es_ready_form, trap_extra_setup
 from pillowtop.es_utils import initialize_index_and_mapping

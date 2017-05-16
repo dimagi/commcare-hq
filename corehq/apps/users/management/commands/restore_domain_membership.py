@@ -99,7 +99,7 @@ class Command(BaseCommand):
     def get_min_max_offsets(self):
         end = get_multi_topic_offset([COMMCARE_USER])[COMMCARE_USER]
         start = get_multi_topic_first_available_offsets([COMMCARE_USER])[COMMCARE_USER]
-        return start, end - 1  # end is next available offset
+        return start, {partition: offset - 1 for partition, offset in end.items()}  # end is next available offset
 
 
 def user_looks_ok(user):

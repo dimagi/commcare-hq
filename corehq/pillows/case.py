@@ -4,7 +4,7 @@ import logging
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
@@ -35,7 +35,7 @@ def transform_case_for_elasticsearch(doc_dict):
     return doc_ret
 
 
-def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow'):
+def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', **kwargs):
     assert pillow_id == 'CaseToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_INDEX_INFO)
     case_processor = ElasticProcessor(
@@ -43,13 +43,13 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow'):
         index_info=CASE_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
     )
-    kafka_change_feed = KafkaChangeFeed(topics=[topics.CASE, topics.CASE_SQL], group_id='cases-to-es')
+    kafka_change_feed = KafkaChangeFeed(topics=topics.CASE_TOPICS, group_id='cases-to-es')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
         change_feed=kafka_change_feed,
         processor=case_processor,
-        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+        change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=kafka_change_feed
         ),
     )

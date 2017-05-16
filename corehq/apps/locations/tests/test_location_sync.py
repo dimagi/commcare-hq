@@ -37,7 +37,6 @@ class TestLocationSync(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestLocationSync, cls).setUpClass()
-        delete_all_locations()
         cls.domain_obj = create_domain(DOMAIN)
         loc_types = setup_location_types(DOMAIN, ['state', 'county', 'city'])
         cls.state = loc_types['state']

@@ -10,6 +10,8 @@ from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.urls import reverse
 from django.views.decorators.http import require_GET
 from django.contrib import messages
+from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
+    get_per_type_defaults
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 from corehq.apps.case_search.models import case_search_enabled_for_domain
@@ -30,8 +32,6 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.util import (
     is_valid_case_type,
     is_usercase_in_use,
-    get_per_type_defaults,
-    ParentCasePropertyBuilder,
     prefix_usercase_properties,
     commtrack_ledger_sections,
     module_offers_search,
@@ -70,28 +70,28 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
 logger = logging.getLogger(__name__)
 
 
-def get_module_template(domain, module):
+def get_module_template(user, module):
     if isinstance(module, CareplanModule):
         return get_app_manager_template(
-            domain,
+            user,
             "app_manager/v1/module_view_careplan.html",
             "app_manager/v2/module_view_careplan.html",
         )
     elif isinstance(module, AdvancedModule):
         return get_app_manager_template(
-            domain,
+            user,
             "app_manager/v1/module_view_advanced.html",
             "app_manager/v2/module_view_advanced.html",
         )
     elif isinstance(module, ReportModule):
         return get_app_manager_template(
-            domain,
+            user,
             'app_manager/v1/module_view_report.html',
             'app_manager/v2/module_view_report.html',
         )
     else:
         return get_app_manager_template(
-            domain,
+            user,
             "app_manager/v1/module_view.html",
             "app_manager/v2/module_view.html",
         )
@@ -100,10 +100,8 @@ def get_module_template(domain, module):
 def get_module_view_context(app, module, lang=None):
     # shared context
     context = {
-        'edit_name_url': reverse(
-            'edit_module_attr',
-            args=[app.domain, app.id, module.id, 'name']
-        )
+        'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'name']),
+        'edit_case_label_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'case_label']),
     }
     module_brief = {
         'id': module.id,
@@ -111,7 +109,8 @@ def get_module_view_context(app, module, lang=None):
         'lang': lang,
         'langs': app.langs,
         'module_type': module.module_type,
-        'requires_case_details': bool(module.requires_case_details),
+        'requires_case_details': module.requires_case_details(),
+        'unique_id': module.unique_id,
     }
     case_property_builder = _setup_case_property_builder(app)
     if isinstance(module, CareplanModule):
@@ -157,18 +156,20 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
         slug = 'module_%s_detail_print' % module.unique_id
         print_template = module.case_details.long.print_template
+        print_uploader = MultimediaHTMLUploadController(
+            slug,
+            reverse(
+                ProcessDetailPrintTemplateUploadView.name,
+                args=[app.domain, app.id, module.unique_id],
+            )
+        )
         if not print_template:
             print_template = {
                 'path': 'jr://file/commcare/text/%s.html' % slug,
             }
         context.update({
-            'print_uploader': MultimediaHTMLUploadController(
-                slug,
-                reverse(
-                    ProcessDetailPrintTemplateUploadView.name,
-                    args=[app.domain, app.id, module.unique_id],
-                )
-            ),
+            'print_uploader': print_uploader,
+            'print_uploader_js': print_uploader.js_options,
             'print_ref': ApplicationMediaReference(
                 print_template.get('path'),
                 media_class=CommCareMultimedia,
@@ -294,13 +295,33 @@ def _get_report_module_context(app, module):
         {'slug': f.slug, 'description': f.short_description} for f in get_auto_filter_configurations()
 
     ]
-    return {
-        'all_reports': [_report_to_config(r) for r in all_reports],
-        'current_reports': [r.to_json() for r in module.report_configs],
-        'filter_choices': filter_choices,
-        'auto_filter_choices': auto_filter_choices,
-        'daterange_choices': [choice._asdict() for choice in get_simple_dateranges()],
+    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import COLUMN_XPATH_CLIENT_TEMPLATE, get_data_path
+    current_reports = []
+    data_path_placeholders = {}
+    for r in module.report_configs:
+        r.migrate_graph_configs(app.domain)
+        current_reports.append(r.to_json())
+        data_path_placeholders[r.report_id] = {}
+        for chart_id in r.complete_graph_configs.keys():
+            data_path_placeholders[r.report_id][chart_id] = get_data_path(r, app.domain)
+
+    context = {
+        'report_module_options': {
+            'moduleName': module.name,
+            'moduleFilter': module.module_filter,
+            'availableReports': [_report_to_config(r) for r in all_reports],  # structure for all reports
+            'currentReports': current_reports,  # config data for app reports
+            'columnXpathTemplate': COLUMN_XPATH_CLIENT_TEMPLATE,
+            'dataPathPlaceholders': data_path_placeholders,
+            'languages': app.langs,
+        },
+        'static_data_options': {
+            'filterChoices': filter_choices,
+            'autoFilterChoices': auto_filter_choices,
+            'dateRangeOptions': [choice._asdict() for choice in get_simple_dateranges()],
+        },
     }
+    return context
 
 
 def _get_fixture_columns_by_type(domain):
@@ -662,8 +683,9 @@ def delete_module(request, domain, app_id, module_unique_id):
     if record is not None:
         messages.success(
             request,
-            'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse(
-                'undo_delete_module', args=[domain, record.get_id]
+            'You have deleted "%s". <a href="%s" class="post-link">Undo</a>' % (
+                record.module.default_name(app=app),
+                reverse('undo_delete_module', args=[domain, record.get_id])
             ),
             extra_tags='html'
         )
@@ -858,7 +880,10 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     if fixture_select is not None:
         module.fixture_select = FixtureSelect.wrap(fixture_select)
     if search_properties is not None:
-        if search_properties.get('properties') is not None:
+        if (
+                search_properties.get('properties') is not None
+                or search_properties.get('default_properties') is not None
+        ):
             module.search_config = CaseSearch(
                 properties=[
                     CaseSearchProperty.wrap(p)
@@ -937,7 +962,7 @@ def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
     lang, langs = get_langs(request, app)
 
     response_html = render_to_string(get_app_manager_template(
-            domain,
+            request.user,
             'app_manager/v1/partials/build_errors.html',
             'app_manager/v2/partials/build_errors.html',
         ), {
@@ -965,7 +990,7 @@ def new_module(request, domain, app_id):
 
     if module_type == 'case' or module_type == 'survey':  # survey option added for V2
 
-        if toggles.APP_MANAGER_V2.enabled(domain):
+        if toggles.APP_MANAGER_V2.enabled(request.user.username):
             if module_type == 'case':
                 name = name or 'Case List'
             else:
@@ -975,7 +1000,7 @@ def new_module(request, domain, app_id):
         module_id = module.id
 
         form_id = None
-        if toggles.APP_MANAGER_V2.enabled(domain):
+        if toggles.APP_MANAGER_V2.enabled(request.user.username):
             if module_type == 'case':
                 # registration form
                 register = app.new_form(module_id, "Register", lang)
@@ -983,25 +1008,17 @@ def new_module(request, domain, app_id):
                 register.actions.update_case = UpdateCaseAction(
                     condition=FormActionCondition(type='always'))
 
-                # set up reg from case list
-                module.case_list_form.form_id = register.unique_id
-                module.case_list_form.label = register.name
-                register.form_filter = "false()"
-
                 # one followup form
                 followup = app.new_form(module_id, "Followup", lang)
                 followup.requires = "case"
                 followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 
                 # make case type unique across app
-                app_case_types = set(
-                    [module.case_type for module in app.modules if
-                     module.case_type])
-                module.case_type = 'case'
-                suffix = 0
-                while module.case_type in app_case_types:
-                    suffix = suffix + 1
-                    module.case_type = 'case-{}'.format(suffix)
+                app_case_types = [m.case_type for m in app.modules if m.case_type]
+                if len(app_case_types):
+                    module.case_type = app_case_types[0]
+                else:
+                    module.case_type = 'case'
             else:
                 app.new_form(module_id, "Survey", lang)
             form_id = 0

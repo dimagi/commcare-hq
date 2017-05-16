@@ -14,41 +14,13 @@
 {% endblock stylesheets %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'style/js/main.js' %}"></script>
     <script src="{% static 'dashboard/js/hq_dashboard.ng.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    <script>
-    (function (angular, undefined) {
-        'use strict';
-        var dashboardApp = angular.module('dashboardApp', [
-            'ui.bootstrap',
-            'ngResource',
-            'ngRoute',
-            'ng.django.rmi',
-            'hq.dashboard'
-        ]);
-        dashboardApp.config(['$httpProvider', function($httpProvider) {
-            $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-            $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-            $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-        }]);
-        dashboardApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
-            djangoRMIProvider.configure({% djng_current_rmi %});
-        }]);
-        dashboardApp.constant('dashboardConfig', {
-            staticRoot: '{{ STATIC_URL }}'
-        });
-        dashboardApp.constant('analyticsConfig', {
-            category: 'Report Builder',
-            action: 'Create Report'
-        });
-    }(window.angular));
-    </script>
+    <script src="{% static 'userreports/js/report_type_select.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'djng_current_rmi' djng_current_rmi %}
+    {% initial_page_data 'static_root' STATIC_URL %}
     {% if not has_apps %}
         <div style="padding: 1em; text-align: center">
             <p style="font-size: 1.5em">

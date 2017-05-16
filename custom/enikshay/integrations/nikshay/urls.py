@@ -4,6 +4,7 @@ from custom.enikshay.integrations.nikshay.views import (
     RegisterNikshayPatientRepeaterView,
     NikshayTreatmentOutcomesView,
     NikshayHIVTestRepeaterView,
+    NikshayPatientFollowupRepeaterView
 )
 
 urlpatterns = [
@@ -24,5 +25,11 @@ urlpatterns = [
         NikshayHIVTestRepeaterView.as_view(),
         {'repeater_type': 'NikshayHIVTestRepeater'},
         name=NikshayHIVTestRepeaterView.urlname
+    ),
+    url(
+        r'^patient_followup_repeater$',
+        NikshayPatientFollowupRepeaterView.as_view(),
+        {'repeater_type': 'NikshayFollowupRepeater'},
+        name=NikshayPatientFollowupRepeaterView.urlname
     ),
 ]

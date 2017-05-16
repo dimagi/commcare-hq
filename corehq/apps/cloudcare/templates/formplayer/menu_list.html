@@ -70,6 +70,15 @@
             <h3><%- displayText ? displayText : "" %></h3>
         </div>
     </div>
+    <% if (menuIndex % 2 === 1) { %>
+      <div class="clearfix visible-xs"></div>
+    <% } %>
+    <% if (menuIndex % 3 === 2) { %>
+      <div class="clearfix visible-sm"></div>
+    <% } %>
+    <% if (menuIndex % 4 === 3) { %>
+      <div class="clearfix visible-lg"></div>
+    <% } %>
 </script>
 
 <script type="text/template" id="menu-view-grid-template">

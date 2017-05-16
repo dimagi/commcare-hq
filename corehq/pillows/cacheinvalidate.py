@@ -13,7 +13,7 @@ pillow_logging = logging.getLogger("pillowtop")
 
 class FakeCheckpoint(PillowCheckpoint):
     def __init__(self, checkpoint_id, couch_db):
-        super(FakeCheckpoint, self).__init__("{}_{}".format(checkpoint_id, couch_db.dbname))
+        super(FakeCheckpoint, self).__init__("{}_{}".format(checkpoint_id, couch_db.dbname), 'text')
         self.couch_db = couch_db
 
     def get_or_create_wrapped(self, verify_unchanged=False):
@@ -72,12 +72,12 @@ class CacheInvalidateProcessor(PillowProcessor):
             )
 
 
-def get_main_cache_invalidation_pillow(pillow_id):
+def get_main_cache_invalidation_pillow(pillow_id, **kwargs):
     from couchforms.models import XFormInstance
     return _get_cache_invalidation_pillow(pillow_id, XFormInstance.get_db(), couch_filter="hqadmin/not_case_form")
 
 
-def get_user_groups_cache_invalidation_pillow(pillow_id):
+def get_user_groups_cache_invalidation_pillow(pillow_id, **kwargs):
     from corehq.apps.users.models import CommCareUser
     return _get_cache_invalidation_pillow(pillow_id, CommCareUser.get_db())
 

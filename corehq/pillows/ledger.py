@@ -1,5 +1,5 @@
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.locations.models import SQLLocation
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import LedgerReindexAccessor
@@ -8,7 +8,7 @@ from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.quickcache import quickcache
-from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, get_checkpoint_for_elasticsearch_pillow
+from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
@@ -55,7 +55,7 @@ def _get_daily_consumption_for_ledger(ledger):
     return daily_consumption
 
 
-def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow'):
+def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow', **kwargs):
     assert pillow_id == 'LedgerToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, LEDGER_INDEX_INFO)
     processor = ElasticProcessor(
@@ -63,13 +63,14 @@ def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow'):
         index_info=LEDGER_INDEX_INFO,
         doc_prep_fn=_prepare_ledger_for_es
     )
+    change_feed = KafkaChangeFeed(topics=[topics.LEDGER], group_id='ledgers-to-es')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[topics.LEDGER], group_id='ledgers-to-es'),
+        change_feed=change_feed,
         processor=processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100
+        change_processed_event_handler=KafkaCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
     )
 
