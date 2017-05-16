@@ -16,7 +16,7 @@ angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui
             controllerAs: "$ctrl"
         })
         .when("/awc_opened", {
-            template : "awc_opened"
+            template : "<awc-opened-yesterday></awc-opened-yesterday>",
         })
         .when("/active_awws", {
             template : "active_awws"

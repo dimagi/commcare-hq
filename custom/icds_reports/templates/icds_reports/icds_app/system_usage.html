@@ -12,52 +12,46 @@
         <div class="col-md-1 "><i class="fa fa-download fa-2x right pointer"></i></div>
     </div>
     <div class="report-content">
-        <div ng-show="$ctrl.step.slug === 'system_usage'">
-            <div class="row" ng-repeat="section in $ctrl.step.data">
-                <div class="col-md-6" ng-repeat="cell in section">
-                    <div class="report-cell">
-                        <div class="row">
-                            <div class="col-md-1"
-                                 uib-popover-html="cell.help_text"
-                                 popover-placement="right"
-                                 popover-trigger="'mouseenter'">
-                                <i class="fa fa-info-circle fa-2x" ></i>
+        <div class="row" ng-repeat="section in $ctrl.step.data">
+            <div class="col-md-6" ng-repeat="cell in section">
+                <div class="report-cell">
+                    <div class="row">
+                        <div class="col-md-1"
+                             uib-popover-html="cell.help_text"
+                             popover-placement="right"
+                             popover-trigger="'mouseenter'">
+                            <i class="fa fa-info-circle fa-2x" ></i>
+                        </div>
+                        <div class="col-md-11 center">
+                            <div class="row">
+                                <span class="title" ng-bind="cell.label"></span>
                             </div>
-                            <div class="col-md-11 center">
-                                <div class="row">
-                                    <span class="title" ng-bind="cell.label"></span>
+                            <div class="row">
+                                <div class="numbers">
+                                    <span ng-if="cell.format == 'div'"><span ng-bind="cell.value | number:0"></span>/<span ng-bind="cell.all | number:0"></span></span>
+                                    <span ng-if="cell.format == 'number'" ng-bind="cell.value | number:0"></span>
                                 </div>
-                                <div class="row">
-                                    <div class="numbers">
-                                        <span ng-bind="cell.value"></span>/<span ng-bind="cell.all"></span>
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <p>
-                                        <i class="fa" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0}"></i>
-                                        <span ng-bind="cell.percent | number:2"></span>
-                                        {% trans 'from the day before last' %}
-                                        <i class="fa fa-ellipsis-h fa-2x" aria-hidden="true"></i>
-                                    </p>
-                                </div>
+                            </div>
+                            <div class="row">
+                                <p>
+                                    <i class="fa" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0}"></i>
+                                    <span ng-bind="cell.percent | number:2"></span>
+                                    {% trans '% from the day before last' %}
+                                    <i class="fa fa-ellipsis-h fa-2x" aria-hidden="true"></i>
+                                </p>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
-        <div ng-show="$ctrl.step.slug === 'maternal_child'">Step 2</div>
-        <div ng-show="$ctrl.step.slug === 'icds_cas_reach'">Step 3</div>
-        <div ng-show="$ctrl.step.slug === 'demographics'">Step 4</div>
-        <div ng-show="$ctrl.step.slug === 'awc_infrastructure'">Step 5</div>
 
     </div>
     <div class="">
         <div class="dot-menu">
             <div class="dot-menu-item pointer" ng-click="$ctrl.goToStep(step)" ng-repeat="step in $ctrl.steps">
                 <div class="dot-menu-dot">
-                    <div  ng-class="{'dot-active': $ctrl.step.slug === $ctrl.steps[$index].slug}" class="dot"></div>
+                    <div ng-class="{'dot-active': $ctrl.step.slug === $ctrl.steps[$index].slug}" class="dot"></div>
                 </div>
                 <div class="dot-menu-label" ng-bind="step.label"></div>
             </div>
