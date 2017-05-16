@@ -1,3 +1,4 @@
+import re
 import json
 import datetime
 import socket
@@ -57,6 +58,9 @@ from dimagi.utils.post import parse_SOAP_response
 
 ENIKSHAY_ID = 8
 NIKSHAY_NULL_DATE = '1900-01-01'
+
+# to accept only alphanumberic, ignore any encoded text \u0000, non-word & _
+SOAP_RESTRICTED_TEXT_REGEX = r'(\\u[a-zA-Z0-9]{4}|\W|_)'
 
 
 class BaseNikshayPayloadGenerator(BasePayloadGenerator):
@@ -376,17 +380,17 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
             "Dtocode": person_locations.dto,
             "TBUcode": tu_code,
             "HFIDNO": person_locations.phi,
-            "pname": person_case.name,
-            "fhname": person_case_properties.get('husband_father_name', ''),
+            "pname": sanitize_text_for_xml(person_case.name),
+            "fhname": sanitize_text_for_xml(person_case_properties.get('husband_father_name', '')),
             "age": person_case_properties.get('age', ''),
             "gender": person_case_properties.get('sex', '').capitalize(),
             # API for Address with char ',' returns Invalid data format error
-            "Address": person_case_properties.get('current_address', '').replace(',', ''),
+            "Address": sanitize_text_for_xml(person_case_properties.get('current_address', '').replace(',', '')),
             "pin": person_case_properties.get('current_address_postal_code', ''),
             "lno": person_case_properties.get('phone', ''),
             "mno": '0',
-            "tbdiagdate": str(episode_date),
-            "tbstdate": episode_case_properties.get(TREATMENT_START_DATE, str(datetime.date.today())),
+            "tbdiagdate": _format_date(str(episode_date)),
+            "tbstdate": _format_date(episode_case_properties.get(TREATMENT_START_DATE, str(datetime.date.today()))),
             "Type": disease_classification.get(episode_case_properties.get('pulmonary_extra_pulmonary', ''), ''),
             "B_diagnosis": episode_case_properties.get('case_definition', ''),
             "D_SUSTest": drug_susceptibility_test_status.get(episode_case_properties.get('dst', '')),
@@ -565,3 +569,13 @@ def _format_date_or_null_date(case_properties, case_property):
 
 def _format_date(date):
     return datetime.datetime.strptime(date, '%Y-%m-%d').strftime('%d/%m/%Y')
+
+
+def sanitize_text_for_xml(text):
+    # little hack to end up with proper spacing for valid text
+    # convert all restricted chars to * and then convert any group of *s to an empty space
+    return re.sub(
+        r'(\*+)',
+        ' ',
+        re.sub(SOAP_RESTRICTED_TEXT_REGEX, '*', text)
+    ).strip()

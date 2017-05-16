@@ -44,7 +44,7 @@ def get_person_case_structure(case_id, user_id, extra_update=None):
         'secondary_contact_name_address': 'Mrs. Everestie',
         'previous_tb_treatment': 'yes',
         'nikshay_registered': "false",
-        'husband_father_name': "Mr. Peregrine",
+        'husband_father_name': u"Mr. Peregrine เՇร ค Շгคק Kumar",
         'current_address_postal_code': '110088',
         'phone': '27477587'
     }
