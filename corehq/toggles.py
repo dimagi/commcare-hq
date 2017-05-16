@@ -410,6 +410,9 @@ MM_CASE_PROPERTIES = StaticToggle(
     'Multimedia Case Properties',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    "Turning on this feature flag allows you to save multimedia/image capture photos as case properties in the App builder."
+    ),
+    help_link='https://confluence.dimagi.com/display/internal/Multimedia+Case+Properties+Feature+Flag', 
 )
 
 VISIT_SCHEDULER = StaticToggle(
@@ -450,6 +453,10 @@ REPORT_BUILDER = StaticToggle(
     'Report Builder',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
+    description=(
+        "This feature flag will allow you to create 5 report builder reports."
+    ),
+    help_link='https://confluence.dimagi.com/display/internal/Report+Builder+feature+flag',
 )
 
 ASYNC_RESTORE = StaticToggle(
@@ -594,6 +601,10 @@ FORM_LINK_WORKFLOW = StaticToggle(
     'Form linking workflow available on forms',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
+    description=(
+        "Turning on this feature flag allows you to use End of Form Navigation to automatically link to another form. "
+    ),
+    help_link='https://confluence.dimagi.com/display/internal/Form+Link+Workflow+Feature+Flag',
 )
 
 # not referenced in code directly but passed through to vellum
@@ -604,6 +615,11 @@ VELLUM_SAVE_TO_CASE = StaticToggle(
     "Adds save to case as a question to the form builder",
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
+    description=(
+        "This feature allows you to add a question in the form builder which saves the question to a case."
+    ),
+    help_link='https://confluence.dimagi.com/display/internal/Save+to+Case+Feature+Flag',
+  
 )
 
 VELLUM_PRINTING = StaticToggle(
@@ -734,6 +750,10 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     'Show Application Error Report',
     TAG_EXPERIMENTAL,
     namespaces=[NAMESPACE_USER],
+     description=(
+        "Turning on this feature flag allows you to see errors within your app's build after each deploy."
+    ),
+    help_link='https://confluence.dimagi.com/display/internal/Show+Application+Error+Report+Feature+Flag',
 )
 
 OPENCLINICA = StaticToggle(
