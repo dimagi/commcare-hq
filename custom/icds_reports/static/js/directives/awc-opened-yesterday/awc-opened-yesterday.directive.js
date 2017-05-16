@@ -7,7 +7,7 @@ window.angular.module('icdsApp').directive('awcOpenedYesterday', function() {
         bindToController: true,
         controller: function() {
             this.step = 'map';
-            this.mapData = {}
+            this.mapData = {};
         },
         controllerAs: '$ctrl',
     };
