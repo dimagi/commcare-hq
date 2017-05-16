@@ -30,11 +30,6 @@ def item_lists_by_domain(domain):
             'path': u"/{tag}_list/{tag}".format(tag=data_type.tag),
             'name': data_type.tag,
             'structure': structure,
-
-            # DEPRECATED PROPERTIES
-            'sourceUri': uri,
-            'defaultId': data_type.tag,
-            'initialQuery': u"instance('{tag}')/{tag}_list/{tag}".format(tag=data_type.tag),
         })
 
     products = product_fixture_generator_json(domain)

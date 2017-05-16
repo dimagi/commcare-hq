@@ -23,11 +23,6 @@ def program_fixture_generator_json(domain):
                 'name': f,
                 'no_option': True
             } for f in fields},
-
-        # DEPRECATED PROPERTIES
-        'sourceUri': uri,
-        'defaultId': 'programs',
-        'initialQuery': "instance('programs')/programs/program",
     }
 
 
