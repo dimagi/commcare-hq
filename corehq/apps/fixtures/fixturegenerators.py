@@ -18,10 +18,7 @@ def item_lists_by_domain(domain):
         }
 
         for attr in data_type.item_attributes:
-            structure['@' + attr] = {
-                'name': attr,
-                'no_option': True
-            }
+            structure['@' + attr] = {'name': attr, 'no_option': True}
 
         uri = 'jr://fixture/%s:%s' % (ItemListsProvider.id, data_type.tag)
         ret.append({
