@@ -14,6 +14,7 @@ from corehq.apps.locations.tests.util import (
     setup_locations_with_structure,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from custom.enikshay.case_utils import CASE_TYPE_REFERRAL
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
@@ -130,6 +131,25 @@ def get_adherence_case_structure(case_id, indexed_episode_id, adherence_date, ex
             "case_type": "adherence",
             "create": True,
             "update": update
+        },
+        indices=[CaseIndex(
+            CaseStructure(case_id=indexed_episode_id, attrs={"create": False}),
+            identifier='host',
+            relationship=CASE_INDEX_EXTENSION,
+            related_type='episode',
+        )],
+        walk_related=False,
+    )
+
+
+def get_referral_case_structure(case_id, indexed_episode_id, extra_update=None):
+    extra_update = extra_update or {}
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            "case_type": CASE_TYPE_REFERRAL,
+            "create": True,
+            "update": extra_update
         },
         indices=[CaseIndex(
             CaseStructure(case_id=indexed_episode_id, attrs={"create": False}),
@@ -320,6 +340,11 @@ class ENikshayCaseStructureMixin(object):
         voucher = self.factory.create_or_update_cases([voucher])[0]
         self._prescription_created = True
         return voucher
+
+    def create_referral_case(self, case_id):
+        return self.factory.create_or_update_cases([
+            get_referral_case_structure(case_id, self.episode_id)
+        ])
 
 
 class ENikshayLocationStructureMixin(object):

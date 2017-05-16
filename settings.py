@@ -1935,6 +1935,10 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('first_case_form_with_xmlns', 'custom.enikshay.expressions.first_case_form_with_xmlns_expression'),
     ('count_case_forms_with_xmlns', 'custom.enikshay.expressions.count_case_forms_with_xmlns_expression'),
     ('month_expression', 'custom.enikshay.expressions.month_expression'),
+    ('referred_to', 'custom.enikshay.expressions.referred_to_expression'),
+    ('referred_by', 'custom.enikshay.expressions.referred_by_expression'),
+    ('date_of_referral', 'custom.enikshay.expressions.date_of_referral_expression'),
+    ('date_of_acceptance', 'custom.enikshay.expressions.referred_to_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
