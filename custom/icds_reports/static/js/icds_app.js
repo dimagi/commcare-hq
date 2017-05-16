@@ -17,9 +17,7 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
         var url = hqImport('hqwebapp/js/urllib.js').reverse;
         $routeProvider
             .when("/", {
-                templateUrl : url('icds-ng-template', 'system_usage'),
-                controller: "SystemUsageController",
-                controllerAs: "$ctrl",
+                template : "<system-usage></system-usage>",
             })
             .when("/awc_opened", {
                 template : "awc_opened",
