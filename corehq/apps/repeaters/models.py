@@ -27,7 +27,7 @@ from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.mixins import UnicodeMixIn
-from dimagi.utils.post import simple_post, simple_xml_post
+from dimagi.utils.post import simple_post, perform_SOAP_operation
 
 from .dbaccessors import (
     get_pending_repeat_record_count,
@@ -410,7 +410,7 @@ class SOAPRepeaterMixin(object):
 
     def send_request(self, repeat_record):
         payload = self.get_payload(repeat_record)
-        return simple_xml_post(payload, self.url, self.operation)
+        return perform_SOAP_operation(payload, self.url, self.operation)
 
 
 class ShortFormRepeater(Repeater):

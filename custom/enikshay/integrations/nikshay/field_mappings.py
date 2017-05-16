@@ -119,3 +119,11 @@ smear_result_grade = {
     '2+': 12,
     '3+': 13,
 }
+
+drug_susceptibility_test_status = {
+    'pending': 'N',
+    'not_done': 'N',
+    'rif_sensitive': 'S',
+    'rif_resistant': 'R',
+    'xdr': 'N'
+}

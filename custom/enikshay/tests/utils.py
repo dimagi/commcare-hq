@@ -101,7 +101,7 @@ def get_episode_case_structure(case_id, indexed_occurrence_case, extra_update=No
         TREATMENT_SUPPORTER_LAST_NAME: u"𝔗𝔥𝔢 𝔊𝔯𝔢𝔶",
         'treatment_initiation_status': 'F',
         'pulmonary_extra_pulmonary': 'pulmonary',
-        'drug_susceptibility_test_status': 'N',
+        'dst': 'pending',
         'case_definition': 'E',
     }
     update.update(extra_update)

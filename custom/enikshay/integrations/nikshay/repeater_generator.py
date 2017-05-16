@@ -50,9 +50,10 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     art_initiated,
     purpose_of_testing,
     smear_result_grade,
+    drug_susceptibility_test_status,
 )
 from custom.enikshay.case_utils import update_case
-from dimagi.utils.post import get_message_from_xml_response
+from dimagi.utils.post import parse_SOAP_response
 
 ENIKSHAY_ID = 8
 NIKSHAY_NULL_DATE = '1900-01-01'
@@ -388,7 +389,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
             "tbstdate": episode_case_properties.get(TREATMENT_START_DATE, str(datetime.date.today())),
             "Type": disease_classification.get(episode_case_properties.get('pulmonary_extra_pulmonary', ''), ''),
             "B_diagnosis": episode_case_properties.get('case_definition', ''),
-            "D_SUSTest": episode_case_properties.get('drug_susceptibility_test_status', ''),
+            "D_SUSTest": drug_susceptibility_test_status.get(episode_case_properties.get('dst', '')),
             "Treat_I": episode_case_properties.get('treatment_initiation_status', ''),
             "usersid": settings.ENIKSHAY_PRIVATE_API_USERS.get(person_locations.sto, ''),
             "password": settings.ENIKSHAY_PRIVATE_API_PASSWORD,
@@ -400,7 +401,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
         # Failures also return with status code 200 and some message like
         # Dublicate Entry or Invalid data format
         # (Dublicate is not a typo)
-        message = get_message_from_xml_response(
+        message = parse_SOAP_response(
             repeat_record.repeater.url,
             repeat_record.repeater.operation,
             response
