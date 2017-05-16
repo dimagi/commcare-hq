@@ -350,7 +350,6 @@ class ENikshayCaseStructureMixin(object):
             get_voucher_case_structure(uuid.uuid4().hex, prescription_id, extra_update)
         )[0]
 
-
     def create_referral_case(self, case_id):
         return self.factory.create_or_update_cases([
             get_referral_case_structure(case_id, self.episode_id)
