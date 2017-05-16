@@ -19,7 +19,7 @@ from custom.enikshay.const import (
     HISTORICAL_CLOSURE_REASON,
 )
 from custom.enikshay.data_store import AdherenceDatastore
-from custom.enikshay.tasks import EpisodeAdherenceUpdater, EpisodeUpdate
+from custom.enikshay.tasks import EpisodeUpdater, EpisodeAdherenceUpdate
 from custom.enikshay.tests.utils import (
     get_person_case_structure,
     get_adherence_case_structure,
@@ -52,7 +52,7 @@ class TestAdherenceUpdater(TestCase):
         self.person_id = u"person"
         self.occurrence_id = u"occurrence"
         self.episode_id = u"episode"
-        self.case_updater = EpisodeAdherenceUpdater(self.domain)
+        self.case_updater = EpisodeUpdater(self.domain)
 
     @classmethod
     def setupFixtureData(cls):
@@ -172,7 +172,7 @@ class TestAdherenceUpdater(TestCase):
         rebuild_indicators(self.data_store.datasource._id)
         self.data_store.adapter.refresh_table()
 
-        return EpisodeUpdate(episode, self.case_updater)
+        return EpisodeAdherenceUpdate(episode, self.case_updater)
 
     def test_adherence_schedule_date_start_late(self):
         #   Sample test case
