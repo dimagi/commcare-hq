@@ -187,6 +187,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(episode_case.opened_on, datetime(2017, 4, 19))
         self.assertEqual(episode_case.owner_id, '-')
         self.assertEqual(episode_case.dynamic_case_properties(), OrderedDict([
+            ('adherence_total_doses_taken', '0'),
             ('adherence_tracking_mechanism', ''),
             ('basis_of_diagnosis', 'clinical_other'),
             ('case_definition', 'clinical'),
@@ -367,6 +368,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
         self.assertEqual(len(episode_case_ids), 1)
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
+        self.assertEqual(episode_case.dynamic_case_properties()['adherence_total_doses_taken'], '1')
 
         adherence_case_ids = self.case_accessor.get_case_ids_in_domain(type='adherence')
         self.assertEqual(len(adherence_case_ids), 1)
@@ -441,7 +443,12 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
 
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
-        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='episode')), 1)
+
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(len(episode_case_ids), 1)
+        episode_case = self.case_accessor.get_case(episode_case_ids[0])
+        self.assertEqual(episode_case.dynamic_case_properties()['adherence_total_doses_taken'], '1')
+
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='adherence')), 2)
 
     def test_skip_adherence(self):
@@ -450,7 +457,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             adherenceScore=0.5,
             alertFrequencyId=2,
             basisOfDiagnosis='Clinical - Other',
-            beneficiaryID=self.beneficiary,
+            beneficiaryID=self.beneficiary.caseId,
             creationDate=datetime(2017, 4, 20),
             dateOfDiagnosis=datetime(2017, 4, 18),
             dstStatus='Rifampicin sensitive',
@@ -492,7 +499,12 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
 
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
-        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='episode')), 1)
+
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(len(episode_case_ids), 1)
+        episode_case = self.case_accessor.get_case(episode_case_ids[0])
+        self.assertEqual(episode_case.dynamic_case_properties()['adherence_total_doses_taken'], '1')
+
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='adherence')), 0)
 
     def test_dots_99_enabled_false(self):

@@ -9,6 +9,10 @@ REPORTING_MECHANISM_TREATMENT_SUPPORTER = 86
 REPORTING_MECHANISM_MERM = 96
 REPORTING_MECHANISM_NONE = 0
 
+DIRECTLY_OBSERVED_DOSE = 0
+MISSED_DOSE = 1
+SELF_ADMINISTERED_DOSE = 3
+
 
 def get_agency_by_motech_user_name(motech_user_name):
     try:
@@ -240,6 +244,12 @@ class Episode(models.Model):
     mermIMIEno = models.CharField(max_length=255, null=True)
     adherenceSupportAssigned = models.CharField(max_length=255, null=True)
 
+    @property
+    def adherence_total_doses_taken(self):
+        return Adherence.objects.filter(
+            episodeId=self.episodeID,
+            dosageStatusId__in=[DIRECTLY_OBSERVED_DOSE, SELF_ADMINISTERED_DOSE],
+        ).count()
 
     @property
     @memoized
@@ -265,7 +275,6 @@ class Episode(models.Model):
                 return 'contact_centre'
         else:
             return ''
-
 
     @property
     def basis_of_diagnosis(self):
@@ -462,9 +471,9 @@ class Adherence(models.Model):
     @property
     def adherence_value(self):
         return {
-            0: 'directly_observed_dose',
-            1: 'missed_dose',
-            3: 'self_administered_dose',
+            DIRECTLY_OBSERVED_DOSE: 'directly_observed_dose',
+            MISSED_DOSE: 'missed_dose',
+            SELF_ADMINISTERED_DOSE: 'self_administered_dose',
         }[self.dosageStatusId]
 
 

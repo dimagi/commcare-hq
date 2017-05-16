@@ -195,6 +195,7 @@ class BeneficiaryCaseFactory(object):
         if self._episode:
             rx_start_datetime = self._episode.rxStartDate
             kwargs['attrs']['date_opened'] = rx_start_datetime
+            kwargs['attrs']['update']['adherence_total_doses_taken'] = self._episode.adherence_total_doses_taken
             kwargs['attrs']['update']['adherence_tracking_mechanism'] = self._episode.adherence_tracking_mechanism
             kwargs['attrs']['update']['basis_of_diagnosis'] = self._episode.basis_of_diagnosis
             kwargs['attrs']['update']['case_definition'] = self._episode.case_definition
@@ -236,6 +237,7 @@ class BeneficiaryCaseFactory(object):
             if self._episode.is_treatment_ended:
                 kwargs['attrs']['close'] = True
         else:
+            kwargs['attrs']['update']['adherence_total_doses_taken'] = 0
             kwargs['attrs']['update']['adherence_tracking_mechanism'] = ''
             kwargs['attrs']['update']['dots_99_enabled'] = 'false'
             kwargs['attrs']['update']['episode_pending_registration'] = 'yes'
