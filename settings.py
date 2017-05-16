@@ -133,7 +133,7 @@ SECRET_KEY = 'you should really change this'
 # Add this to localsettings and set it to False, so that CSRF protection is enabled on localhost
 CSRF_SOFT_MODE = True
 
-MIDDLEWARE_CLASSES = [
+MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -747,7 +747,7 @@ TOUCHFORMS_API_PASSWORD = "changeme"
 # import local settings if we find them
 LOCAL_APPS = ()
 LOCAL_COUCHDB_APPS = ()
-LOCAL_MIDDLEWARE_CLASSES = ()
+LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
 LOCAL_REPEATERS = ()
 
@@ -1435,7 +1435,7 @@ if ENABLE_PRELOGIN_SITE:
 seen = set()
 INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
 
-MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
+MIDDLEWARE += LOCAL_MIDDLEWARE
 
 ### Shared drive settings ###
 SHARED_DRIVE_CONF = helper.SharedDriveConfiguration(

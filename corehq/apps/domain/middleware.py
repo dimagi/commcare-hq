@@ -4,13 +4,14 @@ from __future__ import unicode_literals, print_function, absolute_import
 from django.template.response import TemplateResponse
 
 # External imports
+from django.utils.deprecation import MiddlewareMixin
 from corehq.apps.accounting.exceptions import AccountingError
 from corehq.apps.accounting.models import Subscription
 from corehq.toggles import DATA_MIGRATION
 from django_prbac.models import Role
 
 
-class CCHQPRBACMiddleware(object):
+class CCHQPRBACMiddleware(MiddlewareMixin):
     """
     MiddleWare to add request.role based on user or domain
     information. This _must_ be placed after the
@@ -47,7 +48,7 @@ class CCHQPRBACMiddleware(object):
             request.role = Role()  # A fresh Role() has no privileges
 
 
-class DomainHistoryMiddleware(object):
+class DomainHistoryMiddleware(MiddlewareMixin):
 
     def process_response(self, request, response):
         if hasattr(request, 'domain'):
@@ -60,7 +61,7 @@ class DomainHistoryMiddleware(object):
             request.session['last_visited_domain'] = request.domain
 
 
-class DomainMigrationMiddleware(object):
+class DomainMigrationMiddleware(MiddlewareMixin):
     """
     Redirects web requests to a page explaining a data migration is occurring
     """

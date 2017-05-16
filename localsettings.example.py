@@ -206,7 +206,7 @@ LOCAL_APPS = (
 #    'testapps.test_pillowtop',
 )
 
-LOCAL_MIDDLEWARE_CLASSES = [
+LOCAL_MIDDLEWARE = [
     # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
