@@ -214,6 +214,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('treatment_card_completed_date', '2017-04-20'),
             ('treatment_initiated', 'yes_pcp'),
             ('treatment_initiation_date', '2017-04-19'),
+            ('treatment_options', ''),
             ('treatment_phase', 'continuation_phase_cp'),
             ('weight', '50'),
         ]))
