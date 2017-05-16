@@ -203,12 +203,12 @@ class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
         base_properties.update({
             "PatientID": episode_case_properties.get('nikshay_id'),
             "HIVStatus": hiv_status.get(person_case_properties.get('hiv_status')),
-            "HIVTestDate": _format_date(person_case_properties, 'hiv_test_date'),
-            "CPTDeliverDate": _format_date(person_case_properties, 'cpt_1_date'),
-            "ARTCentreDate": _format_date(person_case_properties, 'art_initiation_date'),
+            "HIVTestDate": _format_date_or_null_date(person_case_properties, 'hiv_test_date'),
+            "CPTDeliverDate": _format_date_or_null_date(person_case_properties, 'cpt_1_date'),
+            "ARTCentreDate": _format_date_or_null_date(person_case_properties, 'art_initiation_date'),
             "InitiatedOnART": art_initiated.get(
                 person_case_properties.get('art_initiated', 'no'), art_initiated['no']),
-            "InitiatedDate": _format_date(person_case_properties, 'art_initiation_date'),
+            "InitiatedDate": _format_date_or_null_date(person_case_properties, 'art_initiation_date'),
         })
 
         return json.dumps(base_properties)
@@ -247,7 +247,7 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         interval_id, lab_serial_number, result_grade, dmc_code = self._get_mandatory_fields(
             test_case, test_case_properties)
 
-        test_reported_on = _format_date(test_case_properties, 'date_reported')
+        test_reported_on = _format_date_or_null_date(test_case_properties, 'date_reported')
         properties_dict = self._base_properties(repeat_record)
         properties_dict.update({
             "PatientID": episode_case_properties.get('nikshay_id'),
@@ -555,9 +555,13 @@ def _save_error_message(domain, case_id, error, reg_field="nikshay_registered", 
     )
 
 
-def _format_date(case_properties, case_property):
+def _format_date_or_null_date(case_properties, case_property):
     date = case_properties.get(case_property) or NIKSHAY_NULL_DATE
     try:
-        return datetime.datetime.strptime(date, '%Y-%m-%d').strftime('%d/%m/%Y')
+        return _format_date(date)
     except ValueError:
-        return datetime.datetime.strptime(NIKSHAY_NULL_DATE, '%Y-%m-%d').strftime('%d/%m/%Y')
+        return _format_date(NIKSHAY_NULL_DATE)
+
+
+def _format_date(date):
+    return datetime.datetime.strptime(date, '%Y-%m-%d').strftime('%d/%m/%Y')
