@@ -179,3 +179,26 @@ h4 {
     height: 100%;
     padding: 10px;
 }
+
+.indie-map-directive {
+    position: relative;
+    margin: 0 auto;
+}
+
+@media screen and (min-width: 1501px) {
+    .indie-map-directive .datamaps-legend {
+        left: 20%;
+    }
+}
+
+@media screen and (min-width: 901px) and (max-width: 1500px) {
+    .indie-map-directive .datamaps-legend {
+        left: 8%;
+    }
+}
+
+@media screen and (min-width: 0px) and (max-width: 900px) {
+    .indie-map-directive .datamaps-legend {
+        left: 5px;
+    }
+}

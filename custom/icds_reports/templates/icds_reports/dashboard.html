@@ -30,6 +30,7 @@
         <script type="text/javascript" src="{% static 'ui-select/dist/select.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-sanitize/angular-sanitize.js' %}"></script>
         <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.js' %}"></script>
+        <script type="text/javascript" src="{% static 'underscore/underscore.js' %}"></script>
 
 
         <script type="text/javascript" src="{% static 'topojson/topojson.js' %}"></script>
@@ -45,7 +46,7 @@
         <script type="text/javascript" src="{% static 'js/filters.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/system_usage.js' %}"></script>
 
-        <script type="text/javascript" src="{% static 'js/services/maternal-child.service.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/angular-services/maternal-child.service.js' %}"></script>
 
         <script type="text/javascript" src="{% static 'js/directives/navigation/navigation.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/dot-link/dot-link.directive.js' %}"></script>
@@ -57,10 +58,10 @@
 <div id="app">
     <div ng-controller="MainController" class="container-fluid">
         <div class="row">
-            <div class="col-md-2 left-menu">
+            <div class="col-xs-2 col-md-2 left-menu">
                 <navigation></navigation>
             </div>
-            <div class="col-md-10 main-container">
+            <div class="col-xs-10 col-md-10 main-container">
                 <div class="row">
                     <nav class="navbar navbar-default">
                         <div class="container-fluid">

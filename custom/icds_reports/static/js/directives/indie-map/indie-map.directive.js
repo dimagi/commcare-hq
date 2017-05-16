@@ -1,4 +1,4 @@
-/* global d3 */
+/* global d3, _ */
 
 function IndieMapController($scope) {
     var vm = this;
@@ -11,19 +11,15 @@ function IndieMapController($scope) {
 
     vm.map = {
         scope: 'ind',
-        aspectRatio: 0.5,
-
-        options: {
-        },
-        zoomable: true,
-        responsive: true,
         fills: vm.fills,
         data: vm.data,
+        aspectRatio: 0.5,
+        height: 800,
         setProjection: function(element) {
-            var projection = d3.geo.mercator()
+            var projection = d3.geo.equirectangular()
                 .center([80, 25])
                 .scale(1240)
-                .translate([element.offsetWidth / 2, element.offsetHeight / 4]);
+                .translate([element.offsetWidth / 2, element.offsetHeight / 2]);
             var path = d3.geo.path()
                 .projection(projection);
 
@@ -31,7 +27,8 @@ function IndieMapController($scope) {
         },
     };
 
-    vm.mapPlugins = {
+    vm.mapPlugins = vm.mapPlugins || {};
+    _.extend(vm.mapPlugins, {
         customLegend: function() {
             var html = ['<h3>' + vm.legendTitle + '</h3><table style="margin: 0 auto;">'];
             for (var fillKey in this.options.fills) {
@@ -42,10 +39,10 @@ function IndieMapController($scope) {
             html.push('</table>');
             d3.select(this.options.element).append('div')
                 .attr('class', 'datamaps-legend text-center')
-                .attr('style', 'width: 200px; bottom: 20%; left: 20%; border: 1px solid black;')
+                .attr('style', 'width: 150px; bottom: 5%; border: 1px solid black;')
                 .html(html.join(''));
         },
-    };
+    });
 }
 
 IndieMapController.$inject = ['$scope'];
@@ -55,8 +52,9 @@ window.angular.module('icdsApp').directive('indieMap', function() {
         restrict: 'E',
         scope: {
             data: '=',
-            legendTitle: '@',
-            fills: '=',
+            legendTitle: '@?',
+            fills: '=?',
+            mapPlugins: '=?',
         },
         template: '<div class="indie-map-directive"><datamap map="$ctrl.map" plugins="$ctrl.mapPlugins"></datamap></div>',
         bindToController: true,
