@@ -392,18 +392,8 @@ hqDefine('app_manager/js/visit-scheduler.js', function () {
         }
     };
 
-    // Initialize form scheduler, if any
-    // A bit inconsistent because form schedule initialization is handled here,
-    // whereas module scheduler initialization is in module-view.js
-    var visit_scheduler_options = hqImport("hqwebapp/js/initial_page_data.js").get('visit_scheduler_options');
-    if (visit_scheduler_options) {
-        var visitScheduler = new Scheduler(_.extend({}, visit_scheduler_options, {
-            home: $('#visit-scheduler'),
-        }));
-        visitScheduler.init();
-    }
-
     return {
+        Scheduler: Scheduler,
         ModuleScheduler: ModuleScheduler
     };
 });
