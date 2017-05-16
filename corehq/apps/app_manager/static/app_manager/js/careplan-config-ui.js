@@ -414,7 +414,8 @@ hqDefine('app_manager/js/careplan-config-ui.js', function () {
         };
     };
 
-    return {
-        Careplan: Careplan
-    };
+    var careplan = new Careplan(_.extend({}, hqImport("hqwebapp/js/initial_page_data.js").get("case_config_options"), {
+        home: $('#case-config-ko'),
+    }));
+    careplan.init();
 });
