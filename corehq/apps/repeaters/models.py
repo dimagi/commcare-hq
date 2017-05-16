@@ -284,16 +284,16 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             return HTTPDigestAuth(self.username, self.password)
         return None
 
-    def send_request(self, repeat_record):
+    def send_request(self, repeat_record, payload):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
-        payload = self.get_payload(repeat_record)
         url = self.get_url(repeat_record)
         return simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth)
 
     def fire_for_record(self, repeat_record):
+        payload = self.get_payload(repeat_record)
         try:
-            response = self.send_request(repeat_record)
+            response = self.send_request(repeat_record, payload)
         except (Timeout, ConnectionError) as error:
             log_repeater_timeout_in_datadog(self.domain)
             return self.handle_response(RequestConnectionError(error), repeat_record)
@@ -408,8 +408,7 @@ class CaseRepeater(Repeater):
 class SOAPRepeaterMixin(object):
     operation = StringProperty()
 
-    def send_request(self, repeat_record):
-        payload = self.get_payload(repeat_record)
+    def send_request(self, repeat_record, payload):
         return perform_SOAP_operation(payload, self.url, self.operation)
 
 
