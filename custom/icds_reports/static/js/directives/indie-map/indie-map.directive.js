@@ -33,16 +33,16 @@ function IndieMapController($scope) {
 
     vm.mapPlugins = {
         customLegend: function() {
-            var html = ['<h3>' + vm.legendTitle + '</h3><ul>'];
+            var html = ['<h3>' + vm.legendTitle + '</h3><table style="margin: 0 auto;">'];
             for (var fillKey in this.options.fills) {
                 if (fillKey === 'defaultFill') continue;
-                html.push('<li class="key"><div style="background-color: ' + this.options.fills[fillKey] + '; width: 45px; height: 45px; display: inline-block"></div>',
-                          '<span style="padding-left: 10px;">', fillKey, '</span></li>');
+                html.push('<tr><td style="background-color: ' + this.options.fills[fillKey] + '; width: 45px; height: 45px;">',
+                          '<td/><td style="padding-left: 5px;">' + fillKey + '</td></tr>');
             }
-            html.push('</ul>');
+            html.push('</table>');
             d3.select(this.options.element).append('div')
-                .attr('class', 'datamaps-legend')
-                .attr('style', 'width: 200px; bottom: 20%; left: 20%')
+                .attr('class', 'datamaps-legend text-center')
+                .attr('style', 'width: 200px; bottom: 20%; left: 20%; border: 1px solid black;')
                 .html(html.join(''));
         },
     };
