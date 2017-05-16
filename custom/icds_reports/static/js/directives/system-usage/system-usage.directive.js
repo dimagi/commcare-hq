@@ -45,4 +45,12 @@ function SystemUsageController($http, $log) {
 
 SystemUsageController.$inject = ['$http', '$log'];
 
-window.angular.module('icdsApp').controller('SystemUsageController', SystemUsageController);
+window.angular.module('icdsApp').directive('systemUsage', function() {
+    return {
+        restrict: 'E',
+        templateUrl: url('icds-ng-template', 'system-usage.directive'),
+        bindToController: true,
+        controller: SystemUsageController,
+        controllerAs: '$ctrl',
+    };
+});
