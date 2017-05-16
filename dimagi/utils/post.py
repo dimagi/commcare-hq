@@ -65,7 +65,7 @@ def simple_post(data, url, content_type="text/xml", timeout=60, headers=None, au
     return requests.post(url, data, **kwargs)
 
 
-def simple_xml_post(data, url, operation):
+def perform_SOAP_operation(data, url, operation):
     client = Client(url)
     # for just response message use
     # with client.options(raw_response=False) # explicitly set it to avoid caching mysteries
@@ -74,7 +74,7 @@ def simple_xml_post(data, url, operation):
         return client.service[operation](**data)
 
 
-def get_message_from_xml_response(url, operation, response):
+def parse_SOAP_response(url, operation, response):
     # parse the xml content on response object to return just the message
     client = Client(url)
     binding = client.service[operation]._proxy._binding
