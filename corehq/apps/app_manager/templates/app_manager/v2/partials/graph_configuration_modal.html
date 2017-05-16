@@ -56,13 +56,13 @@
                                             </div>
                                         </div>
                                         <div class="form-group"
-                                             data-bind="visible: showDataPath, css: {'has-warning': validateDataPath()}">
+                                             data-bind="visible: showDataPath, css: {'has-warning': dataPathWarning()}">
                                             <label class="col-sm-2 control-label">{% trans "Path" %}</label>
-                                            <div class="col-sm-4">
-                                                <div data-bind="css: {'input-group': !validateDataPath()}">
+                                            <div class="col-sm-8">
+                                                <div data-bind="css: {'input-group': showDataPathCopy()}">
                                                     <input type="text" class="form-control"
                                                            data-bind="value: dataPath, attr: {placeholder: dataPathPlaceholder}" />
-                                                    <span class="input-group-btn" data-bind="visible: !validateDataPath()">
+                                                    <span class="input-group-btn" data-bind="visible: showDataPathCopy()">
                                                         <a class="btn btn-default"
                                                            data-bind="click: copyPlaceholder,
                                                                       attr: {'data-clipboard-text': dataPathPlaceholder}">
@@ -70,17 +70,17 @@
                                                         </a>
                                                     </span>
                                                 </div>
-                                                <span class="help-block" data-bind="text: validateDataPath"></span>
+                                                <span class="help-block" data-bind="text: dataPathWarning"></span>
                                             </div>
                                         </div>
                                         <div class="form-group"
-                                             data-bind="css: {'has-warning': validateX()}">
+                                             data-bind="css: {'has-warning': xWarning()}">
                                             <label class="col-sm-2 control-label" data-bind="text: xLabel"></label>
-                                            <div class="col-sm-4">
-                                                <div data-bind="css: {'input-group': !validateX()}">
+                                            <div class="col-sm-8">
+                                                <div data-bind="css: {'input-group': showXCopy()}">
                                                     <input type="text" class="form-control"
                                                            data-bind="value: xFunction, attr: {placeholder: xPlaceholder}" />
-                                                    <span class="input-group-btn" data-bind="visible: !validateX()">
+                                                    <span class="input-group-btn" data-bind="visible: showXCopy()">
                                                         <a class="btn btn-default"
                                                            data-bind="click: copyPlaceholder,
                                                                       attr: {'data-clipboard-text': xPlaceholder}">
@@ -88,17 +88,17 @@
                                                         </a>
                                                     </span>
                                                 </div>
-                                                <span class="help-block" data-bind="text: validateX"></span>
+                                                <span class="help-block" data-bind="text: xWarning"></span>
                                             </div>
                                         </div>
                                         <div class="form-group"
-                                             data-bind="css: {'has-warning': validateY()}">
+                                             data-bind="css: {'has-warning': yWarning()}">
                                             <label class="col-sm-2 control-label" data-bind="text: yLabel"></label>
-                                            <div class="col-sm-4">
-                                                <div data-bind="css: {'input-group': !validateY()}">
+                                            <div class="col-sm-8">
+                                                <div data-bind="css: {'input-group': showYCopy()}">
                                                     <input type="text" class="form-control"
                                                            data-bind="value: yFunction, attr: {placeholder: yPlaceholder}" />
-                                                    <span class="input-group-btn" data-bind="visible: !validateY()">
+                                                    <span class="input-group-btn" data-bind="visible: showYCopy()">
                                                         <a class="btn btn-default"
                                                            data-bind="click: copyPlaceholder,
                                                                       attr: {'data-clipboard-text': yPlaceholder}">
@@ -106,13 +106,13 @@
                                                         </a>
                                                     </span>
                                                 </div>
-                                                <span class="help-block" data-bind="text: validateY"></span>
+                                                <span class="help-block" data-bind="text: yWarning"></span>
                                             </div>
                                         </div>
                                         <!-- ko if: 'radiusFunction' in $data -->
                                         <div class="form-group">
                                             <label class="col-sm-2 control-label">{% trans "Radius" %}</label>
-                                            <div class="col-sm-4">
+                                            <div class="col-sm-8">
                                                 <input type="text" class="form-control" data-bind="value: radiusFunction" />
                                             </div>
                                         </div>
@@ -129,7 +129,7 @@
                                                             <div class="col-sm-1 text-center">
                                                                 <i class="fa fa-arrow-right"></i>
                                                             </div>
-                                                            <div class="col-sm-3">
+                                                            <div class="col-sm-5">
                                                                 <input type="text" class="form-control" data-bind="
                                                                     value: values[$parent.lang],
                                                                     attr: {placeholder: getBackup().value}
@@ -170,7 +170,7 @@
                                             <div class="col-sm-1 text-center">
                                                 <i class="fa fa-arrow-right"></i>
                                             </div>
-                                            <div class="col-sm-3">
+                                            <div class="col-sm-5">
                                                 <input type="text" class="form-control" data-bind="
                                                     value: values[$parent.lang],
                                                     attr: {placeholder: getBackup().value}
@@ -258,7 +258,7 @@
             <div class="col-sm-1 text-center">
                 <i class="fa fa-arrow-right"></i>
             </div>
-            <div class="col-sm-3">
+            <div class="col-sm-5">
                 <input type="text" class="form-control"
                        data-bind="value: value, attr: {placeholder: $parent.configPropertyHints[property()]}">
             </div>

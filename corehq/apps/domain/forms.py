@@ -1020,14 +1020,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         label="Partner contact",
         required=False,
         help_text=(
-            "Primary partner point of contact going forward (type email of existing web user)."
+            "Primary partner point of contact going forward (type username of existing web user)."
         ),
     )
     dimagi_contact = CharField(
         label="Dimagi contact",
         required=False,
         help_text=(
-            "Primary Dimagi point of contact going forward (type email of existing web user)."
+            "Primary Dimagi point of contact going forward (type username of existing web user)."
         ),
     )
     send_handoff_email = forms.BooleanField(

@@ -537,24 +537,33 @@ hqDefine('app_manager/js/graph-config.js', function () {
             "It is recommended that you leave this value blank. Future changes to your report's "
             + "chart configuration will not be reflected here."
         );
-        self.validateDataPath = ko.computed(function() {
+        self.dataPathWarning = ko.computed(function() {
             if (!self.dataPathPlaceholder() || !self.dataPath()) {
                 return;
             }
             self.showDataPath(true);
             return seriesValidationWarning;
         });
-        self.validateX = ko.computed(function() {
+        self.xWarning = ko.computed(function() {
             if (!self.xPlaceholder() || !self.xFunction()) {
                 return;
             }
             return seriesValidationWarning;
         });
-        self.validateY = ko.computed(function() {
+        self.yWarning = ko.computed(function() {
             if (!self.yPlaceholder() || !self.yFunction()) {
                 return;
             }
             return seriesValidationWarning;
+        });
+        self.showDataPathCopy = ko.computed(function() {
+            return self.dataPathPlaceholder() && !self.dataPathWarning();
+        });
+        self.showXCopy = ko.computed(function() {
+            return self.xPlaceholder() && !self.xWarning();
+        });
+        self.showYCopy = ko.computed(function() {
+            return self.yPlaceholder() && !self.yWarning();
         });
         self.xLabel = "X";
         self.yLabel = "Y";

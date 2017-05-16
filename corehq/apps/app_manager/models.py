@@ -2281,8 +2281,9 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def get_app(self):
         return self._parent
 
-    def default_name(self):
-        app = self.get_app()
+    def default_name(self, app=None):
+        if not app:
+            app = self.get_app()
         return trans(
             self.name,
             [app.default_language] + app.langs,
@@ -4159,14 +4160,18 @@ class AncestorLocationTypeFilter(ReportAppFilter):
 
     def get_filter_value(self, user, ui_filter):
         from corehq.apps.locations.models import SQLLocation
+        from corehq.apps.reports_core.filters import REQUEST_USER_KEY
 
+        kwargs = {REQUEST_USER_KEY: user}
         try:
             ancestor = user.sql_location.get_ancestors(include_self=True).\
                 get(location_type__name=self.ancestor_location_type_name)
+            kwargs[ui_filter.name] = ancestor.location_id
         except (AttributeError, SQLLocation.DoesNotExist):
             # user.sql_location is None, or location does not have an ancestor of that type
-            return None
-        return ancestor.location_id
+            pass
+
+        return ui_filter.value(**kwargs)
 
 
 class NumericFilter(ReportAppFilter):
@@ -4221,6 +4226,7 @@ class ReportAppConfig(DocumentSchema):
                     locale_specific_config={},
                     annotations=[]
                 )
+        self.graph_configs = {}
 
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
@@ -5116,7 +5122,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     @property
     def advanced_app_builder(self):
         properties = (self.profile or {}).get('properties', {})
-        return properties.get('advanced_app_builder', 'false') == 'true'
+        return properties.get('advanced_app_builder', 'true') == 'true'
 
     @property
     def jad_settings(self):

@@ -17,7 +17,9 @@
             '/a/' + '{{ domain }}' + '/apps/view/---/app_data/'
         )
         var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
-        var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
+        var profiles = hqImport('app_manager/js/language-profiles.js');
+        profiles.setProfileUrl('{{ application_profile_url }}');
+        var ProfileManager = profiles.ProfileManager;
         // init releases
         var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body')
         $('#recent-changes-btn').on('click', function (e) {

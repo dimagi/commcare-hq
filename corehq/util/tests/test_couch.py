@@ -254,7 +254,6 @@ class DocumentClassLookupTest(SimpleTestCase):
 
     def test_a_few_important_ones(self):
         from casexml.apps.case.models import CommCareCase
-        from corehq.apps.locations.models import Location
         from corehq.apps.users.models import CommCareUser, WebUser
         from couchforms.models import XFormInstance
         from corehq.apps.fixtures.models import FixtureDataType
@@ -263,7 +262,6 @@ class DocumentClassLookupTest(SimpleTestCase):
             ('XFormInstance', XFormInstance),
             ('CommCareUser', CommCareUser),
             ('WebUser', WebUser),
-            ('Location', Location),
             ('FixtureDataType', FixtureDataType),
         ]
         for model_name, model_class in test_cases:
