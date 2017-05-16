@@ -55,3 +55,4 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
                 template : "health_tabular_report",
             });
     }]);
+

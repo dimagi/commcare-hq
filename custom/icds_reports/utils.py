@@ -210,7 +210,7 @@ def get_system_usage_data(filters):
     def percent_increase(prop):
         yesterday = yesterday_data[0][prop]
         before_yesterday = before_yesterday_data[0][prop]
-        return (yesterday - before_yesterday) / float(yesterday) * 100
+        return (yesterday - before_yesterday) / float(before_yesterday) * 100
 
     return {
         'records': [
@@ -221,14 +221,16 @@ def get_system_usage_data(filters):
                         by the AWW or the AWW helper"""),
                     'percent': percent_increase('daily_attendance'),
                     'value': yesterday_data[0]['daily_attendance'],
-                    'all': yesterday_data[0]['awcs']
+                    'all': yesterday_data[0]['awcs'],
+                    'format': 'div'
                 },
                 {
                     'label': _('Average number of forms hosuehold registration forms submitted yesterday'),
                     'help_text': _('Average number of household registration forms submitted by AWWs yesterday.'),
                     'percent': percent_increase('num_forms'),
                     'value': yesterday_data[0]['num_forms'],
-                    'all': yesterday_data[0]['awcs']
+                    'all': yesterday_data[0]['awcs'],
+                    'format': 'number'
                 }
             ],
             [
@@ -239,14 +241,16 @@ def get_system_usage_data(filters):
                         Exclusive breastfeeding and Complementary feeding"""),
                     'percent': percent_increase('num_home_visits'),
                     'value': yesterday_data[0]['num_home_visits'],
-                    'all': yesterday_data[0]['awcs']
+                    'all': yesterday_data[0]['awcs'],
+                    'format': 'number'
                 },
                 {
                     'label': _('Average number of Growth Monitoring forms submitted yesterday'),
                     'help_text': _('Average number of growth monitoring forms (GMP) submitted yesterday'),
                     'percent': percent_increase('num_gmp'),
                     'value': yesterday_data[0]['num_gmp'],
-                    'all': yesterday_data[0]['awcs']
+                    'all': yesterday_data[0]['awcs'],
+                    'format': 'number'
                 }
             ], [
                 {
@@ -254,7 +258,8 @@ def get_system_usage_data(filters):
                     'help_text': _('Average number of Take Home Rations (THR) forms submitted yesterday'),
                     'percent': percent_increase('num_thr'),
                     'value': yesterday_data[0]['num_thr'],
-                    'all': yesterday_data[0]['awcs']
+                    'all': yesterday_data[0]['awcs'],
+                    'format': 'number'
                 }
             ]
         ]
