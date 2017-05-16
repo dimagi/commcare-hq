@@ -2,7 +2,7 @@ window.angular.module('icdsApp').filter('propsFilter', function() {
     return function(items, props) {
         var out = [];
 
-        if (angular.isArray(items)) {
+        if (window.angular.isArray(items)) {
             var keys = Object.keys(props);
 
             items.forEach(function(item) {
