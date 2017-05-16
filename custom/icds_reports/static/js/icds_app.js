@@ -14,7 +14,6 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
         $interpolateProvider.startSymbol('{$');
         $interpolateProvider.endSymbol('$}');
 
-        var url = hqImport('hqwebapp/js/urllib.js').reverse;
         $routeProvider
             .when("/", {
                 template : "<system-usage></system-usage>",

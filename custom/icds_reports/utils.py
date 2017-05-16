@@ -243,9 +243,9 @@ def get_system_usage_data(filters):
             [
                 {
                     'label': _('Average number of Home Visit forms submitted yesterday'),
-                    'help_text': _("""Average number of home visit forms submitted yesterday. Home visit forms are 
-                        Birth Preparedness, Delivery, Post Natal Care, 
-                        Exclusive breastfeeding and Complementary feeding"""),
+                    'help_text': _("""Average number of home visit forms submitted yesterday. 
+                    Home visit forms are Birth Preparedness, Delivery, Post Natal Care, 
+                    Exclusive breastfeeding and Complementary feeding"""),
                     'percent': percent_increase('num_home_visits', yesterday_data, before_yesterday_data),
                     'value': yesterday_data[0]['num_home_visits'],
                     'all': yesterday_data[0]['awcs'],
@@ -325,25 +325,27 @@ def get_maternal_child_data(filters):
             [
                 {
                     'label': _('% Underweight Children'),
-                    'help_text': _("""Percentage of children with weight-for-age less than -2 standard deviations 
-                        of the WHO Child Growth Standards median. Children who are moderately or severely underweight 
-                        have a higher risk of mortality."""),
+                    'help_text': _("""Percentage of children with weight-for-age less than -2 standard 
+                    deviations of the WHO Child Growth Standards median. Children who are moderately 
+                    or severely underweight have a higher risk of mortality."""),
                     'percent': percent_diff(
                         ['moderately_underweight', 'severely_underweight'],
                         this_month_data,
                         prev_month_data,
                         'valid'
                     ),
-                    'value': this_month_data[0]['moderately_underweight'] + this_month_data[0]['severely_underweight'],
+                    'value': (
+                        this_month_data[0]['moderately_underweight'] + this_month_data[0]['severely_underweight']
+                    ),
                     'all': this_month_data[0]['valid'],
                     'format': 'percent_and_div'
                 },
                 {
                     'label': _('% Wasting'),
                     'help_text': _("""Percentage of children (6-60 months) with weight-for-height below -3 
-                        standard deviations of the WHO Child Growth Standards median. Severe Acute Malnutrition 
-                        (SAM) or wasting in children is a symptom of acute undernutrition usually as a consequence
-                        of insufficient food intake or a high incidence of infectious diseases."""),
+                    standard deviations of the WHO Child Growth Standards median. Severe Acute Malnutrition 
+                    (SAM) or wasting in children is a symptom of acute undernutrition usually as a consequence
+                    of insufficient food intake or a high incidence of infectious diseases."""),
                     'percent': percent_diff(
                         ['wasting_mod', 'wasting_seve'],
                         this_month_data,
@@ -359,9 +361,9 @@ def get_maternal_child_data(filters):
                 {
                     'label': _('% Stunting'),
                     'help_text': _("""Percentage of children (6-60 months) with height-for-age below -2Z 
-                        standard deviations of the WHO Child Growth Standards median. Stunting in children is a 
-                        sign of chronic undernutrition and has long lasting harmful consequences on the growth of 
-                        a child"""),
+                    standard deviations of the WHO Child Growth Standards median. Stunting in children is a 
+                    sign of chronic undernutrition and has long lasting harmful consequences on the growth of 
+                    a child"""),
                     'percent': percent_diff(
                         ['stunting_mod', 'stunting_seve'],
                         this_month_data,
@@ -375,9 +377,9 @@ def get_maternal_child_data(filters):
                 {
                     'label': _('% Newborns with Low Birth Weight'),
                     'help_text': _("""Percentage of newborns with born with birth weight less than 2500 grams. 
-                        Newborns with Low Birth Weight are closely associated with foetal and neonatal mortality 
-                        and morbidity, inhibited growth and cognitive development, and chronic 
-                        diseases later in life"""),
+                    Newborns with Low Birth Weight are closely associated with foetal and neonatal mortality 
+                    and morbidity, inhibited growth and cognitive development, and chronic 
+                    diseases later in life"""),
                     'percent': percent_diff(
                         ['low_birth_weight'],
                         this_month_data,
@@ -408,8 +410,8 @@ def get_maternal_child_data(filters):
                 {
                     'label': _('% Exclusive breastfeeding'),
                     'help_text': _("""Percentage of children between 0 - 6 months exclusively breastfed. An 
-                        infant is exclusively breastfed if they recieve only breastmilk with no additional food, 
-                        liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"""),
+                    infant is exclusively breastfed if they recieve only breastmilk with no additional food, 
+                    liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"""),
                     'percent': percent_diff(
                         ['ebf'],
                         this_month_data,
@@ -424,9 +426,9 @@ def get_maternal_child_data(filters):
             [
                 {
                     'label': _('% Children initiated appropriate complementary feeding'),
-                    'help_text': _("""Percentage of children between 6 - 8 months given timely introduction to 
-                    solid or semi-solid food. Timely intiation of complementary feeding in addition to breastmilk at 
-                    6 months of age is a key feeding practice to reduce malnutrition"""),
+                    'help_text': _("""Percentage of children between 6 - 8 months given timely introduction 
+                    to solid or semi-solid food. Timely intiation of complementary feeding in addition to 
+                    breastmilk at 6 months of age is a key feeding practice to reduce malnutrition"""),
                     'percent': percent_diff(
                         ['cf_initiation'],
                         this_month_data,
@@ -603,7 +605,8 @@ def get_demographics_data(filters):
             ], [
                 {
                     'label': _('% Adhaar seeded beneficaries'),
-                    'help_text': _("""Percentage of ICDS beneficiaries whose Adhaar identification has been captured"""),
+                    'help_text': _("""Percentage of ICDS beneficiaries whose Adhaar 
+                    identification has been captured"""),
                     'percent': percent_diff(
                         ['person_aadhaar'],
                         yesterday_data,

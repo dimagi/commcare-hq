@@ -219,7 +219,11 @@ class AggCcsRecordMonthly(models.Model):
     anc2_received_at_delivery = models.IntegerField(blank=True, null=True)
     anc3_received_at_delivery = models.IntegerField(blank=True, null=True)
     anc4_received_at_delivery = models.IntegerField(blank=True, null=True)
-    registration_trimester_at_delivery = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
+    registration_trimester_at_delivery = models.DecimalField(
+        max_digits=65535,
+        decimal_places=65535,
+        blank=True,
+        null=True)
     using_ifa = models.IntegerField(blank=True, null=True)
     ifa_consumed_last_seven_days = models.IntegerField(blank=True, null=True)
     anemic_normal = models.IntegerField(blank=True, null=True)
