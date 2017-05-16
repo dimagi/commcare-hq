@@ -97,8 +97,6 @@ class Select2(Widget):
 
     def _choices_for_binding(self, choices):
         return [{'id': id, 'text': text} for id, text in chain(self.choices, choices)]
-
-
 class QuestionSelect(Widget):
     """
     A widget for rendering an input with our knockout "questionsSelect" binding.
@@ -176,7 +174,7 @@ class DataSourceBuilder(object):
     def __init__(self, domain, app, source_type, source_id):
         assert (source_type in ['case', 'form'])
 
-        self.domain = domain
+        self.domain=domain
         self.app = app
         self.source_type = source_type
         # source_id is a case type of form id
@@ -194,9 +192,9 @@ class DataSourceBuilder(object):
     @memoized
     def source_doc_type(self):
         if self.source_type == "case":
-            return "CommCareCase"
+                return "CommCareCase"
         if self.source_type == "form":
-            return "XFormInstance"
+                return "XFormInstance"
 
     @property
     @memoized
