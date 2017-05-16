@@ -40,7 +40,7 @@ couch:
   expose:
     - "5984"
   volumes:
-    - ${VOLUME_PREFIX}couchdb:/usr/local/var/lib/couchdb
+    - ${VOLUME_PREFIX}couchdb2:/usr/src/couchdb/dev/lib/node1/data
 
 redis:
   image: redis
