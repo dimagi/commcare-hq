@@ -386,10 +386,13 @@ class Episode(models.Model):
             return {
                 'Cured': 'cured',
                 'Died': 'died',
-                'died': 'died',
+                'DIED': 'died',
                 'Failure': 'failure',
-                'SWITCH TO CAT IV': 'regimen_changed',
-                'Switched to Category IV/V': 'regimen_changed',
+                'SWITCH OVER CAT4': 'switched_to_cat_ivv',
+                'SWITCH TO CAT IV': 'switched_to_cat_ivv',
+                'Switched to Category IV/V': 'switched_to_cat_ivv',
+                'Transferred Out': 'transferred_out',
+                'Treatment Completed': 'treatment_completed',
             }[self.treatmentOutcomeId]
 
     @property
@@ -400,7 +403,7 @@ class Episode(models.Model):
             'died',
             'failure',
             'loss_to_follow_up',
-            'regimen_changed',
+            'switched_to_cat_ivv',
         ]
 
 
