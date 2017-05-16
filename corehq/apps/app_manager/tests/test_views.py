@@ -212,7 +212,6 @@ class TestViews(TestCase):
             'domain': self.domain.name,
         }, True)
 
-
     def test_default_new_app(self, mock):
         response = self.client.get(reverse('default_new_app', kwargs={
             'domain': self.domain.name,
