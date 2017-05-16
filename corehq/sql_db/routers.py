@@ -44,7 +44,7 @@ def allow_migrate(db, app_label):
         )
     elif app_label == SQL_ACCESSORS_APP:
         return db in partition_config.get_form_processing_dbs()
-    elif app_label == WAREHOUSE_APP:
+    elif app_label == WAREHOUSE_APP and hasattr(settings, "WAREHOUSE_DATABASE_ALIAS"):
         return hasattr(settings, "WAREHOUSE_DATABASE_ALIAS") and db == settings.WAREHOUSE_DATABASE_ALIAS
     else:
         return db == partition_config.get_main_db()
