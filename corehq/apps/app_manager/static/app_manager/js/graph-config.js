@@ -1,3 +1,4 @@
+/* global Clipboard */
 hqDefine('app_manager/js/graph-config.js', function () {
     /**
      * Create a view model that is bound to an "Edit graph" button. The ui property
@@ -153,8 +154,11 @@ hqDefine('app_manager/js/graph-config.js', function () {
 
                 series.selectedSource = {'text':'custom', 'value':'custom'};
                 series.dataPath = s.data_path;
+                series.dataPathPlaceholder = s.data_path_placeholder;
                 series.xFunction = s.x_function;
+                series.xPlaceholder = s.x_placeholder;
                 series.yFunction = s.y_function;
+                series.yPlaceholder = s.y_placeholder;
                 if (s.radius_function !== undefined){
                     series.radiusFunction = s.radius_function;
                 }
@@ -512,9 +516,55 @@ hqDefine('app_manager/js/graph-config.js', function () {
             self.selectedSource(source);
         }
         self.dataPath = ko.observable(origOrDefault('dataPath', self.getDefaultDataPath(self.selectedSource().value)));
+        self.dataPathPlaceholder = ko.observable(origOrDefault('dataPathPlaceholder', ""));
         self.showDataPath = ko.observable(origOrDefault('showDataPath', false));
         self.xFunction = ko.observable(origOrDefault('xFunction',""));
+        self.xPlaceholder = ko.observable(origOrDefault('xPlaceholder',""));
         self.yFunction = ko.observable(origOrDefault('yFunction',""));
+        self.yPlaceholder = ko.observable(origOrDefault('yPlaceholder',""));
+        self.copyPlaceholder = function(series, e) {
+            var $button = $(e.currentTarget);
+            var clipboard = new Clipboard($button[0]);
+            $button.tooltip({ title: gettext('Copied!') });
+            clipboard.on('success', function() {
+                $button.tooltip('show');
+                window.setTimeout(function() { $button.tooltip('hide'); }, 1000);
+            });
+            clipboard.onClick(e);
+        };
+
+        var seriesValidationWarning = gettext(
+            "It is recommended that you leave this value blank. Future changes to your report's "
+            + "chart configuration will not be reflected here."
+        );
+        self.dataPathWarning = ko.computed(function() {
+            if (!self.dataPathPlaceholder() || !self.dataPath()) {
+                return;
+            }
+            self.showDataPath(true);
+            return seriesValidationWarning;
+        });
+        self.xWarning = ko.computed(function() {
+            if (!self.xPlaceholder() || !self.xFunction()) {
+                return;
+            }
+            return seriesValidationWarning;
+        });
+        self.yWarning = ko.computed(function() {
+            if (!self.yPlaceholder() || !self.yFunction()) {
+                return;
+            }
+            return seriesValidationWarning;
+        });
+        self.showDataPathCopy = ko.computed(function() {
+            return self.dataPathPlaceholder() && !self.dataPathWarning();
+        });
+        self.showXCopy = ko.computed(function() {
+            return self.xPlaceholder() && !self.xWarning();
+        });
+        self.showYCopy = ko.computed(function() {
+            return self.yPlaceholder() && !self.yWarning();
+        });
         self.xLabel = "X";
         self.yLabel = "Y";
         self.configPropertyOptions = [

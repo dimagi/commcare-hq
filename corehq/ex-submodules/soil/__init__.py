@@ -289,13 +289,16 @@ class BlobDownload(DownloadBase):
         raise NotImplementedError
 
     def toHttpResponse(self):
-        file_obj = get_blob_db().get(self.identifier, self.bucket)
+        blob_db = get_blob_db()
+        file_obj = blob_db.get(self.identifier, self.bucket)
+        blob_size = blob_db.size(self.identifier, self.bucket)
 
         response = StreamingHttpResponse(
             FileWrapper(file_obj, CHUNK_SIZE),
             content_type=self.content_type
         )
 
+        response['Content-Length'] = blob_size
         response['Content-Disposition'] = self.content_disposition
         for k, v in self.extras.items():
             response[k] = v

@@ -18,7 +18,7 @@
       </div>
 
       <% if (useGrid) { %>
-        <section class="js-case-container"></section>
+        <section class="js-case-container clearfix"></section>
       <% } else { %>
         <div class="module-caselist-table-container">
           <table class="table module-table module-table-caselist">
@@ -51,7 +51,7 @@
       <% if (actions) { %>
         <div class="caselist-actions">
         <% _.each(actions, function(action, index) { %>
-            <div class="caselist-action-button btn-group">
+            <div class="caselist-action-button btn-group formplayer-request">
               <button type="button" class="btn btn-success btn-lg" id="double-management" data-index="<%= index %>"><%= action.text %></button>
             </div>
         <% }) %>
@@ -148,8 +148,11 @@
         height: 0;
         padding-bottom: <%= model.heightPercentage %>%;
         display: inline-block;
-        border: 1px solid black;
+        border: 1px solid white;
         border-collapse: collapse;
+        vertical-align: top;
+        float: left;
+        background-color: #f2f2f1;
     }
 </script>
 
@@ -158,10 +161,8 @@
         display: grid;
         grid-template-columns: repeat(<%= model.numColumns %>, <%= model.widthPixels %>px) min-content 5px;
         grid-template-rows: repeat(<%= model.numRows %>, <%= model.heightPixels %>px) min-content 5px;
-        background-color: #fff;
+        background-color: transparent;
         color: #685c53;
-        border-color: #685c53;
-        max-height: 400 px;
         justify-items: center;
     }
 </script>

@@ -35,7 +35,8 @@ postgres:
     - ${VOLUME_PREFIX}postgresql:/var/lib/postgresql/data
 
 couch:
-  image: klaemo/couchdb:1.6.1
+  image: klaemo/couchdb:2.0-dev
+  command: ["--with-haproxy", "--with-admin-party-please", "-n", "1"]
   expose:
     - "5984"
   volumes:

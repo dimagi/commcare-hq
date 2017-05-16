@@ -304,7 +304,11 @@
                 {% if request.user.is_superuser %}
                     <div class="panel panel-default">
                         <div class="panel-heading">
-                            <a data-bind="attr: {href: $root.url('source', id)}">
+                            <a class="track-usage-link"
+                               data-category="App Manager"
+                               data-action="Deploy Type"
+                               data-label="View Source Files"
+                               data-bind="attr: {href: $root.url('source', id)}">
                                 {% trans 'View Source Files' %}
                             </a>
                         </div>

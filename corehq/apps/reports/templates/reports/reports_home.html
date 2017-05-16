@@ -16,7 +16,6 @@ $(function() {
         $(this).text("{% trans 'Saving' %}").prepend('<i class="fa fa-refresh fa-spin"></i> ').addClass('btn disabled').prop('disabled', true);
         $(this).parents('form').submit();
     });
-    gaTrackLink($('#create_scheduled_report'), 'Scheduled Reports', 'Configure a scheduled report');
 });
 </script>
 {% endblock %}
@@ -87,9 +86,10 @@ $(function() {
 
     {% if report.show %}
     <div class="tab-pane" id="scheduled-reports">
-        <p><a class="btn btn-success"
+        <p><a class="btn btn-success track-usage-link"
               href="{% url "edit_scheduled_report" domain %}"
-              id="create_scheduled_report">
+              data-category="Scheduled Reports"
+              data-action="Configure a scheduled report">
             <i class="fa fa-plus"></i>
             {% trans "Create a New Scheduled Report" %}
         </a></p>

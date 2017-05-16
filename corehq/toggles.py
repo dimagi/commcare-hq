@@ -52,7 +52,8 @@ class StaticToggle(object):
 
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None, always_enabled=None,
-                 always_disabled=None, enabled_for_new_domains_after=None):
+                 always_disabled=None, enabled_for_new_domains_after=None,
+                 enabled_for_new_users_after=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -65,34 +66,43 @@ class StaticToggle(object):
         self.always_enabled = always_enabled or set()
         self.always_disabled = always_disabled or set()
         self.enabled_for_new_domains_after = enabled_for_new_domains_after
+        self.enabled_for_new_users_after = enabled_for_new_users_after
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
             self.namespaces = [None]
 
-    def enabled(self, item, namespace=None):
+    def enabled(self, item, namespace=Ellipsis):
         if item in self.always_enabled:
             return True
         elif item in self.always_disabled:
             return False
-        enabled_after = self.enabled_for_new_domains_after
-        if (enabled_after is not None and NAMESPACE_DOMAIN in self.namespaces
-                and was_domain_created_after(item, enabled_after)):
+
+        if namespace is not Ellipsis and namespace not in self.namespaces:
+            # short circuit if we're checking an item that isn't supported by this toggle
+            return False
+
+        domain_enabled_after = self.enabled_for_new_domains_after
+        if (domain_enabled_after is not None and NAMESPACE_DOMAIN in self.namespaces
+            and was_domain_created_after(item, domain_enabled_after)):
             return True
-        if namespace is not None:
-            ns = None if namespace == NAMESPACE_USER else namespace
-            return toggle_enabled(self.slug, item, ns)
-        return any([toggle_enabled(self.slug, item, namespace=n) for n in self.namespaces])
+
+        user_enabled_after = self.enabled_for_new_users_after
+        if (user_enabled_after is not None and was_user_created_after(item, user_enabled_after)):
+            return True
+
+        namespaces = self.namespaces if namespace is Ellipsis else [namespace]
+        return any([toggle_enabled(self.slug, item, namespace=n) for n in namespaces])
 
     def enabled_for_request(self, request):
         return (
             None in self.namespaces
             and hasattr(request, 'user')
-            and toggle_enabled(self.slug, request.user.username, None)
+            and self.enabled(request.user.username, namespace=None)
         ) or (
             NAMESPACE_DOMAIN in self.namespaces
             and hasattr(request, 'domain')
-            and self.enabled(request.domain, NAMESPACE_DOMAIN)
+            and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN)
         )
 
     def set(self, item, enabled, namespace=None):
@@ -107,8 +117,8 @@ class StaticToggle(object):
             @wraps(view_func)
             def wrapped_view(request, *args, **kwargs):
                 if (
-                    (hasattr(request, 'user') and self.enabled(request.user.username))
-                    or (hasattr(request, 'domain') and self.enabled(request.domain))
+                    (hasattr(request, 'user') and self.enabled(request.user.username, namespace=None))
+                    or (hasattr(request, 'domain') and self.enabled(request.domain, namespace=NAMESPACE_DOMAIN))
                 ):
                     return view_func(request, *args, **kwargs)
                 if request.user.is_superuser:
@@ -126,10 +136,14 @@ class StaticToggle(object):
         from toggle.models import Toggle
         try:
             toggle = Toggle.get(self.slug)
-            enabled_users = toggle.enabled_users
-            return [user.split('domain:')[1] for user in enabled_users if 'domain:' in user]
         except ResourceNotFound:
             return []
+
+        enabled_users = toggle.enabled_users
+        domains = {user.split('domain:')[1] for user in enabled_users if 'domain:' in user}
+        domains |= self.always_enabled
+        domains -= self.always_disabled
+        return list(domains)
 
 
 def was_domain_created_after(domain, checkpoint):
@@ -145,6 +159,22 @@ def was_domain_created_after(domain, checkpoint):
         domain_obj is not None and
         domain_obj.date_created is not None and
         domain_obj.date_created > checkpoint
+    )
+
+
+def was_user_created_after(username, checkpoint):
+    """
+    Return true if user was created after checkpoint
+
+    :param username: Web User username (string).
+    :param checkpoint: datetime object.
+    """
+    from corehq.apps.users.models import WebUser
+    user = WebUser.get_by_username(username)
+    return (
+        user is not None and
+        user.created_on is not None and
+        user.created_on > checkpoint
     )
 
 
@@ -302,7 +332,8 @@ CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Show text area for entering custom case list xml',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
+    help_link='https://confluence.dimagi.com/display/public/Custom+Case+XML+Overview',
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 CASE_LIST_CUSTOM_VARIABLES = StaticToggle(
@@ -351,8 +382,8 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/internal/Case+Detail+Nodesets',
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 DHIS2_INTEGRATION = StaticToggle(
@@ -366,7 +397,8 @@ GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
+    help_link='https://confluence.dimagi.com/display/RD/Graphing+in+HQ',
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 IS_DEVELOPER = StaticToggle(
@@ -379,7 +411,8 @@ MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    help_link='https://confluence.dimagi.com/display/internal/Multimedia+Case+Properties+Feature+Flag',
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 VISIT_SCHEDULER = StaticToggle(
@@ -446,13 +479,6 @@ SYNC_ALL_LOCATIONS = StaticToggle(
     "Advanced Settings on the Organization Levels page and setting the Level to Expand From option."
 )
 
-FLAT_LOCATION_FIXTURE = StaticToggle(
-    'flat_location_fixture',
-    'Sync the location fixture in a flat format. ',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
-)
-
 HIERARCHICAL_LOCATION_FIXTURE = StaticToggle(
     'hierarchical_location_fixture',
     'Display Settings To Get Hierarchical Location Fixture',
@@ -469,14 +495,16 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     'extension_sync',
     'Enable extension syncing',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
+    help_link='https://confluence.dimagi.com/display/ccinternal/Extension+Cases',
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    help_link='https://confluence.dimagi.com/display/internal/Remote+Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 NO_VELLUM = StaticToggle(
@@ -587,7 +615,8 @@ VELLUM_PRINTING = StaticToggle(
     'printing',
     "Enables the Print Android App Callout",
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    help_link='https://confluence.dimagi.com/display/ccinternal/Printing+from+a+form+in+CommCare+Android',
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 VELLUM_DATA_IN_SETVALUE = StaticToggle(
@@ -609,7 +638,8 @@ CUSTOM_PROPERTIES = StaticToggle(
     'custom_properties',
     'Allow users to add arbitrary custom properties to their application',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
+    help_link='https://confluence.dimagi.com/display/internal/CommCare+Android+Developer+Options',
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 ENABLE_LOADTEST_USERS = StaticToggle(
@@ -710,6 +740,7 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     'Show Application Error Report',
     TAG_EXPERIMENTAL,
+    help_link='https://confluence.dimagi.com/display/internal/Show+Application+Error+Report+Feature+Flag',
     namespaces=[NAMESPACE_USER],
 )
 
@@ -754,6 +785,13 @@ NIKSHAY_INTEGRATION = StaticToggle(
     'Enable patient registration in Nikshay',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
+)
+
+BETS_INTEGRATION = StaticToggle(
+    'bets_repeaters',
+    'Enable BETS data forwarders',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
 )
 
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
@@ -817,7 +855,8 @@ MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
     'mobile_worker_self_registration',
     'Allow mobile workers to self register',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/commcarepublic/SMS+Self+Registration',
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 MESSAGE_LOG_METADATA = StaticToggle(
@@ -935,7 +974,8 @@ MOBILE_USER_DEMO_MODE = StaticToggle(
     'mobile_user_demo_mode',
     'Ability to make a mobile worker into Demo only mobile worker',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    help_link='https://confluence.dimagi.com/display/internal/Demo+Mobile+Workers',
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 
@@ -1002,7 +1042,8 @@ APP_MANAGER_V2 = StaticToggle(
     'app_manager_v2',
     'Prototype for case management onboarding (App Manager V2)',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_USER]
+    [NAMESPACE_USER],
+    enabled_for_new_users_after=datetime(2017, 5, 16, 20),  # 8pm UTC
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
@@ -1065,6 +1106,17 @@ USER_PROPERTY_EASY_REFS = StaticToggle(
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
     enabled_for_new_domains_after=datetime(2017, 5, 3, 20),  # 8pm UTC
+)
+
+LOCATION_USERS = StaticToggle(
+    'location_users',
+    'Autogenerate users for each location',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "This flag adds an option to the location types page (under 'advanced "
+        "mode') to create users for all locations of a specified type."
+    ),
 )
 
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
@@ -1133,7 +1185,7 @@ BLOBDB_RESTORE = PredictablyRandomToggle(
     "Blobdb restore",
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0,
+    randomness=0.7,
 )
 
 SHOW_DEV_TOGGLE_INFO = StaticToggle(
@@ -1168,6 +1220,22 @@ MARK_LATEST_SUBMISSION_ON_USER = StaticToggle(
     'user_last_submission',
     "Marks the latest submssion on user model",
     TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
+)
+
+ENTERPRISE_OPTIMIZATIONS = StaticToggle(
+    'enterprise_optimizations',
+    'Used to enable specific optimizations for environments that only support a single domain e.g. ICDS',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'}
+)
+
+MOBIE_UCR_SYNC_DELAY_CONFIG = StaticToggle(
+    'mobile_ucr_sync_delay',
+    "Show settings for configuring mobile UCR sync delay",
+    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
     always_enabled={'icds-cas'}
 )

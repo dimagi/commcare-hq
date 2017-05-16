@@ -6,37 +6,29 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load compress %}
-@@ -51,10 +51,10 @@
+@@ -50,9 +50,9 @@
          <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
      {% endif %}
  
--    {% include "app_manager/v1/partials/form_filter/value-or-none-ui.html" %}
 -    {% include "app_manager/v1/partials/xpathValidator.html" %}
 -    {% include "app_manager/v1/partials/nav_menu_media_js_common.html" %}
 -    {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.menu %}
-+    {% include "app_manager/v2/partials/form_filter/value-or-none-ui.html" %}
 +    {% include "app_manager/v2/partials/xpathValidator.html" %}
 +    {% include "app_manager/v2/partials/nav_menu_media_js_common.html" %}
 +    {% include "app_manager/v2/partials/nav_menu_media_js.html" with item=multimedia.menu %}
      {% if allow_form_workflow %}
          <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
      {% endif %}
-@@ -176,18 +176,21 @@
-             return true;
-         });
+@@ -163,15 +163,18 @@
+             });
+         }
  
--        $('#form-filter').koApplyBindings({
--                formFilter: formFilter,
--                formFilterAllowed: formFilterAllowed,
--                errorMessages: {notAllowed: formFilterErrorMessage}
--        });
+-        $('#form-filter').koApplyBindings(new FormFilter());
+-
++
 +        var $formFilter = $('#form-filter');
 +        if ($formFilter.length) {
-+            $formFilter.koApplyBindings({
-+                    formFilter: formFilter,
-+                    formFilterAllowed: formFilterAllowed,
-+                    errorMessages: {notAllowed: formFilterErrorMessage},
-+            });
++            $formFilter.koApplyBindings(new FormFilter());
 +        };
          {% endif %}
  
@@ -49,7 +41,7 @@
              {% with module_name=module.name|trans:langs %}
              labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
              {% endwith %}
-@@ -203,13 +206,6 @@
+@@ -187,13 +190,6 @@
                  workflow: '{{ form.post_form_workflow }}',
              };
  
@@ -63,16 +55,16 @@
              $('#form-workflow').koApplyBindings(new FormWorkflow(options))
          {% endif %}
  
-@@ -232,7 +228,7 @@
- 
-         gaTrackLink($('.breadcrumb .view-form'), 'App Builder', 'View Form', 'Breadcrumb');
+@@ -214,7 +210,7 @@
+         });
+         {% endif %}
  
 -        {% if allow_cloudcare %}
 +        {% if can_preview_form and allow_cloudcare %}
              // tag the 'preview in cloudcare' button with the right url
              // unfortunately, has to be done in javascript
              var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-@@ -298,69 +294,55 @@
+@@ -280,72 +276,55 @@
      </script>
  {% endblock %}
  
@@ -138,7 +130,10 @@
 -    <div class="btn-group">
 -        {% if not form.form_type == "shadow_form" %}
 -            {% if not form.no_vellum %}
--            <a id="edit_label" href="{% url "form_source" domain app.id module.id form.id %}" class="btn btn-primary">
+-            <a id="edit_label" class="btn btn-primary track-usage-link"
+-               href="{% url "form_source" domain app.id module.id form.id %}"
+-               data-category='App Builder' data-action='Open Form' data-label='Edit Label'
+-            >
 -                <i class="fa fa-pencil"></i>
 -                {% trans "Edit" %}
 -            </a>
@@ -184,7 +179,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -372,35 +354,36 @@
+@@ -357,35 +336,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -238,7 +233,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -412,30 +395,32 @@
+@@ -397,30 +377,32 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -295,7 +290,7 @@
              <div class="tab-pane" id="usercase-configuration">
                  {% if form_errors or xform_validation_errored %}
                      <p class="alert alert-warning">
-@@ -461,7 +446,6 @@
+@@ -446,7 +428,6 @@
                          {% block usercase_management_content %}
                              {%  if form.uses_usercase and not allow_usercase %}
                                  <div class="container-fluid col-sm-6">
@@ -303,7 +298,7 @@
                                {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
                                  <p>{% blocktrans %}
                                      The User Properties feature is no longer available because of the change in your
-@@ -506,7 +490,7 @@
+@@ -491,7 +472,7 @@
                                  </p>
                                  </div>
                              {% endif %}
@@ -312,7 +307,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -519,14 +503,15 @@
+@@ -504,14 +485,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -330,7 +325,7 @@
              {% endif %}
          </div>
      </div>
-@@ -534,12 +519,12 @@
+@@ -519,12 +501,12 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
@@ -343,5 +338,5 @@
 -    {% include 'app_manager/v1/partials/module_view_breadcrumbs.html' %}
 +    {% include 'app_manager/v2/partials/module_view_breadcrumbs.html' %}
      <li>
-         <a class="view-form" href="{% url "view_form" domain app.id module.id form.id %}">
-             <span class="app-manager-title variable-form_name">{{ form.name|html_trans:langs|safe }}</span>
+         <a class="track-usage-link" href="{% url "view_form" domain app.id module.id form.id %}"
+            data-category="App Builder" data-action="View Form" data-label="Breadcrumb">

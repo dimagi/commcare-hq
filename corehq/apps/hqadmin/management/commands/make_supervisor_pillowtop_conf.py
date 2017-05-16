@@ -16,11 +16,15 @@ class Command(SupervisorConfCommand):
         all_pillows = get_pillows_for_env(pillow_env_configs, settings.PILLOWTOPS)
         for pillow_config in all_pillows:
             pillow_name = pillow_config.name
+            num_processes = pillow_config.params.get('num_processes', 1)
             pillow_params = {
                 'pillow_name': pillow_name,
-                'pillow_option': ' --pillow-name %s' % pillow_name
+                'pillow_option': ' --pillow-name %s' % pillow_name,
+                'num_processes': num_processes
             }
             pillow_params.update(params)
-            pillow_rendering = super(Command, self).render_configuration_file(conf_template_string, pillow_params)
-            configs.append(pillow_rendering)
+            for process_number in range(num_processes):
+                pillow_params.update({'process_num': process_number})
+                pillow_rendering = super(Command, self).render_configuration_file(conf_template_string, pillow_params)
+                configs.append(pillow_rendering)
         return '\n\n'.join(configs)

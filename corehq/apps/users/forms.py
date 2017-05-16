@@ -92,7 +92,7 @@ def wrapped_language_validation(value):
                                     "enter a valid two or three digit code." % value)
 
 
-def _generate_strong_password():
+def generate_strong_password():
     import string
     import random
     possible = string.punctuation + string.ascii_lowercase + string.ascii_uppercase + string.digits
@@ -332,9 +332,18 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
 class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
     loadtest_factor = forms.IntegerField(
         required=False, min_value=1, max_value=50000,
-        help_text=ugettext_lazy(u"Multiply this user's case load by a number for load testing on phones. "
-                    u"Leave blank for normal users."),
+        help_text=ugettext_lazy(
+            u"Multiply this user's case load by a number for load testing on phones. "
+            u"Leave blank for normal users."
+        ),
         widget=forms.HiddenInput())
+
+    mobile_ucr_sync_interval = forms.IntegerField(
+        label=ugettext_lazy("Mobile report sync delay"),
+        required=False,
+        help_text=ugettext_lazy("Time to wait between sending updated mobile report data to users (hours)."),
+        widget=forms.HiddenInput()
+    )
 
     def __init__(self, *args, **kwargs):
         super(UpdateCommCareUserInfoForm, self).__init__(*args, **kwargs)
@@ -346,6 +355,16 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         ))
         if toggles.ENABLE_LOADTEST_USERS.enabled(self.domain):
             self.fields['loadtest_factor'].widget = forms.TextInput()
+
+        if toggles.MOBIE_UCR_SYNC_DELAY_CONFIG.enabled(self.domain):
+            self.fields['mobile_ucr_sync_interval'].widget = forms.NumberInput()
+
+        if self.initial['mobile_ucr_sync_interval']:
+            self.initial['mobile_ucr_sync_interval'] /= 3600  # convert seconds to hours
+
+    def clean_mobile_ucr_sync_interval(self):
+        if self.cleaned_data['mobile_ucr_sync_interval']:
+            return self.cleaned_data['mobile_ucr_sync_interval'] * 3600
 
     @property
     def direct_properties(self):
@@ -382,7 +401,7 @@ class SetUserPasswordForm(EncodedPasswordChangeForm, SetPasswordForm):
                  ugettext_lazy("This password is automatically generated. Please copy it or create your own. It will not be shown again."),
                  '<br /><span data-bind="text: passwordHelp, css: color">'
             ))
-            initial_password = _generate_strong_password()
+            initial_password = generate_strong_password()
 
         self.helper = FormHelper()
 
@@ -543,8 +562,9 @@ class NewMobileWorkerForm(forms.Form):
         email_string = u"@{}.commcarehq.org".format(project.name)
         max_chars_username = 80 - len(email_string)
         self.project = project
+        self.domain = self.project.name
         self.user = user
-        self.can_access_all_locations = user.has_permission(self.project.name, 'access_all_locations')
+        self.can_access_all_locations = user.has_permission(self.domain, 'access_all_locations')
         if not self.can_access_all_locations:
             self.fields['location_id'].required = True
 
@@ -624,7 +644,7 @@ class NewMobileWorkerForm(forms.Form):
 
     def clean_location_id(self):
         location_id = self.cleaned_data['location_id']
-        if not user_can_access_location_id(self.project.name, self.user, location_id):
+        if not user_can_access_location_id(self.domain, self.user, location_id):
             raise forms.ValidationError("You do not have access to that location.")
         return location_id
 
@@ -632,7 +652,7 @@ class NewMobileWorkerForm(forms.Form):
         username = self.cleaned_data['username']
         if username == 'admin' or username == 'demo_user':
             raise forms.ValidationError("The username %s is reserved for CommCare." % username)
-        return username
+        return clean_mobile_worker_username(self.domain, username)
 
     def clean_password(self):
         if self.project.strong_mobile_passwords:

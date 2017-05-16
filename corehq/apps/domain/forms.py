@@ -81,7 +81,7 @@ from corehq.privileges import (
     REPORT_BUILDER_ADD_ON_PRIVS,
     REPORT_BUILDER_TRIAL,
 )
-from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX
+from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBIE_UCR_SYNC_DELAY_CONFIG
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from dimagi.utils.decorators.memoized import memoized
@@ -555,6 +555,17 @@ class DomainGlobalSettingsForm(forms.Form):
         help_text=ugettext_lazy("Enter the case type to be used for FLWs in call center apps")
     )
 
+    mobile_ucr_sync_interval = IntegerField(
+        label=ugettext_lazy("Default mobile report sync delay (hours)"),
+        required=False,
+        help_text=ugettext_lazy(
+            """
+            Default time to wait between sending updated mobile report data to users.
+            Can be overrided on a per user bases.
+            """
+        )
+    )
+
     def __init__(self, *args, **kwargs):
         self.project = kwargs.pop('domain', None)
         self.domain = self.project.name
@@ -594,11 +605,18 @@ class DomainGlobalSettingsForm(forms.Form):
                 )
                 owner_field.widget.set_domain(self.domain)
 
+        if not MOBIE_UCR_SYNC_DELAY_CONFIG.enabled(self.domain):
+            del self.fields['mobile_ucr_sync_interval']
+
     def clean_default_timezone(self):
         data = self.cleaned_data['default_timezone']
         timezone_field = TimeZoneField()
         timezone_field.run_validators(data)
         return smart_str(data)
+
+    def clean_mobile_ucr_sync_interval(self):
+        if self.cleaned_data.get('mobile_ucr_sync_interval'):
+            return self.cleaned_data.get('mobile_ucr_sync_interval') * 3600
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
@@ -666,6 +684,7 @@ class DomainGlobalSettingsForm(forms.Form):
     def save(self, request, domain):
         domain.hr_name = self.cleaned_data['hr_name']
         domain.project_description = self.cleaned_data['project_description']
+        domain.default_mobile_ucr_sync_interval = self.cleaned_data.get('mobile_ucr_sync_interval', None)
         self._save_logo_configuration(domain)
         self._save_call_center_configuration(domain)
         self._save_timezone_configuration(domain)
@@ -1002,14 +1021,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         label="Partner contact",
         required=False,
         help_text=(
-            "Primary partner point of contact going forward (type email of existing web user)."
+            "Primary partner point of contact going forward (type username of existing web user)."
         ),
     )
     dimagi_contact = CharField(
         label="Dimagi contact",
         required=False,
         help_text=(
-            "Primary Dimagi point of contact going forward (type email of existing web user)."
+            "Primary Dimagi point of contact going forward (type username of existing web user)."
         ),
     )
     send_handoff_email = forms.BooleanField(

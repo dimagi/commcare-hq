@@ -7,13 +7,11 @@ from casexml.apps.stock.models import StockReport, StockTransaction
 from couchdbkit.exceptions import ResourceNotFound
 from couchforms.models import XFormInstance
 
-from corehq.apps.accounting.tests import generator
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig, StockState, ConsumptionConfig
 from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.consumption.shortcuts import set_default_consumption_for_supply_point
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import Location, SQLLocation, LocationType
-from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser
@@ -190,7 +188,6 @@ class EWSScriptTest(EWSTestCase, TestScript):
         CommCareUser.get_by_username('stella').delete()
         CommCareUser.get_by_username('super').delete()
         FacilityInCharge.objects.all().delete()
-        delete_all_locations()
         LocationType.objects.all().delete()
         for product in Product.by_domain(TEST_DOMAIN):
             product.delete()

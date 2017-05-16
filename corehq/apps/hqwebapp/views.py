@@ -351,6 +351,11 @@ def login(req):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
+
+    if settings.SERVER_ENVIRONMENT == 'icds':
+        login_url = reverse('domain_login', kwargs={'domain': 'icds-cas'})
+        return HttpResponseRedirect(login_url)
+
     req_params = req.GET if req.method == 'GET' else req.POST
     domain = req_params.get('domain', None)
     return _login(req, domain, "login_and_password/login.html")

@@ -20,9 +20,10 @@ from corehq.form_processor.utils.xform import (
 from corehq.form_processor.tests.utils import run_with_all_backends
 from casexml.apps.case.tests.util import delete_all_xforms
 
+from corehq.util.test_utils import create_and_save_a_case
 from ..views import LocationsListView, EditLocationView
-from ..permissions import can_edit_form_location
-from .util import LocationHierarchyTestCase, delete_all_locations
+from ..permissions import can_edit_form_location, user_can_access_case
+from .util import LocationHierarchyTestCase
 
 
 class FormEditRestrictionsMixin(object):
@@ -105,7 +106,6 @@ class FormEditRestrictionsMixin(object):
     @classmethod
     def extra_teardown(cls):
         delete_all_users()
-        delete_all_locations()
         delete_all_xforms()
 
     def assertCanEdit(self, user, form):
@@ -285,3 +285,9 @@ class TestAccessRestrictions(LocationHierarchyTestCase):
         users = json.loads(response.content)['response']['itemList']
         self.assertEqual(len(users), 1)
         self.assertEqual(users[0]['username'], 'boston_worker')
+
+    def test_user_can_acces_case(self):
+        self.case = create_and_save_a_case(self.domain, uuid.uuid4().hex, 'test-case',
+                                           owner_id=self.locations['Cambridge'].location_id)
+        self.assertTrue(user_can_access_case(self.domain, self.cambridge_worker, self.case))
+        self.assertFalse(user_can_access_case(self.domain, self.suffolk_user, self.case))

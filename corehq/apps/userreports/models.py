@@ -730,6 +730,7 @@ class AsyncIndicator(models.Model):
     )
     date_created = models.DateTimeField(auto_now_add=True, db_index=True)
     date_queued = models.DateTimeField(null=True, db_index=True)
+    unsuccessful_attempts = models.IntegerField(default=0)
 
     class Meta(object):
         ordering = ["date_created"]

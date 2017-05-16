@@ -23,12 +23,14 @@
         <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
     {% endif %}
     <script src="{% static 'app_manager/js/module-view.js' %}"></script>
+    <script src="{% static 'app_manager/js/case_list_setting.js' %}"></script>
     {% include "app_manager/v1/partials/xpathValidator.html" %}
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     {% include "app_manager/v1/partials/nav_menu_media_js_common.html" %}
     {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.menu %}
     {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_menu_item qualifier='case_list-menu_item_' %}
+    <script src="{% static 'app_manager/js/case_detail_print.js' %}"></script>
     <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
     <script src="{% static 'app_manager/js/shadow-module-settings.js' %}"></script>
 
@@ -47,57 +49,6 @@
     {% endif %}
     {% include 'style/partials/key_value_mapping.html' %}
     {% include 'app_manager/v1/partials/graph_configuration_modal.html' %}
-
-    <script>
-    var print_ref;
-    {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
-    {% with print_uploader as uploader %}
-    var printTemplateUploader = new HQMediaFileUploadController (
-        '{{ uploader.slug }}',
-        '{{ uploader.media_type }}',
-        {
-            allowCloseDuringUpload: true,
-            fileFilters: {{ uploader.supported_files|JSON }},
-            uploadURL: '{{ uploader.destination }}',
-            processingURL: '{{ uploader.processing_url }}',
-            swfURL: '{% static 'hqmedia/MediaUploader/flashuploader.swf' %}',
-            isMultiFileUpload: {{ uploader.is_multi_file|yesno:"true,false" }},
-            {% if uploader.queue_template %}queueTemplate: '{% filter escapejs %}{% include uploader.queue_template %}{% endfilter %}',{% endif %}
-            {% if uploader.status_template %}statusTemplate: '{% filter escapejs %}{% include uploader.status_template %}{% endfilter %}',{% endif %}
-            {% if uploader.details_template %}detailsTemplate: '{% filter escapejs %}{% include uploader.details_template %}{% endfilter %}',{% endif %}
-            {% if uploader.errors_template %}errorsTemplate: '{% filter escapejs %}{% include uploader.errors_template %}{% endfilter %}',{% endif %}
-            {% if uploader.existing_file_template %}existingFileTemplate: '{% filter escapejs %}{% include uploader.existing_file_template %}{% endfilter %}',{% endif %}
-            uploadParams: {{ uploader.upload_params|JSON }},
-            sessionid: {{ request.COOKIES.sessionid|JSON }},
-            licensingParams: {{ uploader.licensing_params|JSON }},
-        });
-    printTemplateUploader.init();
-    print_ref = new BaseMediaReference({{ print_ref|JSON }});
-    print_ref.upload_controller = printTemplateUploader;
-    print_ref.setObjReference({{ print_media_info|JSON }});
-    printTemplateUploader.currentReference = print_ref;
-
-    function removePrintTemplate(slug) {
-        $.post(
-            '{% url "hqmedia_remove_detail_print_template" domain app.id %}',
-            {
-                module_unique_id: '{{ module.unique_id }}',
-            },
-            function(data, status) {
-                if(status == 'success'){
-                    print_ref.setObjReference({
-                        path: print_ref.path,
-                    });
-                    print_ref.is_matched(false);
-                    printTemplateUploader.updateUploadFormUI();
-                }
-            }
-        );
-    }
-
-    {% endwith %}
-    {% endif %}
-    </script>
 {% endblock %}
 
 {% block form-view %}
@@ -108,8 +59,14 @@
     {% initial_page_data 'case_list_form_options' case_list_form_options %}
     {% initial_page_data 'case_list_form_not_allowed_reason' case_list_form_not_allowed_reason  %}
     {% initial_page_data 'parent_modules' parent_modules %}
+    {% initial_page_data 'print_media_info' print_media_info %}
+    {% initial_page_data 'print_ref' print_ref %}
+    {% initial_page_data 'print_uploader_js' print_uploader_js %}
     {% initial_page_data 'shadow_module_options' shadow_module_options %}
+    {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
+    {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
     {% registerurl "edit_module_detail_screens" domain app.id module.id %}
+    {% registerurl "hqmedia_remove_detail_print_template" domain app.id %}
     {% registerurl "validate_module_for_build" domain app.id module.id %}
     {% include 'app_manager/v1/partials/module_view_heading.html' %}
 <div class="tabbable">

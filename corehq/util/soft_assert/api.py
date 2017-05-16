@@ -16,14 +16,15 @@ def _send_message(info, backend):
                  'Value: {info.obj!r}\n'
                  'Traceback:\n{info.traceback}\n'
                  'Request:\n{request}\n'
-                 'Occurrences to date: {info.count}\n').format(
+                 'Occurrences to date: {info.count}\n'
+                 'Breadcrumbs: {info.breadcrumbs}\n').format(
                 info=info, request=request_repr)
     )
 
 
 def soft_assert(to=None, notify_admins=False,
                 fail_if_debug=False, exponential_backoff=True, skip_frames=0,
-                send_to_ops=True,):
+                send_to_ops=True, include_breadcrumbs=False):
     """
     send an email with stack trace if assertion is not True
 
@@ -78,6 +79,9 @@ def soft_assert(to=None, notify_admins=False,
         )
 
     def send_to_admins(subject, message):
+        if settings.DEBUG:
+            return
+
         mail_admins_async.delay(
             subject=subject,
             message=message,
@@ -85,16 +89,14 @@ def soft_assert(to=None, notify_admins=False,
 
     if to and notify_admins:
         def send(info):
-            if not settings.DEBUG:
-                _send_message(info, backend=send_to_admins)
+            _send_message(info, backend=send_to_admins)
             _send_message(info, backend=send_to_recipients)
     elif to:
         def send(info):
             _send_message(info, backend=send_to_recipients)
     elif notify_admins:
         def send(info):
-            if not settings.DEBUG:
-                _send_message(info, backend=send_to_admins)
+            _send_message(info, backend=send_to_admins)
     else:
         raise ValueError('You must call soft assert with either a '
                          'list of recipients or notify_admins=True')
@@ -109,4 +111,5 @@ def soft_assert(to=None, notify_admins=False,
         send=send,
         use_exponential_backoff=exponential_backoff,
         skip_frames=skip_frames,
+        include_breadcrumbs=include_breadcrumbs
     )

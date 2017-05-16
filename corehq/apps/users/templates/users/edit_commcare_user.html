@@ -74,6 +74,11 @@
         </div>
         {% if commtrack %}
         <div class="tab-pane" id="commtrack-data">
+            {% if couch_user.user_location_id %}
+                <a class="btn btn-default" href="{% url "edit_location" domain couch_user.user_location_id %}">
+                    <i class="fa fa-external-link"></i> {% trans "User Location" %}
+                </a>
+            {% endif %}
             {% include "users/partial/edit_commtrack_user_settings.html" %}
         </div>
         {% endif %}

@@ -203,7 +203,7 @@
 -                    refreshQuestions('{% url 'get_form_questions' domain app.id %}', '{{module.id}}', '{{form.id}}', event);
 -                    analytics.usage('Refresh case management', 'Button Clicked');
 -                    }">
-+  <p>
++  <p class="pull-right">
 +    <button class="btn btn-info refresh-form-questions"
 +            type="button"
 +             data-bind="click: function(data, event){

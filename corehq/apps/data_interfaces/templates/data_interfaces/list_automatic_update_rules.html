@@ -87,7 +87,7 @@
 {% block page_content %}
 <div ng-app="autoUpdateRuleApp" ng-controller="PaginatedListController as paginationController">
     <div class="btn-toolbar" style="margin-bottom: 20px;">
-        <a href="{% url "add_automatic_update_rule" domain %}">
+        <a href="{% url "add_case_rule" domain %}">
             <button type="button" class="btn btn-success" ng-click="trackNewRule();">
                 <i class="fa fa-plus"></i> {% trans "Add Automatic Case Close Rule" %}
             </button>

@@ -2,9 +2,7 @@ import uuid
 import json
 import phonenumbers
 import jsonobject
-import pytz
-
-from django.utils.dateparse import parse_datetime
+from django.utils.dateparse import parse_date
 
 from corehq.apps.repeaters.repeater_generators import (
     BasePayloadGenerator,
@@ -94,6 +92,10 @@ class PatientPayload(jsonobject.JsonObject):
 
 
 class NinetyNineDotsBasePayloadGenerator(BasePayloadGenerator):
+    @property
+    def content_type(self):
+        return 'application/json'
+
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):
             update_case(repeat_record.domain, repeat_record.payload_id, {
@@ -103,9 +105,6 @@ class NinetyNineDotsBasePayloadGenerator(BasePayloadGenerator):
 
 @RegisterGenerator(NinetyNineDotsRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
 class RegisterPatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
-    @property
-    def content_type(self):
-        return 'application/json'
 
     def get_test_payload(self, domain):
         return json.dumps(PatientPayload(
@@ -151,9 +150,6 @@ class RegisterPatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
 
 @RegisterGenerator(NinetyNineDotsUpdatePatientRepeater, 'case_json', 'JSON', is_default=True)
 class UpdatePatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
-    @property
-    def content_type(self):
-        return 'application/json'
 
     def get_test_payload(self, domain):
         return json.dumps(PatientPayload(
@@ -222,9 +218,7 @@ class AdherencePayloadGenerator(NinetyNineDotsBasePayloadGenerator):
             ).case_id
         )
         adherence_case_properties = adherence_case.dynamic_case_properties()
-        date = (parse_datetime(adherence_case.dynamic_case_properties().get('adherence_date'))
-                .astimezone(pytz.timezone('Asia/Kolkata'))
-                .date())
+        date = parse_date(adherence_case.dynamic_case_properties().get('adherence_date'))
         payload = {
             'beneficiary_id': person_case.case_id,
             'adherence_date': date.isoformat(),
