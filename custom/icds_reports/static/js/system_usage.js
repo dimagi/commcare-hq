@@ -1,6 +1,6 @@
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-angular.module('icdsApp').controller('SystemUsageController', function($http) {
+function SystemUsageController($http, $log) {
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
@@ -11,13 +11,13 @@ angular.module('icdsApp').controller('SystemUsageController', function($http) {
         $http({
             method: "GET",
             url: get_url,
-            params: {}
+            params: {},
         }).then(
             function (response) {
                 step.data = response.data.records;
             },
             function (error) {
-                console.log(error);
+                $log.error(error);
             });
     };
 
@@ -26,13 +26,13 @@ angular.module('icdsApp').controller('SystemUsageController', function($http) {
         { "slug": "maternal_child", "label": "Maternal & Child Health", "data": null},
         { "slug": "icds_cas_reach", "label": "ICDS-CAS Reach", "data": null},
         { "slug": "demographics", "label": "Demographics", "data": null},
-        { "slug": "awc_infrastructure", "label": "AWC Infrastructure", "data": null}
+        { "slug": "awc_infrastructure", "label": "AWC Infrastructure", "data": null},
     ];
     vm.getDataForStep(vm.steps[0]);
     vm.step = vm.steps[0];
 
     vm.goToStep = function(s) {
-        angular.forEach(this.steps, function(value, key) {
+        window.angular.forEach(vm.steps, function(value) {
             if (value.slug === s.slug) {
                 if (!value.data) {
                     vm.getDataForStep(vm.steps[0]);
@@ -40,5 +40,9 @@ angular.module('icdsApp').controller('SystemUsageController', function($http) {
                 vm.step = value;
             }
         });
-    }
-});
+    };
+}
+
+SystemUsageController.$inject = ['$http', '$log'];
+
+window.angular.module('icdsApp').controller('SystemUsageController', SystemUsageController);
