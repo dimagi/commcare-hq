@@ -11,8 +11,8 @@ from ..states import (
 )
 
 
-class FactTableState(models.Model):
-    report_slug = models.CharField(max_length=255)
+class TableState(models.Model):
+    slug = models.CharField(max_length=255)
     state = FSMField(default=FACT_TABLE_NEEDS_UPDATING, db_index=True)
     last_modified = models.DateTimeField(auto_now=True)
     last_batch_id = models.CharField(max_length=255)
