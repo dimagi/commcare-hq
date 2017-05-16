@@ -2079,7 +2079,7 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
                 domain=domain,
             )
 
-        # this is just asserting that an exception is not raised after the toggle is set
+        # this is just asserting that an exception is not raised when there's no synclog
         _test()
 
     def test_restore_with_bad_log_toggle_enabled(self):
