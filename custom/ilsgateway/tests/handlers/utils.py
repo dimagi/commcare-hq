@@ -90,8 +90,8 @@ class ILSTestScript(TestScript):
 
     @staticmethod
     def get_location_by_site_code(site_code):
-        return SQLLocation.objects.get(domain=TEST_DOMAIN,
-                                       site_code__iexact=site_code)
+        return SQLLocation.objects.get_or_None(domain=TEST_DOMAIN,
+                                               site_code__iexact=site_code)
 
     def setUp(self):
         super(ILSTestScript, self).setUp()
