@@ -3,9 +3,13 @@ import re
 
 from corehq.apps.app_manager.util import get_app_manager_template
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, ugettext
 import os
 import yaml
+
+statically_analyzable_translations = [
+    ugettext_noop('Java Phone Platform'),
+]
 
 
 def _load_custom_commcare_settings(user=None):
@@ -37,7 +41,7 @@ def _load_custom_commcare_settings(user=None):
         if not setting.get('widget'):
             setting['widget'] = 'select'
         # i18n; not statically analyzable
-        setting['name'] = ugettext_noop(setting['name'])
+        setting['name'] = ugettext(setting['name'])
     return settings
 
 
