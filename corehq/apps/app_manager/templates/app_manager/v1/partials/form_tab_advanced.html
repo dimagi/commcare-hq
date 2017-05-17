@@ -93,7 +93,7 @@
         </ul>
     </fieldset>
     {% if allow_form_copy%}
-    <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
+    <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id form.unique_id %}'>
         {% csrf_token %}
         <fieldset>
             <legend>{% trans "Copy Form to a Different Module" %}</legend>

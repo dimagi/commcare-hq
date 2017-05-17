@@ -116,11 +116,14 @@ def delete_form(request, domain, app_id, module_unique_id, form_unique_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def copy_form(request, domain, app_id, module_id, form_id):
+def copy_form(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
+    form = app.get_form(form_unique_id)
+    module = form.get_module()
     to_module_id = int(request.POST['to_module_id'])
+    new_form = None
     try:
-        app.copy_form(int(module_id), int(form_id), to_module_id)
+        new_form = app.copy_form(module.id, form.id, to_module_id)
     except ConflictingCaseTypeError:
         messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
         app.save()
@@ -135,8 +138,10 @@ def copy_form(request, domain, app_id, module_id, form_id):
     else:
         app.save()
 
-    return back_to_main(request, domain, app_id=app_id, module_id=module_id,
-                        form_id=form_id)
+    if new_form:
+        return back_to_main(request, domain, app_id=app_id, unique_form_id=new_form.unique_id)
+    return back_to_main(request, domain, app_id=app_id, module_id=module.id,
+                        form_id=form.id)
 
 
 @no_conflict_require_POST

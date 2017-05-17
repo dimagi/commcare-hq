@@ -5954,7 +5954,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         from_module = self.get_module(module_id)
         form = from_module.get_form(form_id)
         to_module = self.get_module(to_module_id)
-        self._copy_form(from_module, form, to_module, rename=True)
+        return self._copy_form(from_module, form, to_module, rename=True)
 
     def _copy_form(self, from_module, form, to_module, *args, **kwargs):
         if not form.source:
@@ -5974,6 +5974,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         save_xform(self, copy_form, form.source)
+        return copy_form
 
     @cached_property
     def has_case_management(self):
