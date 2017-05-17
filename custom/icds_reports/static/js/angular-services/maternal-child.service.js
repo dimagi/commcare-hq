@@ -6,16 +6,16 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', '$q',
                 setTimeout(function() {
                     resolve({
                         data: {
-                            "IN.": {
+                            "Bihar": {
                                 "fillKey": "26%-50%",
                             },
-                            "IN.MH": {
+                            "Odisha": {
                                 "fillKey": "76%-100%",
                             },
-                            "IN.UP": {
+                            "Karnataka": {
                                 "fillKey": "51%-75%",
                             },
-                            "IN.OR": {
+                            "Mizoram": {
                                 "fillKey": "26%-50%",
                             },
                         },

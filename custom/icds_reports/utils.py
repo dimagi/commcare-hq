@@ -742,3 +742,41 @@ def get_awc_infrastructure_data(filters):
             ]
         ]
     }
+
+
+def get_awc_opened_data(filters):
+
+    def get_data_for(date):
+        return AggDailyUsageView.objects.filter(
+            date=datetime(*date), aggregation_level=1
+        ).values(
+            'state_name'
+        ).annotate(
+            awcs=Sum('awc_count'),
+            daily_attendance=Sum('daily_attendance_open'),
+        )
+
+    yesterday_data = get_data_for(filters['yesterday'])
+    data = {}
+    num = 0
+    denom = 0
+    for row in yesterday_data:
+        awcs = row['awcs']
+        name = row['state_name']
+        daily = row['daily_attendance']
+        num += daily
+        denom += awcs
+        percent = (daily or 0) * 100 / (awcs or 1)
+        if 0 < percent < 50:
+            data.update({name: {'fillKey': '0%-50%'}})
+        elif 50 < percent < 75:
+            data.update({name: {'fillKey': '51%-75%'}})
+        elif percent > 75:
+            data.update({name: {'fillKey': '75%-100%'}})
+    return {
+        'map': data,
+        'rightLegend': {
+            'average': num * 100 / (denom or 1),
+            'info': _("Percentage of Angwanwadi Centers that were open yesterday")
+        }
+    }

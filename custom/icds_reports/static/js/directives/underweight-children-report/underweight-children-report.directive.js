@@ -12,28 +12,9 @@ function UnderweightChildrenReportController($routeParams, maternalChildService)
     ];
 
     vm.mapData = {};
-    vm.mapPlugins = {
-        customTable: function() {
-            var html = [
-                '<table style="width: 250px;">',
-                '<td style="border-right: 1px solid black; padding-right: 10px; padding-bottom: 10px; font-size: 2em;"><i class="fa fa-line-chart" aria-hidden="true"></i></td>',
-                '<td style="padding-left: 10px; padding-bottom: 10px;">Average: 4%</td>',
-                '<tr/>',
-                '<tr>',
-                '<td style="border-right: 1px solid black; font-size: 2em;"><i class="fa fa-info" aria-hidden="true"></td>',
-                '<td style="padding-left: 10px;">Percentage of children with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median</td>',
-                '<tr/>',
-                '<tr>',
-                '<td style="border-right: 1px solid black; font-size: 2em;"><i class="fa fa-clock-o" aria-hidden="true"></td>',
-                '<td style="padding-left: 10px;">Last updated: 1/5/2017 | Monthly</td>',
-                '<tr/>',
-                '</table>',
-            ];
-            d3.select(this.options.element).append('div')
-                .attr('class', '')
-                .attr('style', 'position: absolute; width: 150px; bottom: 5%; right: 25%;')
-                .html(html.join(''));
-        },
+    vm.rightLegend = {
+        average: 10,
+        info: "Percentage of children with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median. Children who are moderately or severely underweight have a higher risk of mortality.",
     };
 
     vm.fills = {

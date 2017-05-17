@@ -18,7 +18,8 @@ function SystemUsageController($http, $log) {
             },
             function (error) {
                 $log.error(error);
-            });
+            }
+        );
     };
 
     vm.steps =[

@@ -17,8 +17,10 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
         $routeProvider
             .when("/", {
                 template : "<system-usage></system-usage>",
+            }).when("/awc_opened", {
+                redirectTo : "/awc_opened/1",
             })
-            .when("/awc_opened", {
+            .when("/awc_opened/:step", {
                 template : "<awc-opened-yesterday></awc-opened-yesterday>",
             })
             .when("/active_awws", {
