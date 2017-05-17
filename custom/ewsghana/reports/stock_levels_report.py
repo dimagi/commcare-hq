@@ -24,7 +24,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _
 from corehq.apps.locations.dbaccessors import get_users_by_location_id
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import get_location, SQLLocation
 
 
 class StockLevelsLegend(EWSData):
@@ -377,7 +377,7 @@ class StockLevelsReport(MultiReport):
             lambda loc_type: not loc_type.administrative,
             Domain.get_by_name(self.domain).location_types
         )]
-        if not self.needs_filters and Location.get(config['location_id']).location_type_name in location_types:
+        if not self.needs_filters and get_location(config['location_id']).location_type_name in location_types:
             if self.is_rendered_as_email:
                 return [FacilityReportData(config)]
             else:
