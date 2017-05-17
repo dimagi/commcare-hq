@@ -33,17 +33,19 @@ class BeneficiaryCaseFactory(object):
         self.domain = domain
         self.beneficiary = beneficiary
 
-    def get_case_structures_to_create(self):
+    def get_case_structures_to_create(self, skip_adherence):
         person_structure = self.get_person_case_structure()
         ocurrence_structure = self.get_occurrence_case_structure(person_structure)
         episode_structure = self.get_episode_case_structure(ocurrence_structure)
         episode_descendants = [
-            self.get_adherence_case_structure(adherence, episode_structure)
-            for adherence in self._adherences
-        ] + [
             self.get_prescription_case_structure(prescription, episode_structure)
             for prescription in self._prescriptions
         ]
+        if not skip_adherence:
+            episode_descendants += [
+                self.get_adherence_case_structure(adherence, episode_structure)
+                for adherence in self._adherences
+            ]
         episode_or_descendants = episode_descendants or [episode_structure]
 
         tests = [
