@@ -209,18 +209,6 @@ def default_start_date():
     return datetime(2012, 1, 1)
 
 
-def _get_test_locations(domain):
-    """
-        returns test region and all its children
-    """
-    test_region = SQLLocation.objects.get(domain=domain, external_id=const.TEST_REGION_ID)
-    sql_locations = SQLLocation.objects.filter(
-        Q(domain=domain) & (Q(parent=test_region) | Q(parent__parent=test_region))
-    ).exclude(is_archived=True).order_by('id').only('location_id')
-    return [sql_location.couch_location for sql_location in sql_locations] + \
-           [test_region.couch_location]
-
-
 def _get_locations_by_type(domain, type_name):
     return list(SQLLocation.active_objects.filter(domain=domain, location_type__name=type_name))
 
