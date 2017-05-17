@@ -4,6 +4,7 @@ import traceback
 
 from django.conf import settings
 from django.contrib import admin
+from django.utils.deprecation import MiddlewareMixin
 
 from auditcare.models import AuditEvent
 from auditcare.decorators import watch_login
@@ -12,11 +13,12 @@ from auditcare.decorators import watch_logout
 log = logging.getLogger(__name__)
 
 
-class AuditMiddleware(object):
-    def __init__(self):
+class AuditMiddleware(MiddlewareMixin):
+    def __init__(self, get_response=None):
         """
         Audit middleware needs to be enabled on site after the login/user info is instantiated on the request object.
         """
+        super(AuditMiddleware, self).__init__(get_response)
         self.active = False
         self.log_admin = True
         
