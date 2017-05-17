@@ -174,7 +174,6 @@ class BeneficiaryCaseFactory(object):
                 'update': {
                     'date_of_mo_signature': self.beneficiary.dateOfRegn.date(),
                     'diagnosing_facility_id': self._location_owner_id,
-                    'dots_99_enabled': 'false',  # TODO - confirm or fix
                     'enrolled_in_private': 'true',
                     'episode_id': get_human_friendly_id(),
                     'episode_type': self.beneficiary.current_episode_type,
@@ -196,10 +195,13 @@ class BeneficiaryCaseFactory(object):
         if self._episode:
             rx_start_datetime = self._episode.rxStartDate
             kwargs['attrs']['date_opened'] = rx_start_datetime
+            kwargs['attrs']['update']['adherence_total_doses_taken'] = self._episode.adherence_total_doses_taken
+            kwargs['attrs']['update']['adherence_tracking_mechanism'] = self._episode.adherence_tracking_mechanism
             kwargs['attrs']['update']['basis_of_diagnosis'] = self._episode.basis_of_diagnosis
             kwargs['attrs']['update']['case_definition'] = self._episode.case_definition
             kwargs['attrs']['update']['date_of_diagnosis'] = self._episode.dateOfDiagnosis.date()
             kwargs['attrs']['update']['disease_classification'] = self._episode.disease_classification
+            kwargs['attrs']['update']['dots_99_enabled'] = self._episode.dots_99_enabled
             kwargs['attrs']['update']['dst_status'] = self._episode.dst_status
             kwargs['attrs']['update']['episode_details_complete'] = 'true'
             kwargs['attrs']['update']['episode_pending_registration'] = (
@@ -235,6 +237,9 @@ class BeneficiaryCaseFactory(object):
             if self._episode.is_treatment_ended:
                 kwargs['attrs']['close'] = True
         else:
+            kwargs['attrs']['update']['adherence_total_doses_taken'] = 0
+            kwargs['attrs']['update']['adherence_tracking_mechanism'] = ''
+            kwargs['attrs']['update']['dots_99_enabled'] = 'false'
             kwargs['attrs']['update']['episode_pending_registration'] = 'yes'
             kwargs['attrs']['update']['private_sector_episode_pending_registration'] = 'yes'
             kwargs['attrs']['update']['treatment_initiated'] = 'no'

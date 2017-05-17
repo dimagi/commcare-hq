@@ -187,6 +187,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(episode_case.opened_on, datetime(2017, 4, 19))
         self.assertEqual(episode_case.owner_id, '-')
         self.assertEqual(episode_case.dynamic_case_properties(), OrderedDict([
+            ('adherence_total_doses_taken', '0'),
+            ('adherence_tracking_mechanism', ''),
             ('basis_of_diagnosis', 'clinical_other'),
             ('case_definition', 'clinical'),
             ('date_of_diagnosis', '2017-04-18'),
@@ -366,6 +368,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
         self.assertEqual(len(episode_case_ids), 1)
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
+        self.assertEqual(episode_case.dynamic_case_properties()['adherence_total_doses_taken'], '1')
 
         adherence_case_ids = self.case_accessor.get_case_ids_in_domain(type='adherence')
         self.assertEqual(len(adherence_case_ids), 1)
@@ -440,7 +443,12 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
 
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
-        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='episode')), 1)
+
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(len(episode_case_ids), 1)
+        episode_case = self.case_accessor.get_case(episode_case_ids[0])
+        self.assertEqual(episode_case.dynamic_case_properties()['adherence_total_doses_taken'], '1')
+
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='adherence')), 2)
 
     def test_skip_adherence(self):
@@ -449,7 +457,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             adherenceScore=0.5,
             alertFrequencyId=2,
             basisOfDiagnosis='Clinical - Other',
-            beneficiaryID=self.beneficiary,
+            beneficiaryID=self.beneficiary.caseId,
             creationDate=datetime(2017, 4, 20),
             dateOfDiagnosis=datetime(2017, 4, 18),
             dstStatus='Rifampicin sensitive',
@@ -491,8 +499,106 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
 
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
-        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='episode')), 1)
+
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(len(episode_case_ids), 1)
+        episode_case = self.case_accessor.get_case(episode_case_ids[0])
+        self.assertEqual(episode_case.dynamic_case_properties()['adherence_total_doses_taken'], '1')
+
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='adherence')), 0)
+
+    def test_dots_99_enabled_false(self):
+        episode = Episode.objects.create(
+            id=1,
+            adherenceScore=0.5,
+            alertFrequencyId=2,
+            basisOfDiagnosis='Clinical - Other',
+            beneficiaryID=self.beneficiary.caseId,
+            creationDate=datetime(2017, 4, 20),
+            dateOfDiagnosis=datetime(2017, 4, 18),
+            dstStatus='Rifampicin sensitive',
+            episodeDisplayID=3,
+            extraPulmonary='Abdomen',
+            hiv='Negative',
+            lastMonthAdherencePct=0.6,
+            lastTwoWeeksAdherencePct=0.7,
+            missedDosesPct=0.8,
+            newOrRetreatment='New',
+            nikshayID='02139-02215',
+            patientWeight=50,
+            rxStartDate=datetime(2017, 4, 19),
+            site='Extrapulmonary',
+            unknownAdherencePct=0.9,
+            unresolvedMissedDosesPct=0.1,
+        )
+        Adherence.objects.create(
+            adherenceId=1,
+            creationDate=datetime(2017, 4, 21),
+            dosageStatusId=0,
+            doseDate=datetime.utcnow(),
+            doseReasonId=3,
+            episodeId=episode.episodeID,
+            reportingMechanismId=85,
+        )
+
+        call_command('create_cases_by_beneficiary', self.domain)
+
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(len(episode_case_ids), 1)
+        episode_case = self.case_accessor.get_case(episode_case_ids[0])
+        self.assertEqual(episode_case.dynamic_case_properties()['adherence_tracking_mechanism'], 'field_officer')
+        self.assertEqual(episode_case.dynamic_case_properties()['dots_99_enabled'], 'false')
+
+    def test_dots_99_enabled_true(self):
+        episode = Episode.objects.create(
+            id=1,
+            adherenceScore=0.5,
+            alertFrequencyId=2,
+            basisOfDiagnosis='Clinical - Other',
+            beneficiaryID=self.beneficiary.caseId,
+            creationDate=datetime(2017, 4, 20),
+            dateOfDiagnosis=datetime(2017, 4, 18),
+            dstStatus='Rifampicin sensitive',
+            episodeDisplayID=3,
+            extraPulmonary='Abdomen',
+            hiv='Negative',
+            lastMonthAdherencePct=0.6,
+            lastTwoWeeksAdherencePct=0.7,
+            missedDosesPct=0.8,
+            newOrRetreatment='New',
+            nikshayID='02139-02215',
+            patientWeight=50,
+            rxStartDate=datetime(2017, 4, 19),
+            site='Extrapulmonary',
+            unknownAdherencePct=0.9,
+            unresolvedMissedDosesPct=0.1,
+        )
+        Adherence.objects.create(
+            adherenceId=1,
+            creationDate=datetime(2017, 4, 21),
+            dosageStatusId=0,
+            doseDate=datetime.utcnow(),
+            doseReasonId=3,
+            episodeId=episode.episodeID,
+            reportingMechanismId=84,
+        )
+        Adherence.objects.create(
+            adherenceId=2,
+            creationDate=datetime(2017, 4, 21),
+            dosageStatusId=1,
+            doseDate=datetime.utcnow(),
+            doseReasonId=3,
+            episodeId=episode.episodeID,
+            reportingMechanismId=0,
+        )
+
+        call_command('create_cases_by_beneficiary', self.domain)
+
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(len(episode_case_ids), 1)
+        episode_case = self.case_accessor.get_case(episode_case_ids[0])
+        self.assertEqual(episode_case.dynamic_case_properties()['adherence_tracking_mechanism'], '99dots')
+        self.assertEqual(episode_case.dynamic_case_properties()['dots_99_enabled'], 'true')
 
     def test_prescription(self):
         EpisodePrescription.objects.create(
