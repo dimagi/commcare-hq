@@ -170,7 +170,7 @@ class ReferralExpressionBase(JsonObject):
 
 
 class ReferredBy(ReferralExpressionBase):
-    type = TypeProperty("referred_by")
+    type = TypeProperty("enikshay_referred_by")
 
     def _handle_referral_case(self, referral):
         return referral.opened_by
@@ -188,7 +188,7 @@ def referred_by_expression(spec, context):
 
 
 class ReferredTo(ReferralExpressionBase):
-    type = TypeProperty('referred_to')
+    type = TypeProperty('enikshay_referred_to')
 
     def _handle_referral_case(self, referral):
         return referral.owner_id
@@ -206,7 +206,7 @@ def referred_to_expression(spec, context):
 
 
 class DateOfReferral(ReferralExpressionBase):
-    type = TypeProperty('date_of_referral')
+    type = TypeProperty('enikshay_date_of_referral')
 
     def _handle_referral_case(self, referral):
         return referral.dynamic_case_properties().get("date_of_referral")
@@ -228,7 +228,7 @@ def date_of_referral_expression(spec, context):
 
 
 class DateOfAcceptance(ReferralExpressionBase):
-    type = TypeProperty("date_of_acceptance")
+    type = TypeProperty("enikshay_date_of_acceptance")
 
     def __call__(self, item, context=None):
         person_id = self._person_id_expression(item, context)
