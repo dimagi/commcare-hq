@@ -28,6 +28,7 @@ hqDefine('domain/js/dhis2_map_settings.js', function () {
     var DataSetMap = function (properties) {
         var self = this;
 
+        self.description = ko.observable(properties["description"]);
         self.ucrId = ko.observable(properties["ucr_id"]);
         self.frequency = ko.observable(properties["frequency"]);
         self.dayOfMonth = ko.observable(properties["day_to_send"]);
@@ -67,6 +68,7 @@ hqDefine('domain/js/dhis2_map_settings.js', function () {
                 dataValueMaps.push(dataValueMap.serialize());
             }
             return {
+                "description": self.description(),
                 "ucr_id": self.ucrId(),
                 "frequency": self.frequency(),
                 "day_to_send": self.dayOfMonth(),
