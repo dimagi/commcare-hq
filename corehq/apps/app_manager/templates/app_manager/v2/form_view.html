@@ -201,6 +201,13 @@
                 workflow: '{{ form.post_form_workflow }}',
             };
 
+            {% if request|toggle_enabled:"FORM_LINK_WORKFLOW" or uses_form_workflow %}
+            labels[FormWorkflow.Values.FORM] = "{% trans "Link to other form" %}";
+            options.forms = {{ linkable_forms|JSON}}
+            options.formLinks = {{ form.form_links|JSON }}
+            options.formDatumsUrl = '{% url 'get_form_datums' domain app.id %}'
+            {% endif %}
+
             $('#form-workflow').koApplyBindings(new FormWorkflow(options))
         {% endif %}
 
