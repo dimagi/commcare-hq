@@ -1,4 +1,4 @@
-/* globals hqDefine, ko, $, _ */
+/* globals hqDefine, ko, $, _, alert_user */
 
 hqDefine('domain/js/dhis2_map_settings.js', function () {
     'use strict';
@@ -87,7 +87,7 @@ hqDefine('domain/js/dhis2_map_settings.js', function () {
 
         self.frequencyOptions = [
             {"value": "monthly", "text": "Monthly"},
-            {"value": "quarterly", "text": "Quarterly"}
+            {"value": "quarterly", "text": "Quarterly"},
         ];
         self.dataSetMaps = ko.observableArray();
 
@@ -131,7 +131,7 @@ hqDefine('domain/js/dhis2_map_settings.js', function () {
                 function (data) { alert_user(data, "success", true); }
             );
         };
-    }
+    };
 
     return module;
 });
