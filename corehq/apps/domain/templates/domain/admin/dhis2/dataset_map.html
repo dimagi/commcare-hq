@@ -10,7 +10,7 @@
     <script>
     (function () {
         var Dhis2MapSettings = hqImport('domain/js/dhis2_map_settings.js').Dhis2MapSettings;
-        var viewModel = new Dhis2MapSettings({{ dataset_maps|JSON }});
+        var viewModel = new Dhis2MapSettings({{ dataset_maps|JSON }}, {{ send_data_url|JSON }});
         viewModel.init();
         $('#dataset-maps').koApplyBindings(viewModel);
     }());

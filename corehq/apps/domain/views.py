@@ -47,6 +47,7 @@ from corehq.apps.case_search.models import (
 from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
 from corehq.apps.dhis2.forms import Dhis2ConnectionForm
 from corehq.apps.dhis2.models import JsonApiLog, DataSetMap, DataValueMap
+from corehq.apps.dhis2.tasks import send_datasets
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.forms import LocationFixtureForm
@@ -637,6 +638,13 @@ def logo(request, domain):
         raise Http404()
 
     return HttpResponse(logo[0], content_type=logo[1])
+
+
+@require_POST
+@domain_admin_required
+def send_dhis2_data(request, domain):
+    send_datasets.delay(domain)
+    return HttpResponse(_('Data is being sent to DHIS2.'))
 
 
 class DomainAccountingSettings(BaseProjectSettingsView):
@@ -3161,6 +3169,7 @@ class DataSetMapView(BaseAdminProjectSettingsView):
         dataset_maps = [d.to_json() for d in get_dataset_maps(self.request.domain)]
         return {
             'dataset_maps': dataset_maps,
+            'send_data_url': reverse('send_dhis2_data', kwargs={'domain': self.domain}),
         }
 
 

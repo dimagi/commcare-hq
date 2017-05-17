@@ -82,7 +82,7 @@ hqDefine('domain/js/dhis2_map_settings.js', function () {
         };
     };
 
-    module.Dhis2MapSettings = function (dataSetMaps) {
+    module.Dhis2MapSettings = function (dataSetMaps, sendDataUrl) {
         var self = this;
 
         self.frequencyOptions = [
@@ -125,6 +125,11 @@ hqDefine('domain/js/dhis2_map_settings.js', function () {
         };
 
         self.sendData = function () {
+            $.post(
+                sendDataUrl,
+                {},
+                function (data) { alert_user(data, "success", true); }
+            );
         };
     }
 

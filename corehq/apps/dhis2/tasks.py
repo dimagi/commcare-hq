@@ -3,7 +3,7 @@ from datetime import datetime
 
 import bz2
 from celery.schedules import crontab
-from celery.task import periodic_task
+from celery.task import periodic_task, task
 
 from corehq import toggles
 from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
@@ -11,7 +11,8 @@ from corehq.apps.dhis2.api import JsonApiRequest
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
 
-def send_datavalues(domain_name):
+@task(queue='background_queue')
+def send_datasets(domain_name):
     """
     Sends a data set of data values in the following format:
 
@@ -52,4 +53,4 @@ def send_datavalues(domain_name):
 )
 def send_datasets_for_all_domains():
     for domain_name in find_domains_with_toggle_enabled(toggles.DHIS2_INTEGRATION):
-        send_datavalues(domain_name)
+        send_datasets.apply(args=(domain_name,))
