@@ -235,7 +235,7 @@ def _top_level_tags(form):
         to_return = OrderedDict()
 
         element = form.get_xml_element()
-        if not element:
+        if element is None:
             return OrderedDict(sorted(form.form_data.items()))
 
         for child in element:
