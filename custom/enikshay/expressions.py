@@ -133,13 +133,34 @@ class ReferralExpressionBase(JsonObject):
         if not person_id:
             return None
 
-        referral = get_open_referral_case_from_person(domain, person_id)
+        referral = self._get_referral(context, domain, person_id)
         if referral:
             return self._handle_referral_case(referral)
-        trail = get_latest_trail_case_from_person(domain, person_id)
+        trail = self._get_trail(context, domain, person_id)
         if trail:
             return self._handle_trail_case(trail, domain)
         return None
+
+    @staticmethod
+    def _get_referral(context, domain, person_id):
+        cache_key = (ReferralExpressionBase.__name__, "_get_referral", person_id)
+        if context.get_cache_value(cache_key, False) is not False:
+            return context.get_cache_value(cache_key)
+
+        referral = get_open_referral_case_from_person(domain, person_id)
+        context.set_cache_value(cache_key, referral)
+        return referral
+
+    @staticmethod
+    def _get_trail(context, domain, person_id):
+        cache_key = (ReferralExpressionBase.__name__, "_get_trail", person_id)
+
+        if context.get_cache_value(cache_key, False) is not False:
+            return context.get_cache_value(cache_key)
+
+        trail = get_latest_trail_case_from_person(domain, person_id)
+        context.set_cache_value(cache_key, trail)
+        return trail
 
     def _handle_referral_case(self, referral):
         raise NotImplementedError
