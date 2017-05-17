@@ -77,10 +77,14 @@ from corehq.apps.app_manager.views.download import (
 )
 from corehq.apps.app_manager.views.forms import (
     copy_form,
+    copy_form_by_form_index,
     delete_form,
     edit_advanced_form_actions,
     edit_careplan_form_actions,
     edit_form_actions,
+    edit_advanced_form_actions_by_form_index,
+    edit_careplan_form_actions_by_form_index,
+    edit_form_actions_by_form_index,
     edit_form_attr,
     edit_form_attr_api,
     form_casexml,
@@ -129,6 +133,7 @@ from corehq.apps.app_manager.views.releases import (
 from corehq.apps.app_manager.views.schedules import (
     edit_schedule_phases,
     edit_visit_schedule,
+    edit_visit_schedule_by_form_index,
 )
 from corehq.apps.app_manager.views.settings import (
     commcare_profile,

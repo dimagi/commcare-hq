@@ -23,7 +23,9 @@ from corehq.apps.app_manager.views import (
     edit_app_langs, edit_app_attr, edit_app_ui_translations, get_app_ui_translations, rearrange, odk_qr_code,
     odk_media_qr_code, odk_install, short_url, short_odk_url, save_copy, revert_to_copy, delete_copy, list_apps,
     direct_ccz, download_index, download_file, formdefs, get_form_questions, pull_master_app,
-    update_linked_whitelist, overwrite_module_case_list, app_settings, get_xform_source_by_form_index
+    update_linked_whitelist, overwrite_module_case_list, app_settings, get_xform_source_by_form_index,
+    copy_form_by_form_index, edit_form_actions_by_form_index, edit_careplan_form_actions_by_form_index,
+    edit_advanced_form_actions_by_form_index, edit_visit_schedule_by_form_index
 )
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
@@ -98,6 +100,8 @@ urlpatterns = [
 
     url(r'^overwrite_module_case_list/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',
         overwrite_module_case_list, name='overwrite_module_case_list'),
+    url(r'^copy_form/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
+        copy_form_by_form_index, name='copy_form_by_form_index'),
     url(r'^copy_form/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$', copy_form, name='copy_form'),
 
     url(r'^undo_delete_app/(?P<record_id>[\w-]+)/$', undo_delete_app,
@@ -117,14 +121,22 @@ urlpatterns = [
         validate_form_for_build, name='validate_form_for_build'),
     url(r'^rename_language/(?P<form_unique_id>[\w-]+)/$', rename_language, name='rename_language'),
     url(r'^validate_langcode/(?P<app_id>[\w-]+)/$', validate_language, name='validate_language'),
+    url(r'^edit_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
+        edit_form_actions_by_form_index, name='edit_form_actions_by_form_index'),
     url(r'^edit_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         edit_form_actions, name='edit_form_actions'),
+    url(r'^edit_careplan_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
+        edit_careplan_form_actions_by_form_index, name='edit_careplan_form_actions_by_form_index'),
     url(r'^edit_careplan_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         edit_careplan_form_actions, name='edit_careplan_form_actions'),
-    url(r'^edit_advanced_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
+    url(r'^edit_advanced_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
         edit_advanced_form_actions, name='edit_advanced_form_actions'),
+    url(r'^edit_advanced_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
+        edit_advanced_form_actions_by_form_index, name='edit_advanced_form_actions_by_form_index'),
 
     # Scheduler Modules
+    url(r'^edit_visit_schedule/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
+        edit_visit_schedule_by_form_index, name='edit_visit_schedule_by_form_index'),
     url(r'^edit_visit_schedule/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         edit_visit_schedule, name='edit_visit_schedule'),
     url(r'^edit_schedule_phases/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$', edit_schedule_phases,
