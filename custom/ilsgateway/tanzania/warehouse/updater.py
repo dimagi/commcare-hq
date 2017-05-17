@@ -179,7 +179,7 @@ def update_product_availability_facility_data(facility, products, start_date, en
             if not prev:
                 previous_reports = ProductAvailabilityData.objects.filter(
                     product=p.product_id,
-                    location_id=facility._id,
+                    location_id=facility.location_id,
                     date__lt=window_date,
                     total=1
                 )
@@ -261,7 +261,7 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner=None)
     """
     process all the facility-level warehouse tables
     """
-    logging.info("processing facility %s (%s)" % (facility.name, str(facility._id)))
+    logging.info("processing facility %s (%s)" % (facility.name, str(facility.location_id)))
 
     sql_location = facility.sql_location
     if runner:
@@ -269,14 +269,14 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner=None)
         runner.save()
 
     for alert_type in [const.SOH_NOT_RESPONDING, const.RR_NOT_RESPONDED, const.DELIVERY_NOT_RESPONDING]:
-        alert = Alert.objects.filter(location_id=facility._id, date__gte=start_date, date__lt=end_date,
+        alert = Alert.objects.filter(location_id=facility.location_id, date__gte=start_date, date__lt=end_date,
                                      type=alert_type)
         alert.delete()
 
     supply_point_id = sql_location.supply_point_id
-    location_id = facility._id
+    location_id = facility.location_id
     new_statuses = SupplyPointStatus.objects.filter(
-        location_id=facility._id,
+        location_id=facility.location_id,
         status_date__gte=start_date,
         status_date__lt=end_date
     ).order_by('status_date').iterator()
@@ -302,12 +302,12 @@ def process_facility_warehouse_data(facility, start_date, end_date, runner=None)
         window_date = datetime(year, month, 1)
         # create org_summary for every fac/date combo
         org_summary, created = OrganizationSummary.objects.get_or_create(
-            location_id=facility._id,
+            location_id=facility.location_id,
             date=window_date
         )
 
         org_summary.total_orgs = 1
-        alt = average_lead_time(facility._id, window_date)
+        alt = average_lead_time(facility.location_id, window_date)
         if alt:
             alt = alt.days
         org_summary.average_lead_time_in_days = alt or 0
@@ -485,9 +485,9 @@ def process_non_facility_warehouse_data(location, start_date, end_date, runner=N
     end_date = datetime(end_date.year, end_date.month, 1)
 
     if runner:
-        runner.location = location.sql_location
+        runner.location = location
         runner.save()
-    fac_ids = [f._id for f in facs]
+    fac_ids = [f.location_id for f in facs]
     logging.info("processing non-facility %s (%s), %s children"
                  % (location.name, str(location.location_id), len(facs)))
     prods = SQLProduct.objects.filter(domain=location.domain, is_archived=False)
@@ -611,7 +611,7 @@ def update_historical_data_for_location(loc):
         earliest_org_summary = OrganizationSummary.objects.filter(location_id=loc.location_id).earliest('date')
         earliest_org_summary_date = earliest_org_summary.date
     except OrganizationSummary.DoesNotExist:
-        earliest_org_summary_date = loc.sql_location.created_at
+        earliest_org_summary_date = loc.created_at
 
     if start_date >= earliest_org_summary_date:
         return
