@@ -1,3 +1,5 @@
+var url = hqImport('hqwebapp/js/urllib.js').reverse;
+
 window.angular.module('icdsApp').factory('systemUsageService', ['$http', function($http) {
     return {
         getAwcOpenedData: function(step) {
