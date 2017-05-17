@@ -42,10 +42,10 @@ class BeneficiaryCaseFactory(object):
             for prescription in self._prescriptions
         ]
         if not skip_adherence:
-            episode_descendants += [
+            episode_descendants.extend(
                 self.get_adherence_case_structure(adherence, episode_structure)
                 for adherence in self._adherences
-            ]
+            )
         episode_or_descendants = episode_descendants or [episode_structure]
 
         tests = [
