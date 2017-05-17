@@ -675,7 +675,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             visit_scheduler_options = get_schedule_context(form)
             visit_scheduler_options.update({
                 'questions': xform_questions,
-                'save_url': reverse("edit_visit_schedule", args=[app.domain, app.id, module.id, form.id]),
+                'save_url': reverse("edit_visit_schedule", args=[app.domain, app.id, form.unique_id]),
                 'schedule': form.schedule,
                 'phase': visit_scheduler_options['schedule_phase'],
             })
