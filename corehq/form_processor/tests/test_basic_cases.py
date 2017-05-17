@@ -322,7 +322,7 @@ class FundamentalCaseTests(TestCase):
         with self.assertRaisesMessage(AssertionError, 'Case created without create block'):
             _submit_case_block(False, case_id, user_id='user2', update={})
 
-    def test_globally_form_unique_id(self):
+    def test_globally_unique_form_id(self):
         form_id = uuid.uuid4().hex
 
         form = """
