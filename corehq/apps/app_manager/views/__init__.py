@@ -86,6 +86,7 @@ from corehq.apps.app_manager.views.forms import (
     form_casexml,
     get_form_datums,
     get_xform_source,
+    get_xform_source_by_form_index,
     new_form,
     patch_xform,
     undo_delete_form,

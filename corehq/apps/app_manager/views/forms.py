@@ -462,6 +462,17 @@ def get_xform_source(request, domain, app_id, form_unique_id):
 
 @require_GET
 @require_can_edit_apps
+def get_xform_source_by_form_index(request, domain, app_id, module_id, form_id):
+    app = get_app(domain, app_id)
+    try:
+        form = app.get_module(module_id).get_form(form_id)
+    except IndexError:
+        raise Http404()
+    return _get_xform_source(request, app, form)
+
+
+@require_GET
+@require_can_edit_apps
 def get_form_questions(request, domain, app_id):
     module_id = request.GET.get('module_id')
     form_id = request.GET.get('form_id')

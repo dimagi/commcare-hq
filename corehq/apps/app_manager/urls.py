@@ -23,7 +23,7 @@ from corehq.apps.app_manager.views import (
     edit_app_langs, edit_app_attr, edit_app_ui_translations, get_app_ui_translations, rearrange, odk_qr_code,
     odk_media_qr_code, odk_install, short_url, short_odk_url, save_copy, revert_to_copy, delete_copy, list_apps,
     direct_ccz, download_index, download_file, formdefs, get_form_questions, pull_master_app,
-    update_linked_whitelist, overwrite_module_case_list, app_settings
+    update_linked_whitelist, overwrite_module_case_list, app_settings, get_xform_source_by_form_index
 )
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
@@ -72,6 +72,8 @@ urlpatterns = [
     url(r'^xform/(?P<form_unique_id>[\w-]+)/$', xform_display, name='xform_display'),
     url(r'^browse/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/source/$',
         get_xform_source, name='get_xform_source'),
+    url(r'^browse/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/source/$',
+        get_xform_source_by_form_index, name='get_xform_source_by_form_index'),
     url(r'^casexml/(?P<form_unique_id>[\w-]+)/$', form_casexml, name='form_casexml'),
     url(r'^source/(?P<app_id>[\w-]+)/$', app_source, name='app_source'),
     url(r'^import_app/$', import_app, name='import_app'),
