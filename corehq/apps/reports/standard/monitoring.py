@@ -1732,7 +1732,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
         return rows
 
-    def _report_data(self):
+    @property
+    def avg_datespan(self):
         # Adjust to be have inclusive dates
         duration = (self.datespan.enddate - self.datespan.startdate) + datetime.timedelta(days=1)
         avg_datespan = DateSpan(self.datespan.startdate - (duration * self.num_avg_intervals),
@@ -1740,6 +1741,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
         if avg_datespan.startdate.year < 1900:  # srftime() doesn't work for dates below 1900
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
+        return avg_datespan
+
+    def _report_data(self):
+        avg_datespan = self.avg_datespan
 
         return WorkerActivityReportData(
             avg_submissions_by_user=get_submission_counts_by_user(self.domain, avg_datespan),
