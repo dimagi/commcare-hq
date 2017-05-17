@@ -774,7 +774,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return None
 
     @staticmethod
-    def get_case_ids_in_domain(domain, type_=None, deleted=False):
+    def get_case_ids_in_domain(domain, type_=None):
         return CaseAccessorSQL._get_case_ids_in_domain(domain, case_type=type_)
 
     @staticmethod
