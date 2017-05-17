@@ -39,9 +39,9 @@ class EnikshayWorkerActivityReport(WorkerActivityReport, CustomProjectReport):
     @property
     def user_query(self):
         user_query = UserES().domain(self.domain).filter(mobile_users())
-        location_ids = self.locations_id
-        if location_ids:
-            user_query = user_query.location(location_ids)
+        locations_id = self.locations_id
+        if locations_id:
+            user_query = user_query.location(locations_id)
         return user_query
 
     @property
