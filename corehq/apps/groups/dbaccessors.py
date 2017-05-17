@@ -1,4 +1,5 @@
 from django.conf import settings
+from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.domain.dbaccessors import (
     get_docs_in_domain_by_class,
@@ -52,3 +53,15 @@ def refresh_group_views():
 def get_group_ids_by_domain(domain):
     from corehq.apps.groups.models import Group
     return get_doc_ids_in_domain_by_class(domain, Group)
+
+
+def get_group_ids_by_last_modified(start_datetime, end_datetime):
+    from corehq.apps.groups.models import Group
+
+    return [result['id'] for result in Group.view(
+        'group_last_modified/by_last_modified',
+        startkey=json_format_datetime(start_datetime),
+        endkey=json_format_datetime(end_datetime),
+        include_docs=False,
+        reduce=False,
+    ).all()]

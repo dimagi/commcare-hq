@@ -1,6 +1,7 @@
+from datetime import datetime, timedelta
 from couchdbkit import BadValueError
 from django.test import TestCase, SimpleTestCase
-from corehq.apps.groups.dbaccessors import group_by_domain
+from corehq.apps.groups.dbaccessors import group_by_domain, get_group_ids_by_last_modified
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.apps.users.models import CommCareUser
@@ -72,6 +73,23 @@ class GroupTest(TestCase):
         group2_updated = Group.get(group2.get_id)
         self.assertNotEqual(g1_old_modified, group1_updated.last_modified)
         self.assertNotEqual(g2_old_modified, group2_updated.last_modified)
+
+    def test_get_group_ids_by_last_modified(self):
+        start = datetime.utcnow() - timedelta(days=3)
+        end = datetime.utcnow() + timedelta(days=3)
+
+        g1 = Group(domain=DOMAIN, name='group')
+        g1.save()
+
+        self.assertEqual(
+            set(get_group_ids_by_last_modified(start, end)),
+            set([g1._id]),
+        )
+
+        self.assertEqual(
+            set(get_group_ids_by_last_modified(start, end - timedelta(days=4))),
+            set(),
+        )
 
 
 class TestDeleteAllGroups(TestCase):
