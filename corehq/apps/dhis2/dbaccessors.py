@@ -1,7 +1,7 @@
 from corehq.util.quickcache import quickcache
 
 
-@quickcache(['domain_name'])
+@quickcache(['domain_name'], timeout=10)
 def get_dhis2_connection(domain_name):
     from corehq.apps.dhis2.models import Dhis2Connection
 
@@ -14,7 +14,7 @@ def get_dhis2_connection(domain_name):
     return Dhis2Connection.wrap(result['doc']) if result else None
 
 
-@quickcache(['domain_name'])
+@quickcache(['domain_name'], timeout=10)
 def get_dataset_maps(domain_name):
     from corehq.apps.dhis2.models import DataSetMap
 
