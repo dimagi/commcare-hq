@@ -43,7 +43,7 @@
                 </li>
                 <li>
                     <a {% if not form.source %}class="disabled"{% endif %}
-                       href="{% url "get_xform_source" domain app.id module.id form.id %}?download=true">
+                       href="{% url "get_xform_source" domain app.id form.unique_id %}?download=true">
                         <i class="fa fa-arrow-down"></i>
                         {% trans "Download" %}
                     </a>
@@ -51,7 +51,7 @@
                 <li>
                     <a id="xform-source-opener"
                        class="{% if not form.source %}disabled{% endif %}"
-                       data-href="{% url "get_xform_source" domain app.id module.id form.id %}">
+                       data-href="{% url "get_xform_source" domain app.id form.unique_id %}">
                         <i class="fa fa-search"></i>
                         {% trans "View" %}
                     </a>

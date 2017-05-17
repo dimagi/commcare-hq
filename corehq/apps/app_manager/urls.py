@@ -70,7 +70,7 @@ app_urls = [
 urlpatterns = [
     url(r'^$', view_app, name='default_app'),
     url(r'^xform/(?P<form_unique_id>[\w-]+)/$', xform_display, name='xform_display'),
-    url(r'^browse/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/source/$',
+    url(r'^browse/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/source/$',
         get_xform_source, name='get_xform_source'),
     url(r'^casexml/(?P<form_unique_id>[\w-]+)/$', form_casexml, name='form_casexml'),
     url(r'^source/(?P<app_id>[\w-]+)/$', app_source, name='app_source'),

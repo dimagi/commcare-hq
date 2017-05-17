@@ -445,10 +445,10 @@ def patch_xform(request, domain, app_id, unique_form_id):
 
 @require_GET
 @require_can_edit_apps
-def get_xform_source(request, domain, app_id, module_id, form_id):
+def get_xform_source(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     try:
-        form = app.get_module(module_id).get_form(form_id)
+        form = app.get_form(form_unique_id)
     except IndexError:
         raise Http404()
     return _get_xform_source(request, app, form)
