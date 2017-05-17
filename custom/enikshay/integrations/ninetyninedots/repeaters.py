@@ -53,11 +53,8 @@ class NinetyNineDotsRegisterPatientRepeater(Base99DOTSRepeater):
 
     friendly_name = _("99DOTS Patient Registration (episode case type)")
 
-    class Format(object):
-        formats = {
-            'case_json': (RegisterPatientPayloadGenerator, _('JSON')),
-        }
-        default_format = 'case_json'
+    class Formats(object):
+        generator = RegisterPatientPayloadGenerator
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -95,11 +92,8 @@ class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
 
     friendly_name = _("99DOTS Patient Update (person & episode case type)")
 
-    class Format(object):
-        formats = {
-            'case_json': (UpdatePatientPayloadGenerator, _('JSON')),
-        }
-        default_format = 'case_json'
+    class Formats(object):
+        generator = UpdatePatientPayloadGenerator
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -148,11 +142,8 @@ class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
     """
     friendly_name = _("99DOTS Update Adherence (adherence case type)")
 
-    class Format(object):
-        formats = {
-            'case_json': (AdherencePayloadGenerator, _('JSON')),
-        }
-        default_format = 'case_json'
+    class Formats(object):
+        generator = AdherencePayloadGenerator
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -196,11 +187,8 @@ class NinetyNineDotsTreatmentOutcomeRepeater(Base99DOTSRepeater):
     """
     friendly_name = _("99DOTS Update Treatment Outcome (episode case type)")
 
-    class Format(object):
-        formats = {
-            'case_json': (TreatmentOutcomePayloadGenerator, _('JSON')),
-        }
-        default_format = 'case_json'
+    class Formats(object):
+        generator = TreatmentOutcomePayloadGenerator
 
     @classmethod
     def get_custom_url(cls, domain):

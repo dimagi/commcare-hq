@@ -164,8 +164,16 @@ class RegisterGenerator(object):
     @classmethod
     def get_collection(cls, repeater_class):
         if repeater_class not in cls.generators:
-            formats = repeater_class.Formats.formats
-            default_format = repeater_class.Formats.default_format
+            if hasattr(repeater_class.Formats, 'generator'):
+                # in the case where there's exactly one format
+                # the format slug and display name aren't used so they don't matter
+                formats = {
+                    '': (repeater_class.Formats.generator, '')
+                }
+                default_format = ''
+            else:
+                formats = repeater_class.Formats.formats
+                default_format = repeater_class.Formats.default_format
             if default_format not in formats:
                 raise DuplicateFormatException(
                     'default_format {!r} is not in formats {!r}'.format(default_format, formats))

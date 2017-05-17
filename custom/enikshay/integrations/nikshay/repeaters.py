@@ -42,11 +42,8 @@ class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
     include_app_id_param = False
     friendly_name = _("Forward eNikshay Patients to Nikshay (episode case type)")
 
-    class Format(object):
-        formats = {
-            'case_json': (NikshayRegisterPatientPayloadGenerator, _('JSON')),
-        }
-        default_format = 'case_json'
+    class Formats(object):
+        generator = NikshayRegisterPatientPayloadGenerator
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -86,11 +83,8 @@ class NikshayHIVTestRepeater(BaseNikshayRepeater):
     include_app_id_param = False
     friendly_name = _("Forward eNikshay Patient's HIV Test to Nikshay (person case type)")
 
-    class Format(object):
-        formats = {
-            'case_json': (NikshayHIVTestPayloadGenerator, _('JSON')),
-        }
-        default_format = 'case_json'
+    class Formats(object):
+        generator = NikshayHIVTestPayloadGenerator
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -132,11 +126,8 @@ class NikshayTreatmentOutcomeRepeater(BaseNikshayRepeater):
 
     friendly_name = _("Forward Treatment Outcomes to Nikshay (episode case type)")
 
-    class Format(object):
-        formats = {
-            'case_json': (NikshayTreatmentOutcomePayload, _('JSON')),
-        }
-        default_format = 'case_json'
+    class Formats(object):
+        generator = NikshayTreatmentOutcomePayload
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -170,11 +161,8 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
     include_app_id_param = False
     friendly_name = _("Forward eNikshay Patient's Follow Ups to Nikshay (test case type)")
 
-    class Format(object):
-        formats = {
-            'case_json': (NikshayFollowupPayloadGenerator, _('JSON')),
-        }
-        default_format = 'case_json'
+    class Formats(object):
+        generator = NikshayFollowupPayloadGenerator
 
     @classmethod
     def available_for_domain(cls, domain):

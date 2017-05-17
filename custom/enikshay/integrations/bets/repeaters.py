@@ -65,11 +65,8 @@ class ChemistBETSVoucherRepeater(BaseBETSVoucherRepeater):
     event_id = CHEMIST_VOUCHER_EVENT
     voucher_type = "prescription"
 
-    class Format(object):
-        formats = {
-            'case_json': (ChemistBETSVoucherPayloadGenerator, _('JSON')),
-        }
-        default_format = 'case_json'
+    class Formats(object):
+        generator = ChemistBETSVoucherPayloadGenerator
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -82,11 +79,8 @@ class LabBETSVoucherRepeater(BaseBETSVoucherRepeater):
     event_id = LAB_VOUCHER_EVENT
     voucher_type = "test"
 
-    class Format(object):
-        formats = {
-            'case_json': (LabBETSVoucherPayloadGenerator, _("JSON")),
-        }
-        default_format = 'case_json'
+    class Formats(object):
+        generator = LabBETSVoucherPayloadGenerator
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -107,11 +101,8 @@ class BETS180TreatmentRepeater(BaseBETSRepeater):
         "FDCs with treatment outcome reported (episode case type)"
     )
 
-    class Format(object):
-        formats = {
-            'case_json': (BETS180TreatmentPayloadGenerator, _("JSON")),
-        }
-        default_format = 'case_json'
+    class Formats(object):
+        generator = BETS180TreatmentPayloadGenerator
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -144,11 +135,8 @@ class BETS180TreatmentRepeater(BaseBETSRepeater):
 class BETSDrugRefillRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Patients: Cash transfer on subsequent drug refill (episode case type)")
 
-    class Format(object):
-        formats = {
-            'case_json': (BETSDrugRefillPayloadGenerator, _('JSON')),
-        }
-        default_format = 'case_json'
+    class Formats(object):
+        generator = BETSDrugRefillPayloadGenerator
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -219,11 +207,8 @@ class BETSDrugRefillRepeater(BaseBETSRepeater):
 class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Patients: Cash transfer on successful treatment completion (episode case type)")
 
-    class Format(object):
-        formats = {
-            'case_json': (BETSSuccessfulTreatmentPayloadGenerator, _('JSON')),
-        }
-        default_format = 'case_json'
+    class Formats(object):
+        generator = BETSSuccessfulTreatmentPayloadGenerator
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -257,11 +242,8 @@ class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
 class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Providers: For diagnosis and notification of TB case (episode case type)")
 
-    class Format(object):
-        formats = {
-            'case_json': (BETSDiagnosisAndNotificationPayloadGenerator, _('JSON')),
-        }
-        default_format = 'case_json'
+    class Formats(object):
+        generator = BETSDiagnosisAndNotificationPayloadGenerator
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -287,11 +269,8 @@ class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
 class BETSAYUSHReferralRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Providers: For diagnosis and notification of TB case (episode case type)")
 
-    class Format(object):
-        formats = {
-            'case_json': (BETSAYUSHReferralPayloadGenerator, _('JSON')),
-        }
-        default_format = 'case_json'
+    class Formats(object):
+        generator = BETSAYUSHReferralPayloadGenerator
 
     @classmethod
     def get_custom_url(cls, domain):

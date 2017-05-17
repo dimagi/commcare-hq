@@ -360,14 +360,11 @@ class ShortFormRepeater(Repeater):
 
     """
 
-    class Formats(object):
-        formats = {
-            'short_form_json': (ShortFormRepeaterJsonPayloadGenerator, _('Default JSON')),
-        }
-        default_format = 'short_form_json'
-
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
     friendly_name = _("Forward Form Stubs")
+
+    class Formats(object):
+        generator = ShortFormRepeaterJsonPayloadGenerator
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -391,10 +388,7 @@ class AppStructureRepeater(Repeater):
     friendly_name = _("Forward App Schema Changes")
 
     class Formats(object):
-        formats = {
-            'id': (AppStructureGenerator, _('ID Only')),
-        }
-        default_format = 'app_structure_id'
+        generator = AppStructureGenerator
 
     def payload_doc(self, repeat_record):
         return None
@@ -404,10 +398,7 @@ class UserRepeater(Repeater):
     friendly_name = _("Forward Users")
 
     class Formats(object):
-        formats = {
-            'user_json': (UserPayloadGenerator, _("JSON")),
-        }
-        default_format = 'user_json'
+        generator = UserPayloadGenerator
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -421,10 +412,7 @@ class LocationRepeater(Repeater):
     friendly_name = _("Forward Locations")
 
     class Formats(object):
-        formats = {
-            'location_json': (LocationPayloadGenerator, _("JSON")),
-        }
-        default_format = 'location_json'
+        generator = LocationPayloadGenerator
 
     @memoized
     def payload_doc(self, repeat_record):
