@@ -3174,10 +3174,9 @@ class DataSetMapView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
+        dataset_maps = [d.to_json() for d in get_dataset_maps(self.request.domain)]
         return {
-            'dataset_map_form': self.dataset_map_form,
-            'datavalue_map_formset': self.datavalue_map_formset,
-            'datavalue_map_formset_helper': DataValueMapFormSetHelper(),
+            'dataset_maps': dataset_maps,
         }
 
 

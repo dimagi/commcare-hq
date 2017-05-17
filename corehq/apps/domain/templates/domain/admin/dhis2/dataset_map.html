@@ -4,16 +4,48 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
+{% block js-inline %}{{ block.super }}
+    {% include 'domain/admin/partials/dhis2_dataset_map_templates.html' %}
+    <script src="{% static 'domain/js/dhis2_map_settings.js' %}"></script>
+    <script>
+    (function () {
+        var Dhis2MapSettings = hqImport('domain/js/dhis2_map_settings.js').Dhis2MapSettings;
+        var viewModel = new Dhis2MapSettings({{ dataset_maps|JSON }});
+        viewModel.init();
+        $('#dataset-maps').koApplyBindings(viewModel);
+    }());
+    </script>
+{% endblock %}
+
 {% block page_content %}
-<form class="form-horizontal" method="post">
+<form id="dataset-maps"
+      class="form-horizontal"
+      method="post"
+      data-bind="submit: submit">
 
-    {% crispy dataset_map_form %}
+    <div data-bind="template: {
+                        name: 'dataset_map_template',
+                        foreach: dataSetMaps,
+                        as: 'dataSetMap'
+                    }"></div>
 
-    {% crispy datavalue_map_formset datavalue_map_formset_helper %}
+    <p>
+        <button type="button"
+                class="btn btn-success"
+                data-bind="click: addDataSetMap">
+            <i class="fa fa-plus"></i>
+            {% trans "Add DataSet map" %}
+        </button>
+    </p>
 
     <div class="form-actions">
         <div class="col-sm-offset-3 col-md-offset-2 controls col-sm-9 col-md-8 col-lg-6">
-            <button type="submit" class="btn btn-primary">{% trans "Update DHIS2 DataSet map" %}</button>
+            <button type="submit" class="btn btn-primary">{% trans "Update DHIS2 DataSet maps" %}</button>
+            <button type="button"
+                    class="btn btn-default"
+                    data-bind="click: sendData">
+                {% trans "Send data now" %}
+            </button>
         </div>
     </div>
 </form>
