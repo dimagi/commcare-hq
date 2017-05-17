@@ -18,8 +18,8 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/", {
                 template : "<system-usage></system-usage>",
             })
-            .when("/awc_opened", {
-                template : "awc_opened",
+            .when("/awc_opened/:step", {
+                template : "<awc-opened-yesterday></awc-opened-yesterday>",
             })
             .when("/active_awws", {
                 template : "active_awws",

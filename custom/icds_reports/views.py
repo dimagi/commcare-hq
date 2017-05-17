@@ -15,7 +15,7 @@ from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFil
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
 from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_data, get_cas_reach_data, \
-    get_demographics_data, get_awc_infrastructure_data
+    get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data
 from . import const
 from .exceptions import TableauTokenException
 
@@ -199,4 +199,32 @@ class ProgramSummaryView(View):
             data = get_demographics_data(config)
         elif step == 'awc_infrastructure':
             data = get_awc_infrastructure_data(config)
+        return JsonResponse(data=data)
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class AwcOpenedView(View):
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+
+        data = {
+            'records': []
+        }
+
+        date_2 = datetime(2015, 9, 9)
+        date_1 = datetime(2015, 9, 10)
+        month = datetime(2015, 9, 1)
+        prev_month = datetime(2015, 9, 1) - relativedelta(month=1)
+
+        config = {
+            'yesterday': tuple(date_1.timetuple())[:3],
+            'before_yesterday': tuple(date_2.timetuple())[:3],
+            'month': tuple(month.timetuple())[:3],
+            'prev_month': tuple(prev_month.timetuple())[:3]
+        }
+
+        if step == "1":
+            data = get_awc_opened_data(config)
+        elif step == "2":
+            pass
         return JsonResponse(data=data)
