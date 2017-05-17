@@ -168,9 +168,9 @@ def undo_delete_form(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
+def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    form = app.get_form(form_unique_id)
     json_loads = json.loads(request.POST.get('actions'))
     actions = AdvancedFormActions.wrap(json_loads)
     if form.form_type == "shadow_form":
@@ -189,10 +189,10 @@ def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_form_actions(request, domain, app_id, module_id, form_id):
+def edit_form_actions(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
-    module = app.get_module(module_id)
-    form = module.get_form(form_id)
+    form = app.get_form(form_unique_id)
+    module = form.get_module()
     old_load_from_form = form.actions.load_from_form
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
     add_properties_to_data_dictionary(domain, module.case_type, form.actions.update_case.update.keys())
@@ -217,9 +217,9 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_careplan_form_actions(request, domain, app_id, module_id, form_id):
+def edit_careplan_form_actions(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    form = app.get_form(form_unique_id)
     transaction = json.loads(request.POST.get('transaction'))
 
     for question in transaction['fixedQuestions']:
@@ -639,7 +639,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
 
     if isinstance(form, CareplanForm):
         case_config_options.update({
-            'save_url': reverse("edit_careplan_form_actions", args=[app.domain, app.id, module.id, form.id]),
+            'save_url': reverse("edit_careplan_form_actions", args=[app.domain, app.id, form.unique_id]),
             'case_preload': [
                 {'key': key, 'path': path} for key, path in form.case_preload.items()
             ],
@@ -659,7 +659,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
 
         all_programs = [{'value': '', 'label': _('All Programs')}]
         case_config_options.update({
-            'save_url': reverse("edit_advanced_form_actions", args=[app.domain, app.id, module.id, form.id]),
+            'save_url': reverse("edit_advanced_form_actions", args=[app.domain, app.id, form.unique_id]),
             'commtrack_enabled': app.commtrack_enabled,
             'commtrack_programs': all_programs + commtrack_programs(),
             'module_id': module.unique_id,
@@ -692,7 +692,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             'valid_index_names': valid_index_names,
             'usercasePropertiesMap': get_usercase_properties(app),
             'propertyDescriptions': get_case_property_description_dict(domain),
-            'save_url': reverse("edit_form_actions", args=[app.domain, app.id, module.id, form.id]),
+            'save_url': reverse("edit_form_actions", args=[app.domain, app.id, form.unique_id]),
         })
         context.update({
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled_for_request(request),

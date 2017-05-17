@@ -115,12 +115,12 @@ urlpatterns = [
         validate_form_for_build, name='validate_form_for_build'),
     url(r'^rename_language/(?P<form_unique_id>[\w-]+)/$', rename_language, name='rename_language'),
     url(r'^validate_langcode/(?P<app_id>[\w-]+)/$', validate_language, name='validate_language'),
-    url(r'^edit_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
-        edit_form_actions, name='edit_form_actions'),   # jls
-    url(r'^edit_careplan_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
-        edit_careplan_form_actions, name='edit_careplan_form_actions'), # jls
-    url(r'^edit_advanced_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
-        edit_advanced_form_actions, name='edit_advanced_form_actions'), # jls
+    url(r'^edit_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
+        edit_form_actions, name='edit_form_actions'),
+    url(r'^edit_careplan_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
+        edit_careplan_form_actions, name='edit_careplan_form_actions'),
+    url(r'^edit_advanced_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
+        edit_advanced_form_actions, name='edit_advanced_form_actions'),
 
     # Scheduler Modules
     url(r'^edit_visit_schedule/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
