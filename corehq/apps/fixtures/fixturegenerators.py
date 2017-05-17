@@ -62,10 +62,10 @@ class ItemListsProvider(FixtureProvider):
             # have to do another db trip later
             item._data_type = data_type
 
-        for global_fixture in global_types.values():
-            items = FixtureDataItem.by_data_type(restore_user.domain, global_fixture)
-            _ = [_set_cached_type(item, global_fixture) for item in items]
-            items_by_type[global_fixture._id] = items
+        items = FixtureDataItem.by_data_types(restore_user.domain, global_types)
+        for item in items:
+            _set_cached_type(item, global_types[item.data_type_id])
+            items_by_type[item.data_type_id].append(item)
 
         if set(all_types) - set(global_types):
             # only query ownership models if there are non-global types
