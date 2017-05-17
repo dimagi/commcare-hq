@@ -44,7 +44,7 @@ def allow_migrate(db, app_label):
         )
     elif app_label == SQL_ACCESSORS_APP:
         return db in partition_config.get_form_processing_dbs()
-    elif app_label == WAREHOUSE_APP and hasattr(settings, "WAREHOUSE_DATABASE_ALIAS"):
+    elif app_label == WAREHOUSE_APP:
         return hasattr(settings, "WAREHOUSE_DATABASE_ALIAS") and db == settings.WAREHOUSE_DATABASE_ALIAS
     else:
         return db == partition_config.get_main_db()
@@ -57,7 +57,9 @@ def db_for_read_write(model):
     app_label = model._meta.app_label
     if app_label == FORM_PROCESSOR_APP:
         return partition_config.get_proxy_db()
-    elif app_label == WAREHOUSE_APP and hasattr(settings, "WAREHOUSE_DATABASE_ALIAS"):
+    elif app_label == WAREHOUSE_APP:
+        error_msg = 'Cannot read/write to warehouse db without warehouse database defined'
+        assert hasattr(settings, "WAREHOUSE_DATABASE_ALIAS"), error_msg
         return settings.WAREHOUSE_DATABASE_ALIAS
     else:
         return partition_config.get_main_db()
