@@ -200,8 +200,7 @@ class RegisterGenerator(object):
     def default_format_by_repeater(cls, repeater_class):
         """Return default format_name for a Repeater class"""
         generator_collection = cls.get_collection(repeater_class)
-        default_format = generator_collection.get_default_format()
-        return default_format
+        return generator_collection.get_default_format()
 
 
 class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
