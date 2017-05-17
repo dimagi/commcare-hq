@@ -77,10 +77,10 @@ class DomainDim(BaseDim):
 
 
 class UserLocationDim(BaseDim):
-    user_dim = models.ForeignKey('UserDim')
-    location_dim = models.ForeignKey('LocationDim')
+    user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
+    location_dim = models.ForeignKey('LocationDim', on_delete=models.CASCADE)
 
 
 class UserGroupDim(BaseDim):
-    user_dim = models.ForeignKey('UserDim')
-    group_dim = models.ForeignKey('GroupDim')
+    user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
+    group_dim = models.ForeignKey('GroupDim', on_delete=models.CASCADE)
