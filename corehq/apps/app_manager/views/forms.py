@@ -119,7 +119,7 @@ def delete_form(request, domain, app_id, module_unique_id, form_unique_id):
 @require_can_edit_apps
 def copy_form_by_form_index(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    form = app.get_module(int(module_id)).get_form(int(form_id))
     return copy_form(request, domain, app_id, form.unique_id)
 
 
@@ -179,7 +179,7 @@ def undo_delete_form(request, domain, record_id):
 @require_can_edit_apps
 def edit_advanced_form_actions_by_form_index(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    form = app.get_module(int(module_id)).get_form(int(form_id))
     return edit_advanced_form_actions(request, domain, app_id, form.unique_id)
 
 
@@ -208,7 +208,7 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
 @require_can_edit_apps
 def edit_form_actions_by_form_index(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    form = app.get_module(int(module_id)).get_form(int(form_id))
     return edit_form_actions(request, domain, app_id, form.unique_id)
 
 
@@ -244,7 +244,7 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
 @require_can_edit_apps
 def edit_careplan_form_actions_by_form_index(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    form = app.get_module(int(module_id)).get_form(int(form_id))
     return edit_careplan_form_actions(request, domain, app_id, form.unique_id)
 
 
@@ -497,7 +497,7 @@ def get_xform_source(request, domain, app_id, form_unique_id):
 def get_xform_source_by_form_index(request, domain, app_id, module_id, form_id):
     app = get_app(domain, app_id)
     try:
-        form = app.get_module(module_id).get_form(form_id)
+        form = app.get_module(int(module_id)).get_form(int(form_id))
     except IndexError:
         raise Http404()
     return _get_xform_source(request, app, form)
