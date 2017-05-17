@@ -35,7 +35,7 @@ from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
 from corehq.apps.ota.tasks import queue_prime_restore
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
@@ -112,7 +112,11 @@ def search(request, domain):
             to="{}@{}.com".format('frener', 'dimagi'),
             notify_admins=False, send_to_ops=False
         )
-        _soft_assert(False, u"Someone in domain: {} tried accessing case search without a config".format(domain), e)
+        _soft_assert(
+            False,
+            u"Someone in domain: {} tried accessing case search without a config".format(domain),
+            e
+        )
         config = CaseSearchConfig(domain=domain)
 
     query_addition_id = criteria.pop(SEARCH_QUERY_ADDITION_KEY, None)
