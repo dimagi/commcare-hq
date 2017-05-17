@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _, override as override_language
+from django.utils.translation import ugettext as _, override as override_language, ugettext_lazy
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
@@ -174,11 +174,11 @@ class Permissions(DocumentSchema):
 
 
 class UserRolePresets(object):
-    READ_ONLY_NO_REPORTS = _("Read Only (No Reports)")
-    APP_EDITOR = _("App Editor")
-    READ_ONLY = _("Read Only")
-    FIELD_IMPLEMENTER = _("Field Implementer")
-    BILLING_ADMIN = _("Billing Admin")
+    READ_ONLY_NO_REPORTS = ugettext_lazy("Read Only (No Reports)")
+    APP_EDITOR = ugettext_lazy("App Editor")
+    READ_ONLY = ugettext_lazy("Read Only")
+    FIELD_IMPLEMENTER = ugettext_lazy("Field Implementer")
+    BILLING_ADMIN = ugettext_lazy("Billing Admin")
     INITIAL_ROLES = (
         READ_ONLY,
         APP_EDITOR,

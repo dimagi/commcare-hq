@@ -107,7 +107,7 @@ class ProjectSettingsForm(forms.Form):
         required=False,
         label="",
         widget=BootstrapCheckboxInput(
-            inline_label=_("Override project's timezone setting just for me.")
+            inline_label=ugettext_lazy("Override project's timezone setting just for me.")
         )
     )
     user_timezone = TimeZoneChoiceField(
@@ -125,7 +125,7 @@ class ProjectSettingsForm(forms.Form):
         self.helper.all().wrap_together(crispy.Fieldset, _('Override Project Timezone'))
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                'Override Project Timezone',
+                _('Override Project Timezone'),
                 crispy.Field('global_timezone', css_class='input-xlarge'),
                 twbscrispy.PrependedText(
                     'override_global_tz', '', data_bind='checked: override_tz, event: {change: updateForm}'
