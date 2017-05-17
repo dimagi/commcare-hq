@@ -140,7 +140,7 @@ def copy_form(request, domain, app_id, form_unique_id):
         app.save()
 
     if new_form:
-        return back_to_main(request, domain, app_id=app_id, unique_form_id=new_form.unique_id)
+        return back_to_main(request, domain, app_id=app_id, form_unique_id=new_form.unique_id)
     return back_to_main(request, domain, app_id=app_id, module_id=module.id,
                         form_id=form.id)
 
