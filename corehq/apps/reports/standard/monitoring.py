@@ -742,7 +742,8 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
     slug = "daily_form_stats"
     name = ugettext_lazy("Daily Form Activity")
-    bad_request_error_text = ugettext_lazy("Your search query was invalid. If you're using a large date range, try using a smaller one.")
+    bad_request_error_text = ugettext_lazy(
+        "Your search query was invalid. If you're using a large date range, try using a smaller one.")
 
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
