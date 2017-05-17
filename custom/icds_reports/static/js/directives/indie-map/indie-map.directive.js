@@ -72,8 +72,8 @@ function IndieMapController($scope) {
                 .attr('class', '')
                 .attr('style', 'position: absolute; width: 150px; bottom: 5%; right: 25%;')
                 .html(html.join(''));
-        }
-    })
+        },
+    });
 }
 
 IndieMapController.$inject = ['$scope'];
@@ -86,7 +86,7 @@ window.angular.module('icdsApp').directive('indieMap', function() {
             legendTitle: '@?',
             fills: '=?',
             mapPlugins: '=?',
-            rightLegend: '=?'
+            rightLegend: '=?',
         },
         template: '<div class="indie-map-directive"><datamap map="$ctrl.map" plugins="$ctrl.mapPlugins"></datamap></div>',
         bindToController: true,
