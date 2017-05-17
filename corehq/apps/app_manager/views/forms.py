@@ -239,18 +239,18 @@ def edit_careplan_form_actions(request, domain, app_id, form_unique_id):
 
 @csrf_exempt
 @api_domain_view
-def edit_form_attr_api(request, domain, app_id, unique_form_id, attr):
-    return _edit_form_attr(request, domain, app_id, unique_form_id, attr)
+def edit_form_attr_api(request, domain, app_id, form_unique_id, attr):
+    return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
 
 
 @login_or_digest
-def edit_form_attr(request, domain, app_id, unique_form_id, attr):
-    return _edit_form_attr(request, domain, app_id, unique_form_id, attr)
+def edit_form_attr(request, domain, app_id, form_unique_id, attr):
+    return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
 
 
 @no_conflict_require_POST
 @require_permission(Permissions.edit_apps, login_decorator=None)
-def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
+def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr
 
@@ -261,7 +261,7 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
 
     app = get_app(domain, app_id)
     try:
-        form = app.get_form(unique_form_id)
+        form = app.get_form(form_unique_id)
     except FormNotFoundException as e:
         if ajax:
             return HttpResponseBadRequest(unicode(e))
@@ -379,11 +379,11 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
-    notify_form_changed(domain, request.couch_user, app_id, unique_form_id)
+    notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
     if ajax:
         return HttpResponse(json.dumps(resp))
     else:
-        return back_to_main(request, domain, app_id=app_id, unique_form_id=unique_form_id)
+        return back_to_main(request, domain, app_id=app_id, form_unique_id=form_unique_id)
 
 
 @no_conflict_require_POST
@@ -422,13 +422,13 @@ def new_form(request, domain, app_id, module_id):
 @no_conflict_require_POST
 @login_or_digest
 @require_permission(Permissions.edit_apps, login_decorator=None)
-def patch_xform(request, domain, app_id, unique_form_id):
+def patch_xform(request, domain, app_id, form_unique_id):
     patch = request.POST['patch']
     sha1_checksum = request.POST['sha1']
     case_references = _get_case_references(request.POST)
 
     app = get_app(domain, app_id)
-    form = app.get_form(unique_form_id)
+    form = app.get_form(form_unique_id)
 
     current_xml = form.source
     if hashlib.sha1(current_xml.encode('utf-8')).hexdigest() != sha1_checksum:
@@ -445,7 +445,7 @@ def patch_xform(request, domain, app_id, unique_form_id):
         'sha1': hashlib.sha1(form.source.encode('utf-8')).hexdigest()
     }
     app.save(response_json)
-    notify_form_changed(domain, request.couch_user, app_id, unique_form_id)
+    notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
     return json_response(response_json)
 
 
