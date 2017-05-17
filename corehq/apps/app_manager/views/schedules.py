@@ -44,6 +44,7 @@ def edit_visit_schedule_by_form_index(request, domain, app_id, module_id, form_i
     form = app.get_module(module_id).get_form(form_id)
     return edit_visit_schedule(request, domain, app_id, form.unique_id)
 
+
 @no_conflict_require_POST
 @require_can_edit_apps
 def edit_visit_schedule(request, domain, app_id, form_unique_id):
