@@ -378,7 +378,7 @@ def get_possible_reports(domain_name):
             else:
                 report_to_check_if_viewable = model
 
-            if report_to_check_if_viewable.show_in_navigation(domain=domain_name, project=domain):
+            if report_to_check_if_viewable.show_in_user_roles(domain=domain_name, project=domain):
                 reports.append({
                     'path': model.__module__ + '.' + model.__name__,
                     'name': model.name

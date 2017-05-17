@@ -1,4 +1,4 @@
-/* globals gaTrackLink, HQReport */
+/* globals HQReport */
 hqDefine("userreports/js/configurable_report.js", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
 
@@ -15,11 +15,8 @@ hqDefine("userreports/js/configurable_report.js", function() {
             $applyFiltersButton.click(function(){
                 window.analytics.usage("Report Viewer", "Apply Filters", type);
             });
-            gaTrackLink($editReportButton, 'Report Builder', 'Edit Report', type);
             window.analytics.trackWorkflowLink($editReportButton, "Clicked Edit to enter the Report Builder");
             window.analytics.usage("Report Viewer", "View Report", type);
-        } else {
-            gaTrackLink($editReportButton, 'Edit UCR', 'Edit UCR');
         }
 
         _.each(initial_page_data("report_builder_events"), function(e) {

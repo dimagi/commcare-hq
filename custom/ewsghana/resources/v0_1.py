@@ -1,9 +1,8 @@
 import json
 
 from corehq.apps.api.resources.auth import LoginAndDomainAuthentication
-from corehq.apps.api.util import get_object_or_not_exist
-from corehq.apps.locations.models import SQLLocation, Location
-from corehq.apps.locations.resources.v0_1 import LocationResource
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.resources.v0_1 import LocationResource, get_location_or_not_exist
 from corehq.util.quickcache import quickcache
 
 
@@ -29,7 +28,7 @@ class EWSLocationResource(LocationResource):
         if not parent_id:
             locs = SQLLocation.root_locations(domain, include_inactive)
         else:
-            parent = get_object_or_not_exist(Location, parent_id, domain)
+            parent = get_location_or_not_exist(parent_id, domain)
             locs = parent.sql_location.child_locations(include_inactive)
 
         return [child for child in locs if child.location_id in viewable]

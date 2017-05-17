@@ -133,8 +133,7 @@ domain_settings = [
         name=CreditsWireInvoiceView.urlname),
     url(r'^billing/statements/download/(?P<statement_id>[\w-]+).pdf$',
         BillingStatementPdfView.as_view(),
-        name=BillingStatementPdfView.urlname
-    ),
+        name=BillingStatementPdfView.urlname),
     url(r'^billing/statements/$', DomainBillingStatementsView.as_view(),
         name=DomainBillingStatementsView.urlname),
     url(r'^billing/make_payment/$', InvoiceStripePaymentView.as_view(),

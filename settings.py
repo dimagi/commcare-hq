@@ -138,7 +138,7 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    'corehq.apps.hqwebapp.middleware.HQCsrfViewMiddleWare',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -373,14 +373,16 @@ HQ_APPS = (
     'custom.icds',
     'custom.icds_reports',
     'custom.pnlppgi',
+    'custom.hki'
 )
 
 ENIKSHAY_APPS = (
     'custom.enikshay',
     'custom.enikshay.integrations.ninetyninedots',
     'custom.enikshay.nikshay_datamigration',
+    'custom.enikshay.integrations.nikshay',
+    'custom.enikshay.integrations.bets',
     'custom.enikshay.private_sector_datamigration',
-    'custom.enikshay.integrations.nikshay'
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -1539,6 +1541,12 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "UCLA_SUBSTANCE_USE": "custom.ucla.api.substance_use_message_bank_content",
 }
 
+MAX_RULE_UPDATES_IN_ONE_RUN = 10000
+
+AVAILABLE_CUSTOM_RULE_CRITERIA = {}
+
+AVAILABLE_CUSTOM_RULE_ACTIONS = {}
+
 # These are custom templates which can wrap default the sms/chat.html template
 CUSTOM_CHAT_TEMPLATES = {
     "FRI": "fri/chat.html",
@@ -1709,9 +1717,11 @@ BASE_REPEATERS = (
     'corehq.apps.repeaters.models.CaseRepeater',
     'corehq.apps.repeaters.models.ShortFormRepeater',
     'corehq.apps.repeaters.models.AppStructureRepeater',
+    'corehq.apps.repeaters.models.UserRepeater',
+    'corehq.apps.repeaters.models.LocationRepeater',
 )
 
-CUSTOM_REPEATERS = (
+ENIKSHAY_REPEATERS = (
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsRegisterPatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsAdherenceRepeater',
@@ -1720,9 +1730,17 @@ CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayFollowupRepeater',
+    'custom.enikshay.integrations.bets.repeaters.ChemistBETSVoucherRepeater',
+    'custom.enikshay.integrations.bets.repeaters.LabBETSVoucherRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETS180TreatmentRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSDrugRefillRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSSuccessfulTreatmentRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSDiagnosisAndNotificationRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSAYUSHReferralRepeater',
+
 )
 
-REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS
+REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + ENIKSHAY_REPEATERS
 
 
 STATIC_UCR_REPORTS = [
@@ -1979,6 +1997,12 @@ DOMAIN_MODULE_MAP = {
     'enikshay-domain-copy-test': 'custom.enikshay',
     'enikshay-aks-audit': 'custom.enikshay',
     'np-migration-3': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-1': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-2': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-3': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-4': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-5': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-6': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 
@@ -2044,3 +2068,5 @@ if _raven_config:
     RAVEN_CONFIG = _raven_config
     SENTRY_CONFIGURED = True
     SENTRY_CLIENT = 'corehq.util.sentry.HQSentryClient'
+
+CSRF_COOKIE_HTTPONLY = True

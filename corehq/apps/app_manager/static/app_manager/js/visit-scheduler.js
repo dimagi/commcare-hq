@@ -10,16 +10,18 @@ hqDefine('app_manager/js/visit-scheduler.js', function () {
 
         self.init = function () {
             _.defer(function () {
-                self.home.koApplyBindings(self);
-                self.home.on('textchange', 'input', self.change)
-                // all select2's are represented by an input[type="hidden"]
-                    .on('change', 'select, input[type="hidden"]', self.change)
-                    .on('click', 'a:not(.header)', self.change)
-                    .on('change', 'input[type="checkbox"]', self.change);
-
-                // https://gist.github.com/mkelly12/424774/#comment-92080
-                // textchange doesn't work with live event binding
-                $('#module-scheduler input').on('textchange', self.change);
+                if (self.home.length) {
+                    self.home.koApplyBindings(self);
+                    self.home.on('textchange', 'input', self.change)
+                    // all select2's are represented by an input[type="hidden"]
+                        .on('change', 'select, input[type="hidden"]', self.change)
+                        .on('click', 'a:not(.header)', self.change)
+                        .on('change', 'input[type="checkbox"]', self.change);
+ 
+                    // https://gist.github.com/mkelly12/424774/#comment-92080
+                    // textchange doesn't work with live event binding
+                    $('#module-scheduler input').on('textchange', self.change);
+                }
             });
         };
 
@@ -390,8 +392,18 @@ hqDefine('app_manager/js/visit-scheduler.js', function () {
         }
     };
 
+    // Initialize form scheduler, if any
+    // A bit inconsistent because form schedule initialization is handled here,
+    // whereas module scheduler initialization is in module-view.js
+    var visit_scheduler_options = hqImport("hqwebapp/js/initial_page_data.js").get('visit_scheduler_options');
+    if (visit_scheduler_options) {
+        var visitScheduler = new Scheduler(_.extend({}, visit_scheduler_options, {
+            home: $('#visit-scheduler'),
+        }));
+        visitScheduler.init();
+    }
+
     return {
-        Scheduler: Scheduler,
         ModuleScheduler: ModuleScheduler
     };
 });

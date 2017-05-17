@@ -1,7 +1,4 @@
 {% load i18n %}
-<script type="application/javascript">
-    gaTrackLink($('#mobile-link'), 'App Manager', 'Initiate Install', 'Mobile Browser Link')
-</script>
 <div class="modal-dialog modal-lg">
     <div class="modal-content">
         <div class="modal-header">
@@ -18,7 +15,12 @@
             </p>
             <p>
                 {% blocktrans %}
-                You can also click <strong><a id="mobile-link" href="{{ profile_url }}">here</a></strong> in your mobile browser.
+                You can also click
+                <strong>
+                    <a class="track-usage-link" href="{{ profile_url }}"
+                       data-category="App Manager" data-action="Initiate Install"
+                       data-label="Mobile Browser Link">here</a>
+                </strong> in your mobile browser.
                 {% endblocktrans %}
             </p>
             <p>

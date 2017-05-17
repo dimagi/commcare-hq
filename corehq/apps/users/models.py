@@ -92,6 +92,7 @@ class Permissions(DocumentSchema):
     view_report_list = StringListProperty(default=[])
 
     edit_billing = BooleanProperty(default=False)
+    report_an_issue = BooleanProperty(default=True)
 
     @classmethod
     def wrap(cls, data):
@@ -858,6 +859,26 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     class InvalidID(Exception):
         pass
 
+    def __repr__(self):
+        # copied from jsonobject/base.py
+        name = self.__class__.__name__
+        predefined_properties = set(self._properties_by_attr.keys())
+        predefined_property_keys = set(self._properties_by_attr[p].name
+                                       for p in predefined_properties)
+        dynamic_properties = (set(self._wrapped.keys())
+                              - predefined_property_keys)
+
+        # redact hashed password
+        properties = sorted(predefined_properties - {'password'}) + sorted(dynamic_properties - {'password'})
+
+        return u'{name}({keyword_args})'.format(
+            name=name,
+            keyword_args=', '.join('{key}={value!r}'.format(
+                key=key,
+                value=getattr(self, key)
+            ) for key in properties),
+        )
+
     @property
     def is_dimagi(self):
         return self.username.endswith('@dimagi.com')
@@ -1425,6 +1446,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     is_demo_user = BooleanProperty(default=False)
     demo_restore_id = IntegerProperty()
 
+    # This means that this user represents a location, and has a 1-1 relationship
+    # with a location where location.location_type.has_user == True
+    user_location_id = StringProperty()
+
     is_anonymous = BooleanProperty(default=False)
 
     mobile_ucr_sync_interval = IntegerProperty()
@@ -1600,7 +1625,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             )
             deleted_forms.update(form_id_list)
 
-        tag_system_forms_as_deleted(self.domain, deleted_forms, deleted_cases, deletion_id, deletion_date)
+        tag_system_forms_as_deleted.delay(self.domain, deleted_forms, deleted_cases, deletion_id, deletion_date)
 
         try:
             django_user = self.get_django_user()
@@ -1679,13 +1704,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     @property
     @memoized
     def location(self):
-        from corehq.apps.locations.models import Location
-        if self.location_id:
-            try:
-                return Location.get(self.location_id)
-            except ResourceNotFound:
-                pass
-        return None
+        return self.sql_location
 
     @property
     def sql_location(self):
@@ -1722,7 +1741,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def get_sql_location(self, domain):
         return self.sql_location
 
-    def set_location(self, location):
+    def set_location(self, location, commit=True):
         """
         Set the primary location, and all important user data, for
         the user.
@@ -1730,6 +1749,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         :param location: may be a sql or couch location
         """
         from corehq.apps.fixtures.models import UserFixtureType
+
+        if not location.location_id:
+            raise AssertionError("You can't set an unsaved location")
 
         self.user_data['commcare_location_id'] = location.location_id
 
@@ -1757,7 +1779,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.get_domain_membership(self.domain).assigned_location_ids.append(self.location_id)
             self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
         self.get_sql_location.reset_cache(self)
-        self.save()
+        if commit:
+            self.save()
 
     def unset_location(self, fall_back_to_next=False):
         """
@@ -2139,6 +2162,9 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         else:
             location_id = location_object_or_id.location_id
 
+        if not location_id:
+            raise AssertionError("You can't set an unsaved location")
+
         membership = self.get_domain_membership(domain)
         membership.location_id = location_id
         if self.location_id not in membership.assigned_location_ids:
@@ -2208,16 +2234,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         else:
             return SQLLocation.objects.none()
 
-    @memoized
     def get_location(self, domain):
-        from corehq.apps.locations.models import Location
-        loc_id = self.get_location_id(domain)
-        if loc_id:
-            try:
-                return Location.get(loc_id)
-            except ResourceNotFound:
-                pass
-        return None
+        return self.get_sql_location(domain)
 
     def is_locked_out(self):
         return self.login_attempts >= MAX_LOGIN_ATTEMPTS

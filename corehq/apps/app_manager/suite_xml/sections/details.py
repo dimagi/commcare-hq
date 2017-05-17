@@ -506,6 +506,14 @@ class CaseTileHelper(object):
                 column.header.get(default_lang, "")
             )
         }
+        if column.enum and column.format != "enum":
+            raise SuiteError(
+                'Expected case tile field "{}" to be an id mapping with keys {}.'.format(
+                    column.case_tile_field,
+                    ", ".join(['"{}"'.format(i.key) for i in column.enum])
+                )
+            )
+
         if column.format == "enum":
             context["enum_keys"] = self._get_enum_keys(column)
         return context

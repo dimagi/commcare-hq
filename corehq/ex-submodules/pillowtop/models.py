@@ -76,3 +76,29 @@ class KafkaCheckpoint(models.Model):
 
     class Meta:
         unique_together = ('checkpoint_id', 'topic', 'partition')
+
+    @classmethod
+    def get_or_create_for_checkpoint_id(cls, checkpoint_id, topics):
+        # breaks pillowtop separation from hq
+        from corehq.apps.change_feed.topics import get_multi_topic_first_available_offsets
+
+        all_offsets = get_multi_topic_first_available_offsets(topics)
+
+        already_created = list(
+            cls.objects
+            .filter(checkpoint_id=checkpoint_id, topic__in=topics)
+            .distinct('topic', 'partition')
+            .values_list('topic', 'partition')
+        )
+
+        to_create = []
+
+        for tp, offset in all_offsets.items():
+            if tp not in already_created:
+                to_create.append(
+                    cls(checkpoint_id=checkpoint_id, topic=tp[0], partition=tp[1], offset=0)
+                )
+
+        cls.objects.bulk_create(to_create)
+
+        return list(cls.objects.filter(checkpoint_id=checkpoint_id, topic__in=topics))

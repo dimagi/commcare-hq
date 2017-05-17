@@ -188,14 +188,18 @@ class EntriesHelper(object):
                 for datum_meta in self.get_case_datums_basic_module(module):
                     e.datums.append(datum_meta.datum)
             elif isinstance(module, AdvancedModule):
+                detail_inline = self.get_detail_inline_attr(module, module, "case_short")
+                detail_confirm = None
+                if not detail_inline:
+                    detail_confirm = self.details_helper.get_detail_id_safe(module, 'case_long')
                 e.datums.append(SessionDatum(
                     id='case_id_case_%s' % module.case_type,
                     nodeset=(EntriesHelper.get_nodeset_xpath(module.case_type)),
                     value="./@case_id",
                     detail_select=self.details_helper.get_detail_id_safe(module, 'case_short'),
-                    detail_confirm=self.details_helper.get_detail_id_safe(module, 'case_long'),
+                    detail_confirm=detail_confirm,
                     detail_persistent=self.get_detail_persistent_attr(module, module, "case_short"),
-                    detail_inline=self.get_detail_inline_attr(module, module, "case_short"),
+                    detail_inline=detail_inline,
                     autoselect=module.auto_select_case,
                 ))
                 if self.app.commtrack_enabled:
@@ -540,14 +544,18 @@ class EntriesHelper(object):
                              error=_("Could not find target module used by form '{}'").format(form.default_name()))
                     if target.case_type != case_type:
                         raise ParentModuleReferenceError(
-                            _("Form '%s' in module '%s' references a module with an incorrect case type: "
-                              "module '%s' expected '%s', found '%s'") % (
-                                form.default_name(),
-                                module.default_name(),
-                                target.default_name(),
-                                case_type,
-                                target.case_type,
-                            )
+                            _(
+                                "Form '%(form_name)s' in module '%(module_name)s' "
+                                "references a module with an incorrect case type: "
+                                "module '%(target_name)s' expected '%(expected_case_type)s', "
+                                "found '%(target_case_type)s'"
+                            ) % {
+                                'form_name': form.default_name(),
+                                'module_name': module.default_name(),
+                                'target_name': target.default_name(),
+                                'expected_case_type': case_type,
+                                'target_case_type': target.case_type,
+                            }
                         )
                     if with_product_details and not hasattr(target, 'product_details'):
                         raise ParentModuleReferenceError(

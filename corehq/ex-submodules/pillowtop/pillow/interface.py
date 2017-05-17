@@ -100,7 +100,7 @@ class PillowBase(object):
         """
         context = PillowRuntimeContext(changes_seen=0, do_set_checkpoint=True)
         try:
-            for change in self.get_change_feed().iter_changes(since=since, forever=forever):
+            for change in self.get_change_feed().iter_changes(since=since or None, forever=forever):
                 if change:
                     timer = TimingContext()
                     try:
@@ -207,8 +207,6 @@ class PillowBase(object):
         if change.metadata is not None:
             tags = [
                 u'datasource:{}'.format(change.metadata.data_source_name),
-                u'document_type:{}'.format(change.metadata.document_type),
-                u'domain:{}'.format(change.metadata.domain),
                 u'is_deletion:{}'.format(change.metadata.is_deletion),
                 u'pillow_name:{}'.format(self.get_name()),
             ]

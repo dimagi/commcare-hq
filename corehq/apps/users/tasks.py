@@ -136,11 +136,13 @@ def tag_system_forms_as_deleted(domain, deleted_forms, deleted_cases, deletion_i
         # all cases touched by this form are deleted
         return True
 
-    for form in FormAccessors(domain).iter_forms(form_ids_to_delete):
-        if not _is_safe_to_delete(form):
-            form_ids_to_delete.remove(form.form_id)
+    safe_form_ids_to_delete = [
+        form.form_id
+        for form in FormAccessors(domain).iter_forms(form_ids_to_delete)
+        if _is_safe_to_delete(form)
+    ]
 
-    FormAccessors(domain).soft_delete_forms(list(form_ids_to_delete), deletion_date, deletion_id)
+    FormAccessors(domain).soft_delete_forms(safe_form_ids_to_delete, deletion_date, deletion_id)
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)

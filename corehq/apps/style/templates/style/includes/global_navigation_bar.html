@@ -4,22 +4,10 @@
 {% load tzmigration %}
 
 {% if request.couch_user %}
-    {% addtoblock js-inline %}
-    <script>
-        gaTrackLink($('#settingsmenu-projectSettings'), 'Nav Bar', 'Click Gear Icon');
-        gaTrackLink($('#settingsmenu-help'), 'Nav Bar', 'Click Question Mark');
-        gaTrackLink($('#menuitem-projectsettings'), 'Nav Bar', 'Gear Icon', 'Update Project Settings');
-        gaTrackLink($('#menuitem-currentsubscription'), 'Nav Bar', 'Gear Icon', 'Current Subscription');
-        gaTrackLink($('#menuitem-accountsettings'), 'Nav Bar', 'Gear Icon', 'My Account Settings');
-        gaTrackLink($('#menuitem-signout'), 'Nav Bar', 'Gear Icon', 'Sign Out');
-        gaTrackLink($('#menuitem-helpsite'), 'Nav Bar', 'Question Mark', 'Visit the Help Site');
-        gaTrackLink($('#menuitem-userforum'), 'Nav Bar', 'Question Mark', 'User Forum');
-        gaTrackLink($('#menuitem-issue'), 'Nav Bar', 'Question Mark', 'Report an Issue');
-    </script>
-    {% endaddtoblock %}
 <ul class="nav navbar-nav" role="menu">
     <li class="dropdown">
-        <a href="#" id="settingsmenu-projectSettings" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown">
+        <a href="#" class="dropdown-toggle dropdown-toggle-with-icon track-usage-link"
+           data-toggle="dropdown" data-category="Nav Bar" data-action="Click Gear Icon">
             <i class="fa fa-cog nav-main-icon"></i> <span class="responsive-label">{% trans "Manage" %}</span>
         </a>
         <ul class="dropdown-menu dropdown-menu-right" role="menu">
@@ -47,13 +35,15 @@
             <li class="nav-divider divider"></li>
             <li class="dropdown-header nav-header">{% trans 'Manage Project' %}</li>
             <li>
-                <a href="{% url "domain_settings_default" domain %}" id="menuitem-projectsettings">
+                <a href="{% url "domain_settings_default" domain %}" class="track-usage-link"
+                   data-category="Nav Bar" data-action="Gear Icon" data-label="Update Project Settings">
                     <i class="fa fa-cogs icon-cogs dropdown-icon"></i> {% trans "Project Settings" %}
                 </a>
             </li>
             {% if not enterprise_mode %}
             <li>
-                <a href="{% url "domain_subscription_view" domain %}" id="menuitem-currentsubscription">
+                <a href="{% url "domain_subscription_view" domain %}" class="track-usage-link"
+                   data-category="Nav Bar" data-action="Gear Icon" data-label="Current Subscription">
                     <i class="fa fa-dashboard icon-dashboard dropdown-icon"></i> {% trans "Current Subscription" %}
                 </a>
             </li>
@@ -71,12 +61,14 @@
             <li class="nav-divider divider"></li>
             <li class="dropdown-header nav-header">{% trans 'Manage Account' %}</li>
             <li>
-                <a href="{% url "my_account_settings" %}" id="menuitem-accountsettings">
+                <a href="{% url "my_account_settings" %}" class="track-usage-link"
+                   data-category="Nav Bar" data-action="Gear Icon" data-label="My Account Settings">
                     <i class="fa fa-user icon-user dropdown-icon"></i> {% trans 'My Account Settings' %}
                 </a>
             </li>
             <li>
-                <a href="{% url "logout" %}" id="menuitem-signout">
+                <a href="{% url "logout" %}" class="track-usage-link"
+                   data-category="Nav Bar" data-action="Gear Icon" data-label="Sign Out">
                     <i class="icon-signout fa fa-sign-out"></i>
                     {% trans 'Sign Out' %}
                 </a>
@@ -84,7 +76,8 @@
         </ul>
     </li>
     <li class="dropdown">
-        <a href="#" id="settingsmenu-help" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown">
+        <a href="#" class="dropdown-toggle dropdown-toggle-with-icon track-usage-link"
+           data-toggle="dropdown" data-category="Nav Bar" data-action="Click Question Mark">
             <i class="fa fa-question-circle nav-main-icon"></i> <span class="responsive-label">{% trans "Help &amp; Resources" %}</span>
         </a>
         <ul class="dropdown-menu dropdown-menu-right" role="menu">
@@ -94,20 +87,27 @@
             {% endblocktrans %}
             </li>
             <li>
-                <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" id="menuitem-helpsite" target="_blank">
+                <a href="{% trans 'https://wiki.commcarehq.org/display/commcarepublic/Home' %}" class="track-usage-link" target="_blank"
+                   data-category="Nav Bar" data-action="Question Mark" data-label="Visit the Help Site">
                     <i class="fa fa-question-circle icon-question-sign dropdown-icon"></i> {% trans "Visit the Help Site" %}
                 </a>
             </li>
             <li>
-                <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}" id="menuitem-userforum" target="_blank">
+                <a href="{% trans 'http://groups.google.com/group/commcare-users/subscribe' %}" class="track-usage-link" target="_blank"
+                   data-category="Nav Bar" data-action="Question Mark" data-label="User Forum">
                     <i class="fa fa-comments icon-comments dropdown-icon"></i> {% trans "User Forum" %}
                 </a>
             </li>
-            <li>
-                <a href="#modalReportIssue" data-toggle="modal" id="menuitem-issue">
-                    <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
-                </a>
-            </li>
+            {% if not enterprise_mode or not 500traceback %}
+                {% if allow_report_an_issue %}
+                    <li>
+                        <a href="#modalReportIssue" data-toggle="modal" class="track-usage-link"
+                           data-category="Nav Bar" data-action="Question Mark" data-label="Report an Issue">
+                            <i class="fa fa-exclamation-triangle icon-warning-sign dropdown-icon"></i> {% trans "Report an Issue" %}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endif %}
         </ul>
     </li>
     {% if request.couch_user and request.couch_user.is_web_user %}

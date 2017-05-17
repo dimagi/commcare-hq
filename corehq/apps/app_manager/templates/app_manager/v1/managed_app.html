@@ -12,6 +12,7 @@
     <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
     <script src="{% static 'app_manager/js/managed_app.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -143,6 +144,10 @@
                                     <li class="edit-form-li{% ifequal form selected_form %} active{% endifequal %}" data-moduleid="{{ module.id }}" data-index="{{ form.id }}">
                                         <!--[F]-->
                                         <a id="view_form_{{ module.id }}_{{ form.id }}_sidebar"
+                                           class="track-usage-link"
+                                           data-category="App Builder"
+                                           data-action="View Form"
+                                           data-label="Sidebar"
                                            href="{% url "view_form" domain app.id module.id form.id %}">
                                             <i class="drag_handle"></i>
                                             {% if request|toggle_enabled:"SUPPORT" %}
@@ -166,7 +171,11 @@
                                         </a>
                                         {% if not form.no_vellum %}
                                             <div class="edit-form-pencil">
-                                                <a id="edit_pen_{{ module.id }}_{{ form.id }}" href="{% url "form_source" domain app.id module.id form.id %}">
+                                                <a class="track-usage-link"
+                                                   data-category="App Builder"
+                                                   data-action="Open Form"
+                                                   data-label="Edit Pen"
+                                                   href="{% url "form_source" domain app.id module.id form.id %}">
                                                     <i class="fa fa-pencil"></i>
                                                 </a>
                                             </div>
@@ -294,4 +303,8 @@
     {% initial_page_data 'app_subset' app_subset %}
     {% initial_page_data 'formdesigner' formdesigner %}
     {% block form-view %}{% endblock %}
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% include "hqwebapp/rollout_modal.html" %}
 {% endblock %}
