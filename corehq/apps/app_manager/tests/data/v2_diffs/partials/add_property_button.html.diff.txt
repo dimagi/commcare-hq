@@ -1,7 +1,0 @@
---- 
-+++ 
-@@ -20,4 +20,3 @@
-       </ul>
-     {% endif %}
- </div>
--{{ request|toggle_tag_info:"GRAPH_CREATION" }}
