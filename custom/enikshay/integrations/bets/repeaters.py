@@ -10,6 +10,11 @@ from custom.enikshay.const import ENROLLED_IN_PRIVATE, PRESCRIPTION_TOTAL_DAYS_T
 from custom.enikshay.integrations.bets.const import TREATMENT_180_EVENT, DRUG_REFILL_EVENT, SUCCESSFUL_TREATMENT_EVENT, \
     DIAGNOSIS_AND_NOTIFICATION_EVENT, AYUSH_REFERRAL_EVENT, CHEMIST_VOUCHER_EVENT, LAB_VOUCHER_EVENT, \
     TOTAL_DAY_THRESHOLDS
+from custom.enikshay.integrations.bets.repeater_generators import \
+    BETS180TreatmentPayloadGenerator, LabBETSVoucherPayloadGenerator, \
+    ChemistBETSVoucherPayloadGenerator, BETSAYUSHReferralPayloadGenerator, \
+    BETSDiagnosisAndNotificationPayloadGenerator, BETSSuccessfulTreatmentPayloadGenerator, \
+    BETSDrugRefillPayloadGenerator
 from custom.enikshay.integrations.utils import case_properties_changed, is_valid_episode_submission, \
     is_valid_voucher_submission, is_valid_archived_submission
 
@@ -60,6 +65,12 @@ class ChemistBETSVoucherRepeater(BaseBETSVoucherRepeater):
     event_id = CHEMIST_VOUCHER_EVENT
     voucher_type = "prescription"
 
+    class Format(object):
+        formats = {
+            'case_json': (ChemistBETSVoucherPayloadGenerator, _('JSON')),
+        }
+        default_format = 'case_json'
+
     @classmethod
     def get_custom_url(cls, domain):
         from custom.enikshay.integrations.bets.views import ChemistBETSVoucherRepeaterView
@@ -70,6 +81,12 @@ class LabBETSVoucherRepeater(BaseBETSVoucherRepeater):
     friendly_name = _("BETS - Lab Voucher Forwarding (voucher case type)")
     event_id = LAB_VOUCHER_EVENT
     voucher_type = "test"
+
+    class Format(object):
+        formats = {
+            'case_json': (LabBETSVoucherPayloadGenerator, _("JSON")),
+        }
+        default_format = 'case_json'
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -89,6 +106,12 @@ class BETS180TreatmentRepeater(BaseBETSRepeater):
         "BETS - MBBS+ Providers: 180 days of private OR govt. "
         "FDCs with treatment outcome reported (episode case type)"
     )
+
+    class Format(object):
+        formats = {
+            'case_json': (BETS180TreatmentPayloadGenerator, _("JSON")),
+        }
+        default_format = 'case_json'
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -120,6 +143,12 @@ class BETS180TreatmentRepeater(BaseBETSRepeater):
 
 class BETSDrugRefillRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Patients: Cash transfer on subsequent drug refill (episode case type)")
+
+    class Format(object):
+        formats = {
+            'case_json': (BETSDrugRefillPayloadGenerator, _('JSON')),
+        }
+        default_format = 'case_json'
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -190,6 +219,12 @@ class BETSDrugRefillRepeater(BaseBETSRepeater):
 class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Patients: Cash transfer on successful treatment completion (episode case type)")
 
+    class Format(object):
+        formats = {
+            'case_json': (BETSSuccessfulTreatmentPayloadGenerator, _('JSON')),
+        }
+        default_format = 'case_json'
+
     @classmethod
     def get_custom_url(cls, domain):
         from custom.enikshay.integrations.bets.views import BETSSuccessfulTreatmentRepeaterView
@@ -222,6 +257,12 @@ class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
 class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Providers: For diagnosis and notification of TB case (episode case type)")
 
+    class Format(object):
+        formats = {
+            'case_json': (BETSDiagnosisAndNotificationPayloadGenerator, _('JSON')),
+        }
+        default_format = 'case_json'
+
     @classmethod
     def get_custom_url(cls, domain):
         from custom.enikshay.integrations.bets.views import BETSDiagnosisAndNotificationRepeaterView
@@ -245,6 +286,12 @@ class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
 
 class BETSAYUSHReferralRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Providers: For diagnosis and notification of TB case (episode case type)")
+
+    class Format(object):
+        formats = {
+            'case_json': (BETSAYUSHReferralPayloadGenerator, _('JSON')),
+        }
+        default_format = 'case_json'
 
     @classmethod
     def get_custom_url(cls, domain):
