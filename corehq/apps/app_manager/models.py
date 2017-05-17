@@ -5808,22 +5808,22 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     'form': form
                 }
 
-    def get_form(self, unique_form_id, bare=True):
+    def get_form(self, form_unique_id, bare=True):
         def matches(form):
-            return form.get_unique_id() == unique_form_id
+            return form.get_unique_id() == form_unique_id
         for obj in self.get_forms(bare):
             if matches(obj if bare else obj['form']):
                 return obj
         raise FormNotFoundException(
             ("Form in app '%s' with unique id '%s' not found"
-             % (self.id, unique_form_id)))
+             % (self.id, form_unique_id)))
 
-    def get_form_location(self, unique_form_id):
+    def get_form_location(self, form_unique_id):
         for m_index, module in enumerate(self.get_modules()):
             for f_index, form in enumerate(module.get_forms()):
-                if unique_form_id == form.unique_id:
+                if form_unique_id == form.unique_id:
                     return m_index, f_index
-        raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
+        raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, form_unique_id))
 
     @classmethod
     def new_app(cls, domain, name, lang="en"):

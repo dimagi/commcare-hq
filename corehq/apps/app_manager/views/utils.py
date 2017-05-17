@@ -21,7 +21,7 @@ CASE_TYPE_CONFLICT_MSG = (
 
 @require_deploy_apps
 def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
-                 unique_form_id=None):
+                 form_unique_id=None):
     """
     returns an HttpResponseRedirect back to the main page for the App Manager app
     with the correct GET parameters.
@@ -40,9 +40,9 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
 
     if app_id is not None:
         args.append(app_id)
-        if unique_form_id is not None:
+        if form_unique_id is not None:
             app = get_app(domain, app_id)
-            obj = app.get_form(unique_form_id, bare=False)
+            obj = app.get_form(form_unique_id, bare=False)
             module_id = obj['module'].id
             form_id = obj['form'].id
             if obj['form'].no_vellum:
