@@ -6,7 +6,7 @@ from corehq.apps.motech.models import ConnectedAccount
 
 class OpenmrsConcept(models.Model):
     uuid = models.CharField(max_length=256)
-    account = models.ForeignKey(ConnectedAccount)
+    account = models.ForeignKey(ConnectedAccount, on_delete=models.CASCADE)
     display = models.TextField()
     concept_class = models.CharField(max_length=256)
     retired = models.BooleanField()

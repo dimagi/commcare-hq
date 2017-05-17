@@ -3,10 +3,14 @@ from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.signals import sql_case_post_save
 from corehq.form_processor.models import CommCareCaseSQL
 from dimagi.utils.logging import notify_exception
+from django.conf import settings
 
 
 def case_changed_receiver(sender, case, **kwargs):
     try:
+        if settings.SERVER_ENVIRONMENT == 'icds':
+            return
+
         from corehq.apps.sms.tasks import sync_case_phone_number
         sync_case_phone_number.delay(case)
     except Exception:
