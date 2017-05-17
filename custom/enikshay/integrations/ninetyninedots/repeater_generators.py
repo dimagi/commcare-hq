@@ -4,17 +4,8 @@ import phonenumbers
 import jsonobject
 from django.utils.dateparse import parse_date
 
-from corehq.apps.repeaters.repeater_generators import (
-    BasePayloadGenerator,
-    RegisterGenerator,
-)
+from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
 from corehq.apps.repeaters.exceptions import RequestConnectionError
-from custom.enikshay.integrations.ninetyninedots.repeaters import (
-    NinetyNineDotsRegisterPatientRepeater,
-    NinetyNineDotsUpdatePatientRepeater,
-    NinetyNineDotsAdherenceRepeater,
-    NinetyNineDotsTreatmentOutcomeRepeater,
-)
 from custom.enikshay.case_utils import (
     get_occurrence_case_from_episode,
     get_person_case_from_occurrence,
@@ -103,7 +94,6 @@ class NinetyNineDotsBasePayloadGenerator(BasePayloadGenerator):
             })
 
 
-@RegisterGenerator(NinetyNineDotsRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
 class RegisterPatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
 
     def get_test_payload(self, domain):
@@ -148,7 +138,6 @@ class RegisterPatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
             )
 
 
-@RegisterGenerator(NinetyNineDotsUpdatePatientRepeater, 'case_json', 'JSON', is_default=True)
 class UpdatePatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
 
     def get_test_payload(self, domain):
@@ -207,7 +196,6 @@ class UpdatePatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
             )
 
 
-@RegisterGenerator(NinetyNineDotsAdherenceRepeater, 'case_json', 'JSON', is_default=True)
 class AdherencePayloadGenerator(NinetyNineDotsBasePayloadGenerator):
 
     def get_payload(self, repeat_record, adherence_case):
@@ -257,7 +245,6 @@ class AdherencePayloadGenerator(NinetyNineDotsBasePayloadGenerator):
             )
 
 
-@RegisterGenerator(NinetyNineDotsTreatmentOutcomeRepeater, 'case_json', 'JSON', is_default=True)
 class TreatmentOutcomePayloadGenerator(NinetyNineDotsBasePayloadGenerator):
 
     def get_payload(self, repeat_record, episode_case):

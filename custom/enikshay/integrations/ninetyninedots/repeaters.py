@@ -7,6 +7,9 @@ from corehq.form_processor.models import CommCareCaseSQL
 from corehq.apps.repeaters.models import CaseRepeater
 from corehq.apps.repeaters.signals import create_repeat_records
 from casexml.apps.case.signals import case_post_save
+from custom.enikshay.integrations.ninetyninedots.repeater_generators import \
+    RegisterPatientPayloadGenerator, UpdatePatientPayloadGenerator, AdherencePayloadGenerator, \
+    TreatmentOutcomePayloadGenerator
 
 from custom.enikshay.integrations.utils import (
     is_valid_person_submission,
@@ -50,6 +53,12 @@ class NinetyNineDotsRegisterPatientRepeater(Base99DOTSRepeater):
 
     friendly_name = _("99DOTS Patient Registration (episode case type)")
 
+    class Format(object):
+        formats = {
+            'case_json': (RegisterPatientPayloadGenerator, _('JSON')),
+        }
+        default_format = 'case_json'
+
     @classmethod
     def get_custom_url(cls, domain):
         from custom.enikshay.integrations.ninetyninedots.views import RegisterPatientRepeaterView
@@ -85,6 +94,12 @@ class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
     """
 
     friendly_name = _("99DOTS Patient Update (person & episode case type)")
+
+    class Format(object):
+        formats = {
+            'case_json': (UpdatePatientPayloadGenerator, _('JSON')),
+        }
+        default_format = 'case_json'
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -133,6 +148,12 @@ class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
     """
     friendly_name = _("99DOTS Update Adherence (adherence case type)")
 
+    class Format(object):
+        formats = {
+            'case_json': (AdherencePayloadGenerator, _('JSON')),
+        }
+        default_format = 'case_json'
+
     @classmethod
     def get_custom_url(cls, domain):
         from custom.enikshay.integrations.ninetyninedots.views import UpdateAdherenceRepeaterView
@@ -174,6 +195,12 @@ class NinetyNineDotsTreatmentOutcomeRepeater(Base99DOTSRepeater):
 
     """
     friendly_name = _("99DOTS Update Treatment Outcome (episode case type)")
+
+    class Format(object):
+        formats = {
+            'case_json': (TreatmentOutcomePayloadGenerator, _('JSON')),
+        }
+        default_format = 'case_json'
 
     @classmethod
     def get_custom_url(cls, domain):
