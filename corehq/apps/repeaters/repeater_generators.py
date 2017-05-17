@@ -1,3 +1,4 @@
+from collections import namedtuple
 import json
 
 from datetime import datetime
@@ -5,16 +6,7 @@ from uuid import uuid4
 
 from django.core.serializers.json import DjangoJSONEncoder
 from casexml.apps.case.xform import cases_referenced_by_xform
-
-from corehq.apps.repeaters.models import (
-    FormRepeater,
-    CaseRepeater,
-    ShortFormRepeater,
-    AppStructureRepeater,
-    GeneratorCollection,
-    UserRepeater,
-    LocationRepeater,
-)
+from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
 
 from casexml.apps.case.xml import V2
 
@@ -75,6 +67,68 @@ class BasePayloadGenerator(object):
         return True
 
 
+FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
+
+
+class GeneratorCollection(object):
+    """Collection of format_name to Payload Generators for a Repeater class
+
+    args:
+        repeater_class: A valid child class of Repeater class
+    """
+
+    def __init__(self, repeater_class):
+        self.repeater_class = repeater_class
+        self.default_format = ''
+        self.format_generator_map = {}
+
+    def add_new_format(self, format_name, format_label, generator_class, is_default=False):
+        """Adds a new format->generator mapping to the collection
+
+        args:
+            format_name: unique name to identify the format
+            format_label: label to be displayed to the user
+            generator_class: child class of .repeater_generators.BasePayloadGenerator
+
+        kwargs:
+            is_default: True if the format_name should be default format
+
+        exceptions:
+            raises DuplicateFormatException if format is added with is_default while other
+            default exists
+            raises DuplicateFormatException if format_name alread exists in the collection
+        """
+        if is_default and self.default_format:
+            raise DuplicateFormatException("A default format already exists for this repeater.")
+        elif is_default:
+            self.default_format = format_name
+        if format_name in self.format_generator_map:
+            raise DuplicateFormatException("There is already a Generator with this format name.")
+
+        self.format_generator_map[format_name] = FormatInfo(
+            name=format_name,
+            label=format_label,
+            generator_class=generator_class
+        )
+
+    def get_default_format(self):
+        """returns default format"""
+        return self.default_format
+
+    def get_default_generator(self):
+        """returns generator class for the default format"""
+        raise self.format_generator_map[self.default_format].generator_class
+
+    def get_all_formats(self, for_domain=None):
+        """returns all the formats added to this repeater collection"""
+        return [(name, format.label) for name, format in self.format_generator_map.iteritems()
+                if not for_domain or format.generator_class.enabled_for_domain(for_domain)]
+
+    def get_generator_by_format(self, format):
+        """returns generator class given a format"""
+        return self.format_generator_map[format].generator_class
+
+
 class RegisterGenerator(object):
     """Decorator to register new formats and Payload generators for Repeaters
 
@@ -108,25 +162,40 @@ class RegisterGenerator(object):
         return generator_class
 
     @classmethod
+    def get_collection(cls, repeater_class):
+        if repeater_class not in cls.generators:
+            formats = repeater_class.Formats.formats
+            default_format = repeater_class.Formats.default_format
+            if default_format not in formats:
+                raise DuplicateFormatException(
+                    'default_format {!r} is not in formats {!r}'.format(default_format, formats))
+            collection = GeneratorCollection(repeater_class)
+            for name, (generator_class, label) in formats.items():
+                collection.add_new_format(format_name=name, format_label=label, generator_class=generator_class,
+                                          is_default=(name == default_format))
+            cls.generators[repeater_class] = collection
+        return cls.generators[repeater_class]
+
+    @classmethod
     def generator_class_by_repeater_format(cls, repeater_class, format_name):
         """Return generator class given a Repeater class and format_name"""
-        generator_collection = cls.generators[repeater_class]
+        generator_collection = cls.get_collection(repeater_class)
         return generator_collection.get_generator_by_format(format_name)
 
     @classmethod
     def all_formats_by_repeater(cls, repeater_class, for_domain=None):
         """Return all formats for a given Repeater class"""
-        generator_collection = cls.generators[repeater_class]
+        generator_collection = cls.get_collection(repeater_class)
         return generator_collection.get_all_formats(for_domain=for_domain)
 
     @classmethod
     def default_format_by_repeater(cls, repeater_class):
         """Return default format_name for a Repeater class"""
-        generator_collection = cls.generators[repeater_class]
-        return generator_collection.get_default_format()
+        generator_collection = cls.get_collection(repeater_class)
+        default_format = generator_collection.get_default_format()
+        return default_format
 
 
-@RegisterGenerator(FormRepeater, 'form_xml', 'XML', is_default=True)
 class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, payload_doc):
@@ -136,7 +205,6 @@ class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
         return self.get_payload(None, _get_test_form(domain))
 
 
-@RegisterGenerator(CaseRepeater, 'case_xml', 'XML', is_default=True)
 class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, payload_doc):
@@ -152,7 +220,6 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
         ).as_string()
 
 
-@RegisterGenerator(CaseRepeater, 'case_json', 'JSON', is_default=False)
 class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, payload_doc):
@@ -174,7 +241,6 @@ class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
         )
 
 
-@RegisterGenerator(AppStructureRepeater, "app_structure_xml", "XML", is_default=True)
 class AppStructureGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, payload_doc):
@@ -182,7 +248,6 @@ class AppStructureGenerator(BasePayloadGenerator):
         return repeat_record.payload_id
 
 
-@RegisterGenerator(ShortFormRepeater, "short_form_json", "Default JSON", is_default=True)
 class ShortFormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, form):
@@ -203,7 +268,6 @@ class ShortFormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
         })
 
 
-@RegisterGenerator(FormRepeater, "form_json", "JSON", is_default=False)
 class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
 
     def get_payload(self, repeat_record, form):
@@ -221,7 +285,6 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
         return self.get_payload(None, _get_test_form(domain))
 
 
-@RegisterGenerator(UserRepeater, "user_json", "JSON", is_default=True)
 class UserPayloadGenerator(BasePayloadGenerator):
 
     @property
@@ -235,7 +298,6 @@ class UserPayloadGenerator(BasePayloadGenerator):
         return resource.full_dehydrate(bundle).data
 
 
-@RegisterGenerator(LocationRepeater, "user_json", "JSON", is_default=True)
 class LocationPayloadGenerator(BasePayloadGenerator):
 
     @property
