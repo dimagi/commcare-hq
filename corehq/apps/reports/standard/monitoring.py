@@ -56,7 +56,7 @@ from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.utils.translation import ugettext_noop
 
 
@@ -146,14 +146,14 @@ class CompletionOrSubmissionTimeMixin(object):
 
 class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     """See column headers for details"""
-    name = ugettext_noop('Case Activity')
+    name = _('Case Activity')
     slug = 'case_activity'
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.select.CaseTypeFilter']
     all_users = None
     display_data = ['percent']
     emailable = True
-    description = ugettext_noop("Followup rates on active cases.")
+    description = _("Followup rates on active cases.")
     is_cacheable = True
     ajax_pagination = True
     exportable_all = True
@@ -741,7 +741,7 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 
 class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
     slug = "daily_form_stats"
-    name = ugettext_noop("Daily Form Activity")
+    name = _("Daily Form Activity")
     bad_request_error_text = ugettext_noop("Your search query was invalid. If you're using a large date range, try using a smaller one.")
 
     fields = [
@@ -750,7 +750,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
 
-    description = ugettext_noop("Number of submissions per day.")
+    description = _("Number of submissions per day.")
 
     fix_left_col = False
     emailable = True
@@ -952,14 +952,14 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
 class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixin,
                                CompletionOrSubmissionTimeMixin):
-    name = ugettext_noop("Form Completion Time")
+    name = _("Form Completion Time")
     slug = "completion_times"
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.SingleFormByApplicationFilter',
               'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
 
-    description = ugettext_noop("Statistics on time spent on a particular form.")
+    description = _("Statistics on time spent on a particular form.")
     is_cacheable = True
 
     @property
@@ -1345,8 +1345,8 @@ def _worker_activity_is_location_safe(view, *args, **kwargs):
 class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     slug = 'worker_activity'
     name = ugettext_noop("Worker Activity")
-    description = ugettext_noop("Summary of form and case activity by user or group.")
-    section_name = ugettext_noop("Project Reports")
+    description = ugettext_lazy("Summary of form and case activity by user or group.")
+    section_name = ugettext_lazy("Project Reports")
     num_avg_intervals = 3  # how many duration intervals we go back to calculate averages
     is_cacheable = True
 
