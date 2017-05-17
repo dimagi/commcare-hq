@@ -10,3 +10,7 @@ from corehq.warehouse.models.dimensions import (
 from corehq.warehouse.models.meta import (
     TableState,
 )
+
+from corehq.warehouse.models.staging import (
+    GroupStagingTable,
+)
