@@ -17,6 +17,9 @@ from custom.enikshay.case_utils import (
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.const import TREATMENT_OUTCOME, EPISODE_PENDING_REGISTRATION
+from custom.enikshay.integrations.nikshay.repeater_generator import \
+    NikshayRegisterPatientPayloadGenerator, NikshayHIVTestPayloadGenerator, \
+    NikshayTreatmentOutcomePayload, NikshayFollowupPayloadGenerator
 from custom.enikshay.integrations.utils import (
     is_valid_person_submission,
     is_valid_test_submission,
@@ -38,6 +41,12 @@ class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
 
     include_app_id_param = False
     friendly_name = _("Forward eNikshay Patients to Nikshay (episode case type)")
+
+    class Format(object):
+        formats = {
+            'case_json': (NikshayRegisterPatientPayloadGenerator, _('JSON')),
+        }
+        default_format = 'case_json'
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -76,6 +85,12 @@ class NikshayHIVTestRepeater(BaseNikshayRepeater):
 
     include_app_id_param = False
     friendly_name = _("Forward eNikshay Patient's HIV Test to Nikshay (person case type)")
+
+    class Format(object):
+        formats = {
+            'case_json': (NikshayHIVTestPayloadGenerator, _('JSON')),
+        }
+        default_format = 'case_json'
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -117,6 +132,12 @@ class NikshayTreatmentOutcomeRepeater(BaseNikshayRepeater):
 
     friendly_name = _("Forward Treatment Outcomes to Nikshay (episode case type)")
 
+    class Format(object):
+        formats = {
+            'case_json': (NikshayTreatmentOutcomePayload, _('JSON')),
+        }
+        default_format = 'case_json'
+
     @classmethod
     def available_for_domain(cls, domain):
         return NIKSHAY_INTEGRATION.enabled(domain)
@@ -148,6 +169,12 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
 
     include_app_id_param = False
     friendly_name = _("Forward eNikshay Patient's Follow Ups to Nikshay (test case type)")
+
+    class Format(object):
+        formats = {
+            'case_json': (NikshayFollowupPayloadGenerator, _('JSON')),
+        }
+        default_format = 'case_json'
 
     @classmethod
     def available_for_domain(cls, domain):
