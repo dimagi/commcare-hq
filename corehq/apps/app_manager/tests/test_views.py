@@ -211,3 +211,15 @@ class TestViews(TestCase):
         self._test_status_codes(['default_app'], {
             'domain': self.domain.name,
         }, True)
+
+    def test_default_new_app(self, mock):
+        response = self.client.get(reverse('default_new_app', kwargs={
+            'domain': self.domain.name,
+        }), follow=False)
+
+        self.assertEqual(response.status_code, 302)
+        redirect_location = response['Location']
+        [app_id] = re.compile(r'[a-fA-F0-9]{32}').findall(redirect_location)
+        expected = '/apps/view/{}/'.format(app_id)
+        self.assertTrue(redirect_location.endswith(expected))
+        self.addCleanup(lambda: Application.get_db().delete_doc(app_id))
