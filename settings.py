@@ -179,7 +179,6 @@ PASSWORD_HASHERS = (
 ROOT_URLCONF = "urls"
 
 DEFAULT_APPS = (
-    'corehq.apps.userhack',  # this has to be above auth
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
