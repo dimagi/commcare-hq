@@ -45,12 +45,7 @@ from corehq.apps.case_search.models import (
     disable_case_search,
 )
 from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
-from corehq.apps.dhis2.forms import (
-    Dhis2ConnectionForm,
-    DataSetMapForm,
-    DataValueMapFormSet,
-    DataValueMapFormSetHelper,
-)
+from corehq.apps.dhis2.forms import Dhis2ConnectionForm
 from corehq.apps.dhis2.models import JsonApiLog, DataSetMap, DataValueMap
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.locations.permissions import location_safe
