@@ -63,11 +63,10 @@ class GroupReminder(Reminder):
 
     def location_filter(self, sql_location):
         current_group = self.current_group
-        location = sql_location.couch_location
         status_exists = SupplyPointStatus.objects.filter(
             location_id=sql_location.location_id,
             status_type=self.get_status_type(),
             status_date__gte=self.date
         ).exists()
         return (self.location_type == 'DISTRICT' or
-                current_group == location.metadata.get('group', None)) and not status_exists
+                current_group == sql_location.metadata.get('group', None)) and not status_exists

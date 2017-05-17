@@ -218,7 +218,7 @@ def populate_report_data(start_date, end_date, domain, runner, strict=True):
         location_type__name='FACILITY',
         domain=domain,
         created_at__lt=end_date
-    ).order_by('pk').couch_locations()
+    ).order_by('pk')
     non_facilities = _get_locations_by_type(domain, 'DISTRICT')
     non_facilities += _get_locations_by_type(domain, 'REGION')
     non_facilities += _get_locations_by_type(domain, 'MSDZONE')
@@ -474,8 +474,7 @@ def get_non_archived_facilities_below(location, end_date):
                 .get_descendants(include_self=True)
                 .filter(is_archived=False,
                         location_type__name='FACILITY',
-                        created_at__lt=end_date)
-                .couch_locations())
+                        created_at__lt=end_date))
 
 
 @task(queue='logistics_background_queue')
