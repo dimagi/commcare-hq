@@ -2201,8 +2201,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
             'enabled': request.POST['enable'] == 'true',
             'config': CaseSearchConfigJSON({'fuzzy_properties': unpack_fuzzies(request.POST)})
         })
-        messages.success(request, _("Case search configuration updated successfully"))
-        return self.get(request, *args, **kwargs)
+        return json_response(self.page_context)
 
     @property
     def page_context(self):
