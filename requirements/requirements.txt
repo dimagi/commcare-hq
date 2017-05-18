@@ -96,5 +96,4 @@ email_validator==1.0.2
 dnspython==1.15.0
 raven==6.0.0
 quickcache==0.0.1
--e submodules/motechhub/packages/python/authproxy-client
 django_fsm==2.5.0
