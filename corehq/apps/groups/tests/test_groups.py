@@ -20,10 +20,12 @@ class GroupTest(TestCase):
         cls.deleted_user = CommCareUser.create(domain=DOMAIN, username='goner', password='secret')
         cls.deleted_user.retire()
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         for group in Group.by_domain(DOMAIN):
             group.delete()
+
+    @classmethod
+    def tearDownClass(cls):
         for user in CommCareUser.all():
             user.delete()
 
