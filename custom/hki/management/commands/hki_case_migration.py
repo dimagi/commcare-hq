@@ -30,18 +30,18 @@ class Command(BaseCommand):
         member_cases = CaseES().domain(self.domain).case_type('household_member').count()
         total_cases = household_cases + member_cases
         with open(log_file, "w") as fh:
-            fh.write('--------Successful Form Ids----------')
+            fh.write('--------Successful Form Ids----------\n')
             for cases in chunked(with_progress_bar(self._get_cases_to_process(), total_cases), 100):
                 cases_to_update = self._process_cases(cases, failed_updates, loc_mapping)
                 try:
                     xform, cases = bulk_update_cases(self.domain, cases_to_update)
-                    fh.write(xform.form_id)
+                    fh.write(xform.form_id + '\n')
                 except LocalSubmissionError as e:
                     print unicode(e)
                     failed_updates.extend(case[0] for case in cases_to_update)
-            fh.write('--------Failed Cases--------------')
+            fh.write('--------Failed Cases--------------\n')
             for case_id in failed_updates:
-                fh.write(case_id)
+                fh.write(case_id + '\n')
 
     def _get_cases_to_process(self):
         from corehq.sql_db.util import get_db_aliases_for_partitioned_query
@@ -57,13 +57,21 @@ class Command(BaseCommand):
         for case in cases:
             try:
                 if not case.get_case_property('location_migration_complete') == 'yes':
-                    level2_code = case.get_case_property('household_level2_code') or ''
-                    ward_number = case.get_case_property('household_ward_number') or ''
+                    # names have format 0044-45-V45009-8-47-4
+                    split_name = case.name.split('-')
+                    try:
+                        level2_code = split_name[2][1:]
+                    except IndexError:
+                        level2_code = ''
+                    try:
+                        ward_number = split_name[3]
+                    except IndexError:
+                        ward_number = ''
                     new_site_code = '{}{}'.format(level2_code, ward_number.zfill(2))
                     new_owner_id = loc_mapping.get(new_site_code, 'c9c86e46f57b4d2f81045e5250e03889')
                     case_properties = {
                         'owner_id': new_owner_id,
-                        'location_migration_complete': 'no' if 'c9c86e46f57b4d2f81045e5250e03889' else 'yes'
+                        'location_migration_complete': 'no' if new_owner_id == 'c9c86e46f57b4d2f81045e5250e03889' else 'yes'
                     }
                     cases_to_update.append((case.case_id, case_properties, False))
             except:
