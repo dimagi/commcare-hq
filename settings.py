@@ -1939,6 +1939,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('enikshay_referred_by', 'custom.enikshay.expressions.referred_by_expression'),
     ('enikshay_date_of_referral', 'custom.enikshay.expressions.date_of_referral_expression'),
     ('enikshay_date_of_acceptance', 'custom.enikshay.expressions.date_of_acceptance_expression'),
+    ('enikshay_ancestor_location', 'custom.enikshay.expressions.ancestor_location'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
