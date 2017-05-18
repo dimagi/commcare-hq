@@ -189,20 +189,17 @@ class RegisterGenerator(object):
     @classmethod
     def generator_class_by_repeater_format(cls, repeater_class, format_name):
         """Return generator class given a Repeater class and format_name"""
-        generator_collection = cls.get_collection(repeater_class)
-        return generator_collection.get_generator_by_format(format_name)
+        return cls.get_collection(repeater_class).get_generator_by_format(format_name)
 
     @classmethod
     def all_formats_by_repeater(cls, repeater_class, for_domain=None):
         """Return all formats for a given Repeater class"""
-        generator_collection = cls.get_collection(repeater_class)
-        return generator_collection.get_all_formats(for_domain=for_domain)
+        return cls.get_collection(repeater_class).get_all_formats(for_domain=for_domain)
 
     @classmethod
     def default_format_by_repeater(cls, repeater_class):
         """Return default format_name for a Repeater class"""
-        generator_collection = cls.get_collection(repeater_class)
-        return generator_collection.get_default_format()
+        return cls.get_collection(repeater_class).get_default_format()
 
 
 class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
