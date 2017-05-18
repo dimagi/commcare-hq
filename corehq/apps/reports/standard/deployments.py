@@ -86,7 +86,10 @@ class ApplicationStatusReport(DeploymentsReport):
     @property
     @memoized
     def users(self):
-        mobile_user_and_group_slugs = self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug)
+        mobile_user_and_group_slugs = set(
+            self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug) +
+            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)  # Cater for old ReportConfigs
+        )
 
         limit_user_ids = []
         if self.selected_app_id:
