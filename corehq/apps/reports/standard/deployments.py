@@ -67,8 +67,7 @@ class ApplicationStatusReport(DeploymentsReport):
             DataTablesColumn(_("Application"),
                              help_text=_("Displays application of last submitted form")),
             DataTablesColumn(_("Application Version"),
-                             help_text=_("""Displays application version of the last submitted form;
-                                         The currently deployed version may be different."""),
+                             help_text=_("Displays application version of the user's last sync."),
                              sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("CommCare Version"),
                              help_text=_("""Displays CommCare version the user last submitted with;
