@@ -10,6 +10,7 @@ from braces.views import JSONResponseMixin
 from corehq.apps.domain.decorators import LoginAndDomainMixin
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.filters.case_list import CaseListFilterUtils
+from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.elastic import ESError
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.logging import notify_exception
@@ -304,7 +305,20 @@ class DeviceLogFilter(LoginAndDomainMixin, JSONResponseMixin, View):
 
 
 class DeviceLogUsers(DeviceLogFilter):
-    field = 'username'
+
+    def get(self, request, domain):
+        q = self.request.GET.get('q', None)
+        users_query = (get_search_users_in_domain_es_query(domain, q, self._page_limit(), self._offset())
+            .show_inactive()
+            .remove_default_filter("not_deleted")
+            .source("username")
+        )
+        values = [x['username'].split("@")[0] for x in users_query.run().hits]
+        count = users_query.count()
+        return self.render_json_response({
+            'results': [{'id': v, 'text': v} for v in values],
+            'total': count,
+        })
 
 
 class DeviceLogIds(DeviceLogFilter):
