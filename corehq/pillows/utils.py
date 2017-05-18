@@ -91,6 +91,7 @@ def get_all_expected_es_indices():
     yield CASE_SEARCH_INDEX_INFO
     yield LEDGER_INDEX_INFO
 
+
 def format_form_meta_for_es(form_metadata):
     form_metadata['appVersion'] = form_metadata['appVersion'].get('#text')
     return form_metadata
@@ -115,9 +116,10 @@ def update_latest_builds(user, app_id, date, version):
         last_build.app_id = app_id
         last_build.build_version_date = date
 
-    if user.reporting_metadata.last_build is None or \
-                    date > user.reporting_metadata.last_build.build_version_date:
+    if user.reporting_metadata.last_build is None \
+            or date > user.reporting_metadata.last_build.build_version_date:
         user.reporting_metadata.last_build = last_build
+
 
 def filter_by_app(data_list, app_id):
     last_items = filter(

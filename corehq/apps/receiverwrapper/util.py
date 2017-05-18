@@ -73,7 +73,7 @@ def get_version_from_build_id(domain, build_id):
         return build.version
 
 
-@quickcache(['domain', 'build_id'], timeout=24*60*60)
+@quickcache(['domain', 'build_id'], timeout=24 * 60 * 60)
 def get_version_and_app_from_build_id(domain, build_id):
     """
     fast lookup of app version number given build_id

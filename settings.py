@@ -1604,7 +1604,7 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.app_submission_tracker.get_form_submission_metadata_tracker_pillow',
         },
-{
+        {
             'name': 'SynclogPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.synclog.get_synclog_pillow',

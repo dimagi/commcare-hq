@@ -16,7 +16,6 @@ from pillowtop.reindexer.reindexer import Reindexer
 from casexml.apps.phone.models import SyncLog
 
 
-
 def get_synclog_pillow(pillow_id='SynclogPillow'):
     """
     This gets a pillow which iterates through all synclogs
@@ -55,7 +54,6 @@ class SynclogProcessor(PillowProcessor):
             version, app_id = get_version_and_app_from_build_id(synclog.get('domain'), build_id)
         user_id = synclog.get('user_id')
 
-
         if user_id:
             user = CouchUser.get_by_user_id(user_id)
 
@@ -69,8 +67,8 @@ class SynclogProcessor(PillowProcessor):
                 last_sync.build_version = version
                 last_sync.app_id = app_id
 
-                if user.reporting_metadata.last_sync_for_user is None or \
-                                last_sync_date > user.reporting_metadata.last_sync_for_user.sync_date:
+                if user.reporting_metadata.last_sync_for_user is None \
+                        or last_sync_date > user.reporting_metadata.last_sync_for_user.sync_date:
                     user.reporting_metadata.last_sync_for_user = last_sync
 
                 if version:
