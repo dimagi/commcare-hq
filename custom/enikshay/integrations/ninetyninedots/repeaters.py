@@ -53,8 +53,7 @@ class NinetyNineDotsRegisterPatientRepeater(Base99DOTSRepeater):
 
     friendly_name = _("99DOTS Patient Registration (episode case type)")
 
-    class Formats(object):
-        formats = [RegisterPatientPayloadGenerator]
+    _generators = [RegisterPatientPayloadGenerator]
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -92,8 +91,7 @@ class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
 
     friendly_name = _("99DOTS Patient Update (person & episode case type)")
 
-    class Formats(object):
-        formats = [UpdatePatientPayloadGenerator]
+    _generators = [UpdatePatientPayloadGenerator]
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -142,8 +140,7 @@ class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
     """
     friendly_name = _("99DOTS Update Adherence (adherence case type)")
 
-    class Formats(object):
-        formats = [AdherencePayloadGenerator]
+    _generators = [AdherencePayloadGenerator]
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -187,8 +184,7 @@ class NinetyNineDotsTreatmentOutcomeRepeater(Base99DOTSRepeater):
     """
     friendly_name = _("99DOTS Update Treatment Outcome (episode case type)")
 
-    class Formats(object):
-        formats = [TreatmentOutcomePayloadGenerator]
+    _generators = [TreatmentOutcomePayloadGenerator]
 
     @classmethod
     def get_custom_url(cls, domain):

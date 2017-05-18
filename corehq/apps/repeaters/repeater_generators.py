@@ -157,14 +157,9 @@ class RegisterGenerator(object):
         self.is_default = is_default
 
     def __call__(self, generator_class):
-        if not self.repeater_cls in RegisterGenerator.generators:
-            RegisterGenerator.generators[self.repeater_cls] = GeneratorCollection(self.repeater_cls)
-        RegisterGenerator.generators[self.repeater_cls].add_new_format(
-            self.format_name,
-            self.format_label,
-            generator_class,
-            is_default=self.is_default
-        )
+        collection = self.get_collection(self.repeater_cls)
+        collection.add_new_format(self.format_name, self.format_label, generator_class,
+                                  is_default=self.is_default)
         return generator_class
 
     @classmethod
@@ -173,9 +168,9 @@ class RegisterGenerator(object):
 
     @classmethod
     def get_collection(cls, repeater_class):
-        if hasattr(repeater_class, 'Formats') and \
-                not getattr(repeater_class.Formats, 'processed', False):
-            generator_classes = repeater_class.Formats.formats
+        if repeater_class not in cls.generators:
+            cls.generators[repeater_class] = GeneratorCollection(repeater_class)
+            generator_classes = repeater_class.get_generators()
             default_generator_class = generator_classes[0]
             for generator_class in generator_classes:
                 cls.register_generator(
@@ -185,7 +180,6 @@ class RegisterGenerator(object):
                     format_label=generator_class.format_label,
                     is_default=(generator_class is default_generator_class),
                 )
-            repeater_class.Formats.processed = True
 
         return cls.generators[repeater_class]
 
