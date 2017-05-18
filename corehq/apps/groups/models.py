@@ -9,7 +9,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.users.models import CouchUser, CommCareUser
-from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord, DELETED_SUFFIX
+from dimagi.utils.couch.undo import UndoableMixin, DeleteDocRecord, DELETED_SUFFIX
 from datetime import datetime
 from corehq.apps.groups.dbaccessors import (
     get_group_ids_by_domain,
@@ -20,11 +20,12 @@ from corehq.apps.groups.dbaccessors import (
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.groups.exceptions import CantSaveException
 from corehq.util.quickcache import quickcache
+from corehq.util.couch_helpers import TimestampDocument
 
 dt_no_Z_re = re.compile('^\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d\d\d\d\d\d)?$')
 
 
-class Group(QuickCachedDocumentMixin, UndoableDocument):
+class Group(QuickCachedDocumentMixin, TimestampDocument, UndoableMixin):
     """
     The main use case for these 'groups' of users is currently
     so that we can break down reports by arbitrary regions.
@@ -38,7 +39,6 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
     path = ListProperty()
     case_sharing = BooleanProperty()
     reporting = BooleanProperty(default=True)
-    last_modified = DateTimeProperty()
 
     # custom data can live here
     metadata = DictProperty()
@@ -53,7 +53,6 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         return super(Group, cls).wrap(data)
 
     def save(self, *args, **kwargs):
-        self.last_modified = datetime.utcnow()
         super(Group, self).save(*args, **kwargs)
         refresh_group_views()
 
