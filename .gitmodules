@@ -49,6 +49,3 @@
 [submodule "deployment/commcare-hq-deploy"]
 	path = deployment/commcare-hq-deploy
 	url = https://github.com/dimagi/commcare-hq-deploy.git
-[submodule "submodules/motechhub"]
-	path = submodules/motechhub
-	url = https://github.com/dimagi/motechhub
