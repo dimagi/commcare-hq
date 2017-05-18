@@ -4,6 +4,7 @@ from corehq.util.quickcache import quickcache
 from dimagi.ext import jsonobject
 from django.db import models
 from jsonfield.fields import JSONField
+from django.contrib.postgres.fields import ArrayField
 
 
 CLAIM_CASE_TYPE = 'commcare-case-claim'
@@ -11,13 +12,13 @@ FUZZY_PROPERTIES = "fuzzy_properties"
 SEARCH_QUERY_ADDITION_KEY = 'commcare_custom_search_query'
 
 
-class FuzzyProperties(jsonobject.JsonObject):
+class FuzzyPropertiesJson(jsonobject.JsonObject):
     case_type = jsonobject.StringProperty()
     properties = jsonobject.ListProperty(unicode)
 
 
 class CaseSearchConfigJSON(jsonobject.JsonObject):
-    fuzzy_properties = jsonobject.ListProperty(FuzzyProperties)
+    fuzzy_properties = jsonobject.ListProperty(FuzzyPropertiesJson)
 
     def add_fuzzy_property(self, case_type, property):
         self.add_fuzzy_properties(case_type, [property])
@@ -29,7 +30,7 @@ class CaseSearchConfigJSON(jsonobject.JsonObject):
                 return
 
         self.fuzzy_properties = self.fuzzy_properties + [
-            FuzzyProperties(case_type=case_type, properties=properties)
+            FuzzyPropertiesJson(case_type=case_type, properties=properties)
         ]
 
     def remove_fuzzy_property(self, case_type, property):
@@ -62,6 +63,28 @@ class GetOrNoneManager(models.Manager):
             return None
 
 
+class FuzzyProperties(models.Model):
+    domain = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    case_type = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    properties = ArrayField(
+        models.TextField(null=True, blank=True),
+        null=True,
+    )
+
+    class Meta(object):
+        unique_together = ('domain', 'case_type')
+
+
 class CaseSearchConfig(models.Model):
     """
     Contains config for case search
@@ -77,6 +100,7 @@ class CaseSearchConfig(models.Model):
         primary_key=True
     )
     enabled = models.BooleanField(blank=False, null=False, default=False)
+    fuzzy_properties = models.ManyToManyField(FuzzyProperties)
     _config = JSONField(default=dict)
 
     objects = GetOrNoneManager()
