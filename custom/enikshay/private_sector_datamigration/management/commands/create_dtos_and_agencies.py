@@ -74,14 +74,16 @@ class Command(BaseCommand):
 
     def create_user(self, agency_loc, user_level):
         agency_loc_id = agency_loc.location_id
-        agency_user = make_location_user(agency_loc)
-        agency_user.assigned_location_ids = [agency_loc_id]
-        agency_user.location_id = agency_loc_id
-        agency_user.user_data['commcare_location_id'] = agency_loc_id
-        agency_user.user_data['user_level'] = user_level
-        agency_user.user_data['usertype'] = self.get_usertype(agency_loc.location_type.code)
-        agency_user.user_location_id = agency_loc_id
-        agency_user.save()
+
+        user = make_location_user(agency_loc)
+        user.user_location_id = agency_loc_id
+        user.set_location(agency_loc, commit=False)
+        user.user_data['user_level'] = user_level
+        user.user_data['usertype'] = self.get_usertype(agency_loc.location_type.code)
+        user.save()
+
+        agency_loc.user_id = user._id
+        agency_loc.save()
 
     @staticmethod
     def get_usertype(code):
