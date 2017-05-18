@@ -56,7 +56,7 @@ class Command(BaseCommand):
         cases_to_update = []
         for case in cases:
             try:
-                if not case.get_case_property('location_migration_complete') is None:
+                if not case.get_case_property('location_migration_complete') == 'yes':
                     level2_code = case.get_case_property('household_level2_code', '')
                     ward_number = case.get_case_property('household_ward_number', '')
                     new_site_code = '{}{}'.format(level2_code, ward_number.zfill(2))
