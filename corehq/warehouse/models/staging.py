@@ -11,8 +11,6 @@ from corehq.apps.groups.models import Group
 
 class StagingTable(models.Model):
 
-    staged_on = models.DateTimeField(auto_now_add=True)
-
     class Meta:
         abstract = True
 
