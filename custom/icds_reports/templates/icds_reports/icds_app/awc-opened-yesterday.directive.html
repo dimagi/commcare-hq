@@ -9,12 +9,13 @@
             </div>
         </div>
         <div class="row">
-            <indie-map right-legend="$ctrl.rightLegend" fills="$ctrl.fills" legend-title="Percentage of AWCs" data="$ctrl.mapData"></indie-map>
+            <indie-map legend-title="Percentage of AWCs" data="$ctrl.mapData"></indie-map>
         </div>
     </div>
     <div class="col-md-12" ng-if="$ctrl.step === '2'">
         <div class="row">
-            <nvd3 options="$ctrl.chartOptions" data="$ctrl.chartData" class="with-3d-shadow with-transitions"></nvd3>
+            chart
+{#            #}
         </div>
     </div>
 

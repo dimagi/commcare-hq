@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 
 import operator
 
+from dateutil.relativedelta import relativedelta
+
 from corehq.util.quickcache import quickcache
 from django.db.models.aggregates import Sum
 from django.template.loader import render_to_string
@@ -767,16 +769,130 @@ def get_awc_opened_data(filters):
         num += daily
         denom += awcs
         percent = (daily or 0) * 100 / (awcs or 1)
-        if 0 < percent < 50:
+        if 0 <= percent < 51:
             data.update({name: {'fillKey': '0%-50%'}})
-        elif 50 < percent < 75:
+        elif 51 <= percent <= 75:
             data.update({name: {'fillKey': '51%-75%'}})
         elif percent > 75:
             data.update({name: {'fillKey': '75%-100%'}})
     return {
-        'map': data,
-        'rightLegend': {
-            'average': num * 100 / (denom or 1),
-            'info': _("Percentage of Angwanwadi Centers that were open yesterday")
-        }
+        "configs": [
+            {
+                "slug": "awc_opened",
+                "label": "Awc Opened yesterday",
+                "fills": {
+                    '0%-50%': '#d60000',
+                    '51%-75%': '#df7400',
+                    '75%-100%': '#009811',
+                    'defaultFill': '#eef2ff',
+                },
+                "rightLegend": {
+                    "average": num * 100 / (denom or 1),
+                    "info": _("Percentage of Angwanwadi Centers that were open yesterday")
+                },
+                "data": data,
+            }
+        ]
+    }
+
+
+def get_prevalnece_of_undernutrition_data(filters):
+
+    def get_data_for(month):
+        return AggChildHealthMonthly.objects.filter(
+            month=datetime(*month), aggregation_level=1
+        ).values(
+            'state_name'
+        ).annotate(
+            moderately_underweight=Sum('nutrition_status_moderately_underweight'),
+            severely_underweight=Sum('nutrition_status_severely_underweight'),
+            valid=Sum('valid_in_month'),
+        )
+
+    map_data = {}
+    average = []
+    for row in get_data_for(filters['month']):
+        valid = row['valid']
+        name = row['state_name']
+
+        severely_underweight = row['severely_underweight']
+        moderately_underweight = row['moderately_underweight']
+
+        average.extend([severely_underweight, moderately_underweight])
+
+        moderately_percent = (moderately_underweight or 0) * 100 / (valid or 1)
+        severely_percent = (severely_underweight or 0) * 100 / (valid or 1)
+        if 0 <= moderately_percent < 16 or 0 <= severely_percent < 6:
+            map_data.update({name: {'fillKey': '0%-15%'}})
+        elif 16 <= moderately_percent <= 30 or 6 <= severely_percent <= 10:
+            map_data.update({name: {'fillKey': '16%-30%'}})
+        elif moderately_percent > 30 or severely_percent > 10:
+            map_data.update({name: {'fillKey': '30%-100%'}})
+
+
+    moderately_chart_data = []
+    severaly_chart_data = []
+
+    chart_data = AggChildHealthMonthly.objects.filter(
+        month__range=(
+            datetime(*filters['month']) - relativedelta(months=3),
+            datetime(*filters['month'])
+        ), aggregation_level=1
+    ).values(
+        'month',
+    ).annotate(
+        moderately_underweight=Sum('nutrition_status_moderately_underweight'),
+        severely_underweight=Sum('nutrition_status_severely_underweight'),
+        valid=Sum('valid_in_month'),
+    ).order_by('month')
+
+    for row in chart_data:
+        date = row['month']
+        valid = row['valid']
+        severely_underweight = row['severely_underweight']
+        moderately_underweight = row['moderately_underweight']
+
+        average.extend([severely_underweight, moderately_underweight])
+
+        moderately_percent = (moderately_underweight or 0) / float(valid or 1)
+        severely_percent = (severely_underweight or 0) / float(valid or 1)
+
+        moderately_chart_data.append([int(date.strftime("%s")) * 1000, moderately_percent])
+        severaly_chart_data.append([int(date.strftime("%s")) * 1000, severely_percent])
+
+    return {
+        "configs": [
+            {
+                "slug": "moderately_underweight",
+                "label": "",
+                "fills": {
+                    '0%-15%': '#009811',
+                    '16%-30%': '#df7400',
+                    '30%-100%': '#d60000',
+                    'defaultFill': '#eef2ff',
+                },
+                "rightLegend": {
+                    "average": sum(average) / len(average),
+                    "info": _((
+                        "Percentage of children with weight-for-age less than -2 standard deviations of the WHO"
+                        " Child Growth Standards median. Children who are moderately or severely underweight "
+                        "have a higher risk of mortality."))
+                },
+                "data": map_data,
+            }
+        ],
+        "chart": [
+            {
+                "values": moderately_chart_data,
+                "key": "Underweight below -2 Z score",
+                "strokeWidth": 2,
+                "classed": "dashed"
+            },
+            {
+                "values": severaly_chart_data,
+                "key": "Underweight below -3 Z score",
+                "strokeWidth": 2,
+                "classed": "dashed"
+            }
+        ]
     }

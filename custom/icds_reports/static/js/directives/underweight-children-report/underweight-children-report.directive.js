@@ -8,24 +8,57 @@ function UnderweightChildrenReportController($routeParams, maternalChildService)
         {route: '/underweight_children/1', label: 'MapView'},
         {route: '/underweight_children/2', label: 'ChartView'},
     ];
+    vm.mapData = null;
+    vm.chartData = null;
 
-    vm.mapData = {};
     vm.rightLegend = {
         average: 10,
         info: "Percentage of children with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median. Children who are moderately or severely underweight have a higher risk of mortality.",
     };
 
-    vm.fills = {
-        '0-25%': '#eef2ff',
-        '26%-50%': '#bcd6e7',
-        '51%-75%': '#6baed6',
-        '76%-100%': '#2171b5',
-        'defaultFill': '#eef2ff',
-    };
-
     maternalChildService.getUnderweightChildrenData().then(function(response) {
-        vm.mapData = response.data;
+        vm.mapData = response.data.configs;
+        vm.chartData = response.data.chart
+        vm.chartTicks = vm.chartData[0].values.map(function(d) { return d[0]; })
     });
+
+    vm.chartOptions = {
+        chart: {
+            type: 'lineChart',
+            height: 450,
+            margin : {
+                top: 20,
+                right: 60,
+                bottom: 60,
+                left: 80
+            },
+            x: function(d){ return d[0]; },
+            y: function(d){ return d[1]; },
+
+            color: d3.scale.category10().range(),
+            useInteractiveGuideline: true,
+            clipVoronoi: false,
+            xAxis: {
+                axisLabel: '',
+                showMaxMin: true,
+                tickFormat: function(d) {
+                    return d3.time.format('%m/%d/%y')(new Date(d))
+                },
+                tickValues: function() {
+                    return vm.chartTicks;
+                },
+                axisLabelDistance: -100,
+            },
+
+            yAxis: {
+                axisLabel: '',
+                tickFormat: function(d){
+                    return d3.format(".0%")(d);
+                },
+                axisLabelDistance: 20,
+            }
+        }
+    };
 }
 
 UnderweightChildrenReportController.$inject = ['$routeParams', 'maternalChildService'];

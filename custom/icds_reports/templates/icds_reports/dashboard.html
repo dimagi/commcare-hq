@@ -13,6 +13,8 @@
               rel="stylesheet"
               media="all"
               href="{% static 'font-awesome/css/font-awesome.css' %}"/>
+
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}">
     {% endcompress %}
 
     {% compress css %}
@@ -20,7 +22,7 @@
     {% endcompress %}
 
     {% compress js %}
-    <script type="text/javascript" src="{% static 'd3/d3.js' %}"></script>
+        <script type="text/javascript" src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
     {% endcompress %}
 
     {% compress js %}
@@ -32,7 +34,7 @@
         <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.js' %}"></script>
         <script type="text/javascript" src="{% static 'underscore/underscore.js' %}"></script>
         <script type="text/javascript" src="{% static 'nvd3/nv.d3.min.js' %}"></script>
-        <script type="text/javascript" src="{% static 'angular-nvd3/dist/angular-nvd3.min.js' %}"></script>
+        <script type="text/javascript" src="{% static 'angular-nvd3/dist/angular-nvd3.js' %}"></script>
 
         <script type="text/javascript" src="{% static 'topojson/topojson.js' %}"></script>
         <script type="text/javascript" src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
@@ -87,7 +89,9 @@
                             </div>
                             <div class="nav navbar-nav">
                                 <h2 class="dashboard-title">
-                                    <strong>{% trans "ICT-RTM DASHBOARD OF ICDS" %}</strong></h2>
+                                    <img src="{% static "img/dashboard-logo.png" %}" alt="Logo" style="width: 40px; height: 40px;">
+                                    <strong>{% trans "ICT-RTM DASHBOARD OF ICDS" %}</strong>
+                                </h2>
                             </div>
                             <nav class="navbar-menus fullmenu" id="hq-full-menu" role="navigation">
                                 <div class="nav-settings-bar pull-right">
@@ -145,6 +149,7 @@
                     {% registerurl 'icds-ng-template' domain '---' %}
                     {% registerurl 'program_summary' domain '---' %}
                     {% registerurl 'awc_opened' domain '---' %}
+                    {% registerurl 'underweight_children' domain '---' %}
                     <div class="ng-view"></div>
                 </div>
             </div>

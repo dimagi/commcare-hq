@@ -2,7 +2,9 @@
 {% load static %}
 
 <div class="navigation-directive">
-    <div>LOGO</div>
+    <div style="padding: 5px; margin: 0 auto; text-align: center;">
+        <img src="{% static "img/BBBP_Logo.png" %}" alt="Logo" style="height: 300px;">
+    </div>
     <ul class="nav nav-list">
         <li ng-class="{'active': $location.path() === '/'}">
             <a href="#/"><i class="fa fa-home"
@@ -28,7 +30,7 @@
             </div>
             <ul class="nav nav-list collapse" uib-collapse="healthCollapsed">
                 <li ng-class="{'active': $location.path() === '/underweight_children/1' || $location.path() === '/underweight_children/2'}">
-                    <a href="#underweight_children" class="fa">{% trans "% Underweight Children" %}
+                    <a href="#underweight_children" class="fa">{% trans "Prevalence of Undernutrition (weight-for-age)" %}
                     </a>
                 </li>
                 <li ng-class="{'active': $location.path() === '/breastfeeding'}"><a href="#breastfeeding" class="fa">{% trans "% Breastfeeding" %}</a></li>
