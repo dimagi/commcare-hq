@@ -4,6 +4,9 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpoi
 from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document, \
     change_meta_from_doc_meta_and_document
 from corehq.apps.change_feed.data_sources import FORM_SQL, COUCH
+from corehq.apps.domain.models import Domain
+from corehq.apps.es import FormES
+from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.interface import BaseDocProcessor, DocumentProcessorController
@@ -15,6 +18,8 @@ from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
 from pillowtop.reindexer.reindexer import Reindexer
+
+from corehq.util.quickcache import quickcache
 
 
 def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadataTrackerProcessor', **kwargs):
@@ -126,3 +131,95 @@ def get_sql_app_form_submission_tracker_reindexer():
         FormReindexAccessor(include_attachments=False)
     )
     return AppFormSubmissionReindexer(doc_provider, FORM_SQL, 'form_processor_xforminstancesql')
+
+
+@quickcache(['domain'], timeout=60 * 60)
+def _get_apps_for_domain(domain):
+    project = Domain.get_by_name(domain)
+    if project:
+        return [app._id for app in project.applications()]
+    else:
+        return []
+
+
+class UserAppFormSubmissionDocProcessor(BaseDocProcessor):
+    def __init__(self, pillow_processor):
+        self.pillow_processor = pillow_processor
+
+    def process_doc(self, doc):
+        form_submission_changes = self._doc_to_changes(doc)
+        for change in form_submission_changes:
+            try:
+                self.pillow_processor.process_change(None, change)
+            except Exception as e:
+                print(e)
+                return False
+        return True
+
+    def handle_skip(self, doc):
+        print('Unable to process user {}'.format(
+            doc['_id'],
+        ))
+        return True
+
+    def _doc_to_changes(self, doc):
+        changes = []
+        forms = []
+        apps = []
+        if doc['doc_type'] == 'CommCareUser':
+            apps = _get_apps_for_domain(doc['domain'])
+        else:
+            for domain in (dm['domain'] for dm in doc['domain_memberships']):
+                apps = _get_apps_for_domain(domain)
+        for app_id in apps:
+            query = FormES().app(app_id).user_id(doc['_id']).sort('received_on', desc=True).size(1)
+            hits = query.run().hits
+            if hits:
+                forms.append(hits[0])
+        for form in forms:
+            doc_meta = get_doc_meta_object_from_document(form)
+            change_meta = change_meta_from_doc_meta_and_document(
+                doc_meta=doc_meta,
+                document=form,
+                data_source_type='elasticsearch',
+                data_source_name='hqforms',
+            )
+            changes.append(Change(
+                id=change_meta.document_id,
+                sequence_id=None,
+                document=form,
+                deleted=change_meta.is_deletion,
+                metadata=change_meta,
+                document_store=None,
+            ))
+        return changes
+
+
+class UserAppFormSubmissionReindexer(Reindexer):
+    def __init__(self, doc_provider, chunk_size=1000):
+        self.doc_provider = doc_provider
+        self.chunk_size = chunk_size
+        self.doc_processor = UserAppFormSubmissionDocProcessor(FormSubmissionMetadataTrackerProcessor())
+
+    def consume_options(self, options):
+        self.reset = options.pop("reset", False)
+        self.chunk_size = options.pop("chunksize", self.chunk_size)
+        return options
+
+    def reindex(self):
+        processor = DocumentProcessorController(
+            self.doc_provider,
+            self.doc_processor,
+            reset=self.reset,
+            chunk_size=self.chunk_size,
+        )
+        processor.run()
+
+
+def get_user_form_submission_tracker_reindexer():
+    iteration_key = "UserAppFormSubmissionTrackerPillow_reindexer"
+    doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
+        CommCareUser,
+        WebUser
+    ])
+    return UserAppFormSubmissionReindexer(doc_provider)

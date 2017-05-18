@@ -91,7 +91,60 @@ USER_MAPPING = {'_all': {'analyzer': 'standard'},
                                                     'commcare_version': {'type': 'string'},
                                                },
                                                'type': 'object'
-                                           }
+                                           },
+                                           'last_submission_for_user': {
+                                               'dynamic': False,
+                                               'properties': {
+                                                    'submission_date': {'format': DATE_FORMATS_STRING,
+                                                                        'type': 'date'},
+                                                    'app_id': {'type': 'string'},
+                                                    'build_id': {'type': 'string'},
+                                                    'device_id': {'type': 'string'},
+                                                    'build_version': {'type': 'integer'},
+                                                    'commcare_version': {'type': 'string'},
+                                               },
+                                               'type': 'object'
+                                           },
+                                           'last_syncs': {
+                                               'dynamic': False,
+                                               'properties': {
+                                                    'sync_date': {'format': DATE_FORMATS_STRING,
+                                                                        'type': 'date'},
+                                                    'app_id': {'type': 'string'},
+                                                    'build_version': {'type': 'integer'},
+                                               },
+                                               'type': 'object'
+                                           },
+                                           'last_sync_for_user': {
+                                               'dynamic': False,
+                                               'properties': {
+                                                    'sync_date': {'format': DATE_FORMATS_STRING,
+                                                                        'type': 'date'},
+                                                    'app_id': {'type': 'string'},
+                                                    'build_version': {'type': 'integer'},
+                                               },
+                                               'type': 'object'
+                                           },
+                                           'last_builds': {
+                                               'dynamic': False,
+                                               'properties': {
+                                                    'build_version_date': {'format': DATE_FORMATS_STRING,
+                                                                        'type': 'date'},
+                                                    'app_id': {'type': 'string'},
+                                                    'build_version': {'type': 'integer'},
+                                               },
+                                               'type': 'object'
+                                           },
+                                           'last_build_for_user': {
+                                               'dynamic': False,
+                                               'properties': {
+                                                    'build_version_date': {'format': DATE_FORMATS_STRING,
+                                                                        'type': 'date'},
+                                                    'app_id': {'type': 'string'},
+                                                    'build_version': {'type': 'integer'},
+                                               },
+                                               'type': 'object'
+                                           },
                                        },
                                        'type': 'object'},
                 'status': {'type': 'string'},
