@@ -86,7 +86,7 @@
     "GroupToUserPillow": {
         "advertised_name": "GroupToUserPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "GroupToUserPillow-test_hqusers_2017-03-22",
+        "checkpoint_id": "GroupToUserPillow-test_hqusers_2017-05-11",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "GroupToUserPillow"
     },
@@ -170,7 +170,7 @@
     "UnknownUsersPillow": {
         "advertised_name": "UnknownUsersPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "UnknownUsersPillow-test_hqusers_2017-03-22",
+        "checkpoint_id": "UnknownUsersPillow-test_hqusers_2017-05-11",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UnknownUsersPillow"
     },
@@ -191,7 +191,7 @@
     "UserPillow": {
         "advertised_name": "UserPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "UserPillow-test_hqusers_2017-03-22",
+        "checkpoint_id": "UserPillow-test_hqusers_2017-05-11",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UserPillow"
     },
@@ -232,28 +232,28 @@
     },
     "kafka-ucr-main": {
         "advertised_name": "kafka-ucr-main",
-        "change_feed_type": "KafkaChangeFeed",
+        "change_feed_type": "PartitionedKafkaChangeFeed",
         "checkpoint_id": "kafka-ucr-main",
         "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
         "name": "kafka-ucr-main"
     },
     "kafka-ucr-main-08": {
         "advertised_name": "kafka-ucr-main-08",
-        "change_feed_type": "KafkaChangeFeed",
+        "change_feed_type": "PartitionedKafkaChangeFeed",
         "checkpoint_id": "kafka-ucr-main-08",
         "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
         "name": "kafka-ucr-main-08"
     },
     "kafka-ucr-main-9f": {
         "advertised_name": "kafka-ucr-main-9f",
-        "change_feed_type": "KafkaChangeFeed",
+        "change_feed_type": "PartitionedKafkaChangeFeed",
         "checkpoint_id": "kafka-ucr-main-9f",
         "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
         "name": "kafka-ucr-main-9f"
     },
     "kafka-ucr-static": {
         "advertised_name": "kafka-ucr-static",
-        "change_feed_type": "KafkaChangeFeed",
+        "change_feed_type": "PartitionedKafkaChangeFeed",
         "checkpoint_id": "kafka-ucr-static",
         "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
         "name": "kafka-ucr-static"

@@ -5,8 +5,8 @@ from dateutil.relativedelta import relativedelta
 from lxml import etree as ElementTree
 from django.utils.translation import ugettext as _
 
-from casexml.apps.phone.models import OTARestoreUser
-from corehq.apps.locations.models import Location
+from casexml.apps.phone.fixtures import FixtureProvider
+from corehq.apps.locations.models import SQLLocation
 from custom.m4change.constants import M4CHANGE_DOMAINS, NUMBER_OF_MONTHS_FOR_FIXTURES
 from custom.m4change.models import FixtureReportResult
 from custom.m4change.reports.reports import M4ChangeReportDataSource
@@ -32,11 +32,11 @@ def get_last_day_of_month(month_start, today):
     return today.day if month_start.month == today.month else calendar.monthrange(month_start.year, month_start.month)[1]
 
 
-class ReportFixtureProvider(object):
+class ReportFixtureProvider(FixtureProvider):
     id = 'reports:m4change-mobile'
 
-    def __call__(self, restore_user, version, last_sync=None, app=None):
-        assert isinstance(restore_user, OTARestoreUser)
+    def __call__(self, restore_state):
+        restore_user = restore_state.restore_user
 
         if restore_user.domain in M4CHANGE_DOMAINS:
             location_id = restore_user.get_commtrack_location_id()
@@ -119,7 +119,7 @@ class ReportFixtureProvider(object):
             return facility_element
 
         def _facility_to_fixture(facility, startdate, enddate):
-            facility_id = facility.get_id
+            facility_id = facility.location_id
             facility_element = ElementTree.Element('facility', attrib={
                 'id': facility_id,
                 'name': _(facility.name)
@@ -164,8 +164,8 @@ class ReportFixtureProvider(object):
 
         months_element = ElementTree.Element('monthly-reports')
 
-        user_location = Location.get(location_id)
-        locations = [user_location] + [descendant for descendant in user_location.descendants]
+        user_location = SQLLocation.objects.get(location_id=location_id)
+        locations = user_location.get_descendants(include_self=True)
         dates = get_last_n_months(NUMBER_OF_MONTHS_FOR_FIXTURES)
         for date_tuple in dates:
             monthly_element = _month_to_fixture(date_tuple, locations)

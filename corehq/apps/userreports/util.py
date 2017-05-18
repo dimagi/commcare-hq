@@ -11,6 +11,7 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.userreports.const import (
     REPORT_BUILDER_EVENTS_KEY,
     UCR_ES_BACKEND,
+    UCR_ES_PRIMARY,
     UCR_LABORATORY_BACKEND,
     UCR_SQL_BACKEND,
 )
@@ -120,14 +121,12 @@ def get_indicator_adapter(config, raise_errors=False, can_handle_laboratory=Fals
 
     backend_id = get_backend_id(config, can_handle_laboratory)
 
-    if backend_id == UCR_ES_BACKEND:
-        return IndicatorESAdapter(config)
-    elif backend_id == UCR_LABORATORY_BACKEND:
-        return IndicatorLaboratoryAdapter(config)
-    else:
-        if raise_errors:
-            return ErrorRaisingIndicatorSqlAdapter(config)
-        return IndicatorSqlAdapter(config)
+    return {
+        UCR_ES_BACKEND: IndicatorESAdapter,
+        UCR_LABORATORY_BACKEND: IndicatorLaboratoryAdapter,
+        UCR_ES_PRIMARY: IndicatorESAdapter,
+        UCR_SQL_BACKEND: ErrorRaisingIndicatorSqlAdapter if raise_errors else IndicatorSqlAdapter
+    }[backend_id](config)
 
 
 def get_table_name(domain, table_id):

@@ -121,6 +121,7 @@ def get_releases_context(request, domain, app_id):
             if can_send_sms else []
         ),
         'build_profile_access': build_profile_access,
+        'application_profile_url': reverse(LanguageProfilesView.urlname, args=[domain, app_id]),
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
         'latest_build_id': get_latest_build_id(domain, app_id)

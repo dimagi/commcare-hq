@@ -6,7 +6,7 @@ from django.core.management import call_command
 from corehq.apps.hqadmin.management.utils import get_deploy_email_message_body
 from django.core.management.base import BaseCommand
 from corehq.apps.hqadmin.models import HqDeploy
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.conf import settings
 from pillow_retry.models import PillowError
 
@@ -132,6 +132,7 @@ class Command(BaseCommand):
 
         if settings.SENTRY_CONFIGURED and settings.SENTRY_API_KEY:
             create_update_sentry_release()
+            notify_sentry_deploy(minutes)
 
 
 def create_update_sentry_release():
@@ -141,12 +142,32 @@ def create_update_sentry_release():
     headers = {'Authorization': 'Bearer {}'.format(settings.SENTRY_API_KEY), }
     payload = {
         'version': release,
-        'ref': fetch_git_sha(settings.BASE_DIR),
-        'url': 'https://github.com/dimagi/commcare-hq/releases/tag/{}'.format(release)
+        'refs': [{
+            'repository': 'commcare-hq',
+            'commit': fetch_git_sha(settings.BASE_DIR)
+        }],
+        'projects': ['commcarehq']
     }
-    releases_url = 'https://sentry.io/api/0/projects/dimagi/commcarehq/releases/'
+    releases_url = 'https://sentry.io/api/0/organizations/dimagi/releases/'
     response = requests.post(releases_url, headers=headers, json=payload)
     if response.status_code == 208:
         # already created so update
         payload.pop('version')
         requests.put('{}{}/'.format(releases_url, release), headers=headers, json=payload)
+
+
+def notify_sentry_deploy(duration_mins):
+    from settingshelper import get_release_name
+    headers = {'Authorization': 'Bearer {}'.format(settings.SENTRY_API_KEY), }
+    payload = {
+        'environment': settings.SERVER_ENVIRONMENT,
+    }
+    if duration_mins:
+        utcnow = datetime.utcnow()
+        payload.update({
+            'dateStarted': utcnow - timedelta(minutes=duration_mins),
+            'dateFinished': utcnow,
+        })
+    version = get_release_name(settings.BASE_DIR, settings.SERVER_ENVIRONMENT)
+    releases_url = 'https://sentry.io/api/0/organizations/dimagi/releases/{}/deploys/'.format(version)
+    requests.post(releases_url, headers=headers, json=payload)

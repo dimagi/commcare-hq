@@ -150,6 +150,65 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
         return False
 
 
+class WrappedCheckpoint(object):
+    def __init__(self, kafka_seq, timestamp):
+        self.kafka_seq = kafka_seq
+        self.timestamp = timestamp
+        self.sequence_format = 'json'
+
+    @property
+    def wrapped_sequence(self):
+        return self.kafka_seq
+
+
+class KafkaPillowCheckpoint(PillowCheckpoint):
+
+    def __init__(self, checkpoint_id, topics):
+        self.checkpoint_id = checkpoint_id
+        self.sequence_format = 'json'
+        self.topics = topics
+        self._get_checkpoints()
+
+    def _get_checkpoints(self):
+        return KafkaCheckpoint.get_or_create_for_checkpoint_id(self.checkpoint_id, self.topics)
+
+    def get_or_create_wrapped(self, verify_unchanged=None):
+        checkpoints = self._get_checkpoints()
+        ret = {}
+        timestamp = checkpoints[0].last_modified
+        for checkpoint in checkpoints:
+            ret[(checkpoint.topic, checkpoint.partition)] = checkpoint.offset
+            if checkpoint.last_modified > timestamp:
+                timestamp = checkpoint.last_modified
+
+        return WrappedCheckpoint(ret, timestamp)
+
+    def get_current_sequence_id(self):
+        return {
+            (checkpoint.topic, checkpoint.partition): checkpoint.offset
+            for checkpoint in self._get_checkpoints()
+        }
+
+    def update_to(self, seq):
+        kafka_seq = seq
+        seq = kafka_seq_to_str(seq)
+        pillow_logging.info(
+            "(%s) setting checkpoint: %s" % (self.checkpoint_id, seq)
+        )
+        with transaction.atomic():
+            if kafka_seq:
+                for topic_partition, offset in kafka_seq.items():
+                    KafkaCheckpoint.objects.update_or_create(
+                        checkpoint_id=self.checkpoint_id,
+                        topic=topic_partition[0],
+                        partition=topic_partition[1],
+                        defaults={'offset': offset}
+                    )
+
+    def touch(self, min_interval):
+        return False
+
+
 def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info):
     checkpoint_id = u'{}-{}'.format(pillow_id, index_info.index)
     return PillowCheckpoint(checkpoint_id, 'json')  # all ES pillows use json checkpoints

@@ -200,7 +200,7 @@ def submit_case_block_from_template(domain, template, context, xmlns=None, user_
     kwargs = {}
     if xmlns:
         kwargs['xmlns'] = xmlns
-    submit_case_blocks(case_block, domain, user_id=user_id, **kwargs)
+    return submit_case_blocks(case_block, domain, user_id=user_id, **kwargs)
 
 
 def update_case(domain, case_id, case_properties=None, close=False, xmlns=None):
@@ -220,4 +220,31 @@ def update_case(domain, case_id, case_properties=None, close=False, xmlns=None):
         'case_properties': case_properties,
         'close': close,
     }
-    submit_case_block_from_template(domain, 'hqcase/xml/update_case.xml', context, xmlns=xmlns)
+    return submit_case_block_from_template(domain, 'hqcase/xml/update_case.xml', context, xmlns=xmlns)
+
+
+def bulk_update_cases(domain, case_changes):
+    """
+    Updates or closes a list of cases (or both) by submitting a form.
+    domain - the cases' domain
+    cases - a tuple in the form (case_id, case_properties, close)
+        case_id - id of the case to update
+        case_properties - to update the case, pass in a dictionary of {name1: value1, ...}
+                          to ignore case updates, leave this argument out
+        close - True to close the case, False otherwise
+    """
+    case_blocks = []
+    for case_id, case_properties, close in case_changes:
+        context = {
+            'case_id': case_id,
+            'date_modified': json_format_datetime(datetime.datetime.utcnow()),
+            'user_id': SYSTEM_USER_ID,
+            'case_properties': case_properties,
+            'close': close
+        }
+        case_block = render_to_string('hqcase/xml/update_case.xml', context)
+        # Ensure the XML is formatted properly
+        # An exception is raised if not
+        case_block = ElementTree.tostring(ElementTree.XML(case_block))
+        case_blocks.append(case_block)
+    return submit_case_blocks(case_blocks, domain)

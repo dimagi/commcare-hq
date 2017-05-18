@@ -24,7 +24,7 @@ from custom.enikshay.integrations.utils import (
 )
 
 
-from custom.enikshay.integrations.ninetyninedots.repeaters import case_properties_changed
+from custom.enikshay.integrations.utils import case_properties_changed
 from custom.enikshay.integrations.nikshay.field_mappings import treatment_outcome
 
 
@@ -226,7 +226,3 @@ def create_hiv_test_repeat_records(sender, case, **kwargs):
 
 case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
 case_post_save.connect(create_hiv_test_repeat_records, CommCareCaseSQL)
-
-# TODO: Remove this when eNikshay gets migrated to SQL
-case_post_save.connect(create_case_repeat_records, CommCareCase)
-case_post_save.connect(create_hiv_test_repeat_records, CommCareCase)

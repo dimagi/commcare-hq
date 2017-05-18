@@ -64,31 +64,42 @@ def REPORTS(project):
     from corehq.apps.reports.standard.cases.basic import CaseListReport
     from corehq.apps.reports.standard.cases.careplan import make_careplan_reports
 
+    report_set = None
+    if project.report_whitelist:
+        report_set = set(project.report_whitelist)
     reports = []
 
     reports.extend(_get_configurable_reports(project))
 
+    monitoring_reports = (
+        monitoring.WorkerActivityReport,
+        monitoring.DailyFormStatsReport,
+        monitoring.SubmissionsByFormReport,
+        monitoring.FormCompletionTimeReport,
+        monitoring.CaseActivityReport,
+        monitoring.FormCompletionVsSubmissionTrendsReport,
+        monitoring.WorkerActivityTimes,
+        ProjectHealthDashboard,
+    )
+    inspect_reports = (
+        inspect.SubmitHistory, CaseListReport, OdmExportReport,
+    )
+    deployments_reports = (
+        deployments.ApplicationStatusReport,
+        receiverwrapper.SubmissionErrorReport,
+        phonelog.DeviceLogDetailsReport,
+        deployments.SyncHistoryReport,
+        deployments.ApplicationErrorReport,
+    )
+
+    monitoring_reports = _filter_reports(report_set, monitoring_reports)
+    inspect_reports = _filter_reports(report_set, inspect_reports)
+    deployments_reports = _filter_reports(report_set, deployments_reports)
+
     reports.extend([
-        (ugettext_lazy("Monitor Workers"), (
-            monitoring.WorkerActivityReport,
-            monitoring.DailyFormStatsReport,
-            monitoring.SubmissionsByFormReport,
-            monitoring.FormCompletionTimeReport,
-            monitoring.CaseActivityReport,
-            monitoring.FormCompletionVsSubmissionTrendsReport,
-            monitoring.WorkerActivityTimes,
-            ProjectHealthDashboard,
-        )),
-        (ugettext_lazy("Inspect Data"), (
-            inspect.SubmitHistory, CaseListReport, OdmExportReport,
-        )),
-        (ugettext_lazy("Manage Deployments"), (
-            deployments.ApplicationStatusReport,
-            receiverwrapper.SubmissionErrorReport,
-            phonelog.DeviceLogDetailsReport,
-            deployments.SyncHistoryReport,
-            deployments.ApplicationErrorReport,
-        )),
+        (ugettext_lazy("Monitor Workers"), monitoring_reports),
+        (ugettext_lazy("Inspect Data"), inspect_reports),
+        (ugettext_lazy("Manage Deployments"), deployments_reports),
     ])
 
     if project.commtrack_enabled:
@@ -103,6 +114,7 @@ def REPORTS(project):
                 commtrack.ReportingRatesReport,
                 commtrack.ReportingStatusMapReport,
             )
+        supply_reports = _filter_reports(report_set, supply_reports)
         reports.insert(0, (ugettext_lazy("CommCare Supply"), supply_reports))
 
     if project.has_careplan:
@@ -136,6 +148,7 @@ def REPORTS(project):
     ])
 
     messaging_reports += getattr(Domain.get_module_by_name(project.name), 'MESSAGING_REPORTS', ())
+    messaging_reports = _filter_reports(report_set, messaging_reports)
     messaging = (ugettext_lazy("Messaging"), messaging_reports)
     reports.append(messaging)
 
@@ -143,6 +156,12 @@ def REPORTS(project):
 
     return reports
 
+
+def _filter_reports(report_set, reports):
+    if report_set:
+        return [r for r in reports if r.slug in report_set]
+    else:
+        return reports
 
 def _get_dynamic_reports(project):
     """include any reports that can be configured/customized with static parameters for this domain"""

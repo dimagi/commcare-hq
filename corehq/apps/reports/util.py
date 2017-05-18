@@ -10,6 +10,7 @@ from django.conf import settings
 from django.http import Http404
 from django.utils import html, safestring
 from casexml.apps.case.models import CommCareCase
+
 from corehq.apps.users.permissions import get_extra_permissions
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.utils import use_new_exports, should_use_sql_backend
@@ -377,7 +378,7 @@ def get_possible_reports(domain_name):
             else:
                 report_to_check_if_viewable = model
 
-            if report_to_check_if_viewable.show_in_navigation(domain=domain_name, project=domain):
+            if report_to_check_if_viewable.show_in_user_roles(domain=domain_name, project=domain):
                 reports.append({
                     'path': model.__module__ + '.' + model.__name__,
                     'name': model.name

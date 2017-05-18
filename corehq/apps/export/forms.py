@@ -830,6 +830,7 @@ class AbstractExportFilterBuilder(object):
                  .domain(self.domain_object.name)
                  .OR(*user_filters)
                  .show_inactive()
+                 .remove_default_filter('not_deleted')
                  .fields([]))
         user_ids = query.run().doc_ids
 
