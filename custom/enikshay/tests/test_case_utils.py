@@ -1,4 +1,6 @@
 from datetime import datetime
+from uuid import uuid4
+
 import pytz
 
 from django.test import TestCase, override_settings
@@ -19,6 +21,7 @@ from custom.enikshay.case_utils import (
     get_open_episode_case_from_occurrence,
     get_person_locations,
     get_episode_case_from_adherence,
+    get_open_referral_case_from_person,
     get_approved_prescription_vouchers_from_episode,
 )
 
@@ -127,6 +130,14 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
         self.assertEqual(
             get_episode_case_from_adherence(self.domain, adherence_case.case_id).case_id,
             self.episode_id,
+        )
+
+    def test_get_referral_case_from_person(self):
+        referral_case_id = uuid4().hex
+        self.create_referral_case(referral_case_id)
+        self.assertEqual(
+            get_open_referral_case_from_person(self.domain, self.person_id).case_id,
+            referral_case_id
         )
 
     def test_get_voucher_and_prescription(self):
