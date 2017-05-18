@@ -38,6 +38,7 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/underweight_children/:step", {
                 template : "<underweight-children-report></underweight-children-report>",
+                reloadOnSearch: false,
             })
             .when("/breastfeeding", {
                 template : "breastfeeding",

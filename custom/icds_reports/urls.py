@@ -1,7 +1,7 @@
 from django.conf.urls import url
 
 from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTemplateView, ProgramSummaryView, \
-    AwcOpenedView, PrevalenceOfUndernutritionView
+    AwcOpenedView, PrevalenceOfUndernutritionView, LocationView, LocationAncestorsView
 
 urlpatterns = [
     url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', TableauView.as_view(), name='icds_tableau'),
@@ -12,5 +12,7 @@ urlpatterns = [
     url(
         r'^underweight_children/(?P<step>[\w-]+)/',
         PrevalenceOfUndernutritionView.as_view(),
-        name='underweight_children')
+        name='underweight_children'),
+    url(r'^locations$', LocationView.as_view(), name='icds_locations'),
+    url(r'^locations/ancestors$', LocationAncestorsView.as_view(), name='icds_locations_ancestors'),
 ]

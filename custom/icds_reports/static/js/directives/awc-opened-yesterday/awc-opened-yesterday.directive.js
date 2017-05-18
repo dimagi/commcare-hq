@@ -3,6 +3,7 @@ var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
 function AwcOpenedYesterdayController($routeParams, systemUsageService) {
     var vm = this;
+    vm.data = {};
     vm.step = $routeParams.step;
     vm.steps = [
         {route: '/awc_opened/1', label: 'MapView'},

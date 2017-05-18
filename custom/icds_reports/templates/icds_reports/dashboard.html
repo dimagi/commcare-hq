@@ -53,6 +53,7 @@
 
         <script type="text/javascript" src="{% static 'js/angular-services/maternal-child.service.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/angular-services/system-usage.service.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/angular-services/locations.service.js' %}"></script>
 
         <script type="text/javascript" src="{% static 'js/directives/filters/filters.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/location-filter/location-filter.directive.js' %}"></script>
@@ -150,6 +151,8 @@
                     {% registerurl 'program_summary' domain '---' %}
                     {% registerurl 'awc_opened' domain '---' %}
                     {% registerurl 'underweight_children' domain '---' %}
+                    {% registerurl 'icds_locations' domain %}
+                    {% registerurl 'icds_locations_ancestors' domain %}
                     <div class="ng-view"></div>
                 </div>
             </div>
@@ -159,6 +162,8 @@
 
 {% block js-inline %}{% endblock js-inline %}
 <script>
+    angular.module('icdsApp').constant('locationHierarchy', {{ location_hierarchy | JSON }});
+    angular.module('icdsApp').constant('userLocationId', {{ user_location_id | JSON }});
     angular.bootstrap(document.getElementById('app'), ['icdsApp']);
 </script>
 </body>
