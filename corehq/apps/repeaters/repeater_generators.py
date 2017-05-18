@@ -162,8 +162,13 @@ class RegisterGenerator(object):
         return generator_class
 
     @classmethod
+    def register_generator(cls, generator_class, repeater_class, format_name, format_label, is_default):
+        return cls(repeater_class, format_name, format_label, is_default)(generator_class)
+
+    @classmethod
     def get_collection(cls, repeater_class):
-        if repeater_class not in cls.generators:
+        if hasattr(repeater_class, 'Formats') and \
+                not getattr(repeater_class.Formats, 'processed', False):
             if hasattr(repeater_class.Formats, 'generator'):
                 # in the case where there's exactly one format
                 # the format slug and display name aren't used so they don't matter
@@ -177,11 +182,16 @@ class RegisterGenerator(object):
             if default_format not in formats:
                 raise DuplicateFormatException(
                     'default_format {!r} is not in formats {!r}'.format(default_format, formats))
-            collection = GeneratorCollection(repeater_class)
             for name, (generator_class, label) in formats.items():
-                collection.add_new_format(format_name=name, format_label=label, generator_class=generator_class,
-                                          is_default=(name == default_format))
-            cls.generators[repeater_class] = collection
+                cls.register_generator(
+                    generator_class=generator_class,
+                    repeater_class=repeater_class,
+                    format_name=name,
+                    format_label=label,
+                    is_default=(name == default_format)
+                )
+            repeater_class.Formats.processed = True
+
         return cls.generators[repeater_class]
 
     @classmethod
