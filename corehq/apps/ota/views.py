@@ -127,8 +127,7 @@ def search(request, domain):
 
     blacklisted_owner_ids = criteria.pop(CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY, None)
     if blacklisted_owner_ids is not None:
-        for blacklisted_owner_id in blacklisted_owner_ids.split(' '):
-            search_es = search_es.blacklist_owner_id(blacklisted_owner_id)
+        search_es = add_blacklisted_owner_ids(search_es, blacklisted_owner_ids)
 
     fuzzies = config.config.get_fuzzy_properties_for_case_type(case_type)
     for key, value in criteria.items():
@@ -150,6 +149,12 @@ def search(request, domain):
     cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
+
+
+def add_blacklisted_owner_ids(search_es, blacklisted_owner_ids):
+    for blacklisted_owner_id in blacklisted_owner_ids.split(' '):
+            search_es = search_es.blacklist_owner_id(blacklisted_owner_id)
+    return search_es
 
 
 def _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details):
