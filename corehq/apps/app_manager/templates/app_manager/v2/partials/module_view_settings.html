@@ -16,7 +16,7 @@
               <h4 class="panel-title panel-title-nolink">{% trans "Menu Settings" %}</h4>
             </div>
             <div class="panel-body">
-              {% if not module.is_surveys %}
+              {% if not module.is_surveys and module.module_type != 'shadow' %}
                 {% include "app_manager/v2/partials/module_view_case_type.html" %}
               {% endif %}
 
@@ -124,7 +124,7 @@
             </div>
           </div>
 
-           {% if not module.is_surveys %}
+           {% if not module.is_surveys and module.module_type != 'shadow' %}
              {% if app.advanced_app_builder or module.case_list_form.form_id or module.case_list.show or module.task_list.show or module.doc_type == "AdvancedModule" %}
              <div class="panel panel-appmanager">
               <div class="panel-heading">
