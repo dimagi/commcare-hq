@@ -3,7 +3,7 @@ from datetime import datetime
 from django.core.management import call_command
 from django.test import TestCase
 
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import CommCareUser
 from custom.enikshay.private_sector_datamigration.models import Agency, UserDetail
 from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
@@ -15,6 +15,19 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
     def setUpClass(cls):
         cls.domain = 'test_domain'
         super(TestCreateDTOsAndAgencies, cls).setUpClass()
+
+    def setUp(self):
+        super(TestCreateDTOsAndAgencies, self).setUp()
+        LocationType.objects.filter(
+            domain=self.domain,
+            code__in=[
+                'pac',
+                'pcc',
+                'pdr',
+                'pcp',
+                'plc',
+            ],
+        ).update(has_user=True)
 
     def test_create_dtos(self):
         start_loc_count = SQLLocation.objects.filter(domain=self.domain).count()

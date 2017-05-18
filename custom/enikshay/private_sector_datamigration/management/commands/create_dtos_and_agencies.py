@@ -73,6 +73,8 @@ class Command(BaseCommand):
         )
 
     def create_user(self, agency_loc, user_level):
+        assert agency_loc.location_type.has_user
+
         agency_loc_id = agency_loc.location_id
 
         user = make_location_user(agency_loc)
