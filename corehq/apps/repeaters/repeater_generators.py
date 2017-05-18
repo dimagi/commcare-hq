@@ -5,6 +5,7 @@ from datetime import datetime
 from uuid import uuid4
 
 from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.xform import cases_referenced_by_xform
 from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
 
@@ -21,6 +22,11 @@ def _get_test_form(domain):
 
 
 class BasePayloadGenerator(object):
+
+    # you only have to override these
+    # when there's more than one format option for a given repeater
+    format_name = ''
+    format_label = ""
 
     def __init__(self, repeater):
         self.repeater = repeater
@@ -169,26 +175,15 @@ class RegisterGenerator(object):
     def get_collection(cls, repeater_class):
         if hasattr(repeater_class, 'Formats') and \
                 not getattr(repeater_class.Formats, 'processed', False):
-            if hasattr(repeater_class.Formats, 'generator'):
-                # in the case where there's exactly one format
-                # the format slug and display name aren't used so they don't matter
-                formats = {
-                    '': (repeater_class.Formats.generator, '')
-                }
-                default_format = ''
-            else:
-                formats = repeater_class.Formats.formats
-                default_format = repeater_class.Formats.default_format
-            if default_format not in formats:
-                raise DuplicateFormatException(
-                    'default_format {!r} is not in formats {!r}'.format(default_format, formats))
-            for name, (generator_class, label) in formats.items():
+            generator_classes = repeater_class.Formats.formats
+            default_generator_class = generator_classes[0]
+            for generator_class in generator_classes:
                 cls.register_generator(
                     generator_class=generator_class,
                     repeater_class=repeater_class,
-                    format_name=name,
-                    format_label=label,
-                    is_default=(name == default_format)
+                    format_name=generator_class.format_name,
+                    format_label=generator_class.format_label,
+                    is_default=(generator_class is default_generator_class),
                 )
             repeater_class.Formats.processed = True
 
@@ -214,6 +209,8 @@ class RegisterGenerator(object):
 
 
 class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
+    format_name = 'form_xml'
+    format_label = _("XML")
 
     def get_payload(self, repeat_record, payload_doc):
         return payload_doc.get_xml()
@@ -223,6 +220,8 @@ class FormRepeaterXMLPayloadGenerator(BasePayloadGenerator):
 
 
 class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
+    format_name = 'case_xml'
+    format_label = _("XML")
 
     def get_payload(self, repeat_record, payload_doc):
         return payload_doc.to_xml(self.repeater.version or V2, include_case_on_closed=True)
@@ -238,6 +237,8 @@ class CaseRepeaterXMLPayloadGenerator(BasePayloadGenerator):
 
 
 class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
+    format_name = 'case_json'
+    format_label = _('JSON')
 
     def get_payload(self, repeat_record, payload_doc):
         data = payload_doc.to_api_json(lite=True)
@@ -286,6 +287,9 @@ class ShortFormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
 
 
 class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
+
+    format_name = 'form_json'
+    format_label = _('JSON')
 
     def get_payload(self, repeat_record, form):
         from corehq.apps.api.resources.v0_4 import XFormInstanceResource

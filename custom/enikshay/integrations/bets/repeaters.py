@@ -66,7 +66,7 @@ class ChemistBETSVoucherRepeater(BaseBETSVoucherRepeater):
     voucher_type = "prescription"
 
     class Formats(object):
-        generator = ChemistBETSVoucherPayloadGenerator
+        formats = [ChemistBETSVoucherPayloadGenerator]
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -80,7 +80,7 @@ class LabBETSVoucherRepeater(BaseBETSVoucherRepeater):
     voucher_type = "test"
 
     class Formats(object):
-        generator = LabBETSVoucherPayloadGenerator
+        formats = [LabBETSVoucherPayloadGenerator]
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -102,7 +102,7 @@ class BETS180TreatmentRepeater(BaseBETSRepeater):
     )
 
     class Formats(object):
-        generator = BETS180TreatmentPayloadGenerator
+        formats = [BETS180TreatmentPayloadGenerator]
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -136,7 +136,7 @@ class BETSDrugRefillRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Patients: Cash transfer on subsequent drug refill (episode case type)")
 
     class Formats(object):
-        generator = BETSDrugRefillPayloadGenerator
+        formats = [BETSDrugRefillPayloadGenerator]
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -208,7 +208,7 @@ class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Patients: Cash transfer on successful treatment completion (episode case type)")
 
     class Formats(object):
-        generator = BETSSuccessfulTreatmentPayloadGenerator
+        formats = [BETSSuccessfulTreatmentPayloadGenerator]
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -243,7 +243,7 @@ class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Providers: For diagnosis and notification of TB case (episode case type)")
 
     class Formats(object):
-        generator = BETSDiagnosisAndNotificationPayloadGenerator
+        formats = [BETSDiagnosisAndNotificationPayloadGenerator]
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -270,7 +270,7 @@ class BETSAYUSHReferralRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Providers: For diagnosis and notification of TB case (episode case type)")
 
     class Formats(object):
-        generator = BETSAYUSHReferralPayloadGenerator
+        formats = [BETSAYUSHReferralPayloadGenerator]
 
     @classmethod
     def get_custom_url(cls, domain):

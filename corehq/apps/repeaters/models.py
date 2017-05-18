@@ -1,4 +1,3 @@
-from collections import namedtuple
 from datetime import datetime, timedelta
 import urllib
 import urlparse
@@ -262,11 +261,7 @@ class FormRepeater(Repeater):
     """
 
     class Formats(object):
-        formats = {
-            'form_xml': (FormRepeaterXMLPayloadGenerator, _('XML')),
-            'form_json': (FormRepeaterJsonPayloadGenerator, _('JSON')),
-        }
-        default_format = 'form_xml'
+        formats = [FormRepeaterXMLPayloadGenerator, FormRepeaterJsonPayloadGenerator]
 
     include_app_id_param = BooleanProperty(default=True)
     white_listed_form_xmlns = StringListProperty(default=[])  # empty value means all form xmlns are accepted
@@ -315,11 +310,7 @@ class CaseRepeater(Repeater):
     """
 
     class Formats(object):
-        formats = {
-            'case_xml': (CaseRepeaterXMLPayloadGenerator, _('XML')),
-            'case_json': (CaseRepeaterJsonPayloadGenerator, _('JSON')),
-        }
-        default_format = 'case_xml'
+        formats = [CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator]
 
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
     white_listed_case_types = StringListProperty(default=[])  # empty value means all case-types are accepted
@@ -364,7 +355,7 @@ class ShortFormRepeater(Repeater):
     friendly_name = _("Forward Form Stubs")
 
     class Formats(object):
-        generator = ShortFormRepeaterJsonPayloadGenerator
+        formats = [ShortFormRepeaterJsonPayloadGenerator]
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -388,7 +379,7 @@ class AppStructureRepeater(Repeater):
     friendly_name = _("Forward App Schema Changes")
 
     class Formats(object):
-        generator = AppStructureGenerator
+        formats = [AppStructureGenerator]
 
     def payload_doc(self, repeat_record):
         return None
@@ -398,7 +389,7 @@ class UserRepeater(Repeater):
     friendly_name = _("Forward Users")
 
     class Formats(object):
-        generator = UserPayloadGenerator
+        formats = [UserPayloadGenerator]
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -412,7 +403,7 @@ class LocationRepeater(Repeater):
     friendly_name = _("Forward Locations")
 
     class Formats(object):
-        generator = LocationPayloadGenerator
+        formats = [LocationPayloadGenerator]
 
     @memoized
     def payload_doc(self, repeat_record):
