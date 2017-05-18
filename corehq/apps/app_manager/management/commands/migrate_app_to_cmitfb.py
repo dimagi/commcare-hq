@@ -30,15 +30,18 @@ class Command(BaseCommand):
                  "with --usercase option.")
         parser.add_argument('--usercase', action='store_true',
             help='Migrate user properties.')
+        parser.add_argument('--fix-user-properties', action='store_true',
+            help='Fix bad user property references.')
         parser.add_argument('--force', action='store_true',
             help='Migrate even if app.vellum_case_management is already true.')
 
     def handle(self, **options):
         app_ids_by_domain = defaultdict(set)
         self.force = options["force"]
+        self.fix_user_props = options["fix_user_properties"]
         self.migrate_usercase = options["usercase"]
         for ident in options["app_id_or_domain"]:
-            if not self.migrate_usercase:
+            if not (self.migrate_usercase or self.fix_user_props):
                 try:
                     app = Application.get(ident)
                     app_ids_by_domain[app.domain].add(ident)
@@ -49,9 +52,13 @@ class Command(BaseCommand):
 
         for domain, app_ids in sorted(app_ids_by_domain.items()):
             logger.info('migrating %s: %s apps', domain, len(app_ids))
+            migrated = False
             for app_id in app_ids:
                 try:
-                    migrated = self.migrate_app(app_id)
+                    if self.fix_user_props:
+                        self.fix_user_properties(app_id)
+                    else:
+                        migrated = self.migrate_app(app_id)
                     if migrated:
                         logger.info('migrated app %s', app_id)
                 except Exception:
@@ -98,6 +105,57 @@ class Command(BaseCommand):
         app.vellum_case_management = True
         app.save()
         return True
+
+    def fix_user_properties(self, app_id):
+        app = Application.get(app_id)
+        if not should_fix_user_props(app):
+            return False
+        logger.info('fixing app %s', app_id)
+        modules = [m for m in app.modules if m.module_type == 'basic']
+        for module in modules:
+            forms = [f for f in module.forms if f.doc_type == 'Form']
+            for form in forms:
+                if not (form.case_references and form.case_references.load):
+                    continue
+                xform = XForm(form.source)
+                refs = {xform.resolve_path(ref): value[0]
+                    for ref, value in form.case_references.load.iteritems()
+                    if len(value) == 1 and value[0] and value[0].startswith("#user/")}
+                for node in xform.model_node.findall("{f}setvalue"):
+                    if (node.attrib.get('ref') in refs
+                            and node.attrib.get('event') == "xforms-ready"
+                            and node.attrib.get('value')
+                            and node.attrib.get('value')
+                                .startswith(BAD_USERCASE_PATH)):
+                        ref = node.attrib.get('ref')
+                        userprop = refs[ref]
+                        assert userprop.startswith("#user/"), (ref, userprop)
+                        prop = userprop[len("#user/"):]
+                        setval = node.attrib.get('value')
+                        if setval == BAD_USERCASE_PATH + prop:
+                            logger.info("setvalue %s -> %s", ref, userprop)
+                            node.attrib["value"] = USERPROP_PREFIX + prop
+        save_xform(app, form, ET.tostring(xform.xml))
+        #app.save()
+        return True
+
+
+USERPROP_PREFIX = (
+    "instance('casedb')/casedb/case[@case_type='commcare-user']"
+    "[hq_user_id=instance('commcaresession')/session/context/userid]/"
+)
+BAD_USERCASE_PATH = (
+    "instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/"
+)
+
+
+def should_fix_user_props(app):
+    return any(refs[0].startswith("#user/")
+        for module in app.modules if module.module_type == 'basic'
+        for form in module.forms if form.doc_type == 'Form'
+        if form.case_references and form.case_references.load
+        for refs in form.case_references.load.values()
+        if len(refs) == 1 and refs[0])
 
 
 def migrate_preloads(app, module, form, preloads):
