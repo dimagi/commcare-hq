@@ -51,9 +51,9 @@ class RepeatRecordView(LoginAndDomainMixin, View):
     http_method_names = ['get', 'post']
 
     @staticmethod
-    def get_record_or_404(request, domain):
+    def get_record_or_404(request, domain, record_id):
         try:
-            record = RepeatRecord.get(request.GET.get('record_id'))
+            record = RepeatRecord.get(record_id)
         except ResourceNotFound:
             raise Http404()
 
@@ -63,7 +63,8 @@ class RepeatRecordView(LoginAndDomainMixin, View):
         return record
 
     def get(self, request, domain):
-        record = self.get_record_or_404(request, domain)
+        record_id = request.GET.get('record_id')
+        record = self.get_record_or_404(request, domain, record_id)
         content_type = record.repeater.generator.content_type
         try:
             payload = record.get_payload()
@@ -84,7 +85,8 @@ class RepeatRecordView(LoginAndDomainMixin, View):
 
     def post(self, request, domain):
         # Retriggers a repeat record
-        record = self.get_record_or_404(request, domain)
+        record_id = request.POST.get('record_id')
+        record = self.get_record_or_404(request, domain, record_id)
         record.fire(force_send=True)
         return json_response({
             'success': record.succeeded,

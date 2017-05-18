@@ -143,8 +143,8 @@ hqDefine('app_manager/js/releases.js', function () {
         };
 
         self.get_odk_install_url = ko.computed(function() {
-            var slug = self.include_media() ? 'odk_media' : 'odk';
-            return releasesMain.url(slug, self.id());
+            var slug = self.include_media() ? 'odk_media_install' : 'odk_install';
+            return releasesMain.reverse(slug, self.id());
         });
 
         self.full_odk_install_url = ko.computed(function() {
@@ -162,7 +162,7 @@ hqDefine('app_manager/js/releases.js', function () {
                 }
             }
         };
-        
+
         self.download_application_zip = function (multimedia_only, build_profile) {
             releasesMain.download_application_zip(self.id(), multimedia_only, build_profile);
         };
@@ -170,7 +170,7 @@ hqDefine('app_manager/js/releases.js', function () {
         self.clickDeploy = function () {
             ga_track_event('App Manager', 'Deploy Button', self.id());
             analytics.workflow('Clicked Deploy');
-            $.post(releasesMain.options.urls.hubspot_click_deploy);
+            $.post(releasesMain.reverse('hubspot_click_deploy'));
             self.get_short_odk_url();
         };
 
@@ -222,8 +222,8 @@ hqDefine('app_manager/js/releases.js', function () {
         self.async_downloader = new AsyncDownloader(self.download_modal);
 
         self.download_application_zip = function(appId, multimedia_only, build_profile) {
-            var url_slug = multimedia_only ? 'download_multimedia' : 'download_zip';
-            var url = self.url(url_slug, appId);
+            var url_slug = multimedia_only ? 'download_multimedia_zip' : 'download_ccz';
+            var url = self.reverse(url_slug, appId);
             var params = {};
             params.message = "Your application download is ready";
             if (build_profile) {
@@ -253,12 +253,14 @@ hqDefine('app_manager/js/releases.js', function () {
             var lastApp = self.savedApps()[0];
             self.lastAppVersion(lastApp ? lastApp.version() : -1);
         });
-        self.url = function (name) {
-            var template = self.options.urls[name];
+        self.reverse = function() {
             for (var i = 1; i < arguments.length; i++) {
-                template = template.replace('___', ko.utils.unwrapObservable(arguments[i]));
+                arguments[i] = ko.utils.unwrapObservable(arguments[i]);
             }
-            return template;
+            return hqImport("hqwebapp/js/urllib.js").reverse.apply(null, arguments);
+        };
+        self.app_error_url = function(app_id, version) {
+            return self.reverse('project_report_dispatcher') + '?app=' + app_id + '&version_number=' + version;
         };
         self.latestReleaseId = ko.computed(function () {
             for (var i = 0; i < self.savedApps().length; i++) {
@@ -308,7 +310,7 @@ hqDefine('app_manager/js/releases.js', function () {
         self.getMoreSavedApps = function (scroll) {
             self.fetchState('pending');
             $.ajax({
-                url: self.url('fetch'),
+                url: self.reverse("paginate_releases"),
                 dataType: 'json',
                 data: {
                     start_build: self.nextVersionToFetch,
@@ -336,10 +338,9 @@ hqDefine('app_manager/js/releases.js', function () {
             var is_released = savedApp.is_released();
             var saved_app_id = savedApp.id();
             if (savedApp.is_released() !== 'pending') {
-                var url = self.url('release', saved_app_id);
                 var that = this;
                 $.ajax({
-                    url: url,
+                    url: self.reverse('release_build', saved_app_id),
                     type: 'post',
                     dataType: 'json',
                     data: {ajax: true, is_released: !is_released},
@@ -363,7 +364,7 @@ hqDefine('app_manager/js/releases.js', function () {
         self.deleteSavedApp = function (savedApp) {
             savedApp._deleteState('pending');
             $.post({
-                url: self.url('delete'),
+                url: self.reverse('delete_copy'),
                 data: {saved_app: savedApp.id()},
                 success: function () {
                     self.savedApps.remove(savedApp);
@@ -376,17 +377,16 @@ hqDefine('app_manager/js/releases.js', function () {
             });
         };
         self.revertSavedApp = function (savedApp) {
-            $.postGo(self.url('revertBuild'), {saved_app: savedApp.id()});
+            $.postGo(self.reverse('revert_to_copy'), {saved_app: savedApp.id()});
         };
         self.makeNewBuild = function () {
             if (self.buildState() === 'pending') {
                 return false;
             }
 
-            var url = self.url('currentVersion');
             self.fetchState('pending');
             $.get({
-                url: self.url('currentVersion'),
+                url: self.reverse('current_app_version'),
                 success: function(data) {
                     self.fetchState('');
                     self.currentAppVersion(data.currentVersion);
@@ -415,7 +415,7 @@ hqDefine('app_manager/js/releases.js', function () {
         self.actuallyMakeBuild = function () {
             self.buildState('pending');
             $.post({
-                url: self.url('newBuild'),
+                url: self.reverse('save_copy'),
                 success: function(data) {
                     $('#build-errors-wrapper').html(data.error_html);
                     if (data.saved_app) {

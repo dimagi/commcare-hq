@@ -3,88 +3,89 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:85
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:35
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:60
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:88
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:128
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:161
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:173
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:207
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:217
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:239
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:254
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:265
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:282
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:293
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:321
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:330
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:352
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:358
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:364
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:379
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:398
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:412
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:421
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:429
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:438
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:453
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:463
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:474
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:486
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:508
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:539
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:551
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:563
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:575
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:586
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:610
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:75
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:268
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:85
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:35
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:60
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:88
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:128
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:161
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:173
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:207
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:217
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:239
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:254
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:265
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:282
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:293
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:321
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:330
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:352
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:358
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:364
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:379
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:398
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:412
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:421
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:429
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:438
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:453
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:463
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:474
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:486
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:508
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:539
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:551
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:563
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:575
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:586
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:610
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:75
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:268
+#: bower_components/datatables-1.9-legacy/media/js/jquery.js:2
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:85
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:35
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:60
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:88
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:128
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:161
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:173
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:207
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:217
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:239
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:254
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:265
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:282
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:293
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:321
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:330
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:352
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:358
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:364
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:379
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:398
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:412
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:421
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:429
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:438
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:453
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:463
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:474
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:486
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:508
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:539
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:551
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:563
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:575
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:586
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:610
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:85
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:35
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:60
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:88
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:128
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:161
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:173
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:207
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:217
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:239
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:254
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:265
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:282
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:293
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:321
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:330
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:352
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:358
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:364
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:379
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:398
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:412
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:421
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:429
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:438
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:453
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:463
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:474
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:486
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:508
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:539
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:551
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:563
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:575
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:586
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:610
+#: node_modules/underscore.string/test/speed.js:75
+#: node_modules/underscore.string/test/strings.js:268
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:25
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-05-12 14:40+0000\n"
+"POT-Creation-Date: 2017-05-17 16:53+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -93,17 +94,17 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: bower_components/bower_components/underscore-legacy/test/utility.js:67
-#: bower_components/underscore-legacy/test/utility.js:67
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/test_underscore/utility.js:51
-#: node_modules/grunt/node_modules/underscore.string/test/test_underscore/utility.js:41
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/test_underscore/utility.js:51
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/test_underscore/utility.js:41
-msgid "champ"
-msgstr ""
-
+#: bower_components/bower_components/jquery-ui/jquery-ui.min.js:8
 #: bower_components/jquery-ui/jquery-ui.min.js:8
 msgid "'"
+msgstr ""
+
+#: bower_components/bower_components/underscore-legacy/test/utility.js:67
+#: bower_components/underscore-legacy/test/utility.js:67
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/test_underscore/utility.js:51
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/test_underscore/utility.js:51
+#: node_modules/underscore.string/test/test_underscore/utility.js:41
+msgid "champ"
 msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/accounting.billing_info_handler.js:56
@@ -246,135 +247,135 @@ msgstr ""
 msgid "All properties must be below a tab"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1370
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1391
 msgid "Property"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1371
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1392
 msgid "Display Text"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1372
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1393
 msgid "Format"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1374
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1395
 msgid "Plain"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1375
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1396
 msgid "Date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1376
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1397
 msgid "Time Since or Until Date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1377
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1398
 msgid " Measuring "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1379
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1400
 msgid "Years since date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1380
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1401
 msgid "Months since date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1381
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1402
 msgid "Weeks since date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1382
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1403
 msgid "Days since date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1383
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1404
 msgid "Days until date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1384
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1405
 msgid "Weeks until date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1385
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1406
 msgid "Months until date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1387
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1408
 msgid "Phone Number"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1388
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1409
 msgid "ID Mapping"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1389
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1410
 msgid "Icon"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1390
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1411
 msgid "Mapping: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1391
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1412
 msgid "Late Flag"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1392
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1413
 msgid " Days late "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1394
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1415
 msgid "Search Only"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1395
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1416
 msgid "Address"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1396
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1417
 msgid "Picture"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1397
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1418
 msgid "Audio"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1398
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1419
 msgid "Calculate"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1400
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1421
 msgid "Distance from current location"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1402
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1423
 msgid "Add to list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1403
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1424
 msgid "Duplicate"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1404
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1425
 #: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:40
 #: corehq/apps/style/static/style/js/main.js:252
 #: corehq/apps/style/static/style/js/ui-element.js:358
 msgid "Delete"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1406
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1427
 msgid "You have unsaved detail screen configurations."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1437
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1443
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1458
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1464
 msgid " (Preview!)"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1447
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1468
 msgid ""
 "Must begin with a letter and contain only letters, numbers, '-', and '_'"
 msgstr ""
@@ -399,11 +400,11 @@ msgid ""
 "report's chart configuration will not be reflected here."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/language-profiles.js:14
+#: corehq/apps/app_manager/static/app_manager/js/language-profiles.js:22
 msgid "You have unsaved changes to your application profiles"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/language-profiles.js:33
+#: corehq/apps/app_manager/static/app_manager/js/language-profiles.js:41
 #: corehq/apps/app_manager/static/app_manager/js/linked_whitelist.js:14
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:89
 #: corehq/apps/style/static/style/js/main.js:248
@@ -1270,1266 +1271,1134 @@ msgstr ""
 msgid "Are you sure you want to delete this invitation?"
 msgstr ""
 
-#: docs/_build/html/_static/doctools.js:142
-msgid "Permalink to this headline"
-msgstr ""
-
-#: docs/_build/html/_static/doctools.js:148
-msgid "Permalink to this definition"
-msgstr ""
-
-#: docs/_build/html/_static/doctools.js:177
-msgid "Hide Search Matches"
-msgstr ""
-
-#: docs/_build/html/_static/searchtools.js:299
-msgid "Searching"
-msgstr ""
-
-#: docs/_build/html/_static/searchtools.js:304
-msgid "Preparing search..."
-msgstr ""
-
-#: docs/_build/html/_static/searchtools.js:461
-msgid "Search Results"
-msgstr ""
-
-#: docs/_build/html/_static/searchtools.js:463
-msgid ""
-"Your search did not match any documents. Please make sure that all words are "
-"spelled correctly and that you've selected enough categories."
-msgstr ""
-
-#: docs/_build/html/_static/searchtools.js:465
-#, javascript-format
-msgid "Search finished, found %s page(s) matching the search query."
-msgstr ""
-
-#: docs/_build/html/_static/searchtools.js:517
-msgid ", in "
-msgstr ""
-
-#: docs/_build/html/_static/sidebar.js:77
-msgid "Expand sidebar"
-msgstr ""
-
-#: docs/_build/html/_static/sidebar.js:90
-#: docs/_build/html/_static/sidebar.js:118
-msgid "Collapse sidebar"
-msgstr ""
-
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:22
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:12
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:22
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:12
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:22
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:22
+#: node_modules/underscore.string/test/speed.js:12
 msgid "  foobar  "
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:46
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:189
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:190
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:191
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:36
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:140
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:141
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:142
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:46
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:189
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:190
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:191
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:36
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:140
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:141
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:142
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:46
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:189
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:190
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:191
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:46
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:189
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:190
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:191
+#: node_modules/underscore.string/test/speed.js:36
+#: node_modules/underscore.string/test/strings.js:140
+#: node_modules/underscore.string/test/strings.js:141
+#: node_modules/underscore.string/test/strings.js:142
 msgid "whitespace"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:50
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:40
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:50
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:40
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:50
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:50
+#: node_modules/underscore.string/test/speed.js:40
 msgid "Hello worls"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:54
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:215
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:216
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:44
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:161
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:162
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:54
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:215
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:216
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:44
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:161
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:162
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:54
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:215
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:216
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:54
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:215
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:216
+#: node_modules/underscore.string/test/speed.js:44
+#: node_modules/underscore.string/test/strings.js:161
+#: node_modules/underscore.string/test/strings.js:162
 msgid "Hello "
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:58
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:224
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:48
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:167
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:58
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:224
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:48
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:167
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:58
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:224
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:58
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:224
+#: node_modules/underscore.string/test/speed.js:48
+#: node_modules/underscore.string/test/strings.js:167
 msgid "https://edtsech@bitbucket.org/edtsech/underscore.strings"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:73
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:237
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:63
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:180
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:73
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:237
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:63
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:180
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:73
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:237
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:73
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:237
+#: node_modules/underscore.string/test/speed.js:63
+#: node_modules/underscore.string/test/strings.js:180
 msgid "the titleize string method"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:77
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:81
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:203
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:204
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:205
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:327
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:328
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:342
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:67
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:71
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:152
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:153
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:154
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:244
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:245
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:256
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:77
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:81
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:203
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:204
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:205
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:327
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:328
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:342
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:67
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:71
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:152
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:153
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:154
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:244
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:245
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:256
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:77
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:81
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:203
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:204
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:205
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:327
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:328
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:342
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:77
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:81
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:203
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:204
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:205
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:327
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:328
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:342
+#: node_modules/underscore.string/test/speed.js:67
+#: node_modules/underscore.string/test/speed.js:71
+#: node_modules/underscore.string/test/strings.js:152
+#: node_modules/underscore.string/test/strings.js:153
+#: node_modules/underscore.string/test/strings.js:154
+#: node_modules/underscore.string/test/strings.js:244
+#: node_modules/underscore.string/test/strings.js:245
+#: node_modules/underscore.string/test/strings.js:256
 msgid "Hello world"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:89
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:79
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:89
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:79
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:89
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:89
+#: node_modules/underscore.string/test/speed.js:79
 msgid "<div>Blah blah blah</div>"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:93
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:83
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:93
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:83
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:93
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:93
+#: node_modules/underscore.string/test/speed.js:83
 msgid "&lt;div&gt;Blah blah blah&lt;/div&gt;"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:97
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:428
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:436
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:87
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:316
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:97
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:428
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:436
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:87
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:316
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:97
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:428
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:436
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:97
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:428
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:436
+#: node_modules/underscore.string/test/speed.js:87
+#: node_modules/underscore.string/test/strings.js:316
 msgid "Hello World"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:101
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:105
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:109
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:113
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:117
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:450
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:451
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:452
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:472
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:473
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:483
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:484
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:485
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings_standalone.js:6
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:91
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:95
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:99
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:103
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:107
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:327
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:328
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:329
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:343
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:344
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:351
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:352
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:353
-#: node_modules/grunt/node_modules/underscore.string/test/strings_standalone.js:6
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:101
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:105
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:109
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:113
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:117
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:450
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:451
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:452
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:472
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:473
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:483
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:484
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:485
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings_standalone.js:6
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:91
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:95
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:99
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:103
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:107
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:327
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:328
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:329
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:343
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:344
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:351
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:352
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:353
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings_standalone.js:6
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:101
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:105
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:109
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:113
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:117
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:450
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:451
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:452
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:472
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:473
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:483
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:484
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:485
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings_standalone.js:6
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:101
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:105
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:109
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:113
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:117
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:450
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:451
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:452
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:472
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:473
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:483
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:484
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:485
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings_standalone.js:6
+#: node_modules/underscore.string/test/speed.js:91
+#: node_modules/underscore.string/test/speed.js:95
+#: node_modules/underscore.string/test/speed.js:99
+#: node_modules/underscore.string/test/speed.js:103
+#: node_modules/underscore.string/test/speed.js:107
+#: node_modules/underscore.string/test/strings.js:327
+#: node_modules/underscore.string/test/strings.js:328
+#: node_modules/underscore.string/test/strings.js:329
+#: node_modules/underscore.string/test/strings.js:343
+#: node_modules/underscore.string/test/strings.js:344
+#: node_modules/underscore.string/test/strings.js:351
+#: node_modules/underscore.string/test/strings.js:352
+#: node_modules/underscore.string/test/strings.js:353
+#: node_modules/underscore.string/test/strings_standalone.js:6
 msgid "foo"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:121
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:111
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:121
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:111
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:121
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:121
+#: node_modules/underscore.string/test/speed.js:111
 msgid "10.232323"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:125
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:129
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:133
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:137
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:115
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:119
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:123
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:127
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:125
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:129
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:133
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:137
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:115
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:119
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:123
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:127
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:125
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:129
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:133
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:137
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:125
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:129
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:133
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:137
+#: node_modules/underscore.string/test/speed.js:115
+#: node_modules/underscore.string/test/speed.js:119
+#: node_modules/underscore.string/test/speed.js:123
+#: node_modules/underscore.string/test/speed.js:127
 msgid "aaa_bbb_ccc"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:141
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:131
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:141
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:131
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:141
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:141
+#: node_modules/underscore.string/test/speed.js:131
 msgid "separator"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:145
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:607
-#: node_modules/grunt/node_modules/underscore.string/test/speed.js:135
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:424
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:145
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:607
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/speed.js:135
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:424
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:145
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:607
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/speed.js:145
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:607
+#: node_modules/underscore.string/test/speed.js:135
+#: node_modules/underscore.string/test/strings.js:424
 msgid "Un éléphant à l'orée du bois"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:16
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:56
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:75
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:10
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:31
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:48
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:16
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:56
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:75
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:10
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:31
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:48
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:16
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:56
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:75
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:16
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:56
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:75
+#: node_modules/underscore.string/test/strings.js:10
+#: node_modules/underscore.string/test/strings.js:31
+#: node_modules/underscore.string/test/strings.js:48
 msgid " foo"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:17
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:58
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:76
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:11
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:33
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:49
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:17
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:58
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:76
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:11
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:33
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:49
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:17
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:58
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:76
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:17
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:58
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:76
+#: node_modules/underscore.string/test/strings.js:11
+#: node_modules/underscore.string/test/strings.js:33
+#: node_modules/underscore.string/test/strings.js:49
 msgid "foo "
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:18
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:59
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:79
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:12
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:34
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:52
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:18
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:59
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:79
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:12
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:34
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:52
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:18
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:59
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:79
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:18
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:59
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:79
+#: node_modules/underscore.string/test/strings.js:12
+#: node_modules/underscore.string/test/strings.js:34
+#: node_modules/underscore.string/test/strings.js:52
 msgid " foo "
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:19
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:20
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:13
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:14
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:19
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:20
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:13
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:14
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:19
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:20
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:19
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:20
+#: node_modules/underscore.string/test/strings.js:13
+#: node_modules/underscore.string/test/strings.js:14
 msgid "    foo     "
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:21
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:21
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:21
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:21
 msgid "\t    foo \t  "
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:23
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:64
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:81
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:16
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:37
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:54
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:23
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:64
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:81
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:16
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:37
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:54
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:23
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:64
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:81
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:23
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:64
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:81
+#: node_modules/underscore.string/test/strings.js:16
+#: node_modules/underscore.string/test/strings.js:37
+#: node_modules/underscore.string/test/strings.js:54
 msgid "ffoo"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:24
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:65
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:82
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:17
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:38
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:55
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:24
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:65
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:82
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:17
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:38
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:55
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:24
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:65
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:82
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:24
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:65
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:82
+#: node_modules/underscore.string/test/strings.js:17
+#: node_modules/underscore.string/test/strings.js:38
+#: node_modules/underscore.string/test/strings.js:55
 msgid "ooff"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:25
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:66
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:83
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:18
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:39
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:56
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:25
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:66
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:83
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:18
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:39
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:56
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:25
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:66
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:83
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:25
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:66
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:83
+#: node_modules/underscore.string/test/strings.js:18
+#: node_modules/underscore.string/test/strings.js:39
+#: node_modules/underscore.string/test/strings.js:56
 msgid "ffooff"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:28
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:68
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:85
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:21
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:41
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:58
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:28
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:68
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:85
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:21
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:41
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:58
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:28
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:68
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:85
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:28
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:68
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:85
+#: node_modules/underscore.string/test/strings.js:21
+#: node_modules/underscore.string/test/strings.js:41
+#: node_modules/underscore.string/test/strings.js:58
 msgid "_-foobar-_"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:30
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:74
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:23
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:47
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:30
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:74
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:23
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:47
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:30
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:74
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:30
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:74
+#: node_modules/underscore.string/test/strings.js:23
+#: node_modules/underscore.string/test/strings.js:47
 msgid "http://foo/"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:31
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:24
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:31
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:24
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:31
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:31
+#: node_modules/underscore.string/test/strings.js:24
 msgid "c:\\"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:57
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:32
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:57
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:32
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:57
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:57
+#: node_modules/underscore.string/test/strings.js:32
 msgid "    foo"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:77
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:50
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:77
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:50
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:77
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:77
+#: node_modules/underscore.string/test/strings.js:50
 msgid "foo     "
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:78
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:51
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:78
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:51
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:78
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:78
+#: node_modules/underscore.string/test/strings.js:51
 msgid "foo  bar     "
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:93
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:64
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:93
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:64
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:93
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:93
+#: node_modules/underscore.string/test/strings.js:64
 msgid "fabio"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:110
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:359
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:76
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:269
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:110
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:359
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:76
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:269
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:110
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:359
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:110
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:359
+#: node_modules/underscore.string/test/strings.js:76
+#: node_modules/underscore.string/test/strings.js:269
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:25
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
 msgid " "
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:126
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:89
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:126
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:89
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:126
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:126
+#: node_modules/underscore.string/test/strings.js:89
 msgid " foo    bar   "
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:137
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:148
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:97
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:108
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:137
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:148
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:97
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:108
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:137
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:148
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:137
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:148
+#: node_modules/underscore.string/test/strings.js:97
+#: node_modules/underscore.string/test/strings.js:108
 #, javascript-format
 msgid "Hello %s"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:138
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:149
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:98
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:109
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:138
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:149
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:98
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:109
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:138
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:149
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:138
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:149
+#: node_modules/underscore.string/test/strings.js:98
+#: node_modules/underscore.string/test/strings.js:109
 #, javascript-format
 msgid "hello %s"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:157
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:167
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:117
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:124
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:157
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:167
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:117
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:124
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:157
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:167
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:157
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:167
+#: node_modules/underscore.string/test/strings.js:117
+#: node_modules/underscore.string/test/strings.js:124
 msgid "foobar"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:158
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:118
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:158
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:118
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:158
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:158
+#: node_modules/underscore.string/test/strings.js:118
 msgid "oobar"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:170
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:127
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:170
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:127
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:170
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:170
+#: node_modules/underscore.string/test/strings.js:127
 msgid "fooba"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:206
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:155
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:206
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:155
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:206
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:206
+#: node_modules/underscore.string/test/strings.js:155
 msgid "x.xx....x.x"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:230
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:361
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:173
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:271
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:230
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:361
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:173
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:271
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:230
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:361
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:230
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:361
+#: node_modules/underscore.string/test/strings.js:173
+#: node_modules/underscore.string/test/strings.js:271
 msgid "a"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:231
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:174
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:231
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:174
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:231
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:231
+#: node_modules/underscore.string/test/strings.js:174
 msgid "A"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:232
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:175
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:232
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:175
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:232
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:232
+#: node_modules/underscore.string/test/strings.js:175
 msgid "+"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:238
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:181
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:238
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:181
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:238
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:238
+#: node_modules/underscore.string/test/strings.js:181
 msgid "the titleize string  method"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:242
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:242
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:242
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:242
 msgid "let's have some fun"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:243
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:243
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:243
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:243
 msgid "a-dash-separated-string"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:244
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:244
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:244
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:244
 msgid "A-DASH-SEPARATED-STRING"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:249
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:186
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:249
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:186
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:249
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:249
+#: node_modules/underscore.string/test/strings.js:186
 msgid "the_camelize_string_method"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:250
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:187
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:250
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:187
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:250
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:250
+#: node_modules/underscore.string/test/strings.js:187
 msgid "-the-camelize-string-method"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:251
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:188
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:251
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:188
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:251
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:251
+#: node_modules/underscore.string/test/strings.js:188
 msgid "the camelize string method"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:252
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:189
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:252
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:189
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:252
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:252
+#: node_modules/underscore.string/test/strings.js:189
 msgid " the camelize  string method"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:253
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:190
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:253
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:190
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:253
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:253
+#: node_modules/underscore.string/test/strings.js:190
 msgid "the camelize   string method"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:261
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:195
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:261
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:195
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:261
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:261
+#: node_modules/underscore.string/test/strings.js:195
 msgid "the-underscored-string-method"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:262
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:196
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:262
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:196
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:262
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:262
+#: node_modules/underscore.string/test/strings.js:196
 msgid "theUnderscoredStringMethod"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:263
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:197
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:263
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:197
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:263
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:263
+#: node_modules/underscore.string/test/strings.js:197
 msgid "TheUnderscoredStringMethod"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:264
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:198
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:264
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:198
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:264
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:264
+#: node_modules/underscore.string/test/strings.js:198
 msgid " the underscored  string method"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:272
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:203
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:272
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:203
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:272
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:272
+#: node_modules/underscore.string/test/strings.js:203
 msgid "the_dasherize_string_method"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:273
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:204
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:273
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:204
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:273
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:273
+#: node_modules/underscore.string/test/strings.js:204
 msgid "TheDasherizeStringMethod"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:274
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:205
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:274
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:205
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:274
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:274
+#: node_modules/underscore.string/test/strings.js:205
 msgid "thisIsATest"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:275
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:206
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:275
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:206
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:275
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:275
+#: node_modules/underscore.string/test/strings.js:206
 msgid "this Is A Test"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:276
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:207
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:276
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:207
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:276
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:276
+#: node_modules/underscore.string/test/strings.js:207
 msgid "thisIsATest123"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:277
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:208
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:277
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:208
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:277
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:277
+#: node_modules/underscore.string/test/strings.js:208
 msgid "123thisIsATest"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:278
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:209
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:278
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:209
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:278
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:278
+#: node_modules/underscore.string/test/strings.js:209
 msgid "the dasherize string method"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:279
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:210
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:279
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:210
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:279
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:279
+#: node_modules/underscore.string/test/strings.js:210
 msgid "the  dasherize string method  "
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:280
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:211
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:280
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:211
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:280
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:280
+#: node_modules/underscore.string/test/strings.js:211
 msgid "téléphone"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:281
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:212
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:281
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:212
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:281
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:281
+#: node_modules/underscore.string/test/strings.js:212
 msgid "foo$bar"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:296
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:296
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:296
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:296
 msgid "_som eWeird---name-"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:308
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:230
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:308
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:230
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:308
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:308
+#: node_modules/underscore.string/test/strings.js:230
 msgid "some_class_name"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:309
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:309
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:309
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:309
 msgid "my wonderfull class_name"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:310
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:310
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:310
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:310
 msgid "my wonderfull.class.name"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:314
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:234
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:314
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:234
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:314
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:314
+#: node_modules/underscore.string/test/strings.js:234
 msgid "the_humanize_string_method"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:315
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:235
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:315
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:235
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:315
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:315
+#: node_modules/underscore.string/test/strings.js:235
 msgid "ThehumanizeStringMethod"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:316
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:236
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:316
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:236
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:316
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:316
+#: node_modules/underscore.string/test/strings.js:236
 msgid "the humanize string method"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:317
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:237
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:317
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:237
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:317
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:317
+#: node_modules/underscore.string/test/strings.js:237
 msgid "the humanize_id string method_id"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:318
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:238
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:318
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:238
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:318
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:318
+#: node_modules/underscore.string/test/strings.js:238
 msgid "the  humanize string method  "
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:319
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:239
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:319
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:239
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:319
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:319
+#: node_modules/underscore.string/test/strings.js:239
 msgid "   capitalize dash-CamelCase_underscore trim  "
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:329
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:419
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:246
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:310
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:329
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:419
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:246
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:310
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:329
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:419
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:329
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:419
+#: node_modules/underscore.string/test/strings.js:246
+#: node_modules/underscore.string/test/strings.js:310
 msgid "Hello"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:337
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:341
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:251
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:255
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:337
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:341
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:251
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:255
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:337
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:341
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:337
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:341
+#: node_modules/underscore.string/test/strings.js:251
+#: node_modules/underscore.string/test/strings.js:255
 msgid "Hello, cruel world"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:338
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:339
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:340
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:252
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:253
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:254
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:338
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:339
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:340
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:252
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:253
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:254
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:338
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:339
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:340
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:338
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:339
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:340
+#: node_modules/underscore.string/test/strings.js:252
+#: node_modules/underscore.string/test/strings.js:253
+#: node_modules/underscore.string/test/strings.js:254
 msgid "Hello, world"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:343
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:347
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:257
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:261
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:343
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:347
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:257
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:261
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:343
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:347
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:343
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:347
+#: node_modules/underscore.string/test/strings.js:257
+#: node_modules/underscore.string/test/strings.js:261
 msgid "Привет, жестокий мир"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:344
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:345
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:346
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:348
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:258
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:259
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:260
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:262
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:344
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:345
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:346
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:348
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:258
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:259
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:260
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:262
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:344
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:345
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:346
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:348
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:344
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:345
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:346
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:348
+#: node_modules/underscore.string/test/strings.js:258
+#: node_modules/underscore.string/test/strings.js:259
+#: node_modules/underscore.string/test/strings.js:260
+#: node_modules/underscore.string/test/strings.js:262
 msgid "Привет, мир"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:349
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:349
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:349
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:349
 msgid "alksjd!!!!!!...."
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:360
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:270
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:360
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:270
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:360
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:360
+#: node_modules/underscore.string/test/strings.js:270
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
 msgid "\n"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:362
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:494
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:272
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:359
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:362
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:494
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:272
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:359
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:362
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:494
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:362
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:494
+#: node_modules/underscore.string/test/strings.js:272
+#: node_modules/underscore.string/test/strings.js:359
 msgid "0"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:375
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:277
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:375
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:277
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:375
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:375
+#: node_modules/underscore.string/test/strings.js:277
 msgid "<div>Blah & \"blah\" & 'blah'</div>"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:377
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:279
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:377
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:279
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:377
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:377
+#: node_modules/underscore.string/test/strings.js:279
 msgid "&lt;"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:385
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:385
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:385
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:385
 msgid ""
 "&lt;div&gt;Blah &amp; &quot;blah&quot; &amp; &apos;blah&#39;&lt;/div&gt;"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:387
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:287
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:387
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:287
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:387
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:387
+#: node_modules/underscore.string/test/strings.js:287
 msgid "&amp;lt;"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:388
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:388
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:388
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:388
 msgid "&apos;"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:389
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:288
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:389
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:288
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:389
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:389
+#: node_modules/underscore.string/test/strings.js:288
 msgid "&#39;"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:390
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:289
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:390
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:289
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:390
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:390
+#: node_modules/underscore.string/test/strings.js:289
 msgid "&#0039;"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:391
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:290
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:391
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:290
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:391
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:391
+#: node_modules/underscore.string/test/strings.js:290
 msgid "&#x4a;"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:392
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:291
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:392
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:291
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:392
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:392
+#: node_modules/underscore.string/test/strings.js:291
 msgid "&#x04A;"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:393
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:292
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:393
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:292
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:393
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:393
+#: node_modules/underscore.string/test/strings.js:292
 msgid "&#X4A;"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:394
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:293
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:394
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:293
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:394
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:394
+#: node_modules/underscore.string/test/strings.js:293
 msgid "&_#39;"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:395
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:294
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:395
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:294
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:395
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:395
+#: node_modules/underscore.string/test/strings.js:294
 msgid "&#39_;"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:396
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:295
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:396
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:295
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:396
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:396
+#: node_modules/underscore.string/test/strings.js:295
 msgid "&amp;#38;"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:397
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:296
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:397
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:296
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:397
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:397
+#: node_modules/underscore.string/test/strings.js:296
 msgid "&#38;amp;"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:406
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:302
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:406
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:302
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:406
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:406
+#: node_modules/underscore.string/test/strings.js:302
 msgid "I love you!"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:407
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:303
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:407
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:303
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:407
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:407
+#: node_modules/underscore.string/test/strings.js:303
 msgid " I    love   you!  "
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:408
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:304
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:408
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:304
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:408
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:408
+#: node_modules/underscore.string/test/strings.js:304
 msgid "I_love_you!"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:409
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:305
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:409
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:305
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:409
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:409
+#: node_modules/underscore.string/test/strings.js:305
 msgid "I-love-you!"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:413
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:413
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:413
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:413
 msgid "   "
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:427
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:427
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:427
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:427
 msgid "AaBbCcDdEe"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:435
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:315
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:435
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:315
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:435
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:435
+#: node_modules/underscore.string/test/strings.js:315
 msgid ""
 "Hello\n"
 "World"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:444
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:446
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:447
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:448
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:449
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:459
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:461
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:462
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:469
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:471
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:480
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:482
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:321
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:323
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:324
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:325
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:326
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:333
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:335
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:336
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:340
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:342
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:348
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:350
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:444
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:446
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:447
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:448
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:449
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:459
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:461
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:462
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:469
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:471
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:480
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:482
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:321
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:323
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:324
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:325
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:326
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:333
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:335
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:336
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:340
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:342
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:348
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:350
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:444
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:446
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:447
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:448
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:449
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:459
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:461
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:462
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:469
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:471
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:480
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:482
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:444
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:446
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:447
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:448
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:449
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:459
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:461
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:462
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:469
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:471
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:480
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:482
+#: node_modules/underscore.string/test/strings.js:321
+#: node_modules/underscore.string/test/strings.js:323
+#: node_modules/underscore.string/test/strings.js:324
+#: node_modules/underscore.string/test/strings.js:325
+#: node_modules/underscore.string/test/strings.js:326
+#: node_modules/underscore.string/test/strings.js:333
+#: node_modules/underscore.string/test/strings.js:335
+#: node_modules/underscore.string/test/strings.js:336
+#: node_modules/underscore.string/test/strings.js:340
+#: node_modules/underscore.string/test/strings.js:342
+#: node_modules/underscore.string/test/strings.js:348
+#: node_modules/underscore.string/test/strings.js:350
 msgid "1"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:492
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:357
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:492
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:357
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:492
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:492
+#: node_modules/underscore.string/test/strings.js:357
 msgid "not a number"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:495
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:495
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:495
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:495
 msgid "0.0"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:496
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:497
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:496
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:497
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:496
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:497
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:496
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:497
 msgid "0.1"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:498
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:498
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:498
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:498
 msgid "  0.1 "
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:499
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:360
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:499
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:360
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:499
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:499
+#: node_modules/underscore.string/test/strings.js:360
 msgid "0000"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:500
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:501
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:502
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:361
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:362
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:363
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:500
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:501
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:502
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:361
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:362
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:363
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:500
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:501
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:502
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:500
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:501
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:502
+#: node_modules/underscore.string/test/strings.js:361
+#: node_modules/underscore.string/test/strings.js:362
+#: node_modules/underscore.string/test/strings.js:363
 msgid "2.345"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:503
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:364
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:503
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:364
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:503
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:503
+#: node_modules/underscore.string/test/strings.js:364
 msgid "2.344"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:504
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:365
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:504
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:365
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:504
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:504
+#: node_modules/underscore.string/test/strings.js:365
 msgid "2"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:507
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:368
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:507
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:368
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:507
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:507
+#: node_modules/underscore.string/test/strings.js:368
 msgid "-2"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:533
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:534
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:535
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:536
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:537
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:538
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:546
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:547
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:548
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:549
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:550
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:558
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:559
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:560
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:561
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:562
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:570
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:571
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:572
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:573
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:574
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:372
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:373
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:374
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:375
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:376
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:381
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:382
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:383
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:384
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:385
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:390
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:391
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:392
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:393
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:394
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:399
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:400
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:401
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:402
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:403
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:533
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:534
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:535
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:536
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:537
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:538
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:546
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:547
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:548
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:549
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:550
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:558
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:559
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:560
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:561
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:562
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:570
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:571
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:572
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:573
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:574
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:372
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:373
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:374
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:375
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:376
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:381
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:382
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:383
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:384
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:385
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:390
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:391
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:392
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:393
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:394
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:399
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:400
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:401
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:402
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:403
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:533
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:534
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:535
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:536
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:537
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:538
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:546
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:547
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:548
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:549
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:550
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:558
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:559
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:560
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:561
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:562
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:570
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:571
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:572
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:573
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:574
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:533
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:534
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:535
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:536
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:537
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:538
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:546
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:547
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:548
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:549
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:550
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:558
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:559
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:560
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:561
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:562
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:570
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:571
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:572
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:573
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:574
+#: node_modules/underscore.string/test/strings.js:372
+#: node_modules/underscore.string/test/strings.js:373
+#: node_modules/underscore.string/test/strings.js:374
+#: node_modules/underscore.string/test/strings.js:375
+#: node_modules/underscore.string/test/strings.js:376
+#: node_modules/underscore.string/test/strings.js:381
+#: node_modules/underscore.string/test/strings.js:382
+#: node_modules/underscore.string/test/strings.js:383
+#: node_modules/underscore.string/test/strings.js:384
+#: node_modules/underscore.string/test/strings.js:385
+#: node_modules/underscore.string/test/strings.js:390
+#: node_modules/underscore.string/test/strings.js:391
+#: node_modules/underscore.string/test/strings.js:392
+#: node_modules/underscore.string/test/strings.js:393
+#: node_modules/underscore.string/test/strings.js:394
+#: node_modules/underscore.string/test/strings.js:399
+#: node_modules/underscore.string/test/strings.js:400
+#: node_modules/underscore.string/test/strings.js:401
+#: node_modules/underscore.string/test/strings.js:402
+#: node_modules/underscore.string/test/strings.js:403
 msgid "This_is_a_test_string"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:582
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:408
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:582
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:408
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:582
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:582
+#: node_modules/underscore.string/test/strings.js:408
 msgid "a <a href=\"#\">link</a>"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:583
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:409
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:583
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:409
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:583
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:583
+#: node_modules/underscore.string/test/strings.js:409
 msgid "a <a href=\"#\">link</a><script>alert(\"hello world!\")</script>"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:584
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:410
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:584
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:410
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:584
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:584
+#: node_modules/underscore.string/test/strings.js:410
 msgid "<html><body>hello world</body></html>"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:606
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:423
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:606
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:423
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:606
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:606
+#: node_modules/underscore.string/test/strings.js:423
 msgid "Jack & Jill like numbers 1,2,3 and 4 and silly characters ?%.$!/"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:608
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:608
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:608
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:608
 msgid "I know latin characters: á í ó ú ç ã õ ñ ü ă ș ț"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:609
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:426
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:609
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:426
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:609
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:609
+#: node_modules/underscore.string/test/strings.js:426
 msgid "I am a word too, even though I am but a single letter: i!"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:660
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:660
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:660
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:660
 msgid "false"
 msgstr ""
 
-#: node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:667
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:667
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:667
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:667
 msgid "true"
 msgstr ""
 
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:285
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:285
+#: node_modules/underscore.string/test/strings.js:285
 msgid ""
 "&lt;div&gt;Blah &amp; &quot;blah&quot; &amp; &apos;blah&apos;&lt;/div&gt;"
 msgstr ""
 
-#: node_modules/grunt/node_modules/underscore.string/test/strings.js:425
-#: submodules/touchforms-src/touchforms/node_modules/grunt/node_modules/underscore.string/test/strings.js:425
+#: node_modules/underscore.string/test/strings.js:425
 msgid "I know latin characters: á í ó ú ç ã õ ñ ü"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:25
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid "."
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid "*"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid "import"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid "{}"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid ", "
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid "this"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid "super"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid "null"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid ",\n"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid " = "
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid "debugger;"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid ":"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid "empty"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid "any"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid "mixed"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid "boolean"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid "interface "
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid " & "
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid "number"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid "string"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid "typeof "
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid " | "
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
+msgid "void"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/js-yaml/dist/js-yaml.min.js:2
+msgid "code point within a string may not be greater than 0xFFFFFFFF"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/js-yaml/dist/js-yaml.min.js:2
+msgid "impossible error: invalid scalar style"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/js-yaml/dist/js-yaml.min.js:2
+msgid "sortKeys must be a boolean or a function"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/js-yaml/dist/js-yaml.min.js:2
+msgid "!<"
+msgstr ""
+
+#: submodules/motechhub/services/authproxy/node_modules/js-yaml/dist/js-yaml.min.js:2
+msgid "unacceptable kind of an object to dump "
 msgstr ""

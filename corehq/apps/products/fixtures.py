@@ -36,16 +36,7 @@ def product_fixture_generator_json(domain):
         'uri': uri,
         'path': '/products/product',
         'name': 'Products',
-        'structure': {
-            f: {
-                'name': f,
-                'no_option': True
-            } for f in fields},
-
-        # DEPRECATED PROPERTIES
-        'sourceUri': uri,
-        'defaultId': 'products',
-        'initialQuery': "instance('products')/products/product",
+        'structure': {f: {'name': f, 'no_option': True} for f in fields},
     }
 
 

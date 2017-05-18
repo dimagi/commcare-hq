@@ -1,28 +1,26 @@
-from collections import namedtuple
 from datetime import datetime, timedelta
-import logging
 import urllib
 import urlparse
 import warnings
+
 from django.utils.translation import ugettext_lazy as _
 from requests.auth import HTTPBasicAuth, HTTPDigestAuth
-
 from requests.exceptions import Timeout, ConnectionError
+from couchdbkit.exceptions import ResourceNotFound
+
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.repeaters.repeater_generators import FormRepeaterXMLPayloadGenerator, \
+    FormRepeaterJsonPayloadGenerator, CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator, \
+    ShortFormRepeaterJsonPayloadGenerator, AppStructureGenerator, UserPayloadGenerator, LocationPayloadGenerator
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.util.datadog.metrics import REPEATER_ERROR_COUNT
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.quickcache import quickcache
-
 from dimagi.ext.couchdbkit import *
-from couchdbkit.exceptions import ResourceNotFound
-
 from casexml.apps.case.xml import V2, LEGAL_VERSIONS
-from corehq.apps.receiverwrapper.exceptions import DuplicateFormatException
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
-
 from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
@@ -54,67 +52,6 @@ def log_repeater_timeout_in_datadog(domain):
 
 DELETED = "-Deleted"
 
-FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
-
-
-class GeneratorCollection(object):
-    """Collection of format_name to Payload Generators for a Repeater class
-
-    args:
-        repeater_class: A valid child class of Repeater class
-    """
-
-    def __init__(self, repeater_class):
-        self.repeater_class = repeater_class
-        self.default_format = ''
-        self.format_generator_map = {}
-
-    def add_new_format(self, format_name, format_label, generator_class, is_default=False):
-        """Adds a new format->generator mapping to the collection
-
-        args:
-            format_name: unique name to identify the format
-            format_label: label to be displayed to the user
-            generator_class: child class of .repeater_generators.BasePayloadGenerator
-
-        kwargs:
-            is_default: True if the format_name should be default format
-
-        exceptions:
-            raises DuplicateFormatException if format is added with is_default while other
-            default exists
-            raises DuplicateFormatException if format_name alread exists in the collection
-        """
-        if is_default and self.default_format:
-            raise DuplicateFormatException("A default format already exists for this repeater.")
-        elif is_default:
-            self.default_format = format_name
-        if format_name in self.format_generator_map:
-            raise DuplicateFormatException("There is already a Generator with this format name.")
-
-        self.format_generator_map[format_name] = FormatInfo(
-            name=format_name,
-            label=format_label,
-            generator_class=generator_class
-        )
-
-    def get_default_format(self):
-        """returns default format"""
-        return self.default_format
-
-    def get_default_generator(self):
-        """returns generator class for the default format"""
-        raise self.format_generator_map[self.default_format].generator_class
-
-    def get_all_formats(self, for_domain=None):
-        """returns all the formats added to this repeater collection"""
-        return [(name, format.label) for name, format in self.format_generator_map.iteritems()
-                if not for_domain or format.generator_class.enabled_for_domain(for_domain)]
-
-    def get_generator_by_format(self, format):
-        """returns generator class given a format"""
-        return self.format_generator_map[format].generator_class
-
 
 class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     """
@@ -131,6 +68,8 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     username = StringProperty()
     password = StringProperty()
     friendly_name = _("Data")
+
+    payload_generator_classes = ()
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -326,6 +265,8 @@ class FormRepeater(Repeater):
 
     """
 
+    payload_generator_classes = (FormRepeaterXMLPayloadGenerator, FormRepeaterJsonPayloadGenerator)
+
     include_app_id_param = BooleanProperty(default=True)
     white_listed_form_xmlns = StringListProperty(default=[])  # empty value means all form xmlns are accepted
     friendly_name = _("Forward Forms")
@@ -371,6 +312,8 @@ class CaseRepeater(Repeater):
     Record that cases should be repeated to a new url
 
     """
+
+    payload_generator_classes = (CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator)
 
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
     white_listed_case_types = StringListProperty(default=[])  # empty value means all case-types are accepted
@@ -421,6 +364,8 @@ class ShortFormRepeater(Repeater):
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
     friendly_name = _("Forward Form Stubs")
 
+    payload_generator_classes = (ShortFormRepeaterJsonPayloadGenerator,)
+
     @memoized
     def payload_doc(self, repeat_record):
         return FormAccessors(repeat_record.domain).get_form(repeat_record.payload_id)
@@ -442,12 +387,16 @@ class ShortFormRepeater(Repeater):
 class AppStructureRepeater(Repeater):
     friendly_name = _("Forward App Schema Changes")
 
+    payload_generator_classes = (AppStructureGenerator,)
+
     def payload_doc(self, repeat_record):
         return None
 
 
 class UserRepeater(Repeater):
     friendly_name = _("Forward Users")
+
+    payload_generator_classes = (UserPayloadGenerator,)
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -459,6 +408,8 @@ class UserRepeater(Repeater):
 
 class LocationRepeater(Repeater):
     friendly_name = _("Forward Locations")
+
+    payload_generator_classes = (LocationPayloadGenerator,)
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -481,20 +432,39 @@ class RepeatRecord(Document):
     An record of a particular instance of something that needs to be forwarded
     with a link to the proper repeater object
     """
+
+    domain = StringProperty()
+    repeater_id = StringProperty()
+    repeater_type = StringProperty()
+    payload_id = StringProperty()
+
     overall_tries = IntegerProperty(default=0)
     max_possible_tries = IntegerProperty(default=3)
 
-    repeater_id = StringProperty()
-    repeater_type = StringProperty()
-    domain = StringProperty()
+    attempts = ListProperty(RepeatRecordAttempt)
 
+    cancelled = BooleanProperty(default=False)
     last_checked = DateTimeProperty()
+    failure_reason = StringProperty()
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
-    failure_reason = StringProperty()
-    cancelled = BooleanProperty(default=False)
 
-    payload_id = StringProperty()
+    @classmethod
+    def wrap(cls, data):
+        should_bootstrap_attempts = ('attempts' not in data)
+
+        self = super(RepeatRecord, cls).wrap(data)
+
+        if should_bootstrap_attempts and self.last_checked:
+            assert not self.attempts
+            self.attempts = [RepeatRecordAttempt(
+                cancelled=self.cancelled,
+                datetime=self.last_checked,
+                failure_reason=self.failure_reason,
+                next_check=self.next_check,
+                succeeded=self.succeeded,
+            )]
+        return self
 
     @property
     @memoized
@@ -539,12 +509,17 @@ class RepeatRecord(Document):
         return results['value'] if results else 0
 
     def add_attempt(self, attempt):
+        self.attempts.append(attempt)
         self.last_checked = attempt.datetime
         self.next_check = attempt.next_check
         self.succeeded = attempt.succeeded
         self.cancelled = attempt.cancelled
-        if attempt.failure_reason is not None:
-            self.failure_reason = attempt.failure_reason
+        self.failure_reason = attempt.failure_reason
+
+    def get_numbered_attempts(self):
+        offset = self.overall_tries - len(self.attempts)
+        for i, attempt in enumerate(self.attempts):
+            yield i + 1 + offset, attempt
 
     def make_set_next_try_attempt(self, failure_reason):
         # we use an exponential back-off to avoid submitting to bad urls
@@ -618,7 +593,7 @@ class RepeatRecord(Document):
         """Do something with the response if the repeater fails
         """
         return self._make_failure_attempt(
-            u'{}: {}. {}'.format(response.status_code, response.reason, getattr(response, 'content', None)),
+            u'{}: {}.\n{}'.format(response.status_code, response.reason, getattr(response, 'content', None)),
             response
         )
 

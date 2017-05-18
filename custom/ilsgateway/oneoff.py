@@ -14,7 +14,7 @@ def recalculate_moshi_rural_task():
     moshi = SQLLocation.objects.get(domain='ils-gateway', site_code__iexact=site_code)
     end_date = datetime(2016, 3, 1) - timedelta(microseconds=.1)
 
-    process_non_facility_warehouse_data(moshi.couch_location, default_start_date(), end_date, strict=False)
+    process_non_facility_warehouse_data(moshi, default_start_date(), end_date, strict=False)
 
 TASK_NAME = '2016-04-12_recalculate_non_facilities_task'
 
@@ -52,14 +52,14 @@ def recalculate_non_facilities_task(domain):
         ))
         last_processed = non_facilities[0]
         non_facilities = non_facilities[1:]
-        process_non_facility_warehouse_data(last_processed.couch_location, start_date, end_date, strict=False)
+        process_non_facility_warehouse_data(last_processed, start_date, end_date, strict=False)
 
     for non_facility in non_facilities:
         task_progress.last_synced_object_id = non_facility.location_id
         task_progress.progress += 1
         task_progress.save()
         process_non_facility_warehouse_data(
-            non_facility.couch_location, default_start_date(), end_date, strict=False
+            non_facility, default_start_date(), end_date, strict=False
         )
 
     task_progress.complete = True

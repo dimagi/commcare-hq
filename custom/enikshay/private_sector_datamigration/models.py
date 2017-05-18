@@ -3,6 +3,17 @@ from django.db import models
 from dimagi.utils.decorators.memoized import memoized
 
 
+REPORTING_MECHANISM_99_DOTS = 84
+REPORTING_MECHANISM_FIELD_OFFICER = 85
+REPORTING_MECHANISM_TREATMENT_SUPPORTER = 86
+REPORTING_MECHANISM_MERM = 96
+REPORTING_MECHANISM_NONE = 0
+
+DIRECTLY_OBSERVED_DOSE = 0
+MISSED_DOSE = 1
+SELF_ADMINISTERED_DOSE = 3
+
+
 def get_agency_by_motech_user_name(motech_user_name):
     try:
         return Agency.objects.get(
@@ -130,6 +141,10 @@ class Beneficiary(models.Model):
         }[self.languagePreferences]
 
     @property
+    def name(self):
+        return ' '.join([self.firstName, self.lastName])
+
+    @property
     def referred_provider(self):
         return get_agency_by_motech_user_name(self.referredQP)
 
@@ -172,7 +187,7 @@ class Episode(models.Model):
     associatedFO = models.CharField(max_length=255, null=True)
     bankName = models.CharField(max_length=255, null=True)
     basisOfDiagnosis = models.CharField(max_length=255, null=True)
-    beneficiaryID = models.ForeignKey(Beneficiary, on_delete=models.CASCADE)
+    beneficiaryID = models.CharField(max_length=18)
     branchName = models.CharField(max_length=255, null=True)
     creationDate = models.DateTimeField(null=True)
     creator = models.CharField(max_length=255, null=True)
@@ -221,12 +236,6 @@ class Episode(models.Model):
     treatingQP = models.CharField(max_length=255, null=True)
     treatmentOutcomeId = models.CharField(max_length=255, null=True)
     treatmentPhase = models.CharField(max_length=255, null=True)
-    # [u'Select',
-    #  None,
-    #  u'Intensive Phase',
-    #  u'N/A',
-    #  u'Continuation Phase',
-    #  u'Extended IP']
     tsProviderType = models.CharField(max_length=255, null=True)
     unknownAdherencePct = models.DecimalField(decimal_places=10, max_digits=14)
     unresolvedMissedDosesPct = models.DecimalField(decimal_places=10, max_digits=14)
@@ -234,6 +243,38 @@ class Episode(models.Model):
     treatmentCompletionInsentiveFlag = models.CharField(max_length=1, null=True)
     mermIMIEno = models.CharField(max_length=255, null=True)
     adherenceSupportAssigned = models.CharField(max_length=255, null=True)
+
+    @property
+    def adherence_total_doses_taken(self):
+        return Adherence.objects.filter(
+            episodeId=self.episodeID,
+            dosageStatusId__in=[DIRECTLY_OBSERVED_DOSE, SELF_ADMINISTERED_DOSE],
+        ).count()
+
+    @property
+    @memoized
+    def adherence_tracking_mechanism(self):
+        reporting_mechanism_values = Adherence.objects.filter(
+            episodeId=self.episodeID,
+        ).exclude(
+            reportingMechanismId=REPORTING_MECHANISM_NONE,
+        ).values('reportingMechanismId').distinct()
+
+        values = [field_to_value['reportingMechanismId'] for field_to_value in reporting_mechanism_values]
+
+        if reporting_mechanism_values:
+            if REPORTING_MECHANISM_99_DOTS in values:
+                return '99dots'
+            elif REPORTING_MECHANISM_MERM in values:
+                return 'merm'
+            elif REPORTING_MECHANISM_FIELD_OFFICER in values:
+                return 'field_officer'
+            elif REPORTING_MECHANISM_TREATMENT_SUPPORTER in values:
+                return 'treatment_supporter'
+            else:
+                return 'contact_centre'
+        else:
+            return ''
 
     @property
     def basis_of_diagnosis(self):
@@ -289,6 +330,10 @@ class Episode(models.Model):
             None: 'unknown',
             'Select': 'unknown',
         }[self.diabetes]
+
+    @property
+    def dots_99_enabled(self):
+        return 'true' if self.adherence_tracking_mechanism in ['99dots', 'merm'] else 'false'
 
     @property
     def site_property(self):
@@ -368,6 +413,17 @@ class Episode(models.Model):
         return get_agency_by_motech_user_name(self.treatingQP)
 
     @property
+    def treatment_phase(self):
+        return {
+            'Intensive Phase': 'ip',
+            'Extended IP': 'extended_ip',
+            'Continuation Phase': 'continuation_phase_cp',
+            'N/A': '',
+            'Select': '',
+            None: '',
+        }[self.treatmentPhase]
+
+    @property
     def treatment_outcome(self):
         if self.treatmentOutcomeId is None:
             return None
@@ -377,10 +433,13 @@ class Episode(models.Model):
             return {
                 'Cured': 'cured',
                 'Died': 'died',
-                'died': 'died',
+                'DIED': 'died',
                 'Failure': 'failure',
-                'SWITCH TO CAT IV': 'regimen_changed',
-                'Switched to Category IV/V': 'regimen_changed',
+                'SWITCH OVER CAT4': 'switched_to_cat_ivv',
+                'SWITCH TO CAT IV': 'switched_to_cat_ivv',
+                'Switched to Category IV/V': 'switched_to_cat_ivv',
+                'Transferred Out': 'transferred_out',
+                'Treatment Completed': 'treatment_completed',
             }[self.treatmentOutcomeId]
 
     @property
@@ -391,7 +450,7 @@ class Episode(models.Model):
             'died',
             'failure',
             'loss_to_follow_up',
-            'regimen_changed',
+            'switched_to_cat_ivv',
         ]
 
 
@@ -405,7 +464,7 @@ class Adherence(models.Model):
     dosageStatusId = models.IntegerField()
     doseDate = models.DateTimeField()
     doseReasonId = models.IntegerField()
-    episodeId = models.ForeignKey(Episode, on_delete=models.CASCADE)
+    episodeId = models.CharField(max_length=8)
     modificationDate = models.DateTimeField(null=True)
     modifiedBy = models.CharField(max_length=255, null=True)
     owner = models.CharField(max_length=255, null=True)
@@ -415,9 +474,9 @@ class Adherence(models.Model):
     @property
     def adherence_value(self):
         return {
-            0: 'directly_observed_dose',
-            1: 'missed_dose',
-            3: 'self_administered_dose',
+            DIRECTLY_OBSERVED_DOSE: 'directly_observed_dose',
+            MISSED_DOSE: 'missed_dose',
+            SELF_ADMINISTERED_DOSE: 'self_administered_dose',
         }[self.dosageStatusId]
 
 
@@ -612,3 +671,12 @@ class UserDetail(models.Model):
     valid = models.BooleanField()
     villageTownCity = models.CharField(max_length=256, null=True)
     wardId = models.CharField(max_length=256, null=True)
+
+
+class MigratedBeneficiaryCounter(models.Model):
+    id = models.AutoField(primary_key=True)
+
+    @classmethod
+    def get_next_counter(cls):
+        counter = MigratedBeneficiaryCounter.objects.create()
+        return counter.id

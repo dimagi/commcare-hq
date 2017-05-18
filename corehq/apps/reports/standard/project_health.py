@@ -1,6 +1,6 @@
 from collections import namedtuple
 import datetime
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.standard import ProjectReport
@@ -407,9 +407,9 @@ class ProjectHealthDashboard(ProjectReport):
             self.export_summary(previous_months_reports),
             build_worksheet(title="Inactive Users", headers=header,
                             rows=extract_user_stat(last_month.get_dropouts())),
-            build_worksheet(title="Low Performing Users", headers=header,
+            build_worksheet(title=_("Low Performing Users"), headers=header,
                             rows=extract_user_stat(last_month.get_unhealthy_users())),
-            build_worksheet(title="New Performing Users", headers=header,
+            build_worksheet(title=_("New Performing Users"), headers=header,
                             rows=extract_user_stat(last_month.get_newly_performing())),
         ]
 

@@ -8,7 +8,7 @@ from pytz import timezone
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.exceptions import RequestConnectionError
-from corehq.apps.repeaters.repeater_generators import RegisterGenerator, BasePayloadGenerator
+from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
 from custom.enikshay.case_utils import update_case, get_person_case_from_episode
 from custom.enikshay.const import (
     DATE_FULFILLED,
@@ -26,9 +26,6 @@ from custom.enikshay.integrations.bets.const import (
     LOCATION_TYPE_MAP,
     CHEMIST_VOUCHER_EVENT, LAB_VOUCHER_EVENT, TOTAL_DAY_THRESHOLDS)
 from custom.enikshay.exceptions import NikshayLocationNotFound
-from custom.enikshay.integrations.bets.repeaters import BETS180TreatmentRepeater, \
-    BETSDrugRefillRepeater, BETSSuccessfulTreatmentRepeater, BETSDiagnosisAndNotificationRepeater, \
-    BETSAYUSHReferralRepeater, ChemistBETSVoucherRepeater, LabBETSVoucherRepeater
 
 
 class BETSPayload(jsonobject.JsonObject):
@@ -263,12 +260,10 @@ class BaseBETSVoucherPayloadGenerator(BETSBasePayloadGenerator):
         return json.dumps(VoucherPayload.create_voucher_payload(voucher_case).to_json())
 
 
-@RegisterGenerator(ChemistBETSVoucherRepeater, 'case_json', 'JSON', is_default=True)
 class ChemistBETSVoucherPayloadGenerator(BaseBETSVoucherPayloadGenerator):
     event_id = CHEMIST_VOUCHER_EVENT
 
 
-@RegisterGenerator(LabBETSVoucherRepeater, 'case_json', 'JSON', is_default=True)
 class LabBETSVoucherPayloadGenerator(BaseBETSVoucherPayloadGenerator):
     event_id = LAB_VOUCHER_EVENT
 
@@ -286,7 +281,6 @@ class IncentivePayloadGenerator(BETSBasePayloadGenerator):
         ).to_json())
 
 
-@RegisterGenerator(BETS180TreatmentRepeater, "case_json", "JSON", is_default=True)
 class BETS180TreatmentPayloadGenerator(IncentivePayloadGenerator):
     event_id = TREATMENT_180_EVENT
 
@@ -294,12 +288,12 @@ class BETS180TreatmentPayloadGenerator(IncentivePayloadGenerator):
         return json.dumps(IncentivePayload.create_180_treatment_payload(episode_case).to_json())
 
 
-@RegisterGenerator(BETSDrugRefillRepeater, "case_json", "JSON", is_default=True)
 class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
     event_id = DRUG_REFILL_EVENT
 
     @staticmethod
     def _get_prescription_threshold_to_send(episode_case_properties):
+        from custom.enikshay.integrations.bets.repeaters import BETSDrugRefillRepeater
         thresholds_to_send = [
             n for n in TOTAL_DAY_THRESHOLDS
             if BETSDrugRefillRepeater.prescription_total_days_threshold_in_trigger_state(
@@ -352,7 +346,6 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
             )
 
 
-@RegisterGenerator(BETSSuccessfulTreatmentRepeater, "case_json", "JSON", is_default=True)
 class BETSSuccessfulTreatmentPayloadGenerator(IncentivePayloadGenerator):
     event_id = SUCCESSFUL_TREATMENT_EVENT
 
@@ -360,7 +353,6 @@ class BETSSuccessfulTreatmentPayloadGenerator(IncentivePayloadGenerator):
         return json.dumps(IncentivePayload.create_successful_treatment_payload(episode_case).to_json())
 
 
-@RegisterGenerator(BETSDiagnosisAndNotificationRepeater, "case_json", "JSON", is_default=True)
 class BETSDiagnosisAndNotificationPayloadGenerator(IncentivePayloadGenerator):
     event_id = DIAGNOSIS_AND_NOTIFICATION_EVENT
 
@@ -368,7 +360,6 @@ class BETSDiagnosisAndNotificationPayloadGenerator(IncentivePayloadGenerator):
         return json.dumps(IncentivePayload.create_diagnosis_and_notification_payload(episode_case).to_json())
 
 
-@RegisterGenerator(BETSAYUSHReferralRepeater, "case_json", "JSON", is_default=True)
 class BETSAYUSHReferralPayloadGenerator(IncentivePayloadGenerator):
     event_id = AYUSH_REFERRAL_EVENT
 

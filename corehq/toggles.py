@@ -332,7 +332,8 @@ CASE_LIST_CUSTOM_XML = StaticToggle(
     'case_list_custom_xml',
     'Show text area for entering custom case list xml',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
+    help_link='https://confluence.dimagi.com/display/public/Custom+Case+XML+Overview',
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 CASE_LIST_CUSTOM_VARIABLES = StaticToggle(
@@ -381,8 +382,8 @@ DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
     help_link='https://confluence.dimagi.com/display/internal/Case+Detail+Nodesets',
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 DHIS2_INTEGRATION = StaticToggle(
@@ -396,7 +397,8 @@ GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
+    help_link='https://confluence.dimagi.com/display/RD/Graphing+in+HQ',
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 IS_DEVELOPER = StaticToggle(
@@ -409,7 +411,8 @@ MM_CASE_PROPERTIES = StaticToggle(
     'mm_case_properties',
     'Multimedia Case Properties',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER]
+    help_link='https://confluence.dimagi.com/display/internal/Multimedia+Case+Properties+Feature+Flag',
+    namespaces=[NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
 VISIT_SCHEDULER = StaticToggle(
@@ -492,14 +495,16 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     'extension_sync',
     'Enable extension syncing',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
+    help_link='https://confluence.dimagi.com/display/ccinternal/Extension+Cases',
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    help_link='https://confluence.dimagi.com/display/internal/Remote+Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 NO_VELLUM = StaticToggle(
@@ -529,13 +534,6 @@ STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
     "Enable the stock report handler to accept both stock and receipt values "
     "in the format 'soh abc 100.20'",
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
-)
-
-LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
-    'loose_sync_token_validation',
-    "Don't fail hard on missing or deleted sync tokens.",
-    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN]
 )
 
@@ -610,7 +608,8 @@ VELLUM_PRINTING = StaticToggle(
     'printing',
     "Enables the Print Android App Callout",
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    help_link='https://confluence.dimagi.com/display/ccinternal/Printing+from+a+form+in+CommCare+Android',
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 VELLUM_DATA_IN_SETVALUE = StaticToggle(
@@ -632,7 +631,8 @@ CUSTOM_PROPERTIES = StaticToggle(
     'custom_properties',
     'Allow users to add arbitrary custom properties to their application',
     TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
+    help_link='https://confluence.dimagi.com/display/internal/CommCare+Android+Developer+Options',
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 ENABLE_LOADTEST_USERS = StaticToggle(
@@ -733,6 +733,7 @@ APPLICATION_ERROR_REPORT = StaticToggle(
     'application_error_report',
     'Show Application Error Report',
     TAG_EXPERIMENTAL,
+    help_link='https://confluence.dimagi.com/display/internal/Show+Application+Error+Report+Feature+Flag',
     namespaces=[NAMESPACE_USER],
 )
 
@@ -847,7 +848,8 @@ MOBILE_WORKER_SELF_REGISTRATION = StaticToggle(
     'mobile_worker_self_registration',
     'Allow mobile workers to self register',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
+    help_link='https://confluence.dimagi.com/display/commcarepublic/SMS+Self+Registration',
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 MESSAGE_LOG_METADATA = StaticToggle(
@@ -965,7 +967,8 @@ MOBILE_USER_DEMO_MODE = StaticToggle(
     'mobile_user_demo_mode',
     'Ability to make a mobile worker into Demo only mobile worker',
     TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
+    help_link='https://confluence.dimagi.com/display/internal/Demo+Mobile+Workers',
+    namespaces=[NAMESPACE_DOMAIN]
 )
 
 
@@ -1033,7 +1036,7 @@ APP_MANAGER_V2 = StaticToggle(
     'Prototype for case management onboarding (App Manager V2)',
     TAG_PRODUCT_PATH,
     [NAMESPACE_USER],
-    enabled_for_new_users_after=datetime(2017, 5, 15, 20),  # 8pm UTC
+    enabled_for_new_users_after=datetime(2017, 5, 16, 20),  # 8pm UTC
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
@@ -1175,7 +1178,7 @@ BLOBDB_RESTORE = PredictablyRandomToggle(
     "Blobdb restore",
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0.0,
+    randomness=1.0,
 )
 
 SHOW_DEV_TOGGLE_INFO = StaticToggle(

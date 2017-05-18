@@ -8,7 +8,6 @@ def login_as_user_query(
         search_string,
         limit,
         offset,
-        can_access_all_locations=False,
         user_data_fields=None):
     '''
     Takes in various parameters to determine which users to populate the login as screen.
@@ -19,8 +18,6 @@ def login_as_user_query(
         `search_fields` as well as any fields defined in `user_data_fields`.
     :param limit: The max amount of users returned.
     :param offset: From where to start the query.
-    :param can_access_all_locations: When set to False, will limit the users returned by the
-        locations the user has visibility into.
     :param user_data_fields: A list of custom user data fields that should also be searched
         by the `search_string`
 
@@ -69,7 +66,7 @@ def login_as_user_query(
         )
     )
 
-    if not can_access_all_locations:
+    if not couch_user.has_permission(domain, 'access_all_locations'):
         loc_ids = SQLLocation.objects.accessible_to_user(
             domain, couch_user
         ).location_ids()

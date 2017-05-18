@@ -1,4 +1,4 @@
-/*globals $, COMMCAREHQ, _, ko, print_ref */    // print_ref global is terrible, should be fixed
+/*globals $, COMMCAREHQ, _, ko */
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
         v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2'),
@@ -17,6 +17,7 @@ $(function () {
             var detail = details[i];
             var detailScreenConfig = DetailScreenConfig.init({
                 module_id: moduleBrief.id,
+                moduleUniqueId: moduleBrief.unique_id,
                 state: {
                     type: detail.type,
                     short: detail.short,
@@ -39,7 +40,7 @@ $(function () {
                 includeClosed: options.include_closed,
                 defaultProperties: options.default_properties || [],
                 searchButtonDisplayCondition: options.search_button_display_condition,
-                print_ref: print_ref,
+                blacklistedOwnerIdsExpression: options.blacklisted_owner_ids_expression,
             });
 
             var $list_home = $("#" + detail.type + "-detail-screen-config-tab");

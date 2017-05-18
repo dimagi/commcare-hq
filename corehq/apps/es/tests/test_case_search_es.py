@@ -154,3 +154,20 @@ class TestCaseSearchES(ElasticTestMixin, TestCase):
             ),
             expected
         )
+
+    def test_blacklisted_owner_ids(self):
+        query = self.es.domain('swashbucklers').blacklist_owner_id('123').owner('234')
+        expected = {'query':
+                    {'filtered':
+                     {'filter':
+                      {'and': [
+                          {'term': {'domain.exact': 'swashbucklers'}},
+                          {'not': {'term': {'owner_id': '123'}}},
+                          {'term': {'owner_id': '234'}},
+                          {'match_all': {}}
+                      ]},
+                      "query": {
+                          "match_all": {}
+                      }}},
+                    'size': SIZE_LIMIT}
+        self.checkQuery(query, expected)

@@ -33,7 +33,6 @@ from django.views.decorators.http import require_POST
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
-from django.utils.html import escape
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -95,7 +94,7 @@ from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFE
 from custom.openclinica.forms import OpenClinicaSettingsForm
 from custom.openclinica.models import OpenClinicaSettings
 from dimagi.utils.couch.resource_conflict import retry_resource
-from dimagi.utils.web import json_request, json_response
+from dimagi.utils.web import json_request
 from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege
 from corehq.apps.accounting.models import (
@@ -2202,8 +2201,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
             'enabled': request.POST['enable'] == 'true',
             'config': CaseSearchConfigJSON({'fuzzy_properties': unpack_fuzzies(request.POST)})
         })
-        messages.success(request, _("Case search configuration updated successfully"))
-        return self.get(request, *args, **kwargs)
+        return json_response(self.page_context)
 
     @property
     def page_context(self):
@@ -2388,8 +2386,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             record.url if record.url else _(u'Unable to generate url for record'),
             self._format_date(record.last_checked) if record.last_checked else '---',
             self._format_date(record.next_check) if record.next_check else '---',
-            escape(record.failure_reason) if not record.succeeded else None,
-            record.overall_tries if record.overall_tries > 0 else None,
+            render_to_string('domain/repeaters/partials/attempt_history.html', {'record': record}),
             self._make_view_payload_button(record.get_id),
             self._make_resend_payload_button(record.get_id),
             self._make_requeue_payload_button(record.get_id) if record.cancelled and not record.succeeded
@@ -2409,8 +2406,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn(_('URL')),
             DataTablesColumn(_('Last sent date')),
             DataTablesColumn(_('Retry Date')),
-            DataTablesColumn(_('Failure Reason')),
-            DataTablesColumn(_('Failure Count')),
+            DataTablesColumn(_('Delivery Attempts')),
             DataTablesColumn(_('View payload')),
             DataTablesColumn(_('Resend')),
             DataTablesColumn(_('Cancel or Requeue payload'))

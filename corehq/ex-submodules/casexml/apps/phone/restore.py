@@ -18,8 +18,7 @@ from casexml.apps.phone.exceptions import (
     BadStateException, RestoreException, DateOpenedBugException,
 )
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
-from corehq.util.soft_assert import soft_assert
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.decorators.memoized import memoized
@@ -675,12 +674,8 @@ class RestoreConfig(object):
         try:
             self.restore_state.validate_state()
         except InvalidSyncLogException as e:
-            if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain):
-                # This exception will get caught by the view and a 412 will be returned to the phone for resync
-                raise RestoreException(e)
-            else:
-                # This exception will fail hard and we'll get a 500 error message
-                raise
+            # This exception will get caught by the view and a 412 will be returned to the phone for resync
+            raise RestoreException(e)
 
     def get_payload(self):
         self.validate()

@@ -195,8 +195,8 @@
                             <ol data-bind="if: reveal_java_download()">
                                 <li>
                                     {% trans "Download <strong>both</strong> of the following files:" %}
-                                    <p><a data-bind="attr: {href: $root.url('jad', id)}">{% trans "Download" %} CommCare.jad</a></p>
-                                    <p><a data-bind="attr: {href: $root.url('jar', id)}">{% trans "Download" %} CommCare.jar</a></p>
+                                    <p><a data-bind="attr: {href: $root.reverse('download_jad', id)}">{% trans "Download" %} CommCare.jad</a></p>
+                                    <p><a data-bind="attr: {href: $root.reverse('download_jar', id)}">{% trans "Download" %} CommCare.jar</a></p>
                                 </li>
                                 <li>
                                     {% trans "For help on how to install, see" %}
@@ -322,7 +322,7 @@
                                    data-category="App Manager"
                                    data-action="Deploy Type"
                                    data-label="View Source Files"
-                                   data-bind="attr: {href: $root.url('source', id)}">
+                                   data-bind="attr: {href: $root.reverse('download_index', id)}">
                                     {% trans 'View Source Files' %}
                                 </a>
                             </h4>

@@ -21,6 +21,10 @@ from custom.enikshay.const import (
     EPISODE_PENDING_REGISTRATION,
     PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION,
 )
+from custom.enikshay.const import TREATMENT_OUTCOME, EPISODE_PENDING_REGISTRATION
+from custom.enikshay.integrations.nikshay.repeater_generator import \
+    NikshayRegisterPatientPayloadGenerator, NikshayHIVTestPayloadGenerator, \
+    NikshayTreatmentOutcomePayload, NikshayFollowupPayloadGenerator, NikshayRegisterPrivatePatientPayloadGenerator
 from custom.enikshay.integrations.utils import (
     is_valid_person_submission,
     is_valid_test_submission,
@@ -44,6 +48,8 @@ class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
 
     include_app_id_param = False
     friendly_name = _("Forward eNikshay Patients to Nikshay (episode case type)")
+
+    payload_generator_classes = (NikshayRegisterPatientPayloadGenerator,)
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -78,6 +84,8 @@ class NikshayHIVTestRepeater(BaseNikshayRepeater):
 
     include_app_id_param = False
     friendly_name = _("Forward eNikshay Patient's HIV Test to Nikshay (person case type)")
+
+    payload_generator_classes = (NikshayHIVTestPayloadGenerator,)
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -115,6 +123,8 @@ class NikshayTreatmentOutcomeRepeater(BaseNikshayRepeater):
 
     friendly_name = _("Forward Treatment Outcomes to Nikshay (episode case type)")
 
+    payload_generator_classes = (NikshayTreatmentOutcomePayload,)
+
     @classmethod
     def get_custom_url(cls, domain):
         from custom.enikshay.integrations.nikshay.views import NikshayTreatmentOutcomesView
@@ -142,6 +152,8 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
 
     include_app_id_param = False
     friendly_name = _("Forward eNikshay Patient's Follow Ups to Nikshay (test case type)")
+
+    payload_generator_classes = (NikshayFollowupPayloadGenerator,)
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -177,6 +189,8 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
 
 
 class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeater):
+
+    payload_generator_classes = (NikshayRegisterPrivatePatientPayloadGenerator,)
 
     class Meta(object):
         app_label = 'repeaters'
