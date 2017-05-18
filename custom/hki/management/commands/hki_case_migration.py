@@ -68,3 +68,4 @@ class Command(BaseCommand):
                     cases_to_update.append((case.case_id, case_properties, False))
             except:
                 failed_updates.append(case.case_id)
+        return cases_to_update
