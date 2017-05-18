@@ -21,6 +21,7 @@ class RegisterOpenmrsPatientRepeater(BaseOpenmrsRepeater):
 
     include_app_id_param = False
     friendly_name = _("Forward CommCare Patients to OpenMRS")
+    payload_generator_classes = (CaseRepeaterJsonPayloadGenerator,)
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -33,10 +34,6 @@ class RegisterOpenmrsPatientRepeater(BaseOpenmrsRepeater):
 
     def allowed_to_forward(self, case):
         return super(RegisterOpenmrsPatientRepeater, self).allowed_to_forward(case)
-
-    @property
-    def generator(self):
-        return CaseRepeaterJsonPayloadGenerator(self)
 
     def fire_for_record(self, repeat_record):
         print self.get_payload(repeat_record)
