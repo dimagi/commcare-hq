@@ -49,7 +49,6 @@ from corehq.apps.reports.exportfilters import (
     form_matches_users,
     is_commconnect_form,
 )
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, LocationRestrictedMobileWorkerFilter
 from corehq.apps.userreports.util import default_language as ucr_default_language, localize as ucr_localize
 from corehq.apps.users.dbaccessors import get_user_docs_by_username
 from corehq.apps.users.models import CommCareUser, CouchUser
@@ -221,6 +220,9 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
 
     @classmethod
     def wrap(cls, data):
+        from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, \
+            LocationRestrictedMobileWorkerFilter
+
         if 'filters' in data and ExpandedMobileWorkerFilter.slug in data['filters']:
             data['filters'][LocationRestrictedMobileWorkerFilter.slug] = \
                 data['filters'][ExpandedMobileWorkerFilter.slug]
