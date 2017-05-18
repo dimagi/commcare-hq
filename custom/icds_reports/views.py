@@ -3,7 +3,9 @@ import requests
 from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
+from django.db.models.query_utils import Q
 from django.http.response import JsonResponse
+from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView
 
@@ -11,6 +13,7 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe
+from corehq.apps.locations.util import location_hierarchy_config
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
@@ -160,6 +163,8 @@ class DashboardView(TemplateView):
 
     def get_context_data(self, **kwargs):
         kwargs.update(self.kwargs)
+        kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
+        kwargs['user_location_id'] = self.couch_user.get_location_id(self.domain)
         return super(DashboardView, self).get_context_data(**kwargs)
 
 
@@ -249,3 +254,54 @@ class PrevalenceOfUndernutritionView(View):
         data = get_prevalnece_of_undernutrition_data(config)
 
         return JsonResponse(data=data)
+
+@location_safe
+@method_decorator([login_and_domain_required], name='dispatch')
+class LocationView(View):
+
+    def get(self, request, *args, **kwargs):
+        parent_id = request.GET.get('parent_id')
+        locations = SQLLocation.objects.accessible_to_user(self.kwargs['domain'], self.request.couch_user)
+        if not parent_id:
+            locations = SQLLocation.objects.filter(parent_id__isnull=True)
+        else:
+            locations = locations.filter(parent__location_id=parent_id)
+        return JsonResponse(data={
+            'locations': [
+                {'location_id': location.location_id, 'name': location.name, 'parent_id': parent_id}
+                for location in locations
+            ]
+        })
+
+
+@location_safe
+@method_decorator([login_and_domain_required], name='dispatch')
+class LocationAncestorsView(View):
+    def get(self, request, *args, **kwargs):
+        location_id = request.GET.get('location_id')
+        selected_location = get_object_or_404(SQLLocation, location_id=location_id, domain=self.kwargs['domain'])
+        parents = list(SQLLocation.objects.get_queryset_ancestors(
+            self.request.couch_user.get_sql_locations(self.kwargs['domain']), include_self=True
+        ).distinct()) + list(selected_location.get_ancestors())
+        parent_ids = map(lambda x: x.pk, parents)
+        locations = SQLLocation.objects.accessible_to_user(
+            domain=self.kwargs['domain'], user=self.request.couch_user
+        ).filter(
+            ~Q(pk__in=parent_ids) & (Q(parent_id__in=parent_ids) | Q(parent_id__isnull=True))
+        ).select_related('parent').distinct()
+        return JsonResponse(data={
+            'locations': [
+                {
+                    'location_id': location.location_id,
+                    'name': location.name,
+                    'parent_id': location.parent.location_id if location.parent else None
+                }
+                for location in set(list(locations) + list(parents))
+            ],
+            'selected_location': {
+                'location_type': selected_location.location_type_name,
+                'location_id': selected_location.location_id,
+                'name': selected_location.name,
+                'parent_id': selected_location.parent.location_id if selected_location.parent else None
+            }
+        })

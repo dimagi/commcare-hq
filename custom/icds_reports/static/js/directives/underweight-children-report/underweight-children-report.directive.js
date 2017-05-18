@@ -3,6 +3,9 @@ var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
 function UnderweightChildrenReportController($routeParams, maternalChildService) {
     var vm = this;
+
+    vm.filtersData = {};
+
     vm.step = $routeParams.step;
     vm.steps = [
         {route: '/underweight_children/1', label: 'MapView'},

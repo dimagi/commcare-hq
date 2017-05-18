@@ -84,6 +84,7 @@
     "backbone": "0.9.1",
     "d3": "3.1",
     "datamaps": "~0.4.0",
-    "topojson": "^1.6.19"
+    "topojson": "^1.6.19",
+    "nvd3": "1.1.10-beta"
   }
 }
