@@ -101,8 +101,8 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
         if app_version_info.build_version:
             update_latest_builds(user, app_id, received_on_datetime, app_version_info.build_version)
 
-        if user.reporting_metadata.last_submission_for_user is None or \
-                        user.reporting_metadata.last_submission_for_user.submission_date <= received_on_datetime:
+        if user.reporting_metadata.last_submission_for_user is None \
+                or user.reporting_metadata.last_submission_for_user.submission_date <= received_on_datetime:
             user.reporting_metadata.last_submission_for_user = last_submission
 
         user.save()
