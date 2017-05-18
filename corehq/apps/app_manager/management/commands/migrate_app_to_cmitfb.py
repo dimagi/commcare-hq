@@ -112,6 +112,7 @@ class Command(BaseCommand):
             return False
         logger.info('fixing app %s', app_id)
         modules = [m for m in app.modules if m.module_type == 'basic']
+        updated = False
         for module in modules:
             forms = [f for f in module.forms if f.doc_type == 'Form']
             for form in forms:
@@ -135,7 +136,9 @@ class Command(BaseCommand):
                         if setval == BAD_USERCASE_PATH + prop:
                             logger.info("setvalue %s -> %s", ref, userprop)
                             node.attrib["value"] = USERPROP_PREFIX + prop
-        save_xform(app, form, ET.tostring(xform.xml))
+                            updated = True
+        if updated:
+            save_xform(app, form, ET.tostring(xform.xml))
         #app.save()
         return True
 
