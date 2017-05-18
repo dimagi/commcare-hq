@@ -48,6 +48,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     slug = "app_status"
     emailable = True
     exportable = True
+    exportable_all = True
     ajax_pagination = True
     default_sort = {'reporting_metadata.last_submissions.submission_date', 'desc'}
     fields = [
@@ -94,7 +95,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 sort_dir = self.request.GET['sSortDir_%d' % x]
                 col_id = int(self.request.GET[col_key])
                 col = self.headers.header[col_id]
-                sort_prop = getattr(col, sort_prop_name, col.prop_name)
+                sort_prop = getattr(col, sort_prop_name) or col.prop_name
                 sort_dict = {sort_prop: sort_dir}
                 res.append(sort_dict)
         if len(res) == 0 and self.default_sort is not None:
@@ -123,33 +124,28 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         except IndexError:
             pass
 
-    @property
     @memoized
-    def user_query(self):
+    def user_query(self, pagination=True):
         mobile_user_and_group_slugs = self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug)
         user_query = LocationRestrictedMobileWorkerFilter.user_es_query(
             self.domain,
             mobile_user_and_group_slugs,
         )
         user_query = (user_query
-                      .set_sorting_block(self.get_sorting_block())
-                      .size(self.pagination.count)
-                      .start(self.pagination.start))
+                      .set_sorting_block(self.get_sorting_block()))
+        if self.pagination:
+            user_query = (user_query
+                          .size(self.pagination.count)
+                          .start(self.pagination.start))
         if self.selected_app_id:
             user_query = user_query.filter(
                 filters.term('reporting_metadata.last_submissions.app_id', self.selected_app_id)
             )
         return user_query.run()
 
-    @property
-    def total_records(self):
-        return self.user_query.total
-
-    @property
-    def rows(self):
+    def process_rows(self, users):
         rows = []
-
-        for user in self.user_query.hits:
+        for user in users:
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = None
             build_version = _("Unknown")
             commcare_version = _("Unknown CommCare Version")
@@ -186,6 +182,20 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 app_name or "---", build_version, commcare_version
             ])
         return rows
+
+    @property
+    def total_records(self):
+        return self.user_query.total
+
+    @property
+    def rows(self):
+        users = self.user_query().hits
+        return self.process_rows(users)
+
+    @property
+    def get_all_rows(self):
+        users = self.user_query(False).hits
+        return self.process_users(users)
 
     @property
     def export_table(self):
