@@ -13,4 +13,5 @@ from corehq.warehouse.models.meta import (
 
 from corehq.warehouse.models.staging import (
     GroupStagingTable,
+    DomainStagingTable,
 )
