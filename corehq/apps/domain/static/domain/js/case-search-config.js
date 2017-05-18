@@ -70,26 +70,33 @@ hqDefine('domain/js/case-search-config.js', function () {
                 self.saveButton.ajax({
                     type: 'post',
                     url: hqImport("hqwebapp/js/urllib.js").reverse("case_search_config"),
-                    data: self.serialize(),
+                    data: JSON.stringify(self.serialize()),
                     dataType: 'json',
+                    contentType: "application/json; charset=utf-8",
                 });
             },
         });
 
         self.serialize = function(){
-            var fuzzyProperties = [];
+            var fuzzyProperties = {};
             for (var i = 0; i < self.fuzzyProperties().length; i++) {
-                fuzzyProperties.push({
-                    case_type: self.fuzzyProperties()[i].caseType(),
-                    properties: _.map(
+                var caseType = self.fuzzyProperties()[i].caseType(),
+                    properties = _.map(
                         self.fuzzyProperties()[i].properties(),
                         function (property) { return property.name(); }
-                    ),
-                });
+                    );
+
+                if (fuzzyProperties[caseType]){
+                    for (var propIdx in properties){
+                        fuzzyProperties[caseType].push(properties[propIdx]);
+                    }
+                } else {
+                    fuzzyProperties[caseType] = properties;
+                }
             }
             return {
                 'enable': self.toggleEnabled(),
-                'config': {'fuzzy_properties': fuzzyProperties},
+                'fuzzy_properties': fuzzyProperties,
             };
         };
     };
