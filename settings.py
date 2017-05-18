@@ -336,8 +336,6 @@ HQ_APPS = (
     'corehq.warehouse',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
-    'corehq.apps.motech',
-    'corehq.apps.motech.openmrs',
 
     # custom reports
     'a5288',
