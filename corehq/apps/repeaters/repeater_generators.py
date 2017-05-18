@@ -3,6 +3,7 @@ import json
 
 from datetime import datetime
 from uuid import uuid4
+import warnings
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import ugettext_lazy as _
@@ -157,14 +158,20 @@ class RegisterGenerator(object):
         self.is_default = is_default
 
     def __call__(self, generator_class):
-        collection = self.get_collection(self.repeater_cls)
-        collection.add_new_format(self.format_name, self.format_label, generator_class,
-                                  is_default=self.is_default)
-        return generator_class
+        warnings.warn(
+            "Usage of @RegisterGenerator as a decorator is deprecated. "
+            "Please put your payload generator classes in a tuple on your repeater class "
+            "called payload_generator_classes instead.",
+            DeprecationWarning)
+        return self.register_generator(generator_class, self.repeater_cls, self.format_name,
+                                       self.format_label, is_default=self.is_default)
 
     @classmethod
-    def register_generator(cls, generator_class, repeater_class, format_name, format_label, is_default):
-        return cls(repeater_class, format_name, format_label, is_default)(generator_class)
+    def register_generator(cls, generator_class, repeater_class, format_name, format_label,
+                           is_default):
+        collection = cls.get_collection(repeater_class)
+        collection.add_new_format(format_name, format_label, generator_class, is_default)
+        return generator_class
 
     @classmethod
     def get_collection(cls, repeater_class):
