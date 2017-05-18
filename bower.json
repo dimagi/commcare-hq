@@ -66,7 +66,8 @@
     "datamaps": "^0.5.8",
     "angular-datamaps": "^0.1.2",
     "topojson": "^3.0.0",
-    "angular-bootstrap": "^2.5.0"
+    "angular-bootstrap": "^2.5.0",
+    "angular-nvd3": "^0.1.1"
   },
   "devDependencies": {
     "chai": "3.3.0",

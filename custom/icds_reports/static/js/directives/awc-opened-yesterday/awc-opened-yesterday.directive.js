@@ -9,21 +9,9 @@ function AwcOpenedYesterdayController($routeParams, systemUsageService) {
         {route: '/awc_opened/2', label: 'ChartView'},
     ];
     vm.mapData = {};
-    vm.rightLegend = {
-        'average': 0,
-        'info': "",
-    };
-
-    vm.fills = {
-        '0%-50%': '#d60000',
-        '51%-75%': '#df7400',
-        '75%-100%': '#009811',
-        'defaultFill': '#eef2ff',
-    };
 
     systemUsageService.getAwcOpenedData(1).then(function(response) {
-        vm.mapData = response.data.map;
-        vm.rightLegend = response.data.rightLegend;
+        vm.mapData = response.data.configs;
     });
 }
 
