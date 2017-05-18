@@ -123,8 +123,10 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(len(users), 1)
         user = users[0]
         self.assertEqual(user.username, '%d@%s.commcarehq.org' % (agency_id, self.domain))
+        user_data_minus_commcare_primary_case_sharing_id = user.user_data.copy()
+        del user_data_minus_commcare_primary_case_sharing_id['commcare_primary_case_sharing_id']
         self.assertDictEqual(
-            user.user_data,
+            user_data_minus_commcare_primary_case_sharing_id,
             {
                 'commcare_location_id': agency.location_id,
                 'commcare_location_ids': agency.location_id,
@@ -136,3 +138,5 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
         self.assertListEqual(user.assigned_location_ids, [agency.location_id])
         self.assertEqual(user.location_id, agency.location_id)
         self.assertEqual(user.user_location_id, agency.location_id)
+
+        self.assertEqual(agency.user_id, user._id)
