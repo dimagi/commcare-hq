@@ -4,7 +4,7 @@ import socket
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.exceptions import RequestConnectionError
-from corehq.apps.repeaters.repeater_generators import RegisterGenerator, BasePayloadGenerator
+from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
@@ -23,12 +23,6 @@ from custom.enikshay.case_utils import (
     get_open_episode_case_from_occurrence,
     get_person_case_from_occurrence,
     get_lab_referral_from_test)
-from custom.enikshay.integrations.nikshay.repeaters import (
-    NikshayRegisterPatientRepeater,
-    NikshayHIVTestRepeater,
-    NikshayTreatmentOutcomeRepeater,
-    NikshayFollowupRepeater,
-)
 from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
 from custom.enikshay.exceptions import NikshayLocationNotFound, NikshayRequiredValueMissing
 from custom.enikshay.integrations.nikshay.field_mappings import (
@@ -83,7 +77,6 @@ class BaseNikshayPayloadGenerator(BasePayloadGenerator):
         }
 
 
-@RegisterGenerator(NikshayRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
 class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
     def get_payload(self, repeat_record, episode_case):
         """
@@ -142,7 +135,6 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
             update_case(repeat_record.domain, repeat_record.payload_id, {"nikshay_error": unicode(exception)})
 
 
-@RegisterGenerator(NikshayTreatmentOutcomeRepeater, 'case_json', 'JSON', is_default=True)
 class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
 
     def get_payload(self, repeat_record, episode_case):
@@ -179,7 +171,6 @@ class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
                                 "treatment_outcome_nikshay_registered", "treatment_outcome_nikshay_error")
 
 
-@RegisterGenerator(NikshayHIVTestRepeater, 'case_json', 'JSON', is_default=True)
 class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
     @property
     def content_type(self):
@@ -227,7 +218,6 @@ class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
                                 "hiv_test_nikshay_registered", "hiv_test_nikshay_error")
 
 
-@RegisterGenerator(NikshayFollowupRepeater, 'case_json', 'JSON', is_default=True)
 class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
     def get_payload(self, repeat_record, test_case):
         occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
