@@ -2210,7 +2210,9 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
             'case_types': sorted(list(case_types)),
             'values': {
                 'enabled': current_values.enabled if current_values else False,
-                'config': current_values.config if current_values else {}
+                'fuzzy_properties': {
+                    fp.case_type: fp.properties for fp in current_values.fuzzy_properties.all()
+                } if current_values else {}
             }
         }
 

@@ -36,18 +36,11 @@ hqDefine('domain/js/case-search-config.js', function () {
         self.caseTypes = options.caseTypes;
         self.toggleEnabled = ko.observable(initialValues.enabled);
         self.fuzzyProperties = ko.observableArray();
-        if (
-            initialValues.config.hasOwnProperty('fuzzy_properties') &&
-            initialValues.config.fuzzy_properties.length > 0
-        ) {
-            for (var i = 0; i < initialValues.config.fuzzy_properties.length; i++) {
-                self.fuzzyProperties.push(new CaseTypeProps(
-                    initialValues.config.fuzzy_properties[i].case_type,
-                    initialValues.config.fuzzy_properties[i].properties
-                ));
-            }
-        } else {
-            self.fuzzyProperties.push(new CaseTypeProps('', ['']));
+        for (var caseType in initialValues.fuzzy_properties){
+            self.fuzzyProperties.push(new CaseTypeProps(
+                caseType,
+                initialValues.fuzzy_properties[caseType]
+            ));
         }
 
         self.change = function(){
