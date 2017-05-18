@@ -32,8 +32,8 @@ COPY requirements/requirements.txt \
 RUN git config --global url."https://".insteadOf git:// \
  && pip install --upgrade pip \
  && pip install \
-    -r requirements/requirements.txt \
-    -r requirements/dev-requirements.txt \
+    -r /vendor/requirements.txt \
+    -r /vendor/dev-requirements.txt \
     --user --upgrade \
  && rm -rf /root/.cache/pip
 
