@@ -57,8 +57,8 @@ class Command(BaseCommand):
         for case in cases:
             try:
                 if not case.get_case_property('location_migration_complete') == 'yes':
-                    level2_code = case.get_case_property('household_level2_code', '')
-                    ward_number = case.get_case_property('household_ward_number', '')
+                    level2_code = case.get_case_property('household_level2_code') or ''
+                    ward_number = case.get_case_property('household_ward_number') or ''
                     new_site_code = '{}{}'.format(level2_code, ward_number.zfill(2))
                     new_owner_id = loc_mapping.get(new_site_code, 'c9c86e46f57b4d2f81045e5250e03889')
                     case_properties = {
