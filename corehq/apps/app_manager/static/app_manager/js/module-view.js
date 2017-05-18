@@ -40,6 +40,7 @@ $(function () {
                 includeClosed: options.include_closed,
                 defaultProperties: options.default_properties || [],
                 searchButtonDisplayCondition: options.search_button_display_condition,
+                blacklistedOwnerIdsExpression: options.blacklisted_owner_ids_expression,
             });
 
             var $list_home = $("#" + detail.type + "-detail-screen-config-tab");

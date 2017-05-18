@@ -2,7 +2,7 @@ import re
 from uuid import uuid4
 
 from django.urls import reverse
-from django.test import TestCase, Client
+from django.test import TestCase, Client, SimpleTestCase
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from mock import patch
 
@@ -13,7 +13,10 @@ from corehq.apps.case_search.models import CLAIM_CASE_TYPE, CaseSearchConfig, SE
     CaseSearchQueryAddition
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_new, SIZE_LIMIT
+from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.es.tests.utils import ElasticTestMixin
+from corehq.apps.ota.views import add_blacklisted_owner_ids
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.case_search import get_case_search_reindexer
@@ -37,6 +40,33 @@ PATTERN = r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z'
 DATE_PATTERN = r'\d{4}-\d{2}-\d{2}'
 
 # cf. http://www.theguardian.com/environment/2016/apr/17/boaty-mcboatface-wins-poll-to-name-polar-research-vessel
+
+
+class BlacklistedOwnerIdsTest(SimpleTestCase, ElasticTestMixin):
+    def setUp(self):
+        super(BlacklistedOwnerIdsTest, self).setUp()
+        self.search_es = CaseSearchES().domain('swashbucklers')
+
+    def test_add_blacklisted_ids(self):
+        blacklisted_owner_ids = "id1 id2 id3,id4"
+        expected = {'query':
+                    {'filtered':
+                     {'filter':
+                      {'and': [
+                          {'term': {'domain.exact': 'swashbucklers'}},
+                          {'not': {'term': {'owner_id': 'id1'}}},
+                          {'not': {'term': {'owner_id': 'id2'}}},
+                          {'not': {'term': {'owner_id': 'id3,id4'}}},
+                          {'match_all': {}}
+                      ]},
+                      "query": {
+                          "match_all": {}
+                      }}},
+                    'size': SIZE_LIMIT}
+        self.checkQuery(
+            add_blacklisted_owner_ids(self.search_es, blacklisted_owner_ids),
+            expected
+        )
 
 
 class CaseClaimEndpointTests(TestCase):
