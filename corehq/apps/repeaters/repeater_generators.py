@@ -89,12 +89,10 @@ class GeneratorCollection(object):
         self.default_format = ''
         self.format_generator_map = {}
 
-    def add_new_format(self, format_name, format_label, generator_class, is_default=False):
+    def add_new_format(self, generator_class, is_default=False):
         """Adds a new format->generator mapping to the collection
 
         args:
-            format_name: unique name to identify the format
-            format_label: label to be displayed to the user
             generator_class: child class of .repeater_generators.BasePayloadGenerator
 
         kwargs:
@@ -105,16 +103,17 @@ class GeneratorCollection(object):
             default exists
             raises DuplicateFormatException if format_name alread exists in the collection
         """
+
         if is_default and self.default_format:
             raise DuplicateFormatException("A default format already exists for this repeater.")
         elif is_default:
-            self.default_format = format_name
-        if format_name in self.format_generator_map:
+            self.default_format = generator_class.format_name
+        if generator_class.format_name in self.format_generator_map:
             raise DuplicateFormatException("There is already a Generator with this format name.")
 
-        self.format_generator_map[format_name] = FormatInfo(
-            name=format_name,
-            label=format_label,
+        self.format_generator_map[generator_class.format_name] = FormatInfo(
+            name=generator_class.format_name,
+            label=generator_class.format_label,
             generator_class=generator_class
         )
 
@@ -163,15 +162,14 @@ class RegisterGenerator(object):
             "Please put your payload generator classes in a tuple on your repeater class "
             "called payload_generator_classes instead.",
             DeprecationWarning)
-        return self.register_generator(generator_class, self.repeater_cls, self.format_name,
-                                       self.format_label, is_default=self.is_default)
+        generator_class.format_label = self.format_label
+        generator_class.format_name = self.format_name
+        self.register_generator(generator_class, self.repeater_cls, is_default=self.is_default)
+        return generator_class
 
     @classmethod
-    def register_generator(cls, generator_class, repeater_class, format_name, format_label,
-                           is_default):
-        collection = cls.get_collection(repeater_class)
-        collection.add_new_format(format_name, format_label, generator_class, is_default)
-        return generator_class
+    def register_generator(cls, generator_class, repeater_class, is_default):
+        cls.get_collection(repeater_class).add_new_format(generator_class, is_default)
 
     @classmethod
     def get_collection(cls, repeater_class):
@@ -183,8 +181,6 @@ class RegisterGenerator(object):
                 cls.register_generator(
                     generator_class=generator_class,
                     repeater_class=repeater_class,
-                    format_name=generator_class.format_name,
-                    format_label=generator_class.format_label,
                     is_default=(generator_class is default_generator_class),
                 )
 
