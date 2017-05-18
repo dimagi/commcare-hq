@@ -23,7 +23,7 @@
         case_preload: {{ case_preload|JSON }},
         reserved_words: {{ case_reserved_words_json|JSON }},
         caseType: {{ form.get_case_type|JSON }},
-        save_url: "{% url "edit_careplan_form_actions" app.domain app.id module.id nav_form.id %}",
+        save_url: "{% url "edit_careplan_form_actions" app.domain app.id nav_form.unique_id %}",
         moduleCaseTypes: {{ module_case_types|JSON }},
         propertiesMap: {{ case_properties|JSON }}
     });

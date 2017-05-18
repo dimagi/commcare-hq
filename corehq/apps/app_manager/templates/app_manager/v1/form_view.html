@@ -16,7 +16,7 @@
         home: $('#case-config-ko'),
         actions: {{ form.actions|JSON }},
         questions: {{ xform_questions|JSON }},
-        save_url: "{% url "edit_form_actions" app.domain app.id module.id nav_form.id %}",
+        save_url: "{% url "edit_form_actions" app.domain app.id nav_form.unique_id %}",
         requires: form_requires,
         reserved_words: {{ case_reserved_words_json|JSON }},
         valid_index_names: {{ valid_index_names|JSON }},
