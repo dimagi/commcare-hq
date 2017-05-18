@@ -12,45 +12,6 @@ FUZZY_PROPERTIES = "fuzzy_properties"
 SEARCH_QUERY_ADDITION_KEY = 'commcare_custom_search_query'
 
 
-class FuzzyPropertiesJson(jsonobject.JsonObject):
-    case_type = jsonobject.StringProperty()
-    properties = jsonobject.ListProperty(unicode)
-
-
-class CaseSearchConfigJSON(jsonobject.JsonObject):
-    fuzzy_properties = jsonobject.ListProperty(FuzzyPropertiesJson)
-
-    def add_fuzzy_property(self, case_type, property):
-        self.add_fuzzy_properties(case_type, [property])
-
-    def add_fuzzy_properties(self, case_type, properties):
-        for prop in self.fuzzy_properties:
-            if prop.case_type == case_type:
-                prop.properties = list(set(prop.properties) | set(properties))
-                return
-
-        self.fuzzy_properties = self.fuzzy_properties + [
-            FuzzyPropertiesJson(case_type=case_type, properties=properties)
-        ]
-
-    def remove_fuzzy_property(self, case_type, property):
-        for prop in self.fuzzy_properties:
-            if prop.case_type == case_type and property in prop.properties:
-                prop.properties = list(set(prop.properties) - set([property]))
-                return
-
-        raise AttributeError("{} is not a fuzzy property for {}".format(property, case_type))
-
-    def get_fuzzy_properties_for_case_type(self, case_type):
-        """
-        Returns a list of search properties to be fuzzy searched
-        """
-        for prop in self.fuzzy_properties:
-            if prop.case_type == case_type:
-                return prop.properties
-        return []
-
-
 class GetOrNoneManager(models.Manager):
     """
     Adds get_or_none method to objects
@@ -101,22 +62,12 @@ class CaseSearchConfig(models.Model):
     )
     enabled = models.BooleanField(blank=False, null=False, default=False)
     fuzzy_properties = models.ManyToManyField(FuzzyProperties)
-    _config = JSONField(default=dict)
 
     objects = GetOrNoneManager()
 
     @classmethod
     def enabled_domains(cls):
         return cls.objects.filter(enabled=True).values_list('domain', flat=True)
-
-    @property
-    def config(self):
-        return CaseSearchConfigJSON.wrap(self._config)
-
-    @config.setter
-    def config(self, value):
-        assert isinstance(value, CaseSearchConfigJSON)
-        self._config = value.to_json()
 
 
 class CaseSearchQueryAddition(models.Model):
