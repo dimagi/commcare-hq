@@ -59,7 +59,7 @@ def get_group_ids_by_last_modified(start_datetime, end_datetime):
     from corehq.apps.groups.models import Group
 
     return [result['id'] for result in Group.view(
-        'group_last_modified/by_last_modified',
+        'last_modified/by_last_modified',
         startkey=json_format_datetime(start_datetime),
         endkey=json_format_datetime(end_datetime),
         include_docs=False,
