@@ -6,7 +6,7 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -24,111 +24,116 @@
+@@ -24,111 +24,113 @@
      {% endif %}
      <script src="{% static 'app_manager/js/module-view.js' %}"></script>
      <script src="{% static 'app_manager/js/case_list_setting.js' %}"></script>
@@ -100,9 +100,6 @@
 +      <ul class="nav nav-tabs" id="module-view-tabs">
 +        {% block tab-headers %}
 +          <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
-+          {% if module.module_type == 'shadow' %}
-+            <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
-+          {% endif %}
 +          {% for detail in details %}
 +            <li>
 +              <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">
@@ -210,7 +207,7 @@
  <script type="text/html" id="module-forms-template">
      <div class="checkbox">
          <label>
-@@ -142,7 +147,7 @@
+@@ -142,7 +144,7 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
@@ -219,7 +216,7 @@
  {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
      {% with print_uploader as uploader %}
          {% include 'hqmedia/partials/multimedia_uploader.html' %}
-@@ -152,5 +157,5 @@
+@@ -152,5 +154,5 @@
  
  {% block breadcrumbs %}
      {{ block.super }}
