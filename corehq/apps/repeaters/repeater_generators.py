@@ -170,7 +170,7 @@ class RegisterGenerator(object):
     def get_collection(cls, repeater_class):
         if repeater_class not in cls.generators:
             cls.generators[repeater_class] = GeneratorCollection(repeater_class)
-            generator_classes = repeater_class.get_generators()
+            generator_classes = repeater_class.payload_generator_classes
             default_generator_class = generator_classes[0]
             for generator_class in generator_classes:
                 cls.register_generator(

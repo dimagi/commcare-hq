@@ -65,7 +65,7 @@ class ChemistBETSVoucherRepeater(BaseBETSVoucherRepeater):
     event_id = CHEMIST_VOUCHER_EVENT
     voucher_type = "prescription"
 
-    _generators = [ChemistBETSVoucherPayloadGenerator]
+    payload_generator_classes = (ChemistBETSVoucherPayloadGenerator,)
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -78,7 +78,7 @@ class LabBETSVoucherRepeater(BaseBETSVoucherRepeater):
     event_id = LAB_VOUCHER_EVENT
     voucher_type = "test"
 
-    _generators = [LabBETSVoucherPayloadGenerator]
+    payload_generator_classes = (LabBETSVoucherPayloadGenerator,)
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -99,7 +99,7 @@ class BETS180TreatmentRepeater(BaseBETSRepeater):
         "FDCs with treatment outcome reported (episode case type)"
     )
 
-    _generators = [BETS180TreatmentPayloadGenerator]
+    payload_generator_classes = (BETS180TreatmentPayloadGenerator,)
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -132,7 +132,7 @@ class BETS180TreatmentRepeater(BaseBETSRepeater):
 class BETSDrugRefillRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Patients: Cash transfer on subsequent drug refill (episode case type)")
 
-    _generators = [BETSDrugRefillPayloadGenerator]
+    payload_generator_classes = (BETSDrugRefillPayloadGenerator,)
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -203,7 +203,7 @@ class BETSDrugRefillRepeater(BaseBETSRepeater):
 class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Patients: Cash transfer on successful treatment completion (episode case type)")
 
-    _generators = [BETSSuccessfulTreatmentPayloadGenerator]
+    payload_generator_classes = (BETSSuccessfulTreatmentPayloadGenerator,)
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -237,7 +237,7 @@ class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
 class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Providers: For diagnosis and notification of TB case (episode case type)")
 
-    _generators = [BETSDiagnosisAndNotificationPayloadGenerator]
+    payload_generator_classes = (BETSDiagnosisAndNotificationPayloadGenerator,)
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -263,7 +263,7 @@ class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
 class BETSAYUSHReferralRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Providers: For diagnosis and notification of TB case (episode case type)")
 
-    _generators = [BETSAYUSHReferralPayloadGenerator]
+    payload_generator_classes = (BETSAYUSHReferralPayloadGenerator,)
 
     @classmethod
     def get_custom_url(cls, domain):

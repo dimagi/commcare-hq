@@ -68,11 +68,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     password = StringProperty()
     friendly_name = _("Data")
 
-    _generators = None
-
-    @classmethod
-    def get_generators(cls):
-        return cls._generators
+    payload_generator_classes = ()
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -266,7 +262,7 @@ class FormRepeater(Repeater):
 
     """
 
-    _generators = [FormRepeaterXMLPayloadGenerator, FormRepeaterJsonPayloadGenerator]
+    payload_generator_classes = (FormRepeaterXMLPayloadGenerator, FormRepeaterJsonPayloadGenerator)
 
     include_app_id_param = BooleanProperty(default=True)
     white_listed_form_xmlns = StringListProperty(default=[])  # empty value means all form xmlns are accepted
@@ -314,7 +310,7 @@ class CaseRepeater(Repeater):
 
     """
 
-    _generators = [CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator]
+    payload_generator_classes = (CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator)
 
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
     white_listed_case_types = StringListProperty(default=[])  # empty value means all case-types are accepted
@@ -358,7 +354,7 @@ class ShortFormRepeater(Repeater):
     version = StringProperty(default=V2, choices=LEGAL_VERSIONS)
     friendly_name = _("Forward Form Stubs")
 
-    _generators = [ShortFormRepeaterJsonPayloadGenerator]
+    payload_generator_classes = (ShortFormRepeaterJsonPayloadGenerator,)
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -381,7 +377,7 @@ class ShortFormRepeater(Repeater):
 class AppStructureRepeater(Repeater):
     friendly_name = _("Forward App Schema Changes")
 
-    _generators = [AppStructureGenerator]
+    payload_generator_classes = (AppStructureGenerator,)
 
     def payload_doc(self, repeat_record):
         return None
@@ -390,7 +386,7 @@ class AppStructureRepeater(Repeater):
 class UserRepeater(Repeater):
     friendly_name = _("Forward Users")
 
-    _generators = [UserPayloadGenerator]
+    payload_generator_classes = (UserPayloadGenerator,)
 
     @memoized
     def payload_doc(self, repeat_record):
@@ -403,7 +399,7 @@ class UserRepeater(Repeater):
 class LocationRepeater(Repeater):
     friendly_name = _("Forward Locations")
 
-    _generators = [LocationPayloadGenerator]
+    payload_generator_classes = (LocationPayloadGenerator,)
 
     @memoized
     def payload_doc(self, repeat_record):
