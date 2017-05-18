@@ -796,9 +796,24 @@ class LastSubmission(DocumentSchema):
     commcare_version = StringProperty()
 
 
-class ReportingMetadata(DocumentSchema):
+class LastSync(DocumentSchema):
+    sync_date = DateTimeProperty()
+    build_version = IntegerProperty()
+    app_id = StringProperty()
 
+
+class LastBuild(DocumentSchema):
+    build_version = IntegerProperty()
+    build_version_date = DateTimeProperty()
+    app_id = StringProperty()
+
+class ReportingMetadata(DocumentSchema):
     last_submissions = SchemaListProperty(LastSubmission)
+    last_submission_for_user = SchemaProperty(LastSubmission)
+    last_syncs = SchemaListProperty(LastSync)
+    last_sync_for_user = SchemaProperty(LastSync)
+    last_builds = SchemaListProperty(LastBuild)
+    last_build = SchemaProperty(LastBuild)
 
 
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):

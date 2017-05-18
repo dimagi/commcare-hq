@@ -60,22 +60,46 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         headers = DataTablesHeader(
             DataTablesColumn(_("Username"), prop_name='username.exact'),
             DataTablesColumn(_("Last Submission"),
-                             prop_name='reporting_metadata.last_submissions.submission_date'),
-            DataTablesColumn(_("Last Sync"), sortable=False),
+                             prop_name='reporting_metadata.last_submissions.submission_date',
+                             alt_prop_name='reporting_metadata.last_submission_for_user.submission_date'),
+            DataTablesColumn(_("Last Sync"),
+                             prop_name='reporting_metadata.last_syncs.sync_date',
+                             alt_prop_name='reporting_metadata.last_sync_for_user.sync_date'),
             DataTablesColumn(_("Application"),
                              help_text=_("Displays application of last submitted form"),
-                             prop_name='reporting_metadata.last_submissions.app_id'),
+                             prop_name='reporting_metadata.last_builds.app_id',
+                             alt_prop_name='reporting_metadata.build_version_app'),
             DataTablesColumn(_("Application Version"),
                              help_text=_("""Displays application version of the last submitted form;
                                          The currently deployed version may be different."""),
-                             prop_name='reporting_metadata.last_submissions.build_version'),
+                             prop_name='reporting_metadata.last_builds.build_version',
+                             alt_prop_name='reporting_metadata.last_build.build_version'),
             DataTablesColumn(_("CommCare Version"),
                              help_text=_("""Displays CommCare version the user last submitted with;
                                          The currently deployed version may be different."""),
-                             prop_name='reporting_metadata.last_submissions.commcare_version'),
+                             prop_name='reporting_metadata.last_submissions.commcare_version',
+                             alt_prop_name='reporting_metadata.last_submission_for_user.commcare_version'),
         )
         headers.custom_sort = [[1, 'desc']]
         return headers
+
+    def get_sorting_block(self):
+        sort_prop_name = 'prop_name' if self.selected_app_id else 'alt_prop_name'
+        res = []
+        #the NUMBER of cols sorting
+        sort_cols = int(self.request.GET.get('iSortingCols', 0))
+        if sort_cols > 0:
+            for x in range(sort_cols):
+                col_key = 'iSortCol_%d' % x
+                sort_dir = self.request.GET['sSortDir_%d' % x]
+                col_id = int(self.request.GET[col_key])
+                col = self.headers.header[col_id]
+                sort_prop = getattr(col, sort_prop_name, col.prop_name)
+                sort_dict = {sort_prop: sort_dir}
+                res.append(sort_dict)
+        if len(res) == 0 and self.default_sort is not None:
+            res.append(self.default_sort)
+        return res
 
     @property
     @memoized
@@ -90,6 +114,14 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             pass
         else:
             return app.name
+
+    def get_data_for_app(self, options, app_id):
+        try:
+            data = filter(lambda option: option['app_id'] == app_id,
+                          options)[0]
+            return data
+        except IndexError:
+            pass
 
     @property
     @memoized
@@ -118,46 +150,39 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         rows = []
 
         for user in self.user_query.hits:
-            last_seen = last_sync = app_name = None
-            app_version_info_from_form = app_version_info_from_sync = None
-            last_submissions = user.get('reporting_metadata', {}).get('last_submissions')
-
-            if last_submissions:
-                last_sub = sorted(last_submissions, key=lambda sub: sub.get('submission_date'), reverse=True)[0]
-                last_seen = string_to_utc_datetime(last_sub.get('submission_date'))
-
-                if last_sub.get('app_id'):
-                    app_name = self.get_app_name(last_sub.get('app_id'))
-
-                app_version_info_from_form = AppVersionInfo(last_sub.get('build_version'),
-                                                            last_sub.get('commcare_version'), None)
-
-            if app_name is None and self.selected_app_id:
-                continue
-
-            last_sync_log = SyncLog.last_for_user(user['_id'])
-            if last_sync_log:
-                last_sync = last_sync_log.date
-                if last_sync_log.build_id:
-                    build_version = get_version_from_build_id(self.domain, last_sync_log.build_id)
-                    app_version_info_from_sync = AppVersionInfo(
-                        build_version,
-                        app_version_info_from_form.commcare_version if app_version_info_from_form else None,
-                        BuildVersionSource.BUILD_ID
-                    )
-
-            app_version_info_to_use = _choose_latest_version(
-                app_version_info_from_sync, app_version_info_from_form,
-            )
-
-            commcare_version = _get_commcare_version(app_version_info_to_use)
-            build_version = _get_build_version(app_version_info_to_use)
-
+            last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = None
+            build_version = _("Unknown")
+            commcare_version = _("Unknown CommCare Version")
+            if self.selected_app_id:
+                last_submissions = user.get('reporting_metadata', {}).get('last_submissions')
+                if last_submissions:
+                    last_sub = self.get_data_for_app(last_submissions, self.selected_app_id)
+                last_syncs = user.get('reporting_metadata', {}).get('last_sync')
+                if last_syncs:
+                    last_sync = self.get_data_for_app(last_syncs, self.selected_app_id)
+                    if last_sync is None:
+                        last_sync = self.get_data_for_app(last_syncs, None)
+                last_builds = user.get('reporting_metadata', {}).get('last_builds')
+                if last_builds:
+                    last_build = self.get_data_for_app(last_builds, self.selected_app_id)
+            else:
+                last_sub = user.get('reporting_metadata', {}).get('last_submission_for_user', {})
+                last_sync = user.get('reporting_metadata', {}).get('last_sync_for_user', {})
+                last_build = user.get('reporting_metadata', {}).get('last_build', {})
+                commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
+            if last_sub and last_sub.get('submission_date'):
+                last_seen = string_to_utc_datetime(last_sub['submission_date'])
+            if last_sync and last_sync.get('sync_date'):
+                last_sync_date = string_to_utc_datetime(last_sync['sync_date'])
+            if last_build:
+                build_version = last_build.get('build_version') or build_version
+                if last_build.get('app_id'):
+                    app_name = self.get_app_name(last_build['app_id'])
             rows.append([
                 user_display_string(user.get('username', ''),
                                     user.get('first_name', ''),
                                     user.get('last_name', '')),
-                _fmt_date(last_seen, False), _fmt_date(last_sync, False),
+                _fmt_date(last_seen, False), _fmt_date(last_sync_date, False),
                 app_name or "---", build_version, commcare_version
             ])
         return rows
@@ -180,21 +205,12 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
 
 def _get_commcare_version(app_version_info):
-    commcare_version = _("Unknown CommCare Version")
-    if app_version_info:
-        commcare_version = (
-            'CommCare {}'.format(app_version_info.commcare_version)
-            if app_version_info.commcare_version
-            else _("Unknown CommCare Version")
-        )
+    commcare_version = (
+        'CommCare {}'.format(app_version_info)
+        if app_version_info
+        else _("Unknown CommCare Version")
+    )
     return commcare_version
-
-
-def _get_build_version(app_version_info):
-    build_version = _("Unknown")
-    if app_version_info and app_version_info.build_version:
-        build_version = app_version_info.build_version
-    return build_version
 
 
 def _choose_latest_version(*app_versions):
