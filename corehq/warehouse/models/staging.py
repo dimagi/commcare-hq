@@ -1,7 +1,10 @@
-from django.db import models, transaction
+from contextlib import closing
+
+from django.db import models, transaction, connections
 
 from dimagi.utils.couch.database import iter_docs
 
+from corehq.sql_db.routers import db_for_read_write
 from corehq.apps.groups.dbaccessors import get_group_ids_by_last_modified
 from corehq.apps.groups.models import Group
 
@@ -23,7 +26,9 @@ class StagingTable(models.Model):
 
     @classmethod
     def clear_records(cls):
-        raise NotImplementedError
+        database = db_for_read_write(cls)
+        with closing(connections[database].cursor()) as cursor:
+            cursor.execute("TRUNCATE {}".format(cls._meta.db_table))
 
 
 class GroupStagingTable(StagingTable):
@@ -58,7 +63,3 @@ class GroupStagingTable(StagingTable):
         group_ids = get_group_ids_by_last_modified(start_datetime, end_datetime)
 
         return iter_docs(Group.get_db(), group_ids)
-
-    @classmethod
-    def clear_records(cls):
-        cls.objects.all().delete()
