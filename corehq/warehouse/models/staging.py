@@ -7,6 +7,7 @@ from dimagi.utils.couch.database import iter_docs
 from corehq.sql_db.routers import db_for_read_write
 from corehq.apps.groups.dbaccessors import get_group_ids_by_last_modified
 from corehq.apps.groups.models import Group
+from corehq.warehouse.utils import django_batch_records
 
 
 class StagingTable(models.Model):
@@ -15,12 +16,16 @@ class StagingTable(models.Model):
         abstract = True
 
     @classmethod
-    def stage_records(cls, start_dateime, end_datetime):
+    def raw_record_iter(cls, start_datetime, end_datetime):
         raise NotImplementedError
 
     @classmethod
-    def raw_record_iter(cls, start_datetime, end_datetime):
-        raise NotImplementedError
+    @transaction.atomic
+    def stage_records(cls, start_dateime, end_datetime):
+        cls.clear_records()
+        record_iter = cls.raw_record_iter(start_dateime, end_datetime)
+
+        django_batch_records(cls, record_iter, cls.FIELD_MAPPING)
 
     @classmethod
     def clear_records(cls):
@@ -40,21 +45,15 @@ class GroupStagingTable(StagingTable):
 
     group_last_modified = models.DateTimeField(null=True)
 
-    @classmethod
-    @transaction.atomic
-    def stage_records(cls, start_dateime, end_datetime):
-        cls.clear_records()
-
-        records = []
-        for raw_record in cls.raw_record_iter(start_dateime, end_datetime):
-            records.append(GroupStagingTable(
-                group_id=raw_record.get('_id'),
-                name=raw_record.get('name'),
-                case_sharing=raw_record.get('case_sharing'),
-                reporting=raw_record.get('reporting'),
-                group_last_modified=raw_record.get('last_modified'),
-            ))
-        cls.objects.bulk_create(records)
+    # Map source model fields to staging table fields
+    # ( <source field>, <staging field> )
+    FIELD_MAPPING = [
+        ('_id', 'group_id'),
+        ('name', 'name'),
+        ('case_sharing', 'case_sharing'),
+        ('reporting', 'reporting'),
+        ('last_modified', 'group_last_modified'),
+    ]
 
     @classmethod
     def raw_record_iter(cls, start_datetime, end_datetime):
