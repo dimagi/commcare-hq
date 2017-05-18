@@ -2,11 +2,13 @@ from django.core.management import BaseCommand, CommandError
 from dimagi.utils.parsing import string_to_utc_datetime
 from corehq.warehouse.models import (
     GroupStagingTable,
+    DomainStagingTable,
 )
 
 
 SLUG_TO_STAGING_TABLE = {
     GroupStagingTable.slug: GroupStagingTable,
+    DomainStagingTable.slug: DomainStagingTable,
 }
 
 USAGE = """Usage: ./manage.py stage_table <slug> -s <start_datetime> -e <end_datetime>
@@ -50,6 +52,8 @@ class Command(BaseCommand):
         end = options.get('end')
 
         model = SLUG_TO_STAGING_TABLE.get(slug)
+        if not model:
+            raise CommandError('{} is not a valid slug. \n\n {}'.format(slug, USAGE))
         model.stage_records(start, end)
 
 
