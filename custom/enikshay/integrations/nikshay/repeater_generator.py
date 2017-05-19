@@ -28,7 +28,6 @@ from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseExcep
 from custom.enikshay.exceptions import (
     NikshayLocationNotFound,
     NikshayRequiredValueMissing,
-    NikshayCodeNotFound,
 )
 from custom.enikshay.integrations.nikshay.field_mappings import (
     gender_mapping,
