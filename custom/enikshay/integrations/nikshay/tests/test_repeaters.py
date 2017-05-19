@@ -13,7 +13,7 @@ from custom.enikshay.const import (
     TREATMENT_OUTCOME_DATE,
     EPISODE_PENDING_REGISTRATION,
     PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION,
-)
+    ENROLLED_IN_PRIVATE)
 from custom.enikshay.exceptions import NikshayLocationNotFound, NikshayRequiredValueMissing
 from custom.enikshay.integrations.nikshay.repeaters import (
     NikshayRegisterPatientRepeater,
@@ -965,8 +965,8 @@ class TestNikshayRegisterPrivatePatientRepeater(ENikshayLocationStructureMixin, 
         # nikshay not enabled
         self.create_case(self.episode)
         self.assertEqual(0, len(self.repeat_records().all()))
-
         person = self.create_case(self.person)[0]
+        update_case(self.domain, self.person_id, {ENROLLED_IN_PRIVATE: "true"})
         with self.assertRaisesMessage(
                 NikshayLocationNotFound,
                 "Location with id {location_id} not found. This is the owner for person with "
@@ -974,7 +974,7 @@ class TestNikshayRegisterPrivatePatientRepeater(ENikshayLocationStructureMixin, 
         ):
             self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
         # nikshay enabled, should register a repeat record
-        self.assign_person_to_location(self.phi.location_id)
+        self.assign_person_to_location(self.pcp.location_id)
         self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
         self.assertEqual(1, len(self.repeat_records().all()))
         #
@@ -995,7 +995,7 @@ class TestNikshayRegisterPrivatePatientRepeater(ENikshayLocationStructureMixin, 
         self.phi.metadata['is_test'] = 'yes'
         self.phi.save()
         self.create_case(self.episode)
-        self.assign_person_to_location(self.phi.location_id)
+        self.assign_person_to_location(self.pcp.location_id)
         self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
         self.assertEqual(0, len(self.repeat_records().all()))
 
@@ -1003,7 +1003,7 @@ class TestNikshayRegisterPrivatePatientRepeater(ENikshayLocationStructureMixin, 
         self.phi.metadata['is_test'] = 'no'
         self.phi.save()
         self.create_case(self.episode)
-        self.assign_person_to_location(self.phi.location_id)
+        self.assign_person_to_location(self.pcp.location_id)
         self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
         self.assertEqual(1, len(self.repeat_records().all()))
 
@@ -1014,15 +1014,16 @@ class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructur
     def setUp(self):
         super(TestNikshayRegisterPrivatePatientPayloadGenerator, self).setUp()
         self.cases = self.create_case_structure()
-        self.assign_person_to_location(self.phi.location_id)
-        update_case(self.domain, self.person_id, {"tu_choice": self.phi.location_id})
+        self.assign_person_to_location(self.pcp.location_id)
+        update_case(self.domain, self.person_id, {ENROLLED_IN_PRIVATE: "true"})
+        update_case(self.domain, self.person_id, {"tu_choice": self.tu.location_id})
 
     def test_payload_properties(self):
         episode_case = self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
         payload = NikshayRegisterPrivatePatientPayloadGenerator(None).get_payload(None, episode_case)
         self.assertEqual(payload['tbdiagdate'], '09/09/2014')
-        self.assertEqual(payload['HFIDNO'], '2')
-        self.assertEqual(payload['TBUcode'], '2')
+        self.assertEqual(payload['HFIDNO'], '1234567')
+        self.assertEqual(payload['TBUcode'], '1')
         self.assertEqual(payload['Address'], 'Mt Everest')
         self.assertEqual(payload['pin'], '110088')
         self.assertEqual(payload['fhname'], 'Mr Peregrine Kumar')

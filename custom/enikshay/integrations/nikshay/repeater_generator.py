@@ -347,30 +347,16 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
         person_case_properties = person_case.dynamic_case_properties()
 
         person_locations = get_person_locations(person_case)
-        tu_choice = person_case_properties.get('tu_choice')
-        try:
-            tu_location = SQLLocation.objects.get(location_id=tu_choice)
-        except SQLLocation.DoesNotExist:
-            raise NikshayLocationNotFound(
-                "Location with id {location_id} not found. This is the tu_choice for person with id: {person_id}"
-                .format(location_id=tu_choice, person_id=person_case.case_id)
-            )
-        try:
-            tu_code = tu_location.metadata['nikshay_code']
-        except (KeyError, AttributeError) as e:
-            raise NikshayCodeNotFound("Nikshay codes not found for location with id: {}: {}"
-                                      .format(tu_location.get_id, e))
         episode_case_date = episode_case_properties.get('date_of_diagnosis', None)
         if episode_case_date:
             episode_date = datetime.datetime.strptime(episode_case_date, "%Y-%m-%d").date()
         else:
             episode_date = datetime.date.today()
-
         return {
             "Stocode": person_locations.sto,
             "Dtocode": person_locations.dto,
-            "TBUcode": tu_code,
-            "HFIDNO": person_locations.phi,
+            "TBUcode": person_locations.tu,
+            "HFIDNO": person_locations.pcp,
             "pname": sanitize_text_for_xml(person_case.name),
             "fhname": sanitize_text_for_xml(person_case_properties.get('husband_father_name', '')),
             "age": person_case_properties.get('age', ''),

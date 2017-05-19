@@ -403,7 +403,11 @@ class ENikshayLocationStructureMixin(object):
         self.dmc.save()
 
         self.pcp = locations['PCP']
-
+        self.pcp.metadata = {
+            'nikshay_code': '1234567',
+            'is_test': 'no',
+        }
+        self.pcp.save()
         super(ENikshayLocationStructureMixin, self).setUp()
 
     def tearDown(self):
@@ -471,5 +475,6 @@ def setup_enikshay_locations(domain_name):
         ])
     ]
 
+    location_metadata = {'is_test': 'no', 'nikshay_code': 'nikshay_code'}
     return (setup_location_types_with_structure(domain_name, location_type_structure),
-            setup_locations_with_structure(domain_name, location_structure))
+            setup_locations_with_structure(domain_name, location_structure, location_metadata))
