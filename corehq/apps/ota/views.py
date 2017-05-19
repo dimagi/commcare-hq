@@ -169,15 +169,13 @@ def _add_case_property_queries(domain, case_type, search_es, criteria):
         fuzzies = []
 
     for key, value in criteria.items():
-        try:
-            remove_char_regex = config.remove_characters.get(
-                domain=domain,
-                case_type=case_type,
-                case_property=key,
-            )
-            value = re.sub(remove_char_regex.regex, '', value)
-        except RemoveCharacters.DoesNotExist:
-            pass
+        remove_char_regexs = config.remove_characters.filter(
+            domain=domain,
+            case_type=case_type,
+            case_property=key,
+        )
+        for removal_regex in remove_char_regexs:
+            value = re.sub(removal_regex.regex, '', value)
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
 
     return search_es

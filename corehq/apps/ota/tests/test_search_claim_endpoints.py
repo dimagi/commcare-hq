@@ -81,6 +81,16 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
             case_property='name',
             regex=' word',
         )                       # remove ' word' from the name case property
+        rc.save()
+        config.remove_characters.add(rc)
+        rc = RemoveCharacters(
+            domain=DOMAIN,
+            case_type='case_type',
+            case_property='name',
+            regex=' gone',
+        )                       # remove ' gone' from the name case property
+        rc.save()
+        config.remove_characters.add(rc)
         rc = RemoveCharacters(
             domain=DOMAIN,
             case_type='case_type',
@@ -89,6 +99,7 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
         )                       # remove '-' from the special id case property
         rc.save()
         config.remove_characters.add(rc)
+        config.save()
         criteria = {
             'name': "this word should be gone",
             'other_name': "this word should not be gone",
@@ -147,7 +158,7 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
                                             "query": {
                                                 "match": {
                                                     "case_properties.value": {
-                                                        "query": "this should be gone",
+                                                        "query": "this should be",
                                                         "fuzziness": "0"
                                                     }
                                                 }
