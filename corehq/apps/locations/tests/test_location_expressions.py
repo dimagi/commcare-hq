@@ -69,71 +69,77 @@ class TestLocationTypeExpression(TestCase):
         self._check_expression(doc, None)
 
 
-def setup_module():
-    domain = "a-song-of-ice-and-fire"
-    domain_obj = create_domain(domain)
-    continent_location_type = LocationType(
-        domain=domain,
-        name="continent",
-        code="continent",
-    )
-    continent_location_type.save()
-    kingdom_location_type = LocationType(
-        domain=domain,
-        name="kingdom",
-        code="kingdom",
-        parent_type=continent_location_type,
-    )
-    kingdom_location_type.save()
-    city_location_type = LocationType(
-        domain=domain,
-        name="city",
-        code="city",
-        parent_type=kingdom_location_type,
-    )
-    city_location_type.save()
+class LocationHierarchyTest(TestCase):
+    
+    @classmethod
+    def setUpClass(cls):
+        super(LocationHierarchyTest, cls).setUpClass()
+        domain = "a-song-of-ice-and-fire"
+        domain_obj = create_domain(domain)
+        continent_location_type = LocationType(
+            domain=domain,
+            name="continent",
+            code="continent",
+        )
+        continent_location_type.save()
+        kingdom_location_type = LocationType(
+            domain=domain,
+            name="kingdom",
+            code="kingdom",
+            parent_type=continent_location_type,
+        )
+        kingdom_location_type.save()
+        city_location_type = LocationType(
+            domain=domain,
+            name="city",
+            code="city",
+            parent_type=kingdom_location_type,
+        )
+        city_location_type.save()
+    
+        continent = SQLLocation(
+            domain=domain,
+            name="Westeros",
+            location_type=continent_location_type,
+            site_code="westeros",
+        )
+        continent.save()
+        kingdom = SQLLocation(
+            domain=domain,
+            name="The North",
+            location_type=kingdom_location_type,
+            parent=continent,
+            site_code="the_north",
+        )
+        kingdom.save()
+        city = SQLLocation(
+            domain=domain,
+            name="Winterfell",
+            location_type=city_location_type,
+            parent=kingdom,
+            site_code="winterfell",
+        )
+        city.save()
+    
+        cls.domain_obj = domain_obj
+        cls.domain = domain
+        cls.continent = continent
+        cls.kingdom = kingdom
+        cls.city = city
 
-    continent = SQLLocation(
-        domain=domain,
-        name="Westeros",
-        location_type=continent_location_type,
-        site_code="westeros",
-    )
-    continent.save()
-    kingdom = SQLLocation(
-        domain=domain,
-        name="The North",
-        location_type=kingdom_location_type,
-        parent=continent,
-        site_code="the_north",
-    )
-    kingdom.save()
-    city = SQLLocation(
-        domain=domain,
-        name="Winterfell",
-        location_type=city_location_type,
-        parent=kingdom,
-        site_code="winterfell",
-    )
-    city.save()
 
-    globals()["domain_obj"] = domain_obj
-    globals()["domain"] = domain
-    globals()["continent"] = continent
-    globals()["kingdom"] = kingdom
-    globals()["city"] = city
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super(LocationHierarchyTest, cls).tearDownClass()
 
 
-def teardown_module():
-    domain_obj.delete()
-
-
-class TestLocationParentIdExpression(TestCase):
+class TestLocationParentIdExpression(LocationHierarchyTest):
 
     @classmethod
     def setUpClass(cls):
         super(TestLocationParentIdExpression, cls).setUpClass()
-        cls.evaluation_context = EvaluationContext({"domain": domain})
+        cls.evaluation_context = EvaluationContext({"domain": cls.domain})
         cls.expression_spec = {
             "type": "location_parent_id",
             "location_id_expression": {
@@ -145,12 +151,12 @@ class TestLocationParentIdExpression(TestCase):
 
     def test_location_parent_id(self):
         self.assertEqual(
-            continent.location_id,
-            self.expression({'location_id': kingdom.location_id}, self.evaluation_context)
+            self.continent.location_id,
+            self.expression({'location_id': self.kingdom.location_id}, self.evaluation_context)
         )
         self.assertEqual(
-            kingdom.location_id,
-            self.expression({'location_id': city.location_id}, self.evaluation_context)
+            self.kingdom.location_id,
+            self.expression({'location_id': self.city.location_id}, self.evaluation_context)
         )
 
     def test_location_parent_missing(self):
@@ -162,7 +168,7 @@ class TestLocationParentIdExpression(TestCase):
     def test_location_parent_bad_domain(self):
         self.assertEqual(
             None,
-            self.expression({'location_id': kingdom.location_id}, EvaluationContext({"domain": 'bad-domain'}))
+            self.expression({'location_id': self.kingdom.location_id}, EvaluationContext({"domain": 'bad-domain'}))
         )
 
     def test_location_parents_chained(self):
@@ -177,18 +183,18 @@ class TestLocationParentIdExpression(TestCase):
             }
         })
         self.assertEqual(
-            continent.location_id,
-            expression({'location_id': city.location_id}, self.evaluation_context)
+            self.continent.location_id,
+            expression({'location_id': self.city.location_id}, self.evaluation_context)
         )
 
 
-class TestAncestorLocationExpression(TestCase):
+class TestAncestorLocationExpression(LocationHierarchyTest):
 
     def test_ancestor_location_exists(self):
         context = EvaluationContext({})
         expression = ExpressionFactory.from_spec({
             'type': 'ancestor_location',
-            'location_id': city.location_id,
+            'location_id': self.city.location_id,
             'location_type': "continent",
         }, context)
 
@@ -196,14 +202,14 @@ class TestAncestorLocationExpression(TestCase):
         self.assertIsNotNone(ancestor_location)
         self.assertEqual(
             ancestor_location.get("location_id"),
-            continent.location_id
+            self.continent.location_id
         )
 
     def test_ancestor_location_dne(self):
         context = EvaluationContext({})
         expression = ExpressionFactory.from_spec({
             'type': 'ancestor_location',
-            'location_id': kingdom.location_id,
+            'location_id': self.kingdom.location_id,
             'location_type': "nonsense",
         }, context)
 
