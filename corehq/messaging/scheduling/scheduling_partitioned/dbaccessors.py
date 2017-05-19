@@ -3,14 +3,18 @@ from corehq.sql_db.util import (
     save_object_to_partitioned_database,
     delete_object_from_partitioned_database,
     run_query_across_partitioned_databases,
+    get_db_alias_for_partitioned_doc,
 )
 from django.db.models import Q
 from uuid import UUID
 
 
 def _validate_class(obj, cls):
+    """
+    :param cls: A type or tuple of types to check the type of obj against
+    """
     if not isinstance(obj, cls):
-        raise ValueError("Expected an instance of %s" % cls.__name__)
+        raise ValueError("Expected an instance of %s" % str(cls))
 
 
 def _validate_uuid(value):
@@ -117,3 +121,48 @@ def get_timed_schedule_instances_for_schedule(schedule):
         TimedScheduleInstance,
         Q(timed_schedule_id=schedule.schedule_id)
     )
+
+
+def get_case_alert_schedule_instances_for_schedule(case_id, schedule):
+    from corehq.messaging.scheduling.models import AlertSchedule
+    from corehq.messaging.scheduling.scheduling_partitioned.models import CaseAlertScheduleInstance
+
+    _validate_class(schedule, AlertSchedule)
+    db_name = get_db_alias_for_partitioned_doc(case_id)
+    return CaseAlertScheduleInstance.objects.using(db_name).filter(
+        case_id=case_id,
+        alert_schedule_id=schedule.schedule_id
+    )
+
+
+def get_case_timed_schedule_instances_for_schedule(case_id, schedule):
+    from corehq.messaging.scheduling.models import TimedSchedule
+    from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
+
+    _validate_class(schedule, TimedSchedule)
+    db_name = get_db_alias_for_partitioned_doc(case_id)
+    return CaseTimedScheduleInstance.objects.using(db_name).filter(
+        case_id=case_id,
+        timed_schedule_id=schedule.schedule_id
+    )
+
+
+def save_case_schedule_instance(instance):
+    from corehq.messaging.scheduling.scheduling_partitioned.models import (
+        CaseAlertScheduleInstance,
+        CaseTimedScheduleInstance,
+    )
+
+    _validate_class(instance, (CaseAlertScheduleInstance, CaseTimedScheduleInstance))
+    _validate_uuid(instance.schedule_instance_id)
+    save_object_to_partitioned_database(instance, instance.case_id)
+
+
+def delete_case_schedule_instance(instance):
+    from corehq.messaging.scheduling.scheduling_partitioned.models import (
+        CaseAlertScheduleInstance,
+        CaseTimedScheduleInstance,
+    )
+
+    _validate_class(instance, (CaseAlertScheduleInstance, CaseTimedScheduleInstance))
+    delete_object_from_partitioned_database(instance, instance.case_id)

@@ -10,6 +10,11 @@ from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
+from corehq.messaging.scheduling.tasks import (
+    refresh_case_alert_schedule_instances,
+    refresh_case_timed_schedule_instances,
+)
 from corehq.util.log import with_progress_bar
 from corehq.util.test_utils import unit_testing_only
 from couchdbkit.exceptions import ResourceNotFound
@@ -613,6 +618,8 @@ class CaseRuleAction(models.Model):
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
     update_case_definition = models.ForeignKey('UpdateCaseDefinition', on_delete=models.CASCADE, null=True)
     custom_action_definition = models.ForeignKey('CustomActionDefinition', on_delete=models.CASCADE, null=True)
+    create_schedule_instance_definition = models.ForeignKey('CreateScheduleInstanceActionDefinition',
+        on_delete=models.CASCADE, null=True)
 
     @property
     def definition(self):
@@ -620,6 +627,8 @@ class CaseRuleAction(models.Model):
             return self.update_case_definition
         elif self.custom_action_definition_id:
             return self.custom_action_definition
+        elif self.create_schedule_instance_definition_id:
+            return self.create_schedule_instance_definition
         else:
             raise ValueError("No available definition found")
 
@@ -627,11 +636,14 @@ class CaseRuleAction(models.Model):
     def definition(self, value):
         self.update_case_definition = None
         self.custom_action_definition = None
+        self.create_schedule_instance_definition = None
 
         if isinstance(value, UpdateCaseDefinition):
             self.update_case_definition = value
         elif isinstance(value, CustomActionDefinition):
             self.custom_action_definition = value
+        elif isinstance(value, CreateScheduleInstanceActionDefinition):
+            self.create_schedule_instance_definition = value
         else:
             raise ValueError("Unexpected type found: %s" % type(value))
 
@@ -812,6 +824,46 @@ class CustomActionDefinition(CaseRuleActionDefinition):
             raise ValueError("Unable to resolve '%s'" % custom_function_path)
 
         return custom_function(case, rule)
+
+
+class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
+    alert_schedule = models.ForeignKey('scheduling.AlertSchedule', null=True, on_delete=models.PROTECT)
+    timed_schedule = models.ForeignKey('scheduling.TimedSchedule', null=True, on_delete=models.PROTECT)
+
+    # A List of [recipient_type, recipient_id]
+    recipients = jsonfield.JSONField(default=list)
+
+    @property
+    def schedule(self):
+        if self.alert_schedule_id:
+            return self.alert_schedule
+        elif self.timed_schedule_id:
+            return self.timed_schedule
+
+        raise ValueError("Expected a schedule")
+
+    @schedule.setter
+    def schedule(self, value):
+        from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
+
+        self.alert_schedule = None
+        self.timed_schedule = None
+
+        if isinstance(value, AlertSchedule):
+            self.alert_schedule = value
+        elif isinstance(value, TimedSchedule):
+            self.timed_schedule = value
+        else:
+            raise TypeError("Expected an instance of AlertSchedule or TimedSchedule")
+
+    def run(self, case, rule):
+        schedule = self.schedule
+        if isinstance(schedule, AlertSchedule):
+            refresh_case_alert_schedule_instances(case.case_id, schedule, self.recipients, rule)
+        elif isinstance(schedule, TimedSchedule):
+            refresh_case_timed_schedule_instances(case.case_id, schedule, self.recipients, rule)
+
+        return CaseRuleActionResult()
 
 
 class AutomaticUpdateAction(models.Model):

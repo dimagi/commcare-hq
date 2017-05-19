@@ -20,7 +20,7 @@ class ScheduleInstance(PartitionedModel):
     schedule_instance_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     domain = models.CharField(max_length=126)
     recipient_type = models.CharField(max_length=126)
-    recipient_id = models.CharField(max_length=126)
+    recipient_id = models.CharField(max_length=126, null=True)
     current_event_num = models.IntegerField()
     schedule_iteration_num = models.IntegerField()
     next_event_due = models.DateTimeField()
@@ -79,7 +79,7 @@ class ScheduleInstance(PartitionedModel):
 
     @classmethod
     def create_for_recipient(cls, schedule, recipient_type, recipient_id, start_date=None,
-            move_to_next_event_not_in_the_past=True):
+            move_to_next_event_not_in_the_past=True, **additional_fields):
 
         obj = cls(
             domain=schedule.domain,
@@ -87,7 +87,8 @@ class ScheduleInstance(PartitionedModel):
             recipient_id=recipient_id,
             current_event_num=0,
             schedule_iteration_num=1,
-            active=True
+            active=True,
+            **additional_fields
         )
 
         obj.schedule = schedule
@@ -215,7 +216,28 @@ class TimedScheduleInstance(AbstractTimedScheduleInstance):
         db_table = 'scheduling_timedscheduleinstance'
 
 
-class CaseAlertScheduleInstance(AbstractAlertScheduleInstance):
+class CaseScheduleInstanceMixin(object):
+
+    @property
+    @memoized
+    def recipient(self):
+        if self.recipient_type == 'Self':
+            return CaseAccessors(self.domain).get_case(self.case_id)
+        elif self.recipient_type == 'Owner':
+            return None
+        if self.recipient_type == 'LastSubmittingUser':
+            return None
+        elif self.recipient_type == 'ParentCase':
+            return None
+        elif self.recipient_type == 'SubCase':
+            return None
+        elif self.recipient_type == 'CustomRecipient':
+            return None
+        else:
+            return super(CaseScheduleInstanceMixin, self).recipient
+
+
+class CaseAlertScheduleInstance(CaseScheduleInstanceMixin, AbstractAlertScheduleInstance):
     # Points to the CommCareCase/SQL that spawned this schedule instance
     case_id = models.CharField(max_length=255)
 
@@ -229,7 +251,7 @@ class CaseAlertScheduleInstance(AbstractAlertScheduleInstance):
         )
 
 
-class CaseTimedScheduleInstance(AbstractTimedScheduleInstance):
+class CaseTimedScheduleInstance(CaseScheduleInstanceMixin, AbstractTimedScheduleInstance):
     # Points to the CommCareCase/SQL that spawned this schedule instance
     case_id = models.CharField(max_length=255)
 
