@@ -133,10 +133,11 @@ class Command(BaseCommand):
             raise SkipApp(type(err).__name__)
         copy = get_pre_migration_copy(app)
         if copy is None:
-            logger.warn("%spre-migration copy not found %s/%s", self.dry, app.domain, app_id)
+            logger.warn("%scopy not found %s/%s version %s",
+                self.dry, app.domain, app_id, app.version)
             return
-        logger.info("%smigrating %s/%s: version diff=%s",
-            self.dry, app.domain, app_id, app.version - copy.version)
+        logger.info("%smigrating %s/%s: (%s) version diff=%s",
+            self.dry, app.domain, app_id, copy.version, app.version - copy.version)
         updated = False
         for modi, module, formi, new_form, old_form in iter_forms(app, copy):
             preloads = old_form.actions.usercase_preload.preload
