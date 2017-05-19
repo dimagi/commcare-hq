@@ -381,7 +381,8 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
             "lno": person_case_properties.get('phone_number', ''),
             "mno": '0',
             "tbdiagdate": _format_date(str(episode_date)),
-            "tbstdate": _format_date(episode_case_properties.get(TREATMENT_START_DATE, str(datetime.date.today()))),
+            "tbstdate": _format_date(
+                episode_case_properties.get(TREATMENT_START_DATE, str(datetime.date.today()))),
             "Type": disease_classification.get(episode_case_properties.get('disease_classification', ''), ''),
             "B_diagnosis": basis_of_diagnosis.get(episode_case_properties.get('basis_of_diagnosis', ''), ''),
             "D_SUSTest": drug_susceptibility_test_status.get(episode_case_properties.get('dst_status', '')),
