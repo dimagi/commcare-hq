@@ -79,13 +79,7 @@ hqDefine('domain/js/case-search-config.js', function () {
                         function (property) { return property.name(); }
                     );
 
-                if (fuzzyProperties[caseType]){
-                    for (var propIdx in properties){
-                        fuzzyProperties[caseType].push(properties[propIdx]);
-                    }
-                } else {
-                    fuzzyProperties[caseType] = properties;
-                }
+                fuzzyProperties[caseType] = (fuzzyProperties[caseType] || []).concat(properties);
             }
             return {
                 'enable': self.toggleEnabled(),
