@@ -120,7 +120,7 @@ class BeneficiaryCaseFactory(object):
 
         if self.beneficiary.has_aadhaar_number:
             kwargs['attrs']['update']['aadhaar_number'] = self.beneficiary.identificationNumber
-        else:
+        elif self.beneficiary.other_id_type:
             kwargs['attrs']['update']['other_id_number'] = self.beneficiary.identificationNumber
             kwargs['attrs']['update']['other_id_type'] = self.beneficiary.other_id_type
 
