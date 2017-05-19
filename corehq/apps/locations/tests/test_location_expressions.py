@@ -180,3 +180,43 @@ class TestLocationParentIdExpression(TestCase):
             parent.location_id,
             expression({'location_id': grandchild.location_id}, self.evaluation_context)
         )
+
+
+class TestAncestorLocationExpression(TestCase):
+
+    def test_ancestor_location_exists(self):
+        context = EvaluationContext({})
+        expression = ExpressionFactory.from_spec({
+            'type': 'ancestor_location',
+            'location_id': grandchild.location_id,
+            'location_type': "continent",
+        }, context)
+
+        ancestor_location = expression({}, context)
+        self.assertIsNotNone(ancestor_location)
+        self.assertEqual(
+            ancestor_location.get("location_id"),
+            parent.location_id
+        )
+
+    def test_ancestor_location_dne(self):
+        context = EvaluationContext({})
+        expression = ExpressionFactory.from_spec({
+            'type': 'ancestor_location',
+            'location_id': child.location_id,
+            'location_type': "nonsense",
+        }, context)
+
+        ancestor_location = expression({}, context)
+        self.assertIsNone(ancestor_location)
+
+    def test_location_dne(self):
+        context = EvaluationContext({})
+        expression = ExpressionFactory.from_spec({
+            'type': 'ancestor_location',
+            'location_id': "gibberish",
+            'location_type': "kingdom",
+        }, context)
+
+        ancestor_location = expression({}, context)
+        self.assertIsNone(ancestor_location)
