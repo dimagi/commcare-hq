@@ -53,4 +53,4 @@ def send_datasets(domain_name):
 )
 def send_datasets_for_all_domains():
     for domain_name in find_domains_with_toggle_enabled(toggles.DHIS2_INTEGRATION):
-        send_datasets.apply(args=(domain_name,))
+        send_datasets(domain_name)
