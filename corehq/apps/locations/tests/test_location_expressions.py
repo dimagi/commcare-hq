@@ -93,35 +93,35 @@ def setup_module():
     )
     city_location_type.save()
 
-    parent = SQLLocation(
+    continent = SQLLocation(
         domain=domain,
         name="Westeros",
         location_type=continent_location_type,
         site_code="westeros",
     )
-    parent.save()
-    child = SQLLocation(
+    continent.save()
+    kingdom = SQLLocation(
         domain=domain,
         name="The North",
         location_type=kingdom_location_type,
-        parent=parent,
+        parent=continent,
         site_code="the_north",
     )
-    child.save()
-    grandchild = SQLLocation(
+    kingdom.save()
+    city = SQLLocation(
         domain=domain,
         name="Winterfell",
         location_type=city_location_type,
-        parent=child,
+        parent=kingdom,
         site_code="winterfell",
     )
-    grandchild.save()
+    city.save()
 
     globals()["domain_obj"] = domain_obj
     globals()["domain"] = domain
-    globals()["parent"] = parent
-    globals()["child"] = child
-    globals()["grandchild"] = grandchild
+    globals()["continent"] = continent
+    globals()["kingdom"] = kingdom
+    globals()["city"] = city
 
 
 def teardown_module():
@@ -145,12 +145,12 @@ class TestLocationParentIdExpression(TestCase):
 
     def test_location_parent_id(self):
         self.assertEqual(
-            parent.location_id,
-            self.expression({'location_id': child.location_id}, self.evaluation_context)
+            continent.location_id,
+            self.expression({'location_id': kingdom.location_id}, self.evaluation_context)
         )
         self.assertEqual(
-            child.location_id,
-            self.expression({'location_id': grandchild.location_id}, self.evaluation_context)
+            kingdom.location_id,
+            self.expression({'location_id': city.location_id}, self.evaluation_context)
         )
 
     def test_location_parent_missing(self):
@@ -162,7 +162,7 @@ class TestLocationParentIdExpression(TestCase):
     def test_location_parent_bad_domain(self):
         self.assertEqual(
             None,
-            self.expression({'location_id': child.location_id}, EvaluationContext({"domain": 'bad-domain'}))
+            self.expression({'location_id': kingdom.location_id}, EvaluationContext({"domain": 'bad-domain'}))
         )
 
     def test_location_parents_chained(self):
@@ -177,8 +177,8 @@ class TestLocationParentIdExpression(TestCase):
             }
         })
         self.assertEqual(
-            parent.location_id,
-            expression({'location_id': grandchild.location_id}, self.evaluation_context)
+            continent.location_id,
+            expression({'location_id': city.location_id}, self.evaluation_context)
         )
 
 
@@ -188,7 +188,7 @@ class TestAncestorLocationExpression(TestCase):
         context = EvaluationContext({})
         expression = ExpressionFactory.from_spec({
             'type': 'ancestor_location',
-            'location_id': grandchild.location_id,
+            'location_id': city.location_id,
             'location_type': "continent",
         }, context)
 
@@ -196,14 +196,14 @@ class TestAncestorLocationExpression(TestCase):
         self.assertIsNotNone(ancestor_location)
         self.assertEqual(
             ancestor_location.get("location_id"),
-            parent.location_id
+            continent.location_id
         )
 
     def test_ancestor_location_dne(self):
         context = EvaluationContext({})
         expression = ExpressionFactory.from_spec({
             'type': 'ancestor_location',
-            'location_id': child.location_id,
+            'location_id': kingdom.location_id,
             'location_type': "nonsense",
         }, context)
 
