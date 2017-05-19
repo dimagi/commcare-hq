@@ -9,6 +9,7 @@ from mock import Mock, patch
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tasks import make_location_user
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.private_sector_datamigration.models import (
@@ -831,6 +832,20 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='episode')), 1)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='test')), 2)
+
+    def test_set_location_owner(self):
+        Agency.objects.all().delete()
+        UserDetail.objects.all().delete()
+
+        call_command('create_cases_by_beneficiary', self.domain, location_owner_id=self.pcp.location_id)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(len(person_case_ids), 1)
+        person_case = self.case_accessor.get_case(person_case_ids[0])
+        self.assertEqual(person_case.owner_id, self.pcp.location_id)
+
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='episode')), 1)
 
     def _assertIndexEqual(self, index_1, index_2):
         self.assertEqual(index_1.identifier, index_2.identifier)

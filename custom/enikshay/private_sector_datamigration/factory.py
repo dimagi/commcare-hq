@@ -32,9 +32,10 @@ def get_human_friendly_id():
 
 class BeneficiaryCaseFactory(object):
 
-    def __init__(self, domain, beneficiary):
+    def __init__(self, domain, beneficiary, location_owner):
         self.domain = domain
         self.beneficiary = beneficiary
+        self.location_owner = location_owner
 
     def get_case_structures_to_create(self, skip_adherence):
         person_structure = self.get_person_case_structure()
@@ -363,10 +364,13 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _location_owner(self):
-        return SQLLocation.active_objects.get(
-            domain=self.domain,
-            site_code=str(self._agency.agencyId),
-        )
+        if self.location_owner:
+            return self.location_owner
+        else:
+            return SQLLocation.active_objects.get(
+                domain=self.domain,
+                site_code=str(self._agency.agencyId),
+            )
 
     @property
     @memoized
