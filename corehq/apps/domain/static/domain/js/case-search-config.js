@@ -36,18 +36,11 @@ hqDefine('domain/js/case-search-config.js', function () {
         self.caseTypes = options.caseTypes;
         self.toggleEnabled = ko.observable(initialValues.enabled);
         self.fuzzyProperties = ko.observableArray();
-        if (
-            initialValues.config.hasOwnProperty('fuzzy_properties') &&
-            initialValues.config.fuzzy_properties.length > 0
-        ) {
-            for (var i = 0; i < initialValues.config.fuzzy_properties.length; i++) {
-                self.fuzzyProperties.push(new CaseTypeProps(
-                    initialValues.config.fuzzy_properties[i].case_type,
-                    initialValues.config.fuzzy_properties[i].properties
-                ));
-            }
-        } else {
-            self.fuzzyProperties.push(new CaseTypeProps('', ['']));
+        for (var caseType in initialValues.fuzzy_properties){
+            self.fuzzyProperties.push(new CaseTypeProps(
+                caseType,
+                initialValues.fuzzy_properties[caseType]
+            ));
         }
 
         self.change = function(){
@@ -70,26 +63,27 @@ hqDefine('domain/js/case-search-config.js', function () {
                 self.saveButton.ajax({
                     type: 'post',
                     url: hqImport("hqwebapp/js/urllib.js").reverse("case_search_config"),
-                    data: self.serialize(),
+                    data: JSON.stringify(self.serialize()),
                     dataType: 'json',
+                    contentType: "application/json; charset=utf-8",
                 });
             },
         });
 
         self.serialize = function(){
-            var fuzzyProperties = [];
+            var fuzzyProperties = {};
             for (var i = 0; i < self.fuzzyProperties().length; i++) {
-                fuzzyProperties.push({
-                    case_type: self.fuzzyProperties()[i].caseType(),
-                    properties: _.map(
+                var caseType = self.fuzzyProperties()[i].caseType(),
+                    properties = _.map(
                         self.fuzzyProperties()[i].properties(),
                         function (property) { return property.name(); }
-                    ),
-                });
+                    );
+
+                fuzzyProperties[caseType] = (fuzzyProperties[caseType] || []).concat(properties);
             }
             return {
                 'enable': self.toggleEnabled(),
-                'config': {'fuzzy_properties': fuzzyProperties},
+                'fuzzy_properties': fuzzyProperties,
             };
         };
     };

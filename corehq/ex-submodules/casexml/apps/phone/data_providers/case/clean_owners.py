@@ -253,7 +253,6 @@ class CleanOwnerCaseSyncOperation(object):
         )
 
     def get_payload(self):
-        self.restore_state.mark_as_new_format()
         with self.timing_context('get_case_ids_to_sync'):
             case_ids_to_sync = self.get_case_ids_to_sync()
         sync_payload = self.payload_class(self.timing_context, case_ids_to_sync, self.restore_state)

@@ -112,6 +112,14 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
     try:
         sync_log.update_phone_lists(xform, cases)
     except SyncLogAssertionError as e:
+        soft_assert('@'.join(['skelly', 'dimagi.com']))(
+            False,
+            'SyncLogAssertionError raised while updating phone lists',
+            {
+                'form_id': xform.form_id,
+                'cases': [case.case_id for case in cases]
+            }
+        )
         if e.case_id and e.case_id not in case_id_blacklist:
             form_ids = get_case_xform_ids(e.case_id)
             case_id_blacklist.append(e.case_id)

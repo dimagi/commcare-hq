@@ -3,7 +3,11 @@ from django.utils.translation import get_language
 from dimagi.ext.jsonobject import DictProperty, JsonObject, StringProperty
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.util import localize
-from corehq.apps.userreports.transforms.custom.date import get_month_display, days_elapsed_from_date
+from corehq.apps.userreports.transforms.custom.date import (
+    get_month_display,
+    days_elapsed_from_date,
+    get_ethiopian_to_gregorian,
+)
 from corehq.apps.userreports.transforms.custom.numeric import \
     get_short_decimal_display
 from corehq.apps.userreports.transforms.custom.users import (
@@ -28,6 +32,7 @@ _CUSTOM_TRANSFORM_MAP = {
     'owner_display': get_owner_display,
     'user_without_domain_display': get_user_without_domain_display,
     'short_decimal_display': get_short_decimal_display,
+    'ethiopian_date_to_gregorian_date': get_ethiopian_to_gregorian,
 }
 
 

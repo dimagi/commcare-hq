@@ -20,7 +20,7 @@ from corehq.const import OPENROSA_VERSION_MAP, OPENROSA_DEFAULT_VERSION
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.case_search.models import CaseSearchConfig, merge_queries, CaseSearchQueryAddition, \
-    SEARCH_QUERY_ADDITION_KEY, QueryMergeException
+    SEARCH_QUERY_ADDITION_KEY, QueryMergeException, FuzzyProperties
 from corehq.apps.app_manager.const import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
 from corehq.apps.domain.decorators import (
     domain_admin_required,
@@ -129,7 +129,11 @@ def search(request, domain):
     if blacklisted_owner_ids is not None:
         search_es = add_blacklisted_owner_ids(search_es, blacklisted_owner_ids)
 
-    fuzzies = config.config.get_fuzzy_properties_for_case_type(case_type)
+    try:
+        fuzzies = config.fuzzy_properties.get(domain=domain, case_type=case_type).properties
+    except FuzzyProperties.DoesNotExist:
+        fuzzies = []
+
     for key, value in criteria.items():
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
 
