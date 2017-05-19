@@ -109,38 +109,19 @@ class Command(BaseCommand):
     def fix_user_properties(self, app_id):
         app = Application.get(app_id)
         if not should_fix_user_props(app):
-            return False
+            return
         logger.info('fixing app %s', app_id)
-        modules = [m for m in app.modules if m.module_type == 'basic']
         updated = False
-        for module in modules:
+        modules = [m for m in app.modules if m.module_type == 'basic']
+        for modi, module in enumerate(modules):
             forms = [f for f in module.forms if f.doc_type == 'Form']
-            for form in forms:
+            for formi, form in enumerate(forms):
                 if not (form.case_references and form.case_references.load):
                     continue
-                xform = XForm(form.source)
-                refs = {xform.resolve_path(ref): value[0]
-                    for ref, value in form.case_references.load.iteritems()
-                    if len(value) == 1 and value[0] and value[0].startswith("#user/")}
-                for node in xform.model_node.findall("{f}setvalue"):
-                    if (node.attrib.get('ref') in refs
-                            and node.attrib.get('event') == "xforms-ready"
-                            and node.attrib.get('value')
-                            and node.attrib.get('value')
-                                .startswith(BAD_USERCASE_PATH)):
-                        ref = node.attrib.get('ref')
-                        userprop = refs[ref]
-                        assert userprop.startswith("#user/"), (ref, userprop)
-                        prop = userprop[len("#user/"):]
-                        setval = node.attrib.get('value')
-                        if setval == BAD_USERCASE_PATH + prop:
-                            logger.info("setvalue %s -> %s", ref, userprop)
-                            node.attrib["value"] = USERPROP_PREFIX + prop
-                            updated = True
+                updated = fix_user_props(app, form, modi, formi) or updated
         if updated:
-            save_xform(app, form, ET.tostring(xform.xml))
-        #app.save()
-        return True
+            app.save()
+            logger.info("saving updated app %s", app_id)
 
 
 USERPROP_PREFIX = (
@@ -159,6 +140,29 @@ def should_fix_user_props(app):
         if form.case_references and form.case_references.load
         for refs in form.case_references.load.values()
         if len(refs) == 1 and refs[0])
+
+
+def fix_user_props(app, form, modi, formi):
+    updated = False
+    xform = XForm(form.source)
+    refs = {xform.resolve_path(ref): vals[0]
+        for ref, vals in form.case_references.load.iteritems()
+        if len(vals) == 1 and vals[0] and vals[0].startswith("#user/")}
+    for node in xform.model_node.findall("{f}setvalue"):
+        if (node.attrib.get('ref') in refs
+                and node.attrib.get('event') == "xforms-ready"):
+            ref = node.attrib.get('ref')
+            value = (node.attrib.get('value') or "").replace(" ", "")
+            userprop = refs[ref]
+            assert userprop.startswith("#user/"), (ref, userprop)
+            prop = userprop[len("#user/"):]
+            if value == BAD_USERCASE_PATH + prop:
+                logger.info("%s/%s setvalue %s -> %s", modi, formi, userprop, ref)
+                node.attrib["value"] = USERPROP_PREFIX + prop
+                updated = True
+    if updated:
+        save_xform(app, form, ET.tostring(xform.xml))
+    return updated
 
 
 def migrate_preloads(app, module, form, preloads):
