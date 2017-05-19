@@ -13,7 +13,7 @@ def get_health_establishment_hierarchy_codes(location):
                     location_id=location.location_id))
         return parent[0]
 
-    HealthEstablishmentHierarchy = namedtuple('HealthEstablishmentHierarchy', 'stcode dtcode tbucode')
+    HealthEstablishmentHierarchy = namedtuple('HealthEstablishmentHierarchy', 'stcode dtcode')
     state = get_parent('sto')
     district = get_parent('dto')
     try:

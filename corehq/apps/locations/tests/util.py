@@ -91,22 +91,24 @@ def setup_locations(domain, locations, location_types):
 LocationStructure = namedtuple('LocationStructure', ['name', 'type', 'children'])
 
 
-def setup_locations_with_structure(domain, locations):
+def setup_locations_with_structure(domain, locations, metadata):
     """
     Creates a hierarchy of locations given a recursive list of LocationStructure namedtuples
     This allows you to set complex (e.g. forked) location structures within tests
     """
     created_locations = {}
 
-    def create_locations(locations, parent):
+    def create_locations(locations, parent, metadata=None):
         for location in locations:
             created_location = make_location(domain=domain, name=location.name, parent=parent,
                                              location_type=location.type)
+            if metadata:
+                created_location.metadata = metadata
             created_location.save()
             created_locations[location.name] = created_location.sql_location
-            create_locations(location.children, created_location)
+            create_locations(location.children, created_location, metadata)
 
-    create_locations(locations, None)
+    create_locations(locations, None, metadata)
     return created_locations
 
 

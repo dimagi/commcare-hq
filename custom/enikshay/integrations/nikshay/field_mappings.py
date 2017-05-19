@@ -141,10 +141,10 @@ basis_of_diagnosis = {
 health_establishment_type = {
     'hospital': 'H',
     'lab': 'L',
-    'Pharmacy': 'P',
+    'pharmacy': 'P',
 }
 
 health_establishment_sector = {
-    'Public': 'P',
-    'Private': 'V',
+    'public': 'P',
+    'private': 'V',
 }

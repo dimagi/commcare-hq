@@ -470,6 +470,6 @@ def setup_enikshay_locations(domain_name):
             ])
         ])
     ]
-
+    location_metadata = {'is_test': 'no', 'nikshay_code': 'nikshay_code'}
     return (setup_location_types_with_structure(domain_name, location_type_structure),
-            setup_locations_with_structure(domain_name, location_structure))
+            setup_locations_with_structure(domain_name, location_structure, location_metadata))
