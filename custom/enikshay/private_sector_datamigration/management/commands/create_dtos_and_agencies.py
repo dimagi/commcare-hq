@@ -56,7 +56,7 @@ class Command(BaseCommand):
         return SQLLocation.objects.create(
             domain=domain,
             name=agency.agencyName,
-            site_code=str(agency.agencyId),
+            site_code=Command.get_user_name_for_agency(agency),
             location_type=LocationType.objects.get(
                 domain=domain,
                 code=agency.location_type,
@@ -104,3 +104,10 @@ class Command(BaseCommand):
             4: 'WHP',
             5: 'DTO-Mehsana',
         }[org_id]
+
+    @staticmethod
+    def get_user_name_for_agency(agency):
+        return UserDetail.objects.get(
+            isPrimary=True,
+            agencyId=agency.agencyId,
+        ).motechUserName

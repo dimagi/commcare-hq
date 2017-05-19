@@ -68,13 +68,14 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
         start_loc_count = SQLLocation.objects.filter(domain=self.domain).count()
 
         agency_id = 100789
+        username = 'org123'
 
         UserDetail.objects.create(
             id=1,
             agencyId=agency_id,
             districtId='189',
             isPrimary=True,
-            motechUserName='org123',
+            motechUserName=username,
             organisationId=1,
             passwordResetFlag=False,
             pincode=3,
@@ -106,7 +107,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(agency.location_type.code, 'pcp')
         self.assertEqual(agency.name, 'Nicks Agency')
         self.assertEqual(agency.parent, dto)
-        self.assertEqual(agency.site_code, '100789')
+        self.assertEqual(agency.site_code, username)
         self.assertDictEqual(
             agency.metadata,
             {
@@ -135,7 +136,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
         users = CommCareUser.by_domain(self.domain)
         self.assertEqual(len(users), 1)
         user = users[0]
-        self.assertEqual(user.username, '%d@%s.commcarehq.org' % (agency_id, self.domain))
+        self.assertEqual(user.username, '%s@%s.commcarehq.org' % (username, self.domain))
         user_data_minus_commcare_primary_case_sharing_id = user.user_data.copy()
         del user_data_minus_commcare_primary_case_sharing_id['commcare_primary_case_sharing_id']
         self.assertDictEqual(
