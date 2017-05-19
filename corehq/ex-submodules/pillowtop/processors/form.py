@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.http import Http404
 
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -60,6 +61,17 @@ def mark_has_submission(domain, build_id):
     if app and not app.has_submissions:
         app.has_submissions = True
         app.save()
+
+
+def _update_last_submission(last_submission, received_on_datetime, build_version, cc_version):
+    time_difference = received_on_datetime.timestamp - last_submission.submission_date.timestamp
+    if time_difference > timedelta(seconds=60 * 15):
+        return True
+    if build_version != last_submission.build_version:
+        return True
+    if cc_version != last_submission.commcare_version:
+        return True
+    return False
 
 
 def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata, received_on):

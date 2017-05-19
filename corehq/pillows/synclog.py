@@ -1,6 +1,5 @@
 from corehq.apps.receiverwrapper.util import get_version_and_app_from_build_id
 from corehq.apps.users.models import LastSync, CouchUser, CommCareUser, WebUser
-from corehq.pillows.dbaccessors import get_last_synclogs_for_user
 from corehq.pillows.utils import update_latest_builds, filter_by_app
 from corehq.util.doc_processor.interface import BaseDocProcessor, DocumentProcessorController
 from corehq.util.doc_processor.couch import CouchDocumentProvider
@@ -15,6 +14,7 @@ from pillowtop.checkpoints.manager import PillowCheckpoint, PillowCheckpointEven
 from pillowtop.reindexer.reindexer import Reindexer
 
 from casexml.apps.phone.models import SyncLog
+from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclogs_for_user
 
 
 def get_synclog_pillow(pillow_id='SynclogPillow'):
@@ -99,7 +99,7 @@ class SynclogReindexerDocProcessor(BaseDocProcessor):
         return True
 
     def _doc_to_changes(self, doc):
-        synclogs = get_last_synclogs_for_user(doc['_id'])
+        synclogs = get_synclogs_for_user(doc['_id'])
         changes = [Change(
             id=res['doc']['_id'],
             sequence_id=None,

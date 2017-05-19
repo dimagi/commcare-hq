@@ -6,6 +6,7 @@ from corehq.apps.change_feed.document_types import get_doc_meta_object_from_docu
 from corehq.apps.change_feed.data_sources import FORM_SQL, COUCH
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.reports.analytics.esaccessors import get_last_form_for_apps
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.esaccessors import get_last_form_for_apps
 from corehq.util.doc_processor.couch import CouchDocumentProvider

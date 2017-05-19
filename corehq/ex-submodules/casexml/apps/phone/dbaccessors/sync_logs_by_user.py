@@ -1,5 +1,4 @@
 from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log
-from dimagi.utils.couch.database import get_db
 
 
 def get_last_synclog_for_user(user_id):
@@ -16,3 +15,17 @@ def get_last_synclog_for_user(user_id):
     if result:
         row, = result
         return properly_wrap_sync_log(row['doc'])
+
+
+def get_synclogs_for_user(user_id, limit=10):
+    result = SyncLog.view(
+        "phone/sync_logs_by_user",
+        startkey=[user_id, {}],
+        endkey=[user_id],
+        descending=True,
+        limit=limit,
+        reduce=False,
+        include_docs=True,
+        wrap_doc=False
+    )
+    return result
