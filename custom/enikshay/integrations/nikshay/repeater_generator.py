@@ -45,7 +45,7 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     purpose_of_testing,
     smear_result_grade,
     drug_susceptibility_test_status,
-)
+    basis_of_diagnosis)
 from custom.enikshay.case_utils import update_case
 from dimagi.utils.post import parse_SOAP_response
 
@@ -378,13 +378,13 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
             # API for Address with char ',' returns Invalid data format error
             "Address": sanitize_text_for_xml(person_case_properties.get('current_address', '').replace(',', '')),
             "pin": person_case_properties.get('current_address_postal_code', ''),
-            "lno": person_case_properties.get('phone', ''),
+            "lno": person_case_properties.get('phone_number', ''),
             "mno": '0',
             "tbdiagdate": _format_date(str(episode_date)),
             "tbstdate": _format_date(episode_case_properties.get(TREATMENT_START_DATE, str(datetime.date.today()))),
-            "Type": disease_classification.get(episode_case_properties.get('pulmonary_extra_pulmonary', ''), ''),
-            "B_diagnosis": episode_case_properties.get('case_definition', ''),
-            "D_SUSTest": drug_susceptibility_test_status.get(episode_case_properties.get('dst', '')),
+            "Type": disease_classification.get(episode_case_properties.get('disease_classification', ''), ''),
+            "B_diagnosis": basis_of_diagnosis.get(episode_case_properties.get('basis_of_diagnosis', ''), ''),
+            "D_SUSTest": drug_susceptibility_test_status.get(episode_case_properties.get('dst_status', '')),
             "Treat_I": episode_case_properties.get('treatment_initiation_status', ''),
             "usersid": settings.ENIKSHAY_PRIVATE_API_USERS.get(person_locations.sto, ''),
             "password": settings.ENIKSHAY_PRIVATE_API_PASSWORD,

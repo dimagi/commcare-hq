@@ -47,7 +47,6 @@ def get_person_case_structure(case_id, user_id, extra_update=None):
         'nikshay_registered': "false",
         'husband_father_name': u"Mr. Peregrine เՇร ค Շгคק Kumar",
         'current_address_postal_code': '110088',
-        'phone': '27477587'
     }
     update.update(extra_update)
 
@@ -101,9 +100,8 @@ def get_episode_case_structure(case_id, indexed_occurrence_case, extra_update=No
         TREATMENT_SUPPORTER_FIRST_NAME: u"𝔊𝔞𝔫𝔡𝔞𝔩𝔣",
         TREATMENT_SUPPORTER_LAST_NAME: u"𝔗𝔥𝔢 𝔊𝔯𝔢𝔶",
         'treatment_initiation_status': 'F',
-        'pulmonary_extra_pulmonary': 'pulmonary',
-        'dst': 'pending',
-        'case_definition': 'E',
+        'dst_status': 'pending',
+        'basis_of_diagnosis': 'clinical_other',
     }
     update.update(extra_update)
 

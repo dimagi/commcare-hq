@@ -127,3 +127,13 @@ drug_susceptibility_test_status = {
     'rif_resistant': 'R',
     'xdr': 'N'
 }
+
+basis_of_diagnosis = {
+    'clinical_chest': 'X',
+    'clinical_other': 'E',
+    'microbiological_smear': 'S',
+    'microbiological_cbnaat': 'M',
+    'microbiological_culture': 'C',
+    'microbiological_pcr': 'M',
+    'microbiological_other': 'M',
+}
