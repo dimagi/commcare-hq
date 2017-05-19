@@ -12,11 +12,6 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_http_methods
 
 from couchdbkit import ResourceNotFound, BulkSaveError
-from corehq.apps.style.decorators import (
-    use_jquery_ui,
-    use_multiselect,
-)
-from corehq.util.files import file_extention_from_filename
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
@@ -33,9 +28,12 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.style.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.locations.permissions import location_safe
 from corehq.util import reverse
+from corehq.util.files import file_extention_from_filename
+from custom.enikshay.user_setup import ENikshayLocationFormSet
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
@@ -486,7 +484,9 @@ class NewLocationView(BaseLocationView):
     @memoized
     def location_form(self):
         data = self.request.POST if self.request.method == 'POST' else None
-        return LocationFormSet(
+        form_set = (ENikshayLocationFormSet if toggles.ENIKSHAY.enabled(self.domain)
+                    else LocationFormSet)
+        return form_set(
             self.location,
             bound_data=data,
             request_user=self.request.couch_user,

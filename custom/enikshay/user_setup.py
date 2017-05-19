@@ -9,6 +9,9 @@ import re
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from corehq import toggles
+from corehq.apps.custom_data_fields import CustomDataEditor
+from corehq.apps.locations.forms import LocationFormSet, LocationForm
+from corehq.apps.users.forms import NewMobileWorkerForm
 from corehq.apps.users.signals import clean_commcare_user, commcare_user_post_save
 from corehq.apps.locations.signals import clean_location
 from .models import IssuerId
@@ -26,8 +29,12 @@ LOC_TYPES_TO_USER_TYPES = {
 }
 
 
+def skip_custom_setup(domain, request_user):
+    return not toggles.ENIKSHAY.enabled(domain) or request_user.is_domain_admin(domain)
+
+
 def clean_user_callback(sender, domain, request_user, user, forms, **kwargs):
-    if not toggles.ENIKSHAY.enabled(domain) or request_user.is_domain_admin(domain):
+    if skip_custom_setup(domain, request_user):
         return
 
     new_user_form = forms.get('NewMobileWorkerForm')
@@ -310,3 +317,24 @@ def connect_signals():
     clean_location.connect(clean_location_callback, dispatch_uid="clean_location_callback")
     clean_commcare_user.connect(clean_user_callback, dispatch_uid="clean_user_callback")
     commcare_user_post_save.connect(save_user_callback, dispatch_uid="save_user_callback")
+
+
+class ENikshayNewMobileWorkerForm(NewMobileWorkerForm):
+    """Mobile worker list view create modal"""
+    def __init__(self, *args, **kwargs):
+        super(ENikshayNewMobileWorkerForm, self).__init__(*args, **kwargs)
+
+
+class ENikshayUserDataEditor(CustomDataEditor):
+    """Custom User Data (everywhere it turns up)"""
+    def __init__(self, *args, **kwargs):
+        super(ENikshayUserDataEditor, self).__init__(*args, **kwargs)
+
+
+class ENikshayLocationFormSet(LocationFormSet):
+    """Location, custom data, and possibly location user and data forms"""
+    user_form_class = ENikshayNewMobileWorkerForm
+
+    def __init__(self, *args, **kwargs):
+        print 'ENikshayLocationFormSet'
+        super(ENikshayLocationFormSet, self).__init__(*args, **kwargs)
