@@ -76,24 +76,38 @@ class TestLocationParentIdExpression(TestCase):
         super(TestLocationParentIdExpression, cls).setUpClass()
         cls.domain = 'test-loc-parent-id'
         cls.domain_obj = create_domain(cls.domain)
-        cls.location_type = LocationType(
+        cls.continent_location_type = LocationType(
             domain=cls.domain,
-            name="state",
-            code="state",
+            name="continent",
+            code="continent",
         )
-        cls.location_type.save()
+        cls.continent_location_type.save()
+        cls.kingdom_location_type = LocationType(
+            domain=cls.domain,
+            name="kingdom",
+            code="kingdom",
+            parent_type=cls.continent_location_type,
+        )
+        cls.kingdom_location_type.save()
+        cls.city_location_type = LocationType(
+            domain=cls.domain,
+            name="city",
+            code="city",
+            parent_type=cls.kingdom_location_type,
+        )
+        cls.city_location_type.save()
 
         cls.parent = SQLLocation(
             domain=cls.domain,
             name="Westeros",
-            location_type=cls.location_type,
+            location_type=cls.continent_location_type,
             site_code="westeros",
         )
         cls.parent.save()
         cls.child = SQLLocation(
             domain=cls.domain,
             name="The North",
-            location_type=cls.location_type,
+            location_type=cls.kingdom_location_type,
             parent=cls.parent,
             site_code="the_north",
         )
@@ -101,7 +115,7 @@ class TestLocationParentIdExpression(TestCase):
         cls.grandchild = SQLLocation(
             domain=cls.domain,
             name="Winterfell",
-            location_type=cls.location_type,
+            location_type=cls.city_location_type,
             parent=cls.child,
             site_code="winterfell",
         )
