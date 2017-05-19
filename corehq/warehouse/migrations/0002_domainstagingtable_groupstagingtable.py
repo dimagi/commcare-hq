@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
                 ('use_sql_backend', models.NullBooleanField()),
                 ('first_domain_for_user', models.NullBooleanField()),
                 ('domain_last_modified', models.DateTimeField()),
-                ('domain_created_on', models.DateTimeField()),
+                ('domain_created_on', models.DateTimeField(null=True)),
             ],
             options={
                 'abstract': False,

@@ -3,50 +3,62 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 
 from corehq.apps.groups.models import Group
+from corehq.apps.domain.models import Domain
 
 from corehq.warehouse.models import (
-    GroupStagingTable
+    GroupStagingTable,
+    DomainStagingTable,
 )
 
 
-class TestGroupStagingTable(TestCase):
+class BaseStagingTableTest(TestCase):
+    records = []
+    staging_table_cls = None
 
     @classmethod
     def setUpClass(cls):
-        cls.groups = [
-            Group(name='one', case_sharing=True, reporting=True),
-            Group(name='two'),
-            Group(name='three'),
-        ]
-        for group in cls.groups:
-            group.save()
+        for record in cls.records:
+            record.save()
 
     def tearDown(self):
-        GroupStagingTable.clear_records()
+        self.staging_table_cls.clear_records()
 
     @classmethod
     def tearDownClass(cls):
-        for group in cls.groups:
-            group.delete()
+        for record in cls.records:
+            record.delete()
+
+
+class StagingRecordsTestsMixin(object):
 
     def test_stage_records(self):
         start = datetime.utcnow() - timedelta(days=3)
         end = datetime.utcnow() + timedelta(days=3)
 
-        self.assertEqual(GroupStagingTable.objects.count(), 0)
-        GroupStagingTable.stage_records(start, end)
-        self.assertEqual(GroupStagingTable.objects.count(), 3)
+        self.assertEqual(self.staging_table_cls.objects.count(), 0)
+        self.staging_table_cls.stage_records(start, end)
+        self.assertEqual(self.staging_table_cls.objects.count(), 3)
 
-        GroupStagingTable.stage_records(start, end)
-        self.assertEqual(GroupStagingTable.objects.count(), 3)
+        self.staging_table_cls.stage_records(start, end)
+        self.assertEqual(self.staging_table_cls.objects.count(), 3)
 
     def test_stage_records_no_data(self):
         start = datetime.utcnow() - timedelta(days=3)
         end = datetime.utcnow() - timedelta(days=2)
 
-        self.assertEqual(GroupStagingTable.objects.count(), 0)
-        GroupStagingTable.stage_records(start, end)
-        self.assertEqual(GroupStagingTable.objects.count(), 0)
+        self.assertEqual(self.staging_table_cls.objects.count(), 0)
+        self.staging_table_cls.stage_records(start, end)
+        self.assertEqual(self.staging_table_cls.objects.count(), 0)
+
+
+class TestGroupStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
+
+    records = [
+        Group(name='one', case_sharing=True, reporting=True),
+        Group(name='two'),
+        Group(name='three'),
+    ]
+    staging_table_cls = GroupStagingTable
 
     def test_stage_records_bulk(self):
         start = datetime.utcnow() - timedelta(days=3)
@@ -65,3 +77,13 @@ class TestGroupStagingTable(TestCase):
             with patch('corehq.warehouse.utils.DJANGO_MAX_BATCH_SIZE', 2):
                 GroupStagingTable.stage_records(start, end)
         self.assertEqual(GroupStagingTable.objects.count(), 3)
+
+
+class TestDomainStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
+
+    records = [
+        Domain(name='one', hr_name='One', creating_user_id='abc', is_active=True),
+        Domain(name='two', is_active=True),
+        Domain(name='three', is_active=True),
+    ]
+    staging_table_cls = DomainStagingTable

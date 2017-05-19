@@ -84,7 +84,7 @@ class DomainStagingTable(StagingTable):
     first_domain_for_user = models.NullBooleanField()
 
     domain_last_modified = models.DateTimeField()
-    domain_created_on = models.DateTimeField()
+    domain_created_on = models.DateTimeField(null=True)
 
     FIELD_MAPPING = [
         ('_id', 'domain_id'),
