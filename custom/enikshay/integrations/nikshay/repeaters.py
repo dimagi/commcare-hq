@@ -1,12 +1,14 @@
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 
-from corehq.apps.repeaters.models import CaseRepeater, SOAPRepeaterMixin
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.repeaters.models import CaseRepeater, SOAPRepeaterMixin, LocationRepeater
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import NIKSHAY_INTEGRATION
 from casexml.apps.case.xml.parser import CaseUpdateAction
 from casexml.apps.case.xform import get_case_updates
-from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.repeaters.signals import create_repeat_records
 from custom.enikshay.case_utils import (
@@ -24,7 +26,8 @@ from custom.enikshay.const import (
 from custom.enikshay.const import TREATMENT_OUTCOME, EPISODE_PENDING_REGISTRATION
 from custom.enikshay.integrations.nikshay.repeater_generator import \
     NikshayRegisterPatientPayloadGenerator, NikshayHIVTestPayloadGenerator, \
-    NikshayTreatmentOutcomePayload, NikshayFollowupPayloadGenerator, NikshayRegisterPrivatePatientPayloadGenerator
+    NikshayTreatmentOutcomePayload, NikshayFollowupPayloadGenerator, NikshayRegisterPrivatePatientPayloadGenerator, \
+    NikshayHealthEstablishmentPayloadGenerator
 from custom.enikshay.integrations.utils import (
     is_valid_person_submission,
     is_valid_test_submission,
@@ -223,6 +226,28 @@ class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeat
         )
 
 
+class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
+    payload_generator_classes = (NikshayHealthEstablishmentPayloadGenerator,)
+
+    class Meta(object):
+        app_label = 'repeaters'
+
+    include_app_id_param = False
+    friendly_name = _("Forward Nikshay Health Establishments")
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        return NIKSHAY_INTEGRATION.enabled(domain)
+
+    @classmethod
+    def get_custom_url(cls, domain):
+        from custom.enikshay.integrations.nikshay.views import RegisterNikshayHealthEstablishmentRepeaterView
+        return reverse(RegisterNikshayHealthEstablishmentRepeaterView.urlname, args=[domain])
+
+    def allowed_to_forward(self, location):
+        return True
+
+
 def person_hiv_status_changed(case):
     last_case_action = case.actions[-1]
     if last_case_action.is_case_create:
@@ -250,6 +275,13 @@ def related_dates_changed(case):
         )
     )
     return value_changed
+
+
+@receiver(post_save, sender=SQLLocation, dispatch_uid="create_nikshay_he_repeat_records")
+def create_location_repeat_records(sender, raw=False, **kwargs):
+    if raw:
+        return
+    create_repeat_records(NikshayHealthEstablishmentRepeater, kwargs['instance'])
 
 
 def create_case_repeat_records(sender, case, **kwargs):
