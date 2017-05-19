@@ -7,6 +7,7 @@ import copy
 import re
 from lxml.etree import XMLSyntaxError, Element
 
+from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     ModuleNotFoundException,
@@ -63,11 +64,7 @@ def process_bulk_app_translation_upload(app, f):
     # todo: HeaderValueError does not belong here
     except (HeaderValueError, InvalidExcelFileException) as e:
         msgs.append(
-            (messages.error, _(
-                "Translation Upload Failed! "
-                "Please make sure you are using a valid Excel 2007 or later (.xlsx) file. "
-                "Error details: {}."
-            ).format(e))
+            (messages.error, _(APP_TRANSLATION_UPLOAD_FAIL_MESSAGE).format(e))
         )
         return msgs
     except JSONReaderError as e:
