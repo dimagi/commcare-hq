@@ -10,7 +10,7 @@ from casexml.apps.case.signals import cases_received
 from casexml.apps.case.util import validate_phone_datetime
 from casexml.apps.phone.cleanliness import should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -130,10 +130,7 @@ def _update_sync_logs(xform, case_db, config, cases):
     try:
         relevant_log = xform.get_sync_token()
     except ResourceNotFound:
-        if LOOSE_SYNC_TOKEN_VALIDATION.enabled(xform.domain):
-            relevant_log = None
-        else:
-            raise
+        relevant_log = None
 
     if relevant_log:
         # in reconciliation mode, things can be unexpected

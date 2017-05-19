@@ -6,7 +6,7 @@ import uuid
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation, LocationType
-from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
 from corehq.apps.locations.tests.util import (
     LocationStructure,
     LocationTypeStructure,
@@ -14,6 +14,7 @@ from corehq.apps.locations.tests.util import (
     setup_locations_with_structure,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from custom.enikshay.case_utils import CASE_TYPE_REFERRAL
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
@@ -141,6 +142,74 @@ def get_adherence_case_structure(case_id, indexed_episode_id, adherence_date, ex
     )
 
 
+def get_referral_case_structure(case_id, indexed_episode_id, extra_update=None):
+    extra_update = extra_update or {}
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            "case_type": CASE_TYPE_REFERRAL,
+            "create": True,
+            "update": extra_update
+        },
+        indices=[CaseIndex(
+            CaseStructure(case_id=indexed_episode_id, attrs={"create": False}),
+            identifier='host',
+            relationship=CASE_INDEX_EXTENSION,
+            related_type='episode',
+        )],
+        walk_related=False,
+    )
+
+def get_prescription_case_structure(case_id, indexed_episode_id, extra_update=None):
+    extra_update = extra_update or {}
+    update = {
+        'state': 'fulfilled',
+    }
+    update.update(extra_update)
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            "case_type": "prescription",
+            "create": True,
+            "update": update
+        },
+        indices=[CaseIndex(
+            CaseStructure(case_id=indexed_episode_id, attrs={"create": False}),
+            identifier='episode_of_prescription',
+            relationship=CASE_INDEX_EXTENSION,
+            related_type='episode',
+        )],
+        walk_related=False,
+    )
+
+
+def get_voucher_case_structure(case_id, indexed_prescription_id, extra_update=None):
+    # https://india.commcarehq.org/a/enikshay/apps/view/9340429733463e58ae0e1518defee221/summary/#/cases
+    # https://docs.google.com/spreadsheets/d/1MCG205FOcsYsmKXHoSTjZ6A1iuqCIAESyleBl7G7PR8/
+    extra_update = extra_update or {}
+    update = {
+        'state': 'fulfilled',
+        'final_prescription_num_days': 10,
+        'voucher_type': 'prescription',
+    }
+    update.update(extra_update)
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            "case_type": "voucher",
+            "create": True,
+            "update": update
+        },
+        indices=[CaseIndex(
+            CaseStructure(case_id=indexed_prescription_id, attrs={"create": False}),
+            identifier='prescription_of_voucher',
+            relationship=CASE_INDEX_CHILD,
+            related_type='prescription',
+        )],
+        walk_related=False,  # TODO I'm not sure what this should be
+    )
+
+
 class ENikshayCaseStructureMixin(object):
     def setUp(self):
         super(ENikshayCaseStructureMixin, self).setUp()
@@ -157,6 +226,8 @@ class ENikshayCaseStructureMixin(object):
         self.episode_id = u"episode"
         self.test_id = u"test"
         self.lab_referral_id = u"lab_referral"
+        self.prescription_id = "prescription_id"
+        self._prescription_created = False
         self.primary_phone_number = "0123456789"
         self.secondary_phone_number = "0999999999"
         self.treatment_supporter_phone = "066000666"
@@ -267,6 +338,21 @@ class ENikshayCaseStructureMixin(object):
                 "adherence_source": adherence_source,
                 "adherence_value": adherence_value,
             })
+        ])
+
+    def create_prescription_case(self):
+        return self.factory.create_or_update_case(
+            get_prescription_case_structure(uuid.uuid4().hex, self.episode_id)
+        )[0]
+
+    def create_voucher_case(self, prescription_id, extra_update=None):
+        return self.factory.create_or_update_case(
+            get_voucher_case_structure(uuid.uuid4().hex, prescription_id, extra_update)
+        )[0]
+
+    def create_referral_case(self, case_id):
+        return self.factory.create_or_update_cases([
+            get_referral_case_structure(case_id, self.episode_id)
         ])
 
 

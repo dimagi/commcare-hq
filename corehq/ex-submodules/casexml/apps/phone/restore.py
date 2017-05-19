@@ -18,8 +18,7 @@ from casexml.apps.phone.exceptions import (
     BadStateException, RestoreException, DateOpenedBugException,
 )
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
-from corehq.util.soft_assert import soft_assert
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.decorators.memoized import memoized
@@ -254,7 +253,6 @@ class BlobRestoreResponse(RestoreResponse):
         self.identifier = 'restore-response-{}'.format(uuid4().hex)
 
         self.response_body = tempfile.TemporaryFile('w+')
-        self.blobdb = get_blob_db()
 
     def get_filename(self, suffix=None):
         return "{identifier}{suffix}.{ext}".format(
@@ -296,13 +294,13 @@ class BlobRestoreResponse(RestoreResponse):
 
             response.write(self.closing_tag)
             response.seek(0)
-            self.blobdb.put(response, self.get_filename(), timeout=60)
+            get_blob_db().put(response, self.get_filename(), timeout=60)
 
         self.finalized = True
         self.close()
 
     def as_file(self):
-        return self.blobdb.get(self.get_filename())
+        return get_blob_db().get(self.get_filename())
 
     @classmethod
     def get_payload(cls, identifier):
@@ -317,14 +315,14 @@ class BlobRestoreResponse(RestoreResponse):
 
     def as_string(self):
         try:
-            blob = self.blobdb.get(self.get_filename())
+            blob = get_blob_db().get(self.get_filename())
             return blob.read()
         finally:
             blob.close()
 
     def get_http_response(self):
-        headers = {'Content-Length': self.blobdb.size(self.get_filename())}
-        return stream_response(self.blobdb.get(self.get_filename()), headers)
+        headers = {'Content-Length': get_blob_db().size(self.get_filename())}
+        return stream_response(get_blob_db().get(self.get_filename()), headers)
 
 
 class AsyncRestoreResponse(object):
@@ -676,12 +674,8 @@ class RestoreConfig(object):
         try:
             self.restore_state.validate_state()
         except InvalidSyncLogException as e:
-            if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain):
-                # This exception will get caught by the view and a 412 will be returned to the phone for resync
-                raise RestoreException(e)
-            else:
-                # This exception will fail hard and we'll get a 500 error message
-                raise
+            # This exception will get caught by the view and a 412 will be returned to the phone for resync
+            raise RestoreException(e)
 
     def get_payload(self):
         self.validate()

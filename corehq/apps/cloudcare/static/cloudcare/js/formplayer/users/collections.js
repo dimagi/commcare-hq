@@ -9,7 +9,7 @@ FormplayerFrontend.module("Users.Collections", function(Collections, FormplayerF
             if (!this.domain) {
                 throw new Error('Cannot instantiate collection without domain');
             }
-            return '/a/' + this.domain + '/settings/users/commcare/';
+            return '/a/' + this.domain + '/cloudcare/api/login_as/users/';
         },
         model: FormplayerFrontend.Users.Models.User,
 
@@ -25,14 +25,8 @@ FormplayerFrontend.module("Users.Collections", function(Collections, FormplayerF
 
         sync: function (method, model, options) {
             options.xhrFields = {withCredentials: true};
-            // Need to set these headers to allow access to @allow_remote_invocation
-            options.beforeSend = function(xhr) {
-                xhr.setRequestHeader('DjNg-Remote-Method', 'get_pagination_data');
-                xhr.setRequestHeader("X-CSRFToken", $("#csrfTokenContainer").val());
-            };
             options.contentType = "application/json";
-            options.data = options.data || JSON.stringify({});
-            return Backbone.Collection.prototype.sync.call(this, 'create', model, options);
+            return Backbone.Collection.prototype.sync.call(this, 'read', model, options);
         },
     });
 });

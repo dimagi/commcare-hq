@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _, override as override_language
+from django.utils.translation import ugettext as _, override as override_language, ugettext_noop
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
@@ -92,6 +92,7 @@ class Permissions(DocumentSchema):
     view_report_list = StringListProperty(default=[])
 
     edit_billing = BooleanProperty(default=False)
+    report_an_issue = BooleanProperty(default=True)
 
     @classmethod
     def wrap(cls, data):
@@ -173,11 +174,16 @@ class Permissions(DocumentSchema):
 
 
 class UserRolePresets(object):
-    READ_ONLY_NO_REPORTS = "Read Only (No Reports)"
-    APP_EDITOR = "App Editor"
-    READ_ONLY = "Read Only"
-    FIELD_IMPLEMENTER = "Field Implementer"
-    BILLING_ADMIN = "Billing Admin"
+    # this is kind of messy, but we're only marking for translation (and not using ugettext_lazy)
+    # because these are in JSON and cannot be serialized
+    # todo: apply translation to these in the UI
+    # note: these are also tricky to change because these are just some default names,
+    # that end up being stored in the database. Think about the consequences of changing these before you do.
+    READ_ONLY_NO_REPORTS = ugettext_noop("Read Only (No Reports)")
+    APP_EDITOR = ugettext_noop("App Editor")
+    READ_ONLY = ugettext_noop("Read Only")
+    FIELD_IMPLEMENTER = ugettext_noop("Field Implementer")
+    BILLING_ADMIN = ugettext_noop("Billing Admin")
     INITIAL_ROLES = (
         READ_ONLY,
         APP_EDITOR,
@@ -1719,13 +1725,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     @property
     @memoized
     def location(self):
-        from corehq.apps.locations.models import Location
-        if self.location_id:
-            try:
-                return Location.get(self.location_id)
-            except ResourceNotFound:
-                pass
-        return None
+        return self.sql_location
 
     @property
     def sql_location(self):
@@ -2255,16 +2255,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         else:
             return SQLLocation.objects.none()
 
-    @memoized
     def get_location(self, domain):
-        from corehq.apps.locations.models import Location
-        loc_id = self.get_location_id(domain)
-        if loc_id:
-            try:
-                return Location.get(loc_id)
-            except ResourceNotFound:
-                pass
-        return None
+        return self.get_sql_location(domain)
 
     def is_locked_out(self):
         return self.login_attempts >= MAX_LOGIN_ATTEMPTS

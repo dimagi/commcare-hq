@@ -17,6 +17,9 @@ from custom.enikshay.case_utils import (
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.const import TREATMENT_OUTCOME, EPISODE_PENDING_REGISTRATION
+from custom.enikshay.integrations.nikshay.repeater_generator import \
+    NikshayRegisterPatientPayloadGenerator, NikshayHIVTestPayloadGenerator, \
+    NikshayTreatmentOutcomePayload, NikshayFollowupPayloadGenerator
 from custom.enikshay.integrations.utils import (
     is_valid_person_submission,
     is_valid_test_submission,
@@ -24,7 +27,7 @@ from custom.enikshay.integrations.utils import (
 )
 
 
-from custom.enikshay.integrations.ninetyninedots.repeaters import case_properties_changed
+from custom.enikshay.integrations.utils import case_properties_changed
 from custom.enikshay.integrations.nikshay.field_mappings import treatment_outcome
 
 
@@ -38,6 +41,8 @@ class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
 
     include_app_id_param = False
     friendly_name = _("Forward eNikshay Patients to Nikshay (episode case type)")
+
+    payload_generator_classes = (NikshayRegisterPatientPayloadGenerator,)
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -76,6 +81,8 @@ class NikshayHIVTestRepeater(BaseNikshayRepeater):
 
     include_app_id_param = False
     friendly_name = _("Forward eNikshay Patient's HIV Test to Nikshay (person case type)")
+
+    payload_generator_classes = (NikshayHIVTestPayloadGenerator,)
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -117,6 +124,8 @@ class NikshayTreatmentOutcomeRepeater(BaseNikshayRepeater):
 
     friendly_name = _("Forward Treatment Outcomes to Nikshay (episode case type)")
 
+    payload_generator_classes = (NikshayTreatmentOutcomePayload,)
+
     @classmethod
     def available_for_domain(cls, domain):
         return NIKSHAY_INTEGRATION.enabled(domain)
@@ -148,6 +157,8 @@ class NikshayFollowupRepeater(BaseNikshayRepeater):
 
     include_app_id_param = False
     friendly_name = _("Forward eNikshay Patient's Follow Ups to Nikshay (test case type)")
+
+    payload_generator_classes = (NikshayFollowupPayloadGenerator,)
 
     @classmethod
     def available_for_domain(cls, domain):
@@ -226,7 +237,3 @@ def create_hiv_test_repeat_records(sender, case, **kwargs):
 
 case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
 case_post_save.connect(create_hiv_test_repeat_records, CommCareCaseSQL)
-
-# TODO: Remove this when eNikshay gets migrated to SQL
-case_post_save.connect(create_case_repeat_records, CommCareCase)
-case_post_save.connect(create_hiv_test_repeat_records, CommCareCase)

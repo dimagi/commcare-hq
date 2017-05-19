@@ -96,7 +96,7 @@ class KafkaCheckpoint(models.Model):
         for tp, offset in all_offsets.items():
             if tp not in already_created:
                 to_create.append(
-                    cls(checkpoint_id=checkpoint_id, topic=tp[0], partition=tp[1], offset=offset)
+                    cls(checkpoint_id=checkpoint_id, topic=tp[0], partition=tp[1], offset=0)
                 )
 
         cls.objects.bulk_create(to_create)

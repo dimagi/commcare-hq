@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
 
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from django_prbac.utils import has_privilege
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
@@ -20,6 +21,7 @@ from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.case_search.models import CaseSearchConfig, merge_queries, CaseSearchQueryAddition, \
     SEARCH_QUERY_ADDITION_KEY, QueryMergeException
+from corehq.apps.app_manager.const import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_or_digest_or_basic_or_apikey,
@@ -33,7 +35,7 @@ from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
 from corehq.apps.ota.tasks import queue_prime_restore
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
@@ -110,7 +112,11 @@ def search(request, domain):
             to="{}@{}.com".format('frener', 'dimagi'),
             notify_admins=False, send_to_ops=False
         )
-        _soft_assert(False, u"Someone in domain: {} tried accessing case search without a config".format(domain), e)
+        _soft_assert(
+            False,
+            u"Someone in domain: {} tried accessing case search without a config".format(domain),
+            e
+        )
         config = CaseSearchConfig(domain=domain)
 
     query_addition_id = criteria.pop(SEARCH_QUERY_ADDITION_KEY, None)
@@ -118,6 +124,10 @@ def search(request, domain):
     owner_id = criteria.pop('owner_id', False)
     if owner_id:
         search_es = search_es.owner(owner_id)
+
+    blacklisted_owner_ids = criteria.pop(CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY, None)
+    if blacklisted_owner_ids is not None:
+        search_es = add_blacklisted_owner_ids(search_es, blacklisted_owner_ids)
 
     fuzzies = config.config.get_fuzzy_properties_for_case_type(case_type)
     for key, value in criteria.items():
@@ -139,6 +149,12 @@ def search(request, domain):
     cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
+
+
+def add_blacklisted_owner_ids(search_es, blacklisted_owner_ids):
+    for blacklisted_owner_id in blacklisted_owner_ids.split(' '):
+            search_es = search_es.blacklist_owner_id(blacklisted_owner_id)
+    return search_es
 
 
 def _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details):
@@ -180,6 +196,7 @@ def claim(request, domain):
     """
     as_user = request.POST.get('commcare_login_as', None)
     restore_user = get_restore_user(domain, request.couch_user, as_user)
+    cache = get_redis_default_cache()
 
     case_id = request.POST.get('case_id', None)
     if case_id is None:
@@ -187,7 +204,7 @@ def claim(request, domain):
 
     try:
         if (
-            request.session.get('last_claimed_case_id') == case_id or
+            cache.get(_claim_key(restore_user.user_id)) == case_id or
             get_first_claim(domain, restore_user.user_id, case_id)
         ):
             return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
@@ -198,8 +215,12 @@ def claim(request, domain):
     except CaseNotFound:
         return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
                             status=410)
-    request.session['last_claimed_case_id'] = case_id
+    cache.set(_claim_key(restore_user.user_id), case_id)
     return HttpResponse(status=200)
+
+
+def _claim_key(user_id):
+    return u'last_claimed_case_case_id-{}'.format(user_id)
 
 
 def get_restore_params(request):

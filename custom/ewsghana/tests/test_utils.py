@@ -3,7 +3,7 @@ from nose.tools import nottest
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.custom_data_fields.models import CustomDataField
-from corehq.apps.locations.models import Location, LocationType
+from corehq.apps.locations.models import make_location, LocationType
 from corehq.apps.products.models import SQLProduct, Product
 from corehq.apps.programs.models import Program
 from corehq.apps.users.models import UserRole, Permissions
@@ -60,10 +60,10 @@ def create_test_products(domain):
 
 @nottest
 def create_test_locations(domain):
-    country = Location(name='national', site_code='ghana', location_type='country', domain=domain)
+    country = make_location(name='national', site_code='ghana', location_type='country', domain=domain)
     country.save()
 
-    crms = Location(
+    crms = make_location(
         name='Central Regional Medical Store',
         site_code='crms',
         location_type='country',
@@ -71,7 +71,7 @@ def create_test_locations(domain):
     )
     crms.save()
 
-    test_region = Location(
+    test_region = make_location(
         name='Test Region',
         site_code='testregion',
         location_type='region',
@@ -80,7 +80,7 @@ def create_test_locations(domain):
     )
     test_region.save()
 
-    test_region2 = Location(
+    test_region2 = make_location(
         name='Test Region2',
         site_code='testregion2',
         location_type='region',
@@ -89,7 +89,7 @@ def create_test_locations(domain):
     )
     test_region2.save()
 
-    rsp = Location(
+    rsp = make_location(
         name='Test Regional Medical Store',
         site_code='rsp',
         location_type='Regional Medical Store',
@@ -99,7 +99,7 @@ def create_test_locations(domain):
     rsp.save()
     assign_products_to_locations(rsp, ["ad", "al", "mc", "ng", "mg"])
 
-    rsp2 = Location(
+    rsp2 = make_location(
         name='Test Regional Medical Store',
         site_code='rsp2',
         location_type='Regional Medical Store',
@@ -109,7 +109,7 @@ def create_test_locations(domain):
     rsp2.save()
     assign_products_to_locations(rsp2, ["ad", "al"])
 
-    test_district = Location(
+    test_district = make_location(
         name='Test District',
         site_code='testdistrict',
         location_type='district',
@@ -118,7 +118,7 @@ def create_test_locations(domain):
     )
     test_district.save()
 
-    test_facility = Location(
+    test_facility = make_location(
         name='Active Test hospital',
         site_code='tsactive',
         location_type='Hospital',

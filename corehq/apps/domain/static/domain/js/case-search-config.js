@@ -1,4 +1,4 @@
-/* globals hqDefine, ko, $, _ */
+/* globals hqDefine, ko, $, _, COMMCAREHQ, hqImport */
 
 hqDefine('domain/js/case-search-config.js', function () {
     'use strict';
@@ -50,14 +50,33 @@ hqDefine('domain/js/case-search-config.js', function () {
             self.fuzzyProperties.push(new CaseTypeProps('', ['']));
         }
 
+        self.change = function(){
+            self.saveButton.fire('change');
+        };
+        self.fuzzyProperties.subscribe(self.change);
+
         self.addCaseType = function () {
             self.fuzzyProperties.push(new CaseTypeProps('', ['']));
+            self.change();
         };
         self.removeCaseType = function (caseType) {
             self.fuzzyProperties.remove(caseType);
+            self.change();
         };
 
-        self.submit = function (form) {
+        self.saveButton = COMMCAREHQ.SaveButton.init({
+            unsavedMessage: "You have unchanged settings",
+            save: function() {
+                self.saveButton.ajax({
+                    type: 'post',
+                    url: hqImport("hqwebapp/js/urllib.js").reverse("case_search_config"),
+                    data: self.serialize(),
+                    dataType: 'json',
+                });
+            },
+        });
+
+        self.serialize = function(){
             var fuzzyProperties = [];
             for (var i = 0; i < self.fuzzyProperties().length; i++) {
                 fuzzyProperties.push({
@@ -68,16 +87,10 @@ hqDefine('domain/js/case-search-config.js', function () {
                     ),
                 });
             }
-            $.post({
-                url: form.action, 
-                data: {
-                    'enable': self.toggleEnabled(),
-                    'config': {'fuzzy_properties': fuzzyProperties},
-                },
-                success: function () {
-                    // TODO: Watch changes. On success change Save button from btn-primary to btn-default
-                },
-            });
+            return {
+                'enable': self.toggleEnabled(),
+                'config': {'fuzzy_properties': fuzzyProperties},
+            };
         };
     };
 

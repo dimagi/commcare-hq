@@ -10,7 +10,7 @@ from casexml.apps.phone.models import SyncLog, SyncLogAssertionError
 from couchdbkit import ResourceNotFound
 from couchexport.export import SCALAR_NEVER_WAS
 
-from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter
+from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter, ExpandedMobileWorkerFilter
 from corehq.apps.es import filters
 from dimagi.utils.dates import safe_strftime
 from dimagi.utils.decorators.memoized import memoized
@@ -132,7 +132,10 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     @memoized
     def user_query(self, pagination=True):
-        mobile_user_and_group_slugs = self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug)
+        mobile_user_and_group_slugs = set(
+            self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug) +
+            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)  # Cater for old ReportConfigs
+        )
         user_query = LocationRestrictedMobileWorkerFilter.user_es_query(
             self.domain,
             mobile_user_and_group_slugs,

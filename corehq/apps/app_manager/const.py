@@ -62,3 +62,5 @@ STOCK_QUESTION_TAG_NAMES = [
 ]
 
 DEFAULT_FETCH_LIMIT = 5
+
+CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = u'commcare_blacklisted_owner_ids'

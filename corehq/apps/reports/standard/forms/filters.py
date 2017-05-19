@@ -1,6 +1,6 @@
 from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.apps.reports.models import HQToggle
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 
 
 class SubmitToggle(HQToggle):
@@ -20,12 +20,12 @@ class SubmissionErrorType(object):
     ARCHIVED = 5
     
     doc_types = ["XFormInstance", "XFormError", "XFormDuplicate", "XFormDeprecated", "SubmissionErrorLog", "XFormArchived"]
-    human_readable = [ugettext_noop("Normal Form"),
-                      ugettext_noop("Form with Errors"),
-                      ugettext_noop("Duplicate Form"),
-                      ugettext_noop("Overwritten Form"),
-                      ugettext_noop("Generic Error"),
-                      ugettext_noop("Archived Form")]
+    human_readable = [ugettext_lazy("Normal Form"),
+                      ugettext_lazy("Form with Errors"),
+                      ugettext_lazy("Duplicate Form"),
+                      ugettext_lazy("Overwritten Form"),
+                      ugettext_lazy("Generic Error"),
+                      ugettext_lazy("Archived Form")]
     
     error_defaults = [False, True, False, False, True, False]
     success_defaults = [True, False, False, False, False, False]
@@ -59,7 +59,7 @@ class SubmissionTypeFilter(BaseReportFilter):
     # don't use this as an example / best practice
     # todo: cleanup
     slug = "submitfilter"
-    label = ugettext_noop("Submission Type")
+    label = ugettext_lazy("Submission Type")
     template = "reports/filters/submit_error_types.html"
 
     @property

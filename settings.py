@@ -133,7 +133,7 @@ SECRET_KEY = 'you should really change this'
 # Add this to localsettings and set it to False, so that CSRF protection is enabled on localhost
 CSRF_SOFT_MODE = True
 
-MIDDLEWARE_CLASSES = [
+MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -179,7 +179,6 @@ PASSWORD_HASHERS = (
 ROOT_URLCONF = "urls"
 
 DEFAULT_APPS = (
-    'corehq.apps.userhack',  # this has to be above auth
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -334,10 +333,9 @@ HQ_APPS = (
     'dimagi.ext',
     'corehq.doctypemigrations',
     'corehq.blobs',
+    'corehq.warehouse',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
-    'corehq.apps.motech',
-    'corehq.apps.motech.openmrs',
 
     # custom reports
     'a5288',
@@ -373,14 +371,16 @@ HQ_APPS = (
     'custom.icds',
     'custom.icds_reports',
     'custom.pnlppgi',
+    'custom.hki'
 )
 
 ENIKSHAY_APPS = (
     'custom.enikshay',
     'custom.enikshay.integrations.ninetyninedots',
     'custom.enikshay.nikshay_datamigration',
+    'custom.enikshay.integrations.nikshay',
+    'custom.enikshay.integrations.bets',
     'custom.enikshay.private_sector_datamigration',
-    'custom.enikshay.integrations.nikshay'
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -745,7 +745,7 @@ TOUCHFORMS_API_PASSWORD = "changeme"
 # import local settings if we find them
 LOCAL_APPS = ()
 LOCAL_COUCHDB_APPS = ()
-LOCAL_MIDDLEWARE_CLASSES = ()
+LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
 LOCAL_REPEATERS = ()
 
@@ -1433,7 +1433,7 @@ if ENABLE_PRELOGIN_SITE:
 seen = set()
 INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
 
-MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
+MIDDLEWARE += LOCAL_MIDDLEWARE
 
 ### Shared drive settings ###
 SHARED_DRIVE_CONF = helper.SharedDriveConfiguration(
@@ -1715,9 +1715,11 @@ BASE_REPEATERS = (
     'corehq.apps.repeaters.models.CaseRepeater',
     'corehq.apps.repeaters.models.ShortFormRepeater',
     'corehq.apps.repeaters.models.AppStructureRepeater',
+    'corehq.apps.repeaters.models.UserRepeater',
+    'corehq.apps.repeaters.models.LocationRepeater',
 )
 
-CUSTOM_REPEATERS = (
+ENIKSHAY_REPEATERS = (
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsRegisterPatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsAdherenceRepeater',
@@ -1726,9 +1728,17 @@ CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayFollowupRepeater',
+    'custom.enikshay.integrations.bets.repeaters.ChemistBETSVoucherRepeater',
+    'custom.enikshay.integrations.bets.repeaters.LabBETSVoucherRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETS180TreatmentRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSDrugRefillRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSSuccessfulTreatmentRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSDiagnosisAndNotificationRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSAYUSHReferralRepeater',
+
 )
 
-REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS
+REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + ENIKSHAY_REPEATERS
 
 
 STATIC_UCR_REPORTS = [
@@ -1923,6 +1933,10 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('first_case_form_with_xmlns', 'custom.enikshay.expressions.first_case_form_with_xmlns_expression'),
     ('count_case_forms_with_xmlns', 'custom.enikshay.expressions.count_case_forms_with_xmlns_expression'),
     ('month_expression', 'custom.enikshay.expressions.month_expression'),
+    ('enikshay_referred_to', 'custom.enikshay.expressions.referred_to_expression'),
+    ('enikshay_referred_by', 'custom.enikshay.expressions.referred_by_expression'),
+    ('enikshay_date_of_referral', 'custom.enikshay.expressions.date_of_referral_expression'),
+    ('enikshay_date_of_acceptance', 'custom.enikshay.expressions.date_of_acceptance_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
@@ -1985,6 +1999,12 @@ DOMAIN_MODULE_MAP = {
     'enikshay-domain-copy-test': 'custom.enikshay',
     'enikshay-aks-audit': 'custom.enikshay',
     'np-migration-3': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-1': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-2': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-3': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-4': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-5': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-6': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 

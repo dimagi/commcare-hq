@@ -12,6 +12,7 @@
     <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
     <script src="{% static 'app_manager/js/managed_app.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -302,4 +303,8 @@
     {% initial_page_data 'app_subset' app_subset %}
     {% initial_page_data 'formdesigner' formdesigner %}
     {% block form-view %}{% endblock %}
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% include "hqwebapp/rollout_modal.html" %}
 {% endblock %}

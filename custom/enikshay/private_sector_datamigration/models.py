@@ -3,6 +3,17 @@ from django.db import models
 from dimagi.utils.decorators.memoized import memoized
 
 
+REPORTING_MECHANISM_99_DOTS = 84
+REPORTING_MECHANISM_FIELD_OFFICER = 85
+REPORTING_MECHANISM_TREATMENT_SUPPORTER = 86
+REPORTING_MECHANISM_MERM = 96
+REPORTING_MECHANISM_NONE = 0
+
+DIRECTLY_OBSERVED_DOSE = 0
+MISSED_DOSE = 1
+SELF_ADMINISTERED_DOSE = 3
+
+
 def get_agency_by_motech_user_name(motech_user_name):
     try:
         return Agency.objects.get(
@@ -115,8 +126,34 @@ class Beneficiary(models.Model):
         }[self.caseStatus.strip()]
 
     @property
+    def husband_father_name(self):
+        return self.fatherHusbandName or ''
+
+    @property
+    def language_preference(self):
+        return {
+            '131': 'en',
+            '132': 'hin',
+            '133': 'bhoj',
+            '152': 'mar',
+            '153': 'guj',
+            None: '',
+        }[self.languagePreferences]
+
+    @property
+    def name(self):
+        return ' '.join([self.firstName, self.lastName])
+
+    @property
     def referred_provider(self):
         return get_agency_by_motech_user_name(self.referredQP)
+
+    @property
+    def send_alerts(self):
+        return {
+            'Yes': 'yes',
+            'No': 'no',
+        }[self.configureAlert]
 
     @property
     def sex(self):
@@ -150,7 +187,7 @@ class Episode(models.Model):
     associatedFO = models.CharField(max_length=255, null=True)
     bankName = models.CharField(max_length=255, null=True)
     basisOfDiagnosis = models.CharField(max_length=255, null=True)
-    beneficiaryID = models.ForeignKey(Beneficiary, on_delete=models.CASCADE)
+    beneficiaryID = models.CharField(max_length=18)
     branchName = models.CharField(max_length=255, null=True)
     creationDate = models.DateTimeField(null=True)
     creator = models.CharField(max_length=255, null=True)
@@ -199,12 +236,6 @@ class Episode(models.Model):
     treatingQP = models.CharField(max_length=255, null=True)
     treatmentOutcomeId = models.CharField(max_length=255, null=True)
     treatmentPhase = models.CharField(max_length=255, null=True)
-    # [u'Select',
-    #  None,
-    #  u'Intensive Phase',
-    #  u'N/A',
-    #  u'Continuation Phase',
-    #  u'Extended IP']
     tsProviderType = models.CharField(max_length=255, null=True)
     unknownAdherencePct = models.DecimalField(decimal_places=10, max_digits=14)
     unresolvedMissedDosesPct = models.DecimalField(decimal_places=10, max_digits=14)
@@ -214,19 +245,81 @@ class Episode(models.Model):
     adherenceSupportAssigned = models.CharField(max_length=255, null=True)
 
     @property
-    def current_patient_type_choice(self):
-        if self.newOrRetreatment == 'New':
-            return 'new'
-        elif self.newOrRetreatment == 'Retreatment':
-            if self.retreatmentReason in ['Recurrent', 'Relapse']:
-                return 'recurrent'
-            elif self.retreatmentReason == 'After Treatment Failure':
-                return 'treatment_after_failure'
-            elif self.retreatmentReason == 'After loss to follow-up':
-                return 'treatment_after_lfu'
-            elif self.retreatmentReason == 'Others':
-                return 'other_previously_treated'
-        return ''  # TODO - handle
+    def adherence_total_doses_taken(self):
+        return Adherence.objects.filter(
+            episodeId=self.episodeID,
+            dosageStatusId__in=[DIRECTLY_OBSERVED_DOSE, SELF_ADMINISTERED_DOSE],
+        ).count()
+
+    @property
+    @memoized
+    def adherence_tracking_mechanism(self):
+        reporting_mechanism_values = Adherence.objects.filter(
+            episodeId=self.episodeID,
+        ).exclude(
+            reportingMechanismId=REPORTING_MECHANISM_NONE,
+        ).values('reportingMechanismId').distinct()
+
+        values = [field_to_value['reportingMechanismId'] for field_to_value in reporting_mechanism_values]
+
+        if reporting_mechanism_values:
+            if REPORTING_MECHANISM_99_DOTS in values:
+                return '99dots'
+            elif REPORTING_MECHANISM_MERM in values:
+                return 'merm'
+            elif REPORTING_MECHANISM_FIELD_OFFICER in values:
+                return 'field_officer'
+            elif REPORTING_MECHANISM_TREATMENT_SUPPORTER in values:
+                return 'treatment_supporter'
+            else:
+                return 'contact_centre'
+        else:
+            return ''
+
+    @property
+    def basis_of_diagnosis(self):
+        return {
+            'Clinical - Chest Xray': 'clinical_chest',
+            'Clinical - Other': 'clinical_other',
+            'Microbiologically Confirmed - Smear-positive': 'microbiological_smear',
+            'Microbiologically Confirmed - Xpert MTB/RIF TB-positive': 'microbiological_cbnaat',
+            'Microbiologically Confirmed - Xpert TB-positive': '', # TODO
+            'Microbiologically Confirmed - Culture-positive': 'microbiological_culture',
+            'Microbiologically Confirmed - PCR (including LPA)': 'microbiological_pcr',
+            'Microbiologically Confirmed - PCR(including LPA)': 'microbiological_pcr',
+            'Microbiologically Confirmed - Other': 'microbiological_other',
+        }[self.basisOfDiagnosis]
+
+    @property
+    def case_definition(self):
+        if self.basis_of_diagnosis in [
+            'clinical_chest',
+            'clinical_other',
+        ]:
+            return 'clinical'
+        else:
+            return 'microbiological'
+
+    @property
+    def patient_type(self):
+        return {
+            'new': 'new',
+            'retreatment': self.retreatment_reason,
+            '': '',
+        }[self.new_retreatment]
+
+    @property
+    def retreatment_reason(self):
+        if self.newOrRetreatment == 'Retreatment':
+            return {
+                'After loss to follow-up': 'treatment_after_lfu',
+                'After Treatment Failure': 'treatment_after_failure',
+                'Recurrent': 'recurrent',
+                'Relapse': 'recurrent',
+                'Select': '',
+                'None': '',
+            }
+        return ''
 
     @property
     def diabetes_status(self):
@@ -239,14 +332,37 @@ class Episode(models.Model):
         }[self.diabetes]
 
     @property
-    def disease_classification(self):
+    def dots_99_enabled(self):
+        return 'true' if self.adherence_tracking_mechanism in ['99dots', 'merm'] else 'false'
+
+    @property
+    def site_property(self):
         return {
             'Pulmonary': 'pulmonary',
-            'Extrapulmonary': 'extra_pulmonary',
-            'Pulmonary+Extrapulmonary': 'extra_pulmonary',
-            'Select': '',
-            'N/A': '',
+            'Extrapulmonary': 'extrapulmonary',
+            'Pulmonary+Extrapulmonary': 'pulmonary_and_extrapulmonary',
+            'Select': 'na',
+            'N/A': 'na',
         }[self.site]
+
+    @property
+    def disease_classification(self):
+        return {
+            'na': 'na',
+            'extrapulmonary': 'extrapulmonary',
+            'pulmonary': 'pulmonary',
+            'pulmonary_and_extrapulmonary': 'pulmonary',
+        }[self.site_property]
+
+    @property
+    def dst_status(self):
+        return {
+            'DST Not done': 'not_done',
+            'Pending': 'pending',
+            'Rifampicin Resistant(MDR)': 'rif_resistant',
+            'Rifampicin sensitive': 'rif_sensitive',
+            'XDR': 'xdr',
+        }[self.dstStatus]
 
     @property
     def hiv_status(self):
@@ -259,26 +375,53 @@ class Episode(models.Model):
         }[self.hiv]
 
     @property
-    def site_choice(self):
+    def new_retreatment(self):
         return {
-            'Abdomen': 'abdominal',
-            'Bones And Joints': 'other',
-            'Brain': 'brain',
-            'Eye': 'other',
-            'Genitourinary': 'other',
-            'Intestines': 'other',
-            'Lymph Nodes': 'lymph_node',
-            'Other': 'other',
-            'Pleural effusion': 'pleural_effusion',
-            'Skin': 'other',
-            'Spine': 'spine',
-            None: '',
+            'New': 'new',
+            'Retreatment': 'retreatment',
+            'N/A': '',
             'Select': '',
-        }[self.extraPulmonary]
+            None: '',
+        }[self.newOrRetreatment]
+
+    @property
+    def site_choice(self):
+        if self.site_property in [
+            'extrapulmonary',
+            'pulmonary_and_extrapulmonary',
+        ]:
+            return {
+                'Abdomen': 'abdominal',
+                'Bones And Joints': 'bones_and_joints',
+                'Brain': 'brain',
+                'Eye': 'eye',
+                'Genitourinary': 'genitourinary',
+                'Intestines': 'intestines',
+                'Lymph Nodes': 'lymph_node',
+                'Other': 'other',
+                'Pleural effusion': 'pleural_effusion',
+                'Skin': 'skin',
+                'Spine': 'spine',
+                None: 'other',
+                'Select': 'other',
+            }[self.extraPulmonary]
+        else:
+            return ''
 
     @property
     def treating_provider(self):
         return get_agency_by_motech_user_name(self.treatingQP)
+
+    @property
+    def treatment_phase(self):
+        return {
+            'Intensive Phase': 'ip',
+            'Extended IP': 'extended_ip',
+            'Continuation Phase': 'continuation_phase_cp',
+            'N/A': '',
+            'Select': '',
+            None: '',
+        }[self.treatmentPhase]
 
     @property
     def treatment_outcome(self):
@@ -290,10 +433,13 @@ class Episode(models.Model):
             return {
                 'Cured': 'cured',
                 'Died': 'died',
-                'died': 'died',
+                'DIED': 'died',
                 'Failure': 'failure',
-                'SWITCH TO CAT IV': 'regimen_changed',
-                'Switched to Category IV/V': 'regimen_changed',
+                'SWITCH OVER CAT4': 'switched_to_cat_ivv',
+                'SWITCH TO CAT IV': 'switched_to_cat_ivv',
+                'Switched to Category IV/V': 'switched_to_cat_ivv',
+                'Transferred Out': 'transferred_out',
+                'Treatment Completed': 'treatment_completed',
             }[self.treatmentOutcomeId]
 
     @property
@@ -304,7 +450,7 @@ class Episode(models.Model):
             'died',
             'failure',
             'loss_to_follow_up',
-            'regimen_changed',
+            'switched_to_cat_ivv',
         ]
 
 
@@ -318,7 +464,7 @@ class Adherence(models.Model):
     dosageStatusId = models.IntegerField()
     doseDate = models.DateTimeField()
     doseReasonId = models.IntegerField()
-    episodeId = models.ForeignKey(Episode, on_delete=models.CASCADE)
+    episodeId = models.CharField(max_length=8)
     modificationDate = models.DateTimeField(null=True)
     modifiedBy = models.CharField(max_length=255, null=True)
     owner = models.CharField(max_length=255, null=True)
@@ -328,9 +474,9 @@ class Adherence(models.Model):
     @property
     def adherence_value(self):
         return {
-            0: 'directly_observed_dose',
-            1: 'missed_dose',
-            3: 'self_administered_dose',
+            DIRECTLY_OBSERVED_DOSE: 'directly_observed_dose',
+            MISSED_DOSE: 'missed_dose',
+            SELF_ADMINISTERED_DOSE: 'self_administered_dose',
         }[self.dosageStatusId]
 
 
@@ -525,3 +671,12 @@ class UserDetail(models.Model):
     valid = models.BooleanField()
     villageTownCity = models.CharField(max_length=256, null=True)
     wardId = models.CharField(max_length=256, null=True)
+
+
+class MigratedBeneficiaryCounter(models.Model):
+    id = models.AutoField(primary_key=True)
+
+    @classmethod
+    def get_next_counter(cls):
+        counter = MigratedBeneficiaryCounter.objects.create()
+        return counter.id

@@ -100,7 +100,7 @@ class PillowBase(object):
         """
         context = PillowRuntimeContext(changes_seen=0, do_set_checkpoint=True)
         try:
-            for change in self.get_change_feed().iter_changes(since=since, forever=forever):
+            for change in self.get_change_feed().iter_changes(since=since or None, forever=forever):
                 if change:
                     timer = TimingContext()
                     try:
