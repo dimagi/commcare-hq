@@ -53,7 +53,8 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
                            if subscription is not None else None),
             "date_end": (subscription.date_end
                          if subscription is not None else None),
-            "plan_version": subscription.plan_version,
+            "plan_version": (subscription.plan_version
+                             if subscription is not None else None),
         }
 
     def dehydrate_calculated_properties(self, bundle):

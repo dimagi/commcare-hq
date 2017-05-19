@@ -677,7 +677,7 @@ class DomainSubscriptionView(DomainAccountingSettings):
     @memoized
     def plan(self):
         subscription = Subscription.get_active_subscription_by_domain(self.domain)
-        plan_version = subscription.plan_version
+        plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
         date_end = None
         next_subscription = {
             'exists': False,
