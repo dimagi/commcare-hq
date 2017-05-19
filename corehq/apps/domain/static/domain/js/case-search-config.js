@@ -26,6 +26,14 @@ hqDefine('domain/js/case-search-config.js', function () {
         };
     };
 
+    var RemoveCharacters = function(caseType, caseProperty, regex){
+        var self = this;
+
+        self.caseType = ko.observable(caseType);
+        self.caseProperty = ko.observable(caseProperty);
+        self.regex = ko.observable(regex);
+    };
+
     /**
      * Returns a viewModel for domain/admin/case_search.html
      */
@@ -42,7 +50,14 @@ hqDefine('domain/js/case-search-config.js', function () {
                 initialValues.fuzzy_properties[caseType]
             ));
         }
-
+        self.removeCharacters = ko.observableArray();
+        for (var i = 0; i < initialValues.remove_characters.length; i++){
+            self.removeCharacters.push(new RemoveCharacters(
+                initialValues.remove_characters[i].case_type,
+                initialValues.remove_characters[i].case_property,
+                initialValues.remove_characters[i].regex
+            ));
+        }
         self.change = function(){
             self.saveButton.fire('change');
         };
@@ -54,6 +69,15 @@ hqDefine('domain/js/case-search-config.js', function () {
         };
         self.removeCaseType = function (caseType) {
             self.fuzzyProperties.remove(caseType);
+            self.change();
+        };
+
+        self.addRemoveCharacters = function(){
+            self.removeCharacters.push(new RemoveCharacters('', '', ''));
+            self.change();
+        };
+        self.removeRemoveCharacters = function(r){
+            self.removeCharacters.remove(r);
             self.change();
         };
 
@@ -84,6 +108,13 @@ hqDefine('domain/js/case-search-config.js', function () {
             return {
                 'enable': self.toggleEnabled(),
                 'fuzzy_properties': fuzzyProperties,
+                'remove_characters': _.map(self.removeCharacters(), function(rc){
+                    return {
+                        'case_type': rc.caseType(),
+                        'case_property': rc.caseProperty(),
+                        'regex': rc.regex(),
+                    };
+                }),
             };
         };
     };
