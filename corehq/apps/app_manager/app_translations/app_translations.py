@@ -64,7 +64,7 @@ def process_bulk_app_translation_upload(app, f):
     except (HeaderValueError, InvalidExcelFileException) as e:
         msgs.append(
             (messages.error, _(
-                "App Translation Failed! "
+                "Translation Upload Failed! "
                 "Please make sure you are using a valid Excel 2007 or later (.xlsx) file. "
                 "Error details: {}."
             ).format(e))
