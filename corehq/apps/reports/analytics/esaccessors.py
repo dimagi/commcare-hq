@@ -221,7 +221,7 @@ def get_last_form_for_apps(apps, user_id):
             forms.append(hits[0])
     return forms
 
-g
+
 def get_submission_counts_by_user(domain, datespan, user_ids=None):
     return _get_form_counts_by_user(domain, datespan, True, user_ids)
 
