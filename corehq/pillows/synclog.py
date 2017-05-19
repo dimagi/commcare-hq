@@ -1,5 +1,6 @@
 from corehq.apps.receiverwrapper.util import get_version_and_app_from_build_id
 from corehq.apps.users.models import LastSync, CouchUser, CommCareUser, WebUser
+from corehq.pillows.dbaccessors import get_last_synclogs_for_user
 from corehq.pillows.utils import update_latest_builds, filter_by_app
 from corehq.util.doc_processor.interface import BaseDocProcessor, DocumentProcessorController
 from corehq.util.doc_processor.couch import CouchDocumentProvider
@@ -98,21 +99,12 @@ class SynclogReindexerDocProcessor(BaseDocProcessor):
         return True
 
     def _doc_to_changes(self, doc):
-        result = SyncLog.view(
-            "phone/sync_logs_by_user",
-            startkey=[doc['_id'], {}],
-            endkey=[doc['_id']],
-            descending=True,
-            limit=10,
-            reduce=False,
-            include_docs=True,
-            wrap_doc=False
-        )
+        synclogs = get_last_synclogs_for_user(doc['_id'])
         changes = [Change(
             id=res['doc']['_id'],
             sequence_id=None,
             document=res['doc']
-        ) for res in result]
+        ) for res in synclogs]
         return changes
 
 

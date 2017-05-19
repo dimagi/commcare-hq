@@ -5,9 +5,9 @@ from corehq.apps.change_feed.document_types import get_doc_meta_object_from_docu
     change_meta_from_doc_meta_and_document
 from corehq.apps.change_feed.data_sources import FORM_SQL, COUCH
 from corehq.apps.domain.models import Domain
-from corehq.apps.es import FormES
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
+from corehq.pillows.esaccessors import get_last_form_for_apps
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.interface import BaseDocProcessor, DocumentProcessorController
 from corehq.util.doc_processor.sql import SqlDocumentProvider
@@ -133,7 +133,7 @@ def get_sql_app_form_submission_tracker_reindexer():
     return AppFormSubmissionReindexer(doc_provider, FORM_SQL, 'form_processor_xforminstancesql')
 
 
-@quickcache(['domain'], timeout=60 * 60)
+@quickcache(['domain'], timeout=60 * 60 * 5)
 def _get_apps_for_domain(domain):
     project = Domain.get_by_name(domain)
     if project:
@@ -151,8 +151,7 @@ class UserAppFormSubmissionDocProcessor(BaseDocProcessor):
         for change in form_submission_changes:
             try:
                 self.pillow_processor.process_change(None, change)
-            except Exception as e:
-                print(e)
+            except Exception:
                 return False
         return True
 
@@ -164,18 +163,13 @@ class UserAppFormSubmissionDocProcessor(BaseDocProcessor):
 
     def _doc_to_changes(self, doc):
         changes = []
-        forms = []
         apps = []
         if doc['doc_type'] == 'CommCareUser':
             apps = _get_apps_for_domain(doc['domain'])
         else:
             for domain in (dm['domain'] for dm in doc['domain_memberships']):
                 apps = _get_apps_for_domain(domain)
-        for app_id in apps:
-            query = FormES().app(app_id).user_id(doc['_id']).sort('received_on', desc=True).size(1)
-            hits = query.run().hits
-            if hits:
-                forms.append(hits[0])
+        forms = get_last_form_for_apps(apps, doc['_id'])
         for form in forms:
             doc_meta = get_doc_meta_object_from_document(form)
             change_meta = change_meta_from_doc_meta_and_document(
