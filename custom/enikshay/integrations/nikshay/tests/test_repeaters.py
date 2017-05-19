@@ -1188,7 +1188,7 @@ class TestNikshayHealthEstablishmentPayloadGenerator(NikshayRepeaterTestBase):
         self.assertEqual(payload['STATE_CODE'], locations['STO'].metadata['nikshay_code'])
         self.assertEqual(payload['DISTRICT_CODE'], locations['DTO'].metadata['nikshay_code'])
         self.assertEqual(payload['TBU_CODE'], self.pcp.metadata.get('tbu_code', ''))
-        self.assertEqual(payload['MUST_CREATE_NEW'], 'no')
+        self.assertEqual(payload['MUST_CREATE_NEW'], 'N')
         self.assertEqual(payload['USER_ID'], 'test-mh14')
         self.assertEqual(payload['PASSWORD'], '123')
         self.assertEqual(payload['Source'], ENIKSHAY_ID)
