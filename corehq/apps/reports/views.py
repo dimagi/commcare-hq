@@ -1756,7 +1756,11 @@ class EditFormInstance(View):
         instance = _get_location_safe_form(domain, request.couch_user, instance_id)
         context = _get_form_context(request, domain, instance)
         if not instance.app_id or not instance.build_id:
-            return _error(_('Could not detect the application/form for this submission.'))
+            return _error(_(
+                "This submission was made from the App Preview."
+                "As a result it is not possible to edit this submission\n\n"
+                "If this was not submitted from App Preview, please report an issue"
+            ))
 
         user = CouchUser.get_by_user_id(instance.metadata.userID, domain)
         if not user:
