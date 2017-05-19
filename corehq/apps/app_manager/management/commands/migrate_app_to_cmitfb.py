@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from lxml import etree as ET
 
 from couchdbkit import ResourceNotFound
