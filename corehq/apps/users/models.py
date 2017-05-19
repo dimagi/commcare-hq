@@ -807,6 +807,7 @@ class LastBuild(DocumentSchema):
     build_version_date = DateTimeProperty()
     app_id = StringProperty()
 
+
 class ReportingMetadata(DocumentSchema):
     last_submissions = SchemaListProperty(LastSubmission)
     last_submission_for_user = SchemaProperty(LastSubmission)

@@ -113,7 +113,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     def selected_app_id(self):
         return self.request_params.get(SelectApplicationFilter.slug, None)
 
-    @quickcache(['app_id'], timeout=10 * 60)
+    @quickcache(['app_id'], timeout=60 * 60)
     def get_app_name(self, app_id):
         try:
             app = get_app(self.domain, app_id)
@@ -155,22 +155,23 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = None
             build_version = _("Unknown")
             commcare_version = _("Unknown CommCare Version")
+            reporting_metadata = user.get('reporting_metadata', {})
             if self.selected_app_id:
-                last_submissions = user.get('reporting_metadata', {}).get('last_submissions')
+                last_submissions = reporting_metadata.get('last_submissions')
                 if last_submissions:
                     last_sub = self.get_data_for_app(last_submissions, self.selected_app_id)
-                last_syncs = user.get('reporting_metadata', {}).get('last_sync')
+                last_syncs = reporting_metadata.get('last_sync')
                 if last_syncs:
                     last_sync = self.get_data_for_app(last_syncs, self.selected_app_id)
                     if last_sync is None:
                         last_sync = self.get_data_for_app(last_syncs, None)
-                last_builds = user.get('reporting_metadata', {}).get('last_builds')
+                last_builds = reporting_metadata.get('last_builds')
                 if last_builds:
                     last_build = self.get_data_for_app(last_builds, self.selected_app_id)
             else:
-                last_sub = user.get('reporting_metadata', {}).get('last_submission_for_user', {})
-                last_sync = user.get('reporting_metadata', {}).get('last_sync_for_user', {})
-                last_build = user.get('reporting_metadata', {}).get('last_build', {})
+                last_sub = reporting_metadata.get('last_submission_for_user', {})
+                last_sync = reporting_metadata.get('last_sync_for_user', {})
+                last_build = reporting_metadata.get('last_build', {})
                 commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
             if last_sub and last_sub.get('submission_date'):
                 last_seen = string_to_utc_datetime(last_sub['submission_date'])
