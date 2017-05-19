@@ -71,6 +71,7 @@ class AncestorLocationExpression(JsonObject):
     For a given location id and location type, this expression returns the ancestor of the location that is the
     given type.
     If no such location exists, return None.
+    e.g. (boston.location_id, "state") => massachusetts.to_json()
     """
     type = TypeProperty("ancestor_location")
     location_id = DefaultProperty(required=True)
