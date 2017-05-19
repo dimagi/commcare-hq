@@ -458,7 +458,7 @@ class NikshayHealthEstablishmentPayloadGenerator(LocationPayloadGenerator):
             'EMAILID': location.email_address,
             'STATE_CODE': location_hierarchy_codes.get('stcode'),
             'DISTRICT_CODE': location_hierarchy_codes.get('dtcode'),
-            'TBU_CODE': location_hierarchy_codes.get('tbucode'),
+            'TBU_CODE': location.metadata.get('tbucode', ''),
             'MUST_CREATE_NEW': 'no',
             'USER_ID': settings.ENIKSHAY_PRIVATE_API_USERS.get(location_hierarchy_codes.get('stcode'), ''),
             'PASSWORD': settings.ENIKSHAY_PRIVATE_API_PASSWORD,
