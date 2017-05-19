@@ -4,6 +4,8 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.tasks import make_location_user
 from custom.enikshay.private_sector_datamigration.models import Agency, UserDetail
 
+from dimagi.utils.decorators.memoized import memoized
+
 
 class Command(BaseCommand):
 
@@ -57,10 +59,7 @@ class Command(BaseCommand):
             domain=domain,
             name=agency.agencyName,
             site_code=Command.get_user_name_for_agency(agency),
-            location_type=LocationType.objects.get(
-                domain=domain,
-                code=agency.location_type,
-            ),
+            location_type=Command.get_location_type_by_domain_and_code(domain, agency.location_type),
             parent=dto,
             metadata={
                 'enikshay_enabled': 'yes',
@@ -111,3 +110,11 @@ class Command(BaseCommand):
             isPrimary=True,
             agencyId=agency.agencyId,
         ).motechUserName
+
+    @staticmethod
+    @memoized
+    def get_location_type_by_domain_and_code(domain, location_type_code):
+        return LocationType.objects.get(
+            domain=domain,
+            code=location_type_code,
+        )
