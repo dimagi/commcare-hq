@@ -13,7 +13,6 @@ from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.locations.forms import LocationFormSet, LocationForm
 from corehq.apps.users.forms import NewMobileWorkerForm
 from corehq.apps.users.signals import clean_commcare_user, commcare_user_post_save
-from corehq.apps.locations.signals import clean_location
 from .models import IssuerId
 
 TYPES_WITH_REQUIRED_NIKSHAY_CODES = ['sto', 'dto', 'tu', 'dmc', 'phi']
@@ -314,7 +313,6 @@ def add_drtb_hiv_to_dto(domain, user):
 
 
 def connect_signals():
-    clean_location.connect(clean_location_callback, dispatch_uid="clean_location_callback")
     clean_commcare_user.connect(clean_user_callback, dispatch_uid="clean_user_callback")
     commcare_user_post_save.connect(save_user_callback, dispatch_uid="save_user_callback")
 

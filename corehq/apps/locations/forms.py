@@ -26,13 +26,12 @@ from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
 from corehq.apps.locations.tasks import make_location_user
 from corehq.apps.users.forms import NewMobileWorkerForm, generate_strong_password
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.signals import clean_commcare_user
 from corehq.apps.users.util import user_display_string
 from corehq.apps.style import crispy as hqcrispy
 
 from .models import SQLLocation, LocationType, LocationFixtureConfiguration
 from .permissions import user_can_access_location_id
-from .signals import location_edited, clean_location
+from .signals import location_edited
 
 
 class ParentLocWidget(forms.Widget):
@@ -374,32 +373,7 @@ class LocationFormSet(object):
 
     @memoized
     def is_valid(self):
-        # Trigger the clean methods of each form
-        for form in self.forms:
-            form.errors
-        self._send_clean_signals()
         return all(form.is_valid() for form in self.forms)
-
-    def _send_clean_signals(self):
-        clean_location.send(
-            self.__class__.__name__,
-            domain=self.domain,
-            request_user=self.request_user,
-            location=self.location,
-            forms={self.location_form.__class__.__name__: self.location_form,
-                   self.custom_location_data.__class__.__name__: self.custom_location_data},
-        )
-        if self.include_user_forms:
-            clean_commcare_user.send(
-                'LocationFormSet',
-                domain=self.domain,
-                request_user=self.request_user,
-                user=self.user,
-                forms={
-                    self.user_form.__class__.__name__: self.user_form,
-                    self.custom_user_data.__class__.__name__: self.custom_user_data,
-                }
-            )
 
     def save(self):
         if not self.is_valid():
