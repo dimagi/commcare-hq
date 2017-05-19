@@ -40,6 +40,14 @@ class Command(BaseCommand):
         self.force = options["force"]
         self.fix_user_props = options["fix_user_properties"]
         self.migrate_usercase = options["usercase"]
+        if not self.fix_user_props:
+            raise Exception(
+                "This is currently broken and needs to be fixed. "
+                "Problems:\n"
+                "1. wrong xpath used for user property references\n"
+                "2. case references in form.case_references.load are overwritten\n"
+                "3. log detaileds about what changed in case of problems.\n"
+            )
         for ident in options["app_id_or_domain"]:
             if not (self.migrate_usercase or self.fix_user_props):
                 try:
