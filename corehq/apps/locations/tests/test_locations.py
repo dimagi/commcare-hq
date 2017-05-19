@@ -135,7 +135,7 @@ class LocationsTest(TestCase):
         # descendants
         compare(
             [test_state1, test_state2, test_village1, test_village2],
-            self.loc.descendants
+            self.loc.get_descendants()
         )
 
         # children
@@ -158,16 +158,6 @@ class LocationsTest(TestCase):
         compare(
             [self.loc],
             Location.root_locations(self.domain.name)
-        )
-
-        # Location.filter_by_type
-        compare(
-            [test_village1, test_village2],
-            Location.filter_by_type(self.domain.name, 'village')
-        )
-        compare(
-            [test_village1],
-            Location.filter_by_type(self.domain.name, 'village', test_state1)
         )
 
         create_domain('rejected')

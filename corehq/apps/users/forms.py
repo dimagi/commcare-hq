@@ -1174,3 +1174,4 @@ class AddPhoneNumberForm(forms.Form):
                 )
             )
         )
+        self.fields['phone_number'].label = ugettext_lazy('Phone number')

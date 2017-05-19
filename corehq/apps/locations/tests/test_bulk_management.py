@@ -126,6 +126,45 @@ SAME_NAME_SAME_PARENT = [
     ('Cambridge', 'cambridge2', 'city', 'middlesex', '3458', False) + extra_stub_args,
 ]
 
+BIG_LOCATION_TREE = [
+    # (name, site_code, location_type, parent_code, location_id,
+    # do_delete, external_id, latitude, longitude, index)
+    ('0', '0', 'city', 'county11', '', False) + extra_stub_args,
+    ('1', '1', 'city', 'county11', '', False) + extra_stub_args,
+    ('2', '2', 'city', 'county11', '', False) + extra_stub_args,
+    ('3', '3', 'city', 'county11', '', False) + extra_stub_args,
+    ('4', '4', 'city', 'county11', '', False) + extra_stub_args,
+    ('5', '5', 'city', 'county11', '', False) + extra_stub_args,
+    ('6', '6', 'city', 'county11', '', False) + extra_stub_args,
+    ('7', '7', 'city', 'county11', '', False) + extra_stub_args,
+    ('8', '8', 'city', 'county11', '', False) + extra_stub_args,
+    ('9', '9', 'city', 'county11', '', False) + extra_stub_args,
+    ('10', '10', 'city', 'county11', '', False) + extra_stub_args,
+    ('11', '11', 'city', 'county11', '', False) + extra_stub_args,
+    ('12', '12', 'city', 'county11', '', False) + extra_stub_args,
+    ('13', '13', 'city', 'county11', '', False) + extra_stub_args,
+    ('14', '14', 'city', 'county11', '', False) + extra_stub_args,
+    ('15', '15', 'city', 'county11', '', False) + extra_stub_args,
+    ('16', '16', 'city', 'county11', '', False) + extra_stub_args,
+    ('17', '17', 'city', 'county11', '', False) + extra_stub_args,
+    ('18', '18', 'city', 'county11', '', False) + extra_stub_args,
+    ('19', '19', 'city', 'county11', '', False) + extra_stub_args,
+    ('20', '20', 'city', 'county11', '', False) + extra_stub_args,
+    ('21', '21', 'city', 'county11', '', False) + extra_stub_args,
+    ('22', '22', 'city', 'county11', '', False) + extra_stub_args,
+    ('23', '23', 'city', 'county11', '', False) + extra_stub_args,
+    ('24', '24', 'city', 'county11', '', False) + extra_stub_args,
+    ('25', '25', 'city', 'county11', '', False) + extra_stub_args,
+    ('26', '26', 'city', 'county11', '', False) + extra_stub_args,
+    ('27', '27', 'city', 'county11', '', False) + extra_stub_args,
+    ('28', '28', 'city', 'county11', '', False) + extra_stub_args,
+    ('29', '29', 'city', 'county11', '', False) + extra_stub_args,
+    ('30', '30', 'city', 'county11', '', False) + extra_stub_args,
+    ('31', '31', 'city', 'county11', '', False) + extra_stub_args,
+    ('32', '32', 'city', 'county11', '', False) + extra_stub_args,
+    ('33', '33', 'city', 'county11', '', False) + extra_stub_args,
+]
+
 
 class TestTreeUtils(SimpleTestCase):
     def test_no_issues(self):
@@ -441,6 +480,7 @@ class TestBulkManagement(TestCase):
             self.domain.name,
             [LocationTypeStub(*loc_type) for loc_type in types],
             [LocationStub(*loc) for loc in locations],
+            chunk_size=10
         )
         result = importer.run()
         return result
@@ -1143,4 +1183,44 @@ class TestBulkManagement(TestCase):
         self.assertNotEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+        self.assertCouchSync()
+
+    def test_large_upload(self):
+        self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            self.basic_tree
+        )
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            BIG_LOCATION_TREE
+        )
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree + BIG_LOCATION_TREE))
+        self.assertCouchSync()
+
+    def test_new_root(self):
+        # new locations can be added without having to specify all of old ones
+        self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            self.basic_tree
+        )
+
+        upload = [
+            ('S1', 's1', 'city', 'county11', '', False) + extra_stub_args,
+            ('S2', 's2', 'city', 'county11', '', False) + extra_stub_args,
+            ('County11', 'county11', 'county', 'city111', '', False) + extra_stub_args,
+            ('County21', 'county21', 'county', 'city111', '', False) + extra_stub_args,
+            ('City111', 'city111', 'state', '', '', False) + extra_stub_args,
+            ('City112', 'city112', 'state', '', '', False) + extra_stub_args,
+            ('City211', 'city211', 'state', '', '', False) + extra_stub_args,
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            upload
+        )
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(upload))
         self.assertCouchSync()

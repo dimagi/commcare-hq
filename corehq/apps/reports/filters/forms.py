@@ -569,15 +569,15 @@ class SingleFormByApplicationFilter(FormsByApplicationFilter):
 
 class CompletionOrSubmissionTimeFilter(BaseSingleOptionFilter):
     slug = "sub_time"
-    label = ugettext_noop("Filter Dates By")
+    label = ugettext_lazy("Filter Dates By")
     css_class = "span2"
     help_text = mark_safe(
-        "%s<br />%s" % (ugettext_noop(
+        "%s<br />%s" % (ugettext_lazy(
                         "<strong>Completion</strong> time is when the form is completed on the phone."),
-                        ugettext_noop(
+                        ugettext_lazy(
                         "<strong>Submission</strong> time is when {hq_name} receives the form.".format(
                             hq_name=settings.COMMCARE_HQ_NAME))))
-    default_text = ugettext_noop("Completion Time")
+    default_text = ugettext_lazy("Completion Time")
 
     @property
     def options(self):

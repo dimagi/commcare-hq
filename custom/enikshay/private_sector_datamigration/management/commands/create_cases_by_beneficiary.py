@@ -49,9 +49,17 @@ class Command(BaseCommand):
             type=int,
         )
         parser.add_argument(
-            '--nikshayId',
-            dest='nikshayId',
+            '--caseIds',
+            dest='caseIds',
             default=None,
+            metavar='caseId',
+            nargs='+',
+        )
+        parser.add_argument(
+            '--skip-adherence',
+            action='store_true',
+            default=False,
+            dest='skip_adherence',
         )
 
     @mock_ownership_cleanliness_checks()
@@ -60,8 +68,8 @@ class Command(BaseCommand):
             caseStatus__in=['suspect', 'patient', 'patient '],
         )
 
-        if options['nikshayId']:
-            base_query = base_query.filter(nikshayId=options['nikshayId'])
+        if options['caseIds']:
+            base_query = base_query.filter(caseId__in=options['caseIds'])
 
         start = options['start']
         limit = options['limit']
@@ -102,7 +110,7 @@ class Command(BaseCommand):
             counter += 1
             try:
                 case_factory = BeneficiaryCaseFactory(domain, beneficiary)
-                case_structures.extend(case_factory.get_case_structures_to_create())
+                case_structures.extend(case_factory.get_case_structures_to_create(options['skip_adherence']))
             except Exception:
                 num_failed += 1
                 logger.error(

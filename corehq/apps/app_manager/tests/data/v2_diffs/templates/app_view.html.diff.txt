@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,300 +1,78 @@
+@@ -1,318 +1,95 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -245,6 +245,40 @@
 -    {% registerurl "edit_app_ui_translations" domain app.id %}
 -    {% registerurl "get_app_ui_translations" domain %}
 -    {% registerurl "toggle_diff" domain %}
++  {# release page URLs #}
++  {% registerurl "paginate_releases" domain app.id %}
++  {% registerurl "delete_copy" domain app.id %}
++  {% registerurl "download_jad" domain '---' %}
++  {% registerurl "download_jar" domain '---' %}
++  {% registerurl "odk_install" domain '---' %}
++  {% registerurl "odk_media_install" domain '---' %}
++  {% registerurl "download_index" domain '---' %}
++  {% registerurl "release_build" domain app.id '---' %}
++  {% registerurl "save_copy" domain app.id %}
++  {% registerurl "revert_to_copy" domain app.id %}
++  {% registerurl "current_app_version" domain app.id %}
++  {% registerurl "hubspot_click_deploy" %}
++  {% registerurl "download_ccz" app.domain '---' %}
++  {% registerurl "download_multimedia_zip" app.domain '---' %}
++  {% registerurl "project_report_dispatcher" app.domain 'application_error' %}
+ 
+-    {# release page URLs #}
+-    {% registerurl "paginate_releases" domain app.id %}
+-    {% registerurl "delete_copy" domain app.id %}
+-    {% registerurl "download_jad" domain '---' %}
+-    {% registerurl "download_jar" domain '---' %}
+-    {% registerurl "odk_install" domain '---' %}
+-    {% registerurl "odk_media_install" domain '---' %}
+-    {% registerurl "download_index" domain '---' %}
+-    {% registerurl "release_build" domain app.id '---' %}
+-    {% registerurl "save_copy" domain app.id %}
+-    {% registerurl "revert_to_copy" domain app.id %}
+-    {% registerurl "current_app_version" domain app.id %}
+-    {% registerurl "hubspot_click_deploy" %}
+-    {% registerurl "download_ccz" app.domain '---' %}
+-    {% registerurl "download_multimedia_zip" app.domain '---' %}
+-    {% registerurl "project_report_dispatcher" app.domain 'application_error' %}
+-
 -    <div class="tab-content">
 -        <div class="tab-pane" id="releases">
 -            <!-- templates only; will be populated asynchronously -->

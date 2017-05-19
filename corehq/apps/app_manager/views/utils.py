@@ -21,7 +21,7 @@ CASE_TYPE_CONFLICT_MSG = (
 
 @require_deploy_apps
 def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
-                 unique_form_id=None):
+                 form_unique_id=None):
     """
     returns an HttpResponseRedirect back to the main page for the App Manager app
     with the correct GET parameters.
@@ -36,18 +36,24 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
     params = {}
 
     args = [domain]
+    form_view = 'form_source' if toggles.APP_MANAGER_V2.enabled(request.user.username) else 'view_form'
 
     if app_id is not None:
         args.append(app_id)
-        if unique_form_id is not None:
+        if form_unique_id is not None:
             app = get_app(domain, app_id)
-            obj = app.get_form(unique_form_id, bare=False)
+            obj = app.get_form(form_unique_id, bare=False)
             module_id = obj['module'].id
             form_id = obj['form'].id
+            if obj['form'].no_vellum:
+                form_view = 'view_form'
         if module_id is not None:
             args.append(module_id)
             if form_id is not None:
                 args.append(form_id)
+                app = get_app(domain, app_id)
+                if app.get_module(module_id).get_form(form_id).no_vellum:
+                    form_view = 'view_form'
 
     if page:
         view_name = page
@@ -56,7 +62,7 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
             1: 'default_app',
             2: 'view_app',
             3: 'view_module',
-            4: 'form_source' if toggles.APP_MANAGER_V2.enabled(request.user.username) else 'view_form',
+            4: form_view,
         }[len(args)]
 
     return HttpResponseRedirect(

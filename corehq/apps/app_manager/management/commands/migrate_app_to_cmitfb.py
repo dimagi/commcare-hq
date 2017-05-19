@@ -1,4 +1,5 @@
 import logging
+from collections import defaultdict
 from lxml import etree as ET
 
 from couchdbkit import ResourceNotFound
@@ -33,42 +34,42 @@ class Command(BaseCommand):
             help='Migrate even if app.vellum_case_management is already true.')
 
     def handle(self, **options):
-        domains = []
-        app_ids = []
+        app_ids_by_domain = defaultdict(set)
         self.force = options["force"]
         self.migrate_usercase = options["usercase"]
         for ident in options["app_id_or_domain"]:
             if not self.migrate_usercase:
                 try:
-                    Application.get(ident)
-                    app_ids.append(ident)
+                    app = Application.get(ident)
+                    app_ids_by_domain[app.domain].add(ident)
                     continue
                 except ResourceNotFound:
                     pass
-            ids = get_app_ids_in_domain(ident)
-            app_ids.extend(ids)
-            if ids:
-                domains.append(ident)
-            logger.info('migrating {} apps in domain {}'.format(len(ids), ident))
+            app_ids_by_domain[ident].update(get_app_ids_in_domain(ident))
 
-        for app_id in app_ids:
-            logger.info('migrating app {}'.format(app_id))
-            self.migrate_app(app_id)
-
-        if self.migrate_usercase:
-            for domain in domains:
+        for domain, app_ids in sorted(app_ids_by_domain.items()):
+            logger.info('migrating %s: %s apps', domain, len(app_ids))
+            for app_id in app_ids:
+                try:
+                    migrated = self.migrate_app(app_id)
+                    if migrated:
+                        logger.info('migrated app %s', app_id)
+                except Exception:
+                    logger.exception("skipping app %s", app_id)
+            if self.migrate_usercase and not USER_PROPERTY_EASY_REFS.enabled(domain):
                 USER_PROPERTY_EASY_REFS.set(domain, True, NAMESPACE_DOMAIN)
-            logger.info("enabled USER_PROPERTY_EASY_REFS for domains: %s",
-                ", ".join(domains))
+                logger.info("enabled USER_PROPERTY_EASY_REFS for domain: %s", domain)
 
         logger.info('done with migrate_app_to_cmitfb')
 
     def migrate_app(self, app_id):
         app = Application.get(app_id)
         migrate_usercase = should_migrate_usercase(app, self.migrate_usercase)
+        if self.migrate_usercase and not migrate_usercase:
+            return False
         if app.vellum_case_management and not migrate_usercase and not self.force:
             logger.info('already migrated app {}'.format(app_id))
-            return
+            return False
 
         modules = [m for m in app.modules if m.module_type == 'basic']
         for module in modules:
@@ -96,6 +97,7 @@ class Command(BaseCommand):
 
         app.vellum_case_management = True
         app.save()
+        return True
 
 
 def migrate_preloads(app, module, form, preloads):
