@@ -432,8 +432,9 @@ This can be used to lookup a property in another document. Here's an example tha
 
 #### Ancestor location expression
 This is used to return a json object representing the ancestor of the given type of the given location.
-For instance, we could pass the location id of Cambridge and a location type of state to this expression to get the
-Massachusetts location.
+For instance, if we had locations configured with a hierarchy like `country -> state -> county -> city`, we could
+pass the location id of Cambridge and a location type of state to this expression to get the Massachusetts
+location.
 
 ```json
 {
