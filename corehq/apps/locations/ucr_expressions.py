@@ -72,7 +72,7 @@ class AncestorLocationExpression(JsonObject):
     given type.
     If no such location exists, return None.
     """
-    type = TypeProperty("enikshay_ancestor_location")
+    type = TypeProperty("ancestor_location")
     location_id = DefaultProperty(required=True)
     location_type = DefaultProperty(required=True)
 

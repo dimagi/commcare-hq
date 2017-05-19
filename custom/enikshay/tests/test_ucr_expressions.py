@@ -11,7 +11,7 @@ class TestAncestorLocationExpression(ENikshayLocationStructureMixin, TestCase):
     def test_ancestor_location_exists(self):
         context = EvaluationContext({})
         expression = ExpressionFactory.from_spec({
-            'type': 'enikshay_ancestor_location',
+            'type': 'ancestor_location',
             'location_id': self.phi.location_id,
             'location_type': "sto",
         }, context)
@@ -26,7 +26,7 @@ class TestAncestorLocationExpression(ENikshayLocationStructureMixin, TestCase):
     def test_ancestor_location_dne(self):
         context = EvaluationContext({})
         expression = ExpressionFactory.from_spec({
-            'type': 'enikshay_ancestor_location',
+            'type': 'ancestor_location',
             'location_id': self.phi.location_id,
             'location_type': "nonsense",
         }, context)
@@ -37,7 +37,7 @@ class TestAncestorLocationExpression(ENikshayLocationStructureMixin, TestCase):
     def test_location_dne(self):
         context = EvaluationContext({})
         expression = ExpressionFactory.from_spec({
-            'type': 'enikshay_ancestor_location',
+            'type': 'ancestor_location',
             'location_id': "gibberish",
             'location_type': "sto",
         }, context)
