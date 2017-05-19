@@ -70,7 +70,7 @@ class TestLocationTypeExpression(TestCase):
 
 
 class LocationHierarchyTest(TestCase):
-    
+
     @classmethod
     def setUpClass(cls):
         super(LocationHierarchyTest, cls).setUpClass()
@@ -96,7 +96,7 @@ class LocationHierarchyTest(TestCase):
             parent_type=kingdom_location_type,
         )
         city_location_type.save()
-    
+
         continent = SQLLocation(
             domain=domain,
             name="Westeros",
@@ -120,13 +120,12 @@ class LocationHierarchyTest(TestCase):
             site_code="winterfell",
         )
         city.save()
-    
+
         cls.domain_obj = domain_obj
         cls.domain = domain
         cls.continent = continent
         cls.kingdom = kingdom
         cls.city = city
-
 
     @classmethod
     def tearDownClass(cls):
