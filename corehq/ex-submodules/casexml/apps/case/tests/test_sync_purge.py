@@ -3,13 +3,11 @@ import uuid
 from couchdbkit.exceptions import ResourceNotFound
 from django.test import TestCase
 
-from casexml.apps.case.tests.util import delete_all_xforms, delete_all_sync_logs
 from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.tests.utils import create_restore_user, generate_restore_payload, \
     synclog_id_from_restore_payload, generate_restore_response
 from corehq.apps.domain.models import Domain
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.form_processor.utils import get_simple_form_xml
 
