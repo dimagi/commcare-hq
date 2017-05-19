@@ -2,6 +2,7 @@ import logging
 import mock
 
 from django.core.management import BaseCommand
+from django.db.models import Q
 
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_domain
@@ -10,8 +11,10 @@ from corehq.apps.locations.models import SQLLocation
 from custom.enikshay.private_sector_datamigration.factory import BeneficiaryCaseFactory
 from custom.enikshay.private_sector_datamigration.models import (
     Adherence,
+    Agency,
     Beneficiary,
     Episode,
+    UserDetail,
 )
 
 logger = logging.getLogger('private_sector_datamigration')
@@ -65,12 +68,60 @@ class Command(BaseCommand):
         parser.add_argument(
             '--location-owner-id',
         )
+        parser.add_argument(
+            '--owner-state-id',
+        )
+        parser.add_argument(
+            '--owner-district-id',
+        )
+        parser.add_argument(
+            '--owner-organisation-ids',
+            default=None,
+            metavar='owner_organisation_id',
+            nargs='+',
+        )
 
     @mock_ownership_cleanliness_checks()
     def handle(self, domain, **options):
+        assert not options['caseIds'] or not options['owner_state_id']
+        assert options['owner_state_id'] or not options['owner_district_id']
+
         base_query = Beneficiary.objects.filter(
             caseStatus__in=['suspect', 'patient', 'patient '],
         )
+
+        user_details = None
+
+        if options['owner_state_id']:
+            user_details = user_details or UserDetail.objects.filter(
+                isPrimary=True
+            )
+            user_details = user_details.filter(
+                stateId=options['owner_state_id'],
+            )
+
+            if options['owner_district_id']:
+                user_details = user_details.filter(districtId=options['owner_district_id'])
+
+        if options['owner_organisation_ids']:
+            user_details = user_details or UserDetail.objects.filter(
+                isPrimary=True
+            )
+            user_details = user_details.filter(organisationId__in=options['owner_organisation_ids'])
+
+        if user_details:
+            # Confirm that there is an actual agency object for the motech username
+            agency_ids = Agency.objects.filter(agencyId__in=user_details.values('agencyId')).values('agencyId')
+            motech_usernames = UserDetail.objects.filter(agencyId__in=agency_ids).values('motechUserName')
+
+            bene_ids_treating = Episode.objects.filter(treatingQP__in=motech_usernames).values('beneficiaryID')
+            bene_ids_treating_away = Episode.objects.exclude(treatingQP__in=motech_usernames).values('beneficiaryID')
+            bene_ids_from_referred = Beneficiary.objects.filter(referredQP__in=motech_usernames).values('caseId')
+
+            base_query = base_query.filter(
+                Q(caseId__in=bene_ids_treating)
+                | ((~Q(caseId__in=bene_ids_treating_away)) & Q(caseId__in=bene_ids_from_referred))
+            )
 
         if options['caseIds']:
             base_query = base_query.filter(caseId__in=options['caseIds'])
