@@ -22,7 +22,7 @@ from custom.enikshay.const import (
     TREATMENT_OUTCOME,
     EPISODE_PENDING_REGISTRATION,
     PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION,
-)
+    HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD)
 from custom.enikshay.const import TREATMENT_OUTCOME, EPISODE_PENDING_REGISTRATION
 from custom.enikshay.integrations.nikshay.repeater_generator import \
     NikshayRegisterPatientPayloadGenerator, NikshayHIVTestPayloadGenerator, \
@@ -245,7 +245,10 @@ class NikshayHealthEstablishmentRepeater(SOAPRepeaterMixin, LocationRepeater):
         return reverse(RegisterNikshayHealthEstablishmentRepeaterView.urlname, args=[domain])
 
     def allowed_to_forward(self, location):
-        return True
+        return (
+            not location.metadata.get('is_test', "yes") == "yes" and
+            location.location_type.name in HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD
+        )
 
 
 def person_hiv_status_changed(case):

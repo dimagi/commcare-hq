@@ -64,3 +64,4 @@ FULFILLED_BY_ID = "fulfilled_by_id"
 AMOUNT_APPROVED = "amount_approved"
 
 ENIKSHAY_TIMEZONE = 'Asia/Kolkata'
+HEALTH_ESTABLISHMENT_TYPES_TO_FORWARD = ['pcp', 'pac']
