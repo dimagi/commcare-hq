@@ -233,8 +233,6 @@ class AutomaticUpdateRule(models.Model):
         else:
             return self.run_actions_when_case_does_not_match(case)
 
-        return CaseRuleActionResult()
-
     def criteria_match(self, case, now):
         if not self.migrated:
             raise self.MigrationError("Attempted to call new method on non-migrated model.")
@@ -279,10 +277,10 @@ class AutomaticUpdateRule(models.Model):
         return aggregated_result
 
     def run_actions_when_case_matches(self, case):
-        self._run_method_on_action_definitions(case, 'when_case_matches')
+        return self._run_method_on_action_definitions(case, 'when_case_matches')
 
     def run_actions_when_case_does_not_match(self, case):
-        self._run_method_on_action_definitions(case, 'when_case_does_not_match')
+        return self._run_method_on_action_definitions(case, 'when_case_does_not_match')
 
     def delete_criteria(self):
         for item in self.caserulecriteria_set.all():
