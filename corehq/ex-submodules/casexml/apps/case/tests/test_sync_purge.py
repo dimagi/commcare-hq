@@ -26,6 +26,7 @@ class TestSyncPurge(TestCase):
         FormProcessorTestUtils.delete_all_xforms(cls.domain)
         FormProcessorTestUtils.delete_all_sync_logs()
         cls.project.delete()
+        super(TestSyncPurge, cls).tearDownClass()
 
     def test_previous_log_purged(self):
         initial_synclog_id = synclog_id_from_restore_payload(
