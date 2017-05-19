@@ -48,6 +48,7 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     basis_of_diagnosis)
 from custom.enikshay.case_utils import update_case
 from dimagi.utils.post import parse_SOAP_response
+from dimagi.utils.decorators.memoized import memoized
 
 ENIKSHAY_ID = 8
 NIKSHAY_NULL_DATE = '1900-01-01'
@@ -341,6 +342,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
     format_name = 'case_xml'
     format_label = 'XML'
 
+    @memoized
     def get_payload(self, repeat_record, episode_case):
         person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
         episode_case_properties = episode_case.dynamic_case_properties()
@@ -390,7 +392,8 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
         )
         try:
             if isinstance(message, basestring) and message.isdigit():
-                nikshay_id = message
+                health_facility_id = repeat_record.get_payload()['HFIDNO']
+                nikshay_id = '-'.join([health_facility_id, message])
                 update_case(
                     payload_doc.domain,
                     payload_doc.case_id,

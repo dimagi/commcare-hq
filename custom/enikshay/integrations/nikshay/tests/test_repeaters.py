@@ -992,16 +992,16 @@ class TestNikshayRegisterPrivatePatientRepeater(ENikshayLocationStructureMixin, 
         self.assertEqual(0, len(self.repeat_records().all()))
 
     def test_trigger_test_submission(self):
-        self.phi.metadata['is_test'] = 'yes'
-        self.phi.save()
+        self.pcp.metadata['is_test'] = 'yes'
+        self.pcp.save()
         self.create_case(self.episode)
         self.assign_person_to_location(self.pcp.location_id)
         self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
         self.assertEqual(0, len(self.repeat_records().all()))
 
     def test_trigger_non_test_submission(self):
-        self.phi.metadata['is_test'] = 'no'
-        self.phi.save()
+        self.pcp.metadata['is_test'] = 'no'
+        self.pcp.save()
         self.create_case(self.episode)
         self.assign_person_to_location(self.pcp.location_id)
         self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
@@ -1044,16 +1044,20 @@ class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructur
         self.assertEqual(payload['Source'], ENIKSHAY_ID)
 
     def test_handle_success(self):
-        nikshay_id = "000001"
+        self.repeater = NikshayRegisterPrivatePatientRepeater(
+            domain=self.domain,
+            url='http://nikshay.gov.in/mobileservice/webservice.asmx?WSDL',
+            username='test-user'
+        )
+        self.repeater.operation = 'InsertHFIDPatient_UATBC'
+        self.repeater.white_listed_case_types = ['episode']
+        self.repeater.save()
+        delete_all_repeat_records()
+
+        nikshay_response_id = "000001"
         self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
         payload_generator = NikshayRegisterPrivatePatientPayloadGenerator(None)
-
-        repeat_record = MockNikshayRegisterPrivatePatientRepeatRecord(
-            MockNikshayRegisterPrivatePatientRepeater(
-                # using the actual WSDL link to fetch the xml structure. No data request is sent
-                url="http://nikshay.gov.in/mobileservice/webservice.asmx?WSDL",
-                operation='InsertHFIDPatient_UATBC')
-        )
+        repeat_record = [record for record in self.repeat_records()][0]
 
         payload_generator.handle_success(
             MockSoapResponse(200, SUCCESSFUL_SOAP_RESPONSE),
@@ -1063,6 +1067,7 @@ class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructur
         updated_episode_case = CaseAccessors(self.domain).get_case(self.episode_id)
         self._assert_case_property_equal(updated_episode_case, 'private_nikshay_registered', 'true')
         self._assert_case_property_equal(updated_episode_case, 'private_nikshay_error', '')
+        nikshay_id = '-'.join([self.pcp.metadata['nikshay_code'], nikshay_response_id])
         self._assert_case_property_equal(updated_episode_case, 'nikshay_id', nikshay_id)
         self.assertEqual(updated_episode_case.external_id, nikshay_id)
 

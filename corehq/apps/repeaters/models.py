@@ -348,7 +348,7 @@ class CaseRepeater(Repeater):
         return "forwarding cases to: %s" % self.url
 
 
-class SOAPRepeaterMixin(object):
+class SOAPRepeaterMixin(Repeater):
     operation = StringProperty()
 
     def send_request(self, repeat_record, payload):
