@@ -3101,6 +3101,7 @@ class Dhis2ConnectionView(BaseAdminProjectSettingsView):
         form = self.dhis2_connection_form
         if form.is_valid():
             form.save(self.domain)
+            get_dhis2_connection.clear(request.domain)
             return HttpResponseRedirect(self.page_url)
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context)
@@ -3156,6 +3157,7 @@ class DataSetMapView(BaseAdminProjectSettingsView):
                 dataset_map = DataSetMap(domain=request.domain)
                 update_dataset_map(dataset_map, dataset_maps[j])
                 dataset_map.save()
+        get_dataset_maps.clear(request.domain)
         return HttpResponse(_('DHIS2 DataSet Maps saved'))
 
     @method_decorator(domain_admin_required)
