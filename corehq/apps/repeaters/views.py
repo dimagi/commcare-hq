@@ -13,7 +13,7 @@ from corehq.apps.domain.views import AddRepeaterView
 from corehq.apps.style.decorators import use_select2
 from corehq.apps.repeaters.models import RepeatRecord
 from corehq.util.xml_utils import indent_xml
-from .forms import CaseRepeaterForm, SOAPCaseRepeaterForm
+from .forms import CaseRepeaterForm, SOAPCaseRepeaterForm, SOAPLocationRepeaterForm
 
 
 class AddCaseRepeaterView(AddRepeaterView):
@@ -41,6 +41,19 @@ class AddCustomSOAPCaseRepeaterView(AddCaseRepeaterView):
 
     def make_repeater(self):
         repeater = super(AddCustomSOAPCaseRepeaterView, self).make_repeater()
+        repeater.operation = self.add_repeater_form.cleaned_data['operation']
+        return repeater
+
+
+class AddCustomSOAPLocationRepaterView(AddRepeaterView):
+    repeater_form_class = SOAPLocationRepeaterForm
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    def make_repeater(self):
+        repeater = super(AddCustomSOAPLocationRepaterView, self).make_repeater()
         repeater.operation = self.add_repeater_form.cleaned_data['operation']
         return repeater
 

@@ -202,3 +202,14 @@ class SOAPCaseRepeaterForm(CaseRepeaterForm):
     def get_ordered_crispy_form_fields(self):
         fields = super(SOAPCaseRepeaterForm, self).get_ordered_crispy_form_fields()
         return fields + ['operation']
+
+
+class SOAPLocationRepeaterForm(GenericRepeaterForm):
+    operation = forms.CharField(
+        required=False,
+        label='SOAP operation',
+    )
+
+    def get_ordered_crispy_form_fields(self):
+        fields = super(SOAPLocationRepeaterForm, self).get_ordered_crispy_form_fields()
+        return fields + ['operation']
