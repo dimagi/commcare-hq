@@ -50,7 +50,6 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
     exportable = True
     exportable_all = True
     ajax_pagination = True
-    default_sort = {'reporting_metadata.last_submissions.submission_date', 'desc'}
     fields = [
         'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
         'corehq.apps.reports.filters.select.SelectApplicationFilter'
@@ -83,6 +82,13 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         )
         headers.custom_sort = [[1, 'desc']]
         return headers
+
+    @property
+    def default_sort(self):
+        if self.selected_app_id:
+            return {'reporting_metadata.last_submission.submission_date': 'desc'}
+        else:
+            return {'reporting_metadata.last_submission_for_user.submission_date': 'desc'}
 
     def get_sorting_block(self):
         sort_prop_name = 'prop_name' if self.selected_app_id else 'alt_prop_name'
@@ -133,7 +139,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         )
         user_query = (user_query
                       .set_sorting_block(self.get_sorting_block()))
-        if self.pagination:
+        if pagination:
             user_query = (user_query
                           .size(self.pagination.count)
                           .start(self.pagination.start))
@@ -141,9 +147,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             user_query = user_query.filter(
                 filters.term('reporting_metadata.last_submissions.app_id', self.selected_app_id)
             )
-        return user_query.run()
+        return user_query
 
-    def process_rows(self, users):
+    def process_rows(self, users, fmt_for_export=False):
         rows = []
         for user in users:
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = None
@@ -178,24 +184,28 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 user_display_string(user.get('username', ''),
                                     user.get('first_name', ''),
                                     user.get('last_name', '')),
-                _fmt_date(last_seen, False), _fmt_date(last_sync_date, False),
+                _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
                 app_name or "---", build_version, commcare_version
             ])
         return rows
 
     @property
     def total_records(self):
-        return self.user_query.total
+        if self._total_records:
+            return self._total_records
+        else:
+            return 0
 
     @property
     def rows(self):
-        users = self.user_query().hits
-        return self.process_rows(users)
+        users = self.user_query().run()
+        self._total_records = users.total
+        return self.process_rows(users.hits)
 
     @property
     def get_all_rows(self):
-        users = self.user_query(False).hits
-        return self.process_users(users)
+        users = self.user_query(False).scroll()
+        return self.process_rows(users, True)
 
     @property
     def export_table(self):
