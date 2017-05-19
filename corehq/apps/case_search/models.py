@@ -1,7 +1,6 @@
 import copy
 
 from corehq.util.quickcache import quickcache
-from dimagi.ext import jsonobject
 from django.db import models
 from jsonfield.fields import JSONField
 from django.contrib.postgres.fields import ArrayField
