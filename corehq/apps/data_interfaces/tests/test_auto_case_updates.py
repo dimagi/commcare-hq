@@ -984,7 +984,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
         with _with_case(self.domain, 'person', datetime.utcnow()) as case:
             self.assertActionResult(rule, 0)
 
-            result = rule.run_actions(case)
+            result = rule.run_actions_when_case_matches(case)
             case = CaseAccessors(self.domain).get_case(case.case_id)
 
             self.assertTrue(isinstance(result, CaseRuleActionResult))
@@ -1002,7 +1002,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertActionResult(rule, 0)
 
             dynamic_properties_before = case.dynamic_case_properties()
-            result = rule.run_actions(case)
+            result = rule.run_actions_when_case_matches(case)
             case = CaseAccessors(self.domain).get_case(case.case_id)
             dynamic_properties_after = case.dynamic_case_properties()
 
@@ -1031,7 +1031,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             child_dynamic_properties_before = child.dynamic_case_properties()
 
             self.assertActionResult(rule, 0)
-            result = rule.run_actions(child)
+            result = rule.run_actions_when_case_matches(child)
             child = CaseAccessors(self.domain).get_case(child.case_id)
             parent = CaseAccessors(self.domain).get_case(parent.case_id)
 
@@ -1063,7 +1063,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             case = CaseAccessors(self.domain).get_case(case.case_id)
             self.assertNotIn('result', case.dynamic_case_properties())
 
-            result = rule.run_actions(case)
+            result = rule.run_actions_when_case_matches(case)
             case = CaseAccessors(self.domain).get_case(case.case_id)
 
             self.assertTrue(isinstance(result, CaseRuleActionResult))
@@ -1095,7 +1095,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertNotIn('result', child.dynamic_case_properties())
             parent_case_properties_before = parent.dynamic_case_properties()
 
-            result = rule.run_actions(child)
+            result = rule.run_actions_when_case_matches(child)
             child = CaseAccessors(self.domain).get_case(child.case_id)
             parent = CaseAccessors(self.domain).get_case(parent.case_id)
 
@@ -1127,7 +1127,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             server_modified_before = case.server_modified_on
             self.assertEqual(case.get_case_property('result'), 'xyz')
 
-            result = rule.run_actions(case)
+            result = rule.run_actions_when_case_matches(case)
             case = CaseAccessors(self.domain).get_case(case.case_id)
             self.assertEqual(case.server_modified_on, server_modified_before)
 
@@ -1159,7 +1159,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertActionResult(rule, 0)
 
             child = set_parent_case(self.domain, child, parent)
-            result = rule.run_actions(child)
+            result = rule.run_actions_when_case_matches(child)
 
             child = CaseAccessors(self.domain).get_case(child.case_id)
             parent = CaseAccessors(self.domain).get_case(parent.case_id)
@@ -1198,7 +1198,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertActionResult(rule, 0)
 
             child = set_parent_case(self.domain, child, parent)
-            result = rule.run_actions(child)
+            result = rule.run_actions_when_case_matches(child)
 
             child = CaseAccessors(self.domain).get_case(child.case_id)
             parent = CaseAccessors(self.domain).get_case(parent.case_id)
@@ -1254,7 +1254,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertActionResult(rule, 0)
 
             p.return_value = CaseRuleActionResult(num_related_updates=1)
-            result = rule.run_actions(case)
+            result = rule.run_actions_when_case_matches(case)
             p.assert_called_once_with(case, rule)
             case = CaseAccessors(self.domain).get_case(case.case_id)
 

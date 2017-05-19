@@ -229,7 +229,9 @@ class AutomaticUpdateRule(models.Model):
             raise self.RuleError("Invalid case given")
 
         if self.criteria_match(case, now):
-            return self.run_actions(case)
+            return self.run_actions_when_case_matches(case)
+        else:
+            return self.run_actions_when_case_does_not_match(case)
 
         return CaseRuleActionResult()
 
@@ -260,20 +262,27 @@ class AutomaticUpdateRule(models.Model):
 
         return True
 
-    def run_actions(self, case):
+    def _run_method_on_action_definitions(self, case, method):
         if not self.migrated:
             raise self.MigrationError("Attempted to call new method on non-migrated model.")
 
         aggregated_result = CaseRuleActionResult()
 
         for action in self.memoized_actions:
-            result = action.definition.run(case, self)
+            callable_method = getattr(action.definition, method)
+            result = callable_method(case, self)
             if not isinstance(result, CaseRuleActionResult):
                 raise TypeError("Expected CaseRuleActionResult")
 
             aggregated_result.add_result(result)
 
         return aggregated_result
+
+    def run_actions_when_case_matches(self, case):
+        self._run_method_on_action_definitions(case, 'when_case_matches')
+
+    def run_actions_when_case_does_not_match(self, case):
+        self._run_method_on_action_definitions(case, 'when_case_does_not_match')
 
     def delete_criteria(self):
         for item in self.caserulecriteria_set.all():
@@ -689,11 +698,20 @@ class CaseRuleActionDefinition(models.Model):
     class Meta:
         abstract = True
 
-    def run(self, case, rule):
+    def when_case_matches(self, case, rule):
         """
+        Defines the actions to be taken when the case matches the rule.
         Should return an instance of CaseRuleActionResult
         """
         raise NotImplementedError()
+
+    def when_case_does_not_match(self, case, rule):
+        """
+        Defines the actions to be taken when the case does not match the rule.
+        This method can be optionally overriden, but by default does nothing.
+        Should return an instance of CaseRuleActionResult
+        """
+        return CaseRuleActionResult()
 
 
 class UpdateCaseDefinition(CaseRuleActionDefinition):
@@ -741,7 +759,7 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
 
         self.properties_to_update = result
 
-    def run(self, case, rule):
+    def when_case_matches(self, case, rule):
         cases_to_update = defaultdict(dict)
 
         def _get_case_property_value(current_case, name):
@@ -813,7 +831,7 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
 class CustomActionDefinition(CaseRuleActionDefinition):
     name = models.CharField(max_length=126)
 
-    def run(self, case, rule):
+    def when_case_matches(self, case, rule):
         if self.name not in settings.AVAILABLE_CUSTOM_RULE_ACTIONS:
             raise ValueError("%s not found in AVAILABLE_CUSTOM_RULE_ACTIONS" % self.name)
 
@@ -856,7 +874,7 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
         else:
             raise TypeError("Expected an instance of AlertSchedule or TimedSchedule")
 
-    def run(self, case, rule):
+    def when_case_matches(self, case, rule):
         schedule = self.schedule
         if isinstance(schedule, AlertSchedule):
             refresh_case_alert_schedule_instances(case.case_id, schedule, self.recipients, rule)
