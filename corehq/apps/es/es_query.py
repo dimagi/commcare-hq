@@ -104,8 +104,16 @@ import json
 
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq.elastic import ES_META, ESError, run_query, scroll_query, SIZE_LIMIT, \
-    ScanResult, SCROLL_PAGE_SIZE_LIMIT
+from corehq.elastic import (
+    ES_META,
+    ES_DEFAULT_INSTANCE,
+    ESError,
+    run_query,
+    scroll_query,
+    SIZE_LIMIT,
+    ScanResult,
+    SCROLL_PAGE_SIZE_LIMIT,
+)
 
 from . import aggregations
 from . import filters
@@ -142,7 +150,7 @@ class ESQuery(object):
         "match_all": filters.match_all()
     }
 
-    def __init__(self, index=None, debug_host=None):
+    def __init__(self, index=None, debug_host=None, es_instance=ES_DEFAULT_INSTANCE):
         from corehq.apps.userreports.util import is_ucr_table
 
         self.index = index if index is not None else self.index
@@ -156,6 +164,7 @@ class ESQuery(object):
         self._facets = []
         self._aggregations = []
         self._source = None
+        self.es_instance = es_instance
         self.es_query = {"query": {
             "filtered": {
                 "filter": {"and": []},
@@ -209,7 +218,12 @@ class ESQuery(object):
     def run(self, include_hits=False):
         """Actually run the query.  Returns an ESQuerySet object."""
         query = self._clean_before_run(include_hits)
-        raw = run_query(query.index, query.raw_query, debug_host=query.debug_host)
+        raw = run_query(
+            query.index,
+            query.raw_query,
+            debug_host=query.debug_host,
+            es_instance=self.es_instance,
+        )
         return ESQuerySet(raw, deepcopy(query))
 
     def _clean_before_run(self, include_hits=False):
@@ -226,7 +240,7 @@ class ESQuery(object):
         query = deepcopy(self)
         if query._size is None:
             query._size = SCROLL_PAGE_SIZE_LIMIT
-        result = scroll_query(query.index, query.raw_query)
+        result = scroll_query(query.index, query.raw_query, es_instance=self.es_instance)
         return ScanResult(
             result.count,
             (ESQuerySet.normalize_result(query, r) for r in result)
