@@ -108,20 +108,21 @@ class Command(BaseCommand):
 
     def fix_user_properties(self, app_id):
         app = Application.get(app_id)
-        if not should_fix_user_props(app):
-            return
-        logger.info('fixing app %s', app_id)
-        updated = False
-        modules = [m for m in app.modules if m.module_type == 'basic']
-        for modi, module in enumerate(modules):
-            forms = [f for f in module.forms if f.doc_type == 'Form']
-            for formi, form in enumerate(forms):
+        updated = warn = False
+        modules = [m for m in enumerate(app.modules) if m[1].module_type == 'basic']
+        for modi, module in modules:
+            forms = [f for f in enumerate(module.forms) if f[1].doc_type == 'Form']
+            for formi, form in forms:
                 if not (form.case_references and form.case_references.load):
                     continue
-                updated = fix_user_props(app, form, modi, formi) or updated
+                form_updated, ref_warn = fix_user_props(app, form, modi, formi)
+                updated = form_updated or updated
+                warn = ref_warn or warn
         if updated:
             app.save()
-            logger.info("saving updated app %s", app_id)
+            logger.info("saved app %s", app_id)
+        elif warn:
+            logger.warning('app %s not updated', app_id)
 
 
 USERPROP_PREFIX = (
@@ -133,36 +134,38 @@ BAD_USERCASE_PATH = (
 )
 
 
-def should_fix_user_props(app):
-    return any(refs[0].startswith("#user/")
-        for module in app.modules if module.module_type == 'basic'
-        for form in module.forms if form.doc_type == 'Form'
-        if form.case_references and form.case_references.load
-        for refs in form.case_references.load.values()
-        if len(refs) == 1 and refs[0])
-
-
 def fix_user_props(app, form, modi, formi):
     updated = False
     xform = XForm(form.source)
-    refs = {xform.resolve_path(ref): vals[0]
+    refs = {xform.resolve_path(ref): vals
         for ref, vals in form.case_references.load.iteritems()
-        if len(vals) == 1 and vals[0] and vals[0].startswith("#user/")}
+        if any(v.startswith("#user/") for v in vals)}
+    ref_warnings = []
     for node in xform.model_node.findall("{f}setvalue"):
         if (node.attrib.get('ref') in refs
                 and node.attrib.get('event') == "xforms-ready"):
             ref = node.attrib.get('ref')
+            ref_values = refs[ref]
+            if len(ref_values) != 1:
+                ref_warnings.append((ref, ref_values))
+                continue
             value = (node.attrib.get('value') or "").replace(" ", "")
-            userprop = refs[ref]
+            userprop = ref_values[0]
             assert userprop.startswith("#user/"), (ref, userprop)
             prop = userprop[len("#user/"):]
             if value == BAD_USERCASE_PATH + prop:
                 logger.info("%s/%s setvalue %s -> %s", modi, formi, userprop, ref)
                 node.attrib["value"] = USERPROP_PREFIX + prop
                 updated = True
+            elif value != (USERPROP_PREFIX + prop).replace(" ", ""):
+                ref_warnings.append((ref, ref_values))
     if updated:
         save_xform(app, form, ET.tostring(xform.xml))
-    return updated
+    if ref_warnings:
+        for ref, ref_values in ref_warnings:
+            logger.warning("%s/%s %s has unexpected #user refs: %s",
+                modi, formi, ref, " ".join(ref_values))
+    return updated, ref_warnings
 
 
 def migrate_preloads(app, module, form, preloads):
