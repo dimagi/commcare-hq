@@ -40,7 +40,7 @@ class BeneficiaryCaseFactory(object):
     def get_case_structures_to_create(self, skip_adherence):
         person_structure = self.get_person_case_structure()
         ocurrence_structure = self.get_occurrence_case_structure(person_structure)
-        episode_structure = self.get_episode_case_structure(ocurrence_structure)
+        episode_structure = self.get_episode_case_structure(ocurrence_structure, skip_adherence)
         episode_descendants = [
             self.get_prescription_case_structure(prescription, episode_structure)
             for prescription in self._prescriptions
@@ -175,7 +175,7 @@ class BeneficiaryCaseFactory(object):
 
         return CaseStructure(**kwargs)
 
-    def get_episode_case_structure(self, occurrence_structure):
+    def get_episode_case_structure(self, occurrence_structure, skip_adherence):
         kwargs = {
             'attrs': {
                 'case_type': EPISODE_CASE_TYPE,
@@ -206,8 +206,9 @@ class BeneficiaryCaseFactory(object):
         if self._episode:
             rx_start_datetime = self._episode.rxStartDate
             kwargs['attrs']['date_opened'] = rx_start_datetime
-            kwargs['attrs']['update']['adherence_total_doses_taken'] = self._episode.adherence_total_doses_taken
-            kwargs['attrs']['update']['adherence_tracking_mechanism'] = self._episode.adherence_tracking_mechanism
+            if not skip_adherence:
+                kwargs['attrs']['update']['adherence_total_doses_taken'] = self._episode.adherence_total_doses_taken
+                kwargs['attrs']['update']['adherence_tracking_mechanism'] = self._episode.adherence_tracking_mechanism
             kwargs['attrs']['update']['basis_of_diagnosis'] = self._episode.basis_of_diagnosis
             kwargs['attrs']['update']['case_definition'] = self._episode.case_definition
             kwargs['attrs']['update']['date_of_diagnosis'] = self._episode.dateOfDiagnosis.date()

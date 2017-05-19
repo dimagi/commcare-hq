@@ -542,7 +542,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
         self.assertEqual(len(episode_case_ids), 1)
         episode_case = self.case_accessor.get_case(episode_case_ids[0])
-        self.assertEqual(episode_case.dynamic_case_properties()['adherence_total_doses_taken'], '1')
+        self.assertNotIn('adherence_total_doses_taken', episode_case.dynamic_case_properties())
+        self.assertNotIn('adherence_tracking_mechanism', episode_case.dynamic_case_properties())
 
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='adherence')), 0)
 
