@@ -69,59 +69,71 @@ class TestLocationTypeExpression(TestCase):
         self._check_expression(doc, None)
 
 
+def setup_module():
+    domain = "a-song-of-ice-and-fire"
+    domain_obj = create_domain(domain)
+    continent_location_type = LocationType(
+        domain=domain,
+        name="continent",
+        code="continent",
+    )
+    continent_location_type.save()
+    kingdom_location_type = LocationType(
+        domain=domain,
+        name="kingdom",
+        code="kingdom",
+        parent_type=continent_location_type,
+    )
+    kingdom_location_type.save()
+    city_location_type = LocationType(
+        domain=domain,
+        name="city",
+        code="city",
+        parent_type=kingdom_location_type,
+    )
+    city_location_type.save()
+
+    parent = SQLLocation(
+        domain=domain,
+        name="Westeros",
+        location_type=continent_location_type,
+        site_code="westeros",
+    )
+    parent.save()
+    child = SQLLocation(
+        domain=domain,
+        name="The North",
+        location_type=kingdom_location_type,
+        parent=parent,
+        site_code="the_north",
+    )
+    child.save()
+    grandchild = SQLLocation(
+        domain=domain,
+        name="Winterfell",
+        location_type=city_location_type,
+        parent=child,
+        site_code="winterfell",
+    )
+    grandchild.save()
+
+    globals()["domain_obj"] = domain_obj
+    globals()["domain"] = domain
+    globals()["parent"] = parent
+    globals()["child"] = child
+    globals()["grandchild"] = grandchild
+
+
+def teardown_module():
+    domain_obj.delete()
+
+
 class TestLocationParentIdExpression(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super(TestLocationParentIdExpression, cls).setUpClass()
-        cls.domain = 'test-loc-parent-id'
-        cls.domain_obj = create_domain(cls.domain)
-        cls.continent_location_type = LocationType(
-            domain=cls.domain,
-            name="continent",
-            code="continent",
-        )
-        cls.continent_location_type.save()
-        cls.kingdom_location_type = LocationType(
-            domain=cls.domain,
-            name="kingdom",
-            code="kingdom",
-            parent_type=cls.continent_location_type,
-        )
-        cls.kingdom_location_type.save()
-        cls.city_location_type = LocationType(
-            domain=cls.domain,
-            name="city",
-            code="city",
-            parent_type=cls.kingdom_location_type,
-        )
-        cls.city_location_type.save()
-
-        cls.parent = SQLLocation(
-            domain=cls.domain,
-            name="Westeros",
-            location_type=cls.continent_location_type,
-            site_code="westeros",
-        )
-        cls.parent.save()
-        cls.child = SQLLocation(
-            domain=cls.domain,
-            name="The North",
-            location_type=cls.kingdom_location_type,
-            parent=cls.parent,
-            site_code="the_north",
-        )
-        cls.child.save()
-        cls.grandchild = SQLLocation(
-            domain=cls.domain,
-            name="Winterfell",
-            location_type=cls.city_location_type,
-            parent=cls.child,
-            site_code="winterfell",
-        )
-        cls.grandchild.save()
-
-        cls.evaluation_context = EvaluationContext({"domain": cls.domain})
+        cls.evaluation_context = EvaluationContext({"domain": domain})
         cls.expression_spec = {
             "type": "location_parent_id",
             "location_id_expression": {
@@ -131,19 +143,14 @@ class TestLocationParentIdExpression(TestCase):
         }
         cls.expression = ExpressionFactory.from_spec(cls.expression_spec)
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.domain_obj.delete()
-        super(TestLocationParentIdExpression, cls).tearDownClass()
-
     def test_location_parent_id(self):
         self.assertEqual(
-            self.parent.location_id,
-            self.expression({'location_id': self.child.location_id}, self.evaluation_context)
+            parent.location_id,
+            self.expression({'location_id': child.location_id}, self.evaluation_context)
         )
         self.assertEqual(
-            self.child.location_id,
-            self.expression({'location_id': self.grandchild.location_id}, self.evaluation_context)
+            child.location_id,
+            self.expression({'location_id': grandchild.location_id}, self.evaluation_context)
         )
 
     def test_location_parent_missing(self):
@@ -155,7 +162,7 @@ class TestLocationParentIdExpression(TestCase):
     def test_location_parent_bad_domain(self):
         self.assertEqual(
             None,
-            self.expression({'location_id': self.child.location_id}, EvaluationContext({"domain": 'bad-domain'}))
+            self.expression({'location_id': child.location_id}, EvaluationContext({"domain": 'bad-domain'}))
         )
 
     def test_location_parents_chained(self):
@@ -170,6 +177,6 @@ class TestLocationParentIdExpression(TestCase):
             }
         })
         self.assertEqual(
-            self.parent.location_id,
-            expression({'location_id': self.grandchild.location_id}, self.evaluation_context)
+            parent.location_id,
+            expression({'location_id': grandchild.location_id}, self.evaluation_context)
         )
