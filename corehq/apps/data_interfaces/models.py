@@ -228,9 +228,6 @@ class AutomaticUpdateRule(models.Model):
         if not isinstance(case, (CommCareCase, CommCareCaseSQL)) or case.domain != self.domain:
             raise self.RuleError("Invalid case given")
 
-        if case.is_deleted or case.closed:
-            return CaseRuleActionResult()
-
         if self.criteria_match(case, now):
             return self.run_actions(case)
 
@@ -239,6 +236,9 @@ class AutomaticUpdateRule(models.Model):
     def criteria_match(self, case, now):
         if not self.migrated:
             raise self.MigrationError("Attempted to call new method on non-migrated model.")
+
+        if case.is_deleted or case.closed:
+            return False
 
         if case.type != self.case_type:
             return False
