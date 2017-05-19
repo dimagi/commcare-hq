@@ -7,6 +7,7 @@ import datetime
 
 from django.conf import settings
 from iso8601 import iso8601
+from restkit.errors import ResourceError
 
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_UPDATE, CASE_ACTION_CREATE
@@ -132,6 +133,17 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
 
             update_sync_log_with_checks(updated_log, xform, cases, case_db,
                                         case_id_blacklist=case_id_blacklist)
+
+
+def prune_previous_log(sync_log):
+    previous_log = sync_log.get_previous_log()
+    if previous_log:
+        try:
+            previous_log.delete()
+            sync_log.previous_log_removed = True
+            sync_log.save()
+        except ResourceError:
+            pass
 
 
 def get_indexed_cases(domain, case_ids):
