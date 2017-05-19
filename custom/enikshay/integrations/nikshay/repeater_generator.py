@@ -5,7 +5,7 @@ import socket
 from django.conf import settings
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.exceptions import RequestConnectionError
-from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
+from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator, LocationPayloadGenerator
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
@@ -23,7 +23,8 @@ from custom.enikshay.case_utils import (
     get_occurrence_case_from_test,
     get_open_episode_case_from_occurrence,
     get_person_case_from_occurrence,
-    get_lab_referral_from_test)
+    get_lab_referral_from_test,
+)
 from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
 from custom.enikshay.exceptions import (
     NikshayLocationNotFound,
@@ -45,9 +46,13 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     purpose_of_testing,
     smear_result_grade,
     drug_susceptibility_test_status,
-    basis_of_diagnosis)
+    basis_of_diagnosis,
+    health_establishment_type,
+    health_establishment_sector,
+)
 from custom.enikshay.case_utils import update_case
 from dimagi.utils.post import parse_SOAP_response
+from custom.enikshay.location_utils import get_health_establishment_hierarchy_codes
 
 ENIKSHAY_ID = 8
 NIKSHAY_NULL_DATE = '1900-01-01'
@@ -434,6 +439,31 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
                     "private_nikshay_error": unicode(exception)
                 }
             )
+
+
+class NikshayHealthEstablishmentPayloadGenerator(LocationPayloadGenerator):
+    def get_payload(self, repeat_record, location):
+        location_hierarchy_codes = get_health_establishment_hierarchy_codes(location)
+        return {
+            'ESTABLISHMENT_TYPE': health_establishment_type.get(location.establishment_type, ''),
+            'SECTOR': health_establishment_sector.get(location.sector, ''),
+            'ESTABLISHMENT_NAME': location.name,
+            'MCI_HR_NO': location.registration_number,
+            'CONTACT_PNAME': location.contact_name,
+            'CONTACT_PDESIGNATION': location.contact_designation,
+            'TELEPHONE_NO': location.phone_number,
+            'MOBILE_NO': location.mobile_number,
+            'COMPLETE_ADDRESS': location.address,
+            'PINCODE': location.address_pincode,
+            'EMAILID': location.email_address,
+            'STATE_CODE': location_hierarchy_codes.get('stcode'),
+            'DISTRICT_CODE': location_hierarchy_codes.get('dtcode'),
+            'TBU_CODE': location_hierarchy_codes.get('tbucode'),
+            'MUST_CREATE_NEW': 'no',
+            'USER_ID': settings.ENIKSHAY_PRIVATE_API_USERS.get(location_hierarchy_codes.get('stcode'), ''),
+            'PASSWORD': settings.ENIKSHAY_PRIVATE_API_PASSWORD,
+            'Source': ENIKSHAY_ID,
+        }
 
 
 def _get_nikshay_id_from_response(response):
