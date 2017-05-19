@@ -45,6 +45,33 @@ class FuzzyProperties(models.Model):
         unique_together = ('domain', 'case_type')
 
 
+class RemoveCharacters(models.Model):
+    domain = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    case_type = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    case_property = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    regex = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=False,
+    )
+
+
 class CaseSearchConfig(models.Model):
     """
     Contains config for case search
@@ -61,6 +88,7 @@ class CaseSearchConfig(models.Model):
     )
     enabled = models.BooleanField(blank=False, null=False, default=False)
     fuzzy_properties = models.ManyToManyField(FuzzyProperties)
+    remove_characters = models.ManyToManyField(RemoveCharacters)
 
     objects = GetOrNoneManager()
 
