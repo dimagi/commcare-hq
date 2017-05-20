@@ -1044,20 +1044,15 @@ class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructur
         self.assertEqual(payload['Source'], ENIKSHAY_ID)
 
     def test_handle_success(self):
-        self.repeater = NikshayRegisterPrivatePatientRepeater(
-            domain=self.domain,
-            url='http://nikshay.gov.in/mobileservice/webservice.asmx?WSDL',
-            username='test-user'
-        )
-        self.repeater.operation = 'InsertHFIDPatient_UATBC'
-        self.repeater.white_listed_case_types = ['episode']
-        self.repeater.save()
-        delete_all_repeat_records()
-
         nikshay_response_id = "000001"
         self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
         payload_generator = NikshayRegisterPrivatePatientPayloadGenerator(None)
-        repeat_record = [record for record in self.repeat_records()][0]
+
+        repeat_record = MockNikshayRegisterPrivatePatientRepeatRecord(
+            MockNikshayRegisterPrivatePatientRepeater(
+                url="http://nikshay.gov.in/mobileservice/webservice.asmx?WSDL",
+                operation='InsertHFIDPatient_UATBC')
+        )
 
         payload_generator.handle_success(
             MockSoapResponse(200, SUCCESSFUL_SOAP_RESPONSE),
