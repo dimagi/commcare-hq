@@ -71,7 +71,7 @@ from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.apps.reminders.models import CaseReminderHandler
-from corehq.apps.settings.forms import EncodedPasswordChangeForm
+from custom.nic_compliance.forms import EncodedPasswordChangeForm
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, Select2Ajax

@@ -83,8 +83,8 @@ def aliased_language_name(lang_code):
         raise KeyError('Unknown language code %s' % lang_code)
 
 
-def decode_password(password_hash, username=None):
-    if settings.ENABLE_PASSWORD_HASHING:
-        return get_decoded_password(password_hash, username)
+def decode_password(obfuscated_password, username=None):
+    if settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE:
+        return get_decoded_password(obfuscated_password, username)
     else:
-        return password_hash
+        return obfuscated_password

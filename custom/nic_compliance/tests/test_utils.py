@@ -6,7 +6,7 @@ from custom.nic_compliance.utils import extract_password, verify_password, get_l
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 
-HASHED_PASSWORD_MAPPING = {
+OBFUSCATED_PASSWORD_MAPPING = {
     "sha256$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127=": "123456",
     "sha256$8f5008c2hhMjU2JDhmNTAwOFlXSmpNVEl6TFE9PTRhNjBhOT0=4a60a9=": "abc123-",
     "sha256$4bf7cdc2hhMjU2JDRiZjdjZE1USXpRQ01rSlRFeTEzMGM4ZD0=130c8d=": "123@#$%12",
@@ -30,24 +30,24 @@ class TestDecodePassword(TestCase):
 
     def test_login_attempt(self):
         get_redis_client().clear()
-        with override_settings(ENABLE_PASSWORD_HASHING=True):
-            password_hash = "sha256$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="
+        with override_settings(OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE=True):
+            obfuscated_password = "sha256$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="
             client = Client(enforce_csrf_checks=False)
             form_data = {
                 'auth-username': self.username,
-                'auth-password': password_hash,
+                'auth-password': obfuscated_password,
                 'hq_login_view-current_step': 'auth'
             }
             # ensure that login attempt gets stored
             login_attempts = get_login_attempts(self.username)
             self.assertEqual(login_attempts, [])
             response = client.post(reverse('login'), form_data, follow=True)
-            self.assertRedirects(response, '/a/delhi/dashboard/apps/')
+            self.assertRedirects(response, '/a/delhi/dashboard/project/')
             login_attempts = get_login_attempts(self.username)
 
             self.assertTrue(
                 verify_password(
-                    password_hash,
+                    obfuscated_password,
                     login_attempts[0]
                 )
             )
@@ -62,16 +62,16 @@ class TestDecodePassword(TestCase):
 
 class TestExtractPassword(TestCase):
     def test_password_decoding(self):
-        for password_hash, password in HASHED_PASSWORD_MAPPING.items():
-            self.assertEqual(extract_password(password_hash), password)
+        for obfuscated_password, password in OBFUSCATED_PASSWORD_MAPPING.items():
+            self.assertEqual(extract_password(obfuscated_password), password)
 
     def test_invalid_regex_format(self):
-        password_hash = "sha255$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="
-        self.assertEqual(extract_password(password_hash), password_hash)
+        obfuscated_password = "sha255$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="
+        self.assertEqual(extract_password(obfuscated_password), obfuscated_password)
 
-        password_hash = "sha255$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ=="
-        self.assertEqual(extract_password(password_hash), password_hash)
+        obfuscated_password = "sha255$1e2d5bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ=="
+        self.assertEqual(extract_password(obfuscated_password), obfuscated_password)
 
     def test_invalid_padding(self):
-        password_hash = "sha256$1e456bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="
-        self.assertEqual(extract_password(password_hash), '')
+        obfuscated_password = "sha256$1e456bc2hhMjU2JDFlMmQ1Yk1USXpORFUyZjc5MTI3PQ==f79127="
+        self.assertEqual(extract_password(obfuscated_password), '')

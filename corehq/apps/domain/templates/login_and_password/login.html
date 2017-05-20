@@ -11,7 +11,7 @@
 
 {% block js %}
     {{ block.super }}
-    {% if implement_password_hashing %}
+    {% if implement_password_obfuscation %}
         {% include "nic_compliance/password_encoder.html" %}
     {% endif %}
 {% endblock %}

@@ -13,44 +13,46 @@ from custom.nic_compliance.const import EXPIRE_LOGIN_ATTEMPTS_IN, REDIS_LOGIN_AT
 PASSWORD_HASHER = get_hasher()
 
 
-def extract_password(password):
-    # Passwords set with expected salts length and padding would respect this regex
+def extract_password(obfuscated_password):
+    # Passwords set with expected padding length and format would respect this regex
     reg_exp = r"^sha256\$([a-z0-9A-Z]{6})([a-zA-Z0-9=]*)([a-z0-9A-Z]{6})=$"
-    match_result = re.match(reg_exp, password)
-    # strip out outer level padding of salts/keys and ensure three matches
+    # match regex for padding along with inner block and find matches
+    match_result = re.match(reg_exp, obfuscated_password)
+    # ensure regex match for obfuscated password and three matches
     if match_result and len(match_result.groups()) == 3:
         match_groups = match_result.groups()
-        hash_left, stripped_password, hash_right = match_groups
-        # decode the stripped password to get internal block
-        # decoded(salt1 + encoded_password + salt2)
+        padding_left, encoded_internal_block, padding_right = match_groups
+        # b64 decode the encoded internal block to get raw internal block
+        # raw internal block = (paddling_left + encoded_password + padding_right)
         try:
-            decoded_password = base64.b64decode(stripped_password)
+            decoded_internal_block = base64.b64decode(encoded_internal_block)
         except TypeError:
             return ''
-        match_result_2 = re.match(reg_exp, decoded_password)
-        # strip out hashes from the internal block and ensure 3 matches
+        # match regex for padding along with b64 encoded password and find matches
+        match_result_2 = re.match(reg_exp, decoded_internal_block)
+        # ensure regex match for the internal block and 3 matches
         if match_result_2 and len(match_result_2.groups()) == 3:
             match_groups = match_result_2.groups()
-            # ensure the same hashes were used in the internal block as the outer
-            if match_groups[0] == hash_left and match_groups[2] == hash_right:
-                # decode to get the real password
-                password_hash = match_groups[1]
-                # return password decoded for UTF-8 support
+            # ensure the same padding was used in the internal block as the outer
+            if match_groups[0] == padding_left and match_groups[2] == padding_right:
+                b64_encoded_password = match_groups[1]
                 try:
-                    return base64.b64decode(password_hash).decode('utf-8')
+                    # decode to get the b64encoded real password
+                    # return password decoded for UTF-8 support
+                    return base64.b64decode(b64_encoded_password).decode('utf-8')
                 except TypeError:
                     return ''
             else:
-                # this sounds like someone tried to hash something but failed so ignore the password submitted
+                # this sounds like someone tried to obfuscate password but failed so ignore the password submitted
                 # completely
                 return ''
         else:
-            # this sounds like someone tried to hash something but failed so ignore the password submitted
+            # this sounds like someone tried to obfuscate password but failed so ignore the password submitted
             # completely
             return ''
     else:
         # return the password received AS-IS
-        return password
+        return obfuscated_password
 
 
 def hash_password(password):
@@ -70,19 +72,19 @@ def get_login_attempts(username):
     return client.get(login_attempts_redis_key_for_user(username), [])
 
 
-def get_decoded_password(password_hash, username=None):
+def get_decoded_password(obfuscated_password, username=None):
     def replay_attack():
-        # Replay attack where the same hash used from previous login attempt
+        # Replay attack where the same obfuscated password used from previous login attempt
         login_attempts = get_login_attempts(username)
         for login_attempt in login_attempts:
-            if verify_password(password_hash, login_attempt):
+            if verify_password(obfuscated_password, login_attempt):
                 return True
 
     def record_login_attempt():
         client = get_redis_client()
         key_name = login_attempts_redis_key_for_user(username)
         login_attempts = client.get(key_name, [])
-        client.set(key_name, login_attempts + [hash_password(password_hash)])
+        client.set(key_name, login_attempts + [hash_password(obfuscated_password)])
         client.expire(key_name, timedelta(EXPIRE_LOGIN_ATTEMPTS_IN))
 
     def _decode_password():
@@ -93,9 +95,9 @@ def get_decoded_password(password_hash, username=None):
             if replay_attack():
                 return ''
             record_login_attempt()
-        return extract_password(password_hash)
+        return extract_password(obfuscated_password)
 
-    if settings.ENABLE_PASSWORD_HASHING:
+    if settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE:
         request = get_request()
         if request:
             # 1. an attempt to decode a password should be done just once in a request for the login attempt
@@ -104,14 +106,14 @@ def get_decoded_password(password_hash, username=None):
             if not hasattr(request, 'decoded_password'):
                 request.decoded_password = {}
 
-            # return decoded password set on request object for the password_hash
-            if request.decoded_password.get(password_hash):
-                return request.decoded_password[password_hash]
+            # return decoded password set on request object for the obfuscated_password
+            if request.decoded_password.get(obfuscated_password):
+                return request.decoded_password[obfuscated_password]
             else:
-                # decode the password and save it on the request object for password_hash
-                request.decoded_password[password_hash] = _decode_password()
-                return request.decoded_password[password_hash]
+                # decode the password and save it on the request object for obfuscated_password
+                request.decoded_password[obfuscated_password] = _decode_password()
+                return request.decoded_password[obfuscated_password]
         else:
             return _decode_password()
     else:
-        return password_hash
+        return obfuscated_password

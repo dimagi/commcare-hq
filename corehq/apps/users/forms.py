@@ -23,7 +23,7 @@ from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
-from corehq.apps.settings.forms import EncodedPasswordChangeForm
+from custom.nic_compliance.forms import EncodedPasswordChangeForm
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.apps.users.util import format_username, cc_user_domain

@@ -128,7 +128,7 @@ class EditCommCareUserView(BaseEditUserView):
         context.update({
             'edit_user_form_title': self.edit_user_form_title,
             'strong_mobile_passwords': self.request.project.strong_mobile_passwords,
-            'implement_password_hashing': settings.ENABLE_PASSWORD_HASHING
+            'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
         })
         return context
 
