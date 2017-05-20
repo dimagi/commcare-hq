@@ -352,7 +352,7 @@ class BeneficiaryCaseFactory(object):
     @memoized
     def _adherences(self):
         logger.info('making adherences query')
-        x = list(Adherence.objects.filter(episodeId=self._episode.episodeID)[:50]) if self._episode else []
+        x = list(Adherence.objects.filter(episodeId=self._episode.episodeID).order_by('-doseDate')[:50]) if self._episode else []
         logger.info('adherence query done')
         return x
 
