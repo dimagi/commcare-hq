@@ -342,12 +342,20 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
     format_label = 'XML'
 
     @memoized
+    def _get_person_locations(self, episode_case):
+        person_case = self._get_person_case(episode_case)
+        return get_person_locations(person_case)
+
+    @memoized
+    def _get_person_case(self, episode_case):
+        return get_person_case_from_episode(episode_case.domain, episode_case.get_id)
+
     def get_payload(self, repeat_record, episode_case):
-        person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
+        person_case = self._get_person_case(episode_case)
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case_properties = person_case.dynamic_case_properties()
 
-        person_locations = get_person_locations(person_case)
+        person_locations = self._get_person_locations(person_case)
         episode_case_date = episode_case_properties.get('date_of_diagnosis', None)
         if episode_case_date:
             episode_date = datetime.datetime.strptime(episode_case_date, "%Y-%m-%d").date()
@@ -391,7 +399,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
         )
         try:
             if isinstance(message, basestring) and message.isdigit():
-                health_facility_id = repeat_record.get_payload()['HFIDNO']
+                health_facility_id = self._get_person_locations(payload_doc).pcp
                 nikshay_id = '-'.join([health_facility_id, message])
                 update_case(
                     payload_doc.domain,
