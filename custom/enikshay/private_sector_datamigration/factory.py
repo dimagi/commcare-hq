@@ -218,10 +218,13 @@ class BeneficiaryCaseFactory(object):
         if self._episode:
             rx_start_datetime = self._episode.rxStartDate
             kwargs['attrs']['date_opened'] = rx_start_datetime
-            if not skip_adherence:
-                kwargs['attrs']['update']['adherence_total_doses_taken'] = self._episode.adherence_total_doses_taken
-                kwargs['attrs']['update']['adherence_tracking_mechanism'] = self._episode.adherence_tracking_mechanism
-                kwargs['attrs']['update']['dots_99_enabled'] = self._episode.dots_99_enabled
+            logger.info('entering')
+            kwargs['attrs']['update']['adherence_total_doses_taken'] = self._episode.adherence_total_doses_taken
+            logger.info('adherence_total_doses_taken done')
+            kwargs['attrs']['update']['adherence_tracking_mechanism'] = self._episode.adherence_tracking_mechanism
+            logger.info('adherence_tracking_mechanism done')
+            kwargs['attrs']['update']['dots_99_enabled'] = self._episode.dots_99_enabled
+            logger.info('dots_99_enabled done')
             kwargs['attrs']['update']['basis_of_diagnosis'] = self._episode.basis_of_diagnosis
             kwargs['attrs']['update']['case_definition'] = self._episode.case_definition
             kwargs['attrs']['update']['date_of_diagnosis'] = self._episode.dateOfDiagnosis.date()
@@ -343,14 +346,10 @@ class BeneficiaryCaseFactory(object):
     @memoized
     def _episode(self):
         # return None
-        logger.info('querying for episodes')
         episodes = Episode.objects.filter(beneficiaryID=self.beneficiary.caseId).order_by('-episodeDisplayID')
         if episodes:
-            ep = episodes[0]
-            logger.info('got episode')
-            return ep
+            return episodes[0]
         else:
-            logger.info('no episodes')
             return None
 
     @property
