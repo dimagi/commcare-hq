@@ -41,9 +41,13 @@ class BeneficiaryCaseFactory(object):
         self.location_owner = location_owner
 
     def get_case_structures_to_create(self, skip_adherence):
+        logger.info('get_person_case_structure')
         person_structure = self.get_person_case_structure()
+        logger.info('get_occurrence_case_structure')
         ocurrence_structure = self.get_occurrence_case_structure(person_structure)
+        logger.info('get_episode_case_structure')
         episode_structure = self.get_episode_case_structure(ocurrence_structure, skip_adherence)
+        logger.info('episode_descendants')
         episode_descendants = [
             self.get_prescription_case_structure(prescription, episode_structure)
             for prescription in self._prescriptions
@@ -60,6 +64,7 @@ class BeneficiaryCaseFactory(object):
             for labtest in self._labtests
         ]
 
+        logger.info('returning')
         return episode_or_descendants + tests
 
     def get_person_case_structure(self):
