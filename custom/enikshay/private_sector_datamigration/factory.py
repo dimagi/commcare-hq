@@ -25,6 +25,9 @@ ADHERENCE_CASE_TYPE = 'adherence'
 PRESCRIPTION_CASE_TYPE = 'prescription'
 TEST_CASE_TYPE = 'test'
 
+import logging
+logger = logging.getLogger('private_sector_datamigration')
+
 
 def get_human_friendly_id():
     return datetime.utcnow().strftime('%Y%m%d%H%M%S%f')[:-3]
@@ -331,10 +334,14 @@ class BeneficiaryCaseFactory(object):
     @memoized
     def _episode(self):
         # return None
+        logger.info('querying for episodes')
         episodes = Episode.objects.filter(beneficiaryID=self.beneficiary.caseId).order_by('-episodeDisplayID')
         if episodes:
-            return episodes[0]
+            ep = episodes[0]
+            logger.info('got episode')
+            return ep
         else:
+            logger.info('no episodes')
             return None
 
     @property
