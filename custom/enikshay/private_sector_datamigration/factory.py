@@ -221,11 +221,11 @@ class BeneficiaryCaseFactory(object):
             if not skip_adherence:
                 kwargs['attrs']['update']['adherence_total_doses_taken'] = self._episode.adherence_total_doses_taken
                 kwargs['attrs']['update']['adherence_tracking_mechanism'] = self._episode.adherence_tracking_mechanism
+                kwargs['attrs']['update']['dots_99_enabled'] = self._episode.dots_99_enabled
             kwargs['attrs']['update']['basis_of_diagnosis'] = self._episode.basis_of_diagnosis
             kwargs['attrs']['update']['case_definition'] = self._episode.case_definition
             kwargs['attrs']['update']['date_of_diagnosis'] = self._episode.dateOfDiagnosis.date()
             kwargs['attrs']['update']['disease_classification'] = self._episode.disease_classification
-            kwargs['attrs']['update']['dots_99_enabled'] = self._episode.dots_99_enabled
             kwargs['attrs']['update']['dst_status'] = self._episode.dst_status
             kwargs['attrs']['update']['episode_details_complete'] = 'true'
             kwargs['attrs']['update']['episode_pending_registration'] = (
