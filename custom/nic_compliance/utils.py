@@ -80,8 +80,8 @@ def get_decoded_password(password_hash, username=None):
 
     def record_login_attempt():
         client = get_redis_client()
-        login_attempts = client.get(login_attempts_redis_key_for_user(username), [])
         key_name = login_attempts_redis_key_for_user(username)
+        login_attempts = client.get(key_name, [])
         client.set(key_name, login_attempts + [hash_password(password_hash)])
         client.expire(key_name, timedelta(EXPIRE_LOGIN_ATTEMPTS_IN))
 
