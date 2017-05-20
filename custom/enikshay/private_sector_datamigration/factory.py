@@ -330,6 +330,7 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _episode(self):
+        return None
         episodes = Episode.objects.filter(beneficiaryID=self.beneficiary.caseId).order_by('-episodeDisplayID')
         if episodes:
             return episodes[0]
