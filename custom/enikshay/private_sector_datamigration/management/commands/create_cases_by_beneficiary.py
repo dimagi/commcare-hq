@@ -177,7 +177,7 @@ class Command(BaseCommand):
         factory = CaseFactory(domain=domain)
         case_structures = []
 
-        for beneficiary in beneficiaries:
+        for beneficiary in beneficiaries.order_by('caseId'):
             counter += 1
             try:
                 case_factory = BeneficiaryCaseFactory(domain, beneficiary, location_owner)
