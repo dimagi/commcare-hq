@@ -462,14 +462,14 @@ class Adherence(models.Model):
     commentId = models.CharField(max_length=8, null=True)
     creationDate = models.DateTimeField()
     creator = models.CharField(max_length=255, null=True)
-    dosageStatusId = models.IntegerField()
+    dosageStatusId = models.IntegerField(db_index=True)
     doseDate = models.DateTimeField()
     doseReasonId = models.IntegerField()
-    episodeId = models.CharField(max_length=8)
+    episodeId = models.CharField(max_length=8, db_index=True)
     modificationDate = models.DateTimeField(null=True)
     modifiedBy = models.CharField(max_length=255, null=True)
     owner = models.CharField(max_length=255, null=True)
-    reportingMechanismId = models.IntegerField()
+    reportingMechanismId = models.IntegerField(db_index=True)
     unknwDoseReasonId = models.CharField(max_length=8, null=True)
 
     @property
