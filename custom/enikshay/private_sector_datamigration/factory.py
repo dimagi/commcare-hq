@@ -83,15 +83,15 @@ class BeneficiaryCaseFactory(object):
                     'enrolled_in_private': 'true',
                     'first_name': self.beneficiary.firstName,
                     'husband_father_name': self.beneficiary.husband_father_name,
-                    # 'id_original_beneficiary_count': self._serial_count,
+                    'id_original_beneficiary_count': self._serial_count,
                     'id_original_device_number': 0,
-                    # 'id_original_issuer_number': self._id_issuer_number,
+                    'id_original_issuer_number': self._id_issuer_number,
                     'language_preference': self.beneficiary.language_preference,
                     'last_name': self.beneficiary.lastName,
                     'name': self.beneficiary.name,
-                    # 'person_id': self.person_id,
-                    # 'person_id_flat': self.person_id_flat,
-                    # 'person_id_legacy': self.beneficiary.caseId,
+                    'person_id': self.person_id,
+                    'person_id_flat': self.person_id_flat,
+                    'person_id_legacy': self.beneficiary.caseId,
                     'person_occurrence_count': 1,
                     'phone_number': self.beneficiary.phoneNumber,
                     'search_name': self.beneficiary.name,
@@ -351,10 +351,7 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _adherences(self):
-        logger.info('making adherences query')
-        x = list(Adherence.objects.filter(episodeId=self._episode.episodeID).order_by('-doseDate')[:50]) if self._episode else []
-        logger.info('adherence query done')
-        return x
+        return list(Adherence.objects.filter(episodeId=self._episode.episodeID).order_by('-doseDate')[:50]) if self._episode else []
 
     @property
     @memoized
@@ -398,7 +395,6 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _virtual_user(self):
-        return None
         return CommCareUser.get(self._location_owner.user_id)
 
     @property
@@ -418,7 +414,6 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _serial_count(self):
-        return None
         return MigratedBeneficiaryCounter.get_next_counter()
 
     @property
