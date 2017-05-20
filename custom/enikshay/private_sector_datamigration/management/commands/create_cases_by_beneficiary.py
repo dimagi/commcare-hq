@@ -1,3 +1,4 @@
+from datetime import date
 import logging
 import mock
 
@@ -87,7 +88,14 @@ class Command(BaseCommand):
         assert options['owner_state_id'] or not options['owner_district_id']
 
         base_query = Beneficiary.objects.filter(
-            caseStatus__in=['suspect', 'patient', 'patient '],
+            (
+                Q(caseStatus='suspect')
+                & Q(dateOfRegn__gte=date(2017, 1, 1))
+            )
+            | (
+                Q(caseStatus__in=['patient', 'patient '])
+                & Q(dateOfRegn__gte=date(2016, 1, 1))
+            )
         )
 
         user_details = None
