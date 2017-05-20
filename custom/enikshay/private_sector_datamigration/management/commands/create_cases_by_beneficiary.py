@@ -194,6 +194,7 @@ class Command(BaseCommand):
                 num_succeeded += 1
                 if num_succeeded % chunk_size == 0:
                     logger.info('committing cases {}-{}...'.format(num_succeeded - chunk_size, num_succeeded))
+                    logger.info('%d cases in total' % len(case_structures))
                     try:
                         factory.create_or_update_cases(case_structures)
                     except Exception:
