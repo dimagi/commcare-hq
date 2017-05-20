@@ -218,13 +218,9 @@ class BeneficiaryCaseFactory(object):
         if self._episode:
             rx_start_datetime = self._episode.rxStartDate
             kwargs['attrs']['date_opened'] = rx_start_datetime
-            logger.info('entering')
             kwargs['attrs']['update']['adherence_total_doses_taken'] = self._episode.adherence_total_doses_taken
-            logger.info('adherence_total_doses_taken done')
             kwargs['attrs']['update']['adherence_tracking_mechanism'] = self._episode.adherence_tracking_mechanism
-            logger.info('adherence_tracking_mechanism done')
             kwargs['attrs']['update']['dots_99_enabled'] = self._episode.dots_99_enabled
-            logger.info('dots_99_enabled done')
             kwargs['attrs']['update']['basis_of_diagnosis'] = self._episode.basis_of_diagnosis
             kwargs['attrs']['update']['case_definition'] = self._episode.case_definition
             kwargs['attrs']['update']['date_of_diagnosis'] = self._episode.dateOfDiagnosis.date()
@@ -355,8 +351,10 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _adherences(self):
-        return []
-        return list(Adherence.objects.filter(episodeId=self._episode.episodeID)) if self._episode else []
+        logger.info('making adherences query')
+        x = list(Adherence.objects.filter(episodeId=self._episode.episodeID)) if self._episode else []
+        logger.info('adherence query done')
+        return x
 
     @property
     @memoized
