@@ -52,13 +52,17 @@ class BeneficiaryCaseFactory(object):
             self.get_prescription_case_structure(prescription, episode_structure)
             for prescription in self._prescriptions
         ]
+        logger.info('if not skip_adherence')
         if not skip_adherence:
+            logger.info('get_adherence_case_structure')
             episode_descendants.extend(
                 self.get_adherence_case_structure(adherence, episode_structure)
                 for adherence in self._adherences
             )
+        logger.info('episode_or_descendants')
         episode_or_descendants = episode_descendants or [episode_structure]
 
+        logger.info('tests')
         tests = [
             self.get_test_case_structure(labtest, ocurrence_structure)
             for labtest in self._labtests
