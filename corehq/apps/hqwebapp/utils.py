@@ -11,7 +11,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.hqwebapp.forms import BulkUploadForm
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.users.models import WebUser
-from custom.nic_compliance.utils import get_decoded_password
+from custom.nic_compliance.utils import get_raw_password
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +85,6 @@ def aliased_language_name(lang_code):
 
 def decode_password(obfuscated_password, username=None):
     if settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE:
-        return get_decoded_password(obfuscated_password, username)
+        return get_raw_password(obfuscated_password, username)
     else:
         return obfuscated_password

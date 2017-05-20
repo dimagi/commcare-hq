@@ -63,28 +63,28 @@ def verify_password(password, password_salt):
     return PASSWORD_HASHER.verify(password, password_salt)
 
 
-def login_attempts_redis_key_for_user(username):
+def obfuscated_passwords_redis_key_for_user(username):
     return REDIS_LOGIN_ATTEMPTS_LIST_PREFIX + username
 
 
-def get_login_attempts(username):
+def get_obfuscated_passwords(username):
     client = get_redis_client()
-    return client.get(login_attempts_redis_key_for_user(username), [])
+    return client.get(obfuscated_passwords_redis_key_for_user(username), [])
 
 
-def get_decoded_password(obfuscated_password, username=None):
+def get_raw_password(obfuscated_password, username=None):
     def replay_attack():
         # Replay attack where the same obfuscated password used from previous login attempt
-        login_attempts = get_login_attempts(username)
-        for login_attempt in login_attempts:
-            if verify_password(obfuscated_password, login_attempt):
+        obfuscated_passwords = get_obfuscated_passwords(username)
+        for submitted_obfuscated_password in obfuscated_passwords:
+            if verify_password(obfuscated_password, submitted_obfuscated_password):
                 return True
 
     def record_login_attempt():
         client = get_redis_client()
-        key_name = login_attempts_redis_key_for_user(username)
-        login_attempts = client.get(key_name, [])
-        client.set(key_name, login_attempts + [hash_password(obfuscated_password)])
+        key_name = obfuscated_passwords_redis_key_for_user(username)
+        obfuscated_passwords = client.get(key_name, [])
+        client.set(key_name, obfuscated_passwords + [hash_password(obfuscated_password)])
         client.expire(key_name, timedelta(EXPIRE_LOGIN_ATTEMPTS_IN))
 
     def _decode_password():

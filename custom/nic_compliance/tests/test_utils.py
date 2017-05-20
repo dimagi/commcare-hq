@@ -2,7 +2,7 @@
 from django.test import TestCase, override_settings, Client
 from django.urls import reverse
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from custom.nic_compliance.utils import extract_password, verify_password, get_login_attempts
+from custom.nic_compliance.utils import extract_password, verify_password, get_obfuscated_passwords
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
 
@@ -39,11 +39,11 @@ class TestDecodePassword(TestCase):
                 'hq_login_view-current_step': 'auth'
             }
             # ensure that login attempt gets stored
-            login_attempts = get_login_attempts(self.username)
+            login_attempts = get_obfuscated_passwords(self.username)
             self.assertEqual(login_attempts, [])
             response = client.post(reverse('login'), form_data, follow=True)
             self.assertRedirects(response, '/a/delhi/dashboard/project/')
-            login_attempts = get_login_attempts(self.username)
+            login_attempts = get_obfuscated_passwords(self.username)
 
             self.assertTrue(
                 verify_password(
