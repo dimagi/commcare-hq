@@ -175,7 +175,7 @@ class Beneficiary(models.Model):
             '18': 'drivers_license',
             '19': 'ration_card',
             '20': 'voter_card',
-            None: None,
+            None: 'none',
         }[self.identificationTypeId]
 
 
