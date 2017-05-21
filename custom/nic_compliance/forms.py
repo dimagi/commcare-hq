@@ -9,6 +9,8 @@ class EncodedPasswordChangeForm(object):
         from corehq.apps.domain.forms import clean_password
         from corehq.apps.hqwebapp.utils import decode_password
         new_password = decode_password(self.cleaned_data.get('new_password1'))
+        # User might not be able to submit empty password but decode_password might
+        # return empty password in case the password hashing is messed up with
         if new_password == '':
             raise ValidationError(
                 _("Password cannot be empty"), code='new_password1_empty',

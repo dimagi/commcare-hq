@@ -30,6 +30,8 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
 
     def clean_password(self):
         from corehq.apps.hqwebapp.utils import decode_password
+        # decode password submitted from HQ login
+        # also pass in username to track replay attack
         return decode_password(self.cleaned_data['password'], self.clean_username())
 
     def clean(self):
