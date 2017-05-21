@@ -355,7 +355,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case_properties = person_case.dynamic_case_properties()
 
-        person_locations = self._get_person_locations(person_case)
+        person_locations = self._get_person_locations(episode_case)
         episode_case_date = episode_case_properties.get('date_of_diagnosis', None)
         if episode_case_date:
             episode_date = datetime.datetime.strptime(episode_case_date, "%Y-%m-%d").date()
