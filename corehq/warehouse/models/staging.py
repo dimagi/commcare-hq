@@ -24,12 +24,18 @@ class StagingTable(models.Model):
         raise NotImplementedError
 
     @classmethod
+    def field_mapping(cls):
+        # Map source model fields to staging table fields
+        # ( <source field>, <staging field> )
+        raise NotImplementedError
+
+    @classmethod
     @transaction.atomic
     def stage_records(cls, start_dateime, end_datetime):
         cls.clear_records()
         record_iter = cls.raw_record_iter(start_dateime, end_datetime)
 
-        django_batch_records(cls, record_iter, cls.FIELD_MAPPING)
+        django_batch_records(cls, record_iter, cls.field_mapping())
 
     @classmethod
     def clear_records(cls):
@@ -43,21 +49,23 @@ class GroupStagingTable(StagingTable):
 
     group_id = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
+    doc_type = models.CharField(max_length=100)
 
     case_sharing = models.NullBooleanField()
     reporting = models.NullBooleanField()
 
     group_last_modified = models.DateTimeField(null=True)
 
-    # Map source model fields to staging table fields
-    # ( <source field>, <staging field> )
-    FIELD_MAPPING = [
-        ('_id', 'group_id'),
-        ('name', 'name'),
-        ('case_sharing', 'case_sharing'),
-        ('reporting', 'reporting'),
-        ('last_modified', 'group_last_modified'),
-    ]
+    @classmethod
+    def field_mapping(cls):
+        return [
+            ('_id', 'group_id'),
+            ('name', 'name'),
+            ('case_sharing', 'case_sharing'),
+            ('reporting', 'reporting'),
+            ('last_modified', 'group_last_modified'),
+            ('doc_type', 'doc_type'),
+        ]
 
     @classmethod
     def raw_record_iter(cls, start_datetime, end_datetime):
@@ -74,6 +82,7 @@ class DomainStagingTable(StagingTable):
     hr_name = models.CharField(max_length=255, null=True)
     creating_user_id = models.CharField(max_length=255, null=True)
     project_type = models.CharField(max_length=255, null=True)
+    doc_type = models.CharField(max_length=100)
 
     is_active = models.BooleanField()
     case_sharing = models.BooleanField()
@@ -86,24 +95,27 @@ class DomainStagingTable(StagingTable):
     domain_last_modified = models.DateTimeField()
     domain_created_on = models.DateTimeField(null=True)
 
-    FIELD_MAPPING = [
-        ('_id', 'domain_id'),
-        ('default_timezone', 'default_timezone'),
-        ('hr_name', 'hr_name'),
-        ('creating_user_id', 'creating_user_id'),
-        ('project_type', 'project_type'),
+    @classmethod
+    def field_mapping(cls):
+        return [
+            ('_id', 'domain_id'),
+            ('default_timezone', 'default_timezone'),
+            ('hr_name', 'hr_name'),
+            ('creating_user_id', 'creating_user_id'),
+            ('project_type', 'project_type'),
 
-        ('is_active', 'is_active'),
-        ('case_sharing', 'case_sharing'),
-        ('commtrack_enabled', 'commtrack_enabled'),
-        ('is_test', 'is_test'),
-        ('location_restriction_for_users', 'location_restriction_for_users'),
-        ('use_sql_backend', 'use_sql_backend'),
-        ('first_domain_for_user', 'first_domain_for_user'),
+            ('is_active', 'is_active'),
+            ('case_sharing', 'case_sharing'),
+            ('commtrack_enabled', 'commtrack_enabled'),
+            ('is_test', 'is_test'),
+            ('location_restriction_for_users', 'location_restriction_for_users'),
+            ('use_sql_backend', 'use_sql_backend'),
+            ('first_domain_for_user', 'first_domain_for_user'),
 
-        ('last_modified', 'domain_last_modified'),
-        ('date_created', 'domain_created_on'),
-    ]
+            ('last_modified', 'domain_last_modified'),
+            ('date_created', 'domain_created_on'),
+            ('doc_type', 'doc_type'),
+        ]
 
     @classmethod
     def raw_record_iter(cls, start_datetime, end_datetime):
