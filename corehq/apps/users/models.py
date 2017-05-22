@@ -3,6 +3,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
 import re
+from uuid import uuid4
 
 from restkit.errors import NoMoreData
 from rest_framework.authtoken.models import Token
@@ -1523,20 +1524,22 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @classmethod
     def create(cls,
-            domain,
-            username,
-            password,
-            email=None,
-            uuid='',
-            date='',
-            phone_number=None,
-            is_anonymous=False,
-            commit=True,
-            **kwargs):
+               domain,
+               username,
+               password,
+               email=None,
+               uuid='',
+               date='',
+               phone_number=None,
+               is_anonymous=False,
+               location=None,
+               commit=True,
+               **kwargs):
         """
         used to be a function called `create_hq_user_from_commcare_registration_info`
 
         """
+        uuid = uuid or uuid4().hex
         commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
@@ -1549,6 +1552,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.is_anonymous = is_anonymous
 
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
+
+        if location:
+            commcare_user.set_location(location, commit=False)
 
         if commit:
             commcare_user.save(**get_safe_write_kwargs())
