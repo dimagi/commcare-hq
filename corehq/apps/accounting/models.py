@@ -419,6 +419,11 @@ class BillingAccount(ValidateModelMixin, models.Model):
         current_subscription = Subscription.get_active_subscription_by_domain(domain)
         if current_subscription is not None:
             return current_subscription.account
+        else:
+            return cls._get_account_by_created_by_domain(domain)
+
+    @classmethod
+    def _get_account_by_created_by_domain(cls, domain):
         try:
             return cls.objects.exclude(
                 account_type=BillingAccountType.TRIAL
