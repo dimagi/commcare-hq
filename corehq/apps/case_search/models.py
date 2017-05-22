@@ -1,7 +1,6 @@
 import copy
 
 from corehq.util.quickcache import quickcache
-from dimagi.ext import jsonobject
 from django.db import models
 from jsonfield.fields import JSONField
 from django.contrib.postgres.fields import ArrayField
@@ -10,6 +9,12 @@ from django.contrib.postgres.fields import ArrayField
 CLAIM_CASE_TYPE = 'commcare-case-claim'
 FUZZY_PROPERTIES = "fuzzy_properties"
 SEARCH_QUERY_ADDITION_KEY = 'commcare_custom_search_query'
+CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = u'commcare_blacklisted_owner_ids'
+UNSEARCHABLE_KEYS = (
+    SEARCH_QUERY_ADDITION_KEY,
+    CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    'owner_id',
+)
 
 
 class GetOrNoneManager(models.Manager):
@@ -46,6 +51,33 @@ class FuzzyProperties(models.Model):
         unique_together = ('domain', 'case_type')
 
 
+class IgnorePatterns(models.Model):
+    domain = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    case_type = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    case_property = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    regex = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=False,
+    )
+
+
 class CaseSearchConfig(models.Model):
     """
     Contains config for case search
@@ -62,6 +94,7 @@ class CaseSearchConfig(models.Model):
     )
     enabled = models.BooleanField(blank=False, null=False, default=False)
     fuzzy_properties = models.ManyToManyField(FuzzyProperties)
+    ignore_patterns = models.ManyToManyField(IgnorePatterns)
 
     objects = GetOrNoneManager()
 

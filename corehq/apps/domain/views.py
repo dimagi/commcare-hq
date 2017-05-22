@@ -41,6 +41,7 @@ from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
+    IgnorePatterns,
     enable_case_search,
     disable_case_search,
 )
@@ -2190,6 +2191,24 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         )
         unneeded_fuzzies.delete()
 
+        ignore_patterns = request_json.get('ignore_patterns')
+        updated_ignore_patterns = []
+        update_ignore_pattern_ids = []
+        for ignore_pattern_regex in ignore_patterns:
+            rc, created = IgnorePatterns.objects.get_or_create(
+                domain=self.domain,
+                case_type=ignore_pattern_regex.get('case_type'),
+                case_property=ignore_pattern_regex.get('case_property'),
+                regex=ignore_pattern_regex.get('regex')
+            )
+            updated_ignore_patterns.append(rc)
+            update_ignore_pattern_ids.append(rc.pk)
+
+        unneeded_ignore_patterns = IgnorePatterns.objects.filter(domain=self.domain).exclude(
+            pk__in=update_ignore_pattern_ids
+        )
+        unneeded_ignore_patterns.delete()
+
         if enable:
             enable_case_search(self.domain)
         else:
@@ -2198,6 +2217,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
             'enabled': request_json.get('enable'),
             'fuzzy_properties': updated_fuzzies,
+            'ignore_patterns': updated_ignore_patterns,
         })
         return json_response(self.page_context)
 
@@ -2212,7 +2232,12 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
                 'enabled': current_values.enabled if current_values else False,
                 'fuzzy_properties': {
                     fp.case_type: fp.properties for fp in current_values.fuzzy_properties.all()
-                } if current_values else {}
+                } if current_values else {},
+                'ignore_patterns': [{
+                    'case_type': rc.case_type,
+                    'case_property': rc.case_property,
+                    'regex': rc.regex
+                } for rc in current_values.ignore_patterns.all()] if current_values else {}
             }
         }
 

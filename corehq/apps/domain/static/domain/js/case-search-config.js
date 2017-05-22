@@ -26,6 +26,14 @@ hqDefine('domain/js/case-search-config.js', function () {
         };
     };
 
+    var IgnorePatterns = function(caseType, caseProperty, regex){
+        var self = this;
+
+        self.caseType = ko.observable(caseType);
+        self.caseProperty = ko.observable(caseProperty);
+        self.regex = ko.observable(regex);
+    };
+
     /**
      * Returns a viewModel for domain/admin/case_search.html
      */
@@ -42,7 +50,14 @@ hqDefine('domain/js/case-search-config.js', function () {
                 initialValues.fuzzy_properties[caseType]
             ));
         }
-
+        self.ignorePatterns = ko.observableArray();
+        for (var i = 0; i < initialValues.ignore_patterns.length; i++){
+            self.ignorePatterns.push(new IgnorePatterns(
+                initialValues.ignore_patterns[i].case_type,
+                initialValues.ignore_patterns[i].case_property,
+                initialValues.ignore_patterns[i].regex
+            ));
+        }
         self.change = function(){
             self.saveButton.fire('change');
         };
@@ -54,6 +69,15 @@ hqDefine('domain/js/case-search-config.js', function () {
         };
         self.removeCaseType = function (caseType) {
             self.fuzzyProperties.remove(caseType);
+            self.change();
+        };
+
+        self.addIgnorePatterns = function(){
+            self.ignorePatterns.push(new IgnorePatterns('', '', ''));
+            self.change();
+        };
+        self.removeIgnorePatterns = function(r){
+            self.ignorePatterns.remove(r);
             self.change();
         };
 
@@ -84,6 +108,13 @@ hqDefine('domain/js/case-search-config.js', function () {
             return {
                 'enable': self.toggleEnabled(),
                 'fuzzy_properties': fuzzyProperties,
+                'ignore_patterns': _.map(self.ignorePatterns(), function(rc){
+                    return {
+                        'case_type': rc.caseType(),
+                        'case_property': rc.caseProperty(),
+                        'regex': rc.regex(),
+                    };
+                }),
             };
         };
     };
