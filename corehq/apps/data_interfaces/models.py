@@ -15,6 +15,10 @@ from corehq.messaging.scheduling.tasks import (
     refresh_case_alert_schedule_instances,
     refresh_case_timed_schedule_instances,
 )
+from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
+    get_case_alert_schedule_instances_for_schedule_id,
+    get_case_timed_schedule_instances_for_schedule_id,
+)
 from corehq.util.log import with_progress_bar
 from corehq.util.test_utils import unit_testing_only
 from couchdbkit.exceptions import ResourceNotFound
@@ -878,6 +882,15 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
             refresh_case_alert_schedule_instances(case.case_id, schedule, self.recipients, rule)
         elif isinstance(schedule, TimedSchedule):
             refresh_case_timed_schedule_instances(case.case_id, schedule, self.recipients, rule)
+
+        return CaseRuleActionResult()
+
+    def when_case_does_not_match(self, case, rule):
+        if self.alert_schedule_id:
+            get_case_alert_schedule_instances_for_schedule_id(case.case_id, self.alert_schedule_id).delete()
+
+        if self.timed_schedule_id:
+            get_case_timed_schedule_instances_for_schedule_id(case.case_id, self.timed_schedule_id).delete()
 
         return CaseRuleActionResult()
 

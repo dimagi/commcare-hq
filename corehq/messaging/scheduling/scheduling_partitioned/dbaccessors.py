@@ -123,28 +123,38 @@ def get_timed_schedule_instances_for_schedule(schedule):
     )
 
 
-def get_case_alert_schedule_instances_for_schedule(case_id, schedule):
-    from corehq.messaging.scheduling.models import AlertSchedule
+def get_case_alert_schedule_instances_for_schedule_id(case_id, schedule_id):
     from corehq.messaging.scheduling.scheduling_partitioned.models import CaseAlertScheduleInstance
 
-    _validate_class(schedule, AlertSchedule)
     db_name = get_db_alias_for_partitioned_doc(case_id)
     return CaseAlertScheduleInstance.objects.using(db_name).filter(
         case_id=case_id,
-        alert_schedule_id=schedule.schedule_id
+        alert_schedule_id=schedule_id
     )
+
+
+def get_case_timed_schedule_instances_for_schedule_id(case_id, schedule_id):
+    from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
+
+    db_name = get_db_alias_for_partitioned_doc(case_id)
+    return CaseTimedScheduleInstance.objects.using(db_name).filter(
+        case_id=case_id,
+        timed_schedule_id=schedule_id
+    )
+
+
+def get_case_alert_schedule_instances_for_schedule(case_id, schedule):
+    from corehq.messaging.scheduling.models import AlertSchedule
+
+    _validate_class(schedule, AlertSchedule)
+    return get_case_alert_schedule_instances_for_schedule_id(case_id, schedule.schedule_id)
 
 
 def get_case_timed_schedule_instances_for_schedule(case_id, schedule):
     from corehq.messaging.scheduling.models import TimedSchedule
-    from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
 
     _validate_class(schedule, TimedSchedule)
-    db_name = get_db_alias_for_partitioned_doc(case_id)
-    return CaseTimedScheduleInstance.objects.using(db_name).filter(
-        case_id=case_id,
-        timed_schedule_id=schedule.schedule_id
-    )
+    return get_case_timed_schedule_instances_for_schedule_id(case_id, schedule.schedule_id)
 
 
 def save_case_schedule_instance(instance):
