@@ -90,7 +90,16 @@ class Command(BaseCommand):
         owner_district_id = options['owner_district_id']
         owner_organisation_ids = options['owner_organisation_ids']
         owner_state_id = options['owner_state_id']
+        skip_adherence = options['skip_adherence']
         start = options['start']
+
+        location_owner_id = options['location_owner_id']
+        if location_owner_id:
+            location_owner = SQLLocation.objects.get(
+                location_id=location_owner_id,
+            )
+        else:
+            location_owner = None
 
         assert not case_ids or not owner_state_id
         assert owner_state_id or not owner_district_id
@@ -103,14 +112,6 @@ class Command(BaseCommand):
             owner_district_id=owner_district_id,
             owner_organisation_ids=owner_organisation_ids,
         )
-
-        location_owner_id = options['location_owner_id']
-        if location_owner_id:
-            location_owner = SQLLocation.objects.get(
-                location_id=location_owner_id,
-            )
-        else:
-            location_owner = None
 
         # Assert never null
         assert not beneficiaries.filter(firstName__isnull=True).exists()
@@ -130,63 +131,7 @@ class Command(BaseCommand):
         assert not beneficiaries.filter(tsType__isnull=False).exists()
         assert not Episode.objects.filter(phoneNumber__isnull=False).exists()
 
-        total = beneficiaries.count()
-        counter = 0
-        num_succeeded = 0
-        num_failed = 0
-        logger.info('Starting migration of %d patients in domain %s.' % (total, domain))
-        factory = CaseFactory(domain=domain)
-        case_structures = []
-
-        for beneficiary in beneficiaries:
-            counter += 1
-            try:
-                case_factory = BeneficiaryCaseFactory(domain, beneficiary, location_owner)
-                case_structures.extend(case_factory.get_case_structures_to_create(options['skip_adherence']))
-            except Exception:
-                num_failed += 1
-                logger.error(
-                    'Failed on %d of %d. Case ID=%s' % (
-                        counter, total, beneficiary.caseId
-                    ),
-                    exc_info=True,
-                )
-            else:
-                num_succeeded += 1
-                if num_succeeded % chunk_size == 0:
-                    logger.info('%d cases to save.' % len(case_structures))
-                    logger.info('committing beneficiaries {}-{}...'.format(
-                        num_succeeded - chunk_size, num_succeeded
-                    ))
-                    try:
-                        factory.create_or_update_cases(case_structures)
-                    except Exception:
-                        logger.error(
-                            'Failure writing case structures',
-                            exc_info=True,
-                        )
-                    case_structures = []
-                    logger.info('done')
-
-                logger.info(
-                    'Succeeded on %s of %d. Case ID=%s' % (
-                        counter, total, beneficiary.caseId
-                    )
-                )
-
-        if case_structures:
-            logger.info('committing final cases...'.format(num_succeeded - chunk_size, num_succeeded))
-            factory.create_or_update_cases(case_structures)
-
-        logger.info('Done creating cases for domain %s.' % domain)
-        logger.info('Number of attempts: %d.' % counter)
-        logger.info('Number of successes: %d.' % num_succeeded)
-        logger.info('Number of failures: %d.' % num_failed)
-
-        # since we circumvented cleanliness checks just call this at the end
-        logger.info('Setting cleanliness flags')
-        set_cleanliness_flags_for_domain(domain, force_full=True, raise_soft_assertions=False)
-        logger.info('Done!')
+        self.migrate_to_enikshay(domain, beneficiaries, skip_adherence, chunk_size, location_owner)
 
     @staticmethod
     def beneficiaries(start, limit=None, case_ids=None, owner_state_id=None,
@@ -242,3 +187,63 @@ class Command(BaseCommand):
             return beneficiaries_query[start:limit]
         else:
             return beneficiaries_query[start:]
+
+    @staticmethod
+    def migrate_to_enikshay(domain, beneficiaries, skip_adherence, chunk_size, location_owner):
+        total = beneficiaries.count()
+        counter = 0
+        num_succeeded = 0
+        num_failed = 0
+        logger.info('Starting migration of %d patients in domain %s.' % (total, domain))
+        factory = CaseFactory(domain=domain)
+        case_structures = []
+
+        for beneficiary in beneficiaries:
+            counter += 1
+            try:
+                case_factory = BeneficiaryCaseFactory(domain, beneficiary, location_owner)
+                case_structures.extend(case_factory.get_case_structures_to_create(skip_adherence))
+            except Exception:
+                num_failed += 1
+                logger.error(
+                    'Failed on %d of %d. Case ID=%s' % (
+                        counter, total, beneficiary.caseId
+                    ),
+                    exc_info=True,
+                )
+            else:
+                num_succeeded += 1
+                if num_succeeded % chunk_size == 0:
+                    logger.info('%d cases to save.' % len(case_structures))
+                    logger.info('committing beneficiaries {}-{}...'.format(
+                        num_succeeded - chunk_size, num_succeeded
+                    ))
+                    try:
+                        factory.create_or_update_cases(case_structures)
+                    except Exception:
+                        logger.error(
+                            'Failure writing case structures',
+                            exc_info=True,
+                        )
+                    case_structures = []
+                    logger.info('done')
+
+                logger.info(
+                    'Succeeded on %s of %d. Case ID=%s' % (
+                        counter, total, beneficiary.caseId
+                    )
+                )
+
+        if case_structures:
+            logger.info('committing final cases...'.format(num_succeeded - chunk_size, num_succeeded))
+            factory.create_or_update_cases(case_structures)
+
+        logger.info('Done creating cases for domain %s.' % domain)
+        logger.info('Number of attempts: %d.' % counter)
+        logger.info('Number of successes: %d.' % num_succeeded)
+        logger.info('Number of failures: %d.' % num_failed)
+
+        # since we circumvented cleanliness checks just call this at the end
+        logger.info('Setting cleanliness flags')
+        set_cleanliness_flags_for_domain(domain, force_full=True, raise_soft_assertions=False)
+        logger.info('Done!')
