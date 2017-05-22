@@ -6,6 +6,7 @@ from django.core.management import BaseCommand
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_domain
 
+from corehq.apps.locations.models import SQLLocation
 from custom.enikshay.private_sector_datamigration.factory import BeneficiaryCaseFactory
 from custom.enikshay.private_sector_datamigration.models import (
     Adherence,
@@ -61,6 +62,9 @@ class Command(BaseCommand):
             default=False,
             dest='skip_adherence',
         )
+        parser.add_argument(
+            '--location-owner-id',
+        )
 
     @mock_ownership_cleanliness_checks()
     def handle(self, domain, **options):
@@ -79,6 +83,14 @@ class Command(BaseCommand):
             beneficiaries = base_query[start:start + limit]
         else:
             beneficiaries = base_query[start:]
+
+        location_owner_id = options['location_owner_id']
+        if location_owner_id:
+            location_owner = SQLLocation.objects.get(
+                location_id=location_owner_id,
+            )
+        else:
+            location_owner = None
 
         # Assert never null
         assert not beneficiaries.filter(firstName__isnull=True).exists()
@@ -109,7 +121,7 @@ class Command(BaseCommand):
         for beneficiary in beneficiaries:
             counter += 1
             try:
-                case_factory = BeneficiaryCaseFactory(domain, beneficiary)
+                case_factory = BeneficiaryCaseFactory(domain, beneficiary, location_owner)
                 case_structures.extend(case_factory.get_case_structures_to_create(options['skip_adherence']))
             except Exception:
                 num_failed += 1
