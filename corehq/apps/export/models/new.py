@@ -876,6 +876,19 @@ class ExportInstance(BlobMixin, Document):
         new_export = self.__class__.wrap(export_json)
         return new_export
 
+    def error_messages(self):
+        error_messages = []
+        if self.export_format == 'xls':
+            for table in self.tables:
+                if len(table.selected_columns) > 255:
+                    error_messages.append(_(
+                        "XLS format does not support more than 255 columns. "
+                        "Please select a different file type"
+                    ))
+                    break
+
+        return error_messages
+
 
 class CaseExportInstance(ExportInstance):
     case_type = StringProperty()

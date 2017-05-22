@@ -20,6 +20,7 @@ An overview of the design, API and data structures used here.
             - [Iterator Expression](#iterator-expression)
             - [Base iteration number expressions](#base-iteration-number-expressions)
             - [Related document expressions](#related-document-expressions)
+            - [Ancestor Location Expression](#ancestor-location-expression)
             - [Nested expressions](#nested-expressions)
             - [Dict expressions](#dict-expressions)
             - ["Add Days" expressions](#add-days-expressions)
@@ -88,6 +89,7 @@ An overview of the design, API and data structures used here.
             - [Round to the nearest whole number](#round-to-the-nearest-whole-number)
             - [Always round to 3 decimal places](#always-round-to-3-decimal-places)
         - [Date formatting](#date-formatting)
+        - [Converting an ethiopian date string to a gregorian date](#ethiopian-transform)
     - [Charts](#charts)
         - [Pie charts](#pie-charts)
         - [Aggregate multibar charts](#aggregate-multibar-charts)
@@ -189,6 +191,7 @@ split_string    | Splitting a string and grabbing a specific element from it by 
 iterator        | Combine multiple expressions into a list | `[doc.name, doc.age, doc.gender]`
 related_doc     | A way to reference something in another document | `form.case.owner_id`
 root_doc        | A way to reference the root document explicitly (only needed when making a data source from repeat/child data) | `repeat.parent.name`
+ancestor_location | A way to retrieve the ancestor of a particular type from a location |
 nested          | A way to chain any two expressions together | `f1(f2(doc))`
 dict            | A way to emit a dictionary of key/value pairs | `{"name": "test", "value": f(doc)}`
 add_days        | A way to add days to a date | `my_date + timedelta(days=15)`
@@ -413,7 +416,7 @@ These are very simple expressions with no config. They return the index of the r
 
 This can be used to lookup a property in another document. Here's an example that lets you look up `form.case.owner_id` from a form.
 
-```
+```json
 {
     "type": "related_doc",
     "related_doc_type": "CommCareCase",
@@ -424,6 +427,26 @@ This can be used to lookup a property in another document. Here's an example tha
     "value_expression": {
         "type": "property_name",
         "property_name": "owner_id"
+    }
+}
+```
+
+#### Ancestor location expression
+This is used to return a json object representing the ancestor of the given type of the given location.
+For instance, if we had locations configured with a hierarchy like `country -> state -> county -> city`, we could
+pass the location id of Cambridge and a location type of state to this expression to get the Massachusetts
+location.
+
+```json
+{
+    "type": "ancestor_location",
+    "location_id": {
+        "type": "property_name",
+        "name": "owner_id"
+    },
+    "location_type": {
+        "type": "constant",
+        "constant": "state"
     }
 }
 ```
@@ -1696,6 +1719,19 @@ If there is an error formatting the date, the transform is not applied to that v
 {
    "type": "date_format", 
    "format": "%Y-%m-%d %H:%M"
+}
+```
+
+
+### Converting an ethiopian date string to a gregorian date
+Converts a string in the YYYY-MM-DD format to a gregorian date. For example,
+2009-09-11 is converted date(2017, 5, 19). If it is unable to convert the date,
+it will return an empty string.
+
+```json
+{
+   "type": "custom",
+   "custom_type": "ethiopian_date_to_gregorian_date"
 }
 ```
 

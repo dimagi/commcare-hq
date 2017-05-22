@@ -12,13 +12,15 @@ from custom.enikshay.exceptions import (
     ENikshayCaseNotFound,
     NikshayCodeNotFound,
     NikshayLocationNotFound,
-)
+    ENikshayException)
 from corehq.form_processor.exceptions import CaseNotFound
 
 CASE_TYPE_ADHERENCE = "adherence"
 CASE_TYPE_OCCURRENCE = "occurrence"
 CASE_TYPE_EPISODE = "episode"
 CASE_TYPE_PERSON = "person"
+CASE_TYPE_REFERRAL = "referral"
+CASE_TYPE_TRAIL = "trail"
 CASE_TYPE_LAB_REFERRAL = "lab_referral"
 CASE_TYPE_DRTB_HIV_REFERRAL = "drtb-hiv-referral"
 CASE_TYPE_TEST = "test"
@@ -168,6 +170,39 @@ def get_open_episode_case_from_person(domain, person_case_id):
     return get_open_episode_case_from_occurrence(
         domain, get_open_occurrence_case_from_person(domain, person_case_id).case_id
     )
+
+
+def get_open_referral_case_from_person(domain, person_case_id):
+    episode = get_open_episode_case_from_person(domain, person_case_id)
+    case_accessor = CaseAccessors(domain)
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([episode.case_id])
+    open_referral_cases = [
+        case for case in reverse_indexed_cases
+        if not case.closed and case.type == CASE_TYPE_REFERRAL
+    ]
+    if not open_referral_cases:
+        return None
+    if len(open_referral_cases) == 1:
+        return open_referral_cases[0]
+    else:
+        raise ENikshayException(
+            "Expected none or one open referral case for person with id: {}".format(person_case_id)
+        )
+
+
+def get_latest_trail_case_from_person(domain, person_case_id):
+    episode = get_open_episode_case_from_person(domain, person_case_id)
+    case_accessor = CaseAccessors(domain)
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([episode.case_id])
+    trail_cases = [
+        case for case in reverse_indexed_cases
+        if case.type == CASE_TYPE_TRAIL
+    ]
+    trail_cases.sort(key=lambda c: c.opened_on)
+    if trail_cases:
+        return trail_cases[-1]
+    else:
+        return None
 
 
 def get_episode_case_from_adherence(domain, adherence_case_id):

@@ -7,6 +7,7 @@ from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
+from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps
@@ -15,6 +16,7 @@ from corehq.apps.app_manager.app_translations import \
     process_bulk_app_translation_upload
 from corehq.apps.app_manager.ui_translations import process_ui_translation_upload, \
     build_ui_translation_download_file
+from corehq.util.workbook_json.excel import InvalidExcelFileException
 from couchexport.export import export_raw
 from couchexport.models import Format
 from couchexport.shortcuts import export_response
@@ -53,7 +55,8 @@ def upload_bulk_ui_translations(request, domain, app_id):
             message = _html_message(_("Upload succeeded, but we found following issues for some properties"),
                                     warnings)
             messages.warning(request, message, extra_tags='html')
-
+    except InvalidExcelFileException as e:
+        messages.error(request, _(APP_TRANSLATION_UPLOAD_FAIL_MESSAGE).format(e))
     except Exception:
         notify_exception(request, 'Bulk Upload Translations Error')
         messages.error(request, _("Something went wrong! Update failed. We're looking into it"))

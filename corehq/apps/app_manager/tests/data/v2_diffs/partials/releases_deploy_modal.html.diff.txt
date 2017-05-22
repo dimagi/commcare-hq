@@ -178,7 +178,7 @@
 -                               data-category="App Manager"
 -                               data-action="Deploy Type"
 -                               data-label="View Source Files"
--                               data-bind="attr: {href: $root.url('source', id)}">
+-                               data-bind="attr: {href: $root.reverse('download_index', id)}">
 -                                {% trans 'View Source Files' %}
 -                            </a>
 +                            <h4 class="panel-title">
@@ -186,7 +186,7 @@
 +                                   data-category="App Manager"
 +                                   data-action="Deploy Type"
 +                                   data-label="View Source Files"
-+                                   data-bind="attr: {href: $root.url('source', id)}">
++                                   data-bind="attr: {href: $root.reverse('download_index', id)}">
 +                                    {% trans 'View Source Files' %}
 +                                </a>
 +                            </h4>

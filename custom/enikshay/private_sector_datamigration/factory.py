@@ -188,6 +188,7 @@ class BeneficiaryCaseFactory(object):
                     'episode_type': self.beneficiary.current_episode_type,
                     'name': self.beneficiary.episode_name,
                     'transfer_in': '',
+                    'treatment_options': '',
 
                     'migration_created_case': 'true',
                     'migration_created_from_record': self.beneficiary.caseId,

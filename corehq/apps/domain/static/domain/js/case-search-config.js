@@ -1,4 +1,4 @@
-/* globals hqDefine, ko, $, _ */
+/* globals hqDefine, ko, $, _, COMMCAREHQ, hqImport */
 
 hqDefine('domain/js/case-search-config.js', function () {
     'use strict';
@@ -36,48 +36,55 @@ hqDefine('domain/js/case-search-config.js', function () {
         self.caseTypes = options.caseTypes;
         self.toggleEnabled = ko.observable(initialValues.enabled);
         self.fuzzyProperties = ko.observableArray();
-        if (
-            initialValues.config.hasOwnProperty('fuzzy_properties') &&
-            initialValues.config.fuzzy_properties.length > 0
-        ) {
-            for (var i = 0; i < initialValues.config.fuzzy_properties.length; i++) {
-                self.fuzzyProperties.push(new CaseTypeProps(
-                    initialValues.config.fuzzy_properties[i].case_type,
-                    initialValues.config.fuzzy_properties[i].properties
-                ));
-            }
-        } else {
-            self.fuzzyProperties.push(new CaseTypeProps('', ['']));
+        for (var caseType in initialValues.fuzzy_properties){
+            self.fuzzyProperties.push(new CaseTypeProps(
+                caseType,
+                initialValues.fuzzy_properties[caseType]
+            ));
         }
+
+        self.change = function(){
+            self.saveButton.fire('change');
+        };
+        self.fuzzyProperties.subscribe(self.change);
 
         self.addCaseType = function () {
             self.fuzzyProperties.push(new CaseTypeProps('', ['']));
+            self.change();
         };
         self.removeCaseType = function (caseType) {
             self.fuzzyProperties.remove(caseType);
+            self.change();
         };
 
-        self.submit = function (form) {
-            var fuzzyProperties = [];
+        self.saveButton = COMMCAREHQ.SaveButton.init({
+            unsavedMessage: "You have unchanged settings",
+            save: function() {
+                self.saveButton.ajax({
+                    type: 'post',
+                    url: hqImport("hqwebapp/js/urllib.js").reverse("case_search_config"),
+                    data: JSON.stringify(self.serialize()),
+                    dataType: 'json',
+                    contentType: "application/json; charset=utf-8",
+                });
+            },
+        });
+
+        self.serialize = function(){
+            var fuzzyProperties = {};
             for (var i = 0; i < self.fuzzyProperties().length; i++) {
-                fuzzyProperties.push({
-                    case_type: self.fuzzyProperties()[i].caseType(),
-                    properties: _.map(
+                var caseType = self.fuzzyProperties()[i].caseType(),
+                    properties = _.map(
                         self.fuzzyProperties()[i].properties(),
                         function (property) { return property.name(); }
-                    ),
-                });
+                    );
+
+                fuzzyProperties[caseType] = (fuzzyProperties[caseType] || []).concat(properties);
             }
-            $.post({
-                url: form.action, 
-                data: {
-                    'enable': self.toggleEnabled(),
-                    'config': {'fuzzy_properties': fuzzyProperties},
-                },
-                success: function () {
-                    // TODO: Watch changes. On success change Save button from btn-primary to btn-default
-                },
-            });
+            return {
+                'enable': self.toggleEnabled(),
+                'fuzzy_properties': fuzzyProperties,
+            };
         };
     };
 

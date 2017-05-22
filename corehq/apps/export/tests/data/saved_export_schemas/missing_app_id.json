@@ -1,0 +1,26 @@
+{
+    "_id": "2f1b9a5edd9f0710e6ddbffd6173f2b7",
+    "_rev": "3-0be1a2b246f8f6dd72d287de54f05f7d",
+    "default_format": "csv",
+    "doc_type": "SavedExportSchema",
+    "filter_function": "",
+    "index": "[\"aspace\", \"missing-xmlns\"]", 
+    "name": "alex_audit",
+    "schema_id": "2f1b9a5edd9f0710e6ddbffd6173f435",
+    "tables": [
+        {
+            "columns": [
+                {
+                    "display": "form.meta.username",
+                    "doc_type": "ExportColumn", 
+                    "index": "form.meta.username"
+                }
+            ], 
+            "display": "alex_audit", 
+            "doc_type": "ExportTable", 
+            "index": "#", 
+            "order": []
+        }
+    ], 
+    "type": "form"
+}

@@ -69,7 +69,6 @@ domain_specific = [
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
-    url(r'^motech/', include('corehq.apps.motech.urls')),
     url(r'^fri/', include('custom.fri.urls')),
     url(r'^ilsgateway/', include('custom.ilsgateway.urls')),
     url(r'^ewsghana/', include('custom.ewsghana.urls')),
@@ -164,8 +163,9 @@ if settings.ENABLE_PRELOGIN_SITE:
 if settings.DEBUG:
     try:
         from debug_toolbar import urls as debug_toolbar_urls
+        urlconf_module, app_name, namespace = debug_toolbar_urls
         urlpatterns += [
-            url(r'^__debug__/', include(debug_toolbar_urls)),
+            url(r'^__debug__/', include((urlconf_module, app_name), namespace=namespace)),
         ]
     except ImportError:
         pass

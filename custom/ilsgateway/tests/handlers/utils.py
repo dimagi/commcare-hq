@@ -3,7 +3,7 @@ from corehq.apps.commtrack.models import CommtrackActionConfig
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
 from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import Location, SQLLocation, LocationType
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser
@@ -88,12 +88,17 @@ class ILSTestScript(TestScript):
 
         create_products(cls, domain.name, ["id", "dp", "fs", "md", "ff", "dx", "bp", "pc", "qi", "jd", "mc", "ip"])
 
+    @staticmethod
+    def get_location_by_site_code(site_code):
+        return SQLLocation.objects.get_or_None(domain=TEST_DOMAIN,
+                                               site_code__iexact=site_code)
+
     def setUp(self):
         super(ILSTestScript, self).setUp()
         self.domain = Domain.get_by_name(TEST_DOMAIN)
-        self.loc1 = Location.by_site_code(TEST_DOMAIN, 'loc1')
-        self.loc2 = Location.by_site_code(TEST_DOMAIN, 'loc2')
-        self.dis = Location.by_site_code(TEST_DOMAIN, 'dis1')
+        self.loc1 = self.get_location_by_site_code('loc1')
+        self.loc2 = self.get_location_by_site_code('loc2')
+        self.dis = self.get_location_by_site_code('dis1')
         self.user_fac1 = CommCareUser.get_by_username('stella')
         self.user_fac1_en = CommCareUser.get_by_username('stella_en')
         self.user_fac2 = CommCareUser.get_by_username('bella')
@@ -130,7 +135,7 @@ class ILSTestScript(TestScript):
             'reg1',
             'moh1',
         ]:
-            location = Location.by_site_code(TEST_DOMAIN, site_code)
+            location = cls.get_location_by_site_code(site_code)
             if location:
                 location.delete()
         SQLLocation.objects.all().delete()
