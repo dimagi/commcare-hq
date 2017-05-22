@@ -71,6 +71,7 @@ from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.apps.reminders.models import CaseReminderHandler
+from custom.nic_compliance.forms import EncodedPasswordChangeForm
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, Select2Ajax
@@ -1342,16 +1343,13 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
             return self.cleaned_data['email']
 
 
-class HQSetPasswordForm(SetPasswordForm):
+class HQSetPasswordForm(EncodedPasswordChangeForm, SetPasswordForm):
     new_password1 = forms.CharField(label=ugettext_lazy("New password"),
                                     widget=forms.PasswordInput(
                                         attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
                                     help_text=mark_safe("""
                                     <span data-bind="text: passwordHelp, css: color">
                                     """))
-
-    def clean_new_password1(self):
-        return clean_password(self.cleaned_data.get('new_password1'))
 
     def save(self, commit=True):
         user = super(HQSetPasswordForm, self).save(commit)

@@ -290,6 +290,7 @@ class ChangeMyPasswordView(BaseMyAccountView):
         return {
             'form': self.password_change_form,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
         }
 
     @method_decorator(sensitive_post_parameters())
