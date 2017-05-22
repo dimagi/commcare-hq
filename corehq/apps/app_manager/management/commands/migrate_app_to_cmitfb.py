@@ -6,7 +6,7 @@ from lxml import etree as ET
 from couchdbkit import ResourceNotFound
 from django.core.management import BaseCommand
 
-from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
+from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
 from corehq.apps.app_manager.models import Application, PreloadAction, CaseReferences
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import (
@@ -70,6 +70,10 @@ class Command(BaseCommand):
         for domain, app_ids in sorted(app_ids_by_domain.items()):
             logger.info('migrating %s: %s apps', domain, len(app_ids))
             for app_id in app_ids:
+                app = get_app(domain, app_id)
+                if app.doc_type not in ["Application", "Application-Deleted"]:
+                    logger.info("Skipping %s/%s, a %s", domain, app_id, app.doc_type)
+                    continue
                 try:
                     if self.fix_user_props:
                         self.fix_user_properties(app_id)
