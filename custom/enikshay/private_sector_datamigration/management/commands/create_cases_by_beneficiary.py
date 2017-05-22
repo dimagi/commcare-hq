@@ -114,8 +114,8 @@ class Command(BaseCommand):
             except Exception:
                 num_failed += 1
                 logger.error(
-                    'Failed on %d of %d. Nikshay ID=%s' % (
-                        counter, total, beneficiary.nikshayId
+                    'Failed on %d of %d. Case ID=%s' % (
+                        counter, total, beneficiary.caseId
                     ),
                     exc_info=True,
                 )
@@ -128,8 +128,8 @@ class Command(BaseCommand):
                     logger.info('done')
 
                 logger.info(
-                    'Succeeded on %s of %d. Nikshay ID=%s' % (
-                        counter, total, beneficiary.nikshayId
+                    'Succeeded on %s of %d. Case ID=%s' % (
+                        counter, total, beneficiary.caseId
                     )
                 )
 
