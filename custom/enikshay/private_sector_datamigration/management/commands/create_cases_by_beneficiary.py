@@ -70,28 +70,16 @@ class Command(BaseCommand):
 
     @mock_ownership_cleanliness_checks()
     def handle(self, domain, **options):
-        base_query = Beneficiary.objects.filter(
-            (
-                Q(caseStatus='suspect')
-                & Q(dateOfRegn__gte=date(2017, 1, 1))
-            )
-            | (
-                Q(caseStatus__in=['patient', 'patient '])
-                & Q(dateOfRegn__gte=date(2016, 1, 1))
-            )
-        )
-
-        if options['caseIds']:
-            base_query = base_query.filter(caseId__in=options['caseIds'])
-
-        start = options['start']
-        limit = options['limit']
+        case_ids = options['caseIds']
         chunk_size = options['chunk_size']
+        limit = options['limit']
+        start = options['start']
 
-        if limit is not None:
-            beneficiaries = base_query[start:start + limit]
-        else:
-            beneficiaries = base_query[start:]
+        beneficiaries = self.beneficiaries(
+            start,
+            limit=limit,
+            case_ids=case_ids,
+        )
 
         location_owner_id = options['location_owner_id']
         if location_owner_id:
@@ -127,7 +115,7 @@ class Command(BaseCommand):
         factory = CaseFactory(domain=domain)
         case_structures = []
 
-        for beneficiary in beneficiaries.order_by('caseId'):
+        for beneficiary in beneficiaries:
             counter += 1
             try:
                 case_factory = BeneficiaryCaseFactory(domain, beneficiary, location_owner)
@@ -176,3 +164,24 @@ class Command(BaseCommand):
         logger.info('Setting cleanliness flags')
         set_cleanliness_flags_for_domain(domain, force_full=True, raise_soft_assertions=False)
         logger.info('Done!')
+
+    @staticmethod
+    def beneficiaries(start, limit=None, case_ids=None):
+        beneficiaries_query = Beneficiary.objects.filter(
+            (
+                Q(caseStatus='suspect')
+                & Q(dateOfRegn__gte=date(2017, 1, 1))
+            )
+            | (
+                Q(caseStatus__in=['patient', 'patient '])
+                & Q(dateOfRegn__gte=date(2016, 1, 1))
+            )
+        ).order_by('caseId')
+
+        if case_ids:
+            beneficiaries_query = beneficiaries_query.filter(caseId__in=case_ids)
+
+        if limit is not None:
+            return beneficiaries_query[start:limit]
+        else:
+            return beneficiaries_query[start:]
