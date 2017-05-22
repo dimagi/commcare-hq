@@ -128,7 +128,7 @@ class IncentivePayload(BETSPayload):
 
         return cls(
             EventID=SUCCESSFUL_TREATMENT_EVENT,
-            EventOccurDate=episode_case_properties[TREATMENT_OUTCOME_DATE],
+            EventOccurDate=episode_case_properties.get(TREATMENT_OUTCOME_DATE),
             BeneficiaryUUID=person_case.case_id,
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
@@ -139,7 +139,7 @@ class IncentivePayload(BETSPayload):
     @staticmethod
     def _india_now():
         utc_now = pytz.UTC.localize(datetime.utcnow())
-        india_now = timezone('Asia/Kolkata').localize(utc_now)
+        india_now = utc_now.replace(tzinfo=timezone('Asia/Kolkata')).date()
         return str(india_now)
 
     @classmethod
@@ -157,7 +157,7 @@ class IncentivePayload(BETSPayload):
             EventID=DIAGNOSIS_AND_NOTIFICATION_EVENT,
             EventOccurDate=cls._india_now(),
             BeneficiaryUUID=episode_case.dynamic_case_properties().get(NOTIFYING_PROVIDER_USER_ID),
-            BeneficiaryType=LOCATION_TYPE_MAP[location.location_type],
+            BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
             DTOLocation=cls._get_district_location(location),
