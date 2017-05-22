@@ -8,6 +8,7 @@ from corehq.apps.locations.models import SQLLocation
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from custom.enikshay.const import ENROLLED_IN_PRIVATE
 from custom.enikshay.exceptions import (
     ENikshayCaseNotFound,
     NikshayCodeNotFound,
@@ -251,9 +252,22 @@ def update_case(domain, case_id, updated_properties, external_id=None):
 
 
 def get_person_locations(person_case):
-    PersonLocationHierarchy = namedtuple('PersonLocationHierarchy', 'sto dto tu phi')
+    """
+    public locations hierarchy
+    sto -> cto -> dto -> tu -> phi
+    private locations hierarchy
+    sto-> cto -> dto -> pcp
+    """
+    if person_case.dynamic_case_properties().get(ENROLLED_IN_PRIVATE) == 'true':
+        return _get_private_locations(person_case)
+    else:
+        return _get_public_locations(person_case)
+
+
+def _get_public_locations(person_case):
+    PublicPersonLocationHierarchy = namedtuple('PersonLocationHierarchy', 'sto dto tu phi')
     try:
-        phi_location = SQLLocation.objects.get(location_id=person_case.owner_id)
+        phi_location = SQLLocation.active_objects.get(domain=person_case.domain, location_id=person_case.owner_id)
     except SQLLocation.DoesNotExist:
         raise NikshayLocationNotFound(
             "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
@@ -268,12 +282,48 @@ def get_person_locations(person_case):
     except AttributeError:
         raise NikshayLocationNotFound("Location structure error for person: {}".format(person_case.case_id))
     try:
-        # TODO: verify how location codes will be stored
-        return PersonLocationHierarchy(
+        return PublicPersonLocationHierarchy(
             sto=state_location.metadata['nikshay_code'],
             dto=district_location.metadata['nikshay_code'],
             tu=tu_location.metadata['nikshay_code'],
             phi=phi_location.metadata['nikshay_code'],
+        )
+    except (KeyError, AttributeError) as e:
+        raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
+
+
+def _get_private_locations(person_case):
+    PrivatePersonLocationHierarchy = namedtuple('PersonLocationHierarchy', 'sto dto pcp tu')
+    try:
+        pcp_location = SQLLocation.active_objects.get(domain=person_case.domain, location_id=person_case.owner_id)
+    except SQLLocation.DoesNotExist:
+        raise NikshayLocationNotFound(
+            "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
+            .format(location_id=person_case.owner_id, person_id=person_case.case_id)
+        )
+
+    try:
+        tu_id = person_case.dynamic_case_properties().get('tu_choice')
+        tu_location = SQLLocation.active_objects.get(
+            domain=person_case.domain,
+            location_id=tu_id,
+        )
+        tu_location_nikshay_code = tu_location.metadata['nikshay_code']
+    except (SQLLocation.DoesNotExist, KeyError, AttributeError):
+        tu_location_nikshay_code = None
+
+    try:
+        district_location = pcp_location.parent
+        city_location = district_location.parent
+        state_location = city_location.parent
+    except AttributeError:
+        raise NikshayLocationNotFound("Location structure error for person: {}".format(person_case.case_id))
+    try:
+        return PrivatePersonLocationHierarchy(
+            sto=state_location.metadata['nikshay_code'],
+            dto=district_location.metadata['nikshay_code'],
+            pcp=pcp_location.metadata['nikshay_code'],
+            tu=tu_location_nikshay_code
         )
     except (KeyError, AttributeError) as e:
         raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
