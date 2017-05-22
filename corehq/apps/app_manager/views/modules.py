@@ -152,7 +152,7 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
             'search_button_display_condition':
                 module.search_config.search_button_display_condition if module_offers_search(module) else "",
             'blacklisted_owner_ids_expression': (
-                module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else "",)
+                module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
         }
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
