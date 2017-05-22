@@ -427,7 +427,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
                 account_type=BillingAccountType.TRIAL
             ).get(created_by_domain=domain)
         except cls.DoesNotExist:
-            pass
+            return None
         except cls.MultipleObjectsReturned:
             log_accounting_error(
                 "Multiple billing accounts showed up for the domain '%s'. The "
@@ -437,7 +437,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
             return cls.objects.exclude(
                 account_type=BillingAccountType.TRIAL
             ).filter(created_by_domain=domain).latest('date_created')
-        return None
 
     @property
     def autopay_card(self):
