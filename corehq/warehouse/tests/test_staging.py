@@ -4,6 +4,7 @@ from django.test import TestCase
 
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
+from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 
 from corehq.warehouse.models import (
     GroupStagingTable,
@@ -59,6 +60,11 @@ class TestGroupStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
         Group(name='three'),
     ]
     staging_table_cls = GroupStagingTable
+
+    @classmethod
+    def setUpClass(cls):
+        delete_all_docs_by_doc_type(Group.get_db(), ['Group', 'Group-Deleted'])
+        super(TestGroupStagingTable, cls).setUpClass()
 
     def test_stage_records_bulk(self):
         start = datetime.utcnow() - timedelta(days=3)
