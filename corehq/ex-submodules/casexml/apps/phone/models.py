@@ -921,13 +921,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
         if case_to_remove == checked_case_id:
             return
 
-        for index in deleted_indices.values():
-            if not (quiet_errors or _domain_has_legacy_toggle_set()):
-                # unblocking http://manage.dimagi.com/default.asp?185850
-                _assert = soft_assert(send_to_ops=False, log_to_file=True, exponential_backoff=True,
-                                      fail_if_debug=True, include_breadcrumbs=True)
-                _assert(index in (all_to_remove | set([checked_case_id])),
-                        "expected {} in {} but wasn't".format(index, all_to_remove))
+        # Logging removed temporarily: https://github.com/dimagi/commcare-hq/pull/16259#issuecomment-303176217
+        # for index in deleted_indices.values():
+        #     if not (quiet_errors or _domain_has_legacy_toggle_set()):
+        #         # unblocking http://manage.dimagi.com/default.asp?185850
+        #         _assert = soft_assert(send_to_ops=False, log_to_file=True, exponential_backoff=True,
+        #                               fail_if_debug=True, include_breadcrumbs=True)
+        #         _assert(index in (all_to_remove | set([checked_case_id])),
+        #                 "expected {} in {} but wasn't".format(index, all_to_remove))
 
     def _add_primary_case(self, case_id):
         self.case_ids_on_phone.add(case_id)
