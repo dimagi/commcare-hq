@@ -233,6 +233,8 @@ class FormProcessorSQL(object):
         strategy = SqlCaseUpdateStrategy(case)
 
         rebuild_transaction = CaseTransaction.rebuild_transaction(case, detail)
+        if updated_xforms:
+            rebuild_transaction.server_date = updated_xforms[0].edited_on
         unarchived_form_id = None
         if detail.type == CaseTransaction.TYPE_REBUILD_FORM_ARCHIVED and not detail.archived:
             # we're rebuilding because a form was un-archived
