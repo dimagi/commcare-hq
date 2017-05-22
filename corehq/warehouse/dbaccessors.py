@@ -28,6 +28,6 @@ def _get_ids_by_last_modified(cls, doc_types, start_datetime, end_datetime):
             endkey=[doc_type, json_format_datetime(end_datetime)],
             include_docs=False,
             reduce=False,
-        ).all()
+        )
         for result in results:
             yield result['id']
