@@ -9,7 +9,7 @@ from corehq.toggles import EXPORT_NO_SORT
 
 
 def get_form_export_base_query(domain, app_id, xmlns, include_errors):
-    query = (FormES(es_instance=ES_EXPORT_INSTANCE)
+    query = (FormES(es_instance_alias=ES_EXPORT_INSTANCE)
             .domain(domain)
             .app(app_id)
             .xmlns(xmlns)
@@ -25,7 +25,7 @@ def get_form_export_base_query(domain, app_id, xmlns, include_errors):
 
 
 def get_case_export_base_query(domain, case_type):
-    query = (CaseES(es_instance=ES_EXPORT_INSTANCE)
+    query = (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
             .domain(domain)
             .case_type(case_type))
 
@@ -36,7 +36,7 @@ def get_case_export_base_query(domain, case_type):
 
 
 def get_sms_export_base_query(domain):
-    return (SMSES(es_instance=ES_EXPORT_INSTANCE)
+    return (SMSES(es_instance_alias=ES_EXPORT_INSTANCE)
             .domain(domain)
             .processed_or_incoming_messages()
             .sort("date"))

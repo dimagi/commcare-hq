@@ -150,7 +150,7 @@ class ESQuery(object):
         "match_all": filters.match_all()
     }
 
-    def __init__(self, index=None, debug_host=None, es_instance=ES_DEFAULT_INSTANCE):
+    def __init__(self, index=None, debug_host=None, es_instance_alias=ES_DEFAULT_INSTANCE):
         from corehq.apps.userreports.util import is_ucr_table
 
         self.index = index if index is not None else self.index
@@ -164,7 +164,7 @@ class ESQuery(object):
         self._facets = []
         self._aggregations = []
         self._source = None
-        self.es_instance = es_instance
+        self.es_instance_alias = es_instance_alias
         self.es_query = {"query": {
             "filtered": {
                 "filter": {"and": []},
@@ -222,7 +222,7 @@ class ESQuery(object):
             query.index,
             query.raw_query,
             debug_host=query.debug_host,
-            es_instance=self.es_instance,
+            es_instance_alias=self.es_instance_alias,
         )
         return ESQuerySet(raw, deepcopy(query))
 
@@ -240,7 +240,7 @@ class ESQuery(object):
         query = deepcopy(self)
         if query._size is None:
             query._size = SCROLL_PAGE_SIZE_LIMIT
-        result = scroll_query(query.index, query.raw_query, es_instance=self.es_instance)
+        result = scroll_query(query.index, query.raw_query, es_instance_alias=self.es_instance_alias)
         return ScanResult(
             result.count,
             (ESQuerySet.normalize_result(query, r) for r in result)

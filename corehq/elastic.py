@@ -74,9 +74,9 @@ ES_INSTANCES = {
 }
 
 
-def get_es_instance(es_instance=ES_DEFAULT_INSTANCE):
-    assert es_instance in ES_INSTANCES
-    return ES_INSTANCES[es_instance]()
+def get_es_instance(es_instance_alias=ES_DEFAULT_INSTANCE):
+    assert es_instance_alias in ES_INSTANCES
+    return ES_INSTANCES[es_instance_alias]()
 
 
 def doc_exists_in_es(index_info, doc_id_or_dict):
@@ -179,7 +179,7 @@ class ESError(Exception):
     pass
 
 
-def run_query(index_name, q, debug_host=None, es_instance=ES_DEFAULT_INSTANCE):
+def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTANCE):
     # the debug_host parameter allows you to query another env for testing purposes
     if debug_host:
         if not settings.DEBUG:
@@ -189,7 +189,7 @@ def run_query(index_name, q, debug_host=None, es_instance=ES_DEFAULT_INSTANCE):
                                       'port': settings.ELASTICSEARCH_PORT}],
                                     timeout=3, max_retries=0)
     else:
-        es_instance = get_es_instance(es_instance)
+        es_instance = get_es_instance(es_instance_alias)
 
     try:
         es_meta = ES_META[index_name]
@@ -216,11 +216,11 @@ def mget_query(index_name, ids, source):
         raise ESError(e)
 
 
-def scroll_query(index_name, q, es_instance=ES_DEFAULT_INSTANCE):
+def scroll_query(index_name, q, es_instance_alias=ES_DEFAULT_INSTANCE):
     es_meta = ES_META[index_name]
     try:
         return scan(
-            get_es_instance(es_instance),
+            get_es_instance(es_instance_alias),
             index=es_meta.index,
             doc_type=es_meta.type,
             query=q,
