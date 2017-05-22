@@ -123,7 +123,9 @@ class Command(BaseCommand):
                 num_succeeded += 1
                 if num_succeeded % chunk_size == 0:
                     logger.info('%d cases to save.' % len(case_structures))
-                    logger.info('committing beneficiaries {}-{}...'.format(num_succeeded - chunk_size, num_succeeded))
+                    logger.info('committing beneficiaries {}-{}...'.format(
+                        num_succeeded - chunk_size, num_succeeded
+                    ))
                     try:
                         factory.create_or_update_cases(case_structures)
                     except Exception:
