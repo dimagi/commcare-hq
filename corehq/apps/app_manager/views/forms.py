@@ -616,13 +616,18 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         valid_index_names.append(USERCASE_PREFIX[0:-1])     # strip trailing slash
 
     form_has_schedule = isinstance(form, AdvancedForm) and form.get_module().has_schedule
+    case_config_options = {
+        'caseType': form.get_case_type(),
+        'moduleCaseTypes': module_case_types,
+        'propertiesMap': get_all_case_properties(app),
+        'questions': xform_questions,
+        'reserved_words': load_case_reserved_words(),
+    }
     context = {
         'nav_form': form,
         'xform_languages': languages,
         "xform_questions": xform_questions,
-        'case_reserved_words_json': load_case_reserved_words(),
         'valid_index_names': valid_index_names,
-        'module_case_types': module_case_types,
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
         'xform_validation_missing': xform_validation_missing,
@@ -677,6 +682,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             for candidate_form in candidate_module.get_forms()
         ]
 
+    template = None
     if isinstance(form, CareplanForm):
         context.update({
             'mode': form.mode,
@@ -693,7 +699,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             "app_manager/v1/form_view_careplan.html",
             "app_manager/v2/form_view_careplan.html",
         )
-        return template, context
     elif isinstance(form, AdvancedForm):
         def commtrack_programs():
             if app.commtrack_enabled:
@@ -712,7 +717,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             "app_manager/v1/form_view_advanced.html",
             "app_manager/v2/form_view_advanced.html",
         )
-        return template, context
     else:
         context.update({
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled_for_request(request),
@@ -722,7 +726,9 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             "app_manager/v1/form_view.html",
             "app_manager/v2/form_view.html",
         )
-        return template, context
+
+    context.update({'case_config_options': case_config_options})
+    return template, context
 
 
 @require_can_edit_apps
