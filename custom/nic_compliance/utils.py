@@ -107,7 +107,7 @@ def get_raw_password(obfuscated_password, username=None):
                 request.decoded_password = {}
 
             # return decoded password set on request object for the obfuscated_password
-            if request.decoded_password.get(obfuscated_password):
+            if obfuscated_password in request.decoded_password:
                 return request.decoded_password[obfuscated_password]
             else:
                 # decode the password and save it on the request object for obfuscated_password
