@@ -13,7 +13,7 @@ from corehq.apps.case_search.models import CLAIM_CASE_TYPE, CaseSearchConfig, SE
     CaseSearchQueryAddition
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new, SIZE_LIMIT
+from corehq.elastic import get_es_new, SIZE_LIMIT, ES_DEFAULT_INSTANCE
 from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.apps.ota.views import add_blacklisted_owner_ids
@@ -348,4 +348,9 @@ class CaseClaimEndpointTests(TestCase):
             },
             'size': CASE_SEARCH_MAX_RESULTS
         }
-        run_query_mock.assert_called_with("case_search", expected_query, debug_host=None)
+        run_query_mock.assert_called_with(
+            "case_search",
+            expected_query,
+            debug_host=None,
+            es_instance_alias=ES_DEFAULT_INSTANCE,
+        )

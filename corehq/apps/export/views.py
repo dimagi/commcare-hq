@@ -1935,7 +1935,7 @@ class DailySavedExportMixin(object):
 
         span = datespan_from_beginning(self.domain_object, _get_timezone(self.domain, self.request.couch_user))
         instance.filters.date_period = DatePeriod(
-            period_type="range", begin=span.startdate.date(), end=span.enddate.date()
+            period_type="since", begin=span.startdate.date()
         )
         if not self.request.can_access_all_locations:
             accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
@@ -2080,6 +2080,8 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
             saved_export=export_instance,
             auto_select=auto_select
         )
+        for message in self.export_instance.error_messages():
+            messages.error(request, message)
         return super(BaseEditNewCustomExportView, self).get(request, *args, **kwargs)
 
 
