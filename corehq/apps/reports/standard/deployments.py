@@ -73,7 +73,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                              help_text=_("""Displays application version of the last submitted form;
                                          The currently deployed version may be different."""),
                              prop_name='reporting_metadata.last_builds.build_version',
-                             alt_prop_name='reporting_metadata.last_build.build_version'),
+                             alt_prop_name='reporting_metadata.last_build_for_user.build_version'),
             DataTablesColumn(_("CommCare Version"),
                              help_text=_("""Displays CommCare version the user last submitted with;
                                          The currently deployed version may be different."""),

@@ -820,7 +820,7 @@ class ReportingMetadata(DocumentSchema):
     last_syncs = SchemaListProperty(LastSync)
     last_sync_for_user = SchemaProperty(LastSync)
     last_builds = SchemaListProperty(LastBuild)
-    last_build = SchemaProperty(LastBuild)
+    last_build_for_user = SchemaProperty(LastBuild)
 
 
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
