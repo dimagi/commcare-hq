@@ -54,6 +54,8 @@ branches:
   - es/location-user  # Ethan 4/27
   - np/preview-list # Nick P Cinco de Mayo
   - nc/location-filter-bug  # Noah 5/12
+  - ce/app-status-2 # Cal 5/22
+  - ce/app-status-pillows # Cal 5/22
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
