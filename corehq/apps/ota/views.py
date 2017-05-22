@@ -97,6 +97,8 @@ def search(request, domain):
                  .case_type(case_type)
                  .size(CASE_SEARCH_MAX_RESULTS))
 
+    query_addition_id = criteria.pop(SEARCH_QUERY_ADDITION_KEY, None)
+
     search_es = _add_include_closed(search_es, criteria)
 
     owner_id = criteria.pop('owner_id', False)
@@ -109,7 +111,6 @@ def search(request, domain):
 
     search_es = _add_case_property_queries(domain, case_type, search_es, criteria)
 
-    query_addition_id = criteria.pop(SEARCH_QUERY_ADDITION_KEY, None)
     query_addition_debug_details = {}
     try:
         search_es = _add_case_search_addition(
