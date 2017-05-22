@@ -96,7 +96,7 @@ from soil.tasks import prepare_download
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_json_response
 from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, ShadowForm
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.domain.decorators import (
@@ -1727,10 +1727,11 @@ class EditFormInstance(View):
         except ResourceNotFound:
             raise Http404(_('Application not found.'))
 
-        form = build.get_form_by_xmlns(instance.xmlns)
-        if not form:
+        forms = build.get_forms_by_xmlns(instance.xmlns)
+        if not forms:
             raise Http404(_('Missing module or form information!'))
-        return form
+        non_shadow_forms = [form for form in forms if form.form_type != ShadowForm.form_type]
+        return non_shadow_forms[0]
 
     @staticmethod
     def _form_instance_to_context_url(domain, instance):
