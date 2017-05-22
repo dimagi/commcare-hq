@@ -44,11 +44,16 @@
                 ">
             </div>
             <div class="panel panel-default">
-                <select name="post_form_workflow_backup" class="form-control" data-bind="
-                    optstr: workflowBackUpOptions(),
-                    value: workflowbackup,
-                    optionsCaption: 'Choose a backup...'
-                "></select>
+                <div class="panel-heading clearfix">
+                    Navigation Failure Backup
+                </div>
+                <div class="panel-body">
+                    <select name="post_form_workflow_backup" class="form-control" data-bind="
+                        optstr: workflowBackUpOptions(),
+                        value: workflowbackup,
+                        optionsCaption: 'Choose a backup...'
+                    "></select>
+                </div>
             </div>
             <div class="row">
                 <button class="btn btn-primary" data-bind="click: onAddFormLink">
