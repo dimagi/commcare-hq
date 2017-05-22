@@ -161,6 +161,8 @@ ALL_WORKFLOWS = [
     WORKFLOW_PREVIOUS,
     WORKFLOW_FORM,
 ]
+# allow all options as backups except the one for form linking
+WORKFLOW_BACKUP_OPTIONS = list(ALL_WORKFLOWS).remove(WORKFLOW_FORM)
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -892,6 +894,9 @@ class FormBase(DocumentSchema):
     post_form_workflow = StringProperty(
         default=WORKFLOW_DEFAULT,
         choices=ALL_WORKFLOWS
+    )
+    post_form_workflow_backup = StringProperty(
+        choices=WORKFLOW_BACKUP_OPTIONS,
     )
     auto_gps_capture = BooleanProperty(default=False)
     no_vellum = BooleanProperty(default=False)
