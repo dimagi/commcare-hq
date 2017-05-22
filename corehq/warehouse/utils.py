@@ -9,9 +9,5 @@ def django_batch_records(cls, record_iter, field_mapping):
             record[destination_key] = raw_record.get(source_key)
 
         records.append(cls(**record))
-        if (index + 1) % DJANGO_MAX_BATCH_SIZE == 0:
-            cls.objects.bulk_create(records)
-            records = []
 
-    if records:
-        cls.objects.bulk_create(records)
+    cls.objects.bulk_create(records, batch_size=DJANGO_MAX_BATCH_SIZE)
