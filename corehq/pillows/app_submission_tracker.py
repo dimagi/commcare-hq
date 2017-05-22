@@ -1,4 +1,6 @@
 from __future__ import print_function
+
+from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document, \
@@ -135,12 +137,8 @@ def get_sql_app_form_submission_tracker_reindexer():
 
 @quickcache(['domain'], timeout=60 * 60 * 5)
 def _get_apps_for_domain(domain):
-    project = Domain.get_by_name(domain)
-    if project:
-        return [app._id for app in project.applications()]
-    else:
-        return []
-
+    # thin cached wrapper for get_app_ids_in_domain
+    return get_app_ids_in_domain(domain)
 
 class UserAppFormSubmissionDocProcessor(BaseDocProcessor):
     def __init__(self, pillow_processor):
@@ -162,6 +160,10 @@ class UserAppFormSubmissionDocProcessor(BaseDocProcessor):
         return True
 
     def _doc_to_changes(self, doc):
+        # creates a change object for the last form submission
+        # for the user to each of their apps.
+        # this allows us to reindex for the app status report
+        # without reindexing all forms.
         changes = []
         apps = []
         if doc['doc_type'] == 'CommCareUser':

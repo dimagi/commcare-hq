@@ -17,7 +17,7 @@ from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclogs_for_user
 
 
-def get_synclog_pillow(pillow_id='SynclogPillow'):
+def get_synclog_pillow(pillow_id='UpdateUserSyncHistoryPillow'):
     """
     This gets a pillow which iterates through all synclogs
     """
@@ -99,7 +99,11 @@ class SynclogReindexerDocProcessor(BaseDocProcessor):
         return True
 
     def _doc_to_changes(self, doc):
-        synclogs = get_synclogs_for_user(doc['_id'])
+        # creates a change object for the last 10 synclogs
+        # of the given user, for the synclog pillow to process.
+        # this means we wont have to iterate through all synclogs
+        # when reindexing.
+        synclogs = get_synclogs_for_user(doc['_id'], limit=10)
         changes = [Change(
             id=res['doc']['_id'],
             sequence_id=None,
@@ -131,7 +135,7 @@ class SynclogReindexer(Reindexer):
 
 
 def get_synclog_reindexer():
-    iteration_key = "SynclogPillow_reindexer"
+    iteration_key = "UpdateUserSyncHistoryPillow_reindexer"
     doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
         CommCareUser,
         WebUser

@@ -221,6 +221,31 @@ def get_last_form_for_apps(apps, user_id):
             forms.append(hits[0])
     return forms
 
+def get_last_forms_by_app(user_id):
+    query = (
+        FormES()
+            .user_id(user_id)
+            .aggregation(
+            TermsAggregation('app_id', 'app_id').aggregation(
+                TopHitsAggregation(
+                    'top_hits_last_form_submissions',
+                    'received_on',
+                    is_ascending=False,
+                )
+            )
+        )
+        .size(0)
+    )
+
+    aggregations = query.run().aggregations
+
+    buckets_dict = aggregations.app_id.buckets_dict
+    result = []
+    for app_id, bucket in buckets_dict.iteritems():
+        result.append = bucket.top_hits_last_form_submissions.hits[0]
+
+    return result
+
 
 def get_submission_counts_by_user(domain, datespan, user_ids=None):
     return _get_form_counts_by_user(domain, datespan, True, user_ids)

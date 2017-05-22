@@ -116,9 +116,9 @@ def update_latest_builds(user, app_id, date, version):
         last_build.app_id = app_id
         last_build.build_version_date = date
 
-    if user.reporting_metadata.last_build is None \
-            or date > user.reporting_metadata.last_build.build_version_date:
-        user.reporting_metadata.last_build = last_build
+    if user.reporting_metadata.last_build_for_user is None \
+            or date > user.reporting_metadata.last_build_for_user.build_version_date:
+        user.reporting_metadata.last_build_for_user = last_build
 
 
 def filter_by_app(data_list, app_id):

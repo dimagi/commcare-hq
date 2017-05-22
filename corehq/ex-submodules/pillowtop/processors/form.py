@@ -64,6 +64,9 @@ def mark_has_submission(domain, build_id):
 
 
 def _update_last_submission(last_submission, received_on_datetime, build_version, cc_version):
+    # This function is to reduce load on the user db by  updating form submission metadata no more than
+    # once every 15 minutes unless something else has changed. That way if a user submits 10s
+    # or 100s of forms at once we do not need to write all of them.
     time_difference = received_on_datetime.timestamp - last_submission.submission_date.timestamp
     if time_difference > timedelta(seconds=60 * 15):
         return True
@@ -97,7 +100,10 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
         metadata
     )
 
-    if last_submission is None or last_submission.submission_date <= received_on_datetime:
+    if last_submission is None or _update_last_submission(last_submission,
+                                                          received_on_datetime,
+                                                          app_version_info.build_version,
+                                                          app_version_info.commcare_version):
 
         if last_submission is None:
             last_submission = LastSubmission()
