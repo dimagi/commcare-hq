@@ -1,7 +1,9 @@
+from datetime import date
 import logging
 import mock
 
 from django.core.management import BaseCommand
+from django.db.models import Q
 
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_domain
@@ -69,7 +71,14 @@ class Command(BaseCommand):
     @mock_ownership_cleanliness_checks()
     def handle(self, domain, **options):
         base_query = Beneficiary.objects.filter(
-            caseStatus__in=['suspect', 'patient', 'patient '],
+            (
+                Q(caseStatus='suspect')
+                & Q(dateOfRegn__gte=date(2017, 1, 1))
+            )
+            | (
+                Q(caseStatus__in=['patient', 'patient '])
+                & Q(dateOfRegn__gte=date(2016, 1, 1))
+            )
         )
 
         if options['caseIds']:
