@@ -194,7 +194,7 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
                 }
             }
         },
-                    "size": SIZE_LIMIT,
+            "size": SIZE_LIMIT,
         }
 
         self.checkQuery(
