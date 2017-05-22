@@ -77,7 +77,7 @@ hqDefine('app_manager/js/form_workflow.js', function() {
 
     FormWorkflow.prototype.workflowBackUpOptions = function() {
         // allow all options as backups except the one for form linking
-        var backup_options = _.omit(this.labels, function(key, value) { return value == FormWorkflow.Values.FORM })
+        var backup_options = _.omit(this.labels, function(key, value) { return value === FormWorkflow.Values.FORM; });
         var options = _.map(backup_options, function(label, value) {
             return {
                 value: value,
