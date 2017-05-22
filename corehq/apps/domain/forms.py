@@ -1824,7 +1824,7 @@ class InternalSubscriptionManagementForm(forms.Form):
     @property
     @memoized
     def current_subscription(self):
-        return Subscription.get_subscribed_plan_by_domain(self.domain)[1]
+        return Subscription.get_active_subscription_by_domain(self.domain)
 
     @property
     @memoized
