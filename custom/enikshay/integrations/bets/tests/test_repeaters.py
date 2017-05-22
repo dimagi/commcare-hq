@@ -33,7 +33,7 @@ class TestVoucherRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBa
     def test_trigger(self):
         # voucher not approved
         self.create_case_structure()
-        self.assign_person_to_location(self.phi.location_id)
+        self.assign_person_to_location(self.pcp.location_id)
         prescription = self.create_prescription_case()
         voucher = self.create_voucher_case(
             prescription.case_id, {
@@ -72,7 +72,7 @@ class TestBETS180TreatmentRepeater(ENikshayLocationStructureMixin, ENikshayRepea
     def test_trigger(self):
         # episode that does not meet trigger
         cases = self.create_case_structure()
-        self.assign_person_to_location(self.phi.location_id)
+        self.assign_person_to_location(self.pcp.location_id)
         update_case(
             self.domain,
             self.episode_id,
@@ -112,7 +112,7 @@ class BETSDrugRefillRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepeate
 
         # Create case that doesn't meet trigger
         cases = self.create_case_structure()
-        self.assign_person_to_location(self.phi.location_id)
+        self.assign_person_to_location(self.pcp.location_id)
         update_case(
             self.domain,
             self.episode_id,
@@ -167,7 +167,7 @@ class BETSSuccessfulTreatmentRepeaterTest(ENikshayLocationStructureMixin, ENiksh
     def test_trigger(self):
         # Create case that doesn't meet trigger
         cases = self.create_case_structure()
-        self.assign_person_to_location(self.phi.location_id)
+        self.assign_person_to_location(self.pcp.location_id)
         update_case(
             self.domain,
             self.episode_id,
@@ -205,7 +205,7 @@ class BETSDiagnosisAndNotificationRepeaterTest(ENikshayLocationStructureMixin, E
     def test_trigger(self):
         # Create case that doesn't meet trigger
         cases = self.create_case_structure()
-        self.assign_person_to_location(self.phi.location_id)
+        self.assign_person_to_location(self.pcp.location_id)
         update_case(
             self.domain,
             self.episode_id,
@@ -242,7 +242,7 @@ class BETSAYUSHReferralRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepe
     def test_trigger(self):
         # Create case that doesn't meet trigger
         cases = self.create_case_structure()
-        self.assign_person_to_location(self.phi.location_id)
+        self.assign_person_to_location(self.pcp.location_id)
         update_case(
             self.domain,
             self.episode_id,
