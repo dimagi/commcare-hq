@@ -1156,7 +1156,7 @@ LOGGING = {
             'propagate': False,
         },
         'django': {
-            'handlers': ['mail_admins', 'sentry'],
+            'handlers': ['sentry'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -1165,8 +1165,7 @@ LOGGING = {
             'propagate': False,
         },
         'notify': {
-            # gets overridden in ansible, in environment specific way
-            'handlers': ['notify_exception', 'sentry'],
+            'handlers': ['sentry'],
             'level': 'ERROR',
             'propagate': True,
         },
