@@ -6033,6 +6033,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if not forms:
             return None
         else:
+            # If there are multiple forms with the same xmlns, then all but one are shadow forms, therefore they
+            # all have the same xform.
             return forms[0].wrapped_xform()
 
 
