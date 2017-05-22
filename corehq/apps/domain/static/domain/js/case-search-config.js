@@ -26,7 +26,7 @@ hqDefine('domain/js/case-search-config.js', function () {
         };
     };
 
-    var RemoveCharacters = function(caseType, caseProperty, regex){
+    var IgnorePatterns = function(caseType, caseProperty, regex){
         var self = this;
 
         self.caseType = ko.observable(caseType);
@@ -50,12 +50,12 @@ hqDefine('domain/js/case-search-config.js', function () {
                 initialValues.fuzzy_properties[caseType]
             ));
         }
-        self.removeCharacters = ko.observableArray();
-        for (var i = 0; i < initialValues.remove_characters.length; i++){
-            self.removeCharacters.push(new RemoveCharacters(
-                initialValues.remove_characters[i].case_type,
-                initialValues.remove_characters[i].case_property,
-                initialValues.remove_characters[i].regex
+        self.ignorePatterns = ko.observableArray();
+        for (var i = 0; i < initialValues.ignore_patterns.length; i++){
+            self.ignorePatterns.push(new IgnorePatterns(
+                initialValues.ignore_patterns[i].case_type,
+                initialValues.ignore_patterns[i].case_property,
+                initialValues.ignore_patterns[i].regex
             ));
         }
         self.change = function(){
@@ -72,12 +72,12 @@ hqDefine('domain/js/case-search-config.js', function () {
             self.change();
         };
 
-        self.addRemoveCharacters = function(){
-            self.removeCharacters.push(new RemoveCharacters('', '', ''));
+        self.addIgnorePatterns = function(){
+            self.ignorePatterns.push(new IgnorePatterns('', '', ''));
             self.change();
         };
-        self.removeRemoveCharacters = function(r){
-            self.removeCharacters.remove(r);
+        self.removeIgnorePatterns = function(r){
+            self.ignorePatterns.remove(r);
             self.change();
         };
 
@@ -108,7 +108,7 @@ hqDefine('domain/js/case-search-config.js', function () {
             return {
                 'enable': self.toggleEnabled(),
                 'fuzzy_properties': fuzzyProperties,
-                'remove_characters': _.map(self.removeCharacters(), function(rc){
+                'ignore_patterns': _.map(self.ignorePatterns(), function(rc){
                     return {
                         'case_type': rc.caseType(),
                         'case_property': rc.caseProperty(),

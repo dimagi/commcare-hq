@@ -14,7 +14,7 @@ from corehq.apps.case_search.models import (
     CaseSearchConfig,
     SEARCH_QUERY_ADDITION_KEY,
     CaseSearchQueryAddition,
-    RemoveCharacters,
+    IgnorePatterns,
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
@@ -73,32 +73,32 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
             expected
         )
 
-    def test_add_remove_character_queries(self):
+    def test_add_ignore_pattern_queries(self):
         config, created = CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
-        rc = RemoveCharacters(
+        rc = IgnorePatterns(
             domain=DOMAIN,
             case_type='case_type',
             case_property='name',
             regex=' word',
         )                       # remove ' word' from the name case property
         rc.save()
-        config.remove_characters.add(rc)
-        rc = RemoveCharacters(
+        config.ignore_patterns.add(rc)
+        rc = IgnorePatterns(
             domain=DOMAIN,
             case_type='case_type',
             case_property='name',
             regex=' gone',
         )                       # remove ' gone' from the name case property
         rc.save()
-        config.remove_characters.add(rc)
-        rc = RemoveCharacters(
+        config.ignore_patterns.add(rc)
+        rc = IgnorePatterns(
             domain=DOMAIN,
             case_type='case_type',
             case_property='special_id',
             regex='-',
         )                       # remove '-' from the special id case property
         rc.save()
-        config.remove_characters.add(rc)
+        config.ignore_patterns.add(rc)
         config.save()
         criteria = {
             'name': "this word should be gone",

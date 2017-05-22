@@ -41,7 +41,7 @@ from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
-    RemoveCharacters,
+    IgnorePatterns,
     enable_case_search,
     disable_case_search,
 )
@@ -2191,23 +2191,23 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         )
         unneeded_fuzzies.delete()
 
-        remove_characters = request_json.get('remove_characters')
-        updated_remove_characters = []
-        update_remove_character_ids = []
-        for remove_character_regex in remove_characters:
-            rc, created = RemoveCharacters.objects.get_or_create(
+        ignore_patterns = request_json.get('ignore_patterns')
+        updated_ignore_patterns = []
+        update_ignore_pattern_ids = []
+        for ignore_pattern_regex in ignore_patterns:
+            rc, created = IgnorePatterns.objects.get_or_create(
                 domain=self.domain,
-                case_type=remove_character_regex.get('case_type'),
-                case_property=remove_character_regex.get('case_property'),
-                regex=remove_character_regex.get('regex')
+                case_type=ignore_pattern_regex.get('case_type'),
+                case_property=ignore_pattern_regex.get('case_property'),
+                regex=ignore_pattern_regex.get('regex')
             )
-            updated_remove_characters.append(rc)
-            update_remove_character_ids.append(rc.pk)
+            updated_ignore_patterns.append(rc)
+            update_ignore_pattern_ids.append(rc.pk)
 
-        unneeded_remove_characters = RemoveCharacters.objects.filter(domain=self.domain).exclude(
-            pk__in=update_remove_character_ids
+        unneeded_ignore_patterns = IgnorePatterns.objects.filter(domain=self.domain).exclude(
+            pk__in=update_ignore_pattern_ids
         )
-        unneeded_remove_characters.delete()
+        unneeded_ignore_patterns.delete()
 
         if enable:
             enable_case_search(self.domain)
@@ -2217,7 +2217,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
             'enabled': request_json.get('enable'),
             'fuzzy_properties': updated_fuzzies,
-            'remove_characters': updated_remove_characters,
+            'ignore_patterns': updated_ignore_patterns,
         })
         return json_response(self.page_context)
 
@@ -2233,11 +2233,11 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
                 'fuzzy_properties': {
                     fp.case_type: fp.properties for fp in current_values.fuzzy_properties.all()
                 } if current_values else {},
-                'remove_characters': [{
+                'ignore_patterns': [{
                     'case_type': rc.case_type,
                     'case_property': rc.case_property,
                     'regex': rc.regex
-                } for rc in current_values.remove_characters.all()] if current_values else {}
+                } for rc in current_values.ignore_patterns.all()] if current_values else {}
             }
         }
 

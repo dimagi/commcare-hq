@@ -86,7 +86,7 @@
                             </th>
                             <th></th>
                         </thead>
-                        <tbody data-bind="foreach: removeCharacters">
+                        <tbody data-bind="foreach: ignorePatterns">
                             <tr>
                                 <td>
                                     <select data-bind="options: $root.caseTypes,
@@ -102,7 +102,7 @@
                                 <td>
                                     <button type="button"
                                             class="btn btn-danger pull-right"
-                                            data-bind="click: function(){$parent.removeRemoveCharacters($data); $parent.change();}">
+                                            data-bind="click: function(){$parent.removeIgnorePatterns($data); $parent.change();}">
                                     <i class="fa fa-trash"></i>
                                     </button>
                                 </td>
@@ -111,7 +111,7 @@
                     </table>
                     <button type="button"
                             class="btn btn-primary"
-                            data-bind="click: addRemoveCharacters">
+                            data-bind="click: addIgnorePatterns">
                         <i class="fa fa-plus"></i> {% trans "Add case property" %}
                     </button>
                 </div>

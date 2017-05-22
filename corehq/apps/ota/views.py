@@ -155,7 +155,7 @@ def _add_case_property_queries(domain, case_type, search_es, criteria):
     try:
         config = (CaseSearchConfig.objects
                   .prefetch_related('fuzzy_properties')
-                  .prefetch_related('remove_characters')
+                  .prefetch_related('ignore_patterns')
                   .get(domain=domain))
     except CaseSearchConfig.DoesNotExist as e:
         from corehq.util.soft_assert import soft_assert
@@ -178,7 +178,7 @@ def _add_case_property_queries(domain, case_type, search_es, criteria):
     for key, value in criteria.items():
         if key in UNSEARCHABLE_KEYS:
             continue
-        remove_char_regexs = config.remove_characters.filter(
+        remove_char_regexs = config.ignore_patterns.filter(
             domain=domain,
             case_type=case_type,
             case_property=key,

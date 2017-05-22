@@ -51,7 +51,7 @@ class FuzzyProperties(models.Model):
         unique_together = ('domain', 'case_type')
 
 
-class RemoveCharacters(models.Model):
+class IgnorePatterns(models.Model):
     domain = models.CharField(
         max_length=256,
         null=False,
@@ -94,7 +94,7 @@ class CaseSearchConfig(models.Model):
     )
     enabled = models.BooleanField(blank=False, null=False, default=False)
     fuzzy_properties = models.ManyToManyField(FuzzyProperties)
-    remove_characters = models.ManyToManyField(RemoveCharacters)
+    ignore_patterns = models.ManyToManyField(IgnorePatterns)
 
     objects = GetOrNoneManager()
 
