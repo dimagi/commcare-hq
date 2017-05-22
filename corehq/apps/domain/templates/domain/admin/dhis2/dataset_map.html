@@ -4,8 +4,11 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
-{% block js-inline %}{{ block.super }}
+{% block js %}{{ block.super }}
     <script src="{% static 'domain/js/dhis2_map_settings.js' %}"></script>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
     <script>
     $(function () {
         var Dhis2MapSettings = hqImport('domain/js/dhis2_map_settings.js').Dhis2MapSettings;
