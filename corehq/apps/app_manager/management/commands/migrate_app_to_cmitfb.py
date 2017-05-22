@@ -52,14 +52,6 @@ class Command(BaseCommand):
         self.fup_caseref = options["fix_user_props_caseref"]
         self.fix_user_props = options["fix_user_properties"] or self.fup_caseref
         self.migrate_usercase = options["usercase"]
-        if not self.fix_user_props:
-            raise Exception(
-                "This is currently broken and needs to be fixed. "
-                "Problems:\n"
-                "1. wrong xpath used for user property references\n"
-                "2. case references in form.case_references.load are overwritten\n"
-                "3. log detaileds about what changed in case of problems.\n"
-            )
         for ident in options["app_id_or_domain"]:
             if not (self.migrate_usercase or self.fix_user_props):
                 try:
@@ -79,9 +71,9 @@ class Command(BaseCommand):
                     else:
                         self.migrate_app(app_id)
                 except SkipApp as err:
-                    logger.error("skipping app %s: %s", app_id, err)
+                    logger.error("skipping app %s/%s: %s", domain, app_id, err)
                 except Exception:
-                    logger.exception("skipping app %s", app_id)
+                    logger.exception("skipping app %s/%s", domain, app_id)
             if self.migrate_usercase and not USER_PROPERTY_EASY_REFS.enabled(domain):
                 if not self.dry:
                     USER_PROPERTY_EASY_REFS.set(domain, True, NAMESPACE_DOMAIN)
@@ -98,7 +90,7 @@ class Command(BaseCommand):
         if app.vellum_case_management and not migrate_usercase and not self.force:
             logger.info('already migrated app {}'.format(app_id))
             return False
-        logger.info('%smigrating app %s', self.dry, app_id)
+        logger.info('%smigrating app %s/%s', self.dry, app.domain, app_id)
 
         for module, form, form_ix in iter_forms(app):
             preloads = []
@@ -112,7 +104,7 @@ class Command(BaseCommand):
                 preloads.append(("#user/", usercase_preload))
                 form.actions.usercase_preload = PreloadAction()
             if preloads:
-                migrate_preloads(app, form, preloads, form_ix)
+                migrate_preloads(app, form, preloads, form_ix, self.dry)
 
         if not self.dry:
             app.vellum_case_management = True
@@ -299,7 +291,7 @@ class SkipApp(Exception):
     pass
 
 
-def migrate_preloads(app, form, preload_items):
+def migrate_preloads(app, form, preload_items, form_ix, dry):
     xform = XForm(form.source)
     if form.case_references:
         load_refs = form.case_references.load
@@ -318,7 +310,14 @@ def migrate_preloads(app, form, preload_items):
             raise ValueError("unknown hashtag: " + hashtag)
         for nodeset, prop in preloads.iteritems():
             load_refs.setdefault(nodeset, []).append(hashtag + prop)
-    save_xform(app, form, ET.tostring(xform.xml))
+            logger.info("%s/%s %s setvalue %s = %s",
+                app.domain, app._id, form_ix, nodeset, hashtag + prop)
+    if dry:
+        logger.info("setvalue XML: %s", " ".join(line.strip()
+            for line in ET.tostring(xform.xml).split("\n")
+            if "setvalue" in line))
+    else:
+        save_xform(app, form, ET.tostring(xform.xml))
 
 
 def should_migrate_usercase(app, migrate_usercase):
