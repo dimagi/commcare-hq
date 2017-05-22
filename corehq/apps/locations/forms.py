@@ -337,13 +337,17 @@ class LocationForm(forms.Form):
 
 class LocationFormSet(object):
     """Ties together the forms for location, location data, user, and user data."""
+    _location_form_class = LocationForm
+    _location_data_editor = CustomDataEditor
+    _user_form_class = NewMobileWorkerForm
+    _user_data_editor = CustomDataEditor
 
     def __init__(self, location, request_user, is_new, bound_data=None, *args, **kwargs):
         self.location = location
         self.domain = location.domain
         self.is_new = is_new
         self.request_user = request_user
-        self.location_form = LocationForm(location, bound_data, is_new=is_new)
+        self.location_form = self._location_form_class(location, bound_data, is_new=is_new)
         self.custom_location_data = self._get_custom_location_data(bound_data, is_new)
 
         if self.include_user_forms:
@@ -420,7 +424,7 @@ class LocationFormSet(object):
         if is_new and bound_data is None:
             existing = None
 
-        custom_data = CustomDataEditor(
+        custom_data = self._location_data_editor(
             field_view=LocationFieldsView,
             domain=self.domain,
             # For new locations, only display required fields
@@ -434,7 +438,7 @@ class LocationFormSet(object):
 
     def _get_user_form(self, bound_data):
         domain_obj = Domain.get_by_name(self.domain)
-        form = NewMobileWorkerForm(
+        form = self._user_form_class(
             project=domain_obj,
             data=bound_data,
             request_user=self.request_user,
@@ -467,7 +471,7 @@ class LocationFormSet(object):
 
     def _get_custom_user_data(self, bound_data):
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-        user_data = CustomDataEditor(
+        user_data = self._user_data_editor(
             field_view=UserFieldsView,
             domain=self.domain,
             post_dict=bound_data,

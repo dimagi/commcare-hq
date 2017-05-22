@@ -8,6 +8,7 @@ import math
 import re
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
+from dimagi.utils.decorators.memoized import memoized
 from corehq import toggles
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.locations.forms import LocationFormSet, LocationForm
@@ -119,22 +120,6 @@ def validate_location(domain, user_form):
     user_form.add_error('location_id', _("You must select a location."))
 
 
-def clean_location_callback(sender, domain, request_user, location, forms, **kwargs):
-    if not toggles.ENIKSHAY.enabled(domain) or request_user.is_domain_admin(domain):
-        return
-
-    location_form = forms.get('LocationForm')
-    custom_data = forms.get('CustomDataEditor')
-
-    if location_form.is_new_location:
-        validate_nikshay_code(domain, location_form, custom_data)
-        set_site_code(location_form, custom_data)
-    else:
-        validate_nikshay_code_unchanged(location, custom_data)
-
-    set_available_tests(location, location_form)
-
-
 def get_site_code(name, nikshay_code, type_code, parent):
 
     def code_ify(word):
@@ -164,49 +149,6 @@ def get_site_code(name, nikshay_code, type_code, parent):
         return None  # we don't do anything special for these yet
     else:
         raise AssertionError('This eNikshay location has an unrecognized type, {}'.format(type_code))
-
-
-def set_site_code(location_form, custom_data):
-    # https://docs.google.com/document/d/1Pr19kp5cQz9412Q1lbVgszeZJTv0XRzizb0bFHDxvoA/edit#heading=h.9v4rs82o0soc
-    nikshay_code = custom_data.form.cleaned_data.get('nikshay_code') or ''
-    type_code = location_form.cleaned_data['location_type']
-    parent = location_form.cleaned_data['parent']
-    name = location_form.cleaned_data['name']
-    location_form.cleaned_data['site_code'] = get_site_code(name, nikshay_code, type_code, parent)
-
-
-def validate_nikshay_code(domain, location_form, custom_data):
-    """When locations are created, enforce that a custom location data field
-    (Nikshay code) is unique amongst sibling locations"""
-    from corehq.apps.locations.models import SQLLocation
-    nikshay_code = custom_data.form.cleaned_data.get('nikshay_code', None)
-    loctype = location_form.cleaned_data['location_type']
-    if loctype not in TYPES_WITH_REQUIRED_NIKSHAY_CODES:
-        return
-    if not nikshay_code:
-        location_form.add_error(None, "You cannot create this location without providing a nikshay_code.")
-    parent = location_form.cleaned_data['parent']
-    sibling_codes = [
-        loc.metadata.get('nikshay_code', None)
-        for loc in SQLLocation.objects.filter(domain=domain, parent=parent)
-    ]
-    if nikshay_code in sibling_codes:
-        msg = "Nikshay Code '{}' is already in use.".format(nikshay_code)
-        custom_data.form.add_error('nikshay_code', msg)
-
-
-def validate_nikshay_code_unchanged(location, custom_data):
-    """Block edit of custom location data nikshay code after creation"""
-    specified_nikshay_code = custom_data.form.cleaned_data.get('nikshay_code', None)
-    existing_nikshay_code = location.metadata.get('nikshay_code', None)
-    if existing_nikshay_code and specified_nikshay_code != existing_nikshay_code:
-        msg = "You cannot modify the Nikshay Code of an existing location."
-        custom_data.form.add_error('nikshay_code', msg)
-
-
-def set_available_tests(location, location_form):
-    if location_form.cleaned_data['location_type'] == 'cdst':
-        location.metadata['tests_available'] = 'cbnaat'
 
 
 def save_user_callback(sender, couch_user, **kwargs):
@@ -331,8 +273,65 @@ class ENikshayUserDataEditor(CustomDataEditor):
 
 class ENikshayLocationFormSet(LocationFormSet):
     """Location, custom data, and possibly location user and data forms"""
-    user_form_class = ENikshayNewMobileWorkerForm
+    _location_form_class = LocationForm
+    _location_data_editor = CustomDataEditor
+    _user_form_class = ENikshayNewMobileWorkerForm
+    _user_data_editor = ENikshayUserDataEditor
 
-    def __init__(self, *args, **kwargs):
-        print 'ENikshayLocationFormSet'
-        super(ENikshayLocationFormSet, self).__init__(*args, **kwargs)
+    @memoized
+    def is_valid(self):
+        if skip_custom_setup(self.domain, self.request_user):
+            return super(ENikshayLocationFormSet, self).is_valid()
+
+        for form in self.forms:
+            form.errors
+
+        if self.location_form.is_new_location:
+            self.validate_nikshay_code()
+            self.set_site_code()
+        else:
+            self.validate_nikshay_code_unchanged()
+
+        self.set_available_tests()
+
+        return all(form.is_valid() for form in self.forms)
+
+    def set_site_code(self):
+        # https://docs.google.com/document/d/1Pr19kp5cQz9412Q1lbVgszeZJTv0XRzizb0bFHDxvoA/edit#heading=h.9v4rs82o0soc
+        nikshay_code = self.custom_location_data.form.cleaned_data.get('nikshay_code') or ''
+        type_code = self.location_form.cleaned_data['location_type']
+        parent = self.location_form.cleaned_data['parent']
+        name = self.location_form.cleaned_data['name']
+        self.location_form.cleaned_data['site_code'] = get_site_code(
+                name, nikshay_code, type_code, parent)
+
+    def validate_nikshay_code(self):
+        """When locations are created, enforce that a custom location data field
+        (Nikshay code) is unique amongst sibling locations"""
+        from corehq.apps.locations.models import SQLLocation
+        nikshay_code = self.custom_location_data.form.cleaned_data.get('nikshay_code', None)
+        loctype = self.location_form.cleaned_data['location_type']
+        if loctype not in TYPES_WITH_REQUIRED_NIKSHAY_CODES:
+            return
+        if not nikshay_code:
+            self.location_form.add_error(None, "You cannot create this location without providing a nikshay_code.")
+        parent = self.location_form.cleaned_data['parent']
+        sibling_codes = [
+            loc.metadata.get('nikshay_code', None)
+            for loc in SQLLocation.objects.filter(domain=self.domain, parent=parent)
+        ]
+        if nikshay_code in sibling_codes:
+            msg = "Nikshay Code '{}' is already in use.".format(nikshay_code)
+            self.custom_location_data.form.add_error('nikshay_code', msg)
+
+    def validate_nikshay_code_unchanged(self):
+        """Block edit of custom location data nikshay code after creation"""
+        specified_nikshay_code = self.custom_location_data.form.cleaned_data.get('nikshay_code', None)
+        existing_nikshay_code = self.location.metadata.get('nikshay_code', None)
+        if existing_nikshay_code and specified_nikshay_code != existing_nikshay_code:
+            msg = "You cannot modify the Nikshay Code of an existing location."
+            self.custom_location_data.form.add_error('nikshay_code', msg)
+
+    def set_available_tests(self):
+        if self.location_form.cleaned_data['location_type'] == 'cdst':
+            self.location.metadata['tests_available'] = 'cbnaat'
