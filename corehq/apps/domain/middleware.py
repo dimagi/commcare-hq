@@ -44,7 +44,9 @@ class CCHQPRBACMiddleware(MiddlewareMixin):
             request.plan = plan_version
             request.subscription = subscription
         else:
-            request.role = DefaultProductPlan.get_default_plan_version().role
+            plan_version = DefaultProductPlan.get_default_plan_version()
+            request.role = plan_version.role
+            request.plan = plan_version
 
 
 class DomainHistoryMiddleware(MiddlewareMixin):
