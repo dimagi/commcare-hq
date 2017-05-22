@@ -12,8 +12,10 @@ from corehq.apps.locations.models import SQLLocation
 from custom.enikshay.private_sector_datamigration.factory import BeneficiaryCaseFactory
 from custom.enikshay.private_sector_datamigration.models import (
     Adherence,
+    Agency,
     Beneficiary,
     Episode,
+    UserDetail,
 )
 
 logger = logging.getLogger('private_sector_datamigration')
@@ -67,18 +69,39 @@ class Command(BaseCommand):
         parser.add_argument(
             '--location-owner-id',
         )
+        parser.add_argument(
+            '--owner-state-id',
+        )
+        parser.add_argument(
+            '--owner-district-id',
+        )
+        parser.add_argument(
+            '--owner-organisation-ids',
+            default=None,
+            metavar='owner_organisation_id',
+            nargs='+',
+        )
 
     @mock_ownership_cleanliness_checks()
     def handle(self, domain, **options):
         case_ids = options['caseIds']
         chunk_size = options['chunk_size']
         limit = options['limit']
+        owner_district_id = options['owner_district_id']
+        owner_organisation_ids = options['owner_organisation_ids']
+        owner_state_id = options['owner_state_id']
         start = options['start']
+
+        assert not case_ids or not owner_state_id
+        assert owner_state_id or not owner_district_id
 
         beneficiaries = self.beneficiaries(
             start,
             limit=limit,
             case_ids=case_ids,
+            owner_state_id=owner_state_id,
+            owner_district_id=owner_district_id,
+            owner_organisation_ids=owner_organisation_ids,
         )
 
         location_owner_id = options['location_owner_id']
@@ -166,7 +189,8 @@ class Command(BaseCommand):
         logger.info('Done!')
 
     @staticmethod
-    def beneficiaries(start, limit=None, case_ids=None):
+    def beneficiaries(start, limit=None, case_ids=None, owner_state_id=None,
+                      owner_district_id=None, owner_organisation_ids=None):
         beneficiaries_query = Beneficiary.objects.filter(
             (
                 Q(caseStatus='suspect')
@@ -180,6 +204,39 @@ class Command(BaseCommand):
 
         if case_ids:
             beneficiaries_query = beneficiaries_query.filter(caseId__in=case_ids)
+
+        user_details = None
+
+        if owner_state_id:
+            user_details = user_details or UserDetail.objects.filter(
+                isPrimary=True
+            )
+            user_details = user_details.filter(
+                stateId=owner_state_id,
+            )
+
+            if owner_district_id:
+                user_details = user_details.filter(districtId=owner_district_id)
+
+        if owner_organisation_ids:
+            user_details = user_details or UserDetail.objects.filter(
+                isPrimary=True
+            )
+            user_details = user_details.filter(organisationId__in=owner_organisation_ids)
+
+        if user_details:
+            # Check that there is an actual agency object for the motech username
+            agency_ids = Agency.objects.filter(agencyId__in=user_details.values('agencyId')).values('agencyId')
+            motech_usernames = UserDetail.objects.filter(agencyId__in=agency_ids).values('motechUserName')
+
+            bene_ids_treating = Episode.objects.filter(treatingQP__in=motech_usernames).values('beneficiaryID')
+            bene_ids_treating_away = Episode.objects.exclude(treatingQP__in=motech_usernames).values('beneficiaryID')
+            bene_ids_from_referred = Beneficiary.objects.filter(referredQP__in=motech_usernames).values('caseId')
+
+            beneficiaries_query = beneficiaries_query.filter(
+                Q(caseId__in=bene_ids_treating)
+                | ((~Q(caseId__in=bene_ids_treating_away)) & Q(caseId__in=bene_ids_from_referred))
+            )
 
         if limit is not None:
             return beneficiaries_query[start:limit]
