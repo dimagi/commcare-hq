@@ -924,7 +924,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         for index in deleted_indices.values():
             if not (quiet_errors or _domain_has_legacy_toggle_set()):
                 # unblocking http://manage.dimagi.com/default.asp?185850
-                _assert = soft_assert(notify_admins=True, exponential_backoff=True,
+                _assert = soft_assert(send_to_ops=False, log_to_file=True, exponential_backoff=True,
                                       fail_if_debug=True, include_breadcrumbs=True)
                 _assert(index in (all_to_remove | set([checked_case_id])),
                         "expected {} in {} but wasn't".format(index, all_to_remove))
