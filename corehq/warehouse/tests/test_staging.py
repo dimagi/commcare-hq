@@ -93,3 +93,8 @@ class TestDomainStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
         Domain(name='three', is_active=True),
     ]
     staging_table_cls = DomainStagingTable
+
+    @classmethod
+    def setUpClass(cls):
+        delete_all_docs_by_doc_type(Domain.get_db(), ['Domain', 'Domain-Deleted'])
+        super(TestDomainStagingTable, cls).setUpClass()
