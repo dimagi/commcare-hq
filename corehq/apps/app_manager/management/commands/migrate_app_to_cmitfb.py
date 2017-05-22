@@ -100,29 +100,19 @@ class Command(BaseCommand):
             return False
         logger.info('%smigrating app %s', self.dry, app_id)
 
-        modules = [m for m in app.modules if m.module_type == 'basic']
-        for module in modules:
-            forms = [f for f in module.forms if f.doc_type == 'Form']
-            for form in forms:
-                preloads = []
-                preload = form.actions.case_preload.preload
-                if preload:
-                    if form.requires == 'case':
-                        preloads.append({
-                            "hashtag": "#case/",
-                            "preloads": preload,
-                        })
-                    form.actions.case_preload = PreloadAction()
-                usercase_preload = form.actions.usercase_preload.preload
-                if migrate_usercase and usercase_preload:
-                    preloads.append({
-                        "hashtag": "#user/",
-                        "preloads": usercase_preload,
-                        "case_id_xpath": SESSION_USERCASE_ID,
-                    })
-                    form.actions.usercase_preload = PreloadAction()
-                if preloads:
-                    migrate_preloads(app, module, form, preloads)
+        for module, form, form_ix in iter_forms(app):
+            preloads = []
+            preload = form.actions.case_preload.preload
+            if preload:
+                if form.requires == 'case':
+                    preloads.append(("#case/", preload))
+                form.actions.case_preload = PreloadAction()
+            usercase_preload = form.actions.usercase_preload.preload
+            if migrate_usercase and usercase_preload:
+                preloads.append(("#user/", usercase_preload))
+                form.actions.usercase_preload = PreloadAction()
+            if preloads:
+                migrate_preloads(app, form, preloads, form_ix)
 
         if not self.dry:
             app.vellum_case_management = True
@@ -309,19 +299,25 @@ class SkipApp(Exception):
     pass
 
 
-def migrate_preloads(app, module, form, preloads):
+def migrate_preloads(app, form, preload_items):
     xform = XForm(form.source)
-    case_id_xpath = get_add_case_preloads_case_id_xpath(module, form)
-    for kwargs in preloads:
-        hashtag = kwargs.pop("hashtag")
-        kwargs['case_id_xpath'] = case_id_xpath
-        xform.add_case_preloads(**kwargs)
-        refs = {path: [hashtag + case_property]
-                for path, case_property in kwargs["preloads"].iteritems()}
-        if form.case_references:
-            form.case_references.load.update(refs)
+    if form.case_references:
+        load_refs = form.case_references.load
+    else:
+        load_refs = {}
+        form.case_references = CaseReferences(load=load_refs)
+    for hashtag, preloads in preload_items:
+        if hashtag == "#case/":
+            xform.add_case_preloads(preloads)
+        elif hashtag == "#user/":
+            xform.add_casedb()
+            for nodeset, prop in preloads.items():
+                assert '/' not in prop, (app.id, form.unique_id, prop)
+                xform.add_setvalue(ref=nodeset, value=USERPROP_PREFIX + prop)
         else:
-            form.case_references = CaseReferences(load=refs)
+            raise ValueError("unknown hashtag: " + hashtag)
+        for nodeset, prop in preloads.iteritems():
+            load_refs.setdefault(nodeset, []).append(hashtag + prop)
     save_xform(app, form, ET.tostring(xform.xml))
 
 
