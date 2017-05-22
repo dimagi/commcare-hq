@@ -408,6 +408,20 @@ class ENikshayLocationStructureMixin(object):
             'is_test': 'no',
         }
         self.pcp.save()
+
+        self.pcc = locations['PCC']
+        self.pcc.metadata = {
+            'nikshay_code': '1234567',
+            'is_test': 'no',
+        }
+        self.pcc.save()
+
+        self.plc = locations['PLC']
+        self.plc.metadata = {
+            'nikshay_code': '1234567',
+            'is_test': 'no',
+        }
+        self.plc.save()
         super(ENikshayLocationStructureMixin, self).setUp()
 
     def tearDown(self):

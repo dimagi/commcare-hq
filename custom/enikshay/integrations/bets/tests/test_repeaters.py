@@ -1,4 +1,5 @@
 from datetime import date
+import json
 
 from django.test import override_settings
 
@@ -56,6 +57,75 @@ class TestVoucherRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBa
         payload_generator.handle_success(MockResponse(201, {"success": "hooray"}), voucher, None)
         update_case(self.domain, voucher.case_id, {"state": "approved"})
         self.assertEqual(1, len(self.repeat_records().all()))
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
+
+    def test_prescription_get_payload(self):
+        self.create_case_structure()
+        self.assign_person_to_location(self.pcp.location_id)
+        prescription = self.create_prescription_case()
+        voucher = self.create_voucher_case(
+            prescription.case_id, {
+                "voucher_type": "prescription",
+                "fulfilled_by_id": self.user.user_id,
+                "voucher_fulfilled_by_location_id": self.pcc.location_id,
+                "date_fulfilled": "2017-08-15",
+                "voucher_id": "ABC-DEF-1123",
+                "amount_approved": 10.0,
+            }
+        )
+
+        expected_payload = {
+            u"EventID": u"101",
+            u"EventOccurDate": u"2017-08-15",
+            u"BeneficiaryUUID": self.user.user_id,
+            u"BeneficiaryType": u"chemist",
+            u"Location": self.pcc.location_id,
+            u"DTOLocation": self.dto.location_id,
+            u"VoucherID": voucher.get_case_property('voucher_id'),
+            u"Amount": u'10.0',
+            u"InvestigationType": None,
+        }
+
+        self.assertDictEqual(
+            expected_payload,
+            json.loads(ChemistBETSVoucherPayloadGenerator(None).get_payload(None, voucher))
+        )
+
+    def test_investigation_get_payload(self):
+        self.create_case_structure()
+        self.assign_person_to_location(self.pcp.location_id)
+        prescription = self.create_prescription_case()
+        voucher = self.create_voucher_case(
+            prescription.case_id, {
+                "voucher_type": "test",
+                "fulfilled_by_id": self.user.user_id,
+                "voucher_fulfilled_by_location_id": self.plc.location_id,
+                "date_fulfilled": "2017-08-15",
+                "voucher_id": "ABC-DEF-1123",
+                "amount_approved": 10.0,
+                "investigation_type": "xray",
+            }
+        )
+
+        expected_payload = {
+            u"EventID": u"102",
+            u"EventOccurDate": u"2017-08-15",
+            u"BeneficiaryUUID": self.user.user_id,
+            u"BeneficiaryType": u"lab",
+            u"Location": self.plc.location_id,
+            u"DTOLocation": self.dto.location_id,
+            u"VoucherID": voucher.get_case_property('voucher_id'),
+            u"Amount": u'10.0',
+            u"InvestigationType": u"xray",
+        }
+
+        self.assertDictEqual(
+            expected_payload,
+            json.loads(ChemistBETSVoucherPayloadGenerator(None).get_payload(None, voucher))
+        )
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
