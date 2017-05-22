@@ -2080,6 +2080,8 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
             saved_export=export_instance,
             auto_select=auto_select
         )
+        for message in self.export_instance.error_messages():
+            messages.error(request, message)
         return super(BaseEditNewCustomExportView, self).get(request, *args, **kwargs)
 
 
