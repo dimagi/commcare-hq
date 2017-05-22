@@ -118,6 +118,7 @@
             return result;
         }
 
+        var form_requires = ko.observable({{ form.requires|JSON }});
         var putInRoot = {{ module.put_in_root|BOOL }};
         var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
         var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
@@ -310,6 +311,8 @@
 {% endblock %}
 
 {% block form-view %}
+    {% initial_page_data 'case_config_options' case_config_options %}
+    {% initial_page_data 'form_requires' form.requires %}
     <div class="tabbable appmanager-tabs-container">
         <ul class="nav nav-tabs">
 
