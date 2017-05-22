@@ -14,9 +14,14 @@ class TestDbAccessors(TestCase):
         cls.g1 = Group(domain=cls.domain, name='group')
         cls.g1.save()
 
+        cls.g2 = Group(domain=cls.domain, name='group')
+        cls.g2.save()
+        cls.g2.soft_delete()
+
     @classmethod
     def tearDownClass(cls):
         cls.g1.delete()
+        cls.g2.delete()
 
     def test_get_group_ids_by_last_modified(self):
         start = datetime.utcnow() - timedelta(days=3)
@@ -24,7 +29,7 @@ class TestDbAccessors(TestCase):
 
         self.assertEqual(
             set(get_group_ids_by_last_modified(start, end)),
-            set([self.g1._id]),
+            set([self.g1._id, self.g2._id]),
         )
 
         self.assertEqual(
