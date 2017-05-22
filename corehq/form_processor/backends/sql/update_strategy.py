@@ -258,8 +258,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         if not self.case.modified_on:
             self.case.modified_on = rebuild_transaction.server_date
 
-        self.case.server_modified_on = rebuild_transaction.server_date
-
     def _delete_old_related_models(self, original_models_by_id, models_to_keep):
         for model in models_to_keep:
             original_models_by_id.pop(model.identifier, None)
