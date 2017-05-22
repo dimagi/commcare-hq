@@ -74,9 +74,7 @@ class Command(BaseCommand):
             logger.info('migrating %s: %s apps', domain, len(app_ids))
             for app_id in app_ids:
                 try:
-                    if self.fup_caseref:
-                        self.fix_user_properties_caseref(app_id)
-                    elif self.fix_user_props:
+                    if self.fix_user_props:
                         self.fix_user_properties(app_id)
                     else:
                         self.migrate_app(app_id)
@@ -132,47 +130,44 @@ class Command(BaseCommand):
         return True
 
     def fix_user_properties(self, app_id):
-        """Fix user props based on copy of app from before migration"""
         try:
             app = Application.get(app_id)
         except Exception as err:
             raise SkipApp(type(err).__name__)
-        copy = get_pre_migration_copy(app)
-        if copy is None:
-            logger.warn("%scopy not found %s/%s version %s",
-                self.dry, app.domain, app_id, app.version)
-            return
-        logger.info("%smigrating %s/%s: (%s) version diff=%s",
-            self.dry, app.domain, app_id, copy.version, app.version - copy.version)
         updated = False
-        for modi, module, formi, new_form, old_form in iter_forms(app, copy):
-            preloads = old_form.actions.usercase_preload.preload
-            if preloads:
-                updated = fix_user_props_copy(
-                    app, module, new_form, modi, formi, preloads, self.dry
-                ) or updated
-        if updated:
-            if not self.dry:
-                app.save()
-            logger.info("%ssaved app %s", self.dry, app_id)
-
-    def fix_user_properties_caseref(self, app_id):
-        """Fix user props based on form.case_references.load"""
-        try:
-            app = Application.get(app_id)
-        except Exception as err:
-            raise SkipApp(type(err).__name__)
-        logger.info("%smigrating %s/%s", self.dry, app.domain, app_id)
-        updated = warn = False
-        modules = [m for m in enumerate(app.modules) if m[1].module_type == 'basic']
-        for modi, module in modules:
-            forms = [f for f in enumerate(module.forms) if f[1].doc_type == 'Form']
-            for formi, form in forms:
+        if self.fup_caseref:
+            # fix user properties based on form.case_references.load
+            logger.info("%smigrating %s/%s", self.dry, app.domain, app_id)
+            for module, form, form_ix in iter_forms(app):
                 if not (form.case_references and form.case_references.load):
                     continue
                 updated = fix_user_props_caseref(
-                    app, module, form, modi, formi, self.dry
+                    app, module, form, form_ix, self.dry
                 ) or updated
+        else:
+            # fix user properties based on form.actions.usercase_preload
+            # in most recent copy of app before migration
+            copy = get_pre_migration_copy(app)
+            if copy is None:
+                logger.warn("%scopy not found %s/%s version %s",
+                    self.dry, app.domain, app_id, app.version)
+                return
+            logger.info("%smigrating %s/%s: (%s) version diff=%s",
+                self.dry, app.domain, app_id, copy.version, app.version - copy.version)
+            old_forms = {form.unique_id: form
+                for module in copy.modules if module.module_type == 'basic'
+                for form in module.forms if form.doc_type == 'Form'}
+            for module, new_form, form_ix in iter_forms(app):
+                old_form = old_forms.get(new_form.unique_id)
+                if old_form is None:
+                    logger.warn("form not in pre-migration copy: %s (%s)",
+                        form_ix, new_form.unique_id)
+                    continue
+                preloads = old_form.actions.usercase_preload.preload
+                if preloads:
+                    updated = fix_user_props_copy(
+                        app, module, new_form, form_ix, preloads, self.dry
+                    ) or updated
         if updated:
             if not self.dry:
                 app.save()
@@ -186,21 +181,15 @@ USERPROP_PREFIX = (
 )
 
 
-def iter_forms(app, copy):
-    old_forms = {form.unique_id: form
-        for module in copy.modules if module.module_type == 'basic'
-        for form in module.forms if form.doc_type == 'Form'}
+def iter_forms(app):
     modules = [m for m in enumerate(app.modules) if m[1].module_type == 'basic']
     for modi, module in modules:
         forms = [f for f in enumerate(module.forms) if f[1].doc_type == 'Form']
         for formi, form in forms:
-            if form.unique_id in old_forms:
-                yield modi, module, formi, form, old_forms[form.unique_id]
-            else:
-                logger.warn("form not in pre-migration copy: %s/%s", modi, formi)
+            yield module, form, "%s/%s" % (modi, formi)
 
 
-def fix_user_props_copy(app, module, form, modi, formi, preloads, dry):
+def fix_user_props_copy(app, module, form, form_ix, preloads, dry):
     updated = False
     xform = XForm(form.source)
     refs = {xform.resolve_path(ref): prop for ref, prop in preloads.iteritems()}
@@ -212,12 +201,12 @@ def fix_user_props_copy(app, module, form, modi, formi, preloads, dry):
             prop = refs[ref]
             userprop = "#user/" + prop
             if value == get_bad_usercase_path(module, form, prop):
-                logger.info("%s/%s setvalue %s -> %s", modi, formi, userprop, ref)
+                logger.info("%s setvalue %s -> %s", form_ix, userprop, ref)
                 node.attrib["value"] = USERPROP_PREFIX + prop
                 updated = True
             elif value != USERPROP_PREFIX + prop:
-                logger.warn("%s/%s %s has unexpected value: %r (not %s)",
-                    modi, formi, ref, value, userprop)
+                logger.warn("%s %s has unexpected value: %r (not %s)",
+                    form_ix, ref, value, userprop)
     if updated:
         if dry:
             logger.info("updated setvalues in XML:\n%s", "\n".join(line
@@ -228,7 +217,7 @@ def fix_user_props_copy(app, module, form, modi, formi, preloads, dry):
     return updated
 
 
-def fix_user_props_caseref(app, module, form, modi, formi, dry):
+def fix_user_props_caseref(app, module, form, form_ix, dry):
     updated = False
     xform = XForm(form.source)
     refs = {xform.resolve_path(ref): vals
@@ -248,7 +237,7 @@ def fix_user_props_caseref(app, module, form, modi, formi, dry):
             assert userprop.startswith("#user/"), (ref, userprop)
             prop = userprop[len("#user/"):]
             if value == get_bad_usercase_path(module, form, prop):
-                logger.info("%s/%s setvalue %s -> %s", modi, formi, userprop, ref)
+                logger.info("%s setvalue %s -> %s", form_ix, userprop, ref)
                 node.attrib["value"] = USERPROP_PREFIX + prop
                 updated = True
             elif value != (USERPROP_PREFIX + prop).replace(" ", ""):
@@ -262,8 +251,8 @@ def fix_user_props_caseref(app, module, form, modi, formi, dry):
             save_xform(app, form, ET.tostring(xform.xml))
     if ref_warnings:
         for ref, ref_values in ref_warnings:
-            logger.warning("%s/%s %s has unexpected #user refs: %s",
-                modi, formi, ref, ref_values)
+            logger.warning("%s %s has unexpected #user refs: %s",
+                form_ix, ref, ref_values)
     return updated
 
 
