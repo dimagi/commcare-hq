@@ -101,7 +101,6 @@ def get_module_view_context(app, module, lang=None):
     # shared context
     context = {
         'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'name']),
-        'edit_case_label_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'case_label']),
     }
     module_brief = {
         'id': module.id,
@@ -462,7 +461,6 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     attributes = {
         "all": None,
         "auto_select_case": None,
-        "case_label": None,
         "case_list": ('case_list-show', 'case_list-label'),
         "case_list-menu_item_media_audio": None,
         "case_list-menu_item_media_image": None,
@@ -480,7 +478,6 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "name": None,
         "parent_module": None,
         "put_in_root": None,
-        "referral_label": None,
         "root_module_id": None,
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
@@ -600,12 +597,10 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         )
         module.case_list.set_audio(lang, val)
 
-    for attribute in ("name", "case_label", "referral_label"):
-        if should_edit(attribute):
-            name = request.POST.get(attribute, None)
-            module[attribute][lang] = name
-            if should_edit("name"):
-                resp['update'] = {'.variable-module_name': trans(module.name, [lang], use_delim=False)}
+    if should_edit("name"):
+        name = request.POST.get("name", None)
+        module["name"][lang] = name
+        resp['update'] = {'.variable-module_name': trans(module.name, [lang], use_delim=False)}
     if should_edit('comment'):
         module.comment = request.POST.get('comment')
     for SLUG in ('case_list', 'task_list'):

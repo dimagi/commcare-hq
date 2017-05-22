@@ -82,9 +82,7 @@ class DetailContributor(SectionContributor):
                                         detail_column_infos,
                                         tabs=list(detail.get_tabs()),
                                         id=id_strings.detail(module, detail_type),
-                                        title=Text(locale_id=id_strings.detail_title_locale(
-                                            module, detail_type
-                                        )),
+                                        title=Text(locale_id=id_strings.detail_title_locale(detail_type)),
                                         print_template=print_template_path,
                                     )
                                     if d:
@@ -484,9 +482,7 @@ class CaseTileHelper(object):
         """
         return {
             "detail_id": id_strings.detail(self.module, self.detail_type),
-            "title_text_id": id_strings.detail_title_locale(
-                self.module, self.detail_type
-            )
+            "title_text_id": id_strings.detail_title_locale(self.detail_type),
         }
 
     def _get_column_context(self, column):
