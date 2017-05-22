@@ -9,6 +9,12 @@ from django.contrib.postgres.fields import ArrayField
 CLAIM_CASE_TYPE = 'commcare-case-claim'
 FUZZY_PROPERTIES = "fuzzy_properties"
 SEARCH_QUERY_ADDITION_KEY = 'commcare_custom_search_query'
+CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = u'commcare_blacklisted_owner_ids'
+UNSEARCHABLE_KEYS = (
+    SEARCH_QUERY_ADDITION_KEY,
+    CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    'owner_id',
+)
 
 
 class GetOrNoneManager(models.Manager):

@@ -20,9 +20,16 @@ from corehq import toggles, privileges
 from corehq.const import OPENROSA_VERSION_MAP, OPENROSA_DEFAULT_VERSION
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.case_search.models import CaseSearchConfig, merge_queries, CaseSearchQueryAddition, \
-    SEARCH_QUERY_ADDITION_KEY, QueryMergeException, FuzzyProperties, RemoveCharacters
-from corehq.apps.app_manager.const import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
+from corehq.apps.case_search.models import (
+    CaseSearchConfig,
+    merge_queries,
+    CaseSearchQueryAddition,
+    SEARCH_QUERY_ADDITION_KEY,
+    QueryMergeException,
+    FuzzyProperties,
+    CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    UNSEARCHABLE_KEYS,
+)
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_or_digest_or_basic_or_apikey,
@@ -97,8 +104,6 @@ def search(request, domain):
                  .case_type(case_type)
                  .size(CASE_SEARCH_MAX_RESULTS))
 
-    query_addition_id = criteria.pop(SEARCH_QUERY_ADDITION_KEY, None)
-
     search_es = _add_include_closed(search_es, criteria)
 
     owner_id = criteria.pop('owner_id', False)
@@ -111,6 +116,7 @@ def search(request, domain):
 
     search_es = _add_case_property_queries(domain, case_type, search_es, criteria)
 
+    query_addition_id = criteria.pop(SEARCH_QUERY_ADDITION_KEY, None)
     query_addition_debug_details = {}
     try:
         search_es = _add_case_search_addition(
@@ -170,6 +176,8 @@ def _add_case_property_queries(domain, case_type, search_es, criteria):
         fuzzies = []
 
     for key, value in criteria.items():
+        if key in UNSEARCHABLE_KEYS:
+            continue
         remove_char_regexs = config.remove_characters.filter(
             domain=domain,
             case_type=case_type,
