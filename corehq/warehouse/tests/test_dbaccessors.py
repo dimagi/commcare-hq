@@ -15,7 +15,6 @@ class TestDbAccessors(TestCase):
         cls.g1.save()
 
         cls.g2 = Group(domain=cls.domain, name='group')
-        cls.g2.save()
         cls.g2.soft_delete()
 
     @classmethod
