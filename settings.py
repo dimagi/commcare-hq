@@ -118,6 +118,7 @@ UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
 UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
 NIKSHAY_DATAMIGRATION = "%s/%s" % (FILEPATH, "nikshay_datamigration.log")
 PRIVATE_SECTOR_DATAMIGRATION = "%s/%s" % (FILEPATH, "private_sector_datamigration.log")
+SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -1143,6 +1144,14 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
         },
+        'soft_asserts': {
+            "level": "DEBUG",
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'verbose',
+            'filename': SOFT_ASSERTS_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 200  # Backup 2000 MB of logs
+        }
     },
     'loggers': {
         '': {
@@ -1242,6 +1251,11 @@ LOGGING = {
         },
         'sentry.errors.uncaught': {
             'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'soft_asserts': {
+            'handlers': ['soft_asserts', 'console'],
             'level': 'DEBUG',
             'propagate': False,
         },
