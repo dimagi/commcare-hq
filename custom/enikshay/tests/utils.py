@@ -41,10 +41,12 @@ def get_person_case_structure(case_id, user_id, extra_update=None):
         'dob': "1987-08-15",
         'age': '20',
         'sex': 'male',
-        'current_address': 'Mr. Everest',
+        'current_address': 'Mt. Everest',
         'secondary_contact_name_address': 'Mrs. Everestie',
         'previous_tb_treatment': 'yes',
         'nikshay_registered': "false",
+        'husband_father_name': u"Mr. Peregrine เՇร ค Շгคק Kumar",
+        'current_address_postal_code': '110088',
     }
     update.update(extra_update)
 
@@ -97,6 +99,9 @@ def get_episode_case_structure(case_id, indexed_occurrence_case, extra_update=No
         TREATMENT_START_DATE: "2015-03-03",
         TREATMENT_SUPPORTER_FIRST_NAME: u"𝔊𝔞𝔫𝔡𝔞𝔩𝔣",
         TREATMENT_SUPPORTER_LAST_NAME: u"𝔗𝔥𝔢 𝔊𝔯𝔢𝔶",
+        'treatment_initiation_status': 'F',
+        'dst_status': 'pending',
+        'basis_of_diagnosis': 'clinical_other',
     }
     update.update(extra_update)
 
@@ -398,7 +403,11 @@ class ENikshayLocationStructureMixin(object):
         self.dmc.save()
 
         self.pcp = locations['PCP']
-
+        self.pcp.metadata = {
+            'nikshay_code': '1234567',
+            'is_test': 'no',
+        }
+        self.pcp.save()
         super(ENikshayLocationStructureMixin, self).setUp()
 
     def tearDown(self):
@@ -466,5 +475,6 @@ def setup_enikshay_locations(domain_name):
         ])
     ]
 
+    location_metadata = {'is_test': 'no', 'nikshay_code': 'nikshay_code'}
     return (setup_location_types_with_structure(domain_name, location_type_structure),
-            setup_locations_with_structure(domain_name, location_structure))
+            setup_locations_with_structure(domain_name, location_structure, location_metadata))

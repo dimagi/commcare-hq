@@ -41,6 +41,7 @@ from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     FuzzyProperties,
+    IgnorePatterns,
     enable_case_search,
     disable_case_search,
 )
@@ -661,7 +662,7 @@ class DomainAccountingSettings(BaseProjectSettingsView):
 
     @property
     def current_subscription(self):
-        return Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+        return Subscription.get_active_subscription_by_domain(self.domain)
 
 
 class DomainSubscriptionView(DomainAccountingSettings):
@@ -676,7 +677,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
     @property
     @memoized
     def plan(self):
-        plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
         date_end = None
         next_subscription = {
             'exists': False,
@@ -1134,7 +1136,7 @@ class CreditsStripePaymentView(BaseStripePaymentView):
             self.get_or_create_payment_method(),
             self.domain,
             self.account,
-            subscription=Subscription.get_subscribed_plan_by_domain(self.domain_object)[1],
+            subscription=Subscription.get_active_subscription_by_domain(self.domain),
             post_data=self.request.POST.copy(),
         )
 
@@ -1337,7 +1339,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     def page_context(self):
         return {
             'is_form_editable': self.is_form_editable,
-            'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain)[0],
+            'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain),
             'select_subscription_type_form': self.select_subscription_type_form,
             'subscription_management_forms': self.slug_to_form.values(),
             'today': datetime.date.today(),
@@ -1365,7 +1367,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             })
 
         subscription_type = None
-        subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
         if subscription is None:
             subscription_type = None
         else:
@@ -1554,10 +1556,11 @@ class ConfirmSelectedPlanView(SelectPlanView):
 
     @property
     def downgrade_messages(self):
-        current_plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
-        if subscription is None:
-            current_plan_version = None
-        downgrades = get_change_status(current_plan_version, self.selected_plan_version)[1]
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        downgrades = get_change_status(
+            subscription.plan_version if subscription else None,
+            self.selected_plan_version
+        )[1]
         downgrade_handler = DomainDowngradeStatusHandler(
             self.domain_object, self.selected_plan_version, downgrades,
         )
@@ -1683,7 +1686,7 @@ class SubscriptionMixin(object):
     @property
     @memoized
     def subscription(self):
-        subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
         if subscription is None:
             raise Http404
         if subscription.is_renewed:
@@ -2190,6 +2193,24 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         )
         unneeded_fuzzies.delete()
 
+        ignore_patterns = request_json.get('ignore_patterns')
+        updated_ignore_patterns = []
+        update_ignore_pattern_ids = []
+        for ignore_pattern_regex in ignore_patterns:
+            rc, created = IgnorePatterns.objects.get_or_create(
+                domain=self.domain,
+                case_type=ignore_pattern_regex.get('case_type'),
+                case_property=ignore_pattern_regex.get('case_property'),
+                regex=ignore_pattern_regex.get('regex')
+            )
+            updated_ignore_patterns.append(rc)
+            update_ignore_pattern_ids.append(rc.pk)
+
+        unneeded_ignore_patterns = IgnorePatterns.objects.filter(domain=self.domain).exclude(
+            pk__in=update_ignore_pattern_ids
+        )
+        unneeded_ignore_patterns.delete()
+
         if enable:
             enable_case_search(self.domain)
         else:
@@ -2198,6 +2219,7 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
             'enabled': request_json.get('enable'),
             'fuzzy_properties': updated_fuzzies,
+            'ignore_patterns': updated_ignore_patterns,
         })
         return json_response(self.page_context)
 
@@ -2212,7 +2234,12 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
                 'enabled': current_values.enabled if current_values else False,
                 'fuzzy_properties': {
                     fp.case_type: fp.properties for fp in current_values.fuzzy_properties.all()
-                } if current_values else {}
+                } if current_values else {},
+                'ignore_patterns': [{
+                    'case_type': rc.case_type,
+                    'case_property': rc.case_property,
+                    'regex': rc.regex
+                } for rc in current_values.ignore_patterns.all()] if current_values else {}
             }
         }
 

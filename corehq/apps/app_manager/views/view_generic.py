@@ -137,7 +137,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             request, domain, form, context['langs']
         )
         context.update({
-            'case_properties': get_all_case_properties(app),
             'usercase_properties': get_usercase_properties(app),
             'property_descriptions': get_case_property_description_dict(domain)
         })

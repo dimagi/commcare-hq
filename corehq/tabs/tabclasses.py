@@ -1385,7 +1385,7 @@ class ProjectSettingsTab(UITab):
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
                     InternalSubscriptionManagementView,
                 )
-                current_subscription = Subscription.get_subscribed_plan_by_domain(self.domain)[1]
+                current_subscription = Subscription.get_active_subscription_by_domain(self.domain)
                 subscription = [
                     {
                         'title': _(DomainSubscriptionView.page_title),
