@@ -358,7 +358,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     config_id = StringProperty(required=True)
     title = StringProperty()
     description = StringProperty()
-    aggregation_columns = StringListProperty()
+    aggregation_columns = StringListProperty(required=True)
     filters = ListProperty()
     columns = ListProperty()
     configured_charts = ListProperty()
