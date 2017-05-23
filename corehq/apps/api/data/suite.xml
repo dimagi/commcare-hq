@@ -165,7 +165,7 @@
   <detail id="m1_case_short">
     <title>
       <text>
-        <locale id="m1.case_short.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <field>
@@ -218,7 +218,7 @@
   <detail id="m1_case_long">
     <title>
       <text>
-        <locale id="m1.case_long.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <field>
@@ -355,7 +355,7 @@
   <detail id="m2_case_short">
     <title>
       <text>
-        <locale id="m2.case_short.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <field>
@@ -379,7 +379,7 @@
   <detail id="m2_case_long">
     <title>
       <text>
-        <locale id="m2.case_long.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <field>
@@ -422,7 +422,7 @@
   <detail id="m3_case_short">
     <title>
       <text>
-        <locale id="m3.case_short.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <field>
@@ -446,7 +446,7 @@
   <detail id="m3_case_long">
     <title>
       <text>
-        <locale id="m3.case_long.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <field>
@@ -489,7 +489,7 @@
   <detail id="m6_case_short">
     <title>
       <text>
-        <locale id="m6.case_short.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <field>
@@ -564,7 +564,7 @@
   <detail id="m6_case_long">
     <title>
       <text>
-        <locale id="m6.case_long.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <field>
@@ -629,7 +629,7 @@
   <detail id="m7_case_short">
     <title>
       <text>
-        <locale id="m7.case_short.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <field>
