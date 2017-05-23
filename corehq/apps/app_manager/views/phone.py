@@ -62,8 +62,8 @@ def get_app_list_xml(apps):
             domain=app.domain,
             name=app.name,
             version=app.version,
-            media_profile=app.media_profile_url,
-            profile=app.profile_url,
+            media_profile=app.odk_media_profile_url,
+            profile=app.odk_profile_url,
             environment=settings.SERVER_ENVIRONMENT,
         )
         for app in apps
