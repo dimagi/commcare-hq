@@ -74,8 +74,8 @@ class Command(BaseCommand):
                             self.migrate_app(app)
                     else:
                         logger.info("Skipping %s/%s because it is a %s", domain, app_id, app.doc_type)
-                except Exception as err:
-                    logger.error("skipping app %s/%s: %s", domain, app_id, err)
+                except Exception:
+                    logger.exception("skipping app %s/%s", domain, app_id)
             if self.migrate_usercase and not USER_PROPERTY_EASY_REFS.enabled(domain):
                 if not self.dry:
                     USER_PROPERTY_EASY_REFS.set(domain, True, NAMESPACE_DOMAIN)
