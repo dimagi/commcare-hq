@@ -41,6 +41,12 @@ AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
 
 
 class AutomaticUpdateRule(models.Model):
+    # Used when the rule performs case update actions
+    WORKFLOW_CASE_UPDATE = 'CASE_UPDATE'
+
+    # Used when the rule spawns schedule instances in the scheduling framework
+    WORKFLOW_SCHEDULING = 'SCHEDULING'
+
     domain = models.CharField(max_length=126, db_index=True)
     name = models.CharField(max_length=126)
     case_type = models.CharField(max_length=126)
@@ -55,6 +61,10 @@ class AutomaticUpdateRule(models.Model):
     # before we run the rule against it.
     server_modified_boundary = models.IntegerField(null=True)
     migrated = models.BooleanField(default=False)
+
+    # One of the WORKFLOW_* constants on this class describing the workflow
+    # that this rule belongs to.
+    workflow = models.CharField(max_length=126)
 
     class Meta:
         app_label = "data_interfaces"
