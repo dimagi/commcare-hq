@@ -132,11 +132,17 @@ class AutomaticUpdateRule(models.Model):
             return rule
 
     @classmethod
-    def by_domain(cls, domain, active_only=True):
-        filters = {'domain': domain}
+    def by_domain(cls, domain, workflow, active_only=True):
+        additional_filters = {}
         if active_only:
-            filters['active'] = True
-        return AutomaticUpdateRule.objects.filter(deleted=False, **filters)
+            additional_filters['active'] = True
+
+        return cls.objects.filter(
+            domain=domain,
+            workflow=workflow,
+            deleted=False,
+            **additional_filters
+        )
 
     @classmethod
     def organize_rules_by_case_type(cls, rules):

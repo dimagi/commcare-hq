@@ -54,6 +54,7 @@ class AutomaticCaseUpdateTest(TestCase):
             case_type='test-case-type',
             active=True,
             server_modified_boundary=30,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
         self.rule.save()
         AutomaticUpdateRuleCriteria.objects.create(
@@ -75,6 +76,7 @@ class AutomaticCaseUpdateTest(TestCase):
             case_type='test-case-type-2',
             active=True,
             server_modified_boundary=30,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
         self.rule2.save()
         AutomaticUpdateAction.objects.create(
@@ -88,6 +90,7 @@ class AutomaticCaseUpdateTest(TestCase):
             case_type='test-case-type-2',
             active=True,
             server_modified_boundary=50,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
         self.rule3.save()
         AutomaticUpdateAction.objects.create(
@@ -101,6 +104,7 @@ class AutomaticCaseUpdateTest(TestCase):
             case_type='test-case-type',
             active=True,
             server_modified_boundary=30,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
         self.rule4.save()
         AutomaticUpdateRuleCriteria.objects.create(
@@ -124,7 +128,8 @@ class AutomaticCaseUpdateTest(TestCase):
             name='test-rule-5',
             case_type='test-case-type-3',
             active=True,
-            filter_on_server_modified=False
+            filter_on_server_modified=False,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
         self.rule5.save()
         AutomaticUpdateRuleCriteria.objects.create(
@@ -420,7 +425,7 @@ class AutomaticCaseUpdateTest(TestCase):
             self.assertTrue(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
     def test_get_rules_from_domain(self):
-        rules = AutomaticUpdateRule.by_domain(self.domain)
+        rules = AutomaticUpdateRule.by_domain(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
 
         expected_case_types = ['test-case-type', 'test-case-type-2', 'test-case-type-3']
@@ -440,7 +445,7 @@ class AutomaticCaseUpdateTest(TestCase):
         self.assertEqual(set(expected_rule_ids), set(actual_rule_ids))
 
     def test_boundary_date(self):
-        rules = AutomaticUpdateRule.by_domain(self.domain)
+        rules = AutomaticUpdateRule.by_domain(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
 
         boundary_date = AutomaticUpdateRule.get_boundary_date(
@@ -466,6 +471,7 @@ class AutomaticCaseUpdateTest(TestCase):
                 case_type='test-child-case-type',
                 active=True,
                 server_modified_boundary=30,
+                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
             )
             rule.save()
             self.addCleanup(rule.delete)
@@ -594,6 +600,7 @@ def _create_empty_rule(domain, case_type='person', active=True, deleted=False):
         filter_on_server_modified=False,
         server_modified_boundary=None,
         migrated=True,
+        workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
     )
 
 
@@ -1353,7 +1360,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         rule4 = _create_empty_rule(self.domain, case_type='person-2', active=False)
         rule5 = _create_empty_rule(self.domain, case_type='person-3', deleted=True)
 
-        rules = AutomaticUpdateRule.by_domain(self.domain)
+        rules = AutomaticUpdateRule.by_domain(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
 
         expected_case_types = ['person-1', 'person-2']
@@ -1386,7 +1393,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
 
         rule4 = _create_empty_rule(self.domain, case_type='person-2')
 
-        rules = AutomaticUpdateRule.by_domain(self.domain)
+        rules = AutomaticUpdateRule.by_domain(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
 
         boundary_date = AutomaticUpdateRule.get_boundary_date(
