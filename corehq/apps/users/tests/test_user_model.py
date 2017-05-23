@@ -37,6 +37,12 @@ class UserModelTest(TestCase):
         self.assertEqual(len(form_ids), 1)
         self.assertEqual(form_ids[0], '123')
 
+    def test_last_modified(self):
+        lm = self.user.last_modified
+        self.user.save()
+        user = CommCareUser.get(self.user._id)
+        self.assertGreater(user.last_modified, lm)
+
 
 class UserDeviceTest(SimpleTestCase):
 
