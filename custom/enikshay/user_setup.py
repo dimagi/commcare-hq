@@ -303,7 +303,7 @@ class ENikshayLocationFormSet(LocationFormSet):
         parent = self.location_form.cleaned_data['parent']
         name = self.location_form.cleaned_data['name']
         self.location_form.cleaned_data['site_code'] = get_site_code(
-                name, nikshay_code, type_code, parent)
+            name, nikshay_code, type_code, parent)
 
     def validate_nikshay_code(self):
         """When locations are created, enforce that a custom location data field
