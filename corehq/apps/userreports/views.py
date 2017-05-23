@@ -1110,6 +1110,30 @@ class CreateDataSourceView(BaseEditDataSourceView):
     page_title = ugettext_lazy("Create Data Source")
 
 
+class CloneDataSourceView(CreateDataSourceView):
+    urlname = 'clone_configurable_data_source'
+
+    @property
+    def config(self):
+        data_source_to_clone = get_datasource_config_or_404(self.config_id, self.domain)[0]
+        return DataSourceConfiguration(
+            domain=self.domain,
+            referenced_doc_type=data_source_to_clone.referenced_doc_type,
+            table_id=data_source_to_clone.table_id,
+            description=data_source_to_clone.description,
+            base_item_expression=data_source_to_clone.base_item_expression,
+            configured_filter=data_source_to_clone.configured_filter,
+            configured_indicators=data_source_to_clone.configured_indicators,
+            named_expressions=data_source_to_clone.named_expressions,
+            named_filters=data_source_to_clone.named_filters,
+            display_name='{} - cloned {}'.format(
+                data_source_to_clone.display_name,
+                datetime.datetime.utcnow().strftime('%Y-%m-%d')
+            ),
+            backend_id=data_source_to_clone.backend_id
+        )
+
+
 class EditDataSourceView(BaseEditDataSourceView):
     urlname = 'edit_configurable_data_source'
     page_title = ugettext_lazy("Edit Data Source")

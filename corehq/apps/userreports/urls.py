@@ -22,7 +22,8 @@ from corehq.apps.userreports.views import (
     choice_list_api,
     ExpressionDebuggerView,
     evaluate_expression,
-    undelete_data_source, undelete_report, DataSourceDebuggerView, evaluate_data_source)
+    undelete_data_source, undelete_report, DataSourceDebuggerView, evaluate_data_source, CloneDataSourceView)
+
 
 urlpatterns = [
     url(r'^$', UserConfigReportsHomeView.as_view(),
@@ -58,6 +59,8 @@ urlpatterns = [
         name=PreviewDataSourceView.urlname),
     url(r'^data_sources/export/(?P<config_id>[\w-]+)/$', export_data_source,
         name='export_configurable_data_source'),
+    url(r'^data_sources/clone/(?P<config_id>[\w-]+)/$', CloneDataSourceView.as_view(),
+        name=CloneDataSourceView.urlname),
     url(r'^data_sources/status/(?P<config_id>[\w-]+)/$', data_source_status,
         name='configurable_data_source_status'),
     url(r'^expression_debugger/$', ExpressionDebuggerView.as_view(),
