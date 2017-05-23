@@ -1,10 +1,11 @@
 from couchdbkit.ext.django.schema import StringProperty, ListProperty
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from dimagi.utils.couch.undo import UndoableDocument, DeleteDocRecord
+from dimagi.utils.couch.undo import UndoableMixin, DeleteDocRecord
+from dimagi.ext.couchdbkit import Document
 
 
-class CommCareCaseGroup(UndoableDocument):
+class CommCareCaseGroup(Document, UndoableMixin):
     """
         This is a group of CommCareCases. Useful for managing cases in larger projects.
     """

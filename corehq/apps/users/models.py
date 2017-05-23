@@ -32,6 +32,7 @@ from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.modules import to_function
 from corehq.util.quickcache import quickcache
+from corehq.util.couch_helpers import TimestampDocument
 from casexml.apps.case.mock import CaseBlock
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.exceptions import CaseNotFound
@@ -807,7 +808,7 @@ class ReportingMetadata(DocumentSchema):
     last_submissions = SchemaListProperty(LastSubmission)
 
 
-class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
+class CouchUser(TimestampDocument, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
     """
     A user (for web and commcare)
     """
@@ -821,7 +822,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     devices = SchemaListProperty(DeviceIdLastUsed)
 
     phone_numbers = ListProperty()
-    created_on = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
     #    For now, 'status' is things like:
     #        ('auto_created',     'Automatically created from form submission.'),
     #        ('phone_registered', 'Registered from phone'),
@@ -1294,7 +1294,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return cls.get_by_username(django_user.username)
 
     @classmethod
-    def create(cls, domain, username, password, email=None, uuid='', date='',
+    def create(cls, domain, username, password, email=None, uuid='',
                first_name='', last_name='', **kwargs):
         try:
             django_user = User.objects.get(username=username)
@@ -1310,11 +1310,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             couch_user = cls(_id=uuid)
         else:
             couch_user = cls()
-
-        if date:
-            couch_user.created_on = force_to_datetime(date)
-        else:
-            couch_user.created_on = datetime.utcnow()
 
         user_data = {'commcare_project': domain}
         user_data.update(kwargs.get('user_data', {}))

@@ -1,9 +1,11 @@
+from datetime import datetime
 import base64
 import hashlib
 import threading
 from copy import copy
 from mimetypes import guess_type
 from corehq.util.pagination import paginate_function, PaginationEventHandler, ArgsProvider
+from dimagi.ext.couchdbkit import Document, DateTimeProperty
 
 
 class CouchAttachmentsBuilder(object):
@@ -168,6 +170,20 @@ class MultiKeyViewArgsProvider(PaginatedViewArgsProvider):
                 'startkey': key,
                 'endkey': key
             }
+
+
+class TimestampDocument(Document):
+
+    last_modified = DateTimeProperty()
+    created_on = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
+
+    def save(self, *args, **kwargs):
+        utcnow = datetime.utcnow()
+        self.last_modified = utcnow
+        if not self._id:
+            self.created_on = utcnow
+
+        super(TimestampDocument, self).save(*args, **kwargs)
 
 
 def paginate_view(db, view_name, chunk_size, event_handler=PaginationEventHandler(), **view_kwargs):

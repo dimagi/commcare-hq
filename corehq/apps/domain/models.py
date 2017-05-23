@@ -28,6 +28,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.util.quickcache import quickcache
+from corehq.util.couch_helpers import TimestampDocument
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.database import (
     iter_docs, get_safe_write_kwargs, apply_update, iter_bulk_delete
@@ -231,7 +232,7 @@ class DayTimeWindow(DocumentSchema):
     end_time = TimeProperty()
 
 
-class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
+class Domain(QuickCachedDocumentMixin, TimestampDocument, SnapshotMixin):
     """Domain is the highest level collection of people/stuff
        in the system.  Pretty much everything happens at the
        domain-level, including user membership, permission to
@@ -357,8 +358,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     # to be eliminated from projects and related documents when they are copied for the exchange
     _dirty_fields = ('admin_password', 'admin_password_charset', 'city', 'countries', 'region', 'customer_type')
-
-    last_modified = DateTimeProperty(default=datetime(2015, 1, 1))
 
     # when turned on, use SECURE_TIMEOUT for sessions of users who are members of this domain
     secure_sessions = BooleanProperty(default=False)
@@ -655,7 +654,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
 
     def save(self, **params):
-        self.last_modified = datetime.utcnow()
         if not self._rev:
             # mark any new domain as timezone migration complete
             set_tz_migration_complete(self.name)
