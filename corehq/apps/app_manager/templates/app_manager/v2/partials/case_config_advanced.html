@@ -408,29 +408,38 @@
             <span class="text-muted">{% trans "Add Action" %}</span>
         </div>
         <div class="spacer"></div>
-        <div>
-            <legend data-bind="visible: load_update_cases().length">
+        <div class="panel panel-appmanager" data-bind="visible: load_update_cases().length">
+            <div class="panel-heading">
+              <h4 class="panel-title panel-title-nolink">
                 {% trans "Load / Update / Close Cases" %}
-            </legend>
-            <div id="case-load-accordion" class="panel-group" data-bind="foreach: load_update_cases">
-                <!-- ko if: auto_select -->
-                <div class="panel panel-appmanager" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
-                <!-- /ko -->
-                <!-- ko if: load_case_from_fixture -->
-                <div class="panel panel-appmanager" data-bind="template: {name: 'case-config:case-action-load-case-from-fixture'}"></div>
-                <!-- /ko -->
-                <!-- ko ifnot: auto_select || load_case_from_fixture -->
-                <div class="panel panel-appmanager" data-bind="template: {name: 'case-config:case-action'}"></div>
-                <!-- /ko -->
+              </h4>
+            </div>
+            <div class="panel-body">
+                <div id="case-load-accordion" class="panel-group" data-bind="foreach: load_update_cases">
+                    <!-- ko if: auto_select -->
+                    <div class="panel panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action-auto-select'}"></div>
+                    <!-- /ko -->
+                    <!-- ko if: load_case_from_fixture -->
+                    <div class="panel panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action-load-case-from-fixture'}"></div>
+                    <!-- /ko -->
+                    <!-- ko ifnot: auto_select || load_case_from_fixture -->
+                    <div class="panel panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action'}"></div>
+                    <!-- /ko -->
+                </div>
             </div>
         </div>
         <div class="spacer" data-bind="visible: open_cases().length && load_update_cases().length"></div>
-        <div>
-            <legend data-bind="visible: open_cases().length">
+
+        <div class="panel panel-appmanager" data-bind="visible: open_cases().length">
+            <div class="panel-heading">
+              <h4 class="panel-title panel-title-nolink" >
                 {% trans "Open New Cases" %}
-            </legend>
-            <div id="case-open-accordion" class="panel-group" data-bind="foreach: open_cases">
-                <div class="panel panel-appmanager" data-bind="template: {name: 'case-config:case-action'}"></div>
+              </h4>
+            </div>
+            <div class="panel-body">
+                <div id="case-open-accordion" class="panel-group" data-bind="foreach: open_cases">
+                    <div class="panel panel-appmanager panel-case-actions" data-bind="template: {name: 'case-config:case-action'}"></div>
+                </div>
             </div>
         </div>
     </div>
