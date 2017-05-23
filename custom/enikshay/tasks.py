@@ -154,7 +154,8 @@ class EpisodeAdherenceUpdate(object):
             self.episode.case_id
         )
 
-    def calculate_doses_taken_by_day(self, adherence_cases):
+    @staticmethod
+    def calculate_doses_taken_by_day(adherence_cases):
         """
         Args:
             adherence_cases: list of 'adherence' case dicts
@@ -225,7 +226,8 @@ class EpisodeAdherenceUpdate(object):
             )
             return None
 
-    def count_doses_taken(self, dose_taken_by_date, lte=None, gte=None):
+    @staticmethod
+    def count_doses_taken(dose_taken_by_date, lte=None, gte=None):
         """
         Args:
             dose_taken_by_date: result of self.calculate_doses_taken_by_day

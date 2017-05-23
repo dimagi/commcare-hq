@@ -20,6 +20,7 @@ from custom.enikshay.reports.generic import EnikshayReport
 
 from django.utils.translation import ugettext_lazy
 
+from custom.enikshay.tasks import EpisodeAdherenceUpdate
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 
@@ -120,14 +121,14 @@ class HistoricalAdherenceReport(EnikshayReport):
         return report_context
 
     def get_doses(self):
-        adherence = self.get_adherence_cases_dict()
-        dose_taken_adherence = defaultdict(list)
-        for date, adherence_cases in adherence.iteritems():
-            for case in adherence_cases:
-                adherence_value = case.dynamic_case_properties().get('adherence_value')
-                if adherence_value in DOSE_TAKEN_INDICATORS:
-                    dose_taken_adherence[date].append(case)
-        return len(dose_taken_adherence.keys())
+        adherence_cases = []
+        for day, cases in self.get_adherence_cases_dict().iteritems():
+            adherence_cases.extend(cases)
+
+        doses_taken_by_date = EpisodeAdherenceUpdate.calculate_doses_taken_by_day(
+            [c.to_json() for c in adherence_cases]
+        )
+        return EpisodeAdherenceUpdate.count_doses_taken(doses_taken_by_date)
 
     def get_treatment_phase(self):
         if self.episode_properties.get("treatment_initiated", False) in ("yes_phi", "yes_private"):
