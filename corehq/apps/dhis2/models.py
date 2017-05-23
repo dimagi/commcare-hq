@@ -36,6 +36,7 @@ class DataSetMap(Document):
     domain = StringProperty()
     ucr_id = StringProperty()
 
+    description = StringProperty()
     frequency = StringProperty(choices=SEND_FREQUENCIES, default=SEND_FREQUENCY_MONTHLY)
     day_to_send = IntegerProperty()
     data_set_id = StringProperty()  # If UCR adds values to an existing DataSet
