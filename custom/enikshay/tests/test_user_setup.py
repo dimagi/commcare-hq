@@ -5,7 +5,6 @@ from corehq.util.test_utils import flag_enabled
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition, CustomDataEditor
 from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.forms import LocationFormSet
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole, Permissions
@@ -13,8 +12,13 @@ from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_F
 from corehq.apps.users.forms import UpdateCommCareUserInfoForm
 from corehq.apps.users.signals import clean_commcare_user
 from .utils import setup_enikshay_locations
-from ..user_setup import (validate_nikshay_code, LOC_TYPES_TO_USER_TYPES,
-                          set_user_role, validate_usertype, get_site_code)
+from ..user_setup import (
+    LOC_TYPES_TO_USER_TYPES,
+    set_user_role,
+    validate_usertype,
+    get_site_code,
+    ENikshayLocationFormSet
+)
 from ..models import IssuerId
 
 
@@ -57,7 +61,7 @@ class TestUserSetupUtils(TestCase):
         super(TestUserSetupUtils, cls).tearDownClass()
 
     def assertValid(self, form):
-        if isinstance(form, LocationFormSet):
+        if isinstance(form, ENikshayLocationFormSet):
             errors = ", ".join(filter(None, [f.errors.as_text() for f in form.forms]))
         else:
             errors = form.errors.as_text()
@@ -100,7 +104,7 @@ class TestUserSetupUtils(TestCase):
         self.addCleanup(role.delete)
 
     def make_new_location_form(self, name, location_type, parent, nikshay_code):
-        return LocationFormSet(
+        return ENikshayLocationFormSet(
             location=SQLLocation(domain=self.domain, parent=parent),
             bound_data={'name': name,
                         'location_type': self.location_types[location_type],
@@ -120,7 +124,7 @@ class TestUserSetupUtils(TestCase):
             'location_type': location.location_type.code,
         }
         bound_data.update(data)
-        return LocationFormSet(
+        return ENikshayLocationFormSet(
             location=None,
             bound_data=bound_data,
             request_user=self.web_user,
