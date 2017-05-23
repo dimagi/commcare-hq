@@ -1842,7 +1842,7 @@ def restore_edit(request, domain, instance_id):
         raise Http404()
 
     instance = _get_location_safe_form(domain, request.couch_user, instance_id)
-    if isinstance(instance, XFormDeprecated):
+    if instance.is_deprecated:
         submit_form_locally(instance.get_xml(), domain, app_id=instance.app_id, build_id=instance.build_id)
         messages.success(request, _(u'Form was restored from a previous version.'))
         return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance.orig_id]))
