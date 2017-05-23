@@ -208,8 +208,7 @@ class IndicatorESAdapter(IndicatorAdapter):
             )
 
     def doc_exists(self, doc):
-        records = self.get_query_object().es.doc_id(doc['_id'])
-        return records.count > 0
+        return self.es.exists(self.table_name, 'indicator', doc['_id'])
 
     def delete(self, doc):
         try:
