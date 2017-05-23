@@ -40,3 +40,17 @@ def _get_ids_by_last_modified(cls, doc_types, start_datetime, end_datetime):
         )
         for result in results:
             yield result['id']
+
+
+def get_synclog_ids_by_date(start_datetime, end_datetime):
+    from casexml.apps.phone.models import SyncLog
+
+    results = SyncLog.view(
+        "sync_logs_by_date/view",
+        startkey=[start_datetime],
+        endkey=[end_datetime],
+        reduce=False,
+        include_docs=False
+    )
+    for result in results:
+        yield result['id']
