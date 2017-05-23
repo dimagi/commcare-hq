@@ -41,9 +41,10 @@
             {
                 "compare_as_string": false,
                 "datatype": "string",
-                "type": "dynamic_choice_list",
+                "type": "multi_field_dynamic_choice_list",
                 "slug": "village",
                 "field": "person_owner_id",
+                "fields": ["person_owner_id", "referring_facility_id"],
                 "choice_provider": {
                     "include_descendants": true,
                     "type": "location",
