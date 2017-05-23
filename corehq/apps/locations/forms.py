@@ -449,7 +449,6 @@ class LocationFormSet(object):
             initial_password = generate_strong_password()
             pw_field = crispy.Field(
                 'password',
-                data_bind="initializeValue: password, value: password, valueUpdate: 'input'",
                 value=initial_password,
             )
         else:
