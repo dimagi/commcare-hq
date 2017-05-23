@@ -63,12 +63,8 @@ class HQPasswordChangeForm(EncodedPasswordChangeForm, PasswordChangeForm):
             raise ValidationError(
                 _("Password cannot be empty"), code='password_empty',
             )
-        if not self.user.check_password(old_password):
-            raise forms.ValidationError(
-                self.error_messages['password_incorrect'],
-                code='password_incorrect',
-            )
-        return old_password
+        self.cleaned_data['old_password'] = old_password
+        return super(HQPasswordChangeForm, self).clean_old_password()
 
     def save(self, commit=True):
         user = super(HQPasswordChangeForm, self).save(commit)
