@@ -7,7 +7,7 @@ from couchdbkit.exceptions import ResourceNotFound
 
 from dimagi.utils.dates import force_to_datetime
 
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import get_location, SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.fluff.calculators.xform import FormPropertyFilter, IN
@@ -78,8 +78,8 @@ def _get_location(form):
     loc_id = form.form.get('location_id')
     if loc_id:
         try:
-            return Location.get(loc_id)
-        except ResourceNotFound:
+            return get_location(loc_id)
+        except SQLLocation.DoesNotExist:
             logging.info('Location %s Not Found.' % loc_id)
     else:
         user_id = form['auth_context']['user_id']
@@ -127,11 +127,11 @@ def get_location_by_type(form, type):
             return None
         if loc.count() > 1:
             loc = loc.filter(location_type__name='District')
-        loc = loc[0].couch_location
+        loc = loc[0]
         if type == 'district':
             return loc
     for loc_id in loc.lineage:
-        loc = Location.get(loc_id)
+        loc = get_location(loc_id)
         if unicode(loc.location_type_name).lower().replace(" ", "") == type:
             return loc
 

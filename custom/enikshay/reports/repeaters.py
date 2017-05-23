@@ -1,6 +1,8 @@
+from django.conf import settings
 from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from django.urls import reverse
+
 from corehq.apps.repeaters.dbaccessors import iter_repeat_records_by_domain
 from corehq.apps.domain.views import DomainForwardingRepeatRecords
 from corehq.apps.repeaters.dbaccessors import get_repeaters_by_domain
@@ -8,18 +10,23 @@ from corehq.apps.reports.filters.select import RepeaterFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 
 from custom.enikshay.case_utils import get_person_case
-from custom.enikshay.integrations.ninetyninedots.repeaters import Base99DOTSRepeater
-from custom.enikshay.integrations.nikshay.repeaters import BaseNikshayRepeater
 from custom.enikshay.exceptions import ENikshayException
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from corehq.apps.reports.filters.select import RepeatRecordStateFilter
+from dimagi.utils.modules import to_function
 
 
 class ENikshayRepeaterFilter(RepeaterFilter):
+
+    def __init__(self, *args, **kwargs):
+        super(ENikshayRepeaterFilter, self).__init__(*args, **kwargs)
+        self.enikshay_repeaters = tuple(to_function(cls, failhard=True) for cls in settings.ENIKSHAY_REPEATERS)
+
     def _get_repeaters(self):
-        return [repeater for repeater in get_repeaters_by_domain(self.domain)
-                if (isinstance(repeater, Base99DOTSRepeater)
-                    or isinstance(repeater, BaseNikshayRepeater))]
+        return [
+            repeater for repeater in get_repeaters_by_domain(self.domain)
+            if isinstance(repeater, self.enikshay_repeaters)
+        ]
 
 
 class ENikshayForwarderReport(DomainForwardingRepeatRecords):

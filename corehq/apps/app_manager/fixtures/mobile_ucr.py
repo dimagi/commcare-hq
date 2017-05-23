@@ -20,7 +20,7 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 
-MOBILE_UCR_RANDOM_THRESHOLD = 10 ** 5
+MOBILE_UCR_RANDOM_THRESHOLD = 100
 
 
 def _should_sync(restore_state):

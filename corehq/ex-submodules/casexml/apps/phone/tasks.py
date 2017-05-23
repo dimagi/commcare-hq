@@ -1,8 +1,10 @@
+from datetime import date, timedelta
 from celery import current_task, current_app
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.signals import after_task_publish
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_all_domains
+from casexml.apps.phone.utils import delete_sync_logs
 
 
 ASYNC_RESTORE_QUEUE = 'async_restore_queue'
@@ -62,3 +64,11 @@ def update_celery_state(sender=None, body=None, **kwargs):
     backend = task.backend if task else current_app.backend
 
     backend.store_result(body['id'], None, ASYNC_RESTORE_SENT)
+
+
+@periodic_task(run_every=crontab(hour="23", minute="0"), queue='periodic_queue')
+def prune_synclogs():
+    prune_date = date.today() - timedelta(days=60)
+    num_deleted = delete_sync_logs(prune_date)
+    while num_deleted != 0:
+        num_deleted = delete_sync_logs(prune_date)

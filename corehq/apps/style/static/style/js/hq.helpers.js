@@ -67,7 +67,8 @@ $.fn.hqHelp = function () {
 
         var options = {
             html: true,
-            trigger: 'focus'
+            trigger: 'focus',
+            container: 'body',
         };
         if (!$link.data('content')) {
             options.content = function() {

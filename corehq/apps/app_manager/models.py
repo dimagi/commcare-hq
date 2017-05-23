@@ -2147,6 +2147,7 @@ class CaseSearch(DocumentSchema):
     search_button_display_condition = StringProperty()
     include_closed = BooleanProperty(default=False)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
+    blacklisted_owner_ids_expression = StringProperty()
 
 
 class ParentSelect(DocumentSchema):
@@ -4160,14 +4161,18 @@ class AncestorLocationTypeFilter(ReportAppFilter):
 
     def get_filter_value(self, user, ui_filter):
         from corehq.apps.locations.models import SQLLocation
+        from corehq.apps.reports_core.filters import REQUEST_USER_KEY
 
+        kwargs = {REQUEST_USER_KEY: user}
         try:
             ancestor = user.sql_location.get_ancestors(include_self=True).\
                 get(location_type__name=self.ancestor_location_type_name)
+            kwargs[ui_filter.name] = ancestor.location_id
         except (AttributeError, SQLLocation.DoesNotExist):
             # user.sql_location is None, or location does not have an ancestor of that type
-            return None
-        return ancestor.location_id
+            pass
+
+        return ui_filter.value(**kwargs)
 
 
 class NumericFilter(ReportAppFilter):
@@ -4222,6 +4227,7 @@ class ReportAppConfig(DocumentSchema):
                     locale_specific_config={},
                     annotations=[]
                 )
+        self.graph_configs = {}
 
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
@@ -5803,22 +5809,22 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     'form': form
                 }
 
-    def get_form(self, unique_form_id, bare=True):
+    def get_form(self, form_unique_id, bare=True):
         def matches(form):
-            return form.get_unique_id() == unique_form_id
+            return form.get_unique_id() == form_unique_id
         for obj in self.get_forms(bare):
             if matches(obj if bare else obj['form']):
                 return obj
         raise FormNotFoundException(
             ("Form in app '%s' with unique id '%s' not found"
-             % (self.id, unique_form_id)))
+             % (self.id, form_unique_id)))
 
-    def get_form_location(self, unique_form_id):
+    def get_form_location(self, form_unique_id):
         for m_index, module in enumerate(self.get_modules()):
             for f_index, form in enumerate(module.get_forms()):
-                if unique_form_id == form.unique_id:
+                if form_unique_id == form.unique_id:
                     return m_index, f_index
-        raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
+        raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, form_unique_id))
 
     @classmethod
     def new_app(cls, domain, name, lang="en"):
@@ -5949,7 +5955,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         from_module = self.get_module(module_id)
         form = from_module.get_form(form_id)
         to_module = self.get_module(to_module_id)
-        self._copy_form(from_module, form, to_module, rename=True)
+        return self._copy_form(from_module, form, to_module, rename=True)
 
     def _copy_form(self, from_module, form, to_module, *args, **kwargs):
         if not form.source:
@@ -5969,6 +5975,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         save_xform(self, copy_form, form.source)
+        return copy_form
 
     @cached_property
     def has_case_management(self):

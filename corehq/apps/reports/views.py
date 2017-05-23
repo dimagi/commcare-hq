@@ -1756,7 +1756,14 @@ class EditFormInstance(View):
         instance = _get_location_safe_form(domain, request.couch_user, instance_id)
         context = _get_form_context(request, domain, instance)
         if not instance.app_id or not instance.build_id:
-            return _error(_('Could not detect the application/form for this submission.'))
+            deviceID = instance.metadata.deviceID
+            if deviceID and deviceID == 'Formplayer':
+                return _error(_(
+                    "Could not detect the application or form for this submission. "
+                    "A common cause is that the form was submitted via App or Form preview"
+                ))
+            else:
+                return _error(_('Could not detect the application or form for this submission.'))
 
         user = CouchUser.get_by_user_id(instance.metadata.userID, domain)
         if not user:

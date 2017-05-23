@@ -6,12 +6,15 @@ from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex
 
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
 from custom.enikshay.private_sector_datamigration.models import (
     Adherence,
     Episode,
     EpisodePrescription,
     LabTest,
+    MigratedBeneficiaryCounter,
 )
+from custom.enikshay.user_setup import compress_nikshay_id
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -33,17 +36,19 @@ class BeneficiaryCaseFactory(object):
         self.domain = domain
         self.beneficiary = beneficiary
 
-    def get_case_structures_to_create(self):
+    def get_case_structures_to_create(self, skip_adherence):
         person_structure = self.get_person_case_structure()
         ocurrence_structure = self.get_occurrence_case_structure(person_structure)
         episode_structure = self.get_episode_case_structure(ocurrence_structure)
         episode_descendants = [
-            self.get_adherence_case_structure(adherence, episode_structure)
-            for adherence in self._adherences
-        ] + [
             self.get_prescription_case_structure(prescription, episode_structure)
             for prescription in self._prescriptions
         ]
+        if not skip_adherence:
+            episode_descendants.extend(
+                self.get_adherence_case_structure(adherence, episode_structure)
+                for adherence in self._adherences
+            )
         episode_or_descendants = episode_descendants or [episode_structure]
 
         tests = [
@@ -65,11 +70,18 @@ class BeneficiaryCaseFactory(object):
                     'enrolled_in_private': 'true',
                     'first_name': self.beneficiary.firstName,
                     'husband_father_name': self.beneficiary.husband_father_name,
+                    'id_original_beneficiary_count': self._serial_count,
+                    'id_original_device_number': 0,
+                    'id_original_issuer_number': self._id_issuer_number,
                     'language_preference': self.beneficiary.language_preference,
                     'last_name': self.beneficiary.lastName,
-                    'name': ' '.join([self.beneficiary.firstName, self.beneficiary.lastName]),
+                    'name': self.beneficiary.name,
+                    'person_id': self.person_id,
+                    'person_id_flat': self.person_id_flat,
+                    'person_id_legacy': self.beneficiary.caseId,
                     'person_occurrence_count': 1,
                     'phone_number': self.beneficiary.phoneNumber,
+                    'search_name': self.beneficiary.name,
                     'send_alerts': self.beneficiary.send_alerts,
                     'secondary_phone': self.beneficiary.emergencyContactNo,
 
@@ -111,16 +123,7 @@ class BeneficiaryCaseFactory(object):
             kwargs['attrs']['update']['other_id_number'] = self.beneficiary.identificationNumber
             kwargs['attrs']['update']['other_id_type'] = self.beneficiary.other_id_type
 
-        agency = (
-            self._episode.treating_provider or self.beneficiary.referred_provider
-            if self._episode else self.beneficiary.referred_provider
-        )
-        assert agency is not None
-        facility_assigned_to = SQLLocation.active_objects.get(
-            domain=self.domain,
-            site_code=agency.nikshayId,
-        ).location_id
-        kwargs['attrs']['update']['facility_assigned_to'] = facility_assigned_to
+        kwargs['attrs']['update']['facility_assigned_to'] = self._location_owner_id
 
         if self._episode:
             kwargs['attrs']['update']['diabetes_status'] = self._episode.diabetes_status
@@ -130,15 +133,15 @@ class BeneficiaryCaseFactory(object):
                 kwargs['attrs']['owner_id'] = ARCHIVED_CASE_OWNER_ID
                 kwargs['attrs']['update']['archive_reason'] = self._episode.treatment_outcome
                 kwargs['attrs']['update']['is_active'] = 'no'
-                kwargs['attrs']['update']['last_owner'] = facility_assigned_to
+                kwargs['attrs']['update']['last_owner'] = self._location_owner_id
                 if self._episode.treatment_outcome == 'died':
                     kwargs['attrs']['close'] = True
                     kwargs['attrs']['update']['last_reason_to_close'] = self._episode.treatment_outcome
             else:
-                kwargs['attrs']['owner_id'] = facility_assigned_to
+                kwargs['attrs']['owner_id'] = self._location_owner_id
                 kwargs['attrs']['update']['is_active'] = 'yes'
         else:
-            kwargs['attrs']['owner_id'] = facility_assigned_to
+            kwargs['attrs']['owner_id'] = self._location_owner_id
 
         return CaseStructure(**kwargs)
 
@@ -179,12 +182,13 @@ class BeneficiaryCaseFactory(object):
                 'owner_id': '-',
                 'update': {
                     'date_of_mo_signature': self.beneficiary.dateOfRegn.date(),
-                    'dots_99_enabled': 'false',  # TODO - confirm or fix
+                    'diagnosing_facility_id': self._location_owner_id,
                     'enrolled_in_private': 'true',
                     'episode_id': get_human_friendly_id(),
                     'episode_type': self.beneficiary.current_episode_type,
                     'name': self.beneficiary.episode_name,
                     'transfer_in': '',
+                    'treatment_options': '',
 
                     'migration_created_case': 'true',
                     'migration_created_from_record': self.beneficiary.caseId,
@@ -201,10 +205,13 @@ class BeneficiaryCaseFactory(object):
         if self._episode:
             rx_start_datetime = self._episode.rxStartDate
             kwargs['attrs']['date_opened'] = rx_start_datetime
+            kwargs['attrs']['update']['adherence_total_doses_taken'] = self._episode.adherence_total_doses_taken
+            kwargs['attrs']['update']['adherence_tracking_mechanism'] = self._episode.adherence_tracking_mechanism
             kwargs['attrs']['update']['basis_of_diagnosis'] = self._episode.basis_of_diagnosis
             kwargs['attrs']['update']['case_definition'] = self._episode.case_definition
             kwargs['attrs']['update']['date_of_diagnosis'] = self._episode.dateOfDiagnosis.date()
             kwargs['attrs']['update']['disease_classification'] = self._episode.disease_classification
+            kwargs['attrs']['update']['dots_99_enabled'] = self._episode.dots_99_enabled
             kwargs['attrs']['update']['dst_status'] = self._episode.dst_status
             kwargs['attrs']['update']['episode_details_complete'] = 'true'
             kwargs['attrs']['update']['episode_pending_registration'] = (
@@ -212,12 +219,16 @@ class BeneficiaryCaseFactory(object):
             )
             kwargs['attrs']['update']['new_retreatment'] = self._episode.new_retreatment
             kwargs['attrs']['update']['patient_type'] = self._episode.patient_type
+            kwargs['attrs']['update']['private_sector_episode_pending_registration'] = (
+                'yes' if self._episode.nikshayID is None else 'no'
+            )
             kwargs['attrs']['update']['retreatment_reason'] = self._episode.retreatment_reason
             kwargs['attrs']['update']['site'] = self._episode.site_property
             kwargs['attrs']['update']['site_choice'] = self._episode.site_choice
             kwargs['attrs']['update']['treatment_card_completed_date'] = self._episode.creationDate.date()
-            kwargs['attrs']['update']['treatment_initiated'] = 'yes_private'
+            kwargs['attrs']['update']['treatment_initiated'] = 'yes_pcp'
             kwargs['attrs']['update']['treatment_initiation_date'] = rx_start_datetime.date()
+            kwargs['attrs']['update']['treatment_phase'] = self._episode.treatment_phase
             kwargs['attrs']['update']['weight'] = int(self._episode.patientWeight)
 
             if self._episode.nikshayID:
@@ -236,7 +247,11 @@ class BeneficiaryCaseFactory(object):
             if self._episode.is_treatment_ended:
                 kwargs['attrs']['close'] = True
         else:
+            kwargs['attrs']['update']['adherence_total_doses_taken'] = 0
+            kwargs['attrs']['update']['adherence_tracking_mechanism'] = ''
+            kwargs['attrs']['update']['dots_99_enabled'] = 'false'
             kwargs['attrs']['update']['episode_pending_registration'] = 'yes'
+            kwargs['attrs']['update']['private_sector_episode_pending_registration'] = 'yes'
             kwargs['attrs']['update']['treatment_initiated'] = 'no'
 
         return CaseStructure(**kwargs)
@@ -313,7 +328,7 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _episode(self):
-        episodes = Episode.objects.filter(beneficiaryID=self.beneficiary).order_by('-episodeDisplayID')
+        episodes = Episode.objects.filter(beneficiaryID=self.beneficiary.caseId).order_by('-episodeDisplayID')
         if episodes:
             return episodes[0]
         else:
@@ -322,7 +337,7 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _adherences(self):
-        return list(Adherence.objects.filter(episodeId=self._episode)) if self._episode else []
+        return list(Adherence.objects.filter(episodeId=self._episode.episodeID)) if self._episode else []
 
     @property
     @memoized
@@ -336,3 +351,66 @@ class BeneficiaryCaseFactory(object):
             return list(LabTest.objects.filter(episodeId=self._episode))
         else:
             return []
+
+    @property
+    @memoized
+    def _agency(self):
+        return (
+            self._episode.treating_provider or self.beneficiary.referred_provider
+            if self._episode else self.beneficiary.referred_provider
+        )
+
+    @property
+    @memoized
+    def _location_owner(self):
+        return SQLLocation.active_objects.get(
+            domain=self.domain,
+            site_code=str(self._agency.agencyId),
+        )
+
+    @property
+    @memoized
+    def _location_owner_id(self):
+        return self._location_owner.location_id
+
+    @property
+    @memoized
+    def _virtual_user(self):
+        return CommCareUser.get(self._location_owner.user_id)
+
+    @property
+    @memoized
+    def _id_issuer_number(self):
+        return self._virtual_user.user_data['id_issuer_number']
+
+    @property
+    @memoized
+    def _id_issuer_body(self):
+        return self._virtual_user.user_data['id_issuer_body']
+
+    @property
+    def _id_device_body(self):
+        return compress_nikshay_id(0, 0)
+
+    @property
+    @memoized
+    def _serial_count(self):
+        return MigratedBeneficiaryCounter.get_next_counter()
+
+    @property
+    @memoized
+    def _serial_count_compressed(self):
+        return compress_nikshay_id(self._serial_count, 2)
+
+    @property
+    @memoized
+    def person_id_flat(self):
+        return self._id_issuer_body + self._id_device_body + self._serial_count_compressed
+
+    @property
+    def person_id(self):
+        num_chars_between_hyphens = 3
+        return '-'.join([
+            self.person_id_flat[i:i + num_chars_between_hyphens]
+            for i in range(0, len(self.person_id_flat), num_chars_between_hyphens)
+        ])

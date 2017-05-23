@@ -8,7 +8,13 @@
         "enikshay-nikshay-migration-test",
         "enikshay-domain-copy-test",
         "enikshay-aks-audit",
-        "np-migration-3"
+        "np-migration-3",
+        "enikshay-uatbc-migration-test-1",
+        "enikshay-uatbc-migration-test-2",
+        "enikshay-uatbc-migration-test-3",
+        "enikshay-uatbc-migration-test-4",
+        "enikshay-uatbc-migration-test-5",
+        "enikshay-uatbc-migration-test-6"
     ],
     "server_environment": [
         "softlayer"
@@ -414,7 +420,7 @@
             {
                 "display": "Health Facility for Treatment",
                 "type": "field",
-                "field": "phi",
+                "field": "health_facility_for_treatment",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,

@@ -11,7 +11,7 @@ from corehq.apps.es import case_search as case_search_es
 """
 from . import filters, queries
 
-from corehq.apps.es.cases import CaseES
+from corehq.apps.es.cases import CaseES, owner
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
 
 
@@ -23,7 +23,7 @@ class CaseSearchES(CaseES):
 
     @property
     def builtin_filters(self):
-        return [case_property_filter] + super(CaseSearchES, self).builtin_filters
+        return [case_property_filter, blacklist_owner_id] + super(CaseSearchES, self).builtin_filters
 
     @property
     def _case_property_queries(self):
@@ -84,6 +84,10 @@ def case_property_filter(key, value):
             filters.term("{}.value".format(PATH), value),
         )
     )
+
+
+def blacklist_owner_id(owner_id):
+    return filters.NOT(owner(owner_id))
 
 
 def flatten_result(result):

@@ -18,8 +18,7 @@ from casexml.apps.phone.exceptions import (
     BadStateException, RestoreException, DateOpenedBugException,
 )
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
-from corehq.util.soft_assert import soft_assert
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.decorators.memoized import memoized
@@ -507,9 +506,9 @@ class RestoreState(object):
                     ))
 
                 # convert to the right type if necessary
-                if not isinstance(sync_log, self.sync_log_class):
+                if not isinstance(sync_log, SimplifiedSyncLog):
                     # this call can fail with an IncompatibleSyncLogType error
-                    sync_log = self.sync_log_class.from_other_format(sync_log)
+                    sync_log = SimplifiedSyncLog.from_other_format(sync_log)
                 self._last_sync_log = sync_log
             else:
                 self._last_sync_log = None
@@ -577,34 +576,24 @@ class RestoreState(object):
         previous_log_id = None if self.is_initial else self.last_sync_log._id
         previous_log_rev = None if self.is_initial else self.last_sync_log._rev
         last_seq = str(get_db().info()["update_seq"])
-        new_synclog = SyncLog(
+        new_synclog = SimplifiedSyncLog(
             _id=SyncLog.get_db().server.next_uuid(),
             domain=self.restore_user.domain,
             build_id=self.params.app_id,
             user_id=self.restore_user.user_id,
             last_seq=last_seq,
-            owner_ids_on_phone=list(self.owner_ids),
+            owner_ids_on_phone=set(self.owner_ids),
             date=datetime.utcnow(),
             previous_log_id=previous_log_id,
             previous_log_rev=previous_log_rev,
+            extensions_checked=True,
         )
         return new_synclog
-
-    @property
-    def sync_log_class(self):
-        return get_sync_log_class_by_format(LOG_FORMAT_SIMPLIFIED)
 
     @property
     @memoized
     def loadtest_factor(self):
         return self.restore_user.loadtest_factor
-
-    def mark_as_new_format(self):
-        self.current_sync_log = SimplifiedSyncLog.wrap(
-            self.current_sync_log.to_json()
-        )
-        self.current_sync_log.log_format = LOG_FORMAT_SIMPLIFIED
-        self.current_sync_log.extensions_checked = True
 
 
 class RestoreConfig(object):
@@ -675,12 +664,8 @@ class RestoreConfig(object):
         try:
             self.restore_state.validate_state()
         except InvalidSyncLogException as e:
-            if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain):
-                # This exception will get caught by the view and a 412 will be returned to the phone for resync
-                raise RestoreException(e)
-            else:
-                # This exception will fail hard and we'll get a 500 error message
-                raise
+            # This exception will get caught by the view and a 412 will be returned to the phone for resync
+            raise RestoreException(e)
 
     def get_payload(self):
         self.validate()

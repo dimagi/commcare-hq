@@ -118,7 +118,7 @@
 
 {% block column_style %}hq-flush-content{% endblock %}
 
-{% block modals %}
+{% block modals %}{{ block.super }}
   <div class="modal fade" id="edit-form-name-modal">
       <div class="modal-dialog">
           <div class="modal-content">

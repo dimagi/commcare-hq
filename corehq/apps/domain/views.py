@@ -33,7 +33,6 @@ from django.views.decorators.http import require_POST
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
-from django.utils.html import escape
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -41,7 +40,8 @@ from corehq.apps.calendar_fixture.forms import CalendarFixtureForm
 from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
-    CaseSearchConfigJSON,
+    FuzzyProperties,
+    IgnorePatterns,
     enable_case_search,
     disable_case_search,
 )
@@ -95,7 +95,7 @@ from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFE
 from custom.openclinica.forms import OpenClinicaSettingsForm
 from custom.openclinica.models import OpenClinicaSettings
 from dimagi.utils.couch.resource_conflict import retry_resource
-from dimagi.utils.web import json_request, json_response
+from dimagi.utils.web import json_request
 from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege
 from corehq.apps.accounting.models import (
@@ -662,7 +662,7 @@ class DomainAccountingSettings(BaseProjectSettingsView):
 
     @property
     def current_subscription(self):
-        return Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+        return Subscription.get_active_subscription_by_domain(self.domain)
 
 
 class DomainSubscriptionView(DomainAccountingSettings):
@@ -677,7 +677,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
     @property
     @memoized
     def plan(self):
-        plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
         date_end = None
         next_subscription = {
             'exists': False,
@@ -1135,7 +1136,7 @@ class CreditsStripePaymentView(BaseStripePaymentView):
             self.get_or_create_payment_method(),
             self.domain,
             self.account,
-            subscription=Subscription.get_subscribed_plan_by_domain(self.domain_object)[1],
+            subscription=Subscription.get_active_subscription_by_domain(self.domain),
             post_data=self.request.POST.copy(),
         )
 
@@ -1338,7 +1339,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     def page_context(self):
         return {
             'is_form_editable': self.is_form_editable,
-            'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain)[0],
+            'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain),
             'select_subscription_type_form': self.select_subscription_type_form,
             'subscription_management_forms': self.slug_to_form.values(),
             'today': datetime.date.today(),
@@ -1366,7 +1367,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             })
 
         subscription_type = None
-        subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
         if subscription is None:
             subscription_type = None
         else:
@@ -1555,10 +1556,11 @@ class ConfirmSelectedPlanView(SelectPlanView):
 
     @property
     def downgrade_messages(self):
-        current_plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
-        if subscription is None:
-            current_plan_version = None
-        downgrades = get_change_status(current_plan_version, self.selected_plan_version)[1]
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        downgrades = get_change_status(
+            subscription.plan_version if subscription else None,
+            self.selected_plan_version
+        )[1]
         downgrade_handler = DomainDowngradeStatusHandler(
             self.domain_object, self.selected_plan_version, downgrades,
         )
@@ -1684,7 +1686,7 @@ class SubscriptionMixin(object):
     @property
     @memoized
     def subscription(self):
-        subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
         if subscription is None:
             raise Http404
         if subscription.is_renewed:
@@ -2173,37 +2175,53 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        request_json = json.loads(request.body)
+        enable = request_json.get('enable')
+        fuzzies_by_casetype = request_json.get('fuzzy_properties')
+        updated_fuzzies = []
+        for case_type, properties in fuzzies_by_casetype.iteritems():
+            fp, created = FuzzyProperties.objects.get_or_create(
+                domain=self.domain,
+                case_type=case_type
+            )
+            fp.properties = properties
+            fp.save()
+            updated_fuzzies.append(fp)
 
-        def unpack_fuzzies(query_dict):
-            """
-            Builds an integer-keyed dictionary from POST request data, and returns a list of dictionaries that can
-            be wrapped by CaseSearchConfigJSON
-            """
-            # match "config[fuzzy_properties][0][case_type]" and "config[fuzzy_properties][0][properties][]" but
-            # not "enable"
-            pattern = re.compile(r'^config\[fuzzy_properties]\[(?P<index>\d+)]\[(?P<attr>\w+)](?:\[])?$')
-            fuzzy_dict = defaultdict(dict)
-            for key in query_dict:
-                match = pattern.match(key)
-                if match:
-                    i = int(match.group('index'))
-                    attr = match.group('attr')
-                    is_list = key.endswith('[]')  # i.e. "...[properties][]"
-                    fuzzy_dict[i][attr] = query_dict.getlist(key) if is_list else query_dict[key]
-            if not fuzzy_dict:
-                return []
-            return [fuzzy_dict[i] for i in range(max(fuzzy_dict.keys()) + 1) if fuzzy_dict[i]]
+        unneeded_fuzzies = FuzzyProperties.objects.filter(domain=self.domain).exclude(
+            case_type__in=fuzzies_by_casetype.keys()
+        )
+        unneeded_fuzzies.delete()
 
-        if request.POST['enable'] == 'true':
+        ignore_patterns = request_json.get('ignore_patterns')
+        updated_ignore_patterns = []
+        update_ignore_pattern_ids = []
+        for ignore_pattern_regex in ignore_patterns:
+            rc, created = IgnorePatterns.objects.get_or_create(
+                domain=self.domain,
+                case_type=ignore_pattern_regex.get('case_type'),
+                case_property=ignore_pattern_regex.get('case_property'),
+                regex=ignore_pattern_regex.get('regex')
+            )
+            updated_ignore_patterns.append(rc)
+            update_ignore_pattern_ids.append(rc.pk)
+
+        unneeded_ignore_patterns = IgnorePatterns.objects.filter(domain=self.domain).exclude(
+            pk__in=update_ignore_pattern_ids
+        )
+        unneeded_ignore_patterns.delete()
+
+        if enable:
             enable_case_search(self.domain)
         else:
             disable_case_search(self.domain)
+
         CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
-            'enabled': request.POST['enable'] == 'true',
-            'config': CaseSearchConfigJSON({'fuzzy_properties': unpack_fuzzies(request.POST)})
+            'enabled': request_json.get('enable'),
+            'fuzzy_properties': updated_fuzzies,
+            'ignore_patterns': updated_ignore_patterns,
         })
-        messages.success(request, _("Case search configuration updated successfully"))
-        return self.get(request, *args, **kwargs)
+        return json_response(self.page_context)
 
     @property
     def page_context(self):
@@ -2214,7 +2232,14 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
             'case_types': sorted(list(case_types)),
             'values': {
                 'enabled': current_values.enabled if current_values else False,
-                'config': current_values.config if current_values else {}
+                'fuzzy_properties': {
+                    fp.case_type: fp.properties for fp in current_values.fuzzy_properties.all()
+                } if current_values else {},
+                'ignore_patterns': [{
+                    'case_type': rc.case_type,
+                    'case_property': rc.case_property,
+                    'regex': rc.regex
+                } for rc in current_values.ignore_patterns.all()] if current_values else {}
             }
         }
 
@@ -2388,8 +2413,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             record.url if record.url else _(u'Unable to generate url for record'),
             self._format_date(record.last_checked) if record.last_checked else '---',
             self._format_date(record.next_check) if record.next_check else '---',
-            escape(record.failure_reason) if not record.succeeded else None,
-            record.overall_tries if record.overall_tries > 0 else None,
+            render_to_string('domain/repeaters/partials/attempt_history.html', {'record': record}),
             self._make_view_payload_button(record.get_id),
             self._make_resend_payload_button(record.get_id),
             self._make_requeue_payload_button(record.get_id) if record.cancelled and not record.succeeded
@@ -2409,8 +2433,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             DataTablesColumn(_('URL')),
             DataTablesColumn(_('Last sent date')),
             DataTablesColumn(_('Retry Date')),
-            DataTablesColumn(_('Failure Reason')),
-            DataTablesColumn(_('Failure Count')),
+            DataTablesColumn(_('Delivery Attempts')),
             DataTablesColumn(_('View payload')),
             DataTablesColumn(_('Resend')),
             DataTablesColumn(_('Cancel or Requeue payload'))

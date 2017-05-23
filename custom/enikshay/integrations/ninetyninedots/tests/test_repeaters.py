@@ -217,7 +217,11 @@ class TestAdherenceRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTest
         self.create_adherence_cases([datetime(2017, 2, 18)], adherence_source='enikshay')
         self.assertEqual(1, len(self.repeat_records().all()))
 
-        self.create_adherence_cases([datetime(2017, 2, 20)], adherence_source='enikshay')
+        case = self.create_adherence_cases([datetime(2017, 2, 20)], adherence_source='enikshay')
+        self.assertEqual(2, len(self.repeat_records().all()))
+
+        # Updating the case doesn't make a new repeat record
+        self._update_case(case[0].case_id, {'dots_99_error': "hello"})
         self.assertEqual(2, len(self.repeat_records().all()))
 
 

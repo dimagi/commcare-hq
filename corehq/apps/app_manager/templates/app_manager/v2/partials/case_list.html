@@ -4,14 +4,6 @@
 
 {% include 'app_manager/v2/partials/case_list_missing_warning.html' %}
 
-<div class="ko-inline-edit-with-help">
-    {% inline_edit_trans_v2 module.case_label langs edit_case_label_url containerClass='h4' saveValueName='case_label' %}
-    <span class="hq-help-template"
-          data-title="{% trans "Label on Phone" %}"
-          data-content="{% trans "This label will appear at the top of the phone's case select screen." %}"></span>
-</div>
-<div class="spacer"></div>
-
 <div data-bind="saveButton: shortScreen.saveButton"></div>
 
 <div data-bind="with: customXMLViewModel">
@@ -253,6 +245,37 @@
         {% endif %}
     </div>
   </div>
+</div>
+{% endif %}
+
+{% if detail.parent_select %}
+<div class="panel panel-appmanager" data-bind="with: parentSelect, DetailScreenConfig_notifyShortScreenOnChange: $root">
+    <div class="panel-heading">
+        <h4 class="panel-title panel-title-nolink">
+            {% trans "Parent Child Selection" %}
+        </h4>
+    </div>
+    <div data-bind="visible: moduleOptions().length" class="form-horizontal panel-body">
+        <div class="form-group">
+            <label class="control-label col-sm-2">
+                {% trans "Select Parent First" %}
+            </label>
+            <div class="col-sm-4 checkbox">
+                <label>
+                    <input type="checkbox" data-bind="checked: active"/>
+                </label>
+            </div>
+        </div>
+        <div class="form-group" data-bind="visible: active">
+            <label class="control-label col-sm-2">
+                {% trans "Use Case List from" %}
+            </label>
+            <div class="col-sm-4">
+                <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
+            </div>
+        </div>
+        <div class="spacer"></div>
+    </div>
 </div>
 {% endif %}
 

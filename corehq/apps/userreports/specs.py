@@ -36,14 +36,14 @@ class EvaluationContext(object):
     def exists_in_cache(self, key):
         return key in self.cache or key in self.iteration_cache
 
-    def get_cache_value(self, key):
+    def get_cache_value(self, key, default=None):
         if key in self.cache:
             return self.cache[key]
 
         if key in self.iteration_cache:
             return self.iteration_cache[key]
 
-        return None
+        return default
 
     def set_cache_value(self, key, value):
         self.cache[key] = value

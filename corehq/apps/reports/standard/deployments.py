@@ -67,8 +67,7 @@ class ApplicationStatusReport(DeploymentsReport):
             DataTablesColumn(_("Application"),
                              help_text=_("Displays application of last submitted form")),
             DataTablesColumn(_("Application Version"),
-                             help_text=_("""Displays application version of the last submitted form;
-                                         The currently deployed version may be different."""),
+                             help_text=_("Displays application version of the user's last sync."),
                              sort_type=DTSortType.NUMERIC),
             DataTablesColumn(_("CommCare Version"),
                              help_text=_("""Displays CommCare version the user last submitted with;
@@ -86,7 +85,10 @@ class ApplicationStatusReport(DeploymentsReport):
     @property
     @memoized
     def users(self):
-        mobile_user_and_group_slugs = self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug)
+        mobile_user_and_group_slugs = set(
+            self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug) +
+            self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)  # Cater for old ReportConfigs
+        )
 
         limit_user_ids = []
         if self.selected_app_id:

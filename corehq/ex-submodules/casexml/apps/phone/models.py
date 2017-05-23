@@ -286,14 +286,6 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
 
     strict = True  # for asserts
 
-    def _assert(self, conditional, msg="", case_id=None):
-        if not conditional:
-            _get_logger().warn("assertion failed: %s" % msg)
-            if self.strict:
-                raise SyncLogAssertionError(case_id, msg)
-            else:
-                self.has_assert_errors = True
-
     @classmethod
     def wrap(cls, data):
         ret = super(AbstractSyncLog, cls).wrap(data)
@@ -400,6 +392,14 @@ class SyncLog(AbstractSyncLog):
         from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
 
         return get_last_synclog_for_user(user_id)
+
+    def _assert(self, conditional, msg="", case_id=None):
+        if not conditional:
+            _get_logger().warn("assertion failed: %s" % msg)
+            if self.strict:
+                raise SyncLogAssertionError(case_id, msg)
+            else:
+                self.has_assert_errors = True
 
     def case_count(self):
         return len(self.cases_on_phone)
@@ -921,13 +921,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
         if case_to_remove == checked_case_id:
             return
 
-        for index in deleted_indices.values():
-            if not (quiet_errors or _domain_has_legacy_toggle_set()):
-                # unblocking http://manage.dimagi.com/default.asp?185850
-                _assert = soft_assert(notify_admins=True, exponential_backoff=True,
-                                      fail_if_debug=True)
-                _assert(index in (all_to_remove | set([checked_case_id])),
-                        "expected {} in {} but wasn't".format(index, all_to_remove))
+        # Logging removed temporarily: https://github.com/dimagi/commcare-hq/pull/16259#issuecomment-303176217
+        # for index in deleted_indices.values():
+        #     if not (quiet_errors or _domain_has_legacy_toggle_set()):
+        #         # unblocking http://manage.dimagi.com/default.asp?185850
+        #         _assert = soft_assert(send_to_ops=False, log_to_file=True, exponential_backoff=True,
+        #                               fail_if_debug=True, include_breadcrumbs=True)
+        #         _assert(index in (all_to_remove | set([checked_case_id])),
+        #                 "expected {} in {} but wasn't".format(index, all_to_remove))
 
     def _add_primary_case(self, case_id):
         self.case_ids_on_phone.add(case_id)

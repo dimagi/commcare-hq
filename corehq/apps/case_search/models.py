@@ -1,53 +1,20 @@
 import copy
 
 from corehq.util.quickcache import quickcache
-from dimagi.ext import jsonobject
 from django.db import models
 from jsonfield.fields import JSONField
+from django.contrib.postgres.fields import ArrayField
 
 
 CLAIM_CASE_TYPE = 'commcare-case-claim'
 FUZZY_PROPERTIES = "fuzzy_properties"
 SEARCH_QUERY_ADDITION_KEY = 'commcare_custom_search_query'
-
-
-class FuzzyProperties(jsonobject.JsonObject):
-    case_type = jsonobject.StringProperty()
-    properties = jsonobject.ListProperty(unicode)
-
-
-class CaseSearchConfigJSON(jsonobject.JsonObject):
-    fuzzy_properties = jsonobject.ListProperty(FuzzyProperties)
-
-    def add_fuzzy_property(self, case_type, property):
-        self.add_fuzzy_properties(case_type, [property])
-
-    def add_fuzzy_properties(self, case_type, properties):
-        for prop in self.fuzzy_properties:
-            if prop.case_type == case_type:
-                prop.properties = list(set(prop.properties) | set(properties))
-                return
-
-        self.fuzzy_properties = self.fuzzy_properties + [
-            FuzzyProperties(case_type=case_type, properties=properties)
-        ]
-
-    def remove_fuzzy_property(self, case_type, property):
-        for prop in self.fuzzy_properties:
-            if prop.case_type == case_type and property in prop.properties:
-                prop.properties = list(set(prop.properties) - set([property]))
-                return
-
-        raise AttributeError("{} is not a fuzzy property for {}".format(property, case_type))
-
-    def get_fuzzy_properties_for_case_type(self, case_type):
-        """
-        Returns a list of search properties to be fuzzy searched
-        """
-        for prop in self.fuzzy_properties:
-            if prop.case_type == case_type:
-                return prop.properties
-        return []
+CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = u'commcare_blacklisted_owner_ids'
+UNSEARCHABLE_KEYS = (
+    SEARCH_QUERY_ADDITION_KEY,
+    CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    'owner_id',
+)
 
 
 class GetOrNoneManager(models.Manager):
@@ -60,6 +27,55 @@ class GetOrNoneManager(models.Manager):
             return self.get(**kwargs)
         except self.model.DoesNotExist:
             return None
+
+
+class FuzzyProperties(models.Model):
+    domain = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    case_type = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    properties = ArrayField(
+        models.TextField(null=True, blank=True),
+        null=True,
+    )
+
+    class Meta(object):
+        unique_together = ('domain', 'case_type')
+
+
+class IgnorePatterns(models.Model):
+    domain = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    case_type = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    case_property = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    regex = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=False,
+    )
 
 
 class CaseSearchConfig(models.Model):
@@ -77,22 +93,14 @@ class CaseSearchConfig(models.Model):
         primary_key=True
     )
     enabled = models.BooleanField(blank=False, null=False, default=False)
-    _config = JSONField(default=dict)
+    fuzzy_properties = models.ManyToManyField(FuzzyProperties)
+    ignore_patterns = models.ManyToManyField(IgnorePatterns)
 
     objects = GetOrNoneManager()
 
     @classmethod
     def enabled_domains(cls):
         return cls.objects.filter(enabled=True).values_list('domain', flat=True)
-
-    @property
-    def config(self):
-        return CaseSearchConfigJSON.wrap(self._config)
-
-    @config.setter
-    def config(self, value):
-        assert isinstance(value, CaseSearchConfigJSON)
-        self._config = value.to_json()
 
 
 class CaseSearchQueryAddition(models.Model):

@@ -107,7 +107,7 @@ class ProjectSettingsForm(forms.Form):
         required=False,
         label="",
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_noop("Override project's timezone setting just for me.")
+            inline_label=ugettext_lazy("Override project's timezone setting just for me.")
         )
     )
     user_timezone = TimeZoneChoiceField(
@@ -122,10 +122,10 @@ class ProjectSettingsForm(forms.Form):
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.all().wrap_together(crispy.Fieldset, 'Override Project Timezone')
+        self.helper.all().wrap_together(crispy.Fieldset, _('Override Project Timezone'))
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                'Override Project Timezone',
+                _('Override Project Timezone'),
                 crispy.Field('global_timezone', css_class='input-xlarge'),
                 twbscrispy.PrependedText(
                     'override_global_tz', '', data_bind='checked: override_tz, event: {change: updateForm}'
@@ -576,7 +576,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper[4] = twbscrispy.PrependedText('delete_logo', '')
         self.helper[5] = twbscrispy.PrependedText('call_center_enabled', '')
-        self.helper.all().wrap_together(crispy.Fieldset, 'Edit Basic Information')
+        self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
         self.helper.layout.append(
             hqcrispy.FormActions(
                 StrictButton(
@@ -586,6 +586,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 )
             )
         )
+        self.fields['default_timezone'].label = ugettext_lazy('Default timezone')
 
         if not self.can_use_custom_logo:
             del self.fields['logo']
@@ -1823,7 +1824,7 @@ class InternalSubscriptionManagementForm(forms.Form):
     @property
     @memoized
     def current_subscription(self):
-        return Subscription.get_subscribed_plan_by_domain(self.domain)[1]
+        return Subscription.get_active_subscription_by_domain(self.domain)
 
     @property
     @memoized

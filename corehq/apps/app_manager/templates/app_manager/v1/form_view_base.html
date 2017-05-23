@@ -118,6 +118,7 @@
             return result;
         }
 
+        var form_requires = ko.observable({{ form.requires|JSON }});
         var putInRoot = {{ module.put_in_root|BOOL }};
         var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
         var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
@@ -208,7 +209,7 @@
             });
         }
 
-        {% if request|toggle_enabled:'NO_VELLUM' %}
+        {% if request|toggle_enabled:'NO_VELLUM' and form.form_type != "shadow_form" %}
         $('#no-vellum').koApplyBindings({
             no_vellum: ko.observable({{ form.no_vellum|JSON }})
         });
@@ -281,6 +282,8 @@
 {% endblock %}
 
 {% block form-view %}
+    {% initial_page_data 'case_config_options' case_config_options %}
+    {% initial_page_data 'form_requires' form.requires %}
     <div id="build_errors"></div>
     {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update);}" %}
     <br />

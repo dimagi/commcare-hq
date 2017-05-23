@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from django.test import SimpleTestCase
 from mock import patch
 
@@ -51,6 +51,27 @@ class NumberFormatTransformTest(SimpleTestCase):
 ), NumberFormatTransformTest)
 def test_number_format_transform_strings(self, input, expected_result):
     self.assertEqual(expected_result, self.transform(input))
+
+
+class TestEthiopianConversion(SimpleTestCase):
+    '''Tests converting ethiopian string dates to gregorian dates'''
+
+    def setUp(self):
+        self.transform = TransformFactory.get_transform({
+            "type": "custom",
+            "custom_type": "ethiopian_date_to_gregorian_date",
+        }).get_transform_function()
+
+
+@generate_cases((
+    ('2009-09-11 ', date(2017, 5, 19)),
+    ('2009-13-11 ', date(2017, 9, 16)),
+    ('2009_13_11 ', ''),
+    ('abc-13-11', ''),
+    (None, ''),
+), TestEthiopianConversion)
+def test_ethiopian_to_gregorian(self, date_string, expected_result):
+    self.assertEqual(expected_result, self.transform(date_string))
 
 
 class CustomTransformTest(SimpleTestCase):
