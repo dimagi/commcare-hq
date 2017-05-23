@@ -1347,6 +1347,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             doc['last_modified'] = utcnow
         super(CouchUser, cls).save_docs(docs, **kwargs)
 
+    bulk_save = save_docs
+
     def save(self, **params):
         self.last_modified = datetime.utcnow()
         self.clear_quickcache_for_user()
