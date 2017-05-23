@@ -75,6 +75,8 @@ class DetailContributor(SectionContributor):
                                     print_template_path = None
                                     if detail.print_template:
                                         print_template_path = detail.print_template['path']
+                                    locale_id = id_strings.detail_title_locale(detail_type)
+                                    title = Text(locale_id=locale_id) if locale_id else Text(xpath_function="")
                                     d = self.build_detail(
                                         module,
                                         detail_type,
@@ -82,7 +84,7 @@ class DetailContributor(SectionContributor):
                                         detail_column_infos,
                                         tabs=list(detail.get_tabs()),
                                         id=id_strings.detail(module, detail_type),
-                                        title=Text(locale_id=id_strings.detail_title_locale(detail_type)),
+                                        title=title,
                                         print_template=print_template_path,
                                     )
                                     if d:

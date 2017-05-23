@@ -131,7 +131,7 @@
   <detail id="m1_product_short">
     <title>
       <text>
-        <locale id="m1.product_short.title"/>
+        <xpath function=""/>
       </text>
     </title>
     <field>
@@ -215,7 +215,7 @@
   <detail id="m2_product_short">
     <title>
       <text>
-        <locale id="m2.product_short.title"/>
+        <xpath function=""/>
       </text>
     </title>
     <field>

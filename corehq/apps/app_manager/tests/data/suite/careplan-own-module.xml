@@ -88,7 +88,7 @@
   <detail id="m1_careplan_goal_short">
     <title>
       <text>
-        <locale id="m1.careplan_goal_short.title"/>
+        <xpath function=""/>
       </text>
     </title>
     <field>
@@ -129,7 +129,7 @@
   <detail id="m1_careplan_goal_long">
     <title>
       <text>
-        <locale id="m1.careplan_goal_long.title"/>
+        <xpath function=""/>
       </text>
     </title>
     <field>
@@ -172,7 +172,7 @@
   <detail id="m1_careplan_task_short">
     <title>
       <text>
-        <locale id="m1.careplan_task_short.title"/>
+        <xpath function=""/>
       </text>
     </title>
     <field>
@@ -213,7 +213,7 @@
   <detail id="m1_careplan_task_long">
     <title>
       <text>
-        <locale id="m1.careplan_task_long.title"/>
+        <xpath function=""/>
       </text>
     </title>
     <field>
