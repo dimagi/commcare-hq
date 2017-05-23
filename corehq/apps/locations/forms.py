@@ -463,7 +463,7 @@ class LocationFormSet(object):
         form = NewMobileWorkerForm(
             project=domain_obj,
             data=bound_data,
-            user=self.request_user,
+            request_user=self.request_user,
             prefix='location_user',
         )
 
