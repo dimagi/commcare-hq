@@ -231,8 +231,10 @@ class HistoricalAdherenceReport(EnikshayReport):
     def get_primary_adherence_case(self, adherence_cases):
         """
         Return the case who's adherence value should be used.
-        Cases with adherence_source == enikshay take precedence over other sources, and cases with a later
-        modified_on take precedence over earlier.
+        Cases with adherence_source == enikshay take precedence over other sources
+        Then open cases tak precedence over other cases
+        Then cases with a later modified_on take precedence over earlier cases
+        Then cases with a later opened_on take precedence over earlier cases
         """
         if not adherence_cases:
             return None
@@ -241,7 +243,7 @@ class HistoricalAdherenceReport(EnikshayReport):
             return case.dynamic_case_properties().get('adherence_source') in ('enikshay', '')
 
         return sorted(
-            adherence_cases, key=lambda c: (_source_is_enikshay(c), c.modified_on)
+            adherence_cases, key=lambda c: (_source_is_enikshay(c), not c.closed, c.modified_on, c.opened_on)
         )[-1]
 
     def get_adherence_value(self, primary_adherence_case):
