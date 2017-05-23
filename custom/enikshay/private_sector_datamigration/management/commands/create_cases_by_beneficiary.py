@@ -6,6 +6,7 @@ from django.core.management import BaseCommand
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_domain
 
+from corehq.apps.locations.models import SQLLocation
 from custom.enikshay.private_sector_datamigration.factory import BeneficiaryCaseFactory
 from custom.enikshay.private_sector_datamigration.models import (
     Adherence,
@@ -49,9 +50,20 @@ class Command(BaseCommand):
             type=int,
         )
         parser.add_argument(
-            '--nikshayId',
-            dest='nikshayId',
+            '--caseIds',
+            dest='caseIds',
             default=None,
+            metavar='caseId',
+            nargs='+',
+        )
+        parser.add_argument(
+            '--skip-adherence',
+            action='store_true',
+            default=False,
+            dest='skip_adherence',
+        )
+        parser.add_argument(
+            '--location-owner-id',
         )
 
     @mock_ownership_cleanliness_checks()
@@ -60,8 +72,8 @@ class Command(BaseCommand):
             caseStatus__in=['suspect', 'patient', 'patient '],
         )
 
-        if options['nikshayId']:
-            base_query = base_query.filter(nikshayId=options['nikshayId'])
+        if options['caseIds']:
+            base_query = base_query.filter(caseId__in=options['caseIds'])
 
         start = options['start']
         limit = options['limit']
@@ -71,6 +83,14 @@ class Command(BaseCommand):
             beneficiaries = base_query[start:start + limit]
         else:
             beneficiaries = base_query[start:]
+
+        location_owner_id = options['location_owner_id']
+        if location_owner_id:
+            location_owner = SQLLocation.objects.get(
+                location_id=location_owner_id,
+            )
+        else:
+            location_owner = None
 
         # Assert never null
         assert not beneficiaries.filter(firstName__isnull=True).exists()
@@ -98,30 +118,39 @@ class Command(BaseCommand):
         factory = CaseFactory(domain=domain)
         case_structures = []
 
-        for beneficiary in beneficiaries:
+        for beneficiary in beneficiaries.order_by('caseId'):
             counter += 1
             try:
-                case_factory = BeneficiaryCaseFactory(domain, beneficiary)
-                case_structures.extend(case_factory.get_case_structures_to_create())
+                case_factory = BeneficiaryCaseFactory(domain, beneficiary, location_owner)
+                case_structures.extend(case_factory.get_case_structures_to_create(options['skip_adherence']))
             except Exception:
                 num_failed += 1
                 logger.error(
-                    'Failed on %d of %d. Nikshay ID=%s' % (
-                        counter, total, beneficiary.nikshayId
+                    'Failed on %d of %d. Case ID=%s' % (
+                        counter, total, beneficiary.caseId
                     ),
                     exc_info=True,
                 )
             else:
                 num_succeeded += 1
                 if num_succeeded % chunk_size == 0:
-                    logger.info('committing cases {}-{}...'.format(num_succeeded - chunk_size, num_succeeded))
-                    factory.create_or_update_cases(case_structures)
+                    logger.info('%d cases to save.' % len(case_structures))
+                    logger.info('committing beneficiaries {}-{}...'.format(
+                        num_succeeded - chunk_size, num_succeeded
+                    ))
+                    try:
+                        factory.create_or_update_cases(case_structures)
+                    except Exception:
+                        logger.error(
+                            'Failure writing case structures',
+                            exc_info=True,
+                        )
                     case_structures = []
                     logger.info('done')
 
                 logger.info(
-                    'Succeeded on %s of %d. Nikshay ID=%s' % (
-                        counter, total, beneficiary.nikshayId
+                    'Succeeded on %s of %d. Case ID=%s' % (
+                        counter, total, beneficiary.caseId
                     )
                 )
 

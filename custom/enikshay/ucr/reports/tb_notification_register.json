@@ -420,7 +420,7 @@
             {
                 "display": "Health Facility for Treatment",
                 "type": "field",
-                "field": "phi",
+                "field": "health_facility_for_treatment",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,

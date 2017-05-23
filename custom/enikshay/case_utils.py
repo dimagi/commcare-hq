@@ -8,20 +8,24 @@ from corehq.apps.locations.models import SQLLocation
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from custom.enikshay.const import ENROLLED_IN_PRIVATE
 from custom.enikshay.exceptions import (
     ENikshayCaseNotFound,
     NikshayCodeNotFound,
     NikshayLocationNotFound,
-)
+    ENikshayException)
 from corehq.form_processor.exceptions import CaseNotFound
 
 CASE_TYPE_ADHERENCE = "adherence"
 CASE_TYPE_OCCURRENCE = "occurrence"
 CASE_TYPE_EPISODE = "episode"
 CASE_TYPE_PERSON = "person"
+CASE_TYPE_REFERRAL = "referral"
+CASE_TYPE_TRAIL = "trail"
 CASE_TYPE_LAB_REFERRAL = "lab_referral"
 CASE_TYPE_DRTB_HIV_REFERRAL = "drtb-hiv-referral"
 CASE_TYPE_TEST = "test"
+CASE_TYPE_PRESCRIPTION = "prescription"
 CASE_TYPE_VOUCHER = "voucher"
 CASE_TYPE_PRESCRIPTION = "prescription"
 
@@ -169,6 +173,39 @@ def get_open_episode_case_from_person(domain, person_case_id):
     )
 
 
+def get_open_referral_case_from_person(domain, person_case_id):
+    episode = get_open_episode_case_from_person(domain, person_case_id)
+    case_accessor = CaseAccessors(domain)
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([episode.case_id])
+    open_referral_cases = [
+        case for case in reverse_indexed_cases
+        if not case.closed and case.type == CASE_TYPE_REFERRAL
+    ]
+    if not open_referral_cases:
+        return None
+    if len(open_referral_cases) == 1:
+        return open_referral_cases[0]
+    else:
+        raise ENikshayException(
+            "Expected none or one open referral case for person with id: {}".format(person_case_id)
+        )
+
+
+def get_latest_trail_case_from_person(domain, person_case_id):
+    episode = get_open_episode_case_from_person(domain, person_case_id)
+    case_accessor = CaseAccessors(domain)
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([episode.case_id])
+    trail_cases = [
+        case for case in reverse_indexed_cases
+        if case.type == CASE_TYPE_TRAIL
+    ]
+    trail_cases.sort(key=lambda c: c.opened_on)
+    if trail_cases:
+        return trail_cases[-1]
+    else:
+        return None
+
+
 def get_episode_case_from_adherence(domain, adherence_case_id):
     """Gets the 'episode' case associated with an adherence datapoint
 
@@ -215,9 +252,22 @@ def update_case(domain, case_id, updated_properties, external_id=None):
 
 
 def get_person_locations(person_case):
-    PersonLocationHierarchy = namedtuple('PersonLocationHierarchy', 'sto dto tu phi')
+    """
+    public locations hierarchy
+    sto -> cto -> dto -> tu -> phi
+    private locations hierarchy
+    sto-> cto -> dto -> pcp
+    """
+    if person_case.dynamic_case_properties().get(ENROLLED_IN_PRIVATE) == 'true':
+        return _get_private_locations(person_case)
+    else:
+        return _get_public_locations(person_case)
+
+
+def _get_public_locations(person_case):
+    PublicPersonLocationHierarchy = namedtuple('PersonLocationHierarchy', 'sto dto tu phi')
     try:
-        phi_location = SQLLocation.objects.get(location_id=person_case.owner_id)
+        phi_location = SQLLocation.active_objects.get(domain=person_case.domain, location_id=person_case.owner_id)
     except SQLLocation.DoesNotExist:
         raise NikshayLocationNotFound(
             "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
@@ -232,12 +282,48 @@ def get_person_locations(person_case):
     except AttributeError:
         raise NikshayLocationNotFound("Location structure error for person: {}".format(person_case.case_id))
     try:
-        # TODO: verify how location codes will be stored
-        return PersonLocationHierarchy(
+        return PublicPersonLocationHierarchy(
             sto=state_location.metadata['nikshay_code'],
             dto=district_location.metadata['nikshay_code'],
             tu=tu_location.metadata['nikshay_code'],
             phi=phi_location.metadata['nikshay_code'],
+        )
+    except (KeyError, AttributeError) as e:
+        raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
+
+
+def _get_private_locations(person_case):
+    PrivatePersonLocationHierarchy = namedtuple('PersonLocationHierarchy', 'sto dto pcp tu')
+    try:
+        pcp_location = SQLLocation.active_objects.get(domain=person_case.domain, location_id=person_case.owner_id)
+    except SQLLocation.DoesNotExist:
+        raise NikshayLocationNotFound(
+            "Location with id {location_id} not found. This is the owner for person with id: {person_id}"
+            .format(location_id=person_case.owner_id, person_id=person_case.case_id)
+        )
+
+    try:
+        tu_id = person_case.dynamic_case_properties().get('tu_choice')
+        tu_location = SQLLocation.active_objects.get(
+            domain=person_case.domain,
+            location_id=tu_id,
+        )
+        tu_location_nikshay_code = tu_location.metadata['nikshay_code']
+    except (SQLLocation.DoesNotExist, KeyError, AttributeError):
+        tu_location_nikshay_code = None
+
+    try:
+        district_location = pcp_location.parent
+        city_location = district_location.parent
+        state_location = city_location.parent
+    except AttributeError:
+        raise NikshayLocationNotFound("Location structure error for person: {}".format(person_case.case_id))
+    try:
+        return PrivatePersonLocationHierarchy(
+            sto=state_location.metadata['nikshay_code'],
+            dto=district_location.metadata['nikshay_code'],
+            pcp=pcp_location.metadata['nikshay_code'],
+            tu=tu_location_nikshay_code
         )
     except (KeyError, AttributeError) as e:
         raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
@@ -352,10 +438,8 @@ def get_prescription_vouchers_from_episode(domain, episode_case_id):
 
 
 def get_approved_prescription_vouchers_from_episode(domain, episode_case_id):
-    vouchers = get_prescription_vouchers_from_episode(domain, episode_case_id)
-    approved_prescription_vouchers = []
-    for voucher in vouchers:
-        voucher_props = voucher.dynamic_case_properties()
-        if voucher_props.get("type") == CASE_TYPE_PRESCRIPTION and voucher_props.get("state") == "fulfilled":
-            approved_prescription_vouchers.append(voucher)
-    return approved_prescription_vouchers
+    return [
+        voucher for voucher in get_prescription_vouchers_from_episode(domain, episode_case_id)
+        if (voucher.get_case_property("voucher_type") == CASE_TYPE_PRESCRIPTION
+            and voucher.get_case_property("state") == "fulfilled")
+    ]

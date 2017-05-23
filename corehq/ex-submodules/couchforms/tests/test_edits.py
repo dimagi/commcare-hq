@@ -165,12 +165,13 @@ class EditFormTest(TestCase, TestFileMixin):
                 'property': 'edited value'
             }
         ).as_string()
-        submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
+        xform, _ = submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
         case = self.casedb.get_case(case_id)
         self.assertEqual(case.type, 'newtype')
         self.assertEqual(case.dynamic_case_properties()['property'], 'edited value')
         self.assertEqual([form_id], case.xform_ids)
+        self.assertEqual(case.server_modified_on, xform.edited_on)
 
         if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
             self.assertEqual(2, len(case.actions))

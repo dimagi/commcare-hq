@@ -43,7 +43,7 @@ class ThirdSOHReminder(SecondSOHReminder):
                 for web_user in get_web_users_by_location(self.domain, sql_location.location_id)
                 if has_notifications_enabled(self.domain, web_user)
             ]
-            message, kwargs = self.get_message_for_location(sql_location.couch_location)
+            message, kwargs = self.get_message_for_location(sql_location)
 
             for user in web_users + in_charges:
                 phone_number = get_preferred_phone_number_for_recipient(user)

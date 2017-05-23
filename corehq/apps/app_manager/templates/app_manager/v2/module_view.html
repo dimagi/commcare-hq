@@ -78,9 +78,6 @@
       <ul class="nav nav-tabs" id="module-view-tabs">
         {% block tab-headers %}
           <li class="active"><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
-          {% if module.module_type == 'shadow' %}
-            <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
-          {% endif %}
           {% for detail in details %}
             <li>
               <a href="#{{ detail.type }}-detail-screen-config-tab" data-toggle="tab">

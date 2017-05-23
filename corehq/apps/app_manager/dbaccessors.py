@@ -357,6 +357,7 @@ def get_case_types_from_apps(domain):
     """
     q = (AppES()
          .domain(domain)
+         .is_build(False)
          .size(0)
          .terms_aggregation('modules.case_type.exact', 'case_types'))
     return set(q.run().aggregations.case_types.keys)

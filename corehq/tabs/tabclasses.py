@@ -20,8 +20,6 @@ from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.locations.analytics import users_have_locations
-from corehq.apps.motech.views import OpenmrsInstancesMotechView, \
-    OpenmrsConceptMotechView
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
     CustomProjectReportDispatcher
 from corehq.apps.reports.models import ReportConfig, ReportsSidebarOrdering
@@ -1387,7 +1385,7 @@ class ProjectSettingsTab(UITab):
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
                     InternalSubscriptionManagementView,
                 )
-                current_subscription = Subscription.get_subscribed_plan_by_domain(self.domain)[1]
+                current_subscription = Subscription.get_active_subscription_by_domain(self.domain)
                 subscription = [
                     {
                         'title': _(DomainSubscriptionView.page_title),
@@ -1611,32 +1609,6 @@ class MySettingsTab(UITab):
                 'url': reverse(EnableMobilePrivilegesView.urlname),
             })
         return [[_("Manage My Settings"), menu_items]]
-
-
-class MotechTab(UITab):
-    title = ugettext_noop("Motech")
-    view = OpenmrsInstancesMotechView.urlname
-
-    url_prefix_formats = (
-        '/a/{domain}/motech/',
-    )
-
-    @property
-    def _is_viewable(self):
-        return MOTECH.enabled(self.domain) and self.couch_user.is_domain_admin(self.domain)
-
-    @property
-    @memoized
-    def sidebar_items(self):
-        return [
-            (_("OpenMRS"), [{
-                'title': OpenmrsInstancesMotechView.page_title,
-                'url': reverse(OpenmrsInstancesMotechView.urlname, args=[self.domain]),
-            }, {
-                'title': OpenmrsConceptMotechView.page_title,
-                'url': reverse(OpenmrsConceptMotechView.urlname, args=[self.domain]),
-            }])
-        ]
 
 
 class AccountingTab(UITab):

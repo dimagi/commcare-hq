@@ -6,7 +6,7 @@ import uuid
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation, LocationType
-from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
 from corehq.apps.locations.tests.util import (
     LocationStructure,
     LocationTypeStructure,
@@ -14,6 +14,7 @@ from corehq.apps.locations.tests.util import (
     setup_locations_with_structure,
 )
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
+from custom.enikshay.case_utils import CASE_TYPE_REFERRAL
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
@@ -40,10 +41,12 @@ def get_person_case_structure(case_id, user_id, extra_update=None):
         'dob': "1987-08-15",
         'age': '20',
         'sex': 'male',
-        'current_address': 'Mr. Everest',
+        'current_address': 'Mt. Everest',
         'secondary_contact_name_address': 'Mrs. Everestie',
         'previous_tb_treatment': 'yes',
         'nikshay_registered': "false",
+        'husband_father_name': u"Mr. Peregrine เՇร ค Շгคק Kumar",
+        'current_address_postal_code': '110088',
     }
     update.update(extra_update)
 
@@ -96,6 +99,9 @@ def get_episode_case_structure(case_id, indexed_occurrence_case, extra_update=No
         TREATMENT_START_DATE: "2015-03-03",
         TREATMENT_SUPPORTER_FIRST_NAME: u"𝔊𝔞𝔫𝔡𝔞𝔩𝔣",
         TREATMENT_SUPPORTER_LAST_NAME: u"𝔗𝔥𝔢 𝔊𝔯𝔢𝔶",
+        'treatment_initiation_status': 'F',
+        'dst_status': 'pending',
+        'basis_of_diagnosis': 'clinical_other',
     }
     update.update(extra_update)
 
@@ -141,6 +147,74 @@ def get_adherence_case_structure(case_id, indexed_episode_id, adherence_date, ex
     )
 
 
+def get_referral_case_structure(case_id, indexed_episode_id, extra_update=None):
+    extra_update = extra_update or {}
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            "case_type": CASE_TYPE_REFERRAL,
+            "create": True,
+            "update": extra_update
+        },
+        indices=[CaseIndex(
+            CaseStructure(case_id=indexed_episode_id, attrs={"create": False}),
+            identifier='host',
+            relationship=CASE_INDEX_EXTENSION,
+            related_type='episode',
+        )],
+        walk_related=False,
+    )
+
+def get_prescription_case_structure(case_id, indexed_episode_id, extra_update=None):
+    extra_update = extra_update or {}
+    update = {
+        'state': 'fulfilled',
+    }
+    update.update(extra_update)
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            "case_type": "prescription",
+            "create": True,
+            "update": update
+        },
+        indices=[CaseIndex(
+            CaseStructure(case_id=indexed_episode_id, attrs={"create": False}),
+            identifier='episode_of_prescription',
+            relationship=CASE_INDEX_EXTENSION,
+            related_type='episode',
+        )],
+        walk_related=False,
+    )
+
+
+def get_voucher_case_structure(case_id, indexed_prescription_id, extra_update=None):
+    # https://india.commcarehq.org/a/enikshay/apps/view/9340429733463e58ae0e1518defee221/summary/#/cases
+    # https://docs.google.com/spreadsheets/d/1MCG205FOcsYsmKXHoSTjZ6A1iuqCIAESyleBl7G7PR8/
+    extra_update = extra_update or {}
+    update = {
+        'state': 'fulfilled',
+        'final_prescription_num_days': 10,
+        'voucher_type': 'prescription',
+    }
+    update.update(extra_update)
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            "case_type": "voucher",
+            "create": True,
+            "update": update
+        },
+        indices=[CaseIndex(
+            CaseStructure(case_id=indexed_prescription_id, attrs={"create": False}),
+            identifier='prescription_of_voucher',
+            relationship=CASE_INDEX_CHILD,
+            related_type='prescription',
+        )],
+        walk_related=False,  # TODO I'm not sure what this should be
+    )
+
+
 class ENikshayCaseStructureMixin(object):
     def setUp(self):
         super(ENikshayCaseStructureMixin, self).setUp()
@@ -163,6 +237,7 @@ class ENikshayCaseStructureMixin(object):
         self.secondary_phone_number = "0999999999"
         self.treatment_supporter_phone = "066000666"
         self._episode = None
+        self._person = None
 
     def tearDown(self):
         delete_all_users()
@@ -170,14 +245,16 @@ class ENikshayCaseStructureMixin(object):
 
     @property
     def person(self):
-        return get_person_case_structure(
-            self.person_id,
-            self.user.user_id,
-            extra_update={
-                PRIMARY_PHONE_NUMBER: self.primary_phone_number,
-                BACKUP_PHONE_NUMBER: self.secondary_phone_number,
-            }
-        )
+        if not self._person:
+            self._person = get_person_case_structure(
+                self.person_id,
+                self.user.user_id,
+                extra_update={
+                    PRIMARY_PHONE_NUMBER: self.primary_phone_number,
+                    BACKUP_PHONE_NUMBER: self.secondary_phone_number,
+                }
+            )
+        return self._person
 
     @property
     def occurrence(self):
@@ -271,55 +348,20 @@ class ENikshayCaseStructureMixin(object):
             })
         ])
 
-    def _get_prescription_structure(self):
-        prescription = CaseStructure(
-            case_id=self.prescription_id,
-            attrs={
-                "create": True,
-                "case_type": "prescription"
-            },
+    def create_prescription_case(self):
+        return self.factory.create_or_update_case(
+            get_prescription_case_structure(uuid.uuid4().hex, self.episode_id)
+        )[0]
 
-            indices=[CaseIndex(
-                CaseStructure(case_id=self.episode.case_id, attrs={"create": False}),
-                identifier="episode_of_prescription",
-                relationship=CASE_INDEX_EXTENSION,
-                related_type="episode"
-            )]
-        )
-        return prescription
+    def create_voucher_case(self, prescription_id, extra_update=None):
+        return self.factory.create_or_update_case(
+            get_voucher_case_structure(uuid.uuid4().hex, prescription_id, extra_update)
+        )[0]
 
-    def create_prescription_voucher(self, extra_voucher_props=None):
-        """
-        Create a voucher related to the prescription. This shouldn't be called before create_prescription().
-        """
-        if not self._prescription_created:
-            prescription_structure = self._get_prescription_structure()
-        else:
-            prescription_structure = CaseStructure(case_id=self.prescription_id, attrs={"create": False})
-
-        voucher_props = {
-            "type": "prescription"
-        }
-        voucher_props.update(extra_voucher_props or {})
-
-        voucher = CaseStructure(
-            case_id=uuid.uuid4().hex,
-            attrs={
-                "create": True,
-                "case_type": "voucher",
-                "update": voucher_props
-            },
-            indices=[CaseIndex(
-                prescription_structure,
-                identifier="prescription_of_voucher",
-                relationship=CASE_INDEX_EXTENSION,
-                related_type="prescription"
-            )]
-        )
-
-        voucher = self.factory.create_or_update_cases([voucher])[0]
-        self._prescription_created = True
-        return voucher
+    def create_referral_case(self, case_id):
+        return self.factory.create_or_update_cases([
+            get_referral_case_structure(case_id, self.episode_id)
+        ])
 
 
 class ENikshayLocationStructureMixin(object):
@@ -364,7 +406,31 @@ class ENikshayLocationStructureMixin(object):
         self.dmc.save()
 
         self.pcp = locations['PCP']
+        self.pcp.metadata = {
+            'nikshay_code': '1234567',
+            'is_test': 'no',
+        }
+        self.pcp.save()
 
+        self.pcc = locations['PCC']
+        self.pcc.metadata = {
+            'nikshay_code': '1234567',
+            'is_test': 'no',
+        }
+        self.pcc.save()
+
+        self.plc = locations['PLC']
+        self.plc.metadata = {
+            'nikshay_code': '1234567',
+            'is_test': 'no',
+        }
+        self.plc.save()
+        self.pac = locations['PLC']
+        self.pac.metadata = {
+            'nikshay_code': '1234567',
+            'is_test': 'no',
+        }
+        self.pac.save()
         super(ENikshayLocationStructureMixin, self).setUp()
 
     def tearDown(self):
@@ -432,5 +498,6 @@ def setup_enikshay_locations(domain_name):
         ])
     ]
 
+    location_metadata = {'is_test': 'no', 'nikshay_code': 'nikshay_code'}
     return (setup_location_types_with_structure(domain_name, location_type_structure),
-            setup_locations_with_structure(domain_name, location_structure))
+            setup_locations_with_structure(domain_name, location_structure, location_metadata))

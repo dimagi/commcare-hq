@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import mock
 
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
@@ -49,8 +49,7 @@ class MissingReportNotificationTestCase(EWSTestCase):
         self.product.save()
 
     def tearDown(self):
-        for location in Location.by_domain(self.TEST_DOMAIN):
-            location.delete()
+        delete_all_locations()
 
         for user in WebUser.by_domain(self.TEST_DOMAIN):
             user.delete()
@@ -190,8 +189,7 @@ class StockoutReportNotificationTestCase(EWSTestCase):
         self.product.save()
 
     def tearDown(self):
-        for location in Location.by_domain(self.TEST_DOMAIN):
-            location.delete()
+        delete_all_locations()
 
         for user in WebUser.by_domain(self.TEST_DOMAIN):
             user.delete()
@@ -318,8 +316,7 @@ class UrgentStockoutNotificationTestCase(EWSTestCase):
         )
 
     def tearDown(self):
-        for location in Location.by_domain(self.TEST_DOMAIN):
-            location.delete()
+        delete_all_locations()
 
         for user in WebUser.by_domain(self.TEST_DOMAIN):
             user.delete()
@@ -486,8 +483,7 @@ class UrgentNonReportingNotificationTestCase(EWSTestCase):
         )
 
     def tearDown(self):
-        for location in Location.by_domain(self.TEST_DOMAIN):
-            location.delete()
+        delete_all_locations()
 
         for user in WebUser.by_domain(self.TEST_DOMAIN):
             user.delete()
@@ -613,8 +609,7 @@ class SMSNotificationTestCase(EWSTestCase):
         self.notification = Notification(self.TEST_DOMAIN, self.user, 'test')
 
     def tearDown(self):
-        for location in Location.by_domain(self.TEST_DOMAIN):
-            location.delete()
+        delete_all_locations()
 
         for user in WebUser.by_domain(self.TEST_DOMAIN):
             user.delete()

@@ -160,16 +160,6 @@ class LocationsTest(TestCase):
             Location.root_locations(self.domain.name)
         )
 
-        # Location.filter_by_type
-        compare(
-            [test_village1, test_village2],
-            Location.filter_by_type(self.domain.name, 'village')
-        )
-        compare(
-            [test_village1],
-            Location.filter_by_type(self.domain.name, 'village', test_state1)
-        )
-
         create_domain('rejected')
         bootstrap_location_types('rejected')
         test_village2.domain = 'rejected'

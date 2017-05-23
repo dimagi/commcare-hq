@@ -537,13 +537,6 @@ STOCK_AND_RECEIPT_SMS_HANDLER = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-LOOSE_SYNC_TOKEN_VALIDATION = StaticToggle(
-    'loose_sync_token_validation',
-    "Don't fail hard on missing or deleted sync tokens.",
-    TAG_EXPERIMENTAL,
-    [NAMESPACE_DOMAIN]
-)
-
 # This toggle offers the "multiple_apps_unlimited" mobile flag to non-Dimagi users
 MOBILE_PRIVILEGES_FLAG = StaticToggle(
     'mobile_privileges_flag',
@@ -1185,7 +1178,7 @@ BLOBDB_RESTORE = PredictablyRandomToggle(
     "Blobdb restore",
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN],
-    randomness=0.7,
+    randomness=1.0,
 )
 
 SHOW_DEV_TOGGLE_INFO = StaticToggle(

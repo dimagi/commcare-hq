@@ -25,9 +25,9 @@ from .base import (
 
 class UserOrGroupFilter(BaseSingleOptionFilter):
     slug = "view_by"
-    label = ugettext_noop("View by Users or Groups")
-    default_text = ugettext_noop("Users")
-    options = [('groups', 'Groups')]
+    label = ugettext_lazy("View by Users or Groups")
+    default_text = ugettext_lazy("Users")
+    options = [('groups', ugettext_lazy('Groups'))]
 
 
 class UserTypeFilter(BaseReportFilter):
@@ -51,8 +51,8 @@ class UserTypeFilter(BaseReportFilter):
 
 class SelectMobileWorkerFilter(BaseSingleOptionFilter):
     slug = 'individual'
-    label = ugettext_noop("Select Mobile Worker")
-    default_text = ugettext_noop("All Mobile Workers")
+    label = ugettext_lazy("Select Mobile Worker")
+    default_text = ugettext_lazy("All Mobile Workers")
 
     @property
     def filter_context(self):

@@ -3,6 +3,8 @@ from django.test import SimpleTestCase
 
 from corehq.util.test_utils import generate_cases
 
+from corehq.apps.case_search.models import SEARCH_QUERY_CUSTOM_VALUE, replace_custom_query_variables
+
 
 class TestQueryMerge(SimpleTestCase):
     def test_invalid_merge(self):
@@ -37,3 +39,61 @@ class TestQueryMerge(SimpleTestCase):
 def test_merge(self, base_query, addition, expected):
     new = merge_queries(base_query, addition)
     self.assertDictEqual(new, expected)
+
+
+class TestCustomQueryValues(SimpleTestCase):
+    def test_custom_values(self):
+        initial_custom_query = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "term": {
+                                "case_properties.key": "thing_1"
+                            }
+                        },
+                        "query": {
+                            "match": {
+                                "case_properties.value": {
+                                    "fuzziness": "0",
+                                    "query": "__thing_1"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        search_criteria = {
+            "{}__thing_1".format(SEARCH_QUERY_CUSTOM_VALUE): "boop",
+            "name": "Jon Snow",
+        }
+
+        expected = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "term": {
+                                "case_properties.key": "thing_1"
+                            }
+                        },
+                        "query": {
+                            "match": {
+                                "case_properties.value": {
+                                    "fuzziness": "0",
+                                    "query": "boop"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self.assertDictEqual(
+            expected,
+            replace_custom_query_variables(initial_custom_query, search_criteria)
+        )

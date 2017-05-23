@@ -15,6 +15,7 @@ TREATMENT_SUPPORTER_PHONE = 'treatment_supporter_mobile_number'
 TREATMENT_OUTCOME = 'treatment_outcome'
 TREATMENT_OUTCOME_DATE = 'treatment_outcome_date'
 EPISODE_PENDING_REGISTRATION = "episode_pending_registration"
+PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION = "private_sector_episode_pending_registration"
 WEIGHT_BAND = 'weight_band'
 LAST_VOUCHER_CREATED_BY_ID = "bets_last_voucher_created_by_id"
 NOTIFYING_PROVIDER_USER_ID = "bets_notifying_provider_user_id"
@@ -60,6 +61,8 @@ PRESCRIPTION_TOTAL_DAYS_THRESHOLD = "prescription_total_days_threshold_{}"
 DATE_FULFILLED = "date_fulfilled"
 VOUCHER_ID = "voucher_id"
 FULFILLED_BY_ID = "fulfilled_by_id"
+FULFILLED_BY_LOCATION_ID = "voucher_fulfilled_by_location_id"
 AMOUNT_APPROVED = "amount_approved"
+INVESTIGATION_TYPE = "investigation_type"
 
 ENIKSHAY_TIMEZONE = 'Asia/Kolkata'

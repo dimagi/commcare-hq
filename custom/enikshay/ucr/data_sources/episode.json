@@ -21,7 +21,6 @@
     ],
     "config": {
         "referenced_doc_type": "CommCareCase",
-        "asynchronous": true,
         "engine_id": "ucr",
         "description": "",
         "base_item_expression": {
@@ -591,6 +590,52 @@
                     }
                 },
                 "column_id": "phi"
+            },
+            {
+                "display_name": "health_facility_for_treatment",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "treatment_initiating_facility_id"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": [null, ""]
+                    },
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": "NA"
+                    },
+                    "expression_if_false": {
+                        "value_expression": {
+                            "type":"property_name",
+                            "property_name":"name"
+                        },
+                        "type":"related_doc",
+                        "related_doc_type":"Location",
+                        "doc_id_expression": {
+                            "value_expression": {
+                                "type":"property_name",
+                                "property_name":"name"
+                            },
+                            "type":"related_doc",
+                            "related_doc_type":"Location",
+                            "doc_id_expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_initiating_facility_id"
+                            }
+                        }
+                    }
+                },
+                "column_id": "health_facility_for_treatment"
             },
             {
                 "display_name": "person/phi",
@@ -1222,19 +1267,84 @@
                 "column_id": "treatment_status_value",
                 "datatype": "string",
                 "type": "expression",
-                "expression":{
-                    "type": "nested",
-                    "argument_expression": {
-                        "type": "named",
-                        "name": "complete_treatment_form"
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "treatment_initiated"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "yes_private"
                     },
-                    "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "ql_notification_details",
-                            "treatment_status_value"
-                        ]
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": "Treatment initiated outside RNTCP"
+                    },
+                    "expression_if_false": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_initiated"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "yes_public"
+                        },
+                        "expression_if_true": {
+                            "type": "conditional",
+                            "test": {
+                                "operator": "eq",
+                                "expression": {
+                                    "type": "property_name",
+                                    "property_name": "diagnosing_facility_id"
+                                },
+                                "type": "boolean_expression",
+                                "property_value": {
+                                    "type": "property_name",
+                                    "property_name": "treatment_initiating_facility_id"
+                                }
+                            },
+                            "expression_if_true": {
+                                "type": "constant",
+                                "constant": "Initiated on first line treatment in the same health facility"
+                            },
+                            "expression_if_false": {
+                                "type": "constant",
+                                "constant": "Initiated on treatment outside health facility"
+                            }
+                        },
+                        "expression_if_false": {
+                            "type": "conditional",
+                            "test": {
+                                "operator": "eq",
+                                "expression": {
+                                    "value_expression": {
+                                        "datatype": "string",
+                                        "type": "property_name",
+                                        "property_name": "awaiting_claim"
+                                    },
+                                    "type": "related_doc",
+                                    "related_doc_type": "CommCareCase",
+                                    "doc_id_expression": {
+                                        "type": "named",
+                                        "name": "person_id"
+                                    }
+                                },
+                                "type": "boolean_expression",
+                                "property_value": "yes"
+                            },
+                            "expression_if_true": {
+                                "type": "constant",
+                                "constant": "Referred for treatment with pending feedback"
+                            },
+                            "expression_if_false": {
+                                "type": "constant",
+                                "constant": "NA"
+                            }
+                        }
                     }
                 }
             },

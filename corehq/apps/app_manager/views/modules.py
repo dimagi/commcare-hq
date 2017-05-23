@@ -151,6 +151,8 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
             'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
             'search_button_display_condition':
                 module.search_config.search_button_display_condition if module_offers_search(module) else "",
+            'blacklisted_owner_ids_expression': (
+                module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
         }
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
@@ -899,6 +901,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
                 ),
                 include_closed=bool(search_properties.get('include_closed')),
                 search_button_display_condition=search_properties.get('search_button_display_condition', ""),
+                blacklisted_owner_ids_expression=search_properties.get('blacklisted_owner_ids_expression', ""),
                 default_properties=[
                     DefaultCaseSearchProperty.wrap(p)
                     for p in search_properties.get('default_properties')

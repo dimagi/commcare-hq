@@ -581,11 +581,14 @@ class IgnoreDocumentTest(BaseRepeaterTest):
     def setUpClass(cls):
         super(IgnoreDocumentTest, cls).setUpClass()
 
-        @RegisterGenerator(FormRepeater, 'new_format', 'XML')
         class NewFormGenerator(BasePayloadGenerator):
+            format_name = 'new_format'
+            format_label = 'XML'
 
             def get_payload(self, repeat_record, payload_doc):
                 raise IgnoreDocument
+
+        RegisterGenerator.get_collection(FormRepeater).add_new_format(NewFormGenerator)
 
     def setUp(self):
         super(IgnoreDocumentTest, self).setUp()
@@ -626,11 +629,14 @@ class TestRepeaterFormat(BaseRepeaterTest):
         super(TestRepeaterFormat, cls).setUpClass()
         cls.payload = 'some random case'
 
-        @RegisterGenerator(CaseRepeater, 'new_format', 'XML')
         class NewCaseGenerator(BasePayloadGenerator):
+            format_name = 'new_format'
+            format_label = 'XML'
 
             def get_payload(self, repeat_record, payload_doc):
                 return cls.payload
+
+        RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator)
 
     def setUp(self):
         super(TestRepeaterFormat, self).setUp()
@@ -652,20 +658,26 @@ class TestRepeaterFormat(BaseRepeaterTest):
         super(TestRepeaterFormat, self).tearDown()
 
     def test_new_format_same_name(self):
-        with self.assertRaises(DuplicateFormatException):
-            @RegisterGenerator(CaseRepeater, 'case_xml', 'XML', is_default=False)
-            class NewCaseGenerator(BasePayloadGenerator):
+        class NewCaseGenerator(BasePayloadGenerator):
+            format_name = 'case_xml'
+            format_label = 'XML'
 
-                def get_payload(self, repeat_record, payload_doc):
-                    return self.payload
+            def get_payload(self, repeat_record, payload_doc):
+                return self.payload
+
+        with self.assertRaises(DuplicateFormatException):
+            RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator)
 
     def test_new_format_second_default(self):
-        with self.assertRaises(DuplicateFormatException):
-            @RegisterGenerator(CaseRepeater, 'rubbish', 'XML', is_default=True)
-            class NewCaseGenerator(BasePayloadGenerator):
+        class NewCaseGenerator(BasePayloadGenerator):
+            format_name = 'rubbish'
+            format_label = 'XML'
 
-                def get_payload(self, repeat_record, payload_doc):
-                    return self.payload
+            def get_payload(self, repeat_record, payload_doc):
+                return self.payload
+
+        with self.assertRaises(DuplicateFormatException):
+            RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator, is_default=True)
 
     @run_with_all_backends
     def test_new_format_payload(self):
