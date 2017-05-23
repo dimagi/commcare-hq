@@ -20,7 +20,7 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from dimagi.utils.dates import DateSpan
 
 from custom.icds_reports.models import AggDailyUsageView, AggChildHealthMonthly, AggAwcMonthly, AggCcsRecordMonthly, \
-    AggAwcDailyView
+    AggAwcDailyView, AwcLocation
 
 OPERATORS = {
     "==": operator.eq,
@@ -796,14 +796,15 @@ def get_awc_opened_data(filters):
     }
 
 
-def get_prevalence_of_undernutrition_data_map(config, group_by):
+@quickcache(['config', 'loc_level'], timeout=24 * 60 * 60)
+def get_prevalence_of_undernutrition_data_map(config, loc_level):
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
         return AggChildHealthMonthly.objects.filter(
             **filters
         ).values(
-            group_by
+            '%s_name' % loc_level
         ).annotate(
             moderately_underweight=Sum('nutrition_status_moderately_underweight'),
             severely_underweight=Sum('nutrition_status_severely_underweight'),
@@ -814,7 +815,7 @@ def get_prevalence_of_undernutrition_data_map(config, group_by):
     average = []
     for row in get_data_for(config):
         valid = row['valid']
-        name = row[group_by]
+        name = row['%s_name' % loc_level]
 
         severely_underweight = row['severely_underweight']
         moderately_underweight = row['moderately_underweight']
@@ -839,7 +840,7 @@ def get_prevalence_of_undernutrition_data_map(config, group_by):
                 '0%-15%': '#009811',
                 '16%-30%': '#df7400',
                 '30%-100%': '#d60000',
-                'defaultFill': 'black',
+                'defaultFill': '#9D9D9D',
             },
             "rightLegend": {
                 "average": sum(average) / (len(average) or 1),
@@ -853,9 +854,7 @@ def get_prevalence_of_undernutrition_data_map(config, group_by):
     ]
 
 
-def get_prevalence_of_undernutrition_data_chart(config):
-    moderately_chart_data = []
-    severely_chart_data = []
+def get_prevalence_of_undernutrition_data_chart(config, loc_level):
     config['month__range'] = (
         datetime(*config['month']) - relativedelta(months=3),
         datetime(*config['month'])
@@ -865,36 +864,81 @@ def get_prevalence_of_undernutrition_data_chart(config):
     chart_data = AggChildHealthMonthly.objects.filter(
         **config
     ).values(
-        'month',
+        'month', '%s_name' % loc_level
     ).annotate(
         moderately_underweight=Sum('nutrition_status_moderately_underweight'),
         severely_underweight=Sum('nutrition_status_severely_underweight'),
         valid=Sum('valid_in_month'),
     ).order_by('month')
 
+    locations_for_lvl = SQLLocation.objects.filter(location_type__code=loc_level).count()
+
+    data = {
+        'green': {},
+        'orange': {},
+        'red': {}
+    }
+    best_worst = {}
     for row in chart_data:
         date = row['month']
         valid = row['valid']
+        location = row['%s_name' % loc_level]
         severely_underweight = row['severely_underweight']
         moderately_underweight = row['moderately_underweight']
 
-        moderately_percent = (moderately_underweight or 0) / float(valid or 1)
-        severely_percent = (severely_underweight or 0) / float(valid or 1)
+        moderately_percent = (moderately_underweight or 0) * 100 / (valid or 1)
+        severely_percent = (severely_underweight or 0) * 100 / (valid or 1)
 
-        moderately_chart_data.append([int(date.strftime("%s")) * 1000, moderately_percent])
-        severely_chart_data.append([int(date.strftime("%s")) * 1000, severely_percent])
+        if location in best_worst:
+            best_worst[location].extend([moderately_percent, severely_percent])
+        else:
+            best_worst[location] = [moderately_percent, severely_percent]
 
-    return [
+        date_in_miliseconds = int(date.strftime("%s")) * 1000
+
+        if date_in_miliseconds not in data['green']:
+            data['green'][date_in_miliseconds] = 0
+            data['orange'][date_in_miliseconds] = 0
+            data['red'][date_in_miliseconds] = 0
+
+        if 0 <= moderately_percent < 16 or 0 <= severely_percent < 6:
+            data['green'][date_in_miliseconds] += 1
+        elif 16 <= moderately_percent <= 30 or 6 <= severely_percent <= 10:
+            data['orange'][date_in_miliseconds] += 1
+        elif moderately_percent > 30 or severely_percent > 10:
+            data['red'][date_in_miliseconds] += 1
+
+    calculation = sorted(
+        [dict(loc_name=key, percent=sum(value)/len(value)) for key, value in best_worst.iteritems()],
+        key=lambda x: x['percent'],
+        reverse=True
+    )
+
+    return {
+        "chart_data": [
             {
-                "values": moderately_chart_data,
-                "key": "Underweight below -2 Z score",
+                "values": [[key, value / float(locations_for_lvl)] for key, value in data['green'].iteritems()],
+                "key": "Between 0%-15%",
                 "strokeWidth": 2,
-                "classed": "dashed"
+                "classed": "dashed",
+                "color": "#009811"
             },
             {
-                "values": severely_chart_data,
-                "key": "Underweight below -3 Z score",
+                "values": [[key, value / float(locations_for_lvl)] for key, value in data['orange'].iteritems()],
+                "key": "Between 16%-30%",
                 "strokeWidth": 2,
-                "classed": "dashed"
+                "classed": "dashed",
+                "color": "#df7400"
+            },
+            {
+                "values": [[key, value / float(locations_for_lvl)] for key, value in data['red'].iteritems()],
+                "key": "Between 31%-100%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": "#d60000"
             }
-        ]
+        ],
+        "top_three": calculation[0:3],
+        "bottom_three": calculation[-4:-1],
+        "location_type": loc_level.title()
+    }

@@ -1,4 +1,4 @@
-function LocationFilterController($scope, $location, locationHierarchy, locationsService) {
+function LocationFilterController($scope, $location, $uibModal, locationHierarchy, locationsService) {
     var vm = this;
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
@@ -132,7 +132,10 @@ function LocationFilterController($scope, $location, locationHierarchy, location
         if (selectedLocationIndex() === 0) {
             var locations = vm.getLocationsForLevel(selectedLocationIndex());
             var loc = _.filter(locations, function(loc) { return loc.location_id === vm.selectedLocationId});
-            $location.search('location_name', loc[0]['name'])
+            $location.search('location_name', loc[0]['name']);
+        } else if (selectedLocationIndex() === -1) {
+            delete $location.search()['location_name'];
+            delete $location.search()['location_name'];
         }
         $scope.$emit('filtersChange')
     };
@@ -159,7 +162,7 @@ function LocationFilterController($scope, $location, locationHierarchy, location
     }, true);
 }
 
-LocationFilterController.$inject = ['$scope', '$location', 'locationHierarchy', 'locationsService'];
+LocationFilterController.$inject = ['$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService'];
 
 window.angular.module('icdsApp').directive("locationFilter", function() {
     var url = hqImport('hqwebapp/js/urllib.js').reverse;
