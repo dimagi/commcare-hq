@@ -6007,28 +6007,45 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             xmlns_map[form.xmlns].append(form)
         return xmlns_map
 
-    def get_form_by_xmlns(self, xmlns, log_missing=True):
+    def get_forms_by_xmlns(self, xmlns, log_missing=True):
+        """
+        Return the forms with the given xmlns.
+        This function could return multiple forms if there are shadow forms in the app.
+        """
         if xmlns == "http://code.javarosa.org/devicereport":
-            return None
+            return []
         forms = self.get_xmlns_map()[xmlns]
-        if len(forms) != 1:
-            if log_missing or len(forms) > 1:
+        if len(forms) < 1:
+            if log_missing:
                 logging.error('App %s in domain %s has %s forms with xmlns %s' % (
                     self.get_id,
                     self.domain,
                     len(forms),
                     xmlns,
                 ))
+            return []
+        non_shadow_forms = [form for form in forms if form.form_type != ShadowForm.form_type]
+        assert len(non_shadow_forms) <= 1
+        return forms
+
+    def get_xform_by_xmlns(self, xmlns, log_missing=True):
+        forms = self.get_forms_by_xmlns(xmlns, log_missing)
+        if not forms:
             return None
         else:
-            form, = forms
-        return form
+            # If there are multiple forms with the same xmlns, then all but one are shadow forms, therefore they
+            # all have the same xform.
+            return forms[0].wrapped_xform()
 
-    def get_questions(self, xmlns):
-        form = self.get_form_by_xmlns(xmlns)
-        if not form:
+
+    def get_questions(self, xmlns, langs=None, include_triggers=False, include_groups=False,
+                      include_translations=False):
+        forms = self.get_forms_by_xmlns(xmlns)
+        if not forms:
             return []
-        return form.get_questions(self.langs)
+        # If there are multiple forms with the same xmlns, then some of them are shadow forms, so all the questions
+        # will be the same.
+        return forms[0].get_questions(langs or self.langs, include_triggers, include_groups, include_translations)
 
     def check_subscription(self):
 
