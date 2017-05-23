@@ -6,7 +6,10 @@ def django_batch_records(cls, record_iter, field_mapping):
     for index, raw_record in enumerate(record_iter):
         record = {}
         for source_key, destination_key in field_mapping:
-            record[destination_key] = raw_record.get(source_key)
+            if isinstance(raw_record, dict):
+                record[destination_key] = raw_record.get(source_key)
+            else:
+                record[destination_key] = getattr(raw_record, source_key)
 
         records.append(cls(**record))
 
