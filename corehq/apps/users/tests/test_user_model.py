@@ -43,6 +43,12 @@ class UserModelTest(TestCase):
         user = CommCareUser.get(self.user._id)
         self.assertGreater(user.last_modified, lm)
 
+    def test_last_modified_bulk(self):
+        lm = self.user.last_modified
+        CommCareUser.save_docs([self.user])
+        user = CommCareUser.get(self.user._id)
+        self.assertGreater(user.last_modified, lm)
+
 
 class UserDeviceTest(SimpleTestCase):
 
