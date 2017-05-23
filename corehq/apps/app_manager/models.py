@@ -5364,11 +5364,21 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             response_json=response_json, increment_version=increment_version, **params)
 
     @classmethod
-    def save_docs(cls, docs, **kwargs):
+    def _update_last_modified(cls, docs):
         utcnow = datetime.datetime.utcnow()
         for doc in docs:
             doc['last_modified'] = utcnow
+        return docs
+
+    @classmethod
+    def save_docs(cls, docs, **kwargs):
+        docs = cls._update_last_modified(docs)
         super(ApplicationBase, cls).save_docs(docs, **kwargs)
+
+    @classmethod
+    def bulk_save(cls, docs, **kwargs):
+        docs = cls._update_last_modified(docs)
+        super(ApplicationBase, cls).bulk_save(docs, **kwargs)
 
     def set_form_versions(self, previous_version, force_new_version=False):
         # by default doing nothing here is fine.
