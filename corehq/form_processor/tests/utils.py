@@ -220,7 +220,8 @@ def post_xform(instance_xml, attachments=None, domain='test-domain'):
 
 
 @nottest
-def create_form_for_test(domain, case_id=None, attachments=None, save=True, state=XFormInstanceSQL.NORMAL):
+def create_form_for_test(domain, case_id=None, attachments=None, save=True, state=XFormInstanceSQL.NORMAL,
+        received_on=None):
     """
     Create the models directly so that these tests aren't dependent on any
     other apps. Not testing form processing here anyway.
@@ -233,7 +234,7 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True, stat
 
     form_id = uuid4().hex
     user_id = 'user1'
-    utcnow = datetime.utcnow()
+    utcnow = received_on or datetime.utcnow()
 
     form_xml = get_simple_form_xml(form_id, case_id)
 
