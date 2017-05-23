@@ -1,6 +1,6 @@
 /* global d3, _ */
 
-function IndieMapController($scope, $compile) {
+function IndieMapController($scope, $compile, $location) {
     var vm = this;
     $scope.$watch(function () {
         return vm.data;
@@ -23,6 +23,12 @@ function IndieMapController($scope, $compile) {
         vm.map.rightLegend = newValue;
     }, true);
 
+    var location = $location.search()['location_name'];
+
+    vm.scope = location !== void(0) ? location : "ind";
+    vm.type = vm.scope + "Topo";
+    Datamap.prototype[vm.type] = vm.scope === "ind" ? STATES_TOPOJSON : DISTRICT_TOPOJSON;
+
     vm.indicator = vm.data[0] !== void(0) ? vm.data[0].slug : null;
 
     vm.changeIndicator = function (value) {
@@ -35,23 +41,30 @@ function IndieMapController($scope, $compile) {
         });
         vm.indicator = value;
     };
+
     vm.map = {
-        scope: 'ind',
+        scope: vm.scope,
         rightLegend: vm.data[0] !== void(0) ? vm.data[0].rightLegend : null,
         data: vm.data[0] !== void(0) ? vm.data[0].data : null,
         fills: vm.data[0] !== void(0) ? vm.data[0].fills : null,
-        aspectRatio: 0.5,
-        height: 800,
+        height: Datamap.prototype[vm.type].objects[vm.scope].height,
         setProjection: function (element) {
             var projection = d3.geo.equirectangular()
-                .center([80, 25])
-                .scale(1240)
+                .center(Datamap.prototype[vm.type].objects[vm.scope].center)
+                .scale(Datamap.prototype[vm.type].objects[vm.scope].scale)
                 .translate([element.offsetWidth / 2, element.offsetHeight / 2]);
             var path = d3.geo.path()
                 .projection(projection);
 
             return {path: path, projection: projection};
         },
+    };
+
+    vm.updateMap = function (geography) {
+        if ($location.search()['location_name'] === void(0)) {
+            $location.search('location_name', geography.id);
+            $scope.$apply()
+        }
     };
 
     vm.mapPlugins = {};
@@ -66,7 +79,7 @@ function IndieMapController($scope, $compile) {
             html.push('</table>');
             d3.select(this.options.element).append('div')
                 .attr('class', 'datamaps-legend text-center')
-                .attr('style', 'width: 150px; bottom: 5%; border: 1px solid black;')
+                .attr('style', 'width: 150px; left 5% !imporetant; bottom: 5%; border: 1px solid black;')
                 .html(html.join(''));
         },
     });
@@ -90,12 +103,11 @@ function IndieMapController($scope, $compile) {
                 ];
                 d3.select(this.options.element).append('div')
                     .attr('class', '')
-                    .attr('style', 'position: absolute; width: 150px; bottom: 5%; right: 25%;')
+                    .attr('style', 'position: absolute; width: 150px; bottom: 5%; right: 10%;')
                     .html(html.join(''));
             }
         },
     });
-
     _.extend(vm.mapPlugins, {
         indicators: function () {
             var data = vm.data;
@@ -120,7 +132,7 @@ function IndieMapController($scope, $compile) {
 
 }
 
-IndieMapController.$inject = ['$scope', '$compile'];
+IndieMapController.$inject = ['$scope', '$compile', '$location'];
 
 window.angular.module('icdsApp').directive('indieMap', function() {
     return {
@@ -129,7 +141,7 @@ window.angular.module('icdsApp').directive('indieMap', function() {
             data: '=',
             legendTitle: '@?',
         },
-        template: '<div class="indie-map-directive"><datamap map="$ctrl.map" plugins="$ctrl.mapPlugins"></datamap></div>',
+        template: '<div class="indie-map-directive"><datamap on-click="$ctrl.updateMap" map="$ctrl.map" plugins="$ctrl.mapPlugins"></datamap></div>',
         bindToController: true,
         controller: IndieMapController,
         controllerAs: '$ctrl',

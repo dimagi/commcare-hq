@@ -2,6 +2,7 @@ import requests
 
 from datetime import datetime
 
+from copy import deepcopy
 from dateutil.relativedelta import relativedelta
 from django.db.models.query_utils import Q
 from django.http.response import JsonResponse
@@ -18,7 +19,8 @@ from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFil
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
 from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_data, get_cas_reach_data, \
-    get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, get_prevalnece_of_undernutrition_data
+    get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
+    get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart
 from . import const
 from .exceptions import TableauTokenException
 
@@ -238,22 +240,41 @@ class AwcOpenedView(View):
 class PrevalenceOfUndernutritionView(View):
 
     def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
 
-        date_2 = datetime(2015, 9, 9)
-        date_1 = datetime(2015, 9, 10)
         month = datetime(2015, 9, 1)
-        prev_month = datetime(2015, 9, 1) - relativedelta(months=1)
+        location = request.GET.get('location', None)
+        aggregation_level = 1
 
         config = {
-            'yesterday': tuple(date_1.timetuple())[:3],
-            'before_yesterday': tuple(date_2.timetuple())[:3],
             'month': tuple(month.timetuple())[:3],
-            'prev_month': tuple(prev_month.timetuple())[:3]
+            'aggregation_level': aggregation_level,
         }
 
-        data = get_prevalnece_of_undernutrition_data(config)
+        if location:
+            try:
+                sql_location = SQLLocation.objects.get(location_id=location)
+                aggregation_level = sql_location.get_ancestors(include_self=True).count() + 1
+                location_code = sql_location.site_code
+                location_key = '%s_site_code' % sql_location.location_type.code
+                config.update({
+                    location_key: location_code.upper(),
+                    'aggregation_level': aggregation_level
+                })
+            except SQLLocation.DoesNotExist:
+                pass
 
-        return JsonResponse(data=data)
+        group_by = 'state_name' if aggregation_level == 1 else 'district_name'
+        data = []
+        if step == "1":
+            data = get_prevalence_of_undernutrition_data_map(config, group_by)
+        elif step == "2":
+            data = get_prevalence_of_undernutrition_data_chart(config)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
 
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')

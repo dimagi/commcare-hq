@@ -1,11 +1,11 @@
-function LocationFilterController($location, locationHierarchy, locationsService) {
+function LocationFilterController($scope, $location, locationHierarchy, locationsService) {
     var vm = this;
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
 
     var locationsCache = {};
 
-    vm.selectedLocationId = $location.search()['location_id'] || vm.selectedLocationId;
+    vm.selectedLocationId = $location.search()['location'] || vm.selectedLocationId;
     vm.hierarchy = [];
     vm.selectedLocations = [];
 
@@ -77,7 +77,7 @@ function LocationFilterController($location, locationHierarchy, locationsService
         } else {
             initHierarchy();
             locationsService.getRootLocations().then(function(data) {
-                locationsCache.root = data.locations;
+                locationsCache.root = [ ALL_OPTION ].concat(data.locations);
             });
         }
     };
@@ -127,15 +127,39 @@ function LocationFilterController($location, locationHierarchy, locationsService
 
     vm.apply = function() {
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
-        $location.search('location_id', vm.selectedLocationId);
+
+        $location.search('location', vm.selectedLocationId);
+        if (selectedLocationIndex() === 0) {
+            var locations = vm.getLocationsForLevel(selectedLocationIndex());
+            var loc = _.filter(locations, function(loc) { return loc.location_id === vm.selectedLocationId});
+            $location.search('location_name', loc[0]['name'])
+        }
+        $scope.$emit('filtersChange')
     };
 
     vm.isVisible = function(level) {
         return level === 0 || (vm.selectedLocations[level - 1] && vm.selectedLocations[level - 1] !== 'all');
     };
+
+    $scope.$watch(function () {
+        return $location.search();
+    }, function (newValue, oldValue) {
+        if (newValue === oldValue) {
+            return;
+        }
+        if (selectedLocationIndex() === -1) {
+            var location = _.filter(vm.getLocationsForLevel(0), function(loc) {
+                return loc.name === $location.search()['location_name']
+            });
+            if (location.length > 0) {
+                vm.selectedLocationId = location[0]['location_id'];
+                $location.search('location', location[0]['location_id']);
+            }
+        }
+    }, true);
 }
 
-LocationFilterController.$inject = ['$location', 'locationHierarchy', 'locationsService'];
+LocationFilterController.$inject = ['$scope', '$location', 'locationHierarchy', 'locationsService'];
 
 window.angular.module('icdsApp').directive("locationFilter", function() {
     var url = hqImport('hqwebapp/js/urllib.js').reverse;

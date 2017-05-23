@@ -1,11 +1,11 @@
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
 
-function UnderweightChildrenReportController($routeParams, maternalChildService) {
+function UnderweightChildrenReportController($scope, $routeParams, $location, maternalChildService) {
     var vm = this;
 
-    vm.filtersData = {};
-
+    vm.filtersData = window.angular.copy($location.search());
+    vm.label = "Prevalence of Undernutrition (weight-for-age)";
     vm.step = $routeParams.step;
     vm.steps = [
         {route: '/underweight_children/1', label: 'MapView'},
@@ -19,11 +19,23 @@ function UnderweightChildrenReportController($routeParams, maternalChildService)
         info: "Percentage of children with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median. Children who are moderately or severely underweight have a higher risk of mortality.",
     };
 
-    maternalChildService.getUnderweightChildrenData().then(function(response) {
-        vm.mapData = response.data.configs;
-        vm.chartData = response.data.chart
-        vm.chartTicks = vm.chartData[0].values.map(function(d) { return d[0]; })
+    vm.loadData = function () {
+        maternalChildService.getUnderweightChildrenData(vm.step, vm.filtersData).then(function(response) {
+            if (vm.step === "1") {
+                vm.mapData = response.data.report_data;
+            } else if (vm.step === "2") {
+                vm.chartData = response.data.report_data;
+                vm.chartTicks = vm.chartData[0].values.map(function(d) { return d[0]; });
+            }
+        });
+    };
+
+    vm.loadData();
+
+    $scope.$on('filtersChange', function() {
+        vm.loadData();
     });
+
 
     vm.chartOptions = {
         chart: {
@@ -64,7 +76,7 @@ function UnderweightChildrenReportController($routeParams, maternalChildService)
     };
 }
 
-UnderweightChildrenReportController.$inject = ['$routeParams', 'maternalChildService'];
+UnderweightChildrenReportController.$inject = ['$scope', '$routeParams', '$location', 'maternalChildService' ];
 
 window.angular.module('icdsApp').directive('underweightChildrenReport', function() {
     return {

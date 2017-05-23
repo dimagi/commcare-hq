@@ -796,13 +796,14 @@ def get_awc_opened_data(filters):
     }
 
 
-def get_prevalnece_of_undernutrition_data(filters):
+def get_prevalence_of_undernutrition_data_map(config, group_by):
 
-    def get_data_for(month):
+    def get_data_for(filters):
+        filters['month'] = datetime(*filters['month'])
         return AggChildHealthMonthly.objects.filter(
-            month=datetime(*month), aggregation_level=1
+            **filters
         ).values(
-            'state_name'
+            group_by
         ).annotate(
             moderately_underweight=Sum('nutrition_status_moderately_underweight'),
             severely_underweight=Sum('nutrition_status_severely_underweight'),
@@ -811,17 +812,18 @@ def get_prevalnece_of_undernutrition_data(filters):
 
     map_data = {}
     average = []
-    for row in get_data_for(filters['month']):
+    for row in get_data_for(config):
         valid = row['valid']
-        name = row['state_name']
+        name = row[group_by]
 
         severely_underweight = row['severely_underweight']
         moderately_underweight = row['moderately_underweight']
 
-        average.extend([severely_underweight, moderately_underweight])
-
         moderately_percent = (moderately_underweight or 0) * 100 / (valid or 1)
         severely_percent = (severely_underweight or 0) * 100 / (valid or 1)
+
+        average.extend([moderately_percent, moderately_percent])
+
         if 0 <= moderately_percent < 16 or 0 <= severely_percent < 6:
             map_data.update({name: {'fillKey': '0%-15%'}})
         elif 16 <= moderately_percent <= 30 or 6 <= severely_percent <= 10:
@@ -829,15 +831,39 @@ def get_prevalnece_of_undernutrition_data(filters):
         elif moderately_percent > 30 or severely_percent > 10:
             map_data.update({name: {'fillKey': '30%-100%'}})
 
+    return [
+        {
+            "slug": "moderately_underweight",
+            "label": "",
+            "fills": {
+                '0%-15%': '#009811',
+                '16%-30%': '#df7400',
+                '30%-100%': '#d60000',
+                'defaultFill': 'black',
+            },
+            "rightLegend": {
+                "average": sum(average) / (len(average) or 1),
+                "info": _((
+                    "Percentage of children with weight-for-age less than -2 standard deviations of the WHO"
+                    " Child Growth Standards median. Children who are moderately or severely underweight "
+                    "have a higher risk of mortality."))
+            },
+            "data": map_data,
+        }
+    ]
 
+
+def get_prevalence_of_undernutrition_data_chart(config):
     moderately_chart_data = []
-    severaly_chart_data = []
+    severely_chart_data = []
+    config['month__range'] = (
+        datetime(*config['month']) - relativedelta(months=3),
+        datetime(*config['month'])
+    )
+    del config['month']
 
     chart_data = AggChildHealthMonthly.objects.filter(
-        month__range=(
-            datetime(*filters['month']) - relativedelta(months=3),
-            datetime(*filters['month'])
-        ), aggregation_level=1
+        **config
     ).values(
         'month',
     ).annotate(
@@ -852,36 +878,13 @@ def get_prevalnece_of_undernutrition_data(filters):
         severely_underweight = row['severely_underweight']
         moderately_underweight = row['moderately_underweight']
 
-        average.extend([severely_underweight, moderately_underweight])
-
         moderately_percent = (moderately_underweight or 0) / float(valid or 1)
         severely_percent = (severely_underweight or 0) / float(valid or 1)
 
         moderately_chart_data.append([int(date.strftime("%s")) * 1000, moderately_percent])
-        severaly_chart_data.append([int(date.strftime("%s")) * 1000, severely_percent])
+        severely_chart_data.append([int(date.strftime("%s")) * 1000, severely_percent])
 
-    return {
-        "configs": [
-            {
-                "slug": "moderately_underweight",
-                "label": "",
-                "fills": {
-                    '0%-15%': '#009811',
-                    '16%-30%': '#df7400',
-                    '30%-100%': '#d60000',
-                    'defaultFill': '#eef2ff',
-                },
-                "rightLegend": {
-                    "average": sum(average) / len(average),
-                    "info": _((
-                        "Percentage of children with weight-for-age less than -2 standard deviations of the WHO"
-                        " Child Growth Standards median. Children who are moderately or severely underweight "
-                        "have a higher risk of mortality."))
-                },
-                "data": map_data,
-            }
-        ],
-        "chart": [
+    return [
             {
                 "values": moderately_chart_data,
                 "key": "Underweight below -2 Z score",
@@ -889,10 +892,9 @@ def get_prevalnece_of_undernutrition_data(filters):
                 "classed": "dashed"
             },
             {
-                "values": severaly_chart_data,
+                "values": severely_chart_data,
                 "key": "Underweight below -3 Z score",
                 "strokeWidth": 2,
                 "classed": "dashed"
             }
         ]
-    }
