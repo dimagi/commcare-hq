@@ -1,0 +1,100 @@
+from mock import patch
+from datetime import datetime, timedelta
+from django.test import TestCase
+
+from corehq.apps.groups.models import Group
+from corehq.apps.domain.models import Domain
+from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
+
+from corehq.warehouse.models import (
+    GroupStagingTable,
+    DomainStagingTable,
+)
+
+
+class BaseStagingTableTest(TestCase):
+    records = []
+    staging_table_cls = None
+
+    @classmethod
+    def setUpClass(cls):
+        for record in cls.records:
+            record.save()
+
+    def tearDown(self):
+        self.staging_table_cls.clear_records()
+
+    @classmethod
+    def tearDownClass(cls):
+        for record in cls.records:
+            record.delete()
+
+
+class StagingRecordsTestsMixin(object):
+
+    def test_stage_records(self):
+        start = datetime.utcnow() - timedelta(days=3)
+        end = datetime.utcnow() + timedelta(days=3)
+
+        self.assertEqual(self.staging_table_cls.objects.count(), 0)
+        self.staging_table_cls.stage_records(start, end)
+        self.assertEqual(self.staging_table_cls.objects.count(), 3)
+
+        self.staging_table_cls.stage_records(start, end)
+        self.assertEqual(self.staging_table_cls.objects.count(), 3)
+
+    def test_stage_records_no_data(self):
+        start = datetime.utcnow() - timedelta(days=3)
+        end = datetime.utcnow() - timedelta(days=2)
+
+        self.assertEqual(self.staging_table_cls.objects.count(), 0)
+        self.staging_table_cls.stage_records(start, end)
+        self.assertEqual(self.staging_table_cls.objects.count(), 0)
+
+
+class TestGroupStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
+
+    records = [
+        Group(name='one', case_sharing=True, reporting=True),
+        Group(name='two'),
+        Group(name='three'),
+    ]
+    staging_table_cls = GroupStagingTable
+
+    @classmethod
+    def setUpClass(cls):
+        delete_all_docs_by_doc_type(Group.get_db(), ['Group', 'Group-Deleted'])
+        super(TestGroupStagingTable, cls).setUpClass()
+
+    def test_stage_records_bulk(self):
+        start = datetime.utcnow() - timedelta(days=3)
+        end = datetime.utcnow() + timedelta(days=3)
+
+        # 2 Queries for the atomic.transaction
+        # 1 Query for clearing records
+        # 1 Query for inserting recorrds
+        with self.assertNumQueries(4):
+            GroupStagingTable.stage_records(start, end)
+
+        # 2 Queries for the atomic.transaction
+        # 1 Query for clearing records
+        # 2 Queries for inserting recorrds
+        with self.assertNumQueries(5):
+            with patch('corehq.warehouse.utils.DJANGO_MAX_BATCH_SIZE', 2):
+                GroupStagingTable.stage_records(start, end)
+        self.assertEqual(GroupStagingTable.objects.count(), 3)
+
+
+class TestDomainStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
+
+    records = [
+        Domain(name='one', hr_name='One', creating_user_id='abc', is_active=True),
+        Domain(name='two', is_active=True),
+        Domain(name='three', is_active=True),
+    ]
+    staging_table_cls = DomainStagingTable
+
+    @classmethod
+    def setUpClass(cls):
+        delete_all_docs_by_doc_type(Domain.get_db(), ['Domain', 'Domain-Deleted'])
+        super(TestDomainStagingTable, cls).setUpClass()
