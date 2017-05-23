@@ -1417,6 +1417,22 @@
                 },
                 "type": "boolean",
                 "column_id": "case_created_by_migration"
+            },
+            {
+                "filter": {
+                    "type": "not",
+                    "filter": {
+                        "operator": "in",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "date_reported"
+                        },
+                        "property_value": [null, ""]
+                    }
+                },
+                "type": "boolean",
+                "column_id": "has_date_reported"
             }
         ],
         "named_expressions": {
