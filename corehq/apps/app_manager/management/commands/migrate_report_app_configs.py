@@ -3,6 +3,7 @@ import re
 from django.core.management import BaseCommand
 
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from toggle.models import Toggle
 
 
@@ -34,8 +35,11 @@ class Command(BaseCommand):
                                 logger.info("Migrating module {} in app {} in domain {}".format(
                                     module.id, app.id, domain
                                 ))
-                                config.migrate_graph_configs(domain)
-                                dirty = True
+                                try:
+                                    config.migrate_graph_configs(domain)
+                                    dirty = True
+                                except ReportConfigurationNotFoundError:
+                                    pass
                 if dirty:
                     app.save()
         logger.info('Done with migrate_report_app_configs')
