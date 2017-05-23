@@ -13,6 +13,9 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, ma
     ];
     vm.mapData = null;
     vm.chartData = null;
+    vm.top_three = [];
+    vm.bottom_three = [];
+    vm.location_type = null;
 
     vm.rightLegend = {
         average: 10,
@@ -24,7 +27,10 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, ma
             if (vm.step === "1") {
                 vm.mapData = response.data.report_data;
             } else if (vm.step === "2") {
-                vm.chartData = response.data.report_data;
+                vm.chartData = response.data.report_data.chart_data;
+                vm.top_three = response.data.report_data.top_three;
+                vm.bottom_three = response.data.report_data.bottom_three;
+                vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d[0]; });
             }
         });

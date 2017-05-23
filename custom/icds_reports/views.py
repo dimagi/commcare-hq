@@ -12,7 +12,7 @@ from django.views.generic.base import View, TemplateView
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.util import location_hierarchy_config
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
@@ -250,12 +250,13 @@ class PrevalenceOfUndernutritionView(View):
             'month': tuple(month.timetuple())[:3],
             'aggregation_level': aggregation_level,
         }
-
+        loc_level = 'state'
         if location:
             try:
-                sql_location = SQLLocation.objects.get(location_id=location)
+                sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
                 aggregation_level = sql_location.get_ancestors(include_self=True).count() + 1
                 location_code = sql_location.site_code
+                loc_level = LocationType.objects.filter(parent_type=sql_location.location_type)[0].code
                 location_key = '%s_site_code' % sql_location.location_type.code
                 config.update({
                     location_key: location_code.upper(),
@@ -264,12 +265,11 @@ class PrevalenceOfUndernutritionView(View):
             except SQLLocation.DoesNotExist:
                 pass
 
-        group_by = 'state_name' if aggregation_level == 1 else 'district_name'
         data = []
         if step == "1":
-            data = get_prevalence_of_undernutrition_data_map(config, group_by)
+            data = get_prevalence_of_undernutrition_data_map(config, loc_level)
         elif step == "2":
-            data = get_prevalence_of_undernutrition_data_chart(config)
+            data = get_prevalence_of_undernutrition_data_chart(config, loc_level)
 
         return JsonResponse(data={
             'report_data': data,

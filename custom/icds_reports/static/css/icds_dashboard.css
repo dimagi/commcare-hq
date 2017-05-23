@@ -202,3 +202,53 @@ h4 {
         left: 5px;
     }
 }
+
+.small-table {
+    padding: 0px !important;
+    margin: 15px !important;
+    border: 1px solid #D4D4D4;
+}
+
+.small-table > .small-table-title {
+    background-color: #00A8C6;
+    font-size: 30px;
+    font-weight: bold;
+    color: white;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.small-table > .small-table-record {
+    margin: 5px;
+    line-height: 36px;
+}
+
+.small-table > .small-table-record > span{
+    vertical-align: middle;
+}
+
+.circle-green {
+    background-color: green;
+    border-radius: 30px;
+    font-size: 20px;
+    color: white;
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    display: inline-block;
+}
+
+.circle-red {
+    background-color: red;
+    border-radius: 30px;
+    font-size: 20px;
+    color: white;
+    width: 40px;
+    height: 40px;
+    text-align: center;
+    display: inline-block;
+}
+
+.circle>span {
+    vertical-align: middle;
+}

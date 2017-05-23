@@ -18288,9 +18288,9 @@ STATES_TOPOJSON = {
 	"objects": {
 		"ind": {
 			"type": "GeometryCollection",
-            "center": [80, 25],
-            "height": 800,
-            "scale": 1240,
+            "center": [80, 26],
+            "height": 1000,
+            "scale": 1800,
 			"geometries": [{
 				"arcs": [
 					[
