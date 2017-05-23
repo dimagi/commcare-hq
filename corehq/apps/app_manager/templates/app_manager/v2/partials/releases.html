@@ -172,21 +172,23 @@
                 'error': build_broken
             }">
           <div class="panel-heading">
-              <div class="release-trash-container">
-                <a href="#"
-                   class="hide release-remove"
-                   data-bind="openModal: 'delete-build-modal-template',
-                              visible: !_deleteState(),
-                              css: {hide: false}">
-                    <i class="fa fa-trash"></i>
-                </a>
-                <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
-                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
-                </div>
-                <i class="fa fa-exclamation-circle hide"
-                   data-bind="visible: _deleteState() == 'error',
-                              css: {hide: false}"></i>
-              </div>
+              {% if request.user.is_superuser %}
+                  <div class="release-trash-container">
+                    <a href="#"
+                       class="hide release-remove"
+                       data-bind="openModal: 'delete-build-modal-template',
+                                  visible: !_deleteState(),
+                                  css: {hide: false}">
+                        <i class="fa fa-trash"></i>
+                    </a>
+                    <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
+                        <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
+                    </div>
+                    <i class="fa fa-exclamation-circle hide"
+                       data-bind="visible: _deleteState() == 'error',
+                                  css: {hide: false}"></i>
+                  </div>
+              {% endif %}
               <h4 class="panel-release-title">
                 <span class="build-is-released">
                     <span data-bind="starred: is_released, click: $root.toggleRelease"></span>

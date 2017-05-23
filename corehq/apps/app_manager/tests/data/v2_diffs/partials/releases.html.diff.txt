@@ -70,7 +70,7 @@
  <div class="tabbable">
      <ul class="nav nav-tabs">
          <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
-@@ -72,176 +102,155 @@
+@@ -72,178 +102,157 @@
                          {% endblocktrans %}
                      </small></p>
                  </div>
@@ -118,7 +118,7 @@
      <div id="build-errors-wrapper"></div>
 -    <table class="table">
 -        <tr>
--            <th colspan="2">{% trans "Version" %}</th>
+-            <th{% if request.user.is_superuser %} colspan="2"{% endif %}>{% trans "Version" %}</th>
 -            <th colspan="2">{% trans "Date &amp; Time" %}</th>
 -            <th>{% trans "CommCare Version" %}</th>
 -            <th></th>
@@ -200,23 +200,58 @@
                  'build-latest-release': id() === $root.latestReleaseId(),
                  'error': build_broken
              }">
--                <td>
--                    <a href="#" class="hide" data-bind="
--                        openModal: 'delete-build-modal-template',
--                        visible: !_deleteState(),
--                        css: {hide: false}
--                    ">
--                        <i class="fa fa-remove"></i>
--                    </a>
--                    <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
--                        <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
--                    </div>
--
--                    <i class="fa fa-exclamation-circle" class="hide" data-bind="
--                        visible: _deleteState() == 'error',
--                        css: {hide: false}
--                    "></i>
--                </td>
+-                {% if request.user.is_superuser %}
+-                    <td>
+-                        <a href="#" class="hide" data-bind="
+-                            openModal: 'delete-build-modal-template',
+-                            visible: !_deleteState(),
+-                            css: {hide: false}
+-                        ">
+-                            <i class="fa fa-remove"></i>
+-                        </a>
+-                        <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
+-                            <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
+-                        </div>
+- 
+-                        <i class="fa fa-exclamation-circle" class="hide" data-bind="
+-                            visible: _deleteState() == 'error',
+-                            css: {hide: false}
+-                        "></i>
+-                    </td>
++          <div class="panel-heading">
++              {% if request.user.is_superuser %}
++                  <div class="release-trash-container">
++                    <a href="#"
++                       class="hide release-remove"
++                       data-bind="openModal: 'delete-build-modal-template',
++                                  visible: !_deleteState(),
++                                  css: {hide: false}">
++                        <i class="fa fa-trash"></i>
++                    </a>
++                    <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
++                        <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
++                    </div>
++                    <i class="fa fa-exclamation-circle hide"
++                       data-bind="visible: _deleteState() == 'error',
++                                  css: {hide: false}"></i>
++                  </div>
++              {% endif %}
++              <h4 class="panel-release-title">
++                <span class="build-is-released">
++                    <span data-bind="starred: is_released, click: $root.toggleRelease"></span>
++                </span>
++                <strong>{% trans "Version" %} <span data-bind="text: version"></span></strong> |
++                <span data-bind="text: built_on_date"></span> <span data-bind="text: built_on_time"></span> {% trans 'by' %}
++                <span data-bind="text: comment_user_name"></span>
++                <!--ko if: menu_item_label() -->
++                {% trans "with CommCare v." %}
++                <span data-bind="text: menu_item_label()"></span>
++                <!--/ko-->
++                <span data-bind="if: !built_with.signed()">{% trans "Unsigned Jar" %}</span>
++                {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
++                | <a class="release-error-report-link" data-bind="text: numErrorsText,
++                              attr: {href: $root.app_error_url('{{ app.id }}', version())}"></a>
+                 {% endif %}
 -                <td class="text-nowrap" data-bind="text: version"></td>
 -                <td class="text-nowrap" data-bind="text: built_on_date"></td>
 -                <td class="text-nowrap" data-bind="text: built_on_time"></td>
@@ -248,38 +283,7 @@
 -                        {% trans "View Changes" %}
 -                    </button>
 -                </td>
-+          <div class="panel-heading">
-+              <div class="release-trash-container">
-+                <a href="#"
-+                   class="hide release-remove"
-+                   data-bind="openModal: 'delete-build-modal-template',
-+                              visible: !_deleteState(),
-+                              css: {hide: false}">
-+                    <i class="fa fa-trash"></i>
-+                </a>
-+                <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
-+                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
-+                </div>
-+                <i class="fa fa-exclamation-circle hide"
-+                   data-bind="visible: _deleteState() == 'error',
-+                              css: {hide: false}"></i>
-+              </div>
-+              <h4 class="panel-release-title">
-+                <span class="build-is-released">
-+                    <span data-bind="starred: is_released, click: $root.toggleRelease"></span>
-+                </span>
-+                <strong>{% trans "Version" %} <span data-bind="text: version"></span></strong> |
-+                <span data-bind="text: built_on_date"></span> <span data-bind="text: built_on_time"></span> {% trans 'by' %}
-+                <span data-bind="text: comment_user_name"></span>
-+                <!--ko if: menu_item_label() -->
-+                {% trans "with CommCare v." %}
-+                <span data-bind="text: menu_item_label()"></span>
-+                <!--/ko-->
-+                <span data-bind="if: !built_with.signed()">{% trans "Unsigned Jar" %}</span>
-+                {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
-+                | <a class="release-error-report-link" data-bind="text: numErrorsText,
-+                              attr: {href: $root.app_error_url('{{ app.id }}', version())}"></a>
-                 {% endif %}
+-                {% endif %}
 -                <td>
 -                    <button class="btn btn-default hide" data-bind="
 +              </h4>
@@ -386,7 +390,7 @@
      <script type="text/html" id="delete-build-modal-template">
          <div class="modal-dialog">
              <div class="modal-content">
-@@ -289,18 +298,19 @@
+@@ -291,18 +300,19 @@
          </div>
      </script>
      <script type="text/html" id="deploy-build-modal-template">

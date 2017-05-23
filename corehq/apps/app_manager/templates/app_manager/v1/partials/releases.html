@@ -90,7 +90,7 @@
     <div id="build-errors-wrapper"></div>
     <table class="table">
         <tr>
-            <th colspan="2">{% trans "Version" %}</th>
+            <th{% if request.user.is_superuser %} colspan="2"{% endif %}>{% trans "Version" %}</th>
             <th colspan="2">{% trans "Date &amp; Time" %}</th>
             <th>{% trans "CommCare Version" %}</th>
             <th></th>
@@ -136,23 +136,25 @@
                 'build-latest-release': id() === $root.latestReleaseId(),
                 'error': build_broken
             }">
-                <td>
-                    <a href="#" class="hide" data-bind="
-                        openModal: 'delete-build-modal-template',
-                        visible: !_deleteState(),
-                        css: {hide: false}
-                    ">
-                        <i class="fa fa-remove"></i>
-                    </a>
-                    <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
-                        <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
-                    </div>
-
-                    <i class="fa fa-exclamation-circle" class="hide" data-bind="
-                        visible: _deleteState() == 'error',
-                        css: {hide: false}
-                    "></i>
-                </td>
+                {% if request.user.is_superuser %}
+                    <td>
+                        <a href="#" class="hide" data-bind="
+                            openModal: 'delete-build-modal-template',
+                            visible: !_deleteState(),
+                            css: {hide: false}
+                        ">
+                            <i class="fa fa-remove"></i>
+                        </a>
+                        <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
+                            <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
+                        </div>
+ 
+                        <i class="fa fa-exclamation-circle" class="hide" data-bind="
+                            visible: _deleteState() == 'error',
+                            css: {hide: false}
+                        "></i>
+                    </td>
+                {% endif %}
                 <td class="text-nowrap" data-bind="text: version"></td>
                 <td class="text-nowrap" data-bind="text: built_on_date"></td>
                 <td class="text-nowrap" data-bind="text: built_on_time"></td>
