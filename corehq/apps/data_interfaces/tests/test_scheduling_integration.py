@@ -14,6 +14,7 @@ from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule, SMSContent
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
+    get_case_alert_schedule_instances_for_schedule,
     get_case_timed_schedule_instances_for_schedule,
     delete_case_schedule_instance,
 )
@@ -161,4 +162,67 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             utcnow_patch.return_value = datetime(2017, 5, 1, 7, 3)
             rule.run_rule(case, utcnow_patch.return_value)
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 0)
+
+    @run_with_all_backends
+    def test_alert_schedule_instance_creation(self):
+        schedule = AlertSchedule.create_simple_alert(
+            self.domain,
+            SMSContent(message={'en': 'Hello'})
+        )
+
+        rule = _create_empty_rule(self.domain)
+
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='start_sending',
+            property_value='Y',
+            match_type=MatchPropertyDefinition.MATCH_EQUAL,
+        )
+
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            alert_schedule_id=schedule.schedule_id,
+            recipients=(('CommCareUser', self.user.get_id),)
+        )
+
+        with _create_case(self.domain, 'person') as case, \
+                patch('corehq.messaging.scheduling.util.utcnow') as utcnow_patch:
+
+            utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
+
+            # Rule does not match, no instances created
+            rule.run_rule(case, utcnow_patch.return_value)
+            instances = get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 0)
+
+            update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
+            case = CaseAccessors(self.domain).get_case(case.case_id)
+
+            # Rule now matches. On the first iteration, the instance is created. On the second,
+            # no new instance is created since it already exists.
+            for minute in range(1, 3):
+                utcnow_patch.return_value = datetime(2017, 5, 1, 7, minute)
+                rule.run_rule(case, utcnow_patch.return_value)
+                instances = get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
+                self.assertEqual(instances.count(), 1)
+
+                self.assertEqual(instances[0].case_id, case.case_id)
+                self.assertEqual(instances[0].rule_id, rule.pk)
+                self.assertEqual(instances[0].alert_schedule_id, schedule.schedule_id)
+                self.assertEqual(instances[0].domain, self.domain)
+                self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+                self.assertEqual(instances[0].recipient_id, self.user.get_id)
+                self.assertEqual(instances[0].current_event_num, 0)
+                self.assertEqual(instances[0].schedule_iteration_num, 1)
+                self.assertEqual(instances[0].next_event_due, datetime(2017, 5, 1, 7, 1))
+                self.assertTrue(instances[0].active)
+
+            update_case(self.domain, case.case_id, case_properties={'start_sending': 'N'})
+            case = CaseAccessors(self.domain).get_case(case.case_id)
+
+            # Rule no longer matches. Instance should no longer exist.
+            utcnow_patch.return_value = datetime(2017, 5, 1, 7, 3)
+            rule.run_rule(case, utcnow_patch.return_value)
+            instances = get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
