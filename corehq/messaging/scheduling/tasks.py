@@ -82,6 +82,7 @@ def refresh_timed_schedule_instances(schedule, recipients, start_date=None):
             schedule_instance.recalculate_schedule(schedule, new_start_date=start_date)
             save_timed_schedule_instance(schedule_instance)
 
+
 def convert_to_tuple_of_tuples(list_of_lists):
     list_of_tuples = [tuple(item) for item in list_of_lists]
     return tuple(list_of_tuples)
