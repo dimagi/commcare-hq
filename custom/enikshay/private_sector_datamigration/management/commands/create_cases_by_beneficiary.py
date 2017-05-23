@@ -113,23 +113,7 @@ class Command(BaseCommand):
             owner_organisation_ids=owner_organisation_ids,
         )
 
-        # Assert never null
-        assert not beneficiaries.filter(firstName__isnull=True).exists()
-        assert not beneficiaries.filter(lastName__isnull=True).exists()
-        assert not beneficiaries.filter(phoneNumber__isnull=True).exists()
-        assert not Episode.objects.filter(dateOfDiagnosis__isnull=True).exists()
-        assert not Episode.objects.filter(patientWeight__isnull=True).exists()
-        assert not Episode.objects.filter(rxStartDate__isnull=True).exists()
-        assert not Episode.objects.filter(site__isnull=True).exists()
-        assert not Adherence.objects.filter(creationDate__isnull=True).exists()
-
-        # Assert always null
-        assert not beneficiaries.filter(mdrTBSuspected__isnull=False).exists()
-        assert not beneficiaries.filter(middleName__isnull=False).exists()
-        assert not beneficiaries.filter(nikshayId__isnull=False).exists()
-        assert not beneficiaries.filter(symptoms__isnull=False).exists()
-        assert not beneficiaries.filter(tsType__isnull=False).exists()
-        assert not Episode.objects.filter(phoneNumber__isnull=False).exists()
+        self.perform_checks(beneficiaries)
 
         self.migrate_to_enikshay(domain, beneficiaries, skip_adherence, chunk_size, location_owner)
 
@@ -247,3 +231,23 @@ class Command(BaseCommand):
         logger.info('Setting cleanliness flags')
         set_cleanliness_flags_for_domain(domain, force_full=True, raise_soft_assertions=False)
         logger.info('Done!')
+
+    @staticmethod
+    def perform_checks(beneficiaries):
+        # Assert never null
+        assert not beneficiaries.filter(firstName__isnull=True).exists()
+        assert not beneficiaries.filter(lastName__isnull=True).exists()
+        assert not beneficiaries.filter(phoneNumber__isnull=True).exists()
+        assert not Episode.objects.filter(dateOfDiagnosis__isnull=True).exists()
+        assert not Episode.objects.filter(patientWeight__isnull=True).exists()
+        assert not Episode.objects.filter(rxStartDate__isnull=True).exists()
+        assert not Episode.objects.filter(site__isnull=True).exists()
+        assert not Adherence.objects.filter(creationDate__isnull=True).exists()
+
+        # Assert always null
+        assert not beneficiaries.filter(mdrTBSuspected__isnull=False).exists()
+        assert not beneficiaries.filter(middleName__isnull=False).exists()
+        assert not beneficiaries.filter(nikshayId__isnull=False).exists()
+        assert not beneficiaries.filter(symptoms__isnull=False).exists()
+        assert not beneficiaries.filter(tsType__isnull=False).exists()
+        assert not Episode.objects.filter(phoneNumber__isnull=False).exists()
