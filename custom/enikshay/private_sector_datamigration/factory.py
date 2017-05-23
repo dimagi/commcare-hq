@@ -121,8 +121,9 @@ class BeneficiaryCaseFactory(object):
         if self.beneficiary.has_aadhaar_number:
             kwargs['attrs']['update']['aadhaar_number'] = self.beneficiary.identificationNumber
         else:
-            kwargs['attrs']['update']['other_id_number'] = self.beneficiary.identificationNumber
             kwargs['attrs']['update']['other_id_type'] = self.beneficiary.other_id_type
+            if self.beneficiary.other_id_type != 'none':
+                kwargs['attrs']['update']['other_id_number'] = self.beneficiary.identificationNumber
 
         kwargs['attrs']['update']['facility_assigned_to'] = self._location_owner_id
 
