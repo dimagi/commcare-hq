@@ -130,7 +130,7 @@ class HistoricalAdherenceReport(EnikshayReport):
         return len(dose_taken_adherence.keys())
 
     def get_treatment_phase(self):
-        if self.episode_properties.get("treatment_initiated", False) == "yes":
+        if self.episode_properties.get("treatment_initiated", False) in ("yes_phi", "yes_private"):
             if self.episode_properties.get("cp_initiated", False) == "yes":
                 return "CP"
             return "IP"
