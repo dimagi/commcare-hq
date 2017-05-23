@@ -822,6 +822,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     phone_numbers = ListProperty()
     created_on = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
+    last_modified = DateTimeProperty()
     #    For now, 'status' is things like:
     #        ('auto_created',     'Automatically created from form submission.'),
     #        ('phone_registered', 'Registered from phone'),
@@ -1339,7 +1340,15 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         self.username = username
         self.save()
 
+    @classmethod
+    def save_docs(cls, docs, **kwargs):
+        utcnow = datetime.utcnow()
+        for doc in docs:
+            doc['last_modified'] = utcnow
+        super(CouchUser, cls).save_docs(docs, **kwargs)
+
     def save(self, **params):
+        self.last_modified = datetime.utcnow()
         self.clear_quickcache_for_user()
         with CriticalSection(['username-check-%s' % self.username], timeout=120):
             # test no username conflict
