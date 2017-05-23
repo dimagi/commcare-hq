@@ -340,12 +340,13 @@
                         <!-- /ko -->
                         <span class="help-block" data-bind="text: validate"></span>
                     </div>
+                    <div class="alert alert-warning" data-bind="visible: !auto_select.mode()">
+                        {% trans "Please select an autoselection mode." %}
+                    </div>
                 </div>
             </div>
 
-            <div class="alert alert-warning" data-bind="visible: !auto_select.mode()">
-                <em>{% trans "Please select an autoselection mode." %}</em>
-            </div>
+
             <div data-bind="visible: auto_select.mode()">
                 <!-- ko template: {name: 'case-config:case-action:body'} --><!-- /ko -->
             </div>
