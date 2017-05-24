@@ -58,7 +58,9 @@ class Command(BaseCommand):
                 checkpoint.save()
 
                 for topic_partition, offset in kafka_seq.items():
-                    KafkaCheckpoint.objects.update_or_create(
+                    # use get or create so that we don't accidentally update
+                    # any kafka checkpoints that are further than django checkpoints.
+                    KafkaCheckpoint.objects.get_or_create(
                         checkpoint_id=checkpoint.checkpoint_id,
                         topic=topic_partition.topic,
                         partition=topic_partition.partition,

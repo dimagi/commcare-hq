@@ -95,6 +95,7 @@ class NinetyNineDotsBasePayloadGenerator(BasePayloadGenerator):
 
 
 class RegisterPatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
+    deprecated_format_names = ('case_json',)
 
     def get_test_payload(self, domain):
         return json.dumps(PatientPayload(
@@ -139,6 +140,7 @@ class RegisterPatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
 
 
 class UpdatePatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
+    deprecated_format_names = ('case_json',)
 
     def get_test_payload(self, domain):
         return json.dumps(PatientPayload(
@@ -197,6 +199,7 @@ class UpdatePatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
 
 
 class AdherencePayloadGenerator(NinetyNineDotsBasePayloadGenerator):
+    deprecated_format_names = ('case_json',)
 
     def get_payload(self, repeat_record, adherence_case):
         domain = adherence_case.domain
@@ -246,6 +249,7 @@ class AdherencePayloadGenerator(NinetyNineDotsBasePayloadGenerator):
 
 
 class TreatmentOutcomePayloadGenerator(NinetyNineDotsBasePayloadGenerator):
+    deprecated_format_names = ('case_json',)
 
     def get_payload(self, repeat_record, episode_case):
         domain = episode_case.domain

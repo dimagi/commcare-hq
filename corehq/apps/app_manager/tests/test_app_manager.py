@@ -63,6 +63,23 @@ class AppManagerTest(TestCase):
             )
         self.app.save()
 
+    def test_last_modified(self):
+        lm = self.app.last_modified
+        self.app.save()
+        app = Application.get(self.app._id)
+        self.assertGreater(app.last_modified, lm)
+
+    def test_last_modified_bulk(self):
+        lm = self.app.last_modified
+        Application.save_docs([self.app])
+        app = Application.get(self.app._id)
+        self.assertGreater(app.last_modified, lm)
+
+        lm = self.app.last_modified
+        Application.bulk_save([self.app])
+        app = Application.get(self.app._id)
+        self.assertGreater(app.last_modified, lm)
+
     def test_increment_version(self):
         old_version = self.app.version
         self.app.save()
