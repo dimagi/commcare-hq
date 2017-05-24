@@ -2,7 +2,6 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
 
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import WebUser
 from custom.nic_compliance.password_validation import UsedPasswordValidator
 from custom.nic_compliance.const import RESTRICT_USED_PASSWORDS_NUM
@@ -10,7 +9,6 @@ from custom.nic_compliance.const import RESTRICT_USED_PASSWORDS_NUM
 
 class TestUsedPasswordsRestriction(TestCase):
     def setUp(self):
-        delete_all_users()
         self.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         self.username = 'auser@qwerty.commcarehq.org'
         self.password = 'apassword'
