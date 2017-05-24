@@ -334,6 +334,17 @@ hqDefine('app_manager/js/releases.js', function () {
             });
         };
 
+
+
+        self.handleAfterRender = function (elem, savedApp) {
+            $(elem).find('.js-auto-update-checkbox').bootstrapSwitch({
+                state: savedApp.is_released(),
+                onSwitchChange: function () {
+                    self.toggleRelease(savedApp)
+                }
+            });
+        };
+
         self.toggleRelease = function (savedApp) {
             var is_released = savedApp.is_released();
             var saved_app_id = savedApp.id();
