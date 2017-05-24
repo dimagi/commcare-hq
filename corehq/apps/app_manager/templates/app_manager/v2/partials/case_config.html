@@ -6,15 +6,15 @@
         <div class="modal-content">
             <div class="modal-header">
                 <a href="#" class="close" data-dismiss="modal">×</a>
-                <h4 class="modal-title">{% trans "Remove Subcase?" %}</h4>
+                <h4 class="modal-title">{% trans "Remove Child Case?" %}</h4>
             </div>
             <div class="modal-body">
-                <p>{% trans "Are you sure you want to remove this subcase?" %}</p>
+                <p>{% trans "Are you sure you want to remove this Child Case?" %}</p>
             </div>
             <div class="modal-footer">
                 <a href="#" class="btn btn-default" data-dismiss="modal">{% trans "Cancel" %}</a>
                 <a class="btn btn-danger" href="#" data-bind="click: $parent.removeSubCase" data-dismiss="modal">
-                    {% trans "Remove Subcase" %}
+                    {% trans "Remove Child Case" %}
                 </a>
             </div>
         </div>
