@@ -716,7 +716,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             uuid='ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i',
             xpath_description='"report description"',
             use_xpath_description=True,
-            complete_graph_configs = {
+            complete_graph_configs={
                 chart.chart_id: GraphConfiguration(
                     graph_type="bar",
                     series=[GraphSeries() for c in chart.y_axis_columns],

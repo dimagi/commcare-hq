@@ -112,13 +112,13 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
 
         report_app_config = ReportAppConfig(report_id=report._id,
                                             header={'en': 'CommBugz'},
-                                            complete_graph_configs = {
+                                            complete_graph_configs={
                                                 chart.chart_id: GraphConfiguration(
                                                     series=[GraphSeries() for c in chart.y_axis_columns],
                                                 )
                                                 for chart in report.charts
                                             },
-        )
+                                           )
         report_app_config._report = report
         report_module.report_configs = [report_app_config]
         report_module._loaded = True
