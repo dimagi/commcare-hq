@@ -35,7 +35,7 @@
 
             var creditsHandler = new CreditsManager(
                 {{ plan.products|JSON }}, {{ plan.features|JSON }},
-                paymentHandler, {{ can_purchase_credits|BOOL }}, {{ plan.is_trial|BOOL }}
+                paymentHandler, {{ can_purchase_credits|BOOL }}
             );
             $('#subscriptionSummary').koApplyBindings(creditsHandler);
             creditsHandler.init();
