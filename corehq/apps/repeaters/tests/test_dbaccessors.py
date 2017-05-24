@@ -14,7 +14,7 @@ from corehq.apps.repeaters.dbaccessors import (
     get_domains_that_have_repeat_records,
 )
 from corehq.apps.repeaters.models import RepeatRecord, CaseRepeater
-from corehq.apps.repeaters.const import RECORD_PENDING_STATE
+from corehq.apps.repeaters.const import RECORD_PENDING_STATE, RECORD_CANCELLED_STATE
 
 
 class TestRepeatRecordDBAccessors(TestCase):
@@ -140,6 +140,39 @@ class TestRepeatRecordDBAccessors(TestCase):
     def test_get_all_repeat_records_by_domain_with_repeater_id(self):
         records = list(iter_repeat_records_by_domain(self.domain, repeater_id=self.repeater_id))
         self.assertEqual(len(records), 5)
+
+    def test_get_all_repeat_records_by_domain_since(self):
+        new_records = [
+            # FAIL
+            RepeatRecord(
+                domain=self.domain,
+                repeater_id=self.repeater_id,
+                last_checked=datetime(2017, 5, 24, 0, 0, 0),
+                failure_reason='some error',
+            ),
+            # CANCELLED
+            RepeatRecord(
+                domain=self.domain,
+                repeater_id=self.repeater_id,
+                last_checked=datetime(2017, 5, 10, 0, 0, 0),
+                cancelled=True,
+            ),
+            # CANCELLED
+            RepeatRecord(
+                domain=self.domain,
+                repeater_id=self.repeater_id,
+                last_checked=datetime(2017, 5, 24, 0, 0, 0),
+                cancelled=True,
+            ),
+        ]
+        RepeatRecord.bulk_save(new_records)
+        self.addCleanup(RepeatRecord.bulk_delete, new_records)
+
+        records = list(iter_repeat_records_by_domain(self.domain, state=RECORD_CANCELLED_STATE,
+                                                     since=datetime(2017, 5, 20)))
+        self.assertEqual(len(records), 1)
+        record, = records
+        self.assertEqual(record.to_json(), new_records[-1].to_json())
 
     def test_get_all_repeat_records_by_domain(self):
         records = list(iter_repeat_records_by_domain(self.domain))
