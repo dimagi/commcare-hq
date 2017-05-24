@@ -340,8 +340,8 @@ hqDefine('app_manager/js/releases.js', function () {
             $(elem).find('.js-auto-update-checkbox').bootstrapSwitch({
                 state: savedApp.is_released(),
                 onSwitchChange: function () {
-                    self.toggleRelease(savedApp)
-                }
+                    self.toggleRelease(savedApp);
+                },
             });
         };
 
