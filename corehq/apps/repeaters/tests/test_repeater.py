@@ -632,11 +632,13 @@ class TestRepeaterFormat(BaseRepeaterTest):
         class NewCaseGenerator(BasePayloadGenerator):
             format_name = 'new_format'
             format_label = 'XML'
+            deprecated_format_names = ('new_format_alias',)
 
             def get_payload(self, repeat_record, payload_doc):
                 return cls.payload
 
         RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator)
+        cls.new_generator = NewCaseGenerator
 
     def setUp(self):
         super(TestRepeaterFormat, self).setUp()
@@ -692,6 +694,13 @@ class TestRepeaterFormat(BaseRepeaterTest):
                 timeout=POST_TIMEOUT,
                 auth=self.repeater.get_auth(),
             )
+
+    def test_get_format_by_deprecated_name(self):
+        self.assertIsInstance(CaseRepeater(
+            domain=self.domain,
+            url='case-repeater-url',
+            format='new_format_alias',
+        ).generator, self.new_generator)
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)

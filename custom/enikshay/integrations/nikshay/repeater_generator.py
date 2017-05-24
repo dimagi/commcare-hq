@@ -88,6 +88,8 @@ class BaseNikshayPayloadGenerator(BasePayloadGenerator):
 
 
 class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
+    deprecated_format_names = ('case_json',)
+
     def get_payload(self, repeat_record, episode_case):
         """
         https://docs.google.com/document/d/1yUWf3ynHRODyVVmMrhv5fDhaK_ufZSY7y0h9ke5rBxU/edit#heading=h.a9uhx3ql595c
@@ -146,6 +148,7 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
 
 
 class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
+    deprecated_format_names = ('case_json',)
 
     def get_payload(self, repeat_record, episode_case):
         """
@@ -182,6 +185,8 @@ class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
 
 
 class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
+    deprecated_format_names = ('case_json',)
+
     @property
     def content_type(self):
         return 'application/json'
@@ -229,6 +234,8 @@ class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
 
 
 class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
+    deprecated_format_names = ('case_json',)
+
     def get_payload(self, repeat_record, test_case):
         occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
         episode_case = get_open_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
