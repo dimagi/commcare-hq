@@ -87,6 +87,13 @@
   .bootstrap-switch-primary:focus {
     border-color: @cc-brand-mid;
   }
+  .bootstrap-switch.bootstrap-switch-mini .bootstrap-switch-handle-on,
+  .bootstrap-switch.bootstrap-switch-mini .bootstrap-switch-handle-off,
+  .bootstrap-switch.bootstrap-switch-mini .bootstrap-switch-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 800;
+  }
 }
 
 .panel-release-title {
@@ -111,7 +118,7 @@
       color: @text-color;
       .transition(all 500ms ease-in-out);
       font-size: 15px;
-      padding: 14px 18px 16px;
+      padding: 11px 18px 13px;
       display: block;
       &:hover {
         color: @cc-att-neg-mid;
@@ -119,7 +126,8 @@
     }
   }
   .build-is-released {
-    margin-left: 12px;
+    float: right;
+    padding: 13px 0;
   }
 }
 
