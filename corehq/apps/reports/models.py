@@ -965,8 +965,10 @@ class FormExportSchema(HQExportSchema):
         if not self.app or isinstance(self.app, RemoteApp):
             return False
         forms = self.app.get_forms_by_xmlns(self.xmlns)
-        if forms and isinstance(forms[0], Form):
-            return bool(forms[0].active_actions())
+        for form in forms:
+            if isinstance(form, Form):
+                if bool(form.active_actions()):
+                    return True
         return False
 
 
