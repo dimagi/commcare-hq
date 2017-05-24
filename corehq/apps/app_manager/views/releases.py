@@ -12,7 +12,7 @@ from django_prbac.decorators import requires_privilege
 from django.contrib import messages
 from django.shortcuts import render
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext_lazy, ugettext as _
 from django.views.decorators.cache import cache_control
 
 import ghdiff
@@ -257,18 +257,29 @@ def revert_to_copy(request, domain, app_id):
     """
     app = get_app(domain, app_id)
     copy = get_app(domain, request.POST['saved_app'])
+
+    errors = app.validate_app()
+    if not errors:
+        before = app.make_build(
+            comment=_("Auto-generated before reverting to version %s") % copy.version,
+            user_id=request.couch_user.get_id,
+            previous_version=app.get_latest_app(released_only=False)
+        )
+        before.save(increment_version=False)
+
     app = app.make_reversion_to_copy(copy)
     app.save()
     messages.success(
         request,
         "Successfully reverted to version %s, now at version %s" % (copy.version, app.version)
     )
-    copy = app.make_build(
-        comment="Reverted to version %s" % copy.version,
+
+    after = app.make_build(
+        comment=_("Auto-generated while reverting to version %s") % copy.version,
         user_id=request.couch_user.get_id,
         previous_version=app.get_latest_app(released_only=False)
     )
-    copy.save(increment_version=False)
+    after.save(increment_version=False)
     return back_to_main(request, domain, app_id=app_id)
 
 
