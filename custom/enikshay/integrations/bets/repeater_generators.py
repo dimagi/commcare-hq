@@ -261,10 +261,12 @@ class BaseBETSVoucherPayloadGenerator(BETSBasePayloadGenerator):
 
 
 class ChemistBETSVoucherPayloadGenerator(BaseBETSVoucherPayloadGenerator):
+    deprecated_format_names = ('case_json',)
     event_id = CHEMIST_VOUCHER_EVENT
 
 
 class LabBETSVoucherPayloadGenerator(BaseBETSVoucherPayloadGenerator):
+    deprecated_format_names = ('case_json',)
     event_id = LAB_VOUCHER_EVENT
 
 
@@ -282,6 +284,7 @@ class IncentivePayloadGenerator(BETSBasePayloadGenerator):
 
 
 class BETS180TreatmentPayloadGenerator(IncentivePayloadGenerator):
+    deprecated_format_names = ('case_json',)
     event_id = TREATMENT_180_EVENT
 
     def get_payload(self, repeat_record, episode_case):
@@ -289,6 +292,7 @@ class BETS180TreatmentPayloadGenerator(IncentivePayloadGenerator):
 
 
 class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
+    deprecated_format_names = ('case_json',)
     event_id = DRUG_REFILL_EVENT
 
     @staticmethod
@@ -347,6 +351,7 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
 
 
 class BETSSuccessfulTreatmentPayloadGenerator(IncentivePayloadGenerator):
+    deprecated_format_names = ('case_json',)
     event_id = SUCCESSFUL_TREATMENT_EVENT
 
     def get_payload(self, repeat_record, episode_case):
@@ -354,6 +359,7 @@ class BETSSuccessfulTreatmentPayloadGenerator(IncentivePayloadGenerator):
 
 
 class BETSDiagnosisAndNotificationPayloadGenerator(IncentivePayloadGenerator):
+    deprecated_format_names = ('case_json',)
     event_id = DIAGNOSIS_AND_NOTIFICATION_EVENT
 
     def get_payload(self, repeat_record, episode_case):
@@ -361,6 +367,7 @@ class BETSDiagnosisAndNotificationPayloadGenerator(IncentivePayloadGenerator):
 
 
 class BETSAYUSHReferralPayloadGenerator(IncentivePayloadGenerator):
+    deprecated_format_names = ('case_json',)
     event_id = AYUSH_REFERRAL_EVENT
 
     def get_payload(self, repeat_record, episode_case):
