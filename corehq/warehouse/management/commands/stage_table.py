@@ -4,6 +4,8 @@ from corehq.warehouse.models import (
     GroupStagingTable,
     DomainStagingTable,
     UserStagingTable,
+    FormStagingTable,
+    SyncLogStagingTable,
 )
 
 
@@ -11,6 +13,8 @@ SLUG_TO_STAGING_TABLE = {
     GroupStagingTable.slug: GroupStagingTable,
     DomainStagingTable.slug: DomainStagingTable,
     UserStagingTable.slug: UserStagingTable,
+    FormStagingTable.slug: FormStagingTable,
+    SyncLogStagingTable.slug: SyncLogStagingTable,
 }
 
 USAGE = """Usage: ./manage.py stage_table <slug> -s <start_datetime> -e <end_datetime>

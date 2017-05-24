@@ -15,4 +15,6 @@ from corehq.warehouse.models.staging import (
     GroupStagingTable,
     DomainStagingTable,
     UserStagingTable,
+    FormStagingTable,
+    SyncLogStagingTable,
 )

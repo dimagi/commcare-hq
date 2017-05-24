@@ -8,10 +8,13 @@ from corehq.sql_db.routers import db_for_read_write
 from corehq.apps.users.models import CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
+from casexml.apps.phone.models import SyncLog
 from corehq.warehouse.dbaccessors import (
     get_group_ids_by_last_modified,
     get_user_ids_by_last_modified,
     get_domain_ids_by_last_modified,
+    get_synclog_ids_by_date,
+    get_forms_by_submission_date,
 )
 from corehq.warehouse.utils import django_batch_records
 
@@ -169,3 +172,70 @@ class DomainStagingTable(StagingTable):
         domain_ids = get_domain_ids_by_last_modified(start_datetime, end_datetime)
 
         return iter_docs(Domain.get_db(), domain_ids)
+
+
+class FormStagingTable(StagingTable):
+    slug = 'form_staging'
+
+    form_id = models.CharField(max_length=255, unique=True)
+
+    domain = models.CharField(max_length=255, default=None)
+    app_id = models.CharField(max_length=255, null=True)
+    xmlns = models.CharField(max_length=255, default=None)
+    user_id = models.CharField(max_length=255, null=True)
+
+    # The time at which the server has received the form
+    received_on = models.DateTimeField(db_index=True)
+
+    build_id = models.CharField(max_length=255, null=True)
+
+    # TODO: Should we be storing state or will reports only deal with Normal forms?
+
+    @classmethod
+    def field_mapping(cls):
+        return [
+            ('form_id', 'form_id'),
+            ('domain', 'domain'),
+            ('app_id', 'app_id'),
+            ('xmlns', 'xmlns'),
+            ('user_id', 'user_id'),
+
+            ('received_on', 'received_on'),
+            ('build_id', 'build_id'),
+        ]
+
+    @classmethod
+    def raw_record_iter(cls, start_datetime, end_datetime):
+        return get_forms_by_submission_date(start_datetime, end_datetime)
+
+
+class SyncLogStagingTable(StagingTable):
+    slug = 'synclog_staging'
+
+    sync_log_id = models.CharField(max_length=255)
+    sync_date = models.DateTimeField(null=True)
+
+    # this is only added as of 11/2016 - not guaranteed to be set
+    domain = models.CharField(max_length=255, null=True)
+    user_id = models.CharField(max_length=255, null=True)
+
+    # this is only added as of 11/2016 and only works with app-aware sync
+    build_id = models.CharField(max_length=255, null=True)
+
+    duration = models.IntegerField(null=True)  # in seconds
+
+    @classmethod
+    def field_mapping(cls):
+        return [
+            ('_id', 'sync_log_id'),
+            ('date', 'sync_date'),
+            ('domain', 'domain'),
+            ('user_id', 'user_id'),
+            ('build_id', 'build_id'),
+            ('duration', 'duration'),
+        ]
+
+    @classmethod
+    def raw_record_iter(cls, start_datetime, end_datetime):
+        synclog_ids = get_synclog_ids_by_date(start_datetime, end_datetime)
+        return iter_docs(SyncLog.get_db(), synclog_ids)
