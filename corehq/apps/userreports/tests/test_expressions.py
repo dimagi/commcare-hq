@@ -1008,6 +1008,7 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     ("a and b", {"a": 0, "b": 1}, False),
     # ranges > 100 items aren't supported
     ("range(200)", {}, None),
+    ("a and not b", {"a": 1, "b": 0}, True),
 ])
 def test_supported_evaluator_statements(self, eq, context, expected_value):
     self.assertEqual(eval_statements(eq, context), expected_value)

@@ -7,6 +7,7 @@ from types import NoneType
 
 from simpleeval import SimpleEval, DEFAULT_OPERATORS, InvalidExpression, DEFAULT_FUNCTIONS
 import six
+import operator
 from six.moves import range
 
 
@@ -23,6 +24,7 @@ def safe_range(start, *args):
 
 SAFE_OPERATORS = copy.copy(DEFAULT_OPERATORS)
 SAFE_OPERATORS[ast.Pow] = safe_pow_fn  # don't allow power operations
+SAFE_OPERATORS[ast.Not] = operator.not_
 
 FUNCTIONS = DEFAULT_FUNCTIONS
 FUNCTIONS.update({
