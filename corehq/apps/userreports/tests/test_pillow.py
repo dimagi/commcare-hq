@@ -213,6 +213,29 @@ class IndicatorPillowTest(TestCase):
 
         CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
 
+    @patch('corehq.apps.userreports.specs.datetime')
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_check_if_doc_exist(self, datetime_mock):
+        datetime_mock.utcnow.return_value = self.fake_time_now
+        sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
+
+        since = self.pillow.get_change_feed().get_latest_offsets()
+
+        # save case to DB - should also publish to kafka
+        case = _save_sql_case(sample_doc)
+
+        # run pillow and check changes
+        self.pillow.process_changes(since=since, forever=False)
+        self._check_sample_doc_state(expected_indicators)
+
+        self.assertEqual(self.adapter.doc_exists(sample_doc), True)
+
+        CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_check_if_doc_doesnt_exist(self):
+        self.assertEqual(self.adapter.doc_exists({'_id': "1234"}), False)
+
 
 @override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
 class IndicatorPillowTestES(IndicatorPillowTest):
