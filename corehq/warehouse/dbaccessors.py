@@ -47,8 +47,8 @@ def get_synclog_ids_by_date(start_datetime, end_datetime):
 
     results = SyncLog.view(
         "sync_logs_by_date/view",
-        startkey=[start_datetime],
-        endkey=[end_datetime],
+        startkey=[json_format_datetime(start_datetime)],
+        endkey=[json_format_datetime(end_datetime)],
         reduce=False,
         include_docs=False
     )
