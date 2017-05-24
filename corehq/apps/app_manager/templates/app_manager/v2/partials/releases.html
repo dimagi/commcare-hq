@@ -136,6 +136,15 @@
                                   css: {hide: false}"></i>
                   </div>
               {% endif %}
+              <div class="build-is-released">
+                  <span class="label label-info"
+                        data-bind="visible: id() === $root.latestReleaseId()">{% trans "Latest" %}</span>
+                  <input type="checkbox"
+                         class="js-auto-update-checkbox"
+                         data-size="mini"
+                         data-on-text="{% trans "Released" %}"
+                         data-off-text="{% trans "In Test" %}">
+              </div>
               <h4 class="panel-release-title">
                 <strong>{% trans "Version" %} <span data-bind="text: version"></span></strong> |
                 <span data-bind="text: built_on_date"></span> <span data-bind="text: built_on_time"></span> {% trans 'by' %}
@@ -149,14 +158,6 @@
                 | <a class="release-error-report-link" data-bind="text: numErrorsText,
                               attr: {href: $root.app_error_url('{{ app.id }}', version())}"></a>
                 {% endif %}
-
-                <span class="build-is-released">
-                    {% trans "Auto Update is" %}&nbsp;
-                    <input type="checkbox" class="js-auto-update-checkbox" data-size="mini">
-                    <span data-bind="visible: id() === $root.latestReleaseId()">
-                      ({% trans "Latest Version" %})
-                    </span>
-                </span>
               </h4>
           </div>
           <div class="panel-body">
