@@ -1023,7 +1023,6 @@ def test_supported_evaluator_statements(self, eq, context, expected_value):
     ("a**b", {"a": 2, "b": 23}),
     # lambda not supported
     ("lambda x: x*x", {"a": 2}),
-    ("int(10 in range(1,20))", {"a": 2}),
     # max function not defined
     ("max(a, b)", {"a": 3, "b": 5}),
     # method calls not allowed
