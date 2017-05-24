@@ -4,7 +4,10 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth import password_validation
 
 
-class EncodedPasswordChangeForm(object):
+class EncodedPasswordChangeFormMixin(object):
+    """
+    To be used by forms using passwords to enable decoding for obfuscated passwords.
+    """
     def clean_new_password1(self):
         from corehq.apps.domain.forms import clean_password
         from corehq.apps.hqwebapp.utils import decode_password

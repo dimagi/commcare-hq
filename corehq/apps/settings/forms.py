@@ -18,10 +18,10 @@ from django.core.exceptions import ValidationError
 
 from datetime import datetime
 
-from custom.nic_compliance.forms import EncodedPasswordChangeForm
+from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
 
-class HQPasswordChangeForm(EncodedPasswordChangeForm, PasswordChangeForm):
+class HQPasswordChangeForm(EncodedPasswordChangeFormMixin, PasswordChangeForm):
 
     new_password1 = forms.CharField(label=_("New password"),
                                     widget=forms.PasswordInput(),
