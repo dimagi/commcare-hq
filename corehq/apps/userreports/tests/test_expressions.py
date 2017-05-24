@@ -1017,13 +1017,16 @@ def test_supported_evaluator_statements(self, eq, context, expected_value):
 @generate_cases([
     # variables can't be strings
     ("a + b", {"a": 2, "b": 'text'}),
-    # missing context
+    # missing context, b not defined
     ("a + (a*b)", {"a": 2}),
     # power function not supported
     ("a**b", {"a": 2, "b": 23}),
+    # lambda not supported
     ("lambda x: x*x", {"a": 2}),
-    ("int(10 in range(1,20))", {"a": 2}),
+    # max function not defined
     ("max(a, b)", {"a": 3, "b": 5}),
+    # method calls not allowed
+    ('"WORD".lower()', {"a": 5}),
 ])
 def test_unsupported_evaluator_statements(self, eq, context):
     with self.assertRaises(InvalidExpression):

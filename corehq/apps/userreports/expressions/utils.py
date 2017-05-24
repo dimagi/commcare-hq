@@ -5,7 +5,7 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from types import NoneType
 
-from simpleeval import SimpleEval, DEFAULT_OPERATORS, InvalidExpression, DEFAULT_FUNCTIONS
+from simpleeval import SimpleEval, DEFAULT_OPERATORS, InvalidExpression, DEFAULT_FUNCTIONS, FeatureNotAvailable
 import six
 import operator
 from six.moves import range
@@ -33,6 +33,16 @@ FUNCTIONS.update({
 })
 
 
+class EvalNoMethods(SimpleEval):
+    """Disallow method calls. No real reason for this except that it gives
+    users less options to do crazy things that might get them / us into
+    hard to back out of situations."""
+    def _eval_call(self, node):
+        if isinstance(node.func, ast.Attribute):
+            raise FeatureNotAvailable("Method calls not allowed.")
+        return super(EvalNoMethods, self)._eval_call(node)
+
+
 def eval_statements(statement, variable_context):
     """Evaluates math statements and returns the value
 
@@ -43,9 +53,9 @@ def eval_statements(statement, variable_context):
     # variable values should be numbers
     var_types = set(type(value) for value in variable_context.values())
     if not var_types.issubset({float, Decimal, date, datetime, NoneType, bool}.union(set(six.integer_types))):
-        raise InvalidExpression
+        raise InvalidExpression('Context contains disallowed types')
 
-    evaluator = SimpleEval(operators=SAFE_OPERATORS, names=variable_context, functions=FUNCTIONS)
+    evaluator = EvalNoMethods(operators=SAFE_OPERATORS, names=variable_context, functions=FUNCTIONS)
     return evaluator.eval(statement)
 
 
