@@ -12,13 +12,7 @@
         CaseConfig = hqImport('app_manager/js/case-config-ui.js').CaseConfig;
     var caseConfig = new CaseConfig(_.extend({}, initial_page_data("case_config_options"), {
         home: $('#case-config-ko'),
-        actions: {{ form.actions|JSON }},
-        save_url: "{% url "edit_form_actions" app.domain app.id nav_form.unique_id %}",
         requires: ko.observable(initial_page_data("form_requires")),
-        valid_index_names: {{ valid_index_names|JSON }},
-        allowUsercase: {{ allow_usercase|JSON }},
-        usercasePropertiesMap: {{ usercase_properties|JSON }},
-        propertyDescriptions: {{ property_descriptions|JSON }},
     }));
     caseConfig.init();
 </script>
