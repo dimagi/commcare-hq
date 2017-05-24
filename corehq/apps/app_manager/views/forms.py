@@ -117,14 +117,6 @@ def delete_form(request, domain, app_id, module_unique_id, form_unique_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def copy_form_by_form_index(request, domain, app_id, module_id, form_id):
-    app = get_app(domain, app_id)
-    form = app.get_module(int(module_id)).get_form(int(form_id))
-    return copy_form(request, domain, app_id, form.unique_id)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
 def copy_form(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
@@ -177,14 +169,6 @@ def undo_delete_form(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_advanced_form_actions_by_form_index(request, domain, app_id, module_id, form_id):
-    app = get_app(domain, app_id)
-    form = app.get_module(int(module_id)).get_form(int(form_id))
-    return edit_advanced_form_actions(request, domain, app_id, form.unique_id)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
 def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
@@ -202,14 +186,6 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
     return json_response(response_json)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def edit_form_actions_by_form_index(request, domain, app_id, module_id, form_id):
-    app = get_app(domain, app_id)
-    form = app.get_module(int(module_id)).get_form(int(form_id))
-    return edit_form_actions(request, domain, app_id, form.unique_id)
 
 
 @no_conflict_require_POST
@@ -238,14 +214,6 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     response_json['propertiesMap'] = get_all_case_properties(app)
     response_json['usercasePropertiesMap'] = get_usercase_properties(app)
     return json_response(response_json)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def edit_careplan_form_actions_by_form_index(request, domain, app_id, module_id, form_id):
-    app = get_app(domain, app_id)
-    form = app.get_module(int(module_id)).get_form(int(form_id))
-    return edit_careplan_form_actions(request, domain, app_id, form.unique_id)
 
 
 @no_conflict_require_POST
@@ -487,17 +455,6 @@ def get_xform_source(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     try:
         form = app.get_form(form_unique_id)
-    except IndexError:
-        raise Http404()
-    return _get_xform_source(request, app, form)
-
-
-@require_GET
-@require_can_edit_apps
-def get_xform_source_by_form_index(request, domain, app_id, module_id, form_id):
-    app = get_app(domain, app_id)
-    try:
-        form = app.get_module(int(module_id)).get_form(int(form_id))
     except IndexError:
         raise Http404()
     return _get_xform_source(request, app, form)
