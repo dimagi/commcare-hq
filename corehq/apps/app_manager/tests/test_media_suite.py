@@ -117,8 +117,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
                                                     series=[GraphSeries() for c in chart.y_axis_columns],
                                                 )
                                                 for chart in report.charts
-                                            },
-                            )
+                                            })
         report_app_config._report = report
         report_module.report_configs = [report_app_config]
         report_module._loaded = True
