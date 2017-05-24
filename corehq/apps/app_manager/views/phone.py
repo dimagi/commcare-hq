@@ -6,7 +6,7 @@ from django.conf import settings
 from corehq.apps.domain.auth import basicauth
 from corehq.apps.domain.decorators import check_lockout
 from corehq.apps.users.models import CouchUser
-from corehq.apps.app_manager.dbaccessors import get_built_app_ids, get_app
+from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain, get_latest_released_app_doc, wrap_app
 from corehq.apps.app_manager.suite_xml.xml_models import (
     StringField,
     IntegerField,
@@ -50,9 +50,10 @@ def get_all_latest_builds_for_user(user):
     app_ids = [
         (domain, app_id)
         for domain in user.domains
-        for app_id in get_built_app_ids(domain)
+        for app_id in get_app_ids_in_domain(domain)
     ]
-    return [get_app(app_id[0], app_id[1], latest=True, target="release") for app_id in app_ids]
+    app_docs = [get_latest_released_app_doc(app_id[0], app_id[1]) for app_id in app_ids]
+    return [wrap_app(app_doc) for app_doc in app_docs if app_doc is not None]
 
 
 def get_app_list_xml(apps):
@@ -61,8 +62,8 @@ def get_app_list_xml(apps):
             domain=app.domain,
             name=app.name,
             version=app.version,
-            media_profile=app.media_profile_url,
-            profile=app.profile_url,
+            media_profile=app.odk_media_profile_url,
+            profile=app.odk_profile_url,
             environment=settings.SERVER_ENVIRONMENT,
         )
         for app in apps
