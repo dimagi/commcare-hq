@@ -4855,6 +4855,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # legacy property; kept around to be able to identify (deprecated) v1 apps
     application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
+    last_modified = DateTimeProperty()
 
     def assert_app_v2(self):
         assert self.application_version == APP_V2
@@ -5353,6 +5354,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return record
 
     def save(self, response_json=None, increment_version=None, **params):
+        self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
         user = getattr(view_utils.get_request(), 'couch_user', None)
@@ -5360,6 +5362,15 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
         super(ApplicationBase, self).save(
             response_json=response_json, increment_version=increment_version, **params)
+
+    @classmethod
+    def save_docs(cls, docs, **kwargs):
+        utcnow = datetime.datetime.utcnow()
+        for doc in docs:
+            doc['last_modified'] = utcnow
+        super(ApplicationBase, cls).save_docs(docs, **kwargs)
+
+    bulk_save = save_docs
 
     def set_form_versions(self, previous_version, force_new_version=False):
         # by default doing nothing here is fine.

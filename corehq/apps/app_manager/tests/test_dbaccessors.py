@@ -74,6 +74,11 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         # It may not matter, but it removes a potential source of error for the test
         return cls(app_json)
 
+    def assert_docs_equal(self, doc1, doc2):
+        del doc1['last_modified']
+        del doc2['last_modified']
+        super(DBAccessorsTest, self).assert_docs_equal(doc1, doc2)
+
     def test_get_brief_apps_in_domain(self):
         apps = get_brief_apps_in_domain(self.domain)
         self.assertEqual(len(apps), 2)
