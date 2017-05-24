@@ -196,6 +196,7 @@ class IndicatorPillowTest(TestCase):
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
 
         self.pillow.process_change(doc_to_change(sample_doc))
+        self._check_sample_doc_state(expected_indicators)
 
         sample_doc['type'] = 'wrong_type'
 
