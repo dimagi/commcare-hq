@@ -85,7 +85,7 @@ django-statici18n==1.3.0
 django-simple-captcha==0.5.5
 httpagentparser==1.7.8
 boto3==1.4.4
-simpleeval==0.8.7
+simpleeval==0.9.5
 laboratory==0.2.0
 ConcurrentLogHandler==0.9.1
 github3.py==1.0.0a4
