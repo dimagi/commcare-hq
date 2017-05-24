@@ -298,11 +298,9 @@ def _get_report_module_context(app, module):
 
     ]
     from corehq.apps.app_manager.suite_xml.features.mobile_ucr import COLUMN_XPATH_CLIENT_TEMPLATE, get_data_path
-    current_reports = []
+    current_reports = module.report_configs
     data_path_placeholders = {}
-    for r in module.report_configs:
-        r.migrate_graph_configs(app.domain)
-        current_reports.append(r.to_json())
+    for r in current_reports:
         data_path_placeholders[r.report_id] = {}
         for chart_id in r.complete_graph_configs.keys():
             data_path_placeholders[r.report_id][chart_id] = get_data_path(r, app.domain)

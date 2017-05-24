@@ -8,7 +8,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 from corehq.apps.app_manager.models import ReportAppConfig, Application, ReportModule, \
-    ReportGraphConfig, MobileSelectFilter, _get_auto_filter_function, _filter_by_user_id
+    MobileSelectFilter, _get_auto_filter_function, _filter_by_user_id
 from corehq.apps.app_manager.tests.mocks.mobile_ucr import mock_report_configurations, \
     mock_report_configuration_get, mock_report_data
 from corehq.apps.app_manager.tests.util import TestXmlMixin
