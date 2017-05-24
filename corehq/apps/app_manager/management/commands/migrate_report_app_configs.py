@@ -31,7 +31,7 @@ class Command(BaseCommand):
                                 logger.info("Already migrated module {} in app {} in domain {}".format(
                                     module.id, app.id, domain
                                 ))
-                            else:
+                            elif len(config.graph_configs):
                                 logger.info("Migrating module {} in app {} in domain {}".format(
                                     module.id, app.id, domain
                                 ))
