@@ -13,7 +13,7 @@
 +                    </h4>
 +                </div>
                  <div class="panel-body">
-                     <p>{% trans "User properties can now be loaded in the form builer with easy references" %}</p>
+                     <p>{% trans "User properties can now be loaded in the form builder with easy references" %}</p>
                      <img src="{% static 'app_manager/images/user-properties-loading-moved.png' %}">
 @@ -15,12 +19,12 @@
          </div>
