@@ -11,6 +11,7 @@ from corehq.apps.repeaters.dbaccessors import (
     get_success_repeat_record_count,
     iterate_repeat_records,
     iter_repeat_records_by_domain,
+    get_domains_that_have_repeat_records,
 )
 from corehq.apps.repeaters.models import RepeatRecord, CaseRepeater
 from corehq.apps.repeaters.const import RECORD_PENDING_STATE
@@ -169,3 +170,21 @@ class TestRepeatersDBAccessors(TestCase):
         repeaters = get_repeaters_by_domain(self.domain)
         self.assertEqual(len(repeaters), 1)
         self.assertEqual(repeaters[0].__class__, CaseRepeater)
+
+
+class TestOtherDBAccessors(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.records = [
+            RepeatRecord(domain='a'),
+            RepeatRecord(domain='b'),
+            RepeatRecord(domain='c'),
+        ]
+        RepeatRecord.bulk_save(cls.records)
+
+    @classmethod
+    def tearDownClass(cls):
+        RepeatRecord.bulk_delete(cls.records)
+
+    def test_get_domains_that_have_repeat_records(self):
+        self.assertEqual(get_domains_that_have_repeat_records(), ['a', 'b', 'c'])
