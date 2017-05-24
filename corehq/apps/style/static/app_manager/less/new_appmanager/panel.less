@@ -76,6 +76,17 @@
 .panel-release {
   border: none;
   background-color: lighten(@cc-bg, 3);
+
+  &.build-latest-release {
+    .box-shadow(0 0 10px fade(@cc-brand-mid, 40));
+  }
+
+  .bootstrap-switch-handle-on.bootstrap-switch-primary {
+    background-color: @cc-brand-mid;
+  }
+  .bootstrap-switch-primary:focus {
+    border-color: @cc-brand-mid;
+  }
 }
 
 .panel-release-title {
@@ -100,7 +111,7 @@
       color: @text-color;
       .transition(all 500ms ease-in-out);
       font-size: 15px;
-      padding: 11px 15px 10px;
+      padding: 14px 18px 16px;
       display: block;
       &:hover {
         color: @cc-att-neg-mid;
@@ -108,7 +119,7 @@
     }
   }
   .build-is-released {
-    margin-right: 12px;
+    margin-left: 12px;
   }
 }
 

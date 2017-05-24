@@ -55,12 +55,11 @@
                     </small></p>
                 </div>
                 <p class="pull-right auto-release-notes">
-                  <span data-bind="starred: true"></span> {% trans "Auto-Update On" %} |
-                  <span data-bind="starred: false"></span> {% trans "Auto-Update Off" %}
+                  {% trans 'What is "Auto Update"?' %}
                   <span class="hq-help-template"
-                    data-title="Auto-Update"
+                    data-title="Auto Update"
                     data-container="body"
-                    data-content="Use this for automatically updating CommCare applications. If the &quot;Auto-update&quot; setting is set to Daily or Weekly, any application versions that are marked as released will update to the latest released version when checking for updates."
+                    data-content="Use this for automatically updating CommCare applications. If the &quot;Auto Update&quot; setting is set to Daily or Weekly, any application versions that are marked as released will update to the latest released version when checking for updates."
                     data-placement="left"
                   ></span>
                 </p>
@@ -108,7 +107,8 @@
                     template: {
                         foreach: savedApps,
                         afterAdd: function(elem) { $(elem).hide().fadeIn() },
-                        beforeRemove: function(elem) { if (elem.nodeType === 1) { $(elem).fadeOut(); } }
+                        beforeRemove: function(elem) { if (elem.nodeType === 1) { $(elem).fadeOut(); } },
+                        afterRender: $root.handleAfterRender
                     }" >
 
         <div class="panel panel-release"
@@ -137,9 +137,6 @@
                   </div>
               {% endif %}
               <h4 class="panel-release-title">
-                <span class="build-is-released">
-                    <span data-bind="starred: is_released, click: $root.toggleRelease"></span>
-                </span>
                 <strong>{% trans "Version" %} <span data-bind="text: version"></span></strong> |
                 <span data-bind="text: built_on_date"></span> <span data-bind="text: built_on_time"></span> {% trans 'by' %}
                 <span data-bind="text: comment_user_name"></span>
@@ -152,6 +149,14 @@
                 | <a class="release-error-report-link" data-bind="text: numErrorsText,
                               attr: {href: $root.app_error_url('{{ app.id }}', version())}"></a>
                 {% endif %}
+
+                <span class="build-is-released">
+                    {% trans "Auto Update is" %}&nbsp;
+                    <input type="checkbox" class="js-auto-update-checkbox" data-size="mini">
+                    <span data-bind="visible: id() === $root.latestReleaseId()">
+                      ({% trans "Latest Version" %})
+                    </span>
+                </span>
               </h4>
           </div>
           <div class="panel-body">
