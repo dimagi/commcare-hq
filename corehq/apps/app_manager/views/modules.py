@@ -298,9 +298,8 @@ def _get_report_module_context(app, module):
 
     ]
     from corehq.apps.app_manager.suite_xml.features.mobile_ucr import COLUMN_XPATH_CLIENT_TEMPLATE, get_data_path
-    current_reports = module.report_configs
     data_path_placeholders = {}
-    for r in current_reports:
+    for r in module.report_configs:
         data_path_placeholders[r.report_id] = {}
         for chart_id in r.complete_graph_configs.keys():
             data_path_placeholders[r.report_id][chart_id] = get_data_path(r, app.domain)
@@ -310,7 +309,7 @@ def _get_report_module_context(app, module):
             'moduleName': module.name,
             'moduleFilter': module.module_filter,
             'availableReports': [_report_to_config(r) for r in all_reports],  # structure for all reports
-            'currentReports': current_reports,  # config data for app reports
+            'currentReports': [r.to_json() for r in module.report_configs],  # config data for app reports
             'columnXpathTemplate': COLUMN_XPATH_CLIENT_TEMPLATE,
             'dataPathPlaceholders': data_path_placeholders,
             'languages': app.langs,
