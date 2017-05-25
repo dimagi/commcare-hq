@@ -1,7 +1,7 @@
 import json
 from jsonobject.exceptions import BadValueError
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, Choice, DynamicChoiceListFilter, \
-    NumericFilter, PreFilter, QuarterFilter, LocationDrilldownFilter
+    NumericFilter, PreFilter, QuarterFilter, LocationDrilldownFilter, MultiFieldDynamicChoiceListFilter
 from corehq.apps.userreports.exceptions import BadSpecError
 from django.utils.translation import ugettext as _
 from corehq.apps.userreports.reports.filters.choice_providers import DATA_SOURCE_COLUMN, \
@@ -91,10 +91,10 @@ def _build_multi_field_dynamic_choice_list_filter(spec, report):
     choice_provider_spec = wrapped.get_choice_provider_spec()
     choice_provider = MultiFieldChoiceProviderFactory.from_spec(choice_provider_spec)(report, wrapped.slug)
     choice_provider.configure(choice_provider_spec)
-    return DynamicChoiceListFilter(
+    return MultiFieldDynamicChoiceListFilter(
         name=wrapped.slug,
         datatype=wrapped.datatype,
-        field=wrapped.fields,
+        fields=wrapped.fields,
         label=wrapped.display,
         show_all=wrapped.show_all,
         url_generator=dynamic_choice_list_url,

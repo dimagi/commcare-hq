@@ -192,7 +192,7 @@ class MultiFieldDataSourceColumnChoiceProvider(DataSourceColumnChoiceProvider):
     @property
     def _sql_columns(self):
         try:
-            return [self._adapter.get_table().c[field] for field in self.report_filter.field]
+            return [self._adapter.get_table().c[field] for field in self.report_filter.fields]
         except KeyError as e:
             raise ColumnNotFoundError(e.message)
 
