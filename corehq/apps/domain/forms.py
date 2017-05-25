@@ -1561,6 +1561,9 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         do_not_invoice=False,
                         no_invoice_reason='',
                         date_delay_invoicing=None,
+                        skip_invoicing_if_no_feature_charges=(
+                            self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+                        ),
                     )
                 else:
                     Subscription.new_domain_subscription(
