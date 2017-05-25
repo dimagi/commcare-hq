@@ -105,12 +105,7 @@ class Command(BaseCommand):
         assert owner_state_id or not owner_district_id
 
         beneficiaries = self.beneficiaries(
-            start,
-            limit=limit,
-            case_ids=case_ids,
-            owner_state_id=owner_state_id,
-            owner_district_id=owner_district_id,
-            owner_organisation_ids=owner_organisation_ids,
+            start, limit, case_ids, owner_state_id, owner_district_id, owner_organisation_ids
         )
 
         self.perform_checks(beneficiaries)
@@ -118,8 +113,7 @@ class Command(BaseCommand):
         self.migrate_to_enikshay(domain, beneficiaries, skip_adherence, chunk_size, location_owner)
 
     @staticmethod
-    def beneficiaries(start, limit=None, case_ids=None, owner_state_id=None,
-                      owner_district_id=None, owner_organisation_ids=None):
+    def beneficiaries(start, limit, case_ids, owner_state_id, owner_district_id, owner_organisation_ids):
         beneficiaries_query = Beneficiary.objects.filter(
             (
                 Q(caseStatus='suspect')
