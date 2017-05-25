@@ -7,7 +7,13 @@ from corehq.warehouse.const import (
     DOMAIN_DIM_SLUG,
     USER_LOCATION_DIM_SLUG,
     USER_GROUP_DIM_SLUG,
+    USER_STAGING_SLUG,
+    GROUP_STAGING_SLUG,
+    LOCATION_STAGING_SLUG,
+    DOMAIN_STAGING_SLUG,
 )
+
+from .shared import WarehouseTableMixin
 
 
 class BaseDim(models.Model):
@@ -15,12 +21,13 @@ class BaseDim(models.Model):
 
     dim_last_modified = models.DateTimeField(auto_now=True)
     dim_created_on = models.DateTimeField(auto_now_add=True)
+    deleted = models.BooleanField(default=False)
 
     class Meta:
         abstract = True
 
 
-class UserDim(BaseDim):
+class UserDim(BaseDim, WarehouseTableMixin):
     slug = USER_DIM_SLUG
 
     user_id = models.CharField(max_length=255)
@@ -37,8 +44,12 @@ class UserDim(BaseDim):
     last_login = models.DateTimeField()
     date_joined = models.DateTimeField()
 
+    @classmethod
+    def dependencies(cls):
+        return [USER_STAGING_SLUG]
 
-class GroupDim(BaseDim):
+
+class GroupDim(BaseDim, WarehouseTableMixin):
     slug = GROUP_DIM_SLUG
 
     group_id = models.CharField(max_length=255)
@@ -49,8 +60,12 @@ class GroupDim(BaseDim):
 
     group_last_modified = models.DateTimeField()
 
+    @classmethod
+    def dependencies(cls):
+        return [GROUP_STAGING_SLUG]
 
-class LocationDim(BaseDim):
+
+class LocationDim(BaseDim, WarehouseTableMixin):
     slug = LOCATION_DIM_SLUG
 
     location_id = models.CharField(max_length=100)
@@ -71,8 +86,12 @@ class LocationDim(BaseDim):
     location_last_modified = models.DateTimeField()
     location_created_on = models.DateTimeField()
 
+    @classmethod
+    def dependencies(cls):
+        return [LOCATION_STAGING_SLUG]
 
-class DomainDim(BaseDim):
+
+class DomainDim(BaseDim, WarehouseTableMixin):
     slug = DOMAIN_DIM_SLUG
 
     domain_id = models.CharField(max_length=255)
@@ -92,15 +111,19 @@ class DomainDim(BaseDim):
     domain_last_modified = models.DateTimeField()
     domain_created_on = models.DateTimeField()
 
+    @classmethod
+    def dependencies(cls):
+        return [DOMAIN_STAGING_SLUG]
 
-class UserLocationDim(BaseDim):
+
+class UserLocationDim(BaseDim, WarehouseTableMixin):
     slug = USER_LOCATION_DIM_SLUG
 
     user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
     location_dim = models.ForeignKey('LocationDim', on_delete=models.CASCADE)
 
 
-class UserGroupDim(BaseDim):
+class UserGroupDim(BaseDim, WarehouseTableMixin):
     slug = USER_GROUP_DIM_SLUG
 
     user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
