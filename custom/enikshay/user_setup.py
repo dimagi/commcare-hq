@@ -6,13 +6,16 @@ assumptions laid out here.
 """
 import math
 import re
+import uuid
+from django.forms import ValidationError
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
 from corehq import toggles
 from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.locations.forms import LocationFormSet, LocationForm
-from corehq.apps.users.forms import NewMobileWorkerForm
+from corehq.apps.users.forms import NewMobileWorkerForm, clean_mobile_worker_username
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.signals import clean_commcare_user, commcare_user_post_save
 from .models import IssuerId
 
@@ -147,8 +150,7 @@ def get_site_code(name, nikshay_code, type_code, parent):
         return '_'.join([type_code, parent_site_code, nikshay_code])
     elif type_code in ['ctd', 'drtb']:
         return None  # we don't do anything special for these yet
-    else:
-        raise AssertionError('This eNikshay location has an unrecognized type, {}'.format(type_code))
+    return None
 
 
 def save_user_callback(sender, couch_user, **kwargs):
@@ -271,12 +273,58 @@ class ENikshayUserDataEditor(CustomDataEditor):
         super(ENikshayUserDataEditor, self).__init__(*args, **kwargs)
 
 
+def get_new_username_and_id(domain, attempts_remaining=3):
+    if attempts_remaining <= 0:
+        raise AssertionError(
+            "3 IssuerIds were created, but they all corresponded to existing "
+            "users.  Are there a bunch of users with usernames matching "
+            "possible compressed ids?  Better investigate.")
+
+    user_id = uuid.uuid4().hex
+    issuer_id, created = IssuerId.objects.get_or_create(domain=domain, user_id=user_id)
+    compressed_issuer_id = compress_nikshay_id(issuer_id.pk, 3)
+    try:
+        return clean_mobile_worker_username(domain, compressed_issuer_id), user_id
+    except ValidationError:
+        issuer_id.delete()
+        return get_new_username_and_id(domain, attempts_remaining - 1)
+
+
 class ENikshayLocationFormSet(LocationFormSet):
     """Location, custom data, and possibly location user and data forms"""
     _location_form_class = LocationForm
     _location_data_editor = CustomDataEditor
     _user_form_class = ENikshayNewMobileWorkerForm
     _user_data_editor = ENikshayUserDataEditor
+
+    @property
+    @memoized
+    def user(self):
+        user_data = (self.custom_user_data.get_data_to_save()
+                     if self.custom_user_data.is_valid() else {})
+        password = self.user_form.cleaned_data.get('password', "")
+        first_name = self.user_form.cleaned_data.get('first_name', "")
+        last_name = self.user_form.cleaned_data.get('last_name', "")
+
+        username, user_id = get_new_username_and_id(self.domain)
+
+        return CommCareUser.create(
+            self.domain,
+            username=username,  # TODO should this be compressed?
+            password=password,
+            device_id="Generated from HQ",
+            first_name=first_name,
+            last_name=last_name,
+            user_data=user_data,
+            uuid=user_id,
+            commit=False,
+        )
+
+    def _get_user_form(self, bound_data):
+        form = super(ENikshayLocationFormSet, self)._get_user_form(bound_data)
+        # Hide username, since we'll set it automatically
+        form.fields.pop('username')
+        return form
 
     @memoized
     def is_valid(self):
