@@ -1,5 +1,14 @@
 from django.db import models
 
+from corehq.warehouse.const import (
+    USER_DIM_SLUG,
+    GROUP_DIM_SLUG,
+    LOCATION_DIM_SLUG,
+    DOMAIN_DIM_SLUG,
+    USER_LOCATION_DIM_SLUG,
+    USER_GROUP_DIM_SLUG,
+)
+
 
 class BaseDim(models.Model):
     domain = models.CharField(max_length=255)
@@ -12,6 +21,8 @@ class BaseDim(models.Model):
 
 
 class UserDim(BaseDim):
+    slug = USER_DIM_SLUG
+
     user_id = models.CharField(max_length=255)
     username = models.CharField(max_length=150)
     first_name = models.CharField(max_length=30)
@@ -28,6 +39,8 @@ class UserDim(BaseDim):
 
 
 class GroupDim(BaseDim):
+    slug = GROUP_DIM_SLUG
+
     group_id = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
 
@@ -38,6 +51,8 @@ class GroupDim(BaseDim):
 
 
 class LocationDim(BaseDim):
+    slug = LOCATION_DIM_SLUG
+
     location_id = models.CharField(max_length=100)
     name = models.CharField(max_length=255)
     site_code = models.CharField(max_length=255)
@@ -58,6 +73,8 @@ class LocationDim(BaseDim):
 
 
 class DomainDim(BaseDim):
+    slug = DOMAIN_DIM_SLUG
+
     domain_id = models.CharField(max_length=255)
     default_timezone = models.CharField(max_length=255)
     hr_name = models.CharField(max_length=255)
@@ -77,10 +94,14 @@ class DomainDim(BaseDim):
 
 
 class UserLocationDim(BaseDim):
+    slug = USER_LOCATION_DIM_SLUG
+
     user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
     location_dim = models.ForeignKey('LocationDim', on_delete=models.CASCADE)
 
 
 class UserGroupDim(BaseDim):
+    slug = USER_GROUP_DIM_SLUG
+
     user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
     group_dim = models.ForeignKey('GroupDim', on_delete=models.CASCADE)
