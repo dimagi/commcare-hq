@@ -1,4 +1,6 @@
 language: python
+python:
+  - "3.3"
 sudo: required
 branches:
   only:
