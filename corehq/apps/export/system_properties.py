@@ -446,13 +446,13 @@ PARENT_CASE_TABLE_PROPERTIES = [
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_NONE],
-        label='parent_case_id',
+        label='case_id',
         item=ExportItem(path=[PathNode(name='indices', is_repeat=True), PathNode(name='referenced_id')]),
         is_advanced=False
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_NONE],
-        label='parent_case_type',
+        label='case_type',
         item=ExportItem(path=[PathNode(name='indices', is_repeat=True), PathNode(name='referenced_type')]),
         is_advanced=False
     ),
