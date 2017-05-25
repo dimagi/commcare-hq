@@ -2531,8 +2531,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
 
     """
     module_type = 'basic'
-    case_label = DictProperty()
-    referral_label = DictProperty()
     forms = SchemaListProperty(Form)
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
@@ -2567,7 +2565,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 short=Detail(detail.to_json()),
                 long=Detail(detail.to_json()),
             ),
-            case_label={(lang or 'en'): 'Cases'},
         )
         module.get_or_create_unique_id()
         return module
@@ -3198,7 +3195,6 @@ class SchedulePhase(IndexedSchema):
 
 class AdvancedModule(ModuleBase):
     module_type = 'advanced'
-    case_label = DictProperty()
     forms = SchemaListProperty(FormBase)
     case_details = SchemaProperty(DetailPair)
     product_details = SchemaProperty(DetailPair)
@@ -5508,15 +5504,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def wrap(cls, data):
-        for module in data.get('modules', []):
-            for attr in ('case_label', 'referral_label'):
-                if not module.has_key(attr):
-                    module[attr] = {}
-            for lang in data['langs']:
-                if not module['case_label'].get(lang):
-                    module['case_label'][lang] = commcare_translations.load_translations(lang).get('cchq.case', 'Cases')
-                if not module['referral_label'].get(lang):
-                    module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
         data.pop('commtrack_enabled', None)  # Remove me after migrating apps
         self = super(Application, cls).wrap(data)
 
