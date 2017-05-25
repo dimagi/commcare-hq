@@ -35,7 +35,7 @@ class UserDim(BaseDim, WarehouseTableMixin):
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
     email = models.CharField(max_length=255)
-    user_type = models.CharField(max_length=100)
+    doc_type = models.CharField(max_length=100)
 
     is_active = models.BooleanField()
     is_staff = models.BooleanField()
