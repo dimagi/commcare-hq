@@ -70,7 +70,7 @@
  <div class="tabbable">
      <ul class="nav nav-tabs">
          <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
-@@ -72,178 +102,157 @@
+@@ -72,181 +102,157 @@
                          {% endblocktrans %}
                      </small></p>
                  </div>
@@ -123,6 +123,9 @@
 -            <th>{% trans "CommCare Version" %}</th>
 -            <th></th>
 -            <th></th>
+-            {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+-                <th></th>
+-            {% endif %}
 -            <th>{% trans "Comments" %}</th>
 -            {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
 -                <th>Errors</th>
@@ -390,7 +393,7 @@
      <script type="text/html" id="delete-build-modal-template">
          <div class="modal-dialog">
              <div class="modal-content">
-@@ -291,18 +300,19 @@
+@@ -294,18 +300,19 @@
          </div>
      </script>
      <script type="text/html" id="deploy-build-modal-template">

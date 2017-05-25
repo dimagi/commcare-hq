@@ -95,6 +95,9 @@
             <th>{% trans "CommCare Version" %}</th>
             <th></th>
             <th></th>
+            {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+                <th></th>
+            {% endif %}
             <th>{% trans "Comments" %}</th>
             {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
                 <th>Errors</th>
