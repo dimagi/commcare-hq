@@ -36,8 +36,6 @@ class TestDbAccessors(TestCase):
     def tearDownClass(cls):
         cls.g1.delete()
         cls.g2.delete()
-        cls.web_user.delete()
-        cls.commcare_user.delete()
         cls.domain_obj.delete()
 
     def test_get_group_ids_by_last_modified(self):
