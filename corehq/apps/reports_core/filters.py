@@ -397,6 +397,13 @@ class DynamicChoiceListFilter(BaseFilter):
         return [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
 
 
+class MultiFieldDynamicChoiceListFilter(DynamicChoiceListFilter):
+    def __init__(self, name, fields, datatype, label, show_all, url_generator, choice_provider):
+        super(MultiFieldDynamicChoiceListFilter, self).__init__(name, None, datatype, label, show_all,
+                                                                url_generator, choice_provider)
+        self.fields = fields
+
+
 class LocationDrilldownFilter(BaseFilter):
     template = 'reports_core/filters/location_async/location_async.html'
     javascript_template = 'reports_core/filters/location_async/location_async.js'
