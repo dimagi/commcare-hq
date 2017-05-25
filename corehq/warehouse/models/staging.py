@@ -17,6 +17,13 @@ from corehq.warehouse.dbaccessors import (
     get_forms_by_submission_date,
 )
 from corehq.warehouse.utils import django_batch_records
+from corehq.warehouse.const import (
+    GROUP_STAGING_SLUG,
+    USER_STAGING_SLUG,
+    DOMAIN_STAGING_SLUG,
+    FORM_STAGING_SLUG,
+    SYNCLOG_STAGING_SLUG,
+)
 
 
 class StagingTable(models.Model):
@@ -50,7 +57,7 @@ class StagingTable(models.Model):
 
 
 class GroupStagingTable(StagingTable):
-    slug = 'group_staging'
+    slug = GROUP_STAGING_SLUG
 
     group_id = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
@@ -80,7 +87,7 @@ class GroupStagingTable(StagingTable):
 
 
 class UserStagingTable(StagingTable):
-    slug = 'user_staging'
+    slug = USER_STAGING_SLUG
 
     user_id = models.CharField(max_length=255)
     username = models.CharField(max_length=150)
@@ -125,7 +132,7 @@ class UserStagingTable(StagingTable):
 
 
 class DomainStagingTable(StagingTable):
-    slug = 'domain_staging'
+    slug = DOMAIN_STAGING_SLUG
 
     domain_id = models.CharField(max_length=255)
     default_timezone = models.CharField(max_length=255)
@@ -175,7 +182,7 @@ class DomainStagingTable(StagingTable):
 
 
 class FormStagingTable(StagingTable):
-    slug = 'form_staging'
+    slug = FORM_STAGING_SLUG
 
     form_id = models.CharField(max_length=255, unique=True)
 
@@ -210,7 +217,7 @@ class FormStagingTable(StagingTable):
 
 
 class SyncLogStagingTable(StagingTable):
-    slug = 'synclog_staging'
+    slug = SYNCLOG_STAGING_SLUG
 
     sync_log_id = models.CharField(max_length=255)
     sync_date = models.DateTimeField(null=True)
