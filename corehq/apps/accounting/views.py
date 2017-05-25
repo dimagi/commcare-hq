@@ -450,6 +450,8 @@ class EditSubscriptionView(AccountingSectionView, AsyncHandlerMixin):
             new_plan_version=DefaultProductPlan.get_default_plan_version(),
             note=self.cancel_form.cleaned_data['note'],
             web_user=self.request.user.username,
+            do_not_invoice=False,
+            skip_invoicing_if_no_feature_charges=True,
         )
         self.subscription_canceled = True
 
