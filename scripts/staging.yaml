@@ -54,7 +54,6 @@ branches:
   - es/location-user  # Ethan 4/27
 #  - nc/location-filter-bug  # Noah 5/12 commented out because it appears to be deleted (Cal 5/22)
   - ce/app-status-2 # Cal 5/22
-  - ce/app-status-pillows+nh/new_rb
   - ce/app-status-pillows # Cal 5/22
   - np/accounting/trial-prepay # NP 5/25
 submodules:
