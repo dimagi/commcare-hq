@@ -59,6 +59,7 @@ COMMCAREHQ.transformHelpTemplate = function ($template, wrap) {
 COMMCAREHQ.initBlock = function ($elem) {
     'use strict';
 
+    // Can delete once APP_MANAGER_V2 is released
     $('.submit_on_click', $elem).on("click", function (e) {
         e.preventDefault();
         if (!$(this).data('clicked')) {
