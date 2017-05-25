@@ -241,7 +241,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
                 else:
                     self._save_doc_to_table(table, doc, eval_context)
                     eval_context.reset_iteration()
-            elif table.config.deleted_filter(doc):
+            elif table.config.deleted_filter(doc) or table.doc_exists(doc):
                 table.delete(doc)
 
         if async_tables:

@@ -15,7 +15,7 @@ from corehq.apps.userreports.reports.filters.values import (
     DateFilterValue,
     NumericFilterValue,
     QuarterFilterValue,
-    LocationDrilldownFilterValue)
+    LocationDrilldownFilterValue, MultiFieldChoiceListFilterValue)
 from corehq.apps.userreports.specs import TypeProperty
 
 
@@ -40,6 +40,7 @@ class ReportFilter(JsonObject):
             'pre': PreFilterValue,
             'choice_list': ChoiceListFilterValue,
             'dynamic_choice_list': ChoiceListFilterValue,
+            'multi_field_dynamic_choice_list': MultiFieldChoiceListFilterValue,
             'location_drilldown': LocationDrilldownFilterValue,
         }[self.type](self, value)
 
@@ -99,6 +100,11 @@ class DynamicChoiceListFilterSpec(FilterSpec):
     @property
     def choices(self):
         return []
+
+
+class MultiFieldDynamicChoiceFilterSpec(DynamicChoiceListFilterSpec):
+    type = TypeProperty('multi_field_dynamic_choice_list')
+    fields = ListProperty(default=[])
 
 
 class LocationDrilldownFilterSpec(FilterSpec):
