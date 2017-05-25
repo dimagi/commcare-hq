@@ -59,7 +59,7 @@ urlpatterns = [
         name=PreviewDataSourceView.urlname),
     url(r'^data_sources/export/(?P<config_id>[\w-]+)/$', export_data_source,
         name='export_configurable_data_source'),
-    url(r'^data_sources/clone/(?P<config_id>[\w-]+)/$', CloneDataSourceView.as_view(),
+    url(r'^data_sources/clone/(?P<config_id_to_clone>[\w-]+)/$', CloneDataSourceView.as_view(),
         name=CloneDataSourceView.urlname),
     url(r'^data_sources/status/(?P<config_id>[\w-]+)/$', data_source_status,
         name='configurable_data_source_status'),

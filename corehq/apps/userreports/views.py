@@ -1114,8 +1114,15 @@ class CloneDataSourceView(CreateDataSourceView):
     urlname = 'clone_configurable_data_source'
 
     @property
+    def config_id_to_clone(self):
+        return self.kwargs.get('config_id_to_clone')
+
+    def page_url(self):
+        return reverse(self.urlname, kwargs=dict(domain=self.domain, config_id_to_clone=self.config_id_to_clone))
+
+    @property
     def config(self):
-        data_source_to_clone = get_datasource_config_or_404(self.config_id, self.domain)[0]
+        data_source_to_clone = get_datasource_config_or_404(self.config_id_to_clone, self.domain)[0]
         return DataSourceConfiguration(
             domain=self.domain,
             referenced_doc_type=data_source_to_clone.referenced_doc_type,
