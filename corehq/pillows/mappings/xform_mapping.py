@@ -3,7 +3,7 @@ from corehq.pillows.mappings import NULL_VALUE
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-XFORM_INDEX = es_index("xforms_2016-07-07")
+XFORM_INDEX = es_index("xforms_2016-03-27")
 
 XFORM_MAPPING = {
     "date_detection": False,
@@ -42,6 +42,10 @@ XFORM_MAPPING = {
         "received_on": {
             "type": "date",
             "format": DATE_FORMATS_STRING
+        },
+        "received_on_seconds": {
+            "type": "date",
+            "format": "epoch_second"
         },
         'initial_processing_complete': {"type": "boolean"},
         'partial_submission': {"type": "boolean"},
