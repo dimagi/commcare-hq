@@ -2564,6 +2564,3 @@ class KeywordAction(models.Model):
             raise self.InvalidModelStateException("Expected a value for form_unique_id")
 
         super(KeywordAction, self).save(*args, **kwargs)
-
-
-from corehq.apps.sms import signals
