@@ -508,7 +508,7 @@ function DateTimeEntryBase(question, options) {
                     self.answer(Formplayer.Const.NO_ANSWER);
                     return;
                 }
-                self.answer(moment(newDate).format(self.serverFormat));
+                self.answer(moment(newDate).utc().format(self.serverFormat));
             },
             onGenerate: function () {
                 var $dt = $(this);
