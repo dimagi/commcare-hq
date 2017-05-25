@@ -286,7 +286,7 @@ class PricingTable(object):
     VISIT_WIKI_TEXT = ugettext_noop("Visit the help site to learn more.")
 
     @classmethod
-    def get_footer_by_product(cls, domain=None):
+    def get_footer(cls, domain=None):
         from corehq.apps.domain.views import ProBonoStaticView
         return (
             ugettext_noop(
@@ -305,7 +305,7 @@ class PricingTable(object):
         )
 
     @classmethod
-    def get_table_by_product(cls, domain=None):
+    def get_table(cls, domain=None):
         editions = PricingTableFeatures.get_columns(PricingTableFeatures.SOFTWARE_PLANS)
         edition_data = [(edition.lower(), DESC_BY_EDITION[edition]) for edition in editions]
         table_sections = []
@@ -329,6 +329,6 @@ class PricingTable(object):
             'title': PricingTableFeatures.get_title(PricingTableFeatures.SOFTWARE_PLANS),
             'sections': table_sections,
             'visit_wiki_text': cls.VISIT_WIKI_TEXT,
-            'footer': cls.get_footer_by_product(domain=domain),
+            'footer': cls.get_footer(domain=domain),
         }
         return table
