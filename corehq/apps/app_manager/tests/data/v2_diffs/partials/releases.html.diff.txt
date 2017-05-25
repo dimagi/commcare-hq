@@ -29,7 +29,7 @@
  <div class="tabbable">
      <ul class="nav nav-tabs">
          <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
-@@ -72,181 +102,157 @@
+@@ -32,181 +52,157 @@
                          {% endblocktrans %}
                      </small></p>
                  </div>
@@ -352,7 +352,7 @@
      <script type="text/html" id="delete-build-modal-template">
          <div class="modal-dialog">
              <div class="modal-content">
-@@ -294,18 +300,19 @@
+@@ -254,18 +250,19 @@
          </div>
      </script>
      <script type="text/html" id="deploy-build-modal-template">
