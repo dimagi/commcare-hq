@@ -7,6 +7,7 @@ assumptions laid out here.
 import math
 import re
 import uuid
+from crispy_forms import layout as crispy
 from django import forms
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
@@ -302,6 +303,15 @@ class ENikshayLocationDataEditor(CustomDataEditor):
                 ],
             )
         return super(ENikshayLocationDataEditor, self)._make_field(field)
+
+    def init_form(self, post_dict=None):
+        form = super(ENikshayLocationDataEditor, self).init_form(post_dict)
+        fs = form.helper.layout[0]
+        assert isinstance(fs, crispy.Fieldset)
+        for i, field in enumerate(fs.fields):
+            if field == 'professional_org_membership':
+                fs[i] = crispy.Div(field, data_bind="visible: loc_type() === 'pcp'")
+        return form
 
 
 def get_new_username_and_id(domain, attempts_remaining=3):
