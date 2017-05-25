@@ -712,13 +712,11 @@ class TestRenewalEmailView(AccountingSectionView):
         return self.get(request, *args, **kwargs)
 
 
-def pricing_table_json(request, product, locale):
-    if product not in [c[0] for c in SoftwareProductType.CHOICES]:
-        return HttpResponseBadRequest("Not a valid product")
+def pricing_table_json(request, locale):
     if locale not in [l[0] for l in settings.LANGUAGES]:
         return HttpResponseBadRequest("Not a supported language.")
     with localize(locale):
-        table = PricingTable.get_table_by_product(product)
+        table = PricingTable.get_table()
         table_json = json.dumps(table, cls=LazyEncoder)
 
     # This is necessary for responding to requests from Internet Explorer.
