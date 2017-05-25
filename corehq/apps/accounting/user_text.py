@@ -5,7 +5,6 @@ from django.utils.translation import ugettext_noop, ugettext_lazy as _, ugettext
 from corehq.apps.accounting.models import (
     FeatureType,
     SoftwarePlanEdition as Edition,
-    SoftwareProductType as Product,
 )
 
 DESC_BY_EDITION = {
