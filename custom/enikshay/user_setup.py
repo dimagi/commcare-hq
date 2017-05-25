@@ -7,7 +7,7 @@ assumptions laid out here.
 import math
 import re
 import uuid
-from django.forms import ValidationError
+from django import forms
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
@@ -273,6 +273,46 @@ class ENikshayUserDataEditor(CustomDataEditor):
         super(ENikshayUserDataEditor, self).__init__(*args, **kwargs)
 
 
+class ENikshayLocationDataEditor(CustomDataEditor):
+
+    @property
+    def slugs_to_form_fields(self):
+        return {
+            'private_sector_org_id': self.organization_field
+        }
+
+    def _make_field(self, field):
+        if field.slug in self.slugs_to_form_fields:
+            return self.slugs_to_form_fields[field.slug](field)
+        return super(ENikshayLocationDataEditor, self)._make_field(field)
+
+    def organization_field(self, field):
+        return forms.ChoiceField(
+            label=field.label,
+            required=field.is_required,
+            choices=[
+                ('', _('Select one')),
+                ('1', "PATH"),
+                ('2', "MJK"),
+                ('3', "Alert-India"),
+                ('4', "WHP"),
+                ('5', "DTO-Mehsana"),
+                ('6', "Vertex"),
+                ('7', "Accenture"),
+                ('8', "BMGF"),
+                ('9', "EY"),
+                ('10', "CTD"),
+                ('11', "Nagpur"),
+                ('12', "Nagpur-rural"),
+                ('13', "Nagpur_Corp"),
+                ('14', "Surat"),
+                ('15', "SMC"),
+                ('16', "Surat_Rural"),
+                ('17', "Rajkot"),
+            ],
+        )
+
+
 def get_new_username_and_id(domain, attempts_remaining=3):
     if attempts_remaining <= 0:
         raise AssertionError(
@@ -285,7 +325,7 @@ def get_new_username_and_id(domain, attempts_remaining=3):
     compressed_issuer_id = compress_nikshay_id(issuer_id.pk, 3)
     try:
         return clean_mobile_worker_username(domain, compressed_issuer_id), user_id
-    except ValidationError:
+    except forms.ValidationError:
         issuer_id.delete()
         return get_new_username_and_id(domain, attempts_remaining - 1)
 
@@ -293,7 +333,7 @@ def get_new_username_and_id(domain, attempts_remaining=3):
 class ENikshayLocationFormSet(LocationFormSet):
     """Location, custom data, and possibly location user and data forms"""
     _location_form_class = LocationForm
-    _location_data_editor = CustomDataEditor
+    _location_data_editor = ENikshayLocationDataEditor
     _user_form_class = ENikshayNewMobileWorkerForm
     _user_data_editor = ENikshayUserDataEditor
 
