@@ -3,6 +3,7 @@ from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.sms import tasks as sms_tasks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.celery_utils import no_result_task
+from dimagi.utils.couch import CriticalSection
 from django.conf import settings
 
 
@@ -10,7 +11,9 @@ from django.conf import settings
                 default_retry_delay=5 * 60, max_retries=12, bind=True)
 def sync_case_for_messaging(self, domain, case_id):
     try:
-        _sync_case_for_messaging(domain, case_id)
+        key = 'sync-case-for-messaging-%s' % case_id
+        with CriticalSection([key], timeout=5 * 60):
+            _sync_case_for_messaging(domain, case_id)
     except Exception as e:
         self.retry(exc=e)
 
