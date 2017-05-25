@@ -215,7 +215,7 @@ class IndicatorPillowTest(TestCase):
 
         self.pillow.process_change(doc_to_change(sample_doc))
 
-        self.assertEqual(self.adapter.doc_exists(sample_doc), True)
+        self.assertIs(self.adapter.doc_exists(sample_doc), True)
 
 
 @override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
