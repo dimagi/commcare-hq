@@ -123,9 +123,8 @@
                     self.hasError(false);
                 };
             },
-            {% if request|toggle_enabled:"APP_MANAGER_V2" %}
             template: '<div class="ko-inline-edit inline" data-bind="css: {\'has-error\': hasError()}">\
-                <div class="read-only" data-bind="visible: !isEditing(), click: edit">\
+                <div class="read-only" data-bind="visible: !isEditing(), click: edit, attr: readOnlyAttrs">\
                     <span data-bind="visible: isSaving()" class="pull-right">\
                         <img src="/static/hqstyle/images/loading.gif"/>\
                     </span>\
@@ -135,62 +134,27 @@
                     </span>\
                     <!-- /ko -->\
                     <!-- ko if: lang -->\
-                        <span class="btn btn-xs btn-info btn-langcode-preprocessed"\
-                              data-bind="text: lang, visible: !value()"\
-                        ></span>\
+                        {% if request|toggle_enabled:"APP_MANAGER_V2" %}\
+                        <span class="btn btn-xs btn-info btn-langcode-preprocessed" data-bind="text: lang, visible: !value()"></span>\
+                        {% else %}\
+                        <span class="btn btn-xs btn-info btn-langcode-preprocessed pull-right" data-bind="text: lang, visible: !value()"></span>\
+                        {% endif %}\
                     <!-- /ko -->\
+                    {% if request|toggle_enabled:"APP_MANAGER_V2" %}\
                     <span class="text" data-bind="text: value, css: containerClass"></span>\
-                    <span class="placeholder text-muted" data-bind="text: placeholder, css: containerClass, visible: !value()"></span>\
-                    <span class="inline-edit-icon" data-bind="css: containerClass"><i class="fa fa-pencil"></i></span>\
-                </div>\
-                <div class="read-write form-inline" data-bind="visible: isEditing(), css: containerClass">\
-                    <div class="form-group langcode-container" data-bind="css: {\'has-lang\': lang}">\
-                        <!-- ko if: nodeName === "textarea" -->\
-                            <textarea class="form-control" data-bind="\
-                                attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},\
-                                value: value,\
-                                hasFocus: isEditing(),\
-                            "></textarea>\
-                        <!-- /ko -->\
-                        <!-- ko if: nodeName === "input" -->\
-                            <input type="text" class="form-control" data-bind="\
-                                attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},\
-                                value: value,\
-                                hasFocus: isEditing(),\
-                            " />\
-                        <!-- /ko -->\
-                        <!-- ko if: lang -->\
-                            <span class="btn btn-xs btn-info btn-langcode-preprocessed langcode-input pull-right"\
-                                  data-bind="text: lang, visible: !value()"\
-                            ></span>\
-                        <!-- /ko -->\
-                    </div>\
-                    <div class="help-block" data-bind="text: errorMessage, visible: hasError()"></div>\
-                    <div class="form-group">\
-                        <button class="btn btn-success" data-bind="click: save, hasFocus: saveHasFocus, visible: !isSaving()">\
-                            <i class="fa fa-check"></i>\
-                        </button>\
-                        <button class="btn btn-danger" data-bind="click: cancel, hasFocus: cancelHasFocus, visible: !isSaving()">\
-                            <i class="fa fa-remove"></i>\
-                        </button>\
-                    </div>\
-                </div>\
-            </div><span data-bind="template: {afterRender: afterRenderFunc}"></span>',
-            {% else %}
-            template: '<div class="ko-inline-edit inline" data-bind="css: {\'has-error\': hasError()}">\
-                <div class="read-only" data-bind="visible: !isEditing(), click: edit, attr: readOnlyAttrs">\
-                    <span data-bind="visible: isSaving()" class="pull-right">\
-                        <img src="/static/hqstyle/images/loading.gif"/>\
-                    </span>\
-                    <!-- ko if: lang -->\
-                        <span class="btn btn-xs btn-info btn-langcode-preprocessed pull-right"\
-                              data-bind="text: lang, visible: !value()"\
-                        ></span>\
-                    <!-- /ko -->\
+                    {% else %}\
                     <span class="text" data-bind="text: value, css: readOnlyClass"></span>\
-                    <span class="placeholder text-muted" data-bind="text: placeholder, css: readOnlyClass, visible: !value()"></span>\
+                    {% endif %}\
+                    <span class="placeholder text-muted" data-bind="text: placeholder, css: containerClass, visible: !value()"></span>\
+                    {% if request|toggle_enabled:"APP_MANAGER_V2" %}\
+                    <span class="inline-edit-icon" data-bind="css: containerClass"><i class="fa fa-pencil"></i></span>\
+                    {% endif %}\
                 </div>\
+                {% if request|toggle_enabled:"APP_MANAGER_V2" %}\
+                <div class="read-write form-inline" data-bind="visible: isEditing(), css: containerClass">\
+                {% else %}\
                 <div class="read-write form-inline" data-bind="visible: isEditing()">\
+                {% endif %}\
                     <div class="form-group langcode-container" data-bind="css: {\'has-lang\': lang}">\
                         <!-- ko if: nodeName === "textarea" -->\
                             <textarea class="form-control" data-bind="\
@@ -223,7 +187,6 @@
                     </div>\
                 </div>\
             </div><span data-bind="template: {afterRender: afterRenderFunc}"></span>',
-            {% endif %}
         };
     });
 </script>
