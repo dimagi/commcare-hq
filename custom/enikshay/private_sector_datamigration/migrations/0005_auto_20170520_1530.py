@@ -22,19 +22,4 @@ class Migration(migrations.Migration):
             name='episodeDisplayID',
             field=models.IntegerField(db_index=True),
         ),
-        migrations.AlterField(
-            model_name='adherence',
-            name='dosageStatusId',
-            field=models.IntegerField(db_index=True),
-        ),
-        migrations.AlterField(
-            model_name='adherence',
-            name='episodeId',
-            field=models.CharField(db_index=True, max_length=8),
-        ),
-        migrations.AlterField(
-            model_name='adherence',
-            name='reportingMechanismId',
-            field=models.IntegerField(db_index=True),
-        ),
     ]
