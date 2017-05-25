@@ -32,7 +32,7 @@ BOOTSTRAP_CONFIG = {
     },
     (SoftwarePlanEdition.ADVANCED, False, False): {
         'role': 'advanced_plan_v0',
-        'product_rate-monthly_fee': Decimal('1000.00'),
+        'product_rate_monthly_fee': Decimal('1000.00'),
         'feature_rates': {
             FeatureType.USER: dict(monthly_limit=500, per_excess_fee=Decimal('2.00')),
             FeatureType.SMS: dict(monthly_limit=50),
