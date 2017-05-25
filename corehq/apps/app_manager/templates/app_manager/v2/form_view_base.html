@@ -293,16 +293,16 @@
 
     <div class="appmanager-edit-title">
       {% if form.get_action_type == 'open' %}
-        {% inline_edit_trans_v2 form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
       {% elif form.requires_case %}
-        {% inline_edit_trans_v2 form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
       {% else %}
-        {% inline_edit_trans_v2 form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-file-o' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-file-o' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
       {% endif %}
     </div>
 
     <div class="appmanager-edit-description">
-      <inline-edit-v2 params="
+      <inline-edit params="
           name: 'comment',
           id:'comment-id',
           containerClass: 'app-comment',
@@ -311,7 +311,7 @@
           url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',
           saveValueName: 'comment',
           cols: 50,
-      "></inline-edit-v2>
+      "></inline-edit>
     </div>
 
     <div id="build_errors"></div>
