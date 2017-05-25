@@ -14,3 +14,5 @@ LOCATION_DIM_SLUG = 'location_dim'
 DOMAIN_DIM_SLUG = 'domain_dim'
 USER_LOCATION_DIM_SLUG = 'user_location_dim'
 USER_GROUP_DIM_SLUG = 'user_group_dim'
+
+APP_STATUS_FACT_SLUG = 'app_status_fact'
