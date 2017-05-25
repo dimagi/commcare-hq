@@ -5,6 +5,7 @@ DJANGO_MAX_BATCH_SIZE = 1000
 GROUP_STAGING_SLUG = 'group_staging'
 USER_STAGING_SLUG = 'user_staging'
 DOMAIN_STAGING_SLUG = 'domain_staging'
+LOCATION_STAGING_SLUG = 'location_staging'
 FORM_STAGING_SLUG = 'form_staging'
 SYNCLOG_STAGING_SLUG = 'synclog_staging'
 
