@@ -274,7 +274,7 @@ class PricingTableFeatures(object):
 
 
 class PricingTable(object):
-    STRUCTURE_BY_PRODUCT = (
+    CATEGORIES = (
         PricingTableCategories.CORE,
         PricingTableCategories.MOBILE,
         PricingTableCategories.WEB,
@@ -309,7 +309,7 @@ class PricingTable(object):
         editions = PricingTableFeatures.get_columns(PricingTableFeatures.SOFTWARE_PLANS)
         edition_data = [(edition.lower(), DESC_BY_EDITION[edition]) for edition in editions]
         table_sections = []
-        for category in cls.STRUCTURE_BY_PRODUCT:
+        for category in cls.CATEGORIES:
             features = PricingTableCategories.get_features(category)
             feature_rows = []
             for feature in features:
