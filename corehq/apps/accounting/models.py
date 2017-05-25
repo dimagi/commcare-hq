@@ -427,9 +427,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
     @classmethod
     def _get_account_by_created_by_domain(cls, domain):
         try:
-            return cls.objects.exclude(
-                account_type=BillingAccountType.TRIAL
-            ).get(created_by_domain=domain)
+            return cls.objects.get(created_by_domain=domain)
         except cls.DoesNotExist:
             return None
         except cls.MultipleObjectsReturned:
@@ -438,9 +436,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
                 "latest one was served, but you should reconcile very soon."
                 % domain
             )
-            return cls.objects.exclude(
-                account_type=BillingAccountType.TRIAL
-            ).filter(created_by_domain=domain).latest('date_created')
+            return cls.objects.filter(created_by_domain=domain).latest('date_created')
+        return None
 
     @property
     def autopay_card(self):
