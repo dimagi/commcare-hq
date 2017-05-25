@@ -1223,7 +1223,7 @@ class Subscription(models.Model):
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None, funding_source=None,
                     transfer_credits=True, internal_change=False, account=None,
-                    do_not_invoice=None, no_invoice_reason=None,
+                    do_not_invoice=False, no_invoice_reason="",
                     skip_auto_downgrade=None, **kwargs):
         """
         Changing a plan TERMINATES the current subscription and
@@ -1256,8 +1256,13 @@ class Subscription(models.Model):
             date_end=date_end,
             date_delay_invoicing=date_delay_invoicing,
             is_active=True,
+<<<<<<< HEAD
             do_not_invoice=do_not_invoice if do_not_invoice is not None else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason is not None else self.no_invoice_reason,
+=======
+            do_not_invoice=do_not_invoice,
+            no_invoice_reason=no_invoice_reason,
+>>>>>>> WIP
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
             funding_source=(funding_source or FundingSource.CLIENT),

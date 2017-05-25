@@ -700,7 +700,7 @@ class SubscriptionForm(forms.Form):
         return self.cleaned_data
 
 
-class ChangeSubscriptionForm(forms.Form):
+class ChangeSubscriptionForm(forms.Form): # should expose all fields, default to existing values
     subscription_change_note = forms.CharField(
         label=ugettext_lazy("Note"),
         required=True,
