@@ -1,5 +1,5 @@
 from datetime import datetime, date, timedelta
-from couchdbkit import ResourceNotFound
+from couchdbkit import ResourceNotFound, ResourceConflict
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
@@ -115,6 +115,7 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
@@ -2454,7 +2455,16 @@ def download_daily_saved_export(req, domain, export_instance_id):
                 },
             )
     export_instance.last_accessed = datetime.utcnow()
-    export_instance.save()
+    try:
+        export_instance.save()
+    except ResourceConflict:
+        # if a user tries to download the same export multiple times in parallel
+        # there will be a conflict so retry with crit section
+        with CriticalSection(['export-last-accessed-{}'.format(export_instance_id)]):
+            export_instance = get_properly_wrapped_export_instance(export_instance_id)
+            export_instance.last_accessed = datetime.utcnow()
+            export_instance.save()
+
     payload = export_instance.get_payload(stream=True)
     return build_download_saved_export_response(
         payload, export_instance.export_format, export_instance.filename
