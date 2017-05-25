@@ -33,8 +33,6 @@ hqDefine('style/js/components/inline_edit_v2.js', function() {
             self.name = params.name || '';
             self.id = params.id || '';
 
-            self.iconClass = ko.observable(params.iconClass);
-
             // Data
             self.placeholder = params.placeholder || '';
             self.readOnlyValue = (ko.isObservable(params.value) ? params.value() : params.value) || '';
@@ -46,12 +44,16 @@ hqDefine('style/js/components/inline_edit_v2.js', function() {
             self.nodeName = params.nodeName || 'textarea';
             self.rows = params.rows || 2;
             self.cols = params.cols || "";
+            self.readOnlyClass = params.readOnlyClass || '';
+            self.readOnlyAttrs = params.readOnlyAttrs || {};
+            self.iconClass = ko.observable(params.iconClass);
             self.containerClass = params.containerClass || '';
 
             // Interaction: determine whether widget is in read or write mode
             self.isEditing = ko.observable(false);
             self.saveHasFocus = ko.observable(false);
             self.cancelHasFocus = ko.observable(false);
+            self.afterRenderFunc = params.afterRenderFunc;
 
             // Save to server
             self.url = params.url;
@@ -82,7 +84,8 @@ hqDefine('style/js/components/inline_edit_v2.js', function() {
                     return;
                 }
 
-                self.value(DOMPurify.sanitize(self.value()));
+                // Strip HTML and then undo DOMPurify's HTML escaping
+                self.value($("<div/>").html(DOMPurify.sanitize(self.value())).text());
                 self.readOnlyValue = self.value();
                 var data = self.saveParams;
                 _.each(data, function(value, key) {
@@ -149,7 +152,6 @@ hqDefine('style/js/components/inline_edit_v2.js', function() {
                             attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},\
                             value: value,\
                             hasFocus: isEditing(),\
-                            event: {blur: blur},\
                         "></textarea>\
                     <!-- /ko -->\
                     <!-- ko if: nodeName === "input" -->\
@@ -157,7 +159,6 @@ hqDefine('style/js/components/inline_edit_v2.js', function() {
                             attr: {name: name, id: id, placeholder: placeholder, rows: rows, cols: cols},\
                             value: value,\
                             hasFocus: isEditing(),\
-                            event: {blur: blur},\
                         " />\
                     <!-- /ko -->\
                     <!-- ko if: lang -->\
@@ -176,7 +177,7 @@ hqDefine('style/js/components/inline_edit_v2.js', function() {
                     </button>\
                 </div>\
             </div>\
-        </div>',
+        </div><span data-bind="template: {afterRender: afterRenderFunc}"></span>',
     };
 });
 

@@ -46,6 +46,8 @@ hqDefine('style/js/components/inline_edit.js', function() {
             self.cols = params.cols || "";
             self.readOnlyClass = params.readOnlyClass || '';
             self.readOnlyAttrs = params.readOnlyAttrs || {};
+            self.iconClass = ko.observable(params.iconClass);
+            self.containerClass = params.containerClass || '';
 
             // Interaction: determine whether widget is in read or write mode
             self.isEditing = ko.observable(false);
