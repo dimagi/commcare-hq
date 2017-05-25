@@ -219,11 +219,7 @@ class PricingTableFeatures(object):
             cls.BULK_CASE_USER_MANAGEMENT: _("Bulk Case and User Management"),
             cls.HIPAA_COMPLIANCE: _("HIPAA Compliance Assurance"),
             cls.DE_ID_DATA: _("De-identified Data"),
-            cls.COMMUNITY_SUPPORT: {
-                Product.COMMCARE: _('Community Support (<a href="https://groups.google.com/forum/?fromgroups#!forum/commcare-users">visit commcare-users</a>)'),
-                Product.COMMCONNECT: _('Community Support (<a href="https://groups.google.com/forum/?fromgroups#!forum/commcare-users">visit commcare-users</a>)'),
-                Product.COMMTRACK: _('Community Support (<a href="https://groups.google.com/forum/?fromgroups#!forum/commtrack-users">visit commtrack-users</a>)'),
-            }[product],
+            cls.COMMUNITY_SUPPORT: _('Community Support (<a href="https://groups.google.com/forum/?fromgroups#!forum/commcare-users">visit commcare-users</a>)'),
             cls.EMAIL_SUPPORT: _("Direct Email Support"),
             cls.APP_TROUBLESHOOTING: _("Application Troubleshooting"),
             cls.DEDICATED_SUPPORT_STAFF: _("Dedicated Support Staff"),
