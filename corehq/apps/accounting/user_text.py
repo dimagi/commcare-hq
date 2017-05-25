@@ -48,22 +48,11 @@ FEATURE_TYPE_TO_NAME = {
 }
 
 
-# This exists here specifically so that text can be translated
-def ensure_product(product):
-    if product not in [s[0] for s in Product.CHOICES]:
-        raise ValueError("Unsupported Product")
-
-
-def get_feature_name(feature_type, product):
-    ensure_product(product)
+def get_feature_name(feature_type):
     if feature_type not in [f[0] for f in FeatureType.CHOICES]:
         raise ValueError("Unsupported Feature")
     return {
-        FeatureType.USER: {
-            Product.COMMCARE: _("Mobile Users"),
-            Product.COMMCONNECT: _("Mobile Users"),
-            Product.COMMTRACK: _("Facilities"),
-        }[product],
+        FeatureType.USER: _("Mobile Users"),
         FeatureType.SMS: _("SMS"),
     }[feature_type]
 
@@ -96,8 +85,7 @@ class PricingTableCategories(object):
         }.get(category)
     
     @classmethod
-    def get_title(cls, category, product):
-        ensure_product(product)
+    def get_title(cls, category):
         return {
             cls.MOBILE: _("Mobile"),
             cls.WEB: _("Web"),
@@ -201,28 +189,15 @@ class PricingTableFeatures(object):
     DEDICATED_ACCOUNT_MANAGEMENT = 'dedicated_account_management'
 
     @classmethod
-    def get_title(cls, feature, product):
-        ensure_product(product)
+    def get_title(cls, feature):
         return {
             cls.SOFTWARE_PLANS: _("Software Plans"),
             cls.PRICING: _("Pricing*"),
-            cls.MOBILE_LIMIT: {
-                Product.COMMCARE: _("Mobile Users"),
-                Product.COMMCONNECT: _("Mobile Users"),
-                Product.COMMTRACK: _("Facilities")
-            }[product],
-            cls.ADDITIONAL_MOBILE_USER: {
-                Product.COMMCARE: _("Price per Additional Mobile User"),
-                Product.COMMCONNECT: _("Price per Additional Mobile User"),
-                Product.COMMTRACK: _("Price per Additional Facility")
-            }[product],
+            cls.MOBILE_LIMIT: _("Mobile Users"),
+            cls.ADDITIONAL_MOBILE_USER: _("Price per Additional Mobile User"),
             cls.JAVA_AND_ANDROID: _("Java Feature Phones and Android Phones"),
             cls.MULTIMEDIA_SUPPORT: _("Multimedia Support"),
-            cls.APP_BUILDER: {
-                Product.COMMCARE: _('CommCare Application Builder'),
-                Product.COMMCONNECT: _('CommCare Application Builder'),
-                Product.COMMTRACK: _('CommCare Supply Application Builder'),
-            }[product],
+            cls.APP_BUILDER: _('CommCare Application Builder'),
             cls.EXCHANGE: _('CommCare Exchange (<a href="http://www.commcarehq.org/exchange/">visit the exchange</a>)'),
             cls.API_ACCESS: _("API Access"),
             cls.LOOKUP_TABLES: _("Lookup Tables"),
@@ -303,40 +278,19 @@ class PricingTableFeatures(object):
 
 
 class PricingTable(object):
-    STRUCTURE_BY_PRODUCT = {
-        Product.COMMCARE: (
-            PricingTableCategories.CORE,
-            PricingTableCategories.MOBILE,
-            PricingTableCategories.WEB,
-            PricingTableCategories.ANALYTICS,
-            PricingTableCategories.SMS,
-            PricingTableCategories.USER_MANAGEMENT_AND_SECURITY,
-            PricingTableCategories.SUPPORT,
-        ),
-        Product.COMMCONNECT: (
-            PricingTableCategories.CORE,
-            PricingTableCategories.MOBILE,
-            PricingTableCategories.WEB,
-            PricingTableCategories.ANALYTICS,
-            PricingTableCategories.SMS,
-            PricingTableCategories.USER_MANAGEMENT_AND_SECURITY,
-            PricingTableCategories.SUPPORT,
-        ),
-        Product.COMMTRACK: (
-            PricingTableCategories.CORE,
-            PricingTableCategories.MOBILE,
-            PricingTableCategories.SMS,
-            PricingTableCategories.WEB,
-            PricingTableCategories.ANALYTICS,
-            PricingTableCategories.USER_MANAGEMENT_AND_SECURITY,
-            PricingTableCategories.SUPPORT,
-        ),
-    }
+    STRUCTURE_BY_PRODUCT = (
+        PricingTableCategories.CORE,
+        PricingTableCategories.MOBILE,
+        PricingTableCategories.WEB,
+        PricingTableCategories.ANALYTICS,
+        PricingTableCategories.SMS,
+        PricingTableCategories.USER_MANAGEMENT_AND_SECURITY,
+        PricingTableCategories.SUPPORT,
+    )
     VISIT_WIKI_TEXT = ugettext_noop("Visit the help site to learn more.")
 
     @classmethod
-    def get_footer_by_product(cls, product, domain=None):
-        ensure_product(product)
+    def get_footer_by_product(cls, domain=None):
         from corehq.apps.domain.views import ProBonoStaticView
         return (
             ugettext_noop(
@@ -355,32 +309,30 @@ class PricingTable(object):
         )
 
     @classmethod
-    def get_table_by_product(cls, product, domain=None):
-        ensure_product(product)
-        categories = cls.STRUCTURE_BY_PRODUCT[product]
+    def get_table_by_product(cls, domain=None):
         editions = PricingTableFeatures.get_columns(PricingTableFeatures.SOFTWARE_PLANS)
         edition_data = [(edition.lower(), DESC_BY_EDITION[edition]) for edition in editions]
         table_sections = []
-        for category in categories:
+        for category in cls.STRUCTURE_BY_PRODUCT:
             features = PricingTableCategories.get_features(category)
             feature_rows = []
             for feature in features:
                 feature_rows.append({
-                    'title': PricingTableFeatures.get_title(feature, product),
+                    'title': PricingTableFeatures.get_title(feature),
                     'columns': [(editions[ind].lower(), col) for ind, col in
                                 enumerate(PricingTableFeatures.get_columns(feature))],
                 })
             table_sections.append({
-                'title': PricingTableCategories.get_title(category, product),
+                'title': PricingTableCategories.get_title(category),
                 'url': PricingTableCategories.get_wiki_url(category),
                 'features': feature_rows,
                 'category': category,
             })
         table = {
             'editions': edition_data,
-            'title': PricingTableFeatures.get_title(PricingTableFeatures.SOFTWARE_PLANS, product),
+            'title': PricingTableFeatures.get_title(PricingTableFeatures.SOFTWARE_PLANS),
             'sections': table_sections,
             'visit_wiki_text': cls.VISIT_WIKI_TEXT,
-            'footer': cls.get_footer_by_product(product, domain=domain),
+            'footer': cls.get_footer_by_product(domain=domain),
         }
         return table
