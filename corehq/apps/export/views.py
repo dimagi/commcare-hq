@@ -1,5 +1,5 @@
 from datetime import datetime, date, timedelta
-from couchdbkit import ResourceNotFound, ResourceConflict
+from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
@@ -2425,45 +2425,39 @@ def can_download_daily_saved_export(export, domain, couch_user):
 @login_or_digest_or_basic_or_apikey(default='digest')
 @require_GET
 def download_daily_saved_export(req, domain, export_instance_id):
-    export_instance = get_properly_wrapped_export_instance(export_instance_id)
-    assert domain == export_instance.domain
+    with CriticalSection(['export-last-accessed-{}'.format(export_instance_id)]):
+        export_instance = get_properly_wrapped_export_instance(export_instance_id)
+        assert domain == export_instance.domain
 
-    if export_instance.export_format == "html":
-        if not domain_has_privilege(domain, EXCEL_DASHBOARD):
+        if export_instance.export_format == "html":
+            if not domain_has_privilege(domain, EXCEL_DASHBOARD):
+                raise Http404
+        elif export_instance.is_daily_saved_export:
+            if not domain_has_privilege(domain, DAILY_SAVED_EXPORT):
+                raise Http404
+
+        if not export_instance.filters.is_location_safe_for_user(req):
+            return location_restricted_response(req)
+
+        if not can_download_daily_saved_export(export_instance, domain, req.couch_user):
             raise Http404
-    elif export_instance.is_daily_saved_export:
-        if not domain_has_privilege(domain, DAILY_SAVED_EXPORT):
-            raise Http404
 
-    if not export_instance.filters.is_location_safe_for_user(req):
-        return location_restricted_response(req)
+        if should_update_export(export_instance.last_accessed):
+            try:
+                from corehq.apps.export.tasks import rebuild_export_task
+                rebuild_export_task.delay(export_instance_id)
+            except Exception:
+                notify_exception(
+                    req,
+                    'Failed to rebuild export during download',
+                    {
+                        'export_instance_id': export_instance_id,
+                        'domain': domain,
+                    },
+                )
 
-    if not can_download_daily_saved_export(export_instance, domain, req.couch_user):
-        raise Http404
-
-    if should_update_export(export_instance.last_accessed):
-        try:
-            from corehq.apps.export.tasks import rebuild_export_task
-            rebuild_export_task.delay(export_instance_id)
-        except Exception:
-            notify_exception(
-                req,
-                'Failed to rebuild export during download',
-                {
-                    'export_instance_id': export_instance_id,
-                    'domain': domain,
-                },
-            )
-    export_instance.last_accessed = datetime.utcnow()
-    try:
+        export_instance.last_accessed = datetime.utcnow()
         export_instance.save()
-    except ResourceConflict:
-        # if a user tries to download the same export multiple times in parallel
-        # there will be a conflict so retry with crit section
-        with CriticalSection(['export-last-accessed-{}'.format(export_instance_id)]):
-            export_instance = get_properly_wrapped_export_instance(export_instance_id)
-            export_instance.last_accessed = datetime.utcnow()
-            export_instance.save()
 
     payload = export_instance.get_payload(stream=True)
     return build_download_saved_export_response(
