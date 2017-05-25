@@ -275,42 +275,33 @@ class ENikshayUserDataEditor(CustomDataEditor):
 
 class ENikshayLocationDataEditor(CustomDataEditor):
 
-    @property
-    def slugs_to_form_fields(self):
-        return {
-            'private_sector_org_id': self.organization_field
-        }
-
     def _make_field(self, field):
-        if field.slug in self.slugs_to_form_fields:
-            return self.slugs_to_form_fields[field.slug](field)
+        if field.slug == 'private_sector_org_id':
+            return forms.ChoiceField(
+                label=field.label,
+                required=field.is_required,
+                choices=[
+                    ('', _('Select one')),
+                    ('1', "PATH"),
+                    ('2', "MJK"),
+                    ('3', "Alert-India"),
+                    ('4', "WHP"),
+                    ('5', "DTO-Mehsana"),
+                    ('6', "Vertex"),
+                    ('7', "Accenture"),
+                    ('8', "BMGF"),
+                    ('9', "EY"),
+                    ('10', "CTD"),
+                    ('11', "Nagpur"),
+                    ('12', "Nagpur-rural"),
+                    ('13', "Nagpur_Corp"),
+                    ('14', "Surat"),
+                    ('15', "SMC"),
+                    ('16', "Surat_Rural"),
+                    ('17', "Rajkot"),
+                ],
+            )
         return super(ENikshayLocationDataEditor, self)._make_field(field)
-
-    def organization_field(self, field):
-        return forms.ChoiceField(
-            label=field.label,
-            required=field.is_required,
-            choices=[
-                ('', _('Select one')),
-                ('1', "PATH"),
-                ('2', "MJK"),
-                ('3', "Alert-India"),
-                ('4', "WHP"),
-                ('5', "DTO-Mehsana"),
-                ('6', "Vertex"),
-                ('7', "Accenture"),
-                ('8', "BMGF"),
-                ('9', "EY"),
-                ('10', "CTD"),
-                ('11', "Nagpur"),
-                ('12', "Nagpur-rural"),
-                ('13', "Nagpur_Corp"),
-                ('14', "Surat"),
-                ('15', "SMC"),
-                ('16', "Surat_Rural"),
-                ('17', "Rajkot"),
-            ],
-        )
 
 
 def get_new_username_and_id(domain, attempts_remaining=3):
