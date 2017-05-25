@@ -1,6 +1,7 @@
 from django.core.management import BaseCommand, CommandError
-from corehq.warehouse.models import (
-    get_cls_by_slug,
+from corehq.warehouse.models import get_cls_by_slug
+
+from corehq.warehouse.const import (
     DIM_TABLES,
     FACT_TABLES,
 )
@@ -28,7 +29,7 @@ class Command(BaseCommand):
     def handle(self, slug, **options):
         model = get_cls_by_slug(slug)
 
-        if not model or model not in DIM_TABLES or model not in FACT_TABLES:
+        if not model or (slug not in DIM_TABLES and slug not in FACT_TABLES):
             raise CommandError('{} is not a valid slug. \n\n {}'.format(slug, USAGE))
 
         model.load()
