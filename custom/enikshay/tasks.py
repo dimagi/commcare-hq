@@ -46,10 +46,9 @@ def enikshay_task():
 
 
 class EpisodeUpdater(object):
-    """This iterates over all open 'episode' cases and sets 'adherence' related properties
-    according to this spec https://docs.google.com/document/d/1FjSdLYOYUCRBuW3aSxvu3Z5kvcN6JKbpDFDToCgead8/edit
-
-    This is applicable to various enikshay domains. The domain can be specified in the initalization
+    """
+    This iterates over all open 'episode' cases and sets 'adherence' and 'voucher' related properties
+    This is applicable to various enikshay domains. The domain can be specified in __init__ method
     """
 
     def __init__(self, domain):
@@ -61,6 +60,9 @@ class EpisodeUpdater(object):
 
     def run(self):
         # iterate over all open 'episode' cases and set 'adherence' properties
+        update_count = 0
+        noupdate_count = 0
+        error_count = 0
         for episode in self._get_open_episode_cases():
             adherence_update = EpisodeAdherenceUpdate(episode, self)
             voucher_update = EpisodeVoucherUpdate(self.domain, episode)
@@ -73,13 +75,21 @@ class EpisodeUpdater(object):
                         [ElementTree.tostring(case_block.as_xml())],
                         self.domain
                     )
+                    update_count += 1
+                else:
+                    noupdate_count += 1
             except Exception, e:
+                error_count += 1
                 logger.error(
                     "Error calculating updates for episode case_id({}): {}".format(
                         episode.case_id,
                         e
                     )
                 )
+        logger.info(
+            "Summary of enikshay_task: Updated {updates}, errored on {errors} and {noupdates} "
+            "cases didn't need update ".format(updates=update_count, errors=error_count, noupdates=noupdate_count)
+        )
 
     @staticmethod
     def _get_case_block(update, episode_id):
@@ -112,6 +122,7 @@ class EpisodeUpdater(object):
 class EpisodeAdherenceUpdate(object):
     """
     Class to capture adherence related calculations specific to an 'episode' case
+    per the spec https://docs.google.com/document/d/1FjSdLYOYUCRBuW3aSxvu3Z5kvcN6JKbpDFDToCgead8/edit
     """
     def __init__(self, episode_case, case_updater):
         """
