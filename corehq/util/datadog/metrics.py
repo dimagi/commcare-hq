@@ -1,4 +1,4 @@
-JSERROR_COUNT = 'jserror.count'
+JSERROR_COUNT = 'commcare.jserror.count'
 ERROR_COUNT = 'error.count'
 REPEATER_ERROR_COUNT = 'commcare.repeaters.error'
 MULTIMEDIA_SUBMISSION_ERROR_COUNT = 'corrupt-multimedia-submission.error.count'
