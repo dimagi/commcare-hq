@@ -5,8 +5,6 @@ from django.utils.translation import ugettext_lazy, ugettext as _
 
 
 class VertexBackendForm(BackendForm):
-    _cchq_domain = "enikshay"
-
     username = forms.CharField(
         label=ugettext_lazy("username"),
         required=True,

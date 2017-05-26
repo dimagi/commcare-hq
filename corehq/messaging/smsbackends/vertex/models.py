@@ -9,14 +9,14 @@ SUCCESS_RESPONSE_REGEX = r'^([0-9]+)-(20[0-9]{2})_([0-9]{2})_([0-9]{2})$'  # 570
 SUCCESS_RESPONSE_REGEX_MATCHER = re.compile(SUCCESS_RESPONSE_REGEX)
 
 
-class SQLVertexBackend(SQLSMSBackend):
+class VertexBackend(SQLSMSBackend):
     class Meta:
         app_label = 'sms'
         proxy = True
 
     @classmethod
     def get_api_id(cls):
-        return 'Vertex'
+        return 'VERTEX'
 
     @classmethod
     def get_generic_name(cls):
