@@ -7,7 +7,7 @@ from couchdbkit import ResourceNotFound
 from django.db.models import Q
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.signals import cases_received
-from casexml.apps.case.util import validate_phone_datetime
+from casexml.apps.case.util import validate_phone_datetime, update_sync_log_with_checks, prune_previous_log
 from casexml.apps.phone.cleanliness import should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
 from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
@@ -135,9 +135,10 @@ def _update_sync_logs(xform, case_db, config, cases):
     if relevant_log:
         # in reconciliation mode, things can be unexpected
         relevant_log.strict = config.strict_asserts
-        from casexml.apps.case.util import update_sync_log_with_checks
         update_sync_log_with_checks(relevant_log, xform, cases, case_db,
                                     case_id_blacklist=config.case_id_blacklist)
+
+        prune_previous_log(relevant_log)
 
 
 class CaseProcessingConfig(object):

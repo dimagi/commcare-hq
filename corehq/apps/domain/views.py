@@ -46,13 +46,9 @@ from corehq.apps.case_search.models import (
     disable_case_search,
 )
 from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
-from corehq.apps.dhis2.forms import (
-    Dhis2ConnectionForm,
-    DataSetMapForm,
-    DataValueMapFormSet,
-    DataValueMapFormSetHelper,
-)
-from corehq.apps.dhis2.models import JsonApiLog
+from corehq.apps.dhis2.forms import Dhis2ConnectionForm
+from corehq.apps.dhis2.models import JsonApiLog, DataSetMap, DataValueMap
+from corehq.apps.dhis2.tasks import send_datasets
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.forms import LocationFixtureForm
@@ -643,6 +639,13 @@ def logo(request, domain):
         raise Http404()
 
     return HttpResponse(logo[0], content_type=logo[1])
+
+
+@require_POST
+@domain_admin_required
+def send_dhis2_data(request, domain):
+    send_datasets.delay(domain)
+    return HttpResponse(_('Data is being sent to DHIS2.'))
 
 
 class DomainAccountingSettings(BaseProjectSettingsView):
@@ -3124,6 +3127,7 @@ class Dhis2ConnectionView(BaseAdminProjectSettingsView):
         form = self.dhis2_connection_form
         if form.is_valid():
             form.save(self.domain)
+            get_dhis2_connection.clear(request.domain)
             return HttpResponseRedirect(self.page_url)
         context = self.get_context_data(**kwargs)
         return self.render_to_response(context)
@@ -3150,23 +3154,37 @@ class Dhis2ConnectionView(BaseAdminProjectSettingsView):
 
 class DataSetMapView(BaseAdminProjectSettingsView):
     urlname = 'dataset_map_view'
-    page_title = ugettext_lazy("DHIS2 DataSet Map")
+    page_title = ugettext_lazy("DHIS2 DataSet Maps")
     template_name = 'domain/admin/dhis2/dataset_map.html'
 
     @method_decorator(domain_admin_required)
     def post(self, request, *args, **kwargs):
-        datavalue_maps = []
-        formset = self.datavalue_map_formset
-        if formset.is_valid():
-            for form in formset:
-                form.append_to(datavalue_maps)
 
-        form = self.dataset_map_form
-        if form.is_valid():
-            form.save(self.domain, datavalue_maps)
-            return HttpResponseRedirect(self.page_url)
-        context = self.get_context_data(**kwargs)
-        return self.render_to_response(context)
+        def update_dataset_map(instance, dict_):
+            for key, value in dict_.items():
+                if key == 'datavalue_maps':
+                    value = [DataValueMap(**v) for v in value]
+                instance[key] = value
+
+        dataset_maps = json.loads(request.POST['dataset_maps'])
+        current_dataset_maps = get_dataset_maps(request.domain)
+        i = 0
+        for i, dataset_map in enumerate(current_dataset_maps):
+            if i < len(dataset_maps):
+                # Update current dataset maps
+                update_dataset_map(dataset_map, dataset_maps[i])
+                dataset_map.save()
+            else:
+                # Delete removed dataset maps
+                dataset_map.delete()
+        if (i + 1) < len(dataset_maps):
+            # Insert new dataset maps
+            for j in range(i + 1, len(dataset_maps)):
+                dataset_map = DataSetMap(domain=request.domain)
+                update_dataset_map(dataset_map, dataset_maps[j])
+                dataset_map.save()
+        get_dataset_maps.clear(request.domain)
+        return HttpResponse(_('DHIS2 DataSet Maps saved'))
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
@@ -3174,36 +3192,12 @@ class DataSetMapView(BaseAdminProjectSettingsView):
             raise Http404()
         return super(DataSetMapView, self).dispatch(request, *args, **kwargs)
 
-    @memoized
-    def get_initial(self):
-        try:
-            dataset_map = get_dataset_maps(self.request.domain)[0]
-        except IndexError:
-            dataset_map = None
-        initial = dict(dataset_map) if dataset_map else {}
-        return initial
-
-    @property
-    def dataset_map_form(self):
-        initial = self.get_initial()
-        if self.request.method == 'POST':
-            return DataSetMapForm(self.request.POST, initial=initial)
-        return DataSetMapForm(initial=initial)
-
-    @property
-    def datavalue_map_formset(self):
-        initial = self.get_initial()
-        datavalue_maps = [dict(m) for m in initial.get('datavalue_maps', [])]
-        if self.request.method == 'POST':
-            return DataValueMapFormSet(self.request.POST, initial=datavalue_maps)
-        return DataValueMapFormSet(initial=datavalue_maps)
-
     @property
     def page_context(self):
+        dataset_maps = [d.to_json() for d in get_dataset_maps(self.request.domain)]
         return {
-            'dataset_map_form': self.dataset_map_form,
-            'datavalue_map_formset': self.datavalue_map_formset,
-            'datavalue_map_formset_helper': DataValueMapFormSetHelper(),
+            'dataset_maps': dataset_maps,
+            'send_data_url': reverse('send_dhis2_data', kwargs={'domain': self.domain}),
         }
 
 

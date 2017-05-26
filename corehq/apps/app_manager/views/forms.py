@@ -88,7 +88,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
-from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
+from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary, get_case_property_description_dict
 from corehq.apps.tour import tours
 
 
@@ -113,14 +113,6 @@ def delete_form(request, domain, app_id, module_unique_id, form_unique_id):
         module_id = None
 
     return back_to_main(request, domain, app_id=app_id, module_id=module_id)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def copy_form_by_form_index(request, domain, app_id, module_id, form_id):
-    app = get_app(domain, app_id)
-    form = app.get_module(int(module_id)).get_form(int(form_id))
-    return copy_form(request, domain, app_id, form.unique_id)
 
 
 @no_conflict_require_POST
@@ -177,14 +169,6 @@ def undo_delete_form(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_advanced_form_actions_by_form_index(request, domain, app_id, module_id, form_id):
-    app = get_app(domain, app_id)
-    form = app.get_module(int(module_id)).get_form(int(form_id))
-    return edit_advanced_form_actions(request, domain, app_id, form.unique_id)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
 def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
@@ -202,14 +186,6 @@ def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
     app.save(response_json)
     response_json['propertiesMap'] = get_all_case_properties(app)
     return json_response(response_json)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def edit_form_actions_by_form_index(request, domain, app_id, module_id, form_id):
-    app = get_app(domain, app_id)
-    form = app.get_module(int(module_id)).get_form(int(form_id))
-    return edit_form_actions(request, domain, app_id, form.unique_id)
 
 
 @no_conflict_require_POST
@@ -238,14 +214,6 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     response_json['propertiesMap'] = get_all_case_properties(app)
     response_json['usercasePropertiesMap'] = get_usercase_properties(app)
     return json_response(response_json)
-
-
-@no_conflict_require_POST
-@require_can_edit_apps
-def edit_careplan_form_actions_by_form_index(request, domain, app_id, module_id, form_id):
-    app = get_app(domain, app_id)
-    form = app.get_module(int(module_id)).get_form(int(form_id))
-    return edit_careplan_form_actions(request, domain, app_id, form.unique_id)
 
 
 @no_conflict_require_POST
@@ -494,17 +462,6 @@ def get_xform_source(request, domain, app_id, form_unique_id):
 
 @require_GET
 @require_can_edit_apps
-def get_xform_source_by_form_index(request, domain, app_id, module_id, form_id):
-    app = get_app(domain, app_id)
-    try:
-        form = app.get_module(int(module_id)).get_form(int(form_id))
-    except IndexError:
-        raise Http404()
-    return _get_xform_source(request, app, form)
-
-
-@require_GET
-@require_can_edit_apps
 def get_form_questions(request, domain, app_id):
     module_id = request.GET.get('module_id')
     form_id = request.GET.get('form_id')
@@ -620,14 +577,15 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'caseType': form.get_case_type(),
         'moduleCaseTypes': module_case_types,
         'propertiesMap': get_all_case_properties(app),
+        'propertyDescriptions': get_case_property_description_dict(domain),
         'questions': xform_questions,
         'reserved_words': load_case_reserved_words(),
+        'usercasePropertiesMap': get_usercase_properties(app),
     }
     context = {
         'nav_form': form,
         'xform_languages': languages,
         "xform_questions": xform_questions,
-        'valid_index_names': valid_index_names,
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
         'xform_validation_missing': xform_validation_missing,
@@ -720,6 +678,12 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
     else:
         context.update({
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled_for_request(request),
+        })
+        case_config_options.update({
+            'actions': form.actions,
+            'allowUsercase': allow_usercase,
+            'save_url': reverse("edit_form_actions", args=[app.domain, app.id, form.unique_id]),
+            'valid_index_names': valid_index_names,
         })
         template = get_app_manager_template(
             request.user,

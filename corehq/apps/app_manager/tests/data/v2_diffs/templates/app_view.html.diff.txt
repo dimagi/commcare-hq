@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,318 +1,95 @@
+@@ -1,352 +1,95 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -111,6 +111,38 @@
 -                        state = "loaded";
 -                        showSpinner = false;
 -                        $main.html(content);
+-                        COMMCAREHQ.initBlock($main);
+-                        analytics.workflow('Visited the Release Manager');
+-
+-                        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+-
+-                        // Main releases/versions tab
+-                        var o = {
+-                            currentAppVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
+-                            recipient_contacts: {{ sms_contacts|JSON }},
+-                            download_modal_id: '#download-zip-modal',
+-                            fetchLimit: {{ fetchLimit }},
+-                        };
+-                        var el = $('#releases-table');
+-                        var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
+-                        var releasesMain = new ReleasesMain(o);
+-                        _.defer(function(){ releasesMain.getMoreSavedApps(false); });
+-                        el.koApplyBindings(releasesMain);
+-
+-                        // Build profiles
+-                        $profileManager = $("#profiles-tab");
+-                        if ($profileManager.length) {
+-                            var app_langs = initial_page_data('langs');
+-                            var app_profiles = initial_page_data('build_profiles');
+-                            var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
+-                            $profileManager.koApplyBindings(new ProfileManager(app_profiles, app_langs));
+-                        }
+-
+-                        // App diff
+-                        var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body')
+-                        $('#recent-changes-btn').on('click', function (e) {
+-                            appDiff.renderDiff({{ app.id|JSON }}, {{ latest_build_id|JSON }});
+-                        });
 -                    },
 -                    error: function() {
 -                        state = "error";
@@ -231,6 +263,7 @@
  {% endblock %}
  
  {% block form-view %}
+-    {% initial_page_data 'build_profiles' app.build_profiles %}
 -    {% initial_page_data 'app_view_options' app_view_options %}
 -    {% initial_page_data 'domain_names' domain_names %}
 -    {% initial_page_data 'is_remote_app' app.is_remote_app %}
@@ -278,6 +311,7 @@
 -    {% registerurl "download_ccz" app.domain '---' %}
 -    {% registerurl "download_multimedia_zip" app.domain '---' %}
 -    {% registerurl "project_report_dispatcher" app.domain 'application_error' %}
+-    {% registerurl "app_data_json" app.domain '---' %}
 -
 -    <div class="tab-content">
 -        <div class="tab-pane" id="releases">

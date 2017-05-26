@@ -96,7 +96,7 @@ from soil.tasks import prepare_download
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_json_response
 from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, ShadowForm
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.domain.decorators import (
@@ -107,6 +107,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import BadExportConfiguration
+from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.export import export_cases
@@ -116,6 +117,7 @@ from corehq.apps.locations.permissions import can_edit_form_location, location_s
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.util import default_language as ucr_default_language
+from corehq.apps.reports.util import validate_xform_for_edit
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import (
@@ -1727,10 +1729,11 @@ class EditFormInstance(View):
         except ResourceNotFound:
             raise Http404(_('Application not found.'))
 
-        form = build.get_form_by_xmlns(instance.xmlns)
-        if not form:
+        forms = build.get_forms_by_xmlns(instance.xmlns)
+        if not forms:
             raise Http404(_('Missing module or form information!'))
-        return form
+        non_shadow_forms = [form for form in forms if form.form_type != ShadowForm.form_type]
+        return non_shadow_forms[0]
 
     @staticmethod
     def _form_instance_to_context_url(domain, instance):
@@ -1773,6 +1776,12 @@ class EditFormInstance(View):
 
         # add usercase to session
         form = self._get_form_from_instance(instance)
+
+        try:
+            validate_xform_for_edit(form.wrapped_xform())
+        except EditFormValidationError as e:
+            return _error(e)
+
         if form.uses_usercase():
             usercase_id = user.get_usercase_id()
             if not usercase_id:
@@ -1842,7 +1851,7 @@ def restore_edit(request, domain, instance_id):
         raise Http404()
 
     instance = _get_location_safe_form(domain, request.couch_user, instance_id)
-    if isinstance(instance, XFormDeprecated):
+    if instance.is_deprecated:
         submit_form_locally(instance.get_xml(), domain, app_id=instance.app_id, build_id=instance.build_id)
         messages.success(request, _(u'Form was restored from a previous version.'))
         return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance.orig_id]))

@@ -23,8 +23,10 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
     merge_queries,
+    replace_custom_query_variables,
     CaseSearchQueryAddition,
     SEARCH_QUERY_ADDITION_KEY,
+    SEARCH_QUERY_CUSTOM_VALUE,
     QueryMergeException,
     FuzzyProperties,
     CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
@@ -120,7 +122,7 @@ def search(request, domain):
     query_addition_debug_details = {}
     try:
         search_es = _add_case_search_addition(
-            request, domain, search_es, query_addition_id, query_addition_debug_details
+            request, domain, search_es, query_addition_id, query_addition_debug_details, criteria
         )
     except QueryMergeException as e:
         return _handle_query_merge_exception(request, e)
@@ -176,7 +178,7 @@ def _add_case_property_queries(domain, case_type, search_es, criteria):
         fuzzies = []
 
     for key, value in criteria.items():
-        if key in UNSEARCHABLE_KEYS:
+        if key in UNSEARCHABLE_KEYS or key.startswith(SEARCH_QUERY_CUSTOM_VALUE):
             continue
         remove_char_regexs = config.ignore_patterns.filter(
             domain=domain,
@@ -190,12 +192,14 @@ def _add_case_property_queries(domain, case_type, search_es, criteria):
     return search_es
 
 
-def _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details):
+def _add_case_search_addition(request, domain, search_es, query_addition_id,
+                              query_addition_debug_details, criteria):
     if query_addition_id:
-        query_addition = CaseSearchQueryAddition.objects.get(id=query_addition_id, domain=domain)
+        query_addition = CaseSearchQueryAddition.objects.get(id=query_addition_id, domain=domain).query_addition
+        query_addition = replace_custom_query_variables(query_addition, criteria)
         query_addition_debug_details['original_query'] = search_es.get_query()
-        query_addition_debug_details['query_addition'] = query_addition.query_addition
-        new_query = merge_queries(search_es.get_query(), query_addition.query_addition)
+        query_addition_debug_details['query_addition'] = query_addition
+        new_query = merge_queries(search_es.get_query(), query_addition)
         query_addition_debug_details['new_query'] = new_query
         search_es = search_es.set_query(new_query)
     return search_es

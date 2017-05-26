@@ -20,6 +20,7 @@ from custom.enikshay.reports.generic import EnikshayReport
 
 from django.utils.translation import ugettext_lazy
 
+from custom.enikshay.tasks import EpisodeAdherenceUpdate
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 
@@ -120,17 +121,17 @@ class HistoricalAdherenceReport(EnikshayReport):
         return report_context
 
     def get_doses(self):
-        adherence = self.get_adherence_cases_dict()
-        dose_taken_adherence = defaultdict(list)
-        for date, adherence_cases in adherence.iteritems():
-            for case in adherence_cases:
-                adherence_value = case.dynamic_case_properties().get('adherence_value')
-                if adherence_value in DOSE_TAKEN_INDICATORS:
-                    dose_taken_adherence[date].append(case)
-        return len(dose_taken_adherence.keys())
+        adherence_cases = []
+        for day, cases in self.get_adherence_cases_dict().iteritems():
+            adherence_cases.extend(cases)
+
+        doses_taken_by_date = EpisodeAdherenceUpdate.calculate_doses_taken_by_day(
+            [c.to_json() for c in adherence_cases]
+        )
+        return EpisodeAdherenceUpdate.count_doses_taken(doses_taken_by_date)
 
     def get_treatment_phase(self):
-        if self.episode_properties.get("treatment_initiated", False) == "yes":
+        if self.episode_properties.get("treatment_initiated", False) in ("yes_phi", "yes_private"):
             if self.episode_properties.get("cp_initiated", False) == "yes":
                 return "CP"
             return "IP"
@@ -230,8 +231,10 @@ class HistoricalAdherenceReport(EnikshayReport):
     def get_primary_adherence_case(self, adherence_cases):
         """
         Return the case who's adherence value should be used.
-        Cases with adherence_source == enikshay take precedence over other sources, and cases with a later
-        modified_on take precedence over earlier.
+        Cases with adherence_source == enikshay take precedence over other sources
+        Then open cases tak precedence over other cases
+        Then cases with a later modified_on take precedence over earlier cases
+        Then cases with a later opened_on take precedence over earlier cases
         """
         if not adherence_cases:
             return None
@@ -240,7 +243,7 @@ class HistoricalAdherenceReport(EnikshayReport):
             return case.dynamic_case_properties().get('adherence_source') in ('enikshay', '')
 
         return sorted(
-            adherence_cases, key=lambda c: (_source_is_enikshay(c), c.modified_on)
+            adherence_cases, key=lambda c: (_source_is_enikshay(c), not c.closed, c.modified_on, c.opened_on)
         )[-1]
 
     def get_adherence_value(self, primary_adherence_case):

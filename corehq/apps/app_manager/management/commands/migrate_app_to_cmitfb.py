@@ -6,7 +6,7 @@ from lxml import etree as ET
 from couchdbkit import ResourceNotFound
 from django.core.management import BaseCommand
 
-from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
+from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
 from corehq.apps.app_manager.models import Application, PreloadAction, CaseReferences
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import (
@@ -66,12 +66,14 @@ class Command(BaseCommand):
             logger.info('migrating %s: %s apps', domain, len(app_ids))
             for app_id in app_ids:
                 try:
-                    if self.fix_user_props:
-                        self.fix_user_properties(app_id)
+                    app = get_app(domain, app_id)
+                    if app.doc_type == "Application":
+                        if self.fix_user_props:
+                            self.fix_user_properties(app)
+                        else:
+                            self.migrate_app(app)
                     else:
-                        self.migrate_app(app_id)
-                except SkipApp as err:
-                    logger.error("skipping app %s/%s: %s", domain, app_id, err)
+                        logger.info("Skipping %s/%s because it is a %s", domain, app_id, app.doc_type)
                 except Exception:
                     logger.exception("skipping app %s/%s", domain, app_id)
             if self.migrate_usercase and not USER_PROPERTY_EASY_REFS.enabled(domain):
@@ -82,15 +84,14 @@ class Command(BaseCommand):
 
         logger.info('done with migrate_app_to_cmitfb %s', self.dry)
 
-    def migrate_app(self, app_id):
-        app = Application.get(app_id)
+    def migrate_app(self, app):
         migrate_usercase = should_migrate_usercase(app, self.migrate_usercase)
         if self.migrate_usercase and not migrate_usercase:
             return False
         if app.vellum_case_management and not migrate_usercase and not self.force:
-            logger.info('already migrated app {}'.format(app_id))
+            logger.info('already migrated app {}'.format(app.id))
             return False
-        logger.info('%smigrating app %s/%s', self.dry, app.domain, app_id)
+        logger.info('%smigrating app %s/%s', self.dry, app.domain, app.id)
 
         for module, form, form_ix in iter_forms(app):
             preloads = []
@@ -111,15 +112,11 @@ class Command(BaseCommand):
             app.save()
         return True
 
-    def fix_user_properties(self, app_id):
-        try:
-            app = Application.get(app_id)
-        except Exception as err:
-            raise SkipApp(type(err).__name__)
+    def fix_user_properties(self, app):
         updated = False
         if self.fup_caseref:
             # fix user properties based on form.case_references.load
-            logger.info("%smigrating %s/%s", self.dry, app.domain, app_id)
+            logger.info("%smigrating %s/%s", self.dry, app.domain, app.id)
             for module, form, form_ix in iter_forms(app):
                 if not (form.case_references and form.case_references.load):
                     continue
@@ -132,10 +129,10 @@ class Command(BaseCommand):
             copy = get_pre_migration_copy(app)
             if copy is None:
                 logger.warn("%scopy not found %s/%s version %s",
-                    self.dry, app.domain, app_id, app.version)
+                    self.dry, app.domain, app.id, app.version)
                 return
             logger.info("%smigrating %s/%s: (%s) version diff=%s",
-                self.dry, app.domain, app_id, copy.version, app.version - copy.version)
+                self.dry, app.domain, app.id, copy.version, app.version - copy.version)
             old_forms = {form.unique_id: form
                 for module in copy.modules if module.module_type == 'basic'
                 for form in module.forms if form.doc_type == 'Form'}
@@ -153,7 +150,7 @@ class Command(BaseCommand):
         if updated:
             if not self.dry:
                 app.save()
-            logger.info("%ssaved app %s", self.dry, app_id)
+            logger.info("%ssaved app %s", self.dry, app.id)
 
 
 ORIGINAL_MIGRATION_DATE = datetime(2017, 5, 17, 15, 25)

@@ -5,16 +5,23 @@ from corehq.util.test_utils import flag_enabled
 from corehq.apps.custom_data_fields import CustomDataFieldsDefinition, CustomDataEditor
 from corehq.apps.custom_data_fields.models import CustomDataField
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.forms import LocationFormSet
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole, Permissions
 from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE, UserFieldsView
 from corehq.apps.users.forms import UpdateCommCareUserInfoForm
 from corehq.apps.users.signals import clean_commcare_user
+from corehq.apps.users.util import format_username
 from .utils import setup_enikshay_locations
-from ..user_setup import (validate_nikshay_code, LOC_TYPES_TO_USER_TYPES,
-                          set_user_role, validate_usertype, get_site_code)
+from ..user_setup import (
+    LOC_TYPES_TO_USER_TYPES,
+    set_user_role,
+    validate_usertype,
+    get_site_code,
+    ENikshayLocationFormSet,
+    compress_nikshay_id,
+    get_new_username_and_id,
+)
 from ..models import IssuerId
 
 
@@ -57,7 +64,7 @@ class TestUserSetupUtils(TestCase):
         super(TestUserSetupUtils, cls).tearDownClass()
 
     def assertValid(self, form):
-        if isinstance(form, LocationFormSet):
+        if isinstance(form, ENikshayLocationFormSet):
             errors = ", ".join(filter(None, [f.errors.as_text() for f in form.forms]))
         else:
             errors = form.errors.as_text()
@@ -100,7 +107,7 @@ class TestUserSetupUtils(TestCase):
         self.addCleanup(role.delete)
 
     def make_new_location_form(self, name, location_type, parent, nikshay_code):
-        return LocationFormSet(
+        return ENikshayLocationFormSet(
             location=SQLLocation(domain=self.domain, parent=parent),
             bound_data={'name': name,
                         'location_type': self.location_types[location_type],
@@ -120,7 +127,7 @@ class TestUserSetupUtils(TestCase):
             'location_type': location.location_type.code,
         }
         bound_data.update(data)
-        return LocationFormSet(
+        return ENikshayLocationFormSet(
             location=None,
             bound_data=bound_data,
             request_user=self.web_user,
@@ -288,3 +295,20 @@ class TestUserSetupUtils(TestCase):
             ('cto_sto_cra-z_nm3', 'cRa-Z n@m3', 'nikshaycode', 'cto', self.locations['STO']),
         ]:
             self.assertEqual(expected, get_site_code(name, nikshay_code, type_code, parent))
+
+    def test_conflicting_username(self):
+        def id_to_username(issuer_id):
+            return format_username(compress_nikshay_id(issuer_id, 3), self.domain)
+
+        # Figure out what the next issuer_id should be, and create a user with that username
+        issuer_id, _ = IssuerId.objects.get_or_create(domain=self.domain, user_id='some_id')
+        starting_count = IssuerId.objects.count()
+        username = id_to_username(issuer_id.pk + 1)
+        CommCareUser.create(self.domain, username, '123')
+
+        # Creating a new username should skip over that manually created user to avoid id conflicts
+        username, user_id = get_new_username_and_id(self.domain)
+        self.assertEqual(username, id_to_username(issuer_id.pk + 2))
+
+        # Two IssuerId objects should have been created - a real one and one for the bad, manual user
+        self.assertEqual(IssuerId.objects.count(), starting_count + 2)

@@ -56,3 +56,10 @@ class IndicatorLaboratoryAdapter(IndicatorAdapter):
     def _save_rows(self, rows, doc):
         self.es_adapter._save_rows(rows, doc)
         self.sql_adapter._save_rows(rows, doc)
+
+    def delete(self, doc):
+        self.es_adapter.delete(doc)
+        self.sql_adapter.delete(doc)
+
+    def doc_exists(self, doc):
+        return self.es_adapter.doc_exists(doc) or self.sql_adapter.doc_exists(doc)
