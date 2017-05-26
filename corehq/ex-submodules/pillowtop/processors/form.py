@@ -63,11 +63,13 @@ def mark_has_submission(domain, build_id):
         app.save()
 
 
-def _update_last_submission(last_submission, received_on_datetime, build_version, cc_version):
+def _last_submission_needs_update(last_submission, received_on_datetime, build_version, cc_version):
     # This function is to reduce load on the user db by  updating form submission metadata no more than
     # once every 15 minutes unless something else has changed. That way if a user submits 10s
     # or 100s of forms at once we do not need to write all of them.
-    time_difference = received_on_datetime.timestamp - last_submission.submission_date.timestamp
+    if not (last_submission and last_submission.submission_date):
+        return True
+    time_difference = received_on_datetime - last_submission.submission_date
     if time_difference > timedelta(seconds=60 * 15):
         return True
     if build_version != last_submission.build_version:
@@ -100,10 +102,10 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
         metadata
     )
 
-    if last_submission is None or _update_last_submission(last_submission,
-                                                          received_on_datetime,
-                                                          app_version_info.build_version,
-                                                          app_version_info.commcare_version):
+    if _last_submission_needs_update(last_submission,
+                                     received_on_datetime,
+                                     app_version_info.build_version,
+                                     app_version_info.commcare_version):
 
         if last_submission is None:
             last_submission = LastSubmission()
@@ -119,8 +121,11 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
         if app_version_info.build_version:
             update_latest_builds(user, app_id, received_on_datetime, app_version_info.build_version)
 
-        if user.reporting_metadata.last_submission_for_user is None \
-                or user.reporting_metadata.last_submission_for_user.submission_date <= received_on_datetime:
+        if _last_submission_needs_update(user.reporting_metadata.last_submission_for_user,
+                                         received_on_datetime,
+                                         app_version_info.build_version,
+                                         app_version_info.commcare_version):
+
             user.reporting_metadata.last_submission_for_user = last_submission
 
         user.save()

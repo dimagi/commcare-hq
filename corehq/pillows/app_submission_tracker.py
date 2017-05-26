@@ -6,7 +6,6 @@ from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpoi
 from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document, \
     change_meta_from_doc_meta_and_document
 from corehq.apps.change_feed.data_sources import FORM_SQL, COUCH
-from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.reports.analytics.esaccessors import get_last_form_for_apps
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
@@ -139,6 +138,7 @@ def get_sql_app_form_submission_tracker_reindexer():
 def _get_apps_for_domain(domain):
     # thin cached wrapper for get_app_ids_in_domain
     return get_app_ids_in_domain(domain)
+
 
 class UserAppFormSubmissionDocProcessor(BaseDocProcessor):
     def __init__(self, pillow_processor):
