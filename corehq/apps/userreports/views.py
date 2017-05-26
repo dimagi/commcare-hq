@@ -1126,7 +1126,6 @@ class CloneDataSourceView(CreateDataSourceView):
         return DataSourceConfiguration(
             domain=self.domain,
             referenced_doc_type=data_source_to_clone.referenced_doc_type,
-            table_id=data_source_to_clone.table_id,
             description=data_source_to_clone.description,
             base_item_expression=data_source_to_clone.base_item_expression,
             configured_filter=data_source_to_clone.configured_filter,
