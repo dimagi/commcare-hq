@@ -18,6 +18,7 @@ from corehq.apps.locations.forms import LocationFormSet, LocationForm
 from corehq.apps.users.forms import NewMobileWorkerForm, clean_mobile_worker_username
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.signals import clean_commcare_user, commcare_user_post_save
+from .const import AGENCY_USER_FIELDS
 from .models import IssuerId
 
 TYPES_WITH_REQUIRED_NIKSHAY_CODES = ['sto', 'dto', 'tu', 'dmc', 'phi']
@@ -268,13 +269,57 @@ class ENikshayNewMobileWorkerForm(NewMobileWorkerForm):
         super(ENikshayNewMobileWorkerForm, self).__init__(*args, **kwargs)
 
 
-class ENikshayUserDataEditor(CustomDataEditor):
-    """Custom User Data (everywhere it turns up)"""
-    def __init__(self, *args, **kwargs):
-        super(ENikshayUserDataEditor, self).__init__(*args, **kwargs)
+# pcp -> MBBS
+# pac -> AYUSH/other
+# plc -> Private Lab
+# pcc -> pharmacy / chemist
+# dto -> Field officer??
+
+def _make_field_visible_to(field, type_code):
+    # loc_type() is available because this is inside the location form
+    return crispy.Div(field, data_bind="visible: loc_type() === '{}'".format(type_code))
 
 
-class ENikshayLocationDataEditor(CustomDataEditor):
+class ENikshayLocationUserDataEditor(CustomDataEditor):
+    """Custom User Data on Virtual Location User (agency) creation"""
+
+    @property
+    @memoized
+    def fields(self):
+        # non-required fields are typically excluded from creation UIs
+        fields_to_include = [field[0] for field in AGENCY_USER_FIELDS]
+        return [
+            field for field in self.model.get_fields(required_only=False)
+            if field.is_required or field.slug in fields_to_include
+        ]
+
+    def init_form(self, post_dict=None):
+        form = super(ENikshayLocationUserDataEditor, self).init_form(post_dict)
+        fs = form.helper.layout[0]
+        assert isinstance(fs, crispy.Fieldset)
+
+        fields_to_loc_types = {
+            'pcp_professional_org_membership': 'pcp',
+            'pac_qualification': 'pac',
+            'pcp_qualification': 'pcp',
+            'plc_lab_collection_center_name': 'plc',
+            'plc_lab_or_collection_center': 'plc',
+            'plc_accredidation': 'plc',
+            'plc_tb_tests': 'plc',
+            'plc_hf_if_nikshay': 'plc',
+            'pcc_pharmacy_name': 'pcc',
+            'pcc_pharmacy_affiliation': 'pcc',
+            'pcc_tb_drugs_in_stock': 'pcc',
+        }
+
+        for i, field in enumerate(fs.fields):
+            if field in fields_to_loc_types:
+                fs[i] = _make_field_visible_to(field, fields_to_loc_types[field])
+        return form
+
+
+class ENikshayUserLocationDataEditor(CustomDataEditor):
+    """Custom Location Data on Virtual Location User (agency) creation"""
 
     def _make_field(self, field):
         if field.slug == 'private_sector_org_id':
@@ -302,15 +347,15 @@ class ENikshayLocationDataEditor(CustomDataEditor):
                     ('17', "Rajkot"),
                 ],
             )
-        return super(ENikshayLocationDataEditor, self)._make_field(field)
+        return super(ENikshayUserLocationDataEditor, self)._make_field(field)
 
     def init_form(self, post_dict=None):
-        form = super(ENikshayLocationDataEditor, self).init_form(post_dict)
+        form = super(ENikshayUserLocationDataEditor, self).init_form(post_dict)
         fs = form.helper.layout[0]
         assert isinstance(fs, crispy.Fieldset)
         for i, field in enumerate(fs.fields):
-            if field == 'professional_org_membership':
-                fs[i] = crispy.Div(field, data_bind="visible: loc_type() === 'pcp'")
+            if field == 'suborganization':
+                pass # TODO add in special logic to display on org, not loctype
         return form
 
 
@@ -334,9 +379,9 @@ def get_new_username_and_id(domain, attempts_remaining=3):
 class ENikshayLocationFormSet(LocationFormSet):
     """Location, custom data, and possibly location user and data forms"""
     _location_form_class = LocationForm
-    _location_data_editor = ENikshayLocationDataEditor
+    _location_data_editor = ENikshayUserLocationDataEditor
     _user_form_class = ENikshayNewMobileWorkerForm
-    _user_data_editor = ENikshayUserDataEditor
+    _user_data_editor = ENikshayLocationUserDataEditor
 
     @property
     @memoized
