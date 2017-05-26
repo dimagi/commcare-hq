@@ -57,6 +57,8 @@ def _build_boolean_expression_filter(spec, context):
 
 def _build_named_filter(spec, context):
     wrapped = NamedFilterSpec.wrap(spec)
+    if wrapped.name not in context.named_filters:
+        raise BadSpecError(u'Name {} not found in list of named filters!'.format(wrapped.name))
     return context.named_filters[wrapped.name]
 
 
