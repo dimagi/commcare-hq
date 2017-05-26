@@ -1908,6 +1908,7 @@ class DimagiOnlyEnterpriseForm(InternalSubscriptionManagementForm):
             'do_not_invoice': True,
             'no_invoice_reason': '',
             'service_type': SubscriptionType.INTERNAL,
+            'skip_invoicing_if_no_feature_charges': False,
         })
         return fields
 
@@ -1999,7 +2000,8 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
             'do_not_invoice': False,
             'is_trial': True,
             'no_invoice_reason': '',
-            'service_type': SubscriptionType.EXTENDED_TRIAL
+            'service_type': SubscriptionType.EXTENDED_TRIAL,
+            'skip_invoicing_if_no_feature_charges': False, # DOUBLE CHECK
         })
         return fields
 
@@ -2208,6 +2210,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             'do_not_invoice': False,
             'no_invoice_reason': '',
             'service_type': SubscriptionType.IMPLEMENTATION,
+            'skip_invoicing_if_no_feature_charges': False,
         })
         return fields
 
