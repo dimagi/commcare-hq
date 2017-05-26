@@ -36,6 +36,14 @@ def get_synclog_pillow(pillow_id='UpdateUserSyncHistoryPillow'):
     )
 
 
+def _last_sync_needs_update(last_sync, sync_datetime):
+    if not (last_sync and last_sync.sync_date):
+        return True
+    if sync_datetime > last_sync.sync_date:
+        return True
+    return False
+
+
 class SynclogProcessor(PillowProcessor):
 
     def process_change(self, pillow_instance, change):
@@ -47,7 +55,7 @@ class SynclogProcessor(PillowProcessor):
         version = None
         app_id = None
         try:
-            last_sync_date = string_to_utc_datetime(synclog.get('date'))
+            sync_date = string_to_utc_datetime(synclog.get('date'))
         except ValueError:
             return
         build_id = synclog.get('build_id')
@@ -60,20 +68,19 @@ class SynclogProcessor(PillowProcessor):
 
             last_sync = filter_by_app(user.reporting_metadata.last_syncs, app_id)
 
-            if last_sync is None or last_sync_date >= last_sync.sync_date:
+            if _last_sync_needs_update(last_sync, sync_date):
                 if last_sync is None:
                     last_sync = LastSync()
                     user.reporting_metadata.last_syncs.append(last_sync)
-                last_sync.sync_date = last_sync_date
+                last_sync.sync_date = sync_date
                 last_sync.build_version = version
                 last_sync.app_id = app_id
 
-                if user.reporting_metadata.last_sync_for_user is None \
-                        or last_sync_date > user.reporting_metadata.last_sync_for_user.sync_date:
+                if _last_sync_needs_update(user.reporting_metadata.last_sync_for_user, sync_date):
                     user.reporting_metadata.last_sync_for_user = last_sync
 
                 if version:
-                    update_latest_builds(user, app_id, last_sync_date, version)
+                    update_latest_builds(user, app_id, sync_date, version)
 
                 user.save()
 
