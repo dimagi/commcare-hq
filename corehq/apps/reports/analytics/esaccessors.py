@@ -221,6 +221,7 @@ def get_last_form_for_apps(apps, user_id):
             forms.append(hits[0])
     return forms
 
+
 def get_last_forms_by_app(user_id):
     query = (
         FormES()
@@ -356,18 +357,17 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
     missing_users = False
 
     date_filter_fn = submitted_filter if by_submission_time else completed_filter
-    query = (
-        FormES()
-        .domain(domain)
-        .filter(date_filter_fn(gte=startdate, lt=enddate))
-        .aggregation(
-            TermsAggregation('user_id', 'form.meta.userID').aggregation(
-                TermsAggregation('app_id', 'app_id').aggregation(
-                    TermsAggregation('xmlns', 'xmlns')
-                )
-            )
-        )
-        .size(0)
+    query = (FormES()
+             .domain(domain)
+             .filter(date_filter_fn(gte=startdate, lt=enddate))
+             .aggregation(
+                 TermsAggregation('user_id', 'form.meta.userID').aggregation(
+                     TermsAggregation('app_id', 'app_id').aggregation(
+                         TermsAggregation('xmlns', 'xmlns')
+                     )
+                 )
+             )
+             .size(0)
     )
 
     if user_ids:
