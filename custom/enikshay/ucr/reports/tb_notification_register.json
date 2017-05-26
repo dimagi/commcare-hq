@@ -44,7 +44,7 @@
                 "type": "multi_field_dynamic_choice_list",
                 "slug": "village",
                 "field": "person_owner_id",
-                "fields": ["person_owner_id", "referring_facility_id"],
+                "fields": ["person_owner_id", "diagnosing_facility_id"],
                 "choice_provider": {
                     "include_descendants": true,
                     "type": "location",
