@@ -36,6 +36,8 @@ class VertexBackend(SQLSMSBackend):
         return VertexBackendForm
 
     def sanitize_message(self, message):
+        # sanitize message using the rules as suggested by the api
+        # to avoid collision with reserved HTTP characters
         return (message
                 .replace('&', 'amp;')
                 .replace('#', ';hash')
