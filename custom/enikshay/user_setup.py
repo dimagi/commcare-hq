@@ -18,7 +18,7 @@ from corehq.apps.locations.forms import LocationFormSet, LocationForm
 from corehq.apps.users.forms import NewMobileWorkerForm, clean_mobile_worker_username
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.signals import clean_commcare_user, commcare_user_post_save
-from .const import AGENCY_USER_FIELDS
+from .const import AGENCY_USER_FIELDS, AGENCY_LOCATION_FIELDS
 from .models import IssuerId
 
 TYPES_WITH_REQUIRED_NIKSHAY_CODES = ['sto', 'dto', 'tu', 'dmc', 'phi']
@@ -320,6 +320,16 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
 
 class ENikshayUserLocationDataEditor(CustomDataEditor):
     """Custom Location Data on Virtual Location User (agency) creation"""
+
+    @property
+    @memoized
+    def fields(self):
+        # non-required fields are typically excluded from creation UIs
+        fields_to_include = [field[0] for field in AGENCY_LOCATION_FIELDS]
+        return [
+            field for field in self.model.get_fields(required_only=False)
+            if field.is_required or field.slug in fields_to_include
+        ]
 
     def _make_field(self, field):
         if field.slug == 'private_sector_org_id':
