@@ -1073,7 +1073,8 @@ class Subscription(models.Model):
         changed while the subscription is active (or reactivated)
         """
         return ['do_not_invoice', 'no_invoice_reason',
-                'salesforce_contract_id', 'skip_auto_downgrade']
+                'salesforce_contract_id', 'skip_auto_downgrade',
+                'skip_invoicing_if_no_feature_charges']
 
     @property
     def next_subscription_filter(self):

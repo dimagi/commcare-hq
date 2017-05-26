@@ -1574,6 +1574,10 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         pro_bono_status=ProBonoStatus.NO,
                         funding_source=FundingSource.CLIENT,
                         skip_auto_downgrade=False,
+                        do_not_invoice=False,
+                        skip_invoicing_if_no_feature_charges=(
+                            self.plan_version.plan.edition == SoftwarePlanEdition.COMMUNITY
+                        ),
                     )
                 return True
         except Exception as e:
