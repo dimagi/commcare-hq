@@ -165,10 +165,9 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         Any active automatic case update rules should be deactivated.
         """
         try:
-            AutomaticUpdateRule.objects.filter(
-                domain=domain.name,
-                deleted=False,
-                active=True,
+            AutomaticUpdateRule.by_domain(
+                domain.name,
+                AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
             ).update(active=False)
             return True
         except Exception:
@@ -548,10 +547,9 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         Any active automatic case update rules should be deactivated.
         """
-        rule_count = AutomaticUpdateRule.objects.filter(
-            domain=domain.name,
-            deleted=False,
-            active=True,
+        rule_count = AutomaticUpdateRule.by_domain(
+            domain.name,
+            AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         ).count()
         if rule_count > 0:
             return _fmt_alert(
