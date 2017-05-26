@@ -481,7 +481,7 @@ def resync_case_to_es(domain, case):
 def validate_xform_for_edit(xform):
     for node in xform.bind_nodes:
         if '@case_id' in node.attrib.get('nodeset') and node.attrib.get('calculate') == 'uuid()':
-            raise EditFormValidationError(_(u'XForm cannot be edited because it will create a new case'))
+            raise EditFormValidationError(_(u'Form cannot be edited because it will create a new case'))
 
     return None
 
