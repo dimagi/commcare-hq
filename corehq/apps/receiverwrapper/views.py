@@ -26,7 +26,6 @@ from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
 from corehq.util.datadog.gauges import datadog_gauge, datadog_counter
 from corehq.util.datadog.metrics import MULTIMEDIA_SUBMISSION_ERROR_COUNT
-from corehq.util.datadog.utils import log_counter
 from corehq.util.timer import TimingContext
 import couchforms
 from django.views.decorators.http import require_POST
@@ -67,14 +66,14 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             except:
                 meta = {}
 
-            details = {
-                "domain": domain,
-                "app_id": app_id,
-                "user_id": user_id,
-                "authenticated": authenticated,
-                "form_meta": meta,
-            }
-            log_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, details)
+            details = [
+                "domain:{}".format(domain),
+                "app_id:{}".format(app_id),
+                "user_id:{}".format(user_id),
+                "authenticated:{}".format(authenticated),
+                "form_meta:{}".format(meta),
+            ]
+            datadog_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, tags=details)
             notify_exception(request, "Received a submission with POST.keys()", details)
             response = HttpResponseBadRequest(e.message)
             _record_metrics(metric_tags, 'unknown', response)
