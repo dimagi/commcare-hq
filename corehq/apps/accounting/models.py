@@ -1072,9 +1072,13 @@ class Subscription(models.Model):
         These are the attributes of a Subscription that can always be
         changed while the subscription is active (or reactivated)
         """
-        return ['do_not_invoice', 'no_invoice_reason',
-                'salesforce_contract_id', 'skip_auto_downgrade',
-                'skip_invoicing_if_no_feature_charges']
+        return [
+            'do_not_invoice',
+            'no_invoice_reason',
+            'salesforce_contract_id',
+            'skip_auto_downgrade',
+            'skip_invoicing_if_no_feature_charges',
+        ]
 
     @property
     def next_subscription_filter(self):
@@ -1319,9 +1323,14 @@ class Subscription(models.Model):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
         self.date_end = date_end
         self.is_active = True
-        for allowed_attr in self.allowed_attr_changes:
-            if allowed_attr in kwargs:
-                setattr(self, allowed_attr, kwargs[allowed_attr])
+        for kwarg in kwargs:
+            if kwarg in self.allowed_attr_changes:
+                setattr(self, kwarg, kwargs[kwarg])
+            else:
+                log_accounting_error(
+                    'Tried to reassign attr %s' % kwarg,
+                    show_stack_trace=True,
+                )
         self.save()
         self.subscriber.reactivate_subscription(
             new_plan_version=self.plan_version,
