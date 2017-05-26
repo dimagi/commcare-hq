@@ -48,9 +48,9 @@ branches:
   - vellum-staging # J$ 11/13
 #  - nh/240812/mw_pwd_reset  # Norman 3/23
   - ce/app-status-pillows+nh/new_rb # Cal 3/26
-  - nh/new_rb  # Norman 11/22
   - ce/app-status-2 # Cal 5/22
   - ce/app-status-pillows # Cal 5/22
+  - nh/new_rb  # Norman 11/22
   - revert-16005-revert-15522-mk-nikshay-audit-cookie-safe # Manish 4/May
   - mk-add-password-encoder # Manish 3/3
   - gc/case-close-refactor # Giovanni 4/7
