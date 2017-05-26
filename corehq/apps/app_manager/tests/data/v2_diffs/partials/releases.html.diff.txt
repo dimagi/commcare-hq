@@ -1,49 +1,8 @@
 --- 
 +++ 
-@@ -17,7 +17,9 @@
-             '/a/' + '{{ domain }}' + '/apps/view/---/app_data/'
-         )
-         var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
--        var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
-+        var profiles = hqImport('app_manager/js/language-profiles.js');
-+        profiles.setProfileUrl('{{ application_profile_url }}');
-+        var ProfileManager = profiles.ProfileManager;
-         var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body')
-         $('#recent-changes-btn').on('click', function (e) {
-             appDiff.renderDiff({{ app.id|JSON }}, {{ latest_build_id|JSON }});
-@@ -29,23 +31,51 @@
-             fetchLimit: {{ fetchLimit }},
-         };
-         var el = $('#releases-table');
--        var releasesMain = new ReleasesMain(o);
--        _.defer(function(){ releasesMain.getMoreSavedApps(false); });
--        el.koApplyBindings(releasesMain);
-+        if (el.length) {
-+            var releasesMain = new ReleasesMain(o);
-+            _.defer(function(){ releasesMain.getMoreSavedApps(false); });
-+            el.koApplyBindings(releasesMain);
-+        }
- 
-         var app_langs = {{ app.langs|JSON }};
-         var app_profiles = {{ app.build_profiles|JSON }}
- 
--        {% if build_profile_access %}
-+        {% if not intro_only and build_profile_access %}
-         var profileManager = new ProfileManager(app_profiles, app_langs);
-         $('#profiles-tab').koApplyBindings(profileManager);
-         {% endif %}
-     });
--
--    analytics.workflow('Visited the Release Manager');
-+    {% if intro_only %}
-+    $(function () {
-+        var previewApp = hqImport('app_manager/js/preview_app.js');
-+        previewApp.forceShowPreview();
-+    });
-+    {% endif %}
-+
-+    //analytics.workflow('Visited the Release Manager');
- </script>
+@@ -5,7 +5,27 @@
+ {% load timezone_tags %}
+ {% load i18n %}
  
 -{% if build_profile_access %}
 +{% if intro_only %}
@@ -70,7 +29,7 @@
  <div class="tabbable">
      <ul class="nav nav-tabs">
          <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
-@@ -72,181 +102,157 @@
+@@ -32,181 +52,157 @@
                          {% endblocktrans %}
                      </small></p>
                  </div>
@@ -393,7 +352,7 @@
      <script type="text/html" id="delete-build-modal-template">
          <div class="modal-dialog">
              <div class="modal-content">
-@@ -294,18 +300,19 @@
+@@ -254,18 +250,19 @@
          </div>
      </script>
      <script type="text/html" id="deploy-build-modal-template">

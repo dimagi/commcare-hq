@@ -5,56 +5,6 @@
 {% load timezone_tags %}
 {% load i18n %}
 
-<script>
-    $(function () {
-       $('.hq-help-template').each(function () {
-            COMMCAREHQ.transformHelpTemplate($(this), true);
-       });
-    });
-    $(function () {
-        hqImport('hqwebapp/js/urllib.js').registerUrl(
-            'app_data',
-            '/a/' + '{{ domain }}' + '/apps/view/---/app_data/'
-        )
-        var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
-        var profiles = hqImport('app_manager/js/language-profiles.js');
-        profiles.setProfileUrl('{{ application_profile_url }}');
-        var ProfileManager = profiles.ProfileManager;
-        var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body')
-        $('#recent-changes-btn').on('click', function (e) {
-            appDiff.renderDiff({{ app.id|JSON }}, {{ latest_build_id|JSON }});
-        })
-        var o = {
-            currentAppVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
-            recipient_contacts: {{ sms_contacts|JSON }},
-            download_modal_id: '#download-zip-modal',
-            fetchLimit: {{ fetchLimit }},
-        };
-        var el = $('#releases-table');
-        if (el.length) {
-            var releasesMain = new ReleasesMain(o);
-            _.defer(function(){ releasesMain.getMoreSavedApps(false); });
-            el.koApplyBindings(releasesMain);
-        }
-
-        var app_langs = {{ app.langs|JSON }};
-        var app_profiles = {{ app.build_profiles|JSON }}
-
-        {% if not intro_only and build_profile_access %}
-        var profileManager = new ProfileManager(app_profiles, app_langs);
-        $('#profiles-tab').koApplyBindings(profileManager);
-        {% endif %}
-    });
-    {% if intro_only %}
-    $(function () {
-        var previewApp = hqImport('app_manager/js/preview_app.js');
-        previewApp.forceShowPreview();
-    });
-    {% endif %}
-
-    //analytics.workflow('Visited the Release Manager');
-</script>
-
 {% if intro_only %}
   <div class="helpbubble helpbubble-primary helpbubble-left pull-left" style="max-width: 300px;">
   {% blocktrans %}
