@@ -91,16 +91,18 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         if save:
             self.save()
 
-    def remove_user(self, couch_user_id, save=True):
+    def remove_user(self, couch_user_id):
+        '''
+        Returns True if it removed a user, False otherwise
+        '''
         if not isinstance(couch_user_id, basestring):
             couch_user_id = couch_user_id.user_id
         if couch_user_id in self.users:
-            for i in range(0,len(self.users)):
+            for i in range(0, len(self.users)):
                 if self.users[i] == couch_user_id:
                     del self.users[i]
-                    if save:
-                        self.save()
-                    return
+                    return True
+        return False
 
     def add_group(self, group):
         group.add_to_group(self)

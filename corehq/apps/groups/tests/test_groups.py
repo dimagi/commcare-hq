@@ -62,8 +62,8 @@ class GroupTest(TestCase):
                        users=[self.active_user._id, self.inactive_user._id, self.deleted_user._id])
         group2.save()
 
-        group1.remove_user(self.active_user._id, save=False)
-        group2.remove_user(self.deleted_user._id, save=False)
+        group1.remove_user(self.active_user._id)
+        group2.remove_user(self.deleted_user._id)
 
         g1_old_modified = group1.last_modified
         g2_old_modified = group2.last_modified
