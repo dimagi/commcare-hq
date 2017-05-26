@@ -90,27 +90,29 @@
                     {% endif %}
                 </div>
             </div>
-            {% if plan.date_start %}
-                <div class="form-group">
-                    <label class="control-label col-sm-2">{% trans 'Date Started' %}</label>
-                    <div class="col-sm-10">
-                        <p class="form-control-text">{{ plan.date_start }}</p>
+            {% if not plan.is_trial %}
+                {% if plan.date_start %}
+                    <div class="form-group">
+                        <label class="control-label col-sm-2">{% trans 'Date Started' %}</label>
+                        <div class="col-sm-10">
+                            <p class="form-control-text">{{ plan.date_start }}</p>
+                        </div>
                     </div>
-                </div>
-            {% endif %}
-            {% if plan.date_end %}
-                <div class="form-group">
-                    <label class="control-label col-sm-2">{% trans 'Date Ending' %}</label>
-                    <div class="col-sm-10">
-                        <p class="form-control-text">{{ plan.date_end }}</p>
-                        {% if plan.next_subscription.can_renew %}
-                            <a href="{{ plan.next_subscription.renew_url }}"
-                               class="btn btn-success">
-                                {% trans "Renew Plan" %}
-                            </a>
-                        {% endif %}
+                {% endif %}
+                {% if plan.date_end %}
+                    <div class="form-group">
+                        <label class="control-label col-sm-2">{% trans 'Date Ending' %}</label>
+                        <div class="col-sm-10">
+                            <p class="form-control-text">{{ plan.date_end }}</p>
+                            {% if plan.next_subscription.can_renew %}
+                                <a href="{{ plan.next_subscription.renew_url }}"
+                                   class="btn btn-success">
+                                    {% trans "Renew Plan" %}
+                                </a>
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
+                {% endif %}
             {% endif %}
             <div data-bind="foreach: products">
                 <div class="form-group">
