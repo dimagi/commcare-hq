@@ -585,7 +585,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
     context = {
         'nav_form': form,
         'xform_languages': languages,
-        "xform_questions": xform_questions,
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
         'xform_validation_missing': xform_validation_missing,
@@ -683,7 +682,17 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
                 'actions': form.actions,
                 'isShadowForm': False,
             })
-        context.update(get_schedule_context(form))
+        if module.has_schedule:
+            schedule_options = get_schedule_context(form)
+            schedule_options.update({
+                'phase': schedule_options['schedule_phase'],
+                'questions': xform_questions,
+                'save_url': reverse("edit_visit_schedule", args=[app.domain, app.id, form.unique_id]),
+                'schedule': form.schedule,
+            })
+            context.update({
+                'schedule_options': schedule_options,
+            })
         template = get_app_manager_template(
             request.user,
             "app_manager/v1/form_view_advanced.html",

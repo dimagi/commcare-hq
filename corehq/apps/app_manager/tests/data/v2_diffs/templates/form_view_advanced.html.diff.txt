@@ -6,10 +6,10 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -38,5 +38,5 @@
- {% endblock %}
+@@ -32,5 +32,5 @@
  
  {% block case_management_content %}
+     {% initial_page_data 'schedule_options' schedule_options %}
 -    {% include 'app_manager/v1/partials/case_config_advanced.html' %}
 +    {% include 'app_manager/v2/partials/case_config_advanced.html' %}
  {% endblock %}
