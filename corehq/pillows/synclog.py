@@ -17,7 +17,7 @@ from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclogs_for_user
 
 
-def get_synclog_pillow(pillow_id='UpdateUserSyncHistoryPillow'):
+def get_synclog_pillow(pillow_id='UpdateUserSyncHistoryPillow', **kwargs):
     """
     This gets a pillow which iterates through all synclogs
     """
