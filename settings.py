@@ -1523,6 +1523,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend',
     'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
     'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
+    'corehq.messaging.smsbackends.vertex.models.SQLVertexBackend',
 ]
 
 IVR_LOADED_SQL_BACKENDS = [
