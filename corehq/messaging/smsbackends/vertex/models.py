@@ -27,3 +27,6 @@ class SQLVertexBackend(SQLSMSBackend):
     @classmethod
     def get_form_class(self):
         return VertexBackendForm
+
+    def send(self, msg, *args, **kwargs):
+        pass

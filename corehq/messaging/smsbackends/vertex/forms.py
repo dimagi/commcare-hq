@@ -34,6 +34,3 @@ class VertexBackendForm(BackendForm):
             'senderid',
             'response',
         )
-
-    def send(self, msg, *args, **kwargs):
-        pass
