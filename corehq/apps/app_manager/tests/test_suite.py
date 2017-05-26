@@ -14,6 +14,8 @@ from corehq.apps.app_manager.models import (
     Application,
     DetailColumn,
     FormActionCondition,
+    GraphConfiguration,
+    GraphSeries,
     MappingItem,
     Module,
     OpenCaseAction,
@@ -713,7 +715,14 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             header={'en': 'CommBugz'},
             uuid='ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i',
             xpath_description='"report description"',
-            use_xpath_description=True
+            use_xpath_description=True,
+            complete_graph_configs={
+                chart.chart_id: GraphConfiguration(
+                    graph_type="bar",
+                    series=[GraphSeries() for c in chart.y_axis_columns],
+                )
+                for chart in report.charts
+            },
         )
         report_app_config._report = report
         report_module.report_configs = [report_app_config]
