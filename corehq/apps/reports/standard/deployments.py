@@ -173,7 +173,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             else:
                 last_sub = reporting_metadata.get('last_submission_for_user', {})
                 last_sync = reporting_metadata.get('last_sync_for_user', {})
-                last_build = reporting_metadata.get('last_build', {})
+                last_build = reporting_metadata.get('last_build_for_user', {})
                 commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
             if last_sub and last_sub.get('submission_date'):
                 last_seen = string_to_utc_datetime(last_sub['submission_date'])
