@@ -10,7 +10,7 @@ class VertexBackendForm(BackendForm):
         required=True,
     )
     password = forms.CharField(
-        label=ugettext_lazy("pass"),
+        label=ugettext_lazy("password"),
         required=True,
     )
     senderid = forms.CharField(
