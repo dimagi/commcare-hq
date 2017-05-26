@@ -286,14 +286,6 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
 
     strict = True  # for asserts
 
-    def _assert(self, conditional, msg="", case_id=None):
-        if not conditional:
-            _get_logger().warn("assertion failed: %s" % msg)
-            if self.strict:
-                raise SyncLogAssertionError(case_id, msg)
-            else:
-                self.has_assert_errors = True
-
     @classmethod
     def wrap(cls, data):
         ret = super(AbstractSyncLog, cls).wrap(data)
@@ -400,6 +392,14 @@ class SyncLog(AbstractSyncLog):
         from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user
 
         return get_last_synclog_for_user(user_id)
+
+    def _assert(self, conditional, msg="", case_id=None):
+        if not conditional:
+            _get_logger().warn("assertion failed: %s" % msg)
+            if self.strict:
+                raise SyncLogAssertionError(case_id, msg)
+            else:
+                self.has_assert_errors = True
 
     def case_count(self):
         return len(self.cases_on_phone)

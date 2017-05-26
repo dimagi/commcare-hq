@@ -40,7 +40,7 @@ from corehq.apps.calendar_fixture.forms import CalendarFixtureForm
 from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
-    CaseSearchConfigJSON,
+    FuzzyProperties,
     enable_case_search,
     disable_case_search,
 )
@@ -2172,34 +2172,32 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        request_json = json.loads(request.body)
+        enable = request_json.get('enable')
+        fuzzies_by_casetype = request_json.get('fuzzy_properties')
+        updated_fuzzies = []
+        for case_type, properties in fuzzies_by_casetype.iteritems():
+            fp, created = FuzzyProperties.objects.get_or_create(
+                domain=self.domain,
+                case_type=case_type
+            )
+            fp.properties = properties
+            fp.save()
+            updated_fuzzies.append(fp)
 
-        def unpack_fuzzies(query_dict):
-            """
-            Builds an integer-keyed dictionary from POST request data, and returns a list of dictionaries that can
-            be wrapped by CaseSearchConfigJSON
-            """
-            # match "config[fuzzy_properties][0][case_type]" and "config[fuzzy_properties][0][properties][]" but
-            # not "enable"
-            pattern = re.compile(r'^config\[fuzzy_properties]\[(?P<index>\d+)]\[(?P<attr>\w+)](?:\[])?$')
-            fuzzy_dict = defaultdict(dict)
-            for key in query_dict:
-                match = pattern.match(key)
-                if match:
-                    i = int(match.group('index'))
-                    attr = match.group('attr')
-                    is_list = key.endswith('[]')  # i.e. "...[properties][]"
-                    fuzzy_dict[i][attr] = query_dict.getlist(key) if is_list else query_dict[key]
-            if not fuzzy_dict:
-                return []
-            return [fuzzy_dict[i] for i in range(max(fuzzy_dict.keys()) + 1) if fuzzy_dict[i]]
+        unneeded_fuzzies = FuzzyProperties.objects.filter(domain=self.domain).exclude(
+            case_type__in=fuzzies_by_casetype.keys()
+        )
+        unneeded_fuzzies.delete()
 
-        if request.POST['enable'] == 'true':
+        if enable:
             enable_case_search(self.domain)
         else:
             disable_case_search(self.domain)
+
         CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
-            'enabled': request.POST['enable'] == 'true',
-            'config': CaseSearchConfigJSON({'fuzzy_properties': unpack_fuzzies(request.POST)})
+            'enabled': request_json.get('enable'),
+            'fuzzy_properties': updated_fuzzies,
         })
         return json_response(self.page_context)
 
@@ -2212,7 +2210,9 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
             'case_types': sorted(list(case_types)),
             'values': {
                 'enabled': current_values.enabled if current_values else False,
-                'config': current_values.config if current_values else {}
+                'fuzzy_properties': {
+                    fp.case_type: fp.properties for fp in current_values.fuzzy_properties.all()
+                } if current_values else {}
             }
         }
 
