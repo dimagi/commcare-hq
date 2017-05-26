@@ -207,7 +207,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 try:
                     named_filters[name] = FilterFactory.from_spec(
                         named_filter,
-                        FactoryContext(self.named_expression_objects, self.named_filter_objects)
+                        FactoryContext(self.named_expression_objects, named_filters)
                     )
                     number_generated += 1
                     del named_filter_specs[name]
