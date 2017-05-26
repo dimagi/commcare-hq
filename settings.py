@@ -1762,7 +1762,7 @@ BASE_REPEATERS = (
     'corehq.motech.repeaters.models.AppStructureRepeater',
     'corehq.motech.repeaters.models.UserRepeater',
     'corehq.motech.repeaters.models.LocationRepeater',
-    'custom.infomovel_fgh.openmrs.repeaters.RegisterOpenmrsPatientRepeater',
+    'custom.infomovel_fgh.openmrs.repeaters.OpenmrsRepeater',
 )
 
 ENIKSHAY_REPEATERS = (
