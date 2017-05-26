@@ -20,7 +20,6 @@ from django.template.loader import render_to_string
 from corehq.apps.analytics.utils import analytics_enabled_for_email
 from corehq.util.view_utils import get_request
 from corehq.util.datadog.utils import get_url_group, sanitize_url
-from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.metrics import ERROR_COUNT
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 
@@ -70,6 +69,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
     """
 
     def get_context(self, record):
+        from corehq.util.datadog.gauges import datadog_counter
         try:
             request = record.request
         except Exception:
