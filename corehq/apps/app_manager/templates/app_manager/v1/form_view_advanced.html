@@ -9,28 +9,30 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-{% if form.source %}
 <script>
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
-        CaseConfig = hqImport('app_manager/js/case-config-ui-advanced.js').CaseConfig;
-    var caseConfig = new CaseConfig(_.extend({}, initial_page_data("case_config_options"), {
-        home: $('#case-config-ko'),
-        requires: ko.observable(initial_page_data("form_requires")),
-    }));
-    caseConfig.init();
+    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
 
-    if (initial_page_data("schedule_options")) {
-        var VisitScheduler = hqImport('app_manager/js/visit-scheduler.js');
-        var visitScheduler = new VisitScheduler.Scheduler(_.extend({}, initial_page_data("schedule_options"), {
-            home: $('#visit-scheduler'),
+    if (initial_page_data('has_form_source')) {
+        var CaseConfig = hqImport('app_manager/js/case-config-ui-advanced.js').CaseConfig,
+            caseConfig = new CaseConfig(_.extend({}, initial_page_data("case_config_options"), {
+            home: $('#case-config-ko'),
+            requires: ko.observable(initial_page_data("form_requires")),
         }));
-        visitScheduler.init();
+        caseConfig.init();
+ 
+        if (initial_page_data("schedule_options")) {
+            var VisitScheduler = hqImport('app_manager/js/visit-scheduler.js');
+            var visitScheduler = new VisitScheduler.Scheduler(_.extend({}, initial_page_data("schedule_options"), {
+                home: $('#visit-scheduler'),
+            }));
+            visitScheduler.init();
+        }
     }
 </script>
-{% endif %}
 {% endblock %}
 
 {% block case_management_content %}
+    {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
     {% initial_page_data 'schedule_options' schedule_options %}
     {% include 'app_manager/v1/partials/case_config_advanced.html' %}
 {% endblock %}
