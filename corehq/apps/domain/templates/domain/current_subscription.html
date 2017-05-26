@@ -113,16 +113,16 @@
                         </div>
                     </div>
                 {% endif %}
-            {% endif %}
-            <div data-bind="foreach: products">
-                <div class="form-group">
-                    <label class="control-label col-sm-2">{% trans 'Current Price' %}</label>
-                    <div class="col-sm-10">
-                        <p class="form-control-text"
-                           data-bind="text: monthlyFee"></p>
+                <div data-bind="foreach: products">
+                    <div class="form-group">
+                        <label class="control-label col-sm-2">{% trans 'Current Price' %}</label>
+                        <div class="col-sm-10">
+                            <p class="form-control-text"
+                               data-bind="text: monthlyFee"></p>
+                        </div>
                     </div>
                 </div>
-            </div>
+            {% endif %}
             {% if plan.next_subscription.exists %}
                 <div class="form-group">
                     <label class="control-label col-sm-2">
