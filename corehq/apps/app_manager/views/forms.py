@@ -667,9 +667,22 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
                 return []
 
         all_programs = [{'value': '', 'label': _('All Programs')}]
-        context.update({
+        case_config_options.update({
+            'commtrack_enabled': app.commtrack_enabled,
             'commtrack_programs': all_programs + commtrack_programs(),
+            'module_id': module.unique_id,
+            'save_url': reverse("edit_advanced_form_actions", args=[app.domain, app.id, form.unique_id]),
         })
+        if form.form_type == "shadow_form":
+            case_config_options.update({
+                'actions': form.extra_actions,
+                'isShadowForm': True,
+            })
+        else:
+            case_config_options.update({
+                'actions': form.actions,
+                'isShadowForm': False,
+            })
         context.update(get_schedule_context(form))
         template = get_app_manager_template(
             request.user,

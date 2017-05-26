@@ -15,18 +15,7 @@
         CaseConfig = hqImport('app_manager/js/case-config-ui-advanced.js').CaseConfig;
     var caseConfig = new CaseConfig(_.extend({}, initial_page_data("case_config_options"), {
         home: $('#case-config-ko'),
-        {% if form.form_type == "shadow_form" %}
-            actions: {{ form.extra_actions|JSON }},
-        {% else %}
-            actions: {{ form.actions|JSON }},
-        {% endif %}
         requires: ko.observable(initial_page_data("form_requires")),
-        save_url: "{% url "edit_advanced_form_actions" app.domain app.id nav_form.unique_id %}",
-        module_id: {{ module.unique_id|JSON }},
-        commtrack_enabled: {{ app.commtrack_enabled|JSON }},
-        commtrack_programs: {{ commtrack_programs|JSON }},
-        propertyDescriptions: {{ property_descriptions|JSON }},
-        isShadowForm: {% if form.form_type == "shadow_form" %}true{% else %}false{% endif %},
     }));
     caseConfig.init();
 
