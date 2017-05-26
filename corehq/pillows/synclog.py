@@ -23,7 +23,7 @@ def get_synclog_pillow(pillow_id='UpdateUserSyncHistoryPillow', **kwargs):
     """
     couch_db = SyncLog.get_db()
     change_feed = CouchChangeFeed(couch_db, include_docs=True)
-    checkpoint = PillowCheckpoint('synclog', couch_db)
+    checkpoint = PillowCheckpoint('synclog', change_feed.sequence_format)
     form_processor = SynclogProcessor()
     return ConstructedPillow(
         name=pillow_id,
