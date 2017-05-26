@@ -67,11 +67,11 @@ def _process_form(request, domain, app_id, user_id, authenticated,
                 meta = {}
 
             details = [
-                "domain:{}".format(domain),
-                "app_id:{}".format(app_id),
-                "user_id:{}".format(user_id),
-                "authenticated:{}".format(authenticated),
-                "form_meta:{}".format(meta),
+                u"domain:{}".format(domain),
+                u"app_id:{}".format(app_id),
+                u"user_id:{}".format(user_id),
+                u"authenticated:{}".format(authenticated),
+                u"form_meta:{}".format(meta),
             ]
             datadog_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, tags=details)
             notify_exception(request, "Received a submission with POST.keys()", details)

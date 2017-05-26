@@ -497,12 +497,12 @@ def jserror(request):
             browser_name = parsed_agent['browser'].get('name', DATADOG_UNKNOWN)
 
     datadog_counter(JSERROR_COUNT, tags=[
-        'os:{}'.format(os),
-        'browser_version:{}'.format(browser_version),
-        'browser_name:{}'.format(browser_name),
-        'url:{}'.format(sanitize_url(request.POST.get('page', None))),
-        'file:{}'.format(request.POST.get('filename')),
-        'bot:{}'.format(bot),
+        u'os:{}'.format(os),
+        u'browser_version:{}'.format(browser_version),
+        u'browser_name:{}'.format(browser_name),
+        u'url:{}'.format(sanitize_url(request.POST.get('page', None))),
+        u'file:{}'.format(request.POST.get('filename')),
+        u'bot:{}'.format(bot),
     ])
 
     return HttpResponse('')

@@ -41,10 +41,10 @@ class DateOpenedBugException(RestoreException):
     def __init__(self, user, synclog_id, **kwargs):
         super(DateOpenedBugException, self).__init__(user, **kwargs)
         details = [
-            "domain:{}".format(user.domain),
-            "username:{}".format(user.username),
-            "user_id:{}".format(user.user_id),
-            "last_synclog_id:{}".format(synclog_id)
+            u"domain:{}".format(user.domain),
+            u"username:{}".format(user.username),
+            u"user_id:{}".format(user.user_id),
+            u"last_synclog_id:{}".format(synclog_id)
         ]
         datadog_counter(DATE_OPENED_CASEBLOCK_ERROR_COUNT, tags=details)
 
