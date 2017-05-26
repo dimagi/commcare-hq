@@ -66,3 +66,19 @@ AMOUNT_APPROVED = "amount_approved"
 INVESTIGATION_TYPE = "investigation_type"
 
 ENIKSHAY_TIMEZONE = 'Asia/Kolkata'
+
+AGENCY_USER_FIELDS = [
+    ('tb_corner', "TB Corner", ["Yes", "No"]),
+    ('mbbs_qualification', "MBBS Qualification", ["MBBS", "DTCD", "MD - Chest Physician",
+                                                  "MD - Medicine", "MS", "DM"]),
+    ('ayush_qualification', "AYUSH Qualification", ["BAMS", "BHMS", "BUMS", "DAMS", "DHMS", "ASHA",
+                                                    "ANM", "GNM", "LCEH", "NGO", "Others", "None"]),
+    ('professional_org_membership', "Professional Org Membership", ["IMA", "WMA", "AMA", "AAFP",
+                                                                    "Others", "None"]),
+]
+
+AGENCY_LOCATION_FIELDS = [
+    # (slug, label, choices)
+    ('private_sector_org_id', "Private Sector Org ID", []),
+    ('suborganization', "Suborganization", ["MGK", "Alert"]),
+]

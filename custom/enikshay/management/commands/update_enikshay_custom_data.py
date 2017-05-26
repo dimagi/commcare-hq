@@ -2,27 +2,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
 from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-
-# pcp -> MBBS
-# pac -> AYUSH/other
-# plc -> Private Lab
-# pcc -> pharmacy / chemist
-
-LOCATION_FIELDS = [
-    # (slug, label, choices)
-    ('private_sector_org_id', "Private Sector Org ID", []),
-    ('suborganization', "Suborganization", ["MGK", "Alert"]),
-]
-
-USER_FIELDS = [
-    ('tb_corner', "TB Corner", ["Yes", "No"]),
-    ('mbbs_qualification', "MBBS Qualification", ["MBBS", "DTCD", "MD - Chest Physician",
-                                                  "MD - Medicine", "MS", "DM"]),
-    ('ayush_qualification', "AYUSH Qualification", ["BAMS", "BHMS", "BUMS", "DAMS", "DHMS", "ASHA",
-                                                    "ANM", "GNM", "LCEH", "NGO", "Others", "None"]),
-    ('professional_org_membership', "Professional Org Membership", ["IMA", "WMA", "AMA", "AAFP",
-                                                                    "Others", "None"]),
-]
+from custom.enikshay.const import AGENCY_USER_FIELDS, AGENCY_LOCATION_FIELDS
 
 
 class Command(BaseCommand):
@@ -45,7 +25,7 @@ class Command(BaseCommand):
 
         print "\nOLD:"
         self.show(self.user_data)
-        self.update_definition(self.user_data, USER_FIELDS)
+        self.update_definition(self.user_data, AGENCY_USER_FIELDS)
         print "\nNEW:"
         self.show(self.user_data)
         if self.confirm():
@@ -53,7 +33,7 @@ class Command(BaseCommand):
 
         print "\nOLD:"
         self.show(self.location_data)
-        self.update_definition(self.location_data, LOCATION_FIELDS)
+        self.update_definition(self.location_data, AGENCY_LOCATION_FIELDS)
         print "\nNEW:"
         self.show(self.location_data)
         if self.confirm():
