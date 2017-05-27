@@ -641,8 +641,10 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
     def test_prescription(self):
         EpisodePrescription.objects.create(
             id=1,
-            beneficiaryId=self.beneficiary,
+            beneficiaryID=self.beneficiary.caseId,
+            creationDate=datetime(2017, 5, 26),
             numberOfDays=2,
+            numberOfDaysPrescribed='2',
             prescriptionID=3,
             pricePerUnit=0.5,
             productID=4,
@@ -662,14 +664,15 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         prescription_case_ids = self.case_accessor.get_case_ids_in_domain(type='prescription')
         self.assertEqual(len(prescription_case_ids), 1)
         prescription_case = self.case_accessor.get_case(prescription_case_ids[0])
-        self.assertFalse(prescription_case.closed)  # TODO
+        self.assertTrue(prescription_case.closed)
         self.assertIsNone(prescription_case.external_id)
         self.assertEqual(prescription_case.name, 'drug name')
-        # self.assertEqual(adherence_case.opened_on, '')  # TODO
         self.assertEqual(prescription_case.owner_id, '-')
         self.assertEqual(prescription_case.dynamic_case_properties(), OrderedDict([
+            ('date_ordered', '2017-05-26'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
+            ('number_of_days_prescribed', '2'),
         ]))
         self.assertEqual(len(prescription_case.indices), 1)
         self._assertIndexEqual(
@@ -686,7 +689,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
     def test_multiple_prescriptions(self):
         EpisodePrescription.objects.create(
             id=1,
-            beneficiaryId=self.beneficiary,
+            beneficiaryID=self.beneficiary.caseId,
+            creationDate=datetime(2017, 5, 26),
             numberOfDays=2,
             prescriptionID=3,
             pricePerUnit=0.5,
@@ -696,7 +700,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         )
         EpisodePrescription.objects.create(
             id=2,
-            beneficiaryId=self.beneficiary,
+            beneficiaryID=self.beneficiary.caseId,
+            creationDate=datetime(2017, 5, 26),
             numberOfDays=2,
             prescriptionID=3,
             pricePerUnit=0.5,

@@ -288,11 +288,13 @@ class BeneficiaryCaseFactory(object):
         kwargs = {
             'attrs': {
                 'case_type': PRESCRIPTION_CASE_TYPE,
-                'close': False,
+                'close': True,
                 'create': True,
                 'owner_id': '-',
                 'update': {
+                    'date_ordered': prescription.creationDate.date(),
                     'name': prescription.productName,
+                    'number_of_days_prescribed': prescription.numberOfDaysPrescribed,
 
                     'migration_created_case': 'true',
                     'migration_created_from_record': prescription.prescriptionID,
@@ -346,7 +348,7 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _prescriptions(self):
-        return list(EpisodePrescription.objects.filter(beneficiaryId=self.beneficiary))
+        return list(EpisodePrescription.objects.filter(beneficiaryID=self.beneficiary.caseId))
 
     @property
     @memoized
