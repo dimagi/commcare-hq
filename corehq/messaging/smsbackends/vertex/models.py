@@ -1,11 +1,11 @@
 import requests
 import re
-from django.conf import settings
+
 from corehq.messaging.smsbackends.http.models import SQLSMSBackend
 from corehq.messaging.smsbackends.vertex.forms import VertexBackendForm
 from corehq.apps.sms.util import strip_plus
 
-VERTEX_URL = "https://www.smsjust.com/sms/user/urlsms.php"
+VERTEX_URL = "http://www.smsjust.com/sms/user/urlsms.php"
 SUCCESS_RESPONSE_REGEX = r'^(\d+)-(20\d{2})_(\d{2})_(\d{2})$'  # 570737298-2017_05_27
 SUCCESS_RESPONSE_REGEX_MATCHER = re.compile(SUCCESS_RESPONSE_REGEX)
 
