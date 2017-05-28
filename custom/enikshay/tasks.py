@@ -115,8 +115,13 @@ class EpisodeUpdater(object):
     @memoized
     def get_doses_data(self):
         # return 'doses_per_week' by 'schedule_id' from the Fixture data
-        fixtures = FixtureDataItem.get_indexed_items(self.domain, DAILY_SCHEDULE_FIXTURE_NAME, SCHEDULE_ID_FIXTURE)
-        return dict((k, int(fixture['doses_per_week'])) for k, fixture in fixtures.items())
+        fixtures = FixtureDataItem.get_item_list(self.domain, DAILY_SCHEDULE_FIXTURE_NAME)
+        doses_per_week_by_schedule_id = {}
+        for f in fixtures:
+            schedule_id = f.fields[SCHEDULE_ID_FIXTURE].field_list[0].field_value
+            doses_per_week = int(f.fields["doses_per_week"].field_list[0].field_value)
+            doses_per_week_by_schedule_id[schedule_id] = doses_per_week
+        return doses_per_week_by_schedule_id
 
 
 class EpisodeAdherenceUpdate(object):
