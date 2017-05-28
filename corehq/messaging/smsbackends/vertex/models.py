@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import requests
 import re
 
@@ -35,7 +36,7 @@ class VertexBackend(SQLSMSBackend):
     def get_form_class(cls):
         return VertexBackendForm
 
-    def send(self, msg, *args, **kwargs):
+    def populate_params(self, msg_obj):
         config = self.config
         params = {
             'username': config.username,
@@ -44,19 +45,24 @@ class VertexBackend(SQLSMSBackend):
             'response': 'Y',
             # It must include the country code appended before the mobile number
             # The mobile number should contain only numbers and no symbols like "+", "-" etc.
-            'dest_mobileno': strip_plus(msg.phone_number),
+            'dest_mobileno': strip_plus(msg_obj.phone_number),
             'msgtype': 'UNI'  # TXT/UNI/FLASH/WAP
         }
-        params['message'] = msg.text.encode('utf-8')
+        params['message'] = msg_obj.text.encode('utf-8')
+        return params
+
+    def send(self, msg_obj, *args, **kwargs):
+        params = self.populate_params(msg_obj)
         resp = requests.get(VERTEX_URL, params=params)
-        self.handle_response(msg, resp)
+        self.handle_response(msg_obj, resp.content)
         return resp
 
-    def handle_response(self, msg, resp):
+    def handle_response(self, msg_obj, resp):
         # in case of success store the complete response msg which should be like
         # 570737298-2017_05_27 AS-IS. This complete id referred to as "Scheduleid"
         # can be then used to enquire for status of this particular SMS
         if SUCCESS_RESPONSE_REGEX_MATCHER.match(resp):
-            msg.backend_message_id = resp
+            msg_obj.backend_message_id = resp
+            msg_obj.save()
         else:
-            msg.set_system_error(resp)
+            msg_obj.set_system_error(resp)
