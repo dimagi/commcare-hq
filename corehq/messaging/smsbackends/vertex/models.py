@@ -1,11 +1,12 @@
-import urllib2, urllib
+import requests
 import re
 from django.conf import settings
 from corehq.messaging.smsbackends.http.models import SQLSMSBackend
 from corehq.messaging.smsbackends.vertex.forms import VertexBackendForm
+from corehq.apps.sms.util import strip_plus
 
-VERTEX_URL = "http://www.smsjust.com/sms/user/urlsms.php"
-SUCCESS_RESPONSE_REGEX = r'^([0-9]+)-(20[0-9]{2})_([0-9]{2})_([0-9]{2})$'  # 570737298-2017_05_27
+VERTEX_URL = "https://www.smsjust.com/sms/user/urlsms.php"
+SUCCESS_RESPONSE_REGEX = r'^(\d+)-(20\d{2})_(\d{2})_(\d{2})$'  # 570737298-2017_05_27
 SUCCESS_RESPONSE_REGEX_MATCHER = re.compile(SUCCESS_RESPONSE_REGEX)
 
 
@@ -23,27 +24,16 @@ class VertexBackend(SQLSMSBackend):
         return "Vertex"
 
     @classmethod
-    def get_available_extra_fields(self):
+    def get_available_extra_fields(cls):
         return [
             'username',
             'password',
             'senderid',
-            'response',
         ]
 
     @classmethod
-    def get_form_class(self):
+    def get_form_class(cls):
         return VertexBackendForm
-
-    def sanitize_message(self, message):
-        # sanitize message using the rules as suggested by the api
-        # to avoid collision with reserved HTTP characters
-        return (message
-                .replace('&', 'amp;')
-                .replace('#', ';hash')
-                .replace('+', 'plus;')
-                .replace(',', 'comma;')
-                )
 
     def send(self, msg, *args, **kwargs):
         config = self.config
@@ -51,16 +41,14 @@ class VertexBackend(SQLSMSBackend):
             'username': config.username,
             'pass': config.password,
             'senderid': config.senderid,
-            'response': config.response,
+            'response': 'Y',
             # It must include the country code appended before the mobile number
             # The mobile number should contain only numbers and no symbols like "+", "-" etc.
-            'dest_mobileno': msg.phone_number,
-            'msgtype': 'TXT'  # TXT/UNI/FLASH/WAP
+            'dest_mobileno': strip_plus(msg.phone_number),
+            'msgtype': 'UNI'  # TXT/UNI/FLASH/WAP
         }
-        message = self.sanitize_message(msg)
-        params['message'] = message
-        url = '%s?%s' % (VERTEX_URL, urllib.urlencode(params))
-        resp = urllib2.urlopen(url, timeout=settings.SMS_GATEWAY_TIMEOUT).read()
+        params['message'] = msg.text.encode('utf-8')
+        resp = requests.get(VERTEX_URL, params=params)
         self.handle_response(msg, resp)
         return resp
 
