@@ -336,7 +336,23 @@ class EpisodeAdherenceUpdate(object):
                         True,
                         "No fixture item found with schedule_id {}".format(adherence_schedule_id)
                     )
-        return {'update': update, 'debug_data': debug_data}
+        if self.check_if_needs_update(update):
+            return {'update': update, 'debug_data': debug_data}
+        else:
+            return {'update': None, 'debug_data': debug_data}
+
+    def check_if_needs_update(self, case_properties_expected):
+        """
+        Args:
+            case_properties_expected: dict of case property name to values
+
+        Returns:
+            True if any one of case_properties_expected is not set on self.episode case
+        """
+        return any([
+            self.get_property(k) != v
+            for (k, v) in case_properties_expected.iteritems()
+        ])
 
 
 class EpisodeVoucherUpdate(object):
