@@ -4,6 +4,7 @@ from django.test import TestCase
 
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
     FixtureDataItem, FieldList, FixtureItemField
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 from casexml.apps.case.mock import CaseFactory
@@ -155,13 +156,13 @@ class TestAdherenceUpdater(TestCase):
         ])
 
     def assert_update(self, input, output):
-        update = self.calculate_adherence_update(input)
+        episode = self.updated_episode_case(input)
         self.assertDictEqual(
-            update.update_json()['update'],
-            output
+            {key: episode.dynamic_case_properties()[key] for key in output},
+            {key: str(val) for key, val in output.iteritems()}  # convert values to strings
         )
 
-    def calculate_adherence_update(self, input):
+    def updated_episode_case(self, input):
         self.case_updater.purge_date = input[0]
         # setup episode and adherence cases
         adherence_schedule_date_start, adherence_schedule_id = input[1]
@@ -169,10 +170,15 @@ class TestAdherenceUpdater(TestCase):
         episode = self._create_episode_case(adherence_schedule_date_start, adherence_schedule_id)
         self._create_adherence_cases(adherence_cases)
 
+        # rebuild so that adherence UCR data gets updated
         rebuild_indicators(self.data_store.datasource._id)
         self.data_store.adapter.refresh_table()
 
-        return EpisodeAdherenceUpdate(episode, self.case_updater)
+        # _get_open_episode_cases doesn't work in tests due to caseaccessors returning empty list, so override it
+        self.case_updater._get_open_episode_cases = mock.MagicMock(return_value=[episode])
+        self.case_updater.run()
+        # return updated episode case
+        return CaseAccessors(self.domain).get_case(episode.case_id)
 
     def test_adherence_schedule_date_start_late(self):
         #   Sample test case
@@ -485,11 +491,12 @@ class TestAdherenceUpdater(TestCase):
         )
 
     def test_count_taken_by_day(self):
-        episode_update = self.calculate_adherence_update((
+        episode = self.updated_episode_case((
             datetime.date(2016, 1, 20),
             (datetime.date(2016, 1, 10), 'schedule1'),
             []
         ))
+        episode_update = EpisodeAdherenceUpdate(episode, self.case_updater)
 
         def dose_taken_by_day(cases):
             # cases a list of tuples
