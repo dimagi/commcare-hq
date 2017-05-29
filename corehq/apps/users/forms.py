@@ -833,7 +833,7 @@ class PrimaryLocationWidget(forms.Widget):
     Options for this field are dynamically set in JS depending on what options are selected
     for 'assigned_locations'. This works in conjunction with SupplyPointSelectWidget.
     """
-    def __init__(self, css_id, source_css_id, attrs=None):
+    def __init__(self, css_id, source_css_id, submit_form_id, empty_primary_location_message, attrs=None):
         """
         args:
             css_id: css_id of primary_location field
@@ -842,11 +842,15 @@ class PrimaryLocationWidget(forms.Widget):
         super(PrimaryLocationWidget, self).__init__(attrs)
         self.css_id = css_id
         self.source_css_id = source_css_id
+        self.submit_form_id = submit_form_id
+        self.empty_primary_location_message = empty_primary_location_message
 
     def render(self, name, value, attrs=None):
         return get_template('locations/manage/partials/drilldown_location_widget.html').render(Context({
             'css_id': self.css_id,
             'source_css_id': self.source_css_id,
+            'submit_form_id': self.submit_form_id,
+            'empty_primary_location_message': self.empty_primary_location_message,
             'name': name,
             'value': value or ''
         }))
@@ -874,12 +878,25 @@ class CommtrackUserForm(forms.Form):
             self.domain = kwargs['domain']
             del kwargs['domain']
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
+
+        self.helper = FormHelper()
+
+        self.helper.form_method = 'POST'
+        self.helper.form_class = 'form-horizontal'
+        self.helper.form_tag = False
+        self.helper.form_id = 'commtrack_form'
+
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+
         self.fields['assigned_locations'].widget = SupplyPointSelectWidget(
             self.domain, multiselect=True, id='id_assigned_locations'
         )
         self.fields['primary_location'].widget = PrimaryLocationWidget(
             css_id='id_primary_location',
-            source_css_id='id_assigned_locations'
+            source_css_id='id_assigned_locations',
+            submit_form_id=self.helper.form_id,
+            empty_primary_location_message=_("Primary location can't be empty if user has any locations set")
         )
         if self.commtrack_enabled:
             programs = Program.by_domain(self.domain, wrap=False)
@@ -889,14 +906,6 @@ class CommtrackUserForm(forms.Form):
         else:
             self.fields['program_id'].widget = forms.HiddenInput()
 
-        self.helper = FormHelper()
-
-        self.helper.form_method = 'POST'
-        self.helper.form_class = 'form-horizontal'
-        self.helper.form_tag = False
-
-        self.helper.label_class = 'col-sm-3 col-md-2'
-        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
 
     @property
     @memoized

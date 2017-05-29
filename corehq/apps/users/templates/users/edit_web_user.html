@@ -72,7 +72,7 @@
 
     {% if update_form %}
         <hr />
-        <form id="commtrack_form" class="form form-horizontal" name="" method="post">
+        <form id='{{ update_form.helper.form_id }}' class="form form-horizontal" name="" method="post">
             {% csrf_token %}
             <input type="hidden" name="form_type" value="commtrack" />
             <fieldset>
