@@ -68,7 +68,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             DataTablesColumn(_("Application"),
                              help_text=_("Displays application of last submitted form"),
                              prop_name='reporting_metadata.last_builds.app_id',
-                             alt_prop_name='reporting_metadata.build_version_app'),
+                             alt_prop_name='reporting_metadata.last_build_for_user.app_id'),
             DataTablesColumn(_("Application Version"),
                              help_text = _("Displays application version of the user's last sync."),
                              prop_name='reporting_metadata.last_builds.build_version',
@@ -127,7 +127,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                           options)[0]
             return data
         except IndexError:
-            pass
+            return {}
 
     @memoized
     def user_query(self, pagination=True):
@@ -156,7 +156,6 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         for user in users:
             last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = None
             build_version = _("Unknown")
-            commcare_version = _("Unknown CommCare Version")
             reporting_metadata = user.get('reporting_metadata', {})
             if self.selected_app_id:
                 last_submissions = reporting_metadata.get('last_submissions')
@@ -173,8 +172,8 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             else:
                 last_sub = reporting_metadata.get('last_submission_for_user', {})
                 last_sync = reporting_metadata.get('last_sync_for_user', {})
-                last_build = reporting_metadata.get('last_build', {})
-                commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
+                last_build = reporting_metadata.get('last_build_for_user', {})
+            commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
             if last_sub and last_sub.get('submission_date'):
                 last_seen = string_to_utc_datetime(last_sub['submission_date'])
             if last_sync and last_sync.get('sync_date'):
