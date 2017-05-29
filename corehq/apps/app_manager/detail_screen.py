@@ -312,6 +312,7 @@ class Phone(FormattedDetailColumn):
 class Enum(FormattedDetailColumn):
 
     def _make_xpath(self, type):
+        xpath_fragment_condition_template = u"if({key_as_condition}, {key_as_var_name}"
         if type == 'sort':
             xpath_fragment_template = u"if({xpath} = '{key}', {i}, "
         elif type == 'display':
@@ -321,14 +322,22 @@ class Enum(FormattedDetailColumn):
 
         parts = []
         for i, item in enumerate(self.column.enum):
-            parts.append(
-                xpath_fragment_template.format(
-                    key=item.key,
-                    key_as_var=item.key_as_variable,
-                    xpath=self.xpath,
-                    i=i,
+            if item.treat_as_expression:
+                parts.append(
+                    xpath_fragment_condition_template.format(
+                        key_as_condition=item.key_as_condition(self.xpath),
+                        key_as_var_name=item.ref_to_key_variable(i, type)
+                    )
                 )
-            )
+            else:
+                parts.append(
+                    xpath_fragment_template.format(
+                        key=item.key,
+                        key_as_var=item.key_as_variable,
+                        xpath=self.xpath,
+                        i=i,
+                    )
+                )
         parts.append(u"''")
         parts.append(u")" * len(self.column.enum))
         return ''.join(parts)

@@ -512,17 +512,22 @@ class CaseTileHelper(object):
                 )
             )
 
+        context['variables'] = ''
         if column.format == "enum":
-            context["enum_keys"] = self._get_enum_keys(column)
+            context["variables"] = self._get_enum_keys(column)
         return context
 
     def _get_enum_keys(self, column):
-        keys = {}
-        for mapping in column.enum:
-            keys[mapping.key] = id_strings.detail_column_enum_variable(
-                self.module, self.detail_type, column, mapping.key_as_variable
-            )
-        return keys
+        variables = []
+        variable_template = '<variable name="{var_name}"><locale id="{locale_id}"/></variable>'
+        for i, mapping in enumerate(column.enum):
+            variables.append(variable_template.format(
+                var_name=mapping.key_as_variable,
+                locale_id=id_strings.detail_column_enum_variable(
+                    self.module, self.detail_type, column, mapping.key_as_variable
+                )
+            ))
+        return ''.join(variables)
 
     @property
     @memoized
