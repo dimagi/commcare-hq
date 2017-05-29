@@ -255,7 +255,7 @@ var ReportConfigsViewModel = function (options) {
                     var valid = self.validate();
                     if (!valid) {
                         jqXHR.abort();
-                        $('#modal-save-button')[0].saveButton.setState('save');
+                        $('#modal-save-button')[0].saveButton.setState('retry');
                     }
                 }
             };
