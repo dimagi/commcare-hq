@@ -79,7 +79,7 @@
     "GroupPillow": {
         "advertised_name": "GroupPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "GroupPillow-test_hqgroups_20150403_1501",
+        "checkpoint_id": "GroupPillow-test_hqgroups_2017-05-29",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "GroupPillow"
     },
