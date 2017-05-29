@@ -15,7 +15,7 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from custom.enikshay.case_utils import get_person_case_from_episode, get_adherence_cases_by_day
-from custom.enikshay.const import DOSE_TAKEN_INDICATORS, ENIKSHAY_TIMEZONE
+from custom.enikshay.const import DOSE_TAKEN_INDICATORS, ENIKSHAY_TIMEZONE, TREATMENT_START_DATE
 from custom.enikshay.reports.generic import EnikshayReport
 
 from django.utils.translation import ugettext_lazy
@@ -168,6 +168,8 @@ class HistoricalAdherenceReport(EnikshayReport):
     @property
     def adherence_schedule_date_start(self):
         day = self.episode_properties.get('adherence_schedule_date_start')
+        if not day:
+            day = self.episode_properties.get(TREATMENT_START_DATE)
         return parse(day).date()
 
     @memoized
