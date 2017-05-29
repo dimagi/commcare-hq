@@ -112,7 +112,6 @@ COUCH_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
-DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
 UCR_TIMING_FILE = "%s/%s" % (FILEPATH, "ucr.timing.log")
 UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
 UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
@@ -1019,9 +1018,6 @@ LOGGING = {
         'couch-request-formatter': {
             'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(database)s %(method)s %(status_code)s %(content_length)s %(path)s %(duration)s'
         },
-        'datadog': {
-            'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
-        },
         'ucr_timing': {
             'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(control_duration)s\t%(candidate_duration)s'
         },
@@ -1078,14 +1074,6 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'verbose',
             'filename': ANALYTICS_LOG_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
-        'datadog': {
-            'level': 'INFO',
-            'class': 'cloghandler.ConcurrentRotatingFileHandler',
-            'formatter': 'datadog',
-            'filename': DATADOG_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
@@ -1207,11 +1195,6 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'ERROR',
             'propagate': True,
-        },
-        'datadog-metrics': {
-            'handlers': ['datadog'],
-            'level': 'INFO',
-            'propagate': False,
         },
         'ucr_timing': {
             'handlers': ['ucr_timing'],
