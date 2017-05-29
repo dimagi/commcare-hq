@@ -32,6 +32,11 @@ class TestBetsUpdates(TestCase):
                       data=json.dumps(data),
                       content_type='application/json')
 
+    def assertResponseStatus(self, response, status_code):
+        msg = "expected {} got {}\n{}".format(
+            status_code, response.status_code, response.content)
+        self.assertEqual(response.status_code, status_code, msg)
+
     def make_voucher(self):
         return create_and_save_a_case(
             self.domain,
@@ -52,7 +57,7 @@ class TestBetsUpdates(TestCase):
             'amount': 100,
             'payment_date': "2014-11-22 13:23:44.657"
         }]})
-        self.assertEqual(res.status_code, 400)
+        self.assertResponseStatus(res, 400)
 
     def test_update_voucher_success(self):
         voucher = self.make_voucher()
@@ -63,7 +68,7 @@ class TestBetsUpdates(TestCase):
             'amount': 100,
             'payment_date': "2014-11-22 13:23:44.657"
         }]})
-        self.assertEqual(res.status_code, 200, res.content)
+        self.assertResponseStatus(res, 200)
         # TODO check date parsing
         self.assertDictContainsSubset(
             {'state': 'paid', 'amount_fulfilled': '100'},
@@ -80,7 +85,7 @@ class TestBetsUpdates(TestCase):
             'amount': 0,
             'payment_date': "2014-11-22 13:23:44.657"
         }]})
-        self.assertEqual(res.status_code, 200, res.content)
+        self.assertResponseStatus(res, 200)
         self.assertDictContainsSubset(
             {'state': 'rejected', 'reason_rejected': 'The Iron Bank will have its due'},
             get_case(self.domain, voucher.case_id).case_json,
@@ -94,7 +99,7 @@ class TestBetsUpdates(TestCase):
             'amount': 100,
             'payment_date': "2014-11-22 13:23:44.657"
         }]})
-        self.assertEqual(res.status_code, 404)
+        self.assertResponseStatus(res, 404)
 
     def make_episode_case(self):
         return create_and_save_a_case(
@@ -116,7 +121,7 @@ class TestBetsUpdates(TestCase):
             'amount': 100,
             'payment_date': "2014-11-22 13:23:44.657"
         }]})
-        self.assertEqual(res.status_code, 200, res.content)
+        self.assertResponseStatus(res, 200)
         self.assertDictContainsSubset(
             {
                 'tb_incentive_106_status': 'paid',
@@ -135,7 +140,7 @@ class TestBetsUpdates(TestCase):
             'bets_parent_event_id': '106',
             'payment_date': "2014-11-22 13:23:44.657"
         }]})
-        self.assertEqual(res.status_code, 200, res.content)
+        self.assertResponseStatus(res, 200)
         self.assertDictContainsSubset(
             {
                 'tb_incentive_106_status': 'rejected',
@@ -153,7 +158,7 @@ class TestBetsUpdates(TestCase):
             'amount': 100,
             'payment_date': "2014-11-22 13:23:44.657"
         }]})
-        self.assertEqual(res.status_code, 400)
+        self.assertResponseStatus(res, 400)
 
     def test_multiple_updates(self):
         episode = self.make_episode_case()
@@ -173,7 +178,7 @@ class TestBetsUpdates(TestCase):
             'amount': 100,
             'payment_date': "2014-11-22 13:23:44.657"
         }]})
-        self.assertEqual(res.status_code, 200, res.content)
+        self.assertResponseStatus(res, 200)
 
         # check incentive update
         self.assertDictContainsSubset(
@@ -188,3 +193,21 @@ class TestBetsUpdates(TestCase):
             {'state': 'paid', 'amount_fulfilled': '100'},
             get_case(self.domain, voucher.case_id).case_json,
         )
+
+    def test_missing_case(self):
+        voucher = self.make_voucher()
+        res = self.make_request({'response': [{
+            'event_type': 'Incentive',
+            'id': 'this-is-not-a-real-id',
+            'status': 'Success',
+            'bets_parent_event_id': '106',
+            'amount': 100,
+            'payment_date': "2014-11-22 13:23:44.657"
+        }, {
+            'event_type': 'Voucher',
+            'id': voucher.case_id,
+            'status': 'Success',
+            'amount': 100,
+            'payment_date': "2014-11-22 13:23:44.657"
+        }]})
+        self.assertResponseStatus(res, 404)

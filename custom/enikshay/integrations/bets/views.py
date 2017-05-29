@@ -18,7 +18,6 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.apps.repeaters.views import AddCaseRepeaterView
-from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
@@ -128,17 +127,27 @@ def _get_case_updates(request, domain):
             update = update_model.wrap(event_json)
         except BadValueError as e:
             raise ApiError(msg=e.message, status_code=400)
-        try:
-            # TODO move this to bulk?
-            case = get_case(domain, update.case_id)
-            if case.type != update.case_type:
-                raise CaseNotFound()
-        except CaseNotFound:
-            raise ApiError(
-                msg="No {} case found with that ID".format(update.case_type),
-                status_code=404
-            )
         updates.append(update)
+    return updates
+
+
+def _validate_updates_exist(domain, updates):
+    """Validate that all cases in the payload exist and have the right type"""
+    existing_case_types = {
+        case.case_id: case.type for case in
+        CaseAccessors(domain).get_cases([update.case_id for update in updates])
+    }
+    missing = [
+        update for update in updates
+        if existing_case_types.get(update.case_id, None) != update.case_type
+    ]
+    if missing:
+        str_missing = '\n'.join(["{}: {}".format(update.case_type, update.case_id)
+                                 for update in missing])
+        raise ApiError(
+            msg="The following cases were not found:\n{}".format(str_missing),
+            status_code=404
+        )
     return updates
 
 
@@ -149,6 +158,7 @@ def _get_case_updates(request, domain):
 def payment_confirmation(request, domain):
     try:
         updates = _get_case_updates(request, domain)
+        updates = _validate_updates_exist(domain, updates)
     except ApiError as e:
         if not settings.UNIT_TESTING:
             notify_exception(request, "BETS sent the eNikshay API a bad request.")
