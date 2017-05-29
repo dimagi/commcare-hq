@@ -1703,7 +1703,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             touched.append(group)
         for to_remove in current - desired:
             group = Group.get(to_remove)
-            group.remove_user(self._id, save=False)
+            group.remove_user(self._id)
             touched.append(group)
 
         Group.bulk_save(touched)
