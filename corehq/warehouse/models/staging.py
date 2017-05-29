@@ -85,6 +85,7 @@ class UserStagingTable(StagingTable):
     last_name = models.CharField(max_length=30, null=True)
     email = models.CharField(max_length=255, null=True)
     doc_type = models.CharField(max_length=100)
+    base_doc = models.CharField(max_length=100)
 
     is_active = models.BooleanField()
     is_staff = models.BooleanField()
@@ -104,6 +105,7 @@ class UserStagingTable(StagingTable):
             ('last_name', 'last_name'),
             ('email', 'email'),
             ('doc_type', 'doc_type'),
+            ('base_doc', 'base_doc'),
             ('is_active', 'is_active'),
             ('is_staff', 'is_staff'),
             ('is_superuser', 'is_superuser'),
