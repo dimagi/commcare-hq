@@ -3,8 +3,8 @@ import uuid
 from django.test import TestCase, override_settings, Client
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
-from custom.enikshay.integrations.bets.views import update_voucher, update_incentive, get_case
 from corehq.util.test_utils import create_and_save_a_case, flag_enabled
+from custom.enikshay.integrations.bets.views import get_case
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -25,10 +25,10 @@ class TestBetsUpdates(TestCase):
         cls.web_user.delete()
         super(TestBetsUpdates, cls).tearDownClass()
 
-    def make_request(self, view, data):
+    def make_request(self, data):
         c = Client()
         c.force_login(self.web_user.get_django_user())
-        return c.post("/a/{}/bets/{}".format(self.domain, view.__name__),
+        return c.post("/a/{}/bets/{}".format(self.domain, 'payment_confirmation'),
                       data=json.dumps(data),
                       content_type='application/json')
 
@@ -44,22 +44,27 @@ class TestBetsUpdates(TestCase):
 
     def test_invalid_request(self):
         voucher = self.make_voucher()
-        res = self.make_request(update_voucher, {
-            'voucher_id': voucher.case_id,
+        res = self.make_request({'response': [{
+            'event_type': 'Voucher',
+            'id': voucher.case_id,
             # Missing this field
-            # 'payment_status': 'success',
-            'payment_amount': 100,
-        })
+            # 'status': 'Success',
+            'amount': 100,
+            'payment_date': "2014-11-22 13:23:44.657"
+        }]})
         self.assertEqual(res.status_code, 400)
 
     def test_update_voucher_success(self):
         voucher = self.make_voucher()
-        res = self.make_request(update_voucher, {
-            'voucher_id': voucher.case_id,
-            'payment_status': 'success',
-            'payment_amount': 100,
-        })
-        self.assertEqual(res.status_code, 200)
+        res = self.make_request({'response': [{
+            'event_type': 'Voucher',
+            'id': voucher.case_id,
+            'status': 'Success',
+            'amount': 100,
+            'payment_date': "2014-11-22 13:23:44.657"
+        }]})
+        self.assertEqual(res.status_code, 200, res.content)
+        # TODO check date parsing
         self.assertDictContainsSubset(
             {'state': 'paid', 'amount_fulfilled': '100'},
             get_case(self.domain, voucher.case_id).case_json,
@@ -67,24 +72,28 @@ class TestBetsUpdates(TestCase):
 
     def test_update_voucher_failure(self):
         voucher = self.make_voucher()
-        res = self.make_request(update_voucher, {
-            'voucher_id': voucher.case_id,
-            'payment_status': 'failure',
-            'failure_description': 'The Iron Bank will have its due',
-            'payment_amount': 0,
-        })
-        self.assertEqual(res.status_code, 200)
+        res = self.make_request({'response': [{
+            'event_type': 'Voucher',
+            'id': voucher.case_id,
+            'status': 'Failure',
+            'remarks': 'The Iron Bank will have its due',
+            'amount': 0,
+            'payment_date': "2014-11-22 13:23:44.657"
+        }]})
+        self.assertEqual(res.status_code, 200, res.content)
         self.assertDictContainsSubset(
             {'state': 'rejected', 'reason_rejected': 'The Iron Bank will have its due'},
             get_case(self.domain, voucher.case_id).case_json,
         )
 
     def test_update_voucher_unknown_id(self):
-        res = self.make_request(update_voucher, {
-            'voucher_id': "jaqen-hghar",
-            'payment_status': 'success',
-            'payment_amount': 100,
-        })
+        res = self.make_request({'response': [{
+            'event_type': 'Voucher',
+            'id': "jaqen-hghar",
+            'status': 'Success',
+            'amount': 100,
+            'payment_date': "2014-11-22 13:23:44.657"
+        }]})
         self.assertEqual(res.status_code, 404)
 
     def make_episode_case(self):
@@ -99,14 +108,15 @@ class TestBetsUpdates(TestCase):
 
     def test_update_incentive_success(self):
         episode = self.make_episode_case()
-        res = self.make_request(update_incentive, {
-            'beneficiary_id': episode.case_id,
-            'episode_id': episode.case_id,
-            'payment_status': 'success',
+        res = self.make_request({'response': [{
+            'event_type': 'Incentive',
+            'id': episode.case_id,
+            'status': 'Success',
             'bets_parent_event_id': '106',
-            'payment_amount': 100,
-        })
-        self.assertEqual(res.status_code, 200)
+            'amount': 100,
+            'payment_date': "2014-11-22 13:23:44.657"
+        }]})
+        self.assertEqual(res.status_code, 200, res.content)
         self.assertDictContainsSubset(
             {
                 'tb_incentive_106_status': 'paid',
@@ -117,14 +127,15 @@ class TestBetsUpdates(TestCase):
 
     def test_update_incentive_failure(self):
         episode = self.make_episode_case()
-        res = self.make_request(update_incentive, {
-            'beneficiary_id': episode.case_id,
-            'episode_id': episode.case_id,
-            'payment_status': 'failure',
-            'failure_description': 'We do not sow',
+        res = self.make_request({'response': [{
+            'event_type': 'Incentive',
+            'id': episode.case_id,
+            'status': 'Failure',
+            'remarks': 'We do not sow',
             'bets_parent_event_id': '106',
-        })
-        self.assertEqual(res.status_code, 200)
+            'payment_date': "2014-11-22 13:23:44.657"
+        }]})
+        self.assertEqual(res.status_code, 200, res.content)
         self.assertDictContainsSubset(
             {
                 'tb_incentive_106_status': 'rejected',
@@ -134,11 +145,46 @@ class TestBetsUpdates(TestCase):
         )
 
     def test_update_incentive_bad_event(self):
-        res = self.make_request(update_incentive, {
-            'beneficiary_id': '123',
-            'episode_id': '123',
-            'payment_status': 'success',
+        res = self.make_request({'response': [{
+            'event_type': 'Incentive',
+            'id': '123',
+            'status': 'Success',
             'bets_parent_event_id': '404',
-            'payment_amount': 100,
-        })
+            'amount': 100,
+            'payment_date': "2014-11-22 13:23:44.657"
+        }]})
         self.assertEqual(res.status_code, 400)
+
+    def test_multiple_updates(self):
+        episode = self.make_episode_case()
+        voucher = self.make_voucher()
+
+        res = self.make_request({'response': [{
+            'event_type': 'Incentive',
+            'id': episode.case_id,
+            'status': 'Failure',
+            'remarks': 'We do not sow',
+            'bets_parent_event_id': '106',
+            'payment_date': "2014-11-22 13:23:44.657"
+        }, {
+            'event_type': 'Voucher',
+            'id': voucher.case_id,
+            'status': 'Success',
+            'amount': 100,
+            'payment_date': "2014-11-22 13:23:44.657"
+        }]})
+        self.assertEqual(res.status_code, 200, res.content)
+
+        # check incentive update
+        self.assertDictContainsSubset(
+            {
+                'tb_incentive_106_status': 'rejected',
+                'tb_incentive_106_rejection_reason': 'We do not sow',
+            },
+            get_case(self.domain, episode.case_id).case_json,
+        )
+        # check voucher update
+        self.assertDictContainsSubset(
+            {'state': 'paid', 'amount_fulfilled': '100'},
+            get_case(self.domain, voucher.case_id).case_json,
+        )

@@ -3,6 +3,8 @@ https://docs.google.com/document/d/1RPPc7t9NhRjOOiedlRmtCt3wQSjAnWaj69v2g7QRzS0/
 """
 import datetime
 import json
+
+from dateutil import parser as date_parser
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -14,7 +16,7 @@ from jsonobject.exceptions import BadValueError
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
-from corehq.apps.hqcase.utils import update_case
+from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.apps.repeaters.views import AddCaseRepeaterView
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -30,67 +32,75 @@ class ApiError(Exception):
         super(ApiError, self).__init__(msg)
 
 
-class VoucherUpdate(jsonobject.JsonObject):
-    voucher_id = jsonobject.StringProperty(required=True)
-    payment_status = jsonobject.StringProperty(required=True, choices=['success', 'failure'])
-    payment_amount = jsonobject.DecimalProperty(required=False)
-    failure_description = jsonobject.StringProperty(required=False)
+class FlexibleDateTimeProperty(jsonobject.DateTimeProperty):
+    def _wrap(self, value):
+        try:
+            return date_parser.parse(value)
+        except ValueError:
+            return super(FlexibleDateTimeProperty, self)._wrap(value)
 
-    case_type = CASE_TYPE_VOUCHER
+
+class PaymentUpdate(jsonobject.JsonObject):
+    id = jsonobject.StringProperty(required=True)
+    status = jsonobject.StringProperty(required=True, choices=['Success', 'Failure'])
+    amount = jsonobject.DecimalProperty(required=False)
+    payment_date = FlexibleDateTimeProperty(required=True)
+
+    # TODO save these properties
+    remarks = jsonobject.StringProperty(required=False)
+    payment_mode = jsonobject.StringProperty(required=False)
+    check_number = jsonobject.StringProperty(required=False)
+    bank_name = jsonobject.StringProperty(required=False)
 
     @property
     def case_id(self):
-        return self.voucher_id
+        return self.id
+
+
+class VoucherUpdate(PaymentUpdate):
+    event_type = jsonobject.StringProperty(required=True, choices=['Voucher'])
+    case_type = CASE_TYPE_VOUCHER
 
     @property
     def properties(self):
-        if self.payment_status == 'success':
+        if self.status == 'Success':
             return {
                 'state': 'paid',
-                'amount_fulfilled': self.payment_amount,
-                'date_fulfilled': datetime.datetime.utcnow().date().isoformat(),
+                'amount_fulfilled': self.amount,
+                'date_fulfilled': self.payment_date,
             }
         else:
             return {
                 'state': 'rejected',
-                'reason_rejected': self.failure_description,
-                'date_rejected': datetime.datetime.utcnow().date().isoformat(),
+                'reason_rejected': self.remarks,
+                'date_rejected': self.payment_date,
             }
 
 
-class IncentiveUpdate(jsonobject.JsonObject):
-    beneficiary_id = jsonobject.StringProperty(required=True)
-    episode_id = jsonobject.StringProperty(required=True)
-    payment_status = jsonobject.StringProperty(required=True, choices=['success', 'failure'])
-    payment_amount = jsonobject.DecimalProperty(required=False)
-    failure_description = jsonobject.StringProperty(required=False)
+class IncentiveUpdate(PaymentUpdate):
+    event_type = jsonobject.StringProperty(required=True, choices=['Incentive'])
     bets_parent_event_id = jsonobject.StringProperty(
         required=False, choices=BETS_EVENT_IDS)
-
     case_type = CASE_TYPE_EPISODE
-
-    @property
-    def case_id(self):
-        return self.episode_id
 
     @property
     def properties(self):
         status_key = 'tb_incentive_{}_status'.format(self.bets_parent_event_id)
-        if self.payment_status == 'success':
+        if self.status == 'Success':
             amount_key = 'tb_incentive_{}_amount'.format(self.bets_parent_event_id)
             date_key = 'tb_incentive_{}_payment_date'.format(self.bets_parent_event_id)
             return {
                 status_key: 'paid',
-                amount_key: self.payment_amount,
-                date_key: datetime.datetime.utcnow().date().isoformat(),
+                amount_key: self.amount,
+                date_key: self.payment_date,
             }
         else:
             date_key = 'tb_incentive_{}_rejection_date'.format(self.bets_parent_event_id)
             reason_key = 'tb_incentive_{}_rejection_reason'.format(self.bets_parent_event_id)
             return {
                 status_key: 'rejected',
-                date_key: datetime.datetime.utcnow().date().isoformat(),
-                reason_key: self.failure_description,
+                date_key: self.payment_date,
+                reason_key: self.remarks,
             }
 
 
@@ -99,54 +109,56 @@ def get_case(domain, case_id):
     return case_accessor.get_case(case_id)
 
 
-def _get_case_update(request, domain, update_model):
+def _get_case_updates(request, domain):
     try:
         request_json = json.loads(request.body)
     except ValueError:
         raise ApiError(msg="Malformed JSON", status_code=400)
-    try:
-        update = update_model.wrap(request_json)
-    except BadValueError as e:
-        raise ApiError(msg=e.message, status_code=400)
-    try:
-        case = get_case(domain, update.case_id)
-        if case.type != update.case_type:
-            raise CaseNotFound()
-    except CaseNotFound:
-        raise ApiError(
-            msg="No {} case found with that ID".format(update.case_type),
-            status_code=404
-        )
-    return update
+
+    if not isinstance(request_json.get('response', None), list):
+        raise ApiError(msg='Expected json of the form `{"response": []}`', status_code=400)
+
+    updates = []
+    for event_json in request_json['response']:
+        if event_json.get('event_type', None) not in ('Voucher', 'Incentive'):
+            raise ApiError(msg="Malformed JSON", status_code=400)
+
+        update_model = VoucherUpdate if event_json['event_type'] == 'Voucher' else IncentiveUpdate
+        try:
+            update = update_model.wrap(event_json)
+        except BadValueError as e:
+            raise ApiError(msg=e.message, status_code=400)
+        try:
+            # TODO move this to bulk?
+            case = get_case(domain, update.case_id)
+            if case.type != update.case_type:
+                raise CaseNotFound()
+        except CaseNotFound:
+            raise ApiError(
+                msg="No {} case found with that ID".format(update.case_type),
+                status_code=404
+            )
+        updates.append(update)
+    return updates
 
 
-def _update_case_from_request(request, domain, update_model):
+@require_POST
+@csrf_exempt
+@login_or_digest_or_basic_or_apikey()
+@toggles.ENIKSHAY_API.required_decorator()
+def payment_confirmation(request, domain):
     try:
-        update = _get_case_update(request, domain, update_model)
+        updates = _get_case_updates(request, domain)
     except ApiError as e:
         if not settings.UNIT_TESTING:
             notify_exception(request, "BETS sent the eNikshay API a bad request.")
         return json_response({"error": e.message}, status_code=e.status_code)
 
-    update_case(domain, update.case_id, case_properties=update.properties)
-
+    bulk_update_cases(domain, [
+        (update.case_id, update.properties, False)
+        for update in updates
+    ])
     return json_response({'status': "success"})
-
-
-@require_POST
-@csrf_exempt
-@login_or_digest_or_basic_or_apikey()
-@toggles.ENIKSHAY_API.required_decorator()
-def update_voucher(request, domain):
-    return _update_case_from_request(request, domain, VoucherUpdate)
-
-
-@require_POST
-@csrf_exempt
-@login_or_digest_or_basic_or_apikey()
-@toggles.ENIKSHAY_API.required_decorator()
-def update_incentive(request, domain):
-    return _update_case_from_request(request, domain, IncentiveUpdate)
 
 
 class ChemistBETSVoucherRepeaterView(AddCaseRepeaterView):
