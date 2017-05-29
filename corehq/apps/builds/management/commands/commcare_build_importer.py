@@ -80,7 +80,7 @@ class Command(BaseCommand):
     @memoized
     def jenkin_projects(self):
         print("Pinging Jenkins build server. Pelase wait...")
-        return list(self.build_server)
+        return list(self.build_server.iterkeys())
 
     @property
     @memoized
