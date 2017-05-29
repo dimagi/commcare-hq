@@ -88,6 +88,7 @@ class GroupTest(TestCase):
 
         group1 = Group.get(group1._id)
         self.assertIn(self.active_user._id, group1.removed_users)
+        self.assertNotIn(self.active_user._id, group1.users)
 
 
 class TestDeleteAllGroups(TestCase):
