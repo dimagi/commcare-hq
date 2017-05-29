@@ -15,6 +15,7 @@ from django.utils.translation import string_concat, ugettext as _, ugettext_lazy
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.chunked import chunked
 
+from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from .tree_utils import BadParentError, CycleError, assert_no_cycles, expansion_validators
@@ -413,7 +414,7 @@ class NewLocationImporter(object):
         return cls(domain, type_rows, location_rows, excel_importer)
 
     def run(self):
-        tree_validator = LocationTreeValidator(self.type_rows, self.location_rows, self.old_collection)
+        tree_validator = LocationTreeValidator(self.domain, self.type_rows, self.location_rows, self.old_collection)
         self.result.errors = tree_validator.errors
         self.result.warnings = tree_validator.warnings
         if self.result.errors:
@@ -462,11 +463,12 @@ class LocationTreeValidator(object):
     """
     Validates the given type and location stubs
     """
-    def __init__(self, type_rows, location_rows, old_collection=None):
+    def __init__(self, domain, type_rows, location_rows, old_collection=None):
 
         _to_be_deleted = lambda items: filter(lambda i: i.do_delete, items)
         _not_to_be_deleted = lambda items: filter(lambda i: not i.do_delete, items)
 
+        self.domain = domain
         self.all_listed_types = type_rows
         self.location_types = _not_to_be_deleted(type_rows)
         self.types_to_be_deleted = _to_be_deleted(type_rows)
@@ -505,7 +507,7 @@ class LocationTreeValidator(object):
                                self._check_unknown_location_ids() + self._validate_geodata())
 
         unknown_or_missing_errors = []
-        if self.old_collection:
+        if not toggles.STUPIDLY_DANGEROUS_UPLOAD.enabled(self.domain) and self.old_collection:
             # all old types/locations should be listed in excel
             unknown_or_missing_errors = self._check_unlisted_type_codes()
 

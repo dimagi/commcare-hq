@@ -3,6 +3,7 @@ from collections import namedtuple, defaultdict
 from django.test import SimpleTestCase, TestCase
 from mock import MagicMock
 
+from corehq.util.test_utils import flag_enabled
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.tree_utils import TreeError, assert_no_cycles, expansion_validators
@@ -243,6 +244,7 @@ class MockLocationStub(LocationStub):
 
 def get_validator(location_types, locations, old_collection=None):
     validator = LocationTreeValidator(
+        'fake-domain',
         [LocationTypeStub(*loc_type) for loc_type in location_types],
         [MockLocationStub(*loc) for loc in locations],
         old_collection=old_collection
@@ -663,6 +665,27 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(delete_county11))
+        self.assertCouchSync()
+
+    @flag_enabled('STUPIDLY_DANGEROUS_UPLOAD')
+    def test_dangerous_upload(self):
+        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
+        self.create_locations(self.basic_tree, lt_by_code)
+
+        add_new_stuff = [
+            ('S3', 's3', 'state', '', '', False) + extra_stub_args,
+            ('County33', 'county33', 'county', 's3', '', False) + extra_stub_args,
+            ('City233', 'city233', 'city', 'county33', '', False) + extra_stub_args,
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            add_new_stuff,
+        )
+
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree + add_new_stuff))
         self.assertCouchSync()
 
     def test_invalid_tree(self):

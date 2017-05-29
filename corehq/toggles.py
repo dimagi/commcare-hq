@@ -752,6 +752,13 @@ CUSTOM_MENU_BAR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
+STUPIDLY_DANGEROUS_UPLOAD = StaticToggle(
+    'stupidly_dangerous_upload',
+    'Enable a stupidly dangerous locations upload',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 ICDS_REPORTS = StaticToggle(
     'icds_reports',
     'Enable access to the Tableau dashboard for ICDS',
