@@ -168,6 +168,20 @@
                 "column_id": "person_owner_id"
             },
             {
+                "display_name": "diagnosing_facility_id",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "diagnosing_facility_id"
+                },
+                "column_id": "diagnosing_facility_id"
+            },
+            {
                 "display_name": "episode_type",
                 "transform": {
                 },
