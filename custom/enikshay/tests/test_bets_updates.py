@@ -211,3 +211,52 @@ class TestBetsUpdates(TestCase):
             'payment_date': "2014-11-22 13:23:44.657"
         }]})
         self.assertResponseStatus(res, 404)
+
+    def test_full_details(self):
+        episode = self.make_episode_case()
+        voucher = self.make_voucher()
+        res = self.make_request({'response': [{
+            'event_type': 'Incentive',
+            'id': episode.case_id,
+            'status': 'Success',
+            'bets_parent_event_id': '106',
+            'amount': 100,
+            'payment_date': "2014-11-22 13:23:44.657",
+            'bank_name': "Iron Bank",
+        }, {
+            'event_type': 'Voucher',
+            'id': voucher.case_id,
+            'status': 'Success',
+            'amount': 100,
+            'payment_date': "2014-11-22 13:23:44.657",
+            'remarks': "Cool stuff!",
+            'check_number': "12345",
+        }]})
+        self.assertResponseStatus(res, 200)
+        self.assertEqual(
+            {
+                "weight": "15 stone",
+                "test_confirming_diagnosis": "Old Nan's wisdom",
+                "tb_incentive_106_amount": "100",
+                "tb_incentive_106_bank_name": "Iron Bank",
+                "tb_incentive_106_check_number": "",
+                "tb_incentive_106_comments": "",
+                "tb_incentive_106_payment_date": "2014-11-22T13:23:44.657000Z",
+                "tb_incentive_106_payment_mode": "",
+                "tb_incentive_106_status": "paid",
+            },
+            get_case(self.domain, episode.case_id).case_json
+        )
+        self.assertEqual(
+            {
+                "bank_name": "",
+                "state": "paid",
+                "comments": "Cool stuff!",
+                "date_fulfilled": "2014-11-22T13:23:44.657000Z",
+                "amount_initial": "105",
+                "amount_fulfilled": "100",
+                "payment_mode": "",
+                "check_number": "12345",
+            },
+            get_case(self.domain, voucher.case_id).case_json
+        )

@@ -44,8 +44,6 @@ class PaymentUpdate(jsonobject.JsonObject):
     status = jsonobject.StringProperty(required=True, choices=['Success', 'Failure'])
     amount = jsonobject.DecimalProperty(required=False)
     payment_date = FlexibleDateTimeProperty(required=True)
-
-    # TODO save these properties
     remarks = jsonobject.StringProperty(required=False)
     payment_mode = jsonobject.StringProperty(required=False)
     check_number = jsonobject.StringProperty(required=False)
@@ -66,13 +64,17 @@ class VoucherUpdate(PaymentUpdate):
             return {
                 'state': 'paid',
                 'amount_fulfilled': self.amount,
-                'date_fulfilled': self.payment_date,
+                'date_fulfilled': self.payment_date.isoformat(),
+                'comments': self.remarks or "",
+                'payment_mode': self.payment_mode or "",
+                'check_number': self.check_number or "",
+                'bank_name': self.bank_name or "",
             }
         else:
             return {
                 'state': 'rejected',
-                'reason_rejected': self.remarks,
-                'date_rejected': self.payment_date,
+                'reason_rejected': self.remarks or "",
+                'date_rejected': self.payment_date.isoformat(),
             }
 
 
@@ -88,18 +90,26 @@ class IncentiveUpdate(PaymentUpdate):
         if self.status == 'Success':
             amount_key = 'tb_incentive_{}_amount'.format(self.bets_parent_event_id)
             date_key = 'tb_incentive_{}_payment_date'.format(self.bets_parent_event_id)
+            comments_key = 'tb_incentive_{}_comments'.format(self.bets_parent_event_id)
+            payment_mode_key = 'tb_incentive_{}_payment_mode'.format(self.bets_parent_event_id)
+            check_number_key = 'tb_incentive_{}_check_number'.format(self.bets_parent_event_id)
+            bank_name_key = 'tb_incentive_{}_bank_name'.format(self.bets_parent_event_id)
             return {
                 status_key: 'paid',
                 amount_key: self.amount,
-                date_key: self.payment_date,
+                date_key: self.payment_date.isoformat(),
+                comments_key: self.remarks or "",
+                payment_mode_key: self.payment_mode or "",
+                check_number_key: self.check_number or "",
+                bank_name_key: self.bank_name or "",
             }
         else:
             date_key = 'tb_incentive_{}_rejection_date'.format(self.bets_parent_event_id)
             reason_key = 'tb_incentive_{}_rejection_reason'.format(self.bets_parent_event_id)
             return {
                 status_key: 'rejected',
-                date_key: self.payment_date,
-                reason_key: self.remarks,
+                date_key: self.payment_date.isoformat(),
+                reason_key: self.remarks or "",
             }
 
 
