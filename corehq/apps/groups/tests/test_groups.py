@@ -75,6 +75,20 @@ class GroupTest(TestCase):
         self.assertNotEqual(g1_old_modified, group1_updated.last_modified)
         self.assertNotEqual(g2_old_modified, group2_updated.last_modified)
 
+    def test_remove_user(self):
+        group1 = Group(
+            domain=DOMAIN,
+            name='group1',
+            users=[self.active_user._id, self.inactive_user._id, self.deleted_user._id]
+        )
+        group1.save()
+
+        self.assertTrue(group1.remove_user(self.active_user._id))
+        group1.save()
+
+        group1 = Group.get(group1._id)
+        self.assertIn(self.active_user._id, group1.removed_users)
+
 
 class TestDeleteAllGroups(TestCase):
 
