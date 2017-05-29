@@ -8,7 +8,7 @@ from pytz import timezone
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.exceptions import RequestConnectionError
-from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
+from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator, LocationPayloadGenerator
 from custom.enikshay.case_utils import update_case, get_person_case_from_episode
 from custom.enikshay.const import (
     DATE_FULFILLED,
@@ -397,3 +397,15 @@ class BETSAYUSHReferralPayloadGenerator(IncentivePayloadGenerator):
 
     def get_payload(self, repeat_record, episode_case):
         return json.dumps(IncentivePayload.create_ayush_referral_payload(episode_case).to_json())
+
+
+class BETSLocationPayloadGenerator(LocationPayloadGenerator):
+
+    def get_payload(self, repeat_record, location):
+        payload = location.to_json()
+        # Override lineage to use a custom format for BETS
+        payload['lineage'] = {
+            ancestor.location_type.name: ancestor.location_id
+            for ancestor in location.get_ancestors()
+        }
+        return payload

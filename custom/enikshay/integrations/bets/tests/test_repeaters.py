@@ -1,10 +1,14 @@
-from datetime import date
+from datetime import date, datetime
 import json
 import mock
 
-from django.test import override_settings
+from django.test import override_settings, TestCase
 
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
+from corehq.apps.repeaters.models import RepeatRecord
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+
 from custom.enikshay.const import ENROLLED_IN_PRIVATE, PRESCRIPTION_TOTAL_DAYS_THRESHOLD
 from custom.enikshay.const import (
     TREATMENT_OUTCOME_DATE,
@@ -23,7 +27,7 @@ from custom.enikshay.integrations.bets.repeater_generators import ChemistBETSVou
     BETSDiagnosisAndNotificationPayloadGenerator, BETSAYUSHReferralPayloadGenerator, BETSDrugRefillPayloadGenerator, IncentivePayload
 from custom.enikshay.integrations.bets.repeaters import ChemistBETSVoucherRepeater, BETS180TreatmentRepeater, \
     BETSDrugRefillRepeater, BETSSuccessfulTreatmentRepeater, BETSDiagnosisAndNotificationRepeater, \
-    BETSAYUSHReferralRepeater
+    BETSAYUSHReferralRepeater, BETSLocationRepeater
 from custom.enikshay.integrations.ninetyninedots.tests.test_repeaters import ENikshayRepeaterTestBase, MockResponse
 
 from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
@@ -459,3 +463,68 @@ class BETSAYUSHReferralRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepe
         update_case(self.domain, self.episode_id, {"bets_first_prescription_voucher_redeemed": "false"})
         update_case(self.domain, self.episode_id, {"bets_first_prescription_voucher_redeemed": "true"})
         self.assertEqual(1, len(self.repeat_records().all()))
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
+    domain = 'bets-location-repeater'
+    maxDiff = None
+
+    def setUp(self):
+        super(LocationRepeaterTest, self).setUp()
+        self.repeater = BETSLocationRepeater(
+            domain=self.domain,
+            url='super-cool-url',
+        )
+        self.repeater.save()
+
+    def tearDown(self):
+        super(LocationRepeaterTest, self).tearDown()
+        delete_all_repeat_records()
+        delete_all_repeaters()
+
+    def repeat_records(self):
+        return RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
+
+    def make_location(self, name):
+        location = SQLLocation.objects.create(
+            domain=self.domain,
+            name=name,
+            site_code=name,
+            location_type=self.tu.location_type,
+            parent=self.dto,
+        )
+        self.addCleanup(location.delete)
+        return location
+
+    def test_trigger(self):
+        self.assertEqual(0, len(self.repeat_records().all()))
+        location = self.make_location('kings_landing')
+        records = self.repeat_records().all()
+        self.assertEqual(1, len(records))
+        record = records[0]
+        self.assertEqual(
+            record.get_payload(),
+            {
+                '_id': location.location_id,
+                'doc_type': 'Location',
+                'domain': self.domain,
+                'external_id': None,
+                'is_archived': False,
+                'last_modified': location.last_modified.isoformat(),
+                'latitude': None,
+                'lineage': {
+                    'dto': self.locations['DTO'].location_id,
+                    'cto': self.locations['CTO'].location_id,
+                    'sto': self.locations['STO'].location_id,
+                    'ctd': self.locations['CTD'].location_id,
+                },
+                'location_id': location.location_id,
+                'location_type': 'tu',
+                'longitude': None,
+                'metadata': {},
+                'name': location.name,
+                'parent_location_id': self.locations['DTO'].location_id,
+                'site_code': location.site_code,
+            }
+        )

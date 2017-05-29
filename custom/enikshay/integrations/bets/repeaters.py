@@ -1,7 +1,10 @@
 from dateutil.parser import parse
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.signals import case_post_save
-from corehq.apps.repeaters.models import CaseRepeater
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.repeaters.models import CaseRepeater, LocationRepeater
 from corehq.apps.repeaters.signals import create_repeat_records
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import BETS_INTEGRATION
@@ -14,7 +17,7 @@ from custom.enikshay.integrations.bets.repeater_generators import \
     BETS180TreatmentPayloadGenerator, LabBETSVoucherPayloadGenerator, \
     ChemistBETSVoucherPayloadGenerator, BETSAYUSHReferralPayloadGenerator, \
     BETSDiagnosisAndNotificationPayloadGenerator, BETSSuccessfulTreatmentPayloadGenerator, \
-    BETSDrugRefillPayloadGenerator
+    BETSDrugRefillPayloadGenerator, BETSLocationPayloadGenerator
 from custom.enikshay.integrations.utils import case_properties_changed, is_valid_episode_submission, \
     is_valid_voucher_submission, is_valid_archived_submission
 
@@ -287,6 +290,14 @@ class BETSAYUSHReferralRepeater(BaseBETSRepeater):
         )
 
 
+class BETSLocationRepeater(LocationRepeater):
+    friendly_name = _("Forward locations to BETS")
+    payload_generator_classes = (BETSLocationPayloadGenerator,)
+
+    class Meta(object):
+        app_label = 'repeaters'
+
+
 def create_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(ChemistBETSVoucherRepeater, case)
     create_repeat_records(LabBETSVoucherRepeater, case)
@@ -297,3 +308,10 @@ def create_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(BETSAYUSHReferralRepeater, case)
 
 case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
+
+
+@receiver(post_save, sender=SQLLocation, dispatch_uid="create_bets_location_repeat_records")
+def create_bets_location_repeat_records(sender, raw=False, **kwargs):
+    if raw:
+        return
+    create_repeat_records(BETSLocationRepeater, kwargs['instance'])
