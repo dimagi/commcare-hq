@@ -3,7 +3,7 @@ from casexml.apps.case.xform import extract_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
-Should = namedtuple('Should', 'method', 'url', 'parser')
+Should = namedtuple('Should', ['method', 'url', 'parser'])
 
 
 class Requests(object):
@@ -18,36 +18,37 @@ class Requests(object):
         return '{}{}'.format(self.base_url, uri)
 
     def get(self, uri, *args, **kwargs):
+        # print 'GET', self._url(uri), args, kwargs
         return self.requests.get(self._url(uri), *args,
                                  auth=(self.username, self.password), **kwargs)
 
     def post(self, uri, *args, **kwargs):
-        return self.requests.get(self._url(uri), *args,
-                                 auth=(self.username, self.password), **kwargs)
+        # print 'POST', self._url(uri), args, kwargs
+        return self.requests.post(self._url(uri), *args,
+                                  auth=(self.username, self.password), **kwargs)
 
 
 def url(url_format_string, **kwargs):
     return url_format_string.format(**kwargs)
 
 
-def get_how_to_create_person_attribute(person_uuid, attribute_uuid, value):
+def create_person_attribute(requests, person_uuid, attribute_type_uuid, value):
     # todo: not tested against real openmrs instance
-    return Should('POST', url('/person/{person_uuid}/attribute', person_uuid=person_uuid), {
-        'uuid': attribute_uuid,
-        'value': value,
-    })
-
-
-def get_how_to_update_person_attribute(person_uuid, attribute_uuid, value):
-    # todo: not tested against real openmrs instance
-    return Should(
-        'POST',
-        url('/person/{person_uuid}/attribute/{attribute_uuid}',
-            person_uuid=person_uuid, attribute_uuid=attribute_uuid),
-        {
+    return requests.post('/ws/rest/v1/person/{person_uuid}/attribute'.format(
+        person_uuid=person_uuid), json={
+            'attributeType': attribute_type_uuid,
             'value': value,
+        },
+    ).json()
+
+
+def update_person_attribute(requests, person_uuid, attribute_uuid, attribute_type_uuid, value):
+    return requests.post('/ws/rest/v1/person/{person_uuid}/attribute/{attribute_uuid}'.format(
+        person_uuid=person_uuid, attribute_uuid=attribute_uuid), json={
+            'value': value,
+            'attributeType': attribute_type_uuid,
         }
-    )
+    ).json()
 
 
 def search_patients(requests, search_string):
@@ -100,6 +101,14 @@ def get_relevant_case_updates_from_form_json(domain, form_json, case_types, extr
                 ),
                 created='create' in case_block,
                 closed='close' in case_block,
-                extra_fields={field: getattr(case, field, None) for field in extra_fields}
+                extra_fields={field: case.get_case_property(field) for field in extra_fields}
             ))
     return result
+
+
+def get_patient_identifier_types(requests):
+    return requests.get('/ws/rest/v1/patientidentifiertype').json()
+
+
+def get_person_attribute_types(requests):
+    return requests.get('/ws/rest/v1/personattributetype').json()
