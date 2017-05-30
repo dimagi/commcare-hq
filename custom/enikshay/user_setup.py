@@ -35,6 +35,7 @@ LOC_TYPES_TO_USER_TYPES = {
 
 
 def skip_custom_setup(domain, request_user):
+    return True  # We're gonna revisit this, turning off for now
     return not toggles.ENIKSHAY.enabled(domain) or request_user.is_domain_admin(domain)
 
 
