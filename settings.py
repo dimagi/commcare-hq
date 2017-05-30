@@ -1679,7 +1679,6 @@ PILLOWTOPS = {
         },
     ],
     'fluff': [
-        'custom.bihar.models.CareBiharFluffPillow',
         'custom.opm.models.OpmUserFluffPillow',
         'custom.m4change.models.M4ChangeFormFluffPillow',
         'custom.intrahealth.models.CouvertureFluffPillow',
