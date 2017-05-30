@@ -35,14 +35,20 @@ class TestVertexBackendResponseHandling(TestCase):
             self.vertex_backend.handle_response(self.queued_sms, 200, TEST_NON_CODE_MESSAGES)
             self.assertEqual(self.queued_sms.system_error_message, SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
             self.assertTrue(self.queued_sms.error)
-            exception_notifier.assert_called_once_with(None, TEST_NON_CODE_MESSAGES)
+            exception_notifier.assert_called_once_with(
+                None,
+                "Error with the Vertex SMS Backend: " + TEST_NON_CODE_MESSAGES
+            )
 
-            with mock.patch('corehq.messaging.smsbackends.vertex.models.notify_exception') as exception_notifier:
-                self.queued_sms.error = False
-                self.vertex_backend.handle_response(self.queued_sms, 200, TEST_FAILURE_RESPONSE)
-                self.assertEqual(self.queued_sms.system_error_message, SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
-                self.assertTrue(self.queued_sms.error)
-                exception_notifier.assert_called_once_with(None, TEST_FAILURE_RESPONSE)
+        with mock.patch('corehq.messaging.smsbackends.vertex.models.notify_exception') as exception_notifier:
+            self.queued_sms.error = False
+            self.vertex_backend.handle_response(self.queued_sms, 200, TEST_FAILURE_RESPONSE)
+            self.assertEqual(self.queued_sms.system_error_message, SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
+            self.assertTrue(self.queued_sms.error)
+            exception_notifier.assert_called_once_with(
+                None,
+                "Error with the Vertex SMS Backend: " + TEST_FAILURE_RESPONSE
+            )
 
         with self.assertRaisesMessage(
                 VertexBackendException,
