@@ -5,7 +5,7 @@
 {% load crispy_forms_tags %}
 
 {% block title %}
-  Settings -
+  {% trans "Settings" %} -
   {% if app.name %}
     {{ app.name|html_name }}
   {% else %}
