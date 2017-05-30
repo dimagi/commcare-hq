@@ -105,6 +105,7 @@
                 },
                 "datatype": "date",
                 "type": "expression",
+                "create_index": true,
                 "is_primary_key": false,
                 "is_nullable": true,
                 "column_id": "date_of_diagnosis",
@@ -132,6 +133,7 @@
                 "display_name": "person/owner_id",
                 "datatype": "string",
                 "type": "expression",
+                "create_index": true,
                 "is_primary_key": false,
                 "transform": {
                 },
@@ -469,6 +471,7 @@
             {
                 "display_name": "episode_type_patient",
                 "type": "boolean",
+                "create_index": true,
                 "filter": {
                     "type": "named",
                     "name": "current_episode_type_patient"
