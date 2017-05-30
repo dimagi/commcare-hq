@@ -897,6 +897,7 @@ class FormBase(DocumentSchema):
     )
     post_form_workflow_backup = StringProperty(
         choices=WORKFLOW_BACKUP_OPTIONS,
+        default=None,
     )
     auto_gps_capture = BooleanProperty(default=False)
     no_vellum = BooleanProperty(default=False)
