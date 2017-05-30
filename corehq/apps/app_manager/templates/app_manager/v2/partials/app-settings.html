@@ -149,18 +149,6 @@
     </span>
 </script>
 
-{% if linked_apps_enabled and app.get_doc_type != 'LinkedApplication' %}
-<script>
-     $(function () {
-        var domains = {{ app.linked_whitelist|JSON }};
-        var save = '{% url "update_linked_whitelist" domain app.id %}';
-        var LinkedWhitelist = hqImport('app_manager/js/linked_whitelist.js').LinkedWhitelist;
-        linkedWhitelist = new LinkedWhitelist(domains, save);
-        $('#whitelist-section').koApplyBindings(linkedWhitelist);
-     });
-</script>
-{% endif %}
-
 <script type="text/html" id="CommcareSettings.widgets.text_input">
   <span data-bind="template: 'CommcareSettings.widgets.select'"></span>
   <aside id="custom-keys-help" data-bind="visible: visibleValue() === 'custom-keys'">
@@ -240,7 +228,7 @@
                     </div>
                 {% endif %}
                 {% if linked_apps_enabled %}
-                    <div id="whitelist-section" class="panel panel-appmanager panel-appmanager-form" data-bind="visible: linkedDomains().length > 0">
+                    <div id="linked-whitelist" class="panel panel-appmanager panel-appmanager-form" data-bind="visible: linkedDomains().length > 0">
                     <legend>{% trans 'Linked Project Whitelist' %}</legend>
                     <div class="tab-pane panel-body">
                         <div class="help-block">

@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,352 +1,95 @@
+@@ -1,345 +1,95 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -42,15 +42,6 @@
 -    {{ block.super }}
 -    <script>
 -        {% if not app.is_remote_app and app.get_doc_type != 'LinkedApplication' %}
--            {% if linked_apps_enabled %}
--             $(function () {
--                var domains = {{ app.linked_whitelist|JSON }};
--                var save = '{% url "update_linked_whitelist" domain app.id %}';
--                var LinkedWhitelist = hqImport('app_manager/js/linked_whitelist.js').LinkedWhitelist;
--                linkedWhitelist = new LinkedWhitelist(domains, save);
--                $('#whitelist-tab').koApplyBindings(linkedWhitelist);
--             });
--            {% endif %}
 -        $(function () {
 -            var multimedia_tab = (function () {
 -                var self = {};
@@ -270,6 +261,7 @@
 -    {% initial_page_data 'is_superuser' request.user.is_superuser %}
 -    {% initial_page_data 'lang' lang %}
 -    {% initial_page_data 'langs' app.langs %}
+-    {% initial_page_data 'linked_whitelist' app.linked_whitelist %}
 -    {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
 -    {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
 -    {% initial_page_data 'translations' translations %}
@@ -278,6 +270,7 @@
 -    {% registerurl "edit_app_ui_translations" domain app.id %}
 -    {% registerurl "get_app_ui_translations" domain %}
 -    {% registerurl "toggle_diff" domain %}
+-    {% registerurl "update_linked_whitelist" domain app.id %}
 +  {# release page URLs #}
 +  {% registerurl "paginate_releases" domain app.id %}
 +  {% registerurl "delete_copy" domain app.id %}
@@ -352,7 +345,7 @@
 -            <div class="tabbable">
 -                <ul class="nav nav-tabs">
 -                    <li class="active"><a href="#copy-tab" data-toggle="tab">{% trans "Copy Application" %}</a></li>
--                    <li><a href="#whitelist-tab" data-toggle="tab">{% trans "Linked Project Whitelist" %}</a></li>
+-                    <li><a href="#linked-whitelist" data-toggle="tab">{% trans "Linked Project Whitelist" %}</a></li>
 -                </ul>
 -                <div class="spacer"></div>
 -                <div class="tab-content">
@@ -374,7 +367,7 @@
 -                        {% endif %}
 -            {% if linked_apps_enabled %}
 -                    </div>
--                    <div id="whitelist-tab" class="tab-pane">
+-                    <div id="linked-whitelist" class="tab-pane">
 -                    <div class="help-block">
 -                        {% blocktrans %}
 -                            Project spaces on this list are able to update linked applications

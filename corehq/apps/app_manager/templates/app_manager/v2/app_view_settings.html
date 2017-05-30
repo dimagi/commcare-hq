@@ -113,9 +113,11 @@
   {% initial_page_data 'is_remote_app' app.is_remote_app %}
   {% initial_page_data 'is_superuser' request.user.is_superuser %}
   {% initial_page_data 'langs' app.langs %}
+  {% initial_page_data 'linked_whitelist' app.linked_whitelist %}
   {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
   {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
   {% initial_page_data 'uploaders' uploaders_js %}
   {% registerurl "toggle_diff" domain %}
+  {% registerurl "update_linked_whitelist" domain app.id %}
   {% include "app_manager/v2/partials/app-settings.html" %}
 {% endblock app_view_tabs %}
