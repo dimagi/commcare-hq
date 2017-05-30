@@ -26,6 +26,7 @@ from ..models import IssuerId
 
 
 @flag_enabled('ENIKSHAY')
+@mock.patch('custom.enikshay.user_setup.skip_custom_setup', lambda *args: False)
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestUserSetupUtils(TestCase):
     domain = 'enikshay-user-setup'
