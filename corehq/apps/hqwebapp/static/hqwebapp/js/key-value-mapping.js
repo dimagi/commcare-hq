@@ -100,7 +100,7 @@ function MapList(o) {
     self.items = ko.observableArray();
     self.duplicatedItems = ko.observableArray();
     self.values_are_icons = ko.observable(o.values_are_icons || false);
-    self.values_are_conditional = ko.observable(o.values_are_conditional || false);
+    self.values_are_conditions = ko.observable(o.values_are_conditions || false);
     self.multimedia = o.multimedia;
     self.property_name = o.property_name;
 
@@ -112,7 +112,7 @@ function MapList(o) {
                 addButton: django.gettext('Add Image'),
             };
         }
-        else if (this.values_are_conditional()) {
+        else if (this.values_are_conditions()) {
             return {
                 placeholder: django.gettext('Calculation'),
                 duplicated: django.gettext('Calculation is duplicated'),
@@ -198,7 +198,7 @@ uiElement.key_value_mapping = function (o) {
     m.edit = ko.observable(true);
     m.buttonText = o.buttonText || "Edit",
     m.values_are_icons = ko.observable(o.values_are_icons || false);
-    m.values_are_conditional = ko.observable(o.values_are_conditional || false);
+    m.values_are_conditions = ko.observable(o.values_are_conditions || false);
     m.openModal = function () {
         // create a throw-away modal every time
         // lets us create a sandbox for editing that you can cancel
@@ -210,7 +210,7 @@ uiElement.key_value_mapping = function (o) {
             module_id: o.module_id,
             items: m.getItems(),
             values_are_icons: m.values_are_icons(),
-            values_are_conditional: m.values_are_conditional(),
+            values_are_conditions: m.values_are_conditions(),
             multimedia: m.multimedia,
             property_name: o.property_name,
         });
