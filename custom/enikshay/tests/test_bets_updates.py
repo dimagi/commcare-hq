@@ -69,7 +69,6 @@ class TestBetsUpdates(TestCase):
             'payment_date': "2014-11-22 13:23:44.657"
         }]})
         self.assertResponseStatus(res, 200)
-        # TODO check date parsing
         self.assertDictContainsSubset(
             {'state': 'paid', 'amount_fulfilled': '100'},
             get_case(self.domain, voucher.case_id).case_json,

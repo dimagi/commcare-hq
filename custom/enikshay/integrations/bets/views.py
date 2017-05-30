@@ -24,6 +24,9 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_EPISODE
 from .const import BETS_EVENT_IDS
 
+SUCCESS = "Success"
+FAILURE = "Failure"
+
 
 class ApiError(Exception):
     def __init__(self, msg, status_code):
@@ -41,7 +44,7 @@ class FlexibleDateTimeProperty(jsonobject.DateTimeProperty):
 
 class PaymentUpdate(jsonobject.JsonObject):
     id = jsonobject.StringProperty(required=True)
-    status = jsonobject.StringProperty(required=True, choices=['Success', 'Failure'])
+    status = jsonobject.StringProperty(required=True, choices=[SUCCESS, FAILURE])
     amount = jsonobject.DecimalProperty(required=False)
     payment_date = FlexibleDateTimeProperty(required=True)
     remarks = jsonobject.StringProperty(required=False)
@@ -60,7 +63,7 @@ class VoucherUpdate(PaymentUpdate):
 
     @property
     def properties(self):
-        if self.status == 'Success':
+        if self.status == SUCCESS:
             return {
                 'state': 'paid',
                 'amount_fulfilled': self.amount,
@@ -87,7 +90,7 @@ class IncentiveUpdate(PaymentUpdate):
     @property
     def properties(self):
         status_key = 'tb_incentive_{}_status'.format(self.bets_parent_event_id)
-        if self.status == 'Success':
+        if self.status == SUCCESS:
             amount_key = 'tb_incentive_{}_amount'.format(self.bets_parent_event_id)
             date_key = 'tb_incentive_{}_payment_date'.format(self.bets_parent_event_id)
             comments_key = 'tb_incentive_{}_comments'.format(self.bets_parent_event_id)
@@ -130,7 +133,8 @@ def _get_case_updates(request, domain):
     updates = []
     for event_json in request_json['response']:
         if event_json.get('event_type', None) not in ('Voucher', 'Incentive'):
-            raise ApiError(msg="Malformed JSON", status_code=400)
+            msg = 'Expected "event_type": "Voucher" or "event_type": "Incentive"'
+            raise ApiError(msg=msg, status_code=400)
 
         update_model = VoucherUpdate if event_json['event_type'] == 'Voucher' else IncentiveUpdate
         try:
@@ -178,7 +182,7 @@ def payment_confirmation(request, domain):
         (update.case_id, update.properties, False)
         for update in updates
     ])
-    return json_response({'status': "success"})
+    return json_response({'status': SUCCESS})
 
 
 class ChemistBETSVoucherRepeaterView(AddCaseRepeaterView):
