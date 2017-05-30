@@ -8,12 +8,13 @@
     {% include 'analytics/fullstory.html' %}
 {% endblock %}
 {% block js %}{{ block.super }}
+    <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
+    <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_logos.js' %}"></script>
     <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
     <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
     <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
     <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
-    <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
-    <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
     <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
     <script src="{% static "jsdiff/diff.js" %}"></script>
 
@@ -106,51 +107,6 @@
                 });
             });
         });
-
-        var HQMediaUploaders = hqImport("hqmedia/js/hqmediauploaders.js").get();
-        var refs = {{ refs|JSON }};
-        var media_info = {{ media_info|JSON }};
-        var image_refs = {};
-        for (var slug in refs) {
-            image_refs[slug] = new ImageReference(refs[slug]);
-            image_refs[slug].upload_controller = HQMediaUploaders[slug];
-            image_refs[slug].setObjReference(media_info[slug]);
-        }
-        function urlFromLogo(slug) {
-            return image_refs[slug].url;
-        }
-        function thumbUrlFromLogo(slug) {
-            return image_refs[slug].thumb_url;
-        }
-        function triggerUploadForLogo(slug) {
-            if(image_refs[slug]) {
-                image_refs[slug].triggerUpload();
-            }
-        }
-        function uploadCompleteForLogo(slug, response) {
-            if(image_refs[slug]) {
-                image_refs[slug].uploadComplete(null, null, response);
-            }
-        }
-        function getPathFromSlug(slug) {
-            return image_refs[slug].path;
-        }
-        function removeLogo(slug) {
-            $.post(
-                '{% url "hqmedia_remove_logo" domain app.id %}',
-                {
-                    logo_slug: slug
-                },
-                function(data, status) {
-                    if(status == 'success'){
-                        image_refs[slug].url("");
-                    }
-                }
-            );
-        }
-        function anonymousAppUrl() {
-            return '{{ app.anonymous_cloudcare_url }}';
-        }
     </script>
 {% endblock %}
 
@@ -171,6 +127,8 @@
     {% initial_page_data 'lang' lang %}
     {% initial_page_data 'langs' app.langs %}
     {% initial_page_data 'linked_whitelist' app.linked_whitelist %}
+    {% initial_page_data 'media_refs' refs %}
+    {% initial_page_data 'media_info' media_info %}
     {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
     {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
     {% initial_page_data 'translations' translations %}
@@ -179,6 +137,7 @@
     {% registerurl "edit_app_langs" domain app.id %}
     {% registerurl "edit_app_ui_translations" domain app.id %}
     {% registerurl "get_app_ui_translations" domain %}
+    {% registerurl "hqmedia_remove_logo" domain app.id %}
     {% registerurl "toggle_diff" domain %}
     {% registerurl "update_linked_whitelist" domain app.id %}
 
