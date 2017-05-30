@@ -23,12 +23,13 @@ from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
+from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.apps.users.util import format_username, cc_user_domain
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.programs.models import Program
-
+from corehq.apps.hqwebapp.utils import decode_password
 # Bootstrap 3 Crispy Forms
 from crispy_forms import layout as cb3_layout
 from crispy_forms import helper as cb3_helper
@@ -382,7 +383,7 @@ class RoleForm(forms.Form):
         self.fields['role'].choices = role_choices
 
 
-class SetUserPasswordForm(SetPasswordForm):
+class SetUserPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
 
     new_password1 = forms.CharField(
         label=ugettext_noop("New password"),
@@ -432,9 +433,14 @@ class SetUserPasswordForm(SetPasswordForm):
         )
 
     def clean_new_password1(self):
+        password1 = decode_password(self.cleaned_data.get('new_password1'))
+        if password1 == '':
+            raise ValidationError(
+                _("Password cannot be empty"), code='new_password1_empty',
+            )
         if self.project.strong_mobile_passwords:
-            return clean_password(self.cleaned_data.get('new_password1'))
-        return self.cleaned_data.get('new_password1')
+            return clean_password(password1)
+        return password1
 
 
 class CommCareAccountForm(forms.Form):
