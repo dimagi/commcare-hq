@@ -360,15 +360,6 @@ class ENikshayUserLocationDataEditor(CustomDataEditor):
             )
         return super(ENikshayUserLocationDataEditor, self)._make_field(field)
 
-    def init_form(self, post_dict=None):
-        form = super(ENikshayUserLocationDataEditor, self).init_form(post_dict)
-        fs = form.helper.layout[0]
-        assert isinstance(fs, crispy.Fieldset)
-        for i, field in enumerate(fs.fields):
-            if field == 'suborganization':
-                pass # TODO add in special logic to display on org, not loctype
-        return form
-
 
 def get_new_username_and_id(domain, attempts_remaining=3):
     if attempts_remaining <= 0:
