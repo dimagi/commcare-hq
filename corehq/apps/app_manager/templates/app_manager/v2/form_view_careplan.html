@@ -13,11 +13,6 @@
         Careplan = hqImport('app_manager/js/careplan-config-ui.js').Careplan;
     var careplan = new Careplan(_.extend({}, initial_page_data("case_config_options"), {
         home: $('#case-config-ko'),
-        mode: "{{ mode }}",
-        fixedQuestions: {{ fixed_questions|JSON }},
-        customCaseUpdates: {{ custom_case_properties|JSON }},
-        case_preload: {{ case_preload|JSON }},
-        save_url: "{% url "edit_careplan_form_actions" app.domain app.id nav_form.unique_id %}",
     }));
     careplan.init();
 </script>
