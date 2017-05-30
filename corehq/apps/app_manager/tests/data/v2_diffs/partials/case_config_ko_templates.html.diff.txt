@@ -35,8 +35,8 @@
          <input type="text" class="form-control" data-bind="
              valueDefault: property.key,
              default: property.defaultKey,
--            casePropertySelect2: suggestedProperties,
-+            casePropertySelect2: suggestedProperties
+-            casePropertyAutocomplete: suggestedProperties,
++            casePropertyAutocomplete: suggestedProperties
          "/>
      </span>
      <span data-bind="visible: property.required()">
