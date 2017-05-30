@@ -6,16 +6,7 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -19,7 +19,7 @@
-             requires: ko.observable(initial_page_data("form_requires")),
-         }));
-         caseConfig.init();
-- 
-+
-         if (initial_page_data("schedule_options")) {
-             var VisitScheduler = hqImport('app_manager/js/visit-scheduler.js');
-             var visitScheduler = new VisitScheduler.Scheduler(_.extend({}, initial_page_data("schedule_options"), {
-@@ -34,5 +34,5 @@
+@@ -11,5 +11,5 @@
  {% block case_management_content %}
      {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
      {% initial_page_data 'schedule_options' schedule_options %}
