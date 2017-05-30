@@ -476,6 +476,10 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
             return true;
         };
     };
+
+    // text_input has the same behavior as a select widget but uses a different template
+    CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
+
     return {
         CommcareSettings: CommcareSettings
     };

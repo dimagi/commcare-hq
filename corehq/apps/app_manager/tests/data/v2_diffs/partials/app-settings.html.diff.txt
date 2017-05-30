@@ -125,7 +125,7 @@
          <input type="number" class="col-sm-3 form-control" data-bind="
              value: visibleValue,
              valueUpdate: 'textchange',
-@@ -137,166 +138,177 @@
+@@ -137,159 +138,170 @@
  </script>
  
  <script type="text/html" id="CommcareSettings.widgets.textarea">
@@ -142,18 +142,6 @@
      </span>
  </script>
  
- <script>
--    $(function () {
--        var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
--        CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
--    });
--</script>
-+  $(function () {
-+    var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
-+    CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
-+  });
-+</script>
-+
 +{% if linked_apps_enabled and app.get_doc_type != 'LinkedApplication' %}
 +<script>
 +     $(function () {
@@ -165,7 +153,7 @@
 +     });
 +</script>
 +{% endif %}
- 
++
  <script type="text/html" id="CommcareSettings.widgets.text_input">
 -    <span data-bind="template: 'CommcareSettings.widgets.select'"></span>
 -    <aside id="custom-keys-help" data-bind="visible: visibleValue() === 'custom-keys'">

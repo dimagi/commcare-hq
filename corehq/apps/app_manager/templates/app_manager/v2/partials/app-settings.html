@@ -149,13 +149,6 @@
     </span>
 </script>
 
-<script>
-  $(function () {
-    var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
-    CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
-  });
-</script>
-
 {% if linked_apps_enabled and app.get_doc_type != 'LinkedApplication' %}
 <script>
      $(function () {
