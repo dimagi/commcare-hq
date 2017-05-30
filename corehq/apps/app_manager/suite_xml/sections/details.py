@@ -515,10 +515,10 @@ class CaseTileHelper(object):
 
         context['variables'] = ''
         if column.format == "enum" or column.format == 'conditional-enum':
-            context["variables"] = self._get_enum_keys(column)
+            context["variables"] = self._get_enum_variables(column)
         return context
 
-    def _get_enum_keys(self, column):
+    def _get_enum_variables(self, column):
         variables = []
         for i, mapping in enumerate(column.enum):
             variables.append(
