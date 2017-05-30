@@ -10,10 +10,10 @@
         </div>
         <div class="col-md-1 "><i class="fa fa-download fa-2x right pointer"></i></div>
     </div>
-    <div class="col-md-12" ng-if="$ctrl.step === '1' && $ctrl.mapData !== null">
+    <div class="col-md-12" ng-if="$ctrl.step === '1'">
 
-        <div class="row">
-            <indie-map legend-title="Percentage Children" data="$ctrl.mapData"></indie-map>
+        <div class="row" ng-if="$ctrl.loaded && $ctrl.mode">
+            <map-or-sector-view mode="{$ $ctrl.mode $}" data="$ctrl.data"></map-or-sector-view>
         </div>
     </div>
     <div class="col-md-12" ng-if="$ctrl.step === '2' && $ctrl.chartData !== null">

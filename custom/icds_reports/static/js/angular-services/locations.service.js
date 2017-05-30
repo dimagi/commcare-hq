@@ -19,5 +19,12 @@ window.angular.module('icdsApp').factory('locationsService', ['$http', function(
                 return response.data;
             });
         },
+        getLocation: function(locationId) {
+            return $http.get(url('icds_locations'), {
+                params: {location_id: locationId},
+            }).then(function(response) {
+                return response.data;
+            });
+        },
     };
 }]);
