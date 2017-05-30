@@ -22,42 +22,6 @@
 {% endblock js %}
 
 {% block js-inline %}{{ block.super }}
-  {% if not app.is_remote_app %}
-    <script>
-      $(function () {
-        var MultimediaTab = function () {
-          var self = {};
-          self.load_state = ko.observable(null);
-          self.multimedia_page_html = ko.observable('');
-          self.load_if_necessary = function () {
-            if (!self.load_state() || self.load_state() === 'error') {
-              self.load_state('loading');
-              $.ajax({
-                url: '{% url 'app_multimedia_ajax' domain app.get_id %}',
-                success: function(content) {
-                  self.load_state('loaded');
-                  self.multimedia_page_html(content);
-                },
-                error: function() {
-                  alert('Oops, there was a problem loading this section. Please try again.');
-                  self.load_state('error');
-                },
-              });
-            }
-          };
-          return self;
-        };
-        var multimediaTab = new MultimediaTab();
-        $("#multimedia-tab").koApplyBindings(multimediaTab);
-        $('[href="#multimedia-tab"]').on('shown.bs.tab', function () {
-          if (multimediaTab.load_state() === null) {
-            multimediaTab.load_if_necessary();
-          }
-        });
-      });
-    </script>
-  {% endif %}
-
   <script>
     var HQMediaUploaders = hqImport("hqmedia/js/hqmediauploaders.js").get();
     var refs = {{ refs|JSON }};
@@ -117,6 +81,7 @@
   {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
   {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
   {% initial_page_data 'uploaders' uploaders_js %}
+  {% registerurl 'app_multimedia_ajax' domain app.get_id %}
   {% registerurl "toggle_diff" domain %}
   {% registerurl "update_linked_whitelist" domain app.id %}
   {% include "app_manager/v2/partials/app-settings.html" %}

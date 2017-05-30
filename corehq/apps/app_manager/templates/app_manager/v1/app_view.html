@@ -37,39 +37,6 @@
 {% block js-inline %}
     {{ block.super }}
     <script>
-        {% if not app.is_remote_app and app.get_doc_type != 'LinkedApplication' %}
-        $(function () {
-            var multimedia_tab = (function () {
-                var self = {};
-                self.load_state = ko.observable(null);
-                self.multimedia_page_html = ko.observable('');
-                self.load_if_necessary = function () {
-                    if (!self.load_state() || self.load_state() === 'error') {
-                        self.load_state('loading');
-                        $.ajax({
-                            url: '{% url 'app_multimedia_ajax' domain app.get_id %}',
-                            success: function(content) {
-                                self.load_state('loaded');
-                                self.multimedia_page_html(content);
-                            },
-                            error: function() {
-                                alert('Oops, there was a problem loading this section. Please try again.');
-                                self.load_state('error');
-                            },
-                        });
-                    }
-                };
-                return self;
-            }());
-            $("#multimedia").koApplyBindings(multimedia_tab);
-            $('#demand-multimedia').on('shown.bs.tab', function () {
-                if (multimedia_tab.load_state() === null) {
-                    multimedia_tab.load_if_necessary();
-                }
-            });
-        });
-        {% endif %}
-
         // Releases page ajax: used in app manager v1 only
         $(function () {
             var state = "",
@@ -208,6 +175,7 @@
     {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
     {% initial_page_data 'translations' translations %}
     {% initial_page_data 'uploaders' uploaders_js %}
+    {% registerurl 'app_multimedia_ajax' domain app.get_id %}
     {% registerurl "edit_app_langs" domain app.id %}
     {% registerurl "edit_app_ui_translations" domain app.id %}
     {% registerurl "get_app_ui_translations" domain %}
@@ -254,7 +222,7 @@
         {% include 'app_manager/v1/languages.html' %}
 
         {% if app.get_doc_type == "Application" %}
-            <div class="tab-pane multimedia" id="multimedia">
+            <div class="tab-pane multimedia" id="multimedia-tab">
                 <div data-bind="if: load_state() === 'loading'">
                     <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
                     {% trans "Loading ..." %}

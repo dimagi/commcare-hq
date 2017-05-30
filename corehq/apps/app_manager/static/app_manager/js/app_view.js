@@ -37,5 +37,39 @@ hqDefine("app_manager/js/app_view.js", function() {
         $(document).on("click", '#open_checker', function() {
             ga_track_event('App Builder', 'Manage Multimedia');
         });
+
+        // Multimedia content
+        var MultimediaTab = function () {
+            var self = {};
+            self.load_state = ko.observable(null);
+            self.multimedia_page_html = ko.observable('');
+            self.load_if_necessary = function () {
+                if (!self.load_state() || self.load_state() === 'error') {
+                    self.load_state('loading');
+                    $.ajax({
+                        url: hqImport("hqwebapp/js/urllib.js").reverse("app_multimedia_ajax"),
+                        success: function(content) {
+                            self.load_state('loaded');
+                            self.multimedia_page_html(content);
+                        },
+                        error: function() {
+                            alert(gettext('Oops, there was a problem loading this section. Please try again.'));
+                            self.load_state('error');
+                        },
+                    });
+                }
+            };
+            return self;
+        };
+        if ($('#multimedia-tab').length) {
+            var multimediaTab = new MultimediaTab();
+            $("#multimedia-tab").koApplyBindings(multimediaTab);
+            var selector = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2') ? '[href="#multimedia-tab"]' : '#demand-multimedia';
+            $(selector).on('shown.bs.tab', function () {
+                if (multimediaTab.load_state() === null) {
+                    multimediaTab.load_if_necessary();
+                }
+            });
+        }
     });
 });

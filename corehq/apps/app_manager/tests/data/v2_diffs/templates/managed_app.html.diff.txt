@@ -72,7 +72,7 @@
 -        </li>
 -        {% if app.get_doc_type == 'Application' %}
 -        <li>
--            <a id="demand-multimedia" href="{% url "view_app" domain app.id %}multimedia/#multimedia" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Multimedia" %}: {{ app.name }}"{% endif %}>
+-            <a id="demand-multimedia" href="{% url "view_app" domain app.id %}multimedia/#multimedia-tab" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Multimedia" %}: {{ app.name }}"{% endif %}>
 -                <i class="fa fa-photo"></i>
 -                {% trans "Multimedia" %}
 -            </a>
