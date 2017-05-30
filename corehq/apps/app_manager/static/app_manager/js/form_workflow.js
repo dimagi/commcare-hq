@@ -14,7 +14,7 @@ hqDefine('app_manager/js/form_workflow.js', function() {
         // Workflow type. See FormWorkflow.Values for available types
         self.workflow = ko.observable(options.workflow);
 
-        self.workflowbackup = ko.observable(options.workflow_backup);
+        self.workflowfallback = ko.observable(options.workflow_fallback);
         self.hasError = ko.observable(self.workflow() === FormWorkflow.Values.ERROR);
 
         self.workflow.subscribe(function(value) {
@@ -75,10 +75,10 @@ hqDefine('app_manager/js/form_workflow.js', function() {
         return options;
     };
 
-    FormWorkflow.prototype.workflowBackUpOptions = function() {
-        // allow all options as backups except the one for form linking
-        var backup_options = _.omit(this.labels, function(key, value) { return value === FormWorkflow.Values.FORM; });
-        var options = _.map(backup_options, function(label, value) {
+    FormWorkflow.prototype.workflowFallbackOptions = function() {
+        // allow all options as fallback except the one for form linking
+        var fallback_options = _.omit(this.labels, function(key, value) { return value === FormWorkflow.Values.FORM; });
+        var options = _.map(fallback_options, function(label, value) {
             return {
                 value: value,
                 label: (value === FormWorkflow.Values.DEFAULT ? '* ' + label : label),
