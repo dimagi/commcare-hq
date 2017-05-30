@@ -347,10 +347,6 @@ class IndicatorNamedFilterTest(SimpleTestCase):
                     },
                     'operator': 'eq',
                     'property_value': 'yes',
-                },
-                'named_filter_reference': {
-                   'type': 'named',
-                   'name': 'has_alibi',
                 }
             },
             'configured_filter': {
@@ -466,25 +462,3 @@ class IndicatorNamedFilterTest(SimpleTestCase):
         i = 3
         self.assertEqual('laugh_sound', values[i].column.id)
         self.assertEqual('hehe', values[i].value)
-
-    def test_no_self_lookups(self):
-        bad_config = DataSourceConfiguration.wrap(self.indicator_configuration.to_json())
-        bad_config.named_filters['broken'] = {
-            "type": "named",
-            "name": "broken",
-        }
-        with self.assertRaises(BadSpecError):
-            bad_config.validate()
-
-    def test_no_recursive_lookups(self):
-        bad_config = DataSourceConfiguration.wrap(self.indicator_configuration.to_json())
-        bad_config.named_filters['broken'] = {
-            "type": "named",
-            "name": "also_broken",
-        }
-        bad_config.named_filters['also_broken'] = {
-            "type": "named",
-            "name": "broken",
-        }
-        with self.assertRaises(BadSpecError):
-            bad_config.validate()
