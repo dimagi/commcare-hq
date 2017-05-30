@@ -64,7 +64,7 @@ django-countries==4.0
 reportlab==3.0
 stripe==1.12.2
 django-compressor==2.1
-django-angular==0.7.16
+django-angular==0.8.4
 Pycco==0.3.0
 django-mptt==0.8.7
 jsonpath-rw==1.4.0
