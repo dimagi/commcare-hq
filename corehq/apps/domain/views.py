@@ -53,6 +53,7 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_ca
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator
 
 from corehq.const import USER_DATE_FORMAT
