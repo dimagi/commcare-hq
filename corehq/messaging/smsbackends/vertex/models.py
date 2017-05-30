@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import requests
 
+from dimagi.utils.logging import notify_exception
 from corehq.messaging.smsbackends.http.models import SQLSMSBackend
 from corehq.messaging.smsbackends.vertex.const import (
     TEXT_MSG_TYPE,
@@ -87,7 +88,7 @@ class VertexBackend(SQLSMSBackend):
             error_message in GATEWAY_ERROR_MESSAGES
         ):
             msg_obj.set_system_error(SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
-            raise VertexBackendException(error_message)
+            notify_exception(None, error_message)
         else:
             raise VertexBackendException(
                 "Unrecognized response from Vertex gateway with {response_status_code} "

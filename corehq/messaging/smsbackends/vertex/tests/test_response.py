@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.test import TestCase
+from django.test import mock
 
 from corehq.apps.sms.models import QueuedSMS
 from corehq.messaging.smsbackends.vertex.exceptions import VertexBackendException
@@ -18,28 +19,30 @@ class TestVertexBackendResponseHandling(TestCase):
         self.vertex_backend = VertexBackend()
         self.queued_sms = QueuedSMS()
 
-    def handle_success(self):
+    def test_handle_success(self):
         self.vertex_backend.handle_response(self.queued_sms, 200, TEST_SUCCESSFUL_RESPONSE)
         self.assertEqual(self.queued_sms.backend_message_id, TEST_SUCCESSFUL_RESPONSE)
         self.assertFalse(self.queued_sms.error)
 
-    def handle_failure(self):
+    def test_handle_failure(self):
         self.assertFalse(self.queued_sms.error)
         self.vertex_backend.handle_response(self.queued_sms, 200, TEST_INCORRECT_NUMBER_RESPONSE)
         self.assertEqual(self.queued_sms.system_error_message, SMS.ERROR_INVALID_DESTINATION_NUMBER)
         self.assertTrue(self.queued_sms.error)
 
-        self.queued_sms.error = False
-        with self.assertRaisesMessage(VertexBackendException, TEST_NON_CODE_MESSAGES):
+        with mock.patch('corehq.messaging.smsbackends.vertex.models.notify_exception') as exception_notifier:
+            self.queued_sms.error = False
             self.vertex_backend.handle_response(self.queued_sms, 200, TEST_NON_CODE_MESSAGES)
-        self.assertEqual(self.queued_sms.system_error_message, SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
-        self.assertTrue(self.queued_sms.error)
+            self.assertEqual(self.queued_sms.system_error_message, SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
+            self.assertTrue(self.queued_sms.error)
+            exception_notifier.assert_called_once_with(None, TEST_NON_CODE_MESSAGES)
 
-        self.queued_sms.error = False
-        with self.assertRaisesMessage(VertexBackendException, TEST_FAILURE_RESPONSE):
-            self.vertex_backend.handle_response(self.queued_sms, 200, TEST_FAILURE_RESPONSE)
-        self.assertEqual(self.queued_sms.system_error_message, SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
-        self.assertTrue(self.queued_sms.error)
+            with mock.patch('corehq.messaging.smsbackends.vertex.models.notify_exception') as exception_notifier:
+                self.queued_sms.error = False
+                self.vertex_backend.handle_response(self.queued_sms, 200, TEST_FAILURE_RESPONSE)
+                self.assertEqual(self.queued_sms.system_error_message, SMS.ERROR_TOO_MANY_UNSUCCESSFUL_ATTEMPTS)
+                self.assertTrue(self.queued_sms.error)
+                exception_notifier.assert_called_once_with(None, TEST_FAILURE_RESPONSE)
 
         with self.assertRaisesMessage(
                 VertexBackendException,
