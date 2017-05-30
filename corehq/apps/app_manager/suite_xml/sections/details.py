@@ -32,6 +32,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Template,
     Text,
     Xpath,
+    XpathVariable,
 )
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
 from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search,\
@@ -519,14 +520,15 @@ class CaseTileHelper(object):
 
     def _get_enum_keys(self, column):
         variables = []
-        variable_template = '<variable name="{var_name}"><locale id="{locale_id}"/></variable>'
         for i, mapping in enumerate(column.enum):
-            variables.append(variable_template.format(
-                var_name=mapping.key_as_variable,
-                locale_id=id_strings.detail_column_enum_variable(
-                    self.module, self.detail_type, column, mapping.key_as_variable
-                )
-            ))
+            variables.append(
+                XpathVariable(
+                    name=mapping.key_as_variable,
+                    locale_id=id_strings.detail_column_enum_variable(
+                        self.module, self.detail_type, column, mapping.key_as_variable
+                    )
+                ).serialize()
+            )
         return ''.join(variables)
 
     @property
