@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,272 +1,95 @@
+@@ -1,277 +1,95 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -64,8 +64,9 @@
 -                }, 100);
 -
 -                // Load the content
+-                var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
 -                $.ajax({
--                    url: "{% url 'release_manager_ajax' domain app.get_id %}?limit={{fetchLimit}}",
+-                    url: hqImport("hqwebapp/js/urllib.js").reverse('release_manager_ajax') + "?limit=" + initial_page_data("fetch_limit"),
 -                    success: function(content) {
 -                        state = "loaded";
 -                        showSpinner = false;
@@ -73,14 +74,12 @@
 -                        COMMCAREHQ.initBlock($main);
 -                        analytics.workflow('Visited the Release Manager');
 -
--                        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
--
 -                        // Main releases/versions tab
 -                        var o = {
--                            currentAppVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
--                            recipient_contacts: {{ sms_contacts|JSON }},
+-                            currentAppVersion: initial_page_data("app_version") || -1,
+-                            recipient_contacts: initial_page_data("sms_contacts"),
 -                            download_modal_id: '#download-zip-modal',
--                            fetchLimit: {{ fetchLimit }},
+-                            fetchLimit: initial_page_data("fetch_limit"),
 -                        };
 -                        var el = $('#releases-table');
 -                        var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
@@ -100,7 +99,7 @@
 -                        // App diff
 -                        var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body')
 -                        $('#recent-changes-btn').on('click', function (e) {
--                            appDiff.renderDiff({{ app.id|JSON }}, {{ latest_build_id|JSON }});
+-                            appDiff.renderDiff(initial_page_data("app_id"), initial_page_data("latest_build_id"));
 -                        });
 -                    },
 -                    error: function() {
@@ -178,16 +177,21 @@
  
  {% block form-view %}
 -    {% initial_page_data 'build_profiles' app.build_profiles %}
+-    {% initial_page_data 'app_id' app.id %}
 -    {% initial_page_data 'app_view_options' app_view_options %}
+-    {% initial_page_data 'app_version' app.version %}
 -    {% initial_page_data 'domain_names' domain_names %}
+-    {% initial_page_data 'fetch_limit' fetchLimit %}
 -    {% initial_page_data 'is_remote_app' app.is_remote_app %}
 -    {% initial_page_data 'is_superuser' request.user.is_superuser %}
 -    {% initial_page_data 'lang' lang %}
 -    {% initial_page_data 'langs' app.langs %}
+-    {% initial_page_data 'latest_build_id' latest_build_id %}
 -    {% initial_page_data 'linked_whitelist' app.linked_whitelist %}
 -    {% initial_page_data 'media_refs' refs %}
 -    {% initial_page_data 'media_info' media_info %}
 -    {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
+-    {% initial_page_data 'sms_contacts' sms_contacts %}
 -    {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
 -    {% initial_page_data 'translations' translations %}
 -    {% initial_page_data 'uploaders' uploaders_js %}
@@ -196,6 +200,7 @@
 -    {% registerurl "edit_app_ui_translations" domain app.id %}
 -    {% registerurl "get_app_ui_translations" domain %}
 -    {% registerurl "hqmedia_remove_logo" domain app.id %}
+-    {% registerurl "release_manager_ajax" domain app.get_id %}
 -    {% registerurl "toggle_diff" domain %}
 -    {% registerurl "update_linked_whitelist" domain app.id %}
 +  {# release page URLs #}
