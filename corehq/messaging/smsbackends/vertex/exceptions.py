@@ -1,0 +1,2 @@
+class VertexBackendException(Exception):
+    pass
