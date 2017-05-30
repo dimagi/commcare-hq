@@ -7,17 +7,6 @@
     <script src="{% static 'app_manager/js/careplan-config-ui.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-<script>
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
-        Careplan = hqImport('app_manager/js/careplan-config-ui.js').Careplan;
-    var careplan = new Careplan(_.extend({}, initial_page_data("case_config_options"), {
-        home: $('#case-config-ko'),
-    }));
-    careplan.init();
-</script>
-{% endblock %}
-
 {% block case_management_content %}
     {% include 'app_manager/v1/partials/case_config_careplan.html' %}
 {% endblock %}
