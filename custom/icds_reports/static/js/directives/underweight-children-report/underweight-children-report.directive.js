@@ -1,7 +1,8 @@
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
 
-function UnderweightChildrenReportController($scope, $routeParams, $location, maternalChildService) {
+function UnderweightChildrenReportController($scope, $routeParams, $location, maternalChildService,
+                                             locationsService, userLocationId) {
     var vm = this;
 
     vm.filtersData = window.angular.copy($location.search());
@@ -11,11 +12,14 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, ma
         {route: '/underweight_children/1', label: 'MapView'},
         {route: '/underweight_children/2', label: 'ChartView'},
     ];
-    vm.mapData = null;
+    vm.data = {
+        legendTitle: 'Percentage Children',
+    };
     vm.chartData = null;
     vm.top_three = [];
     vm.bottom_three = [];
     vm.location_type = null;
+    vm.loaded = false;
 
     vm.rightLegend = {
         average: 10,
@@ -23,9 +27,15 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, ma
     };
 
     vm.loadData = function () {
+        if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
+            vm.mode = 'sector';
+        } else {
+            vm.mode = 'map';
+        }
+
         maternalChildService.getUnderweightChildrenData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "1") {
-                vm.mapData = response.data.report_data;
+                vm.data.mapData = response.data.report_data;
             } else if (vm.step === "2") {
                 vm.chartData = response.data.report_data.chart_data;
                 vm.top_three = response.data.report_data.top_three;
@@ -36,7 +46,22 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, ma
         });
     };
 
-    vm.loadData();
+    var init = function() {
+        var locationId = vm.filtersData.location || userLocationId;
+        if (!locationId || locationId === 'all') {
+            vm.loadData();
+            vm.loaded = true;
+            return;
+        }
+        locationsService.getLocation(locationId).then(function(location) {
+            vm.location = location;
+            vm.loadData();
+            vm.loaded = true;
+        });
+    };
+
+    init();
+
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -82,7 +107,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, ma
     };
 }
 
-UnderweightChildrenReportController.$inject = ['$scope', '$routeParams', '$location', 'maternalChildService' ];
+UnderweightChildrenReportController.$inject = ['$scope', '$routeParams', '$location', 'maternalChildService', 'locationsService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive('underweightChildrenReport', function() {
     return {

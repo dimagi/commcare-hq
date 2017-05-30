@@ -17,6 +17,7 @@ from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
+from custom.icds_reports.const import LocationTypes
 from dimagi.utils.dates import DateSpan
 
 from custom.icds_reports.models import AggDailyUsageView, AggChildHealthMonthly, AggAwcMonthly, AggCcsRecordMonthly, \
@@ -798,6 +799,8 @@ def get_awc_opened_data(filters):
 
 @quickcache(['config', 'loc_level'], timeout=24 * 60 * 60)
 def get_prevalence_of_undernutrition_data_map(config, loc_level):
+    if loc_level in [LocationTypes.BLOCK, LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+        return get_prevalence_of_undernutrition_sector_data(config, loc_level)
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -941,4 +944,33 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
         "top_three": calculation[0:3],
         "bottom_three": calculation[-4:-1],
         "location_type": loc_level.title()
+    }
+
+
+@quickcache(['config', 'loc_level'], timeout=24 * 60 * 60)
+def get_prevalence_of_undernutrition_sector_data(config, loc_level):
+    return {
+        "chart_data": [
+            {
+                "values": [['Karera', 0.17], ['Koloras', 0.42], ['Pichhore', 0.11]],
+                "key": "green",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": "#009811"
+            },
+            {
+                "values": [['Karera', 0.6], ['Koloras', 0.13], ['Pichhore', 0.3]],
+                "key": "orange",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": "#df7400"
+            },
+            {
+                "values": [['Karera', 0.11], ['Koloras', 0.3], ['Pichhore', 0.1]],
+                "key": "red",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": "#d60000"
+            }
+        ]
     }
