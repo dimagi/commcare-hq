@@ -92,7 +92,7 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
         if couch_user_id not in self.users:
             self.users.append(couch_user_id)
         if couch_user_id in self.removed_users:
-            self.removed_users.pop(couch_user_id)
+            self.removed_users.remove(couch_user_id)
         if save:
             self.save()
 
