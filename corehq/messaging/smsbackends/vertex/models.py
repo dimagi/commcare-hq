@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 import requests
-import re
 
 from corehq.messaging.smsbackends.http.models import SQLSMSBackend
+from corehq.messaging.smsbackends.vertex.const import (
+    TEXT_MSG_TYPE,
+    UNICODE_MSG_TYPE,
+    VERTEX_URL,
+    SUCCESS_RESPONSE_REGEX_MATCHER,
+)
 from corehq.messaging.smsbackends.vertex.forms import VertexBackendForm
 from corehq.apps.sms.util import strip_plus
-
-VERTEX_URL = "https://www.smsjust.com/sms/user/urlsms.php"
-SUCCESS_RESPONSE_REGEX = r'^(\d+)-(20\d{2})_(\d{2})_(\d{2})$'  # 570737298-2017_05_27
-SUCCESS_RESPONSE_REGEX_MATCHER = re.compile(SUCCESS_RESPONSE_REGEX)
 
 
 class VertexBackend(SQLSMSBackend):
@@ -38,6 +39,12 @@ class VertexBackend(SQLSMSBackend):
 
     def populate_params(self, msg_obj):
         config = self.config
+        try:
+            message = str(msg_obj.text)
+            msgtype = TEXT_MSG_TYPE
+        except UnicodeEncodeError:
+            message = msg_obj.text.encode('utf-8')
+            msgtype = UNICODE_MSG_TYPE
         params = {
             'username': config.username,
             'pass': config.password,
@@ -46,16 +53,15 @@ class VertexBackend(SQLSMSBackend):
             # It must include the country code appended before the mobile number
             # The mobile number should contain only numbers and no symbols like "+", "-" etc.
             'dest_mobileno': strip_plus(msg_obj.phone_number),
-            'msgtype': 'UNI'  # TXT/UNI/FLASH/WAP
+            'msgtype': msgtype,  # TXT/UNI/FLASH/WAP,
+            'message': message
         }
-        params['message'] = msg_obj.text.encode('utf-8')
         return params
 
     def send(self, msg_obj, *args, **kwargs):
         params = self.populate_params(msg_obj)
         resp = requests.get(VERTEX_URL, params=params)
-        self.handle_response(msg_obj, resp.content)
-        return resp
+        self.handle_response(msg_obj, resp.text)
 
     def handle_response(self, msg_obj, resp):
         # in case of success store the complete response msg which should be like
@@ -63,6 +69,5 @@ class VertexBackend(SQLSMSBackend):
         # can be then used to enquire for status of this particular SMS
         if SUCCESS_RESPONSE_REGEX_MATCHER.match(resp):
             msg_obj.backend_message_id = resp
-            msg_obj.save()
         else:
             msg_obj.set_system_error(resp)

@@ -4,6 +4,10 @@ from django.test import TestCase
 from corehq.apps.sms.models import QueuedSMS
 from corehq.messaging.smsbackends.vertex.models import VertexBackend
 from corehq.apps.sms.util import strip_plus
+from corehq.messaging.smsbackends.vertex.const import (
+    TEXT_MSG_TYPE,
+    UNICODE_MSG_TYPE,
+)
 
 TEST_USERNAME = "test-vertex"
 TEST_PASSWORD = "test-password"
@@ -33,9 +37,10 @@ class TestVertexBackendRequestContent(TestCase):
         self.assertEqual(params['senderid'], TEST_SENDER_ID)
         self.assertEqual(params['response'], 'Y')
         self.assertEqual(params['dest_mobileno'], strip_plus(TEST_PHONE_NUMBER))
-        self.assertEqual(params['msgtype'], 'UNI')
-        self.assertEqual(params['message'], TEST_TEXT_MESSAGE.encode('utf-8'))
+        self.assertEqual(params['msgtype'], TEXT_MSG_TYPE)
+        self.assertEqual(params['message'], TEST_TEXT_MESSAGE)
 
         self.queued_sms.text = TEST_UNICODE_MESSAGE
         params = self.vertex_backend.populate_params(self.queued_sms)
         self.assertEqual(params['message'], TEST_UNICODE_MESSAGE.encode('utf-8'))
+        self.assertEqual(params['msgtype'], UNICODE_MSG_TYPE)
