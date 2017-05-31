@@ -31,9 +31,13 @@
 {% block js-inline %}{{ block.super }}
     <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
     <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
-    {% block js_extra %}
-        <script src="{% static 'app_manager/js/case-config-ui.js' %}"></script>
-    {% endblock %}
+    {% if module.doc_type == 'CareplanModule' %}
+        <script src="{% static 'app_manager/js/careplan-config-ui.js' %}"></script>
+    {% else %}
+        {% block js_extra %}
+            <script src="{% static 'app_manager/js/case-config-ui.js' %}"></script>
+        {% endblock %}
+    {% endif %}
     <style>
         #open-referral-action,
         #update-referral-action,
@@ -413,9 +417,13 @@
                         {% endblocktrans %}
                     </div>
                     <div class="casexml" id="casexml_home">
-                        {% block case_management_content %}
-                            {% include 'app_manager/v1/partials/case_config.html' %}
-                        {% endblock %}
+                        {% if module.doc_type == 'CareplanModule' %}
+                            {% include 'app_manager/v1/partials/case_config_careplan.html' %}
+                        {% else %}
+                            {% block case_management_content %}
+                                {% include 'app_manager/v1/partials/case_config.html' %}
+                            {% endblock %}
+                        {% endif %}
                     </div>
                 {% else %}
                     <p class="alert alert-warning">

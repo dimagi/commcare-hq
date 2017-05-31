@@ -6,7 +6,7 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load compress %}
-@@ -50,9 +50,9 @@
+@@ -54,9 +54,9 @@
          <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
      {% endif %}
  
@@ -19,7 +19,7 @@
      {% if allow_form_workflow %}
          <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
      {% endif %}
-@@ -164,15 +164,18 @@
+@@ -168,15 +168,18 @@
              });
          }
  
@@ -41,7 +41,7 @@
              {% with module_name=module.name|trans:langs %}
              labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
              {% endwith %}
-@@ -215,7 +218,7 @@
+@@ -219,7 +222,7 @@
          });
          {% endif %}
  
@@ -50,7 +50,7 @@
              // tag the 'preview in cloudcare' button with the right url
              // unfortunately, has to be done in javascript
              var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-@@ -281,74 +284,57 @@
+@@ -285,74 +288,57 @@
      </script>
  {% endblock %}
  
@@ -167,7 +167,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -360,35 +346,36 @@
+@@ -364,35 +350,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -221,7 +221,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -400,30 +387,32 @@
+@@ -404,34 +391,36 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -238,9 +238,22 @@
 -                        {% endblocktrans %}
 -                    </div>
 -                    <div class="casexml" id="casexml_home">
--                        {% block case_management_content %}
--                            {% include 'app_manager/v1/partials/case_config.html' %}
--                        {% endblock %}
++                  {% endif %}
++                  {% if form_errors or xform_validation_errored %}
++                      <p class="alert alert-warning">
++                          {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
++                      </p>
++                  {% elif form.source %}
++                      <div class="casexml" id="casexml_home">
+                         {% if module.doc_type == 'CareplanModule' %}
+-                            {% include 'app_manager/v1/partials/case_config_careplan.html' %}
++                            {% include 'app_manager/v2/partials/case_config_careplan.html' %}
+                         {% else %}
+                             {% block case_management_content %}
+-                                {% include 'app_manager/v1/partials/case_config.html' %}
++                                {% include 'app_manager/v2/partials/case_config.html' %}
+                             {% endblock %}
+                         {% endif %}
 -                    </div>
 -                {% else %}
 -                    <p class="alert alert-warning">
@@ -249,16 +262,6 @@
 -                {% endif %}
 -            </div>
 -
-+                  {% endif %}
-+                  {% if form_errors or xform_validation_errored %}
-+                      <p class="alert alert-warning">
-+                          {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
-+                      </p>
-+                  {% elif form.source %}
-+                      <div class="casexml" id="casexml_home">
-+                          {% block case_management_content %}
-+                              {% include 'app_manager/v2/partials/case_config.html' %}
-+                          {% endblock %}
 +                      </div>
 +                  {% else %}
 +                      <p class="alert alert-warning">
@@ -278,7 +281,7 @@
              <div class="tab-pane" id="usercase-configuration">
                  {% if form_errors or xform_validation_errored %}
                      <p class="alert alert-warning">
-@@ -449,7 +438,6 @@
+@@ -457,7 +446,6 @@
                          {% block usercase_management_content %}
                              {%  if form.uses_usercase and not allow_usercase %}
                                  <div class="container-fluid col-sm-6">
@@ -286,7 +289,7 @@
                                {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
                                  <p>{% blocktrans %}
                                      The User Properties feature is no longer available because of the change in your
-@@ -494,7 +482,7 @@
+@@ -502,7 +490,7 @@
                                  </p>
                                  </div>
                              {% endif %}
@@ -295,7 +298,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -507,14 +495,15 @@
+@@ -515,14 +503,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -313,7 +316,7 @@
              {% endif %}
          </div>
      </div>
-@@ -522,12 +511,12 @@
+@@ -530,12 +519,12 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
