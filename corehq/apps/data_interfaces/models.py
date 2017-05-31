@@ -244,6 +244,7 @@ class AutomaticUpdateRule(models.Model):
         return list(self.caseruleaction_set.all().select_related(
             'update_case_definition',
             'custom_action_definition',
+            'create_schedule_instance_definition',
         ))
 
     def run_rule(self, case, now):
