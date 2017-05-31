@@ -3,12 +3,13 @@ from datetime import datetime
 
 import sys
 
+from raven.contrib.django.raven_compat.models import client
 from corehq.util.soft_assert import soft_assert
 from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
 from kafka.common import TopicAndPartition
-from pillowtop.const import CHECKPOINT_MIN_WAIT
+from pillowtop.const import CHECKPOINT_MIN_WAIT, DEFAULT_SLOW_THRESHOLD
 from pillowtop.utils import force_seq_int
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
@@ -42,6 +43,8 @@ class PillowBase(object):
 
     # set to true to disable saving pillow retry errors
     retry_errors = True
+
+    slow_threshold = DEFAULT_SLOW_THRESHOLD
 
     @abstractproperty
     def pillow_id(self):
@@ -119,6 +122,19 @@ class PillowBase(object):
                             self._record_checkpoint_in_datadog()
                         self._record_change_success_in_datadog(change)
                     self._record_change_in_datadog(change, timer)
+
+                    if timer.duration > self.slow_threshold:
+                        extra = change.metadata.to_json() if change.metadata else {}
+                        extra.update({
+                            'duration': '{} seconds'.format(timer.duration),
+                            'threshold': self.slow_threshold,
+                        })
+                        client.captureMessage(
+                            u'{} change slow to process'.format(self.pillow_id),
+                            extra=extra,
+                            time_spent=int(timer.duration * 1000),  # Convert to milliseconds  # Convert to
+                            fingerprint=[self.pillow_id],
+                        )
                 else:
                     updated = self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
                     if updated:
