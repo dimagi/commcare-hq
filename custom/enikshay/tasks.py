@@ -406,20 +406,18 @@ class EpisodeVoucherUpdate(object):
         return sorted(relevant_vouchers, key=lambda v: v.get_case_property('date_issued'))
 
     @staticmethod
-    def _is_an_update(existing_properties, new_properties):
+    def _updated_fields(existing_properties, new_properties):
+        updated_fields = {}
         for prop, value in new_properties.items():
             if unicode(existing_properties.get(prop, '--')) != unicode(value):
-                return True
+                updated_fields[prop] = value
+        return updated_fields
 
     def update_json(self):
         output_json = {}
         output_json.update(self.get_prescription_total_days())
         output_json.update(self.get_prescription_refill_due_dates())
-
-        if not self._is_an_update(self.episode.dynamic_case_properties(), output_json):
-            return {}  # Don't trigger a case update
-
-        return output_json
+        return self._updated_fields(self.episode.dynamic_case_properties(), output_json)
 
     def get_prescription_total_days(self):
         prescription_json = {}
