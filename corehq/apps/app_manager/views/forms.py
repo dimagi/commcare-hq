@@ -695,8 +695,8 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             })
         template = get_app_manager_template(
             request.user,
-            "app_manager/v1/form_view_advanced.html",
-            "app_manager/v2/form_view_advanced.html",
+            "app_manager/v1/form_view_base.html",
+            "app_manager/v2/form_view_base.html",
         )
     else:
         context.update({
