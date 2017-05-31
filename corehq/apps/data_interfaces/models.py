@@ -20,6 +20,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_timed_schedule_instances_for_schedule_id,
 )
 from corehq.util.log import with_progress_bar
+from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import date, datetime, time, timedelta
@@ -145,6 +146,19 @@ class AutomaticUpdateRule(models.Model):
         )
 
     @classmethod
+    @quickcache(['domain', 'workflow', 'active_only'], timeout=30 * 60)
+    def by_domain_cached(cls, domain, workflow, active_only=True):
+        result = cls.by_domain(domain, workflow, active_only=active_only)
+        result = list(result)
+
+        for rule in result:
+            # Make the criteria and actions be memoized in the cached result
+            rule.memoized_criteria
+            rule.memoized_actions
+
+        return result
+
+    @classmethod
     def organize_rules_by_case_type(cls, rules):
         rules_by_case_type = {}
         for rule in rules:
@@ -218,19 +232,19 @@ class AutomaticUpdateRule(models.Model):
     @property
     @memoized
     def memoized_criteria(self):
-        return self.caserulecriteria_set.all().select_related(
+        return list(self.caserulecriteria_set.all().select_related(
             'match_property_definition',
             'custom_match_definition',
             'closed_parent_definition',
-        )
+        ))
 
     @property
     @memoized
     def memoized_actions(self):
-        return self.caseruleaction_set.all().select_related(
+        return list(self.caseruleaction_set.all().select_related(
             'update_case_definition',
             'custom_action_definition',
-        )
+        ))
 
     def run_rule(self, case, now):
         """
@@ -335,6 +349,23 @@ class AutomaticUpdateRule(models.Model):
         action.definition = definition
         action.save()
         return action, definition
+
+    def save(self, *args, **kwargs):
+        super(AutomaticUpdateRule, self).save(*args, **kwargs)
+        # If we're in a transaction.atomic() block, this gets executed after commit
+        # If we're not, this gets executed right away
+        transaction.on_commit(lambda: self.clear_caches(self.domain, self.workflow))
+
+    @classmethod
+    def clear_caches(cls, domain, workflow):
+        # domain and workflow should never change once set
+        for active_only in (True, False):
+            cls.by_domain_cached.clear(
+                AutomaticUpdateRule,
+                domain,
+                workflow,
+                active_only=active_only,
+            )
 
 
 class CaseRuleCriteria(models.Model):

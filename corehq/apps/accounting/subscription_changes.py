@@ -169,6 +169,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
                 domain.name,
                 AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
             ).update(active=False)
+            AutomaticUpdateRule.clear_caches(domain.name, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
             return True
         except Exception:
             log_accounting_error(
