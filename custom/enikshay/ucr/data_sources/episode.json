@@ -471,7 +471,6 @@
             {
                 "display_name": "episode_type_patient",
                 "type": "boolean",
-                "create_index": true,
                 "filter": {
                     "type": "named",
                     "name": "current_episode_type_patient"
