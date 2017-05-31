@@ -100,7 +100,8 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             schedule.delete()
 
     @run_with_all_backends
-    def test_timed_schedule_instance_creation(self):
+    @patch('corehq.messaging.scheduling.util.utcnow')
+    def test_timed_schedule_instance_creation(self, utcnow_patch):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
             time(9, 0),
@@ -122,24 +123,20 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             recipients=(('CommCareUser', self.user.get_id),)
         )
 
-        with _create_case(self.domain, 'person') as case, \
-                patch('corehq.messaging.scheduling.util.utcnow') as utcnow_patch:
+        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
 
-            utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
-
+        utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
+        with _create_case(self.domain, 'person') as case:
             # Rule does not match, no instances created
-            rule.run_rule(case, utcnow_patch.return_value)
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
 
-            update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
-
-            # Rule now matches. On the first iteration, the instance is created. On the second,
+            # Make the rule match. On the first iteration, the instance is created. On the second,
             # no new instance is created since it already exists.
             for minute in range(1, 3):
                 utcnow_patch.return_value = datetime(2017, 5, 1, 7, minute)
-                rule.run_rule(case, utcnow_patch.return_value)
+                update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
+
                 instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
                 self.assertEqual(instances.count(), 1)
 
@@ -155,17 +152,15 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
                 self.assertEqual(instances[0].next_event_due, datetime(2017, 5, 1, 13, 0))
                 self.assertTrue(instances[0].active)
 
-            update_case(self.domain, case.case_id, case_properties={'start_sending': 'N'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
-
-            # Rule no longer matches. Instance should no longer exist.
+            # Make the rule not match. Instance should no longer exist.
             utcnow_patch.return_value = datetime(2017, 5, 1, 7, 3)
-            rule.run_rule(case, utcnow_patch.return_value)
+            update_case(self.domain, case.case_id, case_properties={'start_sending': 'N'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
 
     @run_with_all_backends
-    def test_alert_schedule_instance_creation(self):
+    @patch('corehq.messaging.scheduling.util.utcnow')
+    def test_alert_schedule_instance_creation(self, utcnow_patch):
         schedule = AlertSchedule.create_simple_alert(
             self.domain,
             SMSContent(message={'en': 'Hello'})
@@ -186,24 +181,20 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             recipients=(('CommCareUser', self.user.get_id),)
         )
 
-        with _create_case(self.domain, 'person') as case, \
-                patch('corehq.messaging.scheduling.util.utcnow') as utcnow_patch:
+        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
 
-            utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
-
+        utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
+        with _create_case(self.domain, 'person') as case:
             # Rule does not match, no instances created
-            rule.run_rule(case, utcnow_patch.return_value)
             instances = get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
 
-            update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
-
-            # Rule now matches. On the first iteration, the instance is created. On the second,
+            # Make the rule match. On the first iteration, the instance is created. On the second,
             # no new instance is created since it already exists.
             for minute in range(1, 3):
                 utcnow_patch.return_value = datetime(2017, 5, 1, 7, minute)
-                rule.run_rule(case, utcnow_patch.return_value)
+                update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
+
                 instances = get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
                 self.assertEqual(instances.count(), 1)
 
@@ -218,11 +209,9 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
                 self.assertEqual(instances[0].next_event_due, datetime(2017, 5, 1, 7, 1))
                 self.assertTrue(instances[0].active)
 
-            update_case(self.domain, case.case_id, case_properties={'start_sending': 'N'})
-            case = CaseAccessors(self.domain).get_case(case.case_id)
-
-            # Rule no longer matches. Instance should no longer exist.
+            # Make the rule not match. Instance should no longer exist.
             utcnow_patch.return_value = datetime(2017, 5, 1, 7, 3)
-            rule.run_rule(case, utcnow_patch.return_value)
+            update_case(self.domain, case.case_id, case_properties={'start_sending': 'N'})
+
             instances = get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
