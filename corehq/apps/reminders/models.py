@@ -2000,6 +2000,3 @@ class EmailUsage(models.Model):
     def update_count(self, increase_by=1):
         # This operation is thread safe, no need to use CriticalSection
         EmailUsage.objects.filter(pk=self.pk).update(count=models.F('count') + increase_by)
-
-
-from corehq.apps.reminders import signals
