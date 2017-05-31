@@ -4,6 +4,10 @@ from django.test import TestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    delete_all_users,
+    hard_delete_deleted_users,
+)
 
 from corehq.warehouse.dbaccessors import (
     get_group_ids_by_last_modified,
@@ -16,6 +20,10 @@ class TestDbAccessors(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # Needed because other tests do not always clean up their users.
+        delete_all_users()
+        hard_delete_deleted_users()
+
         cls.g1 = Group(domain=cls.domain, name='group')
         cls.g1.save()
 
