@@ -20,7 +20,6 @@ hqDefine('nic_compliance/js/encoder.js', function () {
         };
 
         this.encode = function(password) {
-            password = password.trim();
             if(password) {
                 var secret_password = this.addPadding(window.btoa(b64EncodeUnicode(password)));
                 return this.addPadding(window.btoa(secret_password));
