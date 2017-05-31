@@ -27,7 +27,7 @@
         "sort_expression": [],
         "visible": false,
         "configured_charts": [],
-        "aggregation_columns": [],
+        "aggregation_columns": ["doc_id"],
         "filters": [
             {
                 "compare_as_string": false,
