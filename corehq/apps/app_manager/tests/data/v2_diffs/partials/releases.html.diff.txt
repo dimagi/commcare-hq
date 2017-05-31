@@ -251,7 +251,7 @@
 +              </h4>
 +          </div>
 +          <div class="panel-body">
-+            <inline-edit-v2 params="
++            <inline-edit params="
 +                value: build_comment,
 +                iconClass: 'fa fa-comment',
 +                rows: 1,
@@ -260,7 +260,7 @@
 +                saveParams: {'build_id': id},
 +                saveValueName: 'comment',
 +                errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
-+            "></inline-edit-v2>
++            "></inline-edit>
 +          </div><!-- .panel-body -->
 +          <div class="panel-footer">
 +            <button class="btn btn-default hide"
