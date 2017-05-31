@@ -29,8 +29,9 @@ hqDefine('nic_compliance/js/encoder.js', function () {
     }
 
     $(function(){
-        var password_field = $("#id_auth-password");
+        var password_field = $("#id_auth-password, #id_password");
         if(password_field.length) {
+
             password_field.parents("form")[0].onsubmit = function() {
                 var password_encoder = new HexParsr();
                 password_field.val(password_encoder.encode(password_field.val()));

@@ -655,9 +655,10 @@ class NewMobileWorkerForm(forms.Form):
         return clean_mobile_worker_username(self.domain, username)
 
     def clean_password(self):
+        cleaned_password = decode_password(self.cleaned_data.get('password'))
         if self.project.strong_mobile_passwords:
-            return clean_password(self.cleaned_data.get('password'))
-        return self.cleaned_data.get('password')
+            return clean_password(cleaned_password)
+        return cleaned_password
 
 
 class NewAnonymousMobileWorkerForm(forms.Form):

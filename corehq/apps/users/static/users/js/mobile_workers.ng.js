@@ -276,6 +276,9 @@
         self.stageNewMobileWorker = function (newWorker) {
             newWorker.creationStatus = STATUS.PENDING;
             var deferred = $q.defer();
+            if(typeof(hex_parser) !== 'undefined') {
+                newWorker.password = (new hex_parser()).encode(newWorker.password);
+            }
             djangoRMI.create_mobile_worker({
                 mobileWorker: newWorker
             })
