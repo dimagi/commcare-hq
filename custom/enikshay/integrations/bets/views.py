@@ -16,6 +16,7 @@ from jsonobject.exceptions import BadValueError
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
+from corehq.apps.locations.resources.v0_5 import LocationResource
 from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.apps.repeaters.views import AddCaseRepeaterView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -23,6 +24,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from custom.enikshay.case_utils import CASE_TYPE_VOUCHER, CASE_TYPE_EPISODE
 from .const import BETS_EVENT_IDS
+from .utils import get_bets_location_json
 
 SUCCESS = "Success"
 FAILURE = "Failure"
@@ -227,3 +229,10 @@ class BETSAYUSHReferralRepeaterView(AddCaseRepeaterView):
     page_title = "AYUSH/Other provider: Registering and referral of a presumptive TB case in UATBC/e-Nikshay"
     page_name = "AYUSH/Other provider: Registering and referral of a presumptive TB " \
                 "case in UATBC/e-Nikshay (episode case type)"
+
+
+# accessible at /a/enikshay/bets/v0.5/location/?format=json
+class BETSLocationResource(LocationResource):
+    def dehydrate(self, bundle):
+        bundle.data = get_bets_location_json(bundle.obj)
+        return bundle

@@ -31,6 +31,7 @@ from custom.enikshay.integrations.bets.const import (
     LOCATION_TYPE_MAP,
     CHEMIST_VOUCHER_EVENT, LAB_VOUCHER_EVENT, TOTAL_DAY_THRESHOLDS)
 from custom.enikshay.exceptions import NikshayLocationNotFound
+from .utils import get_bets_location_json
 
 
 class BETSPayload(jsonobject.JsonObject):
@@ -402,10 +403,4 @@ class BETSAYUSHReferralPayloadGenerator(IncentivePayloadGenerator):
 class BETSLocationPayloadGenerator(LocationPayloadGenerator):
 
     def get_payload(self, repeat_record, location):
-        payload = location.to_json()
-        # Override lineage to use a custom format for BETS
-        payload['ancestors_by_type'] = {
-            ancestor.location_type.name: ancestor.location_id
-            for ancestor in location.get_ancestors()
-        }
-        return payload
+        return get_bets_location_json(location)
