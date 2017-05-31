@@ -22,6 +22,17 @@ LAYOUT_SETTINGS_TO_TRANSLATE = [
 ]
 
 
+def _translate_setting(setting, prop):
+    if prop not in setting:
+        return setting
+
+    value = setting[prop]
+    if not isinstance(value, basestring):
+        return [ugettext(v) for v in value]
+    else:
+        return ugettext(value)
+
+
 def _load_custom_commcare_settings(user=None):
     path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
     settings = []
@@ -53,7 +64,7 @@ def _load_custom_commcare_settings(user=None):
 
         for prop in PROFILE_SETTINGS_TO_TRANSLATE:
             if prop in setting:
-                setting[prop] = ugettext(setting[prop])
+                setting[prop] = _translate_setting(setting, prop)
     return settings
 
 
@@ -86,7 +97,7 @@ def _load_commcare_settings_layout(doc_type, user):
             setting['value'] = None
             for prop in LAYOUT_SETTINGS_TO_TRANSLATE:
                 if prop in setting:
-                    setting[prop] = ugettext(setting[prop])
+                    setting[prop] = _translate_setting(setting, prop)
 
     if settings:
         raise Exception(
