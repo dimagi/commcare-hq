@@ -124,8 +124,9 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             connection.execute(delete)
 
     def doc_exists(self, doc):
-        query = self.get_query_object().filter_by(doc_id=doc['_id'])
-        return self.session_helper.Session.query(query.exists()).scalar()
+        with self.session_helper.session_context() as session:
+            query = session.query(self.get_table()).filter_by(doc_id=doc['_id'])
+            return session.query(query.exists()).scalar()
 
 
 class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
