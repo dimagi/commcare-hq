@@ -23,7 +23,9 @@ def sync_case_for_messaging(self, domain, case_id):
 def _sync_case_for_messaging(domain, case_id):
     case = CaseAccessors(domain).get_case(case_id)
     sms_tasks.clear_case_caches(case)
-    sms_tasks._sync_case_phone_number(case)
+
+    if settings.SERVER_ENVIRONMENT != 'icds':
+        sms_tasks._sync_case_phone_number(case)
 
     handler_ids = CaseReminderHandler.get_handler_ids_for_case_post_save(case.domain, case.type)
     if handler_ids:
