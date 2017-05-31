@@ -80,7 +80,7 @@ class TestBetsUpdates(TestCase):
             'eventType': 'Voucher',
             'id': voucher.case_id,
             'status': 'Failure',
-            'comments': 'The Iron Bank will have its due',
+            'failureDescription': 'The Iron Bank will have its due',
             'amount': 0,
             'paymentDate': "2014-11-22 13:23:44.657"
         }]})
@@ -135,7 +135,7 @@ class TestBetsUpdates(TestCase):
             'eventType': 'Incentive',
             'id': episode.case_id,
             'status': 'Failure',
-            'comments': 'We do not sow',
+            'failureDescription': 'We do not sow',
             'eventID': '106',
             'paymentDate': "2014-11-22 13:23:44.657"
         }]})
@@ -167,7 +167,7 @@ class TestBetsUpdates(TestCase):
             'eventType': 'Incentive',
             'id': episode.case_id,
             'status': 'Failure',
-            'comments': 'We do not sow',
+            'failureDescription': 'We do not sow',
             'eventID': '106',
             'paymentDate': "2014-11-22 13:23:44.657"
         }, {

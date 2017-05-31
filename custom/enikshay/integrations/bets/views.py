@@ -77,7 +77,8 @@ class VoucherUpdate(PaymentUpdate):
         else:
             return {
                 'state': 'rejected',
-                'reason_rejected': self.comments or "",
+                'comments': self.comments or "",
+                'reason_rejected': self.failureDescription or "",
                 'date_rejected': self.paymentDate.isoformat(),
             }
 
@@ -91,10 +92,10 @@ class IncentiveUpdate(PaymentUpdate):
     @property
     def properties(self):
         status_key = 'tb_incentive_{}_status'.format(self.eventID)
+        comments_key = 'tb_incentive_{}_comments'.format(self.eventID)
         if self.status == SUCCESS:
             amount_key = 'tb_incentive_{}_amount'.format(self.eventID)
             date_key = 'tb_incentive_{}_payment_date'.format(self.eventID)
-            comments_key = 'tb_incentive_{}_comments'.format(self.eventID)
             payment_mode_key = 'tb_incentive_{}_payment_mode'.format(self.eventID)
             check_number_key = 'tb_incentive_{}_check_number'.format(self.eventID)
             bank_name_key = 'tb_incentive_{}_bank_name'.format(self.eventID)
@@ -113,7 +114,8 @@ class IncentiveUpdate(PaymentUpdate):
             return {
                 status_key: 'rejected',
                 date_key: self.paymentDate.isoformat(),
-                reason_key: self.comments or "",
+                reason_key: self.failureDescription or "",
+                comments_key: self.comments or "",
             }
 
 
