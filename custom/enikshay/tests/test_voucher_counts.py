@@ -91,7 +91,7 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
         )
         self.make_voucher(
             prescription,
-            state="fulfilled",
+            state="available",
             final_prescription_num_days=15,
             date_issued='2012-12-31'
         )
@@ -108,5 +108,29 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
                 'voucher_length': '15',
                 'refill_due_date': '2013-01-16',
             },
+            EpisodeVoucherUpdate(self.domain, self.cases['episode']).get_prescription_refill_due_dates()
+        )
+
+    def test_prescription_refill_due_dates_errors(self):
+        prescription = self.create_prescription_case()
+        self.make_voucher(
+            prescription,
+            state="fulfilled",
+            final_prescription_num_days='abc',
+            date_issued='2013-01-01'
+        )
+        self.assertDictEqual(
+            {},
+            EpisodeVoucherUpdate(self.domain, self.cases['episode']).get_prescription_refill_due_dates()
+        )
+
+        self.make_voucher(
+            prescription,
+            state="fulfilled",
+            final_prescription_num_days=15,
+            date_issued='hello'
+        )
+        self.assertDictEqual(
+            {},
             EpisodeVoucherUpdate(self.domain, self.cases['episode']).get_prescription_refill_due_dates()
         )

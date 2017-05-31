@@ -444,16 +444,23 @@ class EpisodeVoucherUpdate(object):
             return {}
 
         latest_voucher = fulfilled_available_vouchers[-1]
-        date_last_refill = latest_voucher.get_case_property('date_issued')
+
+        date_last_refill = parse_date(latest_voucher.get_case_property('date_issued'))
+        if date_last_refill is None:
+            return {}
+
         if latest_voucher.get_case_property('state') == 'fulfilled':
             voucher_length = latest_voucher.get_case_property('final_prescription_num_days')
         elif latest_voucher.get_case_property('state') == 'available':
             voucher_length = latest_voucher.get_case_property('prescription_num_days')
 
-        refill_due_date = (parse_date(date_last_refill) + datetime.timedelta(days=int(voucher_length))).strftime("%Y-%m-%d")
+        try:
+            refill_due_date = date_last_refill + datetime.timedelta(days=int(voucher_length))
+        except ValueError:
+            return {}
 
         return {
-            'date_last_refill': date_last_refill,
+            'date_last_refill': date_last_refill.strftime("%Y-%m-%d"),
             'voucher_length': voucher_length,
-            'refill_due_date': refill_due_date,
+            'refill_due_date': refill_due_date.strftime("%Y-%m-%d"),
         }
