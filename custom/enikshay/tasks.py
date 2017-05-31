@@ -397,6 +397,14 @@ class EpisodeVoucherUpdate(object):
         ]
         return sorted(relevant_vouchers, key=self._get_fulfilled_voucher_date)
 
+    def _get_fulfilled_available_vouchers(self):
+        relevant_vouchers = [
+            voucher for voucher in self._get_all_vouchers()
+            if (voucher.get_case_property('voucher_type') == 'prescription'
+                and voucher.get_case_property('state') in ['fulfilled', 'available'])
+        ]
+        return sorted(relevant_vouchers, key=lambda v: v.get_case_property('date_issued'))
+
     @staticmethod
     def _is_an_update(existing_properties, new_properties):
         for prop, value in new_properties.items():
@@ -405,14 +413,15 @@ class EpisodeVoucherUpdate(object):
 
     def update_json(self):
         output_json = {}
-        output_json.update(self._get_prescription_total_days())
+        output_json.update(self.get_prescription_total_days())
+        output_json.update(self.get_prescription_refill_due_dates())
 
         if not self._is_an_update(self.episode.dynamic_case_properties(), output_json):
             return {}  # Don't trigger a case update
 
         return output_json
 
-    def _get_prescription_total_days(self):
+    def get_prescription_total_days(self):
         prescription_json = {}
         total_days = 0
         for voucher in self._get_fulfilled_vouchers():
@@ -426,3 +435,27 @@ class EpisodeVoucherUpdate(object):
         prescription_json['prescription_total_days'] = total_days
 
         return prescription_json
+
+    def get_prescription_refill_due_dates(self):
+        """The dates on which the app predicts that the episode should be eligible for prescription refills
+
+        https://docs.google.com/document/d/1s1-MHKS5I8cvf0_7NvcqeTsYGsXLy9YGArw2L7cZSRM/edit#
+        """
+        fulfilled_available_vouchers = self._get_fulfilled_available_vouchers()
+        if not fulfilled_available_vouchers:
+            return {}
+
+        latest_voucher = fulfilled_available_vouchers[-1]
+        date_last_refill = latest_voucher.get_case_property('date_issued')
+        if latest_voucher.get_case_property('state') == 'fulfilled':
+            voucher_length = latest_voucher.get_case_property('final_prescription_num_days')
+        elif latest_voucher.get_case_property('state') == 'available':
+            voucher_length = latest_voucher.get_case_property('prescription_num_days')
+
+        refill_due_date = (parse_date(date_last_refill) + datetime.timedelta(days=int(voucher_length))).strftime("%Y-%m-%d")
+
+        return {
+            'date_last_refill': date_last_refill,
+            'voucher_length': voucher_length,
+            'refill_due_date': refill_due_date,
+        }
