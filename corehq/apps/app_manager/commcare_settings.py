@@ -23,9 +23,6 @@ LAYOUT_SETTINGS_TO_TRANSLATE = [
 
 
 def _translate_setting(setting, prop):
-    if prop not in setting:
-        return setting
-
     value = setting[prop]
     if not isinstance(value, basestring):
         return [ugettext(v) for v in value]
