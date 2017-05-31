@@ -58,12 +58,7 @@ class HQPasswordChangeForm(EncodedPasswordChangeFormMixin, PasswordChangeForm):
 
     def clean_old_password(self):
         from corehq.apps.hqwebapp.utils import decode_password
-        old_password = decode_password(self.cleaned_data['old_password'])
-        if old_password == '':
-            raise ValidationError(
-                _("Password cannot be empty"), code='password_empty',
-            )
-        self.cleaned_data['old_password'] = old_password
+        self.cleaned_data['old_password'] = decode_password(self.cleaned_data['old_password'])
         return super(HQPasswordChangeForm, self).clean_old_password()
 
     def save(self, commit=True):
