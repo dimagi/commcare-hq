@@ -636,16 +636,8 @@
                         "type":"related_doc",
                         "related_doc_type":"Location",
                         "doc_id_expression": {
-                            "value_expression": {
-                                "type":"property_name",
-                                "property_name":"name"
-                            },
-                            "type":"related_doc",
-                            "related_doc_type":"Location",
-                            "doc_id_expression": {
-                                "type": "property_name",
-                                "property_name": "treatment_initiating_facility_id"
-                            }
+                            "type": "property_name",
+                            "property_name": "treatment_initiating_facility_id"
                         }
                     }
                 },
@@ -1305,7 +1297,7 @@
                                 "property_name": "treatment_initiated"
                             },
                             "type": "boolean_expression",
-                            "property_value": "yes_public"
+                            "property_value": "yes_phi"
                         },
                         "expression_if_true": {
                             "type": "conditional",
