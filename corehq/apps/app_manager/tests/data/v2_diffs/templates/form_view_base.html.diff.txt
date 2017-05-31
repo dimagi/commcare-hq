@@ -319,11 +319,12 @@
              {% endif %}
          </div>
      </div>
-@@ -535,12 +524,12 @@
+@@ -535,12 +524,13 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
 -{% include "app_manager/v1/partials/nav_menu_media_modals.html" %}
++{% include "app_manager/v2/partials/form_view_modals.html" %}
 +{% include "app_manager/v2/partials/nav_menu_media_modals.html" %}
  {% endblock modals %}
  
