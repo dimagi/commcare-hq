@@ -444,23 +444,24 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
     };
 
     CommcareSettings.widgets.image_uploader = function (self) {
+        self.manager = hqImport("app_manager/js/app_logos.js").LogoManager;
         self.slug = "hq_" + self.id;
         self.href = "#" + self.slug;
-        self.path = getPathFromSlug(self.slug);
-        self.url = urlFromLogo(self.slug);
-        self.thumb_url = thumbUrlFromLogo(self.slug);
+        self.path = self.manager.getPathFromSlug(self.slug);
+        self.url = self.manager.urlFromLogo(self.slug);
+        self.thumb_url = self.manager.thumbUrlFromLogo(self.slug);
 
         self.is_uploader = function(slug) {
-            return slug == self.slug;
+            return slug === self.slug;
         };
         self.uploadComplete = function(widget, event, response) {
-            uploadCompleteForLogo(self.slug, response);
+            self.manager.uploadCompleteForLogo(self.slug, response);
         };
         self.triggerUpload = function() {
-            triggerUploadForLogo(self.slug);
+            self.manager.triggerUploadForLogo(self.slug);
         };
         self.removeLogo = function() {
-            removeLogo(self.slug);
+            self.manager.removeLogo(self.slug);
         };
     };
 
@@ -476,6 +477,10 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
             return true;
         };
     };
+
+    // text_input has the same behavior as a select widget but uses a different template
+    CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
+
     return {
         CommcareSettings: CommcareSettings
     };
