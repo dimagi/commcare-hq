@@ -17,7 +17,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 
-from .case_utils import CASE_TYPE_EPISODE, get_fulfilled_prescription_vouchers_from_episode
+from .case_utils import CASE_TYPE_EPISODE, get_prescription_vouchers_from_episode
 from .const import (
     DOSE_TAKEN_INDICATORS,
     DAILY_SCHEDULE_FIXTURE_NAME,
@@ -382,17 +382,20 @@ class EpisodeVoucherUpdate(object):
         self.episode = episode_case
 
     @staticmethod
-    def _get_voucher_date(voucher):
+    def _get_fulfilled_voucher_date(voucher):
         return voucher.get_case_property('date_fulfilled')
 
-    def _get_vouchers(self):
-        all_vouchers = get_fulfilled_prescription_vouchers_from_episode(self.domain, self.episode.case_id)
+    @memoized
+    def _get_all_vouchers(self):
+        return get_prescription_vouchers_from_episode(self.domain, self.episode.case_id)
+
+    def _get_fulfilled_vouchers(self):
         relevant_vouchers = [
-            voucher for voucher in all_vouchers
+            voucher for voucher in self._get_all_vouchers()
             if (voucher.get_case_property('voucher_type') == 'prescription'
                 and voucher.get_case_property('state') == 'fulfilled')
         ]
-        return sorted(relevant_vouchers, key=self._get_voucher_date)
+        return sorted(relevant_vouchers, key=self._get_fulfilled_voucher_date)
 
     @staticmethod
     def _is_an_update(existing_properties, new_properties):
@@ -402,20 +405,24 @@ class EpisodeVoucherUpdate(object):
 
     def update_json(self):
         output_json = {}
-
-        total_days = 0
-        for voucher in self._get_vouchers():
-            raw_days_value = voucher.get_case_property('final_prescription_num_days')
-            total_days += int(raw_days_value) if raw_days_value else 0
-
-            for num_days in (30, 60, 90, 120,):
-                prop = "prescription_total_days_threshold_{}".format(num_days)
-                if total_days >= num_days and prop not in output_json:
-                    output_json[prop] = self._get_voucher_date(voucher)
-
-        output_json['prescription_total_days'] = total_days
+        output_json.update(self._get_prescription_total_days())
 
         if not self._is_an_update(self.episode.dynamic_case_properties(), output_json):
             return {}  # Don't trigger a case update
 
         return output_json
+
+    def _get_prescription_total_days(self):
+        prescription_json = {}
+        total_days = 0
+        for voucher in self._get_fulfilled_vouchers():
+            raw_days_value = voucher.get_case_property('final_prescription_num_days')
+            total_days += int(raw_days_value) if raw_days_value else 0
+
+            for num_days in (30, 60, 90, 120,):
+                prop = "prescription_total_days_threshold_{}".format(num_days)
+                if total_days >= num_days and prop not in prescription_json:
+                    prescription_json[prop] = self._get_fulfilled_voucher_date(voucher)
+        prescription_json['prescription_total_days'] = total_days
+
+        return prescription_json
