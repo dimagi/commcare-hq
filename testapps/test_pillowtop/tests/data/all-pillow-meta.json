@@ -20,13 +20,6 @@
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "CacheInvalidatePillow"
     },
-    "CareBiharFluffPillow": {
-        "advertised_name": "CareBiharFluffPillow",
-        "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "fluff.CareBiharFluffPillow.testhq",
-        "full_class_name": "custom.bihar.models.CareBiharFluffPillow",
-        "name": "CareBiharFluffPillow"
-    },
     "CaseToElasticsearchPillow": {
         "advertised_name": "CaseToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
