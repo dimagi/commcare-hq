@@ -115,6 +115,14 @@ class CommCareSettingsTest(SimpleTestCase):
                             continue
                         if not isinstance(value, basestring):
                             for v in value:
-                                self.assertIn(v, static_strings)
+                                self.assertIn(
+                                    v,
+                                    static_strings,
+                                    'You need to add {} to static_strings.py'.format(v)
+                                )
                         else:
-                            self.assertIn(value, static_strings)
+                            self.assertIn(
+                                value,
+                                static_strings,
+                                'You need to add {} to static_strings.py'.format(v)
+                            )
