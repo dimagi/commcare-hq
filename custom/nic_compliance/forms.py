@@ -3,8 +3,6 @@ from django.utils.translation import ugettext as _
 from django.core.exceptions import ValidationError
 from django.contrib.auth import password_validation
 
-from django.contrib.auth.forms import SetPasswordForm
-
 
 class EncodedPasswordChangeFormMixin(object):
     """
@@ -34,7 +32,7 @@ class EncodedPasswordChangeFormMixin(object):
         password2 = self.cleaned_data.get('new_password2')
         if password1 and password1 != password2:
             raise forms.ValidationError(
-                SetPasswordForm.error_messages['password_mismatch'],
+                self.error_messages['password_mismatch'],
                 code='password_mismatch',
             )
         password_validation.validate_password(password2, self.user)
