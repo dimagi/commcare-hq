@@ -132,7 +132,7 @@ class PillowBase(object):
                         client.captureMessage(
                             u'{} change slow to process'.format(self.pillow_id),
                             extra=extra,
-                            time_spent=int(timer.duration * 1000),  # Convert to milliseconds  # Convert to
+                            time_spent=int(timer.duration * 1000),  # Convert to milliseconds
                             fingerprint=[self.pillow_id],
                         )
                 else:
