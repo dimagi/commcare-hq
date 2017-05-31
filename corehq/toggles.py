@@ -808,6 +808,7 @@ SUPPORT = StaticToggle(
     'support',
     'General toggle for support features',
     TAG_EXPERIMENTAL,
+    help_link='https://confluence.dimagi.com/display/ccinternal/Support+Flag',
 )
 
 BASIC_CHILD_MODULE = StaticToggle(
