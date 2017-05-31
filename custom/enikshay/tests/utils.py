@@ -370,6 +370,7 @@ class ENikshayLocationStructureMixin(object):
         self.project = Domain(name=self.domain)
         self.project.save()
         _, locations = setup_enikshay_locations(self.domain)
+        self.locations = locations
         self.sto = locations['STO']
         self.sto.metadata = {
             'nikshay_code': 'MH',
@@ -435,8 +436,6 @@ class ENikshayLocationStructureMixin(object):
 
     def tearDown(self):
         self.project.delete()
-        SQLLocation.objects.all().delete()
-        LocationType.objects.all().delete()
         super(ENikshayLocationStructureMixin, self).tearDown()
 
     def assign_person_to_location(self, location_id):

@@ -1,5 +1,6 @@
 from django.conf.urls import url
 
+from corehq.apps.domain.views import AddRepeaterView
 from custom.enikshay.integrations.bets.views import (
     payment_confirmation,
     BETSDrugRefillRepeaterView,
@@ -54,5 +55,11 @@ urlpatterns = [
         BETSAYUSHReferralRepeaterView.as_view(),
         {'repeater_type': 'BETSAYUSHReferralRepeater'},
         name=BETSAYUSHReferralRepeaterView.urlname
+    ),
+    url(
+        r'^location_repeater$',
+        AddRepeaterView.as_view(),
+        {'repeater_type': 'BETSLocationRepeater'},
+        name='bets_location_repeater'
     ),
 ]
