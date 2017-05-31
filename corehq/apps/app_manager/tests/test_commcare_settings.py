@@ -92,7 +92,13 @@ class CommCareSettingsTest(SimpleTestCase):
         self.assertEqual(test_app2.get_profile_setting("properties", "unsent-time-limit"), "5")
 
     def test_translated_strings(self):
-        base_path = os.path.join(settings.BASE_DIR, 'corehq', 'apps', 'app_manager', 'static', 'app_manager', 'json')
+        '''
+        Ensures all yaml strings are translated. To auto generate these strings,
+        see scripts/yaml_static_strings.py
+        '''
+        base_path = os.path.join(
+            settings.BASE_DIR, 'corehq', 'apps', 'app_manager', 'static', 'app_manager', 'json'
+        )
 
         files_and_keys_to_translate = [
             ('v1/commcare-profile-settings.yaml', PROFILE_SETTINGS_TO_TRANSLATE),
