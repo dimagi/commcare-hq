@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractproperty, abstractmethod
 from datetime import datetime
+import logging
 
 import sys
 
@@ -134,6 +135,8 @@ class PillowBase(object):
                             extra=extra,
                             time_spent=int(timer.duration * 1000),  # Convert to milliseconds
                             fingerprint=[self.pillow_id],
+                            level=logging.WARN,
+                            sample_rate=0.1,
                         )
                 else:
                     updated = self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
