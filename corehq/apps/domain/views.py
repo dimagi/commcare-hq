@@ -11,6 +11,7 @@ import sys
 
 from couchdbkit import ResourceNotFound
 import dateutil
+from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
@@ -139,7 +140,7 @@ from corehq.apps.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
 )
-from corehq.apps.repeaters.utils import get_all_repeater_types, get_repeater_auth_header
+from corehq.apps.repeaters.utils import get_all_repeater_types
 from corehq.apps.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
@@ -588,7 +589,7 @@ def test_repeater(request, domain):
     repeater_type = request.POST['repeater_type']
     format = request.POST.get('format', None)
     repeater_class = get_all_repeater_types()[repeater_type]
-    use_basic_auth = request.POST.get('use_basic_auth')
+    auth_type = request.POST.get('auth_type')
 
     form = GenericRepeaterForm(
         {"url": url, "format": format},
@@ -603,13 +604,17 @@ def test_repeater(request, domain):
         fake_post = generator.get_test_payload(domain)
         headers = generator.get_headers()
 
-        if use_basic_auth == 'true':
-            username = request.POST.get('username')
-            password = request.POST.get('password')
-            headers.update(get_repeater_auth_header(headers, username, password))
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        if auth_type == 'basic':
+            auth = HTTPBasicAuth(username, password)
+        elif auth_type == 'digest':
+            auth = HTTPDigestAuth(username, password)
+        else:
+            auth = None
 
         try:
-            resp = simple_post(fake_post, url, headers=headers)
+            resp = simple_post(fake_post, url, headers=headers, auth=auth)
             if 200 <= resp.status_code < 300:
                 return HttpResponse(json.dumps({"success": True,
                                                 "response": resp.content,
