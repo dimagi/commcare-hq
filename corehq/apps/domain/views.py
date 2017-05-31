@@ -54,6 +54,7 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_ca
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
+from corehq.apps.repeaters.models import BASIC_AUTH, DIGEST_AUTH
 from corehq.apps.repeaters.repeater_generators import RegisterGenerator
 
 from corehq.const import USER_DATE_FORMAT
@@ -606,9 +607,9 @@ def test_repeater(request, domain):
 
         username = request.POST.get('username')
         password = request.POST.get('password')
-        if auth_type == 'basic':
+        if auth_type == BASIC_AUTH:
             auth = HTTPBasicAuth(username, password)
-        elif auth_type == 'digest':
+        elif auth_type == DIGEST_AUTH:
             auth = HTTPDigestAuth(username, password)
         else:
             auth = None

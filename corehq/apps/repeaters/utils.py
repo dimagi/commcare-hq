@@ -13,9 +13,10 @@ def get_all_repeater_types():
 
 
 def migrate_repeater(repeater_doc):
+    from .models import BASIC_AUTH
     if "use_basic_auth" in repeater_doc:
         use_basic_auth = repeater_doc['use_basic_auth'] is True
         del repeater_doc['use_basic_auth']
         if use_basic_auth:
-            repeater_doc["auth_type"] = "basic"
+            repeater_doc["auth_type"] = BASIC_AUTH
         return DocUpdate(repeater_doc)
