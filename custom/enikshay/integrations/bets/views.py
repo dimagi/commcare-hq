@@ -46,11 +46,12 @@ class PaymentUpdate(jsonobject.JsonObject):
     id = jsonobject.StringProperty(required=True)
     status = jsonobject.StringProperty(required=True, choices=[SUCCESS, FAILURE])
     amount = jsonobject.DecimalProperty(required=False)
-    payment_date = FlexibleDateTimeProperty(required=True)
-    remarks = jsonobject.StringProperty(required=False)
-    payment_mode = jsonobject.StringProperty(required=False)
-    check_number = jsonobject.StringProperty(required=False)
-    bank_name = jsonobject.StringProperty(required=False)
+    paymentDate = FlexibleDateTimeProperty(required=True)
+    comments = jsonobject.StringProperty(required=False)
+    failureDescription = jsonobject.StringProperty(required=False)
+    paymentMode = jsonobject.StringProperty(required=False)
+    checkNumber = jsonobject.StringProperty(required=False)
+    bankName = jsonobject.StringProperty(required=False)
 
     @property
     def case_id(self):
@@ -58,7 +59,7 @@ class PaymentUpdate(jsonobject.JsonObject):
 
 
 class VoucherUpdate(PaymentUpdate):
-    event_type = jsonobject.StringProperty(required=True, choices=['Voucher'])
+    eventType = jsonobject.StringProperty(required=True, choices=['Voucher'])
     case_type = CASE_TYPE_VOUCHER
 
     @property
@@ -67,52 +68,52 @@ class VoucherUpdate(PaymentUpdate):
             return {
                 'state': 'paid',
                 'amount_fulfilled': self.amount,
-                'date_fulfilled': self.payment_date.isoformat(),
-                'comments': self.remarks or "",
-                'payment_mode': self.payment_mode or "",
-                'check_number': self.check_number or "",
-                'bank_name': self.bank_name or "",
+                'date_fulfilled': self.paymentDate.isoformat(),
+                'comments': self.comments or "",
+                'payment_mode': self.paymentMode or "",
+                'check_number': self.checkNumber or "",
+                'bank_name': self.bankName or "",
             }
         else:
             return {
                 'state': 'rejected',
-                'reason_rejected': self.remarks or "",
-                'date_rejected': self.payment_date.isoformat(),
+                'reason_rejected': self.comments or "",
+                'date_rejected': self.paymentDate.isoformat(),
             }
 
 
 class IncentiveUpdate(PaymentUpdate):
-    event_type = jsonobject.StringProperty(required=True, choices=['Incentive'])
-    bets_parent_event_id = jsonobject.StringProperty(
+    eventType = jsonobject.StringProperty(required=True, choices=['Incentive'])
+    eventID = jsonobject.StringProperty(
         required=False, choices=BETS_EVENT_IDS)
     case_type = CASE_TYPE_EPISODE
 
     @property
     def properties(self):
-        status_key = 'tb_incentive_{}_status'.format(self.bets_parent_event_id)
+        status_key = 'tb_incentive_{}_status'.format(self.eventID)
         if self.status == SUCCESS:
-            amount_key = 'tb_incentive_{}_amount'.format(self.bets_parent_event_id)
-            date_key = 'tb_incentive_{}_payment_date'.format(self.bets_parent_event_id)
-            comments_key = 'tb_incentive_{}_comments'.format(self.bets_parent_event_id)
-            payment_mode_key = 'tb_incentive_{}_payment_mode'.format(self.bets_parent_event_id)
-            check_number_key = 'tb_incentive_{}_check_number'.format(self.bets_parent_event_id)
-            bank_name_key = 'tb_incentive_{}_bank_name'.format(self.bets_parent_event_id)
+            amount_key = 'tb_incentive_{}_amount'.format(self.eventID)
+            date_key = 'tb_incentive_{}_payment_date'.format(self.eventID)
+            comments_key = 'tb_incentive_{}_comments'.format(self.eventID)
+            payment_mode_key = 'tb_incentive_{}_payment_mode'.format(self.eventID)
+            check_number_key = 'tb_incentive_{}_check_number'.format(self.eventID)
+            bank_name_key = 'tb_incentive_{}_bank_name'.format(self.eventID)
             return {
                 status_key: 'paid',
                 amount_key: self.amount,
-                date_key: self.payment_date.isoformat(),
-                comments_key: self.remarks or "",
-                payment_mode_key: self.payment_mode or "",
-                check_number_key: self.check_number or "",
-                bank_name_key: self.bank_name or "",
+                date_key: self.paymentDate.isoformat(),
+                comments_key: self.comments or "",
+                payment_mode_key: self.paymentMode or "",
+                check_number_key: self.checkNumber or "",
+                bank_name_key: self.bankName or "",
             }
         else:
-            date_key = 'tb_incentive_{}_rejection_date'.format(self.bets_parent_event_id)
-            reason_key = 'tb_incentive_{}_rejection_reason'.format(self.bets_parent_event_id)
+            date_key = 'tb_incentive_{}_rejection_date'.format(self.eventID)
+            reason_key = 'tb_incentive_{}_rejection_reason'.format(self.eventID)
             return {
                 status_key: 'rejected',
-                date_key: self.payment_date.isoformat(),
-                reason_key: self.remarks or "",
+                date_key: self.paymentDate.isoformat(),
+                reason_key: self.comments or "",
             }
 
 
@@ -132,11 +133,11 @@ def _get_case_updates(request, domain):
 
     updates = []
     for event_json in request_json['response']:
-        if event_json.get('event_type', None) not in ('Voucher', 'Incentive'):
-            msg = 'Expected "event_type": "Voucher" or "event_type": "Incentive"'
+        if event_json.get('eventType', None) not in ('Voucher', 'Incentive'):
+            msg = 'Expected "eventType": "Voucher" or "eventType": "Incentive"'
             raise ApiError(msg=msg, status_code=400)
 
-        update_model = VoucherUpdate if event_json['event_type'] == 'Voucher' else IncentiveUpdate
+        update_model = VoucherUpdate if event_json['eventType'] == 'Voucher' else IncentiveUpdate
         try:
             update = update_model.wrap(event_json)
         except BadValueError as e:
