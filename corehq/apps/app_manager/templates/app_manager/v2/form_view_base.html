@@ -29,6 +29,7 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
+    {% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
     <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
     <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
     {% if module.doc_type == 'AdvancedModule' %}
@@ -37,9 +38,7 @@
     {% elif module.doc_type == 'CareplanModule' %}
         <script src="{% static 'app_manager/js/careplan-config-ui.js' %}"></script>
     {% else %}
-        {% block js_extra %}
-            <script src="{% static 'app_manager/js/case-config-ui.js' %}"></script>
-        {% endblock %}
+        <script src="{% static 'app_manager/js/case-config-ui.js' %}"></script>
     {% endif %}
     <style>
         #open-referral-action,
@@ -408,9 +407,8 @@
                         {% elif module.doc_type == 'CareplanModule' %}
                             {% include 'app_manager/v2/partials/case_config_careplan.html' %}
                         {% else %}
-                            {% block case_management_content %}
-                                {% include 'app_manager/v2/partials/case_config.html' %}
-                            {% endblock %}
+                            {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
+                            {% include 'app_manager/v2/partials/case_config.html' %}
                         {% endif %}
                       </div>
                   {% else %}

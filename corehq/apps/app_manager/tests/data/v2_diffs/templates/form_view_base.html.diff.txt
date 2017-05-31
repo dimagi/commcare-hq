@@ -6,7 +6,7 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load compress %}
-@@ -57,9 +57,9 @@
+@@ -56,9 +56,9 @@
          <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
      {% endif %}
  
@@ -19,7 +19,7 @@
      {% if allow_form_workflow %}
          <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
      {% endif %}
-@@ -171,15 +171,18 @@
+@@ -170,15 +170,18 @@
              });
          }
  
@@ -41,7 +41,7 @@
              {% with module_name=module.name|trans:langs %}
              labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
              {% endwith %}
-@@ -222,7 +225,7 @@
+@@ -221,7 +224,7 @@
          });
          {% endif %}
  
@@ -50,7 +50,7 @@
              // tag the 'preview in cloudcare' button with the right url
              // unfortunately, has to be done in javascript
              var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-@@ -288,74 +291,57 @@
+@@ -287,74 +290,57 @@
      </script>
  {% endblock %}
  
@@ -167,7 +167,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -367,35 +353,36 @@
+@@ -366,35 +352,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -221,7 +221,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -407,38 +394,40 @@
+@@ -406,37 +393,39 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -253,10 +253,9 @@
 -                            {% include 'app_manager/v1/partials/case_config_careplan.html' %}
 +                            {% include 'app_manager/v2/partials/case_config_careplan.html' %}
                          {% else %}
-                             {% block case_management_content %}
--                                {% include 'app_manager/v1/partials/case_config.html' %}
-+                                {% include 'app_manager/v2/partials/case_config.html' %}
-                             {% endblock %}
+                             {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
+-                            {% include 'app_manager/v1/partials/case_config.html' %}
++                            {% include 'app_manager/v2/partials/case_config.html' %}
                          {% endif %}
 -                    </div>
 -                {% else %}
@@ -285,7 +284,7 @@
              <div class="tab-pane" id="usercase-configuration">
                  {% if form_errors or xform_validation_errored %}
                      <p class="alert alert-warning">
-@@ -464,7 +453,6 @@
+@@ -462,7 +451,6 @@
                          {% block usercase_management_content %}
                              {%  if form.uses_usercase and not allow_usercase %}
                                  <div class="container-fluid col-sm-6">
@@ -293,7 +292,7 @@
                                {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
                                  <p>{% blocktrans %}
                                      The User Properties feature is no longer available because of the change in your
-@@ -509,7 +497,7 @@
+@@ -507,7 +495,7 @@
                                  </p>
                                  </div>
                              {% endif %}
@@ -302,7 +301,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -522,14 +510,15 @@
+@@ -520,14 +508,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -320,7 +319,7 @@
              {% endif %}
          </div>
      </div>
-@@ -537,12 +526,12 @@
+@@ -535,12 +524,12 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
