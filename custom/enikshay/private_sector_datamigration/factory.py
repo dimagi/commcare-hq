@@ -39,9 +39,10 @@ class BeneficiaryCaseFactory(object):
         self.location_owner = location_owner
 
     def get_case_structures_to_create(self, skip_adherence):
-        return [self.get_person_case_structure()]
+        # return [self.get_person_case_structure()]
         person_structure = self.get_person_case_structure()
         ocurrence_structure = self.get_occurrence_case_structure(person_structure)
+        return [ocurrence_structure]
         episode_structure = self.get_episode_case_structure(ocurrence_structure)
         episode_descendants = [
             self.get_prescription_case_structure(prescription, episode_structure)
