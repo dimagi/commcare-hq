@@ -2378,7 +2378,7 @@
           {
             "type": "boolean_expression",
             "operator": "lte",
-            "property_value": 36,
+            "property_value": 60,
             "expression": {
               "type": "icds_child_age_in_months_month_start"
             }
