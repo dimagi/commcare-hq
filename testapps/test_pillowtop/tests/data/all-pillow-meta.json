@@ -261,7 +261,7 @@
     "UpdateUserSyncHistoryPillow": {
         "advertised_name": "UpdateUserSyncHistoryPillow",
         "change_feed_type": "CouchChangeFeed",
-        "checkpoint_id": "UpdateUserSyncHistoryPillow",
+        "checkpoint_id": "synclog",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UpdateUserSyncHistoryPillow"
     }
