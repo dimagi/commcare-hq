@@ -108,7 +108,7 @@ class Command(BaseCommand):
             start, limit, case_ids, owner_state_id, owner_district_id, owner_organisation_ids
         )
 
-        self.perform_checks(beneficiaries)
+        self.assert_always_null(beneficiaries)
 
         self.migrate_to_enikshay(domain, beneficiaries, skip_adherence, chunk_size, location_owner)
 
@@ -227,18 +227,7 @@ class Command(BaseCommand):
         logger.info('Done!')
 
     @staticmethod
-    def perform_checks(beneficiaries):
-        # Assert never null
-        assert not beneficiaries.filter(firstName__isnull=True).exists()
-        assert not beneficiaries.filter(lastName__isnull=True).exists()
-        assert not beneficiaries.filter(phoneNumber__isnull=True).exists()
-        assert not Episode.objects.filter(dateOfDiagnosis__isnull=True).exists()
-        assert not Episode.objects.filter(patientWeight__isnull=True).exists()
-        assert not Episode.objects.filter(rxStartDate__isnull=True).exists()
-        assert not Episode.objects.filter(site__isnull=True).exists()
-        assert not Adherence.objects.filter(creationDate__isnull=True).exists()
-
-        # Assert always null
+    def assert_always_null(beneficiaries):
         assert not beneficiaries.filter(mdrTBSuspected__isnull=False).exists()
         assert not beneficiaries.filter(middleName__isnull=False).exists()
         assert not beneficiaries.filter(nikshayId__isnull=False).exists()
