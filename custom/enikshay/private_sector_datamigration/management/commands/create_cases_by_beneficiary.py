@@ -2,7 +2,10 @@ from datetime import date
 import logging
 import mock
 
-from django.core.management import BaseCommand
+from django.core.management import (
+    BaseCommand,
+    CommandError,
+)
 from django.db.models import Q
 
 from casexml.apps.case.mock import CaseFactory
@@ -101,8 +104,10 @@ class Command(BaseCommand):
         else:
             location_owner = None
 
-        assert not case_ids or not owner_state_id
-        assert owner_state_id or not owner_district_id
+        if case_ids and owner_state_id:
+            raise CommandError('Cannot specify both caseIds and owner-state-id')
+        if not owner_state_id and owner_district_id:
+            raise CommandError('Cannot specify owner-district-id without owner-state-id')
 
         beneficiaries = self.beneficiaries(
             start, limit, case_ids, owner_state_id, owner_district_id, owner_organisation_ids
