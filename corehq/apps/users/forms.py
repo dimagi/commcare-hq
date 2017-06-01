@@ -551,14 +551,14 @@ class NewMobileWorkerForm(forms.Form):
         label=ugettext_noop("Password"),
     )
 
-    def __init__(self, project, user, *args, **kwargs):
+    def __init__(self, project, request_user, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
         email_string = u"@{}.commcarehq.org".format(project.name)
         max_chars_username = 80 - len(email_string)
         self.project = project
         self.domain = self.project.name
-        self.user = user
-        self.can_access_all_locations = user.has_permission(self.domain, 'access_all_locations')
+        self.request_user = request_user
+        self.can_access_all_locations = request_user.has_permission(self.domain, 'access_all_locations')
         if not self.can_access_all_locations:
             self.fields['location_id'].required = True
 
@@ -638,7 +638,7 @@ class NewMobileWorkerForm(forms.Form):
 
     def clean_location_id(self):
         location_id = self.cleaned_data['location_id']
-        if not user_can_access_location_id(self.domain, self.user, location_id):
+        if not user_can_access_location_id(self.domain, self.request_user, location_id):
             raise forms.ValidationError("You do not have access to that location.")
         return location_id
 
@@ -669,11 +669,11 @@ class NewAnonymousMobileWorkerForm(forms.Form):
         min_length=1,
     )
 
-    def __init__(self, project, user, *args, **kwargs):
+    def __init__(self, project, request_user, *args, **kwargs):
         super(NewAnonymousMobileWorkerForm, self).__init__(*args, **kwargs)
         self.project = project
-        self.user = user
-        self.can_access_all_locations = user.has_permission(self.project.name, 'access_all_locations')
+        self.request_user = request_user
+        self.can_access_all_locations = request_user.has_permission(self.project.name, 'access_all_locations')
         if not self.can_access_all_locations:
             self.fields['location_id'].required = True
 

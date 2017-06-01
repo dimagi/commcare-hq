@@ -14,6 +14,8 @@ from corehq.apps.users.util import raw_username
 
 from dimagi.utils.decorators.memoized import memoized
 
+from .models import BASIC_AUTH, DIGEST_AUTH
+
 
 class GenericRepeaterForm(forms.Form):
 
@@ -26,8 +28,8 @@ class GenericRepeaterForm(forms.Form):
     auth_type = forms.ChoiceField(
         choices=[
             (None, "None"),
-            ("basic", "Basic"),
-            ("digest", "Digest"),
+            (BASIC_AUTH, "Basic"),
+            (DIGEST_AUTH, "Digest"),
         ],
         required=False,
         label=_("Authentication protocol"),
@@ -191,3 +193,14 @@ class CaseRepeaterForm(GenericRepeaterForm):
         if not set(black_listed_users).issubset([t[0] for t in self.user_choices]):
             raise ValidationError(_('Unknown user'))
         return cleaned_data
+
+
+class SOAPCaseRepeaterForm(CaseRepeaterForm):
+    operation = forms.CharField(
+        required=False,
+        label='SOAP operation',
+    )
+
+    def get_ordered_crispy_form_fields(self):
+        fields = super(SOAPCaseRepeaterForm, self).get_ordered_crispy_form_fields()
+        return fields + ['operation']

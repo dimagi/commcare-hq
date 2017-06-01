@@ -29,6 +29,9 @@ class BasePayloadGenerator(object):
     format_name = ''
     format_label = ""
 
+    # if you ever change format_name, add the old format_name here for backwards compatability
+    deprecated_format_names = ()
+
     def __init__(self, repeater):
         self.repeater = repeater
 
@@ -132,7 +135,13 @@ class GeneratorCollection(object):
 
     def get_generator_by_format(self, format):
         """returns generator class given a format"""
-        return self.format_generator_map[format].generator_class
+        try:
+            return self.format_generator_map[format].generator_class
+        except KeyError:
+            for info in self.format_generator_map.values():
+                if format in info.generator_class.deprecated_format_names:
+                    return info.generator_class
+            raise
 
 
 class RegisterGenerator(object):
@@ -255,12 +264,16 @@ class CaseRepeaterJsonPayloadGenerator(BasePayloadGenerator):
 
 class AppStructureGenerator(BasePayloadGenerator):
 
+    deprecated_format_names = ('app_structure_xml',)
+
     def get_payload(self, repeat_record, payload_doc):
         # This is the id of the application, currently all we forward
         return repeat_record.payload_id
 
 
 class ShortFormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
+
+    deprecated_format_names = ('short_form_json',)
 
     def get_payload(self, repeat_record, form):
         cases = cases_referenced_by_xform(form)

@@ -35,6 +35,9 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
     name = StringProperty()
     # a list of user ids for users
     users = ListProperty()
+    # a list of user ids that have been removed from the Group.
+    # This is recorded so that we can update the user at a later point
+    removed_users = SetProperty()
     path = ListProperty()
     case_sharing = BooleanProperty()
     reporting = BooleanProperty(default=True)
@@ -88,19 +91,24 @@ class Group(QuickCachedDocumentMixin, UndoableDocument):
             couch_user_id = couch_user_id.user_id
         if couch_user_id not in self.users:
             self.users.append(couch_user_id)
+        if couch_user_id in self.removed_users:
+            self.removed_users.remove(couch_user_id)
         if save:
             self.save()
 
-    def remove_user(self, couch_user_id, save=True):
+    def remove_user(self, couch_user_id):
+        '''
+        Returns True if it removed a user, False otherwise
+        '''
         if not isinstance(couch_user_id, basestring):
             couch_user_id = couch_user_id.user_id
         if couch_user_id in self.users:
-            for i in range(0,len(self.users)):
+            for i in range(0, len(self.users)):
                 if self.users[i] == couch_user_id:
                     del self.users[i]
-                    if save:
-                        self.save()
-                    return
+                    self.removed_users.add(couch_user_id)
+                    return True
+        return False
 
     def add_group(self, group):
         group.add_to_group(self)

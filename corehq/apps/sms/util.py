@@ -49,7 +49,7 @@ def get_date_format(human_readable_format):
 
 def strip_plus(phone_number):
     if (isinstance(phone_number, basestring) and len(phone_number) > 0
-        and phone_number[0] == "+"):
+            and phone_number[0] == "+"):
         return phone_number[1:]
     else:
         return phone_number

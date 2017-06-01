@@ -121,7 +121,7 @@ class EQAActionItemSpec(JsonObject):
                         ]
                     )
                     application = Application.get(latest_form.app_id)
-                    form = application.get_form_by_xmlns(self.xmlns)
+                    form = application.get_forms_by_xmlns(self.xmlns)[0]
                     question_list = application.get_questions(self.xmlns)
                     questions = {x['value']: x for x in question_list}
                     return {

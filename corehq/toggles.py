@@ -770,7 +770,8 @@ ENIKSHAY_API = StaticToggle(
     'enikshay_api',
     'Enable access to eNikshay api endpoints',
     TAG_ONE_OFF,
-    [NAMESPACE_USER]
+    [NAMESPACE_USER],
+    always_enabled={"enikshay"},
 )
 
 NIKSHAY_INTEGRATION = StaticToggle(
@@ -785,6 +786,7 @@ BETS_INTEGRATION = StaticToggle(
     'Enable BETS data forwarders',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
+    always_enabled={"enikshay"},
 )
 
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
@@ -806,6 +808,7 @@ SUPPORT = StaticToggle(
     'support',
     'General toggle for support features',
     TAG_EXPERIMENTAL,
+    help_link='https://confluence.dimagi.com/display/ccinternal/Support+Flag',
 )
 
 BASIC_CHILD_MODULE = StaticToggle(

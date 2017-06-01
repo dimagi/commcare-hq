@@ -25,7 +25,8 @@ from couchforms.const import DEVICE_LOG_XMLNS
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.mixins import UnicodeMixIn
-from dimagi.utils.post import simple_post
+from dimagi.utils.post import simple_post, perform_SOAP_operation
+
 from .dbaccessors import (
     get_pending_repeat_record_count,
     get_failure_repeat_record_count,
@@ -50,6 +51,8 @@ def log_repeater_timeout_in_datadog(domain):
 
 
 DELETED = "-Deleted"
+BASIC_AUTH = "basic"
+DIGEST_AUTH = "digest"
 
 
 class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
@@ -63,7 +66,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     url = StringProperty()
     format = StringProperty()
 
-    auth_type = StringProperty(choices=("basic", "digest"), required=False)
+    auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH), required=False)
     username = StringProperty()
     password = StringProperty()
     friendly_name = _("Data")
@@ -209,27 +212,23 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         # to be overridden
         return self.generator.get_headers()
 
-    def _use_basic_auth(self):
-        return self.auth_type == "basic"
-
-    def _use_digest_auth(self):
-        return self.auth_type == "digest"
-
     def get_auth(self):
-        if self._use_basic_auth():
+        if self.auth_type == BASIC_AUTH:
             return HTTPBasicAuth(self.username, self.password)
-        elif self._use_digest_auth():
+        elif self.auth_type == DIGEST_AUTH:
             return HTTPDigestAuth(self.username, self.password)
         return None
 
-    def fire_for_record(self, repeat_record):
+    def send_request(self, repeat_record, payload):
         headers = self.get_headers(repeat_record)
         auth = self.get_auth()
-        payload = self.get_payload(repeat_record)
         url = self.get_url(repeat_record)
+        return simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth)
 
+    def fire_for_record(self, repeat_record):
+        payload = self.get_payload(repeat_record)
         try:
-            response = simple_post(payload, url, headers=headers, timeout=POST_TIMEOUT, auth=auth)
+            response = self.send_request(repeat_record, payload)
         except (Timeout, ConnectionError) as error:
             log_repeater_timeout_in_datadog(self.domain)
             return self.handle_response(RequestConnectionError(error), repeat_record)
@@ -343,6 +342,13 @@ class CaseRepeater(Repeater):
 
     def __unicode__(self):
         return "forwarding cases to: %s" % self.url
+
+
+class SOAPRepeaterMixin(Repeater):
+    operation = StringProperty()
+
+    def send_request(self, repeat_record, payload):
+        return perform_SOAP_operation(payload, self.url, self.operation)
 
 
 class ShortFormRepeater(Repeater):
@@ -507,9 +513,8 @@ class RepeatRecord(Document):
         self.failure_reason = attempt.failure_reason
 
     def get_numbered_attempts(self):
-        offset = self.overall_tries - len(self.attempts)
         for i, attempt in enumerate(self.attempts):
-            yield i + 1 + offset, attempt
+            yield i + 1, attempt
 
     def make_set_next_try_attempt(self, failure_reason):
         # we use an exponential back-off to avoid submitting to bad urls

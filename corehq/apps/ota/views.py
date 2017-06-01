@@ -1,3 +1,4 @@
+import re
 from distutils.version import LooseVersion
 
 from django.http import JsonResponse
@@ -19,9 +20,18 @@ from corehq import toggles, privileges
 from corehq.const import OPENROSA_VERSION_MAP, OPENROSA_DEFAULT_VERSION
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.case_search.models import CaseSearchConfig, merge_queries, CaseSearchQueryAddition, \
-    SEARCH_QUERY_ADDITION_KEY, QueryMergeException, FuzzyProperties
-from corehq.apps.app_manager.const import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
+from corehq.apps.case_search.models import (
+    CaseSearchConfig,
+    merge_queries,
+    replace_custom_query_variables,
+    CaseSearchQueryAddition,
+    SEARCH_QUERY_ADDITION_KEY,
+    SEARCH_QUERY_CUSTOM_VALUE,
+    QueryMergeException,
+    FuzzyProperties,
+    CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    UNSEARCHABLE_KEYS,
+)
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_or_digest_or_basic_or_apikey,
@@ -91,35 +101,12 @@ def search(request, domain):
         case_type = criteria.pop('case_type')
     except KeyError:
         return HttpResponse('Search request must specify case type', status=400)
-    try:
-        include_closed = criteria.pop('include_closed')
-    except KeyError:
-        include_closed = False
-
     search_es = (CaseSearchES()
                  .domain(domain)
                  .case_type(case_type)
                  .size(CASE_SEARCH_MAX_RESULTS))
 
-    if include_closed != 'True':
-        search_es = search_es.is_closed(False)
-
-    try:
-        config = CaseSearchConfig.objects.get(domain=domain)
-    except CaseSearchConfig.DoesNotExist as e:
-        from corehq.util.soft_assert import soft_assert
-        _soft_assert = soft_assert(
-            to="{}@{}.com".format('frener', 'dimagi'),
-            notify_admins=False, send_to_ops=False
-        )
-        _soft_assert(
-            False,
-            u"Someone in domain: {} tried accessing case search without a config".format(domain),
-            e
-        )
-        config = CaseSearchConfig(domain=domain)
-
-    query_addition_id = criteria.pop(SEARCH_QUERY_ADDITION_KEY, None)
+    search_es = _add_include_closed(search_es, criteria)
 
     owner_id = criteria.pop('owner_id', False)
     if owner_id:
@@ -127,20 +114,15 @@ def search(request, domain):
 
     blacklisted_owner_ids = criteria.pop(CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY, None)
     if blacklisted_owner_ids is not None:
-        search_es = add_blacklisted_owner_ids(search_es, blacklisted_owner_ids)
+        search_es = _add_blacklisted_owner_ids(search_es, blacklisted_owner_ids)
 
-    try:
-        fuzzies = config.fuzzy_properties.get(domain=domain, case_type=case_type).properties
-    except FuzzyProperties.DoesNotExist:
-        fuzzies = []
+    search_es = _add_case_property_queries(domain, case_type, search_es, criteria)
 
-    for key, value in criteria.items():
-        search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
-
+    query_addition_id = criteria.pop(SEARCH_QUERY_ADDITION_KEY, None)
     query_addition_debug_details = {}
     try:
         search_es = _add_case_search_addition(
-            request, domain, search_es, query_addition_id, query_addition_debug_details
+            request, domain, search_es, query_addition_id, query_addition_debug_details, criteria
         )
     except QueryMergeException as e:
         return _handle_query_merge_exception(request, e)
@@ -155,18 +137,69 @@ def search(request, domain):
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
 
-def add_blacklisted_owner_ids(search_es, blacklisted_owner_ids):
+def _add_include_closed(search_es, criteria):
+    try:
+        include_closed = criteria.pop('include_closed')
+    except KeyError:
+        include_closed = False
+    if include_closed != 'True':
+        search_es = search_es.is_closed(False)
+    return search_es
+
+
+def _add_blacklisted_owner_ids(search_es, blacklisted_owner_ids):
     for blacklisted_owner_id in blacklisted_owner_ids.split(' '):
             search_es = search_es.blacklist_owner_id(blacklisted_owner_id)
     return search_es
 
 
-def _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details):
+def _add_case_property_queries(domain, case_type, search_es, criteria):
+    try:
+        config = (CaseSearchConfig.objects
+                  .prefetch_related('fuzzy_properties')
+                  .prefetch_related('ignore_patterns')
+                  .get(domain=domain))
+    except CaseSearchConfig.DoesNotExist as e:
+        from corehq.util.soft_assert import soft_assert
+        _soft_assert = soft_assert(
+            to="{}@{}.com".format('frener', 'dimagi'),
+            notify_admins=False, send_to_ops=False
+        )
+        _soft_assert(
+            False,
+            u"Someone in domain: {} tried accessing case search without a config".format(domain),
+            e
+        )
+        config = CaseSearchConfig(domain=domain)
+
+    try:
+        fuzzies = config.fuzzy_properties.get(domain=domain, case_type=case_type).properties
+    except FuzzyProperties.DoesNotExist:
+        fuzzies = []
+
+    for key, value in criteria.items():
+        if key in UNSEARCHABLE_KEYS or key.startswith(SEARCH_QUERY_CUSTOM_VALUE):
+            continue
+        remove_char_regexs = config.ignore_patterns.filter(
+            domain=domain,
+            case_type=case_type,
+            case_property=key,
+        )
+        for removal_regex in remove_char_regexs:
+            value = re.sub(removal_regex.regex, '', value)
+        search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
+
+    return search_es
+
+
+def _add_case_search_addition(request, domain, search_es, query_addition_id,
+                              query_addition_debug_details, criteria):
     if query_addition_id:
-        query_addition = CaseSearchQueryAddition.objects.get(id=query_addition_id, domain=domain)
+        query_addition = CaseSearchQueryAddition.objects.get(id=query_addition_id, domain=domain).query_addition
+        query_addition = replace_custom_query_variables(query_addition, criteria)
         query_addition_debug_details['original_query'] = search_es.get_query()
-        query_addition_debug_details['query_addition'] = query_addition.query_addition
-        new_query = merge_queries(search_es.get_query(), query_addition.query_addition)
+        query_addition_debug_details['query_addition'] = query_addition
+        new_query = merge_queries(search_es.get_query(), query_addition)
         query_addition_debug_details['new_query'] = new_query
         search_es = search_es.set_query(new_query)
     return search_es
@@ -248,6 +281,7 @@ def get_restore_params(request):
         'overwrite_cache': request.GET.get('overwrite_cache') == 'true',
         'openrosa_version': openrosa_version,
         'device_id': request.GET.get('device_id'),
+        'user_id': request.GET.get('user_id'),
     }
 
 
@@ -255,9 +289,21 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
                          force_restore_mode=None,
-                         as_user=None, device_id=None,
+                         as_user=None, device_id=None, user_id=None,
                          has_data_cleanup_privelege=False,
                          openrosa_version=OPENROSA_DEFAULT_VERSION):
+
+    if user_id and user_id != couch_user.user_id:
+        # sync with a user that has been deleted but a new
+        # user was created with the same username and password
+        from couchforms.openrosa_response import get_simple_response_xml
+        from couchforms.openrosa_response import ResponseNature
+        response = get_simple_response_xml(
+            'Attempt to sync with invalid user.',
+            ResponseNature.OTA_RESTORE_ERROR
+        )
+        return HttpResponse(response, content_type="text/xml; charset=utf-8", status=412), None
+
     # not a view just a view util
     is_permitted, message = is_permitted_to_restore(
         domain,

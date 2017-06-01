@@ -16,7 +16,6 @@ from corehq.apps.app_manager.views.forms import \
     get_form_view_context_and_template
 from corehq.apps.app_manager.views.releases import get_releases_context
 from corehq.apps.app_manager.views.utils import bail, encode_if_unicode
-from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.hqmedia.controller import (
     MultimediaImageUploadController,
     MultimediaAudioUploadController,
@@ -136,12 +135,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         template, form_context = get_form_view_context_and_template(
             request, domain, form, context['langs']
         )
-        context.update({
-            'case_properties': get_all_case_properties(app),
-            'usercase_properties': get_usercase_properties(app),
-            'property_descriptions': get_case_property_description_dict(domain)
-        })
-
         context.update(form_context)
     elif module:
         template = get_module_template(request.user, module)

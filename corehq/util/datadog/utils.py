@@ -7,8 +7,6 @@ from datadog import api
 
 from corehq.util.datadog.const import ALERT_INFO
 
-datadog_metric_logger = logging.getLogger('datadog-metrics')
-
 WILDCARD = '*'
 DATADOG_WEB_USERS_GAUGE = 'commcare.hubspot.web_users_processed'
 DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE = 'commcare.hubspot.domains_with_forms_gt_threshold'
@@ -54,19 +52,6 @@ def create_datadog_event(title, text, alert_type=ALERT_INFO, tags=None, aggregat
             datadog_logger.exception('Error creating Datadog event', e)
     else:
         datadog_logger.debug('Datadog event: (%s) %s\n%s', alert_type, title, text)
-
-
-def log_counter(metric, details=None):
-    details = details or {}
-    message = ' '.join(['{}={}'.format(key, value) for key, value in details.iteritems()])
-    datadog_metric_logger.info(
-        message,
-        extra={
-            'value': 1,
-            'metric_type': 'counter',
-            'metric': metric,
-        },
-    )
 
 
 def sanitize_url(url):

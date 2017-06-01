@@ -263,6 +263,12 @@ def revert_to_copy(request, domain, app_id):
         request,
         "Successfully reverted to version %s, now at version %s" % (copy.version, app.version)
     )
+    copy = app.make_build(
+        comment="Reverted to version %s" % copy.version,
+        user_id=request.couch_user.get_id,
+        previous_version=app.get_latest_app(released_only=False)
+    )
+    copy.save(increment_version=False)
     return back_to_main(request, domain, app_id=app_id)
 
 
