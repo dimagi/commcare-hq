@@ -79,7 +79,7 @@
     "GroupToUserPillow": {
         "advertised_name": "GroupToUserPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "GroupToUserPillow-test_hqusers_2017-05-11",
+        "checkpoint_id": "GroupToUserPillow-test_hqusers_2017-05-22",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "GroupToUserPillow"
     },
@@ -163,7 +163,7 @@
     "UnknownUsersPillow": {
         "advertised_name": "UnknownUsersPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "UnknownUsersPillow-test_hqusers_2017-05-11",
+        "checkpoint_id": "UnknownUsersPillow-test_hqusers_2017-05-22",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UnknownUsersPillow"
     },
@@ -184,7 +184,7 @@
     "UserPillow": {
         "advertised_name": "UserPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "UserPillow-test_hqusers_2017-05-11",
+        "checkpoint_id": "UserPillow-test_hqusers_2017-05-22",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "UserPillow"
     },
@@ -250,5 +250,12 @@
         "checkpoint_id": "kafka-ucr-static",
         "full_class_name": "corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow",
         "name": "kafka-ucr-static"
+    },
+    "UpdateUserSyncHistoryPillow": {
+        "advertised_name": "UpdateUserSyncHistoryPillow",
+        "change_feed_type": "CouchChangeFeed",
+        "checkpoint_id": "UpdateUserSyncHistoryPillow",
+        "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
+        "name": "UpdateUserSyncHistoryPillow"
     }
 }
