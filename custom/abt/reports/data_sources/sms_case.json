@@ -430,7 +430,8 @@
             "Ethiopia": {
               "default": 0,
               "cases": {
-                "oromia": 708258
+                "Benishangul Gumuz": 112780,
+                "Oromia": 674878
               },
               "type": "switch",
               "switch_on": {
@@ -438,7 +439,7 @@
                   "type": "property_path",
                   "property_path": [
                     "user_data",
-                    "level_1_data"
+                    "level_1_name"
                   ]
                 },
                 "type": "related_doc",
@@ -792,12 +793,16 @@
             "Ethiopia": {
               "default": 0,
               "cases": {
-                "east_wollega": 141827,
-                "ilu_aba_bora": 81882,
-                "jimma": 155256,
-                "kellem_wollega": 106629,
-                "west_shewa": 86478,
-                "west_wollega": 136186
+                "Assosa": 76189,
+                "Buno Bedele": 37670,
+                "East Wollega": 144636,
+                "Horo Guduru Wollega": 65376,
+                "Kamashi": 36591,
+                "Kelem Wollega": 104351,
+                "South West Shewa": 55456,
+                "West Guji": 48655,
+                "West Shewa": 77698,
+                "West Wollega": 141036
               },
               "type": "switch",
               "switch_on": {
@@ -805,7 +810,7 @@
                   "type": "property_path",
                   "property_path": [
                     "user_data",
-                    "level_2_data"
+                    "level_2_name"
                   ]
                 },
                 "type": "related_doc",
@@ -951,42 +956,50 @@
             "Ethiopia": {
               "default": 0,
               "cases": {
-                "boneya_boshe": 12190,
-                "diga": 14758,
-                "gida_ayana": 22259,
-                "gobu_sayo": 12458,
-                "guto_gida": 17006,
-                "limu": 11329,
-                "sasiga_cb": 19027,
-                "wama_hagalo": 16840,
-                "wayu_tuka": 15960,
-                "bedele": 10464,
-                "borecha": 22283,
-                "chewaka_CB": 34548,
-                "dhedessa": 14587,
-                "kersa_cb": 29435,
-                "omo_nada": 36167,
-                "seka_chekorsa": 24312,
-                "sekoru": 21732,
-                "shebe_sombo": 17413,
-                "tiro afeta": 26197,
-                "dale_sadi": 17728,
-                "dale_wabara": 21665,
-                "hawa_galan_cb": 38626,
-                "lalo_kile": 12757,
-                "seyo": 15853,
-                "bako_tibe_cb": 19593,
-                "danno": 18870,
-                "dendy": 12984,
-                "ilu_galan": 19399,
-                "nonno": 15632,
-                "babo_gambel": 18343,
-                "begi": 17692,
-                "guliso": 12639,
-                "kiltu_kara": 12250,
-                "kondala": 19233,
-                "manasibu_cb": 37714,
-                "nejo_rural": 18315
+                "Abay chomen": 18872,
+                "Abe dengoro": 24650,
+                "Abeya": 19885,
+                "Agalo Meti": 10316,
+                "Amru": 14709,
+                "Babo Gambel": 18155,
+                "Bako Tibe": 19691,
+                "Bambasi": 22057,
+                "Begi": 17384,
+                "Boneya Boshe": 12233,
+                "Chewaka": 37670,
+                "Dale Sadi": 17815,
+                "Dale Wabara": 20323,
+                "Danno": 21964,
+                "Diga": 15748,
+                "Gelana": 16295,
+                "Gida Ayana": 22137,
+                "Gobu Sayo": 14226,
+                "Goro": 17000,
+                "Guliso": 13766,
+                "Guto Gida": 16920,
+                "Hawa Galan": 37056,
+                "Ilu": 21820,
+                "Ilu Galan": 20295,
+                "Jardega jarte": 7145,
+                "Kamash": 8101,
+                "Kiltu Kara": 12272,
+                "Kondala": 20632,
+                "Lalo Kile": 13035,
+                "Limu": 11610,
+                "Manasibu": 40566,
+                "Melka Soda": 12475,
+                "Menge": 18228,
+                "Nejo Rural": 18261,
+                "Nonno": 15748,
+                "Oda": 24725,
+                "Sasiga": 18108,
+                "Seyo": 16122,
+                "Sherkole": 11179,
+                "Tedal": 8152,
+                "Waliso Rural": 16636,
+                "Wama Hagalo": 17069,
+                "Wayu Tuka": 16585,
+                "Yaso": 10022
               },
               "type": "switch",
               "switch_on": {
@@ -994,7 +1007,7 @@
                   "type": "property_path",
                   "property_path": [
                     "user_data",
-                    "level_3_data"
+                    "level_3_name"
                   ]
                 },
                 "type": "related_doc",
@@ -1724,7 +1737,7 @@
             "Tanzania": 595393,
             "Rwanda": 188189,
             "zambia": 542184,
-            "Ethiopia": 708258,
+            "Ethiopia": 787658,
             "Mali": 242684,
             "Madagascar": 311916,
             "kenya": 226827,
