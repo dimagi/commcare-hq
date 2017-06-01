@@ -221,7 +221,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -400,101 +387,87 @@
+@@ -406,108 +393,94 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -399,7 +399,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -507,14 +480,15 @@
+@@ -520,14 +493,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -417,7 +417,7 @@
              {% endif %}
          </div>
      </div>
-@@ -522,12 +496,12 @@
+@@ -535,12 +509,13 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
