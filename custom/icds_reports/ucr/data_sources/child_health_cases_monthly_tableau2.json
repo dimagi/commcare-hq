@@ -515,7 +515,7 @@
         "column_id": "has_aadhar_id",
         "type": "boolean",
         "filter": {
-          "type":"boolean_expression",
+          "type": "boolean_expression",
           "operator": "eq",
           "property_value": "yes",
           "expression": {
@@ -569,7 +569,7 @@
             "end_date": {
               "type": "icds_month_end"
             },
-            "xmlns":[
+            "xmlns": [
               "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2",
               "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75",
               "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
@@ -772,17 +772,8 @@
             "name": "height_eligible"
           },
           "expression_if_true": {
-            "type": "icds_get_last_case_property_update",
-            "case_property": "height_child",
-            "start_date": {
-              "type": "icds_month_start"
-            },
-            "end_date": {
-              "type": "icds_month_end"
-            },
-            "xmlns":[
-              "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
-            ]
+            "type": "named",
+            "name": "height_recorded_in_month"
           },
           "expression_if_false": {
             "type": "property_name",
@@ -806,17 +797,8 @@
                   null
                 ],
                 "expression": {
-                  "type": "icds_get_last_case_property_update",
-                  "case_property": "height_child",
-                  "start_date": {
-                    "type": "icds_month_start"
-                  },
-                  "end_date": {
-                    "type": "icds_month_end"
-                  },
-                  "xmlns": [
-                    "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
-                  ]
+                  "type": "named",
+                  "name": "height_recorded_in_month"
                 }
               }
             },
@@ -842,22 +824,247 @@
                 null
               ],
               "expression": {
-                "type": "icds_get_last_case_property_update",
-                "case_property": "height_child",
-                "start_date": {
-                  "type": "icds_month_start"
-                },
-                "end_date": {
-                  "type": "icds_month_end"
-                },
-                "xmlns": [
-                  "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
-                ]
+                "type": "named",
+                "name": "height_recorded_in_month"
               }
             },
             {
               "type": "named",
               "name": "height_eligible"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "stunting_last_recorded",
+        "type": "expression",
+        "datatype": "string",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "height_eligible"
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "stunting_last_recorded"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "column_id": "current_month_stunting",
+        "type": "expression",
+        "datatype": "string",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "height_eligible"
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "current_month_stunting"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "column_id": "stunting_severe",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "height_eligible"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "severe",
+              "expression": {
+                "type": "named",
+                "name": "stunting_last_recorded"
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "stunting_moderate",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "height_eligible"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "moderate",
+              "expression": {
+                "type": "named",
+                "name": "stunting_last_recorded"
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "stunting_normal",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "height_eligible"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "normal",
+              "expression": {
+                "type": "named",
+                "name": "stunting_last_recorded"
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "wasting_last_recorded",
+        "type": "expression",
+        "datatype": "string",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "height_eligible"
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "wasting_last_recorded"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "column_id": "current_month_wasting",
+        "type": "expression",
+        "datatype": "string",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "height_eligible"
+          },
+          "expression_if_true": {
+            "type": "named",
+            "name": "current_month_wasting"
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "column_id": "wasting_severe",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "height_eligible"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "severe",
+              "expression": {
+                "type": "named",
+                "name": "wasting_last_recorded"
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "wasting_moderate",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "height_eligible"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "moderate",
+              "expression": {
+                "type": "named",
+                "name": "wasting_last_recorded"
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "wasting_normal",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "height_eligible"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "normal",
+              "expression": {
+                "type": "named",
+                "name": "wasting_last_recorded"
+              }
             }
           ]
         },
@@ -2169,7 +2376,7 @@
           "end_date": {
             "type": "icds_month_end"
           },
-          "xmlns":[
+          "xmlns": [
             "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2",
             "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75",
             "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
@@ -2209,7 +2416,7 @@
           "end_date": {
             "type": "icds_month_end"
           },
-          "xmlns":[
+          "xmlns": [
             "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2",
             "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75",
             "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
@@ -2242,8 +2449,8 @@
         "type": "icds_get_case_forms_in_date",
         "case_id_expression": {
           "expression": {
-              "type": "property_name",
-              "property_name": "_id"
+            "type": "property_name",
+            "property_name": "_id"
           },
           "type": "root_doc"
         },
@@ -2414,6 +2621,201 @@
         ],
         "case_id_path": [
           "child_health_case_id"
+        ]
+      },
+      "stunting_last_recorded": {
+        "type": "switch",
+        "switch_on": {
+          "type": "nested",
+          "argument_expression": {
+            "aggregation_fn": "last_item",
+            "type": "reduce_items",
+            "items_expression": {
+              "type": "icds_get_case_forms_by_date",
+              "xmlns": [
+                "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
+              ],
+              "end_date": {
+                "type": "icds_month_end"
+              }
+            }
+          },
+          "value_expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "zscore_grading_hfa"
+            ]
+          }
+        },
+        "cases": {
+          "red": {
+            "type": "constant",
+            "constant": "severe"
+          },
+          "yellow": {
+            "type": "constant",
+            "constant": "moderate"
+          },
+          "green": {
+            "type": "constant",
+            "constant": "normal"
+          }
+        },
+        "default": {
+          "type": "constant",
+          "constant": "unknown"
+        }
+      },
+      "current_month_stunting": {
+        "type": "switch",
+        "switch_on": {
+          "type": "nested",
+          "argument_expression": {
+            "aggregation_fn": "last_item",
+            "type": "reduce_items",
+            "items_expression": {
+              "type": "icds_get_case_forms_by_date",
+              "xmlns": [
+                "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
+              ],
+              "start_date": {
+                "type": "icds_month_start"
+              },
+              "end_date": {
+                "type": "icds_month_end"
+              }
+            }
+          },
+          "value_expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "zscore_grading_hfa"
+            ]
+          }
+        },
+        "cases": {
+          "red": {
+            "type": "constant",
+            "constant": "severe"
+          },
+          "yellow": {
+            "type": "constant",
+            "constant": "moderate"
+          },
+          "green": {
+            "type": "constant",
+            "constant": "normal"
+          }
+        },
+        "default": {
+          "type": "constant",
+          "constant": "unmeasured"
+        }
+      },
+      "wasting_last_recorded": {
+        "type": "switch",
+        "switch_on": {
+          "type": "nested",
+          "argument_expression": {
+            "aggregation_fn": "last_item",
+            "type": "reduce_items",
+            "items_expression": {
+              "type": "icds_get_case_forms_by_date",
+              "xmlns": [
+                "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
+              ],
+              "end_date": {
+                "type": "icds_month_end"
+              }
+            }
+          },
+          "value_expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "zscore_grading_wfh"
+            ]
+          }
+        },
+        "cases": {
+          "red": {
+            "type": "constant",
+            "constant": "severe"
+          },
+          "yellow": {
+            "type": "constant",
+            "constant": "moderate"
+          },
+          "green": {
+            "type": "constant",
+            "constant": "normal"
+          }
+        },
+        "default": {
+          "type": "constant",
+          "constant": "unknown"
+        }
+      },
+      "current_month_wasting": {
+        "type": "switch",
+        "switch_on": {
+          "type": "nested",
+          "argument_expression": {
+            "aggregation_fn": "last_item",
+            "type": "reduce_items",
+            "items_expression": {
+              "type": "icds_get_case_forms_by_date",
+              "xmlns": [
+                "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
+              ],
+              "start_date": {
+                "type": "icds_month_start"
+              },
+              "end_date": {
+                "type": "icds_month_end"
+              }
+            }
+          },
+          "value_expression": {
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "zscore_grading_wfh"
+            ]
+          }
+        },
+        "cases": {
+          "red": {
+            "type": "constant",
+            "constant": "severe"
+          },
+          "yellow": {
+            "type": "constant",
+            "constant": "moderate"
+          },
+          "green": {
+            "type": "constant",
+            "constant": "normal"
+          }
+        },
+        "default": {
+          "type": "constant",
+          "constant": "unmeasured"
+        }
+      },
+      "height_recorded_in_month": {
+        "type": "icds_get_last_case_property_update",
+        "case_property": "height_child",
+        "start_date": {
+          "type": "icds_month_start"
+        },
+        "end_date": {
+          "type": "icds_month_end"
+        },
+        "xmlns": [
+          "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
         ]
       }
     },
