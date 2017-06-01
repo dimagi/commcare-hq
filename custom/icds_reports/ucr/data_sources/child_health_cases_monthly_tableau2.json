@@ -582,40 +582,6 @@
         }
       },
       {
-        "column_id": "height_recorded_in_month",
-        "type": "expression",
-        "datatype": "decimal",
-        "is_nullable": true,
-        "is_primary_key": false,
-        "transform": {},
-        "display_name": null,
-        "comment": "Filter history on Additional Growth Monitoring",
-        "expression": {
-          "type": "conditional",
-          "test": {
-            "type": "named",
-            "name": "height_eligible"
-          },
-          "expression_if_true": {
-            "type": "icds_get_last_case_property_update",
-            "case_property": "height_child",
-            "start_date": {
-              "type": "icds_month_start"
-            },
-            "end_date": {
-              "type": "icds_month_end"
-            },
-            "xmlns":[
-              "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
-            ]
-          },
-          "expression_if_false": {
-            "type": "property_name",
-            "property_name": "no_exist"
-          }
-        }
-      },
-      {
         "column_id": "nutrition_status_last_recorded",
         "type": "expression",
         "datatype": "string",
@@ -776,6 +742,122 @@
             {
               "type": "named",
               "name": "wer_eligible"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "height_eligible",
+        "display_name": null,
+        "filter": {
+          "name": "height_eligible",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "height_recorded_in_month",
+        "type": "expression",
+        "datatype": "decimal",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "transform": {},
+        "display_name": null,
+        "comment": "Filter history on Additional Growth Monitoring",
+        "expression": {
+          "type": "conditional",
+          "test": {
+            "type": "named",
+            "name": "height_eligible"
+          },
+          "expression_if_true": {
+            "type": "icds_get_last_case_property_update",
+            "case_property": "height_child",
+            "start_date": {
+              "type": "icds_month_start"
+            },
+            "end_date": {
+              "type": "icds_month_end"
+            },
+            "xmlns":[
+              "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
+            ]
+          },
+          "expression_if_false": {
+            "type": "property_name",
+            "property_name": "no_exist"
+          }
+        }
+      },
+      {
+        "column_id": "height_measured_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "not",
+              "filter": {
+                "type": "boolean_expression",
+                "operator": "in",
+                "property_value": [
+                  "",
+                  null
+                ],
+                "expression": {
+                  "type": "icds_get_last_case_property_update",
+                  "case_property": "height_child",
+                  "start_date": {
+                    "type": "icds_month_start"
+                  },
+                  "end_date": {
+                    "type": "icds_month_end"
+                  },
+                  "xmlns": [
+                    "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
+                  ]
+                }
+              }
+            },
+            {
+              "type": "named",
+              "name": "height_eligible"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "height_not_measured_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "in",
+              "property_value": [
+                "",
+                null
+              ],
+              "expression": {
+                "type": "icds_get_last_case_property_update",
+                "case_property": "height_child",
+                "start_date": {
+                  "type": "icds_month_start"
+                },
+                "end_date": {
+                  "type": "icds_month_end"
+                },
+                "xmlns": [
+                  "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
+                ]
+              }
+            },
+            {
+              "type": "named",
+              "name": "height_eligible"
             }
           ]
         },
