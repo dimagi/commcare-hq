@@ -13,6 +13,7 @@ from custom.enikshay.private_sector_datamigration.models import (
     EpisodePrescription,
     LabTest,
     MigratedBeneficiaryCounter,
+    Voucher,
 )
 from custom.enikshay.user_setup import compress_nikshay_id
 
@@ -307,6 +308,14 @@ class BeneficiaryCaseFactory(object):
                 related_type=EPISODE_CASE_TYPE,
             )],
         }
+
+        try:
+            voucher = Voucher.objects.get(voucherNumber=prescription.voucherID)
+            if voucher.voucherStatusId == '3':
+                kwargs['attrs']['update'] = voucher.voucherUsedDate.date()
+        except Voucher.DoesNotExist:
+            pass
+
         return CaseStructure(**kwargs)
 
     def get_test_case_structure(self, labtest, occurrence_structure):
