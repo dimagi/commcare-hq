@@ -97,6 +97,14 @@ def format_form_meta_for_es(form_metadata):
     return form_metadata
 
 
+def _last_build_needs_update(last_build, build_date):
+    if not (last_build and last_build.build_version_date):
+        return True
+    if build_date > last_build.build_version_date:
+        return True
+    return False
+
+
 def update_latest_builds(user, app_id, date, version):
     last_builds = filter(
         lambda build: build.app_id == app_id,
@@ -108,7 +116,7 @@ def update_latest_builds(user, app_id, date, version):
     else:
         last_build = None
 
-    if last_build is None or date > last_build.build_version_date:
+    if _last_build_needs_update(last_build, date):
         if last_build is None:
             last_build = LastBuild()
             user.reporting_metadata.last_builds.append(last_build)
@@ -116,8 +124,7 @@ def update_latest_builds(user, app_id, date, version):
         last_build.app_id = app_id
         last_build.build_version_date = date
 
-    if user.reporting_metadata.last_build_for_user is None \
-            or date > user.reporting_metadata.last_build_for_user.build_version_date:
+    if _last_build_needs_update(user.reporting_metadata.last_build_for_user, date):
         user.reporting_metadata.last_build_for_user = last_build
 
 
