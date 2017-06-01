@@ -1,24 +1,5 @@
-{% extends "app_manager/v2/form_view_base.html" %}
-{% load xforms_extras %}
-{% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js-inline %}{{ block.super }}
-{% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
-  {% if form.source %}
-  <script>
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
-        CaseConfig = hqImport('app_manager/js/case-config-ui.js').CaseConfig;
-    var caseConfig = new CaseConfig(_.extend({}, initial_page_data("case_config_options"), {
-        home: $('#case-config-ko'),
-        requires: ko.observable(initial_page_data("form_requires")),
-    }));
-    caseConfig.init();
-  </script>
-  {% endif %}
-{% endblock %}
-
-{% block modals %}{{ block.super }}
 <div class="modal fade" id="upload-xform">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -84,4 +65,3 @@
           </div>
       </div>
   </div>
-{% endblock modals %}

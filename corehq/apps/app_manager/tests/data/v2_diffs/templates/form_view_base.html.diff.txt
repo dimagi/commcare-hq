@@ -6,7 +6,7 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load compress %}
-@@ -50,9 +50,9 @@
+@@ -56,9 +56,9 @@
          <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
      {% endif %}
  
@@ -19,7 +19,7 @@
      {% if allow_form_workflow %}
          <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
      {% endif %}
-@@ -164,15 +164,18 @@
+@@ -170,15 +170,18 @@
              });
          }
  
@@ -41,7 +41,7 @@
              {% with module_name=module.name|trans:langs %}
              labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
              {% endwith %}
-@@ -215,7 +218,7 @@
+@@ -221,7 +224,7 @@
          });
          {% endif %}
  
@@ -50,7 +50,7 @@
              // tag the 'preview in cloudcare' button with the right url
              // unfortunately, has to be done in javascript
              var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-@@ -281,74 +284,57 @@
+@@ -287,74 +290,57 @@
      </script>
  {% endblock %}
  
@@ -167,7 +167,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -360,35 +346,36 @@
+@@ -366,35 +352,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -221,7 +221,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -400,101 +387,87 @@
+@@ -406,108 +393,94 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -238,9 +238,25 @@
 -                        {% endblocktrans %}
 -                    </div>
 -                    <div class="casexml" id="casexml_home">
--                        {% block case_management_content %}
++                  {% endif %}
++                  {% if form_errors or xform_validation_errored %}
++                      <p class="alert alert-warning">
++                          {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
++                      </p>
++                  {% elif form.source %}
++                      <div class="casexml" id="casexml_home">
+                         {% if module.doc_type == 'AdvancedModule' %}
+                             {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
+                             {% initial_page_data 'schedule_options' schedule_options %}
+                             {% include 'app_manager/v1/partials/case_config_advanced.html' %}
+                         {% elif module.doc_type == 'CareplanModule' %}
+-                            {% include 'app_manager/v1/partials/case_config_careplan.html' %}
++                            {% include 'app_manager/v2/partials/case_config_careplan.html' %}
+                         {% else %}
+                             {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
 -                            {% include 'app_manager/v1/partials/case_config.html' %}
--                        {% endblock %}
++                            {% include 'app_manager/v2/partials/case_config.html' %}
+                         {% endif %}
 -                    </div>
 -                {% else %}
 -                    <p class="alert alert-warning">
@@ -249,16 +265,6 @@
 -                {% endif %}
 -            </div>
 -
-+                  {% endif %}
-+                  {% if form_errors or xform_validation_errored %}
-+                      <p class="alert alert-warning">
-+                          {% trans "There are errors in your form. Fix your form in order to view and edit Case Management." %}
-+                      </p>
-+                  {% elif form.source %}
-+                      <div class="casexml" id="casexml_home">
-+                          {% block case_management_content %}
-+                              {% include 'app_manager/v2/partials/case_config.html' %}
-+                          {% endblock %}
 +                      </div>
 +                  {% else %}
 +                      <p class="alert alert-warning">
@@ -393,7 +399,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -507,14 +480,15 @@
+@@ -520,14 +493,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -411,11 +417,12 @@
              {% endif %}
          </div>
      </div>
-@@ -522,12 +496,12 @@
+@@ -535,12 +509,13 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
 -{% include "app_manager/v1/partials/nav_menu_media_modals.html" %}
++{% include "app_manager/v2/partials/form_view_modals.html" %}
 +{% include "app_manager/v2/partials/nav_menu_media_modals.html" %}
  {% endblock modals %}
  
