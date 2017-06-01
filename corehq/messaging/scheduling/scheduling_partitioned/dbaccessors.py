@@ -75,12 +75,23 @@ def delete_timed_schedule_instance(instance):
     delete_object_from_partitioned_database(instance, instance.schedule_instance_id)
 
 
-def _get_active_schedule_instance_ids(cls, start_timestamp, end_timestamp):
+def get_active_schedule_instance_ids(cls, due_before, due_after=None):
+    from corehq.messaging.scheduling.scheduling_partitioned.models import (
+        AlertScheduleInstance,
+        TimedScheduleInstance,
+    )
+
+    if cls not in (AlertScheduleInstance, TimedScheduleInstance):
+        raise TypeError("Expected AlertScheduleInstance or TimedScheduleInstance")
+
     active_filter = Q(
         active=True,
-        next_event_due__gt=start_timestamp,
-        next_event_due__lte=end_timestamp,
+        next_event_due__lte=due_before,
     )
+
+    if due_after:
+        active_filter = active_filter & Q(next_event_due__gt=due_after)
+
     for schedule_instance_id in run_query_across_partitioned_databases(
         cls,
         active_filter,
@@ -89,16 +100,29 @@ def _get_active_schedule_instance_ids(cls, start_timestamp, end_timestamp):
         yield schedule_instance_id
 
 
-def get_active_alert_schedule_instance_ids(start_timestamp, end_timestamp):
-    from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
+def get_active_case_schedule_instance_ids(cls, due_before, due_after=None):
+    from corehq.messaging.scheduling.scheduling_partitioned.models import (
+        CaseAlertScheduleInstance,
+        CaseTimedScheduleInstance,
+    )
 
-    return _get_active_schedule_instance_ids(AlertScheduleInstance, start_timestamp, end_timestamp)
+    if cls not in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
+        raise TypeError("Expected CaseAlertScheduleInstance or CaseTimedScheduleInstance")
 
+    active_filter = Q(
+        active=True,
+        next_event_due__lte=due_before,
+    )
 
-def get_active_timed_schedule_instance_ids(start_timestamp, end_timestamp):
-    from corehq.messaging.scheduling.scheduling_partitioned.models import TimedScheduleInstance
+    if due_after:
+        active_filter = active_filter & Q(next_event_due__gt=due_after)
 
-    return _get_active_schedule_instance_ids(TimedScheduleInstance, start_timestamp, end_timestamp)
+    for (case_id, schedule_instance_id) in run_query_across_partitioned_databases(
+        cls,
+        active_filter,
+        values=['case_id', 'schedule_instance_id']
+    ):
+        yield (case_id, schedule_instance_id)
 
 
 def get_alert_schedule_instances_for_schedule(schedule):
