@@ -629,13 +629,23 @@ class Agency(models.Model):
 
     @property
     def location_type(self):
-        return {
-            'ATFO': 'pdr',
-            'ATHC': 'pac',
-            'ATLC': 'plc',
-            'ATPH': 'pcc',
-            'ATPR': 'pcp',
-        }[self.agencyTypeId]
+        if self.agencyTypeId == 'ATFO':
+            return None
+        elif self.agencyTypeId == 'ATPR':
+            return {
+                'PRQP': 'pcp',
+                'PRIP': 'pac',
+            }[self.agencySubTypeId]
+        else:
+            return {
+                'ATHC': 'pcp',
+                'ATLC': 'plc',
+                'ATPH': 'pcc',
+            }[self.agencyTypeId]
+
+    @property
+    def is_field_officer(self):
+        return self.agencyTypeId == 'ATFO'
 
     @property
     def name(self):
