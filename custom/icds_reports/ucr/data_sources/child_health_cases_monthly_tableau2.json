@@ -2376,10 +2376,10 @@
         "filters": [
           {
             "type": "boolean_expression",
-            "operator": "gte",
+            "operator": "gt",
             "property_value": 6,
             "expression": {
-              "type": "icds_child_age_in_months_month_start"
+              "type": "icds_child_age_in_months_month_end"
             }
           },
           {
