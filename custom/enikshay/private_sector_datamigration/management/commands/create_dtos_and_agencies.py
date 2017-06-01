@@ -107,7 +107,6 @@ class Command(BaseCommand):
         field_officer.user_data['usertype'] = 'ps-fieldstaff'
         field_officer.save()
 
-
     @staticmethod
     def get_usertype(code):
         return {
