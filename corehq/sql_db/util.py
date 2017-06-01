@@ -3,7 +3,7 @@ from corehq.sql_db.config import partition_config
 from django.conf import settings
 
 
-def get_object_from_partitioned_database(model_class, partition_value, partitioned_field_name):
+def get_object_from_partitioned_database(model_class, partition_value, lookup_field_name, lookup_value):
     """
     Determines from which database to retrieve a paritioned model object and
     retrieves it.
@@ -13,14 +13,15 @@ def get_object_from_partitioned_database(model_class, partition_value, partition
     :param parition_value: The value that is used to partition the model; this
     value will be used to select the database
 
-    :param partitioned_field_name: The model field on which the object is partitioned; the
-    object whose partitioned_field_name attribute equals partition_value is returned
+    :param lookup_field_name: The model field on which to lookup the object
+
+    :param lookup_value: The value for which to lookup the object
 
     :return: The model object
     """
     db_name = get_db_alias_for_partitioned_doc(partition_value)
     kwargs = {
-        partitioned_field_name: partition_value,
+        lookup_field_name: lookup_value,
     }
     return model_class.objects.using(db_name).get(**kwargs)
 

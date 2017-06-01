@@ -28,7 +28,8 @@ def get_alert_schedule_instance(schedule_instance_id):
     return get_object_from_partitioned_database(
         AlertScheduleInstance,
         schedule_instance_id,
-        'schedule_instance_id'
+        'schedule_instance_id',
+        schedule_instance_id
     )
 
 
@@ -39,7 +40,8 @@ def get_timed_schedule_instance(schedule_instance_id):
     return get_object_from_partitioned_database(
         TimedScheduleInstance,
         schedule_instance_id,
-        'schedule_instance_id'
+        'schedule_instance_id',
+        schedule_instance_id
     )
 
 
@@ -179,6 +181,24 @@ def get_case_timed_schedule_instances_for_schedule(case_id, schedule):
 
     _validate_class(schedule, TimedSchedule)
     return get_case_timed_schedule_instances_for_schedule_id(case_id, schedule.schedule_id)
+
+
+def get_case_schedule_instance(cls, case_id, schedule_instance_id):
+    from corehq.messaging.scheduling.scheduling_partitioned.models import (
+        CaseAlertScheduleInstance,
+        CaseTimedScheduleInstance,
+    )
+
+    if cls not in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
+        raise ValueError("Expected CaseAlertScheduleInstance or CaseTimedScheduleInstance")
+
+    _validate_uuid(schedule_instance_id)
+    return get_object_from_partitioned_database(
+        cls,
+        case_id,
+        'schedule_instance_id',
+        schedule_instance_id
+    )
 
 
 def save_case_schedule_instance(instance):
