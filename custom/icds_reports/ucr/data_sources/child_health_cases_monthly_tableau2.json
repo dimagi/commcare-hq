@@ -1276,12 +1276,38 @@
                 "type": "nested",
                 "argument_expression": {
                   "type": "named",
-                  "name": "get_latest_ebf_repeat"
+                  "name": "get_ebf_repeat_in_month"
                 },
                 "value_expression": {
                   "type": "property_name",
                   "property_name": "is_ebf"
                 }
+              }
+            },
+            {
+              "name": "ebf_eligible",
+              "type": "named"
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "ebf_no_info_recorded",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "in",
+              "property_value": [
+                "",
+                null
+              ],
+              "expression": {
+                "type": "named",
+                "name": "get_ebf_repeat_in_month"
               }
             },
             {
@@ -1333,7 +1359,7 @@
                     "type": "nested",
                     "argument_expression": {
                       "type": "named",
-                      "name": "get_latest_ebf_repeat"
+                      "name": "get_ebf_repeat_in_month"
                     },
                     "value_expression": {
                       "type": "property_name",
@@ -1349,7 +1375,7 @@
                     "type": "nested",
                     "argument_expression": {
                       "type": "named",
-                      "name": "get_latest_ebf_repeat"
+                      "name": "get_ebf_repeat_in_month"
                     },
                     "value_expression": {
                       "type": "property_name",
@@ -1365,7 +1391,7 @@
                     "type": "nested",
                     "argument_expression": {
                       "type": "named",
-                      "name": "get_latest_ebf_repeat"
+                      "name": "get_ebf_repeat_in_month"
                     },
                     "value_expression": {
                       "type": "property_name",
@@ -1397,7 +1423,7 @@
                 "type": "nested",
                 "argument_expression": {
                   "type": "named",
-                  "name": "get_latest_ebf_repeat"
+                  "name": "get_ebf_repeat_in_month"
                 },
                 "value_expression": {
                   "type": "property_name",
@@ -2516,25 +2542,8 @@
       "ebf_not_breastfeeding_reason": {
         "type": "nested",
         "argument_expression": {
-          "type": "icds_get_last_form_repeat",
-          "forms_expression": {
-            "type": "icds_get_case_forms_by_date",
-            "xmlns": [
-              "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE",
-              "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D"
-            ],
-            "end_date": {
-              "type": "icds_month_end"
-            }
-          },
-          "repeat_path": [
-            "form",
-            "child",
-            "item"
-          ],
-          "case_id_path": [
-            "child_health_case_id"
-          ]
+          "type": "named",
+          "name": "get_ebf_repeat_in_month"
         },
         "value_expression": {
           "type": "property_name",
@@ -2589,7 +2598,7 @@
           "property_name": "_id"
         }
       },
-      "get_latest_ebf_repeat": {
+      "get_ebf_repeat_in_month": {
         "type": "icds_get_last_form_repeat",
         "forms_expression": {
           "type": "icds_get_case_forms_by_date",
@@ -2597,6 +2606,9 @@
             "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE",
             "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D"
           ],
+          "start_date": {
+            "type": "icds_month_start"
+          },
           "end_date": {
             "type": "icds_month_end"
           }
@@ -3267,7 +3279,8 @@
             "operator": "eq",
             "property_value": "yes",
             "expression": {
-              "type": "named", "name": "valid_in_month"
+              "type": "named",
+              "name": "valid_in_month"
             }
           }
         ]
