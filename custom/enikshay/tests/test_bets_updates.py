@@ -50,23 +50,23 @@ class TestBetsUpdates(TestCase):
     def test_invalid_request(self):
         voucher = self.make_voucher()
         res = self.make_request({'response': [{
-            'event_type': 'Voucher',
+            'eventType': 'Voucher',
             'id': voucher.case_id,
             # Missing this field
             # 'status': 'Success',
             'amount': 100,
-            'payment_date': "2014-11-22 13:23:44.657"
+            'paymentDate': "2014-11-22 13:23:44.657"
         }]})
         self.assertResponseStatus(res, 400)
 
     def test_update_voucher_success(self):
         voucher = self.make_voucher()
         res = self.make_request({'response': [{
-            'event_type': 'Voucher',
+            'eventType': 'Voucher',
             'id': voucher.case_id,
             'status': 'Success',
             'amount': 100,
-            'payment_date': "2014-11-22 13:23:44.657"
+            'paymentDate': "2014-11-22 13:23:44.657"
         }]})
         self.assertResponseStatus(res, 200)
         self.assertDictContainsSubset(
@@ -77,12 +77,12 @@ class TestBetsUpdates(TestCase):
     def test_update_voucher_failure(self):
         voucher = self.make_voucher()
         res = self.make_request({'response': [{
-            'event_type': 'Voucher',
+            'eventType': 'Voucher',
             'id': voucher.case_id,
             'status': 'Failure',
-            'remarks': 'The Iron Bank will have its due',
+            'failureDescription': 'The Iron Bank will have its due',
             'amount': 0,
-            'payment_date': "2014-11-22 13:23:44.657"
+            'paymentDate': "2014-11-22 13:23:44.657"
         }]})
         self.assertResponseStatus(res, 200)
         self.assertDictContainsSubset(
@@ -92,11 +92,11 @@ class TestBetsUpdates(TestCase):
 
     def test_update_voucher_unknown_id(self):
         res = self.make_request({'response': [{
-            'event_type': 'Voucher',
+            'eventType': 'Voucher',
             'id': "jaqen-hghar",
             'status': 'Success',
             'amount': 100,
-            'payment_date': "2014-11-22 13:23:44.657"
+            'paymentDate': "2014-11-22 13:23:44.657"
         }]})
         self.assertResponseStatus(res, 404)
 
@@ -113,12 +113,12 @@ class TestBetsUpdates(TestCase):
     def test_update_incentive_success(self):
         episode = self.make_episode_case()
         res = self.make_request({'response': [{
-            'event_type': 'Incentive',
+            'eventType': 'Incentive',
             'id': episode.case_id,
             'status': 'Success',
-            'bets_parent_event_id': '106',
+            'eventID': '106',
             'amount': 100,
-            'payment_date': "2014-11-22 13:23:44.657"
+            'paymentDate': "2014-11-22 13:23:44.657"
         }]})
         self.assertResponseStatus(res, 200)
         self.assertDictContainsSubset(
@@ -132,12 +132,12 @@ class TestBetsUpdates(TestCase):
     def test_update_incentive_failure(self):
         episode = self.make_episode_case()
         res = self.make_request({'response': [{
-            'event_type': 'Incentive',
+            'eventType': 'Incentive',
             'id': episode.case_id,
             'status': 'Failure',
-            'remarks': 'We do not sow',
-            'bets_parent_event_id': '106',
-            'payment_date': "2014-11-22 13:23:44.657"
+            'failureDescription': 'We do not sow',
+            'eventID': '106',
+            'paymentDate': "2014-11-22 13:23:44.657"
         }]})
         self.assertResponseStatus(res, 200)
         self.assertDictContainsSubset(
@@ -150,12 +150,12 @@ class TestBetsUpdates(TestCase):
 
     def test_update_incentive_bad_event(self):
         res = self.make_request({'response': [{
-            'event_type': 'Incentive',
+            'eventType': 'Incentive',
             'id': '123',
             'status': 'Success',
-            'bets_parent_event_id': '404',
+            'eventID': '404',
             'amount': 100,
-            'payment_date': "2014-11-22 13:23:44.657"
+            'paymentDate': "2014-11-22 13:23:44.657"
         }]})
         self.assertResponseStatus(res, 400)
 
@@ -164,18 +164,18 @@ class TestBetsUpdates(TestCase):
         voucher = self.make_voucher()
 
         res = self.make_request({'response': [{
-            'event_type': 'Incentive',
+            'eventType': 'Incentive',
             'id': episode.case_id,
             'status': 'Failure',
-            'remarks': 'We do not sow',
-            'bets_parent_event_id': '106',
-            'payment_date': "2014-11-22 13:23:44.657"
+            'failureDescription': 'We do not sow',
+            'eventID': '106',
+            'paymentDate': "2014-11-22 13:23:44.657"
         }, {
-            'event_type': 'Voucher',
+            'eventType': 'Voucher',
             'id': voucher.case_id,
             'status': 'Success',
             'amount': 100,
-            'payment_date': "2014-11-22 13:23:44.657"
+            'paymentDate': "2014-11-22 13:23:44.657"
         }]})
         self.assertResponseStatus(res, 200)
 
@@ -196,18 +196,18 @@ class TestBetsUpdates(TestCase):
     def test_missing_case(self):
         voucher = self.make_voucher()
         res = self.make_request({'response': [{
-            'event_type': 'Incentive',
+            'eventType': 'Incentive',
             'id': 'this-is-not-a-real-id',
             'status': 'Success',
-            'bets_parent_event_id': '106',
+            'eventID': '106',
             'amount': 100,
-            'payment_date': "2014-11-22 13:23:44.657"
+            'paymentDate': "2014-11-22 13:23:44.657"
         }, {
-            'event_type': 'Voucher',
+            'eventType': 'Voucher',
             'id': voucher.case_id,
             'status': 'Success',
             'amount': 100,
-            'payment_date': "2014-11-22 13:23:44.657"
+            'paymentDate': "2014-11-22 13:23:44.657"
         }]})
         self.assertResponseStatus(res, 404)
 
@@ -215,21 +215,21 @@ class TestBetsUpdates(TestCase):
         episode = self.make_episode_case()
         voucher = self.make_voucher()
         res = self.make_request({'response': [{
-            'event_type': 'Incentive',
+            'eventType': 'Incentive',
             'id': episode.case_id,
             'status': 'Success',
-            'bets_parent_event_id': '106',
+            'eventID': '106',
             'amount': 100,
-            'payment_date': "2014-11-22 13:23:44.657",
-            'bank_name': "Iron Bank",
+            'paymentDate': "2014-11-22 13:23:44.657",
+            'bankName': "Iron Bank",
         }, {
-            'event_type': 'Voucher',
+            'eventType': 'Voucher',
             'id': voucher.case_id,
             'status': 'Success',
             'amount': 100,
-            'payment_date': "2014-11-22 13:23:44.657",
-            'remarks': "Cool stuff!",
-            'check_number': "12345",
+            'paymentDate': "2014-11-22 13:23:44.657",
+            'comments': "Cool stuff!",
+            'checkNumber': "12345",
         }]})
         self.assertResponseStatus(res, 200)
         self.assertEqual(
