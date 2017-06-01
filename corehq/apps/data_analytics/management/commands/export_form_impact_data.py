@@ -1,4 +1,5 @@
 import csv
+from collections import defaultdict
 
 import dateutil
 from dateutil.relativedelta import relativedelta
@@ -8,6 +9,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.data_analytics.esaccessors import get_forms_for_users
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
+from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):
@@ -40,28 +42,32 @@ class Command(BaseCommand):
                 'multiple_form_types?'
             ])
 
-            for domain_object in Domain.get_all():
-                domain_name = domain_object.name
+            for domain in with_progress_bar(Domain.get_all(include_docs=False)):
+                domain_name = domain['key']
                 user_ids = CommCareUser.ids_by_domain(domain=domain_name)
-                buckets_dict = get_forms_for_users(domain_object.name, user_ids, start_date, end_date)
-                for user_id, bucket in buckets_dict.iteritems():
+                forms = get_forms_for_users(domain_name, user_ids, start_date, end_date)
+                user_dict = defaultdict(list)
+                for form in forms:
+                    user_id = form['form']['meta']['userID']
+                    user_dict[user_id].append(form)
+                for user_id, forms in user_dict.iteritems():
                     has_case = bool(
                         filter(
                             lambda h: h.get('form', {}).get('case'),
-                            bucket.top_hits_user_submissions.hits
+                            forms
                         )
                     )
                     has_two_or_more_different_forms_submitted = len(
                         [
                             hit.get('form', {}).get('@xmlns')
-                            for hit in bucket.top_hits_user_submissions.hits
+                            for hit in forms
                             if hit.get('form', {}).get('@xmlns')
                         ]
                     ) >= 2
                     writer.writerow([
                         domain_name,
                         user_id,
-                        bucket.doc_count,
+                        len(forms),
                         has_case,
                         has_two_or_more_different_forms_submitted
                     ])
