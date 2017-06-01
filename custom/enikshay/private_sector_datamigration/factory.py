@@ -187,17 +187,17 @@ class BeneficiaryCaseFactory(object):
                 'create': True,
                 'owner_id': '-',
                 'update': {
-                    'date_of_mo_signature': self.beneficiary.dateOfRegn.date(),
-                    'diagnosing_facility_id': self._location_owner_id,
-                    'enrolled_in_private': 'true',
-                    'episode_id': get_human_friendly_id(),
-                    'episode_type': self.beneficiary.current_episode_type,
-                    'name': self.beneficiary.episode_name,
-                    'transfer_in': '',
-                    'treatment_options': '',
-
-                    'migration_created_case': 'true',
-                    'migration_created_from_record': self.beneficiary.caseId,
+                    # 'date_of_mo_signature': self.beneficiary.dateOfRegn.date(),
+                    # 'diagnosing_facility_id': self._location_owner_id,
+                    # 'enrolled_in_private': 'true',
+                    # 'episode_id': get_human_friendly_id(),
+                    # 'episode_type': self.beneficiary.current_episode_type,
+                    # 'name': self.beneficiary.episode_name,
+                    # 'transfer_in': '',
+                    # 'treatment_options': '',
+                    #
+                    # 'migration_created_case': 'true',
+                    # 'migration_created_from_record': self.beneficiary.caseId,
                 }
             },
             'indices': [CaseIndex(
