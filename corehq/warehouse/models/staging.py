@@ -150,6 +150,7 @@ class DomainStagingTable(StagingTable):
     slug = DOMAIN_STAGING_SLUG
 
     domain_id = models.CharField(max_length=255)
+    domain = models.CharField(max_length=100)
     default_timezone = models.CharField(max_length=255)
     hr_name = models.CharField(max_length=255, null=True)
     creating_user_id = models.CharField(max_length=255, null=True)
