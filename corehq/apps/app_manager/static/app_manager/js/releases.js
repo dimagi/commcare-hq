@@ -398,7 +398,7 @@ hqDefine('app_manager/js/releases.js', function () {
                     } else if (self.lastAppVersion() !== self.currentAppVersion()) {
                         self.actuallyMakeBuild();
                     } else {
-                        window.alert(gettext("No new changes to deploy!"));
+                        window.alert(gettext("No new changes!"));
                     }
                 },
                 error: function () {
