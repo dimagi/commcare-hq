@@ -58,7 +58,7 @@ class Command(BaseCommand):
         return SQLLocation.objects.create(
             domain=domain,
             name=agency.agencyName,
-            site_code=Command.get_user_name_for_agency(agency),
+            site_code=str(agency.agencyId),
             location_type=Command.get_location_type_by_domain_and_code(domain, agency.location_type),
             parent=dto,
             metadata={
