@@ -589,12 +589,12 @@
         "is_primary_key": false,
         "transform": {},
         "display_name": null,
-        "comment": "Filter history on Delivery, Growth Monitoring and Additional Growth Monitoring",
+        "comment": "Filter history on Additional Growth Monitoring",
         "expression": {
           "type": "conditional",
           "test": {
             "type": "named",
-            "name": "wer_eligible"
+            "name": "height_eligible"
           },
           "expression_if_true": {
             "type": "icds_get_last_case_property_update",
@@ -606,8 +606,6 @@
               "type": "icds_month_end"
             },
             "xmlns":[
-              "http://openrosa.org/formdesigner/376FA2E1-6FD1-4C9E-ACB4-E046038CD5E2",
-              "http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75",
               "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
             ]
           },
@@ -2353,6 +2351,35 @@
                 "",
                 null
               ]
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "lte",
+            "property_value": 60,
+            "expression": {
+              "type": "icds_child_age_in_months_month_start"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "icds_child_valid_in_month"
+            }
+          }
+        ]
+      },
+      "height_eligible": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "boolean_expression",
+            "operator": "gte",
+            "property_value": 6,
+            "expression": {
+              "type": "icds_child_age_in_months_month_start"
             }
           },
           {
