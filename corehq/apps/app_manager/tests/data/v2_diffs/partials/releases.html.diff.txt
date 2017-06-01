@@ -29,7 +29,7 @@
  <div class="tabbable">
      <ul class="nav nav-tabs">
          <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
-@@ -32,181 +52,157 @@
+@@ -32,181 +52,152 @@
                          {% endblocktrans %}
                      </small></p>
                  </div>
@@ -140,11 +140,6 @@
 +    <div class="alert alert-danger hide"
 +         data-bind="visible: fetchState() === 'error', css: {hide: false}">
 +        {% trans "Whoops, we couldn't get those versions for you. Could you try that again?" %}
-+    </div>
-+
-+    <div class="alert alert-info hide"
-+         data-bind="visible: doneFetching() && !savedApps().length && buildButtonEnabled(), css: {hide: false}">
-+        {% trans 'Use the <strong>Make New Version</strong> button to create and deploy the latest version of your application' %}
 +    </div>
 +
 +    <div class="releases-container"
@@ -337,7 +332,7 @@
 +                <span class="fa fa-exclamation-circle hide"
 +                      data-bind="visible: build_broken, css: {hide: false}">
 +                </span>
-+                {% trans "Deploy Version" %}
++                {% trans "Publish" %}
 +            </a>
 +          </div><!-- .panel-footer -->
 +        </div><!-- .panel-release -->
@@ -352,7 +347,7 @@
      <script type="text/html" id="delete-build-modal-template">
          <div class="modal-dialog">
              <div class="modal-content">
-@@ -254,18 +250,19 @@
+@@ -254,18 +245,19 @@
          </div>
      </script>
      <script type="text/html" id="deploy-build-modal-template">
