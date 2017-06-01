@@ -13,6 +13,7 @@ from custom.enikshay.private_sector_datamigration.models import (
     EpisodePrescription,
     LabTest,
     MigratedBeneficiaryCounter,
+    Voucher,
 )
 from custom.enikshay.user_setup import compress_nikshay_id
 
@@ -288,11 +289,13 @@ class BeneficiaryCaseFactory(object):
         kwargs = {
             'attrs': {
                 'case_type': PRESCRIPTION_CASE_TYPE,
-                'close': False,
+                'close': True,
                 'create': True,
                 'owner_id': '-',
                 'update': {
+                    'date_ordered': prescription.creationDate.date(),
                     'name': prescription.productName,
+                    'number_of_days_prescribed': prescription.numberOfDaysPrescribed,
 
                     'migration_created_case': 'true',
                     'migration_created_from_record': prescription.prescriptionID,
