@@ -87,6 +87,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
             id=1,
             agencyId=agency_id,
             agencyName='Nicks Agency',
+            agencySubTypeId='PRQP',
             agencyTypeId='ATPR',
             creationDate=datetime(2017, 5, 1),
             dateOfRegn=datetime(2017, 5, 1),

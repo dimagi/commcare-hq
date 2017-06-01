@@ -22,8 +22,9 @@ class Command(BaseCommand):
         for org_id in org_ids:
             dto = self.create_dto(domain, state_code, district_code, dto_parent, org_id)
             for agency in self.get_agencies_by_state_district_org(state_code, district_code, org_id):
-                agency_loc = self.create_agency(domain, agency, dto, org_id)
-                self.create_user(agency_loc, user_level)
+                if agency.location_type is not None:
+                    agency_loc = self.create_agency(domain, agency, dto, org_id)
+                    self.create_user(agency_loc, user_level)
 
     def create_dto(self, domain, state_code, district_code, dto_parent, org_id):
         return SQLLocation.objects.create(
