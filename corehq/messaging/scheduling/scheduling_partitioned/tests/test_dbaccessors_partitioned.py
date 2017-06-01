@@ -236,7 +236,10 @@ class TestSchedulingPartitionedDBAccessorsDeleteAndFilter(BaseSchedulingPartitio
                     due_after=datetime(2017, 2, 1),
                 )
             ),
-            set([self.alert_instance1_p1.schedule_instance_id, self.alert_instance2_p2.schedule_instance_id])
+            set([
+                (self.domain, self.alert_instance1_p1.schedule_instance_id),
+                (self.domain, self.alert_instance2_p2.schedule_instance_id),
+            ])
         )
 
         self.assertEqual(
@@ -259,7 +262,10 @@ class TestSchedulingPartitionedDBAccessorsDeleteAndFilter(BaseSchedulingPartitio
                     due_after=datetime(2017, 2, 1),
                 )
             ),
-            set([self.timed_instance1_p2.schedule_instance_id, self.timed_instance2_p1.schedule_instance_id])
+            set([
+                (self.domain, self.timed_instance1_p2.schedule_instance_id),
+                (self.domain, self.timed_instance2_p1.schedule_instance_id),
+            ])
         )
 
         self.assertEqual(

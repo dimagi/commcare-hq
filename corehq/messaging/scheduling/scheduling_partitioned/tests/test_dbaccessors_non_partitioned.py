@@ -178,7 +178,10 @@ class TestSchedulingNonPartitionedDBAccessorsDeleteAndFilter(BaseSchedulingNontP
                     due_after=datetime(2017, 2, 1),
                 )
             ),
-            set([self.alert_instance1.schedule_instance_id, self.alert_instance2.schedule_instance_id])
+            set([
+                (self.domain, self.alert_instance1.schedule_instance_id),
+                (self.domain, self.alert_instance2.schedule_instance_id),
+            ])
         )
 
         self.assertEqual(
@@ -201,7 +204,10 @@ class TestSchedulingNonPartitionedDBAccessorsDeleteAndFilter(BaseSchedulingNontP
                     due_after=datetime(2017, 2, 1),
                 )
             ),
-            set([self.timed_instance1.schedule_instance_id, self.timed_instance2.schedule_instance_id])
+            set([
+                (self.domain, self.timed_instance1.schedule_instance_id),
+                (self.domain, self.timed_instance2.schedule_instance_id),
+            ])
         )
 
         self.assertEqual(

@@ -94,12 +94,12 @@ def get_active_schedule_instance_ids(cls, due_before, due_after=None):
     if due_after:
         active_filter = active_filter & Q(next_event_due__gt=due_after)
 
-    for schedule_instance_id in run_query_across_partitioned_databases(
+    for domain, schedule_instance_id in run_query_across_partitioned_databases(
         cls,
         active_filter,
-        values=['schedule_instance_id']
+        values=['domain', 'schedule_instance_id']
     ):
-        yield schedule_instance_id
+        yield (domain, schedule_instance_id)
 
 
 def get_active_case_schedule_instance_ids(cls, due_before, due_after=None):
@@ -119,12 +119,12 @@ def get_active_case_schedule_instance_ids(cls, due_before, due_after=None):
     if due_after:
         active_filter = active_filter & Q(next_event_due__gt=due_after)
 
-    for (case_id, schedule_instance_id) in run_query_across_partitioned_databases(
+    for (domain, case_id, schedule_instance_id) in run_query_across_partitioned_databases(
         cls,
         active_filter,
-        values=['case_id', 'schedule_instance_id']
+        values=['domain', 'case_id', 'schedule_instance_id']
     ):
-        yield (case_id, schedule_instance_id)
+        yield (domain, case_id, schedule_instance_id)
 
 
 def get_alert_schedule_instances_for_schedule(schedule):
