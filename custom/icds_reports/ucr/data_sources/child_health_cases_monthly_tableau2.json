@@ -628,12 +628,8 @@
         "expression": {
           "type": "conditional",
           "test": {
-            "type": "boolean_expression",
-            "operator": "eq",
-            "property_value": "yes",
-            "expression": {
-              "type": "icds_child_valid_in_month"
-            }
+            "type": "named",
+            "name": "wer_eligible"
           },
           "expression_if_true": {
             "type": "named",
@@ -656,12 +652,8 @@
         "expression": {
           "type": "conditional",
           "test": {
-            "type": "boolean_expression",
-            "operator": "eq",
-            "property_value": "yes",
-            "expression": {
-              "type": "icds_child_valid_in_month"
-            }
+            "type": "named",
+            "name": "wer_eligible"
           },
           "expression_if_true": {
             "type": "named",
@@ -680,12 +672,8 @@
           "type": "and",
           "filters": [
             {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "property_value": "yes",
-              "expression": {
-                "type": "icds_child_valid_in_month"
-              }
+              "type": "named",
+              "name": "wer_eligible"
             },
             {
               "type": "boolean_expression",
@@ -707,12 +695,8 @@
           "type": "and",
           "filters": [
             {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "property_value": "yes",
-              "expression": {
-                "type": "icds_child_valid_in_month"
-              }
+              "type": "named",
+              "name": "wer_eligible"
             },
             {
               "type": "boolean_expression",
@@ -734,12 +718,8 @@
           "type": "and",
           "filters": [
             {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "property_value": "yes",
-              "expression": {
-                "type": "icds_child_valid_in_month"
-              }
+              "type": "named",
+              "name": "wer_eligible"
             },
             {
               "type": "boolean_expression",
