@@ -308,6 +308,14 @@ class BeneficiaryCaseFactory(object):
                 related_type=EPISODE_CASE_TYPE,
             )],
         }
+
+        try:
+            voucher = Voucher.objects.get(voucherNumber=prescription.voucherID)
+            if voucher.voucherStatusId == '3':
+                kwargs['attrs']['update']['date_fulfilled'] = voucher.voucherUsedDate.date()
+        except Voucher.DoesNotExist:
+            pass
+
         return CaseStructure(**kwargs)
 
     def get_test_case_structure(self, labtest, occurrence_structure):
