@@ -42,8 +42,9 @@ class BeneficiaryCaseFactory(object):
         # return [self.get_person_case_structure()]
         person_structure = self.get_person_case_structure()
         ocurrence_structure = self.get_occurrence_case_structure(person_structure)
-        return [ocurrence_structure]
+        # return [ocurrence_structure]
         episode_structure = self.get_episode_case_structure(ocurrence_structure)
+        return [episode_structure]
         episode_descendants = [
             self.get_prescription_case_structure(prescription, episode_structure)
             for prescription in self._prescriptions
