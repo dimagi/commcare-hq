@@ -94,7 +94,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             }
         )
 
-        expected_payload = {
+        expected_payload = {"voucher_details": [{
             u"EventID": u"101",
             u"EventOccurDate": u"2017-08-15",
             u"BeneficiaryUUID": self.user.user_id,
@@ -104,7 +104,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"VoucherID": voucher.get_case_property('voucher_id'),
             u"Amount": u'10.0',
             u"InvestigationType": None,
-        }
+        }]}
 
         self.assertDictEqual(
             expected_payload,
@@ -127,7 +127,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             }
         )
 
-        expected_payload = {
+        expected_payload = {"voucher_details": [{
             u"EventID": u"102",
             u"EventOccurDate": u"2017-08-15",
             u"BeneficiaryUUID": self.user.user_id,
@@ -137,7 +137,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"VoucherID": voucher.get_case_property('voucher_id'),
             u"Amount": u'10.0',
             u"InvestigationType": u"xray",
-        }
+        }]}
 
         self.assertDictEqual(
             expected_payload,
@@ -154,7 +154,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         self.assign_person_to_location(self.pcp.location_id)
         episode = cases[self.episode_id]
 
-        expected_payload = {
+        expected_payload = {"incentive_details": [{
             u"EventID": unicode(TREATMENT_180_EVENT),
             u"EventOccurDate": u"2017-08-15",
             u"BeneficiaryUUID": self.user.user_id,
@@ -162,7 +162,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
-        }
+        }]}
         self.assertDictEqual(
             expected_payload,
             json.loads(BETS180TreatmentPayloadGenerator(None).get_payload(None, episode))
@@ -176,7 +176,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         self.assign_person_to_location(self.pcp.location_id)
         episode = cases[self.episode_id]
 
-        expected_payload = {
+        expected_payload = {"incentive_details": [{
             u"EventID": unicode(DRUG_REFILL_EVENT),
             u"EventOccurDate": u"2017-08-15",
             u"BeneficiaryUUID": self.person_id,
@@ -184,7 +184,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
-        }
+        }]}
         self.assertDictEqual(
             expected_payload,
             json.loads(BETSDrugRefillPayloadGenerator(None).get_payload(None, episode))
@@ -196,7 +196,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         cases = self.create_case_structure()
         episode = cases[self.episode_id]
 
-        expected_payload = {
+        expected_payload = {"incentive_details": [{
             u"EventID": unicode(SUCCESSFUL_TREATMENT_EVENT),
             u"EventOccurDate": u"2017-08-15",
             u"BeneficiaryUUID": self.person_id,
@@ -204,7 +204,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
-        }
+        }]}
         self.assertDictEqual(
             expected_payload,
             json.loads(BETSSuccessfulTreatmentPayloadGenerator(None).get_payload(None, episode))
@@ -217,7 +217,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         episode = cases[self.episode_id]
         date_today = u"2017-08-15"
 
-        expected_payload = {
+        expected_payload = {"incentive_details": [{
             u"EventID": unicode(DIAGNOSIS_AND_NOTIFICATION_EVENT),
             u"EventOccurDate": date_today,
             u"BeneficiaryUUID": self.user.user_id,
@@ -225,7 +225,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
-        }
+        }]}
         with mock.patch.object(IncentivePayload, '_india_now', return_value=date_today):
             self.assertDictEqual(
                 expected_payload,
@@ -240,7 +240,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
         episode = cases[self.episode_id]
         date_today = u"2017-08-15"
 
-        expected_payload = {
+        expected_payload = {"incentive_details": [{
             u"EventID": unicode(AYUSH_REFERRAL_EVENT),
             u"EventOccurDate": date_today,
             u"BeneficiaryUUID": self.user.user_id,
@@ -248,7 +248,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"Location": self.pac.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
-        }
+        }]}
         with mock.patch.object(IncentivePayload, '_india_now', return_value=date_today):
             self.assertDictEqual(
                 expected_payload,
