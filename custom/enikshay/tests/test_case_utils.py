@@ -22,7 +22,7 @@ from custom.enikshay.case_utils import (
     get_person_locations,
     get_episode_case_from_adherence,
     get_open_referral_case_from_person,
-    get_approved_prescription_vouchers_from_episode,
+    get_fulfilled_prescription_vouchers_from_episode,
 )
 
 
@@ -148,7 +148,7 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
         voucher21 = self.create_voucher_case(prescription2.case_id)
         self.assertItemsEqual(
             [voucher11, voucher12, voucher21],
-            get_approved_prescription_vouchers_from_episode(self.domain, self.episode_id)
+            get_fulfilled_prescription_vouchers_from_episode(self.domain, self.episode_id)
         )
 
 

@@ -437,7 +437,7 @@ def get_prescription_vouchers_from_episode(domain, episode_case_id):
     ]
 
 
-def get_approved_prescription_vouchers_from_episode(domain, episode_case_id):
+def get_fulfilled_prescription_vouchers_from_episode(domain, episode_case_id):
     return [
         voucher for voucher in get_prescription_vouchers_from_episode(domain, episode_case_id)
         if (voucher.get_case_property("voucher_type") == CASE_TYPE_PRESCRIPTION
