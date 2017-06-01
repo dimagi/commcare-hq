@@ -14,7 +14,6 @@ from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_domain
 from corehq.apps.locations.models import SQLLocation
 from custom.enikshay.private_sector_datamigration.factory import BeneficiaryCaseFactory
 from custom.enikshay.private_sector_datamigration.models import (
-    Adherence,
     Agency,
     Beneficiary,
     Episode,
