@@ -506,7 +506,22 @@
           "operator": "eq",
           "property_value": "yes",
           "expression": {
-            "type": "icds_child_valid_in_month"
+            "type": "named",
+            "name": "valid_in_month"
+          }
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "valid_all_registered_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": "yes",
+          "expression": {
+            "type": "named",
+            "name": "valid_all_registered_in_month"
           }
         },
         "type": "boolean"
@@ -2326,7 +2341,8 @@
               "operator": "eq",
               "property_value": "yes",
               "expression": {
-                "type": "icds_child_valid_in_month"
+                "type": "named",
+                "name": "valid_in_month"
               }
             }
           ]
@@ -2877,6 +2893,135 @@
         "xmlns": [
           "http://openrosa.org/formdesigner/7a55754119359466b1951d7251068bd4f45e73c3"
         ]
+      },
+      "seeking_services": {
+        "comment": "TODO: This has a dummy calculation for now until the app team defines what seeking services is",
+        "operator": "eq",
+        "type": "boolean_expression",
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "type"
+        },
+        "property_value": "child_health"
+      },
+      "valid_in_month": {
+        "type": "conditional",
+        "test": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "icds_open_in_month"
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "icds_alive_in_month"
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "named",
+                "name": "seeking_services"
+              }
+            },
+            {
+              "type": "not",
+              "filter": {
+                "operator": "in",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "icds_child_age_in_months_month_start"
+                },
+                "property_value": [
+                  "",
+                  null
+                ]
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "lte",
+              "property_value": 72,
+              "expression": {
+                "type": "icds_child_age_in_months_month_start"
+              }
+            }
+          ]
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": "yes"
+        },
+        "expression_if_false": {
+          "type": "constant",
+          "constant": "no"
+        }
+      },
+      "valid_all_registered_in_month": {
+        "comment": "this includes all beneficiaries who are valid, whether they are seeking services or not",
+        "type": "conditional",
+        "test": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "icds_open_in_month"
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "icds_alive_in_month"
+              }
+            },
+            {
+              "type": "not",
+              "filter": {
+                "operator": "in",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "icds_child_age_in_months_month_start"
+                },
+                "property_value": [
+                  "",
+                  null
+                ]
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "lte",
+              "property_value": 72,
+              "expression": {
+                "type": "icds_child_age_in_months_month_start"
+              }
+            }
+          ]
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": "yes"
+        },
+        "expression_if_false": {
+          "type": "constant",
+          "constant": "no"
+        }
       }
     },
     "named_filters": {
@@ -2910,7 +3055,8 @@
             "operator": "eq",
             "property_value": "yes",
             "expression": {
-              "type": "icds_child_valid_in_month"
+              "type": "named",
+              "name": "valid_in_month"
             }
           }
         ]
@@ -2939,7 +3085,8 @@
             "operator": "eq",
             "property_value": "yes",
             "expression": {
-              "type": "icds_child_valid_in_month"
+              "type": "named",
+              "name": "valid_in_month"
             }
           }
         ]
@@ -2982,7 +3129,8 @@
             "operator": "eq",
             "property_value": "yes",
             "expression": {
-              "type": "icds_child_valid_in_month"
+              "type": "named",
+              "name": "valid_in_month"
             }
           }
         ]
@@ -3025,7 +3173,8 @@
             "operator": "eq",
             "property_value": "yes",
             "expression": {
-              "type": "icds_child_valid_in_month"
+              "type": "named",
+              "name": "valid_in_month"
             }
           }
         ]
@@ -3060,7 +3209,8 @@
             "operator": "eq",
             "property_value": "yes",
             "expression": {
-              "type": "icds_child_valid_in_month"
+              "type": "named",
+              "name": "valid_in_month"
             }
           }
         ]
@@ -3073,7 +3223,8 @@
             "operator": "eq",
             "property_value": "yes",
             "expression": {
-              "type": "icds_child_valid_in_month"
+              "type": "named",
+              "name": "valid_in_month"
             }
           },
           {
@@ -3236,7 +3387,8 @@
             "operator": "eq",
             "property_value": "yes",
             "expression": {
-              "type": "icds_child_valid_in_month"
+              "type": "named",
+              "name": "valid_in_month"
             }
           }
         ]
