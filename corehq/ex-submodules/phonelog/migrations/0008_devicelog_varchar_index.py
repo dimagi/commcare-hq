@@ -19,12 +19,12 @@ class Migration(migrations.Migration):
             add_if_not_exists(
                 """
                 CREATE INDEX phonelog_devicereportentry_domain_device_id_pattern_ops
-                ON phonelog_devicereportentry (domain varchar_pattern_ops, device_id varchar_pattern_ops);
+                ON phonelog_devicereportentry (domain varchar_pattern_ops, device_id varchar_pattern_ops)
                 """
             ),
             reverse_sql=
             """
-            DROP INDEX IF EXISTS phonelog_devicereportentry_domain_device_id_pattern_ops;
+            DROP INDEX IF EXISTS phonelog_devicereportentry_domain_device_id_pattern_ops
             """,
         )
     ]
