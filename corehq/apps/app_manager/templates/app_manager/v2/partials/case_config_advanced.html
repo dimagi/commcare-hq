@@ -462,8 +462,8 @@
 </script>
 
 <div id="case-config-ko">
+    <div class="refresh-form-questions-container" data-bind="template: 'case-config:refresh-form-questions'"></div>
     <div data-bind="saveButton: saveButton"></div>
-    <div data-bind="template: 'case-config:refresh-form-questions'"></div>
     <div data-bind="with: caseConfigViewModel">
         <div class="btn-group" data-bind="visible: actionOptions().length">
             <button type="button" class="btn btn-purple dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

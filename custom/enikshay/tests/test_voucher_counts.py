@@ -14,11 +14,16 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
         super(TestVoucherCounts, self).setUp()
         self.cases = self.create_case_structure()
 
-    def make_voucher(self, prescription, num_days, date):
+    def make_voucher(self, prescription, final_prescription_num_days=5,
+                     date_fulfilled='2016-08-15', prescription_num_days=10,
+                     state="fulfilled", date_issued='2016-08-12'):
         return self.create_voucher_case(
             prescription.case_id, {
-                'final_prescription_num_days': num_days,
-                'date_fulfilled': date,
+                'final_prescription_num_days': final_prescription_num_days,
+                'date_fulfilled': date_fulfilled,
+                'date_issued': date_issued,
+                'state': state,
+                'prescription_num_days': prescription_num_days,
             }
         )
 
@@ -30,7 +35,7 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
         self.make_voucher(prescription2, 16, datetime(2017, 1, 2))
         self.make_voucher(prescription2, 10, datetime(2017, 1, 4))
         self.assertEqual(
-            EpisodeVoucherUpdate(self.domain, self.cases['episode']).update_json(),
+            EpisodeVoucherUpdate(self.domain, self.cases['episode']).get_prescription_total_days(),
             {
                 "prescription_total_days": 12 + 7 + 16 + 10,
                 "prescription_total_days_threshold_30": '2017-01-03T00:00:00.000000Z',
@@ -46,7 +51,7 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
         # This one should trigger both the 60 and 90 thresholds
         self.make_voucher(prescription, 70, datetime(2017, 1, 4))
         self.assertEqual(
-            EpisodeVoucherUpdate(self.domain, self.cases['episode']).update_json(),
+            EpisodeVoucherUpdate(self.domain, self.cases['episode']).get_prescription_total_days(),
             {
                 "prescription_total_days": 29 + 1 + 7 + 70,
                 "prescription_total_days_threshold_30": '2017-01-02T00:00:00.000000Z',
@@ -75,3 +80,57 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
                 EpisodeVoucherUpdate(self.domain, episode).update_json(),
                 {}
             )
+
+    def test_prescription_refill_due_dates(self):
+        prescription = self.create_prescription_case()
+        self.make_voucher(
+            prescription,
+            state="fulfilled",
+            final_prescription_num_days=15,
+            date_issued='2013-01-01'
+        )
+        self.make_voucher(
+            prescription,
+            state="available",
+            final_prescription_num_days=15,
+            date_issued='2012-12-31'
+        )
+        self.make_voucher(
+            prescription,
+            state="rejected",
+            final_prescription_num_days=15,
+            date_issued='2012-01-02'
+        )
+
+        self.assertDictEqual(
+            {
+                'date_last_refill': '2013-01-01',
+                'voucher_length': '15',
+                'refill_due_date': '2013-01-16',
+            },
+            EpisodeVoucherUpdate(self.domain, self.cases['episode']).get_prescription_refill_due_dates()
+        )
+
+    def test_prescription_refill_due_dates_errors(self):
+        prescription = self.create_prescription_case()
+        self.make_voucher(
+            prescription,
+            state="fulfilled",
+            final_prescription_num_days='abc',
+            date_issued='2013-01-01'
+        )
+        self.assertDictEqual(
+            {},
+            EpisodeVoucherUpdate(self.domain, self.cases['episode']).get_prescription_refill_due_dates()
+        )
+
+        self.make_voucher(
+            prescription,
+            state="fulfilled",
+            final_prescription_num_days=15,
+            date_issued='hello'
+        )
+        self.assertDictEqual(
+            {},
+            EpisodeVoucherUpdate(self.domain, self.cases['episode']).get_prescription_refill_due_dates()
+        )

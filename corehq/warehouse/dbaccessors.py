@@ -11,6 +11,15 @@ def get_group_ids_by_last_modified(start_datetime, end_datetime):
     return _get_ids_by_last_modified(Group, doc_types, start_datetime, end_datetime)
 
 
+def get_user_ids_by_last_modified(start_datetime, end_datetime):
+    from corehq.apps.users.models import CouchUser
+    doc_types = [
+        'CouchUser',
+        'CouchUser{}'.format(DELETED_SUFFIX),
+    ]
+    return _get_ids_by_last_modified(CouchUser, doc_types, start_datetime, end_datetime)
+
+
 def get_domain_ids_by_last_modified(start_datetime, end_datetime):
     from corehq.apps.domain.models import Domain
     doc_types = [
