@@ -641,8 +641,10 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
     def test_prescription(self):
         EpisodePrescription.objects.create(
             id=1,
-            beneficiaryId=self.beneficiary,
+            beneficiaryId=self.beneficiary.caseId,
+            creationDate=datetime(2017, 5, 26),
             numberOfDays=2,
+            numberOfDaysPrescribed='2',
             prescriptionID=3,
             pricePerUnit=0.5,
             productID=4,
@@ -686,7 +688,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
     def test_multiple_prescriptions(self):
         EpisodePrescription.objects.create(
             id=1,
-            beneficiaryId=self.beneficiary,
+            beneficiaryId=self.beneficiary.caseId,
+            creationDate=datetime(2017, 5, 26),
             numberOfDays=2,
             prescriptionID=3,
             pricePerUnit=0.5,
@@ -696,7 +699,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         )
         EpisodePrescription.objects.create(
             id=2,
-            beneficiaryId=self.beneficiary,
+            beneficiaryId=self.beneficiary.caseId,
+            creationDate=datetime(2017, 5, 26),
             numberOfDays=2,
             prescriptionID=3,
             pricePerUnit=0.5,

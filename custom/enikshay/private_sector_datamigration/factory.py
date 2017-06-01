@@ -346,7 +346,7 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _prescriptions(self):
-        return list(EpisodePrescription.objects.filter(beneficiaryId=self.beneficiary))
+        return list(EpisodePrescription.objects.filter(beneficiaryId=self.beneficiary.caseId))
 
     @property
     @memoized
