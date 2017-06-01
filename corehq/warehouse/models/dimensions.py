@@ -28,6 +28,11 @@ class BaseDim(models.Model):
 
 
 class UserDim(BaseDim, WarehouseTableMixin):
+    '''
+    Dimension for Users
+
+    Grain: user_id
+    '''
     slug = USER_DIM_SLUG
 
     user_id = models.CharField(max_length=255)
@@ -50,6 +55,11 @@ class UserDim(BaseDim, WarehouseTableMixin):
 
 
 class GroupDim(BaseDim, WarehouseTableMixin):
+    '''
+    Dimension for Groups
+
+    Grain: group_id
+    '''
     slug = GROUP_DIM_SLUG
 
     group_id = models.CharField(max_length=255)
@@ -66,6 +76,11 @@ class GroupDim(BaseDim, WarehouseTableMixin):
 
 
 class LocationDim(BaseDim, WarehouseTableMixin):
+    '''
+    Dimension for Locations
+
+    Grain: location_id
+    '''
     slug = LOCATION_DIM_SLUG
 
     location_id = models.CharField(max_length=100)
@@ -92,6 +107,11 @@ class LocationDim(BaseDim, WarehouseTableMixin):
 
 
 class DomainDim(BaseDim, WarehouseTableMixin):
+    '''
+    Dimension for Domain
+
+    Grain: domain_id
+    '''
     slug = DOMAIN_DIM_SLUG
 
     domain_id = models.CharField(max_length=255)
@@ -117,6 +137,11 @@ class DomainDim(BaseDim, WarehouseTableMixin):
 
 
 class UserLocationDim(BaseDim, WarehouseTableMixin):
+    '''
+    Dimension for User and Location mapping
+
+    Grain: user_id, location_id
+    '''
     slug = USER_LOCATION_DIM_SLUG
 
     user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
@@ -124,6 +149,11 @@ class UserLocationDim(BaseDim, WarehouseTableMixin):
 
 
 class UserGroupDim(BaseDim, WarehouseTableMixin):
+    '''
+    Dimension for User and Group mapping
+
+    Grain: user_id, group_id
+    '''
     slug = USER_GROUP_DIM_SLUG
 
     user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)

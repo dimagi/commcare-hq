@@ -57,6 +57,11 @@ class StagingTable(models.Model):
 
 
 class GroupStagingTable(StagingTable):
+    '''
+    Represents the staging table to dump data before loading into the GroupDim
+
+    Grain: group_id
+    '''
     slug = GROUP_STAGING_SLUG
 
     group_id = models.CharField(max_length=255)
@@ -87,6 +92,11 @@ class GroupStagingTable(StagingTable):
 
 
 class UserStagingTable(StagingTable):
+    '''
+    Represents the staging table to dump data before loading into the UserDim
+
+    Grain: user_id
+    '''
     slug = USER_STAGING_SLUG
 
     user_id = models.CharField(max_length=255)
@@ -132,6 +142,11 @@ class UserStagingTable(StagingTable):
 
 
 class DomainStagingTable(StagingTable):
+    '''
+    Represents the staging table to dump data before loading into the DomainDim
+
+    Grain: domain_id
+    '''
     slug = DOMAIN_STAGING_SLUG
 
     domain_id = models.CharField(max_length=255)
@@ -182,6 +197,11 @@ class DomainStagingTable(StagingTable):
 
 
 class FormStagingTable(StagingTable):
+    '''
+    Represents the staging table to dump data before loading into the FormFact
+
+    Grain: form_id
+    '''
     slug = FORM_STAGING_SLUG
 
     form_id = models.CharField(max_length=255, unique=True)
@@ -217,6 +237,11 @@ class FormStagingTable(StagingTable):
 
 
 class SyncLogStagingTable(StagingTable):
+    '''
+    Represents the staging table to dump data before loading into the SyncLogFact
+
+    Grain: sync_log_id
+    '''
     slug = SYNCLOG_STAGING_SLUG
 
     sync_log_id = models.CharField(max_length=255)
