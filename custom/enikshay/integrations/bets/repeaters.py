@@ -19,7 +19,8 @@ from custom.enikshay.integrations.bets.repeater_generators import \
     BETSDiagnosisAndNotificationPayloadGenerator, BETSSuccessfulTreatmentPayloadGenerator, \
     BETSDrugRefillPayloadGenerator, BETSLocationPayloadGenerator
 from custom.enikshay.integrations.utils import case_properties_changed, is_valid_episode_submission, \
-    is_valid_voucher_submission, is_valid_archived_submission
+    is_valid_voucher_submission, is_valid_archived_submission, is_valid_person_submission, \
+    case_was_created
 
 
 class BaseBETSRepeater(CaseRepeater):
@@ -298,6 +299,23 @@ class BETSLocationRepeater(LocationRepeater):
         app_label = 'repeaters'
 
 
+class BETSBeneficiaryRepeater(BaseBETSRepeater):
+    friendly_name = _("BETS - Beneficiary creation and update")
+    properties_we_care_about = (
+        'phone_number',
+        'current_address_district_choice',
+        'current_address_state_choice',
+    )
+
+    def allowed_to_forward(self, person_case):
+        if not (self._allowed_case_type(person_case) and self._allowed_user(person_case)):
+            return False
+
+        return (is_valid_person_submission(person_case)
+                and (case_was_created(person_case)
+                     or case_properties_changed(person_case, self.properties_we_care_about)))
+
+
 def create_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(ChemistBETSVoucherRepeater, case)
     create_repeat_records(LabBETSVoucherRepeater, case)
@@ -306,6 +324,7 @@ def create_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(BETSSuccessfulTreatmentRepeater, case)
     create_repeat_records(BETSDiagnosisAndNotificationRepeater, case)
     create_repeat_records(BETSAYUSHReferralRepeater, case)
+    create_repeat_records(BETSBeneficiaryRepeater, case)
 
 case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
 

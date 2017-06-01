@@ -4,7 +4,8 @@ import mock
 
 from django.test import override_settings, TestCase
 
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.domain.models import Domain
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
 from corehq.apps.repeaters.models import RepeatRecord
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -27,10 +28,10 @@ from custom.enikshay.integrations.bets.repeater_generators import ChemistBETSVou
     BETSDiagnosisAndNotificationPayloadGenerator, BETSAYUSHReferralPayloadGenerator, BETSDrugRefillPayloadGenerator, IncentivePayload
 from custom.enikshay.integrations.bets.repeaters import ChemistBETSVoucherRepeater, BETS180TreatmentRepeater, \
     BETSDrugRefillRepeater, BETSSuccessfulTreatmentRepeater, BETSDiagnosisAndNotificationRepeater, \
-    BETSAYUSHReferralRepeater, BETSLocationRepeater
+    BETSAYUSHReferralRepeater, BETSLocationRepeater, BETSBeneficiaryRepeater
 from custom.enikshay.integrations.ninetyninedots.tests.test_repeaters import ENikshayRepeaterTestBase, MockResponse
 
-from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
+from custom.enikshay.tests.utils import ENikshayLocationStructureMixin, get_person_case_structure
 from custom.enikshay.case_utils import update_case
 
 
@@ -534,3 +535,65 @@ class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
                 'site_code': location.site_code,
             }
         )
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class BETSBeneficiaryRepeaterTest(ENikshayRepeaterTestBase):
+    def setUp(self):
+        super(BETSBeneficiaryRepeaterTest, self).setUp()
+        self.domain_obj = Domain(name=self.domain)
+        self.domain_obj.save()
+        self.repeater = BETSBeneficiaryRepeater(
+            domain=self.domain,
+            url='super-cool-url',
+        )
+        self.repeater.save()
+
+        loc_type = LocationType.objects.create(
+            domain=self.domain,
+            name="loc_type",
+            administrative=True,
+        )
+        self.real_location = SQLLocation.objects.create(
+            domain=self.domain,
+            name="real_location",
+            site_code="real_location",
+            location_type=loc_type,
+            metadata={'is_test': 'no', 'nikshay_code': 'nikshay_code'},
+        )
+        self.test_location = SQLLocation.objects.create(
+            domain=self.domain,
+            name="test_location",
+            site_code="test_location",
+            location_type=loc_type,
+            metadata={'is_test': 'yes', 'nikshay_code': 'nikshay_code'},
+        )
+
+    def tearDown(self):
+        super(BETSBeneficiaryRepeaterTest, self).tearDown()
+        self.domain_obj.delete()
+
+    def create_person_case(self, location_id):
+        case = get_person_case_structure(None, self.episode_id)
+        case.attrs['owner_id'] = location_id
+        return self.factory.create_or_update_cases([case])[0]
+
+    def test_trigger(self):
+        important_case_property = "phone_number"
+        frivolous_case_property = "hair_color"
+
+        # Create, then update person case
+        test_person = self.create_person_case(self.test_location.location_id)
+        update_case(self.domain, test_person.case_id, {important_case_property: "7"})
+        # Neither should trigger forwarding
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        # Create real case
+        real_person = self.create_person_case(self.real_location.location_id)
+        self.assertEqual(1, len(self.repeat_records().all()))
+        # Update real case
+        update_case(self.domain, real_person.case_id, {important_case_property: "7"})
+        self.assertEqual(2, len(self.repeat_records().all()))
+        # frivolous update shouldn't trigger another repeat
+        update_case(self.domain, real_person.case_id, {frivolous_case_property: "blue"})
+        self.assertEqual(2, len(self.repeat_records().all()))
