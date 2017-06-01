@@ -1735,6 +1735,7 @@ ENIKSHAY_REPEATERS = (
     'custom.enikshay.integrations.bets.repeaters.BETSDiagnosisAndNotificationRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETSAYUSHReferralRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETSLocationRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSBeneficiaryRepeater',
 )
 
 REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + ENIKSHAY_REPEATERS
