@@ -90,10 +90,16 @@
             {% endif %}
         </li>
         {% endif %}
-        <li>
+        <li class="rollout-toggle-label">
             <a href="{% url "app_summary" domain app.id %}">
                 <i class="fa fa-list"></i>
                 {% trans "App Summary" %}
+            </a>
+        </li>
+        <li>
+            <a href="#" data-toggle="modal" data-target="#rollout-modal">
+                <i class="fa fa-bell-o"></i>
+                {% trans "New App Builder" %}
             </a>
         </li>
         <li class="divider"></li>
