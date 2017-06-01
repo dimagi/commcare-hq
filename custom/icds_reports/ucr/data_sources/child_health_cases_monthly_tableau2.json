@@ -1545,6 +1545,54 @@
         "type": "boolean"
       },
       {
+        "column_id": "cf_initiation_eligible",
+        "display_name": null,
+        "filter": {
+          "name": "cf_initiation_eligible",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "cf_initiated",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "name": "cf_initiation_eligible",
+              "type": "named"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "gt",
+              "property_value": 0,
+              "expression": {
+                "type": "reduce_items",
+                "aggregation_fn": "count",
+                "items_expression": {
+                  "type": "filter_items",
+                  "items_expression": {
+                    "type": "named",
+                    "name": "get_all_cf_repeats"
+                  },
+                  "filter_expression": {
+                    "type": "boolean_expression",
+                    "operator": "eq",
+                    "property_value": "yes",
+                    "expression": {
+                      "type": "property_name",
+                      "property_name": "comp_feeding"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
         "column_id": "cf_diet_diversity",
         "display_name": null,
         "filter": {
@@ -3177,6 +3225,49 @@
             "property_value": "yes",
             "expression": {
               "type": "icds_child_valid_in_month"
+            }
+          }
+        ]
+      },
+      "cf_initiation_eligible": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "not",
+            "filter": {
+              "operator": "in",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "icds_child_age_in_days"
+              },
+              "property_value": [
+                "",
+                null
+              ]
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "gt",
+            "property_value": 6,
+            "expression": {
+              "type": "icds_child_age_in_months_month_end"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "lte",
+            "property_value": 8,
+            "expression": {
+              "type": "icds_child_age_in_months_month_start"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "named", "name": "valid_in_month"
             }
           }
         ]
