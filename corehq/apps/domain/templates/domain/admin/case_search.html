@@ -65,6 +65,56 @@
                         <i class="fa fa-plus"></i> {% trans "Add case type" %}
                     </button>
                 </div>
+
+                <div id="remove-characters" data-bind="visible: toggleEnabled">
+                    <h2>{% trans "Remove Special Characters" %}</h2>
+                    <p>
+                        {% blocktrans %}
+                            Remove characters from incoming search queries for particular case properties. For example, you can remove '+' from phone numbers or '-' from ID queries.
+                        {% endblocktrans %}
+                    </p>
+                    <table class="table table-striped">
+                        <thead>
+                            <th>
+                                Case Type
+                            </th>
+                            <th>
+                                Case Property
+                            </th>
+                            <th>
+                                String to remove
+                            </th>
+                            <th></th>
+                        </thead>
+                        <tbody data-bind="foreach: ignorePatterns">
+                            <tr>
+                                <td>
+                                    <select data-bind="options: $root.caseTypes,
+                                                       value: caseType">
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="text" data-bind="value: caseProperty" placeholder="e.g. name" />
+                                </td>
+                                <td>
+                                    <input type="text" data-bind="value: regex" placeholder="e.g. +" />
+                                </td>
+                                <td>
+                                    <button type="button"
+                                            class="btn btn-danger pull-right"
+                                            data-bind="click: function(){$parent.removeIgnorePatterns($data); $parent.change();}">
+                                    <i class="fa fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button type="button"
+                            class="btn btn-primary"
+                            data-bind="click: addIgnorePatterns">
+                        <i class="fa fa-plus"></i> {% trans "Add case property" %}
+                    </button>
+                </div>
             </form>
         </div>
     </div>

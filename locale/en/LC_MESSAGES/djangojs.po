@@ -3,7 +3,6 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#: bower_components/datatables-1.9-legacy/media/js/jquery.js:2
 #: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/speed.js:85
 #: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:35
 #: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:60
@@ -78,14 +77,12 @@
 #: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:610
 #: node_modules/underscore.string/test/speed.js:75
 #: node_modules/underscore.string/test/strings.js:268
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:25
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-05-17 16:53+0000\n"
+"POT-Creation-Date: 2017-05-30 18:16+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -94,17 +91,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: bower_components/bower_components/jquery-ui/jquery-ui.min.js:8
 #: bower_components/jquery-ui/jquery-ui.min.js:8
 msgid "'"
-msgstr ""
-
-#: bower_components/bower_components/underscore-legacy/test/utility.js:67
-#: bower_components/underscore-legacy/test/utility.js:67
-#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/test_underscore/utility.js:51
-#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/test_underscore/utility.js:51
-#: node_modules/underscore.string/test/test_underscore/utility.js:41
-msgid "champ"
 msgstr ""
 
 #: corehq/apps/accounting/static/accounting/js/accounting.billing_info_handler.js:56
@@ -231,151 +219,151 @@ msgstr ""
 msgid "Decreasing (1.3, 1.2, 1.1)"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:615
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:620
 msgid "Select One"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1076
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1081
 msgid "There are errors in your property names"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1081
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1086
 msgid "There are errors in your tabs"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1089
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1094
 msgid "All properties must be below a tab"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1391
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1397
 msgid "Property"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1392
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1398
 msgid "Display Text"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1393
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1399
 msgid "Format"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1395
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1401
 msgid "Plain"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1396
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1402
 msgid "Date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1397
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1403
 msgid "Time Since or Until Date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1398
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1404
 msgid " Measuring "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1400
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1406
 msgid "Years since date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1401
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1407
 msgid "Months since date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1402
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1408
 msgid "Weeks since date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1403
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1409
 msgid "Days since date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1404
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1410
 msgid "Days until date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1405
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1411
 msgid "Weeks until date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1406
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1412
 msgid "Months until date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1408
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1414
 msgid "Phone Number"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1409
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1415
 msgid "ID Mapping"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1410
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1416
 msgid "Icon"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1411
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1417
 msgid "Mapping: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1412
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1418
 msgid "Late Flag"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1413
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1419
 msgid " Days late "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1415
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1421
 msgid "Search Only"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1416
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1422
 msgid "Address"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1417
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1423
 msgid "Picture"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1418
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1424
 msgid "Audio"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1419
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1425
 msgid "Calculate"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1421
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1427
 msgid "Distance from current location"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1423
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1429
 msgid "Add to list"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1424
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1430
 msgid "Duplicate"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1425
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1431
 #: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:40
-#: corehq/apps/style/static/style/js/main.js:252
+#: corehq/apps/style/static/style/js/main.js:257
 #: corehq/apps/style/static/style/js/ui-element.js:358
 msgid "Delete"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1427
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1433
 msgid "You have unsaved detail screen configurations."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1458
 #: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1464
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1470
 msgid " (Preview!)"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1468
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1474
 msgid ""
 "Must begin with a letter and contain only letters, numbers, '-', and '_'"
 msgstr ""
@@ -407,7 +395,7 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/language-profiles.js:41
 #: corehq/apps/app_manager/static/app_manager/js/linked_whitelist.js:14
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:89
-#: corehq/apps/style/static/style/js/main.js:248
+#: corehq/apps/style/static/style/js/main.js:253
 msgid "There was an error saving"
 msgstr ""
 
@@ -419,19 +407,19 @@ msgstr ""
 msgid "Edit in form builder"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/module-view.js:73
+#: corehq/apps/app_manager/static/app_manager/js/module-view.js:74
 msgid "Case type is required."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/module-view.js:80
+#: corehq/apps/app_manager/static/app_manager/js/module-view.js:81
 msgid "Case types can only include the characters a-z, 0-9, '-' and '_'"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/module-view.js:85
+#: corehq/apps/app_manager/static/app_manager/js/module-view.js:86
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/module-view.js:117
+#: corehq/apps/app_manager/static/app_manager/js/module-view.js:118
 msgid "Unknown Form (missing)"
 msgstr ""
 
@@ -443,7 +431,7 @@ msgstr ""
 msgid "(Default)"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases.js:361
+#: corehq/apps/app_manager/static/app_manager/js/releases.js:362
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 
@@ -522,7 +510,7 @@ msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:541
 #: corehq/apps/export/static/export/js/models.js:199
-#: corehq/apps/style/static/style/js/main.js:244
+#: corehq/apps/style/static/style/js/main.js:249
 #: corehq/apps/users/static/users/js/web_users.js:46
 msgid "Save"
 msgstr ""
@@ -1032,29 +1020,29 @@ msgstr ""
 msgid "Error saving, please try again."
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:245
+#: corehq/apps/style/static/style/js/main.js:250
 msgid "Saving..."
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:246
+#: corehq/apps/style/static/style/js/main.js:251
 #: corehq/apps/users/static/users/js/web_users.js:55
 msgid "Saved"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:247
-#: corehq/apps/style/static/style/js/main.js:255
+#: corehq/apps/style/static/style/js/main.js:252
+#: corehq/apps/style/static/style/js/main.js:260
 msgid "Try Again"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:253
+#: corehq/apps/style/static/style/js/main.js:258
 msgid "Deleting..."
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:254
+#: corehq/apps/style/static/style/js/main.js:259
 msgid "Deleted"
 msgstr ""
 
-#: corehq/apps/style/static/style/js/main.js:256
+#: corehq/apps/style/static/style/js/main.js:261
 msgid "There was an error deleting"
 msgstr ""
 
@@ -1202,7 +1190,7 @@ msgid "Password was not changed "
 msgstr ""
 
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:49
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:388
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:395
 msgid ""
 "Password Requirements: 1 special character, 1 number, 1 capital letter, "
 "minimum length of 8 characters."
@@ -1602,8 +1590,6 @@ msgstr ""
 #: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:359
 #: node_modules/underscore.string/test/strings.js:76
 #: node_modules/underscore.string/test/strings.js:269
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:25
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
 msgid " "
 msgstr ""
 
@@ -1935,7 +1921,6 @@ msgstr ""
 #: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/strings.js:360
 #: node_modules/grunt-legacy-log/node_modules/underscore.string/test/strings.js:360
 #: node_modules/underscore.string/test/strings.js:270
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
 msgid "\n"
 msgstr ""
 
@@ -2281,6 +2266,12 @@ msgstr ""
 msgid "true"
 msgstr ""
 
+#: node_modules/grunt-legacy-log-utils/node_modules/underscore.string/test/test_underscore/utility.js:51
+#: node_modules/grunt-legacy-log/node_modules/underscore.string/test/test_underscore/utility.js:51
+#: node_modules/underscore.string/test/test_underscore/utility.js:41
+msgid "champ"
+msgstr ""
+
 #: node_modules/underscore.string/test/strings.js:285
 msgid ""
 "&lt;div&gt;Blah &amp; &quot;blah&quot; &amp; &apos;blah&apos;&lt;/div&gt;"
@@ -2288,117 +2279,4 @@ msgstr ""
 
 #: node_modules/underscore.string/test/strings.js:425
 msgid "I know latin characters: á í ó ú ç ã õ ñ ü"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:25
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid "."
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid "*"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid "import"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid "{}"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid ", "
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid "this"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid "super"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid "null"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid ",\n"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid " = "
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid "debugger;"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid ":"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid "empty"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid "any"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid "mixed"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid "boolean"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid "interface "
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid " & "
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid "number"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid "string"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid "typeof "
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid " | "
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/ajv/dist/regenerator.min.js:26
-msgid "void"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/js-yaml/dist/js-yaml.min.js:2
-msgid "code point within a string may not be greater than 0xFFFFFFFF"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/js-yaml/dist/js-yaml.min.js:2
-msgid "impossible error: invalid scalar style"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/js-yaml/dist/js-yaml.min.js:2
-msgid "sortKeys must be a boolean or a function"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/js-yaml/dist/js-yaml.min.js:2
-msgid "!<"
-msgstr ""
-
-#: submodules/motechhub/services/authproxy/node_modules/js-yaml/dist/js-yaml.min.js:2
-msgid "unacceptable kind of an object to dump "
 msgstr ""

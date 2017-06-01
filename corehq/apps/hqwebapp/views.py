@@ -70,7 +70,8 @@ from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.middleware import always_allow_browser_caching
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
-from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
+from corehq.util.datadog.utils import create_datadog_event, sanitize_url
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.view_utils import reverse
 
 
@@ -495,14 +496,14 @@ def jserror(request):
             browser_version = parsed_agent['browser'].get('version', DATADOG_UNKNOWN)
             browser_name = parsed_agent['browser'].get('name', DATADOG_UNKNOWN)
 
-    log_counter(JSERROR_COUNT, {
-        'os': os,
-        'browser_version': browser_version,
-        'browser_name': browser_name,
-        'url': sanitize_url(request.POST.get('page', None)),
-        'file': request.POST.get('filename'),
-        'bot': bot,
-    })
+    datadog_counter(JSERROR_COUNT, tags=[
+        u'os:{}'.format(os),
+        u'browser_version:{}'.format(browser_version),
+        u'browser_name:{}'.format(browser_name),
+        u'url:{}'.format(sanitize_url(request.POST.get('page', None))),
+        u'file:{}'.format(request.POST.get('filename')),
+        u'bot:{}'.format(bot),
+    ])
 
     return HttpResponse('')
 

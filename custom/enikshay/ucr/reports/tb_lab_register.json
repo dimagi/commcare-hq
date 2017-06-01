@@ -70,6 +70,13 @@
                 "field": "case_created_by_migration",
                 "type": "choice_list",
                 "display": "Filter migrated data"
+            },
+            {
+                "type": "pre",
+                "field": "has_date_reported",
+                "slug": "date_reported_pre",
+                "datatype": "integer",
+                "pre_value": 1
             }
         ],
         "columns": [

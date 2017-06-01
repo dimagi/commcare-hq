@@ -617,6 +617,10 @@ class XForm(WrappedNode):
         return self.instance_node.find('*')
 
     @property
+    def bind_nodes(self):
+        return self.model_node.findall('{f}bind')
+
+    @property
     @raise_if_none("Can't find <itext>")
     def itext_node(self):
         # awful, awful hack. It will be many weeks before I can look people in the eye again.

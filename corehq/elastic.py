@@ -6,6 +6,7 @@ from urllib import unquote
 from elasticsearch import Elasticsearch
 from django.conf import settings
 from elasticsearch.exceptions import ElasticsearchException
+from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.util.datadog.gauges import datadog_gauge
@@ -38,32 +39,30 @@ def _es_hosts():
     return hosts
 
 
+@memoized
 def get_es_new():
     """
     Get a handle to the configured elastic search DB.
     Returns an elasticsearch.Elasticsearch instance.
     """
-    if not getattr(get_es_new, '_es_client', None):
-        hosts = _es_hosts()
-        get_es_new._es_client = Elasticsearch(hosts)
-    return get_es_new._es_client
+    hosts = _es_hosts()
+    return Elasticsearch(hosts)
 
 
+@memoized
 def get_es_export():
     """
     Get a handle to the configured elastic search DB with settings geared towards exports.
     Returns an elasticsearch.Elasticsearch instance.
     """
-    if not getattr(get_es_export, '_es_client', None):
-        hosts = _es_hosts()
-        get_es_export._es_client = Elasticsearch(
-            hosts,
-            retry_on_timeout=True,
-            max_retries=3,
-            # Timeout in seconds for an elasticsearch query
-            timeout=30,
-        )
-    return get_es_export._es_client
+    hosts = _es_hosts()
+    return Elasticsearch(
+        hosts,
+        retry_on_timeout=True,
+        max_retries=3,
+        # Timeout in seconds for an elasticsearch query
+        timeout=30,
+    )
 
 ES_DEFAULT_INSTANCE = 'default'
 ES_EXPORT_INSTANCE = 'export'

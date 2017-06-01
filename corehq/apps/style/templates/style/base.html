@@ -397,15 +397,6 @@
         <script src="{% static 'style/js/main.js' %}"></script>
         {% endcompress %}
 
-        {% addtoblock js-inline %}
-        <script>
-            $(function(){
-                $('.hq-help-template').each(function () {
-                    COMMCAREHQ.transformHelpTemplate($(this), true);
-                });
-            });
-        </script>
-        {% endaddtoblock %}
         {# JavaScript Display Logic Libaries #}
 
         {% if request.couch_user %}

@@ -739,7 +739,22 @@ class AsyncIndicator(models.Model):
     @classmethod
     def update_indicators(cls, change, config_ids):
         doc_id = change.id
+        doc_type = change.document['doc_type']
+        domain = change.document['domain']
+
+        indicator, created = cls.objects.get_or_create(
+            doc_id=doc_id, doc_type=doc_type, domain=domain,
+            defaults={'indicator_config_ids': config_ids}
+        )
+
+        if created:
+            return indicator
+        elif set(config_ids) == indicator.indicator_config_ids:
+            return indicator
+
         with CriticalSection([get_async_indicator_modify_lock_key(doc_id)]):
+            # Add new config ids. Need to grab indicator again in case it was
+            # processed since we called get_or_create
             try:
                 indicator = cls.objects.get(doc_id=doc_id)
             except cls.DoesNotExist:

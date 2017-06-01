@@ -1,7 +1,8 @@
 import copy
+import re
+import json
 
 from corehq.util.quickcache import quickcache
-from dimagi.ext import jsonobject
 from django.db import models
 from jsonfield.fields import JSONField
 from django.contrib.postgres.fields import ArrayField
@@ -10,6 +11,13 @@ from django.contrib.postgres.fields import ArrayField
 CLAIM_CASE_TYPE = 'commcare-case-claim'
 FUZZY_PROPERTIES = "fuzzy_properties"
 SEARCH_QUERY_ADDITION_KEY = 'commcare_custom_search_query'
+SEARCH_QUERY_CUSTOM_VALUE = 'commcare_custom_value'
+CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY = u'commcare_blacklisted_owner_ids'
+UNSEARCHABLE_KEYS = (
+    SEARCH_QUERY_ADDITION_KEY,
+    CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+    'owner_id',
+)
 
 
 class GetOrNoneManager(models.Manager):
@@ -46,6 +54,33 @@ class FuzzyProperties(models.Model):
         unique_together = ('domain', 'case_type')
 
 
+class IgnorePatterns(models.Model):
+    domain = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    case_type = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    case_property = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=True,
+    )
+    regex = models.CharField(
+        max_length=256,
+        null=False,
+        blank=False,
+        db_index=False,
+    )
+
+
 class CaseSearchConfig(models.Model):
     """
     Contains config for case search
@@ -62,6 +97,7 @@ class CaseSearchConfig(models.Model):
     )
     enabled = models.BooleanField(blank=False, null=False, default=False)
     fuzzy_properties = models.ManyToManyField(FuzzyProperties)
+    ignore_patterns = models.ManyToManyField(IgnorePatterns)
 
     objects = GetOrNoneManager()
 
@@ -90,6 +126,28 @@ class CaseSearchQueryAddition(models.Model):
 
 class QueryMergeException(Exception):
     pass
+
+
+def replace_custom_query_variables(query_addition, criteria):
+    """Replaces values in custom queries with user input
+
+    - In the custom query add '__{case_property_name}' as the value for the
+      case property you are searching
+    - In the case search options, add
+      commcare_custom_value__{case_property_name} as the name of the property
+      you are searching for.
+
+    https://docs.google.com/document/d/1MKllkHZ6JlxhfqZLZKWAnfmlA3oUqCLOc7iKzxFTzdY/edit#heading=h.suj6zzehvecp
+    """
+    replaceable_criteria = {
+        re.sub(SEARCH_QUERY_CUSTOM_VALUE, '', k): v
+        for k, v in criteria.iteritems() if k.startswith(SEARCH_QUERY_CUSTOM_VALUE)
+    }
+    query_addition = json.dumps(query_addition)
+    for key, value in replaceable_criteria.iteritems():
+        query_addition = re.sub(key, value, query_addition)
+
+    return json.loads(query_addition)
 
 
 def merge_queries(base_query, query_addition):
