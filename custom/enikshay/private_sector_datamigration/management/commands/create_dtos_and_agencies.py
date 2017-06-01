@@ -1,7 +1,11 @@
+import uuid
+
 from django.core.management import BaseCommand
 
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.locations.tasks import make_location_user
+from corehq.apps.locations.tasks import make_location_user, _get_unique_username
+from corehq.apps.users.forms import generate_strong_password
+from corehq.apps.users.models import CommCareUser
 from custom.enikshay.private_sector_datamigration.models import Agency, UserDetail
 
 from dimagi.utils.decorators.memoized import memoized
@@ -25,6 +29,8 @@ class Command(BaseCommand):
                 if agency.location_type is not None:
                     agency_loc = self.create_agency(domain, agency, dto, org_id)
                     self.create_user(agency_loc, user_level)
+                elif agency.is_field_officer:
+                    self.create_field_officer(agency, domain, dto, user_level)
 
     def create_dto(self, domain, state_code, district_code, dto_parent, org_id):
         return SQLLocation.objects.create(
@@ -86,6 +92,21 @@ class Command(BaseCommand):
 
         agency_loc.user_id = user._id
         agency_loc.save()
+
+    @staticmethod
+    def create_field_officer(agency, domain, parent, user_level):
+        field_officer = CommCareUser.create(
+            domain,
+            _get_unique_username(domain, str(agency.agencyId)),
+            generate_strong_password(),
+            uuid=uuid.uuid4().hex,
+            commit=False,
+        )
+        field_officer.set_location(parent, commit=False)
+        field_officer.user_data['user_level'] = user_level
+        field_officer.user_data['usertype'] = 'ps-fieldstaff'
+        field_officer.save()
+
 
     @staticmethod
     def get_usertype(code):
