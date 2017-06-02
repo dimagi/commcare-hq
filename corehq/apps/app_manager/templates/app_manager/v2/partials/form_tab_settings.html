@@ -5,9 +5,32 @@
     <form class="form-horizontal save-button-form" action="{% url "edit_form_attr" domain app.id form.get_unique_id 'all' %}">
         {% csrf_token %}
         <div class="save-button-holder clearfix"></div>
+        <div class="section-changer btn-group" data-collapse-key="form-view-settings">
+            <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+                <i class="fa fa-reorder"></i>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-right checklist">
+                <li class="dropdown-header">{% trans "Show" %}</li>
+                <li>
+                    <a href="#" data-slug="multimedia">
+                        <i class="fa fa-check"></i>{% trans "Multimedia" %}
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-slug="logic" data-collapse="1">
+                        <i class="fa fa-check"></i>{% trans "Logic" %}
+                    </a>
+                </li>
+                <li>
+                    <a href="#" data-slug="advanced" data-collapse="1">
+                        <i class="fa fa-check"></i>{% trans "Advanced" %}
+                    </a>
+                </li>
+            </ul>
+        </div>
         <div class="panel-group" id="form-tab-settings-options">
 
-            <div class="panel panel-appmanager">
+            <div class="panel panel-appmanager" data-slug="multimedia">
                 <div class="panel-heading">
                     <h4 class="panel-title">
                         <a class="collapsed"
@@ -15,7 +38,7 @@
                            data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}"
                            href="#form-settings-multimedia">
                             <i class="fa fa-angle-double-down"></i>
-                            <span data-bind="text: title">{%  trans "Media" %}</span>
+                            <span data-bind="text: title">{%  trans "Multimedia" %}</span>
                         </a>
                     </h4>
                 </div>
@@ -28,7 +51,7 @@
                 </div>
             </div>
 
-            <div class="panel panel-appmanager">
+            <div class="panel panel-appmanager" data-slug="logic">
                 <div class="panel-heading">
                     <h4 class="panel-title">
                         <a class="collapsed"
@@ -65,7 +88,7 @@
             </div>
 
 
-            <div class="panel panel-appmanager">
+            <div class="panel panel-appmanager" data-slug="advanced">
               <div class="panel-heading">
                 <h4 class="panel-title">
                     <a class="collapsed" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-advanced">
