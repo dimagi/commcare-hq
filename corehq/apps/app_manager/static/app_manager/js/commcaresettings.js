@@ -252,12 +252,14 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
                 });
                 return localStorage.hasOwnProperty(key) ? localStorage.getItem(key) : section.collapse;
             });
-            section.reallyCollapse = ko.computed(function () {
-                var el = document.getElementById(section.id);
-                return section.collapse &&
-                    (!el || !el.classList.contains("in")) &&
-                    !_(section.settings).some(function (setting) { return setting.hasError(); });
-            });
+            if (!COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+                section.reallyCollapse = ko.computed(function () {
+                    var el = document.getElementById(section.id);
+                    return section.collapse &&
+                        (!el || !el.classList.contains("in")) &&
+                        !_(section.settings).some(function (setting) { return setting.hasError(); });
+                });
+            }
             section.isVisible = ko.computed(function () {
                 return section.always_show !== false;
             });
