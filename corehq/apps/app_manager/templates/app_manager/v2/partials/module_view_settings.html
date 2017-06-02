@@ -12,21 +12,27 @@
         </a>
         <ul class="dropdown-menu dropdown-menu-right checklist">
             <li class="dropdown-header">{% trans "Show" %}</li>
-            <li>
-                <a href="#" data-slug="menu">
-                    <i class="fa fa-check"></i>{% trans "Menu" %}
-                </a>
-            </li>
+            {% if child_module_enabled or module.module_type == 'shadow' or app.advanced_app_builder or module.put_in_root or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys %}
+                <li>
+                    <a href="#" data-slug="menu">
+                        <i class="fa fa-check"></i>{% trans "Menu" %}
+                    </a>
+                </li>
+            {% endif %}
             <li>
                 <a href="#" data-slug="multimedia" data-collapse="1">
                     <i class="fa fa-check"></i>{% trans "Multimedia" %}
                 </a>
             </li>
-            <li>
-                <a href="#" data-slug="advanced" data-collapse="1">
-                    <i class="fa fa-check"></i>{% trans "Advanced" %}
-                </a>
-            </li>
+            {% if not module.is_surveys and module.module_type != 'shadow' %}
+               {% if app.advanced_app_builder or module.case_list_form.form_id or module.case_list.show or module.task_list.show or module.doc_type == "AdvancedModule" %}
+                    <li>
+                        <a href="#" data-slug="advanced" data-collapse="1">
+                            <i class="fa fa-check"></i>{% trans "Advanced" %}
+                        </a>
+                    </li>
+                {% endif %}
+            {% endif %}
         </ul>
     </div>
     <fieldset>
