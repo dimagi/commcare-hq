@@ -179,8 +179,8 @@ class TestSchedulingNonPartitionedDBAccessorsDeleteAndFilter(BaseSchedulingNontP
                 )
             ),
             set([
-                (self.domain, self.alert_instance1.schedule_instance_id),
-                (self.domain, self.alert_instance2.schedule_instance_id),
+                (self.domain, self.alert_instance1.schedule_instance_id, self.alert_instance1.next_event_due),
+                (self.domain, self.alert_instance2.schedule_instance_id, self.alert_instance2.next_event_due),
             ])
         )
 
@@ -205,8 +205,8 @@ class TestSchedulingNonPartitionedDBAccessorsDeleteAndFilter(BaseSchedulingNontP
                 )
             ),
             set([
-                (self.domain, self.timed_instance1.schedule_instance_id),
-                (self.domain, self.timed_instance2.schedule_instance_id),
+                (self.domain, self.timed_instance1.schedule_instance_id, self.timed_instance1.next_event_due),
+                (self.domain, self.timed_instance2.schedule_instance_id, self.timed_instance2.next_event_due),
             ])
         )
 

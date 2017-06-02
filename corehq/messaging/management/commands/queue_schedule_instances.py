@@ -39,29 +39,35 @@ class Command(BaseCommand):
 
         raise ValueError("Unexpected class: %s" % cls)
 
-    def get_enqueue_lock(self, cls, schedule_instance_id):
+    def get_enqueue_lock(self, cls, schedule_instance_id, next_event_due):
         client = get_redis_client()
-        key = "create-task-for-%s-%s" % (cls.__name__, schedule_instance_id.hex)
+        key = "create-task-for-%s-%s-%s" % (
+            cls.__name__,
+            schedule_instance_id.hex,
+            next_event_due.strftime('%Y-%m-%d %H:%M:%S')
+        )
         return client.lock(key, timeout=60 * 60)
 
     def create_tasks(self):
         for cls in (AlertScheduleInstance, TimedScheduleInstance):
-            for domain, schedule_instance_id in get_active_schedule_instance_ids(cls, datetime.utcnow()):
+            for domain, schedule_instance_id, next_event_due in get_active_schedule_instance_ids(
+                    cls, datetime.utcnow()):
                 if DATA_MIGRATION.enabled(domain):
-                    return
+                    continue
 
-                enqueue_lock = self.get_enqueue_lock(cls, schedule_instance_id)
+                enqueue_lock = self.get_enqueue_lock(cls, schedule_instance_id, next_event_due)
                 if enqueue_lock.acquire(blocking=False):
-                    self.get_task(cls).delay(schedule_instance_id, enqueue_lock)
+                    self.get_task(cls).delay(schedule_instance_id)
 
         for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
-            for domain, case_id, schedule_instance_id in get_active_case_schedule_instance_ids(cls, datetime.utcnow()):
+            for domain, case_id, schedule_instance_id, next_event_due in get_active_case_schedule_instance_ids(
+                    cls, datetime.utcnow()):
                 if DATA_MIGRATION.enabled(domain):
-                    return
+                    continue
 
-                enqueue_lock = self.get_enqueue_lock(cls, schedule_instance_id)
+                enqueue_lock = self.get_enqueue_lock(cls, schedule_instance_id, next_event_due)
                 if enqueue_lock.acquire(blocking=False):
-                    self.get_task(cls).delay(case_id, schedule_instance_id, enqueue_lock)
+                    self.get_task(cls).delay(case_id, schedule_instance_id)
 
     def handle(self, **options):
         while True:

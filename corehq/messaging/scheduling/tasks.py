@@ -20,6 +20,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     delete_case_schedule_instance,
 )
 from corehq.util.celery_utils import no_result_task
+from datetime import datetime
 
 
 @task(ignore_result=True)
@@ -185,28 +186,24 @@ def _handle_schedule_instance(instance, save_function):
 
 
 @no_result_task(queue='reminder_queue')
-def handle_alert_schedule_instance(schedule_instance_id, enqueue_lock):
+def handle_alert_schedule_instance(schedule_instance_id):
     instance = get_alert_schedule_instance(schedule_instance_id)
     _handle_schedule_instance(instance, save_alert_schedule_instance)
-    enqueue_lock.release()
 
 
 @no_result_task(queue='reminder_queue')
-def handle_timed_schedule_instance(schedule_instance_id, enqueue_lock):
+def handle_timed_schedule_instance(schedule_instance_id):
     instance = get_timed_schedule_instance(schedule_instance_id)
     _handle_schedule_instance(instance, save_timed_schedule_instance)
-    enqueue_lock.release()
 
 
 @no_result_task(queue='reminder_queue')
-def handle_case_alert_schedule_instance(case_id, schedule_instance_id, enqueue_lock):
+def handle_case_alert_schedule_instance(case_id, schedule_instance_id):
     instance = get_case_schedule_instance(CaseAlertScheduleInstance, case_id, schedule_instance_id)
     _handle_schedule_instance(instance, save_case_schedule_instance)
-    enqueue_lock.release()
 
 
 @no_result_task(queue='reminder_queue')
-def handle_case_timed_schedule_instance(case_id, schedule_instance_id, enqueue_lock):
+def handle_case_timed_schedule_instance(case_id, schedule_instance_id):
     instance = get_case_schedule_instance(CaseTimedScheduleInstance, case_id, schedule_instance_id)
     _handle_schedule_instance(instance, save_case_schedule_instance)
-    enqueue_lock.release()
