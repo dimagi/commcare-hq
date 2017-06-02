@@ -63,14 +63,17 @@ def mark_has_submission(domain, build_id):
         app.save()
 
 
-def _last_submission_needs_update(last_submission, received_on_datetime, build_version, cc_version):
-    # This function is to reduce load on the user db by  updating form submission metadata no more than
-    # once every 15 minutes unless something else has changed. That way if a user submits 10s
-    # or 100s of forms at once we do not need to write all of them.
+def _last_submission_needs_update(last_submission, received_on_datetime, build_version,
+                                  cc_version, debounce=True):
+    # If debounce is true this function reduces load on the user db by  updating form submission
+    # metadata no more than once every 15 minutes unless something else has changed.
+    # That way if a user submits 10s or 100s of forms at once we do not need to write all of them.
+    # If debounce is false it updates if the submission is newer at all
     if not (last_submission and last_submission.submission_date):
         return True
     time_difference = received_on_datetime - last_submission.submission_date
-    if time_difference > timedelta(seconds=60 * 15):
+    update_frequency = timedelta(seconds=60 * 15) if debounce else timedelta(seconds=0)
+    if time_difference > update_frequency:
         return True
     if build_version != last_submission.build_version:
         return True
@@ -124,7 +127,8 @@ def mark_latest_submission(domain, user_id, app_id, build_id, version, metadata,
         if _last_submission_needs_update(user.reporting_metadata.last_submission_for_user,
                                          received_on_datetime,
                                          app_version_info.build_version,
-                                         app_version_info.commcare_version):
+                                         app_version_info.commcare_version,
+                                         False):
 
             user.reporting_metadata.last_submission_for_user = last_submission
 
