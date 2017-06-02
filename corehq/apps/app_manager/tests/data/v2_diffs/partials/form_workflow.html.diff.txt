@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -55,29 +55,29 @@
+@@ -67,29 +67,29 @@
  </div>
  
  <script type="text/html" id="form-link-template">
@@ -43,7 +43,7 @@
                  <i class="fa fa-arrow-down"></i>
              </div>
          </div>
-@@ -94,25 +94,25 @@
+@@ -106,25 +106,25 @@
              <input type="hidden" name="datums_json" data-bind="value: formLink.serializedDatums"/>
          </div>
          <div class="row">
@@ -74,7 +74,7 @@
                  <p>
                      <button class="btn btn-default btn-sm" data-bind="click: formLink.fetchDatums">
                          <!-- ko if: formLink.datumsFetched() -->
-@@ -126,18 +126,20 @@
+@@ -138,18 +138,20 @@
              </div>
          </div>
          <div class="row">
