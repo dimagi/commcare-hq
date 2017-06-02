@@ -46,6 +46,16 @@ class DemoUserRestore(models.Model):
         }
         return stream_response(payload, headers)
 
+    def get_restore_as_string(self):
+        """
+        Returns restore XML as a string
+        """
+        try:
+            blob = self._get_restore_xml()
+            return blob.read()
+        finally:
+            blob.close()
+
     def _get_restore_xml(self):
         db = get_blob_db()
         try:
