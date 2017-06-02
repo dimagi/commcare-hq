@@ -35,10 +35,12 @@
 
         var app_langs = {{ app.langs|JSON }};
         var app_profiles = {{ app.build_profiles|JSON }}
+        var practice_users = {{ practice_users|JSON }}
 
         {% if build_profile_access %}
-        var profileManager = new ProfileManager(app_profiles, app_langs);
+        var profileManager = new ProfileManager(app_profiles, app_langs, practice_users);
         $('#profiles-tab').koApplyBindings(profileManager);
+        $("#practice-users").select2({"allowClear": true, "data": practice_users});
         {% endif %}
     });
 

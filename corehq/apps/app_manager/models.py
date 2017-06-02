@@ -4760,9 +4760,10 @@ def absolute_url_property(method):
 class BuildProfile(DocumentSchema):
     name = StringProperty()
     langs = StringListProperty()
+    practice_mobile_worker_id = StringProperty()
 
     def __eq__(self, other):
-        return self.langs == other.langs
+        return self.langs == other.langs and self.practice_mobile_worker_id == other.practice_mobile_worker_id
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -4861,6 +4862,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         assert self.application_version == APP_V2
 
     build_profiles = SchemaDictProperty(BuildProfile)
+    practice_mobile_worker_id = StringProperty()
 
     # each language is a key and the value is a list of multimedia referenced in that language
     media_language_map = SchemaDictProperty(MediaList)

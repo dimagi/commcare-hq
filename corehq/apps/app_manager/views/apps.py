@@ -30,8 +30,10 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.locations.dbaccessors import get_practice_mode_mobile_workers
 from corehq.apps.tour import tours
 from corehq.apps.translations.models import Translation
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.app_manager.const import (
     APP_V2,
     MAJOR_RELEASE_TO_VERSION,
@@ -42,6 +44,7 @@ from corehq.apps.app_manager.util import (
     get_settings_values,
     app_doc_types,
     get_app_manager_template,
+    get_and_assert_practice_user_in_domain,
 )
 from corehq.apps.domain.models import Domain
 from corehq.tabs.tabclasses import ApplicationsTab
@@ -144,7 +147,12 @@ def default_new_app(request, domain):
 
 
 def get_app_view_context(request, app):
+    """
+    This provides the context to render commcare settings on Edit Application Settings page
 
+    This is where additional app or domain specific context can be added to any individual
+    commcare-setting defined in commcare-app-settings.yaml or commcare-profile-settings.yaml
+    """
     context = {}
 
     settings_layout = copy.deepcopy(
@@ -200,14 +208,25 @@ def get_app_view_context(request, app):
             app_ver = MAJOR_RELEASE_TO_VERSION[option.build.major_release()]
             builds["default"] = build_config.get_default(app_ver).to_string()
 
-    (build_spec_setting,) = filter(
-        lambda x: x['type'] == 'hq' and x['id'] == 'build_spec',
-        [setting for section in settings_layout
-            for setting in section['settings']]
-    ) if settings_layout else (None,)
+    def _get_setting(setting_type, setting_id):
+        # get setting dict from settings_layout
+        (setting, ) = filter(
+            lambda x: x['type'] == setting_type and x['id'] == setting_id,
+            [setting for section in settings_layout
+             for setting in section['settings']]
+        ) if settings_layout else (None,)
+        return setting
+
+    build_spec_setting = _get_setting('hq', 'build_spec')
     if build_spec_setting:
         build_spec_setting['options_map'] = options_map
         build_spec_setting['default_app_version'] = app.application_version
+
+    practice_user_setting = _get_setting('hq', 'practice_mobile_worker_id')
+    if practice_user_setting:
+        practice_users = get_practice_mode_mobile_workers(request.domain)
+        practice_user_setting['values'] = [''] + [u['_id'] for u in practice_users]
+        practice_user_setting['value_names'] = ['Not set'] + [u['username'] for u in practice_users]
 
     context.update({
         'bulk_ui_translation_upload': {
@@ -668,6 +687,7 @@ def edit_app_attr(request, domain, app_id, attr):
     # For either type of app
     easy_attrs = (
         ('build_spec', BuildSpec.from_string),
+        ('practice_mobile_worker_id', None),
         ('case_sharing', None),
         ('cloudcare_enabled', None),
         ('anonymous_cloudcare_enabled', None),
@@ -704,6 +724,11 @@ def edit_app_attr(request, domain, app_id, attr):
 
     if should_edit("build_spec"):
         resp['update']['commcare-version'] = app.commcare_minor_release
+
+    if should_edit("practice_mobile_worker_id"):
+        user_id = hq_settings['practice_mobile_worker_id']
+        if user_id:
+            get_and_assert_practice_user_in_domain(user_id, request.domain)
 
     if should_edit("admin_password"):
         admin_password = hq_settings.get('admin_password')
