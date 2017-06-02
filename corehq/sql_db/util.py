@@ -113,7 +113,6 @@ def handle_connection_failure(db_names=None):
         @wraps(fn)
         def _inner(*args, **kwargs):
             db_names = db_names or ['default']
-            retry = kwargs.pop('retry', True)
             try:
                 return fn(*args, **kwargs)
             except db.utils.DatabaseError:
@@ -121,6 +120,7 @@ def handle_connection_failure(db_names=None):
                 # open transactions and already closed connections
                 for db_name in db_names:
                     db.transaction.rollback(using=db_name)
+
                 # re raise the exception for additional error handling
                 raise
             except (Psycopg2InterfaceError, DjangoInterfaceError):
@@ -129,11 +129,8 @@ def handle_connection_failure(db_names=None):
                 for db_name in db_names:
                     db.connections[db_name].close()
 
-                if retry:
-                    _inner(retry=False, *args, **kwargs)
-                else:
-                    # re raise the exception for additional error handling
-                    raise
+                # re raise the exception for additional error handling
+                raise
 
         return _inner
 
