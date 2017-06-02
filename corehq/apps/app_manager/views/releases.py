@@ -7,7 +7,7 @@ from django.http import HttpResponseRedirect
 from django.views.generic import View
 from django.utils.decorators import method_decorator
 
-from corehq.apps.app_manager.util import get_app_manager_template
+from corehq.apps.app_manager.util import get_app_manager_template, get_and_assert_practice_user_in_domain
 from django_prbac.decorators import requires_privilege
 from django.contrib import messages
 from django.shortcuts import render
@@ -36,11 +36,13 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_doc, get_latest_build_id
 from corehq.apps.app_manager.models import BuildProfile
 from corehq.apps.app_manager.const import DEFAULT_FETCH_LIMIT
+from corehq.apps.locations.dbaccessors import get_practice_mode_mobile_workers
 from corehq.apps.users.models import CommCareUser
 from corehq.util.view_utils import reverse
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST, require_can_edit_apps, require_deploy_apps)
-from corehq.apps.app_manager.exceptions import ModuleIdMissingException, ModuleNotFoundException
+from corehq.apps.app_manager.exceptions import ModuleIdMissingException, ModuleNotFoundException, \
+    PracticeUserException
 from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.download import source_files
@@ -124,7 +126,9 @@ def get_releases_context(request, domain, app_id):
         'application_profile_url': reverse(LanguageProfilesView.urlname, args=[domain, app_id]),
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
-        'latest_build_id': get_latest_build_id(domain, app_id)
+        'latest_build_id': get_latest_build_id(domain, app_id),
+        'practice_users': [
+            {"id": u['_id'], "text": u["username"]} for u in get_practice_mode_mobile_workers(domain)],
     })
     if not app.is_remote_app():
         if toggles.APP_MANAGER_V2.enabled(request.user.username) and len(app.modules) == 0:
@@ -470,7 +474,14 @@ class LanguageProfilesView(View):
                 id = profile.get('id')
                 if not id:
                     id = uuid.uuid4().hex
-                build_profiles[id] = BuildProfile(langs=profile['langs'], name=profile['name'])
+                try:
+                    practice_user_id = profile.get('practice_user_id')
+                    if practice_user_id:
+                        get_and_assert_practice_user_in_domain(practice_user_id, domain)
+                except PracticeUserException:
+                    return HttpResponse(status=400)
+                build_profiles[id] = BuildProfile(
+                    langs=profile['langs'], name=profile['name'], practice_mobile_worker_id=practice_user_id)
         app.build_profiles = build_profiles
         app.save()
         return HttpResponse()
