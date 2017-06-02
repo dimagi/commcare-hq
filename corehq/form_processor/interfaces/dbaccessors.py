@@ -172,6 +172,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
+    def get_related_cases(domain, case_ids, exclude_ids)
+        raise NotImplementedError
+
+    @abstractmethod
     def case_exists(case_id):
         raise NotImplementedError
 
@@ -185,6 +189,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_open_cases_by_owners(domain, owner_ids):
         raise NotImplementedError
 
     @abstractmethod
@@ -280,6 +288,9 @@ class CaseAccessors(object):
     def get_cases(self, case_ids, ordered=False):
         return self.db_accessor.get_cases(case_ids, ordered=ordered)
 
+    def get_related_cases(self, case_ids, exclude_ids)
+        return self.db_accessor.get_related_cases(case_ids, exclude_ids)
+
     def iter_cases(self, case_ids):
         for chunk in chunked(case_ids, 100):
             chunk = list(filter(None, chunk))
@@ -304,6 +315,10 @@ class CaseAccessors(object):
         returns a list of case_ids
         """
         return self.db_accessor.get_case_ids_in_domain_by_owners(self.domain, owner_ids, closed=closed)
+
+    def get_open_cases_by_owners(self, owner_ids):
+        """like get_case_ids_by_owners except get full cases"""
+        return self.db_accessor.get_open_cases_by_owners(self.domain, owner_ids)
 
     def get_open_case_ids_for_owner(self, owner_id):
         return self.db_accessor.get_open_case_ids_for_owner(self.domain, owner_id)

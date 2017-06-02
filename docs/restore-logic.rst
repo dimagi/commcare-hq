@@ -29,7 +29,7 @@ Dealing with shards
 Observation: the decision to shard by case ID means that the number of levels in
 a case hierarchy impacts restore performance. The minimum number of queries
 needed to retrieve all live_ cases for a device can equal the number of levels
-in the hierarchy.
+in the hierarchy. The maximum is unbounded.
 
 Since cases are sharded by case ID...
 
@@ -111,7 +111,10 @@ Sources: `eNikshay App Design and Feedback - Case Structure`_ and
 
 With the current sharding (by case ID) configuration, the maximum number of
 queries needed to get all live_ cases for a device is 5 because there are 5
-levels in the case hierarchy.
+levels in the case hierarchy. Update: this is wrong; it could be more than 5.
+Example: if a case retrieved in the 5th query has unvisited children, then at
+least one more query is necessary. Because any given case may have multiple
+parents, the maximum number of queries is unbounded.
 
 .. _eNikshay App Design and Feedback - Case Structure: https://docs.google.com/spreadsheets/d/1yNvDsWOnryTYooMs1snAQ3pD1R6wfSQN_1ICZbvKhXU/edit?pli=1#gid=670651589
 .. _case_utils.py: https://github.com/dimagi/commcare-hq/blob/master/custom/enikshay/case_utils.py
@@ -187,8 +190,13 @@ query:
     and parent_id in NEXT_IDS
     and child_type = EXTENSION
 
+The ``IN`` operator used to filter on case ID sets `should be optimized`_ since
+case ID sets may be large.
+
 Each of the above queries is executed on all shards and the results from each
 shard are merged into the final result set.
+
+.. _should be optimized: https://dba.stackexchange.com/questions/91247/optimizing-a-postgres-query-with-a-large-in
 
 
 One query to rule them all.
