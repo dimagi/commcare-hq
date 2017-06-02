@@ -188,6 +188,7 @@
             var options = {
                 labels: labels,
                 workflow: '{{ form.post_form_workflow }}',
+                workflow_fallback: '{{ form.post_form_workflow_fallback }}',
             };
 
             $('#form-workflow').koApplyBindings(new FormWorkflow(options))
