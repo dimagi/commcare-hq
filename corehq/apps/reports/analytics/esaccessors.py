@@ -238,7 +238,7 @@ def get_last_forms_by_app(user_id):
     buckets_dict = aggregations.app_id.buckets_dict
     result = []
     for app_id, bucket in buckets_dict.iteritems():
-        result.append = bucket.top_hits_last_form_submissions.hits[0]
+        result.append(bucket.top_hits_last_form_submissions.hits[0])
 
     return result
 
