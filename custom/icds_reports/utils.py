@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 import operator
 
 from dateutil.relativedelta import relativedelta
-from django.db.models.functions.base import Coalesce
 
 from corehq.util.quickcache import quickcache
 from django.db.models.aggregates import Sum, Avg
@@ -22,7 +21,7 @@ from custom.icds_reports.const import LocationTypes
 from dimagi.utils.dates import DateSpan
 
 from custom.icds_reports.models import AggDailyUsageView, AggChildHealthMonthly, AggAwcMonthly, AggCcsRecordMonthly, \
-    AggAwcDailyView, AwcLocation, DailyAttendanceView
+    AggAwcDailyView, DailyAttendanceView
 
 OPERATORS = {
     "==": operator.eq,
@@ -330,7 +329,9 @@ def get_maternal_child_data(config):
         ).values(
             'aggregation_level'
         ).annotate(
-            underweight=Sum('nutrition_status_moderately_underweight') + Sum('nutrition_status_severely_underweight'),
+            underweight=(
+                Sum('nutrition_status_moderately_underweight') + Sum('nutrition_status_severely_underweight')
+            ),
             valid=Sum('valid_in_month'),
             wasting=Sum('wasting_moderate') + Sum('wasting_severe'),
             stunting=Sum('stunting_moderate') + Sum('stunting_severe'),
@@ -960,7 +961,7 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
             data['red'][date_in_miliseconds] += 1
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=sum(value)/len(value)) for key, value in best_worst.iteritems()],
+        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -1038,13 +1039,13 @@ def get_awc_reports_system_usage(config, month, prev_month, three_month, loc_lev
         )
 
     chart_data = DailyAttendanceView.objects.filter(
-            pse_date__range=(datetime(*three_month), datetime(*month)), **config
-        ).values(
-            'pse_date', 'aggregation_level'
-        ).annotate(
-            awc_count=Sum('awc_open_count'),
-            attended_children=Avg('attended_children_percent')
-        ).order_by('pse_date')
+        pse_date__range=(datetime(*three_month), datetime(*month)), **config
+    ).values(
+        'pse_date', 'aggregation_level'
+    ).annotate(
+        awc_count=Sum('awc_open_count'),
+        attended_children=Avg('attended_children_percent')
+    ).order_by('pse_date')
 
     awc_count_chart = []
     attended_children_chart = []
@@ -1126,7 +1127,6 @@ def get_awc_reports_pse(config, month, three_month):
     for map_row in map_image_data:
         lat = map_row['form_location_lat']
         long = map_row['form_location_long']
-        image = map_row['image_name']
         awc_name = map_row['awc_name']
         if lat and long:
             map_data.append({
@@ -1137,7 +1137,6 @@ def get_awc_reports_pse(config, month, three_month):
                 'latitude': lat,
                 'longitude': long
             })
-        # if image:
         tmp_image.append({'id': count,  'image': 'http://unsplash.it/' + str(300 + count) + '/300'})
         img_count += 1
         count += 1
@@ -1173,23 +1172,25 @@ def get_awc_reports_pse(config, month, three_month):
 def get_awc_reports_maternal_child(config, month, three_month):
 
     data = AggChildHealthMonthly.objects.filter(
-            month__range=(datetime(*three_month), datetime(*month)), **config
-        ).values(
-            'month', 'aggregation_level'
-        ).annotate(
-            underweight=(Sum('nutrition_status_moderately_underweight') + Sum('nutrition_status_severely_underweight')),
-            valid_in_month=Sum('valid_in_month'),
-            immunized=Sum('fully_immunized_on_time') + Sum('fully_immunized_late'),
-            eligible=Sum('fully_immunized_eligible')
-        ).order_by('month')
+        month__range=(datetime(*three_month), datetime(*month)), **config
+    ).values(
+        'month', 'aggregation_level'
+    ).annotate(
+        underweight=(
+            Sum('nutrition_status_moderately_underweight') + Sum('nutrition_status_severely_underweight')
+        ),
+        valid_in_month=Sum('valid_in_month'),
+        immunized=Sum('fully_immunized_on_time') + Sum('fully_immunized_late'),
+        eligible=Sum('fully_immunized_eligible')
+    ).order_by('month')
 
     prevalence = []
     immunized = []
     for row in data:
         month = row['month']
         month_in_milliseconds = int(month.strftime("%s")) * 1000
-        prevalence.append([month_in_milliseconds, row['underweight']/float(row['valid_in_month'] or 1)])
-        immunized.append([month_in_milliseconds, row['immunized']/float(row['eligible'] or 1)])
+        prevalence.append([month_in_milliseconds, row['underweight'] / float(row['valid_in_month'] or 1)])
+        immunized.append([month_in_milliseconds, row['immunized'] / float(row['eligible'] or 1)])
     return {
         'charts': [
             [
@@ -1261,6 +1262,7 @@ def get_awc_report_demographics(config, month):
             has_aadhaar=Sum('cases_person_has_aadhaar'),
             all_cases=Sum('cases_person')
         )
+
     yesterday = datetime.now() - relativedelta(days=1)
     before_yesterday = yesterday - relativedelta(days=1)
     kpi_yesterday = get_data_for_kpi(config, yesterday.date())

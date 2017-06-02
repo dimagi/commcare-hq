@@ -1,3 +1,5 @@
+/* global moment */
+
 function MonthModalController($location, $uibModalInstance) {
     var vm = this;
 
@@ -7,15 +9,15 @@ function MonthModalController($location, $uibModalInstance) {
     window.angular.forEach(moment.months(), function(key, value) {
         vm.months.push({
             name: key,
-            id: value + 1
-        })
+            id: value + 1,
+        });
     });
 
     for (var year=2014; year <= new Date().getFullYear(); year++ ) {
         vm.years.push({
             name: year,
-            id: year
-        })
+            id: year,
+        });
     }
 
     vm.selectedMonth = $location.search()['month'] !== void(0) ? $location.search()['month'] : new Date().getMonth() + 1;
@@ -25,7 +27,7 @@ function MonthModalController($location, $uibModalInstance) {
 
         $uibModalInstance.close({
             month: vm.selectedMonth,
-            year: vm.selectedYear
+            year: vm.selectedYear,
         });
     };
 
@@ -46,13 +48,13 @@ function MonthFilterController($scope, $location, $uibModal) {
             controller: MonthModalController,
             controllerAs: '$ctrl',
             resolve: {
-            }
+            },
         });
 
         modalInstance.result.then(function (data) {
             $location.search('month', data['month']);
             $location.search('year', data['year']);
-            $scope.$emit('filtersChange')
+            $scope.$emit('filtersChange');
         });
     };
 }

@@ -14,7 +14,6 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
-from custom.icds_reports.const import LocationTypes
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
@@ -356,20 +355,13 @@ class AwcReportsView(View):
 
         config = {
             'aggregation_level': aggregation_level,
-            'awc_site_code': "awc_214"
         }
-        loc_level = 'state'
         if location:
             try:
                 sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
-                location_code = sql_location.site_code
-                loc_level = LocationType.objects.filter(
-                    parent_type=sql_location.location_type,
-                    domain=self.kwargs['domain']
-                )[0].code
                 location_key = '%s_site_code' % sql_location.location_type.code
                 config.update({
-                    location_key: "awc_214",
+                    location_key: sql_location.site_code,
                 })
             except SQLLocation.DoesNotExist:
                 pass
