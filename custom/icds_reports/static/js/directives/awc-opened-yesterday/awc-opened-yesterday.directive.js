@@ -5,13 +5,15 @@ function AwcOpenedYesterdayController($routeParams, systemUsageService) {
     var vm = this;
     vm.data = {};
     vm.step = $routeParams.step;
-    vm.steps = [
-        {route: '/awc_opened/1', label: 'MapView'},
-        {route: '/awc_opened/2', label: 'ChartView'},
-    ];
+    vm.filters = [];
+    
+    vm.steps = {
+        'map': {route: '/awc_opened/map', label: 'MapView'},
+        'chart': {route: '/awc_opened/chart', label: 'ChartView'},
+    };
     vm.mapData = {};
 
-    systemUsageService.getAwcOpenedData(1).then(function(response) {
+    systemUsageService.getAwcOpenedData(vm.step).then(function(response) {
         vm.mapData = response.data.configs;
     });
 }

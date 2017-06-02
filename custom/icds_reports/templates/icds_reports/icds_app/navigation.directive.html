@@ -58,7 +58,7 @@
             </div>
         </li>
         <hr>
-        <li ng-class="{'active': $location.path() === '/awc_reports'}">
+        <li ng-class="{'active': $location.path().indexOf('/awc_reports') !== -1}">
             <a href="#awc_reports" class="fa"> <i class="fa fa-file" aria-hidden="true"> {% trans "AWC Report" %}</i></a>
         </li>
         <li>

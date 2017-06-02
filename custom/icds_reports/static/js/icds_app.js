@@ -16,11 +16,11 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
 
         $routeProvider
             .when("/", {
-                redirectTo : '/system_usage',
-            }).when("/:step", {
+                redirectTo : '/program_summary/system_usage',
+            }).when("/program_summary/:step", {
                 template : "<system-usage></system-usage>"
             }).when("/awc_opened", {
-                redirectTo : "/awc_opened/1",
+                redirectTo : "/awc_opened/map",
             })
             .when("/awc_opened/:step", {
                 template : "<awc-opened-yesterday></awc-opened-yesterday>",

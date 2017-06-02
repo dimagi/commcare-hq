@@ -20,6 +20,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, ma
     vm.bottom_three = [];
     vm.location_type = null;
     vm.loaded = false;
+    vm.filters = [];
 
     vm.rightLegend = {
         average: 10,

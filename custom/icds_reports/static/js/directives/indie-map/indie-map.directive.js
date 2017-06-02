@@ -87,7 +87,7 @@ function IndieMapController($scope, $compile, $location) {
         bubbles: [],
     };
 
-    if (vm.bubbles) {
+    if (vm.map.data) {
         _.extend(vm.mapPlugins, {
             customLegend: function () {
                 var html = ['<h3>' + vm.legendTitle + '</h3><table style="margin: 0 auto;">'];
