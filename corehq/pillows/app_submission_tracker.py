@@ -19,8 +19,6 @@ from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
 from pillowtop.reindexer.reindexer import Reindexer
 
-from corehq.util.quickcache import quickcache
-
 
 def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadataTrackerProcessor', **kwargs):
     """
