@@ -21,7 +21,8 @@ from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFil
 from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_data, get_cas_reach_data, \
     get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart, \
-    get_awc_reports_system_usage, get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics
+    get_awc_reports_system_usage, get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics, \
+    get_location_filter
 from . import const
 from .exceptions import TableauTokenException
 
@@ -182,29 +183,44 @@ class ProgramSummaryView(View):
 
     def get(self, request, *args, **kwargs):
         step = kwargs.get('step')
-
         # Hardcoded for local tests, in database we have data only for these two days
-        date_2 = datetime(2015, 9, 9)
-        date_1 = datetime(2015, 9, 10)
-        month = datetime(2015, 9, 1)
-        prev_month = datetime(2015, 9, 1) - relativedelta(months=1)
-        config = {
-            'yesterday': tuple(date_1.timetuple())[:3],
-            'before_yesterday': tuple(date_2.timetuple())[:3],
-            'month': tuple(month.timetuple())[:3],
-            'prev_month': tuple(prev_month.timetuple())[:3]
-        }
+        now = datetime.utcnow()
+        month = request.GET.get('month', now.month)
+        year = request.GET.get('year', now.year)
+        yesterday = (now - relativedelta(days=1)).date()
+        before_yesterday = (now - relativedelta(days=2)).date()
+        current_month = datetime(year, month, 1)
+        prev_month = current_month - relativedelta(months=1)
+
+        if step == 'system_usage' or step == 'demographics':
+            config = {}
+        else:
+            config = {
+                'month': tuple(current_month.timetuple())[:3],
+                'prev_month': tuple(prev_month.timetuple())[:3]
+            }
+
+        get_location_filter(request, self.kwargs['domain'], config)
+
         data = {
             'records': []
         }
         if step == 'system_usage':
-            data = get_system_usage_data(config)
+            data = get_system_usage_data(
+                tuple(yesterday.timetuple())[:3],
+                tuple(before_yesterday.timetuple())[:3],
+                config
+            )
         elif step == 'maternal_child':
             data = get_maternal_child_data(config)
         elif step == 'icds_cas_reach':
             data = get_cas_reach_data(config)
         elif step == 'demographics':
-            data = get_demographics_data(config)
+            data = get_demographics_data(
+                tuple(yesterday.timetuple())[:3],
+                tuple(before_yesterday.timetuple())[:3],
+                config
+            )
         elif step == 'awc_infrastructure':
             data = get_awc_infrastructure_data(config)
         return JsonResponse(data=data)
@@ -244,34 +260,12 @@ class PrevalenceOfUndernutritionView(View):
         step = kwargs.get('step')
 
         month = datetime(2015, 9, 1)
-        location = request.GET.get('location', None)
-        aggregation_level = 1
 
         config = {
             'month': tuple(month.timetuple())[:3],
-            'aggregation_level': aggregation_level,
+            'aggregation_level': 1l,
         }
-        loc_level = 'state'
-        if location:
-            try:
-                domain = self.kwargs['domain']
-                sql_location = SQLLocation.objects.get(location_id=location, domain=domain)
-                aggregation_level = sql_location.get_ancestors(include_self=True).count() + 1
-                location_code = sql_location.site_code
-                if sql_location.location_type.code != LocationTypes.AWC:
-                    loc_level = LocationType.objects.filter(
-                        parent_type=sql_location.location_type,
-                        domain=domain
-                    )[0].code
-                else:
-                    loc_level = LocationTypes.AWC
-                location_key = '%s_site_code' % sql_location.location_type.code
-                config.update({
-                    location_key: location_code.upper(),
-                    'aggregation_level': aggregation_level
-                })
-            except SQLLocation.DoesNotExist:
-                pass
+        loc_level = get_location_filter(request, self.kwargs['domain'], config)
 
         data = []
         if step == "1":

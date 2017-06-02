@@ -13,7 +13,7 @@ from django.db.models.aggregates import Sum, Avg
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
@@ -197,24 +197,59 @@ def percent_increase(prop, data, prev_data):
     return ((current or 0) - (previous or 0)) / float(previous or 1) * 100
 
 
-def percent_diff(properties, current_data, prev_data, all):
+def percent_diff(property, current_data, prev_data, all):
     current = 0
+    curr_all = 1
     prev = 0
-    for prop in properties:
-        current += (current_data[0][prop] or 0) if current_data else 0
-        prev += (prev_data[0][prop] or 0) if prev_data else 0
-    curr_all = (current_data[0][all] or 1) if current_data else 1
-    prev_all = (prev_data[0][all] or 1) if prev_data else 1
-    current_percent = (current or 0) / float(curr_all) * 100
-    prev_percent = (prev or 0) / float(prev_all) * 100
+    prev_all = 1
+    if current_data:
+        current = (current_data[0][property] or 0)
+        curr_all = (current_data[0][all] or 1)
+
+    if prev_data:
+        prev = (prev_data[0][property] or 0)
+        prev_all = (prev_data[0][all] or 1)
+
+    current_percent = current / float(curr_all) * 100
+    prev_percent = prev / float(prev_all) * 100
     return current_percent - prev_percent
 
 
-def get_system_usage_data(filters):
+def get_value(data, prop):
+    return data[0][prop] if data else 0
 
-    def get_data_for(date):
+
+def get_location_filter(request, domain, config):
+    location = request.GET.get('location', None)
+    loc_level = 'state'
+    if location:
+        try:
+            domain = domain
+            sql_location = SQLLocation.objects.get(location_id=location, domain=domain)
+            aggregation_level = sql_location.get_ancestors(include_self=True).count() + 1
+            location_code = sql_location.site_code
+            if sql_location.location_type.code != LocationTypes.AWC:
+                loc_level = LocationType.objects.filter(
+                    parent_type=sql_location.location_type,
+                    domain=domain
+                )[0].code
+            else:
+                loc_level = LocationTypes.AWC
+            location_key = '%s_site_code' % sql_location.location_type.code
+            config.update({
+                location_key: location_code,
+                'aggregation_level': aggregation_level
+            })
+        except SQLLocation.DoesNotExist:
+            pass
+    return loc_level
+
+
+def get_system_usage_data(yesterday, before_yesterday, config):
+
+    def get_data_for(date, filters):
         return AggDailyUsageView.objects.filter(
-            date=datetime(*date), aggregation_level=1
+            date=datetime(*date), **filters
         ).values(
             'aggregation_level'
         ).annotate(
@@ -226,8 +261,8 @@ def get_system_usage_data(filters):
             num_thr=Sum('usage_num_thr')
         )
 
-    yesterday_data = get_data_for(filters['yesterday'])
-    before_yesterday_data = get_data_for(filters['before_yesterday'])
+    yesterday_data = get_data_for(yesterday, config)
+    before_yesterday_data = get_data_for(before_yesterday, config)
 
     return {
         'records': [
@@ -237,16 +272,16 @@ def get_system_usage_data(filters):
                     'help_text': _(("Total Number of Angwanwadi Centers that were open yesterday "
                                     "by the AWW or the AWW helper")),
                     'percent': percent_increase('daily_attendance', yesterday_data, before_yesterday_data),
-                    'value': yesterday_data[0]['daily_attendance'],
-                    'all': yesterday_data[0]['awcs'],
+                    'value': get_value(yesterday_data, 'daily_attendance'),
+                    'all': get_value(yesterday_data, 'awcs'),
                     'format': 'div'
                 },
                 {
                     'label': _('Average number of forms hosuehold registration forms submitted yesterday'),
                     'help_text': _('Average number of household registration forms submitted by AWWs yesterday.'),
                     'percent': percent_increase('num_forms', yesterday_data, before_yesterday_data),
-                    'value': yesterday_data[0]['num_forms'],
-                    'all': yesterday_data[0]['awcs'],
+                    'value': get_value(yesterday_data, 'num_forms'),
+                    'all': get_value(yesterday_data, 'awcs'),
                     'format': 'number'
                 }
             ],
@@ -259,16 +294,16 @@ def get_system_usage_data(filters):
                          "Complementary feeding")
                     ),
                     'percent': percent_increase('num_home_visits', yesterday_data, before_yesterday_data),
-                    'value': yesterday_data[0]['num_home_visits'],
-                    'all': yesterday_data[0]['awcs'],
+                    'value': get_value(yesterday_data, 'num_home_visits'),
+                    'all': get_value(yesterday_data, 'awcs'),
                     'format': 'number'
                 },
                 {
                     'label': _('Average number of Growth Monitoring forms submitted yesterday'),
                     'help_text': _('Average number of growth monitoring forms (GMP) submitted yesterday'),
                     'percent': percent_increase('num_gmp', yesterday_data, before_yesterday_data),
-                    'value': yesterday_data[0]['num_gmp'],
-                    'all': yesterday_data[0]['awcs'],
+                    'value': get_value(yesterday_data, 'num_gmp'),
+                    'all': get_value(yesterday_data, 'awcs'),
                     'format': 'number'
                 }
             ],
@@ -277,8 +312,8 @@ def get_system_usage_data(filters):
                     'label': _('Average number of Take Home Ration forms submitted yesterday'),
                     'help_text': _('Average number of Take Home Rations (THR) forms submitted yesterday'),
                     'percent': percent_increase('num_thr', yesterday_data, before_yesterday_data),
-                    'value': yesterday_data[0]['num_thr'],
-                    'all': yesterday_data[0]['awcs'],
+                    'value': get_value(yesterday_data, 'num_thr'),
+                    'all': get_value(yesterday_data, 'awcs'),
                     'format': 'number'
                 }
             ]
@@ -286,22 +321,19 @@ def get_system_usage_data(filters):
     }
 
 
-@quickcache(['filters'], timeout=24 * 60 * 60)
-def get_maternal_child_data(filters):
+@quickcache(['config'], timeout=24 * 60 * 60)
+def get_maternal_child_data(config):
 
-    def get_data_for(month):
+    def get_data_for_child_health_monhlty(date, filters):
         return AggChildHealthMonthly.objects.filter(
-            month=datetime(*month), aggregation_level=1
+            month=date, **filters
         ).values(
             'aggregation_level'
         ).annotate(
-            moderately_underweight=Sum('nutrition_status_moderately_underweight'),
-            severely_underweight=Sum('nutrition_status_severely_underweight'),
+            underweight=Sum('nutrition_status_moderately_underweight') + Sum('nutrition_status_severely_underweight'),
             valid=Sum('valid_in_month'),
-            wasting_mod=Sum('wasting_moderate'),
-            wasting_seve=Sum('wasting_severe'),
-            stunting_mod=Sum('stunting_moderate'),
-            stunting_seve=Sum('stunting_severe'),
+            wasting=Sum('wasting_moderate') + Sum('wasting_severe'),
+            stunting=Sum('stunting_moderate') + Sum('stunting_severe'),
             height_eli=Sum('height_eligible'),
             low_birth_weight=Sum('low_birth_weight_in_month'),
             bf_birth=Sum('bf_at_birth'),
@@ -312,26 +344,26 @@ def get_maternal_child_data(filters):
             cf_initiation_eli=Sum('cf_initiation_eligible')
         )
 
-    this_month_data = get_data_for(filters['month'])
-    prev_month_data = get_data_for(filters['prev_month'])
+    def get_data_for_deliveries(date, filters):
+        return AggCcsRecordMonthly.objects.filter(
+            month=date, **filters
+        ).values(
+            'aggregation_level'
+        ).annotate(
+            institutional_delivery=Sum('institutional_delivery_in_month'),
+            delivered=Sum('delivered_in_month')
+        )
 
-    deliveries_this_month = AggCcsRecordMonthly.objects.filter(
-        month=datetime(*filters['month']), aggregation_level=1
-    ).values(
-        'aggregation_level'
-    ).annotate(
-        institutional_delivery=Sum('institutional_delivery_in_month'),
-        delivered=Sum('delivered_in_month')
-    )
+    current_month = datetime(*config['month'])
+    previous_month = datetime(*config['prev_month'])
+    del config['month']
+    del config['prev_month']
 
-    deliveries_prev_month = AggCcsRecordMonthly.objects.filter(
-        month=datetime(*filters['prev_month']), aggregation_level=1
-    ).values(
-        'aggregation_level'
-    ).annotate(
-        institutional_delivery=Sum('institutional_delivery_in_month'),
-        delivered=Sum('delivered_in_month')
-    )
+    this_month_data = get_data_for_child_health_monhlty(current_month, config)
+    prev_month_data = get_data_for_child_health_monhlty(previous_month, config)
+
+    deliveries_this_month = get_data_for_deliveries(current_month, config)
+    deliveries_prev_month = get_data_for_deliveries(previous_month, config)
 
     return {
         'records': [
@@ -344,15 +376,13 @@ def get_maternal_child_data(filters):
                         "underweight have a higher risk of mortality.")
                     ),
                     'percent': percent_diff(
-                        ['moderately_underweight', 'severely_underweight'],
+                        'underweight',
                         this_month_data,
                         prev_month_data,
                         'valid'
                     ),
-                    'value': (
-                        this_month_data[0]['moderately_underweight'] + this_month_data[0]['severely_underweight']
-                    ),
-                    'all': this_month_data[0]['valid'],
+                    'value': get_value(this_month_data, 'underweight'),
+                    'all': get_value(this_month_data, 'valid'),
                     'format': 'percent_and_div'
                 },
                 {
@@ -365,13 +395,13 @@ def get_maternal_child_data(filters):
                         "diseases.")
                     ),
                     'percent': percent_diff(
-                        ['wasting_mod', 'wasting_seve'],
+                        'wasting',
                         this_month_data,
                         prev_month_data,
                         'height_eli'
                     ),
-                    'value': this_month_data[0]['wasting_mod'] + this_month_data[0]['wasting_seve'],
-                    'all': this_month_data[0]['height_eli'],
+                    'value': get_value(this_month_data, 'wasting'),
+                    'all': get_value(this_month_data, 'height_eli'),
                     'format': 'percent_and_div'
                 }
             ],
@@ -384,13 +414,13 @@ def get_maternal_child_data(filters):
                         "undernutrition and has long lasting harmful consequences on the growth of a child")
                     ),
                     'percent': percent_diff(
-                        ['stunting_mod', 'stunting_seve'],
+                        'stunting',
                         this_month_data,
                         prev_month_data,
                         'height_eli'
                     ),
-                    'value': this_month_data[0]['stunting_mod'] + this_month_data[0]['stunting_seve'],
-                    'all': this_month_data[0]['height_eli'],
+                    'value': get_value(this_month_data, 'stunting_mod'),
+                    'all': get_value(this_month_data, 'height_eli'),
                     'format': 'percent_and_div'
                 },
                 {
@@ -401,13 +431,13 @@ def get_maternal_child_data(filters):
                         "morbidity, inhibited growth and cognitive development, and chronic diseases later "
                         "in life")),
                     'percent': percent_diff(
-                        ['low_birth_weight'],
+                        'low_birth_weight',
                         this_month_data,
                         prev_month_data,
                         'born'
                     ),
-                    'value': this_month_data[0]['low_birth_weight'],
-                    'all': this_month_data[0]['born'],
+                    'value': get_value(this_month_data, 'low_birth_weight'),
+                    'all': get_value(this_month_data, 'born'),
                     'format': 'percent_and_div'
                 }
             ],
@@ -420,13 +450,13 @@ def get_maternal_child_data(filters):
                         "and encourages exclusive breastfeeding practic")
                     ),
                     'percent': percent_diff(
-                        ['bf_birth'],
+                        'bf_birth',
                         this_month_data,
                         prev_month_data,
                         'born'
                     ),
-                    'value': this_month_data[0]['bf_birth'],
-                    'all': this_month_data[0]['born'],
+                    'value': get_value(this_month_data, 'bf_birth'),
+                    'all': get_value(this_month_data, 'born'),
                     'format': 'percent_and_div'
                 },
                 {
@@ -437,13 +467,13 @@ def get_maternal_child_data(filters):
                         "liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months")
                     ),
                     'percent': percent_diff(
-                        ['ebf'],
+                        'ebf',
                         this_month_data,
                         prev_month_data,
                         'ebf_eli'
                     ),
-                    'value': this_month_data[0]['ebf'],
-                    'all': this_month_data[0]['ebf_eli'],
+                    'value': get_value(this_month_data, 'ebf'),
+                    'all': get_value(this_month_data, 'ebf_eli'),
                     'format': 'percent_and_div'
                 }
             ],
@@ -456,13 +486,13 @@ def get_maternal_child_data(filters):
                         "breastmilk at 6 months of age is a key feeding practice to reduce malnutrition")
                     ),
                     'percent': percent_diff(
-                        ['cf_initiation'],
+                        'cf_initiation',
                         this_month_data,
                         prev_month_data,
                         'cf_initiation_eli'
                     ),
-                    'value': this_month_data[0]['cf_initiation'],
-                    'all': this_month_data[0]['cf_initiation_eli'],
+                    'value': get_value(this_month_data, 'cf_initiation'),
+                    'all': get_value(this_month_data, 'cf_initiation_eli'),
                     'format': 'percent_and_div'
                 },
                 {
@@ -473,13 +503,13 @@ def get_maternal_child_data(filters):
                         "decrease maternal mortality rate")
                     ),
                     'percent': percent_diff(
-                        ['institutional_delivery'],
+                        'institutional_delivery',
                         deliveries_this_month,
                         deliveries_prev_month,
                         'delivered'
                     ),
-                    'value': deliveries_this_month[0]['institutional_delivery'] or 0,
-                    'all': deliveries_this_month[0]['delivered'] or 0,
+                    'value': get_value(deliveries_this_month, 'institutional_delivery'),
+                    'all': get_value(deliveries_this_month, 'delivered'),
                     'format': 'percent_and_div'
                 }
             ]
@@ -487,10 +517,10 @@ def get_maternal_child_data(filters):
     }
 
 
-def get_cas_reach_data(filters):
-    def get_data_for(month):
+def get_cas_reach_data(config):
+    def get_data_for(month, filters):
         return AggAwcMonthly.objects.filter(
-            month=datetime(*month), aggregation_level=1
+            month=month, **filters
         ).values(
             'aggregation_level'
         ).annotate(
@@ -502,8 +532,13 @@ def get_cas_reach_data(filters):
 
         )
 
-    this_month_data = get_data_for(filters['month'])
-    prev_month_data = get_data_for(filters['prev_month'])
+    current_month = datetime(*config['month'])
+    previous_month = datetime(*config['prev_month'])
+    del config['month']
+    del config['prev_month']
+
+    this_month_data = get_data_for(current_month, config)
+    prev_month_data = get_data_for(previous_month, config)
 
     return {
         'records': [
@@ -512,7 +547,7 @@ def get_cas_reach_data(filters):
                     'label': _('States/UTs covered'),
                     'help_text': _('Total States that have launched ICDS CAS'),
                     'percent': None,
-                    'value': this_month_data[0]['states'],
+                    'value': get_value(this_month_data, 'states'),
                     'all': None,
                     'format': 'number'
                 },
@@ -520,7 +555,7 @@ def get_cas_reach_data(filters):
                     'label': _('Districts covered'),
                     'help_text': _('Total Districts that have launched ICDS CAS'),
                     'percent': None,
-                    'value': this_month_data[0]['districts'],
+                    'value': get_value(this_month_data, 'districts'),
                     'all': None,
                     'format': 'number'
                 }
@@ -530,7 +565,7 @@ def get_cas_reach_data(filters):
                     'label': _('Block covered'),
                     'help_text': _('Total Blocks that have launched ICDS CAS'),
                     'percent': None,
-                    'value': this_month_data[0]['blocks'],
+                    'value': get_value(this_month_data, 'blocks'),
                     'all': None,
                     'format': 'number'
                 },
@@ -538,7 +573,7 @@ def get_cas_reach_data(filters):
                     'label': _('Sectors covered'),
                     'help_text': _('Total Sectors that have launched ICDS CAS'),
                     'percent': None,
-                    'value': this_month_data[0]['supervisors'],
+                    'value': get_value(this_month_data, 'supervisors'),
                     'all': None,
                     'format': 'number'
                 }
@@ -548,7 +583,7 @@ def get_cas_reach_data(filters):
                     'label': _('AWCs covered'),
                     'help_text': _('Total AWCs that have launched ICDS CAS'),
                     'percent': percent_increase('awcs', this_month_data, prev_month_data),
-                    'value': this_month_data[0]['awcs'],
+                    'value': get_value(this_month_data, 'awcs'),
                     'all': None,
                     'format': 'number'
                 }
@@ -557,10 +592,10 @@ def get_cas_reach_data(filters):
     }
 
 
-def get_demographics_data(filters):
-    def get_data_for(date):
+def get_demographics_data(yesterday, before_yesterday, config):
+    def get_data_for(date, filters):
         return AggAwcDailyView.objects.filter(
-            date=datetime(*date), aggregation_level=1
+            date=date, **filters
         ).values(
             'aggregation_level'
         ).annotate(
@@ -573,8 +608,8 @@ def get_demographics_data(filters):
             all_persons=Sum('cases_person')
         )
 
-    yesterday_data = get_data_for(filters['yesterday'])
-    before_yesterday_data = get_data_for(filters['before_yesterday'])
+    yesterday_data = get_data_for(datetime(*yesterday), config)
+    before_yesterday_data = get_data_for(datetime(*before_yesterday), config)
 
     return {
         'records': [
@@ -583,7 +618,7 @@ def get_demographics_data(filters):
                     'label': _('Registered Households'),
                     'help_text': _('Total number of households registered using ICDS CAS'),
                     'percent': None,
-                    'value': yesterday_data[0]['household'],
+                    'value': get_value(yesterday_data, 'household'),
                     'all': None,
                     'format': 'number'
                 },
@@ -601,7 +636,7 @@ def get_demographics_data(filters):
                     'label': _('Children (0-6 years)'),
                     'help_text': _('Total number of children registered between the age of 0 - 6 years'),
                     'percent': None,
-                    'value': yesterday_data[0]['child_health'],
+                    'value': get_value(yesterday_data, 'child_health'),
                     'all': None,
                     'format': 'number'
                 },
@@ -609,7 +644,7 @@ def get_demographics_data(filters):
                     'label': _('Pregnant Women'),
                     'help_text': _('Total number of pregnant women registered'),
                     'percent': None,
-                    'value': yesterday_data[0]['ccs_pregnant'],
+                    'value': get_value(yesterday_data, 'ccs_pregnant'),
                     'all': None,
                     'format': 'number'
                 }
@@ -618,7 +653,7 @@ def get_demographics_data(filters):
                     'label': _('Lactating Mothers'),
                     'help_text': _('Total number of lactating women registered'),
                     'percent': None,
-                    'value': yesterday_data[0]['css_lactating'],
+                    'value': get_value(yesterday_data, 'css_lactating'),
                     'all': None,
                     'format': 'number'
                 },
@@ -626,7 +661,7 @@ def get_demographics_data(filters):
                     'label': _('Adolescent Girls (11-18 years)'),
                     'help_text': _('Total number of adolescent girls who are registered'),
                     'percent': None,
-                    'value': yesterday_data[0]['person_adolescent'],
+                    'value': get_value(yesterday_data, 'person_adolescent'),
                     'all': None,
                     'format': 'number'
                 }
@@ -637,13 +672,13 @@ def get_demographics_data(filters):
                         'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
                     )),
                     'percent': percent_diff(
-                        ['person_aadhaar'],
+                        'person_aadhaar',
                         yesterday_data,
                         before_yesterday_data,
                         'all_persons'
                     ),
-                    'value': yesterday_data[0]['person_aadhaar'],
-                    'all': yesterday_data[0]['all_persons'],
+                    'value': get_value(yesterday_data, 'person_aadhaar'),
+                    'all': get_value(yesterday_data, 'all_persons'),
                     'format': 'number'
                 }
             ]
@@ -651,10 +686,10 @@ def get_demographics_data(filters):
     }
 
 
-def get_awc_infrastructure_data(filters):
-    def get_data_for(month):
+def get_awc_infrastructure_data(config):
+    def get_data_for(month, filters):
         return AggAwcMonthly.objects.filter(
-            month=datetime(*month), aggregation_level=1
+            month=month, **filters
         ).values(
             'aggregation_level'
         ).annotate(
@@ -664,8 +699,13 @@ def get_awc_infrastructure_data(filters):
             awcs=Sum('num_awcs')
         )
 
-    this_month_data = get_data_for(filters['month'])
-    prev_month_data = get_data_for(filters['prev_month'])
+    current_month = datetime(*config['month'])
+    previous_month = datetime(*config['prev_month'])
+    del config['month']
+    del config['prev_month']
+
+    this_month_data = get_data_for(current_month, config)
+    prev_month_data = get_data_for(previous_month, config)
 
     return {
         'records': [
@@ -674,13 +714,13 @@ def get_awc_infrastructure_data(filters):
                     'label': _('Total number of AWCs with a source of clean drinking water'),
                     'help_text': _('Percentage of AWCs with a source of clean drinking water'),
                     'percent': percent_diff(
-                        ['clean_water'],
+                        'clean_water',
                         this_month_data,
                         prev_month_data,
                         'awcs'
                     ),
-                    'value': this_month_data[0]['clean_water'],
-                    'all': this_month_data[0]['awcs'],
+                    'value': get_value(this_month_data, 'clean_water'),
+                    'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div'
                 },
                 {
@@ -690,13 +730,13 @@ def get_awc_infrastructure_data(filters):
                     ),
                     'help_text': _('Percentage of AWCs with a functional toilet'),
                     'percent': percent_diff(
-                        ['functional_toilet'],
+                        'functional_toilet',
                         this_month_data,
                         prev_month_data,
                         'awcs'
                     ),
-                    'value': this_month_data[0]['functional_toilet'],
-                    'all': this_month_data[0]['awcs'],
+                    'value': get_value(this_month_data, 'functional_toilet'),
+                    'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div'
                 }
             ],
@@ -713,13 +753,13 @@ def get_awc_infrastructure_data(filters):
                     'label': _('Total number of AWCs with a Medicine Kit'),
                     'help_text': _('Percentage of AWCs with a Medicine Kit'),
                     'percent': percent_diff(
-                        ['medicine_kits'],
+                        'medicine_kits',
                         this_month_data,
                         prev_month_data,
                         'awcs'
                     ),
-                    'value': this_month_data[0]['medicine_kits'],
-                    'all': this_month_data[0]['awcs'],
+                    'value': get_value(this_month_data, 'medicine_kits'),
+                    'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div'
                 }
             ],
@@ -1014,7 +1054,7 @@ def get_awc_reports_system_usage(config, month, prev_month, loc_level):
                         this_month_data,
                         prev_month_data,
                     ),
-                    'value': this_month_data[0]['awc_open'],
+                    'value': get_value(this_month_data, 'awc_open'),
                     'all': '',
                     'format': 'number'
                 },
@@ -1025,13 +1065,13 @@ def get_awc_reports_system_usage(config, month, prev_month, loc_level):
                     ),
                     'help_text': _('Percentage of AWCs with a functional toilet'),
                     'percent': percent_diff(
-                        ['weighed'],
+                        'weighed',
                         this_month_data,
                         prev_month_data,
                         'all'
                     ),
-                    'value': this_month_data[0]['weighed'],
-                    'all': this_month_data[0]['all'],
+                    'value': get_value(this_month_data, 'weighed'),
+                    'all': get_value(this_month_data, 'all'),
                     'format': 'percent_and_div'
                 }
             ]
@@ -1244,7 +1284,7 @@ def get_awc_report_demographics(config, month):
                         kpi_yesterday,
                         kpi_before_yesterday,
                     ),
-                    'value': kpi_yesterday[0]['ccs_pregnant'] if kpi_yesterday else 0,
+                    'value': get_value(kpi_yesterday, 'ccs_pregnant'),
                     'all': '',
                     'format': 'number'
                 },
@@ -1256,7 +1296,7 @@ def get_awc_report_demographics(config, month):
                         kpi_yesterday,
                         kpi_before_yesterday
                     ),
-                    'value': kpi_yesterday[0]['ccs_lactating'] if kpi_yesterday else 0,
+                    'value': get_value(kpi_yesterday, 'ccs_lactating'),
                     'all': '',
                     'format': 'number'
                 }
@@ -1270,7 +1310,7 @@ def get_awc_report_demographics(config, month):
                         kpi_yesterday,
                         kpi_before_yesterday,
                     ),
-                    'value': kpi_yesterday[0]['adolescent'] if kpi_yesterday else 0,
+                    'value': get_value(kpi_yesterday, 'adolescent'),
                     'all': '',
                     'format': 'number'
                 },
@@ -1283,8 +1323,8 @@ def get_awc_report_demographics(config, month):
                         kpi_before_yesterday,
                         'all_cases'
                     ),
-                    'value': kpi_yesterday[0]['has_aadhaar'] if kpi_yesterday else 0,
-                    'all': kpi_yesterday[0]['all_cases'] if kpi_yesterday else 0,
+                    'value': get_value(kpi_yesterday, 'has_aadhaar'),
+                    'all': get_value(kpi_yesterday, 'all_cases'),
                     'format': 'div'
                 }
             ]
