@@ -313,7 +313,11 @@ class EndOfFormNavigationWorkflow(object):
                 # for the fallback negative all if conditions/xpath expressions and use that as the xpath for this
                 link_xpaths = [link.xpath for link in form.form_links]
                 if link_xpaths:
-                    negate_of_all_link_paths = ' and '.join(['not(' + link_xpath + ')' for link_xpath in link_xpaths])
+                    negate_of_all_link_paths = (
+                        ' and '.join(
+                            ['not(' + link_xpath + ')' for link_xpath in link_xpaths]
+                        )
+                    )
                     stack_static_stack_frames(form.post_form_workflow_fallback, negate_of_all_link_paths)
         else:
             stack_static_stack_frames(form.post_form_workflow)

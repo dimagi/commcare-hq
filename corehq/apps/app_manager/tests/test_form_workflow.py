@@ -159,22 +159,25 @@ class TestFormWorkflow(SimpleTestCase, TestXmlMixin):
                 FormDatum(name='case_id', xpath="instance('commcaresession')/session/data/case_id"),
                 FormDatum(name='case_id_load_visit_0',
                           xpath="instance('commcaresession')/session/data/case_id_new_visit_0"),
-                ]),
+            ]),
             FormLink(xpath=condition_for_xpath, form_id=m2f0.unique_id, datums=[
                 FormDatum(name='case_id', xpath="instance('commcaresession')/session/data/case_id"),
                 FormDatum(name='case_id_load_visit_0',
                           xpath="instance('commcaresession')/session/data/case_id_new_visit_0"),
-                ]),
+            ]),
         ]
 
         m1f0.post_form_workflow_fallback = WORKFLOW_PREVIOUS
-        self.assertXmlPartialEqual(self.get_xml('form_link_tdh_with_fallback_previous'), factory.app.create_suite(), "./entry")
+        self.assertXmlPartialEqual(self.get_xml('form_link_tdh_with_fallback_previous'),
+                                   factory.app.create_suite(), "./entry")
 
         m1f0.post_form_workflow_fallback = WORKFLOW_MODULE
-        self.assertXmlPartialEqual(self.get_xml('form_link_tdh_with_fallback_module'), factory.app.create_suite(), "./entry")
+        self.assertXmlPartialEqual(self.get_xml('form_link_tdh_with_fallback_module'),
+                                   factory.app.create_suite(), "./entry")
 
         m1f0.post_form_workflow_fallback = WORKFLOW_ROOT
-        self.assertXmlPartialEqual(self.get_xml('form_link_tdh_with_fallback_root'), factory.app.create_suite(), "./entry")
+        self.assertXmlPartialEqual(self.get_xml('form_link_tdh_with_fallback_root'),
+                                   factory.app.create_suite(), "./entry")
 
     def test_reference_to_missing_session_variable_in_stack(self):
         # http://manage.dimagi.com/default.asp?236750
