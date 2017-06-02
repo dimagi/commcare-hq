@@ -78,7 +78,7 @@ class EpisodeUpdater(object):
                 adherence_update = EpisodeAdherenceUpdate(episode, self)
                 voucher_update = EpisodeVoucherUpdate(self.domain, episode)
                 try:
-                    update_json = adherence_update.update_json()['update']
+                    update_json = adherence_update.update_json()
                     update_json.update(voucher_update.update_json())
                     case_block = self._get_case_block(update_json, episode.case_id)
                     if case_block:
@@ -108,7 +108,7 @@ class EpisodeUpdater(object):
     def update_single_case(self, episode_case):
         # updates a single episode_case.
         assert episode_case.domain == self.domain
-        update_json = EpisodeAdherenceUpdate(episode_case, self).update_json()['update']
+        update_json = EpisodeAdherenceUpdate(episode_case, self).update_json()
         case_block = self._get_case_block(update_json, episode_case.case_id)
         if case_block:
             submit_case_blocks(
@@ -290,6 +290,38 @@ class EpisodeAdherenceUpdate(object):
             ].count(True)
 
     def update_json(self):
+        debug_data = []
+        adherence_schedule_date_start = self.get_adherence_schedule_start_date()
+        debug_data.append("adherence_schedule_date_start: {}".format(adherence_schedule_date_start))
+        debug_data.append("purge_date: {}".format(self.case_updater.purge_date))
+
+        if not adherence_schedule_date_start:
+            # adherence schedule hasn't been selected, so no update necessary
+            return {}
+
+        latest_adherence_date = self.get_latest_adherence_date()
+        debug_data.append("latest_adherence_date: {}".format(latest_adherence_date))
+
+        if (adherence_schedule_date_start > self.case_updater.purge_date) or not latest_adherence_date:
+            return {
+                'aggregated_score_date_calculated': adherence_schedule_date_start - datetime.timedelta(days=1),
+                'expected_doses_taken': 0,
+                'aggregated_score_count_taken': 0,
+                'adherence_total_doses_taken': 0,
+                'adherence_latest_date_recorded': adherence_schedule_date_start - datetime.timedelta(days=1)
+            }
+
+        adherence_cases = self.get_valid_adherence_cases()
+        dose_taken_by_date = self.calculate_doses_taken_by_day(adherence_cases)
+        update = self.get_aggregated_scores(
+            latest_adherence_date, adherence_schedule_date_start, dose_taken_by_date)
+
+        if self.check_if_needs_update(update):
+            return update
+        else:
+            return None
+
+    def get_aggregated_scores(self, latest_adherence_date, adherence_schedule_date_start, dose_taken_by_date):
         """
         Evaluates adherence calculations on the 'episode' case and returns dict of values
 
@@ -303,68 +335,39 @@ class EpisodeAdherenceUpdate(object):
                 'aggregated_score_count_taken': value
             }
         """
+        update = {}
 
-        debug_data = []
-        adherence_schedule_date_start = self.get_adherence_schedule_start_date()
-        debug_data.append("adherence_schedule_date_start: {}".format(adherence_schedule_date_start))
-        debug_data.append("purge_date: {}".format(self.case_updater.purge_date))
-
-        if not adherence_schedule_date_start:
-            # adherence schedule hasn't been selected, so no update necessary
-            return {'update': {}, 'debug_data': debug_data}
-
-        default_update = {
-            'aggregated_score_date_calculated': adherence_schedule_date_start - datetime.timedelta(days=1),
-            'expected_doses_taken': 0,
-            'aggregated_score_count_taken': 0,
-            'adherence_total_doses_taken': 0,
-            'adherence_latest_date_recorded': adherence_schedule_date_start - datetime.timedelta(days=1)
-        }
-
-        if adherence_schedule_date_start > self.case_updater.purge_date:
-            update = default_update
+        update["adherence_latest_date_recorded"] = latest_adherence_date
+        if latest_adherence_date < self.case_updater.purge_date:
+            update["aggregated_score_date_calculated"] = latest_adherence_date
         else:
-            update = {}
-            latest_adherence_date = self.get_latest_adherence_date()
-            debug_data.append("latest_adherence_date: {}".format(latest_adherence_date))
-            if not latest_adherence_date:
-                update = default_update
-            else:
-                update["adherence_latest_date_recorded"] = latest_adherence_date
-                if latest_adherence_date < self.case_updater.purge_date:
-                    update["aggregated_score_date_calculated"] = latest_adherence_date
-                else:
-                    update["aggregated_score_date_calculated"] = self.case_updater.purge_date
+            update["aggregated_score_date_calculated"] = self.case_updater.purge_date
 
-                # calculate 'adherence_total_doses_taken'
-                adherence_cases = self.get_valid_adherence_cases()
-                dose_taken_by_date = self.calculate_doses_taken_by_day(adherence_cases)
-                update["adherence_total_doses_taken"] = self.count_doses_taken(dose_taken_by_date)
-                # calculate 'aggregated_score_count_taken'
-                update["aggregated_score_count_taken"] = self.count_doses_taken(
-                    dose_taken_by_date,
-                    lte=adherence_schedule_date_start,
-                    gte=update["aggregated_score_date_calculated"]
-                )
+        # calculate 'adherence_total_doses_taken'
+        update["adherence_total_doses_taken"] = self.count_doses_taken(dose_taken_by_date)
+        # calculate 'aggregated_score_count_taken'
+        update["aggregated_score_count_taken"] = self.count_doses_taken(
+            dose_taken_by_date,
+            lte=adherence_schedule_date_start,
+            gte=update["aggregated_score_date_calculated"]
+        )
 
-                # calculate 'expected_doses_taken' score
-                dose_data = self.case_updater.get_doses_data()
-                adherence_schedule_id = self.get_property('adherence_schedule_id') or DAILY_SCHEDULE_ID
-                doses_per_week = dose_data.get(adherence_schedule_id)
-                if doses_per_week:
-                    update['expected_doses_taken'] = int(((
-                        (update['aggregated_score_date_calculated'] - adherence_schedule_date_start)).days / 7.0
-                    ) * doses_per_week)
-                else:
-                    update['expected_doses_taken'] = 0
-                    soft_assert(notify_admins=True)(
-                        True,
-                        "No fixture item found with schedule_id {}".format(adherence_schedule_id)
-                    )
-        if self.check_if_needs_update(update):
-            return {'update': update, 'debug_data': debug_data}
+        # calculate 'expected_doses_taken' score
+        dose_data = self.case_updater.get_doses_data()
+        adherence_schedule_id = self.get_property('adherence_schedule_id') or DAILY_SCHEDULE_ID
+        doses_per_week = dose_data.get(adherence_schedule_id)
+        if doses_per_week:
+            update['expected_doses_taken'] = int(((
+                (update['aggregated_score_date_calculated'] - adherence_schedule_date_start)).days / 7.0
+            ) * doses_per_week)
         else:
-            return {'update': None, 'debug_data': debug_data}
+            update['expected_doses_taken'] = 0
+            soft_assert(notify_admins=True)(
+                True,
+                "No fixture item found with schedule_id {}".format(adherence_schedule_id)
+            )
+
+        return update
 
     def check_if_needs_update(self, case_properties_expected):
         """
