@@ -1,6 +1,10 @@
 from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.sql_db.config import partition_config
 from django.conf import settings
+from django import db
+from django.db.utils import InterfaceError as DjangoInterfaceError
+from functools import wraps
+from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 
 
 def get_object_from_partitioned_database(model_class, partition_value, lookup_field_name, lookup_value):
@@ -102,3 +106,28 @@ def get_db_aliases_for_partitioned_query():
     else:
         db_names = ['default']
     return db_names
+
+
+def retry_on_connection_failure(fn):
+    @wraps(fn)
+    def _inner(*args, **kwargs):
+        retry = kwargs.pop('retry', True)
+        try:
+            return fn(*args, **kwargs)
+        except db.utils.DatabaseError:
+            # we have to do this manually to avoid issues with
+            # open transactions and already closed connections
+            db.transaction.rollback()
+            # re raise the exception for additional error handling
+            raise
+        except (Psycopg2InterfaceError, DjangoInterfaceError):
+            # force closing the connection to prevent Django from trying to reuse it.
+            # http://www.tryolabs.com/Blog/2014/02/12/long-time-running-process-and-django-orm/
+            db.connection.close()
+            if retry:
+                _inner(retry=False, *args, **kwargs)
+            else:
+                # re raise the exception for additional error handling
+                raise
+
+    return _inner
