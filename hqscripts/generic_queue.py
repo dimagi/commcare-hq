@@ -37,7 +37,7 @@ class GenericEnqueuingOperation(BaseCommand):
                     message="Could not populate %s." % self.get_queue_name())
             sleep(self.get_fetching_interval())
 
-    @handle_connection_failure
+    @handle_connection_failure()
     def populate_queue(self):
         client = get_redis_client()
         utcnow = datetime.utcnow()
