@@ -137,9 +137,9 @@ function IndieMapController($scope, $compile, $location) {
                         var row = [
                             '<label class="radio-inline" style="float: right; margin-left: 10px;">',
                             '<input type="radio" ng-model="$ctrl.indicator" ng-change="$ctrl.changeIndicator(\'' + indi.slug + '\')" ng-checked="$ctrl.indicator == \'' + indi.slug + '\'" name="indi" ng-value="' + indi.slug + '">' + indi.label,
-                            '</label>'
+                            '</label>',
                         ];
-                        html.push(row.join(''))
+                        html.push(row.join(''));
                     });
                     var ele = d3.select(this.options.element).append('div')
                         .attr('class', '')

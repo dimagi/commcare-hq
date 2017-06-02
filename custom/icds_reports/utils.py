@@ -1137,7 +1137,7 @@ def get_awc_reports_pse(config, month, three_month):
                 'latitude': lat,
                 'longitude': long
             })
-        tmp_image.append({'id': count,  'image': 'http://unsplash.it/' + str(300 + count) + '/300'})
+        tmp_image.append({'id': count, 'image': 'http://unsplash.it/' + str(300 + count) + '/300'})
         img_count += 1
         count += 1
         if img_count == 4:
@@ -1252,16 +1252,16 @@ def get_awc_report_demographics(config, month):
 
     def get_data_for_kpi(filters, date):
         return AggAwcDailyView.objects.filter(
-           date=date, **filters
-        ).values(
-            'aggregation_level'
-        ).annotate(
-            ccs_pregnant=Sum('cases_ccs_pregnant'),
-            ccs_lactating=Sum('cases_ccs_lactating'),
-            adolescent=Sum('cases_person_adolescent'),
-            has_aadhaar=Sum('cases_person_has_aadhaar'),
-            all_cases=Sum('cases_person')
-        )
+               date=date, **filters
+            ).values(
+                'aggregation_level'
+            ).annotate(
+                ccs_pregnant=Sum('cases_ccs_pregnant'),
+                ccs_lactating=Sum('cases_ccs_lactating'),
+                adolescent=Sum('cases_person_adolescent'),
+                has_aadhaar=Sum('cases_person_has_aadhaar'),
+                all_cases=Sum('cases_person')
+            )
 
     yesterday = datetime.now() - relativedelta(days=1)
     before_yesterday = yesterday - relativedelta(days=1)
@@ -1317,7 +1317,9 @@ def get_awc_report_demographics(config, month):
                 },
                 {
                     'label': _('% Adhaar seeded beneficaries'),
-                    'help_text': _('Percentage of ICDS beneficiaries whose Adhaar identification has been captured'),
+                    'help_text': _(
+                        'Percentage of ICDS beneficiaries whose Adhaar identification has been captured'
+                    ),
                     'percent': percent_diff(
                         ['has_aadhaar'],
                         kpi_yesterday,
