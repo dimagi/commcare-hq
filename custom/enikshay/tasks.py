@@ -401,7 +401,8 @@ class EpisodeVoucherUpdate(object):
         relevant_vouchers = [
             voucher for voucher in self._get_all_vouchers()
             if (voucher.get_case_property('voucher_type') == 'prescription'
-                and voucher.get_case_property('state') in ['fulfilled', 'available'])
+                and voucher.get_case_property('state') in
+                ['fulfilled', 'available', 'paid', 'approved', 'rejected'])
         ]
         return sorted(relevant_vouchers, key=lambda v: v.get_case_property('date_issued'))
 
@@ -449,10 +450,10 @@ class EpisodeVoucherUpdate(object):
         if date_last_refill is None:
             return {}
 
-        if latest_voucher.get_case_property('state') == 'fulfilled':
-            voucher_length = latest_voucher.get_case_property('final_prescription_num_days')
-        elif latest_voucher.get_case_property('state') == 'available':
-            voucher_length = latest_voucher.get_case_property('prescription_num_days')
+        voucher_length = (
+            latest_voucher.get_case_property('final_prescription_num_days')
+            or latest_voucher.get_case_property('prescription_num_days')
+        )
 
         try:
             refill_due_date = date_last_refill + datetime.timedelta(days=int(voucher_length))
