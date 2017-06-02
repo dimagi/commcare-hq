@@ -24,5 +24,14 @@ hqDefine('app_manager/js/linked_whitelist.js', function () {
             self.linkedDomains.remove(domain);
         };
     }
-    return {LinkedWhitelist: LinkedWhitelist};
+
+    $(function () {
+        var $whitelistTab = $('#linked-whitelist');
+        if ($whitelistTab.length) {
+            var domains = hqImport("hqwebapp/js/initial_page_data.js").get("linked_whitelist");
+            var save = hqImport("hqwebapp/js/urllib.js").reverse("update_linked_whitelist");
+            linkedWhitelist = new LinkedWhitelist(domains, save);
+            $whitelistTab.koApplyBindings(linkedWhitelist);
+        }
+    });
 });

@@ -41,7 +41,7 @@ hqDefine('case_importer/js/import_history.js', function () {
                 if (anyInProgress) {
                     _.delay(self.fetchCaseUploads, 5000);
                 }
-            }).error(function () {
+            }).fail(function () {
                 self.state(self.states.FAILED);
             });
         };

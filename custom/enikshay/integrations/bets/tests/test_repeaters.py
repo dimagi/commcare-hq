@@ -1,19 +1,37 @@
-from datetime import date
+from datetime import date, datetime
+import json
+import mock
 
-from django.test import override_settings
+from django.test import override_settings, TestCase
 
+from corehq.apps.domain.models import Domain
+from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
+from corehq.apps.repeaters.models import RepeatRecord
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+
 from custom.enikshay.const import ENROLLED_IN_PRIVATE, PRESCRIPTION_TOTAL_DAYS_THRESHOLD
-from custom.enikshay.integrations.bets.const import DRUG_REFILL_EVENT
+from custom.enikshay.const import (
+    TREATMENT_OUTCOME_DATE,
+    LAST_VOUCHER_CREATED_BY_ID,
+    NOTIFYING_PROVIDER_USER_ID,
+)
+from custom.enikshay.integrations.bets.const import (
+    TREATMENT_180_EVENT,
+    DRUG_REFILL_EVENT,
+    SUCCESSFUL_TREATMENT_EVENT,
+    DIAGNOSIS_AND_NOTIFICATION_EVENT,
+    AYUSH_REFERRAL_EVENT,
+)
 from custom.enikshay.integrations.bets.repeater_generators import ChemistBETSVoucherPayloadGenerator, \
     BETS180TreatmentPayloadGenerator, BETSSuccessfulTreatmentPayloadGenerator, \
-    BETSDiagnosisAndNotificationPayloadGenerator, BETSAYUSHReferralPayloadGenerator, BETSDrugRefillPayloadGenerator
+    BETSDiagnosisAndNotificationPayloadGenerator, BETSAYUSHReferralPayloadGenerator, BETSDrugRefillPayloadGenerator, IncentivePayload
 from custom.enikshay.integrations.bets.repeaters import ChemistBETSVoucherRepeater, BETS180TreatmentRepeater, \
     BETSDrugRefillRepeater, BETSSuccessfulTreatmentRepeater, BETSDiagnosisAndNotificationRepeater, \
-    BETSAYUSHReferralRepeater
+    BETSAYUSHReferralRepeater, BETSLocationRepeater, BETSBeneficiaryRepeater
 from custom.enikshay.integrations.ninetyninedots.tests.test_repeaters import ENikshayRepeaterTestBase, MockResponse
 
-from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
+from custom.enikshay.tests.utils import ENikshayLocationStructureMixin, get_person_case_structure
 from custom.enikshay.case_utils import update_case
 
 
@@ -33,7 +51,7 @@ class TestVoucherRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBa
     def test_trigger(self):
         # voucher not approved
         self.create_case_structure()
-        self.assign_person_to_location(self.phi.location_id)
+        self.assign_person_to_location(self.pcp.location_id)
         prescription = self.create_prescription_case()
         voucher = self.create_voucher_case(
             prescription.case_id, {
@@ -59,6 +77,186 @@ class TestVoucherRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBa
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
+
+    def test_prescription_get_payload(self):
+        self.create_case_structure()
+        self.assign_person_to_location(self.pcp.location_id)
+        prescription = self.create_prescription_case()
+        voucher = self.create_voucher_case(
+            prescription.case_id, {
+                "voucher_type": "prescription",
+                "fulfilled_by_id": self.user.user_id,
+                "voucher_fulfilled_by_location_id": self.pcc.location_id,
+                "date_fulfilled": "2017-08-15",
+                "voucher_id": "ABC-DEF-1123",
+                "amount_approved": 10.0,
+            }
+        )
+
+        expected_payload = {
+            u"EventID": u"101",
+            u"EventOccurDate": u"2017-08-15",
+            u"BeneficiaryUUID": self.user.user_id,
+            u"BeneficiaryType": u"chemist",
+            u"Location": self.pcc.location_id,
+            u"DTOLocation": self.dto.location_id,
+            u"VoucherID": voucher.get_case_property('voucher_id'),
+            u"Amount": u'10.0',
+            u"InvestigationType": None,
+        }
+
+        self.assertDictEqual(
+            expected_payload,
+            json.loads(ChemistBETSVoucherPayloadGenerator(None).get_payload(None, voucher))
+        )
+
+    def test_investigation_get_payload(self):
+        self.create_case_structure()
+        self.assign_person_to_location(self.pcp.location_id)
+        prescription = self.create_prescription_case()
+        voucher = self.create_voucher_case(
+            prescription.case_id, {
+                "voucher_type": "test",
+                "fulfilled_by_id": self.user.user_id,
+                "voucher_fulfilled_by_location_id": self.plc.location_id,
+                "date_fulfilled": "2017-08-15",
+                "voucher_id": "ABC-DEF-1123",
+                "amount_approved": 10.0,
+                "investigation_type": "xray",
+            }
+        )
+
+        expected_payload = {
+            u"EventID": u"102",
+            u"EventOccurDate": u"2017-08-15",
+            u"BeneficiaryUUID": self.user.user_id,
+            u"BeneficiaryType": u"lab",
+            u"Location": self.plc.location_id,
+            u"DTOLocation": self.dto.location_id,
+            u"VoucherID": voucher.get_case_property('voucher_id'),
+            u"Amount": u'10.0',
+            u"InvestigationType": u"xray",
+        }
+
+        self.assertDictEqual(
+            expected_payload,
+            json.loads(ChemistBETSVoucherPayloadGenerator(None).get_payload(None, voucher))
+        )
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
+    def test_bets_180_treatment_payload(self):
+        self.episode.attrs['update'][TREATMENT_OUTCOME_DATE] = "2017-08-15"
+        self.episode.attrs['update'][LAST_VOUCHER_CREATED_BY_ID] = self.user.user_id
+        cases = self.create_case_structure()
+        self.assign_person_to_location(self.pcp.location_id)
+        episode = cases[self.episode_id]
+
+        expected_payload = {
+            u"EventID": unicode(TREATMENT_180_EVENT),
+            u"EventOccurDate": u"2017-08-15",
+            u"BeneficiaryUUID": self.user.user_id,
+            u"BeneficiaryType": u"patient",
+            u"Location": self.pcp.location_id,
+            u"DTOLocation": self.dto.location_id,
+            u"EpisodeID": self.episode_id,
+        }
+        self.assertDictEqual(
+            expected_payload,
+            json.loads(BETS180TreatmentPayloadGenerator(None).get_payload(None, episode))
+        )
+
+    def test_drug_refill_payload(self):
+        self.episode.attrs['update'][PRESCRIPTION_TOTAL_DAYS_THRESHOLD.format(30)] = "2012-08-15"
+        self.episode.attrs['update']["event_{}_{}".format(DRUG_REFILL_EVENT, 30)] = "sent"
+        self.episode.attrs['update'][PRESCRIPTION_TOTAL_DAYS_THRESHOLD.format(60)] = "2017-08-15"
+        cases = self.create_case_structure()
+        self.assign_person_to_location(self.pcp.location_id)
+        episode = cases[self.episode_id]
+
+        expected_payload = {
+            u"EventID": unicode(DRUG_REFILL_EVENT),
+            u"EventOccurDate": u"2017-08-15",
+            u"BeneficiaryUUID": self.person_id,
+            u"BeneficiaryType": u"patient",
+            u"Location": self.pcp.location_id,
+            u"DTOLocation": self.dto.location_id,
+            u"EpisodeID": self.episode_id,
+        }
+        self.assertDictEqual(
+            expected_payload,
+            json.loads(BETSDrugRefillPayloadGenerator(None).get_payload(None, episode))
+        )
+
+    def test_successful_treatment_payload(self):
+        self.person.attrs['update']['last_owner'] = self.pcp.location_id
+        self.episode.attrs['update'][TREATMENT_OUTCOME_DATE] = "2017-08-15"
+        cases = self.create_case_structure()
+        episode = cases[self.episode_id]
+
+        expected_payload = {
+            u"EventID": unicode(SUCCESSFUL_TREATMENT_EVENT),
+            u"EventOccurDate": u"2017-08-15",
+            u"BeneficiaryUUID": self.person_id,
+            u"BeneficiaryType": u"patient",
+            u"Location": self.pcp.location_id,
+            u"DTOLocation": self.dto.location_id,
+            u"EpisodeID": self.episode_id,
+        }
+        self.assertDictEqual(
+            expected_payload,
+            json.loads(BETSSuccessfulTreatmentPayloadGenerator(None).get_payload(None, episode))
+        )
+
+    def test_diagnosis_and_notification_payload(self):
+        self.episode.attrs['update'][NOTIFYING_PROVIDER_USER_ID] = self.user.user_id
+        cases = self.create_case_structure()
+        self.assign_person_to_location(self.pcp.location_id)
+        episode = cases[self.episode_id]
+        date_today = u"2017-08-15"
+
+        expected_payload = {
+            u"EventID": unicode(DIAGNOSIS_AND_NOTIFICATION_EVENT),
+            u"EventOccurDate": date_today,
+            u"BeneficiaryUUID": self.user.user_id,
+            u"BeneficiaryType": u"mbbs",
+            u"Location": self.pcp.location_id,
+            u"DTOLocation": self.dto.location_id,
+            u"EpisodeID": self.episode_id,
+        }
+        with mock.patch.object(IncentivePayload, '_india_now', return_value=date_today):
+            self.assertDictEqual(
+                expected_payload,
+                json.loads(BETSDiagnosisAndNotificationPayloadGenerator(None).get_payload(None, episode))
+            )
+
+    def test_ayush_referral_payload(self):
+        self.episode.attrs['update']['created_by_user_location_id'] = self.pac.location_id
+        self.episode.attrs['update']['created_by_user_id'] = self.user.user_id
+        cases = self.create_case_structure()
+        self.assign_person_to_location(self.pcp.location_id)
+        episode = cases[self.episode_id]
+        date_today = u"2017-08-15"
+
+        expected_payload = {
+            u"EventID": unicode(AYUSH_REFERRAL_EVENT),
+            u"EventOccurDate": date_today,
+            u"BeneficiaryUUID": self.user.user_id,
+            u"BeneficiaryType": u"ayush_other",
+            u"Location": self.pac.location_id,
+            u"DTOLocation": self.dto.location_id,
+            u"EpisodeID": self.episode_id,
+        }
+        with mock.patch.object(IncentivePayload, '_india_now', return_value=date_today):
+            self.assertDictEqual(
+                expected_payload,
+                json.loads(BETSAYUSHReferralPayloadGenerator(None).get_payload(None, episode))
+            )
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestBETS180TreatmentRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
     def setUp(self):
         super(TestBETS180TreatmentRepeater, self).setUp()
@@ -72,7 +270,7 @@ class TestBETS180TreatmentRepeater(ENikshayLocationStructureMixin, ENikshayRepea
     def test_trigger(self):
         # episode that does not meet trigger
         cases = self.create_case_structure()
-        self.assign_person_to_location(self.phi.location_id)
+        self.assign_person_to_location(self.pcp.location_id)
         update_case(
             self.domain,
             self.episode_id,
@@ -112,7 +310,7 @@ class BETSDrugRefillRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepeate
 
         # Create case that doesn't meet trigger
         cases = self.create_case_structure()
-        self.assign_person_to_location(self.phi.location_id)
+        self.assign_person_to_location(self.pcp.location_id)
         update_case(
             self.domain,
             self.episode_id,
@@ -167,7 +365,7 @@ class BETSSuccessfulTreatmentRepeaterTest(ENikshayLocationStructureMixin, ENiksh
     def test_trigger(self):
         # Create case that doesn't meet trigger
         cases = self.create_case_structure()
-        self.assign_person_to_location(self.phi.location_id)
+        self.assign_person_to_location(self.pcp.location_id)
         update_case(
             self.domain,
             self.episode_id,
@@ -205,7 +403,7 @@ class BETSDiagnosisAndNotificationRepeaterTest(ENikshayLocationStructureMixin, E
     def test_trigger(self):
         # Create case that doesn't meet trigger
         cases = self.create_case_structure()
-        self.assign_person_to_location(self.phi.location_id)
+        self.assign_person_to_location(self.pcp.location_id)
         update_case(
             self.domain,
             self.episode_id,
@@ -242,7 +440,7 @@ class BETSAYUSHReferralRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepe
     def test_trigger(self):
         # Create case that doesn't meet trigger
         cases = self.create_case_structure()
-        self.assign_person_to_location(self.phi.location_id)
+        self.assign_person_to_location(self.pcp.location_id)
         update_case(
             self.domain,
             self.episode_id,
@@ -266,3 +464,136 @@ class BETSAYUSHReferralRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepe
         update_case(self.domain, self.episode_id, {"bets_first_prescription_voucher_redeemed": "false"})
         update_case(self.domain, self.episode_id, {"bets_first_prescription_voucher_redeemed": "true"})
         self.assertEqual(1, len(self.repeat_records().all()))
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
+    domain = 'bets-location-repeater'
+    maxDiff = None
+
+    def setUp(self):
+        super(LocationRepeaterTest, self).setUp()
+        self.repeater = BETSLocationRepeater(
+            domain=self.domain,
+            url='super-cool-url',
+        )
+        self.repeater.save()
+
+    def tearDown(self):
+        super(LocationRepeaterTest, self).tearDown()
+        delete_all_repeat_records()
+        delete_all_repeaters()
+
+    def repeat_records(self):
+        return RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
+
+    def make_location(self, name):
+        location = SQLLocation.objects.create(
+            domain=self.domain,
+            name=name,
+            site_code=name,
+            location_type=self.tu.location_type,
+            parent=self.dto,
+        )
+        self.addCleanup(location.delete)
+        return location
+
+    def test_trigger(self):
+        self.assertEqual(0, len(self.repeat_records().all()))
+        location = self.make_location('kings_landing')
+        records = self.repeat_records().all()
+        self.assertEqual(1, len(records))
+        record = records[0]
+        self.assertEqual(
+            record.get_payload(),
+            {
+                '_id': location.location_id,
+                'ancestors_by_type': {
+                    'dto': self.locations['DTO'].location_id,
+                    'cto': self.locations['CTO'].location_id,
+                    'sto': self.locations['STO'].location_id,
+                    'ctd': self.locations['CTD'].location_id,
+                },
+                'doc_type': 'Location',
+                'domain': self.domain,
+                'external_id': None,
+                'is_archived': False,
+                'last_modified': location.last_modified.isoformat(),
+                'latitude': None,
+                'lineage': [
+                    self.locations['DTO'].location_id,
+                    self.locations['CTO'].location_id,
+                    self.locations['STO'].location_id,
+                    self.locations['CTD'].location_id,
+                ],
+                'location_id': location.location_id,
+                'location_type': 'tu',
+                'longitude': None,
+                'metadata': {},
+                'name': location.name,
+                'parent_location_id': self.locations['DTO'].location_id,
+                'site_code': location.site_code,
+            }
+        )
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class BETSBeneficiaryRepeaterTest(ENikshayRepeaterTestBase):
+    def setUp(self):
+        super(BETSBeneficiaryRepeaterTest, self).setUp()
+        self.domain_obj = Domain(name=self.domain)
+        self.domain_obj.save()
+        self.repeater = BETSBeneficiaryRepeater(
+            domain=self.domain,
+            url='super-cool-url',
+        )
+        self.repeater.save()
+
+        loc_type = LocationType.objects.create(
+            domain=self.domain,
+            name="loc_type",
+            administrative=True,
+        )
+        self.real_location = SQLLocation.objects.create(
+            domain=self.domain,
+            name="real_location",
+            site_code="real_location",
+            location_type=loc_type,
+            metadata={'is_test': 'no', 'nikshay_code': 'nikshay_code'},
+        )
+        self.test_location = SQLLocation.objects.create(
+            domain=self.domain,
+            name="test_location",
+            site_code="test_location",
+            location_type=loc_type,
+            metadata={'is_test': 'yes', 'nikshay_code': 'nikshay_code'},
+        )
+
+    def tearDown(self):
+        super(BETSBeneficiaryRepeaterTest, self).tearDown()
+        self.domain_obj.delete()
+
+    def create_person_case(self, location_id):
+        case = get_person_case_structure(None, self.episode_id)
+        case.attrs['owner_id'] = location_id
+        return self.factory.create_or_update_cases([case])[0]
+
+    def test_trigger(self):
+        important_case_property = "phone_number"
+        frivolous_case_property = "hair_color"
+
+        # Create, then update person case
+        test_person = self.create_person_case(self.test_location.location_id)
+        update_case(self.domain, test_person.case_id, {important_case_property: "7"})
+        # Neither should trigger forwarding
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        # Create real case
+        real_person = self.create_person_case(self.real_location.location_id)
+        self.assertEqual(1, len(self.repeat_records().all()))
+        # Update real case
+        update_case(self.domain, real_person.case_id, {important_case_property: "7"})
+        self.assertEqual(2, len(self.repeat_records().all()))
+        # frivolous update shouldn't trigger another repeat
+        update_case(self.domain, real_person.case_id, {frivolous_case_property: "blue"})
+        self.assertEqual(2, len(self.repeat_records().all()))

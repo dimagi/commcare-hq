@@ -7,6 +7,7 @@ from collections import defaultdict, OrderedDict, namedtuple
 
 from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
+from django.utils.datastructures import OrderedSet
 from django.utils.translation import ugettext as _
 from django.urls import reverse
 from django.db import models
@@ -876,6 +877,19 @@ class ExportInstance(BlobMixin, Document):
         new_export = self.__class__.wrap(export_json)
         return new_export
 
+    def error_messages(self):
+        error_messages = []
+        if self.export_format == 'xls':
+            for table in self.tables:
+                if len(table.selected_columns) > 255:
+                    error_messages.append(_(
+                        "XLS format does not support more than 255 columns. "
+                        "Please select a different file type"
+                    ))
+                    break
+
+        return error_messages
+
 
 class CaseExportInstance(ExportInstance):
     case_type = StringProperty()
@@ -1552,16 +1566,23 @@ class FormExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _process_app_build(cls, current_schema, app, form_xmlns):
-        form = app.get_form_by_xmlns(form_xmlns, log_missing=False)
-        if not form:
+        forms = app.get_forms_by_xmlns(form_xmlns, log_missing=False)
+        if not forms:
             return current_schema
 
-        case_updates = form.get_case_updates(form.get_module().case_type)
-        xform = form.wrapped_xform()
-        if isinstance(form.actions, AdvancedFormActions):
-            open_case_actions = form.actions.open_cases
-        else:
-            open_case_actions = form.actions.subcases
+        case_updates = OrderedSet()
+        for form in forms:
+            for update in form.get_case_updates(form.get_module().case_type):
+                case_updates.add(update)
+        xform = forms[0].wrapped_xform()  # This will be the same for any form in the list
+        open_case_actions = OrderedSet()
+        for form in forms:
+            if isinstance(form.actions, AdvancedFormActions):
+                actions = form.actions.open_cases
+            else:
+                actions = form.actions.subcases
+            for action in actions:
+                open_case_actions.add(action)
 
         repeats_with_subcases = {
             open_case_action for open_case_action in open_case_actions

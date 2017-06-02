@@ -46,4 +46,5 @@ def get_app_reindexer():
         index_info=APP_INDEX_INFO,
         doc_transform=transform_app_for_es,
         pillow=get_app_to_elasticsearch_pillow(),
+        chunk_size=5,
     )

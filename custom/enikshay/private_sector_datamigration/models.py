@@ -175,6 +175,7 @@ class Beneficiary(models.Model):
             '18': 'drivers_license',
             '19': 'ration_card',
             '20': 'voter_card',
+            None: 'none',
         }[self.identificationTypeId]
 
 
@@ -187,14 +188,14 @@ class Episode(models.Model):
     associatedFO = models.CharField(max_length=255, null=True)
     bankName = models.CharField(max_length=255, null=True)
     basisOfDiagnosis = models.CharField(max_length=255, null=True)
-    beneficiaryID = models.CharField(max_length=18)
+    beneficiaryID = models.CharField(max_length=18, db_index=True)
     branchName = models.CharField(max_length=255, null=True)
     creationDate = models.DateTimeField(null=True)
     creator = models.CharField(max_length=255, null=True)
     dateOfDiagnosis = models.DateTimeField(null=True)
     diabetes = models.CharField(max_length=255, null=True)
     dstStatus = models.CharField(max_length=255, null=True)
-    episodeDisplayID = models.IntegerField()
+    episodeDisplayID = models.IntegerField(db_index=True)
     episodeID = models.CharField(max_length=8, primary_key=True)
     extraPulmonary = models.CharField(max_length=255, null=True)
     hiv = models.CharField(max_length=255, null=True)
@@ -316,9 +317,10 @@ class Episode(models.Model):
                 'After Treatment Failure': 'treatment_after_failure',
                 'Recurrent': 'recurrent',
                 'Relapse': 'recurrent',
+                'Others': '',
                 'Select': '',
-                'None': '',
-            }
+                None: '',
+            }[self.retreatmentReason]
         return ''
 
     @property
@@ -461,14 +463,14 @@ class Adherence(models.Model):
     commentId = models.CharField(max_length=8, null=True)
     creationDate = models.DateTimeField()
     creator = models.CharField(max_length=255, null=True)
-    dosageStatusId = models.IntegerField()
+    dosageStatusId = models.IntegerField(db_index=True)
     doseDate = models.DateTimeField()
     doseReasonId = models.IntegerField()
-    episodeId = models.CharField(max_length=8)
+    episodeId = models.CharField(max_length=8, db_index=True)
     modificationDate = models.DateTimeField(null=True)
     modifiedBy = models.CharField(max_length=255, null=True)
     owner = models.CharField(max_length=255, null=True)
-    reportingMechanismId = models.IntegerField()
+    reportingMechanismId = models.IntegerField(db_index=True)
     unknwDoseReasonId = models.CharField(max_length=8, null=True)
 
     @property
@@ -483,16 +485,16 @@ class Adherence(models.Model):
 class EpisodePrescription(models.Model):
     id = models.BigIntegerField(primary_key=True)
     adultOrPaediatric = models.CharField(max_length=255, null=True)
-    beneficiaryId = models.ForeignKey(Beneficiary, null=True, on_delete=models.CASCADE)
-    creationDate = models.DateTimeField(null=True)
+    beneficiaryId = models.CharField(max_length=18, null=True, db_index=True)
+    creationDate = models.DateTimeField()
     creator = models.CharField(max_length=255, null=True)
     dosageStrength = models.CharField(max_length=255, null=True)
-    episodeId = models.ForeignKey(Episode, null=True, on_delete=models.CASCADE)
+    episodeId = models.CharField(max_length=8, null=True)
     modificationDate = models.DateTimeField(null=True)
     modifiedBy = models.CharField(max_length=255, null=True)
     next_refill_date = models.DateTimeField(null=True)
     numberOfDays = models.IntegerField()
-    numberOfDaysPrescribed = models.CharField(max_length=255, null=True)
+    numberOfDaysPrescribed = models.CharField(max_length=255)
     numberOfRefill = models.CharField(max_length=255, null=True)
     owner = models.CharField(max_length=255, null=True)
     presUnits = models.CharField(max_length=255, null=True)
@@ -509,6 +511,39 @@ class EpisodePrescription(models.Model):
     voucherStatus = models.CharField(max_length=255, null=True)
     motechUserName = models.CharField(max_length=255, null=True)
     physicalVoucherNumber = models.CharField(max_length=255, null=True)
+
+
+class Voucher(models.Model):
+    id = models.BigIntegerField()
+    caseId = models.CharField(max_length=18, null=True)
+    comments = models.CharField(max_length=512, null=True)
+    creationDate = models.DateTimeField()
+    creator = models.CharField(max_length=255, null=True)
+    episodeId = models.CharField(max_length=8, null=True)
+    issuedAmount = models.CharField(max_length=255, null=True)
+    labId = models.CharField(max_length=255, null=True)
+    labTestId = models.CharField(max_length=255, null=True)
+    modificationDate = models.DateTimeField()
+    modifiedBy = models.CharField(max_length=255, null=True)
+    owner = models.CharField(max_length=255, null=True)
+    pharmacyId = models.CharField(max_length=255, null=True)
+    prescriptionId = models.CharField(max_length=255, null=True)
+    validationModeId = models.CharField(max_length=255, null=True)
+    voucherAmount = models.CharField(max_length=255, null=True)
+    voucherCreatedDate = models.DateTimeField()
+    voucherGeneratedBy = models.CharField(max_length=255, null=True)
+    voucherLastUpdateDate = models.DateTimeField(null=True)
+    voucherNumber = models.BigIntegerField(primary_key=True)
+    voucherStatusId = models.CharField(max_length=255, null=True)
+    voucherTypeId = models.CharField(max_length=255, null=True)
+    agencyName = models.CharField(max_length=255, null=True)
+    voucherCancelledDate = models.DateTimeField(null=True)
+    voucherExpiredDate = models.DateTimeField(null=True)
+    voucherValidatedDate = models.DateTimeField(null=True)
+    voucherUsedDate = models.DateTimeField(null=True)
+    physicalVoucherNumber = models.CharField(max_length=255, null=True)
+    markedUpVoucherAmount = models.CharField(max_length=255, null=True)
+    voucherAmountSystem = models.CharField(max_length=255, null=True)
 
 
 class LabTest(models.Model):
@@ -595,13 +630,23 @@ class Agency(models.Model):
 
     @property
     def location_type(self):
-        return {
-            'ATFO': 'pdr',
-            'ATHC': 'pac',
-            'ATLC': 'plc',
-            'ATPH': 'pcc',
-            'ATPR': 'pcp',
-        }[self.agencyTypeId]
+        if self.agencyTypeId == 'ATFO':
+            return None
+        elif self.agencyTypeId == 'ATPR':
+            return {
+                'PRQP': 'pcp',
+                'PRIP': 'pac',
+            }[self.agencySubTypeId]
+        else:
+            return {
+                'ATHC': 'pcp',
+                'ATLC': 'plc',
+                'ATPH': 'pcc',
+            }[self.agencyTypeId]
+
+    @property
+    def is_field_officer(self):
+        return self.agencyTypeId == 'ATFO'
 
     @property
     def name(self):

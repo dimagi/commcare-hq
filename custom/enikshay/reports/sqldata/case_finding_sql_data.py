@@ -105,6 +105,10 @@ class CaseFindingSqlData(EnikshaySqlData):
         return 'date_of_diagnosis'
 
     @property
+    def location_property(self):
+        return 'diagnosing_facility_id'
+
+    @property
     def columns(self):
         test_type_filter = [
             RawFilter("bacteriological_examination = 1")

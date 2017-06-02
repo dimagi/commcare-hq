@@ -67,6 +67,7 @@
     <script type="text/javascript" src="{% static 'tableau_app.js' %}"></script>
 </head>
 <body>
+    <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
     <nav class="navbar navbar-default">
         <div class="container-fluid">
             <div class="navbar-header hq-header navbar-hq-main-menu">

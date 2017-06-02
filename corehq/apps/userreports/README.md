@@ -1246,7 +1246,7 @@ user                 | Select a user
 owner                | Select a possible case owner owner (user, group, or location)
 
 
-Location choice providers also support two additional configuration options:
+Location choice providers also support three additional configuration options:
 
 * "include_descendants" - Include descendant locations in the results. Defaults to `false`.
 * "show_full_path" - Display the full path to the location in the filter.  Defaults to `false`.

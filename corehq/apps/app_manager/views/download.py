@@ -357,7 +357,6 @@ def download_index(request, domain, app_id):
                 "We were unable to get your files "
                 "because your Application has errors. "
                 "Please click <strong>Make New Version</strong> "
-                "under <strong>Deploy</strong> "
                 "for feedback on how to fix these errors."
             ),
             extra_tags='html'

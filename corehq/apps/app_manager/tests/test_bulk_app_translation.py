@@ -114,7 +114,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
     upload_headers = (
         ("Modules_and_forms", (
-            "Type", "sheet_name", "default_en", "default_fra", "label_for_cases_en", "label_for_cases_fra", 'icon_filepath_en', 'icon_filepath_fra', 'audio_filepath_en', 'audio_filepath_fra', "unique_id"
+            "Type", "sheet_name", "default_en", "default_fra", 'icon_filepath_en', 'icon_filepath_fra', 'audio_filepath_en', 'audio_filepath_fra', "unique_id"
         )),
         ("module1", (
             "case_property", "list_or_detail", "default_en", "default_fra"
@@ -127,8 +127,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
     upload_headers_bad_column = (  # bad column is default-fra
         ("Modules_and_forms", (
             "Type", "sheet_name", "default_en", "default-fra",
-            "label_for_cases_en", "label_for_cases_fra", "icon_filepath_en", "icon_filepath_fra",
-            "audio_filepath_en", "audio_filepath_fra", "unique_id"
+            "icon_filepath_en", "icon_filepath_fra", "audio_filepath_en", "audio_filepath_fra", "unique_id"
         )),
         ("module1", (
             "case_property", "list_or_detail", "default_en", "default-fra"
@@ -141,7 +140,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
     upload_data = (
         ("Modules_and_forms", (
-          ("Module", "module1", "My & awesome module", "", "Cases", "Cases", "", "", "", "", "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
+          ("Module", "module1", "My & awesome module", "", "", "", "", "", "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
           ("Form", "module1_form1", "My more & awesome form", "", "", "", "", "", "", "", "93ea2a40df57d8f33b472f5b2b023882281722d4")
         )),
         ("module1", (
@@ -169,14 +168,14 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
     )
 
     upload_no_change_headers = (
-        ('Modules_and_forms', ('Type', 'sheet_name', 'default_en', 'default_fra', 'label_for_cases_en', 'label_for_cases_fra', 'icon_filepath_en', 'icon_filepath_fra', 'audio_filepath_en', 'audio_filepath_fra', 'unique_id')),
+        ('Modules_and_forms', ('Type', 'sheet_name', 'default_en', 'default_fra', 'icon_filepath_en', 'icon_filepath_fra', 'audio_filepath_en', 'audio_filepath_fra', 'unique_id')),
         ('module1', ('case_property', 'list_or_detail', 'default_en', 'default_fra')),
         ('module1_form1', ('label', 'default_en', 'default_fra', 'audio_en', 'audio_fra', 'image_en', 'image_fra', 'video_en', 'video_fra'))
     )
 
     upload_no_change_data = (
         ('Modules_and_forms',
-         (('Module', 'module1', 'My & awesome module', '', 'Cases', 'Cases', '', '', '', '', '8f4f7085a93506cba4295eab9beae8723c0cee2a'),
+         (('Module', 'module1', 'My & awesome module', '', '', '', '', '', '8f4f7085a93506cba4295eab9beae8723c0cee2a'),
           ('Form', 'module1_form1', 'My more & awesome form', '', '', '', '', '', '', '', '93ea2a40df57d8f33b472f5b2b023882281722d4'))),
         ('module1',
          (('name', 'list', 'Name', ''),
@@ -316,18 +315,17 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
     maxDiff = None
 
     excel_headers = (
-        ('Modules_and_forms', ('Type', 'sheet_name', 'default_en', 'label_for_cases_en', 'icon_filepath_en', 'audio_filepath_en', 'unique_id')),
+        ('Modules_and_forms', ('Type', 'sheet_name', 'default_en', 'icon_filepath_en', 'audio_filepath_en', 'unique_id')),
         ('module1', ('case_property', 'list_or_detail', 'default_en')),
         ('module1_form1', ('label', 'default_en', 'audio_en', 'image_en', 'video_en'))
     )
 
     excel_data = (
         ('Modules_and_forms',
-         (('Module', 'module1', 'Stethoscope', 'Cases', 'jr://file/commcare/image/module0.png', '', '58ce5c9cf6eda401526973773ef216e7980bc6cc'),
+         (('Module', 'module1', 'Stethoscope', 'jr://file/commcare/image/module0.png', '', '58ce5c9cf6eda401526973773ef216e7980bc6cc'),
           ('Form',
            'module1_form1',
            'Stethoscope Form',
-           '',
            'jr://file/commcare/image/module0_form0.png',
            '',
            'c480ace490edc870ae952765e8dfacec33c69fec'))),
@@ -399,7 +397,6 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
         ('Modules_and_forms', (
             'Type', 'sheet_name',
             'default_en', 'default_afr', 'default_fra',
-            'label_for_cases_en', 'label_for_cases_afr', 'label_for_cases_fra',
             'icon_filepath_en', 'icon_filepath_afr', 'icon_filepath_fra',
             'audio_filepath_en', 'audio_filepath_afr', 'audio_filepath_fra',
             'unique_id'
@@ -419,13 +416,11 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
         ('Modules_and_forms',
          (('Module', 'module1',
            'Untitled Module', 'Ongetitelde Module', 'Module Sans Titre',
-           'Cases', 'Sake', 'Les Cas',
            '', '', '',
            '', '', '',
            'deadbeef'),
           ('Form', 'module1_form1',
            'Untitled Form', 'Ongetitelde Form', 'Formulaire Sans Titre',
-           'Cases', 'Sake', 'Les Cas',
            '', '', '',
            '', '', '',
            'c0ffee'))),

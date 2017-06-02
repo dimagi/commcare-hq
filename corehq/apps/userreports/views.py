@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect, HttpResponse
-from django.http.response import Http404
+from django.http.response import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
@@ -301,8 +301,7 @@ class ReportBuilderPaywallBase(BaseDomainView):
     @property
     @memoized
     def plan_name(self):
-        plan_version, _ = Subscription.get_subscribed_plan_by_domain(self.domain)
-        return plan_version.plan.name
+        return Subscription.get_subscribed_plan_by_domain(self.domain).plan.name
 
 
 class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
@@ -906,6 +905,12 @@ class ExpressionDebuggerView(BaseUserConfigReportsView):
     page_title = ugettext_lazy("Expression Debugger")
 
 
+class DataSourceDebuggerView(BaseUserConfigReportsView):
+    urlname = 'expression_debugger'
+    template_name = 'userreports/data_source_debugger.html'
+    page_title = ugettext_lazy("Data Source Debugger")
+
+
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def evaluate_expression(request, domain):
@@ -959,6 +964,34 @@ def evaluate_expression(request, domain):
         return json_response(
             {"error": six.text_type(e)},
             status_code=500,
+        )
+
+
+@login_and_domain_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+def evaluate_data_source(request, domain):
+    data_source_id = request.POST['data_source']
+    docs_id = request.POST['docs_id']
+    try:
+        data_source = get_datasource_config(data_source_id, domain)[0]
+        docs_id = [doc_id.strip() for doc_id in docs_id.split(',')]
+        document_store = get_document_store(domain, data_source.referenced_doc_type)
+        rows = []
+        for doc in document_store.iter_documents(docs_id):
+            for row in data_source.get_all_values(doc):
+                rows.append({i.column.database_column_name: i.value for i in row})
+        return JsonResponse(data={
+            'rows': rows,
+            'columns': [
+                column.database_column_name for column in data_source.get_columns()
+            ],
+        })
+    except DataSourceConfigurationNotFoundError:
+        return JsonResponse(
+            {"error": _("Data source with id {} not found in domain {}.").format(
+                data_source_id, domain
+            )},
+            status=404,
         )
 
 

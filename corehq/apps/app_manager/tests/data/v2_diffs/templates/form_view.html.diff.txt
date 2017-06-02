@@ -14,12 +14,12 @@
 -<script>
 +  {% if form.source %}
 +  <script>
-     /* form_requires needs to be a knockout observable so that
-     its value can be read by another UI (form filtering) */
-     var form_requires = ko.observable({{ form.requires|JSON }});
-@@ -28,6 +27,74 @@
-         propertyDescriptions: {{ property_descriptions|JSON }},
-     });
+     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
+         CaseConfig = hqImport('app_manager/js/case-config-ui.js').CaseConfig;
+     var caseConfig = new CaseConfig(_.extend({}, initial_page_data("case_config_options"), {
+@@ -15,6 +14,74 @@
+         requires: ko.observable(initial_page_data("form_requires")),
+     }));
      caseConfig.init();
 -</script>
 -{% endif %}

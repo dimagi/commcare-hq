@@ -1,49 +1,8 @@
 --- 
 +++ 
-@@ -17,7 +17,9 @@
-             '/a/' + '{{ domain }}' + '/apps/view/---/app_data/'
-         )
-         var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
--        var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
-+        var profiles = hqImport('app_manager/js/language-profiles.js');
-+        profiles.setProfileUrl('{{ application_profile_url }}');
-+        var ProfileManager = profiles.ProfileManager;
-         var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body')
-         $('#recent-changes-btn').on('click', function (e) {
-             appDiff.renderDiff({{ app.id|JSON }}, {{ latest_build_id|JSON }});
-@@ -29,23 +31,51 @@
-             fetchLimit: {{ fetchLimit }},
-         };
-         var el = $('#releases-table');
--        var releasesMain = new ReleasesMain(o);
--        _.defer(function(){ releasesMain.getMoreSavedApps(false); });
--        el.koApplyBindings(releasesMain);
-+        if (el.length) {
-+            var releasesMain = new ReleasesMain(o);
-+            _.defer(function(){ releasesMain.getMoreSavedApps(false); });
-+            el.koApplyBindings(releasesMain);
-+        }
- 
-         var app_langs = {{ app.langs|JSON }};
-         var app_profiles = {{ app.build_profiles|JSON }}
- 
--        {% if build_profile_access %}
-+        {% if not intro_only and build_profile_access %}
-         var profileManager = new ProfileManager(app_profiles, app_langs);
-         $('#profiles-tab').koApplyBindings(profileManager);
-         {% endif %}
-     });
--
--    analytics.workflow('Visited the Release Manager');
-+    {% if intro_only %}
-+    $(function () {
-+        var previewApp = hqImport('app_manager/js/preview_app.js');
-+        previewApp.forceShowPreview();
-+    });
-+    {% endif %}
-+
-+    //analytics.workflow('Visited the Release Manager');
- </script>
+@@ -5,7 +5,27 @@
+ {% load timezone_tags %}
+ {% load i18n %}
  
 -{% if build_profile_access %}
 +{% if intro_only %}
@@ -70,7 +29,7 @@
  <div class="tabbable">
      <ul class="nav nav-tabs">
          <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
-@@ -72,176 +102,155 @@
+@@ -32,181 +52,152 @@
                          {% endblocktrans %}
                      </small></p>
                  </div>
@@ -118,11 +77,14 @@
      <div id="build-errors-wrapper"></div>
 -    <table class="table">
 -        <tr>
--            <th colspan="2">{% trans "Version" %}</th>
+-            <th{% if request.user.is_superuser %} colspan="2"{% endif %}>{% trans "Version" %}</th>
 -            <th colspan="2">{% trans "Date &amp; Time" %}</th>
 -            <th>{% trans "CommCare Version" %}</th>
 -            <th></th>
 -            <th></th>
+-            {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+-                <th></th>
+-            {% endif %}
 -            <th>{% trans "Comments" %}</th>
 -            {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
 -                <th>Errors</th>
@@ -180,11 +142,6 @@
 +        {% trans "Whoops, we couldn't get those versions for you. Could you try that again?" %}
 +    </div>
 +
-+    <div class="alert alert-info hide"
-+         data-bind="visible: doneFetching() && !savedApps().length && buildButtonEnabled(), css: {hide: false}">
-+        {% trans 'Use the <strong>Make New Version</strong> button to create and deploy the latest version of your application' %}
-+    </div>
-+
 +    <div class="releases-container"
 +         data-bind="css: {hide: false},
 +                    template: {
@@ -200,23 +157,58 @@
                  'build-latest-release': id() === $root.latestReleaseId(),
                  'error': build_broken
              }">
--                <td>
--                    <a href="#" class="hide" data-bind="
--                        openModal: 'delete-build-modal-template',
--                        visible: !_deleteState(),
--                        css: {hide: false}
--                    ">
--                        <i class="fa fa-remove"></i>
--                    </a>
--                    <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
--                        <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
--                    </div>
--
--                    <i class="fa fa-exclamation-circle" class="hide" data-bind="
--                        visible: _deleteState() == 'error',
--                        css: {hide: false}
--                    "></i>
--                </td>
+-                {% if request.user.is_superuser %}
+-                    <td>
+-                        <a href="#" class="hide" data-bind="
+-                            openModal: 'delete-build-modal-template',
+-                            visible: !_deleteState(),
+-                            css: {hide: false}
+-                        ">
+-                            <i class="fa fa-remove"></i>
+-                        </a>
+-                        <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
+-                            <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
+-                        </div>
+- 
+-                        <i class="fa fa-exclamation-circle" class="hide" data-bind="
+-                            visible: _deleteState() == 'error',
+-                            css: {hide: false}
+-                        "></i>
+-                    </td>
++          <div class="panel-heading">
++              {% if request.user.is_superuser %}
++                  <div class="release-trash-container">
++                    <a href="#"
++                       class="hide release-remove"
++                       data-bind="openModal: 'delete-build-modal-template',
++                                  visible: !_deleteState(),
++                                  css: {hide: false}">
++                        <i class="fa fa-trash"></i>
++                    </a>
++                    <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
++                        <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
++                    </div>
++                    <i class="fa fa-exclamation-circle hide"
++                       data-bind="visible: _deleteState() == 'error',
++                                  css: {hide: false}"></i>
++                  </div>
++              {% endif %}
++              <h4 class="panel-release-title">
++                <span class="build-is-released">
++                    <span data-bind="starred: is_released, click: $root.toggleRelease"></span>
++                </span>
++                <strong>{% trans "Version" %} <span data-bind="text: version"></span></strong> |
++                <span data-bind="text: built_on_date"></span> <span data-bind="text: built_on_time"></span> {% trans 'by' %}
++                <span data-bind="text: comment_user_name"></span>
++                <!--ko if: menu_item_label() -->
++                {% trans "with CommCare v." %}
++                <span data-bind="text: menu_item_label()"></span>
++                <!--/ko-->
++                <span data-bind="if: !built_with.signed()">{% trans "Unsigned Jar" %}</span>
++                {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
++                | <a class="release-error-report-link" data-bind="text: numErrorsText,
++                              attr: {href: $root.app_error_url('{{ app.id }}', version())}"></a>
+                 {% endif %}
 -                <td class="text-nowrap" data-bind="text: version"></td>
 -                <td class="text-nowrap" data-bind="text: built_on_date"></td>
 -                <td class="text-nowrap" data-bind="text: built_on_time"></td>
@@ -248,44 +240,13 @@
 -                        {% trans "View Changes" %}
 -                    </button>
 -                </td>
-+          <div class="panel-heading">
-+              <div class="release-trash-container">
-+                <a href="#"
-+                   class="hide release-remove"
-+                   data-bind="openModal: 'delete-build-modal-template',
-+                              visible: !_deleteState(),
-+                              css: {hide: false}">
-+                    <i class="fa fa-trash"></i>
-+                </a>
-+                <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
-+                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
-+                </div>
-+                <i class="fa fa-exclamation-circle hide"
-+                   data-bind="visible: _deleteState() == 'error',
-+                              css: {hide: false}"></i>
-+              </div>
-+              <h4 class="panel-release-title">
-+                <span class="build-is-released">
-+                    <span data-bind="starred: is_released, click: $root.toggleRelease"></span>
-+                </span>
-+                <strong>{% trans "Version" %} <span data-bind="text: version"></span></strong> |
-+                <span data-bind="text: built_on_date"></span> <span data-bind="text: built_on_time"></span> {% trans 'by' %}
-+                <span data-bind="text: comment_user_name"></span>
-+                <!--ko if: menu_item_label() -->
-+                {% trans "with CommCare v." %}
-+                <span data-bind="text: menu_item_label()"></span>
-+                <!--/ko-->
-+                <span data-bind="if: !built_with.signed()">{% trans "Unsigned Jar" %}</span>
-+                {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
-+                | <a class="release-error-report-link" data-bind="text: numErrorsText,
-+                              attr: {href: $root.app_error_url('{{ app.id }}', version())}"></a>
-                 {% endif %}
+-                {% endif %}
 -                <td>
 -                    <button class="btn btn-default hide" data-bind="
 +              </h4>
 +          </div>
 +          <div class="panel-body">
-+            <inline-edit-v2 params="
++            <inline-edit params="
 +                value: build_comment,
 +                iconClass: 'fa fa-comment',
 +                rows: 1,
@@ -294,7 +255,7 @@
 +                saveParams: {'build_id': id},
 +                saveValueName: 'comment',
 +                errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
-+            "></inline-edit-v2>
++            "></inline-edit>
 +          </div><!-- .panel-body -->
 +          <div class="panel-footer">
 +            <button class="btn btn-default hide"
@@ -371,7 +332,7 @@
 +                <span class="fa fa-exclamation-circle hide"
 +                      data-bind="visible: build_broken, css: {hide: false}">
 +                </span>
-+                {% trans "Deploy Version" %}
++                {% trans "Publish" %}
 +            </a>
 +          </div><!-- .panel-footer -->
 +        </div><!-- .panel-release -->
@@ -386,7 +347,7 @@
      <script type="text/html" id="delete-build-modal-template">
          <div class="modal-dialog">
              <div class="modal-content">
-@@ -289,18 +298,19 @@
+@@ -254,18 +245,19 @@
          </div>
      </script>
      <script type="text/html" id="deploy-build-modal-template">

@@ -41,10 +41,12 @@ def get_person_case_structure(case_id, user_id, extra_update=None):
         'dob': "1987-08-15",
         'age': '20',
         'sex': 'male',
-        'current_address': 'Mr. Everest',
+        'current_address': 'Mt. Everest',
         'secondary_contact_name_address': 'Mrs. Everestie',
         'previous_tb_treatment': 'yes',
         'nikshay_registered': "false",
+        'husband_father_name': u"Mr. Peregrine เՇร ค Շгคק Kumar",
+        'current_address_postal_code': '110088',
     }
     update.update(extra_update)
 
@@ -97,6 +99,9 @@ def get_episode_case_structure(case_id, indexed_occurrence_case, extra_update=No
         TREATMENT_START_DATE: "2015-03-03",
         TREATMENT_SUPPORTER_FIRST_NAME: u"𝔊𝔞𝔫𝔡𝔞𝔩𝔣",
         TREATMENT_SUPPORTER_LAST_NAME: u"𝔗𝔥𝔢 𝔊𝔯𝔢𝔶",
+        'treatment_initiation_status': 'F',
+        'dst_status': 'pending',
+        'basis_of_diagnosis': 'clinical_other',
     }
     update.update(extra_update)
 
@@ -232,6 +237,7 @@ class ENikshayCaseStructureMixin(object):
         self.secondary_phone_number = "0999999999"
         self.treatment_supporter_phone = "066000666"
         self._episode = None
+        self._person = None
 
     def tearDown(self):
         delete_all_users()
@@ -239,14 +245,16 @@ class ENikshayCaseStructureMixin(object):
 
     @property
     def person(self):
-        return get_person_case_structure(
-            self.person_id,
-            self.user.user_id,
-            extra_update={
-                PRIMARY_PHONE_NUMBER: self.primary_phone_number,
-                BACKUP_PHONE_NUMBER: self.secondary_phone_number,
-            }
-        )
+        if not self._person:
+            self._person = get_person_case_structure(
+                self.person_id,
+                self.user.user_id,
+                extra_update={
+                    PRIMARY_PHONE_NUMBER: self.primary_phone_number,
+                    BACKUP_PHONE_NUMBER: self.secondary_phone_number,
+                }
+            )
+        return self._person
 
     @property
     def occurrence(self):
@@ -362,6 +370,7 @@ class ENikshayLocationStructureMixin(object):
         self.project = Domain(name=self.domain)
         self.project.save()
         _, locations = setup_enikshay_locations(self.domain)
+        self.locations = locations
         self.sto = locations['STO']
         self.sto.metadata = {
             'nikshay_code': 'MH',
@@ -398,13 +407,35 @@ class ENikshayLocationStructureMixin(object):
         self.dmc.save()
 
         self.pcp = locations['PCP']
+        self.pcp.metadata = {
+            'nikshay_code': '1234567',
+            'is_test': 'no',
+        }
+        self.pcp.save()
 
+        self.pcc = locations['PCC']
+        self.pcc.metadata = {
+            'nikshay_code': '1234567',
+            'is_test': 'no',
+        }
+        self.pcc.save()
+
+        self.plc = locations['PLC']
+        self.plc.metadata = {
+            'nikshay_code': '1234567',
+            'is_test': 'no',
+        }
+        self.plc.save()
+        self.pac = locations['PLC']
+        self.pac.metadata = {
+            'nikshay_code': '1234567',
+            'is_test': 'no',
+        }
+        self.pac.save()
         super(ENikshayLocationStructureMixin, self).setUp()
 
     def tearDown(self):
         self.project.delete()
-        SQLLocation.objects.all().delete()
-        LocationType.objects.all().delete()
         super(ENikshayLocationStructureMixin, self).tearDown()
 
     def assign_person_to_location(self, location_id):
@@ -466,5 +497,6 @@ def setup_enikshay_locations(domain_name):
         ])
     ]
 
+    location_metadata = {'is_test': 'no', 'nikshay_code': 'nikshay_code'}
     return (setup_location_types_with_structure(domain_name, location_type_structure),
-            setup_locations_with_structure(domain_name, location_structure))
+            setup_locations_with_structure(domain_name, location_structure, location_metadata))

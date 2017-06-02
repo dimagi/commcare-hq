@@ -3,6 +3,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
 import re
+from uuid import uuid4
 
 from restkit.errors import NoMoreData
 from rest_framework.authtoken.models import Token
@@ -822,6 +823,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     phone_numbers = ListProperty()
     created_on = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
+    last_modified = DateTimeProperty()
     #    For now, 'status' is things like:
     #        ('auto_created',     'Automatically created from form submission.'),
     #        ('phone_registered', 'Registered from phone'),
@@ -1339,7 +1341,17 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         self.username = username
         self.save()
 
+    @classmethod
+    def save_docs(cls, docs, **kwargs):
+        utcnow = datetime.utcnow()
+        for doc in docs:
+            doc['last_modified'] = utcnow
+        super(CouchUser, cls).save_docs(docs, **kwargs)
+
+    bulk_save = save_docs
+
     def save(self, **params):
+        self.last_modified = datetime.utcnow()
         self.clear_quickcache_for_user()
         with CriticalSection(['username-check-%s' % self.username], timeout=120):
             # test no username conflict
@@ -1514,20 +1526,22 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @classmethod
     def create(cls,
-            domain,
-            username,
-            password,
-            email=None,
-            uuid='',
-            date='',
-            phone_number=None,
-            is_anonymous=False,
-            commit=True,
-            **kwargs):
+               domain,
+               username,
+               password,
+               email=None,
+               uuid='',
+               date='',
+               phone_number=None,
+               is_anonymous=False,
+               location=None,
+               commit=True,
+               **kwargs):
         """
         used to be a function called `create_hq_user_from_commcare_registration_info`
 
         """
+        uuid = uuid or uuid4().hex
         commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
@@ -1540,6 +1554,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.is_anonymous = is_anonymous
 
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
+
+        if location:
+            commcare_user.set_location(location, commit=False)
 
         if commit:
             commcare_user.save(**get_safe_write_kwargs())
@@ -1686,7 +1703,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             touched.append(group)
         for to_remove in current - desired:
             group = Group.get(to_remove)
-            group.remove_user(self._id, save=False)
+            group.remove_user(self._id)
             touched.append(group)
 
         Group.bulk_save(touched)

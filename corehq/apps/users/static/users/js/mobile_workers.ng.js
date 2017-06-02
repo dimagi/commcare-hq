@@ -379,6 +379,13 @@
                 ctrl.$validators.validatePassword = function (password) {
                     if (!password) {
                         return false;
+                    } else if (!(
+                        password.length >= 8 &&
+                        /\W/.test(password) &&
+                        /\d/.test(password) &&
+                        /[A-Z]/.test(password)
+                    )) {
+                        return false;
                     }
                     $formElements.password()
                         .removeClass('has-error has-success')

@@ -2,7 +2,7 @@ from __future__ import print_function
 from django.core.management.base import BaseCommand
 from corehq.apps.reminders.models import (CaseReminder, CaseReminderHandler,
     CASE_CRITERIA)
-from corehq.apps.reminders.signals import case_changed_receiver
+from corehq.messaging.signals import messaging_case_changed_receiver
 from casexml.apps.case.models import CommCareCase
 
 
@@ -79,7 +79,7 @@ class Command(BaseCommand):
                         for r in reminders[1:]:
                             r.retire()
                         c = CommCareCase.get(split_key[2])
-                        case_changed_receiver(None, c)
+                        messaging_case_changed_receiver(None, c)
                 else:
                     print("ERROR: Not all of the reminders with the above key match")
 

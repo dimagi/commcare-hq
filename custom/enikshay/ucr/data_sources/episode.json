@@ -168,6 +168,20 @@
                 "column_id": "person_owner_id"
             },
             {
+                "display_name": "diagnosing_facility_id",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "diagnosing_facility_id"
+                },
+                "column_id": "diagnosing_facility_id"
+            },
+            {
                 "display_name": "episode_type",
                 "transform": {
                 },
@@ -590,6 +604,44 @@
                     }
                 },
                 "column_id": "phi"
+            },
+            {
+                "display_name": "health_facility_for_treatment",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "treatment_initiating_facility_id"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": [null, ""]
+                    },
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": "NA"
+                    },
+                    "expression_if_false": {
+                        "value_expression": {
+                            "type":"property_name",
+                            "property_name":"name"
+                        },
+                        "type":"related_doc",
+                        "related_doc_type":"Location",
+                        "doc_id_expression": {
+                            "type": "property_name",
+                            "property_name": "treatment_initiating_facility_id"
+                        }
+                    }
+                },
+                "column_id": "health_facility_for_treatment"
             },
             {
                 "display_name": "person/phi",
@@ -1221,19 +1273,105 @@
                 "column_id": "treatment_status_value",
                 "datatype": "string",
                 "type": "expression",
-                "expression":{
-                    "type": "nested",
-                    "argument_expression": {
-                        "type": "named",
-                        "name": "complete_treatment_form"
+                "expression": {
+                    "type": "conditional",
+                    "test": {
+                        "operator": "eq",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "treatment_initiated"
+                        },
+                        "type": "boolean_expression",
+                        "property_value": "yes_private"
                     },
-                    "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "ql_notification_details",
-                            "treatment_status_value"
-                        ]
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": "Treatment initiated outside RNTCP"
+                    },
+                    "expression_if_false": {
+                        "type": "conditional",
+                        "test": {
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "treatment_initiated"
+                            },
+                            "type": "boolean_expression",
+                            "property_value": "yes_phi"
+                        },
+                        "expression_if_true": {
+                            "type": "conditional",
+                            "test": {
+                                "operator": "eq",
+                                "expression": {
+                                    "type": "property_name",
+                                    "property_name": "diagnosing_facility_id"
+                                },
+                                "type": "boolean_expression",
+                                "property_value": {
+                                    "type": "property_name",
+                                    "property_name": "treatment_initiating_facility_id"
+                                }
+                            },
+                            "expression_if_true": {
+                                "type": "constant",
+                                "constant": "Initiated on first line treatment in the same health facility"
+                            },
+                            "expression_if_false": {
+                                "type": "constant",
+                                "constant": "Initiated on treatment outside health facility"
+                            }
+                        },
+                        "expression_if_false": {
+                            "type": "conditional",
+                            "test": {
+                                "type": "and",
+                                "filters": [
+                                    {
+                                        "operator": "eq",
+                                        "expression": {
+                                            "value_expression": {
+                                                "datatype": "string",
+                                                "type": "property_name",
+                                                "property_name": "awaiting_claim"
+                                            },
+                                            "type": "related_doc",
+                                            "related_doc_type": "CommCareCase",
+                                            "doc_id_expression": {
+                                                "type": "named",
+                                                "name": "person_id"
+                                            }
+                                        },
+                                        "type": "boolean_expression",
+                                        "property_value": "yes"
+                                    },
+                                    {
+                                        "operator": "eq",
+                                        "expression": {
+                                            "type": "nested",
+                                            "argument_expression": {
+                                                "type": "named",
+                                                "name": "referral_case"
+                                            },
+                                            "value_expression": {
+                                                "type": "property_name",
+                                                "property_name": "referral_status"
+                                            }
+                                        },
+                                        "type": "boolean_expression",
+                                        "property_value": "pending"
+                                    }
+                                ]
+                            },
+                            "expression_if_true": {
+                                "type": "constant",
+                                "constant": "Referred for treatment with pending feedback"
+                            },
+                            "expression_if_false": {
+                                "type": "constant",
+                                "constant": "NA"
+                            }
+                        }
                     }
                 }
             },
@@ -6085,6 +6223,56 @@
                             }
                         }
                     }
+                }
+            },
+            {
+                "display_name": "priority",
+                "column_id": "priority",
+                "datatype": "string",
+                "type": "expression",
+                "expression":{
+                    "type": "property_name",
+                    "property_name": "priority"
+                }
+            },
+            {
+                "display_name": "date_last_refilled",
+                "column_id": "date_last_refilled",
+                "datatype": "date",
+                "type": "expression",
+                "expression":{
+                    "type": "property_name",
+                    "property_name": "date_last_refilled"
+                }
+            },
+            {
+                "display_name": "one_week_adherence_score",
+                "column_id": "one_week_adherence_score",
+                "datatype": "string",
+                "type": "expression",
+                "expression":{
+                    "type": "property_name",
+                    "property_name": "one_week_adherence_score"
+                }
+            },
+            {
+                "display_name": "month_adherence_score",
+                "column_id": "month_adherence_score",
+                "datatype": "string",
+                "type": "expression",
+                "expression":{
+                    "type": "property_name",
+                    "property_name": "month_adherence_score"
+                }
+            },
+            {
+                "display_name": "adherence_tracking_mechanism",
+                "column_id": "adherence_tracking_mechanism",
+                "datatype": "string",
+                "type": "expression",
+                "expression":{
+                    "type": "property_name",
+                    "property_name": "adherence_tracking_mechanism"
                 }
             }
         ],
