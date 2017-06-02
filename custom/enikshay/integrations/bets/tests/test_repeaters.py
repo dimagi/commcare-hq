@@ -487,13 +487,14 @@ class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
     def repeat_records(self):
         return RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
 
-    def make_location(self, name):
+    def make_location(self, name, location_type=None, metadata=None):
         location = SQLLocation.objects.create(
             domain=self.domain,
             name=name,
             site_code=name,
-            location_type=self.tu.location_type,
+            location_type=location_type or self.tu.location_type,
             parent=self.dto,
+            metadata=metadata or {},
         )
         self.addCleanup(location.delete)
         return location
@@ -536,6 +537,13 @@ class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
                 'site_code': location.site_code,
             }
         )
+
+    def test_dont_send(self):
+        # Don't send a PHI, as it's not relevant to the private sector
+        location = self.make_location('sept_of_baelor', location_type=self.phi.location_type)
+        # Don't send a test location
+        location = self.make_location('flea_bottom', metadata={'is_test': 'yes'})
+        self.assertEqual(0, len(self.repeat_records().all()))
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
