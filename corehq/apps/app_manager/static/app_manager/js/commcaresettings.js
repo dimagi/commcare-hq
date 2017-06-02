@@ -332,7 +332,7 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
             }
         });
         self.saveButton.ui.appendTo($saveContainer);
-        $saveContainer.find(".savebtn-bar").append($saveContainer.closest("form").find(".section-changer").addClass("pull-right").remove());
+        $saveContainer.find(".savebtn-bar").append($saveContainer.closest("form").find(".section-changer").remove());
 
         self.onAddCustomProperty = function() {
             self.customProperties.push({ key: ko.observable(), value: ko.observable() });

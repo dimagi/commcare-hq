@@ -123,7 +123,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
                         },
                     });
                 button.ui.appendTo($buttonHolder);
-                $buttonHolder.find(".savebtn-bar").append($form.find(".section-changer").addClass("pull-right").remove());
+                $buttonHolder.find(".savebtn-bar").append($form.find(".section-changer").remove());
                 $buttonHolder.data('button', button);
             });
 
