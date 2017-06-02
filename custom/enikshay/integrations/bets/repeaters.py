@@ -295,6 +295,10 @@ class BETSLocationRepeater(LocationRepeater):
     friendly_name = _("Forward locations to BETS")
     payload_generator_classes = (BETSLocationPayloadGenerator,)
 
+    @classmethod
+    def available_for_domain(cls, domain):
+        return BETS_INTEGRATION.enabled(domain)
+
     class Meta(object):
         app_label = 'repeaters'
 
