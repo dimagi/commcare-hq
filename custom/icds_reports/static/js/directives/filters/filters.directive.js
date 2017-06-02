@@ -10,6 +10,7 @@ window.angular.module('icdsApp').directive("filters", function() {
         restrict:'E',
         scope: {
             data: '=',
+            filters: '=',
         },
         bindToController: true,
         templateUrl: url('icds-ng-template', 'filters'),

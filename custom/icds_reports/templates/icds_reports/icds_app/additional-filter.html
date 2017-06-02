@@ -3,7 +3,8 @@
         <h3 class="modal-title" id="modal-title">Select Additional Filters<i style="float: right;" ng-click="$ctrl.close()" class="fa fa-close pointer"></i></h3>
     </div>
     <div class="modal-body" id="modal-body">
-        <div style="margin: 20px 50px;">
+        <div class="form-group" style="margin: 20px 50px;" ng-show="$ctrl.filters.indexOf('gender') === -1">
+            <label for="email">Gender:</label>
             <ui-select ng-model="$ctrl.selectedGender" theme="bootstrap" on-select="$ctrl.onSelect($item, $index)">
                 <ui-select-match placeholder="Gender"><span ng-bind="$select.selected.name"></span></ui-select-match>
                   <ui-select-choices repeat="gender.id as gender in $ctrl.genders | propsFilter: {name: $select.search}">
@@ -11,7 +12,8 @@
                   </ui-select-choices>
             </ui-select>
         </div>
-        <div style="margin: 20px 50px;">
+        <div class="form-group" style="margin: 20px 50px;" ng-show="$ctrl.filters.indexOf('age') === -1">
+            <label for="email">Age:</label>
             <ui-select ng-model="$ctrl.selectedAge" theme="bootstrap" on-select="$ctrl.onSelect($item, $index)">
                 <ui-select-match placeholder="Age"><span ng-bind="$select.selected.name"></span></ui-select-match>
                   <ui-select-choices repeat="age.id as age in $ctrl.ages| propsFilter: {name: $select.search}">
