@@ -185,6 +185,9 @@ class IncentivePayload(BETSPayload):
             DTOLocation=cls._get_district_location(location),
         )
 
+    def payload_json(self):
+        return {"incentive_details": [self.to_json()]}
+
 
 class VoucherPayload(BETSPayload):
 
@@ -219,6 +222,9 @@ class VoucherPayload(BETSPayload):
             DTOLocation=cls._get_district_location(location),
             InvestigationType=voucher_case_properties.get(INVESTIGATION_TYPE),
         )
+
+    def payload_json(self):
+        return {"voucher_details": [self.to_json()]}
 
 
 class BETSBasePayloadGenerator(BasePayloadGenerator):
@@ -279,10 +285,10 @@ class BaseBETSVoucherPayloadGenerator(BETSBasePayloadGenerator):
             BeneficiaryUUID="DUMMY-BENEFICIARY-ID",
             BeneficiaryType="chemist",
             location="DUMMY-LOCATION",
-        ).to_json())
+        ).payload_json())
 
     def get_payload(self, repeat_record, voucher_case):
-        return json.dumps(VoucherPayload.create_voucher_payload(voucher_case).to_json())
+        return json.dumps(VoucherPayload.create_voucher_payload(voucher_case).payload_json())
 
 
 class ChemistBETSVoucherPayloadGenerator(BaseBETSVoucherPayloadGenerator):
@@ -306,7 +312,7 @@ class IncentivePayloadGenerator(BETSBasePayloadGenerator):
             BeneficiaryType="chemist",
             Location="DUMMY-LOCATION",
             DTOLocation="DUMMY-LOCATION",
-        ).to_json())
+        ).payload_json())
 
 
 class BETS180TreatmentPayloadGenerator(IncentivePayloadGenerator):
@@ -314,7 +320,7 @@ class BETS180TreatmentPayloadGenerator(IncentivePayloadGenerator):
     event_id = TREATMENT_180_EVENT
 
     def get_payload(self, repeat_record, episode_case):
-        return json.dumps(IncentivePayload.create_180_treatment_payload(episode_case).to_json())
+        return json.dumps(IncentivePayload.create_180_treatment_payload(episode_case).payload_json())
 
 
 class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
@@ -338,7 +344,7 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
     def get_payload(self, repeat_record, episode_case):
         episode_case_properties = episode_case.dynamic_case_properties()
         n = self._get_prescription_threshold_to_send(episode_case_properties)
-        return json.dumps(IncentivePayload.create_drug_refill_payload(episode_case, n).to_json())
+        return json.dumps(IncentivePayload.create_drug_refill_payload(episode_case, n).payload_json())
 
     def get_event_property_name(self, episode_case):
         n = self._get_prescription_threshold_to_send(episode_case.dynamic_case_properties())
@@ -381,7 +387,7 @@ class BETSSuccessfulTreatmentPayloadGenerator(IncentivePayloadGenerator):
     event_id = SUCCESSFUL_TREATMENT_EVENT
 
     def get_payload(self, repeat_record, episode_case):
-        return json.dumps(IncentivePayload.create_successful_treatment_payload(episode_case).to_json())
+        return json.dumps(IncentivePayload.create_successful_treatment_payload(episode_case).payload_json())
 
 
 class BETSDiagnosisAndNotificationPayloadGenerator(IncentivePayloadGenerator):
@@ -389,7 +395,7 @@ class BETSDiagnosisAndNotificationPayloadGenerator(IncentivePayloadGenerator):
     event_id = DIAGNOSIS_AND_NOTIFICATION_EVENT
 
     def get_payload(self, repeat_record, episode_case):
-        return json.dumps(IncentivePayload.create_diagnosis_and_notification_payload(episode_case).to_json())
+        return json.dumps(IncentivePayload.create_diagnosis_and_notification_payload(episode_case).payload_json())
 
 
 class BETSAYUSHReferralPayloadGenerator(IncentivePayloadGenerator):
@@ -397,7 +403,7 @@ class BETSAYUSHReferralPayloadGenerator(IncentivePayloadGenerator):
     event_id = AYUSH_REFERRAL_EVENT
 
     def get_payload(self, repeat_record, episode_case):
-        return json.dumps(IncentivePayload.create_ayush_referral_payload(episode_case).to_json())
+        return json.dumps(IncentivePayload.create_ayush_referral_payload(episode_case).payload_json())
 
 
 class BETSLocationPayloadGenerator(LocationPayloadGenerator):
