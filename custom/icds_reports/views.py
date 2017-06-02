@@ -2,7 +2,6 @@ import requests
 
 from datetime import datetime
 
-from copy import deepcopy
 from dateutil.relativedelta import relativedelta
 from django.db.models.query_utils import Q
 from django.http.response import JsonResponse
@@ -21,7 +20,8 @@ from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFil
     TableauLocationFilter, ICDSYearFilter
 from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_data, get_cas_reach_data, \
     get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
-    get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart
+    get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart, \
+    get_awc_reports_system_usage, get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics
 from . import const
 from .exceptions import TableauTokenException
 
@@ -348,3 +348,63 @@ class LocationAncestorsView(View):
                 'parent_id': selected_location.parent.location_id if selected_location.parent else None
             }
         })
+
+
+@location_safe
+@method_decorator([login_and_domain_required], name='dispatch')
+class AwcReportsView(View):
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+
+        month = datetime(2015, 11, 1)
+        prev_month = month - relativedelta(months=1)
+        three_month = month - relativedelta(months=2)
+        location = request.GET.get('location', None)
+        aggregation_level = 5
+
+        config = {
+            'aggregation_level': aggregation_level,
+            'awc_site_code': "awc_214"
+        }
+        loc_level = 'state'
+        if location:
+            try:
+                sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
+                location_code = sql_location.site_code
+                loc_level = LocationType.objects.filter(
+                    parent_type=sql_location.location_type,
+                    domain=self.kwargs['domain']
+                )[0].code
+                location_key = '%s_site_code' % sql_location.location_type.code
+                config.update({
+                    location_key: "awc_214",
+                })
+            except SQLLocation.DoesNotExist:
+                pass
+
+        data = []
+        if step == 'system_usage':
+            data = get_awc_reports_system_usage(
+                config,
+                tuple(month.timetuple())[:3],
+                tuple(prev_month.timetuple())[:3],
+                'aggregation_level'
+            )
+        elif step == 'pse':
+            data = get_awc_reports_pse(
+                config,
+                tuple(month.timetuple())[:3],
+                tuple(three_month.timetuple())[:3]
+            )
+        elif step == 'maternal_child':
+            data = get_awc_reports_maternal_child(
+                config,
+                tuple(month.timetuple())[:3],
+                tuple(three_month.timetuple())[:3]
+            )
+        elif step == 'demographics':
+            data = get_awc_report_demographics(
+                config,
+                tuple(month.timetuple())[:3]
+            )
+        return JsonResponse(data=data)

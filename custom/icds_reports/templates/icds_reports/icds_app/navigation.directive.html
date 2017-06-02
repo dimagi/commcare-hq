@@ -58,8 +58,8 @@
             </div>
         </li>
         <hr>
-        <li>
-            <i class="fa fa-file" aria-hidden="true"> {% trans "AWC Report" %}</i>
+        <li ng-class="{'active': $location.path() === '/awc_reports'}">
+            <a href="#awc_reports" class="fa"> <i class="fa fa-file" aria-hidden="true"> {% trans "AWC Report" %}</i></a>
         </li>
         <li>
             <i class="fa fa-file-text-o" aria-hidden="true"> {% trans "Progress Report" %}</i>
