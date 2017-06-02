@@ -1,13 +1,12 @@
 from __future__ import print_function
 
-from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document, \
     change_meta_from_doc_meta_and_document
 from corehq.apps.change_feed.data_sources import FORM_SQL, COUCH
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.apps.reports.analytics.esaccessors import get_last_form_for_apps
+from corehq.apps.reports.analytics.esaccessors import get_last_forms_by_app
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.interface import BaseDocProcessor, DocumentProcessorController
@@ -134,12 +133,6 @@ def get_sql_app_form_submission_tracker_reindexer():
     return AppFormSubmissionReindexer(doc_provider, FORM_SQL, 'form_processor_xforminstancesql')
 
 
-@quickcache(['domain'], timeout=60 * 60 * 5)
-def _get_apps_for_domain(domain):
-    # thin cached wrapper for get_app_ids_in_domain
-    return get_app_ids_in_domain(domain)
-
-
 class UserAppFormSubmissionDocProcessor(BaseDocProcessor):
     def __init__(self, pillow_processor):
         self.pillow_processor = pillow_processor
@@ -165,13 +158,7 @@ class UserAppFormSubmissionDocProcessor(BaseDocProcessor):
         # this allows us to reindex for the app status report
         # without reindexing all forms.
         changes = []
-        apps = []
-        if doc['doc_type'] == 'CommCareUser':
-            apps = _get_apps_for_domain(doc['domain'])
-        else:
-            for domain in (dm['domain'] for dm in doc['domain_memberships']):
-                apps = _get_apps_for_domain(domain)
-        forms = get_last_form_for_apps(apps, doc['_id'])
+        forms = get_last_forms_by_app(doc['_id'])
         for form in forms:
             doc_meta = get_doc_meta_object_from_document(form)
             change_meta = change_meta_from_doc_meta_and_document(

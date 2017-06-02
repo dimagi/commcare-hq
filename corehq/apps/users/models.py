@@ -809,6 +809,10 @@ class LastSync(DocumentSchema):
 
 
 class LastBuild(DocumentSchema):
+    """
+    Build info for the app on the user's phone
+    when they last synced or submitted
+    """
     build_version = IntegerProperty()
     build_version_date = DateTimeProperty()
     app_id = StringProperty()

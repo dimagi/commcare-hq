@@ -17,14 +17,14 @@ from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclogs_for_user
 
 
-def get_synclog_pillow(pillow_id='UpdateUserSyncHistoryPillow', **kwargs):
+def get_user_sync_history_pillow(pillow_id='UpdateUserSyncHistoryPillow', **kwargs):
     """
     This gets a pillow which iterates through all synclogs
     """
     couch_db = SyncLog.get_db()
     change_feed = CouchChangeFeed(couch_db, include_docs=True)
     checkpoint = PillowCheckpoint('synclog', change_feed.sequence_format)
-    form_processor = SynclogProcessor()
+    form_processor = UserSyncHistoryProcessor()
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
@@ -44,7 +44,7 @@ def _last_sync_needs_update(last_sync, sync_datetime):
     return False
 
 
-class SynclogProcessor(PillowProcessor):
+class UserSyncHistoryProcessor(PillowProcessor):
 
     def process_change(self, pillow_instance, change):
 
@@ -85,7 +85,7 @@ class SynclogProcessor(PillowProcessor):
                 user.save()
 
 
-class SynclogReindexerDocProcessor(BaseDocProcessor):
+class UserSyncHistoryReindexerDocProcessor(BaseDocProcessor):
 
     def __init__(self, pillow_processor):
         self.pillow_processor = pillow_processor
@@ -119,12 +119,12 @@ class SynclogReindexerDocProcessor(BaseDocProcessor):
         return changes
 
 
-class SynclogReindexer(Reindexer):
+class UserSyncHistoryReindexer(Reindexer):
 
     def __init__(self, doc_provider, chunk_size=1000):
         self.doc_provider = doc_provider
         self.chunk_size = chunk_size
-        self.doc_processor = SynclogReindexerDocProcessor(SynclogProcessor())
+        self.doc_processor = UserSyncHistoryReindexerDocProcessor(UserSyncHistoryProcessor())
 
     def consume_options(self, options):
         self.reset = options.pop("reset", False)
@@ -141,10 +141,10 @@ class SynclogReindexer(Reindexer):
         processor.run()
 
 
-def get_synclog_reindexer():
+def get_user_sync_history_reindexer():
     iteration_key = "UpdateUserSyncHistoryPillow_reindexer"
     doc_provider = CouchDocumentProvider(iteration_key, doc_type_tuples=[
         CommCareUser,
         WebUser
     ])
-    return SynclogReindexer(doc_provider)
+    return UserSyncHistoryReindexer(doc_provider)

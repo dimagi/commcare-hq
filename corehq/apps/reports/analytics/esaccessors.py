@@ -212,17 +212,12 @@ def get_last_form_submissions_by_user(domain, user_ids, app_id=None, xmlns=None)
     return result
 
 
-def get_last_form_for_apps(apps, user_id):
-    forms = []
-    for app_id in apps:
-        query = FormES().app(app_id).user_id(user_id).sort('received_on', desc=True).size(1)
-        hits = query.run().hits
-        if hits:
-            forms.append(hits[0])
-    return forms
-
-
 def get_last_forms_by_app(user_id):
+    """
+    gets the last form submission for each app for a given user id
+    :param user_id: id of a couch user
+    :return: last form submission for every app that user has submitted
+    """
     query = (
         FormES()
             .user_id(user_id)

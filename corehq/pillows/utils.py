@@ -106,6 +106,9 @@ def _last_build_needs_update(last_build, build_date):
 
 
 def update_latest_builds(user, app_id, date, version):
+    """
+    determines whether to update the last build attributes in a user's reporting metadata
+    """
     last_builds = filter(
         lambda build: build.app_id == app_id,
         user.reporting_metadata.last_builds,
@@ -129,6 +132,10 @@ def update_latest_builds(user, app_id, date, version):
 
 
 def filter_by_app(data_list, app_id):
+    """
+    returns the last sync, submission, or build for the given app id
+    :param data_list: list from user's reporting metadata (last syncs, last submissions, or last builds)
+    """
     last_items = filter(
         lambda sync: sync.app_id == app_id,
         data_list,

@@ -1607,7 +1607,7 @@ PILLOWTOPS = {
         {
             'name': 'UpdateUserSyncHistoryPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
-            'instance': 'corehq.pillows.synclog.get_synclog_pillow',
+            'instance': 'corehq.pillows.synclog.get_user_sync_history_pillow',
         },
     ],
     'core_ext': [
