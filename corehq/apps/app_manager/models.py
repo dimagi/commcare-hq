@@ -5841,10 +5841,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             '{}media_suite.xml'.format(prefix): self.create_media_suite(build_profile_id),
         }
 
-        practice_user_id = self.get_practice_user_id(build_profile_id=build_profile_id)
-        if practice_user_id:
+        practice_user_restore = self.create_practice_user_restore(build_profile_id)
+        if practice_user_restore:
             files.update({
-                '{}practice_user_restore.xml'.format(prefix): self.create_practice_user_restore(build_profile_id)
+                '{}practice_user_restore.xml'.format(prefix): practice_user_restore
             })
 
         langs_for_build = self.get_build_langs(build_profile_id)
