@@ -14,6 +14,7 @@ from corehq.messaging.scheduling.tasks import (
     handle_case_alert_schedule_instance,
     handle_case_timed_schedule_instance,
 )
+from corehq.sql_db.util import handle_connection_failure, get_default_and_partitioned_db_aliases
 from corehq.toggles import DATA_MIGRATION
 from datetime import datetime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -48,6 +49,7 @@ class Command(BaseCommand):
         )
         return client.lock(key, timeout=60 * 60)
 
+    @handle_connection_failure(get_db_aliases=get_default_and_partitioned_db_aliases)
     def create_tasks(self):
         for cls in (AlertScheduleInstance, TimedScheduleInstance):
             for domain, schedule_instance_id, next_event_due in get_active_schedule_instance_ids(

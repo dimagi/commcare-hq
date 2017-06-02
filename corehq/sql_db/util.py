@@ -108,17 +108,24 @@ def get_db_aliases_for_partitioned_query():
     return db_names
 
 
-def handle_connection_failure(db_names=None):
+def get_default_db_aliases():
+    return ['default']
+
+
+def get_default_and_partitioned_db_aliases():
+    return list(set(get_db_aliases_for_partitioned_query() + get_default_db_aliases()))
+
+
+def handle_connection_failure(get_db_aliases=get_default_db_aliases):
     def _inner2(fn):
         @wraps(fn)
         def _inner(*args, **kwargs):
-            db_names = db_names or ['default']
             try:
                 return fn(*args, **kwargs)
             except db.utils.DatabaseError:
                 # we have to do this manually to avoid issues with
                 # open transactions and already closed connections
-                for db_name in db_names:
+                for db_name in get_db_aliases():
                     db.transaction.rollback(using=db_name)
 
                 # re raise the exception for additional error handling
@@ -126,7 +133,7 @@ def handle_connection_failure(db_names=None):
             except (Psycopg2InterfaceError, DjangoInterfaceError):
                 # force closing the connection to prevent Django from trying to reuse it.
                 # http://www.tryolabs.com/Blog/2014/02/12/long-time-running-process-and-django-orm/
-                for db_name in db_names:
+                for db_name in get_db_aliases():
                     db.connections[db_name].close()
 
                 # re raise the exception for additional error handling
