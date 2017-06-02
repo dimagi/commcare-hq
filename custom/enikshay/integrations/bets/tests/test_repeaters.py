@@ -528,6 +528,7 @@ class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
                 ],
                 'location_id': location.location_id,
                 'location_type': 'tu',
+                'location_type_code': 'tu',
                 'longitude': None,
                 'metadata': {},
                 'name': location.name,
