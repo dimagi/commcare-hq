@@ -1824,6 +1824,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_general.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_tb_hiv.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'cc_outbound_call_list.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'payment_register.json'),
 ]
 
 
@@ -1866,6 +1867,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher.json'),
 
     os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
     os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json')
