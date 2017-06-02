@@ -5769,6 +5769,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def create_media_suite(self, build_profile_id=None):
         return MediaSuiteGenerator(self, build_profile_id).generate_suite()
 
+    @memoized
     def get_practice_user_id(self, build_profile_id=None):
         # returns app or build profile specific practice_mobile_worker_id
         if build_profile_id:
@@ -5777,32 +5778,51 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         else:
             return self.practice_mobile_worker_id
 
-    def create_practice_user_restore(self, practice_user_id):
+    @memoized
+    def get_practice_user(self, build_profile_id=None):
         """
-        Args:
-            practice_user_id: an id pointing to a CommCareUser
+        kwargs:
+            build_profile_id: id of a particular build profile to get the practice user for
+                If it's None, practice user of the default app is returned
 
         Returns:
-            Returns restore xml as a string for the practice user of app
-            Raises a PracticeUserException if user is not practice user
+            App or build profile specific practice user and validates that the user is
+                a practice mode user and that user belongs to app.domain
+
+        This is memoized to avoid refetching user when validating app, creating build files and
+            generating suite file.
+        """
+        practice_user_id = self.get_practice_user_id(build_profile_id=build_profile_id)
+        if practice_user_id:
+            return get_and_assert_practice_user_in_domain(practice_user_id, self.domain)
+        else:
+            return None
+
+    def create_practice_user_restore(self, build_profile_id=None):
+        """
+        Returns:
+            Returns restore xml as a string for the practice user of app or
+                app profile specfied by build_profile_id
+            Raises a PracticeUserException if the user is not practice user
         """
         from corehq.apps.ota.models import DemoUserRestore
-        user = get_and_assert_practice_user_in_domain(practice_user_id, self.domain)
-        user_restore = DemoUserRestore.objects.get(id=user.demo_restore_id)
-        return user_restore.get_restore_as_string()
+        user = self.get_practice_user(build_profile_id)
+        if user:
+            user_restore = DemoUserRestore.objects.get(id=user.demo_restore_id)
+            return user_restore.get_restore_as_string()
+        else:
+            return None
 
     def validate_practice_users(self):
         # validate practice_mobile_worker of app and all app profiles
         # raises PracticeUserException in case of misconfiguration
-        user_ids = [(self.get_practice_user_id(), None)]
-        user_ids.extend([(self.get_practice_user_id(p), p) for p in self.build_profiles])
-        for user_id, build_profile_id in user_ids:
-            if user_id:
-                try:
-                    get_and_assert_practice_user_in_domain(user_id, self.domain)
-                except PracticeUserException as e:
-                    e.build_profile_id = build_profile_id
-                    raise e
+        self.get_practice_user()
+        try:
+            for build_profile_id in self.build_profiles:
+                self.get_practice_user(build_profile_id)
+        except PracticeUserException as e:
+            e.build_profile_id = build_profile_id
+            raise e
 
     @classmethod
     def get_form_filename(cls, type=None, form=None, module=None):
@@ -5824,7 +5844,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         practice_user_id = self.get_practice_user_id(build_profile_id=build_profile_id)
         if practice_user_id:
             files.update({
-                '{}practice_user_restore.xml'.format(prefix): self.create_practice_user_restore(practice_user_id)
+                '{}practice_user_restore.xml'.format(prefix): self.create_practice_user_restore(build_profile_id)
             })
 
         langs_for_build = self.get_build_langs(build_profile_id)

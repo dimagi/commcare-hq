@@ -586,9 +586,9 @@ def get_and_assert_practice_user_in_domain(practice_user_id, domain):
     if not user.domain == domain:
         raise PracticeUserException(
             "User {username} is not a member of domain {domain}, "
-            "please reset to correct user".format(user.username, domain))
+            "please reset to correct user".format(username=user.username, domain=domain))
     if not user.is_demo_user:
         raise PracticeUserException(
             "User {username} is not a practice user, "
-            "please turn on practice mode for this user".format(user.username))
+            "please turn on practice mode for this user".format(username=user.username))
     return user
