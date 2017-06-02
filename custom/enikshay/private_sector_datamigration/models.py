@@ -317,9 +317,10 @@ class Episode(models.Model):
                 'After Treatment Failure': 'treatment_after_failure',
                 'Recurrent': 'recurrent',
                 'Relapse': 'recurrent',
+                'Others': '',
                 'Select': '',
-                'None': '',
-            }
+                None: '',
+            }[self.retreatmentReason]
         return ''
 
     @property
