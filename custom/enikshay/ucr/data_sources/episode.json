@@ -1338,43 +1338,22 @@
                         "expression_if_false": {
                             "type": "conditional",
                             "test": {
-                                "type": "and",
-                                "filters": [
-                                    {
-                                        "operator": "eq",
-                                        "expression": {
-                                            "value_expression": {
-                                                "datatype": "string",
-                                                "type": "property_name",
-                                                "property_name": "awaiting_claim"
-                                            },
-                                            "type": "related_doc",
-                                            "related_doc_type": "CommCareCase",
-                                            "doc_id_expression": {
-                                                "type": "named",
-                                                "name": "person_id"
-                                            }
-                                        },
-                                        "type": "boolean_expression",
-                                        "property_value": "yes"
+                                "operator": "eq",
+                                "expression": {
+                                    "value_expression": {
+                                        "datatype": "string",
+                                        "type": "property_name",
+                                        "property_name": "awaiting_claim"
                                     },
-                                    {
-                                        "operator": "eq",
-                                        "expression": {
-                                            "type": "nested",
-                                            "argument_expression": {
-                                                "type": "named",
-                                                "name": "referral_case"
-                                            },
-                                            "value_expression": {
-                                                "type": "property_name",
-                                                "property_name": "referral_status"
-                                            }
-                                        },
-                                        "type": "boolean_expression",
-                                        "property_value": "pending"
+                                    "type": "related_doc",
+                                    "related_doc_type": "CommCareCase",
+                                    "doc_id_expression": {
+                                        "type": "named",
+                                        "name": "person_id"
                                     }
-                                ]
+                                },
+                                "type": "boolean_expression",
+                                "property_value": "yes"
                             },
                             "expression_if_true": {
                                 "type": "constant",
