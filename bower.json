@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "dependencies": {
     "angular": "1.4.4",
+    "angular-bootstrap": "^2.5.0",
+    "angular-datamaps": "^0.1.2",
+    "angular-nvd3": "^0.1.1",
     "angular-route": "1.4.4",
     "angular-resource": "1.4.4",
     "angular-message-format": "1.4.4",
@@ -64,10 +67,7 @@
     "intl-tel-input": "9.0.7",
     "jsdiff": "~3.2.0",
     "datamaps": "^0.5.8",
-    "angular-datamaps": "^0.1.2",
-    "topojson": "^3.0.0",
-    "angular-bootstrap": "^2.5.0",
-    "angular-nvd3": "^0.1.1"
+    "topojson": "^3.0.0"
   },
   "devDependencies": {
     "chai": "3.3.0",
