@@ -1,5 +1,7 @@
 import jsonfield
+from corehq.apps.sms.api import send_sms_with_backend_name
 from corehq.messaging.scheduling.models.abstract import Content
+from corehq.apps.reminders.util import get_one_way_number_for_recipient
 from django.db import models
 
 
@@ -7,10 +9,17 @@ class SMSContent(Content):
     message = jsonfield.JSONField(default=dict)
 
     def send(self, recipient):
-        print '*******************************'
-        print 'To:', recipient
-        print 'Message: ', self.message
-        print '*******************************'
+        phone_number = get_one_way_number_for_recipient(recipient)
+        if not phone_number or len(phone_number) <= 3:
+            return
+
+        language_code = recipient.get_language_code()
+        message = self.message.get(language_code)
+        if not message:
+            message = self.message.get('en')
+
+        if message:
+            send_sms_with_backend_name(recipient.domain, phone_number, message, 'TEST')
 
 
 class EmailContent(Content):
