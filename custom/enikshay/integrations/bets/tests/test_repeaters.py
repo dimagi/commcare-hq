@@ -505,7 +505,7 @@ class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(1, len(records))
         record = records[0]
         self.assertEqual(
-            record.get_payload(),
+            json.loads(record.get_payload()),
             {
                 '_id': location.location_id,
                 'ancestors_by_type': {
