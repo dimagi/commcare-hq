@@ -255,30 +255,34 @@ class EndOfFormNavigationWorkflow(object):
 
             return frame_children
 
-        stack_frames = []
-        if form.post_form_workflow == WORKFLOW_ROOT:
-            stack_frames.append(StackFrameMeta(None, [], allow_empty_frame=True))
-        elif form.post_form_workflow == WORKFLOW_MODULE:
-            frame_children = frame_children_for_module(module, include_user_selections=False)
-            stack_frames.append(StackFrameMeta(None, frame_children))
-        elif form.post_form_workflow == WORKFLOW_PARENT_MODULE:
-            root_module = module.root_module
-            frame_children = frame_children_for_module(root_module)
-            stack_frames.append(StackFrameMeta(None, frame_children))
-        elif form.post_form_workflow == WORKFLOW_PREVIOUS:
-            frame_children = self.helper.get_frame_children(form)
+        def stack_static_stack_frames(form_workflow, xpath=None):
+            if form_workflow == WORKFLOW_ROOT:
+                stack_frames.append(StackFrameMeta(xpath, [], allow_empty_frame=True))
+            elif form_workflow == WORKFLOW_MODULE:
+                frame_children = frame_children_for_module(module, include_user_selections=False)
+                stack_frames.append(StackFrameMeta(xpath, frame_children))
+            elif form_workflow == WORKFLOW_PARENT_MODULE:
+                root_module = module.root_module
+                frame_children = frame_children_for_module(root_module)
+                stack_frames.append(StackFrameMeta(xpath, frame_children))
+            elif form_workflow == WORKFLOW_PREVIOUS:
+                frame_children = self.helper.get_frame_children(form)
 
-            # since we want to go the 'previous' screen we need to drop the last
-            # datum
-            last = frame_children.pop()
-            while isinstance(last, WorkflowDatumMeta) and not last.requires_selection:
-                # keep removing last element until we hit a command
-                # or a non-autoselect datum
+                # since we want to go the 'previous' screen we need to drop the last
+                # datum
                 last = frame_children.pop()
+                while isinstance(last, WorkflowDatumMeta) and not last.requires_selection:
+                    # keep removing last element until we hit a command
+                    # or a non-autoselect datum
+                    last = frame_children.pop()
 
-            stack_frames.append(StackFrameMeta(None, frame_children))
-        elif form.post_form_workflow == WORKFLOW_FORM:
+                stack_frames.append(StackFrameMeta(xpath, frame_children))
+
+        stack_frames = []
+
+        if form.post_form_workflow == WORKFLOW_FORM:
             source_form_datums = self.helper.get_form_datums(form)
+
             for link in form.form_links:
                 target_form = self.helper.app.get_form(link.form_id)
                 target_module = target_form.get_module()
@@ -305,7 +309,18 @@ class EndOfFormNavigationWorkflow(object):
                     ]
 
                 stack_frames.append(StackFrameMeta(link.xpath, frame_children, current_session=source_form_datums))
-
+            if form.post_form_workflow_fallback:
+                # for the fallback negative all if conditions/xpath expressions and use that as the xpath for this
+                link_xpaths = [link.xpath for link in form.form_links]
+                if link_xpaths:
+                    negate_of_all_link_paths = (
+                        ' and '.join(
+                            ['not(' + link_xpath + ')' for link_xpath in link_xpaths]
+                        )
+                    )
+                    stack_static_stack_frames(form.post_form_workflow_fallback, negate_of_all_link_paths)
+        else:
+            stack_static_stack_frames(form.post_form_workflow)
         return stack_frames
 
     @staticmethod

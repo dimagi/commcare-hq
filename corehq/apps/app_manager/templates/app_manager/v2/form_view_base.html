@@ -195,6 +195,7 @@
             var options = {
                 labels: labels,
                 workflow: '{{ form.post_form_workflow }}',
+                workflow_fallback: '{{ form.post_form_workflow_fallback }}',
             };
 
             {% if request|toggle_enabled:"FORM_LINK_WORKFLOW" or uses_form_workflow %}
