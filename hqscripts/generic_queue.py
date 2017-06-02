@@ -1,4 +1,4 @@
-from corehq.sql_db.util import retry_on_connection_failure
+from corehq.sql_db.util import handle_connection_failure
 from datetime import datetime
 from time import sleep
 from django.core.management.base import BaseCommand
@@ -37,7 +37,7 @@ class GenericEnqueuingOperation(BaseCommand):
                     message="Could not populate %s." % self.get_queue_name())
             sleep(self.get_fetching_interval())
 
-    @retry_on_connection_failure
+    @handle_connection_failure
     def populate_queue(self):
         client = get_redis_client()
         utcnow = datetime.utcnow()

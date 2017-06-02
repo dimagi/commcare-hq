@@ -108,7 +108,7 @@ def get_db_aliases_for_partitioned_query():
     return db_names
 
 
-def retry_on_connection_failure(fn):
+def handle_connection_failure(fn):
     @wraps(fn)
     def _inner(*args, **kwargs):
         retry = kwargs.pop('retry', True)
