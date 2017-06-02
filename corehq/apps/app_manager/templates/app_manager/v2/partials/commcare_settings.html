@@ -4,8 +4,21 @@
 
 <form class="form-horizontal">
   <div id="settings-save-btn"></div>
+  <div class="section-changer btn-group" data-collapse-key="app-settings">
+      <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+          <i class="fa fa-reorder"></i>
+      </a>
+      <ul class="dropdown-menu dropdown-menu-right checklist">
+          <li class="dropdown-header">{% trans "Show" %}</li>
+          <li data-bind="foreach: sections">
+              <a href="#" data-bind="attr: {'data-slug': id, 'data-collapse': collapse}, visible: isVisible">
+                  <i class="fa fa-check"></i><span data-bind="text: title"></span>
+              </a>
+          </li>
+      </ul>
+  </div>
   <div data-bind="foreach: sections" id="app-settings-options" class="panel-group">
-    <div class="panel panel-appmanager" data-bind="visible: isVisible">
+    <div class="panel panel-appmanager" data-bind="visible: isVisible, css: {hide: collapse}, attr: {'data-slug': id}">
       <div class="panel-heading">
         <h4 class="panel-title">
           <a data-toggle="collapse"

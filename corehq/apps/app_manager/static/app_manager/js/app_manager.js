@@ -120,14 +120,17 @@ hqDefine('app_manager/js/app_manager.js', function () {
                                 var requires_case_details = hqImport('app_manager/js/detail-screen-config.js').state.requires_case_details;
                                 requires_case_details(data['case_list-show']);
                             }
-                        }
+                        },
                     });
                 button.ui.appendTo($buttonHolder);
+                $buttonHolder.find(".savebtn-bar").append($form.find(".section-changer").addClass("pull-right").remove());
                 $buttonHolder.data('button', button);
+            });
 
-                var $sectionChanger = $form.find(".section-changer");
+            $(document).one("click", ".section-changer > a", function(e) {
+                var $sectionChanger = $(this).closest(".section-changer"),
+                    $form = $sectionChanger.closest("form");
                 if ($sectionChanger.length) {
-                    $buttonHolder.find(".savebtn-bar").append(' ').append($sectionChanger.remove());
                     $sectionChanger.find("ul a").each(function() {
                         var $link = $(this),
                             key = _.template("app-manager-collapse-<%= section %>-<%= slug %>")({
@@ -142,19 +145,20 @@ hqDefine('app_manager/js/app_manager.js', function () {
                             $link.addClass("selected");
                         }
                     });
-                    $sectionChanger.find("ul a").on('click', function(e) {
-                        var $link = $(this),
-                            $panel = $form.find(".panel-appmanager[data-slug='" + $link.data("slug") + "']");
-                        if ($link.hasClass("selected")) {
-                            $panel.addClass("hide");
-                        } else {
-                            $panel.removeClass("hide");
-                        }
-                        localStorage.setItem($link.data("collapse-key"), $link.hasClass("selected") ? "1" : "");
-                        $link.toggleClass("selected");
-                        e.preventDefault();
-                    });
                 }
+            });
+
+            $(document).on("click", ".section-changer ul a", function(e) {
+                var $link = $(this),
+                    $panel = $link.closest("form").find(".panel-appmanager[data-slug='" + $link.data("slug") + "']");
+                if ($link.hasClass("selected")) {
+                    $panel.addClass("hide");
+                } else {
+                    $panel.removeClass("hide");
+                }
+                localStorage.setItem($link.data("collapse-key"), $link.hasClass("selected") ? "1" : "");
+                $link.toggleClass("selected");
+                e.preventDefault();
             });
         }());
 

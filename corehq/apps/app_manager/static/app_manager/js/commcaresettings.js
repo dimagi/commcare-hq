@@ -245,6 +245,13 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
                     return setting.visible();
                 });
             });
+            section.collapse = ko.computed(function() {
+                var key = _.template("app-manager-collapse-<%= section %>-<%= slug %>")({
+                    section: "app-settings",
+                    slug: section.id,
+                });
+                return localStorage.hasOwnProperty(key) ? localStorage.getItem(key) : section.collapse;
+            });
             section.reallyCollapse = ko.computed(function () {
                 var el = document.getElementById(section.id);
                 return section.collapse &&
@@ -308,13 +315,15 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
             };
         });
 
+        var $saveContainer = $("#settings-save-btn");
         self.saveButton = COMMCAREHQ.SaveButton.init({
-            unsavedMessage: "You have unsaved settings.",
+            unsavedMessage: gettext("You have unsaved settings."),
             save: function () {
                 self.saveButton.ajax(self.saveOptions());
             }
         });
-        self.saveButton.ui.appendTo($("#settings-save-btn"));
+        self.saveButton.ui.appendTo($saveContainer);
+        $saveContainer.find(".savebtn-bar").append($saveContainer.closest("form").find(".section-changer").addClass("pull-right").remove());
 
         self.onAddCustomProperty = function() {
             self.customProperties.push({ key: ko.observable(), value: ko.observable() });
