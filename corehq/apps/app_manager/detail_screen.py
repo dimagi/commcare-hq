@@ -354,6 +354,19 @@ class Enum(FormattedDetailColumn):
 
 @register_format_type('conditional-enum')
 class ConditionalEnum(Enum):
+    @property
+    def sort_node(self):
+        node = super(ConditionalEnum, self).sort_node
+        if node:
+            node.order = "-2"
+            node.direction = "ascending"
+            variables = self.variables
+            for key in variables:
+                node.text.xpath.node.append(
+                    sx.XpathVariable(name=key, locale_id=variables[key]).node
+                )
+        return node
+
     def _make_xpath(self, type):
         xpath_template = u"if({key_as_condition}, {key_as_var_name}"
         parts = []
@@ -361,7 +374,7 @@ class ConditionalEnum(Enum):
             parts.append(
                 xpath_template.format(
                     key_as_condition=item.key_as_condition(self.xpath),
-                    key_as_var_name=item.ref_to_key_variable(i, type)
+                    key_as_var_name=item.ref_to_key_variable(i, 'display')
                 )
             )
 
