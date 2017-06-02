@@ -73,6 +73,7 @@ def get_forms_for_users(domain, user_ids, start, end):
         .domain(domain)
         .submitted(gte=start, lte=end)
         .user_id(user_ids)
+        .source(['form.meta.userID', 'form.case', 'form.@xmlns'])
     )
 
     return query.scroll()

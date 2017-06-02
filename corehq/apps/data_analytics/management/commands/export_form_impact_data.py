@@ -39,8 +39,8 @@ class Command(BaseCommand):
                 'domain name',
                 'user id',
                 'total number of forms submitted in a month',
-                'used management case?',
-                'multiple_form_types?'
+                'used case management',
+                'multiple form types'
             ])
 
             for domain in with_progress_bar(Domain.get_all(include_docs=False)):
@@ -53,23 +53,24 @@ class Command(BaseCommand):
                         user_id = form['form']['meta']['userID']
                         user_dict[user_id].append(form)
                     for user_id, forms in user_dict.iteritems():
-                        has_case = bool(
-                            filter(
-                                lambda h: h.get('form', {}).get('case'),
-                                forms
-                            )
-                        )
-                        has_two_or_more_different_forms_submitted = len(
-                            [
-                                hit.get('form', {}).get('@xmlns')
-                                for hit in forms
-                                if hit.get('form', {}).get('@xmlns')
-                            ]
-                        ) >= 2
+                        has_two_forms_submitted = False
+                        has_case = False
+                        unique_forms = set()
+                        for form in forms:
+                            if has_case and has_two_forms_submitted:
+                                break
+                            if not has_case and form.get('form', {}).get('case'):
+                                has_case = True
+                            if not has_two_forms_submitted:
+                                xmlns = form.get('form', {}).get('@xmlns')
+                                if xmlns:
+                                    unique_forms.add(xmlns)
+                                    if len(unique_forms) > 2:
+                                        has_two_forms_submitted = True
                         writer.writerow([
                             domain_name,
                             user_id,
                             len(forms),
                             has_case,
-                            has_two_or_more_different_forms_submitted
+                            has_two_forms_submitted
                         ])
