@@ -331,6 +331,7 @@ class BETSBeneficiaryRepeater(BaseBETSRepeater):
             return False
 
         return (is_valid_person_submission(person_case)
+                and person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
                 and (case_was_created(person_case)
                      or case_properties_changed(person_case, self.properties_we_care_about)))
 

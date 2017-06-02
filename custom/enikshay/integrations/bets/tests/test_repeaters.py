@@ -582,19 +582,25 @@ class BETSBeneficiaryRepeaterTest(ENikshayRepeaterTestBase):
         super(BETSBeneficiaryRepeaterTest, self).tearDown()
         self.domain_obj.delete()
 
-    def create_person_case(self, location_id):
+    def create_person_case(self, location_id, private=True):
         case = get_person_case_structure(None, self.episode_id)
         case.attrs['owner_id'] = location_id
+        case.attrs['update'][ENROLLED_IN_PRIVATE] = "true" if private else "false"
         return self.factory.create_or_update_cases([case])[0]
 
     def test_trigger(self):
         important_case_property = "phone_number"
         frivolous_case_property = "hair_color"
 
-        # Create, then update person case
+        # Create, then update test person case
         test_person = self.create_person_case(self.test_location.location_id)
         update_case(self.domain, test_person.case_id, {important_case_property: "7"})
-        # Neither should trigger forwarding
+
+        # Do the same for a public sector person case
+        public_person = self.create_person_case(self.real_location.location_id, private=False)
+        update_case(self.domain, public_person.case_id, {important_case_property: "7"})
+
+        # None of the above should trigger forwarding
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # Create real case
