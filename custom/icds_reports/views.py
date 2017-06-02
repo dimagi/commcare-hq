@@ -244,9 +244,9 @@ class AwcOpenedView(View):
             'prev_month': tuple(prev_month.timetuple())[:3]
         }
 
-        if step == "1":
+        if step == "map":
             data = get_awc_opened_data(config)
-        elif step == "2":
+        elif step == "chart":
             pass
         return JsonResponse(data=data)
 
@@ -380,6 +380,7 @@ class AwcReportsView(View):
                 config,
                 tuple(month.timetuple())[:3],
                 tuple(prev_month.timetuple())[:3],
+                tuple(three_month.timetuple())[:3],
                 'aggregation_level'
             )
         elif step == 'pse':

@@ -1,8 +1,8 @@
 <div class="awc-opened-yesterday-directive">
-    <div class="row">
-        <filters data="$ctrl.data" ></filters>
+    <div class="row filters">
+        <filters filters="$ctrl.filters" data="$ctrl.data" ></filters>
     </div>
-    <div class="col-md-12" ng-if="$ctrl.step === '1'">
+    <div class="col-md-12" ng-if="$ctrl.step === 'map'">
         <div class="row">
             <div class="col-md-12">
                 <h2 class="dashboard-title">Percentage of AWCs Opened Yesterday</h2>
@@ -12,10 +12,9 @@
             <indie-map legend-title="Percentage of AWCs" data="$ctrl.mapData"></indie-map>
         </div>
     </div>
-    <div class="col-md-12" ng-if="$ctrl.step === '2'">
+    <div class="col-md-12" ng-if="$ctrl.step === 'chart'">
         <div class="row">
             chart
-{#            #}
         </div>
     </div>
 

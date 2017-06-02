@@ -5,7 +5,7 @@ function SystemUsageController($http, $log, $routeParams) {
     vm.data = {};
     vm.label = "Program Summary";
     vm.tooltipPlacement = "right";
-    vm.filters = ['month', 'age'];
+    vm.filters = ['month', 'gender', 'age'];
     vm.step = $routeParams.step;
 
     vm.getDataForStep = function(step) {
@@ -25,11 +25,11 @@ function SystemUsageController($http, $log, $routeParams) {
     };
 
     vm.steps = {
-        "system_usage": {"route": "/system_usage", "label": "System Usage", "data": null},
-        "maternal_child": {"route": "/maternal_child", "label": "Maternal & Child Health", "data": null},
-        "icds_cas_reach": {"route": "/icds_cas_reach", "label": "ICDS-CAS Reach", "data": null},
-        "demographics": {"route": "/demographics", "label": "Demographics", "data": null},
-        "awc_infrastructure": {"route": "/awc_infrastructure", "label": "AWC Infrastructure", "data": null},
+        "system_usage": {"route": "/program_summary/system_usage", "label": "System Usage", "data": null},
+        "maternal_child": {"route": "/program_summary/maternal_child", "label": "Maternal & Child Health", "data": null},
+        "icds_cas_reach": {"route": "/program_summary/icds_cas_reach", "label": "ICDS-CAS Reach", "data": null},
+        "demographics": {"route": "/program_summary/demographics", "label": "Demographics", "data": null},
+        "awc_infrastructure": {"route": "/program_summary/awc_infrastructure", "label": "AWC Infrastructure", "data": null},
     };
 
     vm.getDataForStep(vm.step);

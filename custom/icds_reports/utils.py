@@ -216,7 +216,7 @@ def percent_diff(property, current_data, prev_data, all):
 
 
 def get_value(data, prop):
-    return data[0][prop] if data else 0
+    return (data[0][prop] or 0) if data else 0
 
 
 def get_location_filter(request, domain, config):
@@ -833,7 +833,7 @@ def get_awc_opened_data(filters):
                     '0%-50%': '#d60000',
                     '51%-75%': '#df7400',
                     '75%-100%': '#009811',
-                    'defaultFill': '#eef2ff',
+                    'defaultFill': '#9D9D9D',
                 },
                 "rightLegend": {
                     "average": num * 100 / (denom or 1),
@@ -1024,7 +1024,7 @@ def get_prevalence_of_undernutrition_sector_data(config, loc_level):
     }
 
 
-def get_awc_reports_system_usage(config, month, prev_month, loc_level):
+def get_awc_reports_system_usage(config, month, prev_month, three_month, loc_level):
 
     def get_data_for(filters, date):
         return AggAwcMonthly.objects.filter(
@@ -1036,6 +1036,23 @@ def get_awc_reports_system_usage(config, month, prev_month, loc_level):
             weighed=Sum('wer_weighed'),
             all=Sum('wer_eligible'),
         )
+
+    chart_data = DailyAttendanceView.objects.filter(
+            pse_date__range=(datetime(*three_month), datetime(*month)), **config
+        ).values(
+            'pse_date', 'aggregation_level'
+        ).annotate(
+            awc_count=Sum('awc_open_count'),
+            attended_children=Avg('attended_children_percent')
+        ).order_by('pse_date')
+
+    awc_count_chart = []
+    attended_children_chart = []
+    for row in chart_data:
+        date = row['pse_date']
+        date_in_milliseconds = int(date.strftime("%s")) * 1000
+        awc_count_chart.append([date_in_milliseconds, row['awc_count']])
+        attended_children_chart.append([date_in_milliseconds, row['attended_children'] or 0])
 
     this_month_data = get_data_for(config, month)
     prev_month_data = get_data_for(config, prev_month)
@@ -1075,33 +1092,31 @@ def get_awc_reports_system_usage(config, month, prev_month, loc_level):
                     'format': 'percent_and_div'
                 }
             ]
-        ]
+        ],
+        'charts': [
+            [
+                {
+                    'key': 'AWC Days Open Per Week',
+                    'values': awc_count_chart,
+                    "classed": "dashed",
+                }
+            ],
+            [
+                {
+                    'key': 'PSE- Average Weekly Attendance',
+                    'values': attended_children_chart,
+                    "classed": "dashed",
+                }
+            ]
+        ],
     }
 
 
 def get_awc_reports_pse(config, month, three_month):
-    def get_data_for(filters):
-        return DailyAttendanceView.objects.filter(
-            pse_date__range=(datetime(*three_month), datetime(*month)), **filters
-        ).values(
-            'pse_date', 'aggregation_level'
-        ).annotate(
-            awc_count=Sum('awc_open_count'),
-            attended_children=Avg('attended_children_percent')
-        ).order_by('pse_date')
 
     map_image_data = DailyAttendanceView.objects.filter(
         pse_date__range=(datetime(*three_month), datetime(*month)), **config
     ).values('awc_name', 'form_location_lat', 'form_location_long', 'image_name')
-
-    chart_data = get_data_for(config)
-    awc_count_chart = []
-    attended_children_chart = []
-    for row in chart_data:
-        date = row['pse_date']
-        date_in_milliseconds = int(date.strftime("%s")) * 1000
-        awc_count_chart.append([date_in_milliseconds, row['awc_count']])
-        attended_children_chart.append([date_in_milliseconds, row['attended_children'] or 0])
 
     map_data = []
     image_data = []
@@ -1134,22 +1149,6 @@ def get_awc_reports_pse(config, month, three_month):
         image_data.append(tmp_image)
 
     return {
-        'charts': [
-            [
-                {
-                    'key': 'AWC Days Open Per Week',
-                    'values': awc_count_chart,
-                    "classed": "dashed",
-                }
-            ],
-            [
-                {
-                    'key': 'PSE- Average Weekly Attendance',
-                    'values': attended_children_chart,
-                    "classed": "dashed",
-                }
-            ]
-        ],
         'map': {
             'bubbles': map_data,
             'title': 'PSE Form Submissions',
