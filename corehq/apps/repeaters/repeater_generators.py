@@ -315,8 +315,6 @@ class FormRepeaterJsonPayloadGenerator(BasePayloadGenerator):
 
 class UserPayloadGenerator(BasePayloadGenerator):
 
-    deprecated_format_names = ('user_json',)
-
     @property
     def content_type(self):
         return 'application/json'
@@ -329,8 +327,6 @@ class UserPayloadGenerator(BasePayloadGenerator):
 
 
 class LocationPayloadGenerator(BasePayloadGenerator):
-
-    deprecated_format_names = ('user_json',)  # sic
 
     @property
     def content_type(self):

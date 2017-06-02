@@ -3,12 +3,14 @@ from dimagi.utils.parsing import string_to_utc_datetime
 from corehq.warehouse.models import (
     GroupStagingTable,
     DomainStagingTable,
+    UserStagingTable,
 )
 
 
 SLUG_TO_STAGING_TABLE = {
     GroupStagingTable.slug: GroupStagingTable,
     DomainStagingTable.slug: DomainStagingTable,
+    UserStagingTable.slug: UserStagingTable,
 }
 
 USAGE = """Usage: ./manage.py stage_table <slug> -s <start_datetime> -e <end_datetime>

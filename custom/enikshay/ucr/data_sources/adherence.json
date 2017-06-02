@@ -14,7 +14,20 @@
         "enikshay-uatbc-migration-test-3",
         "enikshay-uatbc-migration-test-4",
         "enikshay-uatbc-migration-test-5",
-        "enikshay-uatbc-migration-test-6"
+        "enikshay-uatbc-migration-test-6",
+        "enikshay-uatbc-migration-test-7",
+        "enikshay-uatbc-migration-test-8",
+        "enikshay-uatbc-migration-test-9",
+        "enikshay-uatbc-migration-test-10",
+        "enikshay-uatbc-migration-test-11",
+        "enikshay-uatbc-migration-test-12",
+        "enikshay-uatbc-migration-test-13",
+        "enikshay-uatbc-migration-test-14",
+        "enikshay-uatbc-migration-test-15",
+        "enikshay-uatbc-migration-test-16",
+        "enikshay-uatbc-migration-test-17",
+        "enikshay-uatbc-migration-test-18",
+        "enikshay-uatbc-migration-test-19"
     ],
     "server_environment": [
       "softlayer"

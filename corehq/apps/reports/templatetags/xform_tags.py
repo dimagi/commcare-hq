@@ -218,7 +218,8 @@ def _get_cases_changed_context(domain, form, case_id=None):
             "name": case_inline_display(this_case),
             "table": get_tables_as_columns(b, definition, timezone=get_timezone_for_request()),
             "url": url,
-            "valid_case": valid_case
+            "valid_case": valid_case,
+            "case_type": this_case.type if valid_case else None,
         })
 
     return {

@@ -585,7 +585,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
     context = {
         'nav_form': form,
         'xform_languages': languages,
-        "xform_questions": xform_questions,
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
         'xform_validation_missing': xform_validation_missing,
@@ -642,20 +641,21 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
 
     template = None
     if isinstance(form, CareplanForm):
-        context.update({
-            'mode': form.mode,
-            'fixed_questions': form.get_fixed_questions(),
-            'custom_case_properties': [
-                {'key': key, 'path': path} for key, path in form.custom_case_updates.items()
-            ],
+        case_config_options.update({
             'case_preload': [
                 {'key': key, 'path': path} for key, path in form.case_preload.items()
             ],
+            'customCaseUpdates': [
+                {'key': key, 'path': path} for key, path in form.custom_case_updates.items()
+            ],
+            'fixedQuestions': form.get_fixed_questions(),
+            'mode': form.mode,
+            'save_url': reverse("edit_careplan_form_actions", args=[app.domain, app.id, form.unique_id]),
         })
         template = get_app_manager_template(
             request.user,
-            "app_manager/v1/form_view_careplan.html",
-            "app_manager/v2/form_view_careplan.html",
+            "app_manager/v1/form_view_base.html",
+            "app_manager/v2/form_view_base.html",
         )
     elif isinstance(form, AdvancedForm):
         def commtrack_programs():
@@ -666,14 +666,37 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
                 return []
 
         all_programs = [{'value': '', 'label': _('All Programs')}]
-        context.update({
+        case_config_options.update({
+            'commtrack_enabled': app.commtrack_enabled,
             'commtrack_programs': all_programs + commtrack_programs(),
+            'module_id': module.unique_id,
+            'save_url': reverse("edit_advanced_form_actions", args=[app.domain, app.id, form.unique_id]),
         })
-        context.update(get_schedule_context(form))
+        if form.form_type == "shadow_form":
+            case_config_options.update({
+                'actions': form.extra_actions,
+                'isShadowForm': True,
+            })
+        else:
+            case_config_options.update({
+                'actions': form.actions,
+                'isShadowForm': False,
+            })
+        if module.has_schedule:
+            schedule_options = get_schedule_context(form)
+            schedule_options.update({
+                'phase': schedule_options['schedule_phase'],
+                'questions': xform_questions,
+                'save_url': reverse("edit_visit_schedule", args=[app.domain, app.id, form.unique_id]),
+                'schedule': form.schedule,
+            })
+            context.update({
+                'schedule_options': schedule_options,
+            })
         template = get_app_manager_template(
             request.user,
-            "app_manager/v1/form_view_advanced.html",
-            "app_manager/v2/form_view_advanced.html",
+            "app_manager/v1/form_view_base.html",
+            "app_manager/v2/form_view_base.html",
         )
     else:
         context.update({
@@ -687,8 +710,8 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         })
         template = get_app_manager_template(
             request.user,
-            "app_manager/v1/form_view.html",
-            "app_manager/v2/form_view.html",
+            "app_manager/v1/form_view_base.html",
+            "app_manager/v2/form_view_base.html",
         )
 
     context.update({'case_config_options': case_config_options})

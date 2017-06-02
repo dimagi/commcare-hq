@@ -1093,8 +1093,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             ],
         },
         wrap: function (data, action) {
-            var self = ko.mapping.fromJS(data, LoadCaseFromFixture.mapping);
-            self.action = action;
+            var self = _.extend({}, action, ko.mapping.fromJS(data, LoadCaseFromFixture.mapping));
             self.isBlank = ko.computed(function () {
                 return !self.fixture_nodeset() &&
                     !self.fixture_tag() &&
@@ -1257,7 +1256,22 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
         }
     };
 
-    return {
-        CaseConfig: CaseConfig
-    };
+    $(function() {
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+        if (initial_page_data('has_form_source')) {
+            var caseConfig = new CaseConfig(_.extend({}, initial_page_data("case_config_options"), {
+                home: $('#case-config-ko'),
+                requires: ko.observable(initial_page_data("form_requires")),
+            }));
+            caseConfig.init();
+
+            if (initial_page_data("schedule_options")) {
+                var VisitScheduler = hqImport('app_manager/js/visit-scheduler.js');
+                var visitScheduler = new VisitScheduler.Scheduler(_.extend({}, initial_page_data("schedule_options"), {
+                    home: $('#visit-scheduler'),
+                }));
+                visitScheduler.init();
+            }
+        }
+    });
 });

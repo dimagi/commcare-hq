@@ -51,6 +51,8 @@ def log_repeater_timeout_in_datadog(domain):
 
 
 DELETED = "-Deleted"
+BASIC_AUTH = "basic"
+DIGEST_AUTH = "digest"
 
 
 class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
@@ -64,7 +66,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
     url = StringProperty()
     format = StringProperty()
 
-    auth_type = StringProperty(choices=("basic", "digest"), required=False)
+    auth_type = StringProperty(choices=(BASIC_AUTH, DIGEST_AUTH), required=False)
     username = StringProperty()
     password = StringProperty()
     friendly_name = _("Data")
@@ -210,16 +212,10 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         # to be overridden
         return self.generator.get_headers()
 
-    def _use_basic_auth(self):
-        return self.auth_type == "basic"
-
-    def _use_digest_auth(self):
-        return self.auth_type == "digest"
-
     def get_auth(self):
-        if self._use_basic_auth():
+        if self.auth_type == BASIC_AUTH:
             return HTTPBasicAuth(self.username, self.password)
-        elif self._use_digest_auth():
+        elif self.auth_type == DIGEST_AUTH:
             return HTTPDigestAuth(self.username, self.password)
         return None
 
@@ -517,9 +513,8 @@ class RepeatRecord(Document):
         self.failure_reason = attempt.failure_reason
 
     def get_numbered_attempts(self):
-        offset = self.overall_tries - len(self.attempts)
         for i, attempt in enumerate(self.attempts):
-            yield i + 1 + offset, attempt
+            yield i + 1, attempt
 
     def make_set_next_try_attempt(self, failure_reason):
         # we use an exponential back-off to avoid submitting to bad urls

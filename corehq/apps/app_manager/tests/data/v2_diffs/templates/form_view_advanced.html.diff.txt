@@ -6,10 +6,10 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -49,5 +49,5 @@
- {% endblock %}
- 
+@@ -11,5 +11,5 @@
  {% block case_management_content %}
+     {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
+     {% initial_page_data 'schedule_options' schedule_options %}
 -    {% include 'app_manager/v1/partials/case_config_advanced.html' %}
 +    {% include 'app_manager/v2/partials/case_config_advanced.html' %}
  {% endblock %}

@@ -207,6 +207,14 @@ class IndicatorESAdapter(IndicatorAdapter):
                 id=normalize_id(primary_key_values), doc_type="indicator"
             )
 
+    def doc_exists(self, doc):
+        return self.es.exists(self.table_name, 'indicator', doc['_id'])
+
+    def delete(self, doc):
+        try:
+            self.es.delete(index=self.table_name, doc_type='indicator', id=doc['_id'])
+        except NotFoundError:
+            pass
 
 def build_es_mapping(data_source_config):
     properties = {}

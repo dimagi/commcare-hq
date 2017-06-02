@@ -33,13 +33,13 @@ def create_repeat_records(repeater_cls, payload):
             repeater.register(payload)
 
 
-@receiver(commcare_user_post_save, dispatch_uid="create_bets_user_repeat_records")
+@receiver(commcare_user_post_save, dispatch_uid="create_user_repeat_records")
 def create_user_repeat_records(sender, couch_user, **kwargs):
     from corehq.apps.repeaters.models import UserRepeater
     create_repeat_records(UserRepeater, couch_user)
 
 
-@receiver(post_save, sender=SQLLocation, dispatch_uid="create_bets_location_repeat_records")
+@receiver(post_save, sender=SQLLocation, dispatch_uid="create_location_repeat_records")
 def create_location_repeat_records(sender, raw=False, **kwargs):
     from corehq.apps.repeaters.models import LocationRepeater
     if raw:
