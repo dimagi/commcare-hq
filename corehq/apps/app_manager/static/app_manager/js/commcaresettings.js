@@ -16,6 +16,13 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
         self.customProperties.sort(function(left, right) {
             return left.key() == right.key() ? 0 : (left.key() < right.key() ? -1 : 1);
         });
+        self.customPropertiesCollapse = ko.computed(function() {
+            var key = _.template("app-manager-collapse-<%= section %>-<%= slug %>")({
+                section: "app-settings",
+                slug: "custom-properties",
+            });
+            return localStorage.hasOwnProperty(key) ? localStorage.getItem(key) : "";
+        });
 
         self.settings = [];
         self.settingsIndex = {};

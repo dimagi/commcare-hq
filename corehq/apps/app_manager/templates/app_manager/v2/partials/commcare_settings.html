@@ -15,6 +15,13 @@
                   <i class="fa fa-check"></i><span data-bind="text: title"></span>
               </a>
           </li>
+          {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
+          <li>
+              <a href="#" data-slug="custom-properties">
+                  <i class="fa fa-check"></i>{% trans "Custom Properties" %}
+              </a>
+          </li>
+          {% endif %}
       </ul>
   </div>
   <div data-bind="foreach: sections" id="app-settings-options" class="panel-group">
@@ -66,39 +73,22 @@
   </div>
   {{ request|toggle_tag_info:"CUSTOM_PROPERTIES" }}
   {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
-    <div class="panel panel-appmanager">
+    <div class="panel panel-appmanager" data-slug="custom-properties" data-bind="css: {hide: customPropertiesCollapse}">
       <div class="panel-heading">
-        <h4 class="panel-title">
-          <a class="collapsed"
-             href="#custom-properties"
-             data-toggle="collapse">
-            <i class="fa fa-angle-double-down"></i>
-            {% trans 'Custom Properties' %}
-          </a>
-        </h4>
+        <h4 class="panel-title panel-title-nolink">{% trans 'Custom Properties' %}</h4>
       </div>
-      <div class="panel-collapse collapse" id="custom-properties">
-        <div class="panel-body">
-          <fieldset>
-            <div class="col-sm-6" data-bind="attr: { id: customPropertyType }">
-              <div class="custom-property-list" data-bind="
-                      foreach: customProperties,
-                      as: 'customProperty'
-                      ">
-                <div class="form-group container-fluid" data-bind="
-                          template: {
-                              name: 'CommcareSettings.widgets.customProperty'
-                          }
-                          ">
-                </div>
-              </div>
-              <button class="btn btn-default" data-bind="click: onAddCustomProperty">
-                <i class="fa fa-plus"></i>
-                {% trans "Add Custom Property" %}
-              </button>
+      <div class="panel-body">
+        <fieldset>
+          <div class="col-sm-6" data-bind="attr: { id: customPropertyType }">
+            <div class="custom-property-list" data-bind="foreach: customProperties, as: 'customProperty'">
+              <div class="form-group container-fluid" data-bind="template: { name: 'CommcareSettings.widgets.customProperty' }"></div>
             </div>
-          </fieldset>
-        </div>
+            <button class="btn btn-default" data-bind="click: onAddCustomProperty">
+              <i class="fa fa-plus"></i>
+              {% trans "Add Custom Property" %}
+            </button>
+          </div>
+        </fieldset>
       </div>
     </div>
   {% endif %}
