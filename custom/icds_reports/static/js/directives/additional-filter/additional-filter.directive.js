@@ -5,7 +5,7 @@ function AdditionalModalController($location, $uibModalInstance, filters) {
     vm.genders = [
         {id: '', name: 'All'},
         {id: 'M', name: 'Male'},
-        {id: 'F', name: 'Female'}
+        {id: 'F', name: 'Female'},
     ];
 
     vm.ages = [
@@ -17,7 +17,7 @@ function AdditionalModalController($location, $uibModalInstance, filters) {
         {id: '36', name: '36 months'},
         {id: '48', name: '48 months'},
         {id: '60', name: '60 months'},
-        {id: '72', name: '72 months'}
+        {id: '72', name: '72 months'},
     ];
 
     vm.selectedGender = $location.search()['gender'] !== void(0) ? $location.search()['gender'] : '';
@@ -26,7 +26,7 @@ function AdditionalModalController($location, $uibModalInstance, filters) {
     vm.apply = function() {
         $uibModalInstance.close({
             gender: vm.selectedGender,
-            age: vm.selectedAge
+            age: vm.selectedAge,
         });
     };
 
@@ -49,14 +49,14 @@ function AdditionalFilterController($scope, $location, $uibModal) {
             resolve: {
                 filters: function() {
                     return vm.filters;
-                }
-            }
+                },
+            },
         });
 
         modalInstance.result.then(function (data) {
             $location.search('gender', data['gender']);
             $location.search('age', data['age']);
-            $scope.$emit('filtersChange')
+            $scope.$emit('filtersChange');
         });
     };
 }

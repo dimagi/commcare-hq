@@ -1,5 +1,5 @@
+/* global d3 */
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
-
 
 function UnderweightChildrenReportController($scope, $routeParams, $location, maternalChildService,
                                              locationsService, userLocationId) {
@@ -77,7 +77,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, ma
                 top: 20,
                 right: 60,
                 bottom: 60,
-                left: 80
+                left: 80,
             },
             x: function(d){ return d[0]; },
             y: function(d){ return d[1]; },
@@ -89,7 +89,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, ma
                 axisLabel: '',
                 showMaxMin: true,
                 tickFormat: function(d) {
-                    return d3.time.format('%m/%d/%y')(new Date(d))
+                    return d3.time.format('%m/%d/%y')(new Date(d));
                 },
                 tickValues: function() {
                     return vm.chartTicks;
@@ -103,8 +103,8 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, ma
                     return d3.format(".0%")(d);
                 },
                 axisLabelDistance: 20,
-            }
-        }
+            },
+        },
     };
 }
 

@@ -1,4 +1,4 @@
-/* global d3, _ */
+/* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON */
 
 function IndieMapController($scope, $compile, $location) {
     var vm = this;
@@ -76,7 +76,7 @@ function IndieMapController($scope, $compile, $location) {
     vm.updateMap = function (geography) {
         if ($location.search()['location_name'] === void(0)) {
             $location.search('location_name', geography.id);
-            $scope.$apply()
+            $scope.$apply();
         }
     };
 
@@ -145,7 +145,7 @@ function IndieMapController($scope, $compile, $location) {
                         .attr('class', '')
                         .attr('style', 'position: absolute; width: 100%; top: 5%; right: 25%;')
                         .html(html.join(''));
-                    $compile(ele[0])($scope)
+                    $compile(ele[0])($scope);
                 }
             },
         });
