@@ -1,5 +1,6 @@
-function AdditionalModalController($location, $uibModalInstance) {
+function AdditionalModalController($location, $uibModalInstance, filters) {
     var vm = this;
+    vm.filters = filters;
 
     vm.genders = [
         {id: '', name: 'All'},
@@ -46,6 +47,9 @@ function AdditionalFilterController($scope, $location, $uibModal) {
             controller: AdditionalModalController,
             controllerAs: '$ctrl',
             resolve: {
+                filters: function() {
+                    return vm.filters;
+                }
             }
         });
 
@@ -57,14 +61,15 @@ function AdditionalFilterController($scope, $location, $uibModal) {
     };
 }
 
-AdditionalFilterController.$inject = ['$scope', '$location', '$uibModal'];
-AdditionalModalController.$inject = ['$location', '$uibModalInstance'];
+AdditionalFilterController.$inject = ['$scope', '$location', '$uibModal' ];
+AdditionalModalController.$inject = ['$location', '$uibModalInstance', 'filters'];
 
 window.angular.module('icdsApp').directive("additionalFilter", function() {
     var url = hqImport('hqwebapp/js/urllib.js').reverse;
     return {
         restrict:'E',
         scope: {
+            filters: '=',
         },
         bindToController: true,
         require: 'ngModel',

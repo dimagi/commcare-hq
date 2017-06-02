@@ -3,7 +3,8 @@
         <h3 class="modal-title" id="modal-title">Select Month and Year<i style="float: right;" ng-click="$ctrl.close()" class="fa fa-close pointer"></i></h3>
     </div>
     <div class="modal-body" id="modal-body">
-        <div style="margin: 20px 50px;">
+        <div class="form-group" style="margin: 20px 50px;">
+            <label for="email">Month:</label>
             <ui-select ng-model="$ctrl.selectedMonth" theme="bootstrap" on-select="$ctrl.onSelect($item, $index)">
                 <ui-select-match placeholder="Month"><span ng-bind="$select.selected.name"></span></ui-select-match>
                   <ui-select-choices repeat="month.id as month in $ctrl.months | propsFilter: {name: $select.search}">
@@ -11,7 +12,8 @@
                   </ui-select-choices>
             </ui-select>
         </div>
-        <div style="margin: 20px 50px;">
+        <div class="form-group" style="margin: 20px 50px;">
+            <label for="email">Year:</label>
             <ui-select ng-model="$ctrl.selectedYear" theme="bootstrap" on-select="$ctrl.onSelect($item, $index)">
                 <ui-select-match placeholder="Year"><span ng-bind="$select.selected.name"></span></ui-select-match>
                   <ui-select-choices repeat="year.id as year in $ctrl.years| propsFilter: {name: $select.search}">

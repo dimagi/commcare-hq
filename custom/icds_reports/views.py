@@ -185,11 +185,9 @@ class ProgramSummaryView(View):
         step = kwargs.get('step')
         # Hardcoded for local tests, in database we have data only for these two days
         now = datetime.utcnow()
-        month = request.GET.get('month', now.month)
-        year = request.GET.get('year', now.year)
         yesterday = (now - relativedelta(days=1)).date()
         before_yesterday = (now - relativedelta(days=2)).date()
-        current_month = datetime(year, month, 1)
+        current_month = datetime(now.year, now.month, 1)
         prev_month = current_month - relativedelta(months=1)
 
         if step == 'system_usage' or step == 'demographics':

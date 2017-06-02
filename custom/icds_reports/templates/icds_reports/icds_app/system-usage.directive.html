@@ -1,18 +1,18 @@
 {% load i18n %}
 <div>
     <div class="row filters">
-        <filters data="$ctrl.data"></filters>
+        <filters filters="$ctrl.filters" data="$ctrl.data"></filters>
     </div>
     <div class="row no-margin">
         <div class="col-md-11">
             <span class="breadcrump-element" ng-bind="$ctrl.label"></span>
             <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element"> <i class="fa fa-chevron-right" aria-hidden="true"></i> </span>
-            <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element" ng-bind="$ctrl.step.label"></span>
+            <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element" ng-bind="$ctrl.steps[$ctrl.step].label"></span>
         </div>
         <div class="col-md-1 "><i class="fa fa-download fa-2x right pointer"></i></div>
     </div>
     <div class="report-content">
-        <div class="row" ng-repeat="section in $ctrl.step.data">
+        <div class="row" ng-repeat="section in $ctrl.data">
             <div class="col-md-6" ng-repeat="cell in section">
                 <div class="report-cell">
                     <div class="row">
@@ -53,13 +53,10 @@
         </div>
 
     </div>
-    <div class="">
+    <div class="row">
         <div class="dot-menu">
-            <div class="dot-menu-item pointer" ng-click="$ctrl.goToStep(step)" ng-repeat="step in $ctrl.steps">
-                <div class="dot-menu-dot">
-                    <div ng-class="{'dot-active': $ctrl.step.slug === $ctrl.steps[$index].slug}" class="dot"></div>
-                </div>
-                <div class="dot-menu-label" ng-bind="step.label"></div>
+            <div class="dot-menu-item pointer" ng-repeat="step in $ctrl.steps">
+                <dot-link label="{$ step.label $}" route="{$ step.route $}"></dot-link>
             </div>
         </div>
     </div>
