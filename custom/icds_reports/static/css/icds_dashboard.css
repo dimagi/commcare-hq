@@ -33,6 +33,10 @@
     color: #0a6aa1;
 }
 
+.black {
+    color: #0a0a0a;
+}
+
 .left-menu {
     height: 100%;
     position: fixed;
@@ -251,4 +255,42 @@ h4 {
 
 .circle>span {
     vertical-align: middle;
+}
+
+.slider-image {
+    margin: 0 15px;
+    height: 100%;
+}
+.carousel-indicators {
+    display: none;
+}
+
+.carousel-control, .carousel-control:focus {
+    background-image: none;
+    width: 0;
+    color: #0a0a0a;
+    opacity: .5;
+}
+
+.carousel-control:hover {
+    background-image: none;
+    width: 0;
+    color: #0a0a0a;
+    opacity: 1;
+}
+
+.carousel-control.left {
+    left: 15px;
+}
+
+.carousel-control.right {
+    right: 15px;
+}
+
+.text-center > div {
+    height: 300px !important;
+}
+
+circle {
+    stroke-width: .5px !important;
 }

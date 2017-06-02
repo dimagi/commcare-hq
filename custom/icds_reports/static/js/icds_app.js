@@ -52,5 +52,10 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/health_tabular_report", {
                 template : "health_tabular_report",
+            })
+            .when("/awc_reports", {
+                redirectTo : "/awc_reports/system_usage",
+            }).when("/awc_reports/:step", {
+                template : "<awc-reports></awc-reports>",
             });
     }]);

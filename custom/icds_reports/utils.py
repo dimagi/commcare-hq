@@ -6,9 +6,10 @@ from datetime import datetime, timedelta
 import operator
 
 from dateutil.relativedelta import relativedelta
+from django.db.models.functions.base import Coalesce
 
 from corehq.util.quickcache import quickcache
-from django.db.models.aggregates import Sum
+from django.db.models.aggregates import Sum, Avg
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
@@ -21,7 +22,7 @@ from custom.icds_reports.const import LocationTypes
 from dimagi.utils.dates import DateSpan
 
 from custom.icds_reports.models import AggDailyUsageView, AggChildHealthMonthly, AggAwcMonthly, AggCcsRecordMonthly, \
-    AggAwcDailyView, AwcLocation
+    AggAwcDailyView, AwcLocation, DailyAttendanceView
 
 OPERATORS = {
     "==": operator.eq,
@@ -187,8 +188,12 @@ class ICDSDataTableColumn(DataTablesColumn):
 
 
 def percent_increase(prop, data, prev_data):
-    current = prev_data[0][prop]
-    previous = data[0][prop]
+    current = 0
+    previous = 0
+    if data:
+        current = data[0][prop]
+    if prev_data:
+        previous = prev_data[0][prop]
     return ((current or 0) - (previous or 0)) / float(previous or 1) * 100
 
 
@@ -196,10 +201,12 @@ def percent_diff(properties, current_data, prev_data, all):
     current = 0
     prev = 0
     for prop in properties:
-        current = current_data[0][prop]
-        prev = prev_data[0][prop]
-    current_percent = (current or 0) / float(current_data[0][all] or 1) * 100
-    prev_percent = (prev or 0) / float(prev_data[0][all] or 1) * 100
+        current += (current_data[0][prop] or 0) if current_data else 0
+        prev += (prev_data[0][prop] or 0) if prev_data else 0
+    curr_all = (current_data[0][all] or 1) if current_data else 1
+    prev_all = (prev_data[0][all] or 1) if prev_data else 1
+    current_percent = (current or 0) / float(curr_all) * 100
+    prev_percent = (prev or 0) / float(prev_all) * 100
     return current_percent - prev_percent
 
 
@@ -264,7 +271,8 @@ def get_system_usage_data(filters):
                     'all': yesterday_data[0]['awcs'],
                     'format': 'number'
                 }
-            ], [
+            ],
+            [
                 {
                     'label': _('Average number of Take Home Ration forms submitted yesterday'),
                     'help_text': _('Average number of Take Home Rations (THR) forms submitted yesterday'),
@@ -911,7 +919,7 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
         elif moderately_percent > 30 or severely_percent > 10:
             data['red'][date_in_miliseconds] += 1
 
-    calculation = sorted(
+    top_locations = sorted(
         [dict(loc_name=key, percent=sum(value)/len(value)) for key, value in best_worst.iteritems()],
         key=lambda x: x['percent'],
         reverse=True
@@ -941,8 +949,8 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
                 "color": "#d60000"
             }
         ],
-        "top_three": calculation[0:3],
-        "bottom_three": calculation[-4:-1],
+        "top_three": top_locations[0:3],
+        "bottom_three": top_locations[-4:-1],
         "location_type": loc_level.title()
     }
 
@@ -972,5 +980,313 @@ def get_prevalence_of_undernutrition_sector_data(config, loc_level):
                 "classed": "dashed",
                 "color": "#d60000"
             }
+        ]
+    }
+
+
+def get_awc_reports_system_usage(config, month, prev_month, loc_level):
+
+    def get_data_for(filters, date):
+        return AggAwcMonthly.objects.filter(
+            month=datetime(*date), **filters
+        ).values(
+            loc_level
+        ).annotate(
+            awc_open=Sum('awc_days_open'),
+            weighed=Sum('wer_weighed'),
+            all=Sum('wer_eligible'),
+        )
+
+    this_month_data = get_data_for(config, month)
+    prev_month_data = get_data_for(config, prev_month)
+
+    return {
+        'kpi': [
+            [
+                {
+                    'label': _('AWC Days Open'),
+                    'help_text': _((
+                        "The total number of days the AWC is open in the given month. The AWC is expected to "
+                        "be open 6 days a week (Not on Sundays and public holidays)")
+                    ),
+                    'percent': percent_increase(
+                        'awc_open',
+                        this_month_data,
+                        prev_month_data,
+                    ),
+                    'value': this_month_data[0]['awc_open'],
+                    'all': '',
+                    'format': 'number'
+                },
+                {
+                    'label': _((
+                        "Percentage of eligible children (ICDS beneficiaries between 0-6 years) "
+                        "who have been weighed in the current month")
+                    ),
+                    'help_text': _('Percentage of AWCs with a functional toilet'),
+                    'percent': percent_diff(
+                        ['weighed'],
+                        this_month_data,
+                        prev_month_data,
+                        'all'
+                    ),
+                    'value': this_month_data[0]['weighed'],
+                    'all': this_month_data[0]['all'],
+                    'format': 'percent_and_div'
+                }
+            ]
+        ]
+    }
+
+
+def get_awc_reports_pse(config, month, three_month):
+    def get_data_for(filters):
+        return DailyAttendanceView.objects.filter(
+            pse_date__range=(datetime(*three_month), datetime(*month)), **filters
+        ).values(
+            'pse_date', 'aggregation_level'
+        ).annotate(
+            awc_count=Sum('awc_open_count'),
+            attended_children=Avg('attended_children_percent')
+        ).order_by('pse_date')
+
+    map_image_data = DailyAttendanceView.objects.filter(
+        pse_date__range=(datetime(*three_month), datetime(*month)), **config
+    ).values('awc_name', 'form_location_lat', 'form_location_long', 'image_name')
+
+    chart_data = get_data_for(config)
+    awc_count_chart = []
+    attended_children_chart = []
+    for row in chart_data:
+        date = row['pse_date']
+        date_in_milliseconds = int(date.strftime("%s")) * 1000
+        awc_count_chart.append([date_in_milliseconds, row['awc_count']])
+        attended_children_chart.append([date_in_milliseconds, row['attended_children'] or 0])
+
+    map_data = []
+    image_data = []
+    tmp_image = []
+    img_count = 0
+    count = 1
+    for map_row in map_image_data:
+        lat = map_row['form_location_lat']
+        long = map_row['form_location_long']
+        image = map_row['image_name']
+        awc_name = map_row['awc_name']
+        if lat and long:
+            map_data.append({
+                'name': awc_name,
+                'radius': 3,
+                'country': 'IND',
+                'fillKey': 'green',
+                'latitude': lat,
+                'longitude': long
+            })
+        # if image:
+        tmp_image.append({'id': count,  'image': 'http://unsplash.it/' + str(300 + count) + '/300'})
+        img_count += 1
+        count += 1
+        if img_count == 4:
+            img_count = 0
+            image_data.append(tmp_image)
+            tmp_image = []
+    if tmp_image:
+        image_data.append(tmp_image)
+
+    return {
+        'charts': [
+            [
+                {
+                    'key': 'AWC Days Open Per Week',
+                    'values': awc_count_chart,
+                    "classed": "dashed",
+                }
+            ],
+            [
+                {
+                    'key': 'PSE- Average Weekly Attendance',
+                    'values': attended_children_chart,
+                    "classed": "dashed",
+                }
+            ]
+        ],
+        'map': {
+            'bubbles': map_data,
+            'title': 'PSE Form Submissions',
+            'data': [
+                {
+                    "slug": "pse_forms",
+                    "label": "",
+                    "fills": {
+                        'green': 'green',
+                        'defaultFill': '#9D9D9D',
+                    },
+                    "rightLegend": {
+                    },
+                    "data": None,
+                }
+            ]
+        },
+        'images': image_data
+    }
+
+
+def get_awc_reports_maternal_child(config, month, three_month):
+
+    data = AggChildHealthMonthly.objects.filter(
+            month__range=(datetime(*three_month), datetime(*month)), **config
+        ).values(
+            'month', 'aggregation_level'
+        ).annotate(
+            underweight=(Sum('nutrition_status_moderately_underweight') + Sum('nutrition_status_severely_underweight')),
+            valid_in_month=Sum('valid_in_month'),
+            immunized=Sum('fully_immunized_on_time') + Sum('fully_immunized_late'),
+            eligible=Sum('fully_immunized_eligible')
+        ).order_by('month')
+
+    prevalence = []
+    immunized = []
+    for row in data:
+        month = row['month']
+        month_in_milliseconds = int(month.strftime("%s")) * 1000
+        prevalence.append([month_in_milliseconds, row['underweight']/float(row['valid_in_month'] or 1)])
+        immunized.append([month_in_milliseconds, row['immunized']/float(row['eligible'] or 1)])
+    return {
+        'charts': [
+            [
+                {
+                    'key': 'Prevalence of undernutrition (weight-for-age)',
+                    'values': prevalence,
+                    "classed": "dashed",
+                }
+            ],
+            [
+                {
+                    'key': '% Immunization coverage (at age 1 year)',
+                    'values': immunized,
+                    "classed": "dashed",
+                }
+            ]
+        ]
+    }
+
+
+def get_awc_report_demographics(config, month):
+
+    # map_data = AggAwcMonthly.objects.filter(
+    #     month=datetime(*month), **config
+    # ).values(
+    #     'month', 'aggregation_level'
+    # ).annotate(
+    #     household=Sum('household')
+    # ).order_by('month')
+    #
+    chart = AggChildHealthMonthly.objects.filter(
+        month=datetime(*month), **config
+    ).values(
+        'age_tranche', 'aggregation_level'
+    ).annotate(
+        valid=Sum('valid_in_month')
+    ).order_by('age_tranche')
+
+    chart_data = {
+        '0-1 month': 0,
+        '1-6 months': 0,
+        '6-12 months': 0,
+        '1-3 years': 0,
+        '3-6 years': 0
+    }
+    for chart_row in chart:
+        age = int(chart_row['age_tranche'])
+        valid = chart_row['valid']
+        if 0 <= age < 1:
+            chart_data['0-1 month'] += valid
+        elif 1 <= age < 6:
+            chart_data['1-6 months'] += valid
+        elif 6 <= age < 12:
+            chart_data['6-12 months'] += valid
+        elif 12 <= age < 36:
+            chart_data['1-3 years'] += valid
+        elif 36 <= age <= 72:
+            chart_data['3-6 years'] += valid
+
+    def get_data_for_kpi(filters, date):
+        return AggAwcDailyView.objects.filter(
+           date=date, **filters
+        ).values(
+            'aggregation_level'
+        ).annotate(
+            ccs_pregnant=Sum('cases_ccs_pregnant'),
+            ccs_lactating=Sum('cases_ccs_lactating'),
+            adolescent=Sum('cases_person_adolescent'),
+            has_aadhaar=Sum('cases_person_has_aadhaar'),
+            all_cases=Sum('cases_person')
+        )
+    yesterday = datetime.now() - relativedelta(days=1)
+    before_yesterday = yesterday - relativedelta(days=1)
+    kpi_yesterday = get_data_for_kpi(config, yesterday.date())
+    kpi_before_yesterday = get_data_for_kpi(config, before_yesterday.date())
+    return {
+        'chart': [
+            {
+                'key': 'Children (0-6 years)',
+                'values': [[key, value] for key, value in chart_data.iteritems()],
+                "classed": "dashed",
+            }
+        ],
+        'kpi': [
+            [
+                {
+                    'label': _('Pregnant Women'),
+                    'help_text': _("Total number of pregnant women registered"),
+                    'percent': percent_increase(
+                        'ccs_pregnant',
+                        kpi_yesterday,
+                        kpi_before_yesterday,
+                    ),
+                    'value': kpi_yesterday[0]['ccs_pregnant'] if kpi_yesterday else 0,
+                    'all': '',
+                    'format': 'number'
+                },
+                {
+                    'label': _('Lactating Mothers'),
+                    'help_text': _('Total number of lactating women registered'),
+                    'percent': percent_increase(
+                        ['ccs_lactating'],
+                        kpi_yesterday,
+                        kpi_before_yesterday
+                    ),
+                    'value': kpi_yesterday[0]['ccs_lactating'] if kpi_yesterday else 0,
+                    'all': '',
+                    'format': 'number'
+                }
+            ],
+            [
+                {
+                    'label': _('Adolescent Girls (11-18 years)'),
+                    'help_text': _('Total number of adolescent girls who are registered'),
+                    'percent': percent_increase(
+                        'adolescent',
+                        kpi_yesterday,
+                        kpi_before_yesterday,
+                    ),
+                    'value': kpi_yesterday[0]['adolescent'] if kpi_yesterday else 0,
+                    'all': '',
+                    'format': 'number'
+                },
+                {
+                    'label': _('% Adhaar seeded beneficaries'),
+                    'help_text': _('Percentage of ICDS beneficiaries whose Adhaar identification has been captured'),
+                    'percent': percent_diff(
+                        ['has_aadhaar'],
+                        kpi_yesterday,
+                        kpi_before_yesterday,
+                        'all_cases'
+                    ),
+                    'value': kpi_yesterday[0]['has_aadhaar'] if kpi_yesterday else 0,
+                    'all': kpi_yesterday[0]['all_cases'] if kpi_yesterday else 0,
+                    'format': 'div'
+                }
+            ]
         ]
     }

@@ -8,6 +8,7 @@
 
     {% compress css %}
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
+        <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'ui-select/dist/select.css' %}"/>
         <link type="text/css"
               rel="stylesheet"
@@ -65,6 +66,7 @@
         <script type="text/javascript" src="{% static 'js/directives/dot-link/dot-link.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/awc-opened-yesterday/awc-opened-yesterday.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/underweight-children-report/underweight-children-report.directive.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/directives/awc-reports/awc-reports.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/indie-map/indie-map.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/map-or-sector-view/map-or-sector-view.directive.js' %}"></script>
     {% endcompress js %}
@@ -153,6 +155,7 @@
                     {% registerurl 'icds-ng-template' domain '---' %}
                     {% registerurl 'program_summary' domain '---' %}
                     {% registerurl 'awc_opened' domain '---' %}
+                    {% registerurl 'awc_reports' domain '---' %}
                     {% registerurl 'underweight_children' domain '---' %}
                     {% registerurl 'icds_locations' domain %}
                     {% registerurl 'icds_locations_ancestors' domain %}
