@@ -1252,16 +1252,16 @@ def get_awc_report_demographics(config, month):
 
     def get_data_for_kpi(filters, date):
         return AggAwcDailyView.objects.filter(
-               date=date, **filters
-            ).values(
-                'aggregation_level'
-            ).annotate(
-                ccs_pregnant=Sum('cases_ccs_pregnant'),
-                ccs_lactating=Sum('cases_ccs_lactating'),
-                adolescent=Sum('cases_person_adolescent'),
-                has_aadhaar=Sum('cases_person_has_aadhaar'),
-                all_cases=Sum('cases_person')
-            )
+            date=date, **filters
+        ).values(
+            'aggregation_level'
+        ).annotate(
+            ccs_pregnant=Sum('cases_ccs_pregnant'),
+            ccs_lactating=Sum('cases_ccs_lactating'),
+            adolescent=Sum('cases_person_adolescent'),
+            has_aadhaar=Sum('cases_person_has_aadhaar'),
+            all_cases=Sum('cases_person')
+        )
 
     yesterday = datetime.now() - relativedelta(days=1)
     before_yesterday = yesterday - relativedelta(days=1)
