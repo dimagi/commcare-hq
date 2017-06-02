@@ -65,7 +65,7 @@ class Command(BaseCommand):
                                 xmlns = form.get('form', {}).get('@xmlns')
                                 if xmlns:
                                     unique_forms.add(xmlns)
-                                    if len(unique_forms) > 2:
+                                    if len(unique_forms) >= 2:
                                         has_two_forms_submitted = True
                         writer.writerow([
                             domain_name,
