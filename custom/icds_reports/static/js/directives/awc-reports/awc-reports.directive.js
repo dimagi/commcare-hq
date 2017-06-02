@@ -57,7 +57,7 @@ function AwcReportsController($http, $location, $routeParams, $log) {
             yAxis: {
                 axisLabel: '',
             },
-        }
+        },
     };
 
     vm.steps ={

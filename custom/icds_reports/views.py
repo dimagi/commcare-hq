@@ -11,7 +11,7 @@ from django.views.generic.base import View, TemplateView
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.locations.models import SQLLocation, LocationType
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
@@ -302,8 +302,8 @@ class LocationView(View):
             locations = locations.filter(parent__location_id=parent_id)
         return JsonResponse(data={
             'locations': [
-                {'location_id': location.location_id, 'name': location.name, 'parent_id': parent_id}
-                for location in locations
+                {'location_id': loc.location_id, 'name': loc.name, 'parent_id': parent_id}
+                for loc in locations
             ]
         })
 
