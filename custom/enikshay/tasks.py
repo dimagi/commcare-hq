@@ -81,6 +81,17 @@ class EpisodeUpdater(object):
                     )
                 )
 
+    def update_single_case(self, episode_case):
+        # updates a single episode_case.
+        assert episode_case.domain == self.domain
+        update_json = EpisodeAdherenceUpdate(episode_case, self).update_json()['update']
+        case_block = self._get_case_block(update_json, episode_case.case_id)
+        if case_block:
+            submit_case_blocks(
+                [ElementTree.tostring(case_block.as_xml())],
+                self.domain
+            )
+
     @staticmethod
     def _get_case_block(update, episode_id):
         """
