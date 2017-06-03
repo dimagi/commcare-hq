@@ -16,13 +16,7 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
         self.customProperties.sort(function(left, right) {
             return left.key() == right.key() ? 0 : (left.key() < right.key() ? -1 : 1);
         });
-        self.customPropertiesCollapse = ko.computed(function() {
-            var key = _.template("app-manager-collapse-<%= section %>-<%= slug %>")({
-                section: "app-settings",
-                slug: "custom-properties",
-            });
-            return localStorage.hasOwnProperty(key) ? localStorage.getItem(key) : "";
-        });
+        self.customPropertiesCollapse = hqImport("app_manager/js/section_changer.js").shouldCollapse("app-settings", "custom-properties", false);
 
         self.settings = [];
         self.settingsIndex = {};
@@ -252,13 +246,7 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
                     return setting.visible();
                 });
             });
-            section.collapse = ko.computed(function() {
-                var key = _.template("app-manager-collapse-<%= section %>-<%= slug %>")({
-                    section: "app-settings",
-                    slug: section.id,
-                });
-                return localStorage.hasOwnProperty(key) ? localStorage.getItem(key) : section.collapse;
-            });
+            section.collapse = hqImport("app_manager/js/section_changer.js").shouldCollapse("app-settings", section.id, section.collapse);
             if (!COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
                 section.reallyCollapse = ko.computed(function () {
                     var el = document.getElementById(section.id);
@@ -332,7 +320,7 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
             }
         });
         self.saveButton.ui.appendTo($saveContainer);
-        $saveContainer.find(".savebtn-bar").append($saveContainer.closest("form").find(".section-changer").remove());
+        hqImport("app_manager/js/section_changer.js").attachToForm($saveContainer);
 
         self.onAddCustomProperty = function() {
             self.customProperties.push({ key: ko.observable(), value: ko.observable() });

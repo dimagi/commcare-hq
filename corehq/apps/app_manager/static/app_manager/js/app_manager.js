@@ -123,42 +123,8 @@ hqDefine('app_manager/js/app_manager.js', function () {
                         },
                     });
                 button.ui.appendTo($buttonHolder);
-                $buttonHolder.find(".savebtn-bar").append($form.find(".section-changer").remove());
                 $buttonHolder.data('button', button);
-            });
-
-            $(document).one("click", ".section-changer > a", function(e) {
-                var $sectionChanger = $(this).closest(".section-changer"),
-                    $form = $sectionChanger.closest("form");
-                if ($sectionChanger.length) {
-                    $sectionChanger.find("ul a").each(function() {
-                        var $link = $(this),
-                            key = _.template("app-manager-collapse-<%= section %>-<%= slug %>")({
-                                section: $sectionChanger.data("collapse-key"),
-                                slug: $link.data("slug"),
-                            });
-                        $link.data("collapse-key", key);
-                        var shouldCollapse = localStorage.hasOwnProperty(key) ? localStorage.getItem(key) : $link.data("collapse");
-                        if (shouldCollapse) {
-                            $form.find(".panel-appmanager[data-slug='" + $link.data("slug") + "']").addClass("hide");
-                        } else {
-                            $link.addClass("selected");
-                        }
-                    });
-                }
-            });
-
-            $(document).on("click", ".section-changer ul a", function(e) {
-                var $link = $(this),
-                    $panel = $link.closest("form").find(".panel-appmanager[data-slug='" + $link.data("slug") + "']");
-                if ($link.hasClass("selected")) {
-                    $panel.addClass("hide");
-                } else {
-                    $panel.removeClass("hide");
-                }
-                localStorage.setItem($link.data("collapse-key"), $link.hasClass("selected") ? "1" : "");
-                $link.toggleClass("selected");
-                e.preventDefault();
+                hqImport("app_manager/js/section_changer.js").attachToForm($form);
             });
         }());
 
