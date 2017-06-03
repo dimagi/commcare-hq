@@ -89,7 +89,9 @@ class DetailContributor(SectionContributor):
                                     )
                                     if d:
                                         r.append(d)
-                        if detail.persist_case_context and not detail.persist_tile_on_forms:
+                        # add the persist case context if needed and if
+                        # case tiles are present and have their own persistent block
+                        if detail.persist_case_context and not (detail.use_case_tiles and detail.persist_tile_on_forms):
                             d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
                             r.append(d)
                 if module.fixture_select.active:
