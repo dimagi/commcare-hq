@@ -47,7 +47,7 @@ hqDefine("app_manager/js/section_changer.js", function() {
     var shouldCollapse = function(page, section, defaultCollapse) {
         var key = getKey(page, section);
         return localStorage.hasOwnProperty(key) ? localStorage.getItem(key) : defaultCollapse;
-    }
+    };
 
     // Attach section changer UI to a form's save bar
     // $el can be the form or any element inside of it
