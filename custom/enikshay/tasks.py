@@ -468,7 +468,7 @@ class EpisodeVoucherUpdate(object):
 
         try:
             refill_due_date = date_last_refill + datetime.timedelta(days=int(voucher_length))
-        except ValueError:
+        except (TypeError, ValueError):
             return {}
 
         return {
