@@ -57,8 +57,10 @@
     {% endif %}
 
     {% include "app_manager/v2/partials/xpathValidator.html" %}
-    {% include "app_manager/v2/partials/nav_menu_media_js_common.html" %}
-    {% include "app_manager/v2/partials/nav_menu_media_js.html" with item=multimedia.menu %}
+    {% include 'hqmedia/partials/multimedia_js.html' %}
+    <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
+    <script src="{% static 'app_manager/js/nav_menu_media.js' %}"></script>
     {% if allow_form_workflow %}
         <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
     {% endif %}
@@ -326,6 +328,11 @@
 {% block form-view %}
     {% initial_page_data 'case_config_options' case_config_options %}
     {% initial_page_data 'form_requires' form.requires %}
+    {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
+    {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
+    {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
+    {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
+    {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
     <div class="tabbable appmanager-tabs-container">
         <ul class="nav nav-tabs">
 
