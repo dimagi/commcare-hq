@@ -54,6 +54,7 @@ branches:
   - mk-add-password-encoder # Manish 3/3
   - mk-app-builder-condition-support # Manish 30-May
   - mk-app-builder-changes-137 # Manish 31-May
+  - lwyszomi/icds_dashboard_v2  # j$ 6/5
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
