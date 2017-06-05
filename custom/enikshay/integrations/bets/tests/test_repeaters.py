@@ -8,6 +8,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
 from corehq.apps.repeaters.models import RepeatRecord
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from custom.enikshay.const import ENROLLED_IN_PRIVATE, PRESCRIPTION_TOTAL_DAYS_THRESHOLD
@@ -28,7 +29,7 @@ from custom.enikshay.integrations.bets.repeater_generators import ChemistBETSVou
     BETSDiagnosisAndNotificationPayloadGenerator, BETSAYUSHReferralPayloadGenerator, BETSDrugRefillPayloadGenerator, IncentivePayload
 from custom.enikshay.integrations.bets.repeaters import ChemistBETSVoucherRepeater, BETS180TreatmentRepeater, \
     BETSDrugRefillRepeater, BETSSuccessfulTreatmentRepeater, BETSDiagnosisAndNotificationRepeater, \
-    BETSAYUSHReferralRepeater, BETSLocationRepeater, BETSBeneficiaryRepeater
+    BETSAYUSHReferralRepeater, BETSLocationRepeater, BETSBeneficiaryRepeater, BETSUserRepeater
 from custom.enikshay.integrations.ninetyninedots.tests.test_repeaters import ENikshayRepeaterTestBase, MockResponse
 
 from custom.enikshay.tests.utils import ENikshayLocationStructureMixin, get_person_case_structure
@@ -463,6 +464,44 @@ class BETSAYUSHReferralRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepe
         payload_generator.handle_success(MockResponse(201, {"success": "hooray"}), cases[self.episode_id], None)
         update_case(self.domain, self.episode_id, {"bets_first_prescription_voucher_redeemed": "false"})
         update_case(self.domain, self.episode_id, {"bets_first_prescription_voucher_redeemed": "true"})
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class UserRepeaterTest(TestCase):
+    domain = 'bets-user-repeater'
+
+    @classmethod
+    def setUpClass(cls):
+        super(UserRepeaterTest, cls).setUpClass()
+        cls.domain_obj = Domain(name=cls.domain)
+        cls.domain_obj.save()
+        cls.repeater = BETSUserRepeater(
+            domain=cls.domain,
+            url='super-cool-url',
+        )
+        cls.repeater.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(UserRepeaterTest, cls).tearDownClass()
+        cls.domain_obj.delete()
+        delete_all_repeat_records()
+        delete_all_repeaters()
+
+    def repeat_records(self):
+        return RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
+
+    def make_user(self):
+        return CommCareUser.create(
+            self.domain,
+            "davos.shipwright@stannis.gov",
+            "123",
+        )
+
+    def test_trigger(self):
+        self.assertEqual(0, len(self.repeat_records().all()))
+        self.make_user()
         self.assertEqual(1, len(self.repeat_records().all()))
 
 
