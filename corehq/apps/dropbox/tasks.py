@@ -21,7 +21,6 @@ def upload(dropbox_helper_id, access_token, size, max_retries):
     from .models import DropboxUploadHelper
     helper = DropboxUploadHelper.objects.get(id=dropbox_helper_id)
     dbx = Dropbox(access_token)
-    retries = 0
 
     try:
         with open(helper.src, 'rb') as f:
@@ -36,23 +35,14 @@ def upload(dropbox_helper_id, access_token, size, max_retries):
                     break
                 helper.progress = offset / size
                 helper.save()
-                try:
-                    dbx.files_upload_session_append_v2(
-                        chunk,
-                        UploadSessionCursor(
-                            upload_session.session_id,
-                            offset,
-                        ),
-                    )
-                except ApiError as e:
-                    if retries < max_retries:
-                        retries += 1
-                    else:
-                        helper.failure_reason = str(e)
-                        helper.save()
-                        raise e
-                else:
-                    offset += len(chunk)
+                dbx.files_upload_session_append_v2(
+                    chunk,
+                    UploadSessionCursor(
+                        upload_session.session_id,
+                        offset,
+                    ),
+                )
+                offset += len(chunk)
 
             file_metadata = dbx.files_upload_session_finish(
                 b'',
