@@ -816,7 +816,7 @@ class SupplyPointSelectWidget(forms.Widget):
         location_ids = value.split(',') if value else []
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
-        initial_data = [{'id': loc.location_id, 'name': loc.display_name} for loc in locations]
+        initial_data = [{'id': loc.location_id, 'name': loc.get_path_display()} for loc in locations]
 
         return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
             'id': self.id,

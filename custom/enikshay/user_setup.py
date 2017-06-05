@@ -325,6 +325,9 @@ class ENikshayUserLocationDataEditor(CustomDataEditor):
     @property
     @memoized
     def fields(self):
+        if not self.required_only:
+            return self.model.get_fields(required_only=False)
+
         # non-required fields are typically excluded from creation UIs
         fields_to_include = [field[0] for field in AGENCY_LOCATION_FIELDS]
         return [
