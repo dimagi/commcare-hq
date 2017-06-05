@@ -1,3 +1,5 @@
+from collections import namedtuple
+
 from celery.schedules import crontab
 from celery.task import task
 from corehq.apps.case_importer.exceptions import ImporterError
@@ -24,6 +26,8 @@ from soil.progress import set_task_progress
 POOL_SIZE = 10
 PRIME_VIEW_FREQUENCY = 500
 CASEBLOCK_CHUNKSIZE = 100
+
+RowAndCase = namedtuple('RowAndCase', ['row', 'case'])
 
 
 @task
@@ -76,7 +80,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
         if caseblocks:
             try:
                 form, cases = submit_case_blocks(
-                    [cb.as_string() for cb in caseblocks],
+                    [cb.case.as_string() for cb in caseblocks],
                     domain,
                     username,
                     user_id,
@@ -91,7 +95,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                 err = True
                 errors.add(
                     error=ImportErrors.ImportErrorMessage,
-                    row_number=caseblocks[0].case_id
+                    row_number=caseblocks[0].case.case_id
                 )
             else:
                 if record_form_callback:
@@ -248,7 +252,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                     update=fields_to_update,
                     **extras
                 )
-                caseblocks.append(caseblock)
+                caseblocks.append(RowAndCase(i, caseblock))
                 created_count += 1
                 if external_id:
                     ids_seen.add(external_id)
@@ -271,7 +275,7 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                     update=fields_to_update,
                     **extras
                 )
-                caseblocks.append(caseblock)
+                caseblocks.append(RowAndCase(i, caseblock))
                 match_count += 1
             except CaseBlockError:
                 errors.add(ImportErrors.CaseGeneration, i + 1)
