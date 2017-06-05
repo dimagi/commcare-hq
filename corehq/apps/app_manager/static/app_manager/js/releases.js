@@ -334,18 +334,8 @@ hqDefine('app_manager/js/releases.js', function () {
             });
         };
 
-
-
-        self.handleAfterRender = function (elem, savedApp) {
-            $(elem).find('.js-auto-update-checkbox').bootstrapSwitch({
-                state: savedApp.is_released(),
-                onSwitchChange: function () {
-                    self.toggleRelease(savedApp);
-                },
-            });
-        };
-
-        self.toggleRelease = function (savedApp) {
+        self.toggleRelease = function (savedApp, event) {
+            $(event.currentTarget).parent().prev('.js-release-waiting').removeClass('hide');
             var is_released = savedApp.is_released();
             var saved_app_id = savedApp.id();
             if (savedApp.is_released() !== 'pending') {
@@ -363,9 +353,11 @@ hqDefine('app_manager/js/releases.js', function () {
                     },
                     success: function (data) {
                         savedApp.is_released(data.is_released);
+                        $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
                     },
                     error: function () {
                         savedApp.is_released('error');
+                        $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
                     }
                 });
             }

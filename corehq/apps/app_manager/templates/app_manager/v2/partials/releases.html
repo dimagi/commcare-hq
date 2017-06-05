@@ -107,8 +107,7 @@
                     template: {
                         foreach: savedApps,
                         afterAdd: function(elem) { $(elem).hide().fadeIn() },
-                        beforeRemove: function(elem) { if (elem.nodeType === 1) { $(elem).fadeOut(); } },
-                        afterRender: $root.handleAfterRender
+                        beforeRemove: function(elem) { if (elem.nodeType === 1) { $(elem).fadeOut(); } }
                     }" >
 
         <div class="panel panel-release"
@@ -139,11 +138,29 @@
               <div class="build-is-released">
                   <span class="label label-info"
                         data-bind="visible: id() === $root.latestReleaseId()">{% trans "Latest" %}</span>
-                  <input type="checkbox"
-                         class="js-auto-update-checkbox"
-                         data-size="mini"
-                         data-on-text="{% trans "Released" %}"
-                         data-off-text="{% trans "In Test" %}">
+                  <i class="fa fa-spin fa-refresh hide js-release-waiting"></i>
+                  <div class="btn-group">
+                      <button type="button"
+                              class="btn btn-xs"
+                              data-bind="click: $root.toggleRelease,
+                                         css: {
+                                            'active': is_released(),
+                                            'btn-success': is_released(),
+                                            'btn-default': !is_released()
+                                         }">
+                          {% trans "Released" %}
+                      </button>
+                      <button type="button"
+                              class="btn btn-xs btn-default"
+                              data-bind="click: $root.toggleRelease,
+                                         css: {
+                                            'active': !is_released(),
+                                            'btn-primary': !is_released(),
+                                            'btn-default': is_released()
+                                         }">
+                          {% trans "In Test" %}
+                      </button>
+                  </div>
               </div>
               <h4 class="panel-release-title">
                 <strong>{% trans "Version" %} <span data-bind="text: version"></span></strong> |
