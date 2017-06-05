@@ -50,7 +50,7 @@
              // tag the 'preview in cloudcare' button with the right url
              // unfortunately, has to be done in javascript
              var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-@@ -287,74 +290,57 @@
+@@ -287,75 +290,58 @@
      </script>
  {% endblock %}
  
@@ -90,6 +90,7 @@
  {% block form-view %}
      {% initial_page_data 'case_config_options' case_config_options %}
      {% initial_page_data 'form_requires' form.requires %}
+     {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
 -    <div id="build_errors"></div>
 -    {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update);}" %}
 -    <br />
@@ -167,7 +168,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -366,35 +352,36 @@
+@@ -367,35 +353,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -221,7 +222,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -406,108 +393,94 @@
+@@ -407,106 +394,92 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -246,14 +247,12 @@
 +                  {% elif form.source %}
 +                      <div class="casexml" id="casexml_home">
                          {% if module.doc_type == 'AdvancedModule' %}
-                             {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
                              {% initial_page_data 'schedule_options' schedule_options %}
                              {% include 'app_manager/v1/partials/case_config_advanced.html' %}
                          {% elif module.doc_type == 'CareplanModule' %}
 -                            {% include 'app_manager/v1/partials/case_config_careplan.html' %}
 +                            {% include 'app_manager/v2/partials/case_config_careplan.html' %}
                          {% else %}
-                             {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
 -                            {% include 'app_manager/v1/partials/case_config.html' %}
 +                            {% include 'app_manager/v2/partials/case_config.html' %}
                          {% endif %}
@@ -399,7 +398,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -520,14 +493,15 @@
+@@ -519,14 +492,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -417,7 +416,7 @@
              {% endif %}
          </div>
      </div>
-@@ -535,12 +509,13 @@
+@@ -534,12 +508,13 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
