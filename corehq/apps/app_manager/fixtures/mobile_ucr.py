@@ -29,6 +29,11 @@ def _should_sync(restore_state):
         return True
 
     sync_interval = restore_state.restore_user.get_mobile_ucr_sync_interval()
+    if sync_interval is None and restore_state.params.app:
+        sync_interval = restore_state.params.app.mobile_ucr_sync_interval
+    if sync_interval is None:
+        sync_interval = restore_state.project.default_mobile_ucr_sync_interval
+
     return (
         not last_sync_log or
         not sync_interval or
