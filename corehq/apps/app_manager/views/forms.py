@@ -639,7 +639,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             for candidate_form in candidate_module.get_forms()
         ]
 
-    template = None
     if isinstance(form, CareplanForm):
         case_config_options.update({
             'case_preload': [
@@ -652,11 +651,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             'mode': form.mode,
             'save_url': reverse("edit_careplan_form_actions", args=[app.domain, app.id, form.unique_id]),
         })
-        template = get_app_manager_template(
-            request.user,
-            "app_manager/v1/form_view_base.html",
-            "app_manager/v2/form_view_base.html",
-        )
     elif isinstance(form, AdvancedForm):
         def commtrack_programs():
             if app.commtrack_enabled:
@@ -693,11 +687,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             context.update({
                 'schedule_options': schedule_options,
             })
-        template = get_app_manager_template(
-            request.user,
-            "app_manager/v1/form_view_base.html",
-            "app_manager/v2/form_view_base.html",
-        )
     else:
         context.update({
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled_for_request(request),
@@ -708,13 +697,13 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             'save_url': reverse("edit_form_actions", args=[app.domain, app.id, form.unique_id]),
             'valid_index_names': valid_index_names,
         })
-        template = get_app_manager_template(
-            request.user,
-            "app_manager/v1/form_view_base.html",
-            "app_manager/v2/form_view_base.html",
-        )
 
     context.update({'case_config_options': case_config_options})
+    template = get_app_manager_template(
+        request.user,
+        "app_manager/v1/form_view.html",
+        "app_manager/v2/form_view.html",
+    )
     return template, context
 
 

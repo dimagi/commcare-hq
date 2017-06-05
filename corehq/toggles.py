@@ -1212,26 +1212,10 @@ MOTECH = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-MARK_LATEST_SUBMISSION_ON_USER = StaticToggle(
-    'user_last_submission',
-    "Marks the latest submssion on user model",
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    always_enabled={'icds-cas'}
-)
-
 ENTERPRISE_OPTIMIZATIONS = StaticToggle(
     'enterprise_optimizations',
     'Used to enable specific optimizations for environments that only support a single domain e.g. ICDS',
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    always_enabled={'icds-cas'}
-)
-
-MOBIE_UCR_SYNC_DELAY_CONFIG = StaticToggle(
-    'mobile_ucr_sync_delay',
-    "Show settings for configuring mobile UCR sync delay",
-    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
     always_enabled={'icds-cas'}
 )

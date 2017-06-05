@@ -212,6 +212,37 @@ def get_last_form_submissions_by_user(domain, user_ids, app_id=None, xmlns=None)
     return result
 
 
+def get_last_forms_by_app(user_id):
+    """
+    gets the last form submission for each app for a given user id
+    :param user_id: id of a couch user
+    :return: last form submission for every app that user has submitted
+    """
+    query = (
+        FormES()
+            .user_id(user_id)
+            .aggregation(
+            TermsAggregation('app_id', 'app_id').aggregation(
+                TopHitsAggregation(
+                    'top_hits_last_form_submissions',
+                    'received_on',
+                    is_ascending=False,
+                )
+            )
+        )
+        .size(0)
+    )
+
+    aggregations = query.run().aggregations
+
+    buckets_dict = aggregations.app_id.buckets_dict
+    result = []
+    for app_id, bucket in buckets_dict.iteritems():
+        result.append(bucket.top_hits_last_form_submissions.hits[0])
+
+    return result
+
+
 def get_submission_counts_by_user(domain, datespan, user_ids=None):
     return _get_form_counts_by_user(domain, datespan, True, user_ids)
 
@@ -321,18 +352,17 @@ def get_form_counts_by_user_xmlns(domain, startdate, enddate, user_ids=None,
     missing_users = False
 
     date_filter_fn = submitted_filter if by_submission_time else completed_filter
-    query = (
-        FormES()
-        .domain(domain)
-        .filter(date_filter_fn(gte=startdate, lt=enddate))
-        .aggregation(
-            TermsAggregation('user_id', 'form.meta.userID').aggregation(
-                TermsAggregation('app_id', 'app_id').aggregation(
-                    TermsAggregation('xmlns', 'xmlns')
-                )
-            )
-        )
-        .size(0)
+    query = (FormES()
+             .domain(domain)
+             .filter(date_filter_fn(gte=startdate, lt=enddate))
+             .aggregation(
+                 TermsAggregation('user_id', 'form.meta.userID').aggregation(
+                     TermsAggregation('app_id', 'app_id').aggregation(
+                         TermsAggregation('xmlns', 'xmlns')
+                     )
+                 )
+             )
+             .size(0)
     )
 
     if user_ids:
