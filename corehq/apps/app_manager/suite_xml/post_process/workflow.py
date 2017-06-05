@@ -255,7 +255,8 @@ class EndOfFormNavigationWorkflow(object):
 
             return frame_children
 
-        def stack_static_stack_frames(form_workflow, xpath=None):
+        def stack_static_stack_frames(stack_frames, form_workflow, xpath=None):
+            stack_frames = stack_frames if stack_frames else []
             if form_workflow == WORKFLOW_ROOT:
                 stack_frames.append(StackFrameMeta(xpath, [], allow_empty_frame=True))
             elif form_workflow == WORKFLOW_MODULE:
@@ -277,6 +278,7 @@ class EndOfFormNavigationWorkflow(object):
                     last = frame_children.pop()
 
                 stack_frames.append(StackFrameMeta(xpath, frame_children))
+            return stack_frames
 
         stack_frames = []
 
@@ -318,9 +320,12 @@ class EndOfFormNavigationWorkflow(object):
                             ['not(' + link_xpath + ')' for link_xpath in link_xpaths]
                         )
                     )
-                    stack_static_stack_frames(form.post_form_workflow_fallback, negate_of_all_link_paths)
+                    stack_frames = stack_static_stack_frames(
+                        stack_frames, form.post_form_workflow_fallback,
+                        negate_of_all_link_paths
+                    )
         else:
-            stack_static_stack_frames(form.post_form_workflow)
+            stack_frames = stack_static_stack_frames(stack_frames, form.post_form_workflow)
         return stack_frames
 
     @staticmethod
