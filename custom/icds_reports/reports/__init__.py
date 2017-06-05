@@ -122,7 +122,7 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
         table.insert(0, [export_sheet_name])
         return [export_sheet_name, table]
 
-from custom.icds_reports.reports.reports import MPRReport, ASRReport, TableauReport
+from custom.icds_reports.reports.reports import MPRReport, ASRReport, TableauReport, DashboardReport
 
 CUSTOM_REPORTS = (
     ('BLOCK REPORTS', (
@@ -131,5 +131,6 @@ CUSTOM_REPORTS = (
     )),
     ('CUSTOM REPORTS', (
         TableauReport,
+        DashboardReport
     )),
 )
