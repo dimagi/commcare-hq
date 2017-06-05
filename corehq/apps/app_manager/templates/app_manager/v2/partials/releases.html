@@ -178,18 +178,25 @@
               </h4>
           </div>
           <div class="panel-body">
-            <inline-edit params="
-                value: build_comment,
-                iconClass: 'fa fa-comment',
-                rows: 1,
-                placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
-                url: '{% url "update_build_comment" domain app.id %}',
-                saveParams: {'build_id': id},
-                saveValueName: 'comment',
-                errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
-            "></inline-edit>
+            <div class="comment-container"
+                 data-bind="visible: is_comment_visible">
+              <inline-edit params="
+                  value: build_comment,
+                  iconClass: 'fa fa-comment',
+                  rows: 1,
+                  placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
+                  url: '{% url "update_build_comment" domain app.id %}',
+                  saveParams: {'build_id': id},
+                  saveValueName: 'comment',
+                  errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
+              "></inline-edit>
+            </div>
           </div><!-- .panel-body -->
           <div class="panel-footer">
+            <button class="btn btn-default"
+                    data-bind="visible: !is_comment_visible(), click: showComment">
+              <i class="fa fa-comment"></i> {% trans "Add Comment" %}
+            </button>
             <button class="btn btn-default hide"
                     data-bind="
                         openModal: 'revert-build-modal-template',
