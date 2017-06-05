@@ -1020,7 +1020,7 @@ class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructur
 
     def test_payload_properties(self):
         episode_case = self._create_nikshay_enabled_case(set_property=PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION)
-        payload = NikshayRegisterPrivatePatientPayloadGenerator(None).get_payload(None, episode_case)
+        payload = json.loads(NikshayRegisterPrivatePatientPayloadGenerator(None).get_payload(None, episode_case))
         self.assertEqual(payload['tbdiagdate'], '09/09/2014')
         self.assertEqual(payload['HFIDNO'], '1234567')
         self.assertEqual(payload['TBUcode'], '1')

@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timedelta
 import urllib
 import urlparse
@@ -348,7 +349,8 @@ class SOAPRepeaterMixin(Repeater):
     operation = StringProperty()
 
     def send_request(self, repeat_record, payload):
-        return perform_SOAP_operation(payload, self.url, self.operation)
+        payload_dict = json.loads(payload)
+        return perform_SOAP_operation(payload_dict, self.url, self.operation)
 
 
 class ShortFormRepeater(Repeater):
