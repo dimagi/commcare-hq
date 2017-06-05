@@ -392,10 +392,6 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
     @property
     @memoized
     def basic_info_form(self):
-        sync_interval = self.domain_object.default_mobile_ucr_sync_interval
-        if sync_interval:
-            sync_interval /= 3600
-
         initial = {
             'hr_name': self.domain_object.hr_name or self.domain_object.name,
             'project_description': self.domain_object.project_description,
@@ -406,7 +402,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             'call_center_case_owner': self.initial_call_center_case_owner,
             'call_center_case_type': self.domain_object.call_center_config.case_type,
             'commtrack_enabled': self.domain_object.commtrack_enabled,
-            'mobile_ucr_sync_interval': sync_interval
+            'mobile_ucr_sync_interval': self.domain_object.default_mobile_ucr_sync_interval
         }
         if self.can_user_see_meta:
             initial.update({
