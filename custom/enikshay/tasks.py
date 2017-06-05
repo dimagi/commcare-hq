@@ -11,7 +11,7 @@ from django.utils.dateparse import parse_datetime, parse_date
 
 from casexml.apps.case.mock import CaseBlock
 from corehq import toggles
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.utils import update_case
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
@@ -80,12 +80,8 @@ class EpisodeUpdater(object):
                 try:
                     update_json = adherence_update.update_json()['update']
                     update_json.update(voucher_update.update_json())
-                    case_block = self._get_case_block(update_json, episode.case_id)
-                    if case_block:
-                        submit_case_blocks(
-                            [ElementTree.tostring(case_block.as_xml())],
-                            self.domain
-                        )
+                    if update_json:
+                        update_case(self.domain, episode.case_id, update_json)
                         update_count += 1
                     else:
                         noupdate_count += 1
@@ -98,7 +94,7 @@ class EpisodeUpdater(object):
                         )
                     )
         logger.info(
-            "Summary of enikshay_task: domain: {domain}, duration (sec): {duration} "
+            "Summary of enikshay_task: domain: {domain}, duration (sec): {duration}. "
             "Cases Updated {updates}, cases errored {errors} and {noupdates} "
             "cases didn't need update. ".format(
                 domain=self.domain, duration=t.interval, updates=update_count, errors=error_count,
@@ -109,27 +105,8 @@ class EpisodeUpdater(object):
         # updates a single episode_case.
         assert episode_case.domain == self.domain
         update_json = EpisodeAdherenceUpdate(episode_case, self).update_json()['update']
-        case_block = self._get_case_block(update_json, episode_case.case_id)
-        if case_block:
-            submit_case_blocks(
-                [ElementTree.tostring(case_block.as_xml())],
-                self.domain
-            )
-
-    @staticmethod
-    def _get_case_block(update, episode_id):
-        """
-        Returns:
-            CaseBlock object with episode updates. If no update is necessary, None is returned
-        """
-        if update:
-            return CaseBlock(**{
-                'case_id': episode_id,
-                'create': False,
-                'update': update
-            })
-        else:
-            return None
+        if update_json:
+            update_case(self.domain, episode_case.case_id, update_json)
 
     def _get_open_episode_cases(self):
         # return all open 'episode' cases
