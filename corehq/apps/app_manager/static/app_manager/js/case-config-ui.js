@@ -82,9 +82,7 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
         });
 
         self.saveUsercaseButton = COMMCAREHQ.SaveButton.init({
-            unsavedMessage: COMMCAREHQ.toggleEnabled('USER_PROPERTY_EASY_REFS') ?
-                gettext("You have unchanged user properties settings") :
-                gettext("You have unchanged user case settings"),
+            unsavedMessage: gettext("You have unchanged user properties settings"),
             save: function () {
                 var actions = JSON.stringify(_(self.actions).extend(
                     HQFormActions.from_usercase_transaction(self.caseConfigViewModel.usercase_transaction)
