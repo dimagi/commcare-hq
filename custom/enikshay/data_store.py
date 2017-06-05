@@ -1,4 +1,4 @@
-from dateutil.parser import parse
+from datetime import datetime
 
 from corehq.apps.es import filters
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
@@ -32,11 +32,13 @@ class AdherenceDatastore(object):
         if result:
             # the result is sorted on 'adherence_date'
             latest_date = result[0].get('adherence_date')
-            parsed_date = parse(latest_date).date()
-            if not latest_date or not parsed_date:
-                raise EnikshayTaskException("Adherence row {} does not or has invalid 'adherence_date'".format(
-                    result[0]))
-            else:
-                return parsed_date
+            try:
+                return datetime.strptime(latest_date, '%Y-%m-%d').date()
+            except ValueError:
+                try:
+                    return datetime.strptime(latest_date, '%Y-%m-%dT%H:%M:%S').date()
+                except ValueError:
+                    raise EnikshayTaskException("Adherence row {} does not or has invalid 'adherence_date'".format(
+                        result[0]))
         else:
             return None
