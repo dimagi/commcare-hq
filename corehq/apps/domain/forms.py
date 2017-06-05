@@ -80,7 +80,7 @@ from corehq.privileges import (
     REPORT_BUILDER_ADD_ON_PRIVS,
     REPORT_BUILDER_TRIAL,
 )
-from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBIE_UCR_SYNC_DELAY_CONFIG
+from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from dimagi.utils.decorators.memoized import memoized
@@ -605,7 +605,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 )
                 owner_field.widget.set_domain(self.domain)
 
-        if not MOBIE_UCR_SYNC_DELAY_CONFIG.enabled(self.domain):
+        if not MOBILE_UCR.enabled(self.domain):
             del self.fields['mobile_ucr_sync_interval']
 
     def clean_default_timezone(self):

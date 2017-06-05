@@ -355,7 +355,7 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         if toggles.ENABLE_LOADTEST_USERS.enabled(self.domain):
             self.fields['loadtest_factor'].widget = forms.TextInput()
 
-        if toggles.MOBIE_UCR_SYNC_DELAY_CONFIG.enabled(self.domain):
+        if toggles.MOBILE_UCR.enabled(self.domain):
             self.fields['mobile_ucr_sync_interval'].widget = forms.NumberInput()
 
         if self.initial['mobile_ucr_sync_interval']:
