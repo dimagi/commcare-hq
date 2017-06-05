@@ -29,7 +29,7 @@ kafka-python==0.9.5
 mock==0.8.0
 openpyxl==2.2.5
 Pillow==2.7.0
-phonenumberslite==7.1.0
+phonenumberslite==8.3.0
 psycopg2==2.6.1
 psycogreen==1.0
 pycrypto==2.6.1
