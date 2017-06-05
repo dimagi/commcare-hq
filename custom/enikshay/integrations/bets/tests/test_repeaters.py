@@ -24,12 +24,26 @@ from custom.enikshay.integrations.bets.const import (
     DIAGNOSIS_AND_NOTIFICATION_EVENT,
     AYUSH_REFERRAL_EVENT,
 )
-from custom.enikshay.integrations.bets.repeater_generators import ChemistBETSVoucherPayloadGenerator, \
-    BETS180TreatmentPayloadGenerator, BETSSuccessfulTreatmentPayloadGenerator, \
-    BETSDiagnosisAndNotificationPayloadGenerator, BETSAYUSHReferralPayloadGenerator, BETSDrugRefillPayloadGenerator, IncentivePayload
-from custom.enikshay.integrations.bets.repeaters import ChemistBETSVoucherRepeater, BETS180TreatmentRepeater, \
-    BETSDrugRefillRepeater, BETSSuccessfulTreatmentRepeater, BETSDiagnosisAndNotificationRepeater, \
-    BETSAYUSHReferralRepeater, BETSLocationRepeater, BETSBeneficiaryRepeater, BETSUserRepeater
+from custom.enikshay.integrations.bets.repeater_generators import (
+    ChemistBETSVoucherPayloadGenerator,
+    BETS180TreatmentPayloadGenerator,
+    BETSSuccessfulTreatmentPayloadGenerator,
+    BETSDiagnosisAndNotificationPayloadGenerator,
+    BETSAYUSHReferralPayloadGenerator,
+    BETSDrugRefillPayloadGenerator,
+    IncentivePayload,
+)
+from custom.enikshay.integrations.bets.repeaters import (
+    ChemistBETSVoucherRepeater,
+    BETS180TreatmentRepeater,
+    BETSDrugRefillRepeater,
+    BETSSuccessfulTreatmentRepeater,
+    BETSDiagnosisAndNotificationRepeater,
+    BETSAYUSHReferralRepeater,
+    BETSLocationRepeater,
+    BETSBeneficiaryRepeater,
+    BETSUserRepeater,
+)
 from custom.enikshay.integrations.ninetyninedots.tests.test_repeaters import ENikshayRepeaterTestBase, MockResponse
 
 from custom.enikshay.tests.utils import ENikshayLocationStructureMixin, get_person_case_structure
@@ -531,7 +545,6 @@ class UserRepeaterTest(TestCase):
         private_location = self.make_location(self.private_loc_type, is_test="no")
         self.make_user(private_location)
         self.assertEqual(1, len(self.repeat_records().all()))
-
 
     def test_public_user(self):
         public_location = self.make_location(self.public_loc_type, is_test="no")
