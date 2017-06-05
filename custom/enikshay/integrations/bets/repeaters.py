@@ -316,7 +316,7 @@ class BETSBeneficiaryRepeater(BaseBETSRepeater):
                      or case_properties_changed(person_case, self.properties_we_care_about)))
 
 
-def create_case_repeat_records(sender, case, **kwargs):
+def create_BETS_repeat_records(sender, case, **kwargs):
     create_repeat_records(ChemistBETSVoucherRepeater, case)
     create_repeat_records(LabBETSVoucherRepeater, case)
     create_repeat_records(BETS180TreatmentRepeater, case)
@@ -326,7 +326,7 @@ def create_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(BETSAYUSHReferralRepeater, case)
     create_repeat_records(BETSBeneficiaryRepeater, case)
 
-case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
+case_post_save.connect(create_BETS_repeat_records, CommCareCaseSQL)
 
 
 @receiver(post_save, sender=SQLLocation, dispatch_uid="create_bets_location_repeat_records")
