@@ -76,6 +76,14 @@ ENUM_IMAGE = FeaturePreview(
     help_link='https://help.commcarehq.org/display/commcarepublic/Adding+Icons+in+Case+List+and+Case+Detail+screen'
 )
 
+CONDITIONAL_ENUM = FeaturePreview(
+    slug='conditional_enum',
+    label=_('Conditional Enum in Case List'),
+    description=_(
+        "Conditional ID mapping in case tiles. "
+    ),
+)
+
 SPLIT_MULTISELECT_CASE_EXPORT = FeaturePreview(
     slug='split_multiselect_case_export',
     label=_('Split multi-selects in case export'),
