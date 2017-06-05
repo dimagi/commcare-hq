@@ -1,4 +1,4 @@
-from django.utils.dateparse import parse_date
+from dateutil.parser import parse
 
 from corehq.apps.es import filters
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
@@ -32,10 +32,11 @@ class AdherenceDatastore(object):
         if result:
             # the result is sorted on 'adherence_date'
             latest_date = result[0].get('adherence_date')
-            if not latest_date or not parse_date(latest_date):
+            parsed_date = parse(latest_date).date()
+            if not latest_date or not parsed_date:
                 raise EnikshayTaskException("Adherence row {} does not or has invalid 'adherence_date'".format(
                     result[0]))
             else:
-                return parse_date(latest_date)
+                return parsed_date
         else:
             return None
