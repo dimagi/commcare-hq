@@ -1,8 +1,4 @@
-{% load hq_shared_tags %}
-{% include 'hqmedia/partials/multimedia_js.html' %}
-<script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
-<script>
-hqDefine('#app_manager/v1/partials/nav_menu_media_js_common.html', function () {
+hqDefine("app_manager/js/nav_menu_media_common.js", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
         uploaders = {};
 
@@ -23,4 +19,3 @@ hqDefine('#app_manager/v1/partials/nav_menu_media_js_common.html', function () {
         iconUploader: uploaders.icon,
     };
 });
-</script>

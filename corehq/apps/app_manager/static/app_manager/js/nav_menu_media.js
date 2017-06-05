@@ -1,5 +1,4 @@
-{% load hq_shared_tags %}
-<script>
+hqDefine("app_manager/js/nav_menu_media.js", function() {
     $(function () {
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
         _.each(initial_page_data("nav_menu_media_specifics"), function(item) {
@@ -13,4 +12,4 @@
             );
         });
     });
-</script>
+});
