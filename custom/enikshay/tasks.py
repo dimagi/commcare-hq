@@ -268,7 +268,7 @@ class EpisodeAdherenceUpdate(object):
             return None
 
     @staticmethod
-    def count_doses_taken(dose_taken_by_date, lte=None, gte=None):
+    def count_doses_taken(dose_taken_by_date, start_date=None, end_date=None):
         """
         Args:
             dose_taken_by_date: result of self.calculate_doses_taken_by_day
@@ -276,17 +276,17 @@ class EpisodeAdherenceUpdate(object):
             total count of adherence_cases excluding duplicates on a given day. If there are
             two adherence_cases on one day at different time, it will be counted as one
         """
-        if bool(lte) != bool(gte):
-            raise EnikshayTaskException("Both of lte and gte should be specified or niether of them")
+        if bool(start_date) != bool(end_date):
+            raise EnikshayTaskException("Both of start_date and end_date should be specified or niether of them")
 
-        if not lte:
+        if not start_date:
             return dose_taken_by_date.values().count(True)
         else:
             # any efficient way to do this - numpy, python bisect?
             return [
                 is_taken
                 for date, is_taken in dose_taken_by_date.iteritems()
-                if lte <= date <= gte
+                if start_date <= date <= end_date
             ].count(True)
 
     def update_json(self):
@@ -348,8 +348,8 @@ class EpisodeAdherenceUpdate(object):
         # calculate 'aggregated_score_count_taken'
         update["aggregated_score_count_taken"] = self.count_doses_taken(
             dose_taken_by_date,
-            lte=adherence_schedule_date_start,
-            gte=update["aggregated_score_date_calculated"]
+            start_date=adherence_schedule_date_start,
+            end_date=update["aggregated_score_date_calculated"]
         )
 
         # calculate 'expected_doses_taken' score
