@@ -373,7 +373,8 @@ HQ_APPS = (
     'custom.icds',
     'custom.icds_reports',
     'custom.pnlppgi',
-    'custom.hki'
+    'custom.nic_compliance',
+    'custom.hki',
 )
 
 ENIKSHAY_APPS = (
@@ -897,6 +898,8 @@ SENTRY_PROJECT_ID = None
 SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
 SENTRY_API_KEY = None
 
+OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE = False
+RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE = False
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
 
 AUTHPROXY_URL = None
@@ -1603,6 +1606,11 @@ PILLOWTOPS = {
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.app_submission_tracker.get_form_submission_metadata_tracker_pillow',
         },
+        {
+            'name': 'UpdateUserSyncHistoryPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.synclog.get_user_sync_history_pillow',
+        },
     ],
     'core_ext': [
         {
@@ -1824,6 +1832,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_general.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_tb_hiv.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'cc_outbound_call_list.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'payment_register.json'),
 ]
 
 
@@ -1866,6 +1875,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher.json'),
 
     os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
     os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json')
@@ -2087,6 +2097,12 @@ if _raven_config:
     SENTRY_CLIENT = 'corehq.util.sentry.HQSentryClient'
 
 CSRF_COOKIE_HTTPONLY = True
+if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
+    AUTH_PASSWORD_VALIDATORS = [
+        {
+            'NAME': 'custom.nic_compliance.password_validation.UsedPasswordValidator',
+        }
+    ]
 
 ENIKSHAY_PRIVATE_API_USERS = {}
 ENIKSHAY_PRIVATE_API_PASSWORD = None

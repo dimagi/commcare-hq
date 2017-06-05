@@ -2,7 +2,8 @@ from django.core.management import BaseCommand, CommandError
 
 from corehq.pillows.app_submission_tracker import (
     get_couch_app_form_submission_tracker_reindexer,
-    get_sql_app_form_submission_tracker_reindexer
+    get_sql_app_form_submission_tracker_reindexer,
+    get_user_form_submission_tracker_reindexer
 )
 from corehq.pillows.application import get_app_reindexer
 from corehq.pillows.case import (
@@ -16,6 +17,7 @@ from corehq.pillows.ledger import get_ledger_v2_reindexer, get_ledger_v1_reindex
 from corehq.pillows.reportcase import get_report_case_reindexer
 from corehq.pillows.reportxform import get_report_xforms_reindexer
 from corehq.pillows.sms import get_sms_reindexer
+from corehq.pillows.synclog import get_user_sync_history_reindexer
 from corehq.pillows.user import get_user_reindexer
 from corehq.pillows.xform import get_couch_form_reindexer, get_sql_form_reindexer
 
@@ -37,6 +39,8 @@ REINDEX_FNS = {
     'app': get_app_reindexer,
     'couch-app-form-submission': get_couch_app_form_submission_tracker_reindexer,
     'sql-app-form-submission': get_sql_app_form_submission_tracker_reindexer,
+    'user-sync-history': get_user_sync_history_reindexer,
+    'user-app-form-submission': get_user_form_submission_tracker_reindexer,
 }
 
 
