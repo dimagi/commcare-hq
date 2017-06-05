@@ -409,4 +409,4 @@ class BETSAYUSHReferralPayloadGenerator(IncentivePayloadGenerator):
 class BETSLocationPayloadGenerator(LocationPayloadGenerator):
 
     def get_payload(self, repeat_record, location):
-        return get_bets_location_json(location)
+        return json.dumps(get_bets_location_json(location))

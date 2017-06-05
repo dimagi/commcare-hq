@@ -487,13 +487,14 @@ class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
     def repeat_records(self):
         return RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
 
-    def make_location(self, name):
+    def make_location(self, name, location_type=None, metadata=None):
         location = SQLLocation.objects.create(
             domain=self.domain,
             name=name,
             site_code=name,
-            location_type=self.tu.location_type,
+            location_type=location_type or self.tu.location_type,
             parent=self.dto,
+            metadata=metadata or {},
         )
         self.addCleanup(location.delete)
         return location
@@ -505,7 +506,7 @@ class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(1, len(records))
         record = records[0]
         self.assertEqual(
-            record.get_payload(),
+            json.loads(record.get_payload()),
             {
                 '_id': location.location_id,
                 'ancestors_by_type': {
@@ -528,6 +529,7 @@ class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
                 ],
                 'location_id': location.location_id,
                 'location_type': 'tu',
+                'location_type_code': 'tu',
                 'longitude': None,
                 'metadata': {},
                 'name': location.name,
@@ -535,6 +537,13 @@ class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
                 'site_code': location.site_code,
             }
         )
+
+    def test_dont_send(self):
+        # Don't send a PHI, as it's not relevant to the private sector
+        location = self.make_location('sept_of_baelor', location_type=self.phi.location_type)
+        # Don't send a test location
+        location = self.make_location('flea_bottom', metadata={'is_test': 'yes'})
+        self.assertEqual(0, len(self.repeat_records().all()))
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -573,19 +582,25 @@ class BETSBeneficiaryRepeaterTest(ENikshayRepeaterTestBase):
         super(BETSBeneficiaryRepeaterTest, self).tearDown()
         self.domain_obj.delete()
 
-    def create_person_case(self, location_id):
+    def create_person_case(self, location_id, private=True):
         case = get_person_case_structure(None, self.episode_id)
         case.attrs['owner_id'] = location_id
+        case.attrs['update'][ENROLLED_IN_PRIVATE] = "true" if private else "false"
         return self.factory.create_or_update_cases([case])[0]
 
     def test_trigger(self):
         important_case_property = "phone_number"
         frivolous_case_property = "hair_color"
 
-        # Create, then update person case
+        # Create, then update test person case
         test_person = self.create_person_case(self.test_location.location_id)
         update_case(self.domain, test_person.case_id, {important_case_property: "7"})
-        # Neither should trigger forwarding
+
+        # Do the same for a public sector person case
+        public_person = self.create_person_case(self.real_location.location_id, private=False)
+        update_case(self.domain, public_person.case_id, {important_case_property: "7"})
+
+        # None of the above should trigger forwarding
         self.assertEqual(0, len(self.repeat_records().all()))
 
         # Create real case
