@@ -723,7 +723,7 @@ class AsyncIndicator(models.Model):
     """
     doc_id = models.CharField(max_length=255, null=False, db_index=True, unique=True)
     doc_type = models.CharField(max_length=126, null=False)
-    domain = models.CharField(max_length=126, null=False)
+    domain = models.CharField(max_length=126, null=False, db_index=True)
     indicator_config_ids = ArrayField(
         models.CharField(max_length=126, null=True, blank=True),
         null=False
