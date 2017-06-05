@@ -295,17 +295,7 @@ class BETSAYUSHReferralRepeater(BaseBETSRepeater):
         )
 
 
-class BETSUserRepeater(BETSRepeaterMixin, UserRepeater):
-    friendly_name = _("Forward users to BETS")
-    payload_generator_classes = (UserPayloadGenerator,)
-
-    def allowed_to_forward(self, user):
-        return True
-
-
-class BETSLocationRepeater(BETSRepeaterMixin, LocationRepeater):
-    friendly_name = _("Forward locations to BETS")
-    payload_generator_classes = (BETSLocationPayloadGenerator,)
+def _is_real_private_location(location):
     location_types_to_forward = (
         'ctd',
             'sto',
@@ -317,10 +307,25 @@ class BETSLocationRepeater(BETSRepeaterMixin, LocationRepeater):
                         'pcc',
                         'pac',
     )
+    return (location.metadata.get('is_test') != "yes"
+            and location.location_type.code in location_types_to_forward)
+
+
+class BETSUserRepeater(BETSRepeaterMixin, UserRepeater):
+    friendly_name = _("Forward users to BETS")
+    payload_generator_classes = (UserPayloadGenerator,)
+
+    def allowed_to_forward(self, user):
+        return any(_is_real_private_location(loc)
+                   for loc in user.get_sql_locations(self.domain))
+
+
+class BETSLocationRepeater(BETSRepeaterMixin, LocationRepeater):
+    friendly_name = _("Forward locations to BETS")
+    payload_generator_classes = (BETSLocationPayloadGenerator,)
 
     def allowed_to_forward(self, location):
-        return (location.metadata.get('is_test') != "yes"
-                and location.location_type.code in self.location_types_to_forward)
+        return _is_real_private_location(location)
 
 
 class BETSBeneficiaryRepeater(BaseBETSRepeater):

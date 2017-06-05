@@ -482,27 +482,66 @@ class UserRepeaterTest(TestCase):
         )
         cls.repeater.save()
 
+        cls.private_loc_type = LocationType.objects.create(
+            domain=cls.domain,
+            name="pcp",
+            administrative=True,
+        )
+        cls.public_loc_type = LocationType.objects.create(
+            domain=cls.domain,
+            name="public",
+            administrative=True,
+        )
+
     @classmethod
     def tearDownClass(cls):
         super(UserRepeaterTest, cls).tearDownClass()
         cls.domain_obj.delete()
-        delete_all_repeat_records()
         delete_all_repeaters()
+
+    def tearDown(self):
+        super(UserRepeaterTest, self).tearDown()
+        delete_all_repeat_records()
 
     def repeat_records(self):
         return RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
 
-    def make_user(self):
-        return CommCareUser.create(
+    def make_user(self, location):
+        user = CommCareUser.create(
             self.domain,
             "davos.shipwright@stannis.gov",
             "123",
+            location=location,
         )
+        self.addCleanup(user.delete)
+        return user
 
-    def test_trigger(self):
-        self.assertEqual(0, len(self.repeat_records().all()))
-        self.make_user()
+    def make_location(self, location_type, is_test):
+        location = SQLLocation.objects.create(
+            domain=self.domain,
+            name="Storm's End",
+            site_code="storms_end",
+            location_type=location_type,
+            metadata={'is_test': is_test, 'nikshay_code': 'nikshay_code'},
+        )
+        self.addCleanup(location.delete)
+        return location
+
+    def test_real_private_user(self):
+        private_location = self.make_location(self.private_loc_type, is_test="no")
+        self.make_user(private_location)
         self.assertEqual(1, len(self.repeat_records().all()))
+
+
+    def test_public_user(self):
+        public_location = self.make_location(self.public_loc_type, is_test="no")
+        self.make_user(public_location)
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+    def test_test_user(self):
+        test_location = self.make_location(self.public_loc_type, is_test="yes")
+        self.make_user(test_location)
+        self.assertEqual(0, len(self.repeat_records().all()))
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
