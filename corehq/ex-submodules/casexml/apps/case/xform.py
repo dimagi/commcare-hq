@@ -7,10 +7,10 @@ from couchdbkit import ResourceNotFound
 from django.db.models import Q
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.signals import cases_received
-from casexml.apps.case.util import validate_phone_datetime
+from casexml.apps.case.util import validate_phone_datetime, update_sync_log_with_checks, prune_previous_log
 from casexml.apps.phone.cleanliness import should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -130,17 +130,15 @@ def _update_sync_logs(xform, case_db, config, cases):
     try:
         relevant_log = xform.get_sync_token()
     except ResourceNotFound:
-        if LOOSE_SYNC_TOKEN_VALIDATION.enabled(xform.domain):
-            relevant_log = None
-        else:
-            raise
+        relevant_log = None
 
     if relevant_log:
         # in reconciliation mode, things can be unexpected
         relevant_log.strict = config.strict_asserts
-        from casexml.apps.case.util import update_sync_log_with_checks
         update_sync_log_with_checks(relevant_log, xform, cases, case_db,
                                     case_id_blacklist=config.case_id_blacklist)
+
+        prune_previous_log(relevant_log)
 
 
 class CaseProcessingConfig(object):
@@ -291,9 +289,7 @@ def get_all_extensions_to_close(domain, case_updates):
 
 
 def get_extensions_to_close(case, domain):
-    outgoing_extension_indices = [index.relationship for index in case.indices
-                                  if index.relationship == CASE_INDEX_EXTENSION]
-    if not outgoing_extension_indices and case.closed and EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
+    if case.closed and EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
         return CaseAccessors(domain).get_extension_chain([case.case_id])
     else:
         return set()

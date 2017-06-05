@@ -3,6 +3,17 @@ from django.db import models
 from dimagi.utils.decorators.memoized import memoized
 
 
+REPORTING_MECHANISM_99_DOTS = 84
+REPORTING_MECHANISM_FIELD_OFFICER = 85
+REPORTING_MECHANISM_TREATMENT_SUPPORTER = 86
+REPORTING_MECHANISM_MERM = 96
+REPORTING_MECHANISM_NONE = 0
+
+DIRECTLY_OBSERVED_DOSE = 0
+MISSED_DOSE = 1
+SELF_ADMINISTERED_DOSE = 3
+
+
 def get_agency_by_motech_user_name(motech_user_name):
     try:
         return Agency.objects.get(
@@ -41,13 +52,13 @@ class Beneficiary(models.Model):
     emergencyContactNo = models.CharField(max_length=10, null=True)
     extraPulmonarySiteId = models.IntegerField(null=True)
     fatherHusbandName = models.CharField(max_length=60, null=True)
-    firstName = models.CharField(max_length=30, null=True)
+    firstName = models.CharField(max_length=30)
     gender = models.CharField(max_length=10, null=True)
     identificationNumber = models.CharField(max_length=30, null=True)
     identificationTypeId = models.CharField(max_length=10, null=True)
     isActive = models.CharField(max_length=10, null=True)
     languagePreferences = models.CharField(max_length=30, null=True)
-    lastName = models.CharField(max_length=30, null=True)
+    lastName = models.CharField(max_length=30)
     mdrTBSuspected = models.CharField(max_length=30, null=True)
     middleName = models.CharField(max_length=30, null=True)
     modificationDate = models.DateTimeField(null=True)
@@ -58,7 +69,7 @@ class Beneficiary(models.Model):
     organisationId = models.IntegerField()
     owner = models.CharField(max_length=255, null=True)
     patientCategoryId = models.IntegerField(null=True)
-    phoneNumber = models.CharField(max_length=10, null=True)
+    phoneNumber = models.CharField(max_length=10)
     pincode = models.IntegerField(null=True)
     provisionalDiagnosis = models.CharField(max_length=255, null=True)
     qpReferralBy = models.CharField(max_length=10, null=True)
@@ -130,6 +141,10 @@ class Beneficiary(models.Model):
         }[self.languagePreferences]
 
     @property
+    def name(self):
+        return ' '.join([self.firstName, self.lastName])
+
+    @property
     def referred_provider(self):
         return get_agency_by_motech_user_name(self.referredQP)
 
@@ -160,6 +175,7 @@ class Beneficiary(models.Model):
             '18': 'drivers_license',
             '19': 'ration_card',
             '20': 'voter_card',
+            None: 'none',
         }[self.identificationTypeId]
 
 
@@ -172,14 +188,14 @@ class Episode(models.Model):
     associatedFO = models.CharField(max_length=255, null=True)
     bankName = models.CharField(max_length=255, null=True)
     basisOfDiagnosis = models.CharField(max_length=255, null=True)
-    beneficiaryID = models.CharField(max_length=18)
+    beneficiaryID = models.CharField(max_length=18, db_index=True)
     branchName = models.CharField(max_length=255, null=True)
     creationDate = models.DateTimeField(null=True)
     creator = models.CharField(max_length=255, null=True)
-    dateOfDiagnosis = models.DateTimeField(null=True)
+    dateOfDiagnosis = models.DateTimeField()
     diabetes = models.CharField(max_length=255, null=True)
     dstStatus = models.CharField(max_length=255, null=True)
-    episodeDisplayID = models.IntegerField()
+    episodeDisplayID = models.IntegerField(db_index=True)
     episodeID = models.CharField(max_length=8, primary_key=True)
     extraPulmonary = models.CharField(max_length=255, null=True)
     hiv = models.CharField(max_length=255, null=True)
@@ -214,9 +230,9 @@ class Episode(models.Model):
     #  u'Patient missing',
     #  u'Pending']
     rxOutcomeDate = models.DateTimeField(null=True)
-    rxStartDate = models.DateTimeField(null=True)
+    rxStartDate = models.DateTimeField()
     rxSupervisor = models.CharField(max_length=255, null=True)
-    site = models.CharField(max_length=255, null=True)
+    site = models.CharField(max_length=255)
     status = models.CharField(max_length=255, null=True)
     treatingQP = models.CharField(max_length=255, null=True)
     treatmentOutcomeId = models.CharField(max_length=255, null=True)
@@ -228,6 +244,38 @@ class Episode(models.Model):
     treatmentCompletionInsentiveFlag = models.CharField(max_length=1, null=True)
     mermIMIEno = models.CharField(max_length=255, null=True)
     adherenceSupportAssigned = models.CharField(max_length=255, null=True)
+
+    @property
+    def adherence_total_doses_taken(self):
+        return Adherence.objects.filter(
+            episodeId=self.episodeID,
+            dosageStatusId__in=[DIRECTLY_OBSERVED_DOSE, SELF_ADMINISTERED_DOSE],
+        ).count()
+
+    @property
+    @memoized
+    def adherence_tracking_mechanism(self):
+        reporting_mechanism_values = Adherence.objects.filter(
+            episodeId=self.episodeID,
+        ).exclude(
+            reportingMechanismId=REPORTING_MECHANISM_NONE,
+        ).values('reportingMechanismId').distinct()
+
+        values = [field_to_value['reportingMechanismId'] for field_to_value in reporting_mechanism_values]
+
+        if reporting_mechanism_values:
+            if REPORTING_MECHANISM_99_DOTS in values:
+                return '99dots'
+            elif REPORTING_MECHANISM_MERM in values:
+                return 'merm'
+            elif REPORTING_MECHANISM_FIELD_OFFICER in values:
+                return 'field_officer'
+            elif REPORTING_MECHANISM_TREATMENT_SUPPORTER in values:
+                return 'treatment_supporter'
+            else:
+                return 'contact_centre'
+        else:
+            return ''
 
     @property
     def basis_of_diagnosis(self):
@@ -269,9 +317,10 @@ class Episode(models.Model):
                 'After Treatment Failure': 'treatment_after_failure',
                 'Recurrent': 'recurrent',
                 'Relapse': 'recurrent',
+                'Others': '',
                 'Select': '',
-                'None': '',
-            }
+                None: '',
+            }[self.retreatmentReason]
         return ''
 
     @property
@@ -283,6 +332,10 @@ class Episode(models.Model):
             None: 'unknown',
             'Select': 'unknown',
         }[self.diabetes]
+
+    @property
+    def dots_99_enabled(self):
+        return 'true' if self.adherence_tracking_mechanism in ['99dots', 'merm'] else 'false'
 
     @property
     def site_property(self):
@@ -382,10 +435,13 @@ class Episode(models.Model):
             return {
                 'Cured': 'cured',
                 'Died': 'died',
-                'died': 'died',
+                'DIED': 'died',
                 'Failure': 'failure',
-                'SWITCH TO CAT IV': 'regimen_changed',
-                'Switched to Category IV/V': 'regimen_changed',
+                'SWITCH OVER CAT4': 'switched_to_cat_ivv',
+                'SWITCH TO CAT IV': 'switched_to_cat_ivv',
+                'Switched to Category IV/V': 'switched_to_cat_ivv',
+                'Transferred Out': 'transferred_out',
+                'Treatment Completed': 'treatment_completed',
             }[self.treatmentOutcomeId]
 
     @property
@@ -396,7 +452,7 @@ class Episode(models.Model):
             'died',
             'failure',
             'loss_to_follow_up',
-            'regimen_changed',
+            'switched_to_cat_ivv',
         ]
 
 
@@ -407,38 +463,38 @@ class Adherence(models.Model):
     commentId = models.CharField(max_length=8, null=True)
     creationDate = models.DateTimeField()
     creator = models.CharField(max_length=255, null=True)
-    dosageStatusId = models.IntegerField()
+    dosageStatusId = models.IntegerField(db_index=True)
     doseDate = models.DateTimeField()
     doseReasonId = models.IntegerField()
-    episodeId = models.CharField(max_length=8)
+    episodeId = models.CharField(max_length=8, db_index=True)
     modificationDate = models.DateTimeField(null=True)
     modifiedBy = models.CharField(max_length=255, null=True)
     owner = models.CharField(max_length=255, null=True)
-    reportingMechanismId = models.IntegerField()
+    reportingMechanismId = models.IntegerField(db_index=True)
     unknwDoseReasonId = models.CharField(max_length=8, null=True)
 
     @property
     def adherence_value(self):
         return {
-            0: 'directly_observed_dose',
-            1: 'missed_dose',
-            3: 'self_administered_dose',
+            DIRECTLY_OBSERVED_DOSE: 'directly_observed_dose',
+            MISSED_DOSE: 'missed_dose',
+            SELF_ADMINISTERED_DOSE: 'self_administered_dose',
         }[self.dosageStatusId]
 
 
 class EpisodePrescription(models.Model):
     id = models.BigIntegerField(primary_key=True)
     adultOrPaediatric = models.CharField(max_length=255, null=True)
-    beneficiaryId = models.ForeignKey(Beneficiary, null=True, on_delete=models.CASCADE)
-    creationDate = models.DateTimeField(null=True)
+    beneficiaryId = models.CharField(max_length=18, null=True, db_index=True)
+    creationDate = models.DateTimeField()
     creator = models.CharField(max_length=255, null=True)
     dosageStrength = models.CharField(max_length=255, null=True)
-    episodeId = models.ForeignKey(Episode, null=True, on_delete=models.CASCADE)
+    episodeId = models.CharField(max_length=8, null=True)
     modificationDate = models.DateTimeField(null=True)
     modifiedBy = models.CharField(max_length=255, null=True)
     next_refill_date = models.DateTimeField(null=True)
     numberOfDays = models.IntegerField()
-    numberOfDaysPrescribed = models.CharField(max_length=255, null=True)
+    numberOfDaysPrescribed = models.CharField(max_length=255)
     numberOfRefill = models.CharField(max_length=255, null=True)
     owner = models.CharField(max_length=255, null=True)
     presUnits = models.CharField(max_length=255, null=True)
@@ -455,6 +511,39 @@ class EpisodePrescription(models.Model):
     voucherStatus = models.CharField(max_length=255, null=True)
     motechUserName = models.CharField(max_length=255, null=True)
     physicalVoucherNumber = models.CharField(max_length=255, null=True)
+
+
+class Voucher(models.Model):
+    id = models.BigIntegerField()
+    caseId = models.CharField(max_length=18, null=True)
+    comments = models.CharField(max_length=512, null=True)
+    creationDate = models.DateTimeField()
+    creator = models.CharField(max_length=255, null=True)
+    episodeId = models.CharField(max_length=8, null=True)
+    issuedAmount = models.CharField(max_length=255, null=True)
+    labId = models.CharField(max_length=255, null=True)
+    labTestId = models.CharField(max_length=255, null=True)
+    modificationDate = models.DateTimeField()
+    modifiedBy = models.CharField(max_length=255, null=True)
+    owner = models.CharField(max_length=255, null=True)
+    pharmacyId = models.CharField(max_length=255, null=True)
+    prescriptionId = models.CharField(max_length=255, null=True)
+    validationModeId = models.CharField(max_length=255, null=True)
+    voucherAmount = models.CharField(max_length=255, null=True)
+    voucherCreatedDate = models.DateTimeField()
+    voucherGeneratedBy = models.CharField(max_length=255, null=True)
+    voucherLastUpdateDate = models.DateTimeField(null=True)
+    voucherNumber = models.BigIntegerField(primary_key=True)
+    voucherStatusId = models.CharField(max_length=255, null=True)
+    voucherTypeId = models.CharField(max_length=255, null=True)
+    agencyName = models.CharField(max_length=255, null=True)
+    voucherCancelledDate = models.DateTimeField(null=True)
+    voucherExpiredDate = models.DateTimeField(null=True)
+    voucherValidatedDate = models.DateTimeField(null=True)
+    voucherUsedDate = models.DateTimeField(null=True)
+    physicalVoucherNumber = models.CharField(max_length=255, null=True)
+    markedUpVoucherAmount = models.CharField(max_length=255, null=True)
+    voucherAmountSystem = models.CharField(max_length=255, null=True)
 
 
 class LabTest(models.Model):
@@ -541,13 +630,23 @@ class Agency(models.Model):
 
     @property
     def location_type(self):
-        return {
-            'ATFO': 'pdr',
-            'ATHC': 'pac',
-            'ATLC': 'plc',
-            'ATPH': 'pcc',
-            'ATPR': 'pcp',
-        }[self.agencyTypeId]
+        if self.agencyTypeId == 'ATFO':
+            return None
+        elif self.agencyTypeId == 'ATPR':
+            return {
+                'PRQP': 'pcp',
+                'PRIP': 'pac',
+            }[self.agencySubTypeId]
+        else:
+            return {
+                'ATHC': 'pcp',
+                'ATLC': 'plc',
+                'ATPH': 'pcc',
+            }[self.agencyTypeId]
+
+    @property
+    def is_field_officer(self):
+        return self.agencyTypeId == 'ATFO'
 
     @property
     def name(self):
@@ -617,3 +716,12 @@ class UserDetail(models.Model):
     valid = models.BooleanField()
     villageTownCity = models.CharField(max_length=256, null=True)
     wardId = models.CharField(max_length=256, null=True)
+
+
+class MigratedBeneficiaryCounter(models.Model):
+    id = models.AutoField(primary_key=True)
+
+    @classmethod
+    def get_next_counter(cls):
+        counter = MigratedBeneficiaryCounter.objects.create()
+        return counter.id

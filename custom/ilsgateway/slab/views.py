@@ -5,7 +5,7 @@ from django.utils.decorators import method_decorator
 
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import get_location, SQLLocation
 from corehq.apps.locations.views import LocationsListView
 from corehq.apps.reports.standard import CustomProjectReport
 from corehq.apps.style.decorators import (
@@ -34,19 +34,14 @@ class SLABEditLocationView(BaseDomainView):
     @use_multiselect
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
-        if self.sql_location.location_type.administrative:
+        if self.location.location_type.administrative:
             return HttpResponseBadRequest()
         return super(SLABEditLocationView, self).dispatch(request, *args, **kwargs)
 
     @property
     @memoized
     def location(self):
-        return Location.get(self.kwargs['location_id'])
-
-    @property
-    @memoized
-    def sql_location(self):
-        return self.location.sql_location
+        return get_location(self.kwargs['location_id'])
 
     def section_url(self):
         return reverse(
@@ -57,7 +52,7 @@ class SLABEditLocationView(BaseDomainView):
     @property
     def page_context(self):
         try:
-            slab_config = SLABConfig.objects.get(sql_location=self.sql_location)
+            slab_config = SLABConfig.objects.get(sql_location=self.location)
             is_pilot = slab_config.is_pilot
             selected_ids = slab_config.closest_supply_points.all().values_list('pk', flat=True)
         except SLABConfig.DoesNotExist:
@@ -73,7 +68,7 @@ class SLABEditLocationView(BaseDomainView):
     @property
     def choices(self):
         return SLABConfig.objects.filter(is_pilot=True) \
-            .exclude(sql_location=self.sql_location).values_list('sql_location__pk', 'sql_location__name')
+            .exclude(sql_location=self.location).values_list('sql_location__pk', 'sql_location__name')
 
     def post(self, request, *args, **kwargs):
         form = SLABEditLocationForm(data=request.POST)
@@ -85,8 +80,8 @@ class SLABEditLocationView(BaseDomainView):
         is_pilot = cleaned_data['is_pilot']
         selected_ids = cleaned_data['selected_ids']
         if is_pilot:
-            with CriticalSection(['update-slab-config-for-location-%s' % self.sql_location.location_id]):
-                slab_config, _ = SLABConfig.objects.get_or_create(sql_location=self.sql_location)
+            with CriticalSection(['update-slab-config-for-location-%s' % self.location.location_id]):
+                slab_config, _ = SLABConfig.objects.get_or_create(sql_location=self.location)
                 slab_config.is_pilot = is_pilot
                 slab_config.closest_supply_points.clear()
                 slab_config.closest_supply_points.add(
@@ -94,11 +89,11 @@ class SLABEditLocationView(BaseDomainView):
                 )
                 slab_config.save()
         else:
-            SLABConfig.objects.filter(sql_location=self.sql_location).delete()
+            SLABConfig.objects.filter(sql_location=self.location).delete()
 
         messages.success(request, 'Location updated successfully')
         return HttpResponseRedirect(
-            reverse('slab_edit_location', kwargs={'domain': self.domain, 'location_id': self.location.get_id}),
+            reverse('slab_edit_location', kwargs={'domain': self.domain, 'location_id': self.location.location_id}),
         )
 
 

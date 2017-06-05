@@ -17,7 +17,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 
-from .case_utils import CASE_TYPE_EPISODE
+from .case_utils import CASE_TYPE_EPISODE, get_prescription_vouchers_from_episode
 from .const import (
     DOSE_TAKEN_INDICATORS,
     DAILY_SCHEDULE_FIXTURE_NAME,
@@ -36,19 +36,29 @@ logger = get_task_logger(__name__)
     run_every=crontab(day_of_week=[1], hour=0, minute=0),  # every Monday
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
-def enikshay_adherence_task():
-    # runs adherence calculations for all domains that have `toggles.UATBC_ADHERENCE_TASK` enabled
+def enikshay_task():
+    # runs adherence and voucher calculations for all domains that have
+    # `toggles.UATBC_ADHERENCE_TASK` enabled
     domains = toggles.UATBC_ADHERENCE_TASK.get_enabled_domains()
     for domain in domains:
-        updater = EpisodeAdherenceUpdater(domain)
+        updater = EpisodeUpdater(domain)
         updater.run()
 
 
-class EpisodeAdherenceUpdater(object):
-    """This iterates over all open 'episode' cases and sets 'adherence' related properties
-    according to this spec https://docs.google.com/document/d/1FjSdLYOYUCRBuW3aSxvu3Z5kvcN6JKbpDFDToCgead8/edit
+class Timer:
+    def __enter__(self):
+        self.start = datetime.datetime.now()
+        return self
 
-    This is applicable to various enikshay domains. The domain can be specified in the initalization
+    def __exit__(self, *args):
+        self.end = datetime.datetime.now()
+        self.interval = (self.end - self.start).seconds
+
+
+class EpisodeUpdater(object):
+    """
+    This iterates over all open 'episode' cases and sets 'adherence' and 'voucher' related properties
+    This is applicable to various enikshay domains. The domain can be specified in __init__ method
     """
 
     def __init__(self, domain):
@@ -60,22 +70,66 @@ class EpisodeAdherenceUpdater(object):
 
     def run(self):
         # iterate over all open 'episode' cases and set 'adherence' properties
-        for episode in self._get_open_episode_cases():
-            update = EpisodeUpdate(episode, self)
-            try:
-                case_block = update.case_block()
-                if case_block:
-                    submit_case_blocks(
-                        [ElementTree.tostring(case_block.as_xml())],
-                        self.domain
+        update_count = 0
+        noupdate_count = 0
+        error_count = 0
+        with Timer() as t:
+            for episode in self._get_open_episode_cases():
+                adherence_update = EpisodeAdherenceUpdate(episode, self)
+                voucher_update = EpisodeVoucherUpdate(self.domain, episode)
+                try:
+                    update_json = adherence_update.update_json()['update']
+                    update_json.update(voucher_update.update_json())
+                    case_block = self._get_case_block(update_json, episode.case_id)
+                    if case_block:
+                        submit_case_blocks(
+                            [ElementTree.tostring(case_block.as_xml())],
+                            self.domain
+                        )
+                        update_count += 1
+                    else:
+                        noupdate_count += 1
+                except Exception, e:
+                    error_count += 1
+                    logger.error(
+                        "Error calculating updates for episode case_id({}): {}".format(
+                            episode.case_id,
+                            e
+                        )
                     )
-            except Exception, e:
-                logger.error(
-                    "Error calculating adherence values for episode case_id({}): {}".format(
-                        episode.case_id,
-                        e
-                    )
-                )
+        logger.info(
+            "Summary of enikshay_task: domain: {domain}, duration (sec): {duration} "
+            "Cases Updated {updates}, cases errored {errors} and {noupdates} "
+            "cases didn't need update. ".format(
+                domain=self.domain, duration=t.interval, updates=update_count, errors=error_count,
+                noupdates=noupdate_count)
+        )
+
+    def update_single_case(self, episode_case):
+        # updates a single episode_case.
+        assert episode_case.domain == self.domain
+        update_json = EpisodeAdherenceUpdate(episode_case, self).update_json()['update']
+        case_block = self._get_case_block(update_json, episode_case.case_id)
+        if case_block:
+            submit_case_blocks(
+                [ElementTree.tostring(case_block.as_xml())],
+                self.domain
+            )
+
+    @staticmethod
+    def _get_case_block(update, episode_id):
+        """
+        Returns:
+            CaseBlock object with episode updates. If no update is necessary, None is returned
+        """
+        if update:
+            return CaseBlock(**{
+                'case_id': episode_id,
+                'create': False,
+                'update': update
+            })
+        else:
+            return None
 
     def _get_open_episode_cases(self):
         # return all open 'episode' cases
@@ -86,19 +140,25 @@ class EpisodeAdherenceUpdater(object):
     @memoized
     def get_doses_data(self):
         # return 'doses_per_week' by 'schedule_id' from the Fixture data
-        fixtures = FixtureDataItem.get_indexed_items(self.domain, DAILY_SCHEDULE_FIXTURE_NAME, SCHEDULE_ID_FIXTURE)
-        return dict((k, int(fixture['doses_per_week'])) for k, fixture in fixtures.items())
+        fixtures = FixtureDataItem.get_item_list(self.domain, DAILY_SCHEDULE_FIXTURE_NAME)
+        doses_per_week_by_schedule_id = {}
+        for f in fixtures:
+            schedule_id = f.fields[SCHEDULE_ID_FIXTURE].field_list[0].field_value
+            doses_per_week = int(f.fields["doses_per_week"].field_list[0].field_value)
+            doses_per_week_by_schedule_id[schedule_id] = doses_per_week
+        return doses_per_week_by_schedule_id
 
 
-class EpisodeUpdate(object):
+class EpisodeAdherenceUpdate(object):
     """
     Class to capture adherence related calculations specific to an 'episode' case
+    per the spec https://docs.google.com/document/d/1FjSdLYOYUCRBuW3aSxvu3Z5kvcN6JKbpDFDToCgead8/edit
     """
     def __init__(self, episode_case, case_updater):
         """
         Args:
             episode_case: An 'episode' case object
-            case_repeater: EpisodeAdherenceUpdater object
+            case_updater: EpisodeUpdater object
         """
         self.episode = episode_case
         self.case_updater = case_updater
@@ -135,7 +195,8 @@ class EpisodeUpdate(object):
             self.episode.case_id
         )
 
-    def calculate_doses_taken_by_day(self, adherence_cases):
+    @staticmethod
+    def calculate_doses_taken_by_day(adherence_cases):
         """
         Args:
             adherence_cases: list of 'adherence' case dicts
@@ -165,7 +226,7 @@ class EpisodeUpdate(object):
             else:
                 valid_cases = filter(
                     lambda case: (
-                        case['adherence_source'] is 'enikshay' and
+                        case['adherence_source'] == 'enikshay' and
                         (not case['closed'] or (case['closed'] and
                          case['adherence_closure_reason'] == HISTORICAL_CLOSURE_REASON))
                     ),
@@ -206,7 +267,8 @@ class EpisodeUpdate(object):
             )
             return None
 
-    def count_doses_taken(self, dose_taken_by_date, lte=None, gte=None):
+    @staticmethod
+    def count_doses_taken(dose_taken_by_date, lte=None, gte=None):
         """
         Args:
             dose_taken_by_date: result of self.calculate_doses_taken_by_day
@@ -299,19 +361,118 @@ class EpisodeUpdate(object):
                         True,
                         "No fixture item found with schedule_id {}".format(adherence_schedule_id)
                     )
-        return {'update': update, 'debug_data': debug_data}
-
-    def case_block(self):
-        """
-        Returns:
-            CaseBlock object with adherence updates. If no update is necessary, None is returned
-        """
-        update = self.update_json()['update']
-        if update:
-            return CaseBlock(**{
-                'case_id': self.episode.case_id,
-                'create': False,
-                'update': update
-            })
+        if self.check_if_needs_update(update):
+            return {'update': update, 'debug_data': debug_data}
         else:
-            return None
+            return {'update': None, 'debug_data': debug_data}
+
+    def check_if_needs_update(self, case_properties_expected):
+        """
+        Args:
+            case_properties_expected: dict of case property name to values
+
+        Returns:
+            True if any one of case_properties_expected is not set on self.episode case
+        """
+        return any([
+            self.get_property(k) != v
+            for (k, v) in case_properties_expected.iteritems()
+        ])
+
+
+class EpisodeVoucherUpdate(object):
+    """
+    Class to capture voucher related calculations specific to an 'episode' case
+    """
+    def __init__(self, domain, episode_case):
+        """
+        Args:
+            episode_case: An 'episode' case object
+        """
+        self.domain = domain
+        self.episode = episode_case
+
+    @staticmethod
+    def _get_fulfilled_voucher_date(voucher):
+        return voucher.get_case_property('date_fulfilled')
+
+    @memoized
+    def _get_all_vouchers(self):
+        return get_prescription_vouchers_from_episode(self.domain, self.episode.case_id)
+
+    def _get_fulfilled_vouchers(self):
+        relevant_vouchers = [
+            voucher for voucher in self._get_all_vouchers()
+            if (voucher.get_case_property('voucher_type') == 'prescription'
+                and voucher.get_case_property('state') == 'fulfilled')
+        ]
+        return sorted(relevant_vouchers, key=self._get_fulfilled_voucher_date)
+
+    def _get_fulfilled_available_vouchers(self):
+        relevant_vouchers = [
+            voucher for voucher in self._get_all_vouchers()
+            if (voucher.get_case_property('voucher_type') == 'prescription'
+                and voucher.get_case_property('state') in
+                ['fulfilled', 'available', 'paid', 'approved', 'rejected'])
+        ]
+        return sorted(relevant_vouchers, key=lambda v: v.get_case_property('date_issued'))
+
+    @staticmethod
+    def _updated_fields(existing_properties, new_properties):
+        updated_fields = {}
+        for prop, value in new_properties.items():
+            if unicode(existing_properties.get(prop, '--')) != unicode(value):
+                updated_fields[prop] = value
+        return updated_fields
+
+    def update_json(self):
+        output_json = {}
+        output_json.update(self.get_prescription_total_days())
+        output_json.update(self.get_prescription_refill_due_dates())
+        return self._updated_fields(self.episode.dynamic_case_properties(), output_json)
+
+    def get_prescription_total_days(self):
+        prescription_json = {}
+        total_days = 0
+        for voucher in self._get_fulfilled_vouchers():
+            raw_days_value = voucher.get_case_property('final_prescription_num_days')
+            total_days += int(raw_days_value) if raw_days_value else 0
+
+            for num_days in (30, 60, 90, 120,):
+                prop = "prescription_total_days_threshold_{}".format(num_days)
+                if total_days >= num_days and prop not in prescription_json:
+                    prescription_json[prop] = self._get_fulfilled_voucher_date(voucher)
+        prescription_json['prescription_total_days'] = total_days
+
+        return prescription_json
+
+    def get_prescription_refill_due_dates(self):
+        """The dates on which the app predicts that the episode should be eligible for prescription refills
+
+        https://docs.google.com/document/d/1s1-MHKS5I8cvf0_7NvcqeTsYGsXLy9YGArw2L7cZSRM/edit#
+        """
+        fulfilled_available_vouchers = self._get_fulfilled_available_vouchers()
+        if not fulfilled_available_vouchers:
+            return {}
+
+        latest_voucher = fulfilled_available_vouchers[-1]
+
+        date_last_refill = parse_date(latest_voucher.get_case_property('date_issued'))
+        if date_last_refill is None:
+            return {}
+
+        voucher_length = (
+            latest_voucher.get_case_property('final_prescription_num_days')
+            or latest_voucher.get_case_property('prescription_num_days')
+        )
+
+        try:
+            refill_due_date = date_last_refill + datetime.timedelta(days=int(voucher_length))
+        except ValueError:
+            return {}
+
+        return {
+            'date_last_refill': date_last_refill.strftime("%Y-%m-%d"),
+            'voucher_length': voucher_length,
+            'refill_due_date': refill_due_date.strftime("%Y-%m-%d"),
+        }

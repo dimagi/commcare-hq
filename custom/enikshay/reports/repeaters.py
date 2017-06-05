@@ -20,7 +20,7 @@ class ENikshayRepeaterFilter(RepeaterFilter):
 
     def __init__(self, *args, **kwargs):
         super(ENikshayRepeaterFilter, self).__init__(*args, **kwargs)
-        self.enikshay_repeaters = (to_function(cls, failhard=True) for cls in settings.ENIKSHAY_REPEATERS)
+        self.enikshay_repeaters = tuple(to_function(cls, failhard=True) for cls in settings.ENIKSHAY_REPEATERS)
 
     def _get_repeaters(self):
         return [

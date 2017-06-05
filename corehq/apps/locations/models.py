@@ -474,7 +474,8 @@ class SQLLocation(MPTTModel):
             'longitude': float(self.longitude) if self.longitude else None,
             'metadata': self.metadata,
             'location_type': self.location_type.name,
-            "lineage": self.lineage,
+            'location_type_code': self.location_type.code,
+            'lineage': self.lineage,
             'parent_location_id': self.parent_location_id,
         }
 
@@ -955,20 +956,6 @@ class Location(CachedCouchDocumentMixin, Document):
             except SQLLocation.DoesNotExist:
                 pass
         super(Location, self).delete(*args, **kwargs)
-
-    @classmethod
-    def filter_by_type(cls, domain, loc_type, root_loc=None):
-        if root_loc:
-            query = root_loc.sql_location.get_descendants(include_self=True)
-        else:
-            query = SQLLocation.objects
-        ids = (query.filter(domain=domain, location_type__name=loc_type)
-                    .location_ids())
-
-        return (
-            cls.wrap(l) for l in iter_docs(cls.get_db(), list(ids))
-            if not l.get('is_archived', False)
-        )
 
     @classmethod
     def by_domain(cls, domain, include_docs=True):

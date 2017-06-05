@@ -487,10 +487,10 @@ class WriterTest(SimpleTestCase):
         with writer.open([export_instance]):
             _write_export_instance(writer, export_instance, docs)
         with ExportFile(writer.path, writer.format) as export:
-            exported_tables = [table for table in re.findall('<h2>(.*)</h2>', export.read())]
+            exported_tables = [table for table in re.findall('<table>', export.read())]
 
         expected_tables = [t.label for t in tables]
-        self.assertEqual(expected_tables, exported_tables)
+        self.assertEqual(len(expected_tables), len(exported_tables))
 
     def test_multiple_write_export_instance_calls(self):
         """

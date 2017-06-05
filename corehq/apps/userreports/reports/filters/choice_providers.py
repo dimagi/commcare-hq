@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
 from django.utils.translation import ugettext
+from sqlalchemy import or_
 
 from sqlalchemy.exc import ProgrammingError
 from corehq.apps.es import GroupES, UserES
@@ -184,6 +185,41 @@ class DataSourceColumnChoiceProvider(ChoiceProvider):
 
     def get_choices_for_known_values(self, values, user):
         return []
+
+
+class MultiFieldDataSourceColumnChoiceProvider(DataSourceColumnChoiceProvider):
+
+    @property
+    def _sql_columns(self):
+        try:
+            return [self._adapter.get_table().c[field] for field in self.report_filter.fields]
+        except KeyError as e:
+            raise ColumnNotFoundError(e.message)
+
+    def get_values_for_query(self, query_context):
+        query = self._adapter.session_helper.Session.query(*self._sql_columns)
+        if query_context.query:
+            query = query.filter(
+                or_(
+                    *[
+                        sql_column.ilike(u"%{}%".format(query_context.query))
+                        for sql_column in self._sql_columns
+                    ]
+                )
+            )
+
+        query = (query.distinct().order_by(*self._sql_columns).limit(query_context.limit)
+                 .offset(query_context.offset))
+        try:
+            result = []
+            for row in query:
+                for value in row:
+                    if query_context and query_context.query.lower() not in value.lower():
+                        continue
+                    result.append(value)
+            return result
+        except ProgrammingError:
+            return []
 
 
 class LocationChoiceProvider(ChainableChoiceProvider):

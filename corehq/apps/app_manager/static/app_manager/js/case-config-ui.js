@@ -991,11 +991,14 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
         }
     };
 
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
-    var form_requires = ko.observable(initial_page_data('form_requires'));
-    var caseConfig = new CaseConfig(_.extend({}, initial_page_data("case_config_options"), {
-        home: $('#case-config-ko'),
-        requires: form_requires,
-    }));
-    caseConfig.init();
+    $(function() {
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+        if (initial_page_data('has_form_source')) {
+            var caseConfig = new CaseConfig(_.extend({}, initial_page_data("case_config_options"), {
+                home: $('#case-config-ko'),
+                requires: ko.observable(initial_page_data("form_requires")),
+            }));
+            caseConfig.init();
+        }
+    });
 });

@@ -1,5 +1,5 @@
 from casexml.apps.phone.fixtures import FixtureProvider
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import get_location
 from custom.m4change.constants import M4CHANGE_DOMAINS
 from lxml import etree as ElementTree
 
@@ -38,10 +38,10 @@ class LocationFixtureProvider(FixtureProvider):
         })
 
         locations_element = ElementTree.Element('locations')
-        location = Location.get(location_id)
+        location = get_location(location_id)
         location_element = ElementTree.Element('location', attrib={
             'name': location.name,
-            'id': location.get_id
+            'id': location.location_id
         })
         locations_element.append(location_element)
 

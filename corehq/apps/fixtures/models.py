@@ -6,7 +6,7 @@ from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.fixtures.dbaccessors import (
     get_owner_ids_by_type,
     get_fixture_data_types_in_domain,
-    get_fixture_items_by_data_type
+    get_fixture_items_for_data_types
 )
 from corehq.apps.fixtures.exceptions import FixtureException, FixtureTypeCheckError
 from corehq.apps.fixtures.utils import clean_fixture_field_name, \
@@ -409,8 +409,12 @@ class FixtureDataItem(Document):
 
     @classmethod
     def by_data_type(cls, domain, data_type, bypass_cache=False):
-        data_type_id = _id_from_doc(data_type)
-        return get_fixture_items_by_data_type(domain, data_type_id, bypass_cache)
+        return cls.by_data_types(domain, [data_type], bypass_cache)
+
+    @classmethod
+    def by_data_types(cls, domain, data_types, bypass_cache=False):
+        data_type_ids = set(_id_from_doc(d) for d in data_types)
+        return get_fixture_items_for_data_types(domain, data_type_ids, bypass_cache)
 
     @classmethod
     def by_domain(cls, domain):

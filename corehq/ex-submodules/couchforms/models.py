@@ -160,7 +160,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
 
     @property
     def form_data(self):
-        return self.form
+        return DictProperty().unwrap(self.form)[1]
 
     @property
     def user_id(self):

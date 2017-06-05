@@ -2147,6 +2147,7 @@ class CaseSearch(DocumentSchema):
     search_button_display_condition = StringProperty()
     include_closed = BooleanProperty(default=False)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
+    blacklisted_owner_ids_expression = StringProperty()
 
 
 class ParentSelect(DocumentSchema):
@@ -2530,8 +2531,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
 
     """
     module_type = 'basic'
-    case_label = DictProperty()
-    referral_label = DictProperty()
     forms = SchemaListProperty(Form)
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
@@ -2566,7 +2565,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 short=Detail(detail.to_json()),
                 long=Detail(detail.to_json()),
             ),
-            case_label={(lang or 'en'): 'Cases'},
         )
         module.get_or_create_unique_id()
         return module
@@ -3197,7 +3195,6 @@ class SchedulePhase(IndexedSchema):
 
 class AdvancedModule(ModuleBase):
     module_type = 'advanced'
-    case_label = DictProperty()
     forms = SchemaListProperty(FormBase)
     case_details = SchemaProperty(DetailPair)
     product_details = SchemaProperty(DetailPair)
@@ -3869,20 +3866,6 @@ class CareplanModule(ModuleBase):
         return errors
 
 
-class ReportGraphConfig(DocumentSchema):
-    graph_type = StringProperty(
-        choices=[
-            'bar',
-            'time',
-            'xy',
-        ],
-        default='bar',
-        required=True,
-    )
-    series_configs = DictProperty(DictProperty)
-    config = DictProperty()
-
-
 class ReportAppFilter(DocumentSchema):
 
     @classmethod
@@ -4200,33 +4183,7 @@ class ReportAppConfig(DocumentSchema):
     xpath_description = StringProperty()
     use_xpath_description = BooleanProperty(default=False)
     show_data_table = BooleanProperty(default=True)
-    graph_configs = DictProperty(ReportGraphConfig) # deprecated
     complete_graph_configs = DictProperty(GraphConfiguration)
-
-    def migrate_graph_configs(self, domain):
-        if len(self.complete_graph_configs):
-            return
-
-        self.complete_graph_configs = {}
-        from corehq.apps.userreports.reports.specs import MultibarChartSpec
-        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import MobileSelectFilterHelpers
-        for chart_config in self.report(domain).charts:
-            if isinstance(chart_config, MultibarChartSpec):
-                limited_graph_config = self.graph_configs.get(chart_config.chart_id, ReportGraphConfig())
-                self.complete_graph_configs[chart_config.chart_id] = GraphConfiguration(
-                    graph_type=limited_graph_config.graph_type,
-                    config=limited_graph_config.config,
-                    series=[GraphSeries(
-                        config=limited_graph_config.series_configs.get(c.column_id, {}),
-                        locale_specific_config={},
-                        data_path="",
-                        x_function="",
-                        y_function="",
-                    ) for c in chart_config.y_axis_columns],
-                    locale_specific_config={},
-                    annotations=[]
-                )
-        self.graph_configs = {}
 
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
@@ -4854,6 +4811,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # legacy property; kept around to be able to identify (deprecated) v1 apps
     application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
+    last_modified = DateTimeProperty()
 
     def assert_app_v2(self):
         assert self.application_version == APP_V2
@@ -5352,6 +5310,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return record
 
     def save(self, response_json=None, increment_version=None, **params):
+        self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
         user = getattr(view_utils.get_request(), 'couch_user', None)
@@ -5359,6 +5318,15 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
         super(ApplicationBase, self).save(
             response_json=response_json, increment_version=increment_version, **params)
+
+    @classmethod
+    def save_docs(cls, docs, **kwargs):
+        utcnow = datetime.datetime.utcnow()
+        for doc in docs:
+            doc['last_modified'] = utcnow
+        super(ApplicationBase, cls).save_docs(docs, **kwargs)
+
+    bulk_save = save_docs
 
     def set_form_versions(self, previous_version, force_new_version=False):
         # by default doing nothing here is fine.
@@ -5473,6 +5441,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_grid_menus = BooleanProperty(default=False)
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
+    mobile_ucr_sync_interval = IntegerProperty()
 
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
@@ -5496,15 +5465,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def wrap(cls, data):
-        for module in data.get('modules', []):
-            for attr in ('case_label', 'referral_label'):
-                if not module.has_key(attr):
-                    module[attr] = {}
-            for lang in data['langs']:
-                if not module['case_label'].get(lang):
-                    module['case_label'][lang] = commcare_translations.load_translations(lang).get('cchq.case', 'Cases')
-                if not module['referral_label'].get(lang):
-                    module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
         data.pop('commtrack_enabled', None)  # Remove me after migrating apps
         self = super(Application, cls).wrap(data)
 
@@ -5808,22 +5768,22 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     'form': form
                 }
 
-    def get_form(self, unique_form_id, bare=True):
+    def get_form(self, form_unique_id, bare=True):
         def matches(form):
-            return form.get_unique_id() == unique_form_id
+            return form.get_unique_id() == form_unique_id
         for obj in self.get_forms(bare):
             if matches(obj if bare else obj['form']):
                 return obj
         raise FormNotFoundException(
             ("Form in app '%s' with unique id '%s' not found"
-             % (self.id, unique_form_id)))
+             % (self.id, form_unique_id)))
 
-    def get_form_location(self, unique_form_id):
+    def get_form_location(self, form_unique_id):
         for m_index, module in enumerate(self.get_modules()):
             for f_index, form in enumerate(module.get_forms()):
-                if unique_form_id == form.unique_id:
+                if form_unique_id == form.unique_id:
                     return m_index, f_index
-        raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
+        raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, form_unique_id))
 
     @classmethod
     def new_app(cls, domain, name, lang="en"):
@@ -5954,7 +5914,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         from_module = self.get_module(module_id)
         form = from_module.get_form(form_id)
         to_module = self.get_module(to_module_id)
-        self._copy_form(from_module, form, to_module, rename=True)
+        return self._copy_form(from_module, form, to_module, rename=True)
 
     def _copy_form(self, from_module, form, to_module, *args, **kwargs):
         if not form.source:
@@ -5974,6 +5934,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         save_xform(self, copy_form, form.source)
+        return copy_form
 
     @cached_property
     def has_case_management(self):
@@ -6005,28 +5966,45 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             xmlns_map[form.xmlns].append(form)
         return xmlns_map
 
-    def get_form_by_xmlns(self, xmlns, log_missing=True):
+    def get_forms_by_xmlns(self, xmlns, log_missing=True):
+        """
+        Return the forms with the given xmlns.
+        This function could return multiple forms if there are shadow forms in the app.
+        """
         if xmlns == "http://code.javarosa.org/devicereport":
-            return None
+            return []
         forms = self.get_xmlns_map()[xmlns]
-        if len(forms) != 1:
-            if log_missing or len(forms) > 1:
+        if len(forms) < 1:
+            if log_missing:
                 logging.error('App %s in domain %s has %s forms with xmlns %s' % (
                     self.get_id,
                     self.domain,
                     len(forms),
                     xmlns,
                 ))
+            return []
+        non_shadow_forms = [form for form in forms if form.form_type != ShadowForm.form_type]
+        assert len(non_shadow_forms) <= 1
+        return forms
+
+    def get_xform_by_xmlns(self, xmlns, log_missing=True):
+        forms = self.get_forms_by_xmlns(xmlns, log_missing)
+        if not forms:
             return None
         else:
-            form, = forms
-        return form
+            # If there are multiple forms with the same xmlns, then all but one are shadow forms, therefore they
+            # all have the same xform.
+            return forms[0].wrapped_xform()
 
-    def get_questions(self, xmlns):
-        form = self.get_form_by_xmlns(xmlns)
-        if not form:
+
+    def get_questions(self, xmlns, langs=None, include_triggers=False, include_groups=False,
+                      include_translations=False):
+        forms = self.get_forms_by_xmlns(xmlns)
+        if not forms:
             return []
-        return form.get_questions(self.langs)
+        # If there are multiple forms with the same xmlns, then some of them are shadow forms, so all the questions
+        # will be the same.
+        return forms[0].get_questions(langs or self.langs, include_triggers, include_groups, include_translations)
 
     def check_subscription(self):
 

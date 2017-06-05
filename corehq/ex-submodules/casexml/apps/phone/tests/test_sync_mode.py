@@ -20,11 +20,10 @@ from corehq.form_processor.tests.utils import (
     FormProcessorTestUtils,
     use_sql_backend,
 )
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 from corehq.util.test_utils import flag_enabled
 from casexml.apps.case.tests.util import (
     check_user_has_case, assert_user_doesnt_have_case,
-    assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases, check_payload_has_cases,
+    assert_user_has_case, TEST_DOMAIN_NAME, assert_user_has_cases,
     check_payload_has_case_ids, assert_user_doesnt_have_cases)
 from casexml.apps.phone.tests.utils import create_restore_user, has_cached_payload
 from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, SimplifiedSyncLog, \
@@ -1087,6 +1086,7 @@ class ChangingOwnershipTest(SyncBaseTest):
 
         # remove the owner id and confirm that owner and case are removed on next sync
         group.remove_user(self.user.user_id)
+        group.save()
         incremental_sync_log = self._get_incremental_synclog_for_user(self.user, since=incremental_sync_log._id)
         self.assertFalse(group._id in incremental_sync_log.owner_ids_on_phone)
         self.assertFalse(incremental_sync_log.phone_is_holding_case(case_id))
@@ -2070,14 +2070,6 @@ class SyncTokenReprocessingTestSQL(SyncTokenReprocessingTest):
 
 class LooseSyncTokenValidationTest(SyncBaseTest):
 
-    def test_submission_with_bad_log_default(self):
-        with self.assertRaises(ResourceNotFound):
-            post_case_blocks(
-                [CaseBlock(create=True, case_id='bad-log-default').as_xml()],
-                form_extras={"last_sync_token": 'not-a-valid-synclog-id'},
-                domain='some-domain-without-toggle',
-            )
-
     def test_submission_with_bad_log_toggle_enabled(self):
         domain = 'submission-domain-with-toggle'
 
@@ -2088,24 +2080,8 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
                 domain=domain,
             )
 
-        LOOSE_SYNC_TOKEN_VALIDATION.set(domain, False, namespace='domain')
-        with self.assertRaises(ResourceNotFound):
-            _test()
-
-        LOOSE_SYNC_TOKEN_VALIDATION.set(domain, True, namespace='domain')
-        # this is just asserting that an exception is not raised after the toggle is set
+        # this is just asserting that an exception is not raised when there's no synclog
         _test()
-
-    def test_restore_with_bad_log_default(self):
-        with self.assertRaises(MissingSyncLog):
-            RestoreConfig(
-                project=Domain(name="test_restore_with_bad_log_default"),
-                restore_user=self.user,
-                params=RestoreParams(
-                    version=V2,
-                    sync_log_id='not-a-valid-synclog-id',
-                ),
-            ).get_payload()
 
     def test_restore_with_bad_log_toggle_enabled(self):
         domain = 'restore-domain-with-toggle'
@@ -2120,12 +2096,6 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
                 )
             ).get_payload()
 
-        LOOSE_SYNC_TOKEN_VALIDATION.set(domain, False, namespace='domain')
-        with self.assertRaises(MissingSyncLog):
-            _test()
-
-        LOOSE_SYNC_TOKEN_VALIDATION.set(domain, True, namespace='domain')
-        # when the toggle is set the exception should be a RestoreException instead
         with self.assertRaises(RestoreException):
             _test()
 

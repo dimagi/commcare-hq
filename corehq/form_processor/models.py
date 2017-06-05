@@ -588,6 +588,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     opened_by = models.CharField(max_length=255, null=True)
 
     modified_on = models.DateTimeField(null=False)
+    # represents the max date from all case transactions
     server_modified_on = models.DateTimeField(null=False, db_index=True)
     modified_by = models.CharField(max_length=255)
 

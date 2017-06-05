@@ -87,7 +87,7 @@ def _terminate_subscriptions(domain_name):
     today = date.today()
 
     with transaction.atomic():
-        current_subscription = Subscription.get_subscribed_plan_by_domain(domain_name)[1]
+        current_subscription = Subscription.get_active_subscription_by_domain(domain_name)
 
         if current_subscription:
             current_subscription.date_end = today

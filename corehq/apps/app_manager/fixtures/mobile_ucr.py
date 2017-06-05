@@ -20,7 +20,7 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 
-MOBILE_UCR_RANDOM_THRESHOLD = 10 ** 5
+MOBILE_UCR_RANDOM_THRESHOLD = 10000
 
 
 def _should_sync(restore_state):
@@ -29,6 +29,12 @@ def _should_sync(restore_state):
         return True
 
     sync_interval = restore_state.restore_user.get_mobile_ucr_sync_interval()
+    if sync_interval is None and restore_state.params.app:
+        sync_interval = restore_state.params.app.mobile_ucr_sync_interval
+    if sync_interval is None:
+        sync_interval = restore_state.project.default_mobile_ucr_sync_interval
+
+    sync_interval = sync_interval and sync_interval * 3600  # convert to seconds
     return (
         not last_sync_log or
         not sync_interval or
@@ -118,7 +124,7 @@ class ReportFixturesProvider(FixtureProvider):
 
         if (data_source.config.backend_id in UCR_SUPPORT_BOTH_BACKENDS and
                 random.randint(0, MOBILE_UCR_RANDOM_THRESHOLD) == MOBILE_UCR_RANDOM_THRESHOLD):
-            compare_ucr_dbs.delay(domain, report.report_id, filter_values)
+            compare_ucr_dbs.delay(domain, report_config.report_id, filter_values)
 
         report_elem = E.report(id=report_config.uuid, report_id=report_config.report_id)
         report_elem.append(filters_elem)

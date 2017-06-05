@@ -24,6 +24,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import get_all_case_pro
 from corehq.apps.app_manager.views.media_utils import handle_media_edits
 from corehq.apps.app_manager.views.notifications import notify_form_changed
 from corehq.apps.app_manager.views.schedules import get_schedule_context
+
 from corehq.apps.app_manager.views.utils import back_to_main, \
     CASE_TYPE_CONFLICT_MSG, get_langs
 
@@ -116,11 +117,14 @@ def delete_form(request, domain, app_id, module_unique_id, form_unique_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def copy_form(request, domain, app_id, module_id, form_id):
+def copy_form(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
+    form = app.get_form(form_unique_id)
+    module = form.get_module()
     to_module_id = int(request.POST['to_module_id'])
+    new_form = None
     try:
-        app.copy_form(int(module_id), int(form_id), to_module_id)
+        new_form = app.copy_form(module.id, form.id, to_module_id)
     except ConflictingCaseTypeError:
         messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
         app.save()
@@ -135,8 +139,10 @@ def copy_form(request, domain, app_id, module_id, form_id):
     else:
         app.save()
 
-    return back_to_main(request, domain, app_id=app_id, module_id=module_id,
-                        form_id=form_id)
+    if new_form:
+        return back_to_main(request, domain, app_id=app_id, form_unique_id=new_form.unique_id)
+    return back_to_main(request, domain, app_id=app_id, module_id=module.id,
+                        form_id=form.id)
 
 
 @no_conflict_require_POST
@@ -163,9 +169,9 @@ def undo_delete_form(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
+def edit_advanced_form_actions(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    form = app.get_form(form_unique_id)
     json_loads = json.loads(request.POST.get('actions'))
     actions = AdvancedFormActions.wrap(json_loads)
     if form.form_type == "shadow_form":
@@ -184,10 +190,10 @@ def edit_advanced_form_actions(request, domain, app_id, module_id, form_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_form_actions(request, domain, app_id, module_id, form_id):
+def edit_form_actions(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
-    module = app.get_module(module_id)
-    form = module.get_form(form_id)
+    form = app.get_form(form_unique_id)
+    module = form.get_module()
     old_load_from_form = form.actions.load_from_form
     form.actions = FormActions.wrap(json.loads(request.POST['actions']))
     add_properties_to_data_dictionary(domain, module.case_type, form.actions.update_case.update.keys())
@@ -212,9 +218,9 @@ def edit_form_actions(request, domain, app_id, module_id, form_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_careplan_form_actions(request, domain, app_id, module_id, form_id):
+def edit_careplan_form_actions(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
-    form = app.get_module(module_id).get_form(form_id)
+    form = app.get_form(form_unique_id)
     transaction = json.loads(request.POST.get('transaction'))
 
     for question in transaction['fixedQuestions']:
@@ -233,18 +239,18 @@ def edit_careplan_form_actions(request, domain, app_id, module_id, form_id):
 
 @csrf_exempt
 @api_domain_view
-def edit_form_attr_api(request, domain, app_id, unique_form_id, attr):
-    return _edit_form_attr(request, domain, app_id, unique_form_id, attr)
+def edit_form_attr_api(request, domain, app_id, form_unique_id, attr):
+    return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
 
 
 @login_or_digest
-def edit_form_attr(request, domain, app_id, unique_form_id, attr):
-    return _edit_form_attr(request, domain, app_id, unique_form_id, attr)
+def edit_form_attr(request, domain, app_id, form_unique_id, attr):
+    return _edit_form_attr(request, domain, app_id, form_unique_id, attr)
 
 
 @no_conflict_require_POST
 @require_permission(Permissions.edit_apps, login_decorator=None)
-def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
+def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     """
     Called to edit any (supported) form attribute, given by attr
 
@@ -255,7 +261,7 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
 
     app = get_app(domain, app_id)
     try:
-        form = app.get_form(unique_form_id)
+        form = app.get_form(form_unique_id)
     except FormNotFoundException as e:
         if ajax:
             return HttpResponseBadRequest(unicode(e))
@@ -373,11 +379,11 @@ def _edit_form_attr(request, domain, app_id, unique_form_id, attr):
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
-    notify_form_changed(domain, request.couch_user, app_id, unique_form_id)
+    notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
     if ajax:
         return HttpResponse(json.dumps(resp))
     else:
-        return back_to_main(request, domain, app_id=app_id, unique_form_id=unique_form_id)
+        return back_to_main(request, domain, app_id=app_id, form_unique_id=form_unique_id)
 
 
 @no_conflict_require_POST
@@ -416,13 +422,13 @@ def new_form(request, domain, app_id, module_id):
 @no_conflict_require_POST
 @login_or_digest
 @require_permission(Permissions.edit_apps, login_decorator=None)
-def patch_xform(request, domain, app_id, unique_form_id):
+def patch_xform(request, domain, app_id, form_unique_id):
     patch = request.POST['patch']
     sha1_checksum = request.POST['sha1']
     case_references = _get_case_references(request.POST)
 
     app = get_app(domain, app_id)
-    form = app.get_form(unique_form_id)
+    form = app.get_form(form_unique_id)
 
     current_xml = form.source
     if hashlib.sha1(current_xml.encode('utf-8')).hexdigest() != sha1_checksum:
@@ -439,16 +445,16 @@ def patch_xform(request, domain, app_id, unique_form_id):
         'sha1': hashlib.sha1(form.source.encode('utf-8')).hexdigest()
     }
     app.save(response_json)
-    notify_form_changed(domain, request.couch_user, app_id, unique_form_id)
+    notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
     return json_response(response_json)
 
 
 @require_GET
 @require_can_edit_apps
-def get_xform_source(request, domain, app_id, module_id, form_id):
+def get_xform_source(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     try:
-        form = app.get_module(module_id).get_form(form_id)
+        form = app.get_form(form_unique_id)
     except IndexError:
         raise Http404()
     return _get_xform_source(request, app, form)
@@ -571,13 +577,14 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'caseType': form.get_case_type(),
         'moduleCaseTypes': module_case_types,
         'propertiesMap': get_all_case_properties(app),
+        'propertyDescriptions': get_case_property_description_dict(domain),
         'questions': xform_questions,
         'reserved_words': load_case_reserved_words(),
+        'usercasePropertiesMap': get_usercase_properties(app),
     }
     context = {
         'nav_form': form,
         'xform_languages': languages,
-        "xform_questions": xform_questions,
         'form_errors': form_errors,
         'xform_validation_errored': xform_validation_errored,
         'xform_validation_missing': xform_validation_missing,
@@ -634,7 +641,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
 
     if isinstance(form, CareplanForm):
         case_config_options.update({
-            'save_url': reverse("edit_careplan_form_actions", args=[app.domain, app.id, module.id, form.id]),
             'case_preload': [
                 {'key': key, 'path': path} for key, path in form.case_preload.items()
             ],
@@ -643,6 +649,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             ],
             'fixedQuestions': form.get_fixed_questions(),
             'mode': form.mode,
+            'save_url': reverse("edit_careplan_form_actions", args=[app.domain, app.id, form.unique_id]),
         })
     elif isinstance(form, AdvancedForm):
         def commtrack_programs():
@@ -654,11 +661,10 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
 
         all_programs = [{'value': '', 'label': _('All Programs')}]
         case_config_options.update({
-            'save_url': reverse("edit_advanced_form_actions", args=[app.domain, app.id, module.id, form.id]),
             'commtrack_enabled': app.commtrack_enabled,
             'commtrack_programs': all_programs + commtrack_programs(),
             'module_id': module.unique_id,
-            'propertyDescriptions': get_case_property_description_dict(domain),
+            'save_url': reverse("edit_advanced_form_actions", args=[app.domain, app.id, form.unique_id]),
         })
         if form.form_type == "shadow_form":
             case_config_options.update({
@@ -670,28 +676,28 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
                 'actions': form.actions,
                 'isShadowForm': False,
             })
-
         if module.has_schedule:
-            visit_scheduler_options = get_schedule_context(form)
-            visit_scheduler_options.update({
+            schedule_options = get_schedule_context(form)
+            schedule_options.update({
+                'phase': schedule_options['schedule_phase'],
                 'questions': xform_questions,
-                'save_url': reverse("edit_visit_schedule", args=[app.domain, app.id, module.id, form.id]),
+                'save_url': reverse("edit_visit_schedule", args=[app.domain, app.id, form.unique_id]),
                 'schedule': form.schedule,
-                'phase': visit_scheduler_options['schedule_phase'],
             })
-            context.update({'visit_scheduler_options': visit_scheduler_options})
+            context.update({
+                'schedule_options': schedule_options,
+            })
     else:
-        case_config_options.update({
-            'actions': form.actions,
-            'allowUsercase': allow_usercase,
-            'valid_index_names': valid_index_names,
-            'usercasePropertiesMap': get_usercase_properties(app),
-            'propertyDescriptions': get_case_property_description_dict(domain),
-            'save_url': reverse("edit_form_actions", args=[app.domain, app.id, module.id, form.id]),
-        })
         context.update({
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled_for_request(request),
         })
+        case_config_options.update({
+            'actions': form.actions,
+            'allowUsercase': allow_usercase,
+            'save_url': reverse("edit_form_actions", args=[app.domain, app.id, form.unique_id]),
+            'valid_index_names': valid_index_names,
+        })
+
     context.update({'case_config_options': case_config_options})
     template = get_app_manager_template(
         request.user,

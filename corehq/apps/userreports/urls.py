@@ -22,7 +22,7 @@ from corehq.apps.userreports.views import (
     choice_list_api,
     ExpressionDebuggerView,
     evaluate_expression,
-    undelete_data_source, undelete_report)
+    undelete_data_source, undelete_report, DataSourceDebuggerView, evaluate_data_source)
 
 urlpatterns = [
     url(r'^$', UserConfigReportsHomeView.as_view(),
@@ -62,8 +62,12 @@ urlpatterns = [
         name='configurable_data_source_status'),
     url(r'^expression_debugger/$', ExpressionDebuggerView.as_view(),
         name='expression_debugger'),
+    url(r'^data_source_debugger/$', DataSourceDebuggerView.as_view(),
+        name='data_source_debugger'),
 
     # apis
-    url(r'^api/choice_list/(?P<report_id>[\w-]+)/(?P<filter_id>[\w-]+)/$', choice_list_api, name='choice_list_api'),
+    url(r'^api/choice_list/(?P<report_id>[\w-]+)/(?P<filter_id>[\w-]+)/$',
+        choice_list_api, name='choice_list_api'),
     url(r'^expression_evaluator/$', evaluate_expression, name='expression_evaluator'),
+    url(r'^data_source_evaluator/$', evaluate_data_source, name='data_source_evaluator'),
 ]

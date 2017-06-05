@@ -581,11 +581,14 @@ class IgnoreDocumentTest(BaseRepeaterTest):
     def setUpClass(cls):
         super(IgnoreDocumentTest, cls).setUpClass()
 
-        @RegisterGenerator(FormRepeater, 'new_format', 'XML')
         class NewFormGenerator(BasePayloadGenerator):
+            format_name = 'new_format'
+            format_label = 'XML'
 
             def get_payload(self, repeat_record, payload_doc):
                 raise IgnoreDocument
+
+        RegisterGenerator.get_collection(FormRepeater).add_new_format(NewFormGenerator)
 
     def setUp(self):
         super(IgnoreDocumentTest, self).setUp()
@@ -626,11 +629,16 @@ class TestRepeaterFormat(BaseRepeaterTest):
         super(TestRepeaterFormat, cls).setUpClass()
         cls.payload = 'some random case'
 
-        @RegisterGenerator(CaseRepeater, 'new_format', 'XML')
         class NewCaseGenerator(BasePayloadGenerator):
+            format_name = 'new_format'
+            format_label = 'XML'
+            deprecated_format_names = ('new_format_alias',)
 
             def get_payload(self, repeat_record, payload_doc):
                 return cls.payload
+
+        RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator)
+        cls.new_generator = NewCaseGenerator
 
     def setUp(self):
         super(TestRepeaterFormat, self).setUp()
@@ -652,20 +660,26 @@ class TestRepeaterFormat(BaseRepeaterTest):
         super(TestRepeaterFormat, self).tearDown()
 
     def test_new_format_same_name(self):
-        with self.assertRaises(DuplicateFormatException):
-            @RegisterGenerator(CaseRepeater, 'case_xml', 'XML', is_default=False)
-            class NewCaseGenerator(BasePayloadGenerator):
+        class NewCaseGenerator(BasePayloadGenerator):
+            format_name = 'case_xml'
+            format_label = 'XML'
 
-                def get_payload(self, repeat_record, payload_doc):
-                    return self.payload
+            def get_payload(self, repeat_record, payload_doc):
+                return self.payload
+
+        with self.assertRaises(DuplicateFormatException):
+            RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator)
 
     def test_new_format_second_default(self):
-        with self.assertRaises(DuplicateFormatException):
-            @RegisterGenerator(CaseRepeater, 'rubbish', 'XML', is_default=True)
-            class NewCaseGenerator(BasePayloadGenerator):
+        class NewCaseGenerator(BasePayloadGenerator):
+            format_name = 'rubbish'
+            format_label = 'XML'
 
-                def get_payload(self, repeat_record, payload_doc):
-                    return self.payload
+            def get_payload(self, repeat_record, payload_doc):
+                return self.payload
+
+        with self.assertRaises(DuplicateFormatException):
+            RegisterGenerator.get_collection(CaseRepeater).add_new_format(NewCaseGenerator, is_default=True)
 
     @run_with_all_backends
     def test_new_format_payload(self):
@@ -680,6 +694,13 @@ class TestRepeaterFormat(BaseRepeaterTest):
                 timeout=POST_TIMEOUT,
                 auth=self.repeater.get_auth(),
             )
+
+    def test_get_format_by_deprecated_name(self):
+        self.assertIsInstance(CaseRepeater(
+            domain=self.domain,
+            url='case-repeater-url',
+            format='new_format_alias',
+        ).generator, self.new_generator)
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -718,7 +739,7 @@ class UserRepeaterTest(TestCase):
         self.assertEqual(1, len(records))
         record = records[0]
         self.assertEqual(
-            record.get_payload(),
+            json.loads(record.get_payload()),
             {
                 'id': user._id,
                 'username': user.username,
@@ -777,7 +798,7 @@ class LocationRepeaterTest(TestCase):
         self.assertEqual(1, len(records))
         record = records[0]
         self.assertEqual(
-            record.get_payload(),
+            json.loads(record.get_payload()),
             {
                 '_id': location.location_id,
                 'doc_type': 'Location',
@@ -789,6 +810,7 @@ class LocationRepeaterTest(TestCase):
                 'lineage': [],
                 'location_id': location.location_id,
                 'location_type': 'city',
+                'location_type_code': 'city',
                 'longitude': None,
                 'metadata': {},
                 'name': location.name,

@@ -212,9 +212,7 @@ class OTARestoreCommCareUser(OTARestoreUser):
         return self._couch_user.fixture_status(UserFixtureType.LOCATION)
 
     def get_mobile_ucr_sync_interval(self):
-        return self._couch_user.mobile_ucr_sync_interval or (
-            self.project and self.project.default_mobile_ucr_sync_interval
-        )
+        return self._couch_user.mobile_ucr_sync_interval
 
 
 class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
@@ -263,6 +261,7 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     build_id = StringProperty()  # this is only added as of 11/2016 and only works with app-aware sync
 
     previous_log_id = StringProperty()  # previous sync log, forming a chain
+    previous_log_removed = BooleanProperty(default=False)
     duration = IntegerProperty()  # in seconds
     log_format = StringProperty()
 
@@ -285,14 +284,6 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     cache_payload_paths = DictProperty()
 
     strict = True  # for asserts
-
-    def _assert(self, conditional, msg="", case_id=None):
-        if not conditional:
-            _get_logger().warn("assertion failed: %s" % msg)
-            if self.strict:
-                raise SyncLogAssertionError(case_id, msg)
-            else:
-                self.has_assert_errors = True
 
     @classmethod
     def wrap(cls, data):
@@ -330,6 +321,20 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         state on the phone.
         """
         raise NotImplementedError()
+
+    def get_previous_log(self):
+        """
+        Get the previous sync log, if there was one.  Otherwise returns nothing.
+        """
+        if self.previous_log_removed or not self.previous_log_id:
+            return
+
+        if not hasattr(self, "_previous_log_ref"):
+            try:
+                self._previous_log_ref = SyncLog.get(self.previous_log_id)
+            except ResourceNotFound:
+                self._previous_log_ref = None
+        return self._previous_log_ref
 
     def _cache_key(self, version):
         from casexml.apps.phone.restore import restore_cache_key
@@ -401,16 +406,16 @@ class SyncLog(AbstractSyncLog):
 
         return get_last_synclog_for_user(user_id)
 
+    def _assert(self, conditional, msg="", case_id=None):
+        if not conditional:
+            _get_logger().warn("assertion failed: %s" % msg)
+            if self.strict:
+                raise SyncLogAssertionError(case_id, msg)
+            else:
+                self.has_assert_errors = True
+
     def case_count(self):
         return len(self.cases_on_phone)
-
-    def get_previous_log(self):
-        """
-        Get the previous sync log, if there was one.  Otherwise returns nothing.
-        """
-        if not hasattr(self, "_previous_log_ref"):
-            self._previous_log_ref = SyncLog.get(self.previous_log_id) if self.previous_log_id else None
-        return self._previous_log_ref
 
     def phone_has_case(self, case_id):
         """
@@ -921,13 +926,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
         if case_to_remove == checked_case_id:
             return
 
-        for index in deleted_indices.values():
-            if not (quiet_errors or _domain_has_legacy_toggle_set()):
-                # unblocking http://manage.dimagi.com/default.asp?185850
-                _assert = soft_assert(notify_admins=True, exponential_backoff=True,
-                                      fail_if_debug=True, include_breadcrumbs=True)
-                _assert(index in (all_to_remove | set([checked_case_id])),
-                        "expected {} in {} but wasn't".format(index, all_to_remove))
+        # Logging removed temporarily: https://github.com/dimagi/commcare-hq/pull/16259#issuecomment-303176217
+        # for index in deleted_indices.values():
+        #     if not (quiet_errors or _domain_has_legacy_toggle_set()):
+        #         # unblocking http://manage.dimagi.com/default.asp?185850
+        #         _assert = soft_assert(send_to_ops=False, log_to_file=True, exponential_backoff=True,
+        #                               fail_if_debug=True, include_breadcrumbs=True)
+        #         _assert(index in (all_to_remove | set([checked_case_id])),
+        #                 "expected {} in {} but wasn't".format(index, all_to_remove))
 
     def _add_primary_case(self, case_id):
         self.case_ids_on_phone.add(case_id)

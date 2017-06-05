@@ -7,6 +7,9 @@ from corehq.form_processor.models import CommCareCaseSQL
 from corehq.apps.repeaters.models import CaseRepeater
 from corehq.apps.repeaters.signals import create_repeat_records
 from casexml.apps.case.signals import case_post_save
+from custom.enikshay.integrations.ninetyninedots.repeater_generators import \
+    RegisterPatientPayloadGenerator, UpdatePatientPayloadGenerator, AdherencePayloadGenerator, \
+    TreatmentOutcomePayloadGenerator
 
 from custom.enikshay.integrations.utils import (
     is_valid_person_submission,
@@ -50,6 +53,8 @@ class NinetyNineDotsRegisterPatientRepeater(Base99DOTSRepeater):
 
     friendly_name = _("99DOTS Patient Registration (episode case type)")
 
+    payload_generator_classes = (RegisterPatientPayloadGenerator,)
+
     @classmethod
     def get_custom_url(cls, domain):
         from custom.enikshay.integrations.ninetyninedots.views import RegisterPatientRepeaterView
@@ -85,6 +90,8 @@ class NinetyNineDotsUpdatePatientRepeater(Base99DOTSRepeater):
     """
 
     friendly_name = _("99DOTS Patient Update (person & episode case type)")
+
+    payload_generator_classes = (UpdatePatientPayloadGenerator,)
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -133,6 +140,8 @@ class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
     """
     friendly_name = _("99DOTS Update Adherence (adherence case type)")
 
+    payload_generator_classes = (AdherencePayloadGenerator,)
+
     @classmethod
     def get_custom_url(cls, domain):
         from custom.enikshay.integrations.ninetyninedots.views import UpdateAdherenceRepeaterView
@@ -174,6 +183,8 @@ class NinetyNineDotsTreatmentOutcomeRepeater(Base99DOTSRepeater):
 
     """
     friendly_name = _("99DOTS Update Treatment Outcome (episode case type)")
+
+    payload_generator_classes = (TreatmentOutcomePayloadGenerator,)
 
     @classmethod
     def get_custom_url(cls, domain):

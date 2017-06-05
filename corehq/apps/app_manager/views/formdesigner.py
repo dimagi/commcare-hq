@@ -90,7 +90,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             "the form's front page instead."
         ))
         return back_to_main(request, domain, app_id=app_id,
-                            unique_form_id=form.unique_id)
+                            form_unique_id=form.unique_id)
 
     include_fullstory = False
     vellum_plugins = ["modeliteration", "itemset", "atwho"]

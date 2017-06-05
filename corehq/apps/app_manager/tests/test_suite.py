@@ -14,6 +14,8 @@ from corehq.apps.app_manager.models import (
     Application,
     DetailColumn,
     FormActionCondition,
+    GraphConfiguration,
+    GraphSeries,
     MappingItem,
     Module,
     OpenCaseAction,
@@ -634,6 +636,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         module, form = factory.new_advanced_module("my_module", "person")
         factory.form_requires_case(form, "person")
         module.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
+        module.case_details.short.use_case_tiles = True
         module.case_details.short.persist_tile_on_forms = True
         module.case_details.short.persist_case_context = True
         suite = factory.app.create_suite()
@@ -713,7 +716,14 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             header={'en': 'CommBugz'},
             uuid='ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i',
             xpath_description='"report description"',
-            use_xpath_description=True
+            use_xpath_description=True,
+            complete_graph_configs={
+                chart.chart_id: GraphConfiguration(
+                    graph_type="bar",
+                    series=[GraphSeries() for c in chart.y_axis_columns],
+                )
+                for chart in report.charts
+            },
         )
         report_app_config._report = report
         report_module.report_configs = [report_app_config]

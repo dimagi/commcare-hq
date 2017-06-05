@@ -159,6 +159,10 @@ class EnikshaySqlData(SqlData):
         return 'opened_on'
 
     @property
+    def location_property(self):
+        return 'person_owner_id'
+
+    @property
     def filters(self):
         filters = [
             AND([GTE(self.date_property, 'start_date'), LT(self.date_property, 'end_date')])
@@ -168,7 +172,7 @@ class EnikshaySqlData(SqlData):
 
         if locations_id:
             filters.append(
-                IN('person_owner_id', get_INFilter_bindparams('locations_id', locations_id))
+                IN(self.location_property, get_INFilter_bindparams('locations_id', locations_id))
             )
 
         is_migrated = self.config.is_migrated

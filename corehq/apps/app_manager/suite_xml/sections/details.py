@@ -75,6 +75,8 @@ class DetailContributor(SectionContributor):
                                     print_template_path = None
                                     if detail.print_template:
                                         print_template_path = detail.print_template['path']
+                                    locale_id = id_strings.detail_title_locale(detail_type)
+                                    title = Text(locale_id=locale_id) if locale_id else Text()
                                     d = self.build_detail(
                                         module,
                                         detail_type,
@@ -82,14 +84,15 @@ class DetailContributor(SectionContributor):
                                         detail_column_infos,
                                         tabs=list(detail.get_tabs()),
                                         id=id_strings.detail(module, detail_type),
-                                        title=Text(locale_id=id_strings.detail_title_locale(
-                                            module, detail_type
-                                        )),
+                                        title=title,
                                         print_template=print_template_path,
                                     )
                                     if d:
                                         r.append(d)
-                        if detail.persist_case_context and not detail.persist_tile_on_forms:
+                        # add the persist case context if needed and if
+                        # case tiles are present and have their own persistent block
+                        if (detail.persist_case_context and
+                                not (detail.use_case_tiles and detail.persist_tile_on_forms)):
                             d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
                             r.append(d)
                 if module.fixture_select.active:
@@ -484,9 +487,7 @@ class CaseTileHelper(object):
         """
         return {
             "detail_id": id_strings.detail(self.module, self.detail_type),
-            "title_text_id": id_strings.detail_title_locale(
-                self.module, self.detail_type
-            )
+            "title_text_id": id_strings.detail_title_locale(self.detail_type),
         }
 
     def _get_column_context(self, column):

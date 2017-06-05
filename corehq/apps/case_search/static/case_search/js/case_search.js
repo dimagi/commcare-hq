@@ -14,6 +14,7 @@ hqDefine('case_search/js/case_search.js', function(){
             value: "",
             clause: "must",
             fuzzy: false,
+            regex: '',
         }]);
 
         self.addParameter = function(){
@@ -22,6 +23,7 @@ hqDefine('case_search/js/case_search.js', function(){
                 value: "",
                 clause: "must",
                 fuzzy: false,
+                regex: '',
             });
         };
         self.removeParameter = function(){

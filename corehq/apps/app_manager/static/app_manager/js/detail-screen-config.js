@@ -222,7 +222,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
     };
 
     var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang,
-                                    searchButtonDisplayCondition, saveButton) {
+                                    searchButtonDisplayCondition, blacklistedOwnerIdsExpression, saveButton) {
         var self = this,
             DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
@@ -258,6 +258,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         self.includeClosed = ko.observable(includeClosed);
         self.searchProperties = ko.observableArray();
         self.defaultProperties = ko.observableArray();
+        self.blacklistedOwnerIdsExpression = ko.observable(blacklistedOwnerIdsExpression);
 
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
@@ -342,6 +343,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 search_button_display_condition: self.searchButtonDisplayCondition(),
                 include_closed: self.includeClosed(),
                 default_properties: self._getDefaultProperties(),
+                blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
             };
         };
 
@@ -358,6 +360,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             saveButton.fire('change');
         });
         self.searchButtonDisplayCondition.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.blacklistedOwnerIdsExpression.subscribe(function () {
             saveButton.fire('change');
         });
     };
@@ -1351,6 +1356,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         spec.defaultProperties,
                         spec.lang,
                         spec.searchButtonDisplayCondition,
+                        spec.blacklistedOwnerIdsExpression,
                         this.shortScreen.saveButton
                     );
                 }
