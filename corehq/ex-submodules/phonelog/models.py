@@ -11,9 +11,9 @@ class DeviceReportEntry(models.Model):
     date = models.DateTimeField()
     server_date = models.DateTimeField(null=True, db_index=True)
     domain = models.CharField(max_length=100)
-    device_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, null=True)
+    device_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, null=True, db_index=True)
     app_version = models.TextField(null=True)
-    username = models.CharField(max_length=100, null=True)
+    username = models.CharField(max_length=100, null=True, db_index=True)
     user_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, null=True)
 
     class Meta:
