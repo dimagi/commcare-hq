@@ -28,25 +28,11 @@
 {% endblock %}
 {% block js-inline %}{{ block.super }}
     {% include "app_manager/v1/partials/nav_menu_media_js_common.html" %}
-    {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.menu %}
-    {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_menu_item qualifier='case_list-menu_item_' %}
+    {% include "app_manager/v1/partials/nav_menu_media_js.html" %}
     <script src="{% static 'app_manager/js/case_detail_print.js' %}"></script>
     <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
     <script src="{% static 'app_manager/js/shadow-module-settings.js' %}"></script>
 
-    {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
-      {% for detail in details %}
-          {% if detail.type == 'case' %}
-              {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_lookup qualifier='case-list-lookup'|add:detail.type %}
-          {% else %}
-              {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.product_list_lookup qualifier='case-list-lookup'|add:detail.type %}
-          {% endif %}
-      {% endfor %}
-    {% endif %}
-
-    {% if case_list_form_options %}
-        {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.case_list_form qualifier='case_list_form_' %}
-    {% endif %}
     {% include 'style/partials/key_value_mapping.html' %}
     {% include 'app_manager/v1/partials/graph_configuration_modal.html' %}
 {% endblock %}
@@ -58,6 +44,7 @@
     {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
     {% initial_page_data 'case_list_form_options' case_list_form_options %}
     {% initial_page_data 'case_list_form_not_allowed_reason' case_list_form_not_allowed_reason  %}
+    {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
     {% initial_page_data 'parent_modules' parent_modules %}
     {% initial_page_data 'print_media_info' print_media_info %}
     {% initial_page_data 'print_ref' print_ref %}

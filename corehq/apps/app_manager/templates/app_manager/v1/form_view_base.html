@@ -58,7 +58,7 @@
 
     {% include "app_manager/v1/partials/xpathValidator.html" %}
     {% include "app_manager/v1/partials/nav_menu_media_js_common.html" %}
-    {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.menu %}
+    {% include "app_manager/v1/partials/nav_menu_media_js.html" %}
     {% if allow_form_workflow %}
         <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
     {% endif %}
@@ -290,6 +290,8 @@
 {% block form-view %}
     {% initial_page_data 'case_config_options' case_config_options %}
     {% initial_page_data 'form_requires' form.requires %}
+    {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
+    {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
     <div id="build_errors"></div>
     {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update);}" %}
     <br />

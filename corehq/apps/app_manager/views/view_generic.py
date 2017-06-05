@@ -175,16 +175,14 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         if form_id:
             default_file_name = '%s_form%s' % (default_file_name, form_id)
 
-        specific_media = {
-            'menu': {
-                'menu_refs': app.get_menu_media(
-                    module, module_id, form=form, form_index=form_id, to_language=lang
-                ),
-                'default_file_name': '{name}_{lang}'.format(name=default_file_name, lang=lang),
-            }
-        }
+        specific_media = [{
+            'menu_refs': app.get_menu_media(
+                module, module_id, form=form, form_index=form_id, to_language=lang
+            ),
+            'default_file_name': '{name}_{lang}'.format(name=default_file_name, lang=lang),
+        }]
 
-        if module and module.uses_media():
+        if module and not form and module.uses_media():
             def _make_name(suffix):
                 return "{default_name}_{suffix}_{lang}".format(
                     default_name=default_file_name,
@@ -192,24 +190,30 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                     lang=lang,
                 )
 
-            specific_media['case_list_form'] = {
+            specific_media.append({
                 'menu_refs': app.get_case_list_form_media(module, module_id, to_language=lang),
                 'default_file_name': _make_name('case_list_form'),
-            }
-            specific_media['case_list_menu_item'] = {
+                'qualifier': 'case_list_form_',
+            })
+            specific_media.append({
                 'menu_refs': app.get_case_list_menu_item_media(module, module_id, to_language=lang),
                 'default_file_name': _make_name('case_list_menu_item'),
-            }
-            specific_media['case_list_lookup'] = {
-                'menu_refs': app.get_case_list_lookup_image(module, module_id),
-                'default_file_name': '{}_case_list_lookup'.format(default_file_name),
-            }
+                'qualifier': 'case_list-menu_item_',
+            })
+            if (toggles.CASE_LIST_LOOKUP.enabled(request.user.username)
+                    or toggles.CASE_LIST_LOOKUP.enabled(app.domain)):
+                specific_media.append({
+                    'menu_refs': app.get_case_list_lookup_image(module, module_id),
+                    'default_file_name': '{}_case_list_lookup'.format(default_file_name),
+                    'qualifier': 'case-list-lookupcase',
+                })
 
-            if hasattr(module, 'product_details'):
-                specific_media['product_list_lookup'] = {
-                    'menu_refs': app.get_case_list_lookup_image(module, module_id, type='product'),
-                    'default_file_name': '{}_product_list_lookup'.format(default_file_name),
-                }
+                if hasattr(module, 'product_details'):
+                    specific_media.append({
+                        'menu_refs': app.get_case_list_lookup_image(module, module_id, type='product'),
+                        'default_file_name': '{}_product_list_lookup'.format(default_file_name),
+                        'qualifier': 'case-list-lookupproduct',
+                    })
 
         context.update({
             'multimedia': {
@@ -231,7 +235,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             context['multimedia']['references'] = app.get_references()
         except ReportConfigurationNotFoundError:
             pass
-        context['multimedia'].update(specific_media)
+        context['nav_menu_media_specifics'] = specific_media
 
     error = request.GET.get('error', '')
 
