@@ -34,6 +34,8 @@ from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 
+# this is going to be a really long line to test sticklers line length configuration. i hope it doesn't give me a red x
+
 
 def _get_config_by_id(indicator_config_id):
     if id_is_static(indicator_config_id):
