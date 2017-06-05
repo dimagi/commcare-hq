@@ -230,7 +230,7 @@ class WriterTest(SimpleTestCase):
             'domain': 'my-domain',
             '_id': '12345',
             "form": {
-                "mc": ["one", "two"],
+                "array": ["one", "two"],
             }
         }
 
@@ -244,8 +244,8 @@ class WriterTest(SimpleTestCase):
                 path=[],
                 columns=[
                     ExportColumn(
-                        label="Scalar MC",
-                        item=ScalarItem(path=[PathNode(name='form'), PathNode(name='mc')]),
+                        label="Scalar Array",
+                        item=ScalarItem(path=[PathNode(name='form'), PathNode(name='array')]),
                         selected=True,
                     )
                 ]
@@ -260,7 +260,7 @@ class WriterTest(SimpleTestCase):
                 json.loads(export.read()),
                 {
                     u'My table': {
-                        u'headers': [u'Scalar MC'],
+                        u'headers': [u'Scalar Array'],
                         u'rows': [['one two']],
 
                     }
