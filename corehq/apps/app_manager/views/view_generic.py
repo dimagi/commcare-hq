@@ -42,6 +42,7 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
     ANDROID_LOGO_PROPERTY_MAPPING,
     ModuleNotFoundException,
+    ReportModule,
 )
 from django_prbac.utils import has_privilege
 from corehq.apps.analytics import ab_tests
@@ -182,7 +183,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             'default_file_name': '{name}_{lang}'.format(name=default_file_name, lang=lang),
         }]
 
-        if module and not form and module.uses_media():
+        if not form and module and not isinstance(module, ReportModule) and module.uses_media():
             def _make_name(suffix):
                 return "{default_name}_{suffix}_{lang}".format(
                     default_name=default_file_name,
@@ -215,20 +216,22 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                         'qualifier': 'case-list-lookupproduct',
                     })
 
+        uploaders = {
+            'icon': MultimediaImageUploadController(
+                "hqimage",
+                reverse(ProcessImageFileUploadView.name,
+                        args=[app.domain, app.get_id])
+            ),
+            'audio': MultimediaAudioUploadController(
+                "hqaudio", reverse(ProcessAudioFileUploadView.name,
+                        args=[app.domain, app.get_id])
+            ),
+        }
         context.update({
             'multimedia': {
                 "object_map": app.get_object_map(),
-                'upload_managers': {
-                    'icon': MultimediaImageUploadController(
-                        "hqimage",
-                        reverse(ProcessImageFileUploadView.name,
-                                args=[app.domain, app.get_id])
-                    ),
-                    'audio': MultimediaAudioUploadController(
-                        "hqaudio", reverse(ProcessAudioFileUploadView.name,
-                                args=[app.domain, app.get_id])
-                    ),
-                },
+                'upload_managers': uploaders,
+                'upload_managers_js': {type: u.js_options for type, u in uploaders.iteritems()},
             }
         })
         try:

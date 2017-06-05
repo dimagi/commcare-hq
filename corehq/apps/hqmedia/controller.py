@@ -50,6 +50,7 @@ class BaseMultimediaUploadController(object):
             'isMultiFileUpload': self.is_multi_file,
             'uploadParams': self.upload_params,
             'licensingParams': self.licensing_params,
+            'fileFilters': self.supported_files,
         }
         if hasattr(self, 'queue_template'):
             options.update({'queueTemplate': render_to_string(self.queue_template)})
