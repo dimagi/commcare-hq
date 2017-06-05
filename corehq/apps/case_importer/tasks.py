@@ -93,10 +93,11 @@ def do_import(spreadsheet, config, domain, task=None, chunksize=CASEBLOCK_CHUNKS
                     )
             except Exception:
                 err = True
-                errors.add(
-                    error=ImportErrors.ImportErrorMessage,
-                    row_number=caseblocks[0].case.case_id
-                )
+                for row_number, case in caseblocks:
+                    errors.add(
+                        error=ImportErrors.ImportErrorMessage,
+                        row_number=row_number
+                    )
             else:
                 if record_form_callback:
                     record_form_callback(form.form_id)
