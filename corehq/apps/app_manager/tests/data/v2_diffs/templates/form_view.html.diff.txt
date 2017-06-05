@@ -46,7 +46,7 @@
              // tag the 'preview in cloudcare' button with the right url
              // unfortunately, has to be done in javascript
              var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-@@ -287,75 +290,58 @@
+@@ -289,6 +292,39 @@
      </script>
  {% endblock %}
  
@@ -86,10 +86,10 @@
  {% block form-view %}
      {% initial_page_data 'case_config_options' case_config_options %}
      {% initial_page_data 'form_requires' form.requires %}
+@@ -298,71 +334,21 @@
      {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
      {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
      {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
-     {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
 -    <div id="build_errors"></div>
 -    {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update);}" %}
 -    <br />
@@ -167,7 +167,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -367,35 +353,36 @@
+@@ -374,35 +360,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -221,7 +221,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -407,106 +394,92 @@
+@@ -414,106 +401,92 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -397,7 +397,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -519,14 +492,15 @@
+@@ -526,14 +499,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -415,7 +415,7 @@
              {% endif %}
          </div>
      </div>
-@@ -534,12 +508,13 @@
+@@ -541,12 +515,13 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
