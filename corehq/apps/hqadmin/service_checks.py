@@ -24,7 +24,7 @@ from corehq.apps.change_feed.connection import get_kafka_client_or_none
 from corehq.apps.es import GroupES
 from corehq.blobs import get_blob_db
 from corehq.blobs.util import random_url_id
-from corehq.elastic import send_to_elasticsearch
+from corehq.elastic import send_to_elasticsearch, refresh_elasticsearch_index
 from corehq.util.decorators import change_log_level
 from corehq.apps.hqadmin.utils import parse_celery_workers, parse_celery_pings
 
@@ -93,7 +93,7 @@ def check_elasticsearch():
     doc = {'_id': 'elasticsearch-service-check',
            'date': datetime.datetime.now().isoformat()}
     send_to_elasticsearch('groups', doc)
-    time.sleep(1)
+    refresh_elasticsearch_index('groups')
     hits = GroupES().remove_default_filters().doc_id(doc['_id']).run().hits
     send_to_elasticsearch('groups', doc, delete=True)  # clean up
     if doc in hits:

@@ -1,20 +1,6 @@
 {
     "domains": [
-        "enikshay-test",
-        "enikshay-test-test",
-        "enikshay",
-        "enikshay-test-2",
-        "enikshay-test-3",
-        "enikshay-nikshay-migration-test",
-        "enikshay-domain-copy-test",
-        "enikshay-aks-audit",
-        "np-migration-3",
-        "enikshay-uatbc-migration-test-1",
-        "enikshay-uatbc-migration-test-2",
-        "enikshay-uatbc-migration-test-3",
-        "enikshay-uatbc-migration-test-4",
-        "enikshay-uatbc-migration-test-5",
-        "enikshay-uatbc-migration-test-6"
+        "enikshay"
     ],
     "server_environment": [
         "softlayer"
@@ -105,6 +91,7 @@
                 },
                 "datatype": "date",
                 "type": "expression",
+                "create_index": true,
                 "is_primary_key": false,
                 "is_nullable": true,
                 "column_id": "date_of_diagnosis",
@@ -132,6 +119,7 @@
                 "display_name": "person/owner_id",
                 "datatype": "string",
                 "type": "expression",
+                "create_index": true,
                 "is_primary_key": false,
                 "transform": {
                 },
@@ -1325,43 +1313,22 @@
                         "expression_if_false": {
                             "type": "conditional",
                             "test": {
-                                "type": "and",
-                                "filters": [
-                                    {
-                                        "operator": "eq",
-                                        "expression": {
-                                            "value_expression": {
-                                                "datatype": "string",
-                                                "type": "property_name",
-                                                "property_name": "awaiting_claim"
-                                            },
-                                            "type": "related_doc",
-                                            "related_doc_type": "CommCareCase",
-                                            "doc_id_expression": {
-                                                "type": "named",
-                                                "name": "person_id"
-                                            }
-                                        },
-                                        "type": "boolean_expression",
-                                        "property_value": "yes"
+                                "operator": "eq",
+                                "expression": {
+                                    "value_expression": {
+                                        "datatype": "string",
+                                        "type": "property_name",
+                                        "property_name": "awaiting_claim"
                                     },
-                                    {
-                                        "operator": "eq",
-                                        "expression": {
-                                            "type": "nested",
-                                            "argument_expression": {
-                                                "type": "named",
-                                                "name": "referral_case"
-                                            },
-                                            "value_expression": {
-                                                "type": "property_name",
-                                                "property_name": "referral_status"
-                                            }
-                                        },
-                                        "type": "boolean_expression",
-                                        "property_value": "pending"
+                                    "type": "related_doc",
+                                    "related_doc_type": "CommCareCase",
+                                    "doc_id_expression": {
+                                        "type": "named",
+                                        "name": "person_id"
                                     }
-                                ]
+                                },
+                                "type": "boolean_expression",
+                                "property_value": "yes"
                             },
                             "expression_if_true": {
                                 "type": "constant",

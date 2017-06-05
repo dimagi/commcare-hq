@@ -291,6 +291,7 @@
 {% block form-view %}
     {% initial_page_data 'case_config_options' case_config_options %}
     {% initial_page_data 'form_requires' form.requires %}
+    {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
     <div id="build_errors"></div>
     {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update);}" %}
     <br />
@@ -421,13 +422,11 @@
                     </div>
                     <div class="casexml" id="casexml_home">
                         {% if module.doc_type == 'AdvancedModule' %}
-                            {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
                             {% initial_page_data 'schedule_options' schedule_options %}
                             {% include 'app_manager/v1/partials/case_config_advanced.html' %}
                         {% elif module.doc_type == 'CareplanModule' %}
                             {% include 'app_manager/v1/partials/case_config_careplan.html' %}
                         {% else %}
-                            {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
                             {% include 'app_manager/v1/partials/case_config.html' %}
                         {% endif %}
                     </div>

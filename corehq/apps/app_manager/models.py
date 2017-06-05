@@ -5447,6 +5447,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_grid_menus = BooleanProperty(default=False)
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
+    mobile_ucr_sync_interval = IntegerProperty()
 
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
