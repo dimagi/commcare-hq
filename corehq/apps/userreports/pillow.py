@@ -214,6 +214,11 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
 
     def process_change(self, pillow_instance, change):
         self.bootstrap_if_needed()
+        if change.id == '79f25f76-7828-4237-9f10-ca80909550f0':
+            # TODO: Remove this. It was added because a runaway repeater
+            # created lots of form submissions against this case, filling up
+            # the change feed
+            return
         if change.deleted:
             # we don't currently support hard-deletions at all.
             # we may want to change this at some later date but seem ok for now.

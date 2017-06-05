@@ -29,6 +29,9 @@ class ElasticProcessor(PillowProcessor):
         return self.elasticsearch
 
     def process_change(self, pillow_instance, change):
+        if change.id == '79f25f76-7828-4237-9f10-ca80909550f0':
+            return
+
         if change.deleted and change.id:
             self._delete_doc_if_exists(change.id)
             return
