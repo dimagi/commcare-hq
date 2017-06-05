@@ -278,6 +278,7 @@ def save_document(doc_ids):
 
             eval_context = EvaluationContext(doc)
             for config_id in indicator.indicator_config_ids:
+                adapter = None
                 try:
                     config = _get_config(config_id)
                     adapter = get_indicator_adapter(config, can_handle_laboratory=True)
@@ -288,7 +289,9 @@ def save_document(doc_ids):
                     failed_indicators.append(indicator.pk)
                     break
                 except Exception as e:
-                    adapter.handle_exception(doc, e)
+                    # getting the config could fail before the adapter is set
+                    if adapter:
+                        adapter.handle_exception(doc, e)
                     failed_indicators.append(indicator.pk)
                     break
                 else:
