@@ -72,7 +72,7 @@ def get_download_context(download_id, message=None, require_result=False):
         'is_alive': is_alive() if heartbeat_enabled() else True,
         'progress': task_status.progress._asdict(),
         'download_id': download_id,
-        'allow_dropbox_sync': True or isinstance(download_data, FileDownload) and download_data.use_transfer,
+        'allow_dropbox_sync': isinstance(download_data, FileDownload) and download_data.use_transfer,
         'has_file': download_data is not None and download_data.has_file,
         'custom_message': message,
     }
