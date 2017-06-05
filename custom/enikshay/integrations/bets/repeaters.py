@@ -294,6 +294,25 @@ class BETSAYUSHReferralRepeater(BaseBETSRepeater):
 class BETSLocationRepeater(LocationRepeater):
     friendly_name = _("Forward locations to BETS")
     payload_generator_classes = (BETSLocationPayloadGenerator,)
+    location_types_to_forward = (
+        'ctd',
+            'sto',
+                'cto',
+                    'dto',
+                        'tu',
+                        'plc',
+                        'pcp',
+                        'pcc',
+                        'pac',
+    )
+
+    @classmethod
+    def available_for_domain(cls, domain):
+        return BETS_INTEGRATION.enabled(domain)
+
+    def allowed_to_forward(self, location):
+        return (location.metadata.get('is_test') != "yes"
+                and location.location_type.code in self.location_types_to_forward)
 
     class Meta(object):
         app_label = 'repeaters'
@@ -312,6 +331,7 @@ class BETSBeneficiaryRepeater(BaseBETSRepeater):
             return False
 
         return (is_valid_person_submission(person_case)
+                and person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
                 and (case_was_created(person_case)
                      or case_properties_changed(person_case, self.properties_we_care_about)))
 
