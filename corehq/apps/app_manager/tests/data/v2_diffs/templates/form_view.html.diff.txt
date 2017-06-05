@@ -6,20 +6,16 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load compress %}
-@@ -56,9 +56,9 @@
+@@ -56,7 +56,7 @@
          <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
      {% endif %}
  
 -    {% include "app_manager/v1/partials/xpathValidator.html" %}
--    {% include "app_manager/v1/partials/nav_menu_media_js_common.html" %}
--    {% include "app_manager/v1/partials/nav_menu_media_js.html" with item=multimedia.menu %}
 +    {% include "app_manager/v2/partials/xpathValidator.html" %}
-+    {% include "app_manager/v2/partials/nav_menu_media_js_common.html" %}
-+    {% include "app_manager/v2/partials/nav_menu_media_js.html" with item=multimedia.menu %}
-     {% if allow_form_workflow %}
-         <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
-     {% endif %}
-@@ -170,15 +170,18 @@
+     {% include 'hqmedia/partials/multimedia_js.html' %}
+     <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
+     <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
+@@ -172,15 +172,18 @@
              });
          }
  
@@ -41,7 +37,7 @@
              {% with module_name=module.name|trans:langs %}
              labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
              {% endwith %}
-@@ -221,7 +224,7 @@
+@@ -223,7 +226,7 @@
          });
          {% endif %}
  
@@ -50,7 +46,7 @@
              // tag the 'preview in cloudcare' button with the right url
              // unfortunately, has to be done in javascript
              var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-@@ -287,74 +290,57 @@
+@@ -289,6 +292,39 @@
      </script>
  {% endblock %}
  
@@ -90,6 +86,10 @@
  {% block form-view %}
      {% initial_page_data 'case_config_options' case_config_options %}
      {% initial_page_data 'form_requires' form.requires %}
+@@ -297,71 +333,21 @@
+     {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
+     {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
+     {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
 -    <div id="build_errors"></div>
 -    {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update);}" %}
 -    <br />
@@ -167,7 +167,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -366,35 +352,36 @@
+@@ -373,35 +359,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -221,7 +221,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -406,108 +393,94 @@
+@@ -413,108 +400,94 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -399,7 +399,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -520,14 +493,15 @@
+@@ -527,14 +500,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -417,7 +417,7 @@
              {% endif %}
          </div>
      </div>
-@@ -535,12 +509,13 @@
+@@ -542,12 +516,13 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
