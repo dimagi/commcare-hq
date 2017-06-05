@@ -1,6 +1,9 @@
+import os
 from celery.task import task
-from dropbox.client import DropboxClient
-from dropbox.rest import ErrorResponse
+from dropbox import Dropbox
+from dropbox.exceptions import ApiError
+from dropbox.files import UploadSessionCursor, CommitInfo, WriteMode
+from dropbox.sharing import SharedLinkSettings, RequestedVisibility
 
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -10,43 +13,78 @@ from corehq.apps.users.models import CouchUser
 from corehq.util.translation import localize
 from corehq.util.log import send_HTML_email
 
+CHUNK_SIZE = 5000000  # Read file in 5 MB chunks
+
 
 @task
 def upload(dropbox_helper_id, access_token, size, max_retries):
     from .models import DropboxUploadHelper
     helper = DropboxUploadHelper.objects.get(id=dropbox_helper_id)
-    client = DropboxClient(access_token)
+    dbx = Dropbox(access_token)
     retries = 0
 
     try:
         with open(helper.src, 'rb') as f:
-            uploader = client.get_chunked_uploader(f, size)
-            while uploader.offset < size:
-                helper.progress = uploader.offset / size
+            chunk = f.read(CHUNK_SIZE)
+            offset = len(chunk)
+
+            upload_session = dbx.files_upload_session_start(chunk)
+
+            while True:
+                chunk = f.read(CHUNK_SIZE)
+                if not chunk:
+                    break
+                helper.progress = offset / size
                 helper.save()
                 try:
-                    uploader.upload_chunked()
-                except ErrorResponse as e:
+                    dbx.files_upload_session_append_v2(
+                        chunk,
+                        UploadSessionCursor(
+                            upload_session.session_id,
+                            offset,
+                        ),
+                    )
+                except ApiError as e:
                     if retries < max_retries:
                         retries += 1
                     else:
                         helper.failure_reason = str(e)
                         helper.save()
                         raise e
+                else:
+                    offset += len(chunk)
 
-            upload = uploader.finish(helper.dest)
+            file_metadata = dbx.files_upload_session_finish(
+                b'',
+                UploadSessionCursor(
+                    upload_session.session_id,
+                    offset=offset,
+                ),
+                CommitInfo(
+                    '/{}'.format(os.path.basename(helper.src)),
+                    # When writing the file it won't overwrite an existing file, just add
+                    # another file like "filename (2).txt"
+                    WriteMode('add'),
+                ),
+            )
     except Exception as e:
         helper.failure_reason = str(e)
         helper.save()
 
     couch_user = CouchUser.get_by_username(helper.user.username)
     if helper.failure_reason is None:
-        share = client.share(upload['path'])
+        path_link_metadata = dbx.sharing_create_shared_link_with_settings(
+            file_metadata.path_display,
+            SharedLinkSettings(
+                requested_visibility=RequestedVisibility.team_only,
+            ),
+        )
         context = {
-            'share_url': share.get('url', None),
-            'path': u'Apps/{app}{dest}'.format(
-                app=settings.DROPBOX_APP_NAME,
-                dest=upload['path'],
+            'share_url': path_link_metadata.url,
+            'path': os.path.join(
+                u'Apps',
+                settings.DROPBOX_APP_NAME,
+                path_link_metadata.name,
             )
         }
         with localize(couch_user.get_language_code()):
