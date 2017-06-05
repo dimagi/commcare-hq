@@ -115,10 +115,12 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
         # A success would be getting a nikshay_id for the patient
         # without it this would actually be a failure
         try:
+            episode_case_id = payload_doc.case_id
+            person_case = get_person_case_from_episode(payload_doc.domain, episode_case_id)
             nikshay_id = _get_nikshay_id_from_response(response)
             update_case(
                 payload_doc.domain,
-                payload_doc.case_id,
+                person_case.get_id,
                 {
                     "nikshay_registered": "true",
                     "nikshay_id": nikshay_id,
@@ -127,20 +129,22 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
                 external_id=nikshay_id,
             )
         except NikshayResponseException as e:
-            _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(e.message))
+            _save_error_message(payload_doc.domain, person_case.get_id, unicode(e.message))
 
     def handle_failure(self, response, payload_doc, repeat_record):
+        episode_case_id = payload_doc.case_id
+        person_case = get_person_case_from_episode(payload_doc.domain, episode_case_id)
         if response.status_code == 409:  # Conflict
             update_case(
                 payload_doc.domain,
-                payload_doc.case_id,
+                person_case.get_id,
                 {
                     "nikshay_registered": "true",
                     "nikshay_error": "duplicate",
                 },
             )
         else:
-            _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response.json()))
+            _save_error_message(payload_doc.domain, person_case.get_id, unicode(response.json()))
 
     def handle_exception(self, exception, repeat_record):
         if isinstance(exception, RequestConnectionError):

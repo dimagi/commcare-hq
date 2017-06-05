@@ -58,7 +58,8 @@ class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
 
     def allowed_to_forward(self, episode_case):
         # When case property episode.episode_pending_registration transitions from 'yes' to 'no',
-        # and (episode.nikshay_registered != 'true'  or episode.nikshay_id != '')
+        # and ((episode.nikshay_registered != 'true'  and episode.nikshay_id == None) and person.nikshay_id is
+        # None
         allowed_case_types_and_users = self._allowed_case_type(episode_case) and self._allowed_user(episode_case)
         if allowed_case_types_and_users:
             episode_case_properties = episode_case.dynamic_case_properties()
@@ -68,8 +69,7 @@ class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
                 return False
 
             return (
-                not episode_case_properties.get('nikshay_registered', 'false') == 'true' and
-                not episode_case_properties.get('nikshay_id', False) and
+                not (person_registered_via_api(episode_case) or person_nikshay_id_present(person_case)) and
                 case_properties_changed(episode_case, [EPISODE_PENDING_REGISTRATION]) and
                 episode_case_properties.get(EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
                 is_valid_person_submission(person_case)
@@ -261,6 +261,20 @@ def create_case_repeat_records(sender, case, **kwargs):
 
 def create_hiv_test_repeat_records(sender, case, **kwargs):
     create_repeat_records(NikshayHIVTestRepeater, case)
+
+
+def person_registered_via_api(episode_case):
+    episode_case_properties = episode_case.dynamic_case_properties()
+    return (
+        episode_case_properties.get('nikshay_registered', 'false') == 'true' and
+        episode_case_properties.get('nikshay_id')
+    )
+
+
+def person_nikshay_id_present(person_case):
+    person_case_properties = person_case.dynamic_case_properties()
+    return bool(person_case_properties.get('nikshay_id'))
+
 
 case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
 case_post_save.connect(create_hiv_test_repeat_records, CommCareCaseSQL)
