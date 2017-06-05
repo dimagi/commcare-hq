@@ -17,7 +17,8 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 
-from .case_utils import CASE_TYPE_EPISODE, get_prescription_vouchers_from_episode
+from custom.enikshay.exceptions import ENikshayCaseNotFound
+from .case_utils import CASE_TYPE_EPISODE, get_prescription_vouchers_from_episode, get_prescription_from_voucher
 from .const import (
     DOSE_TAKEN_INDICATORS,
     DAILY_SCHEDULE_FIXTURE_NAME,
@@ -429,6 +430,7 @@ class EpisodeVoucherUpdate(object):
         output_json = {}
         output_json.update(self.get_prescription_total_days())
         output_json.update(self.get_prescription_refill_due_dates())
+        output_json.update(self.get_first_voucher_details())
         return self._updated_fields(self.episode.dynamic_case_properties(), output_json)
 
     def get_prescription_total_days(self):
@@ -475,4 +477,28 @@ class EpisodeVoucherUpdate(object):
             'date_last_refill': date_last_refill.strftime("%Y-%m-%d"),
             'voucher_length': voucher_length,
             'refill_due_date': refill_due_date.strftime("%Y-%m-%d"),
+        }
+
+    def get_first_voucher_details(self):
+        all_voucher_cases = sorted(self._get_all_vouchers(), key=lambda c: c.get_case_property('date_issued'))
+        fulfilled_voucher_cases = sorted(
+            self._get_fulfilled_vouchers(),
+            key=lambda c: c.get_case_property('date_issued')
+        )
+
+        try:
+            first_voucher_generated = all_voucher_cases[0]
+        except IndexError:
+            return {}
+
+        try:
+            first_prescription = get_prescription_from_voucher(self.domain, first_voucher_generated.case_id)
+        except ENikshayCaseNotFound:
+            return {}
+
+        return {
+            'first_voucher_generation_date': first_voucher_generated.get_case_property('date_issued'),
+            'first_voucher_drugs': first_prescription.get_case_property('drugs_ordered_readable'),
+            'first_voucher_validation_date': (fulfilled_voucher_cases[0].get_case_property('date_issued')
+                                              if fulfilled_voucher_cases else '')
         }
