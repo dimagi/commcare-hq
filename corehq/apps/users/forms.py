@@ -358,13 +358,6 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         if toggles.MOBILE_UCR.enabled(self.domain):
             self.fields['mobile_ucr_sync_interval'].widget = forms.NumberInput()
 
-        if self.initial['mobile_ucr_sync_interval']:
-            self.initial['mobile_ucr_sync_interval'] /= 3600  # convert seconds to hours
-
-    def clean_mobile_ucr_sync_interval(self):
-        if self.cleaned_data['mobile_ucr_sync_interval']:
-            return self.cleaned_data['mobile_ucr_sync_interval'] * 3600
-
     @property
     def direct_properties(self):
         indirect_props = ['role']

@@ -34,6 +34,7 @@ def _should_sync(restore_state):
     if sync_interval is None:
         sync_interval = restore_state.project.default_mobile_ucr_sync_interval
 
+    sync_interval = sync_interval and sync_interval * 3600  # convert to seconds
     return (
         not last_sync_log or
         not sync_interval or

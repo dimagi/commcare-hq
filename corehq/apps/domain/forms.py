@@ -614,10 +614,6 @@ class DomainGlobalSettingsForm(forms.Form):
         timezone_field.run_validators(data)
         return smart_str(data)
 
-    def clean_mobile_ucr_sync_interval(self):
-        if self.cleaned_data.get('mobile_ucr_sync_interval'):
-            return self.cleaned_data.get('mobile_ucr_sync_interval') * 3600
-
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
         if (cleaned_data.get('call_center_enabled') and
