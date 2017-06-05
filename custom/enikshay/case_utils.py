@@ -222,6 +222,24 @@ def get_occurrence_case_from_test(domain, test_case_id):
     return get_parent_of_case(domain, test_case_id, CASE_TYPE_OCCURRENCE)
 
 
+def get_private_diagnostic_test_cases_from_episode(domain, episode_case_id):
+    """Returns all test cases for a particular episode
+    """
+    occurrence_case = get_occurrence_case_from_episode(domain, episode_case_id)
+    case_accessor = CaseAccessors(domain)
+    indexed_cases = case_accessor.get_reverse_indexed_cases([occurrence_case.case_id])
+    open_test_cases = [
+        case for case in indexed_cases
+        if not case.closed
+        and case.type == CASE_TYPE_TEST
+        and case.get_case_property('purpose_of_test') == 'diagnostic'
+        and case.get_case_property('date_reported') is not None
+        and case.get_case_property('date_reported') != ''
+        and case.get_case_property('enrolled_in_private') == 'true'
+    ]
+    return sorted(open_test_cases, key=lambda c: c.get_case_property('date_reported'))
+
+
 def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_date):
     episode = get_open_episode_case_from_person(domain, person_case_id)
     case_accessor = CaseAccessors(domain)
