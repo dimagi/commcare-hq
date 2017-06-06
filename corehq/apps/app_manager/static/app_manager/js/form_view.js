@@ -66,6 +66,32 @@ hqDefine("app_manager/js/form_view.js", function() {
             $('#form-filter').koApplyBindings(new FormFilter());
         }
 
+        if (initial_page_data('allow_form_workflow')) {
+            var FormWorkflow = hqImport('app_manager/js/form_workflow.js').FormWorkflow;
+            var labels = {};
+            labels[FormWorkflow.Values.DEFAULT] = gettext("Home Screen");
+            labels[FormWorkflow.Values.ROOT] = gettext("Module Menu");
+            labels[FormWorkflow.Values.MODULE] = gettext("Module: ") + initial_page_data('module_name');
+            if (initial_page_data('root_module_name')) {
+                labels[FormWorkflow.Values.PARENT_MODULE] = gettext("Parent Module: ") + initial_page_data('root_module_name');
+            }
+            labels[FormWorkflow.Values.PREVIOUS_SCREEN] = gettext("Previous Screen");
+
+            var options = {
+                labels: labels,
+                workflow: initial_page_data('post_form_workflow'),
+            };
+
+            if (COMMCAREHQ.toggleEnabled('FORM_LINK_WORKFLOW') || initial_page_data('uses_form_workflow')) {
+                labels[FormWorkflow.Values.FORM] = gettext("Link to other form");
+                options.forms = initial_page_data('linkable_forms');
+                options.formLinks = initial_page_data('form_links');
+                options.formDatumsUrl = hqImport('hqwebapp/js/urllib.js').reverse('get_form_datums');
+            }
+
+            $('#form-workflow').koApplyBindings(new FormWorkflow(options))
+        }
+
         // Settings > Advanced
         $('#auto-gps-capture').koApplyBindings({
             auto_gps_capture: ko.observable(initial_page_data('auto_gps_capture')),

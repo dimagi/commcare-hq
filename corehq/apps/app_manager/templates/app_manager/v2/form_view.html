@@ -70,36 +70,6 @@
         $(function(){
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
 
-        {% if allow_form_workflow %}
-            var FormWorkflow = hqImport('app_manager/js/form_workflow.js').FormWorkflow;
-            var labels = {};
-            labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
-            labels[FormWorkflow.Values.ROOT] = "{% trans "Main Menu" %}";
-            {% with module_name=module.name|trans:langs %}
-            labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
-            {% endwith %}
-            {% if module.root_module_id %}
-            {% with root_module_name=module.root_module.name|trans:langs %}
-            labels[FormWorkflow.Values.PARENT_MODULE] = "{% trans "Parent Module:" %} {{ root_module_name|escapejs }}";
-            {% endwith %}
-            {% endif %}
-            labels[FormWorkflow.Values.PREVIOUS_SCREEN] = "{% trans "Previous Screen" %}";
-
-            var options = {
-                labels: labels,
-                workflow: '{{ form.post_form_workflow }}',
-            };
-
-            {% if request|toggle_enabled:"FORM_LINK_WORKFLOW" or uses_form_workflow %}
-            labels[FormWorkflow.Values.FORM] = "{% trans "Link to other form" %}";
-            options.forms = {{ linkable_forms|JSON}}
-            options.formLinks = {{ form.form_links|JSON }}
-            options.formDatumsUrl = '{% url 'get_form_datums' domain app.id %}'
-            {% endif %}
-
-            $('#form-workflow').koApplyBindings(new FormWorkflow(options))
-        {% endif %}
-
         {% if can_preview_form and allow_cloudcare %}
             // tag the 'preview in cloudcare' button with the right url
             // unfortunately, has to be done in javascript
@@ -196,6 +166,19 @@
     {% initial_page_data 'put_in_root' module.put_in_root %}
     {% initial_page_data 'shadow_parent_form_id' form.shadow_parent_form_id %}
     {% registerurl "validate_form_for_build" domain app.id form.unique_id %}
+
+    {# End of form navigation #}
+    {% initial_page_data 'allow_form_workflow' allow_form_workflow %}
+    {% initial_page_data 'form_links' form.form_links %}
+    {% initial_page_data 'linkable_forms' linkable_forms %}
+    {% initial_page_data 'module_name' module.name|trans:langs %}
+    {% if module.root_module_id %}
+        {% initial_page_data 'root_module_name' module.root_module.name|trans:langs %}
+    {% endif %}
+    {% initial_page_data 'post_form_workflow' form.post_form_workflow %}
+    {% initial_page_data 'uses_form_workflow' uses_form_workflow %}
+    {% registerurl "get_form_datums" domain app.id %}
+
     <div class="tabbable appmanager-tabs-container">
         <ul class="nav nav-tabs">
 
