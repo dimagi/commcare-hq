@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,295 +1,306 @@
+@@ -1,296 +1,308 @@
  {% load i18n %}
  {% load hq_shared_tags %}
 +{% load xforms_extras %}
@@ -95,6 +95,7 @@
 +        </div>
 +        {% endif %}
 +
++        {% if request|feature_preview_enabled:"SHARE_CASE_TILE_CONTEXT" %}
 +        {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
 +        {% if request|toggle_enabled:'CASE_LIST_TILE' %}
 +            {% with app|get_available_modules_for_case_tile_configuration:module as available_modules %}
@@ -132,6 +133,7 @@
 +            </div>
 +            {% endif %}
 +        {% endwith %}
++        {% endif %}
 +        {% endif %}
 +
 +        {% include 'app_manager/v2/partials/case_list_properties.html' %}
@@ -196,6 +198,7 @@
 -    </div>
 -    {% endif %}
 -
+-    {% if request|feature_preview_enabled:"SHARE_CASE_TILE_CONTEXT" %}
 -    {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
 -    {% if request|toggle_enabled:'CASE_LIST_TILE' %}
 -        {% with app|get_available_modules_for_case_tile_configuration:module as available_modules %}
@@ -234,7 +237,7 @@
 -        {% endif %}
 -        {% endwith %}
 -    {% endif %}
--
+-    {% endif %}
 -    {% include 'app_manager/v1/partials/case_list_properties.html' %}
 +
 +{% if detail.type == 'case' %}
@@ -584,7 +587,7 @@
          <div class="form-group">
              <label class="control-label col-sm-2">
                  {% trans "Select Parent First" %}
-@@ -302,7 +313,7 @@
+@@ -303,7 +315,7 @@
          </div>
          <div class="form-group" data-bind="visible: active">
              <label class="control-label col-sm-2">
@@ -593,7 +596,7 @@
              </label>
              <div class="col-sm-4">
                  <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
-@@ -315,15 +326,14 @@
+@@ -316,15 +328,14 @@
  
  {{ request|toggle_tag_info:"CASE_LIST_LOOKUP" }}
  {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}

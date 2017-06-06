@@ -82,6 +82,7 @@
         </div>
         {% endif %}
 
+        {% if request|feature_preview_enabled:"SHARE_CASE_TILE_CONTEXT" %}
         {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
         {% if request|toggle_enabled:'CASE_LIST_TILE' %}
             {% with app|get_available_modules_for_case_tile_configuration:module as available_modules %}
@@ -119,6 +120,7 @@
             </div>
             {% endif %}
         {% endwith %}
+        {% endif %}
         {% endif %}
 
         {% include 'app_manager/v2/partials/case_list_properties.html' %}
