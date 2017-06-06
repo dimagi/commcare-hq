@@ -6027,12 +6027,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'type': 'subscription',
                 'message': _('Your application is using User Properties. You can remove User Properties '
                              'functionality by opening the User Properties tab in a form that uses it, and '
-                             'clicking "Remove User Properties".')
-                           if toggles.USER_PROPERTY_EASY_REFS.enabled(self.domain) else
-                           # old message, to be removed with USER_PROPERTY_EASY_REFS toggle
-                           _('Your application is using User Case functionality. You can remove User Case '
-                             'functionality by opening the User Case Management tab in a form that uses it, and '
-                             'clicking "Remove User Case Properties".'),
+                             'clicking "Remove User Properties".'),
             })
         return errors
 
