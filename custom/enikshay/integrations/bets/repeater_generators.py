@@ -8,7 +8,8 @@ from pytz import timezone
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.exceptions import RequestConnectionError
-from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator, LocationPayloadGenerator
+from corehq.apps.repeaters.repeater_generators import (
+    BasePayloadGenerator, LocationPayloadGenerator, UserPayloadGenerator)
 from custom.enikshay.case_utils import update_case, get_person_case_from_episode
 from custom.enikshay.const import (
     DATE_FULFILLED,
@@ -404,6 +405,16 @@ class BETSAYUSHReferralPayloadGenerator(IncentivePayloadGenerator):
 
     def get_payload(self, repeat_record, episode_case):
         return json.dumps(IncentivePayload.create_ayush_referral_payload(episode_case).payload_json())
+
+
+class BETSUserPayloadGenerator(UserPayloadGenerator):
+
+    def get_payload(self, repeat_record, user):
+        from corehq.apps.api.resources.v0_5 import CommCareUserResource
+        resource = CommCareUserResource(api_name='v0.5')
+        bundle = resource.build_bundle(obj=user)
+        user_json = resource.full_dehydrate(bundle).data
+        return json.dumps(user_json)
 
 
 class BETSLocationPayloadGenerator(LocationPayloadGenerator):
