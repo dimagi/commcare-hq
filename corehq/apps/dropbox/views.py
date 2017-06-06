@@ -1,4 +1,11 @@
-from dropbox.client import DropboxOAuth2Flow
+from dropbox.oauth import (
+    DropboxOAuth2Flow,
+    BadRequestException,
+    BadStateException,
+    CsrfException,
+    NotApprovedException,
+    ProviderException,
+)
 
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponse
@@ -27,17 +34,17 @@ class DropboxAuthCallback(View):
                 # http://manage.dimagi.com/default.asp?222132
                 return HttpResponseRedirect(reverse(DropboxAuthInitiate.slug))
             else:
-                access_token, user_id, url_state = get_dropbox_auth_flow(request.session).finish(request.GET)
-        except DropboxOAuth2Flow.BadRequestException as e:
+                oauth_result = get_dropbox_auth_flow(request.session).finish(request.GET)
+        except BadRequestException as e:
             return HttpResponse(e, status=400)
-        except DropboxOAuth2Flow.BadStateException:
+        except BadStateException:
             # Start the auth flow again.
             return HttpResponseRedirect(reverse(DropboxAuthInitiate.slug))
-        except DropboxOAuth2Flow.CsrfException as e:
+        except CsrfException as e:
             return HttpResponse(e, status=403)
-        except DropboxOAuth2Flow.NotApprovedException:
+        except NotApprovedException:
             return HttpResponseRedirect("/", status=400)
-        except DropboxOAuth2Flow.ProviderException as e:
+        except ProviderException as e:
             return HttpResponse(e, status=403)
-        request.session[DROPBOX_ACCESS_TOKEN] = access_token
+        request.session[DROPBOX_ACCESS_TOKEN] = oauth_result.access_token
         return HttpResponseRedirect(request.session.get('dropbox_next_url', '/'))
