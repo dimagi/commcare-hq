@@ -57,8 +57,10 @@
     {% endif %}
 
     {% include "app_manager/v2/partials/xpathValidator.html" %}
-    {% include "app_manager/v2/partials/nav_menu_media_js_common.html" %}
-    {% include "app_manager/v2/partials/nav_menu_media_js.html" with item=multimedia.menu %}
+    {% include 'hqmedia/partials/multimedia_js.html' %}
+    <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
+    <script src="{% static 'app_manager/js/nav_menu_media.js' %}"></script>
     {% if allow_form_workflow %}
         <script src="{% static 'app_manager/js/form_workflow.js' %}"></script>
     {% endif %}
@@ -195,6 +197,7 @@
             var options = {
                 labels: labels,
                 workflow: '{{ form.post_form_workflow }}',
+                workflow_fallback: '{{ form.post_form_workflow_fallback }}',
             };
 
             {% if request|toggle_enabled:"FORM_LINK_WORKFLOW" or uses_form_workflow %}
@@ -326,6 +329,12 @@
 {% block form-view %}
     {% initial_page_data 'case_config_options' case_config_options %}
     {% initial_page_data 'form_requires' form.requires %}
+    {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
+    {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
+    {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
+    {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
+    {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
+    {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
     <div class="tabbable appmanager-tabs-container">
         <ul class="nav nav-tabs">
 
@@ -344,11 +353,7 @@
             {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
             <li>
                 <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-                  {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
                     {% trans "User Properties" %}
-                  {% else %}
-                    {% trans "User Case Management" %}
-                  {% endif %}
                 </a>
             </li>
             {% endif %}{% endif %}
@@ -401,13 +406,11 @@
                   {% elif form.source %}
                       <div class="casexml" id="casexml_home">
                         {% if module.doc_type == 'AdvancedModule' %}
-                            {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
                             {% initial_page_data 'schedule_options' schedule_options %}
-                            {% include 'app_manager/v1/partials/case_config_advanced.html' %}
+                            {% include 'app_manager/v2/partials/case_config_advanced.html' %}
                         {% elif module.doc_type == 'CareplanModule' %}
                             {% include 'app_manager/v2/partials/case_config_careplan.html' %}
                         {% else %}
-                            {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
                             {% include 'app_manager/v2/partials/case_config.html' %}
                         {% endif %}
                       </div>
@@ -436,46 +439,26 @@
                         {% block usercase_management_content %}
                             {%  if form.uses_usercase and not allow_usercase %}
                                 <div>
-                                    {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
-                                        <p>{% blocktrans %}
-                                            The User Properties feature is no longer available because of the change in your
-                                            CommCare subscription. Although currently-deployed applications will still
-                                            function properly, it will not be possible to update or redeploy them unless
-                                            the User Properties functionality is removed, or you upgrade your CommCare
-                                            subscription.
-                                        {% endblocktrans %}</p>
+                                    <p>{% blocktrans %}
+                                        The User Properties feature is no longer available because of the change in your
+                                        CommCare subscription. Although currently-deployed applications will still
+                                        function properly, it will not be possible to update or redeploy them unless
+                                        the User Properties functionality is removed, or you upgrade your CommCare
+                                        subscription.
+                                    {% endblocktrans %}</p>
 
-                                        <p class="alert alert-danger">{% blocktrans %}
-                                            WARNING: By clicking "Remove User Properties" you will lose User Properties
-                                            functionality if you redeploy your application. However, you will still be
-                                            able to see all previously collected data.
-                                        {% endblocktrans %}</p>
-                                    {% else %}
-                                        <p>{% blocktrans %}
-                                            The User Case feature is no longer available because of the change in your
-                                            CommCare subscription. Although currently-deployed applications will still
-                                            function properly, it will not be possible to update or redeploy them unless
-                                            the User Case functionality is removed, or you upgrade your CommCare
-                                            subscription.
-                                        {% endblocktrans %}</p>
-
-                                        <p class="alert alert-danger">{% blocktrans %}
-                                            WARNING: By clicking "Remove User Case Properties" you will lose User Case
-                                            functionality if you redeploy your application. However, you will still be
-                                            able to see all previously collected data.
-                                        {% endblocktrans %}</p>
-                                    {% endif %}
+                                    <p class="alert alert-danger">{% blocktrans %}
+                                        WARNING: By clicking "Remove User Properties" you will lose User Properties
+                                        functionality if you redeploy your application. However, you will still be
+                                        able to see all previously collected data.
+                                    {% endblocktrans %}</p>
 
                                     <p>
                                         <a href="{% url 'domain_select_plan' domain %}" class="btn btn-primary">
                                             {% trans "Change your subscription" %}
                                         </a>
                                         <a href="{% url 'drop_user_case' domain app.id %}" class="btn btn-danger">
-                                          {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
                                             {% trans "Remove User Properties" %}
-                                          {% else %}
-                                            {% trans "Remove User Case Properties" %}
-                                          {% endif %}
                                         </a>
                                     </p>
                                 </div>
@@ -485,11 +468,7 @@
                     </div>
                 {% else %}
                     <p class="alert alert-warning">
-                      {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
                         {% trans "You have not created a form yet. Create a form in order to view and edit User Properties." %}
-                      {% else %}
-                        {% trans "You have not created a form yet. Create a form in order to view and edit User Case Management." %}
-                      {% endif %}
                     </p>
                 {% endif %}
             </div>
