@@ -532,6 +532,7 @@ class BaseScheduleCaseReminderForm(forms.Form):
                 (k, v[1])
                 for k, v in settings.AVAILABLE_CUSTOM_REMINDER_RECIPIENTS.items()
             ]
+            additional_choices.sort(key=lambda item: item[1])
             add_field_choices(self, 'recipient', additional_choices)
 
         from corehq.apps.reminders.views import RemindersListView
