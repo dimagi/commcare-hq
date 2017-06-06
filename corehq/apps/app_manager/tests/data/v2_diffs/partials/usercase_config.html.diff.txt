@@ -1,9 +1,9 @@
 --- 
 +++ 
-@@ -4,36 +4,47 @@
+@@ -3,30 +3,35 @@
+ 
  <script type="text/html" id="usercase-config:case-transaction">
      <div class="row top-spacer">
-         {% if request|toggle_enabled:'USER_PROPERTY_EASY_REFS' %}
 -        <div class="col-sm-6">
 -            <div class="panel panel-default">
 -                <div class="panel-heading panel-title">{% trans "Load the following case properties into the form" %}</div>
@@ -23,14 +23,6 @@
 +                <p><img src="{% static 'app_manager/images/user-properties-loading-moved.png' %}"></p>
              </div>
          </div>
-         {% else %}
--        <div class="col-sm-6">
--            <div class="panel panel-default"
--                 data-bind="template: 'case-config:case-transaction:case-preload'"></div>
--        </div>
-+        <div class="panel panel-appmanager"
-+             data-bind="template: 'case-config:case-transaction:case-preload'"></div>
-         {% endif %}
 -        <div class="col-sm-6">
 -            <div class="panel panel-default"
 -                 data-bind="template: 'case-config:case-transaction:case-properties'"></div>
@@ -52,19 +44,11 @@
 +        {% endif %}
      </div>
 -    <div class="spacer"></div>
-+    {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
-+        <p class="lead">
-+            {% blocktrans %}
-+            <strong>User Properties</strong> allow you to store data about the user and use that data in forms.
-+            {% endblocktrans %}
-+        </p>
-+    {% else %}
-+        <p class="lead">
-+            {% blocktrans %}
-+              The <strong>User Case</strong> allows you to store data about the user in a case and use that data in forms.
-+            {% endblocktrans %}
-+        </p>
-+    {% endif %}
++    <p class="lead">
++        {% blocktrans %}
++        <strong>User Properties</strong> allow you to store data about the user and use that data in forms.
++        {% endblocktrans %}
++    </p>
      <div data-bind="with: caseConfigViewModel" class="container-fluid">
          <div data-bind="template: {name: 'usercase-config:case-transaction', data: usercase_transaction }"></div>
      </div>

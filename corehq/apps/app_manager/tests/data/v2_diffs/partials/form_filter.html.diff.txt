@@ -8,7 +8,7 @@
  <div class="form-group">
      <label class="control-label col-sm-2">
          {% trans "Display Condition" %}
-@@ -20,18 +22,18 @@
+@@ -19,9 +21,9 @@
                      {% blocktrans %}
                      To use display conditions which reference a case, <br/>
                          (1) the <strong>Menu Mode</strong> setting must be set to
@@ -20,21 +20,8 @@
 +                            forms must go in a separate case list, or if your project uses user properties, your
                              display condition may use user properties.
                      {% endblocktrans %}
-                   {% else %}
-                     {% blocktrans %}
-                     To use display conditions which reference a case, <br/>
--                        (1) the module <strong>Menu Mode</strong> setting must be set to
--                            <em>Display module and then forms</em> <br/>
--                        (2) all the forms in the module must update or close a case, which means registration
--                            forms must go in a separate module, or if your project uses user case management, your
-+                        (1) the <strong>Menu Mode</strong> setting must be set to
-+                            <em>Display menu and then forms</em> <br/>
-+                        (2) all the forms in the case list must update or close a case, which means registration
-+                            forms must go in a separate case list, or if your project uses user case management, your
-                             display condition may use the user case.
-                     {% endblocktrans %}
-                   {% endif %}
-@@ -59,3 +61,5 @@
+                 </span>
+@@ -41,3 +43,5 @@
          </span>
      </div>
  </div>

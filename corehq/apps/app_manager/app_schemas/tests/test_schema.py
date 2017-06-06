@@ -10,7 +10,6 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.util.test_utils import flag_enabled
 
 
-@flag_enabled('USER_PROPERTY_EASY_REFS')
 @patch('corehq.apps.app_manager.app_schemas.casedb_schema.get_case_property_description_dict',
        MagicMock(return_value={}))
 @patch('corehq.apps.app_manager.models.is_usercase_in_use', MagicMock(return_value=False))
@@ -326,33 +325,3 @@ class SchemaTest(SimpleTestCase):
             self.factory_2.form_requires_case(
                 form, case_type=case_type, update=case_updates)
         return form
-
-
-@patch('corehq.apps.app_manager.app_schemas.casedb_schema.get_case_property_description_dict',
-       MagicMock(return_value={}))
-@patch('corehq.apps.app_manager.models.is_usercase_in_use', MagicMock(return_value=True))
-@patch('corehq.apps.app_manager.app_schemas.casedb_schema.is_usercase_in_use', MagicMock(return_value=True))
-@patch('corehq.apps.app_manager.app_schemas.session_schema.is_usercase_in_use', MagicMock(return_value=True))
-@patch('corehq.apps.app_manager.app_schemas.casedb_schema.get_per_type_defaults', MagicMock(return_value={}))
-@patch('corehq.apps.domain.models.Domain.get_by_name',
-    staticmethod(lambda name: MagicMock(spec=["date_created"], date_created=datetime(2017, 1, 1))))
-class DisabledUserPropertiesSchemaTest(SimpleTestCase):
-    # TODO remove this test when removing USER_PROPERTY_EASY_REFS toggle
-
-    def setUp(self):
-        self.factory = AppFactory()
-
-    def test_get_session_schema(self):
-        module, form = self.factory.new_basic_module('village', 'village')
-        schema = get_session_schema(form)
-        self.assertNotIn("context", schema["structure"], repr(schema))
-
-    def test_get_casedb_schema(self):
-        module, form = self.factory.new_basic_module('village', 'village')
-        self.factory.form_uses_usercase(form, update={
-            'name': '/data/username',
-            'role': '/data/userrole',
-        })
-        schema = get_casedb_schema(form)
-        subsets = {s["id"]: s for s in schema["subsets"]}
-        self.assertNotIn(USERCASE_TYPE, subsets, repr(subsets))
