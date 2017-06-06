@@ -360,13 +360,13 @@ def create_BETS_repeat_records(sender, case, **kwargs):
     create_repeat_records(BETSBeneficiaryRepeater, case)
 
 
-@receiver(post_save, sender=SQLLocation, dispatch_uid="create_bets_location_repeat_records")
-def create_bets_location_repeat_records(sender, raw=False, **kwargs):
+@receiver(post_save, sender=SQLLocation, dispatch_uid="create_BETS_location_repeat_records")
+def create_BETS_location_repeat_records(sender, raw=False, **kwargs):
     if raw:
         return
     create_repeat_records(BETSLocationRepeater, kwargs['instance'])
 
 
-@receiver(commcare_user_post_save, dispatch_uid="create_bets_user_repeat_records")
-def create_user_repeat_records(sender, couch_user, **kwargs):
+@receiver(commcare_user_post_save, dispatch_uid="create_BETS_user_repeat_records")
+def create_BETS_user_repeat_records(sender, couch_user, **kwargs):
     create_repeat_records(BETSUserRepeater, couch_user)
