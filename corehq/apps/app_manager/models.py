@@ -161,6 +161,8 @@ ALL_WORKFLOWS = [
     WORKFLOW_PREVIOUS,
     WORKFLOW_FORM,
 ]
+# allow all options as fallback except the one for form linking
+WORKFLOW_FALLBACK_OPTIONS = list(ALL_WORKFLOWS).remove(WORKFLOW_FORM)
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -892,6 +894,10 @@ class FormBase(DocumentSchema):
     post_form_workflow = StringProperty(
         default=WORKFLOW_DEFAULT,
         choices=ALL_WORKFLOWS
+    )
+    post_form_workflow_fallback = StringProperty(
+        choices=WORKFLOW_FALLBACK_OPTIONS,
+        default=None,
     )
     auto_gps_capture = BooleanProperty(default=False)
     no_vellum = BooleanProperty(default=False)
@@ -1816,9 +1822,19 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                 hashtag = "#case"
             return types[hashtag], name
 
+        def parse_relationship(name):
+            if '/' not in name:
+                return name
+
+            relationship, property_name = name.split('/', 1)
+            if relationship == 'grandparent':
+                relationship = 'parent/parent'
+            return '/'.join([relationship, property_name])
+
         for case_load_reference in self.case_references.get_load_references():
             for name in case_load_reference.properties:
                 case_type, name = parse_case_type(name)
+                name = parse_relationship(name)
                 self.add_property_load(
                     app_case_meta,
                     case_type,
@@ -6017,12 +6033,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'type': 'subscription',
                 'message': _('Your application is using User Properties. You can remove User Properties '
                              'functionality by opening the User Properties tab in a form that uses it, and '
-                             'clicking "Remove User Properties".')
-                           if toggles.USER_PROPERTY_EASY_REFS.enabled(self.domain) else
-                           # old message, to be removed with USER_PROPERTY_EASY_REFS toggle
-                           _('Your application is using User Case functionality. You can remove User Case '
-                             'functionality by opening the User Case Management tab in a form that uses it, and '
-                             'clicking "Remove User Case Properties".'),
+                             'clicking "Remove User Properties".'),
             })
         return errors
 

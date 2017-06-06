@@ -220,6 +220,53 @@ class WriterTest(SimpleTestCase):
                 }
             )
 
+    def test_array_data_in_scalar_question(self):
+        '''
+        This test ensures that when a question id has array data
+        that we return still return a string for scalar data.
+        This happens rarely
+        '''
+        doc = {
+            'domain': 'my-domain',
+            '_id': '12345',
+            "form": {
+                "array": ["one", "two"],
+            }
+        }
+
+        export_instance = FormExportInstance(
+            export_format=Format.JSON,
+            domain=DOMAIN,
+            xmlns='xmlns',
+            tables=[TableConfiguration(
+                label="My table",
+                selected=True,
+                path=[],
+                columns=[
+                    ExportColumn(
+                        label="Scalar Array",
+                        item=ScalarItem(path=[PathNode(name='form'), PathNode(name='array')]),
+                        selected=True,
+                    )
+                ]
+            )]
+        )
+        writer = _get_writer([export_instance])
+        with writer.open([export_instance]):
+            _write_export_instance(writer, export_instance, [doc])
+
+        with ExportFile(writer.path, writer.format) as export:
+            self.assertEqual(
+                json.loads(export.read()),
+                {
+                    u'My table': {
+                        u'headers': [u'Scalar Array'],
+                        u'rows': [['one two']],
+
+                    }
+                }
+            )
+
     def test_form_stock_columns(self):
         """Ensure that we can export stock properties in a form export"""
         docs = [{

@@ -1,33 +1,6 @@
 {
     "domains": [
-        "enikshay-test",
-        "enikshay-test-test",
-        "enikshay",
-        "enikshay-test-2",
-        "enikshay-test-3",
-        "enikshay-nikshay-migration-test",
-        "enikshay-domain-copy-test",
-        "enikshay-aks-audit",
-        "np-migration-3",
-        "enikshay-uatbc-migration-test-1",
-        "enikshay-uatbc-migration-test-2",
-        "enikshay-uatbc-migration-test-3",
-        "enikshay-uatbc-migration-test-4",
-        "enikshay-uatbc-migration-test-5",
-        "enikshay-uatbc-migration-test-6",
-        "enikshay-uatbc-migration-test-7",
-        "enikshay-uatbc-migration-test-8",
-        "enikshay-uatbc-migration-test-9",
-        "enikshay-uatbc-migration-test-10",
-        "enikshay-uatbc-migration-test-11",
-        "enikshay-uatbc-migration-test-12",
-        "enikshay-uatbc-migration-test-13",
-        "enikshay-uatbc-migration-test-14",
-        "enikshay-uatbc-migration-test-15",
-        "enikshay-uatbc-migration-test-16",
-        "enikshay-uatbc-migration-test-17",
-        "enikshay-uatbc-migration-test-18",
-        "enikshay-uatbc-migration-test-19"
+        "enikshay"
     ],
     "server_environment": [
         "softlayer"
@@ -330,16 +303,11 @@
                     "type": "nested",
                     "argument_expression": {
                         "type": "named",
-                        "name": "test_request_form"
+                        "name": "lab_referral_case"
                     },
                     "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "rpt_referral_details",
-                            "ql_referral_details",
-                            "lab_referral_owner_id"
-                        ]
+                        "type": "property_name",
+                        "property_name": "owner_id"
                     }
                 }
             },
@@ -1077,6 +1045,14 @@
             },
             {
                 "filter": {
+                    "type": "named",
+                    "name": "microscopy"
+                },
+                "type": "boolean",
+                "column_id": "is_microscopy"
+            },
+            {
+                "filter": {
                     "type": "and",
                     "filters": [
                         {
@@ -1689,6 +1665,36 @@
                                 "property_name": "type"
                             },
                             "property_value": "episode"
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
+            "lab_referral_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "type": "property_name",
+                                "property_name": "_id"
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "type"
+                            },
+                            "property_value": "lab_referral"
                         }
                     },
                     "sort_expression": {

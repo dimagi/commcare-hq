@@ -281,6 +281,9 @@ class ExportColumn(DocumentSchema):
                 pass
         if value is None:
             value = MISSING_VALUE
+
+        if isinstance(value, list):
+            value = ' '.join(value)
         return value
 
     @staticmethod
