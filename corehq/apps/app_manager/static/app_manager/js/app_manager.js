@@ -124,7 +124,9 @@ hqDefine('app_manager/js/app_manager.js', function () {
                     });
                 button.ui.appendTo($buttonHolder);
                 $buttonHolder.data('button', button);
-                hqImport("app_manager/js/section_changer.js").attachToForm($form);
+                if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+                    hqImport("app_manager/js/section_changer.js").attachToForm($form);
+                }
             });
         }());
 
