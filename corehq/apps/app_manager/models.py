@@ -2100,7 +2100,10 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     custom_xml = StringProperty()
 
     persist_tile_on_forms = BooleanProperty()
-    case_context_from_module = StringProperty()
+    # use case tile context persisted over forms from another module
+    persistent_case_context_from_module = StringProperty()
+    # use case tile context in case list from another module
+    detail_case_context_from_module = StringProperty()
     # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
 
@@ -2504,14 +2507,18 @@ class ModuleDetailsMixin():
                         'module': self.get_module_info(),
                         'reason': _('Case tiles may only be used for the case list (not the case details).')
                     })
-                col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
-                for field in ["header", "top_left", "sex", "bottom_left", "date"]:
-                    if field not in col_by_tile_field:
-                        errors.append({
-                            'type': "invalid tile configuration",
-                            'module': self.get_module_info(),
-                            'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
-                        })
+                # validate if using modules case tile context as persisted or
+                # if module should add case context for tiles in case list i.e
+                # module is not using case context for case list tiles from another module
+                if detail.persist_tile_on_forms and not detail.detail_case_context_from_module:
+                    col_by_tile_field = {c.case_tile_field: c for c in detail.columns}
+                    for field in ["header", "top_left", "sex", "bottom_left", "date"]:
+                        if field not in col_by_tile_field:
+                            errors.append({
+                                'type': "invalid tile configuration",
+                                'module': self.get_module_info(),
+                                'reason': _('A case property must be assigned to the "{}" tile field.'.format(field))
+                            })
         return errors
 
     def get_case_errors(self, needs_case_type, needs_case_detail, needs_referral_detail=False):

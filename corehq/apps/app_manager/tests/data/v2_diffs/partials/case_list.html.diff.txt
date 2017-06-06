@@ -86,7 +86,7 @@
 +            {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
 +            {% if available_modules %}
 +                <div data-bind="visible: persistTileOnForms()" >
-+                    <select name='case_context_from_module' class='form-control' data-bind="value: caseContextFromModule">
++                    <select name='persistent_case_context_from_module' class='form-control' data-bind="value: persistentCaseContextFromModule">
 +                        <option value></option>
 +                        {% for other_mod in available_modules %}
 +                        <option value={{ other_mod.unique_id }}>{{ other_mod.name|html_trans:langs }}</option>
@@ -156,7 +156,7 @@
 -        {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
 -        {% if available_modules %}
 -            <div data-bind="visible: persistTileOnForms()" >
--                <select name='case_context_from_module' class='form-control' data-bind="value: caseContextFromModule">
+-                <select name='persistent_case_context_from_module' class='form-control' data-bind="value: persistentCaseContextFromModule">
 -                    <option value></option>
 -                    {% for other_mod in available_modules %}
 -                    <option value={{ other_mod.unique_id }}>{{ other_mod.name|html_trans:langs }}</option>
