@@ -60,7 +60,7 @@ class AdherenceCaseFactory(object):
         for adherence_point in adherence_points:
             if adherence_point.get('MERM_TypeOfEvent') == "HEARTBEAT":
                 continue
-            case_structures.append([
+            case_structures.append(
                 CaseStructure(
                     case_id=uuid.uuid4().hex,
                     attrs={
@@ -77,7 +77,7 @@ class AdherenceCaseFactory(object):
                     )],
                     walk_related=False,
                 )
-            ])
+            )
         return self.case_factory.create_or_update_cases(case_structures)
 
     def _get_adherence_case_properties(self, adherence_point):
