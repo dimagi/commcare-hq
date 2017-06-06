@@ -348,8 +348,8 @@ class BETSBeneficiaryRepeater(BaseBETSRepeater):
                      or case_properties_changed(person_case, self.properties_we_care_about)))
 
 
-@receiver(case_post_save, sender=CommCareCaseSQL, dispatch_uid="create_bets_case_repeat_records")
-def create_case_repeat_records(sender, case, **kwargs):
+@receiver(case_post_save, sender=CommCareCaseSQL, dispatch_uid="create_BETS_case_repeat_records")
+def create_BETS_repeat_records(sender, case, **kwargs):
     create_repeat_records(ChemistBETSVoucherRepeater, case)
     create_repeat_records(LabBETSVoucherRepeater, case)
     create_repeat_records(BETS180TreatmentRepeater, case)

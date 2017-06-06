@@ -905,6 +905,9 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = None
 AUTHPROXY_URL = None
 AUTHPROXY_CERT = None
 
+ENIKSHAY_PRIVATE_API_USERS = {}
+ENIKSHAY_PRIVATE_API_PASSWORD = None
+
 from env_settings import *
 
 try:
@@ -2104,6 +2107,3 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
             'NAME': 'custom.nic_compliance.password_validation.UsedPasswordValidator',
         }
     ]
-
-ENIKSHAY_PRIVATE_API_USERS = {}
-ENIKSHAY_PRIVATE_API_PASSWORD = None

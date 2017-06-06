@@ -252,15 +252,11 @@ def related_dates_changed(case):
     return value_changed
 
 
-def create_case_repeat_records(sender, case, **kwargs):
+def create_nikshay_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(NikshayRegisterPatientRepeater, case)
     create_repeat_records(NikshayTreatmentOutcomeRepeater, case)
     create_repeat_records(NikshayFollowupRepeater, case)
     create_repeat_records(NikshayRegisterPrivatePatientRepeater, case)
-
-
-def create_hiv_test_repeat_records(sender, case, **kwargs):
     create_repeat_records(NikshayHIVTestRepeater, case)
 
-case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
-case_post_save.connect(create_hiv_test_repeat_records, CommCareCaseSQL)
+case_post_save.connect(create_nikshay_case_repeat_records, CommCareCaseSQL)
