@@ -351,6 +351,9 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             ]
         ) for link in form_links]
 
+    if should_edit('post_form_workflow_fallback'):
+        form.post_form_workflow_fallback = request.POST.get('post_form_workflow_fallback')
+
     if should_edit('custom_instances'):
         instances = json.loads(request.POST.get('custom_instances'))
         try:  # validate that custom instances can be added into the XML
