@@ -36,7 +36,8 @@ from dimagi.utils.logging import notify_exception
 from .utils import analytics_enabled_for_email
 
 _hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
-                                               '{}@{}'.format('aphilippot', 'dimagi.com')],
+                                               '{}@{}'.format('aphilippot', 'dimagi.com'),
+                                               '{}@{}'.format('colaughlin', 'dimagi.com')],
                                            send_to_ops=False)
 
 logger = logging.getLogger('analytics')

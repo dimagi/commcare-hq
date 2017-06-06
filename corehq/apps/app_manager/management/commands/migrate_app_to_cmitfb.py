@@ -14,7 +14,6 @@ from corehq.apps.app_manager.xform import (
     get_add_case_preloads_case_id_xpath,
     get_case_parent_id_xpath,
 )
-from corehq.toggles import NAMESPACE_DOMAIN, USER_PROPERTY_EASY_REFS
 from dimagi.utils.parsing import json_format_datetime
 
 
@@ -76,11 +75,6 @@ class Command(BaseCommand):
                         logger.info("Skipping %s/%s because it is a %s", domain, app_id, app.doc_type)
                 except Exception:
                     logger.exception("skipping app %s/%s", domain, app_id)
-            if self.migrate_usercase and not USER_PROPERTY_EASY_REFS.enabled(domain):
-                if not self.dry:
-                    USER_PROPERTY_EASY_REFS.set(domain, True, NAMESPACE_DOMAIN)
-                logger.info("%senabled USER_PROPERTY_EASY_REFS for domain: %s",
-                    self.dry, domain)
 
         logger.info('done with migrate_app_to_cmitfb %s', self.dry)
 
