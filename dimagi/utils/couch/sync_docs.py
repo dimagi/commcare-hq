@@ -7,7 +7,7 @@ from couchdbkit.exceptions import ResourceNotFound
 log = logging.getLogger(__name__)
 
 
-def sync_design_docs(db, design_dir, design_name, temp=None):
+def sync_design_docs(db, design_dir, design_name, temp=None, force_index=False):
     """
     pushes design documents and brings new index up to date if temp
 
@@ -21,10 +21,10 @@ def sync_design_docs(db, design_dir, design_name, temp=None):
     docid = "_design/%s" % design_name_
     push(design_dir, db, force=True, docid=docid)
     log.info("synced '%s' in couchdb", design_name)
-    if temp:
+    if temp or force_index:
         # found in the innards of couchdbkit
         view_names = list(db[docid].get('views', {}))
-        if len(view_names) > 0:
+        if view_names:
             log.info('Triggering view rebuild')
             view = '%s/%s' % (design_name_, view_names[0])
             while True:
