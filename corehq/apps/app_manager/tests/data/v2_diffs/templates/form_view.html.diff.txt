@@ -41,7 +41,7 @@
              {% with module_name=module.name|trans:langs %}
              labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
              {% endwith %}
-@@ -221,7 +224,7 @@
+@@ -222,7 +225,7 @@
          });
          {% endif %}
  
@@ -50,7 +50,7 @@
              // tag the 'preview in cloudcare' button with the right url
              // unfortunately, has to be done in javascript
              var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-@@ -287,75 +290,58 @@
+@@ -288,75 +291,58 @@
      </script>
  {% endblock %}
  
@@ -168,7 +168,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -367,35 +353,36 @@
+@@ -368,35 +354,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -222,7 +222,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -407,106 +394,92 @@
+@@ -408,106 +395,92 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -398,7 +398,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -519,14 +492,15 @@
+@@ -520,14 +493,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -416,7 +416,7 @@
              {% endif %}
          </div>
      </div>
-@@ -534,12 +508,13 @@
+@@ -535,12 +509,13 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
