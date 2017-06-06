@@ -874,6 +874,12 @@ class EntriesHelper(object):
     def get_detail_persistent_attr(self, module, detail_module, detail_type="case_short"):
         detail, detail_enabled = self._get_detail_from_module(module, detail_type)
         if detail_enabled:
+            if detail.case_context_from_module:
+                module_for_persistent_context = module.get_app().get_module_by_unique_id(
+                    detail.case_context_from_module
+                )
+                if module_for_persistent_context:
+                    return id_strings.detail(module_for_persistent_context, detail_type)
             if self._has_persistent_tile(detail):
                 return id_strings.detail(detail_module, detail_type)
             if detail.persist_case_context and detail_type == "case_short":
