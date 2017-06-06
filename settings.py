@@ -1546,6 +1546,18 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 
+AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
+    'CASE_OWNER_LOCATION_PARENT':
+        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent',
+         "Abt: The case owner's location's parent location"],
+    'TB_PERSON_CASE_FROM_VOUCHER_CASE':
+        ['custom.enikshay.messaging.custom_recipients.person_case_from_voucher_case',
+         "TB: Person case from voucher case"],
+    'TB_AGENCY_USER_CASE_FROM_VOUCHER_FULFILLED_BY_ID':
+        ['custom.enikshay.messaging.custom_recipients.agency_user_case_from_voucher_fulfilled_by_id',
+         "TB: Agency user case from voucher_fulfilled_by_id"],
+}
+
 AVAILABLE_CUSTOM_RULE_CRITERIA = {}
 
 AVAILABLE_CUSTOM_RULE_ACTIONS = {}
@@ -1745,6 +1757,7 @@ ENIKSHAY_REPEATERS = (
     'custom.enikshay.integrations.bets.repeaters.BETSSuccessfulTreatmentRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETSDiagnosisAndNotificationRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETSAYUSHReferralRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSUserRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETSLocationRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETSBeneficiaryRepeater',
 )
@@ -2033,6 +2046,7 @@ DOMAIN_MODULE_MAP = {
     'enikshay-uatbc-migration-test-17': 'custom.enikshay',
     'enikshay-uatbc-migration-test-18': 'custom.enikshay',
     'enikshay-uatbc-migration-test-19': 'custom.enikshay',
+    'sheel-enikshay': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 

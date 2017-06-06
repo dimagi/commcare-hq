@@ -29,7 +29,7 @@ class Command(BaseCommand):
         )
         added_partition = raw_input("have you run {} ? [y/n]".format(kafka_command))
         if added_partition not in ['y', 'yes']:
-            print("then run it")
+            print("then run it on the kafka machine")
 
         for checkpoint in DjangoPillowCheckpoint.objects.filter(sequence_format='json'):
             try:
