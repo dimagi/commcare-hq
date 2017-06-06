@@ -67,7 +67,7 @@ class UITab(object):
 
     @property
     def project(self):
-        if not self._project:
+        if not self._project and self.domain:
             self._project = Domain.get_by_name(self.domain)
         return self._project
 
