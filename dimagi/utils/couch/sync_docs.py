@@ -7,7 +7,7 @@ from couchdbkit.exceptions import ResourceNotFound
 log = logging.getLogger(__name__)
 
 
-def sync_design_docs(db, design_dir, design_name, temp=None, force_index=False):
+def sync_design_docs(db, design_dir, design_name, temp=None):
     """
     pushes design documents and brings new index up to date if temp
 
@@ -21,20 +21,24 @@ def sync_design_docs(db, design_dir, design_name, temp=None, force_index=False):
     docid = "_design/%s" % design_name_
     push(design_dir, db, force=True, docid=docid)
     log.info("synced '%s' in couchdb", design_name)
-    if temp or force_index:
-        # found in the innards of couchdbkit
-        view_names = list(db[docid].get('views', {}))
-        if view_names:
-            log.info('Triggering view rebuild')
-            view = '%s/%s' % (design_name_, view_names[0])
-            while True:
-                try:
-                    list(db.view(view, limit=0))
-                except RequestFailed as e:
-                    if 'timeout' not in e.message:
-                        raise
-                else:
-                    break
+    if temp:
+        index_design_docs(db, docid, design_name_)
+
+
+def index_design_docs(db, docid, design_name):
+    # found in the innards of couchdbkit
+    view_names = list(db[docid].get('views', {}))
+    if view_names:
+        log.info('Triggering view rebuild')
+        view = '%s/%s' % (design_name, view_names[0])
+        while True:
+            try:
+                list(db.view(view, limit=0))
+            except RequestFailed as e:
+                if 'timeout' not in e.message:
+                    raise
+            else:
+                break
 
 
 def copy_designs(db, design_name, temp='tmp', delete=True):
