@@ -37,6 +37,7 @@
              {% with module_name=module.name|trans:langs %}
              labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
              {% endwith %}
+@@ -224,7 +227,7 @@
          });
          {% endif %}
  
@@ -45,6 +46,7 @@
              // tag the 'preview in cloudcare' button with the right url
              // unfortunately, has to be done in javascript
              var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
+@@ -290,6 +293,39 @@
      </script>
  {% endblock %}
  
@@ -84,7 +86,7 @@
  {% block form-view %}
      {% initial_page_data 'case_config_options' case_config_options %}
      {% initial_page_data 'form_requires' form.requires %}
-@@ -298,71 +334,21 @@
+@@ -299,71 +335,21 @@
      {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
      {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
      {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
@@ -165,6 +167,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
+@@ -371,35 +357,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -218,6 +221,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
+@@ -411,77 +398,72 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -345,6 +349,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
+@@ -490,14 +472,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -362,6 +367,7 @@
              {% endif %}
          </div>
      </div>
+@@ -505,12 +488,13 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
