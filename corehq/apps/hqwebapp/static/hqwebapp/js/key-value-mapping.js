@@ -1,4 +1,4 @@
-/* globals django, COMMCAREHQ */
+/* globals django */
 (function () {
 
 /**
