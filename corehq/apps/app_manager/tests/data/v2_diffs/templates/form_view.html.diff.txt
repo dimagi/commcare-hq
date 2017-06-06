@@ -58,7 +58,7 @@
  {% endblock %}
  
  {% block form-view %}
-@@ -96,81 +129,21 @@
+@@ -97,81 +130,21 @@
      {% initial_page_data 'uses_form_workflow' uses_form_workflow %}
      {% registerurl "get_form_datums" domain app.id %}
  
@@ -149,7 +149,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -364,35 +350,36 @@
+@@ -179,35 +152,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -203,7 +203,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -404,77 +391,72 @@
+@@ -219,77 +193,72 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -331,7 +331,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -483,14 +465,15 @@
+@@ -298,14 +267,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -349,7 +349,7 @@
              {% endif %}
          </div>
      </div>
-@@ -498,12 +481,13 @@
+@@ -313,12 +283,13 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}

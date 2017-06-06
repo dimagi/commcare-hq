@@ -131,6 +131,7 @@ hqDefine("app_manager/js/form_view.js", function() {
             var options = {
                 labels: labels,
                 workflow: initial_page_data('post_form_workflow'),
+                workflow_fallback: initial_page_data('post_form_workflow_fallback'),
             };
 
             if (COMMCAREHQ.toggleEnabled('FORM_LINK_WORKFLOW') || initial_page_data('uses_form_workflow')) {
