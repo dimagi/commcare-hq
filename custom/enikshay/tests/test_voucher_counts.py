@@ -176,9 +176,9 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
 
         self.assertDictEqual(
             {
-             'first_voucher_generation_date': u'2012-01-01',
-             'first_voucher_drugs': u"Happy Pills, Sad Pills, Buggy Pillz",
-             'first_voucher_validation_date': u'2014-01-02',
+                'first_voucher_generation_date': u'2012-01-01',
+                'first_voucher_drugs': u"Happy Pills, Sad Pills, Buggy Pillz",
+                'first_voucher_validation_date': u'2014-01-02',
             },
             EpisodeVoucherUpdate(self.domain, self.cases[self.episode_id]).get_first_voucher_details()
         )
