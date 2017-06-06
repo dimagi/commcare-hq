@@ -16,7 +16,10 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
         self.customProperties.sort(function(left, right) {
             return left.key() == right.key() ? 0 : (left.key() < right.key() ? -1 : 1);
         });
-        self.customPropertiesCollapse = hqImport("app_manager/js/section_changer.js").shouldCollapse("app-settings", "custom-properties", false);
+        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+            // only referenced in v2 template
+            self.customPropertiesCollapse = hqImport("app_manager/js/section_changer.js").shouldCollapse("app-settings", "custom-properties", false);
+        }
 
         self.settings = [];
         self.settingsIndex = {};
@@ -246,7 +249,6 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
                     return setting.visible();
                 });
             });
-            section.collapse = hqImport("app_manager/js/section_changer.js").shouldCollapse("app-settings", section.id, section.collapse);
             if (!COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
                 section.reallyCollapse = ko.computed(function () {
                     var el = document.getElementById(section.id);
@@ -254,6 +256,8 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
                         (!el || !el.classList.contains("in")) &&
                         !_(section.settings).some(function (setting) { return setting.hasError(); });
                 });
+            } else {
+                section.collapse = hqImport("app_manager/js/section_changer.js").shouldCollapse("app-settings", section.id, section.collapse);
             }
             section.isVisible = ko.computed(function () {
                 return section.always_show !== false;
@@ -320,7 +324,9 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
             }
         });
         self.saveButton.ui.appendTo($saveContainer);
-        hqImport("app_manager/js/section_changer.js").attachToForm($saveContainer);
+        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+            hqImport("app_manager/js/section_changer.js").attachToForm($saveContainer);
+        }
 
         self.onAddCustomProperty = function() {
             self.customProperties.push({ key: ko.observable(), value: ko.observable() });
