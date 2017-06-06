@@ -494,6 +494,8 @@ class UserRepeaterTest(TestCase):
 
         _, locations = setup_enikshay_locations(cls.domain)
         cls.private_location = locations['PCP']
+        cls.private_location.metadata['private_sector_org_id'] = 'ORG_ID'
+        cls.private_location.save()
         cls.dto_location = locations['DTO']
         cls.public_location = locations['DRTB-HIV']
         cls.test_location = locations['PAC']
@@ -535,7 +537,8 @@ class UserRepeaterTest(TestCase):
         self.assertEqual(1, len(records))
 
         self.assertDictContainsSubset(
-            {'dtoLocation': self.dto_location.location_id},
+            {'dtoLocation': self.dto_location.location_id,
+             'privateSectorOrgId': self.private_location.metadata['private_sector_org_id']},
             json.loads(records[0].get_payload())
         )
 

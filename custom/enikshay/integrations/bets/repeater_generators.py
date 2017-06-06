@@ -416,6 +416,7 @@ class BETSUserPayloadGenerator(UserPayloadGenerator):
         user_json = resource.full_dehydrate(bundle).data
         location = user.get_sql_location(repeat_record.domain)
         user_json['dtoLocation'] = _get_district_location(location)
+        user_json['privateSectorOrgId'] = location.metadata['private_sector_org_id']
         return json.dumps(user_json)
 
 
