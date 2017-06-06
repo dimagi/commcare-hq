@@ -400,7 +400,7 @@
                       <div class="casexml" id="casexml_home">
                         {% if module.doc_type == 'AdvancedModule' %}
                             {% initial_page_data 'schedule_options' schedule_options %}
-                            {% include 'app_manager/v1/partials/case_config_advanced.html' %}
+                            {% include 'app_manager/v2/partials/case_config_advanced.html' %}
                         {% elif module.doc_type == 'CareplanModule' %}
                             {% include 'app_manager/v2/partials/case_config_careplan.html' %}
                         {% else %}
