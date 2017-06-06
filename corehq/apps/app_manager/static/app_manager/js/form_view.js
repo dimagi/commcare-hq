@@ -1,8 +1,9 @@
+/* globals analytics, COMMCAREHQ, SyntaxHighlighter, Util */
 hqDefine("app_manager/js/form_view.js", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
 
     function formFilterMatches(filter, pattern_matches, substring_matches) {
-        if (typeof(filter) != 'string') {
+        if (typeof(filter) !== 'string') {
             return false;
         }
 
@@ -12,7 +13,7 @@ hqDefine("app_manager/js/form_view.js", function() {
         });
 
         $.each(substring_matches, function(index, sub) {
-            result = result || filter.indexOf(sub) != -1;
+            result = result || filter.indexOf(sub) !== -1;
         });
 
         return result;
@@ -85,7 +86,7 @@ hqDefine("app_manager/js/form_view.js", function() {
             var getFormplayerUrl = function(urlRoot, appId, moduleId, formId) {
                 var urlObject = new Util.CloudcareUrl({
                     'appId': appId,
-                    'previewCommand': 'm' + moduleId + '-f' + formId
+                    'previewCommand': 'm' + moduleId + '-f' + formId,
                 });
                 return urlRoot + '#' + Util.objectToEncodedUrl(urlObject.toJson());
             };
@@ -94,14 +95,15 @@ hqDefine("app_manager/js/form_view.js", function() {
                 app_id = initial_page_data('app_id'),
                 module_id = initial_page_data('module_id'),
                 form_id = initial_page_data('form_id');
+            var cloudCareUrl = "";
             if (!COMMCAREHQ.toggleEnabled('USE_OLD_CLOUDCARE')) {
-                var cloudCareUrl = getFormplayerUrl(reverse("formplayer_single_app"), app_id, module_id, form_id);
+                cloudCareUrl = getFormplayerUrl(reverse("formplayer_single_app"), app_id, module_id, form_id);
             } else {
-                var cloudCareUrl = getCloudCareUrl(reverse("cloudcare_main"), app_id, module_id, form_id) + "?preview=true";
+                cloudCareUrl = getCloudCareUrl(reverse("cloudcare_main"), app_id, module_id, form_id) + "?preview=true";
             }
 
             $("#cloudcare-preview-url").attr("href", cloudCareUrl);
-            $('#cloudcare-preview-url').click(function(e) {
+            $('#cloudcare-preview-url').click(function() {
                 ga_track_event('CloudCare', 'Click "Preview Form"');
                 analytics.workflow("Clicked Preview Form");
                 if (initial_page_data('user_age_in_days') === 0) {
@@ -141,7 +143,7 @@ hqDefine("app_manager/js/form_view.js", function() {
                 options.formDatumsUrl = hqImport('hqwebapp/js/urllib.js').reverse('get_form_datums');
             }
 
-            $('#form-workflow').koApplyBindings(new FormWorkflow(options))
+            $('#form-workflow').koApplyBindings(new FormWorkflow(options));
         }
 
         // Settings > Advanced
