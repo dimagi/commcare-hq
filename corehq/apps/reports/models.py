@@ -218,6 +218,21 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
     end_date = DateProperty(default=None)
     datespan_slug = StringProperty(default=None)
 
+    @classmethod
+    def wrap(cls, data):
+        from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, \
+            LocationRestrictedMobileWorkerFilter
+
+        if 'filters' in data and ExpandedMobileWorkerFilter.slug in data['filters']:
+            data['filters'][LocationRestrictedMobileWorkerFilter.slug] = \
+                data['filters'][ExpandedMobileWorkerFilter.slug]
+            del data['filters'][ExpandedMobileWorkerFilter.slug]
+        try:
+            self = super(ReportConfig, cls).wrap(data)
+        except AttributeError:
+            self = cls(**data)
+        return self
+
     def delete(self, *args, **kwargs):
         notifications = self.view('reportconfig/notifications_by_config',
             reduce=False, include_docs=True, key=self._id).all()
