@@ -1547,8 +1547,12 @@ class CaseReminderHandler(Document):
     def reset_rule_progress(self, total):
         try:
             client = get_redis_client()
-            client.set('reminder-rule-processing-current-%s' % self.get_id, 0)
-            client.set('reminder-rule-processing-total-%s' % self.get_id, total)
+            processing_current = 'reminder-rule-processing-current-%s' % self.get_id
+            processing_total = 'reminder-rule-processing-total-%s' % self.get_id
+            client.set(processing_current, 0)
+            client.set(processing_total, total)
+            client.expire(processing_current, 24 * 60 * 60)
+            client.expire(processing_total, 24 * 60 * 60)
         except:
             pass
 
@@ -1563,7 +1567,7 @@ class CaseReminderHandler(Document):
         if not self.deleted():
             if self.start_condition_type == CASE_CRITERIA:
                 accessor = CaseAccessors(self.domain)
-                case_ids = accessor.get_case_ids_in_domain()
+                case_ids = accessor.get_case_ids_in_domain(self.case_type)
                 self.reset_rule_progress(len(case_ids))
 
                 for case in accessor.iter_cases(case_ids):
