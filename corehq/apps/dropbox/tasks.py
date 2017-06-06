@@ -1,7 +1,6 @@
 import os
 from celery.task import task
 from dropbox import Dropbox
-from dropbox.exceptions import ApiError
 from dropbox.files import UploadSessionCursor, CommitInfo, WriteMode
 from dropbox.sharing import SharedLinkSettings, RequestedVisibility
 
