@@ -5,12 +5,15 @@ hqDefine("app_manager/js/module_view_report.js", function() {
         var select2Separator = hqImport('app_manager/js/report-module.js').select2Separator;
         var ReportModule = hqImport('app_manager/js/report-module.js').ReportModule;
         var StaticFilterData = hqImport('app_manager/js/report-module.js').StaticFilterData;
+        // Hacky: report modules only deal with one kind of multimedia (the menu image/audio),
+        // so assume nav_menu_media_specifics has one element.
+        var navMenuMediaItem = initial_page_data("nav_menu_media_specifics")[0];
         var navMenuMedia = initNavMenuMedia(
                 "",
-                initial_page_data('menu_refs').image,
-                initial_page_data('menu_refs').audio,
-                initial_page_data('object_map'),
-                initial_page_data('default_file_name')
+                navMenuMediaItem.menu_refs.image,
+                navMenuMediaItem.menu_refs.audio,
+                initial_page_data("multimedia_object_map"),
+                navMenuMediaItem.default_file_name
         );
         var saveURL = hqImport("hqwebapp/js/urllib.js").reverse("edit_report_module");
         var staticData = new StaticFilterData(initial_page_data('static_data_options'));
