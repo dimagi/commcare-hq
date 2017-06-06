@@ -77,6 +77,11 @@ class BasePayloadGenerator(object):
         return True
 
 
+class SOAPPayloadGeneratorMixin(object):
+    @property
+    def content_type(self):
+        return 'application/soap+xml'
+
 FormatInfo = namedtuple('FormatInfo', 'name label generator_class')
 
 
@@ -323,7 +328,7 @@ class UserPayloadGenerator(BasePayloadGenerator):
         from corehq.apps.api.resources.v0_5 import CommCareUserResource
         resource = CommCareUserResource(api_name='v0.5')
         bundle = resource.build_bundle(obj=user)
-        return resource.full_dehydrate(bundle).data
+        return json.dumps(resource.full_dehydrate(bundle).data)
 
 
 class LocationPayloadGenerator(BasePayloadGenerator):
@@ -333,4 +338,4 @@ class LocationPayloadGenerator(BasePayloadGenerator):
         return 'application/json'
 
     def get_payload(self, repeat_record, location):
-        return location.to_json()
+        return json.dumps(location.to_json())

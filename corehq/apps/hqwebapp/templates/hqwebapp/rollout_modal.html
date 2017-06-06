@@ -4,7 +4,7 @@
 {% with slug="app_manager_v2" name="New App Builder" %}
 {% registerurl "toggle_app_manager_v2" %}
     <!-- This will appear on page load, so don't use any animation (normally controlled by .fade) -->
-    <div class="modal rollout-modal" data-slug="{{ slug }}">
+    <div class="modal" id="rollout-modal" data-slug="{{ slug }}">
         <div class="modal-dialog">
             <div class="modal-content">
                 {% blocktrans %}
