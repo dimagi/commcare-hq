@@ -80,7 +80,8 @@ CONDITIONAL_ENUM = FeaturePreview(
     slug='conditional_enum',
     label=_('Conditional Enum in Case List'),
     description=_(
-        "Conditional ID mapping in case tiles. "
+        "Specify a custom xpath expression to calculate a lookup key in the case list, case detail screen or"
+        "case tile enum columns"
     ),
 )
 
