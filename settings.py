@@ -2033,6 +2033,7 @@ DOMAIN_MODULE_MAP = {
     'enikshay-uatbc-migration-test-17': 'custom.enikshay',
     'enikshay-uatbc-migration-test-18': 'custom.enikshay',
     'enikshay-uatbc-migration-test-19': 'custom.enikshay',
+    'sheel-enikshay': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 

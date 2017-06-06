@@ -6241,6 +6241,86 @@
                     "type": "property_name",
                     "property_name": "adherence_tracking_mechanism"
                 }
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "adherence type choice",
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "adherence_type_choice"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "adherence_type_choice"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "99 DOTS enabled",
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "dots_99_enabled"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "dots_99_enabled"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "99 DOTS registered",
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "dots_99_registered"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "dots_99_registered"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "Episode Pending Registration",
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "episode_pending_registration"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "episode_pending_registration"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "Nikshay registered",
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "nikshay_registered"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "nikshay_registered"
             }
         ],
         "named_filters": {
