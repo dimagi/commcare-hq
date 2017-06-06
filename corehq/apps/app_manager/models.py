@@ -1816,9 +1816,19 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                 hashtag = "#case"
             return types[hashtag], name
 
+        def parse_relationship(name):
+            if '/' not in name:
+                return name
+
+            relationship, property_name = name.split('/', 1)
+            if relationship == 'grandparent':
+                relationship = 'parent/parent'
+            return '/'.join([relationship, property_name])
+
         for case_load_reference in self.case_references.get_load_references():
             for name in case_load_reference.properties:
                 case_type, name = parse_case_type(name)
+                name = parse_relationship(name)
                 self.add_property_load(
                     app_case_meta,
                     case_type,

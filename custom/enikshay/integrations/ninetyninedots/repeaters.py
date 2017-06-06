@@ -213,10 +213,10 @@ def episode_registered_with_99dots(episode):
     return episode.dynamic_case_properties().get('dots_99_registered', False) == 'true'
 
 
-def create_case_repeat_records(sender, case, **kwargs):
+def create_99DOTS_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(NinetyNineDotsRegisterPatientRepeater, case)
     create_repeat_records(NinetyNineDotsUpdatePatientRepeater, case)
     create_repeat_records(NinetyNineDotsAdherenceRepeater, case)
     create_repeat_records(NinetyNineDotsTreatmentOutcomeRepeater, case)
 
-case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
+case_post_save.connect(create_99DOTS_case_repeat_records, CommCareCaseSQL)
