@@ -483,7 +483,7 @@ class EpisodeVoucherUpdate(object):
         all_voucher_cases = sorted(self._get_all_vouchers(), key=lambda c: c.get_case_property('date_issued'))
         fulfilled_voucher_cases = sorted(
             self._get_fulfilled_vouchers(),
-            key=lambda c: c.get_case_property('date_issued')
+            key=lambda c: c.get_case_property('date_fulfilled')
         )
 
         try:
@@ -499,6 +499,6 @@ class EpisodeVoucherUpdate(object):
         return {
             'first_voucher_generation_date': first_voucher_generated.get_case_property('date_issued'),
             'first_voucher_drugs': first_prescription.get_case_property('drugs_ordered_readable'),
-            'first_voucher_validation_date': (fulfilled_voucher_cases[0].get_case_property('date_issued')
+            'first_voucher_validation_date': (fulfilled_voucher_cases[0].get_case_property('date_fulfilled')
                                               if fulfilled_voucher_cases else '')
         }

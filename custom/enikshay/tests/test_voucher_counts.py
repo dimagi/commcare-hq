@@ -168,7 +168,7 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
             'drugs_ordered_readable': "Other pillz"
         })
         voucher21 = get_voucher_case_structure(None, prescription2.case_id, {
-            'date_fulfilled': '2014-01-01',
+            'date_fulfilled': '2014-01-02',
             'date_issued': '2014-01-01',
             'state': "fulfilled",
         })
@@ -178,7 +178,7 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
             {
              'first_voucher_generation_date': u'2012-01-01',
              'first_voucher_drugs': u"Happy Pills, Sad Pills, Buggy Pillz",
-             'first_voucher_validation_date': u'2014-01-01',
+             'first_voucher_validation_date': u'2014-01-02',
             },
             EpisodeVoucherUpdate(self.domain, self.cases[self.episode_id]).get_first_voucher_details()
         )
