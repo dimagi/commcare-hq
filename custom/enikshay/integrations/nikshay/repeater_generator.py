@@ -368,7 +368,7 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
             episode_date = datetime.datetime.strptime(episode_case_date, "%Y-%m-%d").date()
         else:
             episode_date = datetime.date.today()
-        payload = {
+        return {
             "Stocode": person_locations.sto,
             "Dtocode": person_locations.dto,
             "TBUcode": person_locations.tu,
@@ -393,7 +393,6 @@ class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator)
             "password": settings.ENIKSHAY_PRIVATE_API_PASSWORD,
             "Source": ENIKSHAY_ID,
         }
-        return json.dumps(payload)
 
     def handle_success(self, response, payload_doc, repeat_record):
         # A successful response returns a Nikshay ID like 00001
