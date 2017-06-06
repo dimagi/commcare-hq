@@ -14,7 +14,15 @@ hqDefine('hqwebapp/js/initial_page_data.js', function () {
         if (COMMCAREHQ_INITIAL_PAGE_DATA[name] === undefined) {
             gather();
         }
-        return COMMCAREHQ_INITIAL_PAGE_DATA[name];
+        var value = COMMCAREHQ_INITIAL_PAGE_DATA[name];
+
+        // The initial_page_data tag escapes whitespace with \n, etc. for the sake of
+        // printing the value in a data attribute. Unescape here.
+        if (typeof value === "string") {
+            value = JSON.parse('"' + value + '"');
+        }
+
+        return value;
     };
 
     /*
