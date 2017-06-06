@@ -1,12 +1,14 @@
 --- 
 +++ 
-@@ -1,264 +1,273 @@
+@@ -1,264 +1,274 @@
  {% load i18n %}
  {% load hq_shared_tags %}
--{% load app_manager_extras %}
- {% load xforms_extras %}
- 
++{% load xforms_extras %}
+ {% load app_manager_extras %}
+-{% load xforms_extras %}
+-
 -{% include 'app_manager/v1/partials/case_list_missing_warning.html' %}
++
 +{% include 'app_manager/v2/partials/case_list_missing_warning.html' %}
  
  <div data-bind="saveButton: shortScreen.saveButton"></div>
@@ -517,7 +519,7 @@
          <div class="form-group">
              <label class="control-label col-sm-2">
                  {% trans "Select Parent First" %}
-@@ -271,7 +280,7 @@
+@@ -271,7 +281,7 @@
          </div>
          <div class="form-group" data-bind="visible: active">
              <label class="control-label col-sm-2">
@@ -526,7 +528,7 @@
              </label>
              <div class="col-sm-4">
                  <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
-@@ -284,15 +293,14 @@
+@@ -284,15 +294,14 @@
  
  {{ request|toggle_tag_info:"CASE_LIST_LOOKUP" }}
  {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
