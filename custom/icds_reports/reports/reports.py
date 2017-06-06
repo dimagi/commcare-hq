@@ -16,7 +16,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 
 @location_safe
-class MPRReport(IcdsBaseReport):
+class MPRReport(IcdsBasiteReport):
 
     title = '1. Identification and Basic Information'
     slug = 'mpr_report'

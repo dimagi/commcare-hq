@@ -59,5 +59,7 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
                 redirectTo : "/awc_reports/system_usage",
             }).when("/awc_reports/:step", {
                 template : "<awc-reports></awc-reports>",
-            });
+            }).when("/download", {
+                template : "<download></download>",
+        });
     }]);

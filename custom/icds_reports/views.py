@@ -1,3 +1,5 @@
+from StringIO import StringIO
+
 import requests
 
 from datetime import datetime
@@ -25,6 +27,8 @@ from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_
     get_location_filter
 from . import const
 from .exceptions import TableauTokenException
+from couchexport.export import export_from_tables
+from couchexport.shortcuts import export_response
 
 
 @location_safe
@@ -401,3 +405,22 @@ class AwcReportsView(View):
                 tuple(month.timetuple())[:3]
             )
         return JsonResponse(data=data)
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class ExportIndicatorView(View):
+    def post(self, request, *args, **kwargs):
+        zxc = StringIO()
+        test = [
+            [
+                'table_or_sheet_name',
+                [
+                    ['header'],
+                    ['row 1'],
+                    ['row 2'],
+                ]
+            ]
+        ]
+        from couchexport.models import Format
+        export_from_tables(test, zxc, Format.XLS_2007)
+        return export_response(zxc, Format.XLS_2007, 'test1234')
