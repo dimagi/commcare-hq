@@ -76,11 +76,7 @@ class RepeatRecordView(LoginAndDomainMixin, View):
         if content_type == 'text/xml':
             payload = indent_xml(payload)
         elif content_type == 'application/json':
-            try:
-                json_dict = json.loads(payload)
-            except TypeError:
-                json_dict = payload
-            payload = json.dumps(json_dict, indent=4)
+            payload = json.dumps(json.loads(payload), indent=4)
 
         return json_response({
             'payload': payload,
