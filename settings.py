@@ -1745,6 +1745,7 @@ ENIKSHAY_REPEATERS = (
     'custom.enikshay.integrations.bets.repeaters.BETSSuccessfulTreatmentRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETSDiagnosisAndNotificationRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETSAYUSHReferralRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSUserRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETSLocationRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETSBeneficiaryRepeater',
 )
@@ -2033,6 +2034,7 @@ DOMAIN_MODULE_MAP = {
     'enikshay-uatbc-migration-test-17': 'custom.enikshay',
     'enikshay-uatbc-migration-test-18': 'custom.enikshay',
     'enikshay-uatbc-migration-test-19': 'custom.enikshay',
+    'sheel-enikshay': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 

@@ -3,7 +3,7 @@ from mock import patch, MagicMock
 from django.test import TestCase, override_settings
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from ..tasks import EpisodeVoucherUpdate, EpisodeUpdater
-from .utils import ENikshayCaseStructureMixin
+from .utils import ENikshayCaseStructureMixin, get_voucher_case_structure
 
 
 @patch('corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider', MagicMock())
@@ -130,6 +130,21 @@ class TestVoucherCounts(ENikshayCaseStructureMixin, TestCase):
             final_prescription_num_days=15,
             date_issued='hello'
         )
+        self.assertDictEqual(
+            {},
+            EpisodeVoucherUpdate(self.domain, self.cases['episode']).get_prescription_refill_due_dates()
+        )
+
+    def test_prescription_refill_missing_days(self):
+        prescription = self.create_prescription_case()
+        voucher_structure = get_voucher_case_structure(None, prescription.case_id, {
+            'date_fulfilled': '2013-01-01',
+            'date_issued': '2013-01-01',
+            'state': "fulfilled",
+        })
+        voucher_structure.attrs['update'].pop('final_prescription_num_days', None)
+        voucher_structure.attrs['update'].pop('prescription_num_days', None)
+        self.factory.create_or_update_case(voucher_structure)
         self.assertDictEqual(
             {},
             EpisodeVoucherUpdate(self.domain, self.cases['episode']).get_prescription_refill_due_dates()
