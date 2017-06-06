@@ -70,7 +70,7 @@
         $(function(){
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
 
-        {% if allow_cloudcare %}
+        if (initial_page_data('allow_cloudcare')) {
             // tag the 'preview in cloudcare' button with the right url
             // unfortunately, has to be done in javascript
             var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
@@ -98,22 +98,26 @@
                 return urlRoot + '#' + Util.objectToEncodedUrl(urlObject.toJson());
             };
 
-            {% if not request|toggle_enabled:"USE_OLD_CLOUDCARE"%}
-            var cloudCareUrl = getFormplayerUrl("{% url "formplayer_single_app" domain app.id %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}");
-            {% else %}
-                var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
-            {% endif %}
+            var reverse = hqImport("hqwebapp/js/urllib.js").reverse,
+                app_id = initial_page_data('app_id'),
+                module_id = initial_page_data('module_id'),
+                form_id = initial_page_data('form_id');
+            if (!COMMCAREHQ.toggleEnabled('USE_OLD_CLOUDCARE')) {
+                var cloudCareUrl = getFormplayerUrl(reverse("formplayer_single_app"), app_id, module_id, form_id);
+            } else {
+                var cloudCareUrl = getCloudCareUrl(reverse("cloudcare_main"), app_id, module_id, form_id) + "?preview=true";
+            }
 
             $("#cloudcare-preview-url").attr("href", cloudCareUrl);
             $('#cloudcare-preview-url').click(function(e) {
                 ga_track_event('CloudCare', 'Click "Preview Form"');
                 analytics.workflow("Clicked Preview Form");
-                {% if request.couch_user.days_since_created == 0 %}
+                if (initial_page_data('user_age_in_days') === 0) {
                     ga_track_event('CloudCare', 'Clicked "Preview Form" within first 24 hours');
                     analytics.workflow('Clicked "Preview Form" within first 24 hours');
-                {% endif %}
+                }
             });
-        {% endif %}
+        }
         });
     </script>
 {% endblock %}
@@ -145,6 +149,16 @@
     {% initial_page_data 'post_form_workflow' form.post_form_workflow %}
     {% initial_page_data 'uses_form_workflow' uses_form_workflow %}
     {% registerurl "get_form_datums" domain app.id %}
+
+    {# CloudCare #}
+    {% initial_page_data 'app_id' app.id %}
+    {% initial_page_data 'module_id' module.id %}
+    {% initial_page_data 'form_id' nav_form.id %}
+    {% initial_page_data 'allow_cloudcare' allow_cloudcare %}
+    {% initial_page_data 'can_preview_form' can_preview_form %}
+    {% initial_page_data 'user_age_in_days' request.couch_user.days_since_created %}
+    {% registerurl "cloudcare_main" domain '' %}
+    {% registerurl "formplayer_single_app" domain app.id %}
 
     <div id="build_errors"></div>
     {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update);}" %}
