@@ -625,6 +625,7 @@ class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
                 'metadata': {},
                 'name': location.name,
                 'parent_location_id': self.locations['DTO'].location_id,
+                'parent_site_code': self.locations['DTO'].site_code,
                 'site_code': location.site_code,
             }
         )
