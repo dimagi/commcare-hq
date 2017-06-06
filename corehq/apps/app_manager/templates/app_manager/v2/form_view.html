@@ -68,77 +68,7 @@
     {% endif %}
     <script>
         $(function(){
-        {% if allow_form_filtering %}
-
-        function formFilterMatches(filter, pattern_matches, substring_matches) {
-            if(typeof(filter) != 'string') {
-                return false;
-            }
-
-            var result = false;
-            $.each(pattern_matches, function(index, pattern) {
-                result = result || filter.match(pattern);
-            });
-
-            $.each(substring_matches, function(index, sub) {
-                result = result || filter.indexOf(sub) != -1;
-            });
-
-            return result;
-        }
-
-        var form_requires = ko.observable({{ form.requires|JSON }});
-        var putInRoot = {{ module.put_in_root|BOOL }};
-        var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
-        var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
-        var caseXpathPatternMatches = {{ case_xpath_pattern_matches|JSON }};
-        var caseXpathSubstringMatches = {{ case_xpath_substring_matches|JSON }};
-        var userCaseXpathPatternMatches = {{ user_case_xpath_pattern_matches|JSON }};
-        var userCaseXpathSubstringMatches = {{ user_case_xpath_substring_matches|JSON }};
-
-        function FormFilter() {
-            var self = this;
-
-            self.formFilter = ko.observable({{ form.form_filter|JSON }});
-
-            self.caseReferenceNotAllowed = ko.computed(function() {
-                var moduleUsesCase = allOtherFormsRequireACase && form_requires() === 'case';
-                if (!moduleUsesCase || putInRoot) {
-                    // We want to determine here if the filter expression references
-                    // any case but the user case.
-                    var filter = self.formFilter();
-                    if (typeof(filter) !== 'string') {
-                        return true;
-                    }
-
-                    $.each(userCaseXpathSubstringMatches, function(index, sub) {
-                        filter = filter.replace(sub, '');
-                    });
-
-                    if (formFilterMatches(filter, caseXpathPatternMatches, caseXpathSubstringMatches)) {
-                        return true;
-                    }
-                }
-                return false;
-            });
-
-            self.userCaseReferenceNotAllowed = ko.computed(function() {
-                return !isUserCaseInUse && formFilterMatches(
-                    self.formFilter(), userCaseXpathPatternMatches, userCaseXpathSubstringMatches
-                );
-            });
-
-            self.allowed = ko.computed(function () {
-                return !self.formFilter() || !self.caseReferenceNotAllowed() && !self.userCaseReferenceNotAllowed();
-            });
-        }
-
-
-        var $formFilter = $('#form-filter');
-        if ($formFilter.length) {
-            $formFilter.koApplyBindings(new FormFilter());
-        };
-        {% endif %}
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
 
         {% if allow_form_workflow %}
             var FormWorkflow = hqImport('app_manager/js/form_workflow.js').FormWorkflow;
@@ -269,10 +199,16 @@
 {% endblock %}
 
 {% block form-view %}
+    {% initial_page_data 'all_other_forms_require_a_case' form.all_other_forms_require_a_case %}
+    {% initial_page_data 'allow_form_filtering' allow_form_filtering %}
     {% initial_page_data 'case_config_options' case_config_options %}
     {% initial_page_data 'custom_instances' custom_instances %}
+    {% initial_page_data 'form_filter' form.form_filter %}
+    {% initial_page_data 'form_filter_patterns' form_filter_patterns %}
     {% initial_page_data 'form_requires' form.requires %}
     {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
+    {% initial_page_data 'is_usercase_in_use' is_usercase_in_use %}
+    {% initial_page_data 'put_in_root' module.put_in_root %}
     {% registerurl "validate_form_for_build" domain app.id form.unique_id %}
     <div class="tabbable appmanager-tabs-container">
         <ul class="nav nav-tabs">
