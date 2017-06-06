@@ -9,7 +9,7 @@ hqDefine("app_manager/js/nav_menu_media_common.js", function() {
             _.extend({}, uploader.options, {
                 sessionid: initial_page_data("sessionid"),
                 swfURL: initial_page_data("swfURL"),
-            }),
+            })
         );
         uploaders[type].init();
     });
