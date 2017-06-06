@@ -26,6 +26,9 @@ def agency_user_case_from_voucher_fulfilled_by_id(handler, reminder):
         return None
 
     fulfilled_by_id = voucher_case.get_case_property('voucher_fulfilled_by_id')
+    if not fulfilled_by_id:
+        return None
+
     try:
         user = CommCareUser.get_by_user_id(fulfilled_by_id, domain=voucher_case.domain)
     except CouchUser.AccountTypeError:
