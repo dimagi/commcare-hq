@@ -217,6 +217,7 @@ def get_voucher_case_structure(case_id, indexed_prescription_id, extra_update=No
     )
 
 
+@nottest
 def get_test_case_structure(case_id, indexed_occurrence_id, extra_update=None):
     extra_update = extra_update or {}
     update = dict(
