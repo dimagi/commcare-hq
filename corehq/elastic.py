@@ -114,6 +114,13 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
         es_merge_update=es_merge_update,
     )
 
+
+def refresh_elasticsearch_index(index_name):
+    es_meta = ES_META[index_name]
+    es = get_es_new()
+    es.indices.refresh(index=es_meta.index)
+
+
 EsMeta = namedtuple('EsMeta', 'index, type')
 
 ES_META = {

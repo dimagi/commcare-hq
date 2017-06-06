@@ -63,7 +63,6 @@ from .models import (
     UI_SIMPLE_FIXED,
     UI_COMPLEX,
     RECIPIENT_ALL_SUBCASES,
-    RECIPIENT_CASE_OWNER_LOCATION_PARENT,
     DAY_MON,
     DAY_TUE,
     DAY_WED,
@@ -529,12 +528,12 @@ class BaseScheduleCaseReminderForm(forms.Form):
         ])
 
         if toggles.ABT_REMINDER_RECIPIENT.enabled(self.domain):
-            add_field_choices(self, 'recipient', [
-                (
-                    RECIPIENT_CASE_OWNER_LOCATION_PARENT,
-                    _("The case owner's location's parent location")
-                ),
-            ])
+            additional_choices = [
+                (k, v[1])
+                for k, v in settings.AVAILABLE_CUSTOM_REMINDER_RECIPIENTS.items()
+            ]
+            additional_choices.sort(key=lambda item: item[1])
+            add_field_choices(self, 'recipient', additional_choices)
 
         from corehq.apps.reminders.views import RemindersListView
         self.helper = FormHelper()

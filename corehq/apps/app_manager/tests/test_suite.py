@@ -636,6 +636,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         module, form = factory.new_advanced_module("my_module", "person")
         factory.form_requires_case(form, "person")
         module.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
+        module.case_details.short.use_case_tiles = True
         module.case_details.short.persist_tile_on_forms = True
         module.case_details.short.persist_case_context = True
         suite = factory.app.create_suite()

@@ -474,7 +474,8 @@ class SQLLocation(MPTTModel):
             'longitude': float(self.longitude) if self.longitude else None,
             'metadata': self.metadata,
             'location_type': self.location_type.name,
-            "lineage": self.lineage,
+            'location_type_code': self.location_type.code,
+            'lineage': self.lineage,
             'parent_location_id': self.parent_location_id,
         }
 

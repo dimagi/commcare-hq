@@ -373,7 +373,8 @@ HQ_APPS = (
     'custom.icds',
     'custom.icds_reports',
     'custom.pnlppgi',
-    'custom.hki'
+    'custom.nic_compliance',
+    'custom.hki',
 )
 
 ENIKSHAY_APPS = (
@@ -897,10 +898,15 @@ SENTRY_PROJECT_ID = None
 SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
 SENTRY_API_KEY = None
 
+OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE = False
+RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE = False
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
 
 AUTHPROXY_URL = None
 AUTHPROXY_CERT = None
+
+ENIKSHAY_PRIVATE_API_USERS = {}
+ENIKSHAY_PRIVATE_API_PASSWORD = None
 
 from env_settings import *
 
@@ -1540,6 +1546,18 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 
+AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
+    'CASE_OWNER_LOCATION_PARENT':
+        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent',
+         "Abt: The case owner's location's parent location"],
+    'TB_PERSON_CASE_FROM_VOUCHER_CASE':
+        ['custom.enikshay.messaging.custom_recipients.person_case_from_voucher_case',
+         "TB: Person case from voucher case"],
+    'TB_AGENCY_USER_CASE_FROM_VOUCHER_FULFILLED_BY_ID':
+        ['custom.enikshay.messaging.custom_recipients.agency_user_case_from_voucher_fulfilled_by_id',
+         "TB: Agency user case from voucher_fulfilled_by_id"],
+}
+
 AVAILABLE_CUSTOM_RULE_CRITERIA = {}
 
 AVAILABLE_CUSTOM_RULE_ACTIONS = {}
@@ -1602,6 +1620,11 @@ PILLOWTOPS = {
             'name': 'FormSubmissionMetadataTrackerPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.app_submission_tracker.get_form_submission_metadata_tracker_pillow',
+        },
+        {
+            'name': 'UpdateUserSyncHistoryPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.synclog.get_user_sync_history_pillow',
         },
     ],
     'core_ext': [
@@ -1734,6 +1757,7 @@ ENIKSHAY_REPEATERS = (
     'custom.enikshay.integrations.bets.repeaters.BETSSuccessfulTreatmentRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETSDiagnosisAndNotificationRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETSAYUSHReferralRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSUserRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETSLocationRepeater',
     'custom.enikshay.integrations.bets.repeaters.BETSBeneficiaryRepeater',
 )
@@ -2022,6 +2046,7 @@ DOMAIN_MODULE_MAP = {
     'enikshay-uatbc-migration-test-17': 'custom.enikshay',
     'enikshay-uatbc-migration-test-18': 'custom.enikshay',
     'enikshay-uatbc-migration-test-19': 'custom.enikshay',
+    'sheel-enikshay': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 
@@ -2089,6 +2114,9 @@ if _raven_config:
     SENTRY_CLIENT = 'corehq.util.sentry.HQSentryClient'
 
 CSRF_COOKIE_HTTPONLY = True
-
-ENIKSHAY_PRIVATE_API_USERS = {}
-ENIKSHAY_PRIVATE_API_PASSWORD = None
+if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
+    AUTH_PASSWORD_VALIDATORS = [
+        {
+            'NAME': 'custom.nic_compliance.password_validation.UsedPasswordValidator',
+        }
+    ]
