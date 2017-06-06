@@ -255,17 +255,16 @@ class EndOfFormNavigationWorkflow(object):
 
             return frame_children
 
-        def stack_static_stack_frames(stack_frames, form_workflow, xpath=None):
-            stack_frames = stack_frames if stack_frames else []
+        def _get_static_stack_frame(form_workflow, xpath=None):
             if form_workflow == WORKFLOW_ROOT:
-                stack_frames.append(StackFrameMeta(xpath, [], allow_empty_frame=True))
+                return StackFrameMeta(xpath, [], allow_empty_frame=True)
             elif form_workflow == WORKFLOW_MODULE:
                 frame_children = frame_children_for_module(module, include_user_selections=False)
-                stack_frames.append(StackFrameMeta(xpath, frame_children))
+                return StackFrameMeta(xpath, frame_children)
             elif form_workflow == WORKFLOW_PARENT_MODULE:
                 root_module = module.root_module
                 frame_children = frame_children_for_module(root_module)
-                stack_frames.append(StackFrameMeta(xpath, frame_children))
+                return StackFrameMeta(xpath, frame_children)
             elif form_workflow == WORKFLOW_PREVIOUS:
                 frame_children = self.helper.get_frame_children(form)
 
@@ -277,8 +276,7 @@ class EndOfFormNavigationWorkflow(object):
                     # or a non-autoselect datum
                     last = frame_children.pop()
 
-                stack_frames.append(StackFrameMeta(xpath, frame_children))
-            return stack_frames
+                return StackFrameMeta(xpath, frame_children)
 
         stack_frames = []
 
@@ -320,12 +318,16 @@ class EndOfFormNavigationWorkflow(object):
                             ['not(' + link_xpath + ')' for link_xpath in link_xpaths]
                         )
                     )
-                    stack_frames = stack_static_stack_frames(
-                        stack_frames, form.post_form_workflow_fallback,
+                    static_stack_frame_for_fallback = _get_static_stack_frame(
+                        form.post_form_workflow_fallback,
                         negate_of_all_link_paths
                     )
+                    if static_stack_frame_for_fallback:
+                        stack_frames.append(static_stack_frame_for_fallback)
         else:
-            stack_frames = stack_static_stack_frames(stack_frames, form.post_form_workflow)
+            static_stack_frame = _get_static_stack_frame(form.post_form_workflow)
+            if static_stack_frame:
+                stack_frames.append(static_stack_frame)
         return stack_frames
 
     @staticmethod
