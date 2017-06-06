@@ -1546,6 +1546,18 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 
+AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
+    'CASE_OWNER_LOCATION_PARENT':
+        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent',
+         "Abt: The case owner's location's parent location"],
+    'TB_PERSON_CASE_FROM_VOUCHER_CASE':
+        ['custom.enikshay.messaging.custom_recipients.person_case_from_voucher_case',
+         "TB: Person case from voucher case"],
+    'TB_AGENCY_USER_CASE_FROM_VOUCHER_FULFILLED_BY_ID':
+        ['custom.enikshay.messaging.custom_recipients.agency_user_case_from_voucher_fulfilled_by_id',
+         "TB: Agency user case from voucher_fulfilled_by_id"],
+}
+
 AVAILABLE_CUSTOM_RULE_CRITERIA = {}
 
 AVAILABLE_CUSTOM_RULE_ACTIONS = {}
