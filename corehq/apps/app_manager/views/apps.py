@@ -687,7 +687,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('comment', None),
         ('custom_base_url', None),
         ('use_j2me_endpoint', None),
-        ('mobile_ucr_sync_interval', None),
+        ('mobile_ucr_sync_interval', lambda x: None if x == 'None' else x),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
