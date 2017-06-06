@@ -100,23 +100,6 @@
             $('#form-workflow').koApplyBindings(new FormWorkflow(options))
         {% endif %}
 
-        $('#auto-gps-capture').koApplyBindings({
-            auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }})
-        });
-
-        var $shadowParent = $('#shadow-parent');
-        if ($shadowParent.length) {
-            $shadowParent.koApplyBindings({
-                shadow_parent: ko.observable({{ form.shadow_parent_form_id|JSON }})
-            });
-        }
-
-        {% if request|toggle_enabled:'NO_VELLUM' and form.form_type != "shadow_form" %}
-        $('#no-vellum').koApplyBindings({
-            no_vellum: ko.observable({{ form.no_vellum|JSON }})
-        });
-        {% endif %}
-
         {% if allow_cloudcare %}
             // tag the 'preview in cloudcare' button with the right url
             // unfortunately, has to be done in javascript
@@ -168,6 +151,7 @@
 {% block form-view %}
     {% initial_page_data 'all_other_forms_require_a_case' form.all_other_forms_require_a_case %}
     {% initial_page_data 'allow_form_filtering' allow_form_filtering %}
+    {% initial_page_data 'auto_gps_capture' form.auto_gps_capture %}
     {% initial_page_data 'case_config_options' case_config_options %}
     {% initial_page_data 'custom_instances' custom_instances %}
     {% initial_page_data 'form_filter' form.form_filter %}
@@ -175,7 +159,9 @@
     {% initial_page_data 'form_requires' form.requires %}
     {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
     {% initial_page_data 'is_usercase_in_use' is_usercase_in_use %}
+    {% initial_page_data 'no_vellum' form.no_vellum %}
     {% initial_page_data 'put_in_root' module.put_in_root %}
+    {% initial_page_data 'shadow_parent_form_id' form.shadow_parent_form_id %}
     {% registerurl "validate_form_for_build" domain app.id form.unique_id %}
     <div id="build_errors"></div>
     {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update);}" %}

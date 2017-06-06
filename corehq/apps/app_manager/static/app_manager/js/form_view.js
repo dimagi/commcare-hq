@@ -60,13 +60,28 @@ hqDefine("app_manager/js/form_view.js", function() {
         var setupValidation = hqImport('app_manager/js/app_manager.js').setupValidation;
         setupValidation(hqImport("hqwebapp/js/urllib.js").reverse("validate_form_for_build"));
 
-        // Settings > Display Condition
+        // Settings > Logic
         var $formFilter = $('#form-filter');
         if ($formFilter.length && initial_page_data('allow_form_filtering')) {
             $('#form-filter').koApplyBindings(new FormFilter());
         }
 
-        // Settings > Custom Instances
+        // Settings > Advanced
+        $('#auto-gps-capture').koApplyBindings({
+            auto_gps_capture: ko.observable(initial_page_data('auto_gps_capture')),
+        });
+
+        var $shadowParent = $('#shadow-parent');
+        if ($shadowParent.length) {
+            $shadowParent.koApplyBindings({
+                shadow_parent: ko.observable(initial_page_data('shadow_parent_form_id')),
+            });
+        } else if (COMMCAREHQ.toggleEnabled('NO_VELLUM')) {
+            $('#no-vellum').koApplyBindings({
+                no_vellum: ko.observable(initial_page_data('no_vellum')),
+            });
+        }
+
         if (COMMCAREHQ.toggleEnabled('CUSTOM_INSTANCES')) {
             var customInstances = hqImport('app_manager/js/custom_intances.js').wrap({
                 customInstances: initial_page_data('custom_instances'),
@@ -78,15 +93,13 @@ hqDefine("app_manager/js/form_view.js", function() {
         $('.property-description').popover();
 
         // Advanced > XForm > Upload
-        (function(){
-            $("#xform_file_input").change(function(){
-                if ($(this).val()) {
-                    $("#xform_file_submit").show();
-                } else {
-                    $("#xform_file_submit").hide();
-                }
-            }).trigger('change');
-        }());
+        $("#xform_file_input").change(function(){
+            if ($(this).val()) {
+                $("#xform_file_submit").show();
+            } else {
+                $("#xform_file_submit").hide();
+            }
+        }).trigger('change');
 
         // Advanced > XForm > View
         $("#xform-source-opener").click(function(evt){
