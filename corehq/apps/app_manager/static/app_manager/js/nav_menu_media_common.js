@@ -1,3 +1,4 @@
+/* globals HQMediaFileUploadController */
 hqDefine("app_manager/js/nav_menu_media_common.js", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
         uploaders = {};
