@@ -57,7 +57,10 @@ logger = logging.getLogger(__name__)
 def form_designer(request, domain, app_id, module_id=None, form_id=None):
 
     def _form_uses_case(module, form):
-        return module and module.case_type and form.requires_case()
+        return (
+            (module and module.case_type and form.requires_case()) or
+            is_usercase_in_use(domain)
+        )
 
     def _form_is_basic(form):
         return form.doc_type == 'Form'
