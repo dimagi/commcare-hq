@@ -25,6 +25,7 @@
     <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
     <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
     <script src="{% static 'style/js/knockout_subscribables.ko.js' %}"></script>
+    <script src="{% static 'app_manager/js/form_view.js' %}"></script>
     {% endcompress %}
 {% endblock %}
 
@@ -278,11 +279,6 @@
         $(function () {
             var setupValidation = hqImport('app_manager/js/app_manager.js').setupValidation;
             setupValidation('{% url "validate_form_for_build" domain app.id form.unique_id %}');
-        });
-    </script>
-    <script>
-        $(function (){
-            $('.property-description').popover();
         });
     </script>
 {% endblock %}
