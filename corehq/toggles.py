@@ -864,7 +864,7 @@ MESSAGE_LOG_METADATA = StaticToggle(
 
 ABT_REMINDER_RECIPIENT = StaticToggle(
     'abt_reminder_recipient',
-    "Ability to send a reminder to the case owner's location's parent location",
+    "Custom reminder recipients",
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
 )

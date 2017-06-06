@@ -1546,6 +1546,12 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 
+AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
+    'CASE_OWNER_LOCATION_PARENT':
+        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent',
+         "Abt: The case owner's location's parent location"],
+}
+
 AVAILABLE_CUSTOM_RULE_CRITERIA = {}
 
 AVAILABLE_CUSTOM_RULE_ACTIONS = {}
