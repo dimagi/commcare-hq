@@ -52,6 +52,11 @@
   text-align: center;
   line-height: @navbar-footer-height - 1px;
 
+  // Needed for firefox to set height and min-height properly
+  // Possibly due to https://bugzilla.mozilla.org/show_bug.cgi?id=307866 ?
+  overflow: hidden;
+  width: 100%;
+
   a, a:link, a:visited {
     color: @navbar-footer-link-color;
     &.btn { color: #ffffff; }
@@ -130,9 +135,9 @@
 }
 
 .navbar {
-  min-height:
-  @navbar-height;
+  min-height: @navbar-height;
 }
+
 .navbar-brand {
   height: @navbar-height;
 }

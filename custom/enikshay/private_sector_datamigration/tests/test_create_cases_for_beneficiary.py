@@ -19,6 +19,7 @@ from custom.enikshay.private_sector_datamigration.models import (
     LabTest,
     Episode,
     UserDetail,
+    Voucher,
 )
 from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
 from custom.enikshay.user_setup import set_issuer_id
@@ -641,8 +642,10 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
     def test_prescription(self):
         EpisodePrescription.objects.create(
             id=1,
-            beneficiaryId=self.beneficiary,
+            beneficiaryId=self.beneficiary.caseId,
+            creationDate=datetime(2017, 5, 26),
             numberOfDays=2,
+            numberOfDaysPrescribed='2',
             prescriptionID=3,
             pricePerUnit=0.5,
             productID=4,
@@ -662,14 +665,73 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         prescription_case_ids = self.case_accessor.get_case_ids_in_domain(type='prescription')
         self.assertEqual(len(prescription_case_ids), 1)
         prescription_case = self.case_accessor.get_case(prescription_case_ids[0])
-        self.assertFalse(prescription_case.closed)  # TODO
+        self.assertTrue(prescription_case.closed)
         self.assertIsNone(prescription_case.external_id)
         self.assertEqual(prescription_case.name, 'drug name')
-        # self.assertEqual(adherence_case.opened_on, '')  # TODO
         self.assertEqual(prescription_case.owner_id, '-')
         self.assertEqual(prescription_case.dynamic_case_properties(), OrderedDict([
+            ('date_ordered', '2017-05-26'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
+            ('number_of_days_prescribed', '2'),
+        ]))
+        self.assertEqual(len(prescription_case.indices), 1)
+        self._assertIndexEqual(
+            prescription_case.indices[0],
+            CommCareCaseIndex(
+                identifier='episode_of_prescription',
+                referenced_type='episode',
+                referenced_id=episode_case.get_id,
+                relationship='extension',
+            )
+        )
+        self.assertEqual(len(prescription_case.xform_ids), 1)
+
+    def test_prescription_with_date_fulfilled(self):
+        EpisodePrescription.objects.create(
+            id=1,
+            beneficiaryId=self.beneficiary.caseId,
+            creationDate=datetime(2017, 5, 26),
+            numberOfDays=2,
+            numberOfDaysPrescribed='2',
+            prescriptionID=3,
+            pricePerUnit=0.5,
+            productID=4,
+            productName='drug name',
+            refill_Index=5,
+            voucherID=6,
+        )
+        Voucher.objects.create(
+            id=2,
+            creationDate=datetime(2017, 5, 31),
+            modificationDate=datetime(2017, 5, 31),
+            voucherCreatedDate=datetime(2017, 5, 31),
+            voucherNumber=6,
+            voucherStatusId='3',
+            voucherUsedDate=datetime(2017, 6, 1),
+        )
+
+        call_command('create_cases_by_beneficiary', self.domain)
+
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
+        self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        self.assertEqual(len(episode_case_ids), 1)
+        episode_case = self.case_accessor.get_case(episode_case_ids[0])
+
+        prescription_case_ids = self.case_accessor.get_case_ids_in_domain(type='prescription')
+        self.assertEqual(len(prescription_case_ids), 1)
+        prescription_case = self.case_accessor.get_case(prescription_case_ids[0])
+        self.assertTrue(prescription_case.closed)
+        self.assertIsNone(prescription_case.external_id)
+        self.assertEqual(prescription_case.name, 'drug name')
+        self.assertEqual(prescription_case.owner_id, '-')
+        self.assertEqual(prescription_case.dynamic_case_properties(), OrderedDict([
+            ('date_fulfilled', '2017-06-01'),
+            ('date_ordered', '2017-05-26'),
+            ('migration_created_case', 'true'),
+            ('migration_created_from_record', '3'),
+            ('number_of_days_prescribed', '2'),
         ]))
         self.assertEqual(len(prescription_case.indices), 1)
         self._assertIndexEqual(
@@ -686,7 +748,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
     def test_multiple_prescriptions(self):
         EpisodePrescription.objects.create(
             id=1,
-            beneficiaryId=self.beneficiary,
+            beneficiaryId=self.beneficiary.caseId,
+            creationDate=datetime(2017, 5, 26),
             numberOfDays=2,
             prescriptionID=3,
             pricePerUnit=0.5,
@@ -696,7 +759,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         )
         EpisodePrescription.objects.create(
             id=2,
-            beneficiaryId=self.beneficiary,
+            beneficiaryId=self.beneficiary.caseId,
+            creationDate=datetime(2017, 5, 26),
             numberOfDays=2,
             prescriptionID=3,
             pricePerUnit=0.5,

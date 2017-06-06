@@ -1,20 +1,6 @@
 {
     "domains": [
-        "enikshay-test",
-        "enikshay-test-test",
-        "enikshay",
-        "enikshay-test-2",
-        "enikshay-test-3",
-        "enikshay-nikshay-migration-test",
-        "enikshay-domain-copy-test",
-        "enikshay-aks-audit",
-        "np-migration-3",
-        "enikshay-uatbc-migration-test-1",
-        "enikshay-uatbc-migration-test-2",
-        "enikshay-uatbc-migration-test-3",
-        "enikshay-uatbc-migration-test-4",
-        "enikshay-uatbc-migration-test-5",
-        "enikshay-uatbc-migration-test-6"
+        "enikshay"
     ],
     "server_environment": [
         "softlayer"
@@ -105,6 +91,7 @@
                 },
                 "datatype": "date",
                 "type": "expression",
+                "create_index": true,
                 "is_primary_key": false,
                 "is_nullable": true,
                 "column_id": "date_of_diagnosis",
@@ -132,6 +119,7 @@
                 "display_name": "person/owner_id",
                 "datatype": "string",
                 "type": "expression",
+                "create_index": true,
                 "is_primary_key": false,
                 "transform": {
                 },
@@ -166,6 +154,20 @@
                     }
                 },
                 "column_id": "person_owner_id"
+            },
+            {
+                "display_name": "diagnosing_facility_id",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "diagnosing_facility_id"
+                },
+                "column_id": "diagnosing_facility_id"
             },
             {
                 "display_name": "episode_type",
@@ -622,16 +624,8 @@
                         "type":"related_doc",
                         "related_doc_type":"Location",
                         "doc_id_expression": {
-                            "value_expression": {
-                                "type":"property_name",
-                                "property_name":"name"
-                            },
-                            "type":"related_doc",
-                            "related_doc_type":"Location",
-                            "doc_id_expression": {
-                                "type": "property_name",
-                                "property_name": "treatment_initiating_facility_id"
-                            }
+                            "type": "property_name",
+                            "property_name": "treatment_initiating_facility_id"
                         }
                     }
                 },
@@ -1291,7 +1285,7 @@
                                 "property_name": "treatment_initiated"
                             },
                             "type": "boolean_expression",
-                            "property_value": "yes_public"
+                            "property_value": "yes_phi"
                         },
                         "expression_if_true": {
                             "type": "conditional",
@@ -6197,6 +6191,136 @@
                         }
                     }
                 }
+            },
+            {
+                "display_name": "priority",
+                "column_id": "priority",
+                "datatype": "string",
+                "type": "expression",
+                "expression":{
+                    "type": "property_name",
+                    "property_name": "priority"
+                }
+            },
+            {
+                "display_name": "date_last_refilled",
+                "column_id": "date_last_refilled",
+                "datatype": "date",
+                "type": "expression",
+                "expression":{
+                    "type": "property_name",
+                    "property_name": "date_last_refilled"
+                }
+            },
+            {
+                "display_name": "one_week_adherence_score",
+                "column_id": "one_week_adherence_score",
+                "datatype": "string",
+                "type": "expression",
+                "expression":{
+                    "type": "property_name",
+                    "property_name": "one_week_adherence_score"
+                }
+            },
+            {
+                "display_name": "month_adherence_score",
+                "column_id": "month_adherence_score",
+                "datatype": "string",
+                "type": "expression",
+                "expression":{
+                    "type": "property_name",
+                    "property_name": "month_adherence_score"
+                }
+            },
+            {
+                "display_name": "adherence_tracking_mechanism",
+                "column_id": "adherence_tracking_mechanism",
+                "datatype": "string",
+                "type": "expression",
+                "expression":{
+                    "type": "property_name",
+                    "property_name": "adherence_tracking_mechanism"
+                }
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "adherence type choice",
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "adherence_type_choice"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "adherence_type_choice"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "99 DOTS enabled",
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "dots_99_enabled"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "dots_99_enabled"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "99 DOTS registered",
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "dots_99_registered"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "dots_99_registered"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "Episode Pending Registration",
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "episode_pending_registration"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "episode_pending_registration"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "Nikshay registered",
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "nikshay_registered"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "nikshay_registered"
             }
         ],
         "named_filters": {

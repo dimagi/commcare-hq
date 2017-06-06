@@ -61,7 +61,7 @@
         </li>
         {% if app.get_doc_type == 'Application' %}
         <li>
-            <a id="demand-multimedia" href="{% url "view_app" domain app.id %}multimedia/#multimedia" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Multimedia" %}: {{ app.name }}"{% endif %}>
+            <a id="demand-multimedia" href="{% url "view_app" domain app.id %}multimedia/#multimedia-tab" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Multimedia" %}: {{ app.name }}"{% endif %}>
                 <i class="fa fa-photo"></i>
                 {% trans "Multimedia" %}
             </a>
@@ -90,10 +90,16 @@
             {% endif %}
         </li>
         {% endif %}
-        <li>
+        <li class="rollout-toggle-label">
             <a href="{% url "app_summary" domain app.id %}">
                 <i class="fa fa-list"></i>
                 {% trans "App Summary" %}
+            </a>
+        </li>
+        <li>
+            <a href="#" data-toggle="modal" data-target="#rollout-modal">
+                <i class="fa fa-bell-o"></i>
+                {% trans "New App Builder" %}
             </a>
         </li>
         <li class="divider"></li>

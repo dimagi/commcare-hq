@@ -43,6 +43,18 @@
                 }
                 ">
             </div>
+            <div class="panel panel-default">
+                <div class="panel-heading clearfix">
+                    {% trans "Navigation Fallback" %}
+                </div>
+                <div class="panel-body">
+                    <select name="post_form_workflow_fallback" class="form-control" data-bind="
+                        optstr: workflowFallbackOptions(),
+                        value: workflowfallback,
+                        optionsCaption: 'Choose a fallback option...'
+                    "></select>
+                </div>
+            </div>
             <div class="row">
                 <button class="btn btn-primary" data-bind="click: onAddFormLink">
                     <i class="fa fa-plus"></i>

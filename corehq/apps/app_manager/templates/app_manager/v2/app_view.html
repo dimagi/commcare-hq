@@ -39,7 +39,7 @@
   </div>
 
   <div class="appmanager-edit-title">
-    <inline-edit-v2 params="
+    <inline-edit params="
         value: '{{ app.name|escapejs }}',
         containerClass: 'h3 app-title',
         url: '{% url "edit_app_attr" domain app.id 'name' %}',
@@ -48,18 +48,18 @@
         rows: 1,
         saveValueName: 'name',
         nodeName: 'input',
-    "></inline-edit-v2>
+    "></inline-edit>
   </div>
 
   <div class="appmanager-edit-description">
-    <inline-edit-v2 params="
+    <inline-edit params="
         value: '{{ app.short_comment|escapejs }}',
         url: '{% url "edit_app_attr" domain app.id 'comment' %}',
         placeholder: '{% trans "Enter app description here"|escapejs %}',
         saveValueName: 'comment',
         containerClass: 'app-comment',
         cols: 50,
-    "></inline-edit-v2>
+    "></inline-edit>
   </div>
 {% endblock %}
 

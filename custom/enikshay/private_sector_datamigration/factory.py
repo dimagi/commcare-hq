@@ -13,6 +13,7 @@ from custom.enikshay.private_sector_datamigration.models import (
     EpisodePrescription,
     LabTest,
     MigratedBeneficiaryCounter,
+    Voucher,
 )
 from custom.enikshay.user_setup import compress_nikshay_id
 
@@ -288,11 +289,13 @@ class BeneficiaryCaseFactory(object):
         kwargs = {
             'attrs': {
                 'case_type': PRESCRIPTION_CASE_TYPE,
-                'close': False,
+                'close': True,
                 'create': True,
                 'owner_id': '-',
                 'update': {
+                    'date_ordered': prescription.creationDate.date(),
                     'name': prescription.productName,
+                    'number_of_days_prescribed': prescription.numberOfDaysPrescribed,
 
                     'migration_created_case': 'true',
                     'migration_created_from_record': prescription.prescriptionID,
@@ -305,6 +308,14 @@ class BeneficiaryCaseFactory(object):
                 related_type=EPISODE_CASE_TYPE,
             )],
         }
+
+        try:
+            voucher = Voucher.objects.get(voucherNumber=prescription.voucherID)
+            if voucher.voucherStatusId == '3':
+                kwargs['attrs']['update']['date_fulfilled'] = voucher.voucherUsedDate.date()
+        except Voucher.DoesNotExist:
+            pass
+
         return CaseStructure(**kwargs)
 
     def get_test_case_structure(self, labtest, occurrence_structure):
@@ -346,7 +357,7 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _prescriptions(self):
-        return list(EpisodePrescription.objects.filter(beneficiaryId=self.beneficiary))
+        return list(EpisodePrescription.objects.filter(beneficiaryId=self.beneficiary.caseId))
 
     @property
     @memoized

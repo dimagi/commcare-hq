@@ -87,9 +87,7 @@
   </detail>
   <detail id="m1_careplan_goal_short">
     <title>
-      <text>
-        <xpath function=""/>
-      </text>
+      <text/>
     </title>
     <field>
       <header>
@@ -128,9 +126,7 @@
   </detail>
   <detail id="m1_careplan_goal_long">
     <title>
-      <text>
-        <xpath function=""/>
-      </text>
+      <text/>
     </title>
     <field>
       <header>
@@ -171,9 +167,7 @@
   </detail>
   <detail id="m1_careplan_task_short">
     <title>
-      <text>
-        <xpath function=""/>
-      </text>
+      <text/>
     </title>
     <field>
       <header>
@@ -212,9 +206,7 @@
   </detail>
   <detail id="m1_careplan_task_long">
     <title>
-      <text>
-        <xpath function=""/>
-      </text>
+      <text/>
     </title>
     <field>
       <header>

@@ -130,9 +130,7 @@
   </detail>
   <detail id="m1_product_short">
     <title>
-      <text>
-        <xpath function=""/>
-      </text>
+      <text/>
     </title>
     <field>
       <header>
@@ -214,9 +212,7 @@
   </detail>
   <detail id="m2_product_short">
     <title>
-      <text>
-        <xpath function=""/>
-      </text>
+      <text/>
     </title>
     <field>
       <header>

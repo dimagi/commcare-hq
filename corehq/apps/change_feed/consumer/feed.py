@@ -98,9 +98,19 @@ class KafkaChangeFeed(ChangeFeed):
     def get_current_checkpoint_offsets(self):
         # the way kafka works, the checkpoint should increment by 1 because
         # querying the feed is inclusive of the value passed in.
-        return {
-            topic_partition: sequence + 1 for topic_partition, sequence in self._processed_topic_offsets.items()
-        }
+        latest_offsets = self.get_latest_offsets()
+        ret = {}
+        for topic_partition, sequence in self.get_processed_offsets().items():
+            if sequence == latest_offsets[topic_partition]:
+                # this topic and partition is totally up to date and if we add 1
+                # then kafka will give us an offset out of range error.
+                # not adding 1 to the partition means that we may process this
+                # change again later, but that should be OK
+                sequence = latest_offsets[topic_partition]
+            else:
+                sequence += 1
+            ret[topic_partition] = sequence
+        return ret
 
     def get_processed_offsets(self):
         return copy(self._processed_topic_offsets)

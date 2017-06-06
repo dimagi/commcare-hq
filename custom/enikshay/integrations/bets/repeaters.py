@@ -1,8 +1,13 @@
 from dateutil.parser import parse
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.signals import case_post_save
-from corehq.apps.repeaters.models import CaseRepeater
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.repeaters.models import CaseRepeater, LocationRepeater, UserRepeater
 from corehq.apps.repeaters.signals import create_repeat_records
+from corehq.apps.repeaters.repeater_generators import UserPayloadGenerator
+from corehq.apps.users.signals import commcare_user_post_save
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import BETS_INTEGRATION
 from corehq.util import reverse
@@ -14,12 +19,13 @@ from custom.enikshay.integrations.bets.repeater_generators import \
     BETS180TreatmentPayloadGenerator, LabBETSVoucherPayloadGenerator, \
     ChemistBETSVoucherPayloadGenerator, BETSAYUSHReferralPayloadGenerator, \
     BETSDiagnosisAndNotificationPayloadGenerator, BETSSuccessfulTreatmentPayloadGenerator, \
-    BETSDrugRefillPayloadGenerator
+    BETSDrugRefillPayloadGenerator, BETSLocationPayloadGenerator
 from custom.enikshay.integrations.utils import case_properties_changed, is_valid_episode_submission, \
-    is_valid_voucher_submission, is_valid_archived_submission
+    is_valid_voucher_submission, is_valid_archived_submission, is_valid_person_submission, \
+    case_was_created
 
 
-class BaseBETSRepeater(CaseRepeater):
+class BETSRepeaterMixin(object):
     class Meta(object):
         app_label = 'repeaters'
 
@@ -27,6 +33,8 @@ class BaseBETSRepeater(CaseRepeater):
     def available_for_domain(cls, domain):
         return BETS_INTEGRATION.enabled(domain)
 
+
+class BaseBETSRepeater(BETSRepeaterMixin, CaseRepeater):
     def case_types_and_users_allowed(self, case):
         return self._allowed_case_type(case) and self._allowed_user(case)
 
@@ -287,7 +295,61 @@ class BETSAYUSHReferralRepeater(BaseBETSRepeater):
         )
 
 
-def create_case_repeat_records(sender, case, **kwargs):
+class BETSUserRepeater(BETSRepeaterMixin, UserRepeater):
+    friendly_name = _("Forward users to BETS")
+    payload_generator_classes = (UserPayloadGenerator,)
+
+    location_types_to_forward = ['plc', 'pcp', 'pcc', 'pac']
+
+    def _is_relevant_location(self, location):
+        return (location.metadata.get('is_test') != "yes"
+                and location.location_type.code in self.location_types_to_forward)
+
+    def allowed_to_forward(self, user):
+        return any(self._is_relevant_location(loc)
+                   for loc in user.get_sql_locations(self.domain))
+
+
+class BETSLocationRepeater(BETSRepeaterMixin, LocationRepeater):
+    friendly_name = _("Forward locations to BETS")
+    payload_generator_classes = (BETSLocationPayloadGenerator,)
+    location_types_to_forward = (
+        'ctd',
+            'sto',
+                'cto',
+                    'dto',
+                        'tu',
+                        'plc',
+                        'pcp',
+                        'pcc',
+                        'pac',
+    )
+
+    def allowed_to_forward(self, location):
+        return (location.metadata.get('is_test') != "yes"
+                and location.location_type.code in self.location_types_to_forward)
+
+
+class BETSBeneficiaryRepeater(BaseBETSRepeater):
+    friendly_name = _("BETS - Beneficiary creation and update")
+    properties_we_care_about = (
+        'phone_number',
+        'current_address_district_choice',
+        'current_address_state_choice',
+    )
+
+    def allowed_to_forward(self, person_case):
+        if not (self._allowed_case_type(person_case) and self._allowed_user(person_case)):
+            return False
+
+        return (is_valid_person_submission(person_case)
+                and person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
+                and (case_was_created(person_case)
+                     or case_properties_changed(person_case, self.properties_we_care_about)))
+
+
+@receiver(case_post_save, sender=CommCareCaseSQL, dispatch_uid="create_BETS_case_repeat_records")
+def create_BETS_repeat_records(sender, case, **kwargs):
     create_repeat_records(ChemistBETSVoucherRepeater, case)
     create_repeat_records(LabBETSVoucherRepeater, case)
     create_repeat_records(BETS180TreatmentRepeater, case)
@@ -295,5 +357,16 @@ def create_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(BETSSuccessfulTreatmentRepeater, case)
     create_repeat_records(BETSDiagnosisAndNotificationRepeater, case)
     create_repeat_records(BETSAYUSHReferralRepeater, case)
+    create_repeat_records(BETSBeneficiaryRepeater, case)
 
-case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
+
+@receiver(post_save, sender=SQLLocation, dispatch_uid="create_BETS_location_repeat_records")
+def create_BETS_location_repeat_records(sender, raw=False, **kwargs):
+    if raw:
+        return
+    create_repeat_records(BETSLocationRepeater, kwargs['instance'])
+
+
+@receiver(commcare_user_post_save, dispatch_uid="create_BETS_user_repeat_records")
+def create_BETS_user_repeat_records(sender, couch_user, **kwargs):
+    create_repeat_records(BETSUserRepeater, couch_user)

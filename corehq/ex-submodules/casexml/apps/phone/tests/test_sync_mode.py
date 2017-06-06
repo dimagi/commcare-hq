@@ -1086,6 +1086,7 @@ class ChangingOwnershipTest(SyncBaseTest):
 
         # remove the owner id and confirm that owner and case are removed on next sync
         group.remove_user(self.user.user_id)
+        group.save()
         incremental_sync_log = self._get_incremental_synclog_for_user(self.user, since=incremental_sync_log._id)
         self.assertFalse(group._id in incremental_sync_log.owner_ids_on_phone)
         self.assertFalse(incremental_sync_log.phone_is_holding_case(case_id))

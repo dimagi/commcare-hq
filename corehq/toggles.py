@@ -770,7 +770,8 @@ ENIKSHAY_API = StaticToggle(
     'enikshay_api',
     'Enable access to eNikshay api endpoints',
     TAG_ONE_OFF,
-    [NAMESPACE_USER]
+    [NAMESPACE_USER],
+    always_enabled={"enikshay"},
 )
 
 NIKSHAY_INTEGRATION = StaticToggle(
@@ -785,6 +786,7 @@ BETS_INTEGRATION = StaticToggle(
     'Enable BETS data forwarders',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
+    always_enabled={"enikshay"},
 )
 
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
@@ -806,6 +808,7 @@ SUPPORT = StaticToggle(
     'support',
     'General toggle for support features',
     TAG_EXPERIMENTAL,
+    help_link='https://confluence.dimagi.com/display/ccinternal/Support+Flag',
 )
 
 BASIC_CHILD_MODULE = StaticToggle(
@@ -1093,14 +1096,6 @@ FORMTRANSLATE_FORM_VALIDATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-USER_PROPERTY_EASY_REFS = StaticToggle(
-    'user_property_easy_refs',
-    'Easy-reference user properties in the form builder.',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-    enabled_for_new_domains_after=datetime(2017, 5, 3, 20),  # 8pm UTC
-)
-
 LOCATION_USERS = StaticToggle(
     'location_users',
     'Autogenerate users for each location',
@@ -1209,26 +1204,10 @@ MOTECH = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-MARK_LATEST_SUBMISSION_ON_USER = StaticToggle(
-    'user_last_submission',
-    "Marks the latest submssion on user model",
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    always_enabled={'icds-cas'}
-)
-
 ENTERPRISE_OPTIMIZATIONS = StaticToggle(
     'enterprise_optimizations',
     'Used to enable specific optimizations for environments that only support a single domain e.g. ICDS',
     TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    always_enabled={'icds-cas'}
-)
-
-MOBIE_UCR_SYNC_DELAY_CONFIG = StaticToggle(
-    'mobile_ucr_sync_delay',
-    "Show settings for configuring mobile UCR sync delay",
-    TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
     always_enabled={'icds-cas'}
 )

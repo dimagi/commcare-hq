@@ -28,6 +28,7 @@ from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.smsbackends.tropo.models import SQLTropoBackend
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.messaging.smsbackends.unicel.models import SQLUnicelBackend, InboundParams
+from corehq.messaging.smsbackends.vertex.models import VertexBackend
 from corehq.messaging.smsbackends.yo.models import SQLYoBackend
 from corehq.util.test_utils import create_test_case
 from datetime import datetime
@@ -157,6 +158,13 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         )
         cls.icds_backend.save()
 
+        cls.vertext_backend = VertexBackend(
+            name="VERTEX",
+            is_global=True,
+            hq_api_id=VertexBackend.get_api_id()
+        )
+        cls.vertext_backend.save()
+
     @classmethod
     def tearDownClass(cls):
         cls.teardown_subscription()
@@ -176,6 +184,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.yo_backend.delete()
         cls.push_backend.delete()
         cls.icds_backend.delete()
+        cls.vertext_backend.delete()
         super(AllBackendTest, cls).tearDownClass()
 
     def tearDown(self):
@@ -264,8 +273,10 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @patch('corehq.messaging.smsbackends.yo.models.SQLYoBackend.send')
     @patch('corehq.messaging.smsbackends.push.models.PushBackend.send')
     @patch('corehq.messaging.smsbackends.icds_nic.models.SQLICDSBackend.send')
+    @patch('corehq.messaging.smsbackends.vertex.models.VertexBackend.send')
     def test_outbound_sms(
             self,
+            vertex_send,
             icds_send,
             push_send,
             yo_send,
@@ -296,6 +307,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.yo_backend, 'yo test', yo_send)
         self._test_outbound_backend(self.push_backend, 'push test', push_send)
         self._test_outbound_backend(self.icds_backend, 'icds test', icds_send)
+        self._test_outbound_backend(self.vertext_backend, 'vertex_test', vertex_send)
 
     @run_with_all_backends
     def test_unicel_inbound_sms(self):

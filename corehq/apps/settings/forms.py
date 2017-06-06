@@ -10,16 +10,18 @@ from crispy_forms.helper import FormHelper
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
-from corehq.apps.domain.forms import clean_password
 from corehq.apps.users.models import CouchUser
 
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
+from django.core.exceptions import ValidationError
 
 from datetime import datetime
 
+from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 
-class HQPasswordChangeForm(PasswordChangeForm):
+
+class HQPasswordChangeForm(EncodedPasswordChangeFormMixin, PasswordChangeForm):
 
     new_password1 = forms.CharField(label=_("New password"),
                                     widget=forms.PasswordInput(),
@@ -54,8 +56,10 @@ class HQPasswordChangeForm(PasswordChangeForm):
             ),
         )
 
-    def clean_new_password1(self):
-        return clean_password(self.cleaned_data.get('new_password1'))
+    def clean_old_password(self):
+        from corehq.apps.hqwebapp.utils import decode_password
+        self.cleaned_data['old_password'] = decode_password(self.cleaned_data['old_password'])
+        return super(HQPasswordChangeForm, self).clean_old_password()
 
     def save(self, commit=True):
         user = super(HQPasswordChangeForm, self).save(commit)
