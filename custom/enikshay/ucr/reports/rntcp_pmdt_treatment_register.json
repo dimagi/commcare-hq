@@ -53,6 +53,14 @@
                     "order_by_hierarchy": true
                 },
                 "display": "Location"
+            },
+            {
+                "pre_value": 1,
+                "datatype": "integer",
+                "display": null,
+                "field": "treatment_public",
+                "type": "pre",
+                "slug": "treatment_public"
             }
         ],
         "columns": [

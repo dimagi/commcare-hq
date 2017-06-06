@@ -5855,6 +5855,19 @@
                 "column_id": "treatment_initiated"
             },
             {
+                "filter": {
+                    "operator": "eq",
+                    "expression": {
+                        "type": "property_name",
+                        "property_name": "treatment_initiated"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "yes_phi"
+                },
+                "type": "boolean",
+                "column_id": "treatment_public"
+            },
+            {
                 "display_name": "date_of_diagnosis_diff",
                 "column_id": "date_of_diagnosis_diff",
                 "datatype": "integer",
