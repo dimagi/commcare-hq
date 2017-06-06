@@ -118,3 +118,11 @@ VELLUM_ADVANCED_ITEMSETS = FeaturePreview(
     ),
     privilege=LOOKUP_TABLES,
 )
+
+SHARE_CASE_TILE_CONTEXT = FeaturePreview(
+    slug="share_case_tile_context",
+    label=_("Share case tile between modules"),
+    description=_(
+        "Configure a module to use persistent case tile from "
+    )
+)

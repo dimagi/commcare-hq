@@ -2094,6 +2094,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     custom_xml = StringProperty()
 
     persist_tile_on_forms = BooleanProperty()
+    case_context_from_module = StringProperty()
     # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
 

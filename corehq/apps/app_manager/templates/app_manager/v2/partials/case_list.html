@@ -69,6 +69,18 @@
                     {% trans "Use this case list tile persistently in forms" %}
                 </label>
             </div>
+            {% with app|get_available_modules_for_case_list_configuration:module as available_modules %}
+            {% if available_modules %}
+                <div data-bind="visible: persistTileOnForms()" >
+                    <select name='case_context_from_module' class='form-control' data-bind="value: caseContextFromModule">
+                        <option value></option>
+                        {% for other_mod in available_modules %}
+                        <option value={{ other_mod.unique_id }}>{{ other_mod.name|html_trans:langs }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            {% endif %}
+            {% endwith %}
             <div class="checkbox" data-bind="visible: persistTileOnForms()">
                 <label>
                     <input type="checkbox" data-bind="checked: enableTilePullDown">
