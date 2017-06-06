@@ -1563,7 +1563,7 @@ class CaseReminderHandler(Document):
         if not self.deleted():
             if self.start_condition_type == CASE_CRITERIA:
                 accessor = CaseAccessors(self.domain)
-                case_ids = accessor.get_case_ids_in_domain()
+                case_ids = accessor.get_case_ids_in_domain(self.case_type)
                 self.reset_rule_progress(len(case_ids))
 
                 for case in accessor.iter_cases(case_ids):
