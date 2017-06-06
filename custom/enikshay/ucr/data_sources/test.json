@@ -1045,6 +1045,14 @@
             },
             {
                 "filter": {
+                    "type": "named",
+                    "name": "microscopy"
+                },
+                "type": "boolean",
+                "column_id": "is_microscopy"
+            },
+            {
+                "filter": {
                     "type": "and",
                     "filters": [
                         {
