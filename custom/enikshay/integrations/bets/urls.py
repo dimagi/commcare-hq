@@ -62,6 +62,12 @@ urlpatterns = [
         name=BETSAYUSHReferralRepeaterView.urlname
     ),
     url(
+        r'^user_repeater$',
+        AddRepeaterView.as_view(),
+        {'repeater_type': 'BETSUserRepeater'},
+        name='bets_user_repeater'
+    ),
+    url(
         r'^location_repeater$',
         AddRepeaterView.as_view(),
         {'repeater_type': 'BETSLocationRepeater'},
