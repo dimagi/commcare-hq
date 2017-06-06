@@ -3,7 +3,6 @@
 
 <script type="text/html" id="usercase-config:case-transaction">
     <div class="row top-spacer">
-        {% if request|toggle_enabled:'USER_PROPERTY_EASY_REFS' %}
         <div class="col-sm-6">
             <div class="panel panel-default">
                 <div class="panel-heading panel-title">{% trans "Load the following case properties into the form" %}</div>
@@ -13,12 +12,6 @@
                 </div>
             </div>
         </div>
-        {% else %}
-        <div class="col-sm-6">
-            <div class="panel panel-default"
-                 data-bind="template: 'case-config:case-transaction:case-preload'"></div>
-        </div>
-        {% endif %}
         <div class="col-sm-6">
             <div class="panel panel-default"
                  data-bind="template: 'case-config:case-transaction:case-properties'"></div>

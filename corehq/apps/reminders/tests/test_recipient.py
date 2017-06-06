@@ -1,8 +1,7 @@
 from django.test import TestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.reminders.models import (CaseReminder, CaseReminderHandler,
-    RECIPIENT_CASE_OWNER_LOCATION_PARENT)
+from corehq.apps.reminders.models import CaseReminder, CaseReminderHandler
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import create_test_case
@@ -58,7 +57,7 @@ class ReminderRecipientTest(TestCase):
 
         with create_test_case(self.domain, 'test-case', 'test-name', owner_id=self.user.get_id) as case:
             self.assertEqual(case.owner_id, self.user.get_id)
-            handler = CaseReminderHandler(domain=self.domain, recipient=RECIPIENT_CASE_OWNER_LOCATION_PARENT)
+            handler = CaseReminderHandler(domain=self.domain, recipient='CASE_OWNER_LOCATION_PARENT')
             reminder = CaseReminder(domain=self.domain, case_id=case.case_id)
 
             # Test the recipient is returned correctly

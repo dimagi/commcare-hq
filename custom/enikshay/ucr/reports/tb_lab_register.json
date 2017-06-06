@@ -63,6 +63,13 @@
                 "slug": "date_reported_pre",
                 "datatype": "integer",
                 "pre_value": 1
+            },
+            {
+                "type": "pre",
+                "field": "is_microscopy",
+                "slug": "is_microscopy",
+                "datatype": "integer",
+                "pre_value": 1
             }
         ],
         "columns": [

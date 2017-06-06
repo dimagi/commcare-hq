@@ -158,6 +158,10 @@ def _add_modified_by_to_template_params(case, result):
         result['case']['last_modified_by'] = _get_obj_template_info(modified_by)
 
 
+def _add_recipient_to_template_params(recipient, result):
+    result['recipient'] = _get_obj_template_info(recipient)
+
+
 def get_message_template_params(case=None):
     """
     Data such as case properties can be referenced from reminder messages
@@ -216,6 +220,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, logged_event
 
     domain_obj = Domain.get_by_name(reminder.domain, strict=True)
     for recipient in recipients:
+        _add_recipient_to_template_params(recipient, template_params)
         logged_subevent = logged_event.create_subevent(handler, reminder, recipient)
 
         try:
@@ -493,6 +498,7 @@ def fire_email_event(reminder, handler, recipients, verified_numbers, logged_eve
         return
 
     for recipient in recipients:
+        _add_recipient_to_template_params(recipient, template_params)
         logged_subevent = logged_event.create_subevent(handler, reminder, recipient)
 
         try:
