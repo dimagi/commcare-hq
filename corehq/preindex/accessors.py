@@ -53,11 +53,20 @@ def copy_design_doc(design, temp=None, delete=True):
     )
 
 
-def sync_design_doc(design, temp=None, force_index=False):
+def sync_design_doc(design, temp=None):
     sync_docs.sync_design_docs(
         db=design.db,
         design_dir=design.design_path,
         design_name=design.app_label,
         temp=temp,
-        force_index=force_index,
+    )
+
+
+def index_design_doc(design):
+    design_name = design.app_label
+    docid = "_design/%s" % design_name
+    sync_docs.index_design_docs(
+        db=design.db,
+        docid=docid,
+        design_name=design_name,
     )
