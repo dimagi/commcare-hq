@@ -214,6 +214,11 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
 
     def process_change(self, pillow_instance, change):
         self.bootstrap_if_needed()
+
+        if change.metadata and change.metadata.domain:
+            if change.metadata.domain == 'np-migration-3':
+                return
+
         if change.deleted:
             # we don't currently support hard-deletions at all.
             # we may want to change this at some later date but seem ok for now.
