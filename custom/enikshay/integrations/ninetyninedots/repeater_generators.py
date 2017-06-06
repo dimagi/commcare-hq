@@ -209,10 +209,11 @@ class AdherencePayloadGenerator(NinetyNineDotsBasePayloadGenerator):
             ).case_id
         )
         adherence_case_properties = adherence_case.dynamic_case_properties()
-        date = parse_date(adherence_case.dynamic_case_properties().get('adherence_date'))
+        date_val = adherence_case_properties.get('adherence_date')
+        date = parse_date(date_val) if date_val else None
         payload = {
             'beneficiary_id': person_case.case_id,
-            'adherence_date': date.isoformat(),
+            'adherence_date': date.isoformat() if date else None,
             'adherence_source': adherence_case_properties.get('adherence_source'),
             'adherence_value': adherence_case_properties.get('adherence_value'),
         }
