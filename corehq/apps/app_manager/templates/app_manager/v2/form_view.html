@@ -66,56 +66,6 @@
     {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
         <script src="{% static 'app_manager/js/custom_instances.js' %}"></script>
     {% endif %}
-    <script>
-        $(function(){
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
-
-        {% if can_preview_form and allow_cloudcare %}
-            // tag the 'preview in cloudcare' button with the right url
-            // unfortunately, has to be done in javascript
-            var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-                var url = urlRoot;
-                if (appId !== undefined) {
-                    url = url + "view/" + appId;
-                    if (moduleId !== undefined) {
-                        url = url + "/" + moduleId;
-                        if (formId !== undefined) {
-                            url = url + "/" + formId;
-                            if (caseId !== undefined) {
-                                url = url + "/" + caseId;
-                            }
-                        }
-                    }
-                }
-                return url;
-            };
-            // build the previewCommand in the format that the CommCareSession will understand
-            var getFormplayerUrl = function(urlRoot, appId, moduleId, formId) {
-                var urlObject = new Util.CloudcareUrl({
-                    'appId': appId,
-                    'previewCommand': 'm' + moduleId + '-f' + formId
-                });
-                return urlRoot + '#' + Util.objectToEncodedUrl(urlObject.toJson());
-            };
-
-            {% if not request|toggle_enabled:"USE_OLD_CLOUDCARE"%}
-            var cloudCareUrl = getFormplayerUrl("{% url "formplayer_single_app" domain app.id %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}");
-            {% else %}
-                var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
-            {% endif %}
-
-            $("#cloudcare-preview-url").attr("href", cloudCareUrl);
-            $('#cloudcare-preview-url').click(function(e) {
-                ga_track_event('CloudCare', 'Click "Preview Form"');
-                analytics.workflow("Clicked Preview Form");
-                {% if request.couch_user.days_since_created == 0 %}
-                    ga_track_event('CloudCare', 'Clicked "Preview Form" within first 24 hours');
-                    analytics.workflow('Clicked "Preview Form" within first 24 hours');
-                {% endif %}
-            });
-        {% endif %}
-        });
-    </script>
 {% endblock %}
 
 {% block pre_form_content %}
