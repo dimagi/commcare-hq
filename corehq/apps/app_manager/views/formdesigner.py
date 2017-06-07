@@ -136,9 +136,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])
 
-    if tours.VELLUM_CASE_MANAGEMENT.is_enabled(request.user) and form.requires_case():
-        request.guided_tour = tours.VELLUM_CASE_MANAGEMENT.get_tour_data()
-
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
     context.update({
