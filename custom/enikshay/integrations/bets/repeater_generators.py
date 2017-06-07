@@ -8,7 +8,8 @@ from pytz import timezone
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.exceptions import RequestConnectionError
-from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator, LocationPayloadGenerator
+from corehq.apps.repeaters.repeater_generators import (
+    BasePayloadGenerator, LocationPayloadGenerator, UserPayloadGenerator)
 from custom.enikshay.case_utils import update_case, get_person_case_from_episode
 from custom.enikshay.const import (
     DATE_FULFILLED,
@@ -34,6 +35,16 @@ from custom.enikshay.exceptions import NikshayLocationNotFound
 from .utils import get_bets_location_json
 
 
+def _get_district_location(pcp_location):
+    try:
+        district_location = pcp_location.parent
+        if district_location.location_type.code != 'dto':
+            raise NikshayLocationNotFound("Parent location of {} is not a district".format(pcp_location))
+        return pcp_location.parent.location_id
+    except AttributeError:
+        raise NikshayLocationNotFound("Parent location of {} not found".format(pcp_location))
+
+
 class BETSPayload(jsonobject.JsonObject):
 
     EventID = jsonobject.StringProperty(required=True)
@@ -57,16 +68,6 @@ class BETSPayload(jsonobject.JsonObject):
                 )
             raise NikshayLocationNotFound(msg)
 
-    @classmethod
-    def _get_district_location(cls, pcp_location):
-        try:
-            district_location = pcp_location.parent
-            if district_location.location_type.code != 'dto':
-                raise NikshayLocationNotFound("Parent location of {} is not a district".format(pcp_location))
-            return pcp_location.parent.location_id
-        except AttributeError:
-            raise NikshayLocationNotFound("Parent location of {} not found".format(pcp_location))
-
 
 class IncentivePayload(BETSPayload):
     EpisodeID = jsonobject.StringProperty(required=False)
@@ -89,7 +90,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
-            DTOLocation=cls._get_district_location(pcp_location),
+            DTOLocation=_get_district_location(pcp_location),
         )
 
     @classmethod
@@ -112,7 +113,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
-            DTOLocation=cls._get_district_location(pcp_location)
+            DTOLocation=_get_district_location(pcp_location)
         )
 
     @classmethod
@@ -134,7 +135,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
             Location=person_case.dynamic_case_properties().get('last_owner'),
-            DTOLocation=cls._get_district_location(location),
+            DTOLocation=_get_district_location(location),
         )
 
     @staticmethod
@@ -161,7 +162,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
-            DTOLocation=cls._get_district_location(location),
+            DTOLocation=_get_district_location(location),
         )
 
     @classmethod
@@ -182,7 +183,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType='ayush_other',
             EpisodeID=episode_case.case_id,
             Location=episode_case_properties.get("created_by_user_location_id"),
-            DTOLocation=cls._get_district_location(location),
+            DTOLocation=_get_district_location(location),
         )
 
     def payload_json(self):
@@ -219,7 +220,7 @@ class VoucherPayload(BETSPayload):
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             Location=fulfilled_by_location_id,
             Amount=voucher_case_properties.get(AMOUNT_APPROVED),
-            DTOLocation=cls._get_district_location(location),
+            DTOLocation=_get_district_location(location),
             InvestigationType=voucher_case_properties.get(INVESTIGATION_TYPE),
         )
 
@@ -404,6 +405,19 @@ class BETSAYUSHReferralPayloadGenerator(IncentivePayloadGenerator):
 
     def get_payload(self, repeat_record, episode_case):
         return json.dumps(IncentivePayload.create_ayush_referral_payload(episode_case).payload_json())
+
+
+class BETSUserPayloadGenerator(UserPayloadGenerator):
+
+    def get_payload(self, repeat_record, user):
+        from corehq.apps.api.resources.v0_5 import CommCareUserResource
+        resource = CommCareUserResource(api_name='v0.5')
+        bundle = resource.build_bundle(obj=user)
+        user_json = resource.full_dehydrate(bundle).data
+        location = user.get_sql_location(repeat_record.domain)
+        user_json['dtoLocation'] = _get_district_location(location)
+        user_json['privateSectorOrgId'] = location.metadata['private_sector_org_id']
+        return json.dumps(user_json)
 
 
 class BETSLocationPayloadGenerator(LocationPayloadGenerator):
