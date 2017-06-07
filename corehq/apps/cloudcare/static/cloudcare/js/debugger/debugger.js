@@ -55,7 +55,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 TabIDs.FORM_DATA,
                 TabIDs.FORM_XML,
                 TabIDs.EVAL_XPATH,
-            ]
+            ],
         });
 
         self.registeredTabIds = self.options.tabs;
@@ -271,7 +271,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             self.$xpath.atwho('destroy');
             self.$xpath.atwho('setIframe', window.frameElement, true);
             self.$xpath.off('inserted.atwho');
-            self.$xpath.on('inserted.atwho', function(atwhoEvent, $li, e) {
+            self.$xpath.on('inserted.atwho', function(atwhoEvent, $li) {
                 var input = atwhoEvent.currentTarget;
 
                 // Move cursor back one so we are inbetween the parenthesis
@@ -391,14 +391,8 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 dataType: "json",
                 crossDomain: {crossDomain: true},
                 xhrFields: {withCredentials: true},
-                success: function(resp) {
-                    console.log(resp);
-                },
-                error: function(resp, textStatus) {
-                    console.log(resp);
-                },
             });
-        }
+        },
     };
 
     return {
@@ -407,4 +401,4 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
         TabIDs: TabIDs,
     };
 
-})
+});
