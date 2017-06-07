@@ -412,7 +412,7 @@ def _get_export_properties(export_id, export_is_legacy):
             export = FormExportInstance.get(export_id)
             for table in export.tables:
                 for column in table.columns:
-                    if column.item:
+                    if column.selected and column.item:
                         path_parts = [n.name for n in column.item.path]
                         path_parts = path_parts[1:] if path_parts[0] == "form" else path_parts
                         properties.add("-".join(path_parts))

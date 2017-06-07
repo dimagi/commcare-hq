@@ -88,8 +88,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                     value: 'fixture'
                 },
                 {
-                    label: COMMCAREHQ.toggleEnabled('USER_PROPERTY_EASY_REFS') ?
-                            'User Properties' : 'User Case',
+                    label: 'User Properties',
                     value: 'usercase'
                 }
             ];
@@ -1093,8 +1092,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
             ],
         },
         wrap: function (data, action) {
-            var self = ko.mapping.fromJS(data, LoadCaseFromFixture.mapping);
-            self.action = action;
+            var self = _.extend({}, action, ko.mapping.fromJS(data, LoadCaseFromFixture.mapping));
             self.isBlank = ko.computed(function () {
                 return !self.fixture_nodeset() &&
                     !self.fixture_tag() &&

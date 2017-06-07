@@ -82,9 +82,7 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
         });
 
         self.saveUsercaseButton = COMMCAREHQ.SaveButton.init({
-            unsavedMessage: COMMCAREHQ.toggleEnabled('USER_PROPERTY_EASY_REFS') ?
-                gettext("You have unchanged user properties settings") :
-                gettext("You have unchanged user case settings"),
+            unsavedMessage: gettext("You have unchanged user properties settings"),
             save: function () {
                 var actions = JSON.stringify(_(self.actions).extend(
                     HQFormActions.from_usercase_transaction(self.caseConfigViewModel.usercase_transaction)
@@ -991,7 +989,14 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
         }
     };
 
-    return {
-        CaseConfig: CaseConfig
-    };
+    $(function() {
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+        if (initial_page_data('has_form_source')) {
+            var caseConfig = new CaseConfig(_.extend({}, initial_page_data("case_config_options"), {
+                home: $('#case-config-ko'),
+                requires: ko.observable(initial_page_data("form_requires")),
+            }));
+            caseConfig.init();
+        }
+    });
 });

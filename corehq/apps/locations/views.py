@@ -880,7 +880,7 @@ def child_locations_for_select2(request, domain):
     base_queryset = SQLLocation.objects.accessible_to_user(domain, user)
 
     def loc_to_payload(loc):
-        return {'id': loc.location_id, 'name': loc.display_name}
+        return {'id': loc.location_id, 'name': loc.get_path_display()}
 
     if id:
         try:

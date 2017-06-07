@@ -63,9 +63,9 @@ class EpisodeUpdater(object):
 
     def __init__(self, domain):
         self.domain = domain
-        # set purge_date to 60 days back
+        # set purge_date to 30 days back
         self.purge_date = datetime.datetime.now(
-            pytz.timezone(ENIKSHAY_TIMEZONE)).date() - datetime.timedelta(days=60)
+            pytz.timezone(ENIKSHAY_TIMEZONE)).date() - datetime.timedelta(days=30)
         self.adherence_data_store = AdherenceDatastore(domain)
 
     def run(self):
@@ -104,6 +104,17 @@ class EpisodeUpdater(object):
                 domain=self.domain, duration=t.interval, updates=update_count, errors=error_count,
                 noupdates=noupdate_count)
         )
+
+    def update_single_case(self, episode_case):
+        # updates a single episode_case.
+        assert episode_case.domain == self.domain
+        update_json = EpisodeAdherenceUpdate(episode_case, self).update_json()['update']
+        case_block = self._get_case_block(update_json, episode_case.case_id)
+        if case_block:
+            submit_case_blocks(
+                [ElementTree.tostring(case_block.as_xml())],
+                self.domain
+            )
 
     @staticmethod
     def _get_case_block(update, episode_id):
@@ -215,7 +226,7 @@ class EpisodeAdherenceUpdate(object):
             else:
                 valid_cases = filter(
                     lambda case: (
-                        case['adherence_source'] is 'enikshay' and
+                        case['adherence_source'] == 'enikshay' and
                         (not case['closed'] or (case['closed'] and
                          case['adherence_closure_reason'] == HISTORICAL_CLOSURE_REASON))
                     ),
@@ -401,7 +412,8 @@ class EpisodeVoucherUpdate(object):
         relevant_vouchers = [
             voucher for voucher in self._get_all_vouchers()
             if (voucher.get_case_property('voucher_type') == 'prescription'
-                and voucher.get_case_property('state') in ['fulfilled', 'available'])
+                and voucher.get_case_property('state') in
+                ['fulfilled', 'available', 'paid', 'approved', 'rejected'])
         ]
         return sorted(relevant_vouchers, key=lambda v: v.get_case_property('date_issued'))
 
@@ -449,14 +461,14 @@ class EpisodeVoucherUpdate(object):
         if date_last_refill is None:
             return {}
 
-        if latest_voucher.get_case_property('state') == 'fulfilled':
-            voucher_length = latest_voucher.get_case_property('final_prescription_num_days')
-        elif latest_voucher.get_case_property('state') == 'available':
-            voucher_length = latest_voucher.get_case_property('prescription_num_days')
+        voucher_length = (
+            latest_voucher.get_case_property('final_prescription_num_days')
+            or latest_voucher.get_case_property('prescription_num_days')
+        )
 
         try:
             refill_due_date = date_last_refill + datetime.timedelta(days=int(voucher_length))
-        except ValueError:
+        except (TypeError, ValueError):
             return {}
 
         return {

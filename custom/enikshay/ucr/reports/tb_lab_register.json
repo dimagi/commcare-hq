@@ -1,20 +1,6 @@
 {
     "domains": [
-        "enikshay-test",
-        "enikshay-test-test",
-        "enikshay",
-        "enikshay-test-2",
-        "enikshay-test-3",
-        "enikshay-nikshay-migration-test",
-        "enikshay-domain-copy-test",
-        "enikshay-aks-audit",
-        "np-migration-3",
-        "enikshay-uatbc-migration-test-1",
-        "enikshay-uatbc-migration-test-2",
-        "enikshay-uatbc-migration-test-3",
-        "enikshay-uatbc-migration-test-4",
-        "enikshay-uatbc-migration-test-5",
-        "enikshay-uatbc-migration-test-6"
+        "enikshay"
     ],
     "server_environment": [
         "softlayer"
@@ -75,6 +61,13 @@
                 "type": "pre",
                 "field": "has_date_reported",
                 "slug": "date_reported_pre",
+                "datatype": "integer",
+                "pre_value": 1
+            },
+            {
+                "type": "pre",
+                "field": "is_microscopy",
+                "slug": "is_microscopy",
                 "datatype": "integer",
                 "pre_value": 1
             }

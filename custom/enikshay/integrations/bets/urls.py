@@ -1,5 +1,6 @@
-from django.conf.urls import url
+from django.conf.urls import url, include
 
+from corehq.apps.api.urls import CommCareHqApi
 from corehq.apps.domain.views import AddRepeaterView
 from custom.enikshay.integrations.bets.views import (
     payment_confirmation,
@@ -10,7 +11,11 @@ from custom.enikshay.integrations.bets.views import (
     BETSAYUSHReferralRepeaterView,
     ChemistBETSVoucherRepeaterView,
     LabBETSVoucherRepeaterView,
+    BETSLocationResource,
 )
+
+hq_api = CommCareHqApi(api_name='v0.5')
+hq_api.register(BETSLocationResource())
 
 urlpatterns = [
     url(r'^payment_confirmation$', payment_confirmation, name='payment_confirmation'),
@@ -57,9 +62,16 @@ urlpatterns = [
         name=BETSAYUSHReferralRepeaterView.urlname
     ),
     url(
+        r'^user_repeater$',
+        AddRepeaterView.as_view(),
+        {'repeater_type': 'BETSUserRepeater'},
+        name='bets_user_repeater'
+    ),
+    url(
         r'^location_repeater$',
         AddRepeaterView.as_view(),
         {'repeater_type': 'BETSLocationRepeater'},
         name='bets_location_repeater'
     ),
+    url(r'^', include(hq_api.urls)),
 ]

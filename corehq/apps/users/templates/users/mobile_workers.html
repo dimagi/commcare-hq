@@ -19,6 +19,9 @@
 {% if strong_mobile_passwords %}
     <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
 {% endif %}
+{% if implement_password_obfuscation %}
+    {% include "nic_compliance/password_encoder.html" %}
+{% endif %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
