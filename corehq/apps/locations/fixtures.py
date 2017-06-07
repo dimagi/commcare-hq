@@ -147,13 +147,23 @@ class FlatLocationSerializer(object):
 
 
 def should_sync_hierarchical_fixture(project):
+    # Sync hierarchical fixture for domains that have moved to flat fixture but
+    # still need hierarchical fixture for older versions or other references and hence have
+    # not deliberately chosen to NOT sync hierarchical fixture
     # Sync hierarchical fixture for domains with fixture toggle enabled for migration and
     # configuration set to use hierarchical fixture
     # Even if both fixtures are set up, this one takes priority for domains with toggle enabled
     return (
-        project.uses_locations and
-        toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(project.name) and
-        LocationFixtureConfiguration.for_domain(project.name).sync_hierarchical_fixture
+        (
+            project.uses_locations and
+            toggles.FLAT_LOCATION_FIXTURE.enabled(project.name) and
+            LocationFixtureConfiguration.for_domain(project.name).sync_hierarchical_fixture
+        ) or
+        (
+            project.uses_locations and
+            toggles.HIERARCHICAL_LOCATION_FIXTURE.enabled(project.name) and
+            LocationFixtureConfiguration.for_domain(project.name).sync_hierarchical_fixture
+        )
     )
 
 
