@@ -136,7 +136,15 @@ def saved_exports():
     for daily_saved_export_id in get_all_daily_saved_export_instance_ids():
         from corehq.apps.export.tasks import rebuild_export_task
         last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-        rebuild_export_task.delay(daily_saved_export_id, last_access_cutoff)
+        rebuild_export_task.apply_async(
+            args=[
+                daily_saved_export_id, last_access_cutoff
+            ],
+            # Normally the rebuild_export_task uses the background queue,
+            # however we want to override it to use its own queue so that it does
+            # not disrupt other actions.
+            queue=SAVED_EXPORTS_QUEUE,
+        )
 
 
 @task(queue='background_queue', ignore_result=True)
