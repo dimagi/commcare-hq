@@ -6,6 +6,7 @@ from datetime import datetime, date
 import pytz
 from pytz import timezone
 
+from django.core.serializers.json import DjangoJSONEncoder
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.exceptions import RequestConnectionError
 from corehq.apps.repeaters.repeater_generators import (
@@ -417,7 +418,7 @@ class BETSUserPayloadGenerator(UserPayloadGenerator):
         location = user.get_sql_location(repeat_record.domain)
         user_json['dtoLocation'] = _get_district_location(location)
         user_json['privateSectorOrgId'] = location.metadata['private_sector_org_id']
-        return json.dumps(user_json)
+        return json.dumps(user_json, cls=DjangoJSONEncoder)
 
 
 class BETSLocationPayloadGenerator(LocationPayloadGenerator):
