@@ -1,7 +1,8 @@
+/* globals CodeMirror */
 hqDefine('cloudcare/js/debugger/debugger.js', function () {
     var CloudCareDebugger = function(options) {
         var self = this;
-        options = options || {};
+        self.options = options || {};
 
         self.evalXPath = new EvaluateXPath();
         self.isMinimized = ko.observable(true);
@@ -20,7 +21,12 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
 
             if (!self.isMinimized()) {
                 self.updating(true);
-                self.updateDebugger();
+                /* TODO
+                 Call to update debugger
+                 .done(function(response) {
+                    self.onUpdateDebugger();
+                });
+                */
             }
             window.analytics.workflow('[app-preview] User toggled CloudCare debugger');
         };
@@ -102,11 +108,15 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             self.xpath(query.xpath);
         };
         self.evaluate = function(xpath) {
-            var callback = function(response) {
-                self.result(response.output);
-                self.success(response.status === "accepted");
-            };
-            $.publish('formplayer.' + Formplayer.Const.EVALUATE_XPATH, [xpath, callback]);
+            /* TODO
+             Call to evaluate xpath
+             .done(function(response) {
+                var callback = function(response) {
+                    self.result(response.output);
+                    self.success(response.status === "accepted");
+                };
+            });
+            */
             window.analytics.workflow('[app-preview] User evaluated XPath');
         };
 
