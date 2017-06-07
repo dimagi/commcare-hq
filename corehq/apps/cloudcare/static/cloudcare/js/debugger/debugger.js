@@ -128,7 +128,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 lineNumbers: true,
             };
             self.codeMirrorResult = CodeMirror.fromTextArea($('#evaluate-result')[0], options);
-        }
+        };
 
         self.result.subscribe(function(newResult) {
             self.codeMirrorResult.setValue(newResult);
@@ -151,7 +151,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             if (!match) {
                 return null;
             }
-            currentQuery = match[2]
+            currentQuery = match[2];
             if (currentQuery.length < 2) {
                 return null;
             }
@@ -169,7 +169,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             self.$xpath.atwho('setIframe', window.frameElement, true);
             self.$xpath.off('inserted.atwho');
             self.$xpath.on('inserted.atwho', function(atwhoEvent, $li, e) {
-                var input = atwhoEvent.currentTarget
+                var input = atwhoEvent.currentTarget;
 
                 // Move cursor back one so we are inbetween the parenthesis
                 if (input.setSelectionRange && $li.data().itemData.type === 'Function') {
