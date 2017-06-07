@@ -206,19 +206,9 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         return view;
     };
 
-    Views.CaseView = Marionette.ItemView.extend({
+    Views.CaseViewUnclickable = Marionette.ItemView.extend({
         tagName: "tr",
         template: "#case-view-item-template",
-        className: "formplayer-request",
-
-        events: {
-            "click": "rowClick",
-        },
-
-        rowClick: function (e) {
-            e.preventDefault();
-            FormplayerFrontend.trigger("menu:show:detail", this.options.model.get('id'), 0);
-        },
 
         templateHelpers: function () {
             var appId = Util.currentUrlToObject().appId;
@@ -229,6 +219,17 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
                     return FormplayerFrontend.request('resourceMap', uri, appId);
                 },
             };
+        },
+    });
+
+    Views.CaseView = Views.CaseViewUnclickable.extend({
+        events: {
+            "click": "rowClick",
+        },
+        className: "formplayer-request",
+        rowClick: function (e) {
+            e.preventDefault();
+            FormplayerFrontend.trigger("menu:show:detail", this.options.model.get('id'), 0);
         },
     });
 
@@ -384,6 +385,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
 
     Views.CaseListDetailView = Views.CaseListView.extend({
         template: "#case-view-list-detail-template",
+        childView: Views.CaseViewUnclickable,
     });
 
     Views.BreadcrumbView = Marionette.ItemView.extend({
