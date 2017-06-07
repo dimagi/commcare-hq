@@ -1,8 +1,9 @@
 hqDefine('cloudcare/js/debugger/debugger.js', function () {
-    Formplayer.ViewModels.CloudCareDebugger = function() {
+    var CloudCareDebugger = function(options) {
         var self = this;
+        options = options || {};
 
-        self.evalXPath = new Formplayer.ViewModels.EvaluateXPath();
+        self.evalXPath = new EvaluateXPath();
         self.isMinimized = ko.observable(true);
         self.instanceXml = ko.observable('');
         self.formattedQuestionsHtml = ko.observable('');
@@ -19,7 +20,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
 
             if (!self.isMinimized()) {
                 self.updating(true);
-                $.publish('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS, self.updateDebugger);
+                self.updateDebugger();
             }
             window.analytics.workflow('[app-preview] User toggled CloudCare debugger');
         };
@@ -38,14 +39,6 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             self.evalXPath.autocomplete(resp.questionList);
             self.evalXPath.recentXPathQueries(resp.recentXPathQueries || []);
         };
-
-        $.unsubscribe('debugger.update');
-        $.subscribe('debugger.update', function(e) {
-            if (!self.isMinimized()) {
-                self.updating(true);
-                $.publish('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS, self.updateDebugger);
-            }
-        });
 
         self.setContentHeight = function() {
             var contentHeight;
@@ -87,7 +80,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
         };
     };
 
-    Formplayer.ViewModels.EvaluateXPath = function() {
+    var EvaluateXPath = function() {
         var self = this;
         self.xpath = ko.observable('');
         self.selectedXPath = ko.observable('');
