@@ -10,7 +10,7 @@ from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
-from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
+from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS, IGNORE_ROW_LIMIT
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
@@ -2212,6 +2212,9 @@ class GenericDownloadNewExportMixin(object):
 
     def _check_export_size(self, export_instances, filters):
         count = 0
+        if IGNORE_ROW_LIMIT.enabled(self.domain):
+            return
+
         for instance in export_instances:
             count += get_export_size(instance, filters)
         if count > MAX_EXPORTABLE_ROWS and not PAGINATED_EXPORTS.enabled(self.domain):
