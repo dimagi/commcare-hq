@@ -358,8 +358,6 @@ class ConditionalEnum(Enum):
     def sort_node(self):
         node = super(ConditionalEnum, self).sort_node
         if node:
-            node.order = "-2"
-            node.direction = "ascending"
             variables = self.variables
             for key in variables:
                 node.text.xpath.node.append(
