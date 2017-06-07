@@ -44,6 +44,14 @@ def _update_tech_issue_for_escalation(case, escalated_ticket_level):
     )
 
 
+def _escalated_tech_issue_delegate_exists(tech_issue, escalated_location_id):
+    for subcase in tech_issue.get_subcases(index_identifier='parent'):
+        if subcase.type == 'tech_issue_delegate' and subcase.owner_id == escalated_location_id:
+            return True
+
+    return False
+
+
 def escalate_tech_issue(case, rule):
     if case.type != 'tech_issue':
         return CaseRuleActionResult()
@@ -67,10 +75,13 @@ def escalate_tech_issue(case, rule):
     if not escalated_ticket_level or not escalated_location_id:
         return CaseRuleActionResult()
 
-    result = _update_tech_issue_for_escalation(case, escalated_ticket_level)
-    rule.log_submission(result[0].form_id)
+    update_result = _update_tech_issue_for_escalation(case, escalated_ticket_level)
+    rule.log_submission(update_result[0].form_id)
 
-    result = _create_tech_issue_delegate_for_escalation(case, escalated_location_id)
-    rule.log_submission(result[0].form_id)
+    num_creates = 0
+    if not _escalated_tech_issue_delegate_exists(case, escalated_location_id):
+        create_result = _create_tech_issue_delegate_for_escalation(case, escalated_location_id)
+        rule.log_submission(create_result[0].form_id)
+        num_creates = 1
 
-    return CaseRuleActionResult(num_updates=1)
+    return CaseRuleActionResult(num_updates=1, num_creates=num_creates)
