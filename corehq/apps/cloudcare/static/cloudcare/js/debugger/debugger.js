@@ -1,5 +1,30 @@
-/* globals CodeMirror */
+/* globals CodeMirror, gettext */
 hqDefine('cloudcare/js/debugger/debugger.js', function () {
+
+    var DebuggerTabs = {
+        FORM_DATA: {
+            id: 'debugger-form-data-tab',
+            tab: '#debugger-form-data',
+            label: gettext('Form Data'),
+        },
+        FORM_XML: {
+            id: 'debugger-xml-instance-tab',
+            tab: '#debugger-xml-instance',
+            label: gettext('Form XML'),
+        },
+        EVAL_XPATH: {
+            id: 'debugger-evaluate-xpath-tab',
+            tab: '#debugger-evaluate',
+            label: gettext('Evaluate XPath'),
+        },
+    };
+
+    var TabIDs = {
+        FORM_DATA: 'FORM_DATA',
+        FORM_XML: 'FORM_XML',
+        EVAL_XPATH: 'EVAL_XPATH',
+    };
+
     var CloudCareDebugger = function(options) {
         var self = this;
         self.options = options || {};
@@ -10,7 +35,15 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             username: null,
             restoreAs: null,
             domain: null,
+            tabs: [
+                TabIDs.FORM_DATA,
+                TabIDs.FORM_XML,
+                TabIDs.EVAL_XPATH,
+            ]
         });
+
+        self.registeredTabIds = self.options.tabs;
+        self.tabs = DebuggerTabs;
 
         self.evalXPath = new EvaluateXPath(options);
         self.isMinimized = ko.observable(true);
@@ -325,6 +358,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
 
     return {
         CloudCareDebugger: CloudCareDebugger,
+        TabIDs: TabIDs,
     };
 
 })

@@ -35,37 +35,19 @@
 
                 <!-- Tab links -->
                 <div class="collapse navbar-collapse" id="debugger-navbar-collapse">
-                  <ul class="nav navbar-nav">
-                    <li role="presentation" class="active">
+                  <ul class="nav navbar-nav" data-bind="foreach: registeredTabIds">
+                    <li role="presentation" data-bind="css: { active: $index() === 0 }">
                         <a
-                            href="#debugger-form-data"
-                            aria-controls="debugger-form-data"
                             role="tab"
                             data-toggle="tab"
-                            data-bind="click: collapseNavbar">
-                            {% trans "Form Data" %}
-                        </a>
-                    </li>
-                    <li role="presentation">
-                        <a
-                            href="#debugger-xml-instance"
-                            aria-controls="debugger-xml-instance"
-                            role="tab"
-                            id="debugger-xml-instance-tab"
-                            data-toggle="tab"
-                            data-bind="click: collapseNavbar"
-                            >
-                            {% trans "Form XML" %}
-                        </a>
-                    </li>
-                    <li role="presentation">
-                        <a
-                            href="#debugger-evaluate"
-                            aria-controls="debugger-evaluate"
-                            role="tab"
-                            data-bind="click: collapseNavbar"
-                            data-toggle="tab">
-                            {% trans "Evaluate XPath" %}
+                            data-bind="
+                                attr: {
+                                    id: $parent.tabs[$data].id,
+                                    href: $parent.tabs[$data].tab,
+                                },
+                                text: $parent.tabs[$data].label,
+                                click: $parent.collapseNavbar,
+                            ">
                         </a>
                     </li>
                   </ul>
