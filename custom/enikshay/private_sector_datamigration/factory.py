@@ -11,7 +11,6 @@ from custom.enikshay.private_sector_datamigration.models import (
     Adherence,
     Episode,
     EpisodePrescription,
-    LabTest,
     MigratedBeneficiaryCounter,
     Voucher,
 )
@@ -53,12 +52,7 @@ class BeneficiaryCaseFactory(object):
             )
         episode_or_descendants = episode_descendants or [episode_structure]
 
-        tests = [
-            self.get_test_case_structure(labtest, ocurrence_structure)
-            for labtest in self._labtests
-        ]
-
-        return episode_or_descendants + tests
+        return episode_or_descendants
 
     def get_person_case_structure(self):
         kwargs = {
@@ -318,26 +312,6 @@ class BeneficiaryCaseFactory(object):
 
         return CaseStructure(**kwargs)
 
-    def get_test_case_structure(self, labtest, occurrence_structure):
-        kwargs = {
-            'attrs': {
-                'case_type': TEST_CASE_TYPE,
-                'close': False,
-                'create': True,
-                'owner_id': '-',
-                'update': {
-                    'migration_created_case': 'true',
-                }
-            },
-            'indices': [CaseIndex(
-                occurrence_structure,
-                identifier='host',
-                relationship=CASE_INDEX_EXTENSION,
-                related_type=OCCURRENCE_CASE_TYPE,
-            )],
-        }
-        return CaseStructure(**kwargs)
-
     @property
     @memoized
     def _episode(self):
@@ -358,14 +332,6 @@ class BeneficiaryCaseFactory(object):
     @memoized
     def _prescriptions(self):
         return list(EpisodePrescription.objects.filter(beneficiaryId=self.beneficiary.caseId))
-
-    @property
-    @memoized
-    def _labtests(self):
-        if self._episode:
-            return list(LabTest.objects.filter(episodeId=self._episode))
-        else:
-            return []
 
     @property
     @memoized
