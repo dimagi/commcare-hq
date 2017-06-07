@@ -382,7 +382,7 @@ class ConditionalEnum(Enum):
 
 
 @register_format_type('enum-image')
-class EnumImage(ConditionalEnum):
+class EnumImage(Enum):
     template_form = 'image'
 
     @property
@@ -407,6 +407,21 @@ class EnumImage(ConditionalEnum):
         if width == 0:
             return '13%'
         return str(width)
+
+    def _make_xpath(self, type):
+        parts = []
+        for i, item in enumerate(self.column.enum):
+
+            xpath_fragment_template = u"if({key_as_condition}, {key_as_var_name}".format(
+                key_as_condition=item.key_as_condition(self.xpath),
+                key_as_var_name=item.ref_to_key_variable(i, type)
+            )
+
+            parts.append(xpath_fragment_template)
+
+        parts.append(u"''")
+        parts.append(u")" * (len(self.column.enum)))
+        return ''.join(parts)
 
 
 @register_format_type('late-flag')
