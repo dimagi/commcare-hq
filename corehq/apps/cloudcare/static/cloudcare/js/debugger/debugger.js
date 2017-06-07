@@ -3,8 +3,16 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
     var CloudCareDebugger = function(options) {
         var self = this;
         self.options = options || {};
+        _.defaults(self.options, {
+            baseUrl: null,
+            formSessionId: null,
+            menuSessionId: null,
+            username: null,
+            restoreAs: null,
+            domain: null,
+        });
 
-        self.evalXPath = new EvaluateXPath();
+        self.evalXPath = new EvaluateXPath(options);
         self.isMinimized = ko.observable(true);
         self.instanceXml = ko.observable('');
         self.formattedQuestionsHtml = ko.observable('');
@@ -21,12 +29,17 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
 
             if (!self.isMinimized()) {
                 self.updating(true);
-                /* TODO
-                 Call to update debugger
-                 .done(function(response) {
-                    self.onUpdateDebugger();
+                API.formattedQuestions(
+                    self.options.baseUrl,
+                    {
+                        session_id: self.options.formSessionId,
+                        username: self.options.username,
+                        restoreAs: self.options.restoreAs,
+                        domain: self.options.domain,
+                    }
+                ).done(function(response) {
+                    self.updateDebugger(response);
                 });
-                */
             }
             window.analytics.workflow('[app-preview] User toggled CloudCare debugger');
         };
@@ -86,8 +99,17 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
         };
     };
 
-    var EvaluateXPath = function() {
+    var EvaluateXPath = function(options) {
         var self = this;
+        self.options = options || {};
+        _.defaults(self.options, {
+            baseUrl: null,
+            formSessionId: null,
+            menuSessionId: null,
+            username: null,
+            restoreAs: null,
+            domain: null,
+        });
         self.xpath = ko.observable('');
         self.selectedXPath = ko.observable('');
         self.recentXPathQueries = ko.observableArray();
@@ -108,15 +130,19 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             self.xpath(query.xpath);
         };
         self.evaluate = function(xpath) {
-            /* TODO
-             Call to evaluate xpath
-             .done(function(response) {
-                var callback = function(response) {
-                    self.result(response.output);
-                    self.success(response.status === "accepted");
-                };
+            API.evaluateXPath(
+                self.options.baseUrl,
+                {
+                    session_id: self.options.formSessionId,
+                    username: self.options.username,
+                    restoreAs: self.options.restoreAs,
+                    domain: self.options.domain,
+                    xpath: xpath,
+                }
+            ).done(function(response) {
+                self.result(response.output);
+                self.success(response.status === "accepted");
             });
-            */
             window.analytics.workflow('[app-preview] User evaluated XPath');
         };
 
@@ -269,6 +295,32 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             break;
         }
         return icon;
+    };
+
+    var API = {
+        evaluateXPath: function(url, params) {
+            return API.request(url, 'evaluate-xpath', params);
+        },
+        formattedQuestions: function(url, params) {
+            return API.request(url, 'formatted_questions', params);
+        },
+        request: function(url, action, params) {
+            return $.ajax({
+                type: 'POST',
+                url: url + "/" + action,
+                data: JSON.stringify(params),
+                contentType: "application/json",
+                dataType: "json",
+                crossDomain: {crossDomain: true},
+                xhrFields: {withCredentials: true},
+                success: function(resp) {
+                    console.log(resp);
+                },
+                error: function(resp, textStatus) {
+                    console.log(resp);
+                },
+            });
+        }
     };
 
     return {

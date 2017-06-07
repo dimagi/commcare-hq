@@ -619,13 +619,20 @@ Formplayer.Utils.answersEqual = function(answer1, answer2) {
 Formplayer.Utils.initialRender = function(formJSON, resourceMap, $div) {
     var form = new Form(formJSON),
         $debug = $('#cloudcare-debugger'),
+        CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger.js').CloudCareDebugger,
         cloudCareDebugger;
     Formplayer.resourceMap = resourceMap;
     ko.cleanNode($div[0]);
     $div.koApplyBindings(form);
 
     if ($debug.length) {
-        cloudCareDebugger = new Formplayer.ViewModels.CloudCareDebugger();
+        cloudCareDebugger = new CloudCareDebugger({
+            baseUrl: formJSON.xform_url,
+            formSessionId: formJSON.session_id,
+            username: formJSON.username,
+            restoreAs: formJSON.restoreAs,
+            domain: formJSON.domain,
+        });
         ko.cleanNode($debug[0]);
         $debug.koApplyBindings(cloudCareDebugger);
     }
