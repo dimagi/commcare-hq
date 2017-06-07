@@ -137,7 +137,8 @@ QUESTIONS = [
         'translations': {},
         'type': 'DataBindOnly',
         'relevant': None,
-        'calculate': None
+        'calculate': None,
+        'comment': None,
     },
 ]
 
