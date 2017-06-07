@@ -756,6 +756,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         property_name: that.field,
                         multimedia: that.screen.config.multimedia,
                         values_are_icons: that.original.format == 'enum-image',
+                        values_are_conditions: that.original.format === 'conditional-enum',
                     };
                     that.enum_extra = uiElement.key_value_mapping(o);
                 }());
@@ -824,9 +825,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         that.filter_xpath_extra.ui.detach();
                         that.calc_xpath_extra.ui.detach();
                         that.time_ago_extra.ui.detach();
-
-                        if (this.val() === "enum" || this.val() === "enum-image") {
+                        if (this.val() === "enum" || this.val() === "enum-image" || this.val() === 'conditional-enum') {
                             that.enum_extra.values_are_icons(this.val() === 'enum-image');
+                            that.enum_extra.values_are_conditions(this.val() === 'conditional-enum');
                             that.format.ui.parent().append(that.enum_extra.ui);
                         } else if (this.val() === "graph") {
                             // Replace format select with edit button
@@ -1414,6 +1415,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             PHONE_FORMAT: gettext('Phone Number'),
             ENUM_FORMAT: gettext('ID Mapping'),
             ENUM_IMAGE_FORMAT: gettext('Icon'),
+            CONDITIONAL_ENUM_FORMAT: gettext('Conditional Enum'),
             ENUM_EXTRA_LABEL: gettext('Mapping: '),
             LATE_FLAG_FORMAT: gettext('Late Flag'),
             LATE_FLAG_EXTRA_LABEL: gettext(' Days late '),
@@ -1464,7 +1466,11 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT + gettext(' (Preview!)')}
             );
         }
-
+        if (COMMCAREHQ.previewEnabled('CONDITIONAL_ENUM')) {
+            DetailScreenConfig.MENU_OPTIONS.push(
+                {value: "conditional-enum", label: DetailScreenConfig.message.CONDITIONAL_ENUM_FORMAT + gettext(' (Preview!)')}
+            );
+        }
         if (COMMCAREHQ.previewEnabled('CALC_XPATHS')) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "calculate", label: DetailScreenConfig.message.CALC_XPATH_FORMAT + gettext(' (Preview!)')}
