@@ -596,7 +596,7 @@ class EntriesHelper(object):
                     if not referenced_by or referenced_by['type'] != 'load' and not detail_inline else None
                 ),
                 detail_persistent=self.get_detail_persistent_attr(target_module_, target_module_, "case_short"),
-                detail_inline=self.get_detail_inline_attr(target_module_, target_module_, "case_short"),
+                detail_inline=detail_inline,
                 autoselect=target_module_.auto_select_case,
             )
 
