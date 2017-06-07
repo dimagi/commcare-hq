@@ -50,9 +50,7 @@ class BeneficiaryCaseFactory(object):
                 self.get_adherence_case_structure(adherence, episode_structure)
                 for adherence in self._adherences
             )
-        episode_or_descendants = episode_descendants or [episode_structure]
-
-        return episode_or_descendants
+        return episode_descendants or [episode_structure]
 
     def get_person_case_structure(self):
         kwargs = {
