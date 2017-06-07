@@ -6,6 +6,16 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         className: "formplayer-request",
         template: "#query-view-item-template",
 
+        events: {
+            'keypress': 'keyAction',
+        },
+
+        keyAction: function (event) {
+            if (event.which === 13 || event.keyCode === 13) {
+                this.trigger("submit");
+            }
+        },
+
         templateHelpers: function () {
             var imageUri = this.options.model.get('imageUri');
             var audioUri = this.options.model.get('audioUri');
@@ -23,7 +33,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         childView: Views.QueryView,
         childViewContainer: "tbody",
 
-        initialize: function(options) {
+        initialize: function (options) {
             this.parentModel = options.collection.models;
         },
 
@@ -41,11 +51,15 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             'click @ui.submitButton': 'submitAction',
         },
 
-        submitAction: function() {
+        childEvents: {
+            submit: "submitAction",
+        },
+
+        submitAction: function () {
             var payload = {};
             var fields = $(".query-field");
             var model = this.parentModel;
-            fields.each(function(index) {
+            fields.each(function (index) {
                 if (this.value !== '') {
                     payload[model[index].get('id')] = this.value;
                 }
