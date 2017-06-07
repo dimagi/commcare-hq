@@ -1,6 +1,14 @@
 /* globals CodeMirror, gettext */
 hqDefine('cloudcare/js/debugger/debugger.js', function () {
 
+    /**
+     * These define tabs that are availabe in the debugger.
+     * {
+     *   id: <id of the tab HTML element>,
+     *   tab: <link to correspoding tab content. sets the href attribute>
+     *   label: <label of the tab being displayed>
+     * }
+     */
     var DebuggerTabs = {
         FORM_DATA: {
             id: 'debugger-form-data-tab',
