@@ -1,4 +1,4 @@
-from StringIO import StringIO
+
 
 import requests
 
@@ -16,10 +16,10 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
-from custom.icds_reports.const import LocationTypes
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
+from custom.icds_reports.sqldata import AWCInfrastructure, MCN, SystemUsage, Demographics
 from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_data, get_cas_reach_data, \
     get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart, \
@@ -27,8 +27,6 @@ from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_
     get_location_filter
 from . import const
 from .exceptions import TableauTokenException
-from couchexport.export import export_from_tables
-from couchexport.shortcuts import export_response
 
 
 @location_safe
@@ -202,7 +200,8 @@ class ProgramSummaryView(View):
                 'prev_month': tuple(prev_month.timetuple())[:3]
             }
 
-        get_location_filter(request, self.kwargs['domain'], config)
+        location = request.GET.get('location', '')
+        get_location_filter(location, self.kwargs['domain'], config)
 
         data = {
             'records': []
@@ -267,7 +266,8 @@ class PrevalenceOfUndernutritionView(View):
             'month': tuple(month.timetuple())[:3],
             'aggregation_level': 1l,
         }
-        loc_level = get_location_filter(request, self.kwargs['domain'], config)
+        location = request.GET.get('location', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
         data = []
         if step == "1":
@@ -410,17 +410,27 @@ class AwcReportsView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class ExportIndicatorView(View):
     def post(self, request, *args, **kwargs):
-        zxc = StringIO()
-        test = [
-            [
-                'table_or_sheet_name',
-                [
-                    ['header'],
-                    ['row 1'],
-                    ['row 2'],
-                ]
-            ]
-        ]
-        from couchexport.models import Format
-        export_from_tables(test, zxc, Format.XLS_2007)
-        return export_response(zxc, Format.XLS_2007, 'test1234')
+        config = {
+            'aggregation_level': 1
+        }
+        export_format = request.POST.get('format')
+        month = int(request.POST.get('month'))
+        year = int(request.POST.get('year'))
+        indicator = int(request.POST.get('indicator'))
+
+        # TODO add other filters - waiting on the specification
+        if month and year:
+            config.update({
+                'month': datetime(year, month, 1).date()
+            })
+
+        location = request.POST.get('location', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+        if indicator == 1:
+            return MCN(config=config, loc_level=loc_level).to_export(export_format)
+        elif indicator == 2:
+            return SystemUsage(config=config, loc_level=loc_level).to_export(export_format)
+        elif indicator == 3:
+            return Demographics(config=config, loc_level=loc_level).to_export(export_format)
+        elif indicator == 4:
+            return AWCInfrastructure(config=config, loc_level=loc_level).to_export(export_format)

@@ -17,9 +17,11 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
         $routeProvider
             .when("/", {
                 redirectTo : '/program_summary/system_usage',
-            }).when("/program_summary/:step", {
-                template : "<system-usage></system-usage>"
-            }).when("/awc_opened", {
+            })
+            .when("/program_summary/:step", {
+                template : "<system-usage></system-usage>",
+            })
+            .when("/awc_opened", {
                 redirectTo : "/awc_opened/map",
             })
             .when("/awc_opened/:step", {
@@ -57,9 +59,11 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/awc_reports", {
                 redirectTo : "/awc_reports/system_usage",
-            }).when("/awc_reports/:step", {
+            })
+            .when("/awc_reports/:step", {
                 template : "<awc-reports></awc-reports>",
-            }).when("/download", {
+            })
+            .when("/download", {
                 template : "<download></download>",
-        });
+            });
     }]);

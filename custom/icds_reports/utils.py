@@ -219,8 +219,7 @@ def get_value(data, prop):
     return (data[0][prop] or 0) if data else 0
 
 
-def get_location_filter(request, domain, config):
-    location = request.GET.get('location', None)
+def get_location_filter(location, domain, config):
     loc_level = 'state'
     if location:
         try:

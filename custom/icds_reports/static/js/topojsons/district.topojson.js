@@ -1,4 +1,4 @@
-DISTRICT_TOPOJSON = {
+var DISTRICT_TOPOJSON = {
     "type": "Topology",
     "arcs": [
         [
