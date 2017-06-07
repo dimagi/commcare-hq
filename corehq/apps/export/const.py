@@ -114,3 +114,6 @@ SKIPPABLE_PROPERTIES = frozenset([
     'auth_context.domain',
     'auth_context.user_id',
 ])
+
+
+SAVED_EXPORTS_QUEUE = 'saved_exports_queue'

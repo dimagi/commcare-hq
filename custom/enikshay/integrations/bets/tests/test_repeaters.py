@@ -46,7 +46,8 @@ from custom.enikshay.integrations.bets.repeaters import (
 )
 from custom.enikshay.integrations.ninetyninedots.tests.test_repeaters import ENikshayRepeaterTestBase, MockResponse
 
-from custom.enikshay.tests.utils import ENikshayLocationStructureMixin, get_person_case_structure
+from custom.enikshay.tests.utils import (
+    ENikshayLocationStructureMixin, get_person_case_structure, setup_enikshay_locations)
 from custom.enikshay.case_utils import update_case
 
 
@@ -490,22 +491,22 @@ class UserRepeaterTest(TestCase):
         super(UserRepeaterTest, cls).setUpClass()
         cls.domain_obj = Domain(name=cls.domain)
         cls.domain_obj.save()
+
+        _, locations = setup_enikshay_locations(cls.domain)
+        cls.private_location = locations['PCP']
+        cls.private_location.metadata['private_sector_org_id'] = 'ORG_ID'
+        cls.private_location.save()
+        cls.dto_location = locations['DTO']
+        cls.public_location = locations['DRTB-HIV']
+        cls.test_location = locations['PAC']
+        cls.test_location.metadata['is_test'] = "yes"
+        cls.test_location.save()
+
         cls.repeater = BETSUserRepeater(
             domain=cls.domain,
             url='super-cool-url',
         )
         cls.repeater.save()
-
-        cls.private_loc_type = LocationType.objects.create(
-            domain=cls.domain,
-            name="pcp",
-            administrative=True,
-        )
-        cls.public_loc_type = LocationType.objects.create(
-            domain=cls.domain,
-            name="public",
-            administrative=True,
-        )
 
     @classmethod
     def tearDownClass(cls):
@@ -530,30 +531,23 @@ class UserRepeaterTest(TestCase):
         self.addCleanup(user.delete)
         return user
 
-    def make_location(self, location_type, is_test):
-        location = SQLLocation.objects.create(
-            domain=self.domain,
-            name="Storm's End",
-            site_code="storms_end",
-            location_type=location_type,
-            metadata={'is_test': is_test, 'nikshay_code': 'nikshay_code'},
-        )
-        self.addCleanup(location.delete)
-        return location
-
     def test_real_private_user(self):
-        private_location = self.make_location(self.private_loc_type, is_test="no")
-        self.make_user(private_location)
-        self.assertEqual(1, len(self.repeat_records().all()))
+        self.make_user(self.private_location)
+        records = self.repeat_records().all()
+        self.assertEqual(1, len(records))
+
+        self.assertDictContainsSubset(
+            {'dtoLocation': self.dto_location.location_id,
+             'privateSectorOrgId': self.private_location.metadata['private_sector_org_id']},
+            json.loads(records[0].get_payload())
+        )
 
     def test_public_user(self):
-        public_location = self.make_location(self.public_loc_type, is_test="no")
-        self.make_user(public_location)
+        self.make_user(self.public_location)
         self.assertEqual(0, len(self.repeat_records().all()))
 
     def test_test_user(self):
-        test_location = self.make_location(self.public_loc_type, is_test="yes")
-        self.make_user(test_location)
+        self.make_user(self.test_location)
         self.assertEqual(0, len(self.repeat_records().all()))
 
 
