@@ -221,7 +221,6 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 mode: 'xml',
                 viewportMargin: Infinity,
                 readOnly: true,
-                lineNumbers: true,
             };
             self.codeMirrorResult = CodeMirror.fromTextArea($('#evaluate-result')[0], options);
         };
