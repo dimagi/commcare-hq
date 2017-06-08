@@ -247,33 +247,28 @@ class BETSBasePayloadGenerator(BasePayloadGenerator):
             })
 
     def handle_success(self, response, case, repeat_record):
-        if response.status_code == 201:
-            update_case(
-                case.domain,
-                case.case_id,
-                {
-                    self.event_property_name: "sent",
-                    "bets_{}_error".format(self.event_id): ""
-                }
-            )
+        update_case(
+            case.domain,
+            case.case_id,
+            {
+                self.event_property_name: "sent",
+                "bets_{}_error".format(self.event_id): ""
+            }
+        )
 
     def handle_failure(self, response, case, repeat_record):
-        if 400 <= response.status_code <= 500:
-            update_case(
-                case.domain,
-                case.case_id,
-                {
-                    self.event_property_name: (
-                        "error"
-                        if case.dynamic_case_properties().get(self.event_property_name) != 'sent'
-                        else 'sent'
-                    ),
-                    "bets_{}_error".format(self.event_id): "{}: {}".format(
-                        response.status_code,
-                        response.json().get('error')
-                    ),
-                }
-            )
+        update_case(
+            case.domain,
+            case.case_id,
+            {
+                self.event_property_name: (
+                    "error"
+                    if case.dynamic_case_properties().get(self.event_property_name) != 'sent'
+                    else 'sent'
+                ),
+                "bets_{}_error".format(self.event_id): response.json(),
+            }
+        )
 
 
 class BaseBETSVoucherPayloadGenerator(BETSBasePayloadGenerator):
@@ -353,35 +348,30 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
         return "event_{}_{}".format(self.event_id, n)
 
     def handle_success(self, response, case, repeat_record):
-        if response.status_code == 201:
-            event_property_name = self.get_event_property_name(case)
-            update_case(
-                case.domain,
-                case.case_id,
-                {
-                    event_property_name: "sent",
-                    "{}_sent_date".format(event_property_name): str(date.today()),
-                    "bets_{}_error".format(self.event_id): "",
-                }
-            )
+        event_property_name = self.get_event_property_name(case)
+        update_case(
+            case.domain,
+            case.case_id,
+            {
+                event_property_name: "sent",
+                "{}_sent_date".format(event_property_name): str(date.today()),
+                "bets_{}_error".format(self.event_id): "",
+            }
+        )
 
     def handle_failure(self, response, case, repeat_record):
-        if 400 <= response.status_code <= 500:
-            update_case(
-                case.domain,
-                case.case_id,
-                {
-                    self.get_event_property_name(case): (
-                        "error"
-                        if case.dynamic_case_properties().get(self.get_event_property_name(case)) != 'sent'
-                        else 'sent'
-                    ),
-                    "bets_{}_error".format(self.event_id): "{}: {}".format(
-                        response.status_code,
-                        response.json().get('error')
-                    ),
-                }
-            )
+        update_case(
+            case.domain,
+            case.case_id,
+            {
+                self.get_event_property_name(case): (
+                    "error"
+                    if case.dynamic_case_properties().get(self.get_event_property_name(case)) != 'sent'
+                    else 'sent'
+                ),
+                "bets_{}_error".format(self.event_id): response.json(),
+            }
+        )
 
 
 class BETSSuccessfulTreatmentPayloadGenerator(IncentivePayloadGenerator):
