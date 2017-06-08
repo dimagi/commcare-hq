@@ -55,8 +55,6 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
 
         self.evalXPath = new EvaluateXPath(options);
         self.isMinimized = ko.observable(true);
-        self.instanceXml = ko.observable('');
-        self.formattedQuestionsHtml = ko.observable('');
 
         // Whether or not the debugger is in the middle of updating from an ajax request
         self.updating = ko.observable(false);
@@ -108,6 +106,8 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
         var self = this;
         CloudCareDebugger.call(self, $.extend({ sessionType: SessionTypes.FORM }, options));
 
+        self.formattedQuestionsHtml = ko.observable('');
+        self.instanceXml = ko.observable('');
         self.instanceXml.subscribe(function(newXml) {
             var codeMirror,
                 $instanceTab = $('#debugger-xml-instance-tab');
