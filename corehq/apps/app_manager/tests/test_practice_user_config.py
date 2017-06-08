@@ -17,8 +17,6 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
     @classmethod
     def setUpClass(cls):
         super(TestPracticeUserRestore, cls).setUpClass()
-        from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-        delete_all_users()
         cls.domain = "practice-user-domain"
 
         cls.project = create_domain(cls.domain)
@@ -33,6 +31,10 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
     def tearDown(self):
         self.factory.app.delete()
         turn_off_demo_mode(self.user)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.delete()
 
     @staticmethod
     def _get_restore_resource(version, build_profile_id=None):
