@@ -30,8 +30,10 @@ hqDefine("app_manager/js/app_view_release_manager.js", function() {
         var ProfileManager = profiles.ProfileManager;
         var app_langs = initial_page_data("langs");
         var app_profiles = initial_page_data('build_profiles');
-        var profileManager = new ProfileManager(app_profiles, app_langs);
+        var practice_users = initial_page_data('practice_users');
+        var profileManager = new ProfileManager(app_profiles, app_langs, practice_users);
         $profilesTab.koApplyBindings(profileManager);
+        $("#practice-users").select2({"allowClear": true, "data": practice_users});
     }
 
     if (initial_page_data('intro_only')) {
