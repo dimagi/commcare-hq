@@ -219,7 +219,7 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "patient_type",
+                "field": "patient_type_private_app",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Type (New, Recurrent, TALFU, Failure, Other)"

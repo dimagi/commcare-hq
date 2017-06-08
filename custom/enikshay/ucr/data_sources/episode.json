@@ -740,9 +740,24 @@
                 "expression": {
                     "datatype": "string",
                     "type": "property_name",
-                    "property_name": "patient_type"
+                    "property_name": "patient_type_choice"
                 },
                 "column_id": "patient_type"
+            },
+            {
+                "display_name": "patient_type_private_app",
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "transform": {
+                },
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "patient_type"
+                },
+                "column_id": "patient_type_private_app"
             },
             {
                 "display_name": "basis_of_diagnosis",
