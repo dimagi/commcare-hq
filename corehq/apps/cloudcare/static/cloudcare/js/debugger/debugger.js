@@ -399,7 +399,9 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
     return {
         CloudCareDebuggerFormEntry: CloudCareDebuggerFormEntry,
         CloudCareDebuggerMenu: CloudCareDebuggerMenu,
+        EvaluateXPath: EvaluateXPath,
         TabIDs: TabIDs,
+        API: API,
     };
 
 });
