@@ -24,6 +24,7 @@ def _create_tech_issue_delegate_for_escalation(tech_issue, owner_id):
     return submit_case_blocks(
         ElementTree.tostring(caseblock.as_xml()),
         tech_issue.domain,
+        user_id=SYSTEM_USER_ID,
         xmlns=AUTO_UPDATE_XMLNS,
     )
 
@@ -102,7 +103,8 @@ def escalate_tech_issue(case, rule):
     tech_issue_delegate = _get_escalated_tech_issue_delegate(case, escalated_location_id)
 
     if tech_issue_delegate:
-        _update_existing_tech_issue_delegate(tech_issue_delegate)
+        delegate_update_result = _update_existing_tech_issue_delegate(tech_issue_delegate)
+        rule.log_submission(delegate_update_result[0].form_id)
         num_related_updates = 1
     else:
         create_result = _create_tech_issue_delegate_for_escalation(case, escalated_location_id)

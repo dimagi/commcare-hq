@@ -52,6 +52,7 @@ class AutoEscalationTest(BaseCaseRuleTest):
             self.assertEqual(len(subcases), 1)
             [tech_issue_delegate] = subcases
 
+            self.assertEqual(tech_issue_delegate.type, 'tech_issue_delegate')
             self.assertEqual(tech_issue_delegate.name, tech_issue.name)
             self.assertEqual(tech_issue_delegate.owner_id,
                 tech_issue.get_case_property('%s_location_id' % to_level))
