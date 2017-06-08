@@ -50,9 +50,8 @@ branches:
   - ce/app-status-pillows+nh/new_rb+ce/app-status-2 # Cal 3/26
   - ce/app-status-2 # Cal 5/22
   - nh/new_rb  # Norman 11/22
-  - mk-app-builder-condition-support # Manish 30-May
-  - mk-app-builder-changes-137 # Manish 31-May
   - lwyszomi/icds_dashboard_v2  # j$ 6/5
+  - externalize-js-form-designer-notifications # jenny June 7
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

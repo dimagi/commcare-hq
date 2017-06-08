@@ -226,9 +226,9 @@ class EpisodeAdherenceUpdate(object):
             else:
                 valid_cases = filter(
                     lambda case: (
-                        case['adherence_source'] == 'enikshay' and
+                        case.get('adherence_source') == 'enikshay' and
                         (not case['closed'] or (case['closed'] and
-                         case['adherence_closure_reason'] == HISTORICAL_CLOSURE_REASON))
+                         case.get('adherence_closure_reason') == HISTORICAL_CLOSURE_REASON))
                     ),
                     cases
                 )
