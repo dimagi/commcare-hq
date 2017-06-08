@@ -4,10 +4,6 @@
   background-color: @cc-brand-low;
   position:relative;
   box-sizing: border-box;
-  background-image: url('img/loading.gif');
-  background-repeat: no-repeat;
-  background-position: center 100px;
-  background-size: 25% auto;
 
   width: -webkit-calc(~"100% - " @app-manager-sidebar-width);
   width: -moz-calc(~"100% - " @app-manager-sidebar-width);
@@ -17,6 +13,30 @@
 
   .transition(all 1s);
   .box-shadow(0 0 20px 0 rgba(0, 0, 0, .20));
+
+  &:after,
+  &:before{
+    content: "";
+    display: block;
+    position: absolute;
+    width: 114px;
+    height: 114px;
+    top: 50%;
+    left: 50%;
+    margin-left: -57px;
+    margin-top: -57px;
+
+    background-image: url('img/loading_flower.png');
+    background-size: 100% auto;
+    background-repeat: no-repeat;
+  }
+  &:before{
+    background-image: url('img/loading_flower.png');
+  }
+  &:before{
+    background-image: url('img/loading_spiral.png');
+    -webkit-animation: spin 4s infinite linear;
+  }
 
   &.formdesigner-content-wrapper {
     padding: 0;
@@ -40,9 +60,15 @@
   }
 }
 
+@-webkit-keyframes spin {
+  0%  {-webkit-transform: rotate(0deg);}
+  100% {-webkit-transform: rotate(360deg);}
+}
+
 .appmanager-content {
   display: none;
   position: relative;
+  z-index: 2;
 }
 
 #js-appmanager-body.appmanager-settings-content {
