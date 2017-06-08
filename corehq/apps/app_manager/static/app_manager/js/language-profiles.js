@@ -52,7 +52,8 @@ hqDefine('app_manager/js/language-profiles.js', function () {
         var select2config = {
             'allowClear': true,
             'width': '100%',
-            'placeholder': practice_users.length > 0 ? 'Select a user': 'No practice mode mobile workers available'};
+            'placeholder': gettext(practice_users.length > 0 ? 'Select a user': 'No practice mode mobile workers available')
+        };
         this.addProfile = function(langs, name, id, practiceUser) {
             var profile = new Profile(langs, name, id, practiceUser);
             profile.name.subscribe(changeSaveButton);

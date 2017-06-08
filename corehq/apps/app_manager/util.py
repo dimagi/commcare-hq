@@ -11,6 +11,7 @@ import yaml
 from django.urls import reverse
 from couchdbkit.exceptions import DocTypeError
 from django.core.cache import cache
+from django.utils.translation import ugettext as _
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
@@ -584,11 +585,11 @@ def get_and_assert_practice_user_in_domain(practice_user_id, domain):
     except ResourceNotFound:
         raise PracticeUserException("Practice User not found, please make sure you have not deleted this user")
     if not user.domain == domain:
-        raise PracticeUserException(
+        raise PracticeUserException(_(
             "User {username} is not a member of domain {domain}, "
-            "please reset to correct user".format(username=user.username, domain=domain))
+            "please reset to correct user".format(username=user.username, domain=domain)))
     if not user.is_demo_user:
-        raise PracticeUserException(
+        raise PracticeUserException(_(
             "User {username} is not a practice user, "
-            "please turn on practice mode for this user".format(username=user.username))
+            "please turn on practice mode for this user".format(username=user.username)))
     return user

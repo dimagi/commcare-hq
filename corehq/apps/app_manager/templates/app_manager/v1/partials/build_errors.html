@@ -297,11 +297,11 @@
                             {% endif %}
                         {% case "practice user config error" %}
                             {% if error.build_profile_id %}
-                                {% blocktrans with profile=app.build_profiles|getattr:error.build_profile_id message=error.message %}
+                                {% blocktrans with profile=app.build_profiles|getattr:error.build_profile_id %}
                                     Error with Practice Mobile Worker in Application Profile {{ profile.name }}.
                                 {% endblocktrans %}
                             {% else %}
-                                {% blocktrans with message=error.message %}
+                                {% blocktrans%}
                                     Error with Practice Mobile Worker in Application Settings.
                                 {% endblocktrans %}
                             {% endif %}
