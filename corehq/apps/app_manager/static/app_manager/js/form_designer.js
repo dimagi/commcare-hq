@@ -106,17 +106,6 @@ hqDefine("app_manager/js/form_designer.js", function() {
                 }
 
                 $('#formdesigner').vellum(VELLUM_OPTIONS);
-
-                var notification_options = initial_page_data("notification_options");
-                if (notification_options) {
-                    var notifications = hqImport('app_manager/js/app-notifications.js');
-                    // initialize redis
-                    WS4Redis({
-                        uri: notification_options.WEBSOCKET_URI + notification_options.notify_facility + '?subscribe-broadcast',
-                        receive_message: notifications.NotifyFunction(notification_options.user_id, $('#notify-bar')),
-                        heartbeat_msg: notification_options.WS4REDIS_HEARTBEAT,
-                    });
-                }
             });
         });
         analytics.workflow('Entered the Form Builder');
