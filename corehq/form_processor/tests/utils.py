@@ -221,7 +221,7 @@ def post_xform(instance_xml, attachments=None, domain='test-domain'):
 
 @nottest
 def create_form_for_test(domain, case_id=None, attachments=None, save=True, state=XFormInstanceSQL.NORMAL,
-        received_on=None):
+        received_on=None, edited_on=None):
     """
     Create the models directly so that these tests aren't dependent on any
     other apps. Not testing form processing here anyway.
@@ -244,7 +244,8 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True, stat
         received_on=utcnow,
         user_id=user_id,
         domain=domain,
-        state=state
+        state=state,
+        edited_on=edited_on,
     )
 
     attachments = attachments or {}

@@ -293,12 +293,14 @@ class FormAccessorSQL(AbstractFormAccessor):
         return list(XFormAttachmentSQL.objects.raw('SELECT * from get_form_attachments(%s)', [form_id]))
 
     @staticmethod
-    def iter_forms_by_submission_date(start_datetime, end_datetime):
+    def iter_forms_by_last_modified(start_datetime, end_datetime):
         from corehq.sql_db.util import run_query_across_partitioned_databases
 
         return run_query_across_partitioned_databases(
             XFormInstanceSQL,
-            Q(received_on__gt=start_datetime) & Q(received_on__lte=end_datetime)
+            (Q(received_on__gt=start_datetime) & Q(received_on__lte=end_datetime)) |
+            (Q(deleted_on__gt=start_datetime) & Q(deleted_on__lte=end_datetime)) |
+            (Q(edited_on__gt=start_datetime) & Q(edited_on__lte=end_datetime))
         )
 
     @staticmethod
