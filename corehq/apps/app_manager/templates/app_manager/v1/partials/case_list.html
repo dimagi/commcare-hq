@@ -76,7 +76,6 @@
     </div>
     {% endif %}
 
-    {% if request|feature_preview_enabled:"SHARE_CASE_TILE_CONTEXT" %}
     {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
     {% if request|toggle_enabled:'CASE_LIST_TILE' %}
     {{ request|toggle_tag_info:"SHOW_PERSIST_CASE_CONTEXT_SETTING" }}
@@ -100,7 +99,6 @@
         </div>
         {% endif %}
         {% endwith %}
-    {% endif %}
     {% endif %}
     {% endif %}
     {% include 'app_manager/v1/partials/case_list_properties.html' %}
