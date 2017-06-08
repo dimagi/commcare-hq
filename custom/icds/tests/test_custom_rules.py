@@ -1,8 +1,8 @@
 import pytz
 from casexml.apps.case.mock import CaseFactory
-from corehq.apps.data_interfaces.models import CustomActionDefinition
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CustomActionDefinition
 from corehq.apps.data_interfaces.tests.test_auto_case_updates import BaseCaseRuleTest
-from corehq.apps.data_interfaces.tests.test_scheduling_integration import _create_empty_rule, _create_case
+from corehq.apps.data_interfaces.tests.util import create_case, create_empty_rule
 from corehq.apps.hqcase.utils import update_case
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
@@ -19,10 +19,10 @@ class AutoEscalationTest(BaseCaseRuleTest):
         return date.strftime('%Y-%m-%d')
 
     def _test_auto_escalation(self, from_level, to_level):
-        rule = _create_empty_rule(self.domain)
+        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rule.add_action(CustomActionDefinition, name='ICDS_ESCALATE_TECH_ISSUE')
 
-        with _create_case(
+        with create_case(
             self.domain,
             'tech_issue',
             case_name='New Issue',
@@ -72,10 +72,10 @@ class AutoEscalationTest(BaseCaseRuleTest):
 
     @run_with_all_backends
     def test_no_further_escalation(self):
-        rule = _create_empty_rule(self.domain)
+        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rule.add_action(CustomActionDefinition, name='ICDS_ESCALATE_TECH_ISSUE')
 
-        with _create_case(
+        with create_case(
             self.domain,
             'tech_issue',
             case_name='New Issue',
@@ -87,10 +87,10 @@ class AutoEscalationTest(BaseCaseRuleTest):
 
     @run_with_all_backends
     def test_when_delegate_exists(self):
-        rule = _create_empty_rule(self.domain)
+        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rule.add_action(CustomActionDefinition, name='ICDS_ESCALATE_TECH_ISSUE')
 
-        with _create_case(
+        with create_case(
             self.domain,
             'tech_issue',
             case_name='New Issue',
