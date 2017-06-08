@@ -954,7 +954,7 @@ class XForm(WrappedNode):
         control_nodes = self.get_control_nodes()
         leaf_data_nodes = self.get_leaf_data_nodes()
 
-        for node, path, repeat, group, items, is_leaf, data_type, relevant, required in control_nodes:
+        for node, path, repeat, group, items, is_leaf, data_type, relevant, required, constraint in control_nodes:
             excluded_paths.add(path)
             if not is_leaf and not include_groups:
                 continue
@@ -974,6 +974,7 @@ class XForm(WrappedNode):
                 "type": data_type,
                 "relevant": relevant,
                 "required": required == "true()",
+                "constraint": constraint,
                 "comment": self._get_comment(leaf_data_nodes, path),
                 "hashtagValue": self.hashtag_path(path),
             }
@@ -1017,6 +1018,7 @@ class XForm(WrappedNode):
                     "type": "DataBindOnly",
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
                     "relevant": bind.attrib.get('relevant') if hasattr(bind, 'attrib') else None,
+                    "constraint": bind.attrib.get('constraint') if hasattr(bind, 'attrib') else None,
                     "comment": self._get_comment(leaf_data_nodes, path),
                 }
 
@@ -1071,6 +1073,7 @@ class XForm(WrappedNode):
                     data_type = infer_vellum_type(node, bind)
                     relevant = bind.attrib.get('relevant') if bind else None
                     required = bind.attrib.get('required') if bind else None
+                    constraint = bind.attrib.get('constraint') if bind else None
                     skip = False
 
                     if tag == "group":
@@ -1105,7 +1108,7 @@ class XForm(WrappedNode):
                     if not skip:
                         control_nodes.append((node, path, repeat_context,
                                               group_context, items, is_leaf,
-                                              data_type, relevant, required))
+                                              data_type, relevant, required, constraint))
                     if recursive_kwargs:
                         for_each_control_node(**recursive_kwargs)
 
