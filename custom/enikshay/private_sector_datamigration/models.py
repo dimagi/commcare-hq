@@ -546,43 +546,6 @@ class Voucher(models.Model):
     voucherAmountSystem = models.CharField(max_length=255, null=True)
 
 
-class LabTest(models.Model):
-    id = models.BigIntegerField(primary_key=True)
-    cancelledBy = models.CharField(max_length=10, null=True)
-    caseId = models.CharField(max_length=18, null=True)
-    creationDate = models.DateTimeField(null=True)
-    creator = models.CharField(max_length=255, null=True)
-    dateOfTest = models.DateTimeField(null=True)
-    episodeId = models.ForeignKey(Episode, null=True, on_delete=models.CASCADE)
-    labId = models.IntegerField()
-    modificationDate = models.DateTimeField(null=True)
-    modifiedBy = models.CharField(max_length=255, null=True)
-    onBehalfOf = models.CharField(max_length=10, null=True)
-    orderedBy = models.CharField(max_length=10, null=True)
-    owner = models.CharField(max_length=255, null=True)
-    reason = models.CharField(max_length=5, null=True)
-    resultDate = models.DateTimeField(null=True)
-    # `resultFileContent` mediumblob,
-    resultFileFormat = models.CharField(max_length=10, null=True)
-    resultFileName = models.CharField(max_length=255, null=True)
-    sampleACollectionDate = models.DateTimeField(null=True)
-    sampleADeliveryDate = models.DateTimeField(null=True)
-    sampleBCollectionDate = models.DateTimeField(null=True)
-    sampleBDeliveryDate = models.DateTimeField(null=True)
-    sampleCollectionDate = models.DateTimeField(null=True)
-    sampleDeliveryDate = models.DateTimeField(null=True)
-    tbStatusId = models.IntegerField()
-    testId = models.IntegerField()
-    testSiteId = models.IntegerField()
-    testSiteSpecimenId = models.IntegerField()
-    testSpecimenId = models.IntegerField()
-    testStatus = models.CharField(max_length=20, null=True)
-    treatmentCardId = models.IntegerField()
-    treatmentFileId = models.IntegerField()
-    voucherNumber = models.IntegerField()
-    physicalVoucherNumber = models.CharField(max_length=255, null=True)
-
-
 class Agency(models.Model):
     id = models.IntegerField(null=True, unique=True)
     agencyId = models.IntegerField(primary_key=True)
