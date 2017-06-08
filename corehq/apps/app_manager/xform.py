@@ -579,6 +579,8 @@ def validate_xform(domain, source):
         )
 
 
+ControlNode = collections.namedtuple('ControlNode', ['node', 'path', 'repeat', 'group', 'items',
+                                     'is_leaf', 'data_type', 'relevant', 'required', 'constraint'])
 class XForm(WrappedNode):
     """
     A bunch of utility functions for doing certain specific
@@ -954,14 +956,17 @@ class XForm(WrappedNode):
         control_nodes = self.get_control_nodes()
         leaf_data_nodes = self.get_leaf_data_nodes()
 
-        for node, path, repeat, group, items, is_leaf, data_type, relevant, required, constraint in control_nodes:
+        for cnode in control_nodes:
+            node = cnode.node
+            path = cnode.path
             excluded_paths.add(path)
-            if not is_leaf and not include_groups:
+            if not cnode.is_leaf and not include_groups:
                 continue
 
             if node.tag_name == 'trigger' and not include_triggers:
                 continue
 
+            repeat = cnode.repeat
             if repeat is not None:
                 repeat_contexts.add(repeat)
 
@@ -970,20 +975,20 @@ class XForm(WrappedNode):
                 "tag": node.tag_name,
                 "value": path,
                 "repeat": repeat,
-                "group": group,
-                "type": data_type,
-                "relevant": relevant,
-                "required": required == "true()",
-                "constraint": constraint,
+                "group": cnode.group,
+                "type": cnode.data_type,
+                "relevant": cnode.relevant,
+                "required": cnode.required == "true()",
+                "constraint": cnode.constraint,
                 "comment": self._get_comment(leaf_data_nodes, path),
                 "hashtagValue": self.hashtag_path(path),
             }
             if include_translations:
                 question["translations"] = self.get_label_translations(node, langs)
 
-            if items is not None:
+            if cnode.items is not None:
                 options = []
-                for item in items:
+                for item in cnode.items:
                     translation = self.get_label_text(item, langs)
                     try:
                         value = item.findtext('{f}value').strip()
@@ -1106,9 +1111,18 @@ class XForm(WrappedNode):
                             items = node.findall('{f}item')
 
                     if not skip:
-                        control_nodes.append((node, path, repeat_context,
-                                              group_context, items, is_leaf,
-                                              data_type, relevant, required, constraint))
+                        control_nodes.append(ControlNode(
+                            node=node,
+                            path=path,
+                            repeat=repeat_context,
+                            group=group_context,
+                            items=items,
+                            is_leaf=is_leaf,
+                            data_type=data_type,
+                            relevant=relevant,
+                            required=required,
+                            constraint=constraint
+                        ))
                     if recursive_kwargs:
                         for_each_control_node(**recursive_kwargs)
 
