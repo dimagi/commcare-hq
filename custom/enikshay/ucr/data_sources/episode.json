@@ -6361,28 +6361,6 @@
                 "column_id": "nikshay_registered"
             },
             {
-                "display_name": "external_id",
-                "datatype": "string",
-                "expression": {
-                    "value_expression": {
-                        "datatype": "string",
-                        "type": "property_name",
-                        "property_name": "external_id"
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                        "type": "named",
-                        "name": "person_id"
-                    }
-                },
-                "is_nullable": true,
-                "type": "expression",
-                "is_primary_key": false,
-                "column_id": "external_id",
-                "transform": {}
-            },
-            {
                 "display_name": "husband_father_name",
                 "datatype": "string",
                 "expression": {
