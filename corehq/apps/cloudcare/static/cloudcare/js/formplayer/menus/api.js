@@ -33,6 +33,9 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     } else {
                         FormplayerFrontend.trigger('clearProgress');
                         defer.resolve(parsedMenus);
+                        if (response.menuSessionId) {
+                            FormplayerFrontend.trigger('configureDebugger', response.menuSessionId);
+                        }
                     }
                 },
                 error: function () {
