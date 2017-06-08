@@ -582,12 +582,13 @@ def get_and_assert_practice_user_in_domain(practice_user_id, domain):
     #   or if user doesn't belong to domain
     try:
         user = CommCareUser.get(practice_user_id)
+        if not user.domain == domain:
+            raise ResourceNotFound
     except ResourceNotFound:
-        raise PracticeUserException("Practice User not found, please make sure you have not deleted this user")
-    if not user.domain == domain:
         raise PracticeUserException(_(
-            "User {username} is not a member of domain {domain}, "
-            "please reset to correct user".format(username=user.username, domain=domain)))
+            "Practice User with id {id} not found, please make sure you have not deleted this user").format(
+            id=practice_user_id
+        ))
     if not user.is_demo_user:
         raise PracticeUserException(_(
             "User {username} is not a practice user, "
