@@ -338,7 +338,6 @@ def download_media_profile(request, domain, app_id):
 def download_practice_user_restore(request, domain, app_id):
     if not request.app.copy_of:
         make_async_build.delay(request.app)
-    print request.GET.get('profile')
     return HttpResponse(
         request.app.create_practice_user_restore()
     )
