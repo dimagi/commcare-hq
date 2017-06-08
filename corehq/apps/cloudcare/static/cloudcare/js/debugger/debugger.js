@@ -62,17 +62,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
 
             if (!self.isMinimized()) {
                 self.updating(true);
-                API.formattedQuestions(
-                    self.options.baseUrl,
-                    {
-                        session_id: self.options.formSessionId,
-                        username: self.options.username,
-                        restoreAs: self.options.restoreAs,
-                        domain: self.options.domain,
-                    }
-                ).done(function(response) {
-                    self.updateDebugger(response);
-                });
+                self.onUpdate();
             }
             window.analytics.workflow('[app-preview] User toggled CloudCare debugger');
         };
@@ -131,6 +121,39 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             $debug.width($body.width());
         };
     };
+
+    // By default do nothing when updating the debugger
+    CloudCareDebugger.prototype.onUpdate = function() {
+        return;
+    };
+
+    var CloudCareDebuggerFormEntry = function(options) {
+        var self = this;
+        CloudCareDebugger.call(self, options);
+    };
+    CloudCareDebuggerFormEntry.prototype = Object.create(CloudCareDebugger.prototype);
+    CloudCareDebuggerFormEntry.prototype.constructor = CloudCareDebugger;
+    // By default do nothing when updating the debugger
+    CloudCareDebuggerFormEntry.prototype.onUpdate = function() {
+        API.formattedQuestions(
+            this.options.baseUrl,
+            {
+                session_id: this.options.formSessionId,
+                username: this.options.username,
+                restoreAs: this.options.restoreAs,
+                domain: this.options.domain,
+            }
+        ).done(function(response) {
+            this.updateDebugger(response);
+        }.bind(this));
+    };
+
+    var CloudCareDebuggerMenu = function(options) {
+        var self = this;
+        CloudCareDebugger.call(self, options);
+    };
+    CloudCareDebuggerMenu.prototype = Object.create(CloudCareDebugger.prototype);
+    CloudCareDebuggerMenu.prototype.constructor = CloudCareDebugger;
 
     var EvaluateXPath = function(options) {
         var self = this;
@@ -357,7 +380,8 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
     };
 
     return {
-        CloudCareDebugger: CloudCareDebugger,
+        CloudCareDebuggerFormEntry: CloudCareDebuggerFormEntry,
+        CloudCareDebuggerMenu: CloudCareDebuggerMenu,
         TabIDs: TabIDs,
     };
 
