@@ -267,9 +267,6 @@ class BaseEditUserView(BaseUserSettingsView):
                         self.request.session['django_language'] = new_lang
                 return True
 
-    def custom_user_is_valid(self):
-        return True
-
     def post(self, request, *args, **kwargs):
         saved = False
         if self.request.POST['form_type'] == "commtrack":
@@ -277,7 +274,7 @@ class BaseEditUserView(BaseUserSettingsView):
                 self.commtrack_form.save(self.editable_user)
                 saved = True
         elif self.request.POST['form_type'] == "update-user":
-            if all([self.update_user(), self.custom_user_is_valid()]):
+            if self.update_user():
                 messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
                 saved = True
         if saved:

@@ -68,7 +68,7 @@ from corehq.apps.users.bulkupload import (
 from corehq.apps.users.dbaccessors.all_commcare_users import get_mobile_user_ids
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import (
-    CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
+    CommCareAccountForm, CommCareUserFormSet, CommtrackUserForm,
     MultipleSelectionForm, ConfirmExtraUserChargesForm, NewMobileWorkerForm,
     SelfRegistrationForm, SetUserPasswordForm, NewAnonymousMobileWorkerForm
 )
@@ -109,7 +109,8 @@ class EditCommCareUserView(BaseEditUserView):
     page_title = ugettext_noop("Edit Mobile Worker")
 
     def _get_user_form(self, data):
-        return UpdateCommCareUserInfoForm(data=data, domain=self.domain, existing_user=self.editable_user)
+        return CommCareUserFormSet(data=data, domain=self.domain,
+            editable_user=self.editable_user, request_user=self.request.couch_user)
 
     @property
     def template_name(self):
@@ -132,17 +133,6 @@ class EditCommCareUserView(BaseEditUserView):
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
         })
         return context
-
-    @property
-    @memoized
-    def custom_data(self):
-        is_custom_data_post = self.request.method == "POST" and self.request.POST['form_type'] == "update-user"
-        return CustomDataEditor(
-            field_view=UserFieldsView,
-            domain=self.domain,
-            existing_custom_data=self.editable_user.user_data,
-            post_dict=self.request.POST if is_custom_data_post else None,
-        )
 
     @property
     @memoized
@@ -219,7 +209,7 @@ class EditCommCareUserView(BaseEditUserView):
             'group_form': self.group_form,
             'reset_password_form': self.reset_password_form,
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
-            'data_fields_form': self.custom_data.form,
+            'data_fields_form': self.form_user_update.custom_data.form,
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
             'can_create_groups': (
                 self.request.couch_user.has_permission(self.domain, 'edit_commcare_users') and
@@ -263,7 +253,7 @@ class EditCommCareUserView(BaseEditUserView):
     @memoized
     def form_user_update(self):
         form = super(EditCommCareUserView, self).form_user_update
-        form.load_language(language_choices=get_domain_languages(self.domain))
+        form.user_form.load_language(language_choices=get_domain_languages(self.domain))
         return form
 
     @property
@@ -284,14 +274,6 @@ class EditCommCareUserView(BaseEditUserView):
             else:
                 messages.error(request, _("Please enter digits only."))
         return super(EditCommCareUserView, self).post(request, *args, **kwargs)
-
-    def custom_user_is_valid(self):
-        if self.custom_data.is_valid():
-            self.editable_user.user_data = self.custom_data.get_data_to_save()
-            self.editable_user.save()
-            return True
-        else:
-            return False
 
 
 class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerMixin):
