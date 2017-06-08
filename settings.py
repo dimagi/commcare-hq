@@ -1560,7 +1560,10 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
 
 AVAILABLE_CUSTOM_RULE_CRITERIA = {}
 
-AVAILABLE_CUSTOM_RULE_ACTIONS = {}
+AVAILABLE_CUSTOM_RULE_ACTIONS = {
+    'ICDS_ESCALATE_TECH_ISSUE':
+        'custom.icds.rules.custom_actions.escalate_tech_issue',
+}
 
 # These are custom templates which can wrap default the sms/chat.html template
 CUSTOM_CHAT_TEMPLATES = {
@@ -1849,6 +1852,9 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_tb_hiv.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'cc_outbound_call_list.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'payment_register.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'beneficiary_register.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_register_for_culture.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'rntcp_pmdt_treatment_register.json'),
 ]
 
 

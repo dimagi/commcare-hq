@@ -20,7 +20,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 success: function (parsedMenus, response) {
                     if (response.status === 'retry') {
                         FormplayerFrontend.trigger('retry', response, function() {
-                            menus.fetch($.extend(true, {}, options));
+                            var newOptionsData = JSON.stringify($.extend(true, { mustRestore: true }, JSON.parse(options.data)));
+                            menus.fetch($.extend(true, {}, options, { data: newOptionsData }));
                         }, gettext('Waiting for server progress'));
                     } else if (response.hasOwnProperty('exception')){
                         FormplayerFrontend.trigger(

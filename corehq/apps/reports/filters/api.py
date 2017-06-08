@@ -280,10 +280,10 @@ class DeviceLogFilter(LoginAndDomainMixin, JSONResponseMixin, View):
             .values_list(self.field, flat=True)
             .order_by(self.field)
         )
-        values = query_set[self._offset():self._offset() + self._page_limit()]
+        values = query_set[self._offset():self._offset() + self._page_limit() + 1]
         return self.render_json_response({
-            'results': [{'id': v, 'text': v} for v in values],
-            'total': query_set.count(),
+            'results': [{'id': v, 'text': v} for v in values[:self._page_limit()]],
+            'more': len(values) > self._page_limit(),
         })
 
     def _page_limit(self):

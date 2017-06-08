@@ -5999,7 +5999,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     xmlns,
                 ))
             return []
-        non_shadow_forms = [form for form in forms if form.form_type != ShadowForm.form_type]
+        non_shadow_forms = [form for form in forms if form.form_type != 'shadow_form']
         assert len(non_shadow_forms) <= 1
         return forms
 

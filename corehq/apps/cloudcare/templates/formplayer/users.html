@@ -98,7 +98,7 @@
                 <td><%= user.dateRegistered %></td>
             </tr>
         <% _.each(user.customFields, function(value, key) { %>
-            <% if (!key.startsWith('commcare_') && !key.startsWith('commtrack')) { %>
+            <% if (!key.startsWith('commcare_') && !key.startsWith('commtrack') && value) { %>
             <tr>
                 <th><%= key %></th>
                 <td><%= value %></td>

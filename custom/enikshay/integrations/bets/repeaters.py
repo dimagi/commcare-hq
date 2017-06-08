@@ -6,23 +6,24 @@ from casexml.apps.case.signals import case_post_save
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.models import CaseRepeater, LocationRepeater, UserRepeater
 from corehq.apps.repeaters.signals import create_repeat_records
-from corehq.apps.repeaters.repeater_generators import UserPayloadGenerator
 from corehq.apps.users.signals import commcare_user_post_save
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import BETS_INTEGRATION
 from corehq.util import reverse
+from custom.enikshay.case_utils import CASE_TYPE_PERSON
 from custom.enikshay.const import ENROLLED_IN_PRIVATE, PRESCRIPTION_TOTAL_DAYS_THRESHOLD
-from custom.enikshay.integrations.bets.const import TREATMENT_180_EVENT, DRUG_REFILL_EVENT, SUCCESSFUL_TREATMENT_EVENT, \
-    DIAGNOSIS_AND_NOTIFICATION_EVENT, AYUSH_REFERRAL_EVENT, CHEMIST_VOUCHER_EVENT, LAB_VOUCHER_EVENT, \
-    TOTAL_DAY_THRESHOLDS
-from custom.enikshay.integrations.bets.repeater_generators import \
-    BETS180TreatmentPayloadGenerator, LabBETSVoucherPayloadGenerator, \
-    ChemistBETSVoucherPayloadGenerator, BETSAYUSHReferralPayloadGenerator, \
-    BETSDiagnosisAndNotificationPayloadGenerator, BETSSuccessfulTreatmentPayloadGenerator, \
-    BETSDrugRefillPayloadGenerator, BETSLocationPayloadGenerator
-from custom.enikshay.integrations.utils import case_properties_changed, is_valid_episode_submission, \
-    is_valid_voucher_submission, is_valid_archived_submission, is_valid_person_submission, \
-    case_was_created
+from custom.enikshay.integrations.bets.const import (
+    TREATMENT_180_EVENT, DRUG_REFILL_EVENT, SUCCESSFUL_TREATMENT_EVENT,
+    DIAGNOSIS_AND_NOTIFICATION_EVENT, AYUSH_REFERRAL_EVENT, CHEMIST_VOUCHER_EVENT,
+    LAB_VOUCHER_EVENT, TOTAL_DAY_THRESHOLDS)
+from custom.enikshay.integrations.bets.repeater_generators import (
+    BETS180TreatmentPayloadGenerator, LabBETSVoucherPayloadGenerator,
+    ChemistBETSVoucherPayloadGenerator, BETSAYUSHReferralPayloadGenerator,
+    BETSDiagnosisAndNotificationPayloadGenerator, BETSSuccessfulTreatmentPayloadGenerator,
+    BETSDrugRefillPayloadGenerator, BETSLocationPayloadGenerator, BETSUserPayloadGenerator)
+from custom.enikshay.integrations.utils import (
+    case_properties_changed, is_valid_episode_submission, is_valid_voucher_submission,
+    is_valid_archived_submission, is_valid_person_submission, case_was_created)
 
 
 class BETSRepeaterMixin(object):
@@ -297,7 +298,7 @@ class BETSAYUSHReferralRepeater(BaseBETSRepeater):
 
 class BETSUserRepeater(BETSRepeaterMixin, UserRepeater):
     friendly_name = _("Forward users to BETS")
-    payload_generator_classes = (UserPayloadGenerator,)
+    payload_generator_classes = (BETSUserPayloadGenerator,)
 
     location_types_to_forward = ['plc', 'pcp', 'pcc', 'pac']
 
@@ -339,10 +340,8 @@ class BETSBeneficiaryRepeater(BaseBETSRepeater):
     )
 
     def allowed_to_forward(self, person_case):
-        if not (self._allowed_case_type(person_case) and self._allowed_user(person_case)):
-            return False
-
-        return (is_valid_person_submission(person_case)
+        return (person_case.type == CASE_TYPE_PERSON
+                and is_valid_person_submission(person_case)
                 and person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
                 and (case_was_created(person_case)
                      or case_properties_changed(person_case, self.properties_we_care_about)))

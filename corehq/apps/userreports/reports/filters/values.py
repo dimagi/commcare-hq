@@ -296,7 +296,7 @@ class PreFilterValue(FilterValue):
 
 class ChoiceListFilterValue(FilterValue):
 
-    ALLOWED_TYPES = ('choice_list', 'dynamic_choice_list')
+    ALLOWED_TYPES = ('choice_list', 'dynamic_choice_list', 'multi_field_dynamic_choice_list')
 
     def __init__(self, filter, value):
         assert filter.type in self.ALLOWED_TYPES

@@ -210,7 +210,7 @@ def get_voucher_case_structure(case_id, indexed_prescription_id, extra_update=No
         indices=[CaseIndex(
             CaseStructure(case_id=indexed_prescription_id, attrs={"create": False}),
             identifier='prescription_of_voucher',
-            relationship=CASE_INDEX_CHILD,
+            relationship=CASE_INDEX_EXTENSION,
             related_type='prescription',
         )],
         walk_related=False,  # TODO I'm not sure what this should be
@@ -374,9 +374,9 @@ class ENikshayCaseStructureMixin(object):
             })
         ])
 
-    def create_prescription_case(self):
+    def create_prescription_case(self, extra_update=None):
         return self.factory.create_or_update_case(
-            get_prescription_case_structure(uuid.uuid4().hex, self.episode_id)
+            get_prescription_case_structure(uuid.uuid4().hex, self.episode_id, extra_update)
         )[0]
 
     def create_voucher_case(self, prescription_id, extra_update=None):

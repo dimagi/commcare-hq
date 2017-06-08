@@ -671,3 +671,53 @@ class TestAdherenceUpdater(TestCase):
             {key: episode.dynamic_case_properties()[key] for key in expected_update},
             {key: str(val) for key, val in expected_update.iteritems()}  # convert values to strings
         )
+
+    def test_adherence_score_start_date_month(self):
+        # If the start date is more than a month ago, calculate the last month's scores
+        self.case_updater.date_today_in_india = datetime.date(2016, 1, 31)
+        self.assert_update(
+            (
+                datetime.date(2016, 1, 30),
+                (datetime.date(2015, 12, 31), 'schedule1'),  # adherence_schedule_date_start
+                [
+                    (datetime.date(2015, 12, 31), DTIndicators[0]),
+                    (datetime.date(2016, 1, 15), DTIndicators[0]),
+                    (datetime.date(2016, 1, 17), DTIndicators[0]),
+                    (datetime.date(2016, 1, 20), DTIndicators[0]),
+                    (datetime.date(2016, 1, 30), DTIndicators[0]),
+                ]
+            ),
+            {
+                'one_week_score_count_taken': 1,
+                'two_week_score_count_taken': 3,
+                'month_score_count_taken': 4,
+                'one_week_adherence_score': 14.29,
+                'two_week_adherence_score': 21.43,
+                'month_adherence_score': 13.33,
+            }
+        )
+
+    def test_adherence_score_start_date_week(self):
+        # If the start date is only a week ago, don't send 2 week or month scores
+        self.case_updater.date_today_in_india = datetime.date(2016, 1, 31)
+        self.assert_update(
+            (
+                datetime.date(2016, 1, 30),
+                (datetime.date(2016, 1, 24), 'schedule1'),  # adherence_schedule_date_start
+                [
+                    (datetime.date(2015, 12, 31), DTIndicators[0]),
+                    (datetime.date(2016, 1, 15), DTIndicators[0]),
+                    (datetime.date(2016, 1, 17), DTIndicators[0]),
+                    (datetime.date(2016, 1, 20), DTIndicators[0]),
+                    (datetime.date(2016, 1, 30), DTIndicators[0]),
+                ]
+            ),
+            {
+                'one_week_score_count_taken': 1,
+                'two_week_score_count_taken': 0,
+                'month_score_count_taken': 0,
+                'one_week_adherence_score': 14.29,
+                'two_week_adherence_score': 0.0,
+                'month_adherence_score': 0.0,
+            }
+        )

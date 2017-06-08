@@ -1,4 +1,4 @@
-from dropbox.client import DropboxOAuth2Flow
+from dropbox.oauth import DropboxOAuth2Flow
 
 from django.conf import settings
 from django.urls import reverse
@@ -16,5 +16,10 @@ def get_dropbox_auth_flow(session):
         get_url_base(),
         reverse(DropboxAuthCallback.slug),
     )
-    return DropboxOAuth2Flow(settings.DROPBOX_KEY, settings.DROPBOX_SECRET, redirect_uri,
-         session, DROPBOX_CSRF_TOKEN)
+    return DropboxOAuth2Flow(
+        settings.DROPBOX_KEY,
+        settings.DROPBOX_SECRET,
+        redirect_uri,
+        session,
+        DROPBOX_CSRF_TOKEN
+    )

@@ -61,7 +61,7 @@
                          };
                     },
                     results: function (data, page) {
-                        var more = (page * 10) < data.total;
+                        var more = data.more || (page * 10) < data.total;
                         return {results: data.results, more: more};
                     }
                 },

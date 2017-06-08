@@ -355,7 +355,7 @@ def user_can_access_other_user(domain, user, other_user):
 def user_can_access_case(domain, user, case):
     from corehq.apps.reports.standard.cases.data_sources import CaseInfo
 
-    info = CaseInfo(None, case)
+    info = CaseInfo(None, case.to_json())
     if info.owner_type == 'location':
         return user_can_access_location_id(domain, user, info.owner_id)
     elif info.owner_type == 'user':
