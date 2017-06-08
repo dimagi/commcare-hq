@@ -13,7 +13,7 @@ from corehq.warehouse.const import (
     DOMAIN_STAGING_SLUG,
 )
 
-from .shared import CustomSQLETLMixin
+from corehq.warehouse.etl import CustomSQLETLMixin
 
 
 class BaseDim(models.Model):

@@ -8,7 +8,7 @@ from corehq.warehouse.const import (
 )
 
 from .dimensions import UserDim
-from .shared import CustomSQLETLMixin
+from corehq.warehouse.etl import CustomSQLETLMixin
 
 
 class ApplicationStatusFact(models.Model, CustomSQLETLMixin):
