@@ -1,3 +1,4 @@
+from nose.tools import nottest
 import pytz
 from collections import namedtuple, defaultdict
 from django.utils.dateparse import parse_datetime
@@ -215,6 +216,7 @@ def get_episode_case_from_adherence(domain, adherence_case_id):
     return get_parent_of_case(domain, adherence_case_id, CASE_TYPE_EPISODE)
 
 
+@nottest
 def get_occurrence_case_from_test(domain, test_case_id):
     """
         Gets the first open occurrence case for a test
@@ -222,6 +224,7 @@ def get_occurrence_case_from_test(domain, test_case_id):
     return get_parent_of_case(domain, test_case_id, CASE_TYPE_OCCURRENCE)
 
 
+@nottest
 def get_private_diagnostic_test_cases_from_episode(domain, episode_case_id):
     """Returns all test cases for a particular episode
     """
@@ -347,6 +350,7 @@ def _get_private_locations(person_case):
         raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
 
 
+@nottest
 def get_lab_referral_from_test(domain, test_case_id):
     case_accessor = CaseAccessors(domain)
     reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([test_case_id])
