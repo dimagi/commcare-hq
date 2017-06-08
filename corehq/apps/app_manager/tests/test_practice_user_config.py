@@ -21,19 +21,17 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
         delete_all_users()
         cls.domain = "practice-user-domain"
 
-        cls.factory = AppFactory(build_version='2.28.0', domain=cls.domain)
-        module, form = cls.factory.new_basic_module('register', 'case')
-        form.source = cls.get_xml('very_simple_form')
-
         cls.project = create_domain(cls.domain)
         cls.user = CommCareUser.create(cls.domain, 'test@main-domain.commcarehq.org', 'secret')
 
-    def assert_(self, app, expected_paths):
-        # test user-restore files created
-        # test resource blocks created
-        app.create_build_files
+    def setUp(self):
+        self.factory = AppFactory(build_version='2.28.0', domain=self.domain)
+        module, form = self.factory.new_basic_module('register', 'case')
+        form.source = self.get_xml('very_simple_form')
+        self.factory.app.save()
 
     def tearDown(self):
+        self.factory.app.delete()
         turn_off_demo_mode(self.user)
 
     @staticmethod
@@ -81,13 +79,13 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
         )
         app.create_build_files(save=True, build_profile_id=build_profile_id)
         app.save()
-        self.assertTrue(app.lazy_fetch_attachment('files/practice_user_restore.xml'))
+        self.assertTrue(app.lazy_fetch_attachment('files/{profile}/practice_user_restore.xml'.format(
+            profile=build_profile_id
+        )))
 
     def test_bad_config(self):
         # if the user set as practice user for an app is not practice user, build should raise error
-
-        # refetch so that memoized app.get_practice_user gets busted
-        app = Application.get(self.factory.app._id)
+        app = self.factory.app
         app.practice_mobile_worker_id = self.user._id
 
         self.assertIn(
@@ -103,9 +101,8 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
         turn_on_demo_mode(self.user, self.domain)
         app = self.factory.app
         app.practice_mobile_worker_id = self.user._id
+        app.save()
 
-        # refetch so that memoized app.get_practice_user gets busted
-        app = Application.get(app._id)
         self.assertXmlPartialEqual(
             self._get_restore_resource(self.user.demo_restore_id),
             app.create_suite(),
