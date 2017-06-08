@@ -473,7 +473,9 @@ class EpisodeVoucherUpdate(object):
     def _updated_fields(existing_properties, new_properties):
         updated_fields = {}
         for prop, value in new_properties.items():
-            if unicode(existing_properties.get(prop, '--')) != unicode(value):
+            existing_value = unicode(existing_properties.get(prop, '--'))
+            new_value = unicode(value) if value is not None else u""
+            if existing_value != new_value:
                 updated_fields[prop] = value
         return updated_fields
 
