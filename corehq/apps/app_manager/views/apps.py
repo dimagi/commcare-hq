@@ -30,7 +30,7 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
-from corehq.apps.locations.dbaccessors import get_practice_mode_mobile_workers
+from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
 from corehq.apps.tour import tours
 from corehq.apps.translations.models import Translation
 from corehq.apps.app_manager.const import (

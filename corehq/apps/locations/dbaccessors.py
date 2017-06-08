@@ -2,7 +2,6 @@ from itertools import imap, chain
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
-from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
 
 
@@ -158,17 +157,3 @@ def get_location_ids_with_location_type(domain, location_type_code):
         is_archived=False,
         location_type__code=location_type_code,
     ).values_list('location_id', flat=True)
-
-
-def get_practice_mode_mobile_workers(domain):
-    """
-    Returns list of practice mode mobile workers formatted for HTML select
-    """
-    return (
-        UserES()
-        .domain(domain)
-        .mobile_users()
-        .is_practice_user()
-        .fields(['_id', 'username'])
-        .run().hits
-    )
