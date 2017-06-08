@@ -754,10 +754,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             if not is_valid():
                 return {'error': _("Forms did not validate")}
 
-            couch_user.save()
-            location_id = self.new_mobile_worker_form.cleaned_data['location_id']
-            if location_id:
-                couch_user.set_location(SQLLocation.objects.get(location_id=location_id))
+            couch_user = self._build_commcare_user()
 
         return {
             'success': True,
@@ -774,7 +771,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         last_name = ANONYMOUS_LASTNAME
         location_id = self.new_anonymous_mobile_worker_form.cleaned_data['location_id']
 
-        couch_user = CommCareUser.create(
+        return CommCareUser.create(
             self.domain,
             format_username(username, self.domain),
             password,
@@ -783,16 +780,15 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             last_name=last_name,
             user_data=self.custom_data.get_data_to_save(),
             is_anonymous=True,
+            location=SQLLocation.objects.get(location_id=location_id),
         )
-        if location_id:
-            couch_user.set_location(SQLLocation.objects.get(location_id=location_id))
-        return couch_user
 
     def _build_commcare_user(self):
         username = self.new_mobile_worker_form.cleaned_data['username']
         password = self.new_mobile_worker_form.cleaned_data['password']
         first_name = self.new_mobile_worker_form.cleaned_data['first_name']
         last_name = self.new_mobile_worker_form.cleaned_data['last_name']
+        location_id = self.new_mobile_worker_form.cleaned_data['location_id']
 
         return CommCareUser.create(
             self.domain,
@@ -802,7 +798,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             first_name=first_name,
             last_name=last_name,
             user_data=self.custom_data.get_data_to_save(),
-            commit=False,
+            location=SQLLocation.objects.get(location_id=location_id),
         )
 
     def _ensure_proper_request(self, in_data):
