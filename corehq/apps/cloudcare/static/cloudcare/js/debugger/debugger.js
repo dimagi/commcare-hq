@@ -4,17 +4,20 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
     var DebuggerTabs = {
         FORM_DATA: {
             id: 'debugger-form-data-tab',
-            tab: '#debugger-form-data',
+            tab: 'debugger-form-data',
+            tabTemplate: 'debugger-form-data-template',
             label: gettext('Form Data'),
         },
         FORM_XML: {
             id: 'debugger-xml-instance-tab',
-            tab: '#debugger-xml-instance',
+            tab: 'debugger-xml-instance',
+            tabTemplate: 'debugger-xml-instance-template',
             label: gettext('Form XML'),
         },
         EVAL_XPATH: {
             id: 'debugger-evaluate-xpath-tab',
-            tab: '#debugger-evaluate',
+            tab: 'debugger-evaluate',
+            tabTemplate: 'debugger-evaluate-template',
             label: gettext('Evaluate XPath'),
         },
     };
@@ -73,10 +76,6 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
         };
         self.collapseNavbar = function() {
             $('.navbar-collapse').collapse('hide');
-        };
-
-        self.afterRender = function() {
-            self.evalXPath.afterRender();
         };
 
         self.setContentHeight = function() {
@@ -208,7 +207,8 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                     restoreAs: self.options.restoreAs,
                     domain: self.options.domain,
                     xpath: xpath,
-                }
+                },
+                self.options.sessionType
             ).done(function(response) {
                 self.result(response.output);
                 self.success(response.status === "accepted");

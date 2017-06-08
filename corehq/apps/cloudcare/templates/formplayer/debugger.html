@@ -43,7 +43,7 @@
                             data-bind="
                                 attr: {
                                     id: $parent.tabs[$data].id,
-                                    href: $parent.tabs[$data].tab,
+                                    href: '#' + $parent.tabs[$data].tab,
                                 },
                                 text: $parent.tabs[$data].label,
                                 click: $parent.collapseNavbar,
@@ -56,23 +56,38 @@
             </nav>
 
             <!-- tab content -->
-            <div class="tab-content debugger-content">
-                <div role="tabpanel" class="tab-pane active" id="debugger-form-data">
-                    <div data-bind="html: formattedQuestionsHtml" id="question-viewer-pretty"></div>
-                </div>
-                <div role="tabpanel" class="tab-pane" id="debugger-xml-instance">
-                    <div id="xml-viewer-pretty">{% trans "Answer a question to show data" %}</div>
-                </div>
-                <div role="tabpanel" class="tab-pane" id="debugger-evaluate">
+            <div class="tab-content debugger-content" data-bind="foreach: registeredTabIds">
+                <div role="tabpanel" class="tab-pane" id="debugger-form-data"
+                    data-bind="
+                        attr: {
+                            id: $parent.tabs[$data].tab
+                        },
+                        css: { active: $index() === 0 }
+                    "></div>
                     <div data-bind="template: {
-                        name: 'debugger-eval-ko-template',
-                        afterRender: afterRender,
-                        data: evalXPath }">
-                    </div>
+                        name: $parent.tabs[$data].tabTemplate,
+                        data: $parent
+                    }"></div>
                 </div>
             </div>
         </div>
     </div>
+</script>
+
+<script type="text/html" id="debugger-form-data-template">
+    <div data-bind="html: formattedQuestionsHtml" id="question-viewer-pretty"></div>
+</script>
+
+<script type="text/html" id="debugger-xml-instance-template">
+    <div id="xml-viewer-pretty"></div>
+</script>
+
+<script type="text/html" id="debugger-evaluate-template">
+    <div data-bind="template: {
+        name: 'debugger-eval-ko-template',
+        afterRender: evalXPath.afterRender,
+        data: evalXPath
+    }"></div>
 </script>
 
 <script type="text/html" id="debugger-eval-ko-template">
