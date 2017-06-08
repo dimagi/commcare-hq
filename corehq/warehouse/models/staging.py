@@ -214,6 +214,8 @@ class FormStagingTable(StagingTable):
 
     # The time at which the server has received the form
     received_on = models.DateTimeField(db_index=True)
+    deleted_on = models.DateTimeField(null=True)
+    edited_on = models.DateTimeField(null=True)
 
     build_id = models.CharField(max_length=255, null=True)
 
@@ -229,6 +231,8 @@ class FormStagingTable(StagingTable):
             ('user_id', 'user_id'),
 
             ('received_on', 'received_on'),
+            ('deleted_on', 'deleted_on'),
+            ('edited_on', 'edited_on'),
             ('build_id', 'build_id'),
         ]
 
