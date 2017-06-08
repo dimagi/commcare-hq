@@ -59,9 +59,7 @@ def get_synclog_ids_by_date(start_datetime, end_datetime):
 
 
 def get_forms_by_submission_date(start_datetime, end_datetime):
-
-    form_ids = list(FormAccessorSQL.iter_forms_by_last_modified(start_datetime, end_datetime))
-    for form in FormAccessorSQL.get_forms(form_ids):
+    for form in FormAccessorSQL.iter_forms_by_last_modified(start_datetime, end_datetime):
         yield form
 
     # TODO Couch forms
