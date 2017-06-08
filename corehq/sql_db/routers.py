@@ -64,7 +64,7 @@ def db_for_read_write(model):
         return settings.WAREHOUSE_DATABASE_ALIAS
     elif app_label == ICDS_MODEL:
         assert hasattr(settings, "ICDS_UCR_TEST_DATABASE_ALIAS")
-        return settings.ICDS_UCR_DATABASE_ALIAS
+        return settings.ICDS_UCR_TEST_DATABASE_ALIAS
 
     else:
         return partition_config.get_main_db()
