@@ -10,6 +10,7 @@ from corehq.apps.users.signals import commcare_user_post_save
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import BETS_INTEGRATION
 from corehq.util import reverse
+from custom.enikshay.case_utils import CASE_TYPE_PERSON
 from custom.enikshay.const import ENROLLED_IN_PRIVATE, PRESCRIPTION_TOTAL_DAYS_THRESHOLD
 from custom.enikshay.integrations.bets.const import (
     TREATMENT_180_EVENT, DRUG_REFILL_EVENT, SUCCESSFUL_TREATMENT_EVENT,
@@ -339,10 +340,8 @@ class BETSBeneficiaryRepeater(BaseBETSRepeater):
     )
 
     def allowed_to_forward(self, person_case):
-        if not (self._allowed_case_type(person_case) and self._allowed_user(person_case)):
-            return False
-
-        return (is_valid_person_submission(person_case)
+        return (person_case.type == CASE_TYPE_PERSON
+                and is_valid_person_submission(person_case)
                 and person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
                 and (case_was_created(person_case)
                      or case_properties_changed(person_case, self.properties_we_care_about)))
