@@ -80,10 +80,10 @@
         <div class="row">
             <div class="col-sm-6">
                 <label>
-                    {% trans "Use persistent case list tile from module" %}
+                    {% trans "Use persistent case tile from module" %}
                 </label>
                 <div>
-                    <select name='persistent_case_context_from_module' class='form-control' data-bind="value: persistentCaseContextFromModule">
+                    <select name='persistent_case_tile_from_module' class='form-control' data-bind="value: persistentCaseTileFromModule">
                         <option value></option>
                         {% for other_mod in available_modules %}
                             <option value={{ other_mod.unique_id }}>{{ other_mod.name|html_trans:langs }}</option>

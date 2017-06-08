@@ -877,9 +877,9 @@ class EntriesHelper(object):
         if detail_enabled:
             # if configured to use persisted case tile context from another module which has case tiles
             # configured then get id_string for that module
-            if detail.persistent_case_context_from_module:
+            if detail.persistent_case_tile_from_module:
                 module_for_persistent_context = module.get_app().get_module_by_unique_id(
-                    detail.persistent_case_context_from_module
+                    detail.persistent_case_tile_from_module
                 )
                 if (module_for_persistent_context and
                         module_for_persistent_context.case_details.short.use_case_tiles):

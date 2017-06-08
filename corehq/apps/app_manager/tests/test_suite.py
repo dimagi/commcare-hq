@@ -620,7 +620,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         ensure_module_session_datum_xml('')
 
         # configured to use other module's persistent case tile
-        module1.case_details.short.persistent_case_context_from_module = module0.unique_id
+        module1.case_details.short.persistent_case_tile_from_module = module0.unique_id
         ensure_module_session_datum_xml('detail-persistent="m0_case_short"')
 
         # set to use persistent case tile of its own as well but it would still
