@@ -147,7 +147,7 @@ hqDefine("app_manager/js/form_designer.js", function() {
                 reverse("edit_form_attr", "name")
             );
             editDetails.initComment(
-                initial_page_data("form_comment"),
+                initial_page_data("form_comment").replace(/\\n/g, "\n"),
                 reverse("edit_form_attr", "comment")
             );
             editDetails.setUpdateCallbackFn(function (name) {
