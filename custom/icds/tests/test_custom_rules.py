@@ -4,11 +4,12 @@ from corehq.apps.data_interfaces.tests.test_auto_case_updates import BaseCaseRul
 from corehq.apps.data_interfaces.tests.util import create_case, create_empty_rule
 from corehq.apps.hqcase.utils import update_case
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import run_with_all_backends
+from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.util.timezones.conversions import ServerTime
 from datetime import datetime
 
 
+@use_sql_backend
 class AutoEscalationTest(BaseCaseRuleTest):
     domain = 'icds-auto-escalation-test'
 
@@ -58,19 +59,15 @@ class AutoEscalationTest(BaseCaseRuleTest):
                 tech_issue.get_case_property('%s_location_id' % to_level))
             self.assertEqual(tech_issue_delegate.get_case_property('change_in_level'), '1')
 
-    @run_with_all_backends
     def test_auto_escalation_to_block(self):
         self._test_auto_escalation('supervisor', 'block')
 
-    @run_with_all_backends
     def test_auto_escalation_to_district(self):
         self._test_auto_escalation('block', 'district')
 
-    @run_with_all_backends
     def test_auto_escalation_to_state(self):
         self._test_auto_escalation('district', 'state')
 
-    @run_with_all_backends
     def test_no_further_escalation(self):
         rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rule.add_action(CustomActionDefinition, name='ICDS_ESCALATE_TECH_ISSUE')
@@ -85,7 +82,6 @@ class AutoEscalationTest(BaseCaseRuleTest):
             self.assertEqual(result.num_updates, 0)
             self.assertEqual(result.num_creates, 0)
 
-    @run_with_all_backends
     def test_when_delegate_exists(self):
         rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rule.add_action(CustomActionDefinition, name='ICDS_ESCALATE_TECH_ISSUE')
