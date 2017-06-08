@@ -6361,6 +6361,442 @@
                 "column_id": "nikshay_registered"
             },
             {
+                "display_name": "husband_father_name",
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "husband_father_name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "husband_father_name",
+                "transform": {}
+            },
+            {
+                "display_name": "age_entered",
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "age_entered"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "age_entered",
+                "transform": {}
+            },
+            {
+                "display_name": "phone_number",
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "phone_number"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "phone_number",
+                "transform": {}
+            },
+            {
+                "display_name": "secondary_phone",
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "secondary_phone"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "secondary_phone",
+                "transform": {}
+            },
+            {
+                "display_name": "current_address_first_line",
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "current_address_first_line"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "current_address_first_line",
+                "transform": {}
+            },
+            {
+                "display_name": "current_address_ward",
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "current_address_ward"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "current_address_ward",
+                "transform": {}
+            },
+            {
+                "display_name": "current_address_village_town_city",
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "current_address_village_town_city"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "current_address_village_town_city",
+                "transform": {}
+            },
+            {
+                "display_name": "current_address_state_choice",
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "current_address_state_choice"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "current_address_state_choice",
+                "transform": {}
+            },
+            {
+                "display_name": "treatment_supervisor_name",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "treatment_supervisor_name"
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "treatment_supervisor_name",
+                "transform": {}
+            },
+            {
+                "display_name": "treatment_supervisor_phone",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "treatment_supervisor_phone"
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "treatment_supervisor_phone",
+                "transform": {}
+            },
+            {
+                "display_name": "diagnostic_test_results",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "diagnostic_test_results"
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "diagnostic_test_results",
+                "transform": {}
+            },
+            {
+                "display_name": "treatment_initiation_status",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "treatment_initiation_status"
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "treatment_initiation_status",
+                "transform": {}
+            },
+            {
+                "display_name": "first_voucher_generation_date",
+                "datatype": "date",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "first_voucher_generation_date"
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "first_voucher_generation_date",
+                "transform": {}
+            },
+            {
+                "display_name": "first_voucher_validation_date",
+                "datatype": "date",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "first_voucher_validation_date"
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "first_voucher_validation_date",
+                "transform": {}
+            },
+            {
+                "display_name": "first_voucher_drugs",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "first_voucher_drugs"
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "first_voucher_drugs",
+                "transform": {}
+            },
+            {
+                "display_name": "site",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "site"
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "site",
+                "transform": {}
+            },
+            {
+                "display_name": "site_choice",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "site_choice"
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "site_choice",
+                "transform": {}
+            },
+            {
+                "display_name": "treatment_phase",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "treatment_phase"
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "treatment_phase",
+                "transform": {}
+            },
+            {
+                "display_name": "new_retreatment",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "new_retreatment"
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "new_retreatment",
+                "transform": {}
+            },
+            {
+                "display_name": "dst_status",
+                "datatype": "string",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "dst_status"
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "dst_status",
+                "transform": {}
+            },
+            {
+                "display_name": "",
+                "datatype": "string",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "treating_provider_name",
+                "transform": {}
+            },
+            {
+                "display_name": "",
+                "datatype": "string",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "treating_provider_id",
+                "transform": {}
+            },
+            {
+                "display_name": "",
+                "datatype": "string",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "date_of_registration",
+                "transform": {}
+            },
+            {
+                "display_name": "",
+                "datatype": "string",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "registered_by_provider_name",
+                "transform": {}
+            },
+            {
+                "display_name": "",
+                "datatype": "string",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "registered_by_provider_id",
+                "transform": {}
+            },
+            {
+                "display_name": "",
+                "datatype": "string",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "registered_by_provider_type",
+                "transform": {}
+            },
+            {
+                "display_name": "",
+                "datatype": "string",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "date_of_diagnosis2",
+                "transform": {}
+            },
+            {
+                "display_name": "",
+                "datatype": "string",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "total_adherence_score",
+                "transform": {}
+            },
+            {
                 "display_name": "pmdt_tb_number",
                 "column_id": "pmdt_tb_number",
                 "datatype": "string",
