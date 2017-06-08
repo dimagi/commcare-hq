@@ -46,6 +46,7 @@ class Command(BaseCommand):
                 'enikshay_enabled': 'yes',
                 'is_test': 'no',
                 'private_sector_org_id': org_id,
+                'sector': 'private',
             },
         )
 
@@ -74,6 +75,7 @@ class Command(BaseCommand):
                 'nikshay_code': agency.nikshayId,
                 'private_sector_agency_id': agency.agencyId,
                 'private_sector_org_id': org_id,
+                'sector': 'private',
 
             },
         )
