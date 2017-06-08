@@ -5,7 +5,8 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
      * These define tabs that are availabe in the debugger.
      * {
      *   id: <id of the tab HTML element>,
-     *   tab: <link to correspoding tab content. sets the href attribute>
+     *   tab: <link to corresponding tab content. sets the href attribute>
+     *   tabTemplate: <id of the tab's template>
      *   label: <label of the tab being displayed>
      * }
      */
