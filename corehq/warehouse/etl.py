@@ -1,3 +1,7 @@
+'''
+This files defines ETL objects that all have a common "load" function.
+Each object is meant for transfering one type of data to another type.
+'''
 import os
 
 from django.db import connections
@@ -8,14 +12,21 @@ from corehq.warehouse.utils import django_batch_records
 from corehq.sql_db.routers import db_for_read_write
 
 
-class CustomSQLETLMixin(object):
+class BaseETLMixin(object):
+
+    @classmethod
+    def load(cls, start_datetime, end_datetime):
+        raise NotImplementedError
+
+
+class CustomSQLETLMixin(BaseETLMixin):
 
     @classmethod
     def dependencies(cls):
         raise NotImplementedError
 
     @classmethod
-    def load(cls):
+    def load(cls, start_datetime, end_datetime):
         '''
         Bulk loads records for a dim or fact table from
         their corresponding dependencies
@@ -56,7 +67,7 @@ class CustomSQLETLMixin(object):
         return _render_template(path, cls._table_context())
 
 
-class CouchToDjangoETLMixin(object):
+class CouchToDjangoETLMixin(BaseETLMixin):
 
     @classmethod
     def field_mapping(cls):
