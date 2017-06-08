@@ -86,6 +86,7 @@ class Command(BaseCommand):
         user = make_location_user(agency_loc)
         user.user_location_id = agency_loc_id
         user.set_location(agency_loc, commit=False)
+        user.user_data['agency_id_legacy'] = agency_loc.metadata['private_sector_agency_id']
         user.user_data['user_level'] = user_level
         user.user_data['usertype'] = self.get_usertype(agency_loc.location_type.code)
         user.save()
