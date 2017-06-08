@@ -40,6 +40,50 @@ import commcare_translations
 class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     file_path = ('data', 'suite')
 
+    @staticmethod
+    def _add_columns_for_case_details(_module):
+        _module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'a'},
+                model='case',
+                field='a',
+                format='plain',
+                case_tile_field='header'
+            ),
+            DetailColumn(
+                header={'en': 'b'},
+                model='case',
+                field='b',
+                format='plain',
+                case_tile_field='top_left'
+            ),
+            DetailColumn(
+                header={'en': 'c'},
+                model='case',
+                field='c',
+                format='enum',
+                enum=[
+                    MappingItem(key='male', value={'en': 'Male'}),
+                    MappingItem(key='female', value={'en': 'Female'}),
+                ],
+                case_tile_field='sex'
+            ),
+            DetailColumn(
+                header={'en': 'd'},
+                model='case',
+                field='d',
+                format='plain',
+                case_tile_field='bottom_left'
+            ),
+            DetailColumn(
+                header={'en': 'e'},
+                model='case',
+                field='e',
+                format='date',
+                case_tile_field='date'
+            ),
+        ]
+
     def test_normal_suite(self):
         self._test_generic_suite('app', 'normal-suite')
 
@@ -530,48 +574,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         module.case_details.short.use_case_tiles = True
         module.case_details.short.persist_tile_on_forms = True
         module.case_details.short.pull_down_tile = True
-
-        module.case_details.short.columns = [
-            DetailColumn(
-                header={'en': 'a'},
-                model='case',
-                field='a',
-                format='plain',
-                case_tile_field='header'
-            ),
-            DetailColumn(
-                header={'en': 'b'},
-                model='case',
-                field='b',
-                format='plain',
-                case_tile_field='top_left'
-            ),
-            DetailColumn(
-                header={'en': 'c'},
-                model='case',
-                field='c',
-                format='enum',
-                enum=[
-                    MappingItem(key='male', value={'en': 'Male'}),
-                    MappingItem(key='female', value={'en': 'Female'}),
-                ],
-                case_tile_field='sex'
-            ),
-            DetailColumn(
-                header={'en': 'd'},
-                model='case',
-                field='d',
-                format='plain',
-                case_tile_field='bottom_left'
-            ),
-            DetailColumn(
-                header={'en': 'e'},
-                model='case',
-                field='e',
-                format='date',
-                case_tile_field='date'
-            ),
-        ]
+        self._add_columns_for_case_details(module)
 
         form = app.new_form(0, "Untitled Form", None)
         form.xmlns = 'http://id_m0-f0'
@@ -582,6 +585,60 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             app.create_suite(),
             "./entry/session"
         )
+
+    def test_persistent_case_tiles_from_another_module(self):
+        def ensure_module_session_datum_xml(detail_persistent_attr):
+            suite = factory.app.create_suite()
+            self.assertXmlPartialEqual(
+                """
+                <partial>
+                    <datum
+                        detail-confirm="m1_case_long"
+                        {detail_persistent_attr}
+                        detail-select="m1_case_short"
+                        id="case_id_load_person_0"
+                        nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                        value="./@case_id"
+                    />
+                </partial>
+                """.format(detail_persistent_attr=detail_persistent_attr),
+                suite,
+                'entry/command[@id="m1-f0"]/../session/datum',
+            )
+
+        factory = AppFactory()
+        module0, form0 = factory.new_advanced_module("m0", "person")
+        factory.form_requires_case(form0, "person")
+        module0.case_details.short.use_case_tiles = True
+        self._add_columns_for_case_details(module0)
+
+        module1, form1 = factory.new_advanced_module("m1", "person")
+        factory.form_requires_case(form1, "person")
+
+        # not configured to use other module's persistent case tile so
+        # has no detail-persistent attr
+        ensure_module_session_datum_xml('')
+
+        # configured to use other module's persistent case tile
+        module1.case_details.short.persistent_case_context_from_module = module0.unique_id
+        ensure_module_session_datum_xml('detail-persistent="m0_case_short"')
+
+        # set to use persistent case tile of its own as well but it would still
+        # persists case tiles from another module
+        module1.case_details.short.use_case_tiles = True
+        module1.case_details.short.persist_tile_on_forms = True
+        self._add_columns_for_case_details(module1)
+        ensure_module_session_datum_xml('detail-persistent="m0_case_short"')
+
+        # set to use case tile from a module that does not support case tiles anymore
+        # and has own persistent case tile as well
+        module0.case_details.short.use_case_tiles = False
+        ensure_module_session_datum_xml('detail-persistent="m1_case_short"')
+
+        # set to use case tile from a module that does not support case tiles anymore
+        # and does not have its own persistent case tile as well
+        module1.case_details.short.use_case_tiles = False
+        ensure_module_session_datum_xml('')
 
     def test_persistent_case_tiles_in_advanced_forms(self):
         """
