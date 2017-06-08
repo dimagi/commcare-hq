@@ -33,7 +33,7 @@ logger = get_task_logger(__name__)
 
 
 @periodic_task(
-    run_every=crontab(day_of_week=[1], hour=0, minute=0),  # every Monday
+    run_every=crontab(hour=0, minute=0),  # every day at midnight
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def enikshay_task():
