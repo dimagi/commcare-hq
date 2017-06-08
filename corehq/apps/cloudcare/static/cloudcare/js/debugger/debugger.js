@@ -25,6 +25,11 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
         EVAL_XPATH: 'EVAL_XPATH',
     };
 
+    var SessionTypes = {
+        FORM: 'form',
+        MENU: 'menu',
+    };
+
     var CloudCareDebugger = function(options) {
         var self = this;
         self.options = options || {};
@@ -102,7 +107,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
 
     var CloudCareDebuggerFormEntry = function(options) {
         var self = this;
-        CloudCareDebugger.call(self, options);
+        CloudCareDebugger.call(self, $.extend({ sessionType: SessionTypes.FORM }, options));
 
         self.instanceXml.subscribe(function(newXml) {
             var codeMirror,
@@ -147,7 +152,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
 
     var CloudCareDebuggerMenu = function(options) {
         var self = this;
-        CloudCareDebugger.call(self, options);
+        CloudCareDebugger.call(self, $.extend({ sessionType: SessionTypes.MENU }, options));
     };
     CloudCareDebuggerMenu.prototype = Object.create(CloudCareDebugger.prototype);
     CloudCareDebuggerMenu.prototype.constructor = CloudCareDebugger;
@@ -162,6 +167,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             username: null,
             restoreAs: null,
             domain: null,
+            sessionType: SessionTypes.FORM,
         });
         self.xpath = ko.observable('');
         self.selectedXPath = ko.observable('');
@@ -173,20 +179,31 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
         self.onSubmitXPath = function() {
             self.evaluate(self.xpath());
         };
+
         self.onClickSelectedXPath = function() {
             if (self.selectedXPath()) {
                 self.evaluate(self.selectedXPath());
                 self.selectedXPath('');
             }
         };
+
         self.onClickSavedQuery = function(query) {
             self.xpath(query.xpath);
         };
+
+        self.getSessionId = function() {
+            if (self.options.sessionType === SessionTypes.FORM) {
+                return self.options.formSessionId;
+            } else {
+                return self.options.menuSessionId;
+            }
+        };
+
         self.evaluate = function(xpath) {
             API.evaluateXPath(
                 self.options.baseUrl,
                 {
-                    session_id: self.options.formSessionId,
+                    session_id: self.getSessionId(),
                     username: self.options.username,
                     restoreAs: self.options.restoreAs,
                     domain: self.options.domain,
@@ -351,8 +368,9 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
     };
 
     var API = {
-        evaluateXPath: function(url, params) {
-            return API.request(url, 'evaluate-xpath', params);
+        evaluateXPath: function(url, params, sessionType) {
+            var action = sessionType === SessionTypes.MENU ? 'evaluate-menu-xpath' : 'evaluate-xpath';
+            return API.request(url, action, params);
         },
         formattedQuestions: function(url, params) {
             return API.request(url, 'formatted_questions', params);
