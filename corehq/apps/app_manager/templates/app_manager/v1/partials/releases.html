@@ -5,47 +5,6 @@
 {% load timezone_tags %}
 {% load i18n %}
 
-<script>
-    $(function () {
-       $('.hq-help-template').each(function () {
-            COMMCAREHQ.transformHelpTemplate($(this), true);
-       });
-    });
-    $(function () {
-        hqImport('hqwebapp/js/urllib.js').registerUrl(
-            'app_data',
-            '/a/' + '{{ domain }}' + '/apps/view/---/app_data/'
-        )
-        var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
-        var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
-        var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body')
-        $('#recent-changes-btn').on('click', function (e) {
-            appDiff.renderDiff({{ app.id|JSON }}, {{ latest_build_id|JSON }});
-        })
-        var o = {
-            currentAppVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
-            recipient_contacts: {{ sms_contacts|JSON }},
-            download_modal_id: '#download-zip-modal',
-            fetchLimit: {{ fetchLimit }},
-        };
-        var el = $('#releases-table');
-        var releasesMain = new ReleasesMain(o);
-        _.defer(function(){ releasesMain.getMoreSavedApps(false); });
-        el.koApplyBindings(releasesMain);
-
-        var app_langs = {{ app.langs|JSON }};
-        var app_profiles = {{ app.build_profiles|JSON }}
-        var practice_users = {{ practice_users|JSON }}
-
-        {% if build_profile_access %}
-        var profileManager = new ProfileManager(app_profiles, app_langs, practice_users);
-        $('#profiles-tab').koApplyBindings(profileManager);
-        $("#practice-users").select2({"allowClear": true, "data": practice_users});
-        {% endif %}
-    });
-
-    analytics.workflow('Visited the Release Manager');
-</script>
 
 {% if build_profile_access %}
 <div class="tabbable">
@@ -97,6 +56,9 @@
             <th>{% trans "CommCare Version" %}</th>
             <th></th>
             <th></th>
+            {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+                <th></th>
+            {% endif %}
             <th>{% trans "Comments" %}</th>
             {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
                 <th>Errors</th>

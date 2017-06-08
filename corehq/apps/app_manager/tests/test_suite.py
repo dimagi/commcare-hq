@@ -14,6 +14,8 @@ from corehq.apps.app_manager.models import (
     Application,
     DetailColumn,
     FormActionCondition,
+    GraphConfiguration,
+    GraphSeries,
     MappingItem,
     Module,
     OpenCaseAction,
@@ -374,6 +376,84 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_case_tile_suite(self):
         self._test_generic_suite("app_case_tiles", "suite-case-tiles")
 
+    def test_case_detail_conditional_enum(self):
+        app = Application.new_app('domain', 'Untitled Application')
+
+        module = app.add_module(Module.new_module('Unititled Module', None))
+        module.case_type = 'patient'
+
+        module.case_details.short.columns = [
+            DetailColumn(
+                header={'en': 'Gender'},
+                model='case',
+                field='gender',
+                format='conditional-enum',
+                enum=[
+                    MappingItem(key="gender = 'male' and age <= 21", value={'en': 'Boy'}),
+                    MappingItem(key="gender = 'female' and age <= 21", value={'en': 'Girl'}),
+                    MappingItem(key="gender = 'male' and age > 21", value={'en': 'Man'}),
+                    MappingItem(key="gender = 'female' and age > 21", value={'en': 'Woman'}),
+                ],
+            ),
+        ]
+
+        key1_varname = hashlib.md5("gender = 'male' and age <= 21").hexdigest()[:8]
+        key2_varname = hashlib.md5("gender = 'female' and age <= 21").hexdigest()[:8]
+        key3_varname = hashlib.md5("gender = 'male' and age > 21").hexdigest()[:8]
+        key4_varname = hashlib.md5("gender = 'female' and age > 21").hexdigest()[:8]
+
+        icon_mapping_spec = """
+        <partial>
+          <template>
+            <text>
+              <xpath function="if(gender = 'male' and age &lt;= 21, $h{key1_varname}, if(gender = 'female' and age &lt;= 21, $h{key2_varname}, if(gender = 'male' and age &gt; 21, $h{key3_varname}, if(gender = 'female' and age &gt; 21, $h{key4_varname}, ''))))">
+                <variable name="h{key4_varname}">
+                  <locale id="m0.case_short.case_gender_1.enum.h{key4_varname}"/>
+                </variable>
+                <variable name="h{key2_varname}">
+                  <locale id="m0.case_short.case_gender_1.enum.h{key2_varname}"/>
+                </variable>
+                <variable name="h{key3_varname}">
+                  <locale id="m0.case_short.case_gender_1.enum.h{key3_varname}"/>
+                </variable>
+                <variable name="h{key1_varname}">
+                  <locale id="m0.case_short.case_gender_1.enum.h{key1_varname}"/>
+                </variable>
+              </xpath>
+            </text>
+          </template>
+        </partial>
+        """.format(
+            key1_varname=key1_varname,
+            key2_varname=key2_varname,
+            key3_varname=key3_varname,
+            key4_varname=key4_varname,
+        )
+        # check correct suite is generated
+        self.assertXmlPartialEqual(
+            icon_mapping_spec,
+            app.create_suite(),
+            './detail[@id="m0_case_short"]/field/template'
+        )
+        # check app strings mapped correctly
+        app_strings = commcare_translations.loads(app.create_app_strings('en'))
+        self.assertEqual(
+            app_strings['m0.case_short.case_gender_1.enum.h{key1_varname}'.format(key1_varname=key1_varname, )],
+            'Boy'
+        )
+        self.assertEqual(
+            app_strings['m0.case_short.case_gender_1.enum.h{key2_varname}'.format(key2_varname=key2_varname, )],
+            'Girl'
+        )
+        self.assertEqual(
+            app_strings['m0.case_short.case_gender_1.enum.h{key3_varname}'.format(key3_varname=key3_varname, )],
+            'Man'
+        )
+        self.assertEqual(
+            app_strings['m0.case_short.case_gender_1.enum.h{key4_varname}'.format(key4_varname=key4_varname, )],
+            'Woman'
+        )
+
     def test_case_detail_icon_mapping(self):
         app = Application.new_app('domain', 'Untitled Application')
 
@@ -634,6 +714,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         module, form = factory.new_advanced_module("my_module", "person")
         factory.form_requires_case(form, "person")
         module.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
+        module.case_details.short.use_case_tiles = True
         module.case_details.short.persist_tile_on_forms = True
         module.case_details.short.persist_case_context = True
         suite = factory.app.create_suite()
@@ -713,7 +794,14 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             header={'en': 'CommBugz'},
             uuid='ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i',
             xpath_description='"report description"',
-            use_xpath_description=True
+            use_xpath_description=True,
+            complete_graph_configs={
+                chart.chart_id: GraphConfiguration(
+                    graph_type="bar",
+                    series=[GraphSeries() for c in chart.y_axis_columns],
+                )
+                for chart in report.charts
+            },
         )
         report_app_config._report = report
         report_module.report_configs = [report_app_config]

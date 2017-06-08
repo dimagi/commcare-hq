@@ -11,18 +11,22 @@ from corehq.apps.users.models import CommCareUser, WebUser, UserRole, Permission
 from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE, UserFieldsView
 from corehq.apps.users.forms import UpdateCommCareUserInfoForm
 from corehq.apps.users.signals import clean_commcare_user
+from corehq.apps.users.util import format_username
 from .utils import setup_enikshay_locations
 from ..user_setup import (
     LOC_TYPES_TO_USER_TYPES,
     set_user_role,
     validate_usertype,
     get_site_code,
-    ENikshayLocationFormSet
+    ENikshayLocationFormSet,
+    compress_nikshay_id,
+    get_new_username_and_id,
 )
 from ..models import IssuerId
 
 
 @flag_enabled('ENIKSHAY')
+@mock.patch('custom.enikshay.user_setup.skip_custom_setup', lambda *args: False)
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestUserSetupUtils(TestCase):
     domain = 'enikshay-user-setup'
@@ -292,3 +296,20 @@ class TestUserSetupUtils(TestCase):
             ('cto_sto_cra-z_nm3', 'cRa-Z n@m3', 'nikshaycode', 'cto', self.locations['STO']),
         ]:
             self.assertEqual(expected, get_site_code(name, nikshay_code, type_code, parent))
+
+    def test_conflicting_username(self):
+        def id_to_username(issuer_id):
+            return format_username(compress_nikshay_id(issuer_id, 3), self.domain)
+
+        # Figure out what the next issuer_id should be, and create a user with that username
+        issuer_id, _ = IssuerId.objects.get_or_create(domain=self.domain, user_id='some_id')
+        starting_count = IssuerId.objects.count()
+        username = id_to_username(issuer_id.pk + 1)
+        CommCareUser.create(self.domain, username, '123')
+
+        # Creating a new username should skip over that manually created user to avoid id conflicts
+        username, user_id = get_new_username_and_id(self.domain)
+        self.assertEqual(username, id_to_username(issuer_id.pk + 2))
+
+        # Two IssuerId objects should have been created - a real one and one for the bad, manual user
+        self.assertEqual(IssuerId.objects.count(), starting_count + 2)

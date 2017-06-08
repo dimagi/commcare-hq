@@ -57,7 +57,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "hqapps",
-        "index": "test_hqapps_2016-10-20_1835",
+        "index": "test_hqapps_2017-05-22_1426",
         "type": "app",
         "meta": {
             "settings": {
@@ -124,7 +124,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "hqgroups",
-        "index": "test_hqgroups_20150403_1501",
+        "index": "test_hqgroups_2017-05-29",
         "type": "group",
         "meta": {
             "settings": {
@@ -151,7 +151,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "hqusers",
-        "index": "test_hqusers_2017-05-11",
+        "index": "test_hqusers_2017-05-22",
         "type": "user",
         "meta": {
             "settings": {

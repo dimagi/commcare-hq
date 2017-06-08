@@ -383,7 +383,7 @@ hqDefine('app_manager/js/app_diff.js', function () {
         var cache = {};
 
         this.getAppData = function(appId) {
-            var url = reverse('app_data', appId),
+            var url = reverse('app_data_json', appId),
                 deferred = $.Deferred();
 
             if (cache.hasOwnProperty(appId)) {

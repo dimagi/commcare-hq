@@ -45,7 +45,7 @@
   <detail id="m0_case_short">
     <title>
       <text>
-        <locale id="m0.case_short.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <field>
@@ -69,7 +69,7 @@
   <detail id="m0_case_long">
     <title>
       <text>
-        <locale id="m0.case_long.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <field>
@@ -87,9 +87,7 @@
   </detail>
   <detail id="m1_careplan_goal_short">
     <title>
-      <text>
-        <locale id="m1.careplan_goal_short.title"/>
-      </text>
+      <text/>
     </title>
     <field>
       <header>
@@ -128,9 +126,7 @@
   </detail>
   <detail id="m1_careplan_goal_long">
     <title>
-      <text>
-        <locale id="m1.careplan_goal_long.title"/>
-      </text>
+      <text/>
     </title>
     <field>
       <header>
@@ -171,9 +167,7 @@
   </detail>
   <detail id="m1_careplan_task_short">
     <title>
-      <text>
-        <locale id="m1.careplan_task_short.title"/>
-      </text>
+      <text/>
     </title>
     <field>
       <header>
@@ -212,9 +206,7 @@
   </detail>
   <detail id="m1_careplan_task_long">
     <title>
-      <text>
-        <locale id="m1.careplan_task_long.title"/>
-      </text>
+      <text/>
     </title>
     <field>
       <header>

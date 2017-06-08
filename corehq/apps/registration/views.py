@@ -174,7 +174,7 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
 
     @property
     def prefilled_email(self):
-        return self.request.POST.get('e', '')
+        return self.request.GET.get('e', '') or self.request.POST.get('e', '')
 
     @property
     def atypical_user(self):
@@ -193,6 +193,7 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
             ),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'show_number': self.ab_show_number,
             'ab_test': self.ab_context,
         }

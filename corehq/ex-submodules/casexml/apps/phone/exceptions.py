@@ -1,5 +1,5 @@
 from casexml.apps.case.exceptions import CommCareCaseError
-from corehq.util.datadog.utils import log_counter
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.metrics import DATE_OPENED_CASEBLOCK_ERROR_COUNT
 
 
@@ -40,13 +40,13 @@ class DateOpenedBugException(RestoreException):
 
     def __init__(self, user, synclog_id, **kwargs):
         super(DateOpenedBugException, self).__init__(user, **kwargs)
-        details = {
-            "domain": user.domain,
-            "username": user.username,
-            "user_id": user.user_id,
-            "last_synclog_id": synclog_id
-        }
-        log_counter(DATE_OPENED_CASEBLOCK_ERROR_COUNT, details)
+        details = [
+            u"domain:{}".format(user.domain),
+            u"username:{}".format(user.username),
+            u"user_id:{}".format(user.user_id),
+            u"last_synclog_id:{}".format(synclog_id)
+        ]
+        datadog_counter(DATE_OPENED_CASEBLOCK_ERROR_COUNT, tags=details)
 
 
 class BadVersionException(RestoreException):

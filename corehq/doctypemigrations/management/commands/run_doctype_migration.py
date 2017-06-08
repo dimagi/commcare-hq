@@ -52,6 +52,9 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
+            'migrator_slug',
+        )
+        parser.add_argument(
             '--initial',
             action='store_true',
             default=False,
@@ -83,7 +86,7 @@ class Command(BaseCommand):
             default=False,
         )
 
-    def handle(self, migrator_slug=None, initial=None, continuous=None, cleanup=None,
+    def handle(self, migrator_slug, initial=None, continuous=None, cleanup=None,
                stats=None, erase_continuous_progress=None, **options):
         try:
             migrator = get_migrator_by_slug(migrator_slug)

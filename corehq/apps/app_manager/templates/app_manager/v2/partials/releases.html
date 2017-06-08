@@ -5,57 +5,6 @@
 {% load timezone_tags %}
 {% load i18n %}
 
-<script>
-    $(function () {
-       $('.hq-help-template').each(function () {
-            COMMCAREHQ.transformHelpTemplate($(this), true);
-       });
-    });
-    $(function () {
-        hqImport('hqwebapp/js/urllib.js').registerUrl(
-            'app_data',
-            '/a/' + '{{ domain }}' + '/apps/view/---/app_data/'
-        )
-        var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
-        var profiles = hqImport('app_manager/js/language-profiles.js');
-        profiles.setProfileUrl('{{ application_profile_url }}');
-        var ProfileManager = profiles.ProfileManager;
-        var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body')
-        $('#recent-changes-btn').on('click', function (e) {
-            appDiff.renderDiff({{ app.id|JSON }}, {{ latest_build_id|JSON }});
-        })
-        var o = {
-            currentAppVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
-            recipient_contacts: {{ sms_contacts|JSON }},
-            download_modal_id: '#download-zip-modal',
-            fetchLimit: {{ fetchLimit }},
-        };
-        var el = $('#releases-table');
-        if (el.length) {
-            var releasesMain = new ReleasesMain(o);
-            _.defer(function(){ releasesMain.getMoreSavedApps(false); });
-            el.koApplyBindings(releasesMain);
-        }
-
-        var app_langs = {{ app.langs|JSON }};
-        var app_profiles = {{ app.build_profiles|JSON }}
-        var practice_users = {{ practice_users|JSON }}
-
-        {% if not intro_only and build_profile_access %}
-        var profileManager = new ProfileManager(app_profiles, app_langs, practice_users);
-        $('#profiles-tab').koApplyBindings(profileManager);
-        $("#practice-users").select2({"allowClear": true, "data": practice_users});
-        {% endif %}
-    });
-    {% if intro_only %}
-    $(function () {
-        var previewApp = hqImport('app_manager/js/preview_app.js');
-        previewApp.forceShowPreview();
-    });
-    {% endif %}
-
-    //analytics.workflow('Visited the Release Manager');
-</script>
 
 {% if intro_only %}
   <div class="helpbubble helpbubble-primary helpbubble-left pull-left" style="max-width: 300px;">
@@ -153,11 +102,6 @@
         {% trans "Whoops, we couldn't get those versions for you. Could you try that again?" %}
     </div>
 
-    <div class="alert alert-info hide"
-         data-bind="visible: doneFetching() && !savedApps().length && buildButtonEnabled(), css: {hide: false}">
-        {% trans 'Use the <strong>Make New Version</strong> button to create and deploy the latest version of your application' %}
-    </div>
-
     <div class="releases-container"
          data-bind="css: {hide: false},
                     template: {
@@ -210,7 +154,7 @@
               </h4>
           </div>
           <div class="panel-body">
-            <inline-edit-v2 params="
+            <inline-edit params="
                 value: build_comment,
                 iconClass: 'fa fa-comment',
                 rows: 1,
@@ -219,7 +163,7 @@
                 saveParams: {'build_id': id},
                 saveValueName: 'comment',
                 errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
-            "></inline-edit-v2>
+            "></inline-edit>
           </div><!-- .panel-body -->
           <div class="panel-footer">
             <button class="btn btn-default hide"
@@ -243,7 +187,7 @@
                 <span class="fa fa-exclamation-circle hide"
                       data-bind="visible: build_broken, css: {hide: false}">
                 </span>
-                {% trans "Deploy Version" %}
+                {% trans "Publish" %}
             </a>
           </div><!-- .panel-footer -->
         </div><!-- .panel-release -->

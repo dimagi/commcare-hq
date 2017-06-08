@@ -21,10 +21,3 @@
         </script>
     </div>
 </div>
-{% if not ko_value %}
-<script>
-$(function () {
-    $('#module-filter').koApplyBindings({xpath: {{ value|JSON }} || ''});
-});
-</script>
-{% endif %}

@@ -555,6 +555,34 @@ ko.bindingHandlers.autocompleteSelect2 = new function(){
     };
 }();
 
+/**
+ * Autocomplete widget based on atwho.
+ */
+ko.bindingHandlers.autocompleteAtwho = {
+    init: function(element, valueAccessor) {
+        var $element = $(element);
+        if (!$element.atwho) {
+            throw new Error("The typeahead binding requires Atwho.js and Caret.js");
+        }
+
+        hqImport('style/js/atwho').init($element, {
+            afterInsert: function() {
+                $element.trigger('textchange');
+            },
+        });
+
+        $element.on("textchange", function() {
+            if ($element.val()) {
+                $element.change();
+              }
+          });
+    },
+
+    update: function(element, valueAccessor, allBindings){
+        $(element).atwho('load', '', ko.utils.unwrapObservable(valueAccessor()));
+    },
+};
+
 ko.bindingHandlers.multiTypeahead = {
     init: function(element, valueAccessor) {
         var contacts = valueAccessor();
