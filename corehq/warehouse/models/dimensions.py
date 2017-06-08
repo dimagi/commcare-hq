@@ -13,7 +13,7 @@ from corehq.warehouse.const import (
     DOMAIN_STAGING_SLUG,
 )
 
-from .shared import WarehouseTableMixin
+from .shared import CustomSQLETLMixin
 
 
 class BaseDim(models.Model):
@@ -27,7 +27,7 @@ class BaseDim(models.Model):
         abstract = True
 
 
-class UserDim(BaseDim, WarehouseTableMixin):
+class UserDim(BaseDim, CustomSQLETLMixin):
     '''
     Dimension for Users
 
@@ -54,7 +54,7 @@ class UserDim(BaseDim, WarehouseTableMixin):
         return [USER_STAGING_SLUG]
 
 
-class GroupDim(BaseDim, WarehouseTableMixin):
+class GroupDim(BaseDim, CustomSQLETLMixin):
     '''
     Dimension for Groups
 
@@ -75,7 +75,7 @@ class GroupDim(BaseDim, WarehouseTableMixin):
         return [GROUP_STAGING_SLUG]
 
 
-class LocationDim(BaseDim, WarehouseTableMixin):
+class LocationDim(BaseDim, CustomSQLETLMixin):
     '''
     Dimension for Locations
 
@@ -106,7 +106,7 @@ class LocationDim(BaseDim, WarehouseTableMixin):
         return [LOCATION_STAGING_SLUG]
 
 
-class DomainDim(BaseDim, WarehouseTableMixin):
+class DomainDim(BaseDim, CustomSQLETLMixin):
     '''
     Dimension for Domain
 
@@ -136,7 +136,7 @@ class DomainDim(BaseDim, WarehouseTableMixin):
         return [DOMAIN_STAGING_SLUG]
 
 
-class UserLocationDim(BaseDim, WarehouseTableMixin):
+class UserLocationDim(BaseDim, CustomSQLETLMixin):
     '''
     Dimension for User and Location mapping
 
@@ -148,7 +148,7 @@ class UserLocationDim(BaseDim, WarehouseTableMixin):
     location_dim = models.ForeignKey('LocationDim', on_delete=models.CASCADE)
 
 
-class UserGroupDim(BaseDim, WarehouseTableMixin):
+class UserGroupDim(BaseDim, CustomSQLETLMixin):
     '''
     Dimension for User and Group mapping
 

@@ -8,10 +8,10 @@ from corehq.warehouse.const import (
 )
 
 from .dimensions import UserDim
-from .shared import WarehouseTableMixin
+from .shared import CustomSQLETLMixin
 
 
-class ApplicationStatusFact(models.Model, WarehouseTableMixin):
+class ApplicationStatusFact(models.Model, CustomSQLETLMixin):
     '''
     Application Status Report Fact Table
 
