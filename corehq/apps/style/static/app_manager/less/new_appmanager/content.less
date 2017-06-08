@@ -14,30 +14,6 @@
   .transition(all 1s);
   .box-shadow(0 0 20px 0 rgba(0, 0, 0, .20));
 
-  &:after,
-  &:before{
-    content: "";
-    display: block;
-    position: absolute;
-    width: 114px;
-    height: 114px;
-    top: 50%;
-    left: 50%;
-    margin-left: -57px;
-    margin-top: -57px;
-
-    background-image: url('img/loading_flower.png');
-    background-size: 100% auto;
-    background-repeat: no-repeat;
-  }
-  &:before{
-    background-image: url('img/loading_flower.png');
-  }
-  &:before{
-    background-image: url('img/loading_spiral.png');
-    -webkit-animation: spin 4s infinite linear;
-  }
-
   &.formdesigner-content-wrapper {
     padding: 0;
   }
@@ -60,6 +36,39 @@
   }
 }
 
+.appmanager-loading-bg {
+  width: 224px;
+  height: 224px;
+
+  position: absolute;
+  top: 15vh;
+  left: 50%;
+  margin-left: -112px;
+
+  background-image: url('img/loading_flower.png');
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 100% auto;
+
+  &:before {
+    display: block;
+    content: '';
+    width: 100%;
+    height: 100%;
+    background-image: url('img/loading_spiral.png');
+    background-size: 100% auto;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    animation: spin 4s infinite linear;
+    -webkit-animation: spin 4s infinite linear;
+  }
+}
+
+@keyframes spin {
+  0%  {-webkit-transform: rotate(0deg);}
+  100% {-webkit-transform: rotate(360deg);}
+}
+
 @-webkit-keyframes spin {
   0%  {-webkit-transform: rotate(0deg);}
   100% {-webkit-transform: rotate(360deg);}
@@ -68,7 +77,6 @@
 .appmanager-content {
   display: none;
   position: relative;
-  z-index: 2;
 }
 
 #js-appmanager-body.appmanager-settings-content {
