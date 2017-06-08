@@ -1,3 +1,4 @@
+from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_active_schedule_instance_ids,
     get_active_case_schedule_instance_ids,
@@ -21,6 +22,10 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
 from django.core.management.base import BaseCommand
 from time import sleep
+
+
+def skip_domain(domain):
+    return DATA_MIGRATION.enabled(domain) or any_migrations_in_progress(domain)
 
 
 class Command(BaseCommand):
@@ -54,7 +59,7 @@ class Command(BaseCommand):
         for cls in (AlertScheduleInstance, TimedScheduleInstance):
             for domain, schedule_instance_id, next_event_due in get_active_schedule_instance_ids(
                     cls, datetime.utcnow()):
-                if DATA_MIGRATION.enabled(domain):
+                if skip_domain(domain):
                     continue
 
                 enqueue_lock = self.get_enqueue_lock(cls, schedule_instance_id, next_event_due)
@@ -64,7 +69,7 @@ class Command(BaseCommand):
         for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
             for domain, case_id, schedule_instance_id, next_event_due in get_active_case_schedule_instance_ids(
                     cls, datetime.utcnow()):
-                if DATA_MIGRATION.enabled(domain):
+                if skip_domain(domain):
                     continue
 
                 enqueue_lock = self.get_enqueue_lock(cls, schedule_instance_id, next_event_due)
