@@ -19,6 +19,6 @@ def get_available_modules_for_case_list_configuration(app, module):
 
 
 @register.filter
-def get_available_modules_for_case_tile_configuration(app, module):
-    valid_modules = get_available_modules_for_case_list_configuration(app, module)
+def get_available_modules_for_case_tile_configuration(app, for_module):
+    valid_modules = get_available_modules_for_case_list_configuration(app, for_module)
     return [m for m in valid_modules if m.case_details.short.use_case_tiles]
