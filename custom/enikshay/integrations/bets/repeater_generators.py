@@ -409,15 +409,46 @@ class BETSAYUSHReferralPayloadGenerator(IncentivePayloadGenerator):
 
 
 class BETSUserPayloadGenerator(UserPayloadGenerator):
+    # Not all of these are used, but the endpoint will fail without them
+    user_data_fields = [
+        "secondary_pincode", "address_line_1", "use_new_ids",
+        "pcc_pharmacy_affiliation", "plc_lab_collection_center_name",
+        "commcare_project", "pcp_professional_org_membership", "pincode",
+        "id_issuer_body", "agency_status", "secondary_date_of_birth",
+        "tb_corner", "pcc_pharmacy_name", "id_device_number",
+        "secondary_gender", "plc_tb_tests", "landline_no", "id_issuer_number",
+        "secondary_landline_no", "plc_lab_or_collection_center",
+        "secondary_first_name", "commcare_primary_case_sharing_id",
+        "pcp_qualification", "pac_qualification", "secondary_unique_id_type",
+        "email", "commcare_location_id", "issuing_authority",
+        "pcc_tb_drugs_in_stock", "secondary_mobile_no_2",
+        "secondary_mobile_no_1", "secondary_middle_name", "plc_accredidation",
+        "mobile_no_2", "commcare_location_ids", "mobile_no_1", "is_test",
+        "secondary_email", "id_device_body", "secondary_unique_id_Number",
+        "plc_hf_if_nikshay", "usertype", "user_level", "gender",
+        "secondary_address_line_1", "secondary_last_name",
+        "secondary_address_line_2", "address_line_2", "registration_number",
+        "nikshay_id",
+    ]
 
     def get_payload(self, repeat_record, user):
-        from corehq.apps.api.resources.v0_5 import CommCareUserResource
-        resource = CommCareUserResource(api_name='v0.5')
-        bundle = resource.build_bundle(obj=user)
-        user_json = resource.full_dehydrate(bundle).data
         location = user.get_sql_location(repeat_record.domain)
-        user_json['dtoLocation'] = _get_district_location(location)
-        user_json['privateSectorOrgId'] = location.metadata['private_sector_org_id']
+        user_json = {
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "default_phone_number": user.default_phone_number,
+            "id": user._id,
+            "phone_numbers": user.phone_numbers,
+            "email": user.email,
+            "dtoLocation": _get_district_location(location),
+            "privateSectorOrgId": location.metadata['private_sector_org_id'],
+            "resource_uri": "",
+        }
+        user_json['user_data'] = {
+            field: user.user_data.get(field, "")
+            for field in self.user_data_fields
+        }
         return json.dumps(user_json, cls=DjangoJSONEncoder)
 
 
