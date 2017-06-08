@@ -52,6 +52,82 @@ from custom.enikshay.case_utils import update_case
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestBetsResponseHandling(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
+    def setUp(self):
+        super(TestBetsResponseHandling, self).setUp()
+        user = CommCareUser.create(
+            self.domain,
+            "davos.shipwright@stannis.gov",
+            "123",
+        )
+        self.repeater = BETSUserRepeater(
+            domain=self.domain,
+            url='super-cool-url',
+        )
+        self.repeater.save()
+        self.repeat_record = RepeatRecord(
+            repeater_id=self.repeater.get_id,
+            payload_id=user.user_id,
+            next_check=datetime.utcnow(),
+        )
+
+    def test_success(self):
+        mock_response_json = {
+            "meta": {
+                "failCount": "0",
+                "successCount": "1",
+                "totalCount": "1",
+            },
+            "response": [
+                {
+                    "status": "Success",
+                    "failureDescription": ""
+                }
+            ]
+        }
+        mock_response = mock.MagicMock()
+        mock_response.status_code = 200
+        mock_response.json = mock.MagicMock(return_value=mock_response_json)
+
+        attempt = self.repeater.handle_response(mock_response, self.repeat_record)
+        self.assertTrue(attempt.succeeded)
+
+    def test_failure(self):
+        mock_response_json = {
+            "meta": {
+                "failCount": "1",
+                "successCount": "1",
+                "totalCount": "2",
+            },
+            "response": [
+                {
+                    "status": "Success",
+                    "failureDescription": ""
+                },
+                {
+                    "status": "Partial",
+                    "failureDescription": "yo"
+                }
+            ]
+        }
+        mock_response = mock.MagicMock()
+        mock_response.status_code = 200
+        mock_response.json = mock.MagicMock(return_value=mock_response_json)
+
+        attempt = self.repeater.handle_response(mock_response, self.repeat_record)
+        self.assertTrue(attempt.failure_reason)
+
+    def test_failure_2(self):
+        mock_response_json = {"status": "Failed", "code": "400"}
+        mock_response = mock.MagicMock()
+        mock_response.status_code = 200
+        mock_response.json = mock.MagicMock(return_value=mock_response_json)
+
+        attempt = self.repeater.handle_response(mock_response, self.repeat_record)
+        self.assertTrue(attempt.failure_reason)
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestVoucherRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
 
     def setUp(self):
