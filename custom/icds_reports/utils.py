@@ -20,8 +20,8 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from custom.icds_reports.const import LocationTypes
 from dimagi.utils.dates import DateSpan
 
-from custom.icds_reports.models import AggDailyUsageView, AggChildHealthMonthly, AggAwcMonthly, AggCcsRecordMonthly, \
-    AggAwcDailyView, DailyAttendanceView
+from custom.icds_reports.models import AggDailyUsageView, AggChildHealthMonthly, AggAwcMonthly, \
+    AggCcsRecordMonthly, AggAwcDailyView, DailyAttendanceView
 
 OPERATORS = {
     "==": operator.eq,

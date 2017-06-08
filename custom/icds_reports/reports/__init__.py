@@ -6,6 +6,7 @@ from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParam
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.util.dates import get_first_last_days
+from custom.icds_reports.reports.reports import MPRReport, ASRReport, TableauReport, DashboardReport
 
 
 class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYearMixin, GenericTabularReport):
@@ -122,7 +123,6 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
         table.insert(0, [export_sheet_name])
         return [export_sheet_name, table]
 
-from custom.icds_reports.reports.reports import MPRReport, ASRReport, TableauReport, DashboardReport
 
 CUSTOM_REPORTS = (
     ('BLOCK REPORTS', (
