@@ -80,8 +80,6 @@
 
         {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
         {% if request|toggle_enabled:'CASE_LIST_TILE' %}
-        {{ request|toggle_tag_info:"SHOW_PERSIST_CASE_CONTEXT_SETTING" }}
-        {% if request|toggle_enabled:'SHOW_PERSIST_CASE_CONTEXT_SETTING' %}
             {% with app|get_available_modules_for_case_tile_configuration:module as available_modules %}
             {% if available_modules %}
             <div class="row">
@@ -101,7 +99,6 @@
             </div>
             {% endif %}
             {% endwith %}
-        {% endif %}
         {% endif %}
         {% include 'app_manager/v2/partials/case_list_properties.html' %}
     </div>
