@@ -106,8 +106,10 @@ def _can_edit_workers_location(web_user, mobile_worker):
 @location_safe
 class EditCommCareUserView(BaseEditUserView):
     urlname = "edit_commcare_user"
-    user_update_form_class = UpdateCommCareUserInfoForm
     page_title = ugettext_noop("Edit Mobile Worker")
+
+    def _get_user_form(self, data):
+        return UpdateCommCareUserInfoForm(data=data, domain=self.domain, existing_user=self.editable_user)
 
     @property
     def template_name(self):

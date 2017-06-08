@@ -145,7 +145,6 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
 
 
 class BaseEditUserView(BaseUserSettingsView):
-    user_update_form_class = None
 
     @use_select2
     def dispatch(self, request, *args, **kwargs):
@@ -200,17 +199,16 @@ class BaseEditUserView(BaseUserSettingsView):
             )
         )
 
+    def _get_user_form(self, data):
+        raise NotImplementedError()
+
     @property
     @memoized
     def form_user_update(self):
-        if self.user_update_form_class is None:
-            raise NotImplementedError("You must specify a form to update the user!")
-
         if self.request.method == "POST" and self.request.POST['form_type'] == "update-user":
-            form = self.user_update_form_class(
-                data=self.request.POST, domain=self.domain, existing_user=self.editable_user)
+            form = self._get_user_form(self.request.POST)
         else:
-            form = self.user_update_form_class(domain=self.domain, existing_user=self.editable_user)
+            form = self._get_user_form(None)
 
         if self.can_change_user_roles:
             form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
@@ -292,7 +290,9 @@ class EditWebUserView(BaseEditUserView):
     template_name = "users/edit_web_user.html"
     urlname = "user_account"
     page_title = ugettext_noop("Edit User Role")
-    user_update_form_class = UpdateUserRoleForm
+
+    def _get_user_form(self, data):
+        return UpdateUserRoleForm(data=data, domain=self.domain, existing_user=self.editable_user)
 
     @property
     def user_role_choices(self):
