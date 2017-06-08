@@ -14,7 +14,7 @@ from corehq.warehouse.dbaccessors import (
     get_user_ids_by_last_modified,
     get_domain_ids_by_last_modified,
     get_synclog_ids_by_date,
-    get_forms_by_submission_date,
+    get_forms_by_last_modified,
 )
 from corehq.warehouse.utils import django_batch_records
 from corehq.warehouse.const import (
@@ -234,7 +234,7 @@ class FormStagingTable(StagingTable):
 
     @classmethod
     def raw_record_iter(cls, start_datetime, end_datetime):
-        return get_forms_by_submission_date(start_datetime, end_datetime)
+        return get_forms_by_last_modified(start_datetime, end_datetime)
 
 
 class SyncLogStagingTable(StagingTable):
