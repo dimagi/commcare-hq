@@ -120,7 +120,7 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
         # refetch so that memoized app.get_practice_user gets busted`
         app = Application.get(app._id)
         self.assertXmlPartialEqual(
-            self._get_restore_resource(self.user.demo_restore_id),
+            self._get_restore_resource(version_after),
             app.create_suite(),
             "./user-restore"
         )
