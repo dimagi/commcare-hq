@@ -138,7 +138,11 @@ class FormMetaColumnOption(ColumnOption):
     def get_indicator(self, aggregation, is_multiselect_chart_report=False):
         # aggregation parameter is never used because we need not infer the data type
         # self._question_source is a tuple of (identifier, datatype)
-        column_id = get_column_name(self._meta_property_spec[0].strip("/"))
+        identifier = self._meta_property_spec[0]
+        if isinstance(identifier, basestring):
+            identifier = [identifier]
+        identifier = "/".join(identifier)
+        column_id = get_column_name(identifier.strip("/"))
         return make_form_meta_block_indicator(self._meta_property_spec, column_id, root_doc=is_multiselect_chart_report)
 
 
