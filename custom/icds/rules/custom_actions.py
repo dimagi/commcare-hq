@@ -28,6 +28,21 @@ def _create_tech_issue_delegate_for_escalation(tech_issue, owner_id):
     )
 
 
+def _update_existing_tech_issue_delegate(tech_issue_delegate):
+    if tech_issue_delegate.get_case_property('change_in_level') == '1':
+        change_in_level = '2'
+    else:
+        change_in_level = '1'
+
+    return update_case(
+        tech_issue_delegate.domain,
+        tech_issue_delegate.case_id,
+        case_properties={'change_in_level': change_in_level},
+        close=False,
+        xmlns=AUTO_UPDATE_XMLNS,
+    )
+
+
 def _update_tech_issue_for_escalation(case, escalated_ticket_level):
     today = ServerTime(datetime.utcnow()).user_time(pytz.timezone('Asia/Kolkata')).done().date()
 
@@ -44,12 +59,16 @@ def _update_tech_issue_for_escalation(case, escalated_ticket_level):
     )
 
 
-def _escalated_tech_issue_delegate_exists(tech_issue, escalated_location_id):
+def _get_escalated_tech_issue_delegate(tech_issue, escalated_location_id):
     for subcase in tech_issue.get_subcases(index_identifier='parent'):
-        if subcase.type == 'tech_issue_delegate' and subcase.owner_id == escalated_location_id:
-            return True
+        if (
+            subcase.type == 'tech_issue_delegate' and
+            subcase.owner_id == escalated_location_id and
+            not subcase.closed
+        ):
+            return subcase
 
-    return False
+    return None
 
 
 def escalate_tech_issue(case, rule):
@@ -79,9 +98,15 @@ def escalate_tech_issue(case, rule):
     rule.log_submission(update_result[0].form_id)
 
     num_creates = 0
-    if not _escalated_tech_issue_delegate_exists(case, escalated_location_id):
+    num_related_updates = 0
+    tech_issue_delegate = _get_escalated_tech_issue_delegate(case, escalated_location_id)
+
+    if tech_issue_delegate:
+        _update_existing_tech_issue_delegate(tech_issue_delegate)
+        num_related_updates = 1
+    else:
         create_result = _create_tech_issue_delegate_for_escalation(case, escalated_location_id)
         rule.log_submission(create_result[0].form_id)
         num_creates = 1
 
-    return CaseRuleActionResult(num_updates=1, num_creates=num_creates)
+    return CaseRuleActionResult(num_updates=1, num_creates=num_creates, num_related_updates=num_related_updates)

@@ -86,7 +86,7 @@ class AutoEscalationTest(BaseCaseRuleTest):
             self.assertEqual(result.num_creates, 0)
 
     @run_with_all_backends
-    def test_skip_delegate_creation(self):
+    def test_when_delegate_exists(self):
         rule = _create_empty_rule(self.domain)
         rule.add_action(CustomActionDefinition, name='ICDS_ESCALATE_TECH_ISSUE')
 
@@ -105,10 +105,13 @@ class AutoEscalationTest(BaseCaseRuleTest):
             result = rule.run_actions_when_case_matches(tech_issue)
             self.assertEqual(result.num_updates, 1)
             self.assertEqual(result.num_creates, 1)
+            self.assertEqual(result.num_related_updates, 0)
 
             tech_issue = CaseAccessors(self.domain).get_case(tech_issue.case_id)
             subcases = tech_issue.get_subcases(index_identifier='parent')
             self.assertEqual(len(subcases), 1)
+            [tech_issue_delegate] = subcases
+            self.assertEqual(tech_issue_delegate.get_case_property('change_in_level'), '1')
 
             update_case(self.domain, tech_issue.case_id, case_properties={'ticket_level': 'block'})
             tech_issue = CaseAccessors(self.domain).get_case(tech_issue.case_id)
@@ -116,6 +119,10 @@ class AutoEscalationTest(BaseCaseRuleTest):
             result = rule.run_actions_when_case_matches(tech_issue)
             self.assertEqual(result.num_updates, 1)
             self.assertEqual(result.num_creates, 0)
+            self.assertEqual(result.num_related_updates, 1)
 
+            tech_issue = CaseAccessors(self.domain).get_case(tech_issue.case_id)
             subcases = tech_issue.get_subcases(index_identifier='parent')
             self.assertEqual(len(subcases), 1)
+            [tech_issue_delegate] = subcases
+            self.assertEqual(tech_issue_delegate.get_case_property('change_in_level'), '2')
