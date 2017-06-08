@@ -73,7 +73,6 @@ from corehq.apps.users.forms import (
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
                                       DomainRemovalRecord, UserRole, AdminUserRole, Invitation,
                                       DomainMembershipError)
-from corehq.apps.users.signals import clean_commcare_user
 from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.util.couch import get_document_or_404
 from corehq import toggles
@@ -277,29 +276,9 @@ class BaseEditUserView(BaseUserSettingsView):
         saved = False
         if self.request.POST['form_type'] == "commtrack":
             if self.commtrack_form.is_valid():
-                clean_commcare_user.send(
-                    'BaseEditUserView.commtrack',
-                    domain=self.domain,
-                    request_user=self.request.couch_user,
-                    user=self.editable_user,
-                    forms={self.commtrack_form.__class__.__name__: self.commtrack_form}
-                )
-                if self.commtrack_form.is_valid():
-                    self.commtrack_form.save(self.editable_user)
-                    saved = True
+                self.commtrack_form.save(self.editable_user)
+                saved = True
         elif self.request.POST['form_type'] == "update-user":
-            self.form_user_update.is_valid()
-            forms = {self.form_user_update.__class__.__name__: self.form_user_update}
-            if hasattr(self, 'custom_data'):
-                self.custom_data.is_valid()
-                forms[self.custom_data.__class__.__name__] = self.custom_data
-            clean_commcare_user.send(
-                'BaseEditUserView.update_user',
-                domain=self.domain,
-                request_user=self.request.couch_user,
-                user=self.editable_user,
-                forms=forms
-            )
             if all([self.update_user(), self.custom_user_is_valid()]):
                 messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
                 saved = True

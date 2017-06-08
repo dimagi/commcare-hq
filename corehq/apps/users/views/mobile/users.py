@@ -74,7 +74,6 @@ from corehq.apps.users.forms import (
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.const import ANONYMOUS_USERNAME, ANONYMOUS_FIRSTNAME, ANONYMOUS_LASTNAME
-from corehq.apps.users.signals import clean_commcare_user
 from corehq.apps.users.tasks import bulk_upload_async, turn_on_demo_mode_task, reset_demo_user_restore_task, \
     bulk_download_users_async
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
@@ -277,13 +276,6 @@ class EditCommCareUserView(BaseEditUserView):
             phone_number = self.request.POST['phone_number']
             phone_number = re.sub('\s', '', phone_number)
             if re.match(r'\d+$', phone_number):
-                clean_commcare_user.send(
-                    'EditCommCareUserView.phone_number',
-                    domain=self.domain,
-                    request_user=self.request.couch_user,
-                    user=self.editable_user,
-                    forms={'phone_number': phone_number},
-                )
                 self.editable_user.add_phone_number(phone_number)
                 self.editable_user.save()
                 messages.success(request, _("Phone number added!"))
@@ -759,9 +751,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 return {'error': _("Forms did not validate")}
             couch_user = self._build_anonymous_commcare_user()
         else:
-            is_valid()
-            couch_user = self._build_commcare_user()
-            self.send_clean_commcare_user_signal(couch_user)
             if not is_valid():
                 return {'error': _("Forms did not validate")}
 
@@ -777,18 +766,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 args=[self.domain, couch_user.userID]
             )
         }
-
-    def send_clean_commcare_user_signal(self, couch_user):
-        clean_commcare_user.send(
-            'MobileWorkerListView.create_mobile_worker',
-            domain=self.domain,
-            request_user=self.request.couch_user,
-            user=couch_user,
-            forms={
-                self._mobile_worker_form.__class__.__name__: self._mobile_worker_form,
-                self.custom_data.__class__.__name__: self.custom_data,
-            }
-        )
 
     def _build_anonymous_commcare_user(self):
         username = ANONYMOUS_USERNAME

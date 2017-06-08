@@ -10,7 +10,6 @@ from corehq.apps.locations.views import LocationFieldsView
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole, Permissions
 from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE, UserFieldsView
 from corehq.apps.users.forms import UpdateCommCareUserInfoForm
-from corehq.apps.users.signals import clean_commcare_user
 from corehq.apps.users.util import format_username
 from .utils import setup_enikshay_locations
 from ..user_setup import (
@@ -187,14 +186,7 @@ class TestUserSetupUtils(TestCase):
         )
         self.assertValid(user_form)
         self.assertValid(custom_data)
-        clean_commcare_user.send(
-            'BaseEditUserView.update_user',
-            domain=self.domain,
-            request_user=self.web_user,
-            user=user,
-            forms={'UpdateCommCareUserInfoForm': user_form,
-                   'CustomDataEditor': custom_data}
-        )
+        # TODO update this test to account for form subclasses
         self.assertValid(user_form)
         self.assertInvalid(custom_data)  # there should be an error
 
