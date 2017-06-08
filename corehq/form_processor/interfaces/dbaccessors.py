@@ -61,7 +61,7 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def iter_form_ids_by_submission_date(start_datetime, end_datetime):
+    def iter_forms_by_submission_date(start_datetime, end_datetime):
         raise NotImplementedError
 
     @abstractmethod
@@ -137,9 +137,8 @@ class FormAccessors(object):
     def get_forms_by_type(self, type_, limit, recent_first=False):
         return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
 
-    def iter_form_ids_by_submission_date(self, start_datetime, end_datetime):
-        return self.db_accessor.iter_form_ids_by_submission_date(
-            self.domain,
+    def iter_forms_by_submission_date(self, start_datetime, end_datetime):
+        return self.db_accessor.iter_forms_by_submission_date(
             start_datetime,
             end_datetime,
         )

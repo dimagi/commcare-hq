@@ -11,6 +11,7 @@ import csiphash
 import six
 from django.conf import settings
 from django.db import connections, InternalError, transaction
+from django.db.models import Q
 
 from corehq.blobs import get_blob_db
 from corehq.form_processor.exceptions import (
@@ -292,16 +293,13 @@ class FormAccessorSQL(AbstractFormAccessor):
         return list(XFormAttachmentSQL.objects.raw('SELECT * from get_form_attachments(%s)', [form_id]))
 
     @staticmethod
-    def iter_form_ids_by_submission_date(start_datetime, end_datetime):
-        with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute(
-                'SELECT * from get_form_ids_by_type_and_date(%s, %s, %s)',
-                [start_datetime, end_datetime, XFormInstanceSQL.NORMAL],
-            )
-            # TODO make this a real iterator
-            results = fetchall_as_namedtuple(cursor)
-            for result in results:
-                yield result
+    def iter_forms_by_submission_date(start_datetime, end_datetime):
+        from corehq.sql_db.util import run_query_across_partitioned_databases
+
+        return run_query_across_partitioned_databases(
+            XFormInstanceSQL,
+            Q(received_on__gt=start_datetime) & Q(received_on__lte=end_datetime)
+        )
 
     @staticmethod
     def get_with_attachments(form_id):

@@ -78,7 +78,7 @@ class FormAccessorTestsSQL(TestCase):
             received_on=datetime(2015, 1, 1)
         )
 
-        forms = list(FormAccessorSQL.iter_form_ids_by_submission_date(start, end))
+        forms = list(FormAccessorSQL.iter_forms_by_submission_date(start, end))
         self.assertEqual(1, len(forms))
         self.assertEqual(form1.form_id, forms[0].form_id)
 
