@@ -101,11 +101,6 @@
         {% trans "Whoops, we couldn't get those versions for you. Could you try that again?" %}
     </div>
 
-    <div class="alert alert-info hide"
-         data-bind="visible: doneFetching() && !savedApps().length && buildButtonEnabled(), css: {hide: false}">
-        {% trans 'Use the <strong>Make New Version</strong> button to create and deploy the latest version of your application' %}
-    </div>
-
     <div class="releases-container"
          data-bind="css: {hide: false},
                     template: {
@@ -191,7 +186,7 @@
                 <span class="fa fa-exclamation-circle hide"
                       data-bind="visible: build_broken, css: {hide: false}">
                 </span>
-                {% trans "Deploy Version" %}
+                {% trans "Publish" %}
             </a>
           </div><!-- .panel-footer -->
         </div><!-- .panel-release -->

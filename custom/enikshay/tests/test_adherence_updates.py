@@ -4,6 +4,7 @@ from django.test import TestCase
 
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
     FixtureDataItem, FieldList, FixtureItemField
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 from casexml.apps.case.mock import CaseFactory
@@ -20,6 +21,7 @@ from custom.enikshay.const import (
 )
 from custom.enikshay.data_store import AdherenceDatastore
 from custom.enikshay.tasks import EpisodeUpdater, EpisodeAdherenceUpdate
+from custom.enikshay.integrations.ninetyninedots.utils import update_episode_adherence_properties
 from custom.enikshay.tests.utils import (
     get_person_case_structure,
     get_adherence_case_structure,
@@ -155,13 +157,18 @@ class TestAdherenceUpdater(TestCase):
         ])
 
     def assert_update(self, input, output):
-        update = self.calculate_adherence_update(input)
+        episode = self.create_episode_case(input)
+
+        self.case_updater.run()
+        # refetch episode case after updates
+        episode = CaseAccessors(self.domain).get_case(episode.case_id)
+
         self.assertDictEqual(
-            update.update_json()['update'],
-            output
+            {key: episode.dynamic_case_properties()[key] for key in output},
+            {key: str(val) for key, val in output.iteritems()}  # convert values to strings
         )
 
-    def calculate_adherence_update(self, input):
+    def create_episode_case(self, input):
         self.case_updater.purge_date = input[0]
         # setup episode and adherence cases
         adherence_schedule_date_start, adherence_schedule_id = input[1]
@@ -169,10 +176,13 @@ class TestAdherenceUpdater(TestCase):
         episode = self._create_episode_case(adherence_schedule_date_start, adherence_schedule_id)
         self._create_adherence_cases(adherence_cases)
 
+        # rebuild so that adherence UCR data gets updated
         rebuild_indicators(self.data_store.datasource._id)
         self.data_store.adapter.refresh_table()
 
-        return EpisodeAdherenceUpdate(episode, self.case_updater)
+        # _get_open_episode_cases doesn't work in tests due to caseaccessors returning empty list, so override it
+        self.case_updater._get_open_episode_cases = mock.MagicMock(return_value=[episode])
+        return episode
 
     def test_adherence_schedule_date_start_late(self):
         #   Sample test case
@@ -485,11 +495,12 @@ class TestAdherenceUpdater(TestCase):
         )
 
     def test_count_taken_by_day(self):
-        episode_update = self.calculate_adherence_update((
+        episode = self.create_episode_case((
             datetime.date(2016, 1, 20),
             (datetime.date(2016, 1, 10), 'schedule1'),
             []
         ))
+        episode_update = EpisodeAdherenceUpdate(episode, self.case_updater)
 
         def dose_taken_by_day(cases):
             # cases a list of tuples
@@ -634,4 +645,79 @@ class TestAdherenceUpdater(TestCase):
                  DTIndicators[0], 'enikshay', True, HISTORICAL_CLOSURE_REASON),
             ]),
             {datetime.date(2016, 1, 3): True}
+        )
+
+    def test_update_by_person(self):
+        initial_data = (
+            datetime.date(2016, 1, 15),
+            (datetime.date(2016, 1, 17), 'schedule1'),
+            []
+        )
+
+        expected_update = {
+            'aggregated_score_date_calculated': datetime.date(2016, 1, 16),
+            'expected_doses_taken': 0,
+            'aggregated_score_count_taken': 0,
+            # 1 day before should be adherence_schedule_date_start,
+            'adherence_latest_date_recorded': datetime.date(2016, 1, 16),
+            'adherence_total_doses_taken': 0
+        }
+
+        episode = self.create_episode_case(initial_data)
+        update_episode_adherence_properties(self.domain, self.person_id)
+
+        episode = CaseAccessors(self.domain).get_case(episode.case_id)
+        self.assertDictEqual(
+            {key: episode.dynamic_case_properties()[key] for key in expected_update},
+            {key: str(val) for key, val in expected_update.iteritems()}  # convert values to strings
+        )
+
+    def test_adherence_score_start_date_month(self):
+        # If the start date is more than a month ago, calculate the last month's scores
+        self.case_updater.date_today_in_india = datetime.date(2016, 1, 31)
+        self.assert_update(
+            (
+                datetime.date(2016, 1, 30),
+                (datetime.date(2015, 12, 31), 'schedule1'),  # adherence_schedule_date_start
+                [
+                    (datetime.date(2015, 12, 31), DTIndicators[0]),
+                    (datetime.date(2016, 1, 15), DTIndicators[0]),
+                    (datetime.date(2016, 1, 17), DTIndicators[0]),
+                    (datetime.date(2016, 1, 20), DTIndicators[0]),
+                    (datetime.date(2016, 1, 30), DTIndicators[0]),
+                ]
+            ),
+            {
+                'one_week_score_count_taken': 1,
+                'two_week_score_count_taken': 3,
+                'month_score_count_taken': 4,
+                'one_week_adherence_score': 14.29,
+                'two_week_adherence_score': 21.43,
+                'month_adherence_score': 13.33,
+            }
+        )
+
+    def test_adherence_score_start_date_week(self):
+        # If the start date is only a week ago, don't send 2 week or month scores
+        self.case_updater.date_today_in_india = datetime.date(2016, 1, 31)
+        self.assert_update(
+            (
+                datetime.date(2016, 1, 30),
+                (datetime.date(2016, 1, 24), 'schedule1'),  # adherence_schedule_date_start
+                [
+                    (datetime.date(2015, 12, 31), DTIndicators[0]),
+                    (datetime.date(2016, 1, 15), DTIndicators[0]),
+                    (datetime.date(2016, 1, 17), DTIndicators[0]),
+                    (datetime.date(2016, 1, 20), DTIndicators[0]),
+                    (datetime.date(2016, 1, 30), DTIndicators[0]),
+                ]
+            ),
+            {
+                'one_week_score_count_taken': 1,
+                'two_week_score_count_taken': 0,
+                'month_score_count_taken': 0,
+                'one_week_adherence_score': 14.29,
+                'two_week_adherence_score': 0.0,
+                'month_adherence_score': 0.0,
+            }
         )

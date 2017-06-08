@@ -351,6 +351,9 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
             ]
         ) for link in form_links]
 
+    if should_edit('post_form_workflow_fallback'):
+        form.post_form_workflow_fallback = request.POST.get('post_form_workflow_fallback')
+
     if should_edit('custom_instances'):
         instances = json.loads(request.POST.get('custom_instances'))
         try:  # validate that custom instances can be added into the XML
@@ -598,10 +601,12 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'is_module_filter_enabled': app.enable_module_filtering,
         'is_case_list_form': form.is_case_list_form,
         'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
-        'case_xpath_pattern_matches': CASE_XPATH_PATTERN_MATCHES,
-        'case_xpath_substring_matches': CASE_XPATH_SUBSTRING_MATCHES,
-        'user_case_xpath_pattern_matches': USER_CASE_XPATH_PATTERN_MATCHES,
-        'user_case_xpath_substring_matches': USER_CASE_XPATH_SUBSTRING_MATCHES,
+        'form_filter_patterns': {
+            'case': CASE_XPATH_PATTERN_MATCHES,
+            'case_substring': CASE_XPATH_SUBSTRING_MATCHES,
+            'usercase': USER_CASE_XPATH_PATTERN_MATCHES,
+            'usercase_substring': USER_CASE_XPATH_SUBSTRING_MATCHES,
+        },
         'custom_instances': [
             {'instanceId': instance.instance_id, 'instancePath': instance.instance_path}
             for instance in form.custom_instances
@@ -639,7 +644,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             for candidate_form in candidate_module.get_forms()
         ]
 
-    template = None
     if isinstance(form, CareplanForm):
         case_config_options.update({
             'case_preload': [
@@ -652,11 +656,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             'mode': form.mode,
             'save_url': reverse("edit_careplan_form_actions", args=[app.domain, app.id, form.unique_id]),
         })
-        template = get_app_manager_template(
-            request.user,
-            "app_manager/v1/form_view_careplan.html",
-            "app_manager/v2/form_view_careplan.html",
-        )
     elif isinstance(form, AdvancedForm):
         def commtrack_programs():
             if app.commtrack_enabled:
@@ -693,11 +692,6 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             context.update({
                 'schedule_options': schedule_options,
             })
-        template = get_app_manager_template(
-            request.user,
-            "app_manager/v1/form_view_advanced.html",
-            "app_manager/v2/form_view_advanced.html",
-        )
     else:
         context.update({
             'show_custom_ref': toggles.APP_BUILDER_CUSTOM_PARENT_REF.enabled_for_request(request),
@@ -708,13 +702,13 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             'save_url': reverse("edit_form_actions", args=[app.domain, app.id, form.unique_id]),
             'valid_index_names': valid_index_names,
         })
-        template = get_app_manager_template(
-            request.user,
-            "app_manager/v1/form_view.html",
-            "app_manager/v2/form_view.html",
-        )
 
     context.update({'case_config_options': case_config_options})
+    template = get_app_manager_template(
+        request.user,
+        "app_manager/v1/form_view.html",
+        "app_manager/v2/form_view.html",
+    )
     return template, context
 
 

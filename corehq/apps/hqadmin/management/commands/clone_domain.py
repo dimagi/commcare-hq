@@ -18,6 +18,7 @@ types = [
     "feature_flags",
     'fixtures',
     'locations',
+    'types_only'
     'products',
     'ucr',
     'apps',
@@ -73,7 +74,8 @@ class Command(BaseCommand):
             self.copy_fixtures()
 
         if self._clone_type(options, 'locations'):
-            self.copy_locations()
+            types_only = self._clone_type(options, 'types_only')
+            self.copy_locations(types_only)
 
         if self._clone_type(options, 'products'):
             self.copy_products()
@@ -155,7 +157,7 @@ class Command(BaseCommand):
         existing_fixture_config = CalendarFixtureSettings.for_domain(self.existing_domain)
         self.save_sql_copy(existing_fixture_config, self.new_domain)
 
-    def copy_locations(self):
+    def copy_locations(self, types_only=False):
         from corehq.apps.locations.models import LocationType, SQLLocation
         from corehq.apps.locations.views import LocationFieldsView
 
@@ -169,22 +171,23 @@ class Command(BaseCommand):
             old_id, new_id = self.save_sql_copy(location_type, self.new_domain)
             location_types_map[old_id] = new_id
 
-        # MPTT sorts this queryset so we can just save in the same order
-        new_loc_pks_by_code = {}
-        for loc in SQLLocation.active_objects.filter(domain=self.existing_domain):
-            # start with a new location so we don't inadvertently copy over a bunch of foreign keys
-            new_loc = SQLLocation()
-            for field in ["name", "site_code", "external_id", "metadata",
-                          "is_archived", "latitude", "longitude"]:
-                setattr(new_loc, field, getattr(loc, field, None))
-            new_loc.domain = self.new_domain
-            new_loc.parent_id = new_loc_pks_by_code[loc.parent.site_code] if loc.parent_id else None
-            new_loc.location_type_id = location_types_map[loc.location_type_id]
-            _, new_pk = self.save_sql_copy(new_loc, self.new_domain)
-            new_loc_pks_by_code[new_loc.site_code] = new_pk
+        if not types_only:
+            # MPTT sorts this queryset so we can just save in the same order
+            new_loc_pks_by_code = {}
+            for loc in SQLLocation.active_objects.filter(domain=self.existing_domain):
+                # start with a new location so we don't inadvertently copy over a bunch of foreign keys
+                new_loc = SQLLocation()
+                for field in ["name", "site_code", "external_id", "metadata",
+                              "is_archived", "latitude", "longitude"]:
+                    setattr(new_loc, field, getattr(loc, field, None))
+                new_loc.domain = self.new_domain
+                new_loc.parent_id = new_loc_pks_by_code[loc.parent.site_code] if loc.parent_id else None
+                new_loc.location_type_id = location_types_map[loc.location_type_id]
+                _, new_pk = self.save_sql_copy(new_loc, self.new_domain)
+                new_loc_pks_by_code[new_loc.site_code] = new_pk
 
-        existing_fixture_config = LocationFixtureConfiguration.for_domain(self.existing_domain)
-        self.save_sql_copy(existing_fixture_config, self.new_domain)
+            existing_fixture_config = LocationFixtureConfiguration.for_domain(self.existing_domain)
+            self.save_sql_copy(existing_fixture_config, self.new_domain)
 
     def copy_products(self):
         from corehq.apps.products.models import Product

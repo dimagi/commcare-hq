@@ -182,6 +182,7 @@
                     <div role="tabpanel" class="tab-pane" id="debugger-evaluate">
                         <div data-bind="template: {
                             name: 'debugger-eval-ko-template',
+                            afterRender: afterRender,
                             data: evalXPath }">
                         </div>
                     </div>
@@ -214,13 +215,13 @@
           </div>
           </div>
           <div class="col-sm-12">
-              <div
+              <textarea
                   id="evaluate-result"
                   type="text"
                   data-bind="
-                      text: result,
+                      value: result,
                       css: { 'text-danger': !success() }
-              "></div>
+              "></textarea>
           </div>
       </form>
       <div class="row">

@@ -657,13 +657,21 @@ def edit_app_attr(request, domain, app_id, attr):
         'auto_gps_capture',
         # RemoteApp only
         'profile_url',
-        'manage_urls'
+        'manage_urls',
+        'mobile_ucr_sync_interval',
     ]
     if attr not in attributes:
         return HttpResponseBadRequest()
 
     def should_edit(attribute):
         return attribute == attr or ('all' == attr and attribute in hq_settings)
+
+    def parse_sync_interval(interval):
+        try:
+            return int(interval)
+        except ValueError:
+            pass
+
     resp = {"update": {}}
     # For either type of app
     easy_attrs = (
@@ -686,6 +694,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('comment', None),
         ('custom_base_url', None),
         ('use_j2me_endpoint', None),
+        ('mobile_ucr_sync_interval', parse_sync_interval),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):

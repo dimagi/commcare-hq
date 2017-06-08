@@ -739,7 +739,7 @@ class UserRepeaterTest(TestCase):
         self.assertEqual(1, len(records))
         record = records[0]
         self.assertEqual(
-            record.get_payload(),
+            json.loads(record.get_payload()),
             {
                 'id': user._id,
                 'username': user.username,
@@ -798,7 +798,7 @@ class LocationRepeaterTest(TestCase):
         self.assertEqual(1, len(records))
         record = records[0]
         self.assertEqual(
-            record.get_payload(),
+            json.loads(record.get_payload()),
             {
                 '_id': location.location_id,
                 'doc_type': 'Location',
@@ -810,6 +810,7 @@ class LocationRepeaterTest(TestCase):
                 'lineage': [],
                 'location_id': location.location_id,
                 'location_type': 'city',
+                'location_type_code': 'city',
                 'longitude': None,
                 'metadata': {},
                 'name': location.name,

@@ -6,9 +6,11 @@ from datetime import datetime, date
 import pytz
 from pytz import timezone
 
+from django.core.serializers.json import DjangoJSONEncoder
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.exceptions import RequestConnectionError
-from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator, LocationPayloadGenerator
+from corehq.apps.repeaters.repeater_generators import (
+    BasePayloadGenerator, LocationPayloadGenerator, UserPayloadGenerator)
 from custom.enikshay.case_utils import update_case, get_person_case_from_episode
 from custom.enikshay.const import (
     DATE_FULFILLED,
@@ -31,6 +33,17 @@ from custom.enikshay.integrations.bets.const import (
     LOCATION_TYPE_MAP,
     CHEMIST_VOUCHER_EVENT, LAB_VOUCHER_EVENT, TOTAL_DAY_THRESHOLDS)
 from custom.enikshay.exceptions import NikshayLocationNotFound
+from .utils import get_bets_location_json
+
+
+def _get_district_location(pcp_location):
+    try:
+        district_location = pcp_location.parent
+        if district_location.location_type.code != 'dto':
+            raise NikshayLocationNotFound("Parent location of {} is not a district".format(pcp_location))
+        return pcp_location.parent.location_id
+    except AttributeError:
+        raise NikshayLocationNotFound("Parent location of {} not found".format(pcp_location))
 
 
 class BETSPayload(jsonobject.JsonObject):
@@ -56,16 +69,6 @@ class BETSPayload(jsonobject.JsonObject):
                 )
             raise NikshayLocationNotFound(msg)
 
-    @classmethod
-    def _get_district_location(cls, pcp_location):
-        try:
-            district_location = pcp_location.parent
-            if district_location.location_type.code != 'dto':
-                raise NikshayLocationNotFound("Parent location of {} is not a district".format(pcp_location))
-            return pcp_location.parent.location_id
-        except AttributeError:
-            raise NikshayLocationNotFound("Parent location of {} not found".format(pcp_location))
-
 
 class IncentivePayload(BETSPayload):
     EpisodeID = jsonobject.StringProperty(required=False)
@@ -88,7 +91,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
-            DTOLocation=cls._get_district_location(pcp_location),
+            DTOLocation=_get_district_location(pcp_location),
         )
 
     @classmethod
@@ -111,7 +114,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
-            DTOLocation=cls._get_district_location(pcp_location)
+            DTOLocation=_get_district_location(pcp_location)
         )
 
     @classmethod
@@ -133,7 +136,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType="patient",
             EpisodeID=episode_case.case_id,
             Location=person_case.dynamic_case_properties().get('last_owner'),
-            DTOLocation=cls._get_district_location(location),
+            DTOLocation=_get_district_location(location),
         )
 
     @staticmethod
@@ -160,7 +163,7 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
-            DTOLocation=cls._get_district_location(location),
+            DTOLocation=_get_district_location(location),
         )
 
     @classmethod
@@ -181,8 +184,11 @@ class IncentivePayload(BETSPayload):
             BeneficiaryType='ayush_other',
             EpisodeID=episode_case.case_id,
             Location=episode_case_properties.get("created_by_user_location_id"),
-            DTOLocation=cls._get_district_location(location),
+            DTOLocation=_get_district_location(location),
         )
+
+    def payload_json(self):
+        return {"incentive_details": [self.to_json()]}
 
 
 class VoucherPayload(BETSPayload):
@@ -215,9 +221,12 @@ class VoucherPayload(BETSPayload):
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             Location=fulfilled_by_location_id,
             Amount=voucher_case_properties.get(AMOUNT_APPROVED),
-            DTOLocation=cls._get_district_location(location),
+            DTOLocation=_get_district_location(location),
             InvestigationType=voucher_case_properties.get(INVESTIGATION_TYPE),
         )
+
+    def payload_json(self):
+        return {"voucher_details": [self.to_json()]}
 
 
 class BETSBasePayloadGenerator(BasePayloadGenerator):
@@ -278,10 +287,10 @@ class BaseBETSVoucherPayloadGenerator(BETSBasePayloadGenerator):
             BeneficiaryUUID="DUMMY-BENEFICIARY-ID",
             BeneficiaryType="chemist",
             location="DUMMY-LOCATION",
-        ).to_json())
+        ).payload_json())
 
     def get_payload(self, repeat_record, voucher_case):
-        return json.dumps(VoucherPayload.create_voucher_payload(voucher_case).to_json())
+        return json.dumps(VoucherPayload.create_voucher_payload(voucher_case).payload_json())
 
 
 class ChemistBETSVoucherPayloadGenerator(BaseBETSVoucherPayloadGenerator):
@@ -305,7 +314,7 @@ class IncentivePayloadGenerator(BETSBasePayloadGenerator):
             BeneficiaryType="chemist",
             Location="DUMMY-LOCATION",
             DTOLocation="DUMMY-LOCATION",
-        ).to_json())
+        ).payload_json())
 
 
 class BETS180TreatmentPayloadGenerator(IncentivePayloadGenerator):
@@ -313,7 +322,7 @@ class BETS180TreatmentPayloadGenerator(IncentivePayloadGenerator):
     event_id = TREATMENT_180_EVENT
 
     def get_payload(self, repeat_record, episode_case):
-        return json.dumps(IncentivePayload.create_180_treatment_payload(episode_case).to_json())
+        return json.dumps(IncentivePayload.create_180_treatment_payload(episode_case).payload_json())
 
 
 class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
@@ -337,7 +346,7 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
     def get_payload(self, repeat_record, episode_case):
         episode_case_properties = episode_case.dynamic_case_properties()
         n = self._get_prescription_threshold_to_send(episode_case_properties)
-        return json.dumps(IncentivePayload.create_drug_refill_payload(episode_case, n).to_json())
+        return json.dumps(IncentivePayload.create_drug_refill_payload(episode_case, n).payload_json())
 
     def get_event_property_name(self, episode_case):
         n = self._get_prescription_threshold_to_send(episode_case.dynamic_case_properties())
@@ -380,7 +389,7 @@ class BETSSuccessfulTreatmentPayloadGenerator(IncentivePayloadGenerator):
     event_id = SUCCESSFUL_TREATMENT_EVENT
 
     def get_payload(self, repeat_record, episode_case):
-        return json.dumps(IncentivePayload.create_successful_treatment_payload(episode_case).to_json())
+        return json.dumps(IncentivePayload.create_successful_treatment_payload(episode_case).payload_json())
 
 
 class BETSDiagnosisAndNotificationPayloadGenerator(IncentivePayloadGenerator):
@@ -388,7 +397,7 @@ class BETSDiagnosisAndNotificationPayloadGenerator(IncentivePayloadGenerator):
     event_id = DIAGNOSIS_AND_NOTIFICATION_EVENT
 
     def get_payload(self, repeat_record, episode_case):
-        return json.dumps(IncentivePayload.create_diagnosis_and_notification_payload(episode_case).to_json())
+        return json.dumps(IncentivePayload.create_diagnosis_and_notification_payload(episode_case).payload_json())
 
 
 class BETSAYUSHReferralPayloadGenerator(IncentivePayloadGenerator):
@@ -396,16 +405,54 @@ class BETSAYUSHReferralPayloadGenerator(IncentivePayloadGenerator):
     event_id = AYUSH_REFERRAL_EVENT
 
     def get_payload(self, repeat_record, episode_case):
-        return json.dumps(IncentivePayload.create_ayush_referral_payload(episode_case).to_json())
+        return json.dumps(IncentivePayload.create_ayush_referral_payload(episode_case).payload_json())
+
+
+class BETSUserPayloadGenerator(UserPayloadGenerator):
+    # Not all of these are used, but the endpoint will fail without them
+    user_data_fields = [
+        "secondary_pincode", "address_line_1", "use_new_ids",
+        "pcc_pharmacy_affiliation", "plc_lab_collection_center_name",
+        "commcare_project", "pcp_professional_org_membership", "pincode",
+        "id_issuer_body", "agency_status", "secondary_date_of_birth",
+        "tb_corner", "pcc_pharmacy_name", "id_device_number",
+        "secondary_gender", "plc_tb_tests", "landline_no", "id_issuer_number",
+        "secondary_landline_no", "plc_lab_or_collection_center",
+        "secondary_first_name", "commcare_primary_case_sharing_id",
+        "pcp_qualification", "pac_qualification", "secondary_unique_id_type",
+        "email", "commcare_location_id", "issuing_authority",
+        "pcc_tb_drugs_in_stock", "secondary_mobile_no_2",
+        "secondary_mobile_no_1", "secondary_middle_name", "plc_accredidation",
+        "mobile_no_2", "commcare_location_ids", "mobile_no_1", "is_test",
+        "secondary_email", "id_device_body", "secondary_unique_id_Number",
+        "plc_hf_if_nikshay", "usertype", "user_level", "gender",
+        "secondary_address_line_1", "secondary_last_name",
+        "secondary_address_line_2", "address_line_2", "registration_number",
+        "nikshay_id",
+    ]
+
+    def get_payload(self, repeat_record, user):
+        location = user.get_sql_location(repeat_record.domain)
+        user_json = {
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "default_phone_number": user.default_phone_number,
+            "id": user._id,
+            "phone_numbers": user.phone_numbers,
+            "email": user.email,
+            "dtoLocation": _get_district_location(location),
+            "privateSectorOrgId": location.metadata['private_sector_org_id'],
+            "resource_uri": "",
+        }
+        user_json['user_data'] = {
+            field: user.user_data.get(field, "")
+            for field in self.user_data_fields
+        }
+        return json.dumps(user_json, cls=DjangoJSONEncoder)
 
 
 class BETSLocationPayloadGenerator(LocationPayloadGenerator):
 
     def get_payload(self, repeat_record, location):
-        payload = location.to_json()
-        # Override lineage to use a custom format for BETS
-        payload['lineage'] = {
-            ancestor.location_type.name: ancestor.location_id
-            for ancestor in location.get_ancestors()
-        }
-        return payload
+        return json.dumps(get_bets_location_json(location))

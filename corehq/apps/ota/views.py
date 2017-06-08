@@ -281,6 +281,7 @@ def get_restore_params(request):
         'overwrite_cache': request.GET.get('overwrite_cache') == 'true',
         'openrosa_version': openrosa_version,
         'device_id': request.GET.get('device_id'),
+        'user_id': request.GET.get('user_id'),
     }
 
 
@@ -288,9 +289,21 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
                          force_restore_mode=None,
-                         as_user=None, device_id=None,
+                         as_user=None, device_id=None, user_id=None,
                          has_data_cleanup_privelege=False,
                          openrosa_version=OPENROSA_DEFAULT_VERSION):
+
+    if user_id and user_id != couch_user.user_id:
+        # sync with a user that has been deleted but a new
+        # user was created with the same username and password
+        from couchforms.openrosa_response import get_simple_response_xml
+        from couchforms.openrosa_response import ResponseNature
+        response = get_simple_response_xml(
+            'Attempt to sync with invalid user.',
+            ResponseNature.OTA_RESTORE_ERROR
+        )
+        return HttpResponse(response, content_type="text/xml; charset=utf-8", status=412), None
+
     # not a view just a view util
     is_permitted, message = is_permitted_to_restore(
         domain,

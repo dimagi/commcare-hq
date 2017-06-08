@@ -90,6 +90,7 @@ AGENCY_USER_FIELDS = [
                                  "dropped"]),
     ('gender', "Gender", ["Male", "Female", "Transgender"]),
     ('registration_number', "Registration Number", []),
+    ('date_of_birth', "Date of Birth", []),
     ('issuing_authority', "Issuing Authority", ["State Medical Council (SMC)",
                                                 "Medical Council of India (MCI)"]),
     # TODO Do these ones make sense?

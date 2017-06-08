@@ -5,11 +5,7 @@
     Usage:
 
     <a href="#{ID_OF_MODAL}" data-toggle="modal" onclick="download_application_zip()">Click me!</a>
-    {% include 'app_manager/v1/partials/download_async_modal.html' with element_id={ID_OF_MODAL} %}
-
-    Also need to include associated JavaScript:
-    <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
-    {% include 'app_manager/v1/partials/download_async_modal_inline.html' with element_id={ID_OF_MODAL} download_url={URL_TO_DOWNLOAD} %}
+    {% include 'app_manager/v1/partials/download_async_modal.html' with element_id={ID_OF_MODAL} url={URL_TO_DOWNLOAD.} %}
 
     Simply set ID_OF_MODAL and URL_TO_DOWNLOAD.
     Clicking the link should open the modal, start the polling, and will give the user a link when the download is ready.
@@ -17,7 +13,7 @@
 
 {% load i18n %}
 {% load hq_shared_tags %}
-<div class="modal fade" id="{{element_id}}">
+<div class="modal fade download-async-modal" id="{{element_id}}" data-url="{{ url }}">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">

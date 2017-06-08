@@ -1,4 +1,6 @@
+from copy import deepcopy
 import uuid
+
 from django.test import SimpleTestCase, TestCase
 from kafka import SimpleProducer
 from kafka.common import KafkaUnavailableError
@@ -101,6 +103,36 @@ class KafkaCheckpointTest(TestCase):
         pillow.process_changes(pillow.get_last_checkpoint_sequence(), forever=False)
         self.assertEqual(8, processor.count)
         self.assertEqual(feed.get_current_checkpoint_offsets(), pillow.get_last_checkpoint_sequence())
+
+    @trap_extra_setup(KafkaUnavailableError)
+    def test_dont_create_checkpoint_past_current(self):
+        pillow_name = 'test-checkpoint-reset'
+
+        # initialize change feed and pillow
+        feed = KafkaChangeFeed(topics=topics.USER_TOPICS, group_id='test-kafka-feed')
+        checkpoint = PillowCheckpoint(pillow_name, feed.sequence_format)
+        processor = CountingProcessor()
+        pillow = ConstructedPillow(
+            name=pillow_name,
+            checkpoint=checkpoint,
+            change_feed=feed,
+            processor=processor,
+            change_processed_event_handler=KafkaCheckpointEventHandler(
+                checkpoint=checkpoint, checkpoint_frequency=1, change_feed=feed
+            )
+        )
+
+        original_kafka_offsets = feed.get_latest_offsets()
+        current_kafka_offsets = deepcopy(original_kafka_offsets)
+        self.assertEqual(feed.get_current_checkpoint_offsets(), {})
+        self.assertEqual(pillow.get_last_checkpoint_sequence(), {})
+
+        publish_stub_change(topics.COMMCARE_USER)
+        # the following line causes tests to fail if you have multiple partitions
+        current_kafka_offsets[(topics.COMMCARE_USER, 0)] += 1
+        pillow.process_changes(since=original_kafka_offsets, forever=False)
+        self.assertEqual(1, processor.count)
+        self.assertEqual(feed.get_current_checkpoint_offsets(), current_kafka_offsets)
 
 
 @memoized

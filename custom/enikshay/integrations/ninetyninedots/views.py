@@ -14,6 +14,7 @@ from custom.enikshay.integrations.ninetyninedots.utils import (
     create_adherence_cases,
     update_adherence_confidence_level,
     update_default_confidence_level,
+    update_episode_adherence_properties,
 )
 
 
@@ -58,6 +59,7 @@ def update_patient_adherence(request, domain):
         validate_beneficiary_id(beneficiary_id)
         validate_adherence_values(adherence_values)
         create_adherence_cases(domain, beneficiary_id, adherence_values)
+        update_episode_adherence_properties(domain, beneficiary_id)
     except AdherenceException as e:
         return json_response({"error": e.message}, status_code=400)
 
