@@ -33,7 +33,6 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.dbaccessors import get_practice_mode_mobile_workers
 from corehq.apps.tour import tours
 from corehq.apps.translations.models import Translation
-from corehq.apps.users.models import CommCareUser
 from corehq.apps.app_manager.const import (
     APP_V2,
     MAJOR_RELEASE_TO_VERSION,
