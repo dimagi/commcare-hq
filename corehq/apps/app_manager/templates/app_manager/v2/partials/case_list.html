@@ -1,5 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load app_manager_extras %}
 {% load xforms_extras %}
 
 {% include 'app_manager/v2/partials/case_list_missing_warning.html' %}
@@ -62,7 +63,7 @@
             </div>
         </div>
         {% endif %}
-        <div data-bind="visible: useCaseTiles() == 'yes' || COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML')">
+        <div data-bind="visible: (useCaseTiles() == 'yes' && COMMCAREHQ.toggleEnabled('CASE_LIST_TILE')) || COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML')">
             <div class="checkbox">
                 <label>
                     <input type="checkbox" data-bind="checked: persistTileOnForms">
@@ -76,6 +77,31 @@
                 </label>
             </div>
         </div>
+
+        {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
+        {% if request|toggle_enabled:'CASE_LIST_TILE' %}
+            {% with app|get_available_modules_for_case_tile_configuration:module as available_modules %}
+            {% if available_modules %}
+            <div class="row">
+                <div class="col-sm-6">
+                    <label>
+                        {% trans "Use persistent case tile from menu" %}
+                    </label>
+                    <div>
+                        <select name='persistent_case_tile_from_module' class='form-control' data-bind="value: persistentCaseTileFromModule">
+                            <option value>
+                                {% trans "Select Menu" %}
+                            </option>
+                            {% for other_mod in available_modules %}
+                                <option value={{ other_mod.unique_id }}>{{ other_mod.name|html_trans:langs }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endwith %}
+        {% endif %}
         {% include 'app_manager/v2/partials/case_list_properties.html' %}
     </div>
   </div>
