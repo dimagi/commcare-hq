@@ -20,7 +20,8 @@ from custom.enikshay.integrations.bets.repeater_generators import (
     BETS180TreatmentPayloadGenerator, LabBETSVoucherPayloadGenerator,
     ChemistBETSVoucherPayloadGenerator, BETSAYUSHReferralPayloadGenerator,
     BETSDiagnosisAndNotificationPayloadGenerator, BETSSuccessfulTreatmentPayloadGenerator,
-    BETSDrugRefillPayloadGenerator, BETSLocationPayloadGenerator, BETSUserPayloadGenerator)
+    BETSDrugRefillPayloadGenerator, BETSLocationPayloadGenerator, BETSUserPayloadGenerator,
+    BETSBeneficiaryPayloadGenerator)
 from custom.enikshay.integrations.utils import (
     case_properties_changed, is_valid_episode_submission, is_valid_voucher_submission,
     is_valid_archived_submission, is_valid_person_submission, case_was_created)
@@ -333,6 +334,7 @@ class BETSLocationRepeater(BETSRepeaterMixin, LocationRepeater):
 
 class BETSBeneficiaryRepeater(BaseBETSRepeater):
     friendly_name = _("BETS - Beneficiary creation and update")
+    payload_generator_classes = (BETSBeneficiaryPayloadGenerator,)
     properties_we_care_about = (
         'phone_number',
         'current_address_district_choice',

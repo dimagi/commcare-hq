@@ -456,3 +456,45 @@ class BETSLocationPayloadGenerator(LocationPayloadGenerator):
 
     def get_payload(self, repeat_record, location):
         return json.dumps(get_bets_location_json(location))
+
+
+class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
+    case_properties = [
+        "age", "age_entered", "case_name", "case_type", "current_address",
+        "current_address_block_taluka_mandal",
+        "current_address_district_choice", "current_address_first_line",
+        "current_address_postal_code", "current_address_state_choice",
+        "current_address_village_town_city", "current_address_ward",
+        "current_episode_type", "dataset", "date_opened", "dob", "dob_known",
+        "enrolled_in_private", "external_id", "facility_assigned_to",
+        "first_name", "husband_father_name", "id_original_beneficiary_count",
+        "id_original_device_number", "id_original_issuer_number",
+        "language_preference", "last_name", "other_id_type", "owner_id",
+        "person_id", "phi", "phone_number", "send_alerts", "sex", "tu_choice",
+    ]
+
+    @property
+    def content_type(self):
+        return 'application/json'
+
+    def get_payload(self, repeat_record, person_case):
+        case_json = {
+            "case_id": person_case.case_id,
+            "closed": person_case.closed,
+            "date_closed": person_case.closed_on,
+            "date_modified": person_case.modified_on,
+            "domain": person_case.domain,
+            "id": person_case.case_id,
+            "indices": {},
+            "resource_uri": "",
+            "server_date_modified": person_case.server_modified_on,
+            "server_date_opened": person_case.opened_on,
+            "user_id": person_case.modified_by,
+            "xform_ids": [],
+        }
+        case_properties = person_case.dynamic_case_properties()
+        case_json["properties"] = {
+            prop: case_properties.get(prop, "")
+            for prop in self.case_properties
+        }
+        return json.dumps(case_json, cls=DjangoJSONEncoder)
