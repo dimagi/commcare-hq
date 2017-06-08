@@ -443,3 +443,7 @@ def get_fulfilled_prescription_vouchers_from_episode(domain, episode_case_id):
         if (voucher.get_case_property("voucher_type") == CASE_TYPE_PRESCRIPTION
             and voucher.get_case_property("state") == "fulfilled")
     ]
+
+
+def get_prescription_from_voucher(domain, voucher_id):
+    return get_parent_of_case(domain, voucher_id, CASE_TYPE_PRESCRIPTION)
