@@ -419,6 +419,7 @@ class RepeatRecordAttempt(DocumentSchema):
     cancelled = BooleanProperty(default=False)
     datetime = DateTimeProperty()
     failure_reason = StringProperty()
+    success_response = StringProperty()
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
 
@@ -457,6 +458,7 @@ class RepeatRecord(Document):
                 cancelled=self.cancelled,
                 datetime=self.last_checked,
                 failure_reason=self.failure_reason,
+                success_response=None,
                 next_check=self.next_check,
                 succeeded=self.succeeded,
             )]
@@ -535,6 +537,7 @@ class RepeatRecord(Document):
             cancelled=False,
             datetime=now,
             failure_reason=failure_reason,
+            success_response=None,
             next_check=now + window,
             succeeded=False,
         )
@@ -553,6 +556,7 @@ class RepeatRecord(Document):
             cancelled=True,
             datetime=now,
             failure_reason=unicode(exception),
+            success_response=None,
             next_check=None,
             succeeded=False,
         )
@@ -572,6 +576,11 @@ class RepeatRecord(Document):
                 self.add_attempt(attempt)
                 self.save()
 
+    @staticmethod
+    def _format_response(response):
+        return u'{}: {}.\n{}'.format(
+            response.status_code, response.reason, getattr(response, 'content', None))
+
     def handle_success(self, response):
         """Do something with the response if the repeater succeeds
         """
@@ -580,6 +589,7 @@ class RepeatRecord(Document):
             cancelled=False,
             datetime=now,
             failure_reason=None,
+            success_response=self._format_response(response),
             next_check=None,
             succeeded=True,
         )
@@ -587,10 +597,7 @@ class RepeatRecord(Document):
     def handle_failure(self, response):
         """Do something with the response if the repeater fails
         """
-        return self._make_failure_attempt(
-            u'{}: {}.\n{}'.format(response.status_code, response.reason, getattr(response, 'content', None)),
-            response
-        )
+        return self._make_failure_attempt(self._format_response(response), response)
 
     def handle_exception(self, exception):
         """handle internal exceptions
@@ -612,6 +619,7 @@ class RepeatRecord(Document):
                 cancelled=True,
                 datetime=now,
                 failure_reason=reason,
+                success_response=None,
                 next_check=None,
                 succeeded=False,
             )
