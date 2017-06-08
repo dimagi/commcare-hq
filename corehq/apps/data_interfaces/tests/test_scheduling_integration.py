@@ -30,8 +30,8 @@ from mock import patch
 
 
 @contextmanager
-def _create_case(domain, case_type):
-    case = CaseFactory(domain).create_case(case_type=case_type)
+def _create_case(domain, case_type, **kwargs):
+    case = CaseFactory(domain).create_case(case_type=case_type, **kwargs)
 
     try:
         yield case
