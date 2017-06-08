@@ -8,6 +8,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
 from corehq.apps.repeaters.models import RepeatRecord
+from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from custom.enikshay.const import ENROLLED_IN_PRIVATE, PRESCRIPTION_TOTAL_DAYS_THRESHOLD
@@ -23,15 +24,30 @@ from custom.enikshay.integrations.bets.const import (
     DIAGNOSIS_AND_NOTIFICATION_EVENT,
     AYUSH_REFERRAL_EVENT,
 )
-from custom.enikshay.integrations.bets.repeater_generators import ChemistBETSVoucherPayloadGenerator, \
-    BETS180TreatmentPayloadGenerator, BETSSuccessfulTreatmentPayloadGenerator, \
-    BETSDiagnosisAndNotificationPayloadGenerator, BETSAYUSHReferralPayloadGenerator, BETSDrugRefillPayloadGenerator, IncentivePayload
-from custom.enikshay.integrations.bets.repeaters import ChemistBETSVoucherRepeater, BETS180TreatmentRepeater, \
-    BETSDrugRefillRepeater, BETSSuccessfulTreatmentRepeater, BETSDiagnosisAndNotificationRepeater, \
-    BETSAYUSHReferralRepeater, BETSLocationRepeater, BETSBeneficiaryRepeater
+from custom.enikshay.integrations.bets.repeater_generators import (
+    ChemistBETSVoucherPayloadGenerator,
+    BETS180TreatmentPayloadGenerator,
+    BETSSuccessfulTreatmentPayloadGenerator,
+    BETSDiagnosisAndNotificationPayloadGenerator,
+    BETSAYUSHReferralPayloadGenerator,
+    BETSDrugRefillPayloadGenerator,
+    IncentivePayload,
+)
+from custom.enikshay.integrations.bets.repeaters import (
+    ChemistBETSVoucherRepeater,
+    BETS180TreatmentRepeater,
+    BETSDrugRefillRepeater,
+    BETSSuccessfulTreatmentRepeater,
+    BETSDiagnosisAndNotificationRepeater,
+    BETSAYUSHReferralRepeater,
+    BETSLocationRepeater,
+    BETSBeneficiaryRepeater,
+    BETSUserRepeater,
+)
 from custom.enikshay.integrations.ninetyninedots.tests.test_repeaters import ENikshayRepeaterTestBase, MockResponse
 
-from custom.enikshay.tests.utils import ENikshayLocationStructureMixin, get_person_case_structure
+from custom.enikshay.tests.utils import (
+    ENikshayLocationStructureMixin, get_person_case_structure, setup_enikshay_locations)
 from custom.enikshay.case_utils import update_case
 
 
@@ -467,6 +483,75 @@ class BETSAYUSHReferralRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepe
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class UserRepeaterTest(TestCase):
+    domain = 'bets-user-repeater'
+
+    @classmethod
+    def setUpClass(cls):
+        super(UserRepeaterTest, cls).setUpClass()
+        cls.domain_obj = Domain(name=cls.domain)
+        cls.domain_obj.save()
+
+        _, locations = setup_enikshay_locations(cls.domain)
+        cls.private_location = locations['PCP']
+        cls.private_location.metadata['private_sector_org_id'] = 'ORG_ID'
+        cls.private_location.save()
+        cls.dto_location = locations['DTO']
+        cls.public_location = locations['DRTB-HIV']
+        cls.test_location = locations['PAC']
+        cls.test_location.metadata['is_test'] = "yes"
+        cls.test_location.save()
+
+        cls.repeater = BETSUserRepeater(
+            domain=cls.domain,
+            url='super-cool-url',
+        )
+        cls.repeater.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        super(UserRepeaterTest, cls).tearDownClass()
+        cls.domain_obj.delete()
+        delete_all_repeaters()
+
+    def tearDown(self):
+        super(UserRepeaterTest, self).tearDown()
+        delete_all_repeat_records()
+
+    def repeat_records(self):
+        return RepeatRecord.all(domain=self.domain, due_before=datetime.utcnow())
+
+    def make_user(self, location):
+        user = CommCareUser.create(
+            self.domain,
+            "davos.shipwright@stannis.gov",
+            "123",
+            location=location,
+        )
+        self.addCleanup(user.delete)
+        return user
+
+    def test_real_private_user(self):
+        self.make_user(self.private_location)
+        records = self.repeat_records().all()
+        self.assertEqual(1, len(records))
+
+        self.assertDictContainsSubset(
+            {'dtoLocation': self.dto_location.location_id,
+             'privateSectorOrgId': self.private_location.metadata['private_sector_org_id']},
+            json.loads(records[0].get_payload())
+        )
+
+    def test_public_user(self):
+        self.make_user(self.public_location)
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+    def test_test_user(self):
+        self.make_user(self.test_location)
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
     domain = 'bets-location-repeater'
     maxDiff = None
@@ -534,6 +619,7 @@ class LocationRepeaterTest(ENikshayLocationStructureMixin, TestCase):
                 'metadata': {},
                 'name': location.name,
                 'parent_location_id': self.locations['DTO'].location_id,
+                'parent_site_code': self.locations['DTO'].site_code,
                 'site_code': location.site_code,
             }
         )

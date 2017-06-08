@@ -484,6 +484,10 @@ Formplayer.ViewModels.CloudCareDebugger = function() {
         $('.navbar-collapse').collapse('hide');
     };
 
+    self.afterRender = function() {
+        self.evalXPath.afterRender();
+    };
+
     self.updateDebugger = function(resp) {
         self.updating(false);
         self.formattedQuestionsHtml(resp.formattedQuestions);
@@ -546,6 +550,7 @@ Formplayer.ViewModels.EvaluateXPath = function() {
     self.selectedXPath = ko.observable('');
     self.recentXPathQueries = ko.observableArray();
     self.$xpath = null;
+    self.codeMirrorResult = null;
     self.result = ko.observable('');
     self.success = ko.observable(true);
     self.onSubmitXPath = function() {
@@ -561,13 +566,27 @@ Formplayer.ViewModels.EvaluateXPath = function() {
         self.xpath(query.xpath);
     };
     self.evaluate = function(xpath) {
-        var callback = function(result, status) {
-            self.result(result);
-            self.success(status === "accepted");
+        var callback = function(response) {
+            self.result(response.output);
+            self.success(response.status === "accepted");
         };
         $.publish('formplayer.' + Formplayer.Const.EVALUATE_XPATH, [xpath, callback]);
         window.analytics.workflow('[app-preview] User evaluated XPath');
     };
+
+    self.afterRender = function() {
+        var options = {
+            mode: 'xml',
+            viewportMargin: Infinity,
+            readOnly: true,
+            lineNumbers: true,
+        };
+        self.codeMirrorResult = CodeMirror.fromTextArea($('#evaluate-result')[0], options);
+    }
+
+    self.result.subscribe(function(newResult) {
+        self.codeMirrorResult.setValue(newResult);
+    });
 
     self.isSuccess = function(query) {
         return query.status === 'accepted';

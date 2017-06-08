@@ -46,7 +46,7 @@
             {
                 "display": "eNikshay ID",
                 "type": "field",
-                "field": "person_id",
+                "field": "external_id",
                 "aggregation": "simple",
                 "sortable": false,
                 "description": null,

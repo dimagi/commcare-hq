@@ -1,6 +1,7 @@
 {
     "domains": [
-        "enikshay"
+        "enikshay",
+        "sheel-enikshay"
     ],
     "server_environment": [
         "softlayer"
@@ -303,16 +304,11 @@
                     "type": "nested",
                     "argument_expression": {
                         "type": "named",
-                        "name": "test_request_form"
+                        "name": "lab_referral_case"
                     },
                     "value_expression": {
-                        "type": "property_path",
-                        "property_path": [
-                            "form",
-                            "rpt_referral_details",
-                            "ql_referral_details",
-                            "lab_referral_owner_id"
-                        ]
+                        "type": "property_name",
+                        "property_name": "owner_id"
                     }
                 }
             },
@@ -1050,6 +1046,14 @@
             },
             {
                 "filter": {
+                    "type": "named",
+                    "name": "microscopy"
+                },
+                "type": "boolean",
+                "column_id": "is_microscopy"
+            },
+            {
+                "filter": {
                     "type": "and",
                     "filters": [
                         {
@@ -1418,6 +1422,1458 @@
                 },
                 "type": "boolean",
                 "column_id": "has_date_reported"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "test_type_value"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "test_type_value"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "separator": " | ",
+                    "expressions": [
+                        {
+                            "value_expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "name"
+                            },
+                            "type": "related_doc",
+                            "related_doc_type": "CommCareCase",
+                            "doc_id_expression": {
+                                "type": "named",
+                                "name": "person_id"
+                            }
+                        },
+                        {
+                            "value_expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "current_address"
+                            },
+                            "type": "related_doc",
+                            "related_doc_type": "CommCareCase",
+                            "doc_id_expression": {
+                                "type": "named",
+                                "name": "person_id"
+                            }
+                        },
+                        {
+                            "value_expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "phone_number"
+                            },
+                            "type": "related_doc",
+                            "related_doc_type": "CommCareCase",
+                            "doc_id_expression": {
+                                "type": "named",
+                                "name": "person_id"
+                            }
+                        }
+                    ],
+                    "type": "concatenate_strings"
+                },
+                "column_id": "person_details"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "key_populations",
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "key_populations"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "occurrence_id"
+                    }
+                },
+                "column_id": "key_populations_from_occurrence"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "facility_name_and_type",
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "separator": ", ",
+                    "expressions": [
+                        {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referring_facility_saved_name"
+                        },
+                        {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "referring_facility_type"
+                        }
+                    ],
+                    "type": "concatenate_strings"
+                },
+                "column_id": "facility_name_and_type"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "patient_type"
+                    },
+                    "type": "nested",
+                    "related_doc_type": "CommCareCase",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "episode_case"
+                    }
+                },
+                "column_id": "patient_type"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "rft_general"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "rft_general"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "criteria_for_testing",
+                "datatype": "string",
+                "expression": {
+                    "default": {
+                        "constant": "",
+                        "type": "constant"
+                    },
+                    "cases": {
+                        "follow_up_drtb": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "rft_drtb_follow_up"
+                        },
+                        "diagnosis_drtb": {
+                            "test": {
+                                "operator": "eq",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "rft_drtb_diagnosis"
+                                },
+                                "comment": null,
+                                "property_value": "extended_dst"
+                            },
+                            "expression_if_true": {
+                                "separator": " ",
+                                "expressions": [
+                                    {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "rft_drtb_diagnosis"
+                                    },
+                                    {
+                                        "datatype": null,
+                                        "type": "property_name",
+                                        "property_name": "rft_drtb_diagnosis_ext_dst"
+                                    }
+                                ],
+                                "type": "concatenate_strings"
+                            },
+                            "type": "conditional",
+                            "expression_if_false": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "rft_drtb_diagnosis"
+                            }
+                        },
+                        "diagnosis_dstb": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "rft_dstb_diagnosis"
+                        }
+                    },
+                    "type": "switch",
+                    "switch_on": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "rft_general"
+                    }
+                },
+                "is_primary_key": false,
+                "transform": {},
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "criteria_for_testing"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "constant": "",
+                    "type": "constant"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "predominant_symptoms_and_durations"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "pmdt_tb_number"
+                    },
+                    "type": "nested",
+                    "related_doc_type": "CommCareCase",
+                    "argument_expression": {
+                        "type": "named",
+                        "name": "episode_case"
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "pmdt_tb_number"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "rft_drtb_follow_up_treatment_month"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "rft_drtb_follow_up_treatment_month"
+            }, {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "date",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "date_tested"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "date_tested"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "date",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "sample_receipt_date"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "sample_receipt_date_from_case"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "specimen_type"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "specimen_type_from_case"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "sputum_visual_appearance"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "sputum_visual_appearance"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "date",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "date_reported"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "date_reported2"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "test_validity"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "result"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "result"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "r_drug",
+                "datatype": "string",
+                "expression": {
+                    "test": {
+                        "operator": "in",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "constant",
+                            "constant": "r"
+                        },
+                        "comment": null,
+                        "property_value": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "drug_sensitive_list"
+                        }
+                    },
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": "Sensitive"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "test": {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "constant",
+                                "constant": "r"
+                            },
+                            "comment": null,
+                            "property_value": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "drug_resistance_list"
+                            }
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": "Resistant"
+                        },
+                        "type": "conditional",
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": "NA"
+                        }
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "r_drug"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "s_drug",
+                "datatype": "string",
+                "expression": {
+                    "test": {
+                        "operator": "in",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "constant",
+                            "constant": "s"
+                        },
+                        "comment": null,
+                        "property_value": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "drug_sensitive_list"
+                        }
+                    },
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": "Sensitive"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "test": {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "constant",
+                                "constant": "s"
+                            },
+                            "comment": null,
+                            "property_value": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "drug_resistance_list"
+                            }
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": "Resistant"
+                        },
+                        "type": "conditional",
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": "NA"
+                        }
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "s_drug"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "e_drug",
+                "datatype": "string",
+                "expression": {
+                    "test": {
+                        "operator": "in",
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "constant",
+                            "constant": "e"
+                        },
+                        "comment": null,
+                        "property_value": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "drug_sensitive_list"
+                        }
+                    },
+                    "expression_if_true": {
+                        "type": "constant",
+                        "constant": "Sensitive"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "test": {
+                            "operator": "in",
+                            "type": "boolean_expression",
+                            "expression": {
+                                "type": "constant",
+                                "constant": "e"
+                            },
+                            "comment": null,
+                            "property_value": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "drug_resistance_list"
+                            }
+                        },
+                        "expression_if_true": {
+                            "type": "constant",
+                            "constant": "Resistant"
+                        },
+                        "type": "conditional",
+                        "expression_if_false": {
+                            "type": "constant",
+                            "constant": "NA"
+                        }
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "e_drug"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "z_drug",
+                "datatype": "string",
+                "expression": {
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "constant": "z",
+                            "type": "constant"
+                        },
+                        "type": "boolean_expression",
+                        "comment": null,
+                        "property_value": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "drug_sensitive_list"
+                        }
+                    },
+                    "expression_if_true": {
+                        "constant": "Sensitive",
+                        "type": "constant"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "test": {
+                            "operator": "in",
+                            "expression": {
+                                "constant": "z",
+                                "type": "constant"
+                            },
+                            "type": "boolean_expression",
+                            "comment": null,
+                            "property_value": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "drug_resistance_list"
+                            }
+                        },
+                        "expression_if_true": {
+                            "constant": "Resistant",
+                            "type": "constant"
+                        },
+                        "type": "conditional",
+                        "expression_if_false": {
+                            "constant": "NA",
+                            "type": "constant"
+                        }
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "z_drug"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "km_drug",
+                "datatype": "string",
+                "expression": {
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "constant": "km",
+                            "type": "constant"
+                        },
+                        "type": "boolean_expression",
+                        "comment": null,
+                        "property_value": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "drug_sensitive_list"
+                        }
+                    },
+                    "expression_if_true": {
+                        "constant": "Sensitive",
+                        "type": "constant"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "test": {
+                            "operator": "in",
+                            "expression": {
+                                "constant": "km",
+                                "type": "constant"
+                            },
+                            "type": "boolean_expression",
+                            "comment": null,
+                            "property_value": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "drug_resistance_list"
+                            }
+                        },
+                        "expression_if_true": {
+                            "constant": "Resistant",
+                            "type": "constant"
+                        },
+                        "type": "conditional",
+                        "expression_if_false": {
+                            "constant": "NA",
+                            "type": "constant"
+                        }
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "km_drug"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "cm_drug",
+                "datatype": "string",
+                "expression": {
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "constant": "cm",
+                            "type": "constant"
+                        },
+                        "type": "boolean_expression",
+                        "comment": null,
+                        "property_value": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "drug_sensitive_list"
+                        }
+                    },
+                    "expression_if_true": {
+                        "constant": "Sensitive",
+                        "type": "constant"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "test": {
+                            "operator": "in",
+                            "expression": {
+                                "constant": "cm",
+                                "type": "constant"
+                            },
+                            "type": "boolean_expression",
+                            "comment": null,
+                            "property_value": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "drug_resistance_list"
+                            }
+                        },
+                        "expression_if_true": {
+                            "constant": "Resistant",
+                            "type": "constant"
+                        },
+                        "type": "conditional",
+                        "expression_if_false": {
+                            "constant": "NA",
+                            "type": "constant"
+                        }
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "cm_drug"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "am_drug",
+                "datatype": "string",
+                "expression": {
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "constant": "am",
+                            "type": "constant"
+                        },
+                        "type": "boolean_expression",
+                        "comment": null,
+                        "property_value": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "drug_sensitive_list"
+                        }
+                    },
+                    "expression_if_true": {
+                        "constant": "Sensitive",
+                        "type": "constant"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "test": {
+                            "operator": "in",
+                            "expression": {
+                                "constant": "am",
+                                "type": "constant"
+                            },
+                            "type": "boolean_expression",
+                            "comment": null,
+                            "property_value": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "drug_resistance_list"
+                            }
+                        },
+                        "expression_if_true": {
+                            "constant": "Resistant",
+                            "type": "constant"
+                        },
+                        "type": "conditional",
+                        "expression_if_false": {
+                            "constant": "NA",
+                            "type": "constant"
+                        }
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "am_drug"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "lfx_drug",
+                "datatype": "string",
+                "expression": {
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "constant": "lfx",
+                            "type": "constant"
+                        },
+                        "type": "boolean_expression",
+                        "comment": null,
+                        "property_value": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "drug_sensitive_list"
+                        }
+                    },
+                    "expression_if_true": {
+                        "constant": "Sensitive",
+                        "type": "constant"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "test": {
+                            "operator": "in",
+                            "expression": {
+                                "constant": "lfx",
+                                "type": "constant"
+                            },
+                            "type": "boolean_expression",
+                            "comment": null,
+                            "property_value": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "drug_resistance_list"
+                            }
+                        },
+                        "expression_if_true": {
+                            "constant": "Resistant",
+                            "type": "constant"
+                        },
+                        "type": "conditional",
+                        "expression_if_false": {
+                            "constant": "NA",
+                            "type": "constant"
+                        }
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "lfx_drug"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "mfx05_drug",
+                "datatype": "string",
+                "expression": {
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "constant": "mfx05",
+                            "type": "constant"
+                        },
+                        "type": "boolean_expression",
+                        "comment": null,
+                        "property_value": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "drug_sensitive_list"
+                        }
+                    },
+                    "expression_if_true": {
+                        "constant": "Sensitive",
+                        "type": "constant"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "test": {
+                            "operator": "in",
+                            "expression": {
+                                "constant": "mfx05",
+                                "type": "constant"
+                            },
+                            "type": "boolean_expression",
+                            "comment": null,
+                            "property_value": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "drug_resistance_list"
+                            }
+                        },
+                        "expression_if_true": {
+                            "constant": "Resistant",
+                            "type": "constant"
+                        },
+                        "type": "conditional",
+                        "expression_if_false": {
+                            "constant": "NA",
+                            "type": "constant"
+                        }
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "mfx05_drug"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "mfx20_drug",
+                "datatype": "string",
+                "expression": {
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "constant": "mfx20",
+                            "type": "constant"
+                        },
+                        "type": "boolean_expression",
+                        "comment": null,
+                        "property_value": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "drug_sensitive_list"
+                        }
+                    },
+                    "expression_if_true": {
+                        "constant": "Sensitive",
+                        "type": "constant"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "test": {
+                            "operator": "in",
+                            "expression": {
+                                "constant": "mfx20",
+                                "type": "constant"
+                            },
+                            "type": "boolean_expression",
+                            "comment": null,
+                            "property_value": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "drug_resistance_list"
+                            }
+                        },
+                        "expression_if_true": {
+                            "constant": "Resistant",
+                            "type": "constant"
+                        },
+                        "type": "conditional",
+                        "expression_if_false": {
+                            "constant": "NA",
+                            "type": "constant"
+                        }
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "mfx20_drug"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "eto_drug",
+                "datatype": "string",
+                "expression": {
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "constant": "eto",
+                            "type": "constant"
+                        },
+                        "type": "boolean_expression",
+                        "comment": null,
+                        "property_value": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "drug_sensitive_list"
+                        }
+                    },
+                    "expression_if_true": {
+                        "constant": "Sensitive",
+                        "type": "constant"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "test": {
+                            "operator": "in",
+                            "expression": {
+                                "constant": "eto",
+                                "type": "constant"
+                            },
+                            "type": "boolean_expression",
+                            "comment": null,
+                            "property_value": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "drug_resistance_list"
+                            }
+                        },
+                        "expression_if_true": {
+                            "constant": "Resistant",
+                            "type": "constant"
+                        },
+                        "type": "conditional",
+                        "expression_if_false": {
+                            "constant": "NA",
+                            "type": "constant"
+                        }
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "eto_drug"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "pas_drug",
+                "datatype": "string",
+                "expression": {
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "constant": "pas",
+                            "type": "constant"
+                        },
+                        "type": "boolean_expression",
+                        "comment": null,
+                        "property_value": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "drug_sensitive_list"
+                        }
+                    },
+                    "expression_if_true": {
+                        "constant": "Sensitive",
+                        "type": "constant"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "test": {
+                            "operator": "in",
+                            "expression": {
+                                "constant": "pas",
+                                "type": "constant"
+                            },
+                            "type": "boolean_expression",
+                            "comment": null,
+                            "property_value": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "drug_resistance_list"
+                            }
+                        },
+                        "expression_if_true": {
+                            "constant": "Resistant",
+                            "type": "constant"
+                        },
+                        "type": "conditional",
+                        "expression_if_false": {
+                            "constant": "NA",
+                            "type": "constant"
+                        }
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "pas_drug"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "lzd_drug",
+                "datatype": "string",
+                "expression": {
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "constant": "lzd",
+                            "type": "constant"
+                        },
+                        "type": "boolean_expression",
+                        "comment": null,
+                        "property_value": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "drug_sensitive_list"
+                        }
+                    },
+                    "expression_if_true": {
+                        "constant": "Sensitive",
+                        "type": "constant"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "test": {
+                            "operator": "in",
+                            "expression": {
+                                "constant": "lzd",
+                                "type": "constant"
+                            },
+                            "type": "boolean_expression",
+                            "comment": null,
+                            "property_value": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "drug_resistance_list"
+                            }
+                        },
+                        "expression_if_true": {
+                            "constant": "Resistant",
+                            "type": "constant"
+                        },
+                        "type": "conditional",
+                        "expression_if_false": {
+                            "constant": "NA",
+                            "type": "constant"
+                        }
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "lzd_drug"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "cfz_drug",
+                "datatype": "string",
+                "expression": {
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "constant": "cfz",
+                            "type": "constant"
+                        },
+                        "type": "boolean_expression",
+                        "comment": null,
+                        "property_value": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "drug_sensitive_list"
+                        }
+                    },
+                    "expression_if_true": {
+                        "constant": "Sensitive",
+                        "type": "constant"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "test": {
+                            "operator": "in",
+                            "expression": {
+                                "constant": "cfz",
+                                "type": "constant"
+                            },
+                            "type": "boolean_expression",
+                            "comment": null,
+                            "property_value": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "drug_resistance_list"
+                            }
+                        },
+                        "expression_if_true": {
+                            "constant": "Resistant",
+                            "type": "constant"
+                        },
+                        "type": "conditional",
+                        "expression_if_false": {
+                            "constant": "NA",
+                            "type": "constant"
+                        }
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "cfz_drug"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "dlm_drug",
+                "datatype": "string",
+                "expression": {
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "constant": "dlm",
+                            "type": "constant"
+                        },
+                        "type": "boolean_expression",
+                        "comment": null,
+                        "property_value": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "drug_sensitive_list"
+                        }
+                    },
+                    "expression_if_true": {
+                        "constant": "Sensitive",
+                        "type": "constant"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "test": {
+                            "operator": "in",
+                            "expression": {
+                                "constant": "dlm",
+                                "type": "constant"
+                            },
+                            "type": "boolean_expression",
+                            "comment": null,
+                            "property_value": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "drug_resistance_list"
+                            }
+                        },
+                        "expression_if_true": {
+                            "constant": "Resistant",
+                            "type": "constant"
+                        },
+                        "type": "conditional",
+                        "expression_if_false": {
+                            "constant": "NA",
+                            "type": "constant"
+                        }
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "dlm_drug"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "cfz_drug",
+                "datatype": "string",
+                "expression": {
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "constant": "bdg",
+                            "type": "constant"
+                        },
+                        "type": "boolean_expression",
+                        "comment": null,
+                        "property_value": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "drug_sensitive_list"
+                        }
+                    },
+                    "expression_if_true": {
+                        "constant": "Sensitive",
+                        "type": "constant"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "test": {
+                            "operator": "in",
+                            "expression": {
+                                "constant": "bdg",
+                                "type": "constant"
+                            },
+                            "type": "boolean_expression",
+                            "comment": null,
+                            "property_value": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "drug_resistance_list"
+                            }
+                        },
+                        "expression_if_true": {
+                            "constant": "Resistant",
+                            "type": "constant"
+                        },
+                        "type": "conditional",
+                        "expression_if_false": {
+                            "constant": "NA",
+                            "type": "constant"
+                        }
+                    }
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "bdg_drug"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "h_inha",
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "constant": "h_inha",
+                            "type": "constant"
+                        },
+                        "type": "boolean_expression",
+                        "comment": null,
+                        "property_value": {
+                            "value_expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "diagnosis_test_drug_sensitive_list"
+                            },
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "episode_case"
+                            }
+                        }
+                    },
+                    "expression_if_true": {
+                        "constant": "Sensitive",
+                        "type": "constant"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "test": {
+                            "operator": "in",
+                            "expression": {
+                                "constant": "h_inha",
+                                "type": "constant"
+                            },
+                            "type": "boolean_expression",
+                            "comment": null,
+                            "property_value": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "diagnosis_test_drug_resistance_list"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "episode_case"
+                                }
+                            }
+                        },
+                        "expression_if_true": {
+                            "constant": "Resistant",
+                            "type": "constant"
+                        },
+                        "type": "conditional",
+                        "expression_if_false": {
+                            "constant": "NA",
+                            "type": "constant"
+                        }
+                    }
+                },
+                "column_id": "h_inha"
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": "h_katg",
+                "datatype": "string",
+                "type": "expression",
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "test": {
+                        "operator": "in",
+                        "expression": {
+                            "constant": "h_katg",
+                            "type": "constant"
+                        },
+                        "type": "boolean_expression",
+                        "comment": null,
+                        "property_value": {
+                            "value_expression": {
+                                "datatype": null,
+                                "type": "property_name",
+                                "property_name": "diagnosis_test_drug_sensitive_list"
+                            },
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "named",
+                                "name": "episode_case"
+                            }
+                        }
+                    },
+                    "expression_if_true": {
+                        "constant": "Sensitive",
+                        "type": "constant"
+                    },
+                    "type": "conditional",
+                    "expression_if_false": {
+                        "test": {
+                            "operator": "in",
+                            "expression": {
+                                "constant": "h_katg",
+                                "type": "constant"
+                            },
+                            "type": "boolean_expression",
+                            "comment": null,
+                            "property_value": {
+                                "value_expression": {
+                                    "datatype": null,
+                                    "type": "property_name",
+                                    "property_name": "diagnosis_test_drug_resistance_list"
+                                },
+                                "type": "nested",
+                                "argument_expression": {
+                                    "type": "named",
+                                    "name": "episode_case"
+                                }
+                            }
+                        },
+                        "expression_if_true": {
+                            "constant": "Resistant",
+                            "type": "constant"
+                        },
+                        "type": "conditional",
+                        "expression_if_false": {
+                            "constant": "NA",
+                            "type": "constant"
+                        }
+                    }
+                },
+                "column_id": "h_katg"
             }
         ],
         "named_expressions": {
@@ -1671,6 +3127,36 @@
                 },
                 "aggregation_fn": "last_item"
             },
+            "lab_referral_case": {
+                "type": "reduce_items",
+                "items_expression": {
+                    "type": "sort_items",
+                    "items_expression": {
+                        "type": "filter_items",
+                        "items_expression": {
+                            "type": "get_subcases",
+                            "case_id_expression": {
+                                "type": "property_name",
+                                "property_name": "_id"
+                            }
+                        },
+                        "filter_expression": {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "type"
+                            },
+                            "property_value": "lab_referral"
+                        }
+                    },
+                    "sort_expression": {
+                        "type": "property_name",
+                        "property_name": "opened_on"
+                    }
+                },
+                "aggregation_fn": "last_item"
+            },
             "complete_treatment_form": {
                 "type": "reduce_items",
                 "items_expression": {
@@ -1749,6 +3235,26 @@
                     }
                 },
                 "aggregation_fn": "last_item"
+            },
+            "occurrence_id": {
+                "value_expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "referenced_id"
+                },
+                "type": "nested",
+                "argument_expression": {
+                    "array_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "indices"
+                    },
+                    "type": "array_index",
+                    "index_expression": {
+                        "constant": 0,
+                        "type": "constant"
+                    }
+                }
             }
         },
         "named_filters": {

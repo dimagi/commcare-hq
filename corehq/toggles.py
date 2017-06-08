@@ -864,7 +864,7 @@ MESSAGE_LOG_METADATA = StaticToggle(
 
 ABT_REMINDER_RECIPIENT = StaticToggle(
     'abt_reminder_recipient',
-    "Ability to send a reminder to the case owner's location's parent location",
+    "Custom reminder recipients",
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
 )
@@ -1094,14 +1094,6 @@ FORMTRANSLATE_FORM_VALIDATION = StaticToggle(
     'Use formtranslate to validate XForms',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
-)
-
-USER_PROPERTY_EASY_REFS = StaticToggle(
-    'user_property_easy_refs',
-    'Easy-reference user properties in the form builder.',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-    enabled_for_new_domains_after=datetime(2017, 5, 3, 20),  # 8pm UTC
 )
 
 LOCATION_USERS = StaticToggle(

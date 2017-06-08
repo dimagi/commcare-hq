@@ -1,4 +1,4 @@
-/* globals Clipboard */
+/* globals Clipboard, COMMCAREHQ */
 hqDefine('app_manager/js/commcaresettings.js', function () {
     function CommcareSettings(options) {
         var app_manager = hqImport('app_manager/js/app_manager.js');
@@ -16,6 +16,10 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
         self.customProperties.sort(function(left, right) {
             return left.key() == right.key() ? 0 : (left.key() < right.key() ? -1 : 1);
         });
+        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+            // only referenced in v2 template
+            self.customPropertiesCollapse = hqImport("app_manager/js/section_changer.js").shouldCollapse("app-settings", "custom-properties", false);
+        }
 
         self.settings = [];
         self.settingsIndex = {};
@@ -245,12 +249,16 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
                     return setting.visible();
                 });
             });
-            section.reallyCollapse = ko.computed(function () {
-                var el = document.getElementById(section.id);
-                return section.collapse &&
-                    (!el || !el.classList.contains("in")) &&
-                    !_(section.settings).some(function (setting) { return setting.hasError(); });
-            });
+            if (!COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+                section.reallyCollapse = ko.computed(function () {
+                    var el = document.getElementById(section.id);
+                    return section.collapse &&
+                        (!el || !el.classList.contains("in")) &&
+                        !_(section.settings).some(function (setting) { return setting.hasError(); });
+                });
+            } else {
+                section.collapse = hqImport("app_manager/js/section_changer.js").shouldCollapse("app-settings", section.id, section.collapse);
+            }
             section.isVisible = ko.computed(function () {
                 return section.always_show !== false;
             });
@@ -308,13 +316,17 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
             };
         });
 
+        var $saveContainer = $("#settings-save-btn");
         self.saveButton = COMMCAREHQ.SaveButton.init({
-            unsavedMessage: "You have unsaved settings.",
+            unsavedMessage: gettext("You have unsaved settings."),
             save: function () {
                 self.saveButton.ajax(self.saveOptions());
             }
         });
-        self.saveButton.ui.appendTo($("#settings-save-btn"));
+        self.saveButton.ui.appendTo($saveContainer);
+        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+            hqImport("app_manager/js/section_changer.js").attachToForm($saveContainer);
+        }
 
         self.onAddCustomProperty = function() {
             self.customProperties.push({ key: ko.observable(), value: ko.observable() });

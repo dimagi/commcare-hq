@@ -281,6 +281,9 @@ class ExportColumn(DocumentSchema):
                 pass
         if value is None:
             value = MISSING_VALUE
+
+        if isinstance(value, list):
+            value = ' '.join(value)
         return value
 
     @staticmethod
@@ -940,10 +943,6 @@ class FormExportInstance(ExportInstance):
     # static filters to limit the data in this export
     # filters are only used in daily saved and HTML (dashboard feed) exports
     filters = SchemaProperty(FormExportInstanceFilters)
-
-    @property
-    def identifier(self):
-        return self.xmlns
 
     @property
     def identifier(self):

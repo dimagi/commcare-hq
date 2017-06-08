@@ -63,9 +63,9 @@ class EpisodeUpdater(object):
 
     def __init__(self, domain):
         self.domain = domain
-        # set purge_date to 60 days back
+        # set purge_date to 30 days back
         self.purge_date = datetime.datetime.now(
-            pytz.timezone(ENIKSHAY_TIMEZONE)).date() - datetime.timedelta(days=60)
+            pytz.timezone(ENIKSHAY_TIMEZONE)).date() - datetime.timedelta(days=30)
         self.adherence_data_store = AdherenceDatastore(domain)
 
     def run(self):
@@ -226,9 +226,9 @@ class EpisodeAdherenceUpdate(object):
             else:
                 valid_cases = filter(
                     lambda case: (
-                        case['adherence_source'] == 'enikshay' and
+                        case.get('adherence_source') == 'enikshay' and
                         (not case['closed'] or (case['closed'] and
-                         case['adherence_closure_reason'] == HISTORICAL_CLOSURE_REASON))
+                         case.get('adherence_closure_reason') == HISTORICAL_CLOSURE_REASON))
                     ),
                     cases
                 )
@@ -468,7 +468,7 @@ class EpisodeVoucherUpdate(object):
 
         try:
             refill_due_date = date_last_refill + datetime.timedelta(days=int(voucher_length))
-        except ValueError:
+        except (TypeError, ValueError):
             return {}
 
         return {
