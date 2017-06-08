@@ -1,0 +1,29 @@
+<div class="awc-opened-yesterday-directive">
+    <div class="row filters">
+        <filters filters="$ctrl.filters" data="$ctrl.data" ></filters>
+    </div>
+    <div class="col-md-12" ng-if="$ctrl.step === 'map'">
+        <div class="row">
+            <div class="col-md-12">
+                <h2 class="dashboard-title">Percentage of AWCs Opened Yesterday</h2>
+            </div>
+        </div>
+        <div class="row">
+            <indie-map legend-title="Percentage of AWCs" data="$ctrl.mapData"></indie-map>
+        </div>
+    </div>
+    <div class="col-md-12" ng-if="$ctrl.step === 'chart'">
+        <div class="row">
+            chart
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="dot-menu">
+            <div class="dot-menu-item pointer" ng-repeat="step in $ctrl.steps">
+                <dot-link label="{$ step.label $}" route="{$ step.route $}"></dot-link>
+            </div>
+        </div>
+    </div>
+
+</div>
