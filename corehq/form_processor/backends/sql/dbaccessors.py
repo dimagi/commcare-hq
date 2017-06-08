@@ -294,6 +294,17 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def iter_forms_by_last_modified(start_datetime, end_datetime):
+        '''
+        Returns all forms that have been modified within a time range. The start date is
+        exclusive while the end date is inclusive (start_datetime, end_datetime].
+
+        NOTE: This does not include archived forms
+
+        :param start_datetime: The start date of which modified forms must be greater than
+        :param end_datetime: The end date of which modified forms must be less than or equal to
+
+        :returns: An iterator of XFormInstanceSQL objects
+        '''
         from corehq.sql_db.util import run_query_across_partitioned_databases
 
         return run_query_across_partitioned_databases(
