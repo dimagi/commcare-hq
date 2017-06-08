@@ -332,21 +332,33 @@ class EpisodeAdherenceUpdate(object):
     def get_adherence_scores(self, doses_taken_by_date):
         today = self.case_updater.date_today_in_india
         start_date = self.get_adherence_schedule_start_date()
-        one_week_score_count_taken = self.count_doses_taken(
-            doses_taken_by_date,
-            start_date=today - datetime.timedelta(days=7),
-            end_date=today,
-        ) if today - datetime.timedelta(days=7) >= start_date else 0
-        two_week_score_count_taken = self.count_doses_taken(
-            doses_taken_by_date,
-            start_date=today - datetime.timedelta(days=14),
-            end_date=today,
-        ) if today - datetime.timedelta(days=14) >= start_date else 0
-        month_score_count_taken = self.count_doses_taken(
-            doses_taken_by_date,
-            start_date=today - datetime.timedelta(days=30),
-            end_date=today,
-        ) if today - datetime.timedelta(days=30) >= start_date else 0
+
+        if today - datetime.timedelta(days=7) >= start_date:
+            one_week_score_count_taken = self.count_doses_taken(
+                doses_taken_by_date,
+                start_date=today - datetime.timedelta(days=7),
+                end_date=today,
+            )
+        else:
+            one_week_score_count_taken = 0
+
+        if today - datetime.timedelta(days=14) >= start_date:
+            two_week_score_count_taken = self.count_doses_taken(
+                doses_taken_by_date,
+                start_date=today - datetime.timedelta(days=14),
+                end_date=today,
+            )
+        else:
+            two_week_score_count_taken = 0
+
+        if today - datetime.timedelta(days=30) >= start_date:
+            month_score_count_taken = self.count_doses_taken(
+                doses_taken_by_date,
+                start_date=today - datetime.timedelta(days=30),
+                end_date=today,
+            )
+        else:
+            month_score_count_taken = 0
 
         return {
             'one_week_score_count_taken': one_week_score_count_taken,
