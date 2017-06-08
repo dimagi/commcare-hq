@@ -25,21 +25,12 @@ from corehq.warehouse.const import (
     SYNCLOG_STAGING_SLUG,
 )
 
+from corehq.warehouse.etl import CouchToDjangoETLMixin
 
 class StagingTable(models.Model):
 
     class Meta:
         abstract = True
-
-    @classmethod
-    def raw_record_iter(cls, start_datetime, end_datetime):
-        raise NotImplementedError
-
-    @classmethod
-    def field_mapping(cls):
-        # Map source model fields to staging table fields
-        # ( <source field>, <staging field> )
-        raise NotImplementedError
 
     @classmethod
     @transaction.atomic
@@ -56,7 +47,7 @@ class StagingTable(models.Model):
             cursor.execute("TRUNCATE {}".format(cls._meta.db_table))
 
 
-class GroupStagingTable(StagingTable):
+class GroupStagingTable(StagingTable, CouchToDjangoETLMixin):
     '''
     Represents the staging table to dump data before loading into the GroupDim
 
@@ -91,7 +82,7 @@ class GroupStagingTable(StagingTable):
         return iter_docs(Group.get_db(), group_ids)
 
 
-class UserStagingTable(StagingTable):
+class UserStagingTable(StagingTable, CouchToDjangoETLMixin):
     '''
     Represents the staging table to dump data before loading into the UserDim
 
@@ -141,7 +132,7 @@ class UserStagingTable(StagingTable):
         return iter_docs(CouchUser.get_db(), user_ids)
 
 
-class DomainStagingTable(StagingTable):
+class DomainStagingTable(StagingTable, CouchToDjangoETLMixin):
     '''
     Represents the staging table to dump data before loading into the DomainDim
 
@@ -197,7 +188,7 @@ class DomainStagingTable(StagingTable):
         return iter_docs(Domain.get_db(), domain_ids)
 
 
-class FormStagingTable(StagingTable):
+class FormStagingTable(StagingTable, CouchToDjangoETLMixin):
     '''
     Represents the staging table to dump data before loading into the FormFact
 
@@ -241,7 +232,7 @@ class FormStagingTable(StagingTable):
         return get_forms_by_last_modified(start_datetime, end_datetime)
 
 
-class SyncLogStagingTable(StagingTable):
+class SyncLogStagingTable(StagingTable, CouchToDjangoETLMixin):
     '''
     Represents the staging table to dump data before loading into the SyncLogFact
 

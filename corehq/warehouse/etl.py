@@ -4,6 +4,7 @@ from django.db import connections
 from django.conf import settings
 from django.template import Context, engines
 
+from corehq.warehouse.utils import django_batch_records
 from corehq.sql_db.routers import db_for_read_write
 
 
@@ -53,6 +54,24 @@ class CustomSQLETLMixin(object):
         )
 
         return _render_template(path, cls._table_context())
+
+
+class CouchToDjangoETLMixin(object):
+
+    @classmethod
+    def field_mapping(cls):
+        # Map source model fields to staging table fields
+        # ( <source field>, <staging field> )
+        raise NotImplementedError
+
+    @classmethod
+    def record_iter(cls, start_datetime, end_datetime):
+        raise NotImplementedError
+
+    def load(cls, start_datetime, end_datetime):
+        record_iter = cls.raw_record_iter(start_datetime, end_datetime)
+
+        django_batch_records(cls, record_iter, cls.field_mapping())
 
 
 def _render_template(path, context):
