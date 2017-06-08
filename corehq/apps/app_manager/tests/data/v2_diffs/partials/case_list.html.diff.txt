@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -3,279 +3,288 @@
+@@ -3,276 +3,285 @@
  {% load app_manager_extras %}
  {% load xforms_extras %}
  
@@ -72,9 +72,7 @@
 +            </div>
 +        </div>
 +        {% endif %}
-+        {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
-+        {% if request|toggle_enabled:'CASE_LIST_TILE' %}
-+        <div data-bind="visible: useCaseTiles() == 'yes' || COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML')">
++        <div data-bind="visible: (useCaseTiles() == 'yes' && COMMCAREHQ.toggleEnabled('CASE_LIST_TILE')) || COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML')">
 +            <div class="checkbox">
 +                <label>
 +                    <input type="checkbox" data-bind="checked: persistTileOnForms">
@@ -88,7 +86,6 @@
 +                </label>
 +            </div>
 +        </div>
-+        {% endif %}
 +
 +        {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
 +        {% if request|toggle_enabled:'CASE_LIST_TILE' %}
@@ -158,9 +155,7 @@
 -    </div>
 -    {% endif %}
 -
--    {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
--    {% if request|toggle_enabled:'CASE_LIST_TILE' %}
--    <div data-bind="visible: useCaseTiles() == 'yes' || COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML')">
+-    <div data-bind="visible: (useCaseTiles() == 'yes' && COMMCAREHQ.toggleEnabled('CASE_LIST_TILE'))|| COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML')">
 -        <div class="checkbox">
 -            <label>
 -                <input type="checkbox" data-bind="checked: persistTileOnForms">
@@ -174,7 +169,6 @@
 -            </label>
 -        </div>
 -    </div>
--    {% endif %}
 -
 -    {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
 -    {% if request|toggle_enabled:'CASE_LIST_TILE' %}
@@ -550,7 +544,7 @@
          <div class="form-group">
              <label class="control-label col-sm-2">
                  {% trans "Select Parent First" %}
-@@ -288,7 +297,7 @@
+@@ -285,7 +294,7 @@
          </div>
          <div class="form-group" data-bind="visible: active">
              <label class="control-label col-sm-2">
@@ -559,7 +553,7 @@
              </label>
              <div class="col-sm-4">
                  <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
-@@ -301,15 +310,14 @@
+@@ -298,15 +307,14 @@
  
  {{ request|toggle_tag_info:"CASE_LIST_LOOKUP" }}
  {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}
