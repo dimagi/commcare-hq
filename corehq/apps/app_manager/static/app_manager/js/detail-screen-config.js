@@ -974,6 +974,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 this.persistTileOnForms = ko.observable(spec[this.columnKey].persist_tile_on_forms || false);
                 this.enableTilePullDown = ko.observable(spec[this.columnKey].pull_down_tile || false);
                 this.allowsEmptyColumns = options.allowsEmptyColumns;
+                this.persistentCaseContextFromModule = ko.observable(spec[this.columnKey].persistent_case_context_from_module || "");
+                this.detailCaseContextFromModule = ko.observable(spec[this.columnKey].detail_case_context_from_module || "");
 
                 this.fireChange = function() {
                     that.fire('change');
@@ -1056,6 +1058,12 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     that.saveButton.fire('change');
                 });
                 this.persistTileOnForms.subscribe(function(){
+                    that.saveButton.fire('change');
+                });
+                this.persistentCaseContextFromModule.subscribe(function(){
+                    that.saveButton.fire('change');
+                });
+                this.detailCaseContextFromModule.subscribe(function(){
                     that.saveButton.fire('change');
                 });
                 this.enableTilePullDown.subscribe(function(){
@@ -1157,6 +1165,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     data.persistCaseContext = this.persistCaseContext();
                     data.persistentCaseContextXML = this.persistentCaseContextXML();
                     data.persistTileOnForms = this.persistTileOnForms();
+                    data.persistentCaseContextFromModule = this.persistentCaseContextFromModule();
+                    data.detailCaseContextFromModule = this.detailCaseContextFromModule();
                     data.enableTilePullDown = this.persistTileOnForms() ? this.enableTilePullDown() : false;
 
                     if (this.containsParentConfiguration) {

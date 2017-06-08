@@ -1,5 +1,7 @@
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load app_manager_extras %}
+{% load xforms_extras %}
 
 {% include 'app_manager/v1/partials/case_list_missing_warning.html' %}
 
@@ -56,6 +58,8 @@
     </div>
     {% endif %}
 
+    {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
+    {% if request|toggle_enabled:'CASE_LIST_TILE' %}
     <div data-bind="visible: useCaseTiles() == 'yes' || COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML')">
         <div class="checkbox">
             <label>
@@ -70,6 +74,48 @@
             </label>
         </div>
     </div>
+    {% endif %}
+
+    {% if request|feature_preview_enabled:"SHARE_CASE_TILE_CONTEXT" %}
+    {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
+    {% if request|toggle_enabled:'CASE_LIST_TILE' %}
+        {% with app|get_available_modules_for_case_tile_configuration:module as available_modules %}
+        {% if available_modules %}
+        <div class="row">
+            <div class="col-sm-6">
+                <label>
+                    {% trans "Use case list tile from module" %}
+                </label>
+                <div>
+                    <select name='detail_case_context_from_module' class='form-control' data-bind="value: detailCaseContextFromModule">
+                        <option value></option>
+                        {% for other_mod in available_modules %}
+                        <option value={{ other_mod.unique_id }}>{{ other_mod.name|html_trans:langs }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            {% if request|toggle_enabled:'SHOW_PERSIST_CASE_CONTEXT_SETTING' %}
+            <div class="col-sm-6">
+                <label>
+                    {% trans "Use persistent case list tile from module" %}
+                </label>
+                <div data-bind="visible: persistTileOnForms()" >
+                    <select name='persistent_case_context_from_module' class='form-control' data-bind="value: persistentCaseContextFromModule">
+                        <option value></option>
+                        {% for other_mod in available_modules %}
+                            <option value={{ other_mod.unique_id }}>{{ other_mod.name|html_trans:langs }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% endwith %}
+    {% endif %}
+    {% endif %}
     {% include 'app_manager/v1/partials/case_list_properties.html' %}
 </div>
 
