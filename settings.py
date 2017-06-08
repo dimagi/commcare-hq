@@ -1560,7 +1560,10 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
 
 AVAILABLE_CUSTOM_RULE_CRITERIA = {}
 
-AVAILABLE_CUSTOM_RULE_ACTIONS = {}
+AVAILABLE_CUSTOM_RULE_ACTIONS = {
+    'ICDS_ESCALATE_TECH_ISSUE':
+        'custom.icds.rules.custom_actions.escalate_tech_issue',
+}
 
 # These are custom templates which can wrap default the sms/chat.html template
 CUSTOM_CHAT_TEMPLATES = {

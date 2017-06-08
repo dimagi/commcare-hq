@@ -1,17 +1,14 @@
-from contextlib import contextmanager
-from casexml.apps.case.mock import CaseFactory
 from corehq.apps.data_interfaces.models import (
     AutomaticUpdateRule,
     MatchPropertyDefinition,
     CreateScheduleInstanceActionDefinition,
 )
+from corehq.apps.data_interfaces.tests.util import create_case, create_empty_rule
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
-from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule, SMSContent
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     get_case_alert_schedule_instances_for_schedule,
@@ -27,33 +24,6 @@ from datetime import datetime, date, time
 from django.db.models import Q
 from django.test import TestCase
 from mock import patch
-
-
-@contextmanager
-def _create_case(domain, case_type):
-    case = CaseFactory(domain).create_case(case_type=case_type)
-
-    try:
-        yield case
-    finally:
-        if should_use_sql_backend(domain):
-            CaseAccessorSQL.hard_delete_cases(domain, [case.case_id])
-        else:
-            case.delete()
-
-
-def _create_empty_rule(domain):
-    return AutomaticUpdateRule.objects.create(
-        domain=domain,
-        name='test',
-        case_type='person',
-        active=True,
-        deleted=False,
-        filter_on_server_modified=False,
-        server_modified_boundary=None,
-        migrated=True,
-        workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
-    )
 
 
 class CaseRuleSchedulingIntegrationTest(TestCase):
@@ -108,7 +78,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             SMSContent(message={'en': 'Hello'})
         )
 
-        rule = _create_empty_rule(self.domain)
+        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
 
         rule.add_criteria(
             MatchPropertyDefinition,
@@ -126,7 +96,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
 
         utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
-        with _create_case(self.domain, 'person') as case:
+        with create_case(self.domain, 'person') as case:
             # Rule does not match, no instances created
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
@@ -166,7 +136,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             SMSContent(message={'en': 'Hello'})
         )
 
-        rule = _create_empty_rule(self.domain)
+        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
 
         rule.add_criteria(
             MatchPropertyDefinition,
@@ -184,7 +154,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
         AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
 
         utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
-        with _create_case(self.domain, 'person') as case:
+        with create_case(self.domain, 'person') as case:
             # Rule does not match, no instances created
             instances = get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
