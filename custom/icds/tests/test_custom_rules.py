@@ -1,5 +1,4 @@
 import pytz
-from casexml.apps.case.mock import CaseFactory
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CustomActionDefinition
 from corehq.apps.data_interfaces.tests.test_auto_case_updates import BaseCaseRuleTest
 from corehq.apps.data_interfaces.tests.util import create_case, create_empty_rule
