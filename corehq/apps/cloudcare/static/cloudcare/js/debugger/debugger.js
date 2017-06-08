@@ -74,14 +74,6 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             self.evalXPath.afterRender();
         };
 
-        self.updateDebugger = function(resp) {
-            self.updating(false);
-            self.formattedQuestionsHtml(resp.formattedQuestions);
-            self.instanceXml(resp.instanceXml);
-            self.evalXPath.autocomplete(resp.questionList);
-            self.evalXPath.recentXPathQueries(resp.recentXPathQueries || []);
-        };
-
         self.setContentHeight = function() {
             var contentHeight;
             if (self.isMinimized()) {
@@ -93,6 +85,24 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 $('.debugger-content').outerHeight(contentHeight);
             }
         };
+
+        // Called afterRender, ensures that the debugger takes the whole screen
+        self.adjustWidth = function() {
+            var $debug = $('#instance-xml-home'),
+                $body = $('body');
+
+            $debug.width($body.width());
+        };
+    };
+
+    // By default do nothing when updating the debugger
+    CloudCareDebugger.prototype.onUpdate = function() {
+        this.updating(false);
+    };
+
+    var CloudCareDebuggerFormEntry = function(options) {
+        var self = this;
+        CloudCareDebugger.call(self, options);
 
         self.instanceXml.subscribe(function(newXml) {
             var codeMirror,
@@ -113,23 +123,6 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             });
         });
 
-        // Called afterRender, ensures that the debugger takes the whole screen
-        self.adjustWidth = function() {
-            var $debug = $('#instance-xml-home'),
-                $body = $('body');
-
-            $debug.width($body.width());
-        };
-    };
-
-    // By default do nothing when updating the debugger
-    CloudCareDebugger.prototype.onUpdate = function() {
-        return;
-    };
-
-    var CloudCareDebuggerFormEntry = function(options) {
-        var self = this;
-        CloudCareDebugger.call(self, options);
     };
     CloudCareDebuggerFormEntry.prototype = Object.create(CloudCareDebugger.prototype);
     CloudCareDebuggerFormEntry.prototype.constructor = CloudCareDebugger;
@@ -144,7 +137,11 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 domain: this.options.domain,
             }
         ).done(function(response) {
-            this.updateDebugger(response);
+            this.formattedQuestionsHtml(response.formattedQuestions);
+            this.instanceXml(response.instanceXml);
+            this.evalXPath.autocomplete(response.questionList);
+            this.evalXPath.recentXPathQueries(response.recentXPathQueries || []);
+            this.updating(false);
         }.bind(this));
     };
 
