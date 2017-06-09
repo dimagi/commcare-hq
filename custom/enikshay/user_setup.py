@@ -9,6 +9,7 @@ import re
 import uuid
 from crispy_forms import layout as crispy
 from django import forms
+from django.core.validators import RegexValidator
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
@@ -317,6 +318,31 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
             if field in fields_to_loc_types:
                 fs[i] = _make_field_visible_to(field, fields_to_loc_types[field])
         return form
+
+    def _make_field(self, field):
+        if field.slug == 'language_code':
+            return forms.ChoiceField(
+                label=field.label,
+                required=True,
+                choices=[
+                    ('', _('Select one')),
+                    ("en", "English"),
+                    ("hin", "Hindi"),
+                    ("mar", "Marathi"),
+                    ("bho", "Bhojpuri"),
+                    ('guj', "Gujarati"),
+                ],
+            )
+        if field.slug == 'contact_phone_number':
+            regexp = "^91[0-9]{10}$"
+            help_text = "Please enter only digits. Enter 91 followed by the 10-digit national number."
+            return forms.CharField(
+                widget=forms.TextInput(attrs={"pattern": regexp, "title": help_text}),
+                label=field.label,
+                required=True,
+                validators=[RegexValidator(regexp, help_text)],
+            )
+        return super(ENikshayLocationUserDataEditor, self)._make_field(field)
 
 
 class ENikshayUserLocationDataEditor(CustomDataEditor):
