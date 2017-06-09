@@ -1,7 +1,16 @@
-from django.test import SimpleTestCase
+import tempfile
+
+from couchexport.export import export_raw
+from couchexport.models import Format
+from django.test import SimpleTestCase, TestCase
+from StringIO import StringIO
+
+from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.fixtures.exceptions import FixtureUploadError
+from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.apps.fixtures.upload import validate_fixture_file_format
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
+from corehq.apps.fixtures.upload.run_upload import _run_fixture_upload
 from corehq.apps.fixtures.upload.workbook import get_workbook
 from corehq.util.test_utils import make_make_path
 from corehq.util.test_utils import generate_cases
@@ -119,13 +128,84 @@ class TestValidationComprehensiveness(SimpleTestCase):
             .format('\n'.join(untested)))
 
 
-class TestFixtureUpload(SimpleTestCase):
+class TestFixtureUpload(TestCase):
+
+    headers = (
+        (
+            'types',
+            ('Delete(Y/N)', 'table_id', 'is_global?', 'field 1', 'field 1: is_indexed?')
+        ),
+        (
+            'things',
+            ('UID', 'Delete(Y/N)', 'field: name')
+        )
+    )
+
+    @staticmethod
+    def make_rows(item_rows):
+        # given a list of fixture-items, return formatted excel rows
+        return (
+            (
+                'types',
+                ('N', 'things', 'yes', 'name', 'yes')
+            ),
+            (
+                'things',
+                tuple(item_rows)
+            )
+        )
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = 'fixture-upload-test'
+        cls.project = create_domain(cls.domain)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.project.delete()
+
     def _get_workbook(self, filename):
         return get_workbook(_make_path('test_upload', '{}.xlsx'.format(filename)))
 
+    def _get_workbook_from_data(self, headers, rows):
+        file = StringIO()
+        export_raw(headers, rows, file, format=Format.XLS_2007)
+        with tempfile.TemporaryFile(suffix='.xlsx') as f:
+            f.write(file.getvalue())
+            return get_workbook(f)
+
+    def get_fixture_items(self, attribute):
+        fixtures = []
+        for fixture in FixtureDataItem.get_item_list(self.domain, 'things'):
+            fixtures.append(fixture.fields.get(attribute).field_list[0].field_value)
+        return fixtures
+
     def test_indexed_field(self):
+        # test indexed fields are ready correctly
         workbook = self._get_workbook('ok')
         type_sheets = workbook.get_all_type_sheets()
         indexed_field = type_sheets[0].fields[0]
         self.assertEqual(indexed_field.field_name, 'name')
         self.assertTrue(indexed_field.is_indexed)
+
+    def test_row_addition(self):
+        # upload and then reupload with addition of a new fixture-item should work
+
+        initial_rows = [(None, 'N', 'apple')]
+        rows = self.make_rows(initial_rows)
+        workbook = self._get_workbook_from_data(self.headers, rows)
+        _run_fixture_upload(self.domain, workbook)
+
+        self.assertListEqual(
+            self.get_fixture_items('name'),
+            ['apple']
+        )
+
+        # reupload with additional row
+        new_rows = initial_rows + [(None, 'N', 'orange')]
+        workbook = self._get_workbook_from_data(self.headers, self.make_rows(new_rows))
+        _run_fixture_upload(self.domain, workbook)
+        self.assertItemsEqual(
+            self.get_fixture_items('name'),
+            ['apple', 'orange']
+        )
