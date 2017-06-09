@@ -4,8 +4,6 @@ import hashlib
 
 from django.conf import settings
 
-from corehq.apps.userreports.models import StaticReportConfiguration, STATIC_PREFIX, \
-    CUSTOM_REPORT_PREFIX
 from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.userreports.const import (
@@ -193,6 +191,9 @@ def get_async_indicator_modify_lock_key(doc_id):
 
 
 def copy_static_reports(from_domain, to_domain, report_map):
+    from corehq.apps.userreports.models import StaticReportConfiguration, STATIC_PREFIX, \
+        CUSTOM_REPORT_PREFIX
+
     for static_report in StaticReportConfiguration.by_domain(from_domain):
         if static_report.get_id.startswith(STATIC_PREFIX):
             report_id = static_report.get_id.replace(
