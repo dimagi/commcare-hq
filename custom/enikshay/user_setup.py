@@ -9,6 +9,7 @@ import re
 import uuid
 from crispy_forms import layout as crispy
 from django import forms
+from django.core.validators import RegexValidator
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
@@ -330,6 +331,15 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
                     ("bho", "Bhojpuri"),
                     ('guj', "Gujarati"),
                 ],
+            )
+        if field.slug == 'contact_phone_number':
+            regexp = "^91[1-9][0-9]{9}$"
+            help_text = "Phone number must be 91 followed by 10 digits with no leading zeroes"
+            return forms.CharField(
+                widget=forms.TextInput(attrs={"pattern": regexp, "title": help_text}),
+                label=field.label,
+                required=True,
+                validators=[RegexValidator(regexp, help_text)],
             )
         return super(ENikshayLocationUserDataEditor, self)._make_field(field)
 
