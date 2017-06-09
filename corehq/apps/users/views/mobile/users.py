@@ -764,7 +764,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             last_name=last_name,
             user_data=self.custom_data.get_data_to_save(),
             is_anonymous=True,
-            location=SQLLocation.objects.get(location_id=location_id),
+            location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
         )
 
     def _build_commcare_user(self):
@@ -782,7 +782,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             first_name=first_name,
             last_name=last_name,
             user_data=self.custom_data.get_data_to_save(),
-            location=SQLLocation.objects.get(location_id=location_id),
+            location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
         )
 
     def _ensure_proper_request(self, in_data):
