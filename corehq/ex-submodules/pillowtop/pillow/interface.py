@@ -3,8 +3,7 @@ from datetime import datetime
 
 import sys
 
-from corehq.util.soft_assert import soft_assert
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge, datadog_histogram
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
 from kafka.common import TopicAndPartition
@@ -219,7 +218,7 @@ class PillowBase(object):
             ])
 
             if timer:
-                datadog_gauge('commcare.change_feed.processing_time', timer.duration, tags=tags)
+                datadog_histogram('commcare.change_feed.processing_time', timer.duration, tags=tags)
 
 
 class ChangeEventHandler(object):
