@@ -157,6 +157,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
         self.assertDictEqual(
             user_data_minus_commcare_primary_case_sharing_id,
             {
+                'agency_id_legacy': 100789,
                 'commcare_location_id': agency.location_id,
                 'commcare_location_ids': agency.location_id,
                 'commcare_project': self.domain,

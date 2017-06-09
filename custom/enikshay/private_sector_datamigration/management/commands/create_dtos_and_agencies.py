@@ -89,6 +89,7 @@ class Command(BaseCommand):
         user = make_location_user(agency_loc)
         user.user_location_id = agency_loc_id
         user.set_location(agency_loc, commit=False)
+        user.user_data['agency_id_legacy'] = agency_loc.metadata['private_sector_agency_id']
         user.set_role(
             domain,
             UserRole.by_domain_and_name(domain, 'Default Mobile Worker')[0].get_qualified_id()
