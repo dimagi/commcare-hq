@@ -38,7 +38,7 @@ from corehq.apps.domain.decorators import (
     check_domain_migration,
     login_or_digest_or_basic_or_apikey_or_token,
 )
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
+from corehq.util.datadog.gauges import datadog_counter, datadog_histogram
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
@@ -79,7 +79,7 @@ def restore(request, domain, app_id=None):
         for timer in timing_context.to_list(exclude_root=True):
             # Only record leaf nodes so we can sum to get the total
             if timer.is_leaf_node:
-                datadog_gauge(
+                datadog_histogram(
                     'commcare.restores.timings',
                     timer.duration,
                     tags=tags + [u'segment:{}'.format(timer.name)],
