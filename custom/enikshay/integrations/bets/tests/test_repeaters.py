@@ -178,7 +178,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
         voucher = self.create_voucher_case(
             prescription.case_id, {
                 "voucher_type": "prescription",
-                "fulfilled_by_id": self.user.user_id,
+                "voucher_fulfilled_by_id": self.user.user_id,
                 "voucher_fulfilled_by_location_id": self.pcc.location_id,
                 "date_fulfilled": "2017-08-15",
                 "voucher_id": "ABC-DEF-1123",
@@ -210,7 +210,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
         voucher = self.create_voucher_case(
             prescription.case_id, {
                 "voucher_type": "test",
-                "fulfilled_by_id": self.user.user_id,
+                "voucher_fulfilled_by_id": self.user.user_id,
                 "voucher_fulfilled_by_location_id": self.plc.location_id,
                 "date_fulfilled": "2017-08-15",
                 "voucher_id": "ABC-DEF-1123",
