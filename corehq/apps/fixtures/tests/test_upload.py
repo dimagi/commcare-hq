@@ -175,6 +175,7 @@ class TestFixtureUpload(TestCase):
             return get_workbook(f)
 
     def get_fixture_items(self, attribute):
+        # return list of 'attribute' values of fixture table 'things'
         fixtures = []
         for fixture in FixtureDataItem.get_item_list(self.domain, 'things'):
             fixtures.append(fixture.fields.get(attribute).field_list[0].field_value)
@@ -202,7 +203,8 @@ class TestFixtureUpload(TestCase):
         )
 
         # reupload with additional row
-        new_rows = initial_rows + [(None, 'N', 'orange')]
+        apple_id = FixtureDataItem.get_item_list(self.domain, 'things')[0]._id
+        new_rows = [(apple_id, 'N', 'apple'), (None, 'N', 'orange')]
         workbook = self._get_workbook_from_data(self.headers, self.make_rows(new_rows))
         _run_fixture_upload(self.domain, workbook)
         self.assertItemsEqual(
