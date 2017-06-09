@@ -264,7 +264,8 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
         )
         checkpoint = KafkaPillowCheckpoint(pillow_name, topics)
         event_handler = KafkaCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed
+            checkpoint=checkpoint, checkpoint_frequency=1000, change_feed=change_feed,
+            checkpoint_callback=processor
         )
         super(ConfigurableReportKafkaPillow, self).__init__(
             name=pillow_name,
