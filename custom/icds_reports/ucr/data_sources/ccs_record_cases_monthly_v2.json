@@ -6,8 +6,8 @@
     "icds"
   ],
   "config": {
-    "table_id": "static-ccs_record_cases_monthly",
-    "display_name": "Cases - CCS Record (Monthly) (Static)",
+    "table_id": "static-ccs_record_cases_monthly_v2",
+    "display_name": "Cases - CCS Record (Monthly) (Static) v2",
     "referenced_doc_type": "CommCareCase",
     "description": "",
     "base_item_expression": {
