@@ -21,6 +21,14 @@ def datadog_gauge_task(name, fn, run_every, enforce_prefix='commcare'):
     return datadog_gauge.periodic_task()
 
 
+def datadog_histogram(name, value, enforce_prefix='commcare', tags=None):
+    """
+    Usage: Used to track the statistical distribution of a set of values over a statsd flush period.
+    Actually submits as multiple metrics:
+    """
+    _datadog_record(statsd.histogram, name, value, enforce_prefix, tags)
+
+
 def datadog_gauge(name, value, enforce_prefix='commcare', tags=None):
     _datadog_record(statsd.gauge, name, value, enforce_prefix, tags)
 
