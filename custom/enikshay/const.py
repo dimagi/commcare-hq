@@ -1,9 +1,31 @@
 # Case property names used in integrations
 PRIMARY_PHONE_NUMBER = 'phone_number'
 BACKUP_PHONE_NUMBER = 'secondary_contact_phone_number'
+OTHER_NUMBER = "phone_number_other"
+NINETYNINEDOTS_NUMBERS = [
+    PRIMARY_PHONE_NUMBER,
+    BACKUP_PHONE_NUMBER,
+    OTHER_NUMBER,
+]
 
 MERM_ID = 'merm_id'
+MERM_DAILY_REMINDER_STATUS = 'merm_daily_reminder_status'
+MERM_DAILY_REMINDER_TIME = "merm_daily_reminder_time"
+MERM_REFILL_REMINDER_STATUS = "merm_refill_reminder_status"
+MERM_REFILL_REMINDER_DATETIME = "merm_refill_reminder_datetime"
+MERM_RT_HOURS = "merm_rt_hours"
+MERM_PROPERTIES = [
+    MERM_ID,
+    MERM_DAILY_REMINDER_STATUS,
+    MERM_DAILY_REMINDER_TIME,
+    MERM_REFILL_REMINDER_STATUS,
+    MERM_REFILL_REMINDER_DATETIME,
+    MERM_RT_HOURS,
+]
 
+ENROLLED_IN_PRIVATE = "enrolled_in_private"
+
+ENIKSHAY_ID = 'person_id'
 PERSON_FIRST_NAME = 'first_name'
 PERSON_LAST_NAME = 'last_name'
 
@@ -24,12 +46,15 @@ CURRENT_ADDRESS = 'current_address'
 ENROLLED_IN_PRIVATE = "enrolled_in_private"
 
 NINETYNINEDOTS_PERSON_PROPERTIES = [
+    ENIKSHAY_ID,
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
-    MERM_ID,
+    OTHER_NUMBER,
     PERSON_FIRST_NAME,
     PERSON_LAST_NAME,
     CURRENT_ADDRESS,
+    ENROLLED_IN_PRIVATE,
+    'owner_id',
 ]
 NINETYNINEDOTS_EPISODE_PROPERTIES = [
     TREATMENT_SUPPORTER_FIRST_NAME,
@@ -39,7 +64,7 @@ NINETYNINEDOTS_EPISODE_PROPERTIES = [
     TREATMENT_OUTCOME_DATE,
     TREATMENT_START_DATE,
     WEIGHT_BAND,
-]
+] + MERM_PROPERTIES
 
 DOSE_TAKEN_INDICATORS = [
     'directly_observed_dose',

@@ -258,6 +258,7 @@ def get_person_locations(person_case):
     """
     public locations hierarchy
     sto -> cto -> dto -> tu -> phi
+
     private locations hierarchy
     sto-> cto -> dto -> pcp
     """
