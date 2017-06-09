@@ -9,6 +9,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from casexml.apps.phone.models import SyncLog
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.warehouse.dbaccessors import (
     get_group_ids_by_last_modified,
     get_user_ids_by_last_modified,
@@ -209,7 +210,10 @@ class FormStagingTable(StagingTable, CouchToDjangoETLMixin):
 
     build_id = models.CharField(max_length=255, null=True)
 
-    # TODO: Should we be storing state or will reports only deal with Normal forms?
+    state = models.PositiveSmallIntegerField(
+        choices=XFormInstanceSQL.STATES,
+        default=XFormInstanceSQL.NORMAL
+    )
 
     @classmethod
     def field_mapping(cls):

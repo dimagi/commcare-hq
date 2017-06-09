@@ -17,6 +17,7 @@ USER_LOCATION_DIM_SLUG = 'user_location_dim'
 USER_GROUP_DIM_SLUG = 'user_group_dim'
 
 APP_STATUS_FACT_SLUG = 'app_status_fact'
+FORM_FACT_SLUG = 'form_fact'
 
 DIM_TABLES = [
     GROUP_STAGING_SLUG,
@@ -29,6 +30,7 @@ DIM_TABLES = [
 
 FACT_TABLES = [
     APP_STATUS_FACT_SLUG,
+    FORM_FACT_SLUG,
 ]
 
 STAGING_TABLES = [
