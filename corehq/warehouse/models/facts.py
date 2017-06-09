@@ -4,6 +4,7 @@ from corehq.warehouse.const import (
     APP_STATUS_FACT_SLUG,
     FORM_FACT_SLUG,
     USER_DIM_SLUG,
+    DOMAIN_DIM_SLUG,
     FORM_STAGING_SLUG,
     SYNCLOG_STAGING_SLUG,
 )
@@ -55,6 +56,7 @@ class FormFact(BaseFact, CustomSQLETLMixin):
     @classmethod
     def dependencies(cls):
         return [
+            DOMAIN_DIM_SLUG,
             FORM_STAGING_SLUG,
         ]
 

@@ -122,9 +122,9 @@ class DomainDim(BaseDim, CustomSQLETLMixin):
 
     domain_id = models.CharField(max_length=255)
     default_timezone = models.CharField(max_length=255)
-    hr_name = models.CharField(max_length=255)
-    creating_user_id = models.CharField(max_length=255)
-    project_type = models.CharField(max_length=255)
+    hr_name = models.CharField(max_length=255, null=True)
+    creating_user_id = models.CharField(max_length=255, null=True)
+    project_type = models.CharField(max_length=255, null=True)
 
     is_active = models.BooleanField()
     case_sharing = models.BooleanField()
