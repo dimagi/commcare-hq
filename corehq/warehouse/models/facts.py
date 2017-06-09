@@ -33,8 +33,7 @@ class ApplicationStatusFact(BaseFact, CustomSQLETLMixin):
 
     # app_dim = models.CharField(max_length=255)
 
-    # TODO is CASCADE the functionality that we want?
-    user_dim = models.ForeignKey(UserDim, on_delete=models.CASCADE)
+    user_dim = models.ForeignKey(UserDim, on_delete=models.PROTECT)
 
     last_form_submission_date = models.DateTimeField(null=True)
     last_sync_log_date = models.DateTimeField(null=True)
