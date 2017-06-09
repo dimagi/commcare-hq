@@ -11,6 +11,8 @@ class SMSContent(Content):
     def send(self, recipient):
         phone_number = get_one_way_number_for_recipient(recipient)
         if not phone_number or len(phone_number) <= 3:
+            # Avoid processing phone numbers that are obviously fake to
+            # save on processing time
             return
 
         language_code = recipient.get_language_code()
