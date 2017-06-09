@@ -188,8 +188,8 @@ class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):
     Event handler that supports checkpoints when subscribing to multiple topics.
     """
 
-    def __init__(self, checkpoint, checkpoint_frequency, change_feed):
-        super(KafkaCheckpointEventHandler, self).__init__(checkpoint, checkpoint_frequency)
+    def __init__(self, checkpoint, checkpoint_frequency, change_feed, checkpoint_callback=None):
+        super(KafkaCheckpointEventHandler, self).__init__(checkpoint, checkpoint_frequency, checkpoint_callback)
         assert isinstance(change_feed, KafkaChangeFeed)
         self.change_feed = change_feed
 
