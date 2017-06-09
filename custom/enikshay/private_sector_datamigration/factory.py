@@ -200,6 +200,7 @@ class BeneficiaryCaseFactory(object):
         if self._episode:
             rx_start_datetime = self._episode.rxStartDate
             kwargs['attrs']['date_opened'] = rx_start_datetime
+            kwargs['attrs']['update']['adherence_schedule_date_start'] = rx_start_datetime.date()
             kwargs['attrs']['update']['adherence_total_doses_taken'] = self._episode.adherence_total_doses_taken
             kwargs['attrs']['update']['adherence_tracking_mechanism'] = self._episode.adherence_tracking_mechanism
             kwargs['attrs']['update']['basis_of_diagnosis'] = self._episode.basis_of_diagnosis
