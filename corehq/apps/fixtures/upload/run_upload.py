@@ -208,4 +208,4 @@ def clear_fixture_quickcache(data_types):
         data_type.clear_caches()
         type_ids.append(data_type.get_id)
     from corehq.apps.fixtures.dbaccessors import get_fixture_items_for_data_types
-    get_fixture_items_for_data_types.clear(data_types[0].domain, type_ids)
+    get_fixture_items_for_data_types.clear(data_types[0].domain, set(type_ids))
