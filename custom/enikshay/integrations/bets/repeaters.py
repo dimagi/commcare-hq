@@ -346,7 +346,8 @@ class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
 
 
 class BETSAYUSHReferralRepeater(BaseBETSRepeater):
-    friendly_name = _("BETS - Providers: For diagnosis and notification of TB case (episode case type)")
+    friendly_name = _("AYUSH/Other provider: Registering and referral of a presumptive TB case"
+                      " in UATBC/e-Nikshay (episode case type)")
 
     payload_generator_classes = (BETSAYUSHReferralPayloadGenerator,)
 
