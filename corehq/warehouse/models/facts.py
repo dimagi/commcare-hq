@@ -31,6 +31,7 @@ class ApplicationStatusFact(BaseFact, CustomSQLETLMixin):
     '''
     slug = APP_STATUS_FACT_SLUG
 
+    # TODO: Add app dimension
     # app_dim = models.CharField(max_length=255)
 
     user_dim = models.ForeignKey(UserDim, on_delete=models.PROTECT)
