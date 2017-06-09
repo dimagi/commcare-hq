@@ -174,7 +174,10 @@ def get_open_episode_case_from_person(domain, person_case_id):
 
 
 def get_open_referral_case_from_person(domain, person_case_id):
-    episode = get_open_episode_case_from_person(domain, person_case_id)
+    try:
+        episode = get_open_episode_case_from_person(domain, person_case_id)
+    except ENikshayCaseNotFound:
+        return None
     case_accessor = CaseAccessors(domain)
     reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([episode.case_id])
     open_referral_cases = [
