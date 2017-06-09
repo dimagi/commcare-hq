@@ -4,7 +4,7 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, UserRole
 from custom.enikshay.private_sector_datamigration.models import Agency, UserDetail
 from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
 
@@ -15,6 +15,17 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
     def setUpClass(cls):
         cls.domain = 'test_domain'
         super(TestCreateDTOsAndAgencies, cls).setUpClass()
+
+        cls.user_role = UserRole(
+            domain=cls.domain,
+            name='Default Mobile Worker',
+        )
+        cls.user_role.save()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.user_role.delete()
+        super(TestCreateDTOsAndAgencies, cls).tearDownClass()
 
     def setUp(self):
         super(TestCreateDTOsAndAgencies, self).setUp()
@@ -156,6 +167,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
         self.assertListEqual(user.assigned_location_ids, [agency.location_id])
         self.assertEqual(user.location_id, agency.location_id)
         self.assertEqual(user.user_location_id, agency.location_id)
+        self.assertEqual(user.get_role(self.domain).get_qualified_id(), 'user-role:%s' % self.user_role._id)
 
         self.assertEqual(agency.user_id, user._id)
 
