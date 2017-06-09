@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from collections import defaultdict
+from collections import defaultdict, Counter
 from datetime import datetime, timedelta
 import hashlib
 
@@ -20,7 +20,9 @@ from corehq.apps.userreports.sql import metadata
 from corehq.apps.userreports.tasks import rebuild_indicators
 from corehq.apps.userreports.util import get_indicator_adapter, get_backend_id
 from corehq.sql_db.connections import connection_manager
+from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.soft_assert import soft_assert
+from corehq.util.timer import TimingContext
 from fluff.signals import (
     apply_index_changes,
     get_migration_context,
@@ -207,6 +209,8 @@ class ConfigurableReportTableManagerMixin(object):
 
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, PillowProcessor):
 
+    domain_timing_context = Counter()
+
     @time_ucr_process_change
     def _save_doc_to_table(self, table, doc, eval_context):
         # best effort will swallow errors in the table
@@ -233,19 +237,40 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
         if doc is None:
             return
 
-        eval_context = EvaluationContext(doc)
-        for table in self.table_adapters_by_domain[domain]:
-            if table.config.filter(doc):
-                if table.run_asynchronous:
-                    async_tables.append(table.config._id)
-                else:
-                    self._save_doc_to_table(table, doc, eval_context)
-                    eval_context.reset_iteration()
-            elif table.config.deleted_filter(doc) or table.doc_exists(doc):
-                table.delete(doc)
+        with TimingContext() as timer:
+            eval_context = EvaluationContext(doc)
+            for table in self.table_adapters_by_domain[domain]:
+                if table.config.filter(doc):
+                    if table.run_asynchronous:
+                        async_tables.append(table.config._id)
+                    else:
+                        self._save_doc_to_table(table, doc, eval_context)
+                        eval_context.reset_iteration()
+                elif table.config.deleted_filter(doc) or table.doc_exists(doc):
+                    table.delete(doc)
 
-        if async_tables:
-            AsyncIndicator.update_indicators(change, async_tables)
+            if async_tables:
+                AsyncIndicator.update_indicators(change, async_tables)
+
+        self.domain_timing_context.update(**{
+            domain: timer.duration
+        })
+
+    def checkpoint_updated(self):
+        total_duration = sum(self.domain_timing_context.values())
+        duration_seen = 0
+        top_half_domains = {}
+        for domain, duration in self.domain_timing_context.most_common():
+            top_half_domains[domain] = duration
+            duration_seen += duration
+            if duration_seen >= total_duration / 2:
+                break
+
+        for domain, duration in top_half_domains:
+            datadog_histogram('commcare.change_feed.ucr_slow_log', duration, tags=[
+                'domain:{}'.format(domain)
+            ])
+        self.domain_timing_context.clear()
 
 
 class ConfigurableReportKafkaPillow(ConstructedPillow):
