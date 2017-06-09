@@ -45,7 +45,7 @@ from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
 from corehq.apps.ota.tasks import queue_prime_restore
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
@@ -68,8 +68,6 @@ def restore(request, domain, app_id=None):
     We override restore because we have to supply our own
     user model (and have the domain in the url)
     """
-    if toggles.ENIKSHAY.enabled(domain):
-        update_device_id(request.couch_user, request.GET.get('device_id'))
     response, timing_context = get_restore_response(domain, request.couch_user, app_id, **get_restore_params(request))
     tags = [
         u'status_code:{}'.format(response.status_code),
@@ -314,7 +312,15 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     if not is_permitted:
         return HttpResponse(message, status=401), None
 
-    if couch_user.is_commcare_user() and couch_user.is_demo_user:
+    is_demo_restore = couch_user.is_commcare_user() and couch_user.is_demo_user
+    is_enikshay = toggles.ENIKSHAY.enabled(domain)
+    if is_enikshay:
+        couch_restore_user = couch_user
+        if not is_demo_restore and as_user is not None:
+            couch_restore_user = CouchUser.get_by_username(as_user)
+        update_device_id(couch_restore_user, device_id)
+
+    if is_demo_restore:
         # if user is in demo-mode, return demo restore
         return demo_user_restore_response(couch_user), None
 

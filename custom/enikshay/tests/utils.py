@@ -248,10 +248,12 @@ class ENikshayCaseStructureMixin(object):
         delete_all_users()
         self.domain = getattr(self, 'domain', 'fake-domain-from-mixin')
         self.factory = CaseFactory(domain=self.domain)
+        self.username = "jon-snow@user"
+        self.password = "123"
         self.user = CommCareUser.create(
             self.domain,
-            "jon-snow@user",
-            "123",
+            username=self.username,
+            password=self.password,
         )
         self.person_id = u"person"
         self.occurrence_id = u"occurrence"
