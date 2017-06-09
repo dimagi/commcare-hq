@@ -43,14 +43,14 @@ from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 class MermParams(jsonobject.JsonObject):
     IMEI = jsonobject.StringProperty(required=False)
-    daily_reminder_status = jsonobject.IntegerProperty(required=False, choices=(1, 0), exclude_if_none=True)
-    daily_reminder_time = jsonobject.TimeProperty(required=False, exclude_if_none=True)  # HH:mm
-    refill_reminder_status = jsonobject.IntegerProperty(required=False, choices=(1, 0), exclude_if_none=True)
+    daily_reminder_status = jsonobject.StringProperty(required=False, exclude_if_none=True)
+    daily_reminder_time = jsonobject.StringProperty(required=False, exclude_if_none=True)  # HH:mm
+    refill_reminder_status = jsonobject.StringProperty(required=False, exclude_if_none=True)
     refill_reminder_datetime = jsonobject.StringProperty(
         required=False,
         exclude_if_none=True
     )  # yy/MM/dd HH:mm:ss
-    RT_hours = jsonobject.IntegerProperty(
+    RT_hours = jsonobject.StringProperty(
         required=False,
         exclude_if_none=True
     )  # 1 = 12 hours; i.e. for 3 days - RT_hours = 6
