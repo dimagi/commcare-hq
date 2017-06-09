@@ -282,15 +282,6 @@ class Command(BaseCommand):
 
             old_id, new_id = self.save_couch_copy(datasource, self.new_domain)
             datasource_map[old_id] = new_id
-        for static_datasource in StaticDataSourceConfiguration.by_domain(self.existing_domain):
-            table_id = static_datasource.get_id.replace(
-                StaticDataSourceConfiguration._datasource_id_prefix + self.existing_domain + '-',
-                ''
-            )
-            new_id = StaticDataSourceConfiguration.get_doc_id(self.new_domain, table_id)
-            # check that new datasource is in new domain's list of static datasources
-            StaticDataSourceConfiguration.by_id(new_id)
-            datasource_map[static_datasource.get_id] = new_id
         return datasource_map
 
     def copy_auto_case_update_rules(self):
