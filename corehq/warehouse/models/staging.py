@@ -175,7 +175,7 @@ class DomainStagingTable(StagingTable, CouchToDjangoETLMixin):
     def field_mapping(cls):
         return [
             ('_id', 'domain_id'),
-            ('domain', 'domain'),
+            ('name', 'domain'),
             ('default_timezone', 'default_timezone'),
             ('hr_name', 'hr_name'),
             ('creating_user_id', 'creating_user_id'),
