@@ -190,7 +190,7 @@ class TestFixtureUpload(TestCase):
         self.assertTrue(indexed_field.is_indexed)
 
     def test_row_addition(self):
-        # upload and then reupload with addition of a new fixture-item should work
+        # upload and then reupload with addition of a new fixture-item should create new items
 
         initial_rows = [(None, 'N', 'apple')]
         rows = self.make_rows(initial_rows)
