@@ -50,6 +50,7 @@ branches:
   - ce/app-status-pillows+nh/new_rb+ce/app-status-2 # Cal 3/26
   - nh/new_rb  # Norman 11/22
   - lwyszomi/icds_dashboard_v2  # j$ 6/5
+  - mk-select-module-for-persisted-case-tile # MK 8/June
   - externalize-js-form-designer-notifications # jenny June 7
 submodules:
   submodules/touchforms-src:

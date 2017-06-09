@@ -974,6 +974,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 this.persistTileOnForms = ko.observable(spec[this.columnKey].persist_tile_on_forms || false);
                 this.enableTilePullDown = ko.observable(spec[this.columnKey].pull_down_tile || false);
                 this.allowsEmptyColumns = options.allowsEmptyColumns;
+                this.persistentCaseTileFromModule = (
+                    ko.observable(spec[this.columnKey].persistent_case_tile_from_module || ""));
 
                 this.fireChange = function() {
                     that.fire('change');
@@ -1056,6 +1058,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     that.saveButton.fire('change');
                 });
                 this.persistTileOnForms.subscribe(function(){
+                    that.saveButton.fire('change');
+                });
+                this.persistentCaseTileFromModule.subscribe(function(){
                     that.saveButton.fire('change');
                 });
                 this.enableTilePullDown.subscribe(function(){
@@ -1157,6 +1162,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     data.persistCaseContext = this.persistCaseContext();
                     data.persistentCaseContextXML = this.persistentCaseContextXML();
                     data.persistTileOnForms = this.persistTileOnForms();
+                    data.persistentCaseTileFromModule = this.persistentCaseTileFromModule();
                     data.enableTilePullDown = this.persistTileOnForms() ? this.enableTilePullDown() : false;
 
                     if (this.containsParentConfiguration) {

@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from django.db import migrations
 
 from corehq.sql_db.operations import HqRunSQL
-from corehq.util.django_migrations import add_if_not_exists
+from corehq.util.django_migrations import add_if_not_exists_raw
 
 
 class Migration(migrations.Migration):
@@ -16,11 +16,11 @@ class Migration(migrations.Migration):
 
     operations = [
         HqRunSQL(
-            add_if_not_exists(
+            add_if_not_exists_raw(
                 """
                 CREATE INDEX phonelog_devicereportentry_domain_device_id_pattern_ops
                 ON phonelog_devicereportentry (domain varchar_pattern_ops, device_id varchar_pattern_ops)
-                """
+                """, name='phonelog_devicereportentry_domain_device_id_pattern_ops'
             ),
             reverse_sql=
             """
