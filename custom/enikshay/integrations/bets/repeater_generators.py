@@ -266,7 +266,7 @@ class BETSBasePayloadGenerator(BasePayloadGenerator):
                     if case.dynamic_case_properties().get(self.event_property_name) != 'sent'
                     else 'sent'
                 ),
-                "bets_{}_error".format(self.event_id): response.json(),
+                "bets_{}_error".format(self.event_id): unicode(response.json()),
             }
         )
 
@@ -369,7 +369,7 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
                     if case.dynamic_case_properties().get(self.get_event_property_name(case)) != 'sent'
                     else 'sent'
                 ),
-                "bets_{}_error".format(self.event_id): response.json(),
+                "bets_{}_error".format(self.event_id): unicode(response.json()),
             }
         )
 
