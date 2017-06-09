@@ -323,8 +323,9 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
         if field.slug == 'language_code':
             return forms.ChoiceField(
                 label=field.label,
-                required=field.is_required,
+                required=True,
                 choices=[
+                    ('', _('Select one')),
                     ("en", "English"),
                     ("hin", "Hindi"),
                     ("mar", "Marathi"),
