@@ -318,6 +318,21 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
                 fs[i] = _make_field_visible_to(field, fields_to_loc_types[field])
         return form
 
+    def _make_field(self, field):
+        if field.slug == 'language_code':
+            return forms.ChoiceField(
+                label=field.label,
+                required=field.is_required,
+                choices=[
+                    ("en", "English"),
+                    ("hin", "Hindi"),
+                    ("mar", "Marathi"),
+                    ("bho", "Bhojpuri"),
+                    ('guj', "Gujarati"),
+                ],
+            )
+        return super(ENikshayLocationUserDataEditor, self)._make_field(field)
+
 
 class ENikshayUserLocationDataEditor(CustomDataEditor):
     """Custom Location Data on Virtual Location User (agency) creation"""
