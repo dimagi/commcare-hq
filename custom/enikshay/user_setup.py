@@ -334,7 +334,7 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
                 ],
             )
         if field.slug == 'contact_phone_number':
-            regexp = "^91[1-9][0-9]{9}$"
+            regexp = "^91[0-9]{10}$"
             help_text = "Phone number must be 91 followed by 10 digits with no leading zeroes"
             return forms.CharField(
                 widget=forms.TextInput(attrs={"pattern": regexp, "title": help_text}),
