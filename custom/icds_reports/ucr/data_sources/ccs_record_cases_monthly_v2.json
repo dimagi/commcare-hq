@@ -1,9 +1,6 @@
 {
   "domains": [
-    "icds-sql",
-    "icds-test",
-    "icds-cas",
-    "icds-cas-sandbox"
+    "icds-test"
   ],
   "server_environment": [
     "icds"
