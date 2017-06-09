@@ -12,14 +12,16 @@ MERM_ID = 'merm_id'
 MERM_DAILY_REMINDER_STATUS = 'merm_daily_reminder_status'
 MERM_DAILY_REMINDER_TIME = "merm_daily_reminder_time"
 MERM_REFILL_REMINDER_STATUS = "merm_refill_reminder_status"
-MERM_REFILL_REMINDER_DATETIME = "merm_refill_reminder_datetime"
+MERM_REFILL_REMINDER_DATE = "merm_refill_reminder_date"
+MERM_REFILL_REMINDER_TIME = "merm_refill_reminder_time"
 MERM_RT_HOURS = "merm_rt_hours"
 MERM_PROPERTIES = [
     MERM_ID,
     MERM_DAILY_REMINDER_STATUS,
     MERM_DAILY_REMINDER_TIME,
     MERM_REFILL_REMINDER_STATUS,
-    MERM_REFILL_REMINDER_DATETIME,
+    MERM_REFILL_REMINDER_DATE,
+    MERM_REFILL_REMINDER_TIME,
     MERM_RT_HOURS,
 ]
 
