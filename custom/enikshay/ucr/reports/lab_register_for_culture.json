@@ -92,6 +92,17 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
+                "field": "lab_serial_number",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Lab Serial Number"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
                 "field": "nikshay_id",
                 "calculate_total": false,
                 "type": "field",
@@ -103,10 +114,21 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
+                "field": "person_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Patient's Full Name"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
                 "field": "person_details",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Patient's Full Name (Current Address and phone number)"
+                "display": "Address and Contact Details"
             },
             {
                 "sortable": false,
@@ -238,7 +260,7 @@
                 "field": "specimen_type_from_case",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Type of Specimen (sputum or other) For C&DST Lab Microscopy"
+                "display": "Type of Specimen"
             },
             {
                 "sortable": false,
@@ -249,7 +271,7 @@
                 "field": "sputum_visual_appearance",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Specimen Condition For C&DST Lab Microscopy"
+                "display": "Sputum Specimen Condition"
             },
             {
                 "sortable": false,
@@ -293,7 +315,7 @@
                 "field": "r_drug",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Rifampicin"
+                "display": "Rif"
             },
             {
                 "sortable": false,
@@ -323,76 +345,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "s_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Streptomycin"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "e_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Ethambutol"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "z_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Pyrazinamide"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "km_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Kanamycin"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "cm_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Capreomycin"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "am_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Amikacin"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
                 "field": "lfx_drug",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Levofloxacin"
+                "display": "Lfx"
             },
             {
                 "sortable": false,
@@ -400,87 +356,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "mfx05_drug",
+                "field": "other_drugs",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Moxifloxacin (0.5)"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "mfx20_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Moxifloxacin (2.0)"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "eto_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Ethionamide"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "pas_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "PAS"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "lzd_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Linezolid"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "cfz_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Clofazimine"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "bdg_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Bedaquiline"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "dlm_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Delamanid"
+                "display": "Other"
             }
         ]
     }
