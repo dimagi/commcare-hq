@@ -3,11 +3,9 @@ import collections
 import hashlib
 
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.userreports.models import StaticDataSourceConfiguration, StaticReportConfiguration, STATIC_PREFIX, \
+from corehq.apps.userreports.models import StaticReportConfiguration, STATIC_PREFIX, \
     CUSTOM_REPORT_PREFIX
-from corehq.util.soft_assert import soft_assert
 from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.userreports.const import (
@@ -20,7 +18,6 @@ from corehq.apps.userreports.const import (
 from django_prbac.utils import has_privilege
 
 from corehq.apps.userreports.dbaccessors import get_all_es_data_sources
-from corehq.apps.userreports.exceptions import BadBuilderConfigError
 
 
 def localize(value, lang):
