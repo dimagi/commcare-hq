@@ -76,6 +76,10 @@ class GroupStagingTable(StagingTable, CouchToDjangoETLMixin):
         ]
 
     @classmethod
+    def dependencies(cls):
+        return []
+
+    @classmethod
     def raw_record_iter(cls, start_datetime, end_datetime):
         group_ids = get_group_ids_by_last_modified(start_datetime, end_datetime)
 
@@ -106,6 +110,10 @@ class UserStagingTable(StagingTable, CouchToDjangoETLMixin):
     date_joined = models.DateTimeField()
 
     user_last_modified = models.DateTimeField(null=True)
+
+    @classmethod
+    def dependencies(cls):
+        return []
 
     @classmethod
     def field_mapping(cls):
@@ -158,6 +166,10 @@ class DomainStagingTable(StagingTable, CouchToDjangoETLMixin):
 
     domain_last_modified = models.DateTimeField()
     domain_created_on = models.DateTimeField(null=True)
+
+    @classmethod
+    def dependencies(cls):
+        return []
 
     @classmethod
     def field_mapping(cls):
@@ -216,6 +228,10 @@ class FormStagingTable(StagingTable, CouchToDjangoETLMixin):
     )
 
     @classmethod
+    def dependencies(cls):
+        return []
+
+    @classmethod
     def field_mapping(cls):
         return [
             ('form_id', 'form_id'),
@@ -254,6 +270,10 @@ class SyncLogStagingTable(StagingTable, CouchToDjangoETLMixin):
     build_id = models.CharField(max_length=255, null=True)
 
     duration = models.IntegerField(null=True)  # in seconds
+
+    @classmethod
+    def dependencies(cls):
+        return []
 
     @classmethod
     def field_mapping(cls):

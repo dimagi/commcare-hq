@@ -22,10 +22,6 @@ class BaseETLMixin(object):
 class CustomSQLETLMixin(BaseETLMixin):
 
     @classmethod
-    def dependencies(cls):
-        raise NotImplementedError
-
-    @classmethod
     def load(cls, start_datetime, end_datetime):
         '''
         Bulk loads records for a dim or fact table from
