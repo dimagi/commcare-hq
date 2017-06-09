@@ -73,7 +73,13 @@
                                 ng-click="showRelevance = !showRelevance"
                                 ng-class="{ 'active' : showRelevance }">
                             <i class="fa fa-code-fork" ng-class="showRelevance ? 'hq-icon' : ''"></i>
-                            &nbsp;{% trans "Display Conditions" %}
+                            &nbsp;{% trans "Display" %}
+                        </button>
+                        <button type="button" class="btn btn-default"
+                                ng-click="showConstraints = !showConstraints"
+                                ng-class="{ 'active' : showConstraints }">
+                            <i class="fa fa-ban" ng-class="showConstraints ? 'hq-icon' : ''"></i>
+                            &nbsp;{% trans "Validation" %}
                         </button>
                         <button type="button" class="btn btn-default"
                                 ng-click="showComments = !showComments"
@@ -145,6 +151,11 @@
                                 <ul class="fa-ul" ng-if="question.relevant" ng-show="showRelevance">
                                     <li>
                                         <i class="fa-li fa fa-code-fork text-muted"></i> {{ question.relevant }}
+                                    </li>
+                                </ul>
+                                <ul class="fa-ul" ng-if="question.constraint" ng-show="showConstraints">
+                                    <li>
+                                        <i class="fa-li fa fa-ban text-muted"></i> {{ question.constraint }}
                                     </li>
                                 </ul>
                             </li>
