@@ -106,7 +106,8 @@ AGENCY_USER_FIELDS = [
     ("address_line_2", "Address Line 2", []),
     ("pincode", "Pincode", []),
     # TODO add format validation (91 + 10 digits, no leading zeros)
-    ("contact_phone_number", "Mobile number for SMS alerts (please only enter 91 and ten digits, not beginning with 0)", []),
+    ("contact_phone_number", "Mobile number for SMS alerts "
+        "(Please enter only digits. Enter 91 followed by the 10-digit national number.)", []),
     ("language_code", "Preferred language for SMS alerts", ["en", "hin", "mar", "bho", "guj"]),
     ("mobile_no_2", "Mobile No. 2", []),
     ("landline_no", "Landline No.", []),
