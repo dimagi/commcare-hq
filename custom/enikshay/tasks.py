@@ -17,13 +17,8 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 
-from .case_utils import (
-    CASE_TYPE_EPISODE,
-    get_prescription_vouchers_from_episode,
-    get_private_diagnostic_test_cases_from_episode,
-    get_prescription_from_voucher,
-)
 from custom.enikshay.exceptions import ENikshayCaseNotFound
+from .case_utils import CASE_TYPE_EPISODE, get_prescription_vouchers_from_episode, get_prescription_from_voucher
 from .const import (
     DOSE_TAKEN_INDICATORS,
     DAILY_SCHEDULE_FIXTURE_NAME,
@@ -84,11 +79,9 @@ class EpisodeUpdater(object):
             for episode in self._get_open_episode_cases():
                 adherence_update = EpisodeAdherenceUpdate(episode, self)
                 voucher_update = EpisodeVoucherUpdate(self.domain, episode)
-                test_update = EpisodeTestUpdate(self.domain, episode)
                 try:
                     update_json = adherence_update.update_json()
                     update_json.update(voucher_update.update_json())
-                    update_json.update(test_update.update_json())
                     case_block = self._get_case_block(update_json, episode.case_id)
                     if case_block:
                         submit_case_blocks(
@@ -562,26 +555,3 @@ class EpisodeVoucherUpdate(object):
             'first_voucher_validation_date': (fulfilled_voucher_cases[0].get_case_property('date_fulfilled')
                                               if fulfilled_voucher_cases else '')
         }
-
-
-class EpisodeTestUpdate(object):
-
-    def __init__(self, domain, episode_case):
-        self.domain = domain
-        self.episode = episode_case
-
-    @property
-    @memoized
-    def diagnostic_tests(self):
-        return get_private_diagnostic_test_cases_from_episode(self.domain, self.episode.case_id)
-
-    def update_json(self):
-        if self.diagnostic_tests:
-            return {
-                'diagnostic_tests': ", ".join([diagnostic_test.get_case_property('investigation_id')
-                                               for diagnostic_test in self.diagnostic_tests]),
-                'diagnostic_test_results': ", ".join([diagnostic_test.get_case_property('result_grade')
-                                                      for diagnostic_test in self.diagnostic_tests])
-            }
-        else:
-            return {}
