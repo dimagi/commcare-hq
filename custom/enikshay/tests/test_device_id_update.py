@@ -17,7 +17,7 @@ class DeviceIdUpdateTest(ENikshayCaseStructureMixin, TestCase):
         super(DeviceIdUpdateTest, self).setUp()
         self.web_user_username = "user@example.com"
         self.web_user_password = "123"
-        self.web_user= WebUser.create(
+        self.web_user = WebUser.create(
             self.domain,
             username=self.web_user_username,
             password=self.web_user_password,
