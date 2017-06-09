@@ -242,6 +242,8 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
 
     if request.user.is_superuser:
         notification_options = websockets_override(request)
+        if notification_options['WS4REDIS_HEARTBEAT'] in ['null', 'undefined']:
+            notification_options['WS4REDIS_HEARTBEAT'] = None
         notification_options.update({
             'notify_facility': get_facility_for_form(domain, app_id, form.unique_id),
             'user_id': request.couch_user.get_id,
