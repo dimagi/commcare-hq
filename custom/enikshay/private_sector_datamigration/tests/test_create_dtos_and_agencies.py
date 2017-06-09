@@ -48,6 +48,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
                 'enikshay_enabled': 'yes',
                 'is_test': 'no',
                 'private_sector_org_id': 1,
+                'sector': 'private',
             }
         )
 
@@ -61,6 +62,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
                 'enikshay_enabled': 'yes',
                 'is_test': 'no',
                 'private_sector_org_id': 4,
+                'sector': 'private',
             }
         )
 
@@ -116,6 +118,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
                 'nikshay_code': '988765',
                 'private_sector_agency_id': agency_id,
                 'private_sector_org_id': 1,
+                'sector': 'private',
 
             }
         )
@@ -130,6 +133,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
                 'enikshay_enabled': 'yes',
                 'is_test': 'no',
                 'private_sector_org_id': 1,
+                'sector': 'private',
             }
         )
 
@@ -204,6 +208,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
                 'enikshay_enabled': 'yes',
                 'is_test': 'no',
                 'private_sector_org_id': 1,
+                'sector': 'private',
             }
         )
 
