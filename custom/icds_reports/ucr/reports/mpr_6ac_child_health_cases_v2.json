@@ -1,18 +1,14 @@
 {
   "domains": [
-    "icds-test",
-    "icds-sql",
-    "icds-cas",
-    "icds-cas-sandbox"
+    "icds-test"
   ],
   "server_environment": [
-    "softlayer",
     "icds"
   ],
-  "report_id": "static-mpr_6ac_child_health_cases",
-  "data_source_table": "static-child_cases_monthly",
+  "report_id": "static-mpr_6ac_child_health_cases_v2",
+  "data_source_table": "static-child_cases_monthly_v2",
   "config": {
-    "title": "MPR - 6ac - Child Health cases (Static)",
+    "title": "MPR - 6ac - Child Health cases (Static) v2",
     "description": "",
     "visible": false,
     "aggregation_columns": [

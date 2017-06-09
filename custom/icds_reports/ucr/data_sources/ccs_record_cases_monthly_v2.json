@@ -6,7 +6,6 @@
     "icds-cas-sandbox"
   ],
   "server_environment": [
-    "softlayer",
     "icds"
   ],
   "config": {
@@ -978,35 +977,7 @@
     ],
     "named_expressions": {
       "month_start": {
-        "date_expression": {
-          "date_expression": {
-            "date_expression": {
-              "date_expression": {
-                "expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "server_modified_on"
-                },
-                "type": "root_doc"
-              },
-              "type": "add_months",
-              "months_expression": {
-                "type": "evaluator",
-                "statement": "iteration - 3",
-                "context_variables": {
-                  "iteration": {
-                    "type": "base_iteration_number"
-                  }
-                }
-              }
-            },
-            "type": "month_start_date"
-          },
-          "type": "add_days",
-          "count_expression": 20
-        },
-        "type": "add_months",
-        "months_expression": -1
+        "type": "icds_month_start"
       },
       "thr_rations": {
         "aggregation_fn": "sum",
@@ -1111,35 +1082,7 @@
         }
       },
       "month_end": {
-        "date_expression": {
-          "date_expression": {
-            "date_expression": {
-              "date_expression": {
-                "expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "server_modified_on"
-                },
-                "type": "root_doc"
-              },
-              "type": "add_months",
-              "months_expression": {
-                "type": "evaluator",
-                "statement": "iteration - 3",
-                "context_variables": {
-                  "iteration": {
-                    "type": "base_iteration_number"
-                  }
-                }
-              }
-            },
-            "type": "month_end_date"
-          },
-          "type": "add_days",
-          "count_expression": 20
-        },
-        "type": "add_months",
-        "months_expression": -1
+        "type": "icds_month_end"
       }
     },
     "named_filters": {
@@ -1160,35 +1103,7 @@
                 }
               },
               "to_date_expression": {
-                "date_expression": {
-                  "date_expression": {
-                    "date_expression": {
-                      "date_expression": {
-                        "type": "root_doc",
-                        "expression": {
-                          "datatype": null,
-                          "type": "property_name",
-                          "property_name": "server_modified_on"
-                        }
-                      },
-                      "type": "add_months",
-                      "months_expression": {
-                        "type": "evaluator",
-                        "statement": "iteration - 3",
-                        "context_variables": {
-                          "iteration": {
-                            "type": "base_iteration_number"
-                          }
-                        }
-                      }
-                    },
-                    "type": "month_end_date"
-                  },
-                  "type": "add_days",
-                  "count_expression": 20
-                },
-                "type": "add_months",
-                "months_expression": -1
+                "type": "icds_month_end"
               }
             },
             "property_value": 0
@@ -1215,35 +1130,7 @@
                 "expression": {
                   "type": "diff_days",
                   "from_date_expression": {
-                    "date_expression": {
-                      "date_expression": {
-                        "date_expression": {
-                          "date_expression": {
-                            "type": "root_doc",
-                            "expression": {
-                              "datatype": null,
-                              "type": "property_name",
-                              "property_name": "server_modified_on"
-                            }
-                          },
-                          "type": "add_months",
-                          "months_expression": {
-                            "type": "evaluator",
-                            "statement": "iteration - 3",
-                            "context_variables": {
-                              "iteration": {
-                                "type": "base_iteration_number"
-                              }
-                            }
-                          }
-                        },
-                        "type": "month_start_date"
-                      },
-                      "type": "add_days",
-                      "count_expression": 20
-                    },
-                    "type": "add_months",
-                    "months_expression": -1
+                    "type": "icds_month_start"
                   },
                   "to_date_expression": {
                     "datatype": "date",
@@ -1280,35 +1167,7 @@
                         }
                       },
                       "to_date_expression": {
-                        "date_expression": {
-                          "date_expression": {
-                            "date_expression": {
-                              "date_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                  "datatype": null,
-                                  "type": "property_name",
-                                  "property_name": "server_modified_on"
-                                }
-                              },
-                              "type": "add_months",
-                              "months_expression": {
-                                "type": "evaluator",
-                                "statement": "iteration - 3",
-                                "context_variables": {
-                                  "iteration": {
-                                    "type": "base_iteration_number"
-                                  }
-                                }
-                              }
-                            },
-                            "type": "month_end_date"
-                          },
-                          "type": "add_days",
-                          "count_expression": 20
-                        },
-                        "type": "add_months",
-                        "months_expression": -1
+                        "type": "icds_month_end"
                       }
                     },
                     "property_value": 0
@@ -1335,35 +1194,7 @@
                         "expression": {
                           "type": "diff_days",
                           "from_date_expression": {
-                            "date_expression": {
-                              "date_expression": {
-                                "date_expression": {
-                                  "date_expression": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                      "datatype": null,
-                                      "type": "property_name",
-                                      "property_name": "server_modified_on"
-                                    }
-                                  },
-                                  "type": "add_months",
-                                  "months_expression": {
-                                    "type": "evaluator",
-                                    "statement": "iteration - 3",
-                                    "context_variables": {
-                                      "iteration": {
-                                        "type": "base_iteration_number"
-                                      }
-                                    }
-                                  }
-                                },
-                                "type": "month_start_date"
-                              },
-                              "type": "add_days",
-                              "count_expression": 20
-                            },
-                            "type": "add_months",
-                            "months_expression": -1
+                            "type": "icds_month_start"
                           },
                           "to_date_expression": {
                             "datatype": "date",
@@ -1439,35 +1270,7 @@
                     "expression": {
                       "type": "diff_days",
                       "from_date_expression": {
-                        "date_expression": {
-                          "date_expression": {
-                            "date_expression": {
-                              "date_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                  "datatype": null,
-                                  "type": "property_name",
-                                  "property_name": "server_modified_on"
-                                }
-                              },
-                              "type": "add_months",
-                              "months_expression": {
-                                "type": "evaluator",
-                                "statement": "iteration - 3",
-                                "context_variables": {
-                                  "iteration": {
-                                    "type": "base_iteration_number"
-                                  }
-                                }
-                              }
-                            },
-                            "type": "month_end_date"
-                          },
-                          "type": "add_days",
-                          "count_expression": 20
-                        },
-                        "type": "add_months",
-                        "months_expression": -1
+                        "type": "icds_month_end"
                       },
                       "to_date_expression": {
                         "value_expression": {
@@ -1554,35 +1357,7 @@
                 }
               },
               "to_date_expression": {
-                "date_expression": {
-                  "date_expression": {
-                    "date_expression": {
-                      "date_expression": {
-                        "type": "root_doc",
-                        "expression": {
-                          "datatype": null,
-                          "type": "property_name",
-                          "property_name": "server_modified_on"
-                        }
-                      },
-                      "type": "add_months",
-                      "months_expression": {
-                        "type": "evaluator",
-                        "statement": "iteration - 3",
-                        "context_variables": {
-                          "iteration": {
-                            "type": "base_iteration_number"
-                          }
-                        }
-                      }
-                    },
-                    "type": "month_end_date"
-                  },
-                  "type": "add_days",
-                  "count_expression": 20
-                },
-                "type": "add_months",
-                "months_expression": -1
+                "type": "icds_month_end"
               }
             },
             "property_value": 0
@@ -1601,35 +1376,7 @@
                 }
               },
               "to_date_expression": {
-                "date_expression": {
-                  "date_expression": {
-                    "date_expression": {
-                      "date_expression": {
-                        "type": "root_doc",
-                        "expression": {
-                          "datatype": null,
-                          "type": "property_name",
-                          "property_name": "server_modified_on"
-                        }
-                      },
-                      "type": "add_months",
-                      "months_expression": {
-                        "type": "evaluator",
-                        "statement": "iteration - 3",
-                        "context_variables": {
-                          "iteration": {
-                            "type": "base_iteration_number"
-                          }
-                        }
-                      }
-                    },
-                    "type": "month_end_date"
-                  },
-                  "type": "add_days",
-                  "count_expression": 20
-                },
-                "type": "add_months",
-                "months_expression": -1
+                "type": "icds_month_end"
               }
             },
             "property_value": 183
@@ -1793,35 +1540,7 @@
                     }
                   },
                   "to_date_expression": {
-                    "date_expression": {
-                      "date_expression": {
-                        "date_expression": {
-                          "date_expression": {
-                            "type": "root_doc",
-                            "expression": {
-                              "datatype": null,
-                              "type": "property_name",
-                              "property_name": "server_modified_on"
-                            }
-                          },
-                          "type": "add_months",
-                          "months_expression": {
-                            "type": "evaluator",
-                            "statement": "iteration - 3",
-                            "context_variables": {
-                              "iteration": {
-                                "type": "base_iteration_number"
-                              }
-                            }
-                          }
-                        },
-                        "type": "month_end_date"
-                      },
-                      "type": "add_days",
-                      "count_expression": 20
-                    },
-                    "type": "add_months",
-                    "months_expression": -1
+                    "type": "icds_month_end"
                   }
                 },
                 "property_value": 0
@@ -1848,35 +1567,7 @@
                     "expression": {
                       "type": "diff_days",
                       "from_date_expression": {
-                        "date_expression": {
-                          "date_expression": {
-                            "date_expression": {
-                              "date_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                  "datatype": null,
-                                  "type": "property_name",
-                                  "property_name": "server_modified_on"
-                                }
-                              },
-                              "type": "add_months",
-                              "months_expression": {
-                                "type": "evaluator",
-                                "statement": "iteration - 3",
-                                "context_variables": {
-                                  "iteration": {
-                                    "type": "base_iteration_number"
-                                  }
-                                }
-                              }
-                            },
-                            "type": "month_start_date"
-                          },
-                          "type": "add_days",
-                          "count_expression": 20
-                        },
-                        "type": "add_months",
-                        "months_expression": -1
+                        "type": "icds_month_start"
                       },
                       "to_date_expression": {
                         "datatype": "date",
@@ -1952,35 +1643,7 @@
                 "expression": {
                   "type": "diff_days",
                   "from_date_expression": {
-                    "date_expression": {
-                      "date_expression": {
-                        "date_expression": {
-                          "date_expression": {
-                            "type": "root_doc",
-                            "expression": {
-                              "datatype": null,
-                              "type": "property_name",
-                              "property_name": "server_modified_on"
-                            }
-                          },
-                          "type": "add_months",
-                          "months_expression": {
-                            "type": "evaluator",
-                            "statement": "iteration - 3",
-                            "context_variables": {
-                              "iteration": {
-                                "type": "base_iteration_number"
-                              }
-                            }
-                          }
-                        },
-                        "type": "month_end_date"
-                      },
-                      "type": "add_days",
-                      "count_expression": 20
-                    },
-                    "type": "add_months",
-                    "months_expression": -1
+                    "type": "icds_month_end"
                   },
                   "to_date_expression": {
                     "value_expression": {
@@ -2096,35 +1759,7 @@
             "expression": {
               "type": "diff_days",
               "from_date_expression": {
-                "date_expression": {
-                  "date_expression": {
-                    "date_expression": {
-                      "date_expression": {
-                        "type": "root_doc",
-                        "expression": {
-                          "datatype": null,
-                          "type": "property_name",
-                          "property_name": "server_modified_on"
-                        }
-                      },
-                      "type": "add_months",
-                      "months_expression": {
-                        "type": "evaluator",
-                        "statement": "iteration - 3",
-                        "context_variables": {
-                          "iteration": {
-                            "type": "base_iteration_number"
-                          }
-                        }
-                      }
-                    },
-                    "type": "month_end_date"
-                  },
-                  "type": "add_days",
-                  "count_expression": 20
-                },
-                "type": "add_months",
-                "months_expression": -1
+                "type": "icds_month_end"
               },
               "to_date_expression": {
                 "value_expression": {
@@ -2199,35 +1834,7 @@
                         }
                       },
                       "to_date_expression": {
-                        "date_expression": {
-                          "date_expression": {
-                            "date_expression": {
-                              "date_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                  "datatype": null,
-                                  "type": "property_name",
-                                  "property_name": "server_modified_on"
-                                }
-                              },
-                              "type": "add_months",
-                              "months_expression": {
-                                "type": "evaluator",
-                                "statement": "iteration - 3",
-                                "context_variables": {
-                                  "iteration": {
-                                    "type": "base_iteration_number"
-                                  }
-                                }
-                              }
-                            },
-                            "type": "month_end_date"
-                          },
-                          "type": "add_days",
-                          "count_expression": 20
-                        },
-                        "type": "add_months",
-                        "months_expression": -1
+                        "type": "icds_month_end"
                       }
                     },
                     "property_value": 0
@@ -2254,35 +1861,7 @@
                         "expression": {
                           "type": "diff_days",
                           "from_date_expression": {
-                            "date_expression": {
-                              "date_expression": {
-                                "date_expression": {
-                                  "date_expression": {
-                                    "type": "root_doc",
-                                    "expression": {
-                                      "datatype": null,
-                                      "type": "property_name",
-                                      "property_name": "server_modified_on"
-                                    }
-                                  },
-                                  "type": "add_months",
-                                  "months_expression": {
-                                    "type": "evaluator",
-                                    "statement": "iteration - 3",
-                                    "context_variables": {
-                                      "iteration": {
-                                        "type": "base_iteration_number"
-                                      }
-                                    }
-                                  }
-                                },
-                                "type": "month_start_date"
-                              },
-                              "type": "add_days",
-                              "count_expression": 20
-                            },
-                            "type": "add_months",
-                            "months_expression": -1
+                            "type": "icds_month_start"
                           },
                           "to_date_expression": {
                             "datatype": "date",
@@ -2358,35 +1937,7 @@
                     "expression": {
                       "type": "diff_days",
                       "from_date_expression": {
-                        "date_expression": {
-                          "date_expression": {
-                            "date_expression": {
-                              "date_expression": {
-                                "type": "root_doc",
-                                "expression": {
-                                  "datatype": null,
-                                  "type": "property_name",
-                                  "property_name": "server_modified_on"
-                                }
-                              },
-                              "type": "add_months",
-                              "months_expression": {
-                                "type": "evaluator",
-                                "statement": "iteration - 3",
-                                "context_variables": {
-                                  "iteration": {
-                                    "type": "base_iteration_number"
-                                  }
-                                }
-                              }
-                            },
-                            "type": "month_end_date"
-                          },
-                          "type": "add_days",
-                          "count_expression": 20
-                        },
-                        "type": "add_months",
-                        "months_expression": -1
+                        "type": "icds_month_end"
                       },
                       "to_date_expression": {
                         "value_expression": {
@@ -2484,35 +2035,7 @@
                 "expression": {
                   "type": "diff_days",
                   "from_date_expression": {
-                    "date_expression": {
-                      "date_expression": {
-                        "date_expression": {
-                          "date_expression": {
-                            "type": "root_doc",
-                            "expression": {
-                              "datatype": null,
-                              "type": "property_name",
-                              "property_name": "server_modified_on"
-                            }
-                          },
-                          "type": "add_months",
-                          "months_expression": {
-                            "type": "evaluator",
-                            "statement": "iteration - 3",
-                            "context_variables": {
-                              "iteration": {
-                                "type": "base_iteration_number"
-                              }
-                            }
-                          }
-                        },
-                        "type": "month_end_date"
-                      },
-                      "type": "add_days",
-                      "count_expression": 20
-                    },
-                    "type": "add_months",
-                    "months_expression": -1
+                    "type": "icds_month_end"
                   },
                   "to_date_expression": {
                     "type": "root_doc",

@@ -1,18 +1,14 @@
 {
   "domains": [
-    "icds-test",
-    "icds-sql",
-    "icds-cas",
-    "icds-cas-sandbox"
+    "icds-test"
   ],
   "server_environment": [
-    "softlayer",
     "icds"
   ],
-  "report_id": "static-mpr_5_ccs_record_cases",
-  "data_source_table": "static-ccs_record_cases_monthly",
+  "report_id": "static-mpr_5_ccs_record_cases_v2",
+  "data_source_table": "static-ccs_record_cases_monthly_v2",
   "config": {
-    "title": "MPR - 5 - CCS Record cases (Static)",
+    "title": "MPR - 5 - CCS Record cases (Static) v2",
     "description": "",
     "visible": false,
     "aggregation_columns": [
