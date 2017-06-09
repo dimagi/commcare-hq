@@ -85,7 +85,7 @@ PRESCRIPTION_TOTAL_DAYS_THRESHOLD = "prescription_total_days_threshold_{}"
 # Voucher Case Properties
 DATE_FULFILLED = "date_fulfilled"
 VOUCHER_ID = "voucher_id"
-FULFILLED_BY_ID = "fulfilled_by_id"
+FULFILLED_BY_ID = "voucher_fulfilled_by_id"
 FULFILLED_BY_LOCATION_ID = "voucher_fulfilled_by_location_id"
 AMOUNT_APPROVED = "amount_approved"
 INVESTIGATION_TYPE = "investigation_type"
