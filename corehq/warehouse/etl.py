@@ -33,10 +33,10 @@ class CustomSQLETLMixin(BaseETLMixin):
         '''
         database = db_for_read_write(cls)
         with connections[database].cursor() as cursor:
-            cursor.execute(cls._sql_query_template(cls.slug))
+            cursor.execute(cls._sql_query_template(cls.slug, start_datetime, end_datetime))
 
     @classmethod
-    def _table_context(cls):
+    def _table_context(cls, start_datetime, end_datetime):
         '''
         Get a dict of slugs to table name mapping
         :returns: Dict of slug to table_name
@@ -51,10 +51,12 @@ class CustomSQLETLMixin(BaseETLMixin):
         for dep in cls.dependencies():
             dep_cls = get_cls_by_slug(dep)
             context[dep] = dep_cls._meta.db_table
+        context['start_datetime'] = start_datetime
+        context['end_datetime'] = start_datetime
         return context
 
     @classmethod
-    def _sql_query_template(cls, template_name):
+    def _sql_query_template(cls, template_name, start_datetime, end_datetime):
         path = os.path.join(
             settings.BASE_DIR,
             'corehq',
@@ -64,7 +66,7 @@ class CustomSQLETLMixin(BaseETLMixin):
             '{}.sql'.format(template_name),
         )
 
-        return _render_template(path, cls._table_context())
+        return _render_template(path, cls._table_context(start_datetime, end_datetime))
 
 
 class CouchToDjangoETLMixin(BaseETLMixin):
@@ -79,6 +81,7 @@ class CouchToDjangoETLMixin(BaseETLMixin):
     def record_iter(cls, start_datetime, end_datetime):
         raise NotImplementedError
 
+    @classmethod
     def load(cls, start_datetime, end_datetime):
         record_iter = cls.raw_record_iter(start_datetime, end_datetime)
 

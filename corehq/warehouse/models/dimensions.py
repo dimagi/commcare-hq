@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 
 from corehq.warehouse.const import (
     USER_DIM_SLUG,
@@ -14,14 +14,20 @@ from corehq.warehouse.const import (
 )
 
 from corehq.warehouse.etl import CustomSQLETLMixin
+from corehq.warehouse.models.shared import WarehouseTableMixin
 
 
-class BaseDim(models.Model):
+class BaseDim(models.Model, WarehouseTableMixin):
     domain = models.CharField(max_length=255)
 
     dim_last_modified = models.DateTimeField(auto_now=True)
     dim_created_on = models.DateTimeField(auto_now_add=True)
     deleted = models.BooleanField(default=False)
+
+    @classmethod
+    @transaction.atomic
+    def commit(cls, start_datetime, end_datetime):
+        cls.load(start_datetime, end_datetime)
 
     class Meta:
         abstract = True

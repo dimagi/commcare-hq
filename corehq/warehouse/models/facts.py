@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 
 from corehq.warehouse.const import (
     APP_STATUS_FACT_SLUG,
@@ -9,9 +9,21 @@ from corehq.warehouse.const import (
 
 from .dimensions import UserDim
 from corehq.warehouse.etl import CustomSQLETLMixin
+from corehq.warehouse.models.shared import WarehouseTableMixin
 
 
-class ApplicationStatusFact(models.Model, CustomSQLETLMixin):
+class BaseFact(models.Model, WarehouseTableMixin):
+
+    @classmethod
+    @transaction.atomic
+    def commit(cls, start_datetime, end_datetime):
+        cls.load(start_datetime, end_datetime)
+
+    class Meta:
+        abstract = True
+
+
+class ApplicationStatusFact(BaseFact, CustomSQLETLMixin):
     '''
     Application Status Report Fact Table
 

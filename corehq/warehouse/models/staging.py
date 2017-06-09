@@ -16,7 +16,6 @@ from corehq.warehouse.dbaccessors import (
     get_synclog_ids_by_date,
     get_forms_by_last_modified,
 )
-from corehq.warehouse.utils import django_batch_records
 from corehq.warehouse.const import (
     GROUP_STAGING_SLUG,
     USER_STAGING_SLUG,
@@ -25,20 +24,20 @@ from corehq.warehouse.const import (
     SYNCLOG_STAGING_SLUG,
 )
 
+from corehq.warehouse.models.shared import WarehouseTableMixin
 from corehq.warehouse.etl import CouchToDjangoETLMixin
 
-class StagingTable(models.Model):
+
+class StagingTable(models.Model, WarehouseTableMixin):
 
     class Meta:
         abstract = True
 
     @classmethod
     @transaction.atomic
-    def stage_records(cls, start_dateime, end_datetime):
+    def commit(cls, start_datetime, end_datetime):
         cls.clear_records()
-        record_iter = cls.raw_record_iter(start_dateime, end_datetime)
-
-        django_batch_records(cls, record_iter, cls.field_mapping())
+        cls.load(start_datetime, end_datetime)
 
     @classmethod
     def clear_records(cls):
