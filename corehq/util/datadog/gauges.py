@@ -30,10 +30,19 @@ def datadog_histogram(name, value, enforce_prefix='commcare', tags=None):
 
 
 def datadog_gauge(name, value, enforce_prefix='commcare', tags=None):
+    """
+    Stored as a GAUGE type in the datadog web application. Each value in the stored timeseries
+    is the last gauge value submitted for that metric during the statsd flush period.
+    """
     _datadog_record(statsd.gauge, name, value, enforce_prefix, tags)
 
 
 def datadog_counter(name, value=1, enforce_prefix='commcare', tags=None):
+    """
+    Usage: Used to increment a counter of events.
+    Stored as a RATE type in the datadog web application. Each value in the stored timeseries
+    is a time-normalized delta of the counter's value over that statsd flush period.
+    """
     _datadog_record(statsd.increment, name, value, enforce_prefix, tags)
 
 
