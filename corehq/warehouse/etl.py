@@ -61,6 +61,10 @@ class CustomSQLETLMixin(BaseETLMixin):
             'sql',
             '{}.sql'.format(template_name),
         )
+        if not os.path.exists(path):
+            raise NotImplementedError(
+                'You must define {} in order to load data'.format(path)
+            )
 
         return _render_template(path, cls._table_context(start_datetime, end_datetime))
 
