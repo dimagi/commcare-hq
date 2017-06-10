@@ -1,7 +1,8 @@
 from StringIO import StringIO
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn
-from sqlagg.filters import EQ
+from sqlagg.filters import EQ, OR
+from sqlagg.sorting import OrderBy
 
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.datatables import DataTablesHeader
@@ -9,6 +10,8 @@ from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColu
 from custom.icds_reports.utils import ICDSMixin
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
+
+from localsettings import ICDS_UCR_TEST_DATABASE_ALIAS
 
 
 class BaseIdentification(object):
@@ -96,9 +99,9 @@ def percent(x, y):
 
 
 class ExportableMixin(object):
-    engine_id = 'ucr'
+    engine_id = 'icds-test-ucr'
 
-    def __init__(self, config=None, loc_level='state'):
+    def __init__(self, config=None, loc_level=1):
         self.config = config
         self.loc_level = loc_level
 
@@ -108,10 +111,6 @@ class ExportableMixin(object):
         for key, value in self.config.iteritems():
             filters.append(EQ(key, key))
         return filters
-
-    @property
-    def group_by(self):
-        return ['%s_name' % self.loc_level]
 
     def to_export(self, format):
         export_file = StringIO()
@@ -737,3 +736,698 @@ class AWCInfrastructure(ExportableMixin, SqlData):
                 slug='medicine_kits'
             ),
         ]
+
+
+class ChildrenExport(ExportableMixin, SqlData):
+    title = 'AWC Infrastructure'
+    table_name = 'agg_child_health_monthly'
+
+    @property
+    def get_columns_by_loc_level(self):
+        columns = [
+            DatabaseColumn('State', SimpleColumn('state_name'))
+        ]
+        if self.loc_level > 1:
+            columns.append(DatabaseColumn('District', SimpleColumn('district_name'), slug='district_name'))
+        if self.loc_level > 2:
+            columns.append(DatabaseColumn('Block', SimpleColumn('block_name'), slug='block_name'))
+        if self.loc_level > 3:
+            columns.append(DatabaseColumn('Supervisor', SimpleColumn('supervisor_name'), slug='supervisor_name'))
+        if self.loc_level > 4:
+            columns.extend([
+                DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'),
+                DatabaseColumn('Gender', SimpleColumn('gender'), slug='gender'),
+                DatabaseColumn('Age', SimpleColumn('age_tranche'), slug='age_tranche'),
+                DatabaseColumn('Caste', SimpleColumn('caste'), slug='caste'),
+                DatabaseColumn('Disabled', SimpleColumn('disabled'), slug='disabled'),
+                DatabaseColumn('Minority', SimpleColumn('minority'), slug='minority'),
+                DatabaseColumn('Resident', SimpleColumn('resident'), slug='resident')
+            ])
+        return columns
+
+    @property
+    def group_by(self):
+        group_by_columns = self.get_columns_by_loc_level
+        group_by = ['aggregation_level']
+        for column in group_by_columns:
+            group_by.append(column.slug)
+        return group_by
+
+    @property
+    def order_by(self):
+        order_by_columns = self.get_columns_by_loc_level
+        order_by = []
+        for column in order_by_columns:
+            order_by.append(OrderBy(column.slug))
+        return order_by
+
+    @property
+    def columns(self):
+        columns = self.get_columns_by_loc_level
+        agg_columns = [
+            AggregateColumn(
+                'percent_weight_efficiency',
+                percent,
+                [
+                    SumColumn('nutrition_status_weighed'),
+                    SumColumn('wer_eligible')
+                ],
+                slug='percent_weight_efficiency'
+            ),
+            DatabaseColumn(
+                'total_number_unweighed',
+                SumColumn('nutrition_status_unweighed'),
+                slug='total_number_unweighed'
+            ),
+            AggregateColumn(
+                'percent_severe_underweight',
+                percent,
+                [
+                    SumColumn('nutrition_status_severely_underweight'),
+                    AliasColumn('wer_eligible')
+                ],
+                slug='percent_severe_underweight'
+            ),
+            AggregateColumn(
+                'percent_moderate_underweight',
+                percent,
+                [
+                    SumColumn('nutrition_status_moderately_underweight'),
+                    AliasColumn('wer_eligible')
+                ],
+                slug='percent_moderate_underweight'
+            ),
+            AggregateColumn(
+                'percent_normal_weight',
+                percent,
+                [
+                    SumColumn('nutrition_status_normal'),
+                    AliasColumn('wer_eligible')
+                ],
+                slug='percent_normal_weight'
+            ),
+            AggregateColumn(
+                'percent_severe_wasting',
+                percent,
+                [
+                    SumColumn('wasting_severe'),
+                    SumColumn('height_eligible')
+                ],
+                slug='percent_severe_wasting'
+            ),
+            AggregateColumn(
+                'percent_moderate_wasting',
+                percent,
+                [
+                    SumColumn('wasting_moderate'),
+                    AliasColumn('height_eligible')
+                ],
+                slug='percent_moderate_wasting'
+            ),
+            AggregateColumn(
+                'percent_normal_wasting',
+                percent,
+                [
+                    SumColumn('wasting_normal'),
+                    AliasColumn('height_eligible')
+                ],
+                slug='percent_normal_wasting'
+            ),
+            AggregateColumn(
+                'percent_severe_stunting',
+                percent,
+                [
+                    SumColumn('stunting_severe'),
+                    AliasColumn('height_eligible')
+                ],
+                slug='percent_severe_stunting'
+            ),
+            AggregateColumn(
+                'percent_moderate_stunting',
+                percent,
+                [
+                    SumColumn('stunting_moderate'),
+                    AliasColumn('height_eligible')
+                ],
+                slug='percent_moderate_stunting'
+            ),
+            AggregateColumn(
+                'percent_normal_stunting',
+                percent,
+                [
+                    SumColumn('stunting_normal'),
+                    AliasColumn('height_eligible')
+                ],
+                slug='percent_normal_stunting'
+            ),
+            AggregateColumn(
+                'percent_completed_1year_immunizations',
+                lambda x, y, z: '%.2f%%' % (((x or 0) + (y or 0)) * 100 / float(z or 1)),
+                [
+                    SumColumn('fully_immunized_on_time'),
+                    SumColumn('fully_immunized_late'),
+                    SumColumn('fully_immunized_eligible')
+                ],
+                slug='percent_completed_1year_immunizations'
+            ),
+            AggregateColumn(
+                'percent_breastfed_at_birth',
+                percent,
+                [
+                    SumColumn('bf_at_birth'),
+                    SumColumn('born_in_month')
+                ],
+                slug='percent_breastfed_at_birth'
+            ),
+            AggregateColumn(
+                'percent_ebf',
+                percent,
+                [
+                    SumColumn('ebf_in_month'),
+                    SumColumn('ebf_eligible')
+                ],
+                slug='percent_ebf'
+            ),
+            AggregateColumn(
+                'percent_initiated_on_cf',
+                percent,
+                [
+                    SumColumn('cf_initiation_in_month'),
+                    SumColumn('cf_initiation_eligible')
+                ],
+                slug='percent_initiated_on_cf'
+            ),
+            AggregateColumn(
+                'percent_appropriate_cf',
+                percent,
+                [
+                    SumColumn('cf_in_month'),
+                    SumColumn('cf_eligible')
+                ],
+                slug='percent_appropriate_cf'
+            ),
+            AggregateColumn(
+                'percent_cf_diet_diversity',
+                percent,
+                [
+                    SumColumn('cf_diet_diversity'),
+                    AliasColumn('cf_eligible')
+                ],
+                slug='percent_cf_diet_diversity'
+            ),
+            AggregateColumn(
+                'percent_cf_diet_quanity',
+                percent,
+                [
+                    SumColumn('cf_diet_quantity'),
+                    AliasColumn('cf_eligible')
+                ],
+                slug='percent_cf_diet_quanity'
+            ),
+            AggregateColumn(
+                'percent_cf_handwashing_before_feeding',
+                percent,
+                [
+                    SumColumn('cf_handwashing'),
+                    AliasColumn('cf_eligible')
+                ],
+                slug='percent_cf_handwashing_before_feeding'
+            ),
+        ]
+        return columns + agg_columns
+
+
+class PregnantWomenExport(ExportableMixin, SqlData):
+    title = 'Pregnant Women'
+    table_name = 'agg_ccs_record_monthly'
+
+    @property
+    def get_columns_by_loc_level(self):
+        columns = [
+            DatabaseColumn('State', SimpleColumn('state_name'))
+        ]
+        if self.loc_level > 1:
+            columns.append(DatabaseColumn('District', SimpleColumn('district_name'), slug='district_name'))
+        if self.loc_level > 2:
+            columns.append(DatabaseColumn('Block', SimpleColumn('block_name'), slug='block_name'))
+        if self.loc_level > 3:
+            columns.append(DatabaseColumn('Supervisor', SimpleColumn('supervisor_name'), slug='supervisor_name'))
+        if self.loc_level > 4:
+            columns.extend([
+                DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'),
+                DatabaseColumn('Gender', SimpleColumn('ccs_status'), slug='ccs_status'),
+                DatabaseColumn('Trimester', SimpleColumn('trimester'), slug='trimester'),
+                DatabaseColumn('Caste', SimpleColumn('caste'), slug='caste'),
+                DatabaseColumn('Disabled', SimpleColumn('disabled'), slug='disabled'),
+                DatabaseColumn('Minority', SimpleColumn('minority'), slug='minority'),
+                DatabaseColumn('Resident', SimpleColumn('resident'), slug='resident')
+            ])
+        return columns
+
+    @property
+    def group_by(self):
+        group_by_columns = self.get_columns_by_loc_level
+        group_by = ['aggregation_level']
+        for column in group_by_columns:
+            group_by.append(column.slug)
+        return group_by
+
+    @property
+    def order_by(self):
+        order_by_columns = self.get_columns_by_loc_level
+        order_by = []
+        for column in order_by_columns:
+            order_by.append(OrderBy(column.slug))
+        return order_by
+
+    @property
+    def columns(self):
+        columns = self.get_columns_by_loc_level
+        agg_columns = [
+            DatabaseColumn('Num lactating', SumColumn('lactating'), slug='lactating'),
+            DatabaseColumn('Num pregnant', SumColumn('pregnant'), slug='pregnant'),
+            DatabaseColumn('Num postnatal', SumColumn('postnatal'), slug='postnatal'),
+            AggregateColumn(
+                'percent_anemia',
+                lambda x, y, z: '%.2f%%' % (((x or 0) + (y or 0)) * 100 / float(z or 1)),
+                [
+                    SumColumn('anemic_moderate'),
+                    SumColumn('anemic_severe'),
+                    AliasColumn('pregnant')
+                ],
+                slug='percent_anemia'
+            ),
+            AggregateColumn(
+                'percent_tetanus_complete',
+                percent,
+                [
+                    SumColumn('tetanus_complete'),
+                    AliasColumn('pregnant')
+                ],
+                slug='percent_tetanus_complete'
+            ),
+            AggregateColumn(
+                'percent_anc1_received_by_delivery',
+                percent,
+                [
+                    SumColumn('anc1_received_at_delivery'),
+                    SumColumn('delivered_in_month')
+                ],
+                slug='percent_anc1_received_by_delivery'
+            ),
+            AggregateColumn(
+                'percent_anc2_received_by_delivery',
+                percent,
+                [
+                    SumColumn('anc2_received_at_delivery'),
+                    AliasColumn('delivered_in_month')
+                ],
+                slug='percent_anc2_received_by_delivery'
+            ),
+            AggregateColumn(
+                'percent_anc3_received_by_delivery',
+                percent,
+                [
+                    SumColumn('anc3_received_at_delivery'),
+                    AliasColumn('delivered_in_month')
+                ],
+                slug='percent_anc3_received_by_delivery'
+            ),
+            AggregateColumn(
+                'percent_anc4_received_by_delivery',
+                percent,
+                [
+                    SumColumn('anc4_received_at_delivery'),
+                    AliasColumn('delivered_in_month')
+                ],
+                slug='percent_anc4_received_by_delivery'
+            ),
+            AggregateColumn(
+                'percent_resting_during_pregnancy',
+                percent,
+                [
+                    SumColumn('resting_during_pregnancy'),
+                    AliasColumn('pregnant')
+                ],
+                slug='percent_resting_during_pregnancy'
+            ),
+            AggregateColumn(
+                'percent_eating_extra_meal_during_pregnancy',
+                percent,
+                [
+                    SumColumn('extra_meal'),
+                    AliasColumn('pregnant')
+                ],
+                slug='percent_eating_extra_meal_during_pregnancy'
+            ),
+            AggregateColumn(
+                'percent_trimester_3_women_counselled_on_immediate_bf',
+                percent,
+                [
+                    SumColumn('counsel_immediate_bf'),
+                    SumColumn('trimester_3')
+                ],
+                slug='percent_trimester_3_women_counselled_on_immediate_bf'
+            )
+        ]
+        return columns + agg_columns
+
+
+class DemographicsExport(ExportableMixin, SqlData):
+    title = 'Demographics'
+    table_name = 'agg_Awc_monthly'
+
+    engine_id = 'icds-test-ucr'
+
+    def __init__(self, config=None, loc_level=1):
+        super(DemographicsExport, self).__init__(config, loc_level)
+        self.config.update({
+            'age_0': 0,
+            'age_6': 6,
+            'age_12': 12,
+            'age_24': 24,
+            'age_36': 36,
+            'age_48': 48,
+            'age_60': 60,
+            'age_72': 72
+        })
+
+    @property
+    def filters(self):
+        filters = []
+        for key, value in self.config.iteritems():
+            if not key.startswith('age'):
+                filters.append(EQ(key, key))
+        return filters
+
+    @property
+    def get_columns_by_loc_level(self):
+        columns = [
+            DatabaseColumn('State', SimpleColumn('state_name'))
+        ]
+        if self.loc_level > 1:
+            columns.append(DatabaseColumn('District', SimpleColumn('district_name'), slug='district_name'))
+        if self.loc_level > 2:
+            columns.append(DatabaseColumn('Block', SimpleColumn('block_name'), slug='block_name'))
+        if self.loc_level > 3:
+            columns.append(DatabaseColumn('Supervisor', SimpleColumn('supervisor_name'), slug='supervisor_name'))
+        if self.loc_level > 4:
+            columns.append(DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'))
+        return columns
+
+    @property
+    def group_by(self):
+        group_by_columns = self.get_columns_by_loc_level
+        group_by = ['aggregation_level']
+        for column in group_by_columns:
+            group_by.append(column.slug)
+        return group_by
+
+    @property
+    def order_by(self):
+        order_by_columns = self.get_columns_by_loc_level
+        order_by = []
+        for column in order_by_columns:
+            order_by.append(OrderBy(column.slug))
+        return order_by
+
+    @property
+    def columns(self):
+        columns = self.get_columns_by_loc_level
+        agg_columns = [
+            DatabaseColumn(
+                'num_households',
+                SumColumn('cases_households'),
+                slug='num_households'
+            ),
+            DatabaseColumn(
+                'num_people',
+                SumColumn('cases_person_all'),
+                slug='num_people'
+            ),
+            DatabaseColumn(
+                'num_people_enrolled_for_services',
+                SumColumn('cases_person'),
+                slug='num_people_enrolled_for_services'
+            ),
+            DatabaseColumn(
+                'num_pregnant_women',
+                SumColumn('cases_ccs_pregnant_all'),
+                slug='num_pregnant_women'
+            ),
+            DatabaseColumn(
+                'num_pregnant_women_enrolled_for_services',
+                SumColumn('cases_ccs_pregnant'),
+                slug='num_pregnant_women_enrolled_for_services'
+            ),
+            DatabaseColumn(
+                'num_lactating_women',
+                SumColumn('cases_ccs_lactating_all'),
+                slug='num_lactating_women'
+            ),
+            DatabaseColumn(
+                'num_lactating_women_enrolled_for_services',
+                SumColumn('cases_ccs_lactating'),
+                slug='num_lactating_women_enrolled_for_services'
+            ),
+            DatabaseColumn(
+                'num_children_0_6years',
+                SumColumn('cases_child_health_all'),
+                slug='num_children_0_6years'
+            ),
+            DatabaseColumn(
+                'num_children_0_6years_enrolled_for_services',
+                SumColumn('cases_child_health'),
+                slug='num_children_0_6years_enrolled_for_services'
+            ),
+            DatabaseColumn(
+                'num_children_0_28days_enrolled_for_services',
+                SumColumn('valid_in_month', filters=self.filters + [EQ('age_tranche', 'age_0')]),
+                slug='num_children_0_28days_enrolled_for_services'
+            ),
+            DatabaseColumn(
+                'num_children_28days6mo_enrolled_for_services',
+                SumColumn('valid_in_month', filters=self.filters + [EQ('age_tranche', 'age_6')]),
+                slug='num_children_28days6mo_enrolled_for_services'
+            ),
+            DatabaseColumn(
+                'num_children_6mo1yr_enrolled_for_services',
+                SumColumn('valid_in_month', filters=self.filters + [EQ('age_tranche', 'age_12')]),
+                slug='num_children_6mo1yr_enrolled_for_services'
+            ),
+            DatabaseColumn(
+                'num_children_1yr3yr_enrolled_for_services',
+                SumColumn(
+                    'valid_in_month',
+                    filters=self.filters + [
+                        OR([
+                            EQ('age_tranche', 'age_24'),
+                            EQ('age_tranche', 'age_36')
+                        ])
+                    ]
+                ),
+                slug='num_children_1yr3yr_enrolled_for_services'
+            ),
+            DatabaseColumn(
+                'num_children_3yr6yr_enrolled_for_services',
+                SumColumn(
+                    'valid_in_month',
+                    filters=self.filters + [
+                        OR([
+                            EQ('age_tranche', 'age_48'),
+                            EQ('age_tranche', 'age_60'),
+                            EQ('age_tranche', 'age_72')
+                        ])
+                    ]
+                ),
+                slug='num_children_3yr6yr_enrolled_for_services'
+            ),
+            DatabaseColumn(
+                'num_adolescent_girls_11yr14yr',
+                SumColumn('cases_adolescent_girls_11_14_all'),
+                slug='num_adolescent_girls_11yr14yr'
+            ),
+            DatabaseColumn(
+                'num_adolescent_girls_15yr18yr',
+                SumColumn('cases_adolescent_girls_15_18_all'),
+                slug='num_adolescent_girls_15yr18yr'
+            ),
+            DatabaseColumn(
+                'num_adolescent_girls_11yr14yr_enrolled_for_services',
+                SumColumn('cases_adolescent_girls_11_14'),
+                slug='num_adolescent_girls_11yr14yr_enrolled_for_services'
+            ),
+            DatabaseColumn(
+                'num_adolescent_girls_15yr18yr_enrolled_for_services',
+                SumColumn('cases_adolescent_girls_15_18'),
+                slug='num_adolescent_girls_15yr18yr_enrolled_for_services'
+            )
+        ]
+        return columns + agg_columns
+
+
+class SystemUsageExport(ExportableMixin, SqlData):
+    title = 'System Usage'
+    table_name = 'agg_awc_monthly'
+
+    @property
+    def get_columns_by_loc_level(self):
+        columns = [
+            DatabaseColumn('State', SimpleColumn('state_name'))
+        ]
+        if self.loc_level > 1:
+            columns.append(DatabaseColumn('District', SimpleColumn('district_name'), slug='district_name'))
+        if self.loc_level > 2:
+            columns.append(DatabaseColumn('Block', SimpleColumn('block_name'), slug='block_name'))
+        if self.loc_level > 3:
+            columns.append(DatabaseColumn('Supervisor', SimpleColumn('supervisor_name'), slug='supervisor_name'))
+        if self.loc_level > 4:
+            columns.append(DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'))
+        return columns
+
+    @property
+    def group_by(self):
+        group_by_columns = self.get_columns_by_loc_level
+        group_by = ['aggregation_level']
+        for column in group_by_columns:
+            group_by.append(column.slug)
+        return group_by
+
+    @property
+    def order_by(self):
+        order_by_columns = self.get_columns_by_loc_level
+        order_by = []
+        for column in order_by_columns:
+            order_by.append(OrderBy(column.slug))
+        return order_by
+
+    @property
+    def columns(self):
+        columns = self.get_columns_by_loc_level
+        agg_columns = [
+            DatabaseColumn('num_awc_open', SumColumn('awc_num_open'), slug='num_awc_open'),
+            DatabaseColumn('num_hh_reg_forms', SumColumn('usage_num_hh_reg'), slug='num_hh_reg_forms'),
+            DatabaseColumn(
+                'num_add_pregnancy_forms',
+                SumColumn('usage_num_add_pregnancy'),
+                slug='num_add_pregnancy_forms'
+            ),
+            DatabaseColumn(
+                'num_pse_forms_with_image',
+                SumColumn('usage_num_pse_with_image'),
+                slug='num_pse_forms_with_image'
+            ),
+            AggregateColumn(
+                'num_bp_forms',
+                lambda x, y, z: x + y + z,
+                [
+                    SumColumn('usage_num_bp_tri1'),
+                    SumColumn('usage_num_bp_tri2'),
+                    SumColumn('usage_num_bp_tri3')
+                ],
+                slug='num_bp_forms'
+            ),
+            DatabaseColumn('num_delivery_forms', SumColumn('usage_num_delivery'), slug='num_delivery_forms'),
+            DatabaseColumn('num_pnc_forms', SumColumn('usage_num_pnc'), slug='num_pnc_forms'),
+            DatabaseColumn('num_ebf_forms', SumColumn('usage_num_ebf'), slug='num_ebf_forms'),
+            DatabaseColumn('num_cf_forms', SumColumn('usage_num_cf'), slug='num_cf_forms'),
+            DatabaseColumn('num_gmp_forms', SumColumn('usage_num_gmp'), slug='num_gmp_forms'),
+            DatabaseColumn('num_thr_forms', SumColumn('usage_num_thr'), slug='num_thr_forms'),
+            AggregateColumn(
+                'num_due_list_forms',
+                lambda x, y: x + y,
+                [
+                    SumColumn('usage_num_due_list_ccs'),
+                    SumColumn('usage_num_due_list_child_health')
+                ],
+                slug='num_due_list_forms')
+        ]
+        return columns + agg_columns
+
+
+class AWCInfrastructureExport(ExportableMixin, SqlData):
+    title = 'AWC Infrastructure'
+    table_name = 'agg_awc_monthly'
+
+    @property
+    def get_columns_by_loc_level(self):
+        columns = [
+            DatabaseColumn('State', SimpleColumn('state_name'))
+        ]
+        if self.loc_level > 1:
+            columns.append(DatabaseColumn('District', SimpleColumn('district_name'), slug='district_name'))
+        if self.loc_level > 2:
+            columns.append(DatabaseColumn('Block', SimpleColumn('block_name'), slug='block_name'))
+        if self.loc_level > 3:
+            columns.append(DatabaseColumn('Supervisor', SimpleColumn('supervisor_name'), slug='supervisor_name'))
+        if self.loc_level > 4:
+            columns.append(DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'))
+        return columns
+
+    @property
+    def group_by(self):
+        group_by_columns = self.get_columns_by_loc_level
+        group_by = ['aggregation_level']
+        for column in group_by_columns:
+            group_by.append(column.slug)
+        return group_by
+
+    @property
+    def order_by(self):
+        order_by_columns = self.get_columns_by_loc_level
+        order_by = []
+        for column in order_by_columns:
+            order_by.append(OrderBy(column.slug))
+        return order_by
+
+    @property
+    def columns(self):
+        columns = self.get_columns_by_loc_level
+        agg_columns = [
+            AggregateColumn(
+                'percent_with_drinking_water',
+                percent,
+                [
+                    SumColumn('infra_clean_water'),
+                    SumColumn('num_awcs')
+                ],
+                slug='percent_with_drinking_water'
+            ),
+            AggregateColumn(
+                'percent_with_functional_toilet',
+                percent,
+                [
+                    SumColumn('infra_functional_toilet'),
+                    AliasColumn('num_awcs')
+                ],
+                slug='percent_with_functional_toilet'
+            ),
+            AggregateColumn(
+                'percent_with_medicine_kit',
+                percent,
+                [
+                    SumColumn('infra_medicine_kits'),
+                    AliasColumn('num_awcs')
+                ],
+                slug='percent_with_medicine_kit'
+            ),
+            AggregateColumn(
+                'percent_adult_scale',
+                percent,
+                [
+                    SumColumn('infra_adult_weighing_scale'),
+                    AliasColumn('num_awcs')
+                ],
+                slug='percent_adult_scale'
+            ),
+            AggregateColumn(
+                'percent_baby_scale',
+                percent,
+                [
+                    SumColumn('infra_baby_weighing_scale'),
+                    AliasColumn('num_awcs')
+                ],
+                slug='percent_baby_scale'
+            )
+        ]
+        return columns + agg_columns

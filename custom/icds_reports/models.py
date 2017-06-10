@@ -20,6 +20,7 @@ class AwcLocation(models.Model):
     aggregation_level = models.IntegerField(blank=True, null=True)
 
     class Meta:
+        app_label = 'icds_model'
         managed = False
         db_table = 'awc_location'
         unique_together = (('state_id', 'district_id', 'block_id', 'supervisor_id', 'doc_id'),)
@@ -52,6 +53,7 @@ class AggAwcDailyView(models.Model):
     cases_person_has_aadhaar = models.IntegerField(blank=True, null=True)
 
     class Meta:
+        app_label = 'icds_model'
         managed = False
         db_table = 'agg_awc_daily_view'
 
@@ -193,6 +195,7 @@ class AggAwcMonthly(models.Model):
     num_launched_awcs = models.IntegerField(blank=True, null=True)
 
     class Meta:
+        app_label = 'icds_model'
         managed = False
         db_table = 'agg_awc_monthly'
 
@@ -261,6 +264,7 @@ class AggCcsRecordMonthly(models.Model):
     institutional_delivery_in_month = models.IntegerField(blank=True, null=True)
 
     class Meta:
+        app_label = 'icds_model'
         managed = False
         db_table = 'agg_ccs_record_monthly'
 
@@ -332,6 +336,7 @@ class AggChildHealthMonthly(models.Model):
     cf_initiation_eligible = models.IntegerField(blank=True, null=True)
 
     class Meta:
+        app_label = 'icds_model'
         managed = False
         db_table = 'agg_child_health_monthly'
 
@@ -362,6 +367,7 @@ class AggDailyUsageView(models.Model):
     awc_count = models.IntegerField(blank=True, null=True)
 
     class Meta:
+        app_label = 'icds_model'
         managed = False
         db_table = 'agg_daily_usage_view'
 
@@ -418,6 +424,7 @@ class AwcLocationMonths(models.Model):
     month_display = models.TextField(blank=True, null=True)
 
     class Meta:
+        app_label = 'icds_model'
         managed = False
         db_table = 'awc_location_months'
 
@@ -453,6 +460,7 @@ class DailyAttendanceView(models.Model):
     image_name = models.TextField(blank=True, null=True)
 
     class Meta:
+        app_label = 'icds_model'
         managed = False
         db_table = 'daily_attendance_view'
 

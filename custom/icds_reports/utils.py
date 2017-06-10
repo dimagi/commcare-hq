@@ -223,7 +223,6 @@ def get_location_filter(location, domain, config):
     loc_level = 'state'
     if location:
         try:
-            domain = domain
             sql_location = SQLLocation.objects.get(location_id=location, domain=domain)
             aggregation_level = sql_location.get_ancestors(include_self=True).count() + 1
             location_code = sql_location.site_code

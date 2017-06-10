@@ -1,3 +1,5 @@
+/* global moment */
+
 function DownloadController($location, locationHierarchy, locationsService) {
     var vm = this;
 
@@ -22,14 +24,15 @@ function DownloadController($location, locationHierarchy, locationsService) {
     vm.selectedYear = new Date().getFullYear();
     vm.selectedIndicator = 1;
     vm.selectedFormat = 'xls';
-    vm.selectedGender = '';
-    vm.selectedAge = '';
     vm.selectedLocationId = '';
+    vm.selectedLevel = 1;
 
-    vm.genders = [
-        {id: '', name: 'All'},
-        {id: 'M', name: 'Male'},
-        {id: 'F', name: 'Female'},
+    vm.levels = [
+        {id: 1, name: 'State'},
+        {id: 2, name: 'District'},
+        {id: 3, name: 'Block'},
+        {id: 4, name: 'Supervisor'},
+        {id: 5, name: 'AWC'},
     ];
 
     vm.formats = [
@@ -37,23 +40,12 @@ function DownloadController($location, locationHierarchy, locationsService) {
         {id: 'xls', name: 'Excel'},
     ];
 
-    vm.ages = [
-        {id: '', name: 'All'},
-        {id: '0', name: '0 months'},
-        {id: '6', name: '6 months'},
-        {id: '12', name: '12 months'},
-        {id: '24', name: '24 months'},
-        {id: '36', name: '36 months'},
-        {id: '48', name: '48 months'},
-        {id: '60', name: '60 months'},
-        {id: '72', name: '72 months'},
-    ];
-
     vm.indicators = [
-        {id: 1, name: 'MCH'},
-        {id: 2, name: 'System Usage'},
+        {id: 1, name: 'Child'},
+        {id: 2, name: 'Pregnant Women'},
         {id: 3, name: 'Demographics'},
-        {id: 4, name: 'AWC Infrastructure'},
+        {id: 4, name: 'System Usage'},
+        {id: 5, name: 'AWC Infrastructure'},
     ];
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};

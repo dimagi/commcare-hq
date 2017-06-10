@@ -16,10 +16,11 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
+from custom.icds_reports.const import LocationTypes
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
-from custom.icds_reports.sqldata import AWCInfrastructure, MCN, SystemUsage, Demographics
+from custom.icds_reports.sqldata import AWCInfrastructure, MCN, SystemUsage, Demographics, ChildrenExport
 from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_data, get_cas_reach_data, \
     get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart, \
@@ -410,13 +411,16 @@ class AwcReportsView(View):
 @method_decorator([login_and_domain_required], name='dispatch')
 class ExportIndicatorView(View):
     def post(self, request, *args, **kwargs):
-        config = {
-            'aggregation_level': 1
-        }
+
         export_format = request.POST.get('format')
         month = int(request.POST.get('month'))
         year = int(request.POST.get('year'))
+        aggregation_level = int(request.POST.get('aggregation_level'))
         indicator = int(request.POST.get('indicator'))
+
+        config = {
+            'aggregation_level': aggregation_level
+        }
 
         # TODO add other filters - waiting on the specification
         if month and year:
@@ -425,12 +429,23 @@ class ExportIndicatorView(View):
             })
 
         location = request.POST.get('location', '')
-        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        if location:
+            try:
+                sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
+                location_code = sql_location.site_code
+                location_key = '%s_site_code' % sql_location.location_type.code
+                config.update({
+                    location_key: location_code,
+                })
+            except SQLLocation.DoesNotExist:
+                pass
+
         if indicator == 1:
-            return MCN(config=config, loc_level=loc_level).to_export(export_format)
+            return ChildrenExport(config=config, loc_level=aggregation_level).to_export(export_format)
         elif indicator == 2:
-            return SystemUsage(config=config, loc_level=loc_level).to_export(export_format)
+            return SystemUsage(config=config, loc_level=aggregation_level).to_export(export_format)
         elif indicator == 3:
-            return Demographics(config=config, loc_level=loc_level).to_export(export_format)
+            return Demographics(config=config, loc_level=aggregation_level).to_export(export_format)
         elif indicator == 4:
-            return AWCInfrastructure(config=config, loc_level=loc_level).to_export(export_format)
+            return AWCInfrastructure(config=config, loc_level=aggregation_level).to_export(export_format)
