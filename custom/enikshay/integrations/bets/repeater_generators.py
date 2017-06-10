@@ -84,11 +84,15 @@ class IncentivePayload(BETSPayload):
             related_case_id=person_case.case_id
         )
 
+        treatment_outcome_date = episode_case_properties.get(TREATMENT_OUTCOME_DATE, None)
+        if treatment_outcome_date is None:
+            treatment_outcome_date = datetime.utcnow().strftime("%Y-%m-%d")
+
         return cls(
             EventID=TREATMENT_180_EVENT,
-            EventOccurDate=episode_case_properties.get(TREATMENT_OUTCOME_DATE),
+            EventOccurDate=treatment_outcome_date,
             BeneficiaryUUID=episode_case_properties.get(LAST_VOUCHER_CREATED_BY_ID),
-            BeneficiaryType="patient",
+            BeneficiaryType="mbbs",
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(pcp_location),
