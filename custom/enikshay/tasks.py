@@ -9,7 +9,7 @@ from django.conf import settings
 from django.utils.dateparse import parse_datetime, parse_date
 
 from corehq import toggles
-from corehq.apps.hqcase.utils import update_case
+from corehq.apps.hqcase.utils import update_case, bulk_update_cases
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
@@ -74,6 +74,8 @@ class EpisodeUpdater(object):
         noupdate_count = 0
         error_count = 0
         with Timer() as t:
+            batch_size = 100
+            updates = []
             for episode in self._get_open_episode_cases():
                 adherence_update = EpisodeAdherenceUpdate(episode, self)
                 voucher_update = EpisodeVoucherUpdate(self.domain, episode)
@@ -81,10 +83,13 @@ class EpisodeUpdater(object):
                     update_json = adherence_update.update_json()
                     update_json.update(voucher_update.update_json())
                     if update_json:
-                        update_case(self.domain, episode.case_id, update_json)
+                        updates.append((episode.case_id, update_json, False))
                         update_count += 1
                     else:
                         noupdate_count += 1
+                    if len(updates) == batch_size:
+                        bulk_update_cases(self.domain, updates)
+                        updates = []
                 except Exception, e:
                     error_count += 1
                     logger.error(
@@ -93,6 +98,7 @@ class EpisodeUpdater(object):
                             e
                         )
                     )
+            bulk_update_cases(self.domain, updates)
         logger.info(
             "Summary of enikshay_task: domain: {domain}, duration (sec): {duration} "
             "Cases Updated {updates}, cases errored {errors} and {noupdates} "
