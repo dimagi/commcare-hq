@@ -60,7 +60,7 @@ class BETSPayload(jsonobject.JsonObject):
         try:
             return SQLLocation.objects.get(location_id=location_id)
         except SQLLocation.DoesNotExist:
-            msg = "Location with id {location_id} not found.".format(location_id)
+            msg = "Location with id {location_id} not found.".format(location_id=location_id)
             if field_name and related_case_type and related_case_id:
                 msg += " This is the {field_name} for {related_case_type} with id: {related_case_id}".format(
                     field_name=field_name,
