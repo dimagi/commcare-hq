@@ -475,6 +475,9 @@ def setup_enikshay_locations(domain_name):
                         LocationTypeStructure('pcp', []),
                         LocationTypeStructure('pdr', []),
                         LocationTypeStructure('plc', []),
+                        LocationTypeStructure('block', [
+                            LocationTypeStructure('ward', []),
+                        ])
                     ])
                 ]),
                 LocationTypeStructure('drtb', []),

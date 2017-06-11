@@ -9,6 +9,10 @@ from mock import Mock, patch
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
+from corehq.apps.locations.models import (
+    LocationType,
+    SQLLocation,
+)
 from corehq.apps.locations.tasks import make_location_user
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.private_sector_datamigration.models import (
@@ -35,6 +39,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             addressLineOne='585 Mass Ave',
             addressLineTwo='Suite 4',
             age=25,
+            blockOrHealthPostId='12',
             caseId='3',
             caseStatus='patient',
             configureAlert='Yes',
@@ -55,6 +60,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             pincode=822113,
             referredQP='org123',
             villageTownCity='Cambridge',
+            wardId='13',
         )
         cls.case_accessor = CaseAccessors(cls.domain)
 
@@ -147,8 +153,10 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('age', '25'),
             ('age_entered', '25'),
             ('current_address', '585 Mass Ave, Suite 4'),
+            ('current_address_block_taluka_mandal', '-'),
             ('current_address_postal_code', '822113'),
             ('current_address_village_town_city', 'Cambridge'),
+            ('current_address_ward', '-'),
             ('current_episode_type', 'confirmed_tb'),
             ('dataset', 'real'),
             ('diabetes_status', 'diabetic'),
@@ -260,6 +268,96 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             )
         )
         self.assertEqual(len(episode_case.xform_ids), 1)
+
+    def test_block(self):
+        block = SQLLocation.objects.create(
+            domain=self.domain,
+            location_type=LocationType.objects.get(domain=self.domain, code='block'),
+            metadata={
+                'block_id': '12',
+            }
+        )
+
+        call_command('create_cases_by_beneficiary', self.domain)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(len(person_case_ids), 1)
+        person_case = self.case_accessor.get_case(person_case_ids[0])
+
+        self.assertEqual(
+            person_case.dynamic_case_properties()['current_address_block_taluka_mandal'],
+            block.location_id
+        )
+
+        self.assertEqual(
+            person_case.dynamic_case_properties()['current_address_ward'],
+            '-'
+        )
+
+    def test_ward_and_block(self):
+        block = SQLLocation.objects.create(
+            domain=self.domain,
+            location_type=LocationType.objects.get(domain=self.domain, code='block'),
+            metadata={
+                'block_id': '12',
+            }
+        )
+
+        ward = SQLLocation.objects.create(
+            domain=self.domain,
+            location_type=LocationType.objects.get(domain=self.domain, code='ward'),
+            metadata={
+                'ward_id': '13',
+            }
+        )
+
+        call_command('create_cases_by_beneficiary', self.domain)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(len(person_case_ids), 1)
+        person_case = self.case_accessor.get_case(person_case_ids[0])
+
+        self.assertEqual(
+            person_case.dynamic_case_properties()['current_address_block_taluka_mandal'],
+            block.location_id
+        )
+
+        self.assertEqual(
+            person_case.dynamic_case_properties()['current_address_ward'],
+            ward.location_id
+        )
+
+    def test_ward_without_block_id(self):
+        block = SQLLocation.objects.create(
+            domain=self.domain,
+            location_type=LocationType.objects.get(domain=self.domain, code='block'),
+            metadata={}
+        )
+
+        ward = SQLLocation.objects.create(
+            domain=self.domain,
+            location_type=LocationType.objects.get(domain=self.domain, code='ward'),
+            metadata={
+                'ward_id': '13',
+            },
+            parent=block,
+        )
+
+        call_command('create_cases_by_beneficiary', self.domain)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(len(person_case_ids), 1)
+        person_case = self.case_accessor.get_case(person_case_ids[0])
+
+        self.assertEqual(
+            person_case.dynamic_case_properties()['current_address_block_taluka_mandal'],
+            block.location_id
+        )
+
+        self.assertEqual(
+            person_case.dynamic_case_properties()['current_address_ward'],
+            ward.location_id
+        )
 
     def test_beneficiary_cured(self):
         Episode.objects.create(

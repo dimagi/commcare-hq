@@ -111,6 +111,18 @@ class Beneficiary(models.Model):
             return self.addressLineOne or ''
         return ', '.join([self.addressLineOne, self.addressLineTwo])
 
+    def current_address_block_taluka_mandal(self, block_id_to_location, ward_id_to_location):
+        if self._block(block_id_to_location, ward_id_to_location):
+            return self._block(block_id_to_location, ward_id_to_location).location_id
+        else:
+            return '-'
+
+    def current_address_ward(self, ward_id_to_location):
+        if self._ward(ward_id_to_location):
+            return self._ward(ward_id_to_location).location_id
+        else:
+            return '-'
+
     @property
     def current_episode_type(self):
         return {
@@ -177,6 +189,20 @@ class Beneficiary(models.Model):
             '20': 'voter_card',
             None: 'none',
         }[self.identificationTypeId]
+
+    def _block(self, block_id_to_location, ward_id_to_location):
+        if self.blockOrHealthPostId in block_id_to_location:
+            return block_id_to_location[self.blockOrHealthPostId]
+        elif self._ward(ward_id_to_location):
+            return self._ward(ward_id_to_location).parent
+        else:
+            return None
+
+    def _ward(self, ward_id_to_location):
+        if self.wardId in ward_id_to_location:
+            return ward_id_to_location[self.wardId]
+        else:
+            return None
 
 
 class Episode(models.Model):

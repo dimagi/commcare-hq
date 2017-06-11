@@ -32,10 +32,12 @@ def get_human_friendly_id():
 
 class BeneficiaryCaseFactory(object):
 
-    def __init__(self, domain, beneficiary, location_owner):
+    def __init__(self, domain, beneficiary, location_owner, block_id_to_location, ward_id_to_location):
         self.domain = domain
         self.beneficiary = beneficiary
         self.location_owner = location_owner
+        self.block_id_to_location = block_id_to_location
+        self.ward_id_to_location = ward_id_to_location
 
     def get_case_structures_to_create(self, skip_adherence):
         person_structure = self.get_person_case_structure()
@@ -59,6 +61,10 @@ class BeneficiaryCaseFactory(object):
                 'create': True,
                 'update': {
                     'current_address': self.beneficiary.current_address,
+                    'current_address_block_taluka_mandal': self.beneficiary.current_address_block_taluka_mandal(
+                        self.block_id_to_location, self.ward_id_to_location
+                    ),
+                    'current_address_ward': self.beneficiary.current_address_ward(self.ward_id_to_location),
                     'current_episode_type': self.beneficiary.current_episode_type,
                     'dataset': 'real',
                     'enrolled_in_private': 'true',

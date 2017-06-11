@@ -172,6 +172,19 @@ class Command(BaseCommand):
 
     @staticmethod
     def migrate_to_enikshay(domain, beneficiaries, skip_adherence, chunk_size, location_owner):
+
+        block_id_to_location = {
+            block.metadata.get('block_id'): block
+            for block in SQLLocation.objects.filter(domain=domain, location_type__code='block')
+            if block.metadata.get('block_id')
+        }
+
+        ward_id_to_location = {
+            ward.metadata.get('ward_id'): ward
+            for ward in SQLLocation.objects.filter(domain=domain, location_type__code='ward')
+            if ward.metadata.get('ward_id')
+        }
+
         total = beneficiaries.count()
         counter = 0
         num_succeeded = 0
@@ -183,7 +196,9 @@ class Command(BaseCommand):
         for beneficiary in beneficiaries:
             counter += 1
             try:
-                case_factory = BeneficiaryCaseFactory(domain, beneficiary, location_owner)
+                case_factory = BeneficiaryCaseFactory(
+                    domain, beneficiary, location_owner, block_id_to_location, ward_id_to_location
+                )
                 case_structures.extend(case_factory.get_case_structures_to_create(skip_adherence))
             except Exception:
                 num_failed += 1
