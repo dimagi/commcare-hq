@@ -2027,9 +2027,13 @@ which is later processed by a celery queue. If multiple changes are submitted
 before this can be processed, a new entry is not created, so it will be processed
 once.
 
-The benefits of this are that documents will be processed only once even if many
-changes come in at a time. It can also achieve greater parallelization than is
-currently available via pillows
+The main benefit of this is that documents will be processed only once even if many
+changes come in at a time. This makes this approach ideal datasources that don't
+require 'live' data or where the source documents change very frequently.
+
+It is also possible achieve greater parallelization than is
+currently available via pillows since multiple Celery workers can process
+the changes.
 
 ## Inspecting database tables
 
