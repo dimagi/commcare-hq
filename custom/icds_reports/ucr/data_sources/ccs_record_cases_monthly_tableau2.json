@@ -680,6 +680,32 @@
         "type": "boolean"
       },
       {
+        "column_id": "institutional_delivery_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "delivered_in_month"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "hospital",
+              "expression": {
+                "type": "root_doc",
+                "expression": {
+                  "type": "property_name",
+                  "property_name": "child_birth_location"
+                }
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
         "column_id": "anc1_received_at_delivery",
         "display_name": null,
         "filter": {
