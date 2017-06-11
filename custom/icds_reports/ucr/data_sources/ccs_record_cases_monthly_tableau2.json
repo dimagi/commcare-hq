@@ -533,10 +533,28 @@
         "type": "boolean"
       },
       {
+        "column_id": "pregnant_all",
+        "display_name": null,
+        "filter": {
+          "name": "pregnant_all",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
         "column_id": "lactating",
         "display_name": null,
         "filter": {
           "name": "lactating",
+          "type": "named"
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "lactating_all",
+        "display_name": null,
+        "filter": {
+          "name": "lactating_all",
           "type": "named"
         },
         "type": "boolean"
