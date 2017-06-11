@@ -10,8 +10,8 @@
     "icds"
   ],
   "config": {
-    "table_id": "static-child_cases_monthly_tableau",
-    "display_name": "Cases - Child Health for Tableau (Monthly) (Static)",
+    "table_id": "static-child_cases_monthly_tableau_v2",
+    "display_name": "Cases - Child Health for Tableau v2 (Monthly) (Static)",
     "referenced_doc_type": "CommCareCase",
     "description": "",
     "base_item_expression": {
