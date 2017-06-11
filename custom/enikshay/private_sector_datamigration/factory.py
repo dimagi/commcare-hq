@@ -120,6 +120,9 @@ class BeneficiaryCaseFactory(object):
 
         kwargs['attrs']['update']['facility_assigned_to'] = self._location_owner_id
 
+        if self.beneficiary.pincode:
+            kwargs['attrs']['update']['current_address_postal_code'] = self.beneficiary.pincode
+
         if self._episode:
             kwargs['attrs']['update']['diabetes_status'] = self._episode.diabetes_status
             kwargs['attrs']['update']['hiv_status'] = self._episode.hiv_status

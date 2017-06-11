@@ -52,7 +52,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             lastName='P',
             organisationId=2,
             phoneNumber='5432109876',
-            referredQP='org123'
+            pincode=822113,
+            referredQP='org123',
         )
         cls.case_accessor = CaseAccessors(cls.domain)
 
@@ -145,6 +146,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('age', '25'),
             ('age_entered', '25'),
             ('current_address', '585 Mass Ave, Suite 4'),
+            ('current_address_postal_code', '822113'),
             ('current_episode_type', 'confirmed_tb'),
             ('dataset', 'real'),
             ('diabetes_status', 'diabetic'),
