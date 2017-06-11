@@ -54,6 +54,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             phoneNumber='5432109876',
             pincode=822113,
             referredQP='org123',
+            villageTownCity='Cambridge',
         )
         cls.case_accessor = CaseAccessors(cls.domain)
 
@@ -147,6 +148,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('age_entered', '25'),
             ('current_address', '585 Mass Ave, Suite 4'),
             ('current_address_postal_code', '822113'),
+            ('current_address_village_town_city', 'Cambridge'),
             ('current_episode_type', 'confirmed_tb'),
             ('dataset', 'real'),
             ('diabetes_status', 'diabetic'),

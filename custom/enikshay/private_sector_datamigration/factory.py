@@ -123,6 +123,9 @@ class BeneficiaryCaseFactory(object):
         if self.beneficiary.pincode:
             kwargs['attrs']['update']['current_address_postal_code'] = self.beneficiary.pincode
 
+        if self.beneficiary.villageTownCity is not None:
+            kwargs['attrs']['update']['current_address_village_town_city'] = self.beneficiary.villageTownCity
+
         if self._episode:
             kwargs['attrs']['update']['diabetes_status'] = self._episode.diabetes_status
             kwargs['attrs']['update']['hiv_status'] = self._episode.hiv_status
