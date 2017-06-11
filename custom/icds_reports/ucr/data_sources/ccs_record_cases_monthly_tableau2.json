@@ -429,6 +429,46 @@
               "type": "named"
             },
             {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "named",
+                "name": "seeking_services"
+              },
+              "property_value": "yes"
+            },
+            {
+              "type": "or",
+              "filters": [
+                {
+                  "name": "pregnant",
+                  "type": "named"
+                },
+                {
+                  "name": "lactating",
+                  "type": "named"
+                }
+              ]
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "valid_all_registered_in_month",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "name": "alive_in_month",
+              "type": "named"
+            },
+            {
+              "name": "open_in_month",
+              "type": "named"
+            },
+            {
               "type": "or",
               "filters": [
                 {
@@ -1732,6 +1772,36 @@
             "anemia"
           ]
         }
+      },
+      "seeking_services": {
+        "type": "conditional",
+        "test": {
+          "type": "not",
+          "filter": {
+            "operator": "eq",
+            "type": "boolean_expression",
+            "expression": {
+              "doc_id_expression": {
+                "type": "icds_parent_id"
+              },
+              "related_doc_type": "CommCareCase",
+              "type": "related_doc",
+              "value_expression": {
+                "property_name": "registered_status",
+                "type": "property_name"
+              }
+            },
+            "property_value": "not_registered"
+          }
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": "yes"
+        },
+        "expression_if_false": {
+          "type": "constant",
+          "constant": "no"
+        }
       }
     },
     "named_filters": {
@@ -1752,6 +1822,28 @@
         "property_value": "yes"
       },
       "lactating": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+              "type": "icds_ccs_lactating"
+            },
+            "property_value": "yes"
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+              "type": "named",
+              "name": "seeking_services"
+            },
+            "property_value": "yes"
+          }
+        ]
+      },
+      "lactating_all": {
         "type": "boolean_expression",
         "operator": "eq",
         "expression": {
@@ -1760,6 +1852,28 @@
         "property_value": "yes"
       },
       "pregnant": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+              "type": "icds_ccs_pregnant"
+            },
+            "property_value": "yes"
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+              "type": "named",
+              "name": "seeking_services"
+            },
+            "property_value": "yes"
+          }
+        ]
+      },
+      "pregnant_all": {
         "type": "boolean_expression",
         "operator": "eq",
         "expression": {
