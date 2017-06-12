@@ -122,15 +122,15 @@ hqDefine('domain/js/dhis2_map_settings.js', function () {
             $.post(
                 form.action,
                 {'dataset_maps': JSON.stringify(dataSetMaps)},
-                function (data) { alert_user(data, "success", true); }
-            );
+                function (data) { alert_user(data['success'], 'success', true); }
+            ).fail(function (data) { alert_user(data['error'], 'danger'); });
         };
 
         self.sendData = function () {
             $.post(
                 sendDataUrl,
                 {},
-                function (data) { alert_user(data, "success", true); }
+                function (data) { alert_user(data['success'], 'success', true); }
             );
         };
     };
