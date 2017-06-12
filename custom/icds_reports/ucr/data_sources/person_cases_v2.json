@@ -184,6 +184,7 @@
         "datatype": "string",
         "is_primary_key": false,
         "is_nullable": true,
+        "create_index": true,
         "column_id": "sex",
         "type": "raw",
         "property_name": "sex"
