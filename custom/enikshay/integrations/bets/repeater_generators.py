@@ -220,7 +220,7 @@ class VoucherPayload(BETSPayload):
         return cls(
             EventID=event_id,
             EventOccurDate=voucher_case_properties.get(DATE_FULFILLED),
-            VoucherID=voucher_case_properties.get(VOUCHER_ID),
+            VoucherID=voucher_case.case_id,
             BeneficiaryUUID=fulfilled_by_id,
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             Location=fulfilled_by_location_id,

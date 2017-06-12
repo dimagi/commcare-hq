@@ -193,7 +193,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"BeneficiaryType": u"chemist",
             u"Location": self.pcc.location_id,
             u"DTOLocation": self.dto.location_id,
-            u"VoucherID": voucher.get_case_property('voucher_id'),
+            u"VoucherID": voucher.case_id,
             u"Amount": u'10.0',
             u"InvestigationType": None,
         }]}
@@ -226,7 +226,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"BeneficiaryType": u"lab",
             u"Location": self.plc.location_id,
             u"DTOLocation": self.dto.location_id,
-            u"VoucherID": voucher.get_case_property('voucher_id'),
+            u"VoucherID": voucher.case_id,
             u"Amount": u'10.0',
             u"InvestigationType": u"xray",
         }]}
