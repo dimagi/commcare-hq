@@ -2188,6 +2188,29 @@
         "display_name": null,
         "type": "boolean",
         "column_id": "disabled_speaking_count"
+      },
+      {
+        "column_id": "seeking_services",
+        "type": "boolean",
+        "filter": {
+          "type": "not",
+          "filter": {
+            "operator": "eq",
+            "type": "boolean_expression",
+            "expression": {
+              "type": "root_doc",
+              "expression": {
+                "property_name": "registered_status",
+                "type": "property_name"
+              }
+            },
+            "property_value": "not_registered"
+          }
+        }
+      },
+      {
+        "column_id": "count",
+        "type": "count"
       }
     ],
     "named_expressions": {},
