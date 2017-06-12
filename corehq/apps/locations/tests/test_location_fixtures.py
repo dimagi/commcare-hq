@@ -18,7 +18,6 @@ from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.users.models import CommCareUser
 
 from corehq.apps.app_manager.tests.util import TestXmlMixin, extract_xml_partial
-from casexml.apps.case.xml import V2
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 from .util import (
@@ -283,6 +282,85 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         schema = extract_xml_partial(ElementTree.tostring(fixture_nodes[0]), '.')
         expected_schema = extract_xml_partial(expected_result, './schema')
         self.assertXmlEqual(expected_schema, schema)
+
+
+@mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
+class ForkedHierarchiesTest(TestCase, FixtureHasLocationsMixin):
+    def setUp(self):
+        super(ForkedHierarchiesTest, self).setUp()
+        self.domain = 'test'
+        self.domain_obj = bootstrap_domain(self.domain)
+        self.addCleanup(self.domain_obj.delete)
+
+        self.user = create_restore_user(self.domain, 'user', '123')
+
+        location_type_structure = [
+            LocationTypeStructure('ctd', [
+                LocationTypeStructure('sto', [
+                    LocationTypeStructure('cto', [
+                        LocationTypeStructure('dto', [
+                            LocationTypeStructure('tu', [
+                                LocationTypeStructure('phi', []),
+                                LocationTypeStructure('dmc', []),
+                            ]),
+                        ])
+                    ]),
+                    LocationTypeStructure('drtb', []),
+                    LocationTypeStructure('cdst', []),
+                ])
+            ])
+        ]
+        location_structure = [
+            LocationStructure('CTD', 'ctd', [
+                LocationStructure('STO', 'sto', [
+                    LocationStructure('CTO', 'cto', [
+                        LocationStructure('DTO', 'dto', [
+                            LocationStructure('TU', 'tu', [
+                                LocationStructure('PHI', 'phi', []),
+                                LocationStructure('DMC', 'dmc', []),
+                            ]),
+                        ])
+                    ]),
+                    LocationStructure('DRTB', 'drtb', []),
+                    LocationStructure('CDST', 'cdst', []),
+                ]),
+                LocationStructure('STO1', 'sto', [
+                    LocationStructure('CTO1', 'cto', [
+                        LocationStructure('DTO1', 'dto', [
+                            LocationStructure('TU1', 'tu', [
+                                LocationStructure('PHI1', 'phi', []),
+                                LocationStructure('DMC1', 'dmc', []),
+                            ]),
+                        ])
+                    ]),
+                    LocationStructure('DRTB1', 'drtb', []),
+                    LocationStructure('CDST1', 'cdst', []),
+                ])
+            ])
+        ]
+
+        location_metadata = {'is_test': 'no', 'nikshay_code': 'nikshay_code'}
+        setup_location_types_with_structure(self.domain, location_type_structure),
+        self.locations = setup_locations_with_structure(self.domain, location_structure, location_metadata)
+
+    def tearDown(self):
+        super(ForkedHierarchiesTest, self).tearDown()
+        delete_all_users()
+
+    def test_include_without_expanding_includes_all_ancestors(self):
+        self.user._couch_user.set_location(self.locations['DTO'].couch_location)
+        location_type = self.locations['DTO'].location_type
+
+        location_type.include_without_expanding = self.locations['DTO'].location_type
+        location_type.save()
+
+        fixture = ElementTree.tostring(call_fixture_generator(flat_location_fixture_generator, self.user)[-1])
+
+        for location_name in ('CDST1', 'CDST', 'DRTB1', 'DRTB', 'DTO1', 'DTO', 'CTO', 'CTO1', 'CTD'):
+            self.assertTrue(location_name in fixture)
+
+        for location_name in ('PHI1', 'TU1', 'DMC1'):
+            self.assertFalse(location_name in fixture)
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
