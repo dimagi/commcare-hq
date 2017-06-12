@@ -78,17 +78,17 @@ class FormFactIntegrationTest(TestCase):
         start = datetime.utcnow() - timedelta(days=3)
         end = datetime.utcnow() + timedelta(days=3)
 
-        UserStagingTable.commit(start, end)
-        self.assertEqual(UserStagingTable.objects.count(), len(self.user_records))
-
-        UserDim.commit(start, end)
-        self.assertEqual(UserDim.objects.count(), len(self.user_records))
-
         DomainStagingTable.commit(start, end)
         self.assertEqual(DomainStagingTable.objects.count(), len(self.domain_records))
 
         DomainDim.commit(start, end)
         self.assertEqual(DomainDim.objects.count(), len(self.domain_records))
+
+        UserStagingTable.commit(start, end)
+        self.assertEqual(UserStagingTable.objects.count(), len(self.user_records))
+
+        UserDim.commit(start, end)
+        self.assertEqual(UserDim.objects.count(), len(self.user_records))
 
         FormStagingTable.commit(start, end)
         self.assertEqual(FormStagingTable.objects.count(), len(self.form_records))
