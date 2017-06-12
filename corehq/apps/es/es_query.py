@@ -86,7 +86,7 @@ as the ``debug_host`` to the constructor:
 Language
 --------
 
- * es_query - the entire query, filters, query, pagination, facets
+ * es_query - the entire query, filters, query, pagination
  * filters - a list of the individual filters
  * query - the query, used for searching, not filtering
  * field - a field on the document. User docs have a 'domain' field.
@@ -161,7 +161,6 @@ class ESQuery(object):
 
         self.debug_host = debug_host
         self._default_filters = deepcopy(self.default_filters)
-        self._facets = []
         self._aggregations = []
         self._source = None
         self.es_instance_alias = es_instance_alias
