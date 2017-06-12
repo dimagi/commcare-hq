@@ -1,6 +1,6 @@
 '''
 This files defines ETL objects that all have a common "load" function.
-Each object is meant for transfering one type of data to another type.
+Each object is meant for transferring one type of data to another type.
 '''
 import os
 
@@ -20,6 +20,10 @@ class BaseETLMixin(object):
 
 
 class CustomSQLETLMixin(BaseETLMixin):
+    '''
+    Mixin for transferring data from a SQL store to another SQL store using
+    a custom SQL script.
+    '''
 
     @classmethod
     def load(cls, start_datetime, end_datetime):
@@ -70,6 +74,9 @@ class CustomSQLETLMixin(BaseETLMixin):
 
 
 class CouchToDjangoETLMixin(BaseETLMixin):
+    '''
+    Mixin for transferring docs from Couch to a Django model.
+    '''
 
     @classmethod
     def field_mapping(cls):
