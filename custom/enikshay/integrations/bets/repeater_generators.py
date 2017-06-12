@@ -60,7 +60,7 @@ class BETSPayload(jsonobject.JsonObject):
         try:
             return SQLLocation.objects.get(location_id=location_id)
         except SQLLocation.DoesNotExist:
-            msg = "Location with id {location_id} not found.".format(location_id)
+            msg = "Location with id {location_id} not found.".format(location_id=location_id)
             if field_name and related_case_type and related_case_id:
                 msg += " This is the {field_name} for {related_case_type} with id: {related_case_id}".format(
                     field_name=field_name,
@@ -84,11 +84,15 @@ class IncentivePayload(BETSPayload):
             related_case_id=person_case.case_id
         )
 
+        treatment_outcome_date = episode_case_properties.get(TREATMENT_OUTCOME_DATE, None)
+        if treatment_outcome_date is None:
+            treatment_outcome_date = datetime.utcnow().strftime("%Y-%m-%d")
+
         return cls(
             EventID=TREATMENT_180_EVENT,
-            EventOccurDate=episode_case_properties.get(TREATMENT_OUTCOME_DATE),
+            EventOccurDate=treatment_outcome_date,
             BeneficiaryUUID=episode_case_properties.get(LAST_VOUCHER_CREATED_BY_ID),
-            BeneficiaryType="patient",
+            BeneficiaryType="mbbs",
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(pcp_location),
@@ -266,7 +270,7 @@ class BETSBasePayloadGenerator(BasePayloadGenerator):
                     if case.dynamic_case_properties().get(self.event_property_name) != 'sent'
                     else 'sent'
                 ),
-                "bets_{}_error".format(self.event_id): response.json(),
+                "bets_{}_error".format(self.event_id): unicode(response.json()),
             }
         )
 
@@ -369,7 +373,7 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
                     if case.dynamic_case_properties().get(self.get_event_property_name(case)) != 'sent'
                     else 'sent'
                 ),
-                "bets_{}_error".format(self.event_id): response.json(),
+                "bets_{}_error".format(self.event_id): unicode(response.json()),
             }
         )
 

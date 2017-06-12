@@ -93,13 +93,15 @@ class BETSRepeaterMixin(object):
         if isinstance(result, Exception):
             attempt = repeat_record.handle_exception(result)
             self.generator.handle_exception(result, repeat_record)
+            return attempt
 
         try:
             response_json = result.json()
         except ValueError:
             # read the spec, bro.
             attempt = repeat_record.handle_exception(result)
-            self.generator.handle_exception(result, self.payload_doc(repeat_record), repeat_record)
+            self.generator.handle_exception(result.text, repeat_record)
+            return attempt
 
         if self._is_successful_response(response_json):
             attempt = repeat_record.handle_success(result)
