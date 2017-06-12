@@ -8,9 +8,9 @@ from corehq.util.markup import SimpleTableWriter, CSVRowFormatter, \
 
 class Command(BaseCommand):
     help = "Print doc counts in ES & Primary database split by Doc Type."
-    args = '<domain1>..<domainN>'
 
     def add_arguments(self, parser):
+        parser.add_argument('domains', nargs='*')
         parser.add_argument('--csv', action='store_true', default=False, dest='csv',
                             help='Write output in CSV format.')
 

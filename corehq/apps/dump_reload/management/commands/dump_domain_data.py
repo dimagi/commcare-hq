@@ -14,9 +14,9 @@ from corehq.apps.dump_reload.sql import SqlDataDumper
 
 class Command(BaseCommand):
     help = "Dump a domain's data to disk."
-    args = '<domain>'
 
     def add_arguments(self, parser):
+        parser.add_argument('domain_name')
         parser.add_argument('-e', '--exclude', dest='exclude', action='append', default=[],
             help='An app_label or app_label.ModelName to exclude '
                  '(use multiple --exclude to exclude multiple apps/models).')

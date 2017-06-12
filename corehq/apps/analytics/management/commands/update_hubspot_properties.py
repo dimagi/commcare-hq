@@ -11,11 +11,11 @@ from corehq.apps.users.models import WebUser
 
 
 class Command(BaseCommand):
-    args = '<property_name_1> <property_name_2> ...'
     help = ("Updates given Hubspot properties for all users active within last 6 months. "
             "Only subscription, domain-membership, and A/B Test properties are supported")
 
     def add_arguments(self, parser):
+        parser.add_argument('property_names', nargs='+')
         parser.add_argument(
             'property_names',
             metavar='property_name',

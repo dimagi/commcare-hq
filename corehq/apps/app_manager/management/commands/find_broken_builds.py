@@ -71,9 +71,9 @@ CHECK_FUNCTIONS = {
 
 class Command(BaseCommand):
     help = "Print a list of broken builds"
-    args = '<check_function>'
 
     def add_arguments(self, parser):
+        parser.add_argument('check_function')
         parser.add_argument(
             'check_function',
             choices=list(CHECK_FUNCTIONS),
@@ -101,8 +101,8 @@ class Command(BaseCommand):
             help='End date',
         )
 
-    def handle(self, check_fn_name, **options):
-        check_fn = CHECK_FUNCTIONS[check_fn_name]
+    def handle(self, check_function, **options):
+        check_fn = CHECK_FUNCTIONS[check_function]
 
         start = options['startdate']
         end = options['enddate']

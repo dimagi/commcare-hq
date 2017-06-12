@@ -13,7 +13,6 @@ from corehq.apps.userreports.tasks import rebuild_indicators
 
 
 class Command(BaseCommand):
-    args = '<domain domain ...>'
     help = "Rebuild call center data sources which are out of sync"
 
     def add_arguments(self, parser):
