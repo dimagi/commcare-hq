@@ -190,13 +190,21 @@ def referred_by_expression(spec, context):
 
 
 class ReferredTo(ReferralExpressionBase):
+    """
+    An expression that returns the id of a location that the person was referred to.
+    """
     type = TypeProperty('enikshay_referred_to')
 
     def _handle_referral_case(self, referral):
         return referral.owner_id
 
     def _handle_trail_case(self, trail, domain):
-        return trail.dynamic_case_properties().get("accepted_by")
+        # We can't use trail.accepted_by because that is a human readable name, not an id
+        referral_id = trail.dynamic_case_properties().get("referral_id")
+        if referral_id:
+            referral = CaseAccessors(domain).get_case(referral_id)
+            return self._handle_referral_case(referral)
+        return None
 
 
 def referred_to_expression(spec, context):
