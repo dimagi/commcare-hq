@@ -65,5 +65,8 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/download", {
                 template : "<download></download>",
+            })
+            .when("/progress_report", {
+                template : "<progress-report></progress-report>",
             });
     }]);

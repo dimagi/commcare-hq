@@ -16,11 +16,11 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
-from custom.icds_reports.const import LocationTypes
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
-from custom.icds_reports.sqldata import AWCInfrastructure, MCN, SystemUsage, Demographics, ChildrenExport
+from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, PregnantWomenExport, DemographicsExport, \
+    SystemUsageExport, AWCInfrastructureExport
 from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_data, get_cas_reach_data, \
     get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart, \
@@ -360,21 +360,14 @@ class AwcReportsView(View):
         aggregation_level = 5
 
         config = {
-            'aggregation_level': aggregation_level,
-            'awc_site_code': "awc_214"
+            'aggregation_level': aggregation_level
         }
-        loc_level = 'state'
         if location:
             try:
                 sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
-                location_code = sql_location.site_code
-                loc_level = LocationType.objects.filter(
-                    parent_type=sql_location.location_type,
-                    domain=self.kwargs['domain']
-                )[0].code
                 location_key = '%s_site_code' % sql_location.location_type.code
                 config.update({
-                    location_key: "awc_214",
+                    location_key: sql_location.site_code,
                 })
             except SQLLocation.DoesNotExist:
                 pass
@@ -444,8 +437,34 @@ class ExportIndicatorView(View):
         if indicator == 1:
             return ChildrenExport(config=config, loc_level=aggregation_level).to_export(export_format)
         elif indicator == 2:
-            return SystemUsage(config=config, loc_level=aggregation_level).to_export(export_format)
+            return PregnantWomenExport(config=config, loc_level=aggregation_level).to_export(export_format)
         elif indicator == 3:
-            return Demographics(config=config, loc_level=aggregation_level).to_export(export_format)
+            return DemographicsExport(config=config, loc_level=aggregation_level).to_export(export_format)
         elif indicator == 4:
-            return AWCInfrastructure(config=config, loc_level=aggregation_level).to_export(export_format)
+            return SystemUsageExport(config=config, loc_level=aggregation_level).to_export(export_format)
+        elif indicator == 5:
+            return AWCInfrastructureExport(config=config, loc_level=aggregation_level).to_export(export_format)
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class ProgressReportView(View):
+    def get(self, request, *args, **kwargs):
+
+        month = int(request.GET.get('month'))
+        year = int(request.GET.get('year'))
+        location = request.GET.get('location', None)
+        aggregation_level = 1
+
+        this_month = datetime(year, month, 1).date()
+        three_before = this_month - relativedelta(months=2)
+
+        config = {
+            'aggregation_level': aggregation_level,
+            'month': this_month,
+            'three_before': three_before
+        }
+
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        data = ProgressReport(config=config, loc_level=loc_level).get_data()
+        return JsonResponse(data=data)

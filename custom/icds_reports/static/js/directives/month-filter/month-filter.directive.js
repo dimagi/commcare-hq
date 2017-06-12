@@ -1,4 +1,5 @@
-function MonthModalController($location, $uibModalInstance) {
+/* global moment */
+function MonthModalController($scope, $location, $uibModalInstance) {
     var vm = this;
 
     vm.months = [];
@@ -7,25 +8,24 @@ function MonthModalController($location, $uibModalInstance) {
     window.angular.forEach(moment.months(), function(key, value) {
         vm.months.push({
             name: key,
-            id: value + 1
-        })
+            id: value + 1,
+        });
     });
 
     for (var year=2014; year <= new Date().getFullYear(); year++ ) {
         vm.years.push({
             name: year,
-            id: year
-        })
+            id: year,
+        });
     }
 
     vm.selectedMonth = $location.search()['month'] !== void(0) ? $location.search()['month'] : new Date().getMonth() + 1;
     vm.selectedYear = $location.search()['year'] !== void(0) ? $location.search()['year'] : new Date().getFullYear();
 
     vm.apply = function() {
-
         $uibModalInstance.close({
             month: vm.selectedMonth,
-            year: vm.selectedYear
+            year: vm.selectedYear,
         });
     };
 
@@ -46,19 +46,19 @@ function MonthFilterController($scope, $location, $uibModal) {
             controller: MonthModalController,
             controllerAs: '$ctrl',
             resolve: {
-            }
+            },
         });
 
         modalInstance.result.then(function (data) {
             $location.search('month', data['month']);
             $location.search('year', data['year']);
-            $scope.$emit('filtersChange')
+            $scope.$emit('filtersChange');
         });
     };
 }
 
 MonthFilterController.$inject = ['$scope', '$location', '$uibModal'];
-MonthModalController.$inject = ['$location', '$uibModalInstance'];
+MonthModalController.$inject = ['$scope', '$location', '$uibModalInstance'];
 
 window.angular.module('icdsApp').directive("monthFilter", function() {
     var url = hqImport('hqwebapp/js/urllib.js').reverse;

@@ -54,6 +54,7 @@
         <script type="text/javascript" src="{% static 'js/angular-services/maternal-child.service.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/angular-services/system-usage.service.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/angular-services/locations.service.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/angular-services/progress-report.service.js' %}"></script>
 
         <script type="text/javascript" src="{% static 'js/directives/filters/filters.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/location-filter/location-filter.directive.js' %}"></script>
@@ -69,6 +70,7 @@
         <script type="text/javascript" src="{% static 'js/directives/indie-map/indie-map.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/map-or-sector-view/map-or-sector-view.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/download/download.directive.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/directives/progress-report/progress-report.directive.js' %}"></script>
     {% endcompress js %}
 </head>
 <body>
@@ -151,7 +153,7 @@
                         </div>
                     </nav>
                 </div>
-                <div class="row">
+                <div class="row no-margin">
                     {% registerurl 'icds-ng-template' domain '---' %}
                     {% registerurl 'program_summary' domain '---' %}
                     {% registerurl 'awc_opened' domain '---' %}
@@ -159,6 +161,7 @@
                     {% registerurl 'underweight_children' domain '---' %}
                     {% registerurl 'icds_locations' domain %}
                     {% registerurl 'icds_locations_ancestors' domain %}
+                    {% registerurl 'progress_report' domain %}
                     <div class="ng-view"></div>
                 </div>
             </div>
