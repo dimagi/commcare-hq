@@ -196,11 +196,14 @@ def json_response(obj, status_code=200, **kwargs):
                         content_type="application/json")
 
 
-def json_request(params, lenient=True):
+def json_request(params, lenient=True, booleans_as_strings=False):
     d = {}
     for key, val in params.items():
         try:
-            d[str(key)] = json.loads(val)
+            if booleans_as_strings and val in ('true', 'false'):
+                d[str(key)] = val
+            else:
+                d[str(key)] = json.loads(val)
         except ValueError:
             if lenient:
                 d[str(key)] = val
