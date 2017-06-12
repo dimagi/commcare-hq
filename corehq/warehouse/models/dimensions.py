@@ -1,4 +1,4 @@
-from django.db import models, transaction
+from django.db import models, transaction, connections
 
 from corehq.warehouse.const import (
     USER_DIM_SLUG,
@@ -13,6 +13,8 @@ from corehq.warehouse.const import (
     DOMAIN_STAGING_SLUG,
 )
 
+from corehq.sql_db.routers import db_for_read_write
+from corehq.util.test_utils import unit_testing_only
 from corehq.warehouse.etl import CustomSQLETLMixin
 from corehq.warehouse.models.shared import WarehouseTableMixin
 
@@ -31,6 +33,13 @@ class BaseDim(models.Model, WarehouseTableMixin):
 
     class Meta:
         abstract = True
+
+    @classmethod
+    @unit_testing_only
+    def clear_records(cls):
+        database = db_for_read_write(cls)
+        with connections[database].cursor() as cursor:
+            cursor.execute("TRUNCATE {}".format(cls._meta.db_table))
 
 
 class UserDim(BaseDim, CustomSQLETLMixin):

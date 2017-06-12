@@ -43,7 +43,7 @@ class StagingTable(models.Model, WarehouseTableMixin):
     @classmethod
     def clear_records(cls):
         database = db_for_read_write(cls)
-        with closing(connections[database].cursor()) as cursor:
+        with connections[database].cursor() as cursor:
             cursor.execute("TRUNCATE {}".format(cls._meta.db_table))
 
 
