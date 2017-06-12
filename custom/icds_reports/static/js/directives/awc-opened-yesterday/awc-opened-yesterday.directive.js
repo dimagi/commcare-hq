@@ -6,6 +6,8 @@ function AwcOpenedYesterdayController($routeParams, systemUsageService) {
     vm.data = {};
     vm.step = $routeParams.step;
     vm.filters = [];
+
+    vm.label = "AWCs Opened Yesterday";
     
     vm.steps = {
         'map': {route: '/awc_opened/map', label: 'MapView'},

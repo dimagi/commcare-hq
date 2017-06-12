@@ -13,17 +13,13 @@ from django.views.generic.base import View, TemplateView
 
 from corehq import toggles
 from corehq.apps.domain.decorators import login_and_domain_required
-<<<<<<< HEAD
-from corehq.apps.locations.models import SQLLocation, LocationType
-=======
 from corehq.apps.locations.models import SQLLocation
->>>>>>> icds_dashboard_v2
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
-<<<<<<< HEAD
+
 from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, PregnantWomenExport, DemographicsExport, \
     SystemUsageExport, AWCInfrastructureExport
 from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_data, get_cas_reach_data, \
@@ -31,13 +27,6 @@ from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart, \
     get_awc_reports_system_usage, get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics, \
     get_location_filter
-=======
-from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_data, get_cas_reach_data, \
-    get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
-    get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart, \
-    get_awc_reports_system_usage, get_awc_reports_pse, get_awc_reports_maternal_child, \
-    get_awc_report_demographics, get_location_filter
->>>>>>> icds_dashboard_v2
 from . import const
 from .exceptions import TableauTokenException
 
@@ -213,12 +202,8 @@ class ProgramSummaryView(View):
                 'prev_month': tuple(prev_month.timetuple())[:3]
             }
 
-<<<<<<< HEAD
         location = request.GET.get('location', '')
         get_location_filter(location, self.kwargs['domain'], config)
-=======
-        get_location_filter(request, self.kwargs['domain'], config)
->>>>>>> icds_dashboard_v2
 
         data = {
             'records': []
@@ -283,12 +268,8 @@ class PrevalenceOfUndernutritionView(View):
             'month': tuple(month.timetuple())[:3],
             'aggregation_level': 1l,
         }
-<<<<<<< HEAD
         location = request.GET.get('location', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
-=======
-        loc_level = get_location_filter(request, self.kwargs['domain'], config)
->>>>>>> icds_dashboard_v2
 
         data = []
         if step == "1":
@@ -328,13 +309,8 @@ class LocationView(View):
             locations = locations.filter(parent__location_id=parent_id)
         return JsonResponse(data={
             'locations': [
-<<<<<<< HEAD
-                {'location_id': location.location_id, 'name': location.name, 'parent_id': parent_id}
-                for location in locations
-=======
                 {'location_id': loc.location_id, 'name': loc.name, 'parent_id': parent_id}
                 for loc in locations
->>>>>>> icds_dashboard_v2
             ]
         })
 
@@ -385,11 +361,7 @@ class AwcReportsView(View):
         aggregation_level = 5
 
         config = {
-<<<<<<< HEAD
-            'aggregation_level': aggregation_level
-=======
             'aggregation_level': aggregation_level,
->>>>>>> icds_dashboard_v2
         }
         if location:
             try:
@@ -428,7 +400,6 @@ class AwcReportsView(View):
                 tuple(month.timetuple())[:3]
             )
         return JsonResponse(data=data)
-<<<<<<< HEAD
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -498,5 +469,3 @@ class ProgressReportView(View):
 
         data = ProgressReport(config=config, loc_level=loc_level).get_data()
         return JsonResponse(data=data)
-=======
->>>>>>> icds_dashboard_v2
