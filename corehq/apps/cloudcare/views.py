@@ -453,7 +453,11 @@ class LoginAsUsers(View):
     def _user_query(self, search_string, page, limit):
         user_data_fields = []
         if toggles.ENIKSHAY.enabled(self.domain):
-            user_data_fields = ['id_issuer_number']
+            user_data_fields = [
+                'id_issuer_number',
+                'id_issuer_body',
+                'agency_id_legacy',
+            ]
         return login_as_user_query(
             self.domain,
             self.couch_user,
