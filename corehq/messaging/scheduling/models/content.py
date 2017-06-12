@@ -16,9 +16,7 @@ class SMSContent(Content):
             return
 
         language_code = recipient.get_language_code()
-        message = self.message.get(language_code)
-        if not message:
-            message = self.message.get('en')
+        message = self.message.get(language_code) or self.message.get('en')
 
         if message:
             send_sms_with_backend_name(recipient.domain, phone_number, message, 'TEST')
