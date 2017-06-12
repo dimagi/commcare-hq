@@ -14,7 +14,7 @@ def _validate_class(obj, cls):
     :param cls: A type or tuple of types to check the type of obj against
     """
     if not isinstance(obj, cls):
-        raise ValueError("Expected an instance of %s" % str(cls))
+        raise TypeError("Expected an instance of %s" % str(cls))
 
 
 def _validate_uuid(value):
@@ -190,7 +190,7 @@ def get_case_schedule_instance(cls, case_id, schedule_instance_id):
     )
 
     if cls not in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
-        raise ValueError("Expected CaseAlertScheduleInstance or CaseTimedScheduleInstance")
+        raise TypeError("Expected CaseAlertScheduleInstance or CaseTimedScheduleInstance")
 
     _validate_uuid(schedule_instance_id)
     return get_object_from_partitioned_database(
