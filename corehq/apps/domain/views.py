@@ -3169,22 +3169,22 @@ class DataSetMapView(BaseAdminProjectSettingsView):
                 instance[key] = value
 
         try:
-            dataset_maps = json.loads(request.POST['dataset_maps'])
+            new_dataset_maps = json.loads(request.POST['dataset_maps'])
             current_dataset_maps = get_dataset_maps(request.domain)
             i = -1
             for i, dataset_map in enumerate(current_dataset_maps):
-                if i < len(dataset_maps):
+                if i < len(new_dataset_maps):
                     # Update current dataset maps
-                    update_dataset_map(dataset_map, dataset_maps[i])
+                    update_dataset_map(dataset_map, new_dataset_maps[i])
                     dataset_map.save()
                 else:
                     # Delete removed dataset maps
                     dataset_map.delete()
-            if i + 1 < len(dataset_maps):
+            if i + 1 < len(new_dataset_maps):
                 # Insert new dataset maps
-                for j in range(i + 1, len(dataset_maps)):
+                for j in range(i + 1, len(new_dataset_maps)):
                     dataset_map = DataSetMap(domain=request.domain)
-                    update_dataset_map(dataset_map, dataset_maps[j])
+                    update_dataset_map(dataset_map, new_dataset_maps[j])
                     dataset_map.save()
             get_dataset_maps.clear(request.domain)
             return json_response({'success': _('DHIS2 DataSet Maps saved')})
