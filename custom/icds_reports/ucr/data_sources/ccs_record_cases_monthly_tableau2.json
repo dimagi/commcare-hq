@@ -407,15 +407,6 @@
               "type": "named"
             },
             {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "expression": {
-                "type": "named",
-                "name": "seeking_services"
-              },
-              "property_value": "yes"
-            },
-            {
               "type": "or",
               "filters": [
                 {
@@ -450,11 +441,11 @@
               "type": "or",
               "filters": [
                 {
-                  "name": "pregnant",
+                  "name": "pregnant_all",
                   "type": "named"
                 },
                 {
-                  "name": "lactating",
+                  "name": "lactating_all",
                   "type": "named"
                 }
               ]
