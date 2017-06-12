@@ -18,6 +18,7 @@ from custom.enikshay.case_utils import get_person_case_from_episode, get_adheren
 from custom.enikshay.const import DOSE_TAKEN_INDICATORS, ENIKSHAY_TIMEZONE, TREATMENT_START_DATE
 from custom.enikshay.reports.generic import EnikshayReport
 
+from django.http import Http404
 from django.utils.translation import ugettext_lazy
 
 from custom.enikshay.tasks import EpisodeAdherenceUpdate
@@ -63,7 +64,10 @@ class HistoricalAdherenceReport(EnikshayReport):
 
     def __init__(self, *args, **kwargs):
         super(HistoricalAdherenceReport, self).__init__(*args, **kwargs)
-        self.episode = CaseAccessors(self.domain).get_case(self.episode_case_id)
+        try:
+            self.episode = CaseAccessors(self.domain).get_case(self.episode_case_id)
+        except:
+            raise Http404()
         self.episode_properties = self.episode.dynamic_case_properties()
         self.person = get_person_case_from_episode(self.domain, self.episode_case_id)
 
