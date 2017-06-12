@@ -2,6 +2,7 @@ INSERT INTO {{ user_dim }} (
     domain,
     user_id,
     username,
+    user_type,
     first_name,
     last_name,
     email,
@@ -19,6 +20,14 @@ SELECT
     domain,
     user_id,
     username,
+    CASE
+        WHEN user_id = 'system' THEN 'system'
+        WHEN user_id = 'demo_user' THEN 'demo'
+        WHEN user_id = 'commtrack-system' THEN 'supply'
+        WHEN doc_type = 'WebUser' THEN 'web'
+        WHEN doc_type = 'CommCareUser' THEN 'mobile'
+        ELSE 'unknown'
+    END,
     first_name,
     last_name,
     email,
