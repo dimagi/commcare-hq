@@ -1,6 +1,7 @@
 import contextlib
 import os
 import tempfile
+import time
 from collections import Counter
 
 import datetime
@@ -13,6 +14,7 @@ from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.files import safe_filename
+from corehq.util.datadog.gauges import datadog_histogram
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
@@ -354,6 +356,7 @@ def _write_export_instance(writer, export_instance, documents, progress_tracker=
     if progress_tracker:
         DownloadBase.set_progress(progress_tracker, 0, documents.count)
 
+    start = int(time.time() * 1000)
     for row_number, doc in enumerate(documents):
         for table in export_instance.selected_tables:
             rows = table.get_rows(
@@ -368,6 +371,11 @@ def _write_export_instance(writer, export_instance, documents, progress_tracker=
                 writer.write(table, row)
         if progress_tracker:
             DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
+
+    end = int(time.time() * 1000)
+    if documents.count:
+        datadog_histogram('commcare.export_duration', end - start)
+        datadog_histogram('commcare.normalized_export_duration', (end - start) / (documents.count))
 
 
 def _get_base_query(export_instance):
