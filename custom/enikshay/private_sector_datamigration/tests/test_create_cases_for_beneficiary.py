@@ -151,6 +151,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('aadhaar_number', '98765'),
             ('age', '25'),
             ('age_entered', '25'),
+            ('contact_phone_number', '915432109876'),
             ('current_address', '585 Mass Ave, Suite 4'),
             ('current_address_postal_code', '822113'),
             ('current_address_village_town_city', 'Cambridge'),
