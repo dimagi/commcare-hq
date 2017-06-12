@@ -240,7 +240,6 @@ def get_private_diagnostic_test_cases_from_episode(domain, episode_case_id):
     return sorted(open_test_cases, key=lambda c: c.get_case_property('date_reported'))
 
 
-@hqnottest
 def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_date):
     episode = get_open_episode_case_from_person(domain, person_case_id)
     case_accessor = CaseAccessors(domain)
@@ -349,6 +348,7 @@ def _get_private_locations(person_case):
         raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
 
 
+@hqnottest
 def get_lab_referral_from_test(domain, test_case_id):
     case_accessor = CaseAccessors(domain)
     reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([test_case_id])
