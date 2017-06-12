@@ -26,7 +26,7 @@ from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
 from corehq import toggles, privileges
 from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
-from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager import id_strings, toggles as app_manager_toggles
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -186,6 +186,7 @@ def get_app_view_context(request, app):
     context.update({
         'app_view_options': app_view_options,
     })
+    context.update({'all_toggles': app_manager_toggles.all_toggles(app)})
 
     build_config = CommCareBuildConfig.fetch()
     options = build_config.get_menu()
@@ -237,6 +238,7 @@ def get_app_view_context(request, app):
             context_key="bulk_app_translation_upload"
         )
     })
+    # Not used in APP_MANAGER_V2
     context['is_app_view'] = True
     try:
         context['fetchLimit'] = int(request.GET.get('limit', DEFAULT_FETCH_LIMIT))
@@ -749,6 +751,16 @@ def edit_app_attr(request, domain, app_id, attr):
         app.set_custom_suite(hq_settings['custom_suite'])
 
     return HttpResponse(json.dumps(resp))
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def edit_toggles(request, domain, app_id):
+    app = get_app(domain, app_id)
+    for toggle in app_manager_toggles.all_toggles(app):
+        app.labs[toggle['slug']] = request.POST.get(toggle['slug'], 'off') == 'on'
+    app.save()
+    return HttpResponse(json.dumps({'success': True}))
 
 
 @no_conflict_require_POST

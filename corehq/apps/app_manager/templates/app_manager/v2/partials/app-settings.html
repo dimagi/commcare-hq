@@ -180,6 +180,7 @@
             <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
         {% endif %}
         <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
+        <li><a href="#labs" data-toggle="tab">{% trans "Labs" %}</a></li>
         <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
     {% endif %}
     </ul>
@@ -280,6 +281,9 @@
                     </div>
                 </form>
             </div>
+        </div>
+        <div class="tab-pane" id="labs">
+            {% include 'app_manager/v2/partials/labs.html' %}
         </div>
         <div class="tab-pane" id="commcare-settings">
             {% include 'app_manager/v2/partials/commcare_settings.html' %}

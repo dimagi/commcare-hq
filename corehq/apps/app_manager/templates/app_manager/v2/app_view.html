@@ -25,6 +25,7 @@
       <script src="{% static 'app_manager/js/app_view_application.js' %}"></script>
       <script src="{% static 'translations/js/translations.js' %}"></script>
   {% endif %}
+  <script src="{% static 'app_manager/js/labs.js' %}"></script>
 {% endblock js %}
 
 {% block pre_form_content %}
@@ -80,6 +81,9 @@
   {% registerurl "download_ccz" app.domain '---' %}
   {% registerurl "download_multimedia_zip" app.domain '---' %}
   {% registerurl "project_report_dispatcher" app.domain 'application_error' %}
+
+  {% initial_page_data "labs" all_toggles %}
+  {% registerurl "edit_toggles" domain app.id %}
 
   <div class="appmanager-tabs-container">
   {% block app_view_tabs %}{% endblock app_view_tabs %}

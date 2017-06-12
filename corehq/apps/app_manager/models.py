@@ -5461,6 +5461,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                                      choices=['none', 'all', 'some'])
     mobile_ucr_sync_interval = IntegerProperty()
 
+    labs = DictProperty()
+
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
 

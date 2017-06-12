@@ -1,0 +1,23 @@
+{% load i18n %}
+
+<div data-bind="saveButton: saveButton"></div>
+<div class="row">
+    <div class="col-sm-10">
+        <table class="table table-striped">
+            <thead>
+                <th class="col-sm-3">{% trans "Name" %}</th>
+                <th>{% trans "Description" %}</th>
+                <th>{% trans "Enabled" %}</th>
+            </thead>
+            <tbody data-bind="foreach: labs">
+                <tr>
+                    <td data-bind="text: name"></td>
+                    <td data-bind="text: description"></td>
+                    <td>
+                        <input type="checkbox" data-bind="attr: {name: slug}, checked: enabled, event: {change: $parent.toggle}" />
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
