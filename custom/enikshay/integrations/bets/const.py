@@ -1,5 +1,8 @@
 # BETS event names
-SUCCESSFUL_TREATMENT_EVENT = "SUCCESSFUL_TREATMENT_EVENT"  # TODO: Get this from BETS
+
+# Patients: Cash transfer on successful treatment completion
+# (* trigger - updating of 'Treatment Outcome' for an episode)
+SUCCESSFUL_TREATMENT_EVENT = '104'
 
 # e-Voucher payout to chemists (reimbursement of drug cost + additional x% top up)
 CHEMIST_VOUCHER_EVENT = '101'
@@ -8,14 +11,14 @@ CHEMIST_VOUCHER_EVENT = '101'
 LAB_VOUCHER_EVENT = '102'
 
 # To provider for diagnosis and notification of TB case
-DIAGNOSIS_AND_NOTIFICATION_EVENT = "103"
+DIAGNOSIS_AND_NOTIFICATION_EVENT = '103'
 
 # 6 months (180 days) of private OR govt. FDCs with "Treatment Outcome" reported
-TREATMENT_180_EVENT = "104"
+TREATMENT_180_EVENT = '104'
 
 # Registering and referral of a presumptive TB case in UATBC/eNikshay,
 # and patient subsequently gets notified
-AYUSH_REFERRAL_EVENT = "105"
+AYUSH_REFERRAL_EVENT = '105'
 
 # Suspect Registration + Validated diagnostic e-Voucher prior to or on date
 # of treatment initiation
@@ -29,7 +32,7 @@ CHEMIST_HONORARIUM_EVENT = '108'
 
 # Cash transfer on subsequent drug refill (~at every drug voucher validation,
 # starting after 2nd voucher)
-DRUG_REFILL_EVENT = "109"
+DRUG_REFILL_EVENT = '109'
 
 # Honorarium to public DOT providers
 PROVIDER_HONORARIUM = '110'
