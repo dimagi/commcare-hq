@@ -29,7 +29,6 @@ def skip_domain(domain):
 
 
 class Command(BaseCommand):
-    args = ""
     help = "Spawns tasks to process schedule instances"
 
     def get_task(self, cls):
