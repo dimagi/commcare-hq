@@ -206,9 +206,20 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         return view;
     };
 
-    Views.CaseViewUnclickable = Marionette.ItemView.extend({
+    Views.CaseView = Marionette.ItemView.extend({
         tagName: "tr",
         template: "#case-view-item-template",
+
+        events: {
+            "click": "rowClick",
+        },
+
+        className: "formplayer-request",
+
+        rowClick: function (e) {
+            e.preventDefault();
+            FormplayerFrontend.trigger("menu:show:detail", this.options.model.get('id'), 0);
+        },
 
         templateHelpers: function () {
             var appId = Util.currentUrlToObject().appId;
@@ -222,15 +233,10 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
-    Views.CaseView = Views.CaseViewUnclickable.extend({
-        events: {
-            "click": "rowClick",
-        },
-        className: "formplayer-request",
-        rowClick: function (e) {
-            e.preventDefault();
-            FormplayerFrontend.trigger("menu:show:detail", this.options.model.get('id'), 0);
-        },
+    Views.CaseViewUnclickable = Views.CaseView.extend({
+        events: {},
+        className: "",
+        rowClick: function () {},
     });
 
     Views.CaseTileView = Views.CaseView.extend({
