@@ -190,7 +190,7 @@ def get_async_indicator_modify_lock_key(doc_id):
     return 'async_indicator_save-{}'.format(doc_id)
 
 
-def copy_static_reports(from_domain, to_domain, report_map):
+def get_static_report_mapping(from_domain, to_domain, report_map):
     from corehq.apps.userreports.models import StaticReportConfiguration, STATIC_PREFIX, \
         CUSTOM_REPORT_PREFIX
 
@@ -213,3 +213,4 @@ def copy_static_reports(from_domain, to_domain, report_map):
         # check that new report is in new domain's list of static reports
         StaticReportConfiguration.by_id(new_id)
         report_map[static_report.get_id] = new_id
+        return report_map

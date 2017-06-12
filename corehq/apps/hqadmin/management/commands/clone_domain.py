@@ -6,14 +6,9 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain, get_datasources_for_domain
-from corehq.apps.userreports.util import copy_static_reports
+from corehq.apps.userreports.models import StaticDataSourceConfiguration
+from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.blobs.mixin import BlobMixin
-from corehq.apps.userreports.models import (
-    CUSTOM_REPORT_PREFIX,
-    STATIC_PREFIX,
-    StaticDataSourceConfiguration,
-    StaticReportConfiguration,
-)
 
 types = [
     "feature_flags",
@@ -253,7 +248,7 @@ class Command(BaseCommand):
 
             old_id, new_id = self.save_couch_copy(report, self.new_domain)
             report_map[old_id] = new_id
-        copy_static_reports(self.existing_domain, self.new_domain, report_map)
+        report_map = get_static_report_mapping(self.existing_domain, self.new_domain, report_map)
         return report_map
 
     def copy_ucr_datasources(self):
@@ -265,6 +260,15 @@ class Command(BaseCommand):
 
             old_id, new_id = self.save_couch_copy(datasource, self.new_domain)
             datasource_map[old_id] = new_id
+        for static_datasource in StaticDataSourceConfiguration.by_domain(self.existing_domain):
+            table_id = static_datasource.get_id.replace(
+                StaticDataSourceConfiguration._datasource_id_prefix + self.existing_domain + '-',
+                ''
+            )
+            new_id = StaticDataSourceConfiguration.get_doc_id(self.new_domain, table_id)
+            # check that new datasource is in new domain's list of static datasources
+            StaticDataSourceConfiguration.by_id(new_id)
+            datasource_map[static_datasource.get_id] = new_id
         return datasource_map
 
     def copy_auto_case_update_rules(self):

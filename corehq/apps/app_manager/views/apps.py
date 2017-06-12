@@ -22,7 +22,7 @@ from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layo
 from corehq.apps.app_manager.exceptions import ConflictingCaseTypeError, \
     IncompatibleFormTypeException, RearrangeError
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
-    validate_langs, CASE_TYPE_CONFLICT_MSG
+    validate_langs, CASE_TYPE_CONFLICT_MSG, overwrite_app
 from corehq import toggles, privileges
 from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
@@ -888,22 +888,8 @@ def pull_master_app(request, domain, app_id):
     app = get_current_app_doc(domain, app_id)
     master_app = get_app(None, app['master'])
     latest_master_build = get_app(None, app['master'], latest=True)
-    params = {}
     if app['domain'] in master_app.linked_whitelist:
-        excluded_fields = set(Application._meta_fields).union(
-            ['date_created', 'build_profiles', 'copy_history', 'copy_of', 'name', 'comment', 'doc_type']
-        )
-        master_json = latest_master_build.to_json()
-        for key, value in master_json.iteritems():
-            if key not in excluded_fields:
-                app[key] = value
-        app['version'] = master_json['version']
-        wrapped_app = wrap_app(app)
-        mobile_ucrs = False
-        for module in wrapped_app.modules:
-            if isinstance(module, ReportModule):
-                mobile_ucrs = True
-                break
+        mobile_ucrs = overwrite_app(app, latest_master_build)
         if mobile_ucrs:
             messages.error(request, _('This linked application uses mobile UCRs '
                                       'which are currently not supported. For this application '
@@ -912,13 +898,12 @@ def pull_master_app(request, domain, app_id):
         else:
             messages.success(request,
                              _('Your linked application was successfully updated to the latest version.'))
-        wrapped_app.copy_attachments(latest_master_build)
-        wrapped_app.save(increment_version=False)
     else:
         messages.error(request, _(
             'This project is not authorized to update from the master application. '
             'Please contact the maintainer of the master app if you believe this is a mistake. ')
         )
+    params = {}
     return HttpResponseRedirect(reverse_util('view_app', params=params, args=[domain, app_id]))
 
 
