@@ -123,7 +123,7 @@ hqDefine('domain/js/dhis2_map_settings.js', function () {
                 form.action,
                 {'dataset_maps': JSON.stringify(dataSetMaps)},
                 function (data) { alert_user(data['success'], 'success', true); }
-            ).fail(function (data) { alert_user(data['error'], 'danger'); });
+            ).fail(function () { alert_user(gettext('Unable to save DataSet maps'), 'danger'); });
         };
 
         self.sendData = function () {
