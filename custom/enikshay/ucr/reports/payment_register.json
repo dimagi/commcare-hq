@@ -51,6 +51,14 @@
                     "order_by_hierarchy": true
                 },
                 "display": "Location"
+            },
+            {
+                "pre_value": "true",
+                "datatype": "string",
+                "display": null,
+                "field": "enrolled_in_private",
+                "type": "pre",
+                "slug": "enrolled_in_private"
             }
         ],
         "columns": [
@@ -60,7 +68,7 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "issued_by_id",
+                "field": "voucher_fulfilled_by_id",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Provider Id"
@@ -71,7 +79,7 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "issued_by_name",
+                "field": "voucher_fulfilled_by_name",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Provider Name"
@@ -218,50 +226,6 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Status"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "mode_of_payment",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Mode of Payment"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "bank_name",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Bank Name"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "cheque_number",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Cheque Number"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "comments",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Comments"
             },
             {
                 "sortable": false,
