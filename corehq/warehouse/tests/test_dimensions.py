@@ -14,6 +14,7 @@ from corehq.warehouse.tests.utils import (
     create_user_staging_record,
 )
 from corehq.warehouse.models import (
+    UserStagingTable,
     UserDim,
 )
 
