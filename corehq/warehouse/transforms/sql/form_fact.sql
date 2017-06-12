@@ -1,9 +1,11 @@
 INSERT INTO {{ form_fact }} (
     form_id,
     domain,
+    domain_dim_id,
     app_id,
     xmlns,
     user_id,
+    user_dim_id,
     received_on,
     deleted_on,
     edited_on,
@@ -13,10 +15,12 @@ INSERT INTO {{ form_fact }} (
 )
 SELECT
     form_id,
-    form_table.domain,
+    domain_table.domain,
+    domain_table.id,
     app_id,
     xmlns,
-    user_id,
+    user_table.user_id,
+    user_table.id,
     received_on,
     deleted_on,
     edited_on,
@@ -35,6 +39,6 @@ SELECT
     END
 FROM
     {{ form_staging }} AS form_table
-JOIN
-    {{ domain_dim }} AS domain_table
-ON form_table.domain = domain_table.domain
+JOIN {{ domain_dim }} AS domain_table ON form_table.domain = domain_table.domain
+-- TODO: Should we allow records to be inserted if not found in the UserDim? Unknown Users?
+JOIN {{ user_dim }} AS user_table ON form_table.user_id = user_table.user_id

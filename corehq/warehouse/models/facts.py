@@ -9,7 +9,7 @@ from corehq.warehouse.const import (
     SYNCLOG_STAGING_SLUG,
 )
 
-from .dimensions import UserDim
+from .dimensions import UserDim, DomainDim
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.sql_db.routers import db_for_read_write
 from corehq.util.test_utils import unit_testing_only
@@ -50,6 +50,9 @@ class FormFact(BaseFact, CustomSQLETLMixin):
     xmlns = models.CharField(max_length=255, default=None)
     user_id = models.CharField(max_length=255, null=True)
 
+    user_dim = models.ForeignKey(UserDim, on_delete=models.PROTECT)
+    domain_dim = models.ForeignKey(DomainDim, on_delete=models.PROTECT)
+
     # The time at which the server has received the form
     received_on = models.DateTimeField(db_index=True)
     deleted_on = models.DateTimeField(null=True)
@@ -65,6 +68,7 @@ class FormFact(BaseFact, CustomSQLETLMixin):
     @classmethod
     def dependencies(cls):
         return [
+            USER_DIM_SLUG,
             DOMAIN_DIM_SLUG,
             FORM_STAGING_SLUG,
         ]

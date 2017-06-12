@@ -52,16 +52,16 @@ class UserDim(BaseDim, CustomSQLETLMixin):
 
     user_id = models.CharField(max_length=255)
     username = models.CharField(max_length=150)
-    first_name = models.CharField(max_length=30)
-    last_name = models.CharField(max_length=30)
-    email = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=30, null=True)
+    last_name = models.CharField(max_length=30, null=True)
+    email = models.CharField(max_length=255, null=True)
     doc_type = models.CharField(max_length=100)
 
     is_active = models.BooleanField()
     is_staff = models.BooleanField()
     is_superuser = models.BooleanField()
 
-    last_login = models.DateTimeField()
+    last_login = models.DateTimeField(null=True)
     date_joined = models.DateTimeField()
 
     @classmethod
@@ -143,8 +143,8 @@ class DomainDim(BaseDim, CustomSQLETLMixin):
     use_sql_backend = models.BooleanField()
     first_domain_for_user = models.BooleanField()
 
-    domain_last_modified = models.DateTimeField()
-    domain_created_on = models.DateTimeField()
+    domain_last_modified = models.DateTimeField(null=True)
+    domain_created_on = models.DateTimeField(null=True)
 
     @classmethod
     def dependencies(cls):

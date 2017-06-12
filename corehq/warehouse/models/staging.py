@@ -101,6 +101,7 @@ class UserStagingTable(StagingTable, CouchToDjangoETLMixin):
     email = models.CharField(max_length=255, null=True)
     doc_type = models.CharField(max_length=100)
     base_doc = models.CharField(max_length=100)
+    domain = models.CharField(max_length=100)
 
     is_active = models.BooleanField()
     is_staff = models.BooleanField()
@@ -123,6 +124,7 @@ class UserStagingTable(StagingTable, CouchToDjangoETLMixin):
             ('first_name', 'first_name'),
             ('last_name', 'last_name'),
             ('email', 'email'),
+            ('domain', 'domain'),
             ('doc_type', 'doc_type'),
             ('base_doc', 'base_doc'),
             ('is_active', 'is_active'),
@@ -164,7 +166,7 @@ class DomainStagingTable(StagingTable, CouchToDjangoETLMixin):
     use_sql_backend = models.NullBooleanField()
     first_domain_for_user = models.NullBooleanField()
 
-    domain_last_modified = models.DateTimeField()
+    domain_last_modified = models.DateTimeField(null=True)
     domain_created_on = models.DateTimeField(null=True)
 
     @classmethod
