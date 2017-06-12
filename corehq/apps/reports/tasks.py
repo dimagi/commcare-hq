@@ -37,10 +37,8 @@ from corehq.apps.domain.calculations import (
     all_domain_stats,
     calced_props,
     CALC_FNS,
-    total_distinct_users,
 )
 from corehq.apps.es.domains import DomainES
-from corehq.apps.indicators.utils import get_mvp_domains
 from corehq.elastic import (
     stream_es_query,
     send_to_elasticsearch,
