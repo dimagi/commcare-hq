@@ -3171,7 +3171,7 @@ class DataSetMapView(BaseAdminProjectSettingsView):
         try:
             dataset_maps = json.loads(request.POST['dataset_maps'])
             current_dataset_maps = get_dataset_maps(request.domain)
-            i = 0
+            i = -1
             for i, dataset_map in enumerate(current_dataset_maps):
                 if i < len(dataset_maps):
                     # Update current dataset maps
@@ -3180,9 +3180,9 @@ class DataSetMapView(BaseAdminProjectSettingsView):
                 else:
                     # Delete removed dataset maps
                     dataset_map.delete()
-            if i < len(dataset_maps):
+            if i + 1 < len(dataset_maps):
                 # Insert new dataset maps
-                for j in range(i, len(dataset_maps)):
+                for j in range(i + 1, len(dataset_maps)):
                     dataset_map = DataSetMap(domain=request.domain)
                     update_dataset_map(dataset_map, dataset_maps[j])
                     dataset_map.save()
