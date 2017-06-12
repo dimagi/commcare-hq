@@ -22,7 +22,7 @@ from corehq.apps.app_manager.views import (
     edit_report_module, validate_module_for_build, commcare_profile, edit_commcare_profile, edit_commcare_settings,
     edit_app_langs, edit_app_attr, edit_app_ui_translations, get_app_ui_translations, rearrange, odk_qr_code,
     odk_media_qr_code, odk_install, short_url, short_odk_url, save_copy, revert_to_copy, delete_copy, list_apps,
-    direct_ccz, download_index, download_file, formdefs, get_form_questions, pull_master_app,
+    direct_ccz, download_index, download_file, get_form_questions, pull_master_app,
     update_linked_whitelist, overwrite_module_case_list, app_settings,
 )
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
@@ -179,7 +179,6 @@ urlpatterns = [
         name='app_download_file'),
     url(r'^download/(?P<app_id>[\w-]+)/',
         include('corehq.apps.app_manager.download_urls')),
-    url(r'^formdefs/(?P<app_id>[\w-]+)/', formdefs, name='formdefs'),
     url(r'^ng_template/(?P<template>[\w-]+)', DynamicTemplateView.as_view(), name='ng_template'),
 
     url(r'^diff/(?P<first_app_id>[\w-]+)/(?P<second_app_id>[\w-]+)/$', AppDiffView.as_view(), name=AppDiffView.urlname),
