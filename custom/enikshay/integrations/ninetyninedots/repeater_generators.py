@@ -42,7 +42,7 @@ from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 
 class MermParams(jsonobject.JsonObject):
-    IMEI = jsonobject.StringProperty(required=False)
+    IMEI = jsonobject.StringProperty(required=False, exclude_if_none=True)
     daily_reminder_status = jsonobject.StringProperty(required=False, exclude_if_none=True)
     daily_reminder_time = jsonobject.StringProperty(required=False, exclude_if_none=True)  # HH:mm
     refill_reminder_status = jsonobject.StringProperty(required=False, exclude_if_none=True)

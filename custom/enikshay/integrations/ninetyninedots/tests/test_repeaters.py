@@ -299,9 +299,6 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
             u"first_name": person_case_properties.get(PERSON_FIRST_NAME, None),
             u"last_name": person_case_properties.get(PERSON_LAST_NAME, None),
             u"phone_numbers": expected_numbers,
-            u"merm_params": {
-                u"IMEI": episode_case_properties.get(MERM_ID, None),
-            },
             u"treatment_start_date": episode_case_properties.get(TREATMENT_START_DATE, None),
             u"treatment_supporter_name": u"{} {}".format(
                 episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
@@ -312,6 +309,12 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
             u"address": person_case_properties.get(CURRENT_ADDRESS),
             u"sector": sector,
         }
+        if episode_case_properties.get(MERM_ID, None) is not None:
+            expected_payload.update({
+                u"merm_params": {
+                    u"IMEI": episode_case_properties.get(MERM_ID, None),
+                }
+            })
         expected_payload.update(locations)
         actual_payload = json.loads(self._get_actual_payload(casedb))
         self.assertDictEqual(expected_payload, actual_payload)
@@ -324,6 +327,7 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
         return RegisterPatientPayloadGenerator(None).get_payload(None, casedb[self.episode_id])
 
     def test_get_payload(self):
+        del self.episode.attrs['update']['merm_id']
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
         self._assert_payload_equal(cases)
