@@ -101,7 +101,7 @@ def get_active_schedule_instance_ids(cls, due_before, due_after=None):
         active_filter,
         values=['domain', 'schedule_instance_id', 'next_event_due']
     ):
-        yield (domain, schedule_instance_id, next_event_due)
+        yield domain, schedule_instance_id, next_event_due
 
 
 def get_active_case_schedule_instance_ids(cls, due_before, due_after=None):
