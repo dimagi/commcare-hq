@@ -108,10 +108,6 @@ class EditCommCareUserView(BaseEditUserView):
     urlname = "edit_commcare_user"
     page_title = ugettext_noop("Edit Mobile Worker")
 
-    def _get_user_form(self, data):
-        return CommCareUserFormSet(data=data, domain=self.domain,
-            editable_user=self.editable_user, request_user=self.request.couch_user)
-
     @property
     def template_name(self):
         if self.editable_user.is_deleted():
@@ -252,8 +248,20 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     @memoized
     def form_user_update(self):
-        form = super(EditCommCareUserView, self).form_user_update
+        if self.request.method == "POST" and self.request.POST['form_type'] == "update-user":
+            data = self.request.POST
+        else:
+            data = None
+        form = CommCareUserFormSet(data=data, domain=self.domain,
+            editable_user=self.editable_user, request_user=self.request.couch_user)
+
         form.user_form.load_language(language_choices=get_domain_languages(self.domain))
+
+        if self.can_change_user_roles:
+            form.user_form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
+        else:
+            del form.user_form.fields['role']
+
         return form
 
     @property

@@ -1211,6 +1211,3 @@ class CommCareUserFormSet(object):
     def update_user(self):
         self.user_form.existing_user.user_data = self.custom_data.get_data_to_save()
         return self.user_form.update_user()
-
-    def load_roles(self, *args, **kwargs):
-        return self.user_form.load_roles(*args, **kwargs)
