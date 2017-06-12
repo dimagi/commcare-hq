@@ -59,6 +59,8 @@ class TestUserDim(TestCase):
     def tearDownClass(cls):
         for record in cls.records:
             record.delete()
+        UserDim.clear_records()
+        UserStagingTable.clear_records()
         super(TestUserDim, cls).tearDownClass()
 
     def test_user_types(self):

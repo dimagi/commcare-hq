@@ -74,6 +74,13 @@ class FormFactIntegrationTest(TestCase):
 
         FormProcessorTestUtils.delete_all_sql_forms(cls.domain)
 
+        DomainStagingTable.clear_records()
+        DomainDim.clear_records()
+        UserStagingTable.clear_records()
+        UserDim.clear_records()
+        FormStagingTable.clear_records()
+        FormFact.clear_records()
+
     def test_loading_form_fact(self):
         start = datetime.utcnow() - timedelta(days=3)
         end = datetime.utcnow() + timedelta(days=3)
