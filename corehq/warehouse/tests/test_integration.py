@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from django.test import TestCase
 
-from corehq.apps.users.models import WebUser, CommCareUser
+from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils
 
