@@ -17,11 +17,15 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain_name')
-        parser.add_argument('-e', '--exclude', dest='exclude', action='append', default=[],
+        parser.add_argument(
+            '-e', '--exclude', dest='exclude', action='append', default=[],
             help='An app_label or app_label.ModelName to exclude '
-                 '(use multiple --exclude to exclude multiple apps/models).')
-        parser.add_argument('--console', action='store_true', default=False, dest='console',
-                            help='Write output to the console instead of to file.')
+                 '(use multiple --exclude to exclude multiple apps/models).'
+        )
+        parser.add_argument(
+            '--console', action='store_true', default=False, dest='console',
+            help='Write output to the console instead of to file.'
+        )
 
     def handle(self, domain_name, **options):
         excludes = options.get('exclude')
