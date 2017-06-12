@@ -105,25 +105,24 @@
         "datatype": "string",
         "display_name": null,
         "expression": {
-          "type": "nested",
-          "argument_expression": {
-            "type": "ancestor_location",
-            "location_id": {
-              "expression": {
-                "property_name": "owner_id",
-                "type": "property_name"
+          "location_id_expression": {
+            "location_id_expression": {
+              "location_id_expression": {
+                "location_id_expression": {
+                  "expression": {
+                    "datatype": null,
+                    "property_name": "owner_id",
+                    "type": "property_name"
+                  },
+                  "type": "root_doc"
+                },
+                "type": "location_parent_id"
               },
-              "type": "root_doc"
+              "type": "location_parent_id"
             },
-            "location_type": {
-              "type": "constant",
-              "constant": "state"
-            }
+            "type": "location_parent_id"
           },
-          "value_expression": {
-            "type": "property_name",
-            "property_name": "_id"
-          }
+          "type": "location_parent_id"
         },
         "is_nullable": true,
         "is_primary_key": false,
@@ -135,25 +134,21 @@
         "datatype": "string",
         "display_name": null,
         "expression": {
-          "type": "nested",
-          "argument_expression": {
-            "type": "ancestor_location",
-            "location_id": {
-              "expression": {
-                "property_name": "owner_id",
-                "type": "property_name"
+          "location_id_expression": {
+            "location_id_expression": {
+              "location_id_expression": {
+                "expression": {
+                  "datatype": null,
+                  "property_name": "owner_id",
+                  "type": "property_name"
+                },
+                "type": "root_doc"
               },
-              "type": "root_doc"
+              "type": "location_parent_id"
             },
-            "location_type": {
-              "type": "constant",
-              "constant": "district"
-            }
+            "type": "location_parent_id"
           },
-          "value_expression": {
-            "type": "property_name",
-            "property_name": "_id"
-          }
+          "type": "location_parent_id"
         },
         "is_nullable": true,
         "is_primary_key": false,
@@ -165,25 +160,18 @@
         "datatype": "string",
         "display_name": null,
         "expression": {
-          "type": "nested",
-          "argument_expression": {
-            "type": "ancestor_location",
-            "location_id": {
+          "location_id_expression": {
+            "location_id_expression": {
               "expression": {
+                "datatype": null,
                 "property_name": "owner_id",
                 "type": "property_name"
               },
               "type": "root_doc"
             },
-            "location_type": {
-              "type": "constant",
-              "constant": "block"
-            }
+            "type": "location_parent_id"
           },
-          "value_expression": {
-            "type": "property_name",
-            "property_name": "_id"
-          }
+          "type": "location_parent_id"
         },
         "is_nullable": true,
         "is_primary_key": false,
@@ -196,25 +184,15 @@
         "datatype": "string",
         "display_name": null,
         "expression": {
-          "type": "nested",
-          "argument_expression": {
-            "type": "ancestor_location",
-            "location_id": {
-              "expression": {
-                "property_name": "owner_id",
-                "type": "property_name"
-              },
-              "type": "root_doc"
+          "location_id_expression": {
+            "expression": {
+              "datatype": null,
+              "property_name": "owner_id",
+              "type": "property_name"
             },
-            "location_type": {
-              "type": "constant",
-              "constant": "supervisor"
-            }
+            "type": "root_doc"
           },
-          "value_expression": {
-            "type": "property_name",
-            "property_name": "_id"
-          }
+          "type": "location_parent_id"
         },
         "is_nullable": true,
         "is_primary_key": false,
