@@ -2211,6 +2211,48 @@
       {
         "column_id": "count",
         "type": "count"
+      },
+      {
+        "column_id": "aadhar_date",
+        "type": "expression",
+        "is_nullable": true,
+        "is_primary_key": false,
+        "create_index": true,
+        "datatype": "date",
+        "expression": {
+          "type": "nested",
+          "argument_expression": {
+            "type": "reduce_items",
+            "aggregation_fn": "first_item",
+            "items_expression": {
+              "type": "filter_items",
+              "items_expression": {
+                "type": "icds_get_case_history_by_date",
+                "xmlns": [
+                  "http://openrosa.org/formdesigner/1D568275-1D19-46DB-8C54-2C9765DF6335",
+                  "http://openrosa.org/formdesigner/756ec44475658f3f463f8012632def2bc9fbe731",
+                  "http://openrosa.org/formdesigner/991c712a8588b52505d50a6f2262ca962a85e21c"
+                ]
+              },
+              "filter_expression": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "update",
+                    "has_aadhar"
+                  ]
+                },
+                "property_value": "yes"
+              }
+            }
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "@date_modified"
+          }
+        }
       }
     ],
     "named_expressions": {},
