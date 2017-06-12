@@ -10,7 +10,7 @@
     "report_id": "lab_register_for_culture",
     "config": {
         "description": "",
-        "title": "Lab Register for Culture, CBNAAT and Drug",
+        "title": "RNTCP Laboratory Register for Culture, CBNAAT and Drug Susceptibility Testing",
         "sort_expression": [],
         "visible": true,
         "configured_charts": [],
@@ -85,6 +85,17 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Test Type"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "testing_facility_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Testing Facility Name"
             },
             {
                 "sortable": false,
@@ -202,6 +213,17 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
+                "field": "criteria_for_testing",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Criteria for Testing"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
                 "field": "predominant_symptoms_and_durations",
                 "calculate_total": false,
                 "type": "field",
@@ -272,6 +294,15 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Sputum Specimen Condition"
+            },
+            {
+                "type": "expression",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                },
+                "display": "eNikshay Specimen Condition",
+                "column_id": "enikshay_specimen_condition"
             },
             {
                 "sortable": false,
