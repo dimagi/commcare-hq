@@ -250,7 +250,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"EventID": unicode(TREATMENT_180_EVENT),
             u"EventOccurDate": u"2017-08-15",
             u"BeneficiaryUUID": self.user.user_id,
-            u"BeneficiaryType": u"patient",
+            u"BeneficiaryType": u"mbbs",
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
