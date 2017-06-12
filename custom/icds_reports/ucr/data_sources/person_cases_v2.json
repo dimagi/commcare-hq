@@ -82,6 +82,7 @@
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
+        "create_index": true,
         "column_id": "block_id",
         "expression": {
           "location_id_expression": {
@@ -105,6 +106,7 @@
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
+        "create_index": true,
         "column_id": "district_id",
         "expression": {
           "location_id_expression": {
@@ -131,6 +133,7 @@
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
+        "create_index": true,
         "column_id": "state_id",
         "expression": {
           "location_id_expression": {
