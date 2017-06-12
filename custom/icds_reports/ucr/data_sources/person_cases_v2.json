@@ -170,6 +170,17 @@
       {
         "display_name": null,
         "property_path": [],
+        "datatype": "datetime",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "closed_on",
+        "create_index": true,
+        "type": "raw",
+        "property_name": "closed_on"
+      },
+      {
+        "display_name": null,
+        "property_path": [],
         "datatype": "string",
         "is_primary_key": false,
         "is_nullable": true,
