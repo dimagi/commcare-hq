@@ -49,8 +49,9 @@ def get_overdue_repeat_record_count(overdue_threshold=datetime.timedelta(minutes
     return results['value'] if results else 0
 
 
-def _get_startkey_endkey_all_records(domain, repeater_id=None, state=None):
+def _get_startkey_endkey_all_records(domain, repeater_id=None, state=None, last_checked_after=None):
     kwargs = {}
+
     if repeater_id and not state:
         kwargs['endkey'] = [domain, repeater_id]
         kwargs['startkey'] = [domain, repeater_id, {}]
@@ -63,6 +64,10 @@ def _get_startkey_endkey_all_records(domain, repeater_id=None, state=None):
     elif not repeater_id and not state:
         kwargs['endkey'] = [domain, None]
         kwargs['startkey'] = [domain, None, {}]
+
+    if last_checked_after:
+        assert state, 'You must choose a state in order to query by last_checked'
+        kwargs['endkey'].append(json_format_datetime(last_checked_after))
 
     return kwargs
 
@@ -83,14 +88,15 @@ def get_paged_repeat_records(domain, skip, limit, repeater_id=None, state=None):
     return [RepeatRecord.wrap(result['doc']) for result in results]
 
 
-def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, chunk_size=1000):
+def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, since=None, chunk_size=1000):
     from .models import RepeatRecord
     kwargs = {
         'include_docs': True,
         'reduce': False,
         'descending': True,
     }
-    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state))
+    kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state,
+                                                   last_checked_after=since))
 
     for doc in paginate_view(
             RepeatRecord.get_db(),
@@ -142,6 +148,14 @@ def iterate_repeat_records(due_before, chunk_size=10000, database=None):
             chunk_size,
             **view_kwargs):
         yield RepeatRecord.wrap(doc['doc'])
+
+
+def get_domains_that_have_repeat_records():
+    from .models import RepeatRecord
+    return [
+        row['key'][0]
+        for row in RepeatRecord.view('receiverwrapper/repeat_records', group_level=1).all()
+    ]
 
 
 @unit_testing_only

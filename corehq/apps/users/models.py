@@ -3,6 +3,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import logging
 import re
+from uuid import uuid4
 
 from restkit.errors import NoMoreData
 from rest_framework.authtoken.models import Token
@@ -10,7 +11,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext as _, override as override_language
+from django.utils.translation import ugettext as _, override as override_language, ugettext_noop
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
@@ -92,6 +93,7 @@ class Permissions(DocumentSchema):
     view_report_list = StringListProperty(default=[])
 
     edit_billing = BooleanProperty(default=False)
+    report_an_issue = BooleanProperty(default=True)
 
     @classmethod
     def wrap(cls, data):
@@ -173,11 +175,16 @@ class Permissions(DocumentSchema):
 
 
 class UserRolePresets(object):
-    READ_ONLY_NO_REPORTS = "Read Only (No Reports)"
-    APP_EDITOR = "App Editor"
-    READ_ONLY = "Read Only"
-    FIELD_IMPLEMENTER = "Field Implementer"
-    BILLING_ADMIN = "Billing Admin"
+    # this is kind of messy, but we're only marking for translation (and not using ugettext_lazy)
+    # because these are in JSON and cannot be serialized
+    # todo: apply translation to these in the UI
+    # note: these are also tricky to change because these are just some default names,
+    # that end up being stored in the database. Think about the consequences of changing these before you do.
+    READ_ONLY_NO_REPORTS = ugettext_noop("Read Only (No Reports)")
+    APP_EDITOR = ugettext_noop("App Editor")
+    READ_ONLY = ugettext_noop("Read Only")
+    FIELD_IMPLEMENTER = ugettext_noop("Field Implementer")
+    BILLING_ADMIN = ugettext_noop("Billing Admin")
     INITIAL_ROLES = (
         READ_ONLY,
         APP_EDITOR,
@@ -796,9 +803,29 @@ class LastSubmission(DocumentSchema):
     commcare_version = StringProperty()
 
 
-class ReportingMetadata(DocumentSchema):
+class LastSync(DocumentSchema):
+    sync_date = DateTimeProperty()
+    build_version = IntegerProperty()
+    app_id = StringProperty()
 
+
+class LastBuild(DocumentSchema):
+    """
+    Build info for the app on the user's phone
+    when they last synced or submitted
+    """
+    build_version = IntegerProperty()
+    build_version_date = DateTimeProperty()
+    app_id = StringProperty()
+
+
+class ReportingMetadata(DocumentSchema):
     last_submissions = SchemaListProperty(LastSubmission)
+    last_submission_for_user = SchemaProperty(LastSubmission)
+    last_syncs = SchemaListProperty(LastSync)
+    last_sync_for_user = SchemaProperty(LastSync)
+    last_builds = SchemaListProperty(LastBuild)
+    last_build_for_user = SchemaProperty(LastBuild)
 
 
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
@@ -816,6 +843,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     phone_numbers = ListProperty()
     created_on = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
+    last_modified = DateTimeProperty()
     #    For now, 'status' is things like:
     #        ('auto_created',     'Automatically created from form submission.'),
     #        ('phone_registered', 'Registered from phone'),
@@ -1333,7 +1361,17 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         self.username = username
         self.save()
 
+    @classmethod
+    def save_docs(cls, docs, **kwargs):
+        utcnow = datetime.utcnow()
+        for doc in docs:
+            doc['last_modified'] = utcnow
+        super(CouchUser, cls).save_docs(docs, **kwargs)
+
+    bulk_save = save_docs
+
     def save(self, **params):
+        self.last_modified = datetime.utcnow()
         self.clear_quickcache_for_user()
         with CriticalSection(['username-check-%s' % self.username], timeout=120):
             # test no username conflict
@@ -1508,20 +1546,22 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
     @classmethod
     def create(cls,
-            domain,
-            username,
-            password,
-            email=None,
-            uuid='',
-            date='',
-            phone_number=None,
-            is_anonymous=False,
-            commit=True,
-            **kwargs):
+               domain,
+               username,
+               password,
+               email=None,
+               uuid='',
+               date='',
+               phone_number=None,
+               is_anonymous=False,
+               location=None,
+               commit=True,
+               **kwargs):
         """
         used to be a function called `create_hq_user_from_commcare_registration_info`
 
         """
+        uuid = uuid or uuid4().hex
         commcare_user = super(CommCareUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
         if phone_number is not None:
             commcare_user.add_phone_number(phone_number)
@@ -1534,6 +1574,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.is_anonymous = is_anonymous
 
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
+
+        if location:
+            commcare_user.set_location(location, commit=False)
 
         if commit:
             commcare_user.save(**get_safe_write_kwargs())
@@ -1624,7 +1667,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             )
             deleted_forms.update(form_id_list)
 
-        tag_system_forms_as_deleted(self.domain, deleted_forms, deleted_cases, deletion_id, deletion_date)
+        tag_system_forms_as_deleted.delay(self.domain, deleted_forms, deleted_cases, deletion_id, deletion_date)
 
         try:
             django_user = self.get_django_user()
@@ -1680,7 +1723,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             touched.append(group)
         for to_remove in current - desired:
             group = Group.get(to_remove)
-            group.remove_user(self._id, save=False)
+            group.remove_user(self._id)
             touched.append(group)
 
         Group.bulk_save(touched)
@@ -1703,13 +1746,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     @property
     @memoized
     def location(self):
-        from corehq.apps.locations.models import Location
-        if self.location_id:
-            try:
-                return Location.get(self.location_id)
-            except ResourceNotFound:
-                pass
-        return None
+        return self.sql_location
 
     @property
     def sql_location(self):
@@ -2239,16 +2276,8 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         else:
             return SQLLocation.objects.none()
 
-    @memoized
     def get_location(self, domain):
-        from corehq.apps.locations.models import Location
-        loc_id = self.get_location_id(domain)
-        if loc_id:
-            try:
-                return Location.get(loc_id)
-            except ResourceNotFound:
-                pass
-        return None
+        return self.get_sql_location(domain)
 
     def is_locked_out(self):
         return self.login_attempts >= MAX_LOGIN_ATTEMPTS

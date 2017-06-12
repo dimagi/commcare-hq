@@ -432,6 +432,7 @@ class SQLLocation(MPTTModel):
     def save(self, *args, **kwargs):
         from corehq.apps.commtrack.models import sync_supply_point
         from .document_store import publish_location_saved
+        set_site_code_if_needed(self)
 
         sync_to_couch = kwargs.pop('sync_to_couch', True)
 
@@ -473,7 +474,8 @@ class SQLLocation(MPTTModel):
             'longitude': float(self.longitude) if self.longitude else None,
             'metadata': self.metadata,
             'location_type': self.location_type.name,
-            "lineage": self.lineage,
+            'location_type_code': self.location_type.code,
+            'lineage': self.lineage,
             'parent_location_id': self.parent_location_id,
         }
 
@@ -612,6 +614,9 @@ class SQLLocation(MPTTModel):
     class Meta:
         app_label = 'locations'
         unique_together = ('domain', 'site_code',)
+        index_together = [
+            ('tree_id', 'lft', 'rght')
+        ]
 
     def __unicode__(self):
         return u"{} ({})".format(self.name, self.domain)
@@ -748,7 +753,6 @@ class SQLLocation(MPTTModel):
     @property
     def sql_location(self):
         # For backwards compatability
-        notify_of_deprecation("'sql_location' was just called on a sql_location.  That's kinda silly.")
         return self
 
 
@@ -767,6 +771,43 @@ def filter_for_archived(locations, include_archive_ancestors):
         ]
     else:
         return locations.filter(is_archived=False)
+
+
+def make_location(**kwargs):
+    """API compatabile with `Location.__init__`, but returns a SQLLocation"""
+    loc_type_name = kwargs.pop('location_type')
+    try:
+        sql_location_type = LocationType.objects.get(
+            domain=kwargs['domain'],
+            name=loc_type_name,
+        )
+    except LocationType.DoesNotExist:
+        msg = "You can't create a location without a real location type"
+        raise LocationType.DoesNotExist(msg)
+    kwargs['location_type'] = sql_location_type
+    parent = kwargs.pop('parent', None)
+    kwargs['parent'] = parent.sql_location if parent else None
+    return SQLLocation(**kwargs)
+
+
+def get_location(location_id, domain=None):
+    """Drop-in replacement for `Location.get`, but returns a SQLLocation"""
+    if domain:
+        return SQLLocation.objects.get(domain=domain, location_id=location_id)
+    else:
+        return SQLLocation.objects.get(location_id=location_id)
+
+
+def set_site_code_if_needed(location):
+    from corehq.apps.commtrack.util import generate_code
+    if not location.site_code:
+        all_codes = [
+            code.lower() for code in
+            (SQLLocation.objects.exclude(location_id=location.location_id)
+                                .filter(domain=location.domain)
+                                .values_list('site_code', flat=True))
+        ]
+        location.site_code = generate_code(location.name, all_codes)
 
 
 class Location(CachedCouchDocumentMixin, Document):
@@ -899,14 +940,7 @@ class Location(CachedCouchDocumentMixin, Document):
         self.last_modified = datetime.utcnow()
 
         # lazy migration for site_code
-        if not self.site_code:
-            from corehq.apps.commtrack.util import generate_code
-            all_codes = [
-                code.lower() for code in
-                (SQLLocation.objects.filter(domain=self.domain)
-                                    .values_list('site_code', flat=True))
-            ]
-            self.site_code = generate_code(self.name, all_codes)
+        set_site_code_if_needed(self)
 
         sync_to_sql = kwargs.pop('sync_to_sql', True)
         with transaction.atomic():
@@ -922,20 +956,6 @@ class Location(CachedCouchDocumentMixin, Document):
             except SQLLocation.DoesNotExist:
                 pass
         super(Location, self).delete(*args, **kwargs)
-
-    @classmethod
-    def filter_by_type(cls, domain, loc_type, root_loc=None):
-        if root_loc:
-            query = root_loc.sql_location.get_descendants(include_self=True)
-        else:
-            query = SQLLocation.objects
-        ids = (query.filter(domain=domain, location_type__name=loc_type)
-                    .location_ids())
-
-        return (
-            cls.wrap(l) for l in iter_docs(cls.get_db(), list(ids))
-            if not l.get('is_archived', False)
-        )
 
     @classmethod
     def by_domain(cls, domain, include_docs=True):
@@ -1000,6 +1020,7 @@ class Location(CachedCouchDocumentMixin, Document):
     @property
     def descendants(self):
         """return list of all locations that have this location as an ancestor"""
+        notify_of_deprecation("Deprecating this - use SQL locations instead")
         return list(self.sql_location.get_descendants().couch_locations())
 
     def get_children(self):

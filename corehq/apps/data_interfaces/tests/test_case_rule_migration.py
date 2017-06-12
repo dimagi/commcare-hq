@@ -148,6 +148,7 @@ class TestCaseRuleMigration(TestCase):
             last_run=None,
             filter_on_server_modified=True,
             server_modified_boundary=30,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
         rule.automaticupdateaction_set.create(action=AutomaticUpdateAction.ACTION_CLOSE)
         self.assertRuleMigratesCorrectly(rule, 0, 0)
@@ -162,6 +163,7 @@ class TestCaseRuleMigration(TestCase):
             last_run=None,
             filter_on_server_modified=True,
             server_modified_boundary=30,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
         rule.automaticupdateaction_set.create(
             action=AutomaticUpdateAction.ACTION_UPDATE,
@@ -188,6 +190,7 @@ class TestCaseRuleMigration(TestCase):
             last_run=datetime.utcnow(),
             filter_on_server_modified=False,
             server_modified_boundary=None,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
         rule.automaticupdateaction_set.create(
             action=AutomaticUpdateAction.ACTION_UPDATE,
@@ -213,6 +216,7 @@ class TestCaseRuleMigration(TestCase):
             last_run=None,
             filter_on_server_modified=True,
             server_modified_boundary=30,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
         rule.automaticupdaterulecriteria_set.create(
             property_name='visit_date_1',
@@ -257,6 +261,7 @@ class TestCaseRuleMigration(TestCase):
             last_run=None,
             filter_on_server_modified=True,
             server_modified_boundary=30,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
         rule.automaticupdaterulecriteria_set.create(
             property_name='property1',
@@ -282,6 +287,7 @@ class TestCaseRuleMigration(TestCase):
             last_run=None,
             filter_on_server_modified=True,
             server_modified_boundary=30,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
         rule.automaticupdaterulecriteria_set.create(
             property_name='property1',

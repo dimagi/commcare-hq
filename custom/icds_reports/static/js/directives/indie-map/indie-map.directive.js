@@ -1,4 +1,4 @@
-/* global d3, _ */
+/* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON */
 
 function IndieMapController($scope, $compile, $location) {
     var vm = this;
@@ -76,7 +76,7 @@ function IndieMapController($scope, $compile, $location) {
     vm.updateMap = function (geography) {
         if ($location.search()['location_name'] === void(0)) {
             $location.search('location_name', geography.id);
-            $scope.$apply()
+            $scope.$apply();
         }
     };
 
@@ -137,15 +137,15 @@ function IndieMapController($scope, $compile, $location) {
                         var row = [
                             '<label class="radio-inline" style="float: right; margin-left: 10px;">',
                             '<input type="radio" ng-model="$ctrl.indicator" ng-change="$ctrl.changeIndicator(\'' + indi.slug + '\')" ng-checked="$ctrl.indicator == \'' + indi.slug + '\'" name="indi" ng-value="' + indi.slug + '">' + indi.label,
-                            '</label>'
+                            '</label>',
                         ];
-                        html.push(row.join(''))
+                        html.push(row.join(''));
                     });
                     var ele = d3.select(this.options.element).append('div')
                         .attr('class', '')
                         .attr('style', 'position: absolute; width: 100%; top: 5%; right: 25%;')
                         .html(html.join(''));
-                    $compile(ele[0])($scope)
+                    $compile(ele[0])($scope);
                 }
             },
         });

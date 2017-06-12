@@ -101,7 +101,6 @@ def get_module_view_context(app, module, lang=None):
     # shared context
     context = {
         'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'name']),
-        'edit_case_label_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'case_label']),
     }
     module_brief = {
         'id': module.id,
@@ -110,6 +109,7 @@ def get_module_view_context(app, module, lang=None):
         'langs': app.langs,
         'module_type': module.module_type,
         'requires_case_details': module.requires_case_details(),
+        'unique_id': module.unique_id,
     }
     case_property_builder = _setup_case_property_builder(app)
     if isinstance(module, CareplanModule):
@@ -150,23 +150,27 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
             'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
             'search_button_display_condition':
                 module.search_config.search_button_display_condition if module_offers_search(module) else "",
+            'blacklisted_owner_ids_expression': (
+                module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
         }
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
         slug = 'module_%s_detail_print' % module.unique_id
         print_template = module.case_details.long.print_template
+        print_uploader = MultimediaHTMLUploadController(
+            slug,
+            reverse(
+                ProcessDetailPrintTemplateUploadView.name,
+                args=[app.domain, app.id, module.unique_id],
+            )
+        )
         if not print_template:
             print_template = {
                 'path': 'jr://file/commcare/text/%s.html' % slug,
             }
         context.update({
-            'print_uploader': MultimediaHTMLUploadController(
-                slug,
-                reverse(
-                    ProcessDetailPrintTemplateUploadView.name,
-                    args=[app.domain, app.id, module.unique_id],
-                )
-            ),
+            'print_uploader': print_uploader,
+            'print_uploader_js': print_uploader.js_options,
             'print_ref': ApplicationMediaReference(
                 print_template.get('path'),
                 media_class=CommCareMultimedia,
@@ -293,25 +297,28 @@ def _get_report_module_context(app, module):
 
     ]
     from corehq.apps.app_manager.suite_xml.features.mobile_ucr import COLUMN_XPATH_CLIENT_TEMPLATE, get_data_path
-    context = {
-        'all_reports': [_report_to_config(r) for r in all_reports],
-        'filter_choices': filter_choices,
-        'auto_filter_choices': auto_filter_choices,
-        'daterange_choices': [choice._asdict() for choice in get_simple_dateranges()],
-        'column_xpath_template': COLUMN_XPATH_CLIENT_TEMPLATE,
-    }
-    current_reports = []
     data_path_placeholders = {}
     for r in module.report_configs:
-        r.migrate_graph_configs(app.domain)
-        current_reports.append(r.to_json())
         data_path_placeholders[r.report_id] = {}
         for chart_id in r.complete_graph_configs.keys():
             data_path_placeholders[r.report_id][chart_id] = get_data_path(r, app.domain)
-    context.update({
-        'current_reports': current_reports,
-        'data_path_placeholders': data_path_placeholders,
-    })
+
+    context = {
+        'report_module_options': {
+            'moduleName': module.name,
+            'moduleFilter': module.module_filter,
+            'availableReports': [_report_to_config(r) for r in all_reports],  # structure for all reports
+            'currentReports': [r.to_json() for r in module.report_configs],  # config data for app reports
+            'columnXpathTemplate': COLUMN_XPATH_CLIENT_TEMPLATE,
+            'dataPathPlaceholders': data_path_placeholders,
+            'languages': app.langs,
+        },
+        'static_data_options': {
+            'filterChoices': filter_choices,
+            'autoFilterChoices': auto_filter_choices,
+            'dateRangeOptions': [choice._asdict() for choice in get_simple_dateranges()],
+        },
+    }
     return context
 
 
@@ -451,7 +458,6 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     attributes = {
         "all": None,
         "auto_select_case": None,
-        "case_label": None,
         "case_list": ('case_list-show', 'case_list-label'),
         "case_list-menu_item_media_audio": None,
         "case_list-menu_item_media_image": None,
@@ -469,7 +475,6 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "name": None,
         "parent_module": None,
         "put_in_root": None,
-        "referral_label": None,
         "root_module_id": None,
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
@@ -589,12 +594,10 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         )
         module.case_list.set_audio(lang, val)
 
-    for attribute in ("name", "case_label", "referral_label"):
-        if should_edit(attribute):
-            name = request.POST.get(attribute, None)
-            module[attribute][lang] = name
-            if should_edit("name"):
-                resp['update'] = {'.variable-module_name': trans(module.name, [lang], use_delim=False)}
+    if should_edit("name"):
+        name = request.POST.get("name", None)
+        module["name"][lang] = name
+        resp['update'] = {'.variable-module_name': trans(module.name, [lang], use_delim=False)}
     if should_edit('comment'):
         module.comment = request.POST.get('comment')
     for SLUG in ('case_list', 'task_list'):
@@ -674,8 +677,9 @@ def delete_module(request, domain, app_id, module_unique_id):
     if record is not None:
         messages.success(
             request,
-            'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse(
-                'undo_delete_module', args=[domain, record.get_id]
+            'You have deleted "%s". <a href="%s" class="post-link">Undo</a>' % (
+                record.module.default_name(app=app),
+                reverse('undo_delete_module', args=[domain, record.get_id])
             ),
             extra_tags='html'
         )
@@ -889,6 +893,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
                 ),
                 include_closed=bool(search_properties.get('include_closed')),
                 search_button_display_condition=search_properties.get('search_button_display_condition', ""),
+                blacklisted_owner_ids_expression=search_properties.get('blacklisted_owner_ids_expression', ""),
                 default_properties=[
                     DefaultCaseSearchProperty.wrap(p)
                     for p in search_properties.get('default_properties')

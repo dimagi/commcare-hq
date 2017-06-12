@@ -57,7 +57,10 @@ logger = logging.getLogger(__name__)
 def form_designer(request, domain, app_id, module_id=None, form_id=None):
 
     def _form_uses_case(module, form):
-        return module and module.case_type and form.requires_case()
+        return (
+            (module and module.case_type and form.requires_case()) or
+            is_usercase_in_use(domain)
+        )
 
     def _form_is_basic(form):
         return form.doc_type == 'Form'
@@ -90,7 +93,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             "the form's front page instead."
         ))
         return back_to_main(request, domain, app_id=app_id,
-                            unique_form_id=form.unique_id)
+                            form_unique_id=form.unique_id)
 
     include_fullstory = False
     vellum_plugins = ["modeliteration", "itemset", "atwho"]
@@ -132,9 +135,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
             for f in form.get_phase().get_forms()
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])
-
-    if tours.VELLUM_CASE_MANAGEMENT.is_enabled(request.user) and form.requires_case():
-        request.guided_tour = tours.VELLUM_CASE_MANAGEMENT.get_tour_data()
 
     context = get_apps_base_context(request, domain, app)
     context.update(locals())

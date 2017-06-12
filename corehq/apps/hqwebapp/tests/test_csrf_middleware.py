@@ -1,5 +1,6 @@
+from bs4 import BeautifulSoup
 from django.urls import reverse
-from django.test import TestCase, Client
+from django.test import TestCase, Client, override_settings
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import WebUser
@@ -24,15 +25,26 @@ class TestCSRF(TestCase):
         cls.domain.delete()
         super(TestCSRF, cls).tearDownClass()
 
+    @override_settings(UNIT_TESTING=False)
     def test_csrf_ON(self):
         csrf_sent, csrf_missing = self._form_post_with_and_without_csrf()
         self.assertEqual(csrf_sent, 200)
         self.assertEqual(csrf_missing, 403)
 
+    def test_csrf_ON_for_test(self):
+        with self.assertRaisesMessage(
+            AssertionError,
+            "Request at {at} doesn't contain a csrf token. Referring url is Unknown URL."
+            "Possibly related to https://github.com/dimagi/commcare-hq/pull/16008".format(
+                at=reverse('send_to_recipients', args=[self.domain.name])
+            )
+        ):
+            self._form_post_with_and_without_csrf()
+
     def _form_post_with_and_without_csrf(self):
         client = Client(enforce_csrf_checks=True)
         login_page = client.get(reverse('login'))
-        csrf_token = login_page.cookies.get('csrftoken')
+        csrf_token = BeautifulSoup(login_page.content).find('input', {'id': 'csrfTokenContainer'}).get('value')
         client.login(username=self.username, password=self.password)
 
         form_data = {
@@ -44,7 +56,7 @@ class TestCSRF(TestCase):
         # all views unless decorated with csrf_exempt should be CSRF protected by default via Django's middleware
         csrf_missing = client.post(reverse('send_to_recipients', args=[self.domain.name]), form_data).status_code
 
-        form_data['csrfmiddlewaretoken'] = csrf_token.value
+        form_data['csrfmiddlewaretoken'] = csrf_token
         csrf_sent = client.post(
             reverse('send_to_recipients', args=[self.domain.name]), form_data, follow=True
         ).status_code

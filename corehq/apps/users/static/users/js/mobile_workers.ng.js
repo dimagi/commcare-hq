@@ -276,6 +276,9 @@
         self.stageNewMobileWorker = function (newWorker) {
             newWorker.creationStatus = STATUS.PENDING;
             var deferred = $q.defer();
+            if(typeof(hex_parser) !== 'undefined') {
+                newWorker.password = (new hex_parser()).encode(newWorker.password);
+            }
             djangoRMI.create_mobile_worker({
                 mobileWorker: newWorker
             })
@@ -378,6 +381,13 @@
             link: function ($scope, $elem, $attr, ctrl) {
                 ctrl.$validators.validatePassword = function (password) {
                     if (!password) {
+                        return false;
+                    } else if (!(
+                        password.length >= 8 &&
+                        /\W/.test(password) &&
+                        /\d/.test(password) &&
+                        /[A-Z]/.test(password)
+                    )) {
                         return false;
                     }
                     $formElements.password()

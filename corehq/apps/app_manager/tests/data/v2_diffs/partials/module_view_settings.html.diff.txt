@@ -1,7 +1,39 @@
 --- 
 +++ 
-@@ -8,89 +8,139 @@
+@@ -6,91 +6,189 @@
+       action="{% url 'edit_module_attr' domain app.id module.id 'all' %}">
+     {% csrf_token %}
      <div class="save-button-holder clearfix"></div>
++    <div class="section-changer btn-group" data-collapse-key="module-view-settings">
++        <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
++            <i class="fa fa-reorder"></i>
++            <span class="caret"></span>
++        </a>
++        <ul class="dropdown-menu dropdown-menu-right checklist">
++            <li class="dropdown-header">{% trans "Show" %}</li>
++            {% if child_module_enabled or module.module_type == 'shadow' or app.advanced_app_builder or module.put_in_root or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys %}
++                <li>
++                    <a href="#" data-slug="menu">
++                        <i class="fa fa-check"></i>{% trans "Menu" %}
++                    </a>
++                </li>
++            {% endif %}
++            <li>
++                <a href="#" data-slug="multimedia" data-collapse="1">
++                    <i class="fa fa-check"></i>{% trans "Multimedia" %}
++                </a>
++            </li>
++            {% if not module.is_surveys and module.module_type != 'shadow' %}
++               {% if app.advanced_app_builder or module.case_list_form.form_id or module.case_list.show or module.task_list.show or module.doc_type == "AdvancedModule" %}
++                    <li>
++                        <a href="#" data-slug="advanced" data-collapse="1">
++                            <i class="fa fa-check"></i>{% trans "Advanced" %}
++                        </a>
++                    </li>
++                {% endif %}
++            {% endif %}
++        </ul>
++    </div>
      <fieldset>
          {% block settings_fields %}
 -        {% if module.module_type == 'shadow' %}
@@ -17,14 +49,15 @@
 -                                       optionsValue: 'uniqueId',
 -                                       value: selectedModuleId"></select>
 +
-+          <div class="panel panel-appmanager">
++
++          {% if child_module_enabled or module.module_type == 'shadow' or app.advanced_app_builder or module.put_in_root or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys %}
++          <div class="panel panel-appmanager" data-slug="menu">
 +            <div class="panel-heading">
-+              <h4 class="panel-title panel-title-nolink">{% trans "Case Settings" %}</h4>
++              <h4 class="panel-title panel-title-nolink">{% trans "Menu" %}</h4>
 +            </div>
 +            <div class="panel-body">
-+
-+              {% if not module.is_surveys %}
-+                  {% include "app_manager/v2/partials/module_view_case_type.html" %}
++              {% if not module.is_surveys and module.module_type != 'shadow' %}
++                {% include "app_manager/v2/partials/module_view_case_type.html" %}
 +              {% endif %}
 +
 +              {% if child_module_enabled %}
@@ -116,7 +149,7 @@
 +              </div>
 +              {% endif %}
 +
-+              {% include "app_manager/v2/partials/module_filter.html" with value=module.module_filter %}
++              {% include "app_manager/v2/partials/module_filter.html" %}
 +
              </div>
 -            <div class="form-group" data-bind="visible: selectedModule().forms().length">
@@ -137,10 +170,11 @@
 -                    <input name="excl_form_ids" type="checkbox" value="0" checked="">
 -                </div>
 +          </div>
++          {% endif %}
 +
-+           <div class="panel panel-appmanager">
++           <div class="panel panel-appmanager" data-slug="multimedia">
 +            <div class="panel-heading">
-+              <h4 class="panel-title panel-title-nolink">{% trans "Multimedia Settings" %}</h4>
++              <h4 class="panel-title panel-title-nolink">{% trans "Multimedia" %}</h4>
              </div>
 -        </div>
 -        {% endif %}
@@ -174,11 +208,11 @@
 -                        {% trans "Grid" %}
 -                    </option>
 -                </select>
-+           {% if not module.is_surveys %}
-+             {% if app.advanced_app_builder or module.case_list_form.form_id or module.case_list.show or module.task_list.show %}
-+             <div class="panel panel-appmanager">
++           {% if not module.is_surveys and module.module_type != 'shadow' %}
++             {% if app.advanced_app_builder or module.case_list_form.form_id or module.case_list.show or module.task_list.show or module.doc_type == "AdvancedModule" %}
++             <div class="panel panel-appmanager" data-slug="advanced">
 +              <div class="panel-heading">
-+                <h4 class="panel-title panel-title-nolink">{% trans "Advanced Settings" %}</h4>
++                <h4 class="panel-title panel-title-nolink">{% trans "Advanced" %}</h4>
 +              </div>
 +              <div class="panel-body">
 +                {% include 'app_manager/v2/partials/case_list_form_setting.html' %}
@@ -188,11 +222,27 @@
 +                {% if module.module_type == 'basic' and request.project.survey_management_enabled or module.task_list.show %}
 +                    {% include 'app_manager/v1/partials/case_list_setting.html' with LABEL="Task List" DESC="Whether to have an item in the module's menu that lets you see all of your delegated tasks. Only makes sense if you're using a delegation workflow." SLUG="task_list" case_list=module.task_list %}
 +                {% endif %}
++
++                {% if module.doc_type == "AdvancedModule" %}
++                    <div class="form-group">
++                        <label class="control-label col-sm-2">
++                            {% trans "Auto Select Case" %}
++                            <span class="hq-help-template"
++                                  data-title="{% trans "Auto Select Case" %}"
++                                  data-content="{% blocktrans %}When the case list contains only one case, skip over it, jumping directly to case details.{% endblocktrans %}"
++                            ></span>
++                        </label>
++                        <div id="auto-select-case" class="col-sm-4 checkbox commcare-feature" data-since-version="2.24">
++                            <input type="checkbox" data-bind="checked: auto_select_case" />
++                            <input type="hidden" name="auto_select_case" data-bind="value: auto_select_case"/>
++                        </div>
++                    </div>
++                {% endif %}
 +              </div>
              </div>
 -        </div>
 -        {% endif %}
--        {% include "app_manager/v1/partials/module_filter.html" with value=module.module_filter %}
+-        {% include "app_manager/v1/partials/module_filter.html" %}
 -        {% include "app_manager/v1/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
 -        {% if child_module_enabled %}
 -        <div class="form-group">

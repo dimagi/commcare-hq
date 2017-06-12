@@ -113,7 +113,11 @@
                             ga_track_event('Report Viewer', 'Save Report', '{{ report.spec.report_meta.builder_report_type }}');
                             {% endif %}
                     ">
-                        <span data-bind="saveButton2: $root.modalSaveButton.state, saveOptions: $root.modalSaveButton.saveOptions"></span>
+                        <span
+                            id="modal-save-button"
+                            data-bind="
+                                saveButton2: $root.modalSaveButton.state,
+                                saveOptions: $root.modalSaveButton.saveOptions"></span>
                     </div>
                 </div>
             </form>

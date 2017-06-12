@@ -29,7 +29,7 @@ class Command(BaseCommand):
         )
         added_partition = raw_input("have you run {} ? [y/n]".format(kafka_command))
         if added_partition not in ['y', 'yes']:
-            print("then run it")
+            print("then run it on the kafka machine")
 
         for checkpoint in DjangoPillowCheckpoint.objects.filter(sequence_format='json'):
             try:
@@ -58,7 +58,9 @@ class Command(BaseCommand):
                 checkpoint.save()
 
                 for topic_partition, offset in kafka_seq.items():
-                    KafkaCheckpoint.objects.update_or_create(
+                    # use get or create so that we don't accidentally update
+                    # any kafka checkpoints that are further than django checkpoints.
+                    KafkaCheckpoint.objects.get_or_create(
                         checkpoint_id=checkpoint.checkpoint_id,
                         topic=topic_partition.topic,
                         partition=topic_partition.partition,

@@ -399,6 +399,7 @@ class AggThrMonthly(models.Model):
     rations_21_plus_distributed = models.IntegerField(blank=True, null=True)
 
     class Meta:
+        app_label = 'icds_model'
         managed = False
         db_table = 'agg_thr_monthly'
 

@@ -70,7 +70,8 @@ from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.middleware import always_allow_browser_caching
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
-from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
+from corehq.util.datadog.utils import create_datadog_event, sanitize_url
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.view_utils import reverse
 
 
@@ -351,6 +352,11 @@ def login(req):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
+
+    if settings.SERVER_ENVIRONMENT == 'icds':
+        login_url = reverse('domain_login', kwargs={'domain': 'icds-cas'})
+        return HttpResponseRedirect(login_url)
+
     req_params = req.GET if req.method == 'GET' else req.POST
     domain = req_params.get('domain', None)
     return _login(req, domain, "login_and_password/login.html")
@@ -380,6 +386,7 @@ class HQLoginView(LoginView):
     def get_context_data(self, **kwargs):
         context = super(HQLoginView, self).get_context_data(**kwargs)
         context.update(self.extra_context)
+        context['implement_password_obfuscation'] = settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
         return context
 
 
@@ -490,14 +497,14 @@ def jserror(request):
             browser_version = parsed_agent['browser'].get('version', DATADOG_UNKNOWN)
             browser_name = parsed_agent['browser'].get('name', DATADOG_UNKNOWN)
 
-    log_counter(JSERROR_COUNT, {
-        'os': os,
-        'browser_version': browser_version,
-        'browser_name': browser_name,
-        'url': sanitize_url(request.POST.get('page', None)),
-        'file': request.POST.get('filename'),
-        'bot': bot,
-    })
+    datadog_counter(JSERROR_COUNT, tags=[
+        u'os:{}'.format(os),
+        u'browser_version:{}'.format(browser_version),
+        u'browser_name:{}'.format(browser_name),
+        u'url:{}'.format(sanitize_url(request.POST.get('page', None))),
+        u'file:{}'.format(request.POST.get('filename')),
+        u'bot:{}'.format(bot),
+    ])
 
     return HttpResponse('')
 

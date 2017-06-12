@@ -262,7 +262,10 @@ class SubmissionPost(object):
         case_result = process_cases_with_casedb(xforms, case_db)
         stock_result = process_stock(xforms, case_db)
 
-        cases = case_db.get_cases_for_saving(instance.received_on)
+        modified_on_date = instance.received_on
+        if getattr(instance, 'edited_on', None) and instance.edited_on > instance.received_on:
+            modified_on_date = instance.edited_on
+        cases = case_db.get_cases_for_saving(modified_on_date)
         stock_result.populate_models()
 
         return CaseStockProcessingResult(

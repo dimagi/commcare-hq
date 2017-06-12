@@ -110,11 +110,12 @@
                     >
                     <p class="help-block">
                         {% blocktrans %}
-                        If this xpath expression evaluates to false, the case search button will not be
-                        displayed. If no expression is given, the button will always be displayed.
+                            If this XPath expression evaluates to false, the case search button will not be
+                            displayed. If no expression is given, the button will always be displayed.
                         {% endblocktrans %}
                     </p>
-
+                </div>
+                <div class="form-group">
                     <label for="claim-relevant-condition" >
                         {% trans "Only claim cases that fulfill the following condition" %}
                     </label>
@@ -124,14 +125,28 @@
                            id="claim-relevant-condition"
                            spellcheck="false"
                     />
-                </div>
-                <div class="form-group">
                     <div class="checkbox">
                         <label>
                             <input type="checkbox" data-bind="checked: default_relevant">
                             {% trans "Don't claim cases already owned by the user" %}
                         </label>
                     </div>
+                </div>
+                <div class="form-group">
+                    <label for="blacklisted-user-ids" >
+                        {% trans "Don't search cases owned by the following ids" %}
+                    </label>
+                    <input type="text"
+                           data-bind="value: blacklistedOwnerIdsExpression"
+                           class="form-control"
+                           id="blacklisted-user-ids"
+                           spellcheck="false"
+                    />
+                    <p class="help-block">
+                        {% blocktrans %}
+                            An XPath expression that will evaluate to a space separated list of ids. For example: instance('commcaresession')/session/context/userid or 'a1c0148dc2120c6b1762f5ac5aba2a15'
+                        {% endblocktrans %}
+                    </p>
                 </div>
                 <div class="form-group">
                     <div class="checkbox">

@@ -1,14 +1,33 @@
 --- 
 +++ 
-@@ -2,9 +2,9 @@
- <h2>{% trans "Overwrite Case List/Detail from Existing Module" %}</h2>
- <p class="help-block">{% trans "This will <strong>overwrite</strong> the current case list/details screen with the configuration from the selected module." %}</p>
- {% with detail_type="short" %}
+@@ -1,10 +1,21 @@
+ {% load i18n %}
+-<h2>{% trans "Overwrite Case List/Detail from Existing Module" %}</h2>
+-<p class="help-block">{% trans "This will <strong>overwrite</strong> the current case list/details screen with the configuration from the selected module." %}</p>
+-{% with detail_type="short" %}
 -    {% include 'app_manager/v1/partials/case_list_module_overwrite.html' %}
-+    {% include 'app_manager/v2/partials/case_list_module_overwrite.html' %}
- {% endwith %}
- <hr>
- {% with detail_type="long" %}
+-{% endwith %}
+-<hr>
+-{% with detail_type="long" %}
 -    {% include 'app_manager/v1/partials/case_list_module_overwrite.html' %}
-+    {% include 'app_manager/v2/partials/case_list_module_overwrite.html' %}
- {% endwith %}
+-{% endwith %}
++
++<div class="panel panel-appmanager">
++    <div class="panel-heading">
++        <h4 class="panel-title panel-title-nolink">
++            {% trans "Overwrite Case List/Detail from Existing Module" %}
++        </h4>
++    </div>
++    <div class="panel-body">
++        <p class="help-block">
++            {% trans "This will <strong>overwrite</strong> the current case list/details screen with the configuration from the selected module." %}
++        </p>
++        {% with detail_type="short" %}
++            {% include 'app_manager/v2/partials/case_list_module_overwrite.html' %}
++        {% endwith %}
++        <br><br>
++        {% with detail_type="long" %}
++            {% include 'app_manager/v2/partials/case_list_module_overwrite.html' %}
++        {% endwith %}
++    </div>
++</div>

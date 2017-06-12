@@ -2,12 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import migrations
-from django.core.management import call_command
-from corehq.sql_db.operations import HqRunPython
-
-
-def migrate_translation_transforms(apps, schema_editor):
-    call_command('migrate_translation_transforms')
+from corehq.sql_db.operations import noop_migration
 
 
 class Migration(migrations.Migration):
@@ -17,5 +12,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(migrate_translation_transforms),
+        noop_migration(),
     ]

@@ -263,7 +263,7 @@ hqDefine('app_manager/js/report-module.js', function () {
         self.languages = options.languages;
         self.lang = options.lang;
         self.moduleName = options.moduleName;
-        self.moduleFilter = options.moduleFilter === "None" ? "" : options.moduleFilter;
+        self.moduleFilter = options.moduleFilter || "";
         self.currentModuleName = ko.observable(options.moduleName[self.lang]);
         self.currentModuleFilter = ko.observable(self.moduleFilter);
         self.menuImage = options.menuImage;

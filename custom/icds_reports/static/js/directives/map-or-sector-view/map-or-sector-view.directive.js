@@ -22,7 +22,7 @@ window.angular.module('icdsApp').directive('mapOrSectorView', function() {
                     showValues: true,
                     duration: 500,
                     xAxis: {
-                        showMaxMin: false
+                        showMaxMin: false,
                     },
                 },
             };

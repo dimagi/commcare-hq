@@ -17,11 +17,9 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
         $routeProvider
             .when("/", {
                 redirectTo : '/program_summary/system_usage',
-            })
-            .when("/program_summary/:step", {
+            }).when("/program_summary/:step", {
                 template : "<system-usage></system-usage>",
-            })
-            .when("/awc_opened", {
+            }).when("/awc_opened", {
                 redirectTo : "/awc_opened/map",
             })
             .when("/awc_opened/:step", {
@@ -70,3 +68,4 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
                 template : "<progress-report></progress-report>",
             });
     }]);
+

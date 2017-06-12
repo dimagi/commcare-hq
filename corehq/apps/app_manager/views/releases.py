@@ -121,6 +121,7 @@ def get_releases_context(request, domain, app_id):
             if can_send_sms else []
         ),
         'build_profile_access': build_profile_access,
+        'application_profile_url': reverse(LanguageProfilesView.urlname, args=[domain, app_id]),
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
         'latest_build_id': get_latest_build_id(domain, app_id)
@@ -262,6 +263,12 @@ def revert_to_copy(request, domain, app_id):
         request,
         "Successfully reverted to version %s, now at version %s" % (copy.version, app.version)
     )
+    copy = app.make_build(
+        comment="Reverted to version %s" % copy.version,
+        user_id=request.couch_user.get_id,
+        previous_version=app.get_latest_app(released_only=False)
+    )
+    copy.save(increment_version=False)
     return back_to_main(request, domain, app_id=app_id)
 
 

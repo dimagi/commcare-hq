@@ -6,6 +6,7 @@ from urllib import unquote
 from elasticsearch import Elasticsearch
 from django.conf import settings
 from elasticsearch.exceptions import ElasticsearchException
+from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.util.datadog.gauges import datadog_gauge
@@ -23,25 +24,58 @@ from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 
 
+def _es_hosts():
+    es_hosts = getattr(settings, 'ELASTICSEARCH_HOSTS', None)
+    if not es_hosts:
+        es_hosts = [settings.ELASTICSEARCH_HOST]
+
+    hosts = [
+        {
+            'host': host,
+            'port': settings.ELASTICSEARCH_PORT,
+        }
+        for host in es_hosts
+    ]
+    return hosts
+
+
+@memoized
 def get_es_new():
     """
     Get a handle to the configured elastic search DB.
     Returns an elasticsearch.Elasticsearch instance.
     """
-    if not getattr(get_es_new, '_es_client', None):
-        es_hosts = getattr(settings, 'ELASTICSEARCH_HOSTS', None)
-        if not es_hosts:
-            es_hosts = [settings.ELASTICSEARCH_HOST]
+    hosts = _es_hosts()
+    return Elasticsearch(hosts)
 
-        hosts = [
-            {
-                'host': host,
-                'port': settings.ELASTICSEARCH_PORT,
-            }
-            for host in es_hosts
-        ]
-        get_es_new._es_client = Elasticsearch(hosts)
-    return get_es_new._es_client
+
+@memoized
+def get_es_export():
+    """
+    Get a handle to the configured elastic search DB with settings geared towards exports.
+    Returns an elasticsearch.Elasticsearch instance.
+    """
+    hosts = _es_hosts()
+    return Elasticsearch(
+        hosts,
+        retry_on_timeout=True,
+        max_retries=3,
+        # Timeout in seconds for an elasticsearch query
+        timeout=30,
+    )
+
+ES_DEFAULT_INSTANCE = 'default'
+ES_EXPORT_INSTANCE = 'export'
+
+ES_INSTANCES = {
+    ES_DEFAULT_INSTANCE: get_es_new,
+    ES_EXPORT_INSTANCE: get_es_export,
+}
+
+
+def get_es_instance(es_instance_alias=ES_DEFAULT_INSTANCE):
+    assert es_instance_alias in ES_INSTANCES
+    return ES_INSTANCES[es_instance_alias]()
 
 
 def doc_exists_in_es(index_info, doc_id_or_dict):
@@ -79,6 +113,13 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
         delete=delete,
         es_merge_update=es_merge_update,
     )
+
+
+def refresh_elasticsearch_index(index_name):
+    es_meta = ES_META[index_name]
+    es = get_es_new()
+    es.indices.refresh(index=es_meta.index)
+
 
 EsMeta = namedtuple('EsMeta', 'index, type')
 
@@ -144,7 +185,7 @@ class ESError(Exception):
     pass
 
 
-def run_query(index_name, q, debug_host=None):
+def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTANCE):
     # the debug_host parameter allows you to query another env for testing purposes
     if debug_host:
         if not settings.DEBUG:
@@ -154,7 +195,7 @@ def run_query(index_name, q, debug_host=None):
                                       'port': settings.ELASTICSEARCH_PORT}],
                                     timeout=3, max_retries=0)
     else:
-        es_instance = get_es_new()
+        es_instance = get_es_instance(es_instance_alias)
 
     try:
         es_meta = ES_META[index_name]
@@ -181,11 +222,11 @@ def mget_query(index_name, ids, source):
         raise ESError(e)
 
 
-def scroll_query(index_name, q):
+def scroll_query(index_name, q, es_instance_alias=ES_DEFAULT_INSTANCE):
     es_meta = ES_META[index_name]
     try:
         return scan(
-            get_es_new(),
+            get_es_instance(es_instance_alias),
             index=es_meta.index,
             doc_type=es_meta.type,
             query=q,

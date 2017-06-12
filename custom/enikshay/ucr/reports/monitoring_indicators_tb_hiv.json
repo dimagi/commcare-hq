@@ -1,14 +1,6 @@
 {
     "domains": [
-        "enikshay-test",
-        "enikshay-test-test",
-        "enikshay",
-        "enikshay-test-2",
-        "enikshay-test-3",
-        "enikshay-nikshay-migration-test",
-        "enikshay-domain-copy-test",
-        "enikshay-aks-audit",
-        "np-migration-3"
+        "enikshay"
     ],
     "server_environment": [
         "softlayer"
@@ -40,7 +32,9 @@
                 "field": "person_owner_id",
                 "choice_provider": {
                     "include_descendants": true,
-                    "type": "location"
+                    "type": "location",
+                    "show_full_path": true,
+                    "order_by_hierarchy": true
                 },
                 "display": "Location"
             }

@@ -378,7 +378,7 @@ WebFormSession.prototype.evaluateXPath = function(xpath, callback) {
             'xpath': xpath
         },
         function(resp) {
-            callback(resp.output, resp.status);
+            callback(resp);
         });
 };
 

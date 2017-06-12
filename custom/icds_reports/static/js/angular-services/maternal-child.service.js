@@ -1,3 +1,5 @@
+var url = hqImport('hqwebapp/js/urllib.js').reverse;
+
 window.angular.module('icdsApp').factory('maternalChildService', ['$http', function($http) {
     return {
         getUnderweightChildrenData: function(step, params) {

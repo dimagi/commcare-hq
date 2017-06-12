@@ -5,7 +5,9 @@ from datetime import datetime, timedelta
 from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
 from django.conf import settings
+from django.db.models import F
 from django.utils.translation import ugettext as _
+from elasticsearch.exceptions import ConnectionTimeout
 from restkit import RequestError
 
 from corehq import toggles
@@ -275,17 +277,27 @@ def save_document(doc_ids):
             indicator = indicator_by_doc_id[doc['_id']]
 
             eval_context = EvaluationContext(doc)
-            try:
-                for config_id in indicator.indicator_config_ids:
+            for config_id in indicator.indicator_config_ids:
+                adapter = None
+                try:
                     config = _get_config(config_id)
                     adapter = get_indicator_adapter(config, can_handle_laboratory=True)
-                    adapter.best_effort_save(doc, eval_context)
+                    adapter.save(doc, eval_context)
                     eval_context.reset_iteration()
-            except (ESError, RequestError):
-                # couch or es had an issue
-                failed_indicators.append(indicator.pk)
-            else:
-                processed_indicators.append(indicator.pk)
+                except (ESError, RequestError, ConnectionTimeout):
+                    # couch or es had an issue so don't log it and go on to the next doc
+                    failed_indicators.append(indicator.pk)
+                    break
+                except Exception as e:
+                    # getting the config could fail before the adapter is set
+                    if adapter:
+                        adapter.handle_exception(doc, e)
+                    failed_indicators.append(indicator.pk)
+                    break
+                else:
+                    processed_indicators.append(indicator.pk)
 
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
-        AsyncIndicator.objects.filter(pk__in=failed_indicators).update(date_queued=None)
+        AsyncIndicator.objects.filter(pk__in=failed_indicators).update(
+            date_queued=None, unsuccessful_attempts=F('unsuccessful_attempts') + 1
+        )

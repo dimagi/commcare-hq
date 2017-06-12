@@ -5,9 +5,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css"/>
-    {% compress css %}
+
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.css' %}"/>
+        <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css"/>
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'ui-select/dist/select.css' %}"/>
         <link type="text/css"
               rel="stylesheet"
@@ -15,17 +16,9 @@
               href="{% static 'font-awesome/css/font-awesome.css' %}"/>
 
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'hqwebapp/js/lib/nvd3/nv.d3.css' %}">
-    {% endcompress %}
-
-    {% compress css %}
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.css' %}"/>
-    {% endcompress %}
 
-    {% compress js %}
         <script type="text/javascript" src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
-    {% endcompress %}
-
-    {% compress js %}
         <script type="text/javascript" src="{% static 'jquery/dist/jquery.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular/angular.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-route/angular-route.js' %}"></script>
@@ -43,9 +36,7 @@
         <script type="text/javascript" src="{% static 'js/topojsons/district.topojson.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-datamaps/dist/angular-datamaps.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
-    {% endcompress %}
 
-    {% compress js %}
         <script type="text/javascript" src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
         <script type="text/javascript" src="{% static 'hqwebapp/js/urllib.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/icds_app.js' %}"></script>
@@ -71,7 +62,6 @@
         <script type="text/javascript" src="{% static 'js/directives/map-or-sector-view/map-or-sector-view.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/download/download.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/progress-report/progress-report.directive.js' %}"></script>
-    {% endcompress js %}
 </head>
 <body>
 <div id="app">

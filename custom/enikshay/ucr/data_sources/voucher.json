@@ -1,0 +1,497 @@
+{
+    "domains": [
+        "enikshay-test",
+        "enikshay-test-test",
+        "enikshay",
+        "enikshay-test-2",
+        "enikshay-test-3",
+        "enikshay-nikshay-migration-test",
+        "enikshay-domain-copy-test",
+        "enikshay-aks-audit",
+        "np-migration-3",
+        "enikshay-uatbc-migration-test-1",
+        "enikshay-uatbc-migration-test-2",
+        "enikshay-uatbc-migration-test-3",
+        "enikshay-uatbc-migration-test-4",
+        "enikshay-uatbc-migration-test-5",
+        "enikshay-uatbc-migration-test-6"
+    ],
+    "server_environment": [
+        "softlayer"
+    ],
+    "config": {
+        "referenced_doc_type": "CommCareCase",
+        "engine_id": "ucr",
+        "description": "",
+        "base_item_expression": {
+        },
+        "table_id": "voucher",
+        "display_name": "voucher",
+        "configured_filter": {
+            "operator": "eq",
+            "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "type"
+            },
+            "type": "boolean_expression",
+            "property_value": "voucher"
+        },
+        "configured_indicators": [
+            {
+                "column_id": "person_owner_id",
+                "display_name": "person_owner_id",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "owner_id"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
+                }
+            },
+            {
+                "column_id": "issued_by_id",
+                "display_name": "issued_by_id",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "issued_by_id"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "prescription_id"
+                    }
+                }
+            },
+            {
+                "column_id": "issued_by_name",
+                "display_name": "issued_by_name",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "issued_by_name"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "prescription_id"
+                    }
+                }
+            },
+            {
+                "column_id": "created_by_user_type",
+                "display_name": "created_by_user_type",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "created_by_user_type"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "episode_id"
+                    }
+                }
+            },
+            {
+                "column_id": "external_id",
+                "display_name": "external_id",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "external_id"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "episode_id"
+                    }
+                }
+            },
+            {
+                "column_id": "voucher_id",
+                "display_name": "voucher_id",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "voucher_id"
+                }
+            },
+            {
+                "column_id": "date_fulfilled",
+                "display_name": "date_fulfilled",
+                "transform": {
+                },
+                "datatype": "date",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "date_fulfilled"
+                }
+            },
+            {
+                "column_id": "state",
+                "display_name": "state",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "state"
+                }
+            },
+            {
+                "column_id": "validation_mode",
+                "display_name": "validation_mode",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "validation_mode"
+                }
+            },
+            {
+                "column_id": "date_issued",
+                "display_name": "date_issued",
+                "transform": {
+                },
+                "datatype": "date",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "date_issued"
+                }
+            },
+            {
+                "column_id": "issued_amount",
+                "display_name": "issued_amount",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "switch",
+                    "switch_on": {
+                        "type": "property_name",
+                        "property_name": "voucher_type"
+                    },
+                    "cases": {
+                        "prescription": {
+                            "type": "property_name",
+                            "property_name": "total_new_max_amount_eligible"
+                        },
+                        "test": {
+                            "type": "property_name",
+                            "property_name": "final_subsidy"
+                        }
+                    },
+                    "default": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
+            },
+            {
+                "column_id": "validated_amount_system",
+                "display_name": "validated_amount_system",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "switch",
+                    "switch_on": {
+                        "type": "property_name",
+                        "property_name": "voucher_type"
+                    },
+                    "cases": {
+                        "prescription": {
+                            "type": "property_name",
+                            "property_name": "sum_max_eligible"
+                        }
+                    },
+                    "default": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
+            },
+            {
+                "column_id": "validated_amount_as_per_chemist",
+                "display_name": "validated_amount_as_per_chemist",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "switch",
+                    "switch_on": {
+                        "type": "property_name",
+                        "property_name": "voucher_type"
+                    },
+                    "cases": {
+                        "prescription": {
+                            "type": "property_name",
+                            "property_name": "amount_redeemed"
+                        },
+                        "test": {
+                            "type": "property_name",
+                            "property_name": "dispersed_amount"
+                        }
+                    },
+                    "default": {
+                        "type": "constant",
+                        "constant": ""
+                    }
+                }
+            },
+            {
+                "column_id": "validated_amount_marked_up",
+                "display_name": "validated_amount_marked_up",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                }
+            },
+            {
+                "column_id": "amount_approved",
+                "display_name": "amount_approved",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "amount_approved"
+                }
+            },
+            {
+                "column_id": "voucher_approval_status",
+                "display_name": "voucher_approval_status",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "datatype": "string",
+                    "type": "property_name",
+                    "property_name": "voucher_approval_status"
+                }
+            },
+            {
+                "column_id": "mode_of_payment",
+                "display_name": "mode_of_payment",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                }
+            },
+            {
+                "column_id": "bank_name",
+                "display_name": "bank_name",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                }
+            },
+            {
+                "column_id": "cheque_number",
+                "display_name": "cheque_number",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                }
+            },
+            {
+                "column_id": "comments",
+                "display_name": "comments",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                }
+            },
+            {
+                "column_id": "date_approved",
+                "display_name": "date_approved",
+                "transform": {
+                },
+                "datatype": "date",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "date_approved"
+                }
+            }
+        ],
+        "named_filters": {},
+        "named_expressions": {
+            "parent_case_id": {
+                "type": "nested",
+                "value_expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "referenced_id"
+                },
+                "argument_expression": {
+                    "type": "array_index",
+                    "array_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "indices"
+                    },
+                    "index_expression": {
+                        "type": "constant",
+                        "constant": 0
+                    }
+                }
+            },
+            "prescription_id": {
+                "type": "named",
+                "name": "parent_case_id"
+            },
+            "episode_id": {
+                "value_expression": {
+                    "type": "named",
+                    "name": "parent_case_id"
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                    "type": "named",
+                    "name": "prescription_id"
+                }
+            },
+            "occurrence_id": {
+                "value_expression": {
+                    "type": "named",
+                    "name": "parent_case_id"
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                    "type": "named",
+                    "name": "episode_id"
+                }
+            },
+            "person_id": {
+                "value_expression": {
+                    "type": "named",
+                    "name": "parent_case_id"
+                },
+                "type": "related_doc",
+                "related_doc_type": "CommCareCase",
+                "doc_id_expression": {
+                    "type": "named",
+                    "name": "occurrence_id"
+                }
+            }
+        }
+    }
+}

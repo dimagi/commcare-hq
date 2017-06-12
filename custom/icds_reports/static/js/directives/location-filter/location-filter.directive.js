@@ -194,24 +194,24 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
             controllerAs: '$ctrl',
             resolve: {
                 location: function () {
-                    return vm.location
+                    return vm.location;
                 },
                 selectedLocationId: function () {
-                    return vm.selectedLocationId
+                    return vm.selectedLocationId;
                 },
                 hierarchy: function () {
-                    return vm.hierarchy
+                    return vm.hierarchy;
                 },
                 selectedLocations: function () {
-                    return vm.selectedLocations
+                    return vm.selectedLocations;
                 },
                 locationsCache: function () {
-                    return vm.locationsCache
+                    return vm.locationsCache;
                 },
                 maxLevel: function () {
-                    return vm.maxLevel
+                    return vm.maxLevel;
                 },
-            }
+            },
         });
 
         modalInstance.result.then(function (selectedLocations) {
@@ -225,7 +225,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
             if (selectedLocationIndex() === 0) {
                 var locations = vm.getLocationsForLevel(selectedLocationIndex());
                 var loc = _.filter(locations, function (loc) {
-                    return loc.location_id === vm.selectedLocationId
+                    return loc.location_id === vm.selectedLocationId;
                 });
                 $location.search('location_name', loc[0]['name']);
             } else if (selectedLocationIndex() === -1) {

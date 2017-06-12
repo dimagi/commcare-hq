@@ -39,10 +39,10 @@ def edit_schedule_phases(request, domain, app_id, module_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_visit_schedule(request, domain, app_id, module_id, form_id):
+def edit_visit_schedule(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
-    module = app.get_module(module_id)
-    form = module.get_form(form_id)
+    form = app.get_form(form_unique_id)
+    module = form.get_module()
 
     json_loads = json.loads(request.POST.get('schedule'))
     enabled = json_loads.pop('enabled')

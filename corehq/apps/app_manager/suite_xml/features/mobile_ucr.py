@@ -1,6 +1,5 @@
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.models import ReportModule, ReportGraphConfig, \
-    MobileSelectFilter
+from corehq.apps.app_manager.models import ReportModule, MobileSelectFilter
 from corehq.apps.app_manager import models
 from corehq.apps.app_manager.suite_xml.xml_models import Locale, Text, Command, Entry, \
     SessionDatum, Detail, Header, Field, Template, Series, ConfigurationGroup, \
@@ -150,7 +149,6 @@ def _get_summary_details(config, domain, module):
 
         for chart_config in config.report(domain).charts:
             if isinstance(chart_config, MultibarChartSpec):
-                config.migrate_graph_configs(domain)
                 graph_config = config.complete_graph_configs.get(chart_config.chart_id, GraphConfiguration())
                 for index, column in enumerate(chart_config.y_axis_columns):
                     graph_config.series[index].data_path = (

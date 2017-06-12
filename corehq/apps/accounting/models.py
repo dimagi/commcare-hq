@@ -1558,43 +1558,34 @@ class Subscription(models.Model):
             self.account.save()
 
     @classmethod
-    def _get_plan_by_subscriber(cls, subscriber):
-        active_subscriptions = cls.objects\
-            .filter(subscriber=subscriber, is_active=True)\
-            .order_by('-date_created')[:2]\
-            .select_related('plan_version__role')
-
-        if not active_subscriptions:
-            return None, None
-
-        if len(active_subscriptions) > 1:
-            log_accounting_error(
-                "There seem to be multiple ACTIVE subscriptions for the "
-                "subscriber %s. Odd, right? The latest one by "
-                "date_created was used, but consider this an issue."
-                % subscriber
+    def get_active_subscription_by_domain(cls, domain_name):
+        try:
+            return cls.objects.select_related(
+                'plan_version__role'
+            ).get(
+                is_active=True,
+                subscriber__domain=domain_name,
             )
-        current_subscription = active_subscriptions[0]
-        return current_subscription.plan_version, current_subscription
+        except cls.DoesNotExist:
+            return None
 
     @classmethod
     def get_subscribed_plan_by_domain(cls, domain):
         """
-        Returns SoftwarePlanVersion, Subscription for the given domain.
+        Returns SoftwarePlanVersion for the given domain.
         """
         domain_obj = ensure_domain_instance(domain)
         if domain_obj is None:
             try:
-                plan_version = DefaultProductPlan.get_default_plan_version()
-                return plan_version, None
+                return DefaultProductPlan.get_default_plan_version()
             except DefaultProductPlan.DoesNotExist:
                 raise ProductPlanNotFoundError
-        domain = domain_obj
-        subscriber = Subscriber.objects.safe_get(domain=domain.name)
-        plan_version, subscription = cls._get_plan_by_subscriber(subscriber) if subscriber else (None, None)
-        if plan_version is None:
-            plan_version = DefaultProductPlan.get_default_plan_version()
-        return plan_version, subscription
+        else:
+            active_subscription = cls.get_active_subscription_by_domain(domain_obj.name)
+            if active_subscription is not None:
+                return active_subscription.plan_version
+            else:
+                return DefaultProductPlan.get_default_plan_version()
 
     @classmethod
     def new_domain_subscription(cls, account, domain, plan_version,
@@ -2706,7 +2697,7 @@ class CreditLine(ValidateModelMixin, models.Model):
     @classmethod
     def get_non_general_credits_by_subscription(cls, subscription):
         return cls.objects.filter(subscription=subscription).filter(
-            Q(product_type__in=[c[0] for c in SoftwareProductType.CHOICES] + [SoftwareProductType.ANY]) |
+            Q(product_type=SoftwareProductType.ANY) |
             Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
         ).all()
 

@@ -5,7 +5,7 @@ from corehq.util.decorators import serial_task
 from corehq.util.workbook_json.excel_importer import MultiExcelImporter
 from django.conf import settings
 
-LOCK_LOCATIONS_TIMEOUT = 60 * 60  # seconds
+LOCK_LOCATIONS_TIMEOUT = 60 * 60 * 10  # seconds
 
 
 @serial_task('{domain}', default_retry_delay=5 * 60, timeout=LOCK_LOCATIONS_TIMEOUT, max_retries=12,

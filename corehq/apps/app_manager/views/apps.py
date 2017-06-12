@@ -132,7 +132,7 @@ def default_new_app(request, domain):
         # APP MANAGER V2 is completely blank on new app
         module = Module.new_module(_("Untitled Module"), lang)
         app.add_module(module)
-        form = app.new_form(0, "Untitled Form", lang)
+        app.new_form(0, _("Untitled Form"), lang)
 
     if request.project.secure_submissions:
         app.secure_submissions = True
@@ -295,6 +295,11 @@ def get_apps_base_context(request, domain, app):
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
             'show_shadow_forms': show_advanced,
         })
+
+    if toggles.APP_MANAGER_V2.enabled(request.user.username):
+        rollout = toggles.APP_MANAGER_V2.enabled_for_new_users_after
+        if not toggles.was_user_created_after(request.user.username, rollout):
+            context.update({'allow_v2_opt_out': True})
 
     return context
 
@@ -652,13 +657,21 @@ def edit_app_attr(request, domain, app_id, attr):
         'auto_gps_capture',
         # RemoteApp only
         'profile_url',
-        'manage_urls'
+        'manage_urls',
+        'mobile_ucr_sync_interval',
     ]
     if attr not in attributes:
         return HttpResponseBadRequest()
 
     def should_edit(attribute):
         return attribute == attr or ('all' == attr and attribute in hq_settings)
+
+    def parse_sync_interval(interval):
+        try:
+            return int(interval)
+        except ValueError:
+            pass
+
     resp = {"update": {}}
     # For either type of app
     easy_attrs = (
@@ -681,6 +694,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('comment', None),
         ('custom_base_url', None),
         ('use_j2me_endpoint', None),
+        ('mobile_ucr_sync_interval', parse_sync_interval),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):

@@ -60,7 +60,9 @@
         {% endif %}
 
         {% block stylesheets %}{% endblock stylesheets %}
-
+        {% block csrf_token_block %}
+          <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
+        {% endblock %}
         {% if request.use_select2 %}
         {% compress css %}
             <link type="text/css"
@@ -395,15 +397,6 @@
         <script src="{% static 'style/js/main.js' %}"></script>
         {% endcompress %}
 
-        {% addtoblock js-inline %}
-        <script>
-            $(function(){
-                $('.hq-help-template').each(function () {
-                    COMMCAREHQ.transformHelpTemplate($(this), true);
-                });
-            });
-        </script>
-        {% endaddtoblock %}
         {# JavaScript Display Logic Libaries #}
 
         {% if request.couch_user %}

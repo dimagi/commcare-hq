@@ -1,3 +1,4 @@
+from copy import deepcopy
 from pydoc import html
 from django.http import Http404
 from django.utils.safestring import mark_safe
@@ -242,8 +243,8 @@ def get_questions(domain, app_id, xmlns):
             _("Remote apps are not supported")
         )
 
-    form = app.get_form_by_xmlns(xmlns)
-    if not form:
+    xform = app.get_xform_by_xmlns(xmlns)
+    if not xform:
         if xmlns == 'http://code.javarosa.org/devicereport':
             raise QuestionListNotFound(
                 _("This is a Device Report")
@@ -257,7 +258,7 @@ def get_questions(domain, app_id, xmlns):
     # to bootstrap a test and have it print out your form xml
     # uncomment this line. Ghetto but it works.
     # print form.wrapped_xform().render()
-    return get_questions_from_xform_node(form.wrapped_xform(), app.langs)
+    return get_questions_from_xform_node(xform, app.langs)
 
 
 def get_questions_from_xform_node(xform, langs):
@@ -283,7 +284,7 @@ def get_questions_for_submission(xform):
 def get_readable_data_for_submission(xform):
     questions, questions_error = get_questions_for_submission(xform)
     return get_readable_form_data(
-        xform.form_data,
+        deepcopy(xform.form_data),
         questions,
         process_label=_html_interpolate_output_refs
     ), questions_error

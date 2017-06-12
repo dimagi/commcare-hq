@@ -366,11 +366,11 @@ def recalculation_on_location_change(domain, last_run):
         if recalculation_type == 'group_change'\
                 and data_list[0]['previous_group'] != data_list[-1]['current_group']\
                 and not sql_location.location_type.administrative:
-            to_recalculate = recalculate_on_group_change(sql_location.couch_location, last_run)
+            to_recalculate = recalculate_on_group_change(sql_location, last_run)
         elif recalculation_type == 'parent_change' \
                 and data_list[0]['previous_parent'] != data_list[-1]['current_parent']:
             to_recalculate = recalculate_on_parent_change(
-                sql_location.couch_location, data_list[0]['previous_parent'], last_run
+                sql_location, data_list[0]['previous_parent'], last_run
             )
         else:
             to_recalculate = {}
@@ -383,7 +383,7 @@ def recalculation_on_location_change(domain, last_run):
     for location_type in ["DISTRICT", "REGION", "MSDZONE", "MOHSW"]:
         for sql_location in non_facilities_to_recalculate.get(location_type, []):
             process_non_facility_warehouse_data(
-                sql_location.couch_location, default_start_date(), last_run.end, strict=False
+                sql_location, default_start_date(), last_run.end, strict=False
             )
     PendingReportingDataRecalculation.objects.filter(
         sql_location__in=recalculated, domain=domain

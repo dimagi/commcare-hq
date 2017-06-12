@@ -71,6 +71,7 @@ from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.apps.reminders.models import CaseReminderHandler
+from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, Select2Ajax
@@ -80,7 +81,7 @@ from corehq.privileges import (
     REPORT_BUILDER_ADD_ON_PRIVS,
     REPORT_BUILDER_TRIAL,
 )
-from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBIE_UCR_SYNC_DELAY_CONFIG
+from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from dimagi.utils.decorators.memoized import memoized
@@ -107,7 +108,7 @@ class ProjectSettingsForm(forms.Form):
         required=False,
         label="",
         widget=BootstrapCheckboxInput(
-            inline_label=ugettext_noop("Override project's timezone setting just for me.")
+            inline_label=ugettext_lazy("Override project's timezone setting just for me.")
         )
     )
     user_timezone = TimeZoneChoiceField(
@@ -122,10 +123,10 @@ class ProjectSettingsForm(forms.Form):
         self.helper.form_class = 'form-horizontal'
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
-        self.helper.all().wrap_together(crispy.Fieldset, 'Override Project Timezone')
+        self.helper.all().wrap_together(crispy.Fieldset, _('Override Project Timezone'))
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                'Override Project Timezone',
+                _('Override Project Timezone'),
                 crispy.Field('global_timezone', css_class='input-xlarge'),
                 twbscrispy.PrependedText(
                     'override_global_tz', '', data_bind='checked: override_tz, event: {change: updateForm}'
@@ -576,7 +577,7 @@ class DomainGlobalSettingsForm(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.helper[4] = twbscrispy.PrependedText('delete_logo', '')
         self.helper[5] = twbscrispy.PrependedText('call_center_enabled', '')
-        self.helper.all().wrap_together(crispy.Fieldset, 'Edit Basic Information')
+        self.helper.all().wrap_together(crispy.Fieldset, _('Edit Basic Information'))
         self.helper.layout.append(
             hqcrispy.FormActions(
                 StrictButton(
@@ -586,6 +587,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 )
             )
         )
+        self.fields['default_timezone'].label = ugettext_lazy('Default timezone')
 
         if not self.can_use_custom_logo:
             del self.fields['logo']
@@ -604,7 +606,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 )
                 owner_field.widget.set_domain(self.domain)
 
-        if not MOBIE_UCR_SYNC_DELAY_CONFIG.enabled(self.domain):
+        if not MOBILE_UCR.enabled(self.domain):
             del self.fields['mobile_ucr_sync_interval']
 
     def clean_default_timezone(self):
@@ -612,10 +614,6 @@ class DomainGlobalSettingsForm(forms.Form):
         timezone_field = TimeZoneField()
         timezone_field.run_validators(data)
         return smart_str(data)
-
-    def clean_mobile_ucr_sync_interval(self):
-        if self.cleaned_data.get('mobile_ucr_sync_interval'):
-            return self.cleaned_data.get('mobile_ucr_sync_interval') * 3600
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
@@ -1020,14 +1018,14 @@ class DomainInternalForm(forms.Form, SubAreaMixin):
         label="Partner contact",
         required=False,
         help_text=(
-            "Primary partner point of contact going forward (type email of existing web user)."
+            "Primary partner point of contact going forward (type username of existing web user)."
         ),
     )
     dimagi_contact = CharField(
         label="Dimagi contact",
         required=False,
         help_text=(
-            "Primary Dimagi point of contact going forward (type email of existing web user)."
+            "Primary Dimagi point of contact going forward (type username of existing web user)."
         ),
     )
     send_handoff_email = forms.BooleanField(
@@ -1341,16 +1339,13 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
             return self.cleaned_data['email']
 
 
-class HQSetPasswordForm(SetPasswordForm):
+class HQSetPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
     new_password1 = forms.CharField(label=ugettext_lazy("New password"),
                                     widget=forms.PasswordInput(
                                         attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
                                     help_text=mark_safe("""
                                     <span data-bind="text: passwordHelp, css: color">
                                     """))
-
-    def clean_new_password1(self):
-        return clean_password(self.cleaned_data.get('new_password1'))
 
     def save(self, commit=True):
         user = super(HQSetPasswordForm, self).save(commit)
@@ -1823,7 +1818,7 @@ class InternalSubscriptionManagementForm(forms.Form):
     @property
     @memoized
     def current_subscription(self):
-        return Subscription.get_subscribed_plan_by_domain(self.domain)[1]
+        return Subscription.get_active_subscription_by_domain(self.domain)
 
     @property
     @memoized

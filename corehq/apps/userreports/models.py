@@ -723,13 +723,14 @@ class AsyncIndicator(models.Model):
     """
     doc_id = models.CharField(max_length=255, null=False, db_index=True, unique=True)
     doc_type = models.CharField(max_length=126, null=False)
-    domain = models.CharField(max_length=126, null=False)
+    domain = models.CharField(max_length=126, null=False, db_index=True)
     indicator_config_ids = ArrayField(
         models.CharField(max_length=126, null=True, blank=True),
         null=False
     )
     date_created = models.DateTimeField(auto_now_add=True, db_index=True)
     date_queued = models.DateTimeField(null=True, db_index=True)
+    unsuccessful_attempts = models.IntegerField(default=0)
 
     class Meta(object):
         ordering = ["date_created"]
@@ -737,7 +738,22 @@ class AsyncIndicator(models.Model):
     @classmethod
     def update_indicators(cls, change, config_ids):
         doc_id = change.id
+        doc_type = change.document['doc_type']
+        domain = change.document['domain']
+
+        indicator, created = cls.objects.get_or_create(
+            doc_id=doc_id, doc_type=doc_type, domain=domain,
+            defaults={'indicator_config_ids': config_ids}
+        )
+
+        if created:
+            return indicator
+        elif set(config_ids) == indicator.indicator_config_ids:
+            return indicator
+
         with CriticalSection([get_async_indicator_modify_lock_key(doc_id)]):
+            # Add new config ids. Need to grab indicator again in case it was
+            # processed since we called get_or_create
             try:
                 indicator = cls.objects.get(doc_id=doc_id)
             except cls.DoesNotExist:

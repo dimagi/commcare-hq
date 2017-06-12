@@ -112,12 +112,12 @@ COUCH_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
-DATADOG_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.datadog.log")
 UCR_TIMING_FILE = "%s/%s" % (FILEPATH, "ucr.timing.log")
 UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
 UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
 NIKSHAY_DATAMIGRATION = "%s/%s" % (FILEPATH, "nikshay_datamigration.log")
 PRIVATE_SECTOR_DATAMIGRATION = "%s/%s" % (FILEPATH, "private_sector_datamigration.log")
+SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -133,12 +133,12 @@ SECRET_KEY = 'you should really change this'
 # Add this to localsettings and set it to False, so that CSRF protection is enabled on localhost
 CSRF_SOFT_MODE = True
 
-MIDDLEWARE_CLASSES = [
+MIDDLEWARE = [
     'corehq.middleware.NoCacheMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    'corehq.apps.hqwebapp.middleware.HQCsrfViewMiddleWare',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -179,7 +179,6 @@ PASSWORD_HASHERS = (
 ROOT_URLCONF = "urls"
 
 DEFAULT_APPS = (
-    'corehq.apps.userhack',  # this has to be above auth
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -279,6 +278,7 @@ HQ_APPS = (
     'corehq.apps.sms',
     'corehq.apps.smsforms',
     'corehq.apps.ivr',
+    'corehq.messaging',
     'corehq.messaging.scheduling',
     'corehq.messaging.scheduling.scheduling_partitioned',
     'corehq.messaging.smsbackends.tropo',
@@ -299,6 +299,7 @@ HQ_APPS = (
     'corehq.apps.registration',
     'corehq.messaging.smsbackends.unicel',
     'corehq.messaging.smsbackends.icds_nic',
+    'corehq.messaging.smsbackends.vertex',
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
@@ -334,10 +335,9 @@ HQ_APPS = (
     'dimagi.ext',
     'corehq.doctypemigrations',
     'corehq.blobs',
+    'corehq.warehouse',
     'corehq.apps.case_search',
     'corehq.apps.zapier.apps.ZapierConfig',
-    'corehq.apps.motech',
-    'corehq.apps.motech.openmrs',
 
     # custom reports
     'a5288',
@@ -373,14 +373,17 @@ HQ_APPS = (
     'custom.icds',
     'custom.icds_reports',
     'custom.pnlppgi',
+    'custom.nic_compliance',
+    'custom.hki',
 )
 
 ENIKSHAY_APPS = (
     'custom.enikshay',
     'custom.enikshay.integrations.ninetyninedots',
     'custom.enikshay.nikshay_datamigration',
+    'custom.enikshay.integrations.nikshay',
+    'custom.enikshay.integrations.bets',
     'custom.enikshay.private_sector_datamigration',
-    'custom.enikshay.integrations.nikshay'
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -745,7 +748,7 @@ TOUCHFORMS_API_PASSWORD = "changeme"
 # import local settings if we find them
 LOCAL_APPS = ()
 LOCAL_COUCHDB_APPS = ()
-LOCAL_MIDDLEWARE_CLASSES = ()
+LOCAL_MIDDLEWARE = ()
 LOCAL_PILLOWTOPS = {}
 LOCAL_REPEATERS = ()
 
@@ -895,10 +898,15 @@ SENTRY_PROJECT_ID = None
 SENTRY_QUERY_URL = 'https://sentry.io/{org}/{project}/?query='
 SENTRY_API_KEY = None
 
+OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE = False
+RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE = False
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
 
 AUTHPROXY_URL = None
 AUTHPROXY_CERT = None
+
+ENIKSHAY_PRIVATE_API_USERS = {}
+ENIKSHAY_PRIVATE_API_PASSWORD = None
 
 from env_settings import *
 
@@ -1018,9 +1026,6 @@ LOGGING = {
         'couch-request-formatter': {
             'format': '%(asctime)s [%(username)s:%(domain)s] %(hq_url)s %(database)s %(method)s %(status_code)s %(content_length)s %(path)s %(duration)s'
         },
-        'datadog': {
-            'format': '%(metric)s %(created)s %(value)s metric_type=%(metric_type)s %(message)s'
-        },
         'ucr_timing': {
             'format': '%(asctime)s\t%(domain)s\t%(report_config_id)s\t%(filter_values)s\t%(control_duration)s\t%(candidate_duration)s'
         },
@@ -1080,14 +1085,6 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
-        'datadog': {
-            'level': 'INFO',
-            'class': 'cloghandler.ConcurrentRotatingFileHandler',
-            'formatter': 'datadog',
-            'filename': DATADOG_LOG_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
         'ucr_diff': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
@@ -1143,6 +1140,14 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
         },
+        'soft_asserts': {
+            "level": "DEBUG",
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'verbose',
+            'filename': SOFT_ASSERTS_LOG_FILE,
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB
+            'backupCount': 200  # Backup 2000 MB of logs
+        }
     },
     'loggers': {
         '': {
@@ -1156,7 +1161,7 @@ LOGGING = {
             'propagate': False,
         },
         'django': {
-            'handlers': ['mail_admins', 'sentry'],
+            'handlers': ['sentry'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -1165,8 +1170,7 @@ LOGGING = {
             'propagate': False,
         },
         'notify': {
-            # gets overridden in ansible, in environment specific way
-            'handlers': ['notify_exception', 'sentry'],
+            'handlers': ['sentry'],
             'level': 'ERROR',
             'propagate': True,
         },
@@ -1199,11 +1203,6 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'ERROR',
             'propagate': True,
-        },
-        'datadog-metrics': {
-            'handlers': ['datadog'],
-            'level': 'INFO',
-            'propagate': False,
         },
         'ucr_timing': {
             'handlers': ['ucr_timing'],
@@ -1242,6 +1241,11 @@ LOGGING = {
         },
         'sentry.errors.uncaught': {
             'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'soft_asserts': {
+            'handlers': ['soft_asserts', 'console'],
             'level': 'DEBUG',
             'propagate': False,
         },
@@ -1433,7 +1437,7 @@ if ENABLE_PRELOGIN_SITE:
 seen = set()
 INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
 
-MIDDLEWARE_CLASSES += LOCAL_MIDDLEWARE_CLASSES
+MIDDLEWARE += LOCAL_MIDDLEWARE
 
 ### Shared drive settings ###
 SHARED_DRIVE_CONF = helper.SharedDriveConfiguration(
@@ -1510,6 +1514,7 @@ SMS_LOADED_SQL_BACKENDS = [
     'corehq.messaging.smsbackends.twilio.models.SQLTwilioBackend',
     'corehq.messaging.smsbackends.unicel.models.SQLUnicelBackend',
     'corehq.messaging.smsbackends.yo.models.SQLYoBackend',
+    'corehq.messaging.smsbackends.vertex.models.VertexBackend',
 ]
 
 IVR_LOADED_SQL_BACKENDS = [
@@ -1540,6 +1545,18 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
 }
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
+
+AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
+    'CASE_OWNER_LOCATION_PARENT':
+        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent',
+         "Abt: The case owner's location's parent location"],
+    'TB_PERSON_CASE_FROM_VOUCHER_CASE':
+        ['custom.enikshay.messaging.custom_recipients.person_case_from_voucher_case',
+         "TB: Person case from voucher case"],
+    'TB_AGENCY_USER_CASE_FROM_VOUCHER_FULFILLED_BY_ID':
+        ['custom.enikshay.messaging.custom_recipients.agency_user_case_from_voucher_fulfilled_by_id',
+         "TB: Agency user case from voucher_fulfilled_by_id"],
+}
 
 AVAILABLE_CUSTOM_RULE_CRITERIA = {}
 
@@ -1603,6 +1620,11 @@ PILLOWTOPS = {
             'name': 'FormSubmissionMetadataTrackerPillow',
             'class': 'pillowtop.pillow.interface.ConstructedPillow',
             'instance': 'corehq.pillows.app_submission_tracker.get_form_submission_metadata_tracker_pillow',
+        },
+        {
+            'name': 'UpdateUserSyncHistoryPillow',
+            'class': 'pillowtop.pillow.interface.ConstructedPillow',
+            'instance': 'corehq.pillows.synclog.get_user_sync_history_pillow',
         },
     ],
     'core_ext': [
@@ -1682,7 +1704,6 @@ PILLOWTOPS = {
         },
     ],
     'fluff': [
-        'custom.bihar.models.CareBiharFluffPillow',
         'custom.opm.models.OpmUserFluffPillow',
         'custom.m4change.models.M4ChangeFormFluffPillow',
         'custom.intrahealth.models.CouvertureFluffPillow',
@@ -1715,9 +1736,11 @@ BASE_REPEATERS = (
     'corehq.apps.repeaters.models.CaseRepeater',
     'corehq.apps.repeaters.models.ShortFormRepeater',
     'corehq.apps.repeaters.models.AppStructureRepeater',
+    'corehq.apps.repeaters.models.UserRepeater',
+    'corehq.apps.repeaters.models.LocationRepeater',
 )
 
-CUSTOM_REPEATERS = (
+ENIKSHAY_REPEATERS = (
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsRegisterPatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsUpdatePatientRepeater',
     'custom.enikshay.integrations.ninetyninedots.repeaters.NinetyNineDotsAdherenceRepeater',
@@ -1726,9 +1749,20 @@ CUSTOM_REPEATERS = (
     'custom.enikshay.integrations.nikshay.repeaters.NikshayTreatmentOutcomeRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayHIVTestRepeater',
     'custom.enikshay.integrations.nikshay.repeaters.NikshayFollowupRepeater',
+    'custom.enikshay.integrations.nikshay.repeaters.NikshayRegisterPrivatePatientRepeater',
+    'custom.enikshay.integrations.bets.repeaters.ChemistBETSVoucherRepeater',
+    'custom.enikshay.integrations.bets.repeaters.LabBETSVoucherRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETS180TreatmentRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSDrugRefillRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSSuccessfulTreatmentRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSDiagnosisAndNotificationRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSAYUSHReferralRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSUserRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSLocationRepeater',
+    'custom.enikshay.integrations.bets.repeaters.BETSBeneficiaryRepeater',
 )
 
-REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + CUSTOM_REPEATERS
+REPEATERS = BASE_REPEATERS + LOCAL_REPEATERS + ENIKSHAY_REPEATERS
 
 
 STATIC_UCR_REPORTS = [
@@ -1812,7 +1846,11 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding_mobile.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_treatment_outcome.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_general.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_tb_hiv.json')
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'monitoring_indicators_tb_hiv.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'cc_outbound_call_list.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'payment_register.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_register_for_culture.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'rntcp_pmdt_treatment_register.json'),
 ]
 
 
@@ -1855,6 +1893,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher.json'),
 
     os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
     os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json')
@@ -1914,6 +1953,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
+    ('ancestor_location', 'corehq.apps.locations.ucr_expressions.ancestor_location'),
     ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
     ('eqa_percent_expression', 'custom.eqa.expressions.eqa_percent_expression'),
@@ -1923,6 +1963,10 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('first_case_form_with_xmlns', 'custom.enikshay.expressions.first_case_form_with_xmlns_expression'),
     ('count_case_forms_with_xmlns', 'custom.enikshay.expressions.count_case_forms_with_xmlns_expression'),
     ('month_expression', 'custom.enikshay.expressions.month_expression'),
+    ('enikshay_referred_to', 'custom.enikshay.expressions.referred_to_expression'),
+    ('enikshay_referred_by', 'custom.enikshay.expressions.referred_by_expression'),
+    ('enikshay_date_of_referral', 'custom.enikshay.expressions.date_of_referral_expression'),
+    ('enikshay_date_of_acceptance', 'custom.enikshay.expressions.date_of_acceptance_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
@@ -1985,6 +2029,26 @@ DOMAIN_MODULE_MAP = {
     'enikshay-domain-copy-test': 'custom.enikshay',
     'enikshay-aks-audit': 'custom.enikshay',
     'np-migration-3': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-1': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-2': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-3': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-4': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-5': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-6': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-7': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-8': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-9': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-10': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-11': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-12': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-13': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-14': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-15': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-16': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-17': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-18': 'custom.enikshay',
+    'enikshay-uatbc-migration-test-19': 'custom.enikshay',
+    'sheel-enikshay': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 
@@ -2050,3 +2114,11 @@ if _raven_config:
     RAVEN_CONFIG = _raven_config
     SENTRY_CONFIGURED = True
     SENTRY_CLIENT = 'corehq.util.sentry.HQSentryClient'
+
+CSRF_COOKIE_HTTPONLY = True
+if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
+    AUTH_PASSWORD_VALIDATORS = [
+        {
+            'NAME': 'custom.nic_compliance.password_validation.UsedPasswordValidator',
+        }
+    ]

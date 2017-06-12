@@ -1,5 +1,7 @@
 /* global moment */
-function MonthModalController($scope, $location, $uibModalInstance) {
+
+
+function MonthModalController($location, $uibModalInstance) {
     var vm = this;
 
     vm.months = [];
@@ -58,7 +60,7 @@ function MonthFilterController($scope, $location, $uibModal) {
 }
 
 MonthFilterController.$inject = ['$scope', '$location', '$uibModal'];
-MonthModalController.$inject = ['$scope', '$location', '$uibModalInstance'];
+MonthModalController.$inject = ['$location', '$uibModalInstance'];
 
 window.angular.module('icdsApp').directive("monthFilter", function() {
     var url = hqImport('hqwebapp/js/urllib.js').reverse;

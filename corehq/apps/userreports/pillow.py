@@ -35,7 +35,7 @@ from pillowtop.processors import PillowProcessor
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
-LONG_UCR_LOGGING_THRESHOLD = 0.2
+LONG_UCR_LOGGING_THRESHOLD = 0.5
 LONG_UCR_SOFT_ASSERT_THRESHOLD = 5
 _slow_ucr_assert = soft_assert('{}@{}'.format('jemord', 'dimagi.com'))
 
@@ -241,7 +241,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
                 else:
                     self._save_doc_to_table(table, doc, eval_context)
                     eval_context.reset_iteration()
-            elif table.config.deleted_filter(doc):
+            elif table.config.deleted_filter(doc) or table.doc_exists(doc):
                 table.delete(doc)
 
         if async_tables:

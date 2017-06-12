@@ -1,0 +1,33 @@
+{% extends 'registration/email/confirm_account.html' %}
+{% load i18n %}
+
+{% block content %}
+    <p>{% blocktrans %}Dear {{ full_name }},{% endblocktrans %}</p>
+
+    <p>
+        {% blocktrans %}Welcome to CommCare!{% endblocktrans %}
+        {% blocktrans %}We noticed that you registered for an account yesterday,
+          but it seems you haven't confirmed your email address yet.{% endblocktrans %}
+    </p>
+    <p>
+        {% blocktrans %}Please click the button below to activate your CommCare project <strong>{{ domain }}</strong>.{% endblocktrans %}
+    </p>
+    <p style="text-align: center;">
+        <a class="btn"
+           href="{{ registration_link }}"
+           style="color: #ffffff; text-decoration: none; padding: 10px 15px; background-color: #004ebc; border-radius: 5px; font-size: 20px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer;">
+            {% trans "Activate CommCare" %}
+        </a>
+    </p>
+    <p>
+        {% blocktrans %}
+        Once you do this, our team will be in touch with some helpful tips for getting started!
+        {% endblocktrans %}
+    </p>
+    <p>
+        {% blocktrans %}
+        Cheers,<br />
+        The CommCare Team
+        {% endblocktrans %}
+    </p>
+{% endblock %}

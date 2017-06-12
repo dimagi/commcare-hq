@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
 
+=======
+/* global d3 */
+var url = hqImport('hqwebapp/js/urllib.js').reverse;
+
+>>>>>>> icds_dashboard_v2
 function UnderweightChildrenReportController($scope, $routeParams, $location, maternalChildService,
                                              locationsService, userLocationId) {
     var vm = this;
@@ -77,7 +83,11 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, ma
                 top: 20,
                 right: 60,
                 bottom: 60,
+<<<<<<< HEAD
                 left: 80
+=======
+                left: 80,
+>>>>>>> icds_dashboard_v2
             },
             x: function(d){ return d[0]; },
             y: function(d){ return d[1]; },
@@ -89,7 +99,11 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, ma
                 axisLabel: '',
                 showMaxMin: true,
                 tickFormat: function(d) {
+<<<<<<< HEAD
                     return d3.time.format('%m/%d/%y')(new Date(d))
+=======
+                    return d3.time.format('%m/%d/%y')(new Date(d));
+>>>>>>> icds_dashboard_v2
                 },
                 tickValues: function() {
                     return vm.chartTicks;
@@ -103,8 +117,13 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, ma
                     return d3.format(".0%")(d);
                 },
                 axisLabelDistance: 20,
+<<<<<<< HEAD
             }
         }
+=======
+            },
+        },
+>>>>>>> icds_dashboard_v2
     };
 }
 

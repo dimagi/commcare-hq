@@ -1,3 +1,5 @@
+/* global d3, _ */
+
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
 function AwcReportsController($http, $location, $routeParams, $log) {
@@ -34,7 +36,7 @@ function AwcReportsController($http, $location, $routeParams, $log) {
                 top: 20,
                 right: 20,
                 bottom: 50,
-                left: 80
+                left: 80,
             },
             x: function(d){return d[0];},
             y: function(d){return d[1];},
@@ -50,12 +52,12 @@ function AwcReportsController($http, $location, $routeParams, $log) {
                     } else if (typeof d === 'string') {
                         return d;
                     }
-                }
+                },
             },
             yAxis: {
                 axisLabel: '',
-            }
-        }
+            },
+        },
     };
 
     vm.steps ={

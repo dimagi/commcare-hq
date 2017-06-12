@@ -1,10 +1,10 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% with slug="vellum_beta" name="New Form Builder" %}
-{% registerurl "enable_vellum_beta" %}
+{% with slug="app_manager_v2" name="New App Builder" %}
+{% registerurl "toggle_app_manager_v2" %}
     <!-- This will appear on page load, so don't use any animation (normally controlled by .fade) -->
-    <div class="modal rollout-modal" data-slug="{{ slug }}">
+    <div class="modal" id="rollout-modal" data-slug="{{ slug }}">
         <div class="modal-dialog">
             <div class="modal-content">
                 {% blocktrans %}
@@ -13,11 +13,13 @@
                 </div>
                 <div class="modal-body">
                     <p>
-                        We're about to release changes to make form builder easier to use.
-                        <a href="http://www.dimagi.com/blog/new-commcare-form-builder-improvements-released/">Check them out here.</a>
+                        We're about to release a new look for the app builder.
+                        <a href="https://www.dimagi.com/blog/commcare-feature-update-new-app-manager/">
+                            Check it out here.
+                        </a>
                     </p>
                     <p>
-                        These changes will be rolled out permanently on <strong>March 24th</strong>, but if
+                        These changes will be rolled out permanently in <strong>July</strong>, but if
                         you'd like, you can turn them on now.
                     </p>
                     <div class="row">
