@@ -4,7 +4,7 @@
 */
 hqDefine("hqwebapp/js/rollout_modal.js", function() {
     function snooze(slug) {
-        $.cookie(cookieName(slug), true, { expires: 7, path: '/' });
+        $.cookie(cookieName(slug), true, { expires: 3, path: '/' });
         window.analytics.usage("Soft Rollout", "snooze", slug);
     }
 
