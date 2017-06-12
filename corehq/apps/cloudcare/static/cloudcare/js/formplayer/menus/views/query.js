@@ -6,16 +6,6 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         className: "formplayer-request",
         template: "#query-view-item-template",
 
-        events: {
-            'keypress': 'keyAction',
-        },
-
-        keyAction: function (event) {
-            if (event.which === 13 || event.keyCode === 13) {
-                this.trigger("submit");
-            }
-        },
-
         templateHelpers: function () {
             var imageUri = this.options.model.get('imageUri');
             var audioUri = this.options.model.get('audioUri');
@@ -49,10 +39,6 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
 
         events: {
             'click @ui.submitButton': 'submitAction',
-        },
-
-        childEvents: {
-            submit: "submitAction",
         },
 
         submitAction: function () {
