@@ -1,6 +1,8 @@
 from collections import namedtuple
 from dimagi.utils.decorators.memoized import memoized
 
+from corehq.apps.app_manager.models import Module
+
 class Lab(object):
     def __init__(self, slug, name, description, in_use):
         self.slug = slug
@@ -21,15 +23,22 @@ def display_conditions_in_use(app, module=None, form=None):
 DISPLAY_CONDITIONS = Lab(
     slug="display_conditions",
     name="Form and Menu Display Conditions",
-    description="these are things",
+    description="TODO",
     in_use=display_conditions_in_use,
 )
+
+def case_list_menu_item_in_use(app, module=None, form=None):
+    if form:
+        return False
+    if module:
+        return isinstance(module, Module) and module.case_list.show
+    return False
 
 CASE_LIST_MENU_ITEM = Lab(
     slug="case_list_menu_item",
     name="Case List Menu Item",
-    description="these are other things",
-    in_use=lambda app, module, form: False,
+    description="TODO",
+    in_use=case_list_menu_item_in_use,
 )
 
 @memoized
@@ -56,7 +65,6 @@ def all_labs(app, module=None, form=None):
 
 
 '''
-Display conditions, for both forms and modules
 Case list menu item
 Registration from case list
 Ability to delete registration forms
@@ -65,7 +73,10 @@ Menu mode (display menu & forms / display only forms)
 Conditional case opening/closing (in form's case management, open/close case "Only if the answer to...")
 Child cases
 Ability to change the case action of a form ("This form does not use cases", etc.)
-Icons in Case List
-Custom Single and Multiple Answer Questions
+
+FEATURE PREVIEWS
+Conditional Enum in Case List
 Custom Calculations in Case List
+Custom Single and Multiple Answer Questions
+Icons in Case List
 '''
