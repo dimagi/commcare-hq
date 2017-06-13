@@ -14,7 +14,7 @@ class Command(BaseCommand):
         parser.add_argument('--csv', action='store_true', default=False, dest='csv',
                             help='Write output in CSV format.')
 
-    def handle(self, *domains, **options):
+    def handle(self, domains, **options):
         csv = options.get('csv')
 
         if csv:
