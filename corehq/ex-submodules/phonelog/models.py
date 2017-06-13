@@ -67,6 +67,7 @@ class UserEntry(models.Model):
     user_id = models.CharField(max_length=COUCH_UUID_MAX_LEN)
     sync_token = models.CharField(max_length=COUCH_UUID_MAX_LEN)
     username = models.CharField(max_length=100, db_index=True)
+    server_date = models.DateTimeField(null=True, db_index=True)
 
     class Meta:
         app_label = 'phonelog'
