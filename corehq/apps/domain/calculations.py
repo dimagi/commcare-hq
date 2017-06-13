@@ -339,7 +339,7 @@ def calced_props(dom, id, all_stats):
         "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
         "cp_n_cc_users": int(all_stats["commcare_users"].get(dom, 0)),
         "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
-        "cp_n_users_submitted_form": total_distinct_users([dom]),
+        "cp_n_users_submitted_form": total_distinct_users(dom),
         "cp_n_inactive_cases": int(CALC_FNS["inactive_cases_in_last"](dom, 120)),
         "cp_n_30_day_cases": int(CALC_FNS["cases_in_last"](dom, 30)),
         "cp_n_60_day_cases": int(CALC_FNS["cases_in_last"](dom, 60)),
