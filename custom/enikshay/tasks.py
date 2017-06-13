@@ -1,7 +1,6 @@
 import datetime
 from collections import defaultdict
 import pytz
-from xml.etree import ElementTree
 
 from celery.task import periodic_task
 from celery.schedules import crontab
@@ -9,9 +8,8 @@ from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.utils.dateparse import parse_datetime, parse_date
 
-from casexml.apps.case.mock import CaseBlock
 from corehq import toggles
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.utils import update_case, bulk_update_cases
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
@@ -81,6 +79,8 @@ class EpisodeUpdater(object):
         noupdate_count = 0
         error_count = 0
         with Timer() as t:
+            batch_size = 100
+            updates = []
             for episode in self._get_open_episode_cases():
                 adherence_update = EpisodeAdherenceUpdate(episode, self)
                 voucher_update = EpisodeVoucherUpdate(self.domain, episode)
@@ -89,15 +89,14 @@ class EpisodeUpdater(object):
                     update_json = adherence_update.update_json()
                     update_json.update(voucher_update.update_json())
                     update_json.update(test_update.update_json())
-                    case_block = self._get_case_block(update_json, episode.case_id)
-                    if case_block:
-                        submit_case_blocks(
-                            [ElementTree.tostring(case_block.as_xml())],
-                            self.domain
-                        )
+                    if update_json:
+                        updates.append((episode.case_id, update_json, False))
                         update_count += 1
                     else:
                         noupdate_count += 1
+                    if len(updates) == batch_size:
+                        bulk_update_cases(self.domain, updates)
+                        updates = []
                 except Exception, e:
                     error_count += 1
                     logger.error(
@@ -106,6 +105,8 @@ class EpisodeUpdater(object):
                             e
                         )
                     )
+            if len(updates) > 0:
+                bulk_update_cases(self.domain, updates)
         logger.info(
             "Summary of enikshay_task: domain: {domain}, duration (sec): {duration} "
             "Cases Updated {updates}, cases errored {errors} and {noupdates} "
@@ -118,27 +119,8 @@ class EpisodeUpdater(object):
         # updates a single episode_case.
         assert episode_case.domain == self.domain
         update_json = EpisodeAdherenceUpdate(episode_case, self).update_json()
-        case_block = self._get_case_block(update_json, episode_case.case_id)
-        if case_block:
-            submit_case_blocks(
-                [ElementTree.tostring(case_block.as_xml())],
-                self.domain
-            )
-
-    @staticmethod
-    def _get_case_block(update, episode_id):
-        """
-        Returns:
-            CaseBlock object with episode updates. If no update is necessary, None is returned
-        """
-        if update:
-            return CaseBlock(**{
-                'case_id': episode_id,
-                'create': False,
-                'update': update
-            })
-        else:
-            return None
+        if update_json:
+            update_case(self.domain, episode_case.case_id, update_json)
 
     def _get_open_episode_cases(self):
         # return all open 'episode' cases
@@ -312,7 +294,7 @@ class EpisodeAdherenceUpdate(object):
         debug_data.append("latest_adherence_date: {}".format(latest_adherence_date))
 
         if (adherence_schedule_date_start > self.case_updater.purge_date) or not latest_adherence_date:
-            return {
+            return self.check_and_return({
                 'aggregated_score_date_calculated': adherence_schedule_date_start - datetime.timedelta(days=1),
                 'expected_doses_taken': 0,
                 'aggregated_score_count_taken': 0,
@@ -324,7 +306,7 @@ class EpisodeAdherenceUpdate(object):
                 'one_week_adherence_score': 0,
                 'two_week_adherence_score': 0,
                 'month_adherence_score': 0,
-            }
+            })
 
         adherence_cases = self.get_valid_adherence_cases()
         dose_taken_by_date = self.calculate_doses_taken_by_day(adherence_cases)
@@ -332,10 +314,7 @@ class EpisodeAdherenceUpdate(object):
             latest_adherence_date, adherence_schedule_date_start, dose_taken_by_date)
         update.update(self.get_adherence_scores(dose_taken_by_date))
 
-        if self.check_if_needs_update(update):
-            return update
-        else:
-            return None
+        return self.check_and_return(update)
 
     def get_adherence_scores(self, doses_taken_by_date):
         today = self.case_updater.date_today_in_india
@@ -425,18 +404,25 @@ class EpisodeAdherenceUpdate(object):
 
         return update
 
-    def check_if_needs_update(self, case_properties_expected):
+    def check_and_return(self, update_dict):
         """
         Args:
-            case_properties_expected: dict of case property name to values
+            update_dict: dict of case property name to values
 
         Returns:
-            True if any one of case_properties_expected is not set on self.episode case
+            Checks if any one of update_dict is not set on self.episode case,
+                if any of them are not returns update_dict after formatting any
+                date values to string.
+                If all of them are set as expected, returns None
         """
-        return any([
+        needs_update = any([
             self.get_property(k) != v
-            for (k, v) in case_properties_expected.iteritems()
+            for (k, v) in update_dict.iteritems()
         ])
+        if needs_update:
+            return update_dict
+        else:
+            return None
 
 
 class EpisodeVoucherUpdate(object):
