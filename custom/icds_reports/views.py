@@ -26,7 +26,7 @@ from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_
     get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart, \
     get_awc_reports_system_usage, get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics, \
-    get_location_filter
+    get_location_filter, get_awc_report_beneficiary
 from . import const
 from .exceptions import TableauTokenException
 
@@ -157,7 +157,7 @@ def get_tableau_access_token(tableau_user, client_ip):
 
 
 @location_safe
-@method_decorator([toggles.ICDS_REPORTS.required_decorator(), login_and_domain_required], name='dispatch')
+@method_decorator([toggles.DASHBOARD_ICDS_REPORT.required_decorator(), login_and_domain_required], name='dispatch')
 class DashboardView(TemplateView):
     template_name = 'icds_reports/dashboard.html'
 
@@ -187,11 +187,17 @@ class ProgramSummaryView(View):
 
     def get(self, request, *args, **kwargs):
         step = kwargs.get('step')
-        # Hardcoded for local tests, in database we have data only for these two days
+
         now = datetime.utcnow()
-        yesterday = (now - relativedelta(days=1)).date()
-        before_yesterday = (now - relativedelta(days=2)).date()
-        current_month = datetime(now.year, now.month, 1)
+        month = int(self.request.GET.get('month', now.month))
+        year = int(self.request.GET.get('year', now.year))
+        day = int(self.request.GET.get('day', now.day))
+
+        test_date = datetime(year, month, day)
+
+        yesterday = (test_date - relativedelta(days=1)).date()
+        before_yesterday = (test_date - relativedelta(days=2)).date()
+        current_month = datetime(year, month, 1)
         prev_month = current_month - relativedelta(months=1)
 
         if step == 'system_usage' or step == 'demographics':
@@ -199,15 +205,14 @@ class ProgramSummaryView(View):
         else:
             config = {
                 'month': tuple(current_month.timetuple())[:3],
-                'prev_month': tuple(prev_month.timetuple())[:3]
+                'prev_month': tuple(prev_month.timetuple())[:3],
+                'aggregation_level': 1
             }
 
         location = request.GET.get('location', '')
         get_location_filter(location, self.kwargs['domain'], config)
 
-        data = {
-            'records': []
-        }
+        data = {}
         if step == 'system_usage':
             data = get_system_usage_data(
                 tuple(yesterday.timetuple())[:3],
@@ -262,10 +267,15 @@ class PrevalenceOfUndernutritionView(View):
     def get(self, request, *args, **kwargs):
         step = kwargs.get('step')
 
-        month = datetime(2015, 9, 1)
+        now = datetime.utcnow()
+        month = int(self.request.GET.get('month', now.month))
+        year = int(self.request.GET.get('year', now.year))
+        day = int(self.request.GET.get('day', now.day))
+
+        test_date = datetime(year, month, day)
 
         config = {
-            'month': tuple(month.timetuple())[:3],
+            'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1l,
         }
         location = request.GET.get('location', '')
@@ -354,7 +364,10 @@ class AwcReportsView(View):
     def get(self, request, *args, **kwargs):
         step = kwargs.get('step')
 
-        month = datetime(2015, 11, 1)
+        now = datetime.utcnow()
+        month_param = int(request.GET.get('month', now.month))
+        year_param = int(request.GET.get('year', now.year))
+        month = datetime(year_param, month_param, 1)
         prev_month = month - relativedelta(months=1)
         three_month = month - relativedelta(months=2)
         location = request.GET.get('location', None)
@@ -362,6 +375,7 @@ class AwcReportsView(View):
 
         config = {
             'aggregation_level': aggregation_level,
+            'awc_site_code': "awc_214"
         }
         if location:
             try:
@@ -399,6 +413,12 @@ class AwcReportsView(View):
                 config,
                 tuple(month.timetuple())[:3]
             )
+        elif step == 'beneficiary':
+            data = get_awc_report_beneficiary(
+                config['awc_site_code'],
+                tuple(month.timetuple())[:3],
+                tuple(three_month.timetuple())[:3],
+            )
         return JsonResponse(data=data)
 
 
@@ -416,10 +436,9 @@ class ExportIndicatorView(View):
             'aggregation_level': aggregation_level
         }
 
-        # TODO add other filters - waiting on the specification
         if month and year:
             config.update({
-                'month': datetime(year, month, 1).date()
+                'month': datetime(year, month, 1).date(),
             })
 
         location = request.POST.get('location', '')
@@ -451,8 +470,9 @@ class ExportIndicatorView(View):
 class ProgressReportView(View):
     def get(self, request, *args, **kwargs):
 
-        month = int(request.GET.get('month'))
-        year = int(request.GET.get('year'))
+        now = datetime.utcnow()
+        month = int(request.GET.get('month', now.month))
+        year = int(request.GET.get('year', now.year))
         location = request.GET.get('location', None)
         aggregation_level = 1
 

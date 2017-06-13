@@ -7,6 +7,7 @@ import operator
 
 from dateutil.relativedelta import relativedelta
 from django.db.models.functions.base import Coalesce
+from simplejson import OrderedDict
 
 from corehq.util.quickcache import quickcache
 from django.db.models.aggregates import Sum, Avg
@@ -19,10 +20,10 @@ from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.factory import ReportFactory
 from custom.icds_reports.const import LocationTypes
-from dimagi.utils.dates import DateSpan
+from dimagi.utils.dates import DateSpan, rrule, MONTHLY
 
 from custom.icds_reports.models import AggDailyUsageView, AggChildHealthMonthly, AggAwcMonthly, AggCcsRecordMonthly, \
-    AggAwcDailyView, AwcLocation, DailyAttendanceView
+    AggAwcDailyView, AwcLocation, DailyAttendanceView, ChildHealthMonthlyView
 
 OPERATORS = {
     "==": operator.eq,
@@ -419,7 +420,7 @@ def get_maternal_child_data(config):
                         prev_month_data,
                         'height_eli'
                     ),
-                    'value': get_value(this_month_data, 'stunting_mod'),
+                    'value': get_value(this_month_data, 'stunting'),
                     'all': get_value(this_month_data, 'height_eli'),
                     'format': 'percent_and_div'
                 },
@@ -1332,4 +1333,50 @@ def get_awc_report_demographics(config, month):
             ]
         ]
     }
+
+
+def get_awc_report_beneficiary(awc_site_code, month, three_before):
+    data = ChildHealthMonthlyView.objects.filter(
+        month__range=(datetime(*three_before), datetime(*month)),
+        awc_id=awc_site_code,
+        open_in_month=1,
+        valid_in_month=1,
+        age_in_months__lte=72
+    ).order_by('month', 'person_name')
+
+    config = {
+        'rows': {},
+        'months': [
+            dt.strftime("%b %Y") for dt in rrule(
+                MONTHLY,
+                dtstart=datetime(*three_before),
+                until=datetime(*month)
+            )
+        ],
+        'last_month': datetime(*month).strftime("%b %Y")
+    }
+
+    def row_format(row_data):
+        return dict(
+            person_name=row_data.person_name,
+            dob=row_data.dob,
+            sex=row_data.sex,
+            age=round((datetime(*month).date() - row_data.dob).days / 365.25),
+            fully_immunized_date='Yes' if row_data.fully_immunized_date != '' else 'No',
+            nutrition_status=row_data.current_month_nutrition_status,
+            recorded_weight=row_data.recorded_weight or 0,
+            recorder_height=row_data.recorded_height or 0,
+            stunning=row_data.current_month_stunting,
+            wasting=row_data.current_month_wasting,
+            mother_name=row_data.mother_name,
+            pse_days_attended=row_data.pse_days_attended,
+            age_in_months=row_data.age_in_months,
+        )
+
+    for row in data:
+        if row.case_id not in config['rows']:
+            config['rows'][row.case_id] = {}
+        config['rows'][row.case_id][row.month.strftime("%b %Y")] = row_format(row)
+
+    return config
 

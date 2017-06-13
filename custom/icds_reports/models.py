@@ -467,7 +467,7 @@ class DailyAttendanceView(models.Model):
 
 
 class ChildHealthMonthlyView(models.Model):
-    case_id = models.TextField(blank=True, null=True)
+    case_id = models.TextField(primary_key=True)
     awc_id = models.TextField(blank=True, null=True)
     person_name = models.TextField(blank=True, null=True)
     mother_name = models.TextField(blank=True, null=True)

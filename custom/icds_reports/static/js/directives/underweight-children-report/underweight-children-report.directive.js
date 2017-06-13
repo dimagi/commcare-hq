@@ -5,7 +5,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, ma
                                              locationsService, userLocationId) {
     var vm = this;
 
-    vm.filtersData = window.angular.copy($location.search());
+    vm.filtersData = $location.search();
     vm.label = "Prevalence of Undernutrition (weight-for-age)";
     vm.step = $routeParams.step;
     vm.steps = [

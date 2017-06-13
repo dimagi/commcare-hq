@@ -91,7 +91,7 @@ class TableauReport(CustomProjectReport):
 @location_safe
 class DashboardReport(CustomProjectReport):
     slug = 'dashboard_report'
-    name = 'ICDS-CAS Dashboard v2'
+    name = 'Dashboard ICDS-CAS'
 
     @classmethod
     def get_url(cls, domain=None, **kwargs):

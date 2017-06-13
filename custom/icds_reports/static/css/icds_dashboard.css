@@ -69,11 +69,6 @@ li {
     padding: 10px;
 }
 
-li.active {
-    background-color: #545454;
-    border-right: 4px solid #00a8c6;
-}
-
 .nav-list > li {
     padding-left: 20px;
 }
@@ -88,13 +83,18 @@ li.active {
     height: 38px;
 }
 
-li > a {
+.navigation-directive li > a {
     color: #ffffff;
     text-decoration: none;
     padding: 0px !important;
 }
 
-li > a:hover, a:focus {
+.navigation-directive li.active {
+    background-color: #545454;
+    border-right: 4px solid #00a8c6;
+}
+
+.navigation-directive li > a:hover, a:focus {
      color: #ffffff;
     background-color: inherit !important;
      text-decoration:none;
@@ -293,4 +293,12 @@ h4 {
 
 circle {
     stroke-width: .5px !important;
+}
+
+.dataTable td {
+    white-space: nowrap;
+}
+
+.hideLegend .nv-legend {
+    display: none !important;
 }

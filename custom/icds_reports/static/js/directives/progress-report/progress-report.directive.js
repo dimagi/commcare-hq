@@ -5,7 +5,7 @@ var url = hqImport('hqwebapp/js/urllib.js').reverse;
 function ProgressReportController($scope, $location, progressReportService) {
     var vm = this;
 
-    vm.filtersData = window.angular.copy($location.search());
+    vm.filtersData = $location.search();
     vm.filters = ['gender', 'age'];
     vm.label = "Progress Report";
     vm.data = {};
@@ -25,6 +25,8 @@ function ProgressReportController($scope, $location, progressReportService) {
         var sum = _.reduce(values, function(memo, num) { return memo + num; }, 0);
         return sum / values.length;
     };
+
+    vm.loadData();
 }
 
 ProgressReportController.$inject = ['$scope', '$location', 'progressReportService'];

@@ -1050,7 +1050,7 @@ class PregnantWomenExport(ExportableMixin, SqlData):
 
 class DemographicsExport(ExportableMixin, SqlData):
     title = 'Demographics'
-    table_name = 'agg_Awc_monthly'
+    table_name = 'agg_awc_monthly'
 
     engine_id = 'icds-test-ucr'
 

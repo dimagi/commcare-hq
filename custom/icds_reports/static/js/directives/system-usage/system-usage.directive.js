@@ -1,11 +1,11 @@
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function SystemUsageController($http, $log, $routeParams) {
+function SystemUsageController($http, $log, $routeParams, $location) {
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
     vm.tooltipPlacement = "right";
-    vm.filters = ['month', 'gender', 'age'];
+    vm.filters = ['gender', 'age'];
     vm.step = $routeParams.step;
 
     vm.getDataForStep = function(step) {
@@ -13,7 +13,7 @@ function SystemUsageController($http, $log, $routeParams) {
         $http({
             method: "GET",
             url: get_url,
-            params: {},
+            params: $location.search(),
         }).then(
             function (response) {
                 vm.data = response.data.records;
@@ -35,7 +35,7 @@ function SystemUsageController($http, $log, $routeParams) {
     vm.getDataForStep(vm.step);
 }
 
-SystemUsageController.$inject = ['$http', '$log', '$routeParams'];
+SystemUsageController.$inject = ['$http', '$log', '$routeParams', '$location'];
 
 window.angular.module('icdsApp').directive('systemUsage', function() {
     return {
