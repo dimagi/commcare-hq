@@ -113,8 +113,9 @@ class ConnectionManager(object):
                 "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(
                     **settings.DATABASES[settings.ICDS_UCR_DATABASE_ALIAS]
                 )
-        if hasattr(settings, 'ICDS_UCR_TEST_DATABASE_ALIAS') and \
-                        settings.ICDS_UCR_TEST_DATABASE_ALIAS in settings.DATABASES:
+        if hasattr(
+            settings, 'ICDS_UCR_TEST_DATABASE_ALIAS'
+        ) and settings.ICDS_UCR_TEST_DATABASE_ALIAS in settings.DATABASES:
             db_connection_map[
                 ICDS_TEST_UCR_ENGINE_ID
             ] = "postgresql+psycopg2://{USER}:{PASSWORD}@{HOST}:{PORT}/{NAME}".format(

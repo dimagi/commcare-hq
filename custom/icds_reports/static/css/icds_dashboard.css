@@ -208,8 +208,8 @@ h4 {
 }
 
 .small-table {
-    padding: 0px !important;
-    margin: 15px !important;
+    padding: 0;
+    margin: 15px;
     border: 1px solid #D4D4D4;
 }
 

@@ -1373,8 +1373,8 @@ class ProgressReport(object):
                         'slug': 'status_weighed',
                         'average': []
                     },
-                    {'header':
-                        'Total number Unweighed',
+                    {
+                        'header': 'Total number Unweighed',
                         'slug': 'nutrition_status_unweighed'
                     },
                     {

@@ -20,13 +20,13 @@ from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFil
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
 
-from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, PregnantWomenExport, DemographicsExport, \
-    SystemUsageExport, AWCInfrastructureExport
+from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, PregnantWomenExport, \
+    DemographicsExport, SystemUsageExport, AWCInfrastructureExport
 from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_data, get_cas_reach_data, \
     get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart, \
-    get_awc_reports_system_usage, get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics, \
-    get_location_filter, get_awc_report_beneficiary
+    get_awc_reports_system_usage, get_awc_reports_pse, get_awc_reports_maternal_child, \
+    get_awc_report_demographics, get_location_filter, get_awc_report_beneficiary
 from . import const
 from .exceptions import TableauTokenException
 
