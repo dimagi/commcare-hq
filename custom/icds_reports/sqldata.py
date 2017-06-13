@@ -1562,8 +1562,14 @@ class ProgressReport(object):
                     {'header': 'Children (6 mo - 1 year) Seeking Services', 'slug': 'two'},
                     {'header': 'Children (1 year - 3 years) Seeking Services', 'slug': 'three'},
                     {'header': 'Children (3 years - 6 years) Seeking Services', 'slug': 'four'},
-                    {'header': 'Adolescent girls (11-14 years)', 'slug': 'cases_person_adolescent_girls_11_14_all'},
-                    {'header': 'Adolescent girls (15-18 years)', 'slug': 'cases_person_adolescent_girls_15_18_all'},
+                    {
+                        'header': 'Adolescent girls (11-14 years)',
+                        'slug': 'cases_person_adolescent_girls_11_14_all'
+                    },
+                    {
+                        'header': 'Adolescent girls (15-18 years)',
+                        'slug': 'cases_person_adolescent_girls_15_18_all'
+                    },
                     {
                         'header': 'Adolescent girls (11-14 years) Seeking Services',
                         'slug': 'cases_person_adolescent_girls_11_14'

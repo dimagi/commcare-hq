@@ -86,19 +86,19 @@ li {
 .navigation-directive li > a {
     color: #ffffff;
     text-decoration: none;
-    padding: 0px !important;
+    padding: 0;
 }
 
-.navigation-directive li.active {
+.navigation-directive .active {
     background-color: #545454;
     border-right: 4px solid #00a8c6;
 }
 
 .navigation-directive li > a:hover, a:focus {
-     color: #ffffff;
-    background-color: inherit !important;
-     text-decoration:none;
-     cursor:pointer;
+    color: #ffffff;
+    background-color: inherit;
+    text-decoration:none;
+    cursor:pointer;
 }
 
 .dot {

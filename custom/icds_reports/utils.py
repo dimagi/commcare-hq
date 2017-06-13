@@ -6,8 +6,6 @@ from datetime import datetime, timedelta
 import operator
 
 from dateutil.relativedelta import relativedelta
-from django.db.models.functions.base import Coalesce
-from simplejson import OrderedDict
 
 from corehq.util.quickcache import quickcache
 from django.db.models.aggregates import Sum, Avg
@@ -22,8 +20,8 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from custom.icds_reports.const import LocationTypes
 from dimagi.utils.dates import DateSpan, rrule, MONTHLY
 
-from custom.icds_reports.models import AggDailyUsageView, AggChildHealthMonthly, AggAwcMonthly, AggCcsRecordMonthly, \
-    AggAwcDailyView, AwcLocation, DailyAttendanceView, ChildHealthMonthlyView
+from custom.icds_reports.models import AggDailyUsageView, AggChildHealthMonthly, AggAwcMonthly, \
+    AggCcsRecordMonthly, AggAwcDailyView, DailyAttendanceView, ChildHealthMonthlyView
 
 OPERATORS = {
     "==": operator.eq,
@@ -1379,4 +1377,3 @@ def get_awc_report_beneficiary(awc_site_code, month, three_before):
         config['rows'][row.case_id][row.month.strftime("%b %Y")] = row_format(row)
 
     return config
-

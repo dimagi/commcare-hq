@@ -345,7 +345,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 axisLabel: '',
                 tickFormat: function(d){
                     return d3.format("d")(d);
-                }
+                },
             },
         },
     };
@@ -398,7 +398,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     values: vm.lineChartOneData,
                     color: 'black',
                     yAxis: 1,
-                }
+                },
             ];
             $scope.$apply();
         }, 500);
