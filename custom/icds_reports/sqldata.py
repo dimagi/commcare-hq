@@ -1,5 +1,10 @@
+from sqlagg.columns import SimpleColumn
+from sqlagg.filters import EQ
+
 from corehq.apps.reports.datatables import DataTablesColumn
 from corehq.apps.reports.datatables import DataTablesHeader
+from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn
+from corehq.util.quickcache import quickcache
 from custom.icds_reports.utils import ICDSMixin
 
 
@@ -81,3 +86,23 @@ class BasePopulation(ICDSMixin):
                     data['open_count']
                 ]
             ]
+
+
+class StateData(SqlData):
+    table_name = "agg_child_health_monthly"
+    filters = [
+        EQ('aggregation_level', 'aggregation_level')
+    ]
+    group_by = ['state_name', 'state_id']
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn('State Id', SimpleColumn('state_id')),
+            DatabaseColumn('State Name', SimpleColumn('state_name'))
+        ]
+
+    @property
+    @quickcache([])
+    def data(self):
+        return super(StateData, self).data

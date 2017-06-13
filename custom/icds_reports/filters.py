@@ -4,11 +4,13 @@ import pytz
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.util import load_locs_json
-from corehq.apps.reports.filters.base import BaseSingleOptionFilter
+from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseMultipleOptionFilter
 from corehq.apps.reports.filters.fixtures import AsyncLocationFilter
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from custom.common.filters import RestrictedAsyncLocationFilter
 from dimagi.utils.decorators.memoized import memoized
+
+from custom.icds_reports.sqldata import StateData
 
 
 def location_hierarchy_config(domain, location_types=None):
@@ -217,4 +219,106 @@ class THRBeneficiaryType(ICDSTableauFilterMixin, BaseSingleOptionFilter):
             ('Child', 'Child'),
             ('Pregnant', 'Pregnant'),
             ('Lactating', 'Lactating'),
+        ]
+
+
+class StateFilter(ICDSTableauFilterMixin, BaseSingleOptionFilter):
+    slug = 'state'
+    label = 'State'
+
+    @property
+    @memoized
+    def selected(self):
+        return super(StateFilter, self).selected or self.options[0][0]
+
+    @property
+    def options(self):
+        data = sorted(StateData(config=dict(aggregation_level=1)).data, key=lambda x: x[1])
+        state_names = [(x[0], x[0]) for x in data]
+        return [
+            ('All', 'All')
+        ] + state_names
+
+
+class GenderFilter(ICDSTableauFilterMixin, BaseSingleOptionFilter):
+    slug = 'gender'
+    label = 'Gender'
+
+    @property
+    @memoized
+    def selected(self):
+        return super(GenderFilter, self).selected or self.options[0][0]
+
+    @property
+    def options(self):
+        return [
+            ('All', 'All'),
+            ('M', 'Male'),
+            ('F', 'Female')
+        ]
+
+
+class MultiCasteFilter(ICDSTableauFilterMixin, BaseMultipleOptionFilter):
+    slug = 'caste'
+    label = 'Caste'
+
+    default_options = ['All']
+
+    @property
+    @memoized
+    def selected(self):
+        return super(MultiCasteFilter, self).selected or self.options[0][0]
+
+    @property
+    def options(self):
+        return [
+            ('All', 'All'),
+            ('ST', 'ST'),
+            ('SC', 'SC'),
+            ('OBC', 'OBC'),
+            ('Others', 'Others'),
+        ]
+
+
+class MultiAgeTrancheFilter(ICDSTableauFilterMixin, BaseMultipleOptionFilter):
+    slug = 'age_tranche'
+    label = 'Age Tranche'
+
+    default_options = ['All']
+
+    @property
+    @memoized
+    def selected(self):
+        return super(MultiAgeTrancheFilter, self).selected or self.options[0][0]
+
+    @property
+    def options(self):
+        return [
+            ('All', 'All'),
+            ('0', '0 mo'),
+            ('6', '6 mo'),
+            ('12', '12 mo'),
+            ('24', '24 mo'),
+            ('36', '36 mo'),
+            ('48', '48 mo'),
+            ('60', '60 mo'),
+            ('72', '72 mo'),
+        ]
+
+
+class YesNoResidentFilter(ICDSTableauFilterMixin, BaseSingleOptionFilter):
+    slug = 'resident'
+    label = 'Resident'
+
+    @property
+    @memoized
+    def selected(self):
+        return super(YesNoResidentFilter, self).selected or self.options[0][0]
+
+    @property
+    def options(self):
+        return [
+            ('All', 'All'),
+            ('yes', 'Yes'),
+            ('no', 'No')
         ]
