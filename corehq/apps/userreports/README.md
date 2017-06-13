@@ -70,6 +70,7 @@ An overview of the design, API and data structures used here.
             - [Formats](#formats)
         - [AggregateDateColumn](#aggregatedatecolumn)
         - [Expanded Columns](#expanded-columns)
+	- [Expression Columns](#expression-columns)
         - [The "aggregation" column property](#the-aggregation-column-property)
             - [Column IDs](#column-ids)
         - [Calculating Column Totals](#calculating-column-totals)
