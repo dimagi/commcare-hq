@@ -31,7 +31,7 @@ def transform_domain_for_elasticsearch(doc_dict):
 
 def get_domain_kafka_to_elasticsearch_pillow(pillow_id='KafkaDomainPillow', **kwargs):
     assert pillow_id == 'KafkaDomainPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, DOMAIN_INDEX_INFO)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, DOMAIN_INDEX_INFO, [topics.DOMAIN])
     domain_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=DOMAIN_INDEX_INFO,
