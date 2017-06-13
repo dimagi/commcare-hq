@@ -3,6 +3,7 @@ from celery import current_task, current_app
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.signals import after_task_publish
+from django.conf import settings
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_all_domains
 from casexml.apps.phone.utils import delete_sync_logs
 
