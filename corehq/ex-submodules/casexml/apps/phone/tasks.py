@@ -66,7 +66,10 @@ def update_celery_state(sender=None, body=None, **kwargs):
     backend.store_result(body['id'], None, ASYNC_RESTORE_SENT)
 
 
-@periodic_task(run_every=crontab(hour="23", minute="0"), queue='periodic_queue')
+@periodic_task(
+    run_every=crontab(hour="23", minute="0"),
+    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
+)
 def prune_synclogs():
     prune_date = date.today() - timedelta(days=60)
     num_deleted = delete_sync_logs(prune_date)
