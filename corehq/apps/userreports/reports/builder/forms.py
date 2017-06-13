@@ -711,8 +711,7 @@ class ConfigureNewReportBase(forms.Form):
         """
         Return the first fieldset in the form.
         """
-        return crispy.Fieldset(
-            "",
+        return crispy.Div(
             self.user_filter_fieldset
         )
 
@@ -1082,15 +1081,17 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
 
     @property
     def container_fieldset(self):
-        return crispy.Fieldset(
-            _('Chart'),
-            FieldWithHelpBubble(
-                'group_by',
-                help_bubble_text=_(
-                    "The values of the selected property will be aggregated "
-                    "and shown as bars in the chart."
+        return crispy.Div(
+            crispy.Fieldset(
+                _('Chart'),
+                FieldWithHelpBubble(
+                    'group_by',
+                    help_bubble_text=_(
+                        "The values of the selected property will be aggregated "
+                        "and shown as bars in the chart."
+                    ),
+                    placeholder=_("Select Property..."),
                 ),
-                placeholder=_("Select Property..."),
             ),
             self.user_filter_fieldset,
             self.default_filter_fieldset
@@ -1156,16 +1157,18 @@ class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
 
     @property
     def container_fieldset(self):
-        return crispy.Fieldset(
-            _('Chart Properties'),
-            FieldWithHelpBubble(
-                'group_by',
-                help_bubble_text=_(
-                    "The values of the selected property will be aggregated "
-                    "and shows as the sections of the pie chart."
-                ),
-                placeholder=_(
-                    "Select Property..."
+        return crispy.Div(
+            crispy.Fieldset(
+                _('Chart Properties'),
+                FieldWithHelpBubble(
+                    'group_by',
+                    help_bubble_text=_(
+                        "The values of the selected property will be aggregated "
+                        "and shows as the sections of the pie chart."
+                    ),
+                    placeholder=_(
+                        "Select Property..."
+                    ),
                 ),
             ),
             self.user_filter_fieldset,
@@ -1200,8 +1203,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             source_name = self.report_source_id
         if self.source_type == 'form':
             source_name = Form.get_form(self.report_source_id).default_name()
-        return crispy.Fieldset(
-            '',
+        return crispy.Div(
             crispy.Fieldset(
                 _legend(
                     _("Rows"),
@@ -1292,8 +1294,7 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
 
     @property
     def container_fieldset(self):
-        return crispy.Fieldset(
-            "",
+        return crispy.Div(
             self.column_fieldset,
             crispy.Fieldset(
                 _legend(
@@ -1418,8 +1419,7 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
 
     @property
     def container_fieldset(self):
-        return crispy.Fieldset(
-            '',
+        return crispy.Div(
             crispy.Fieldset(
                 _legend(
                     _("Rows"),
@@ -1457,8 +1457,7 @@ class ConfigureMapReportForm(ConfigureListReportForm):
 
     @property
     def container_fieldset(self):
-        return crispy.Fieldset(
-            "",
+        return crispy.Div(
             self.column_fieldset,
             crispy.Fieldset(
                 _legend(
