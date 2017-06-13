@@ -106,6 +106,12 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 },
             });
 
+            if (model.isPersistentDetail) {
+                $('#select-case').hide();
+            } else {
+                $('#select-case').show();
+            }
+
             $('#select-case').off('click').click(function () {
                 FormplayerFrontend.trigger("menu:select", caseId);
             });
@@ -115,6 +121,28 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
         },
 
         getDetailList: function (detailObject) {
+
+            if (detailObject.get('entities')) {
+                var entities = detailObject.get('entities');
+                var listModel = [];
+                // we need to map the details and headers JSON to a list for a Backbone Collection
+                for (var i = 0; i < entities.length; i++) {
+                    var listObj = {};
+                    listObj.data = entities[i].data;
+                    listObj.id = i;
+                    listModel.push(listObj);
+                }
+                var listCollection = new Backbone.Collection();
+                listCollection.reset(listModel);
+                var menuData = {
+                    collection: listCollection,
+                    headers: detailObject.get('headers'),
+                    styles: detailObject.get('styles'),
+                    title: detailObject.get('title'),
+                };
+                return new Menus.Views.CaseListDetailView(menuData);
+            }
+
             var headers = detailObject.get('headers');
             var details = detailObject.get('details');
             var styles = detailObject.get('styles');
@@ -198,6 +226,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 maxHeight: menuResponse.maxHeight,
                 maxWidth: menuResponse.maxWidth,
                 useUniformUnits: menuResponse.useUniformUnits,
+                isPersistentDetail: menuResponse.isPersistentDetail,
             };
             if (menuResponse.type === "commands") {
                 return new Menus.Views.MenuListView(menuData);

@@ -674,7 +674,7 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
         super(GenericFilterFormExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
 
         self.fields['date_range'].help_text = _(
-            "The timezone for this export is %(timezone)s."
+            "Filters forms by date received. The timezone for this export is %(timezone)s."
         ) % {
             'timezone': self.timezone,
         }
@@ -830,6 +830,7 @@ class AbstractExportFilterBuilder(object):
                  .domain(self.domain_object.name)
                  .OR(*user_filters)
                  .show_inactive()
+                 .remove_default_filter('not_deleted')
                  .fields([]))
         user_ids = query.run().doc_ids
 
@@ -1235,7 +1236,7 @@ class FilterSmsESExportDownloadForm(BaseFilterExportDownloadForm):
     date_range = DateSpanField(
         label=ugettext_lazy("Date Range"),
         required=True,
-        help_text="Export messages sent in this date range",
+        help_text=ugettext_lazy("Export messages sent in this date range"),
     )
 
     def __init__(self, domain_object, timezone, *args, **kwargs):

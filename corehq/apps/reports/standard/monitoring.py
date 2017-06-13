@@ -4,7 +4,9 @@ from urllib import urlencode
 import math
 import operator
 from pygooglechart import ScatterChart
-from corehq.util.quickcache import quickcache
+from corehq.apps.locations.dbaccessors import user_ids_at_locations
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import conditionally_location_safe
 import pytz
 
 from corehq import toggles
@@ -31,7 +33,6 @@ from corehq.apps.reports.analytics.esaccessors import (
     get_form_duration_stats_for_users)
 from corehq.apps.reports.exceptions import TooMuchDataError
 from corehq.apps.reports.filters.case_list import CaseListFilter
-from corehq.apps.reports.const import USER_QUERY_LIMIT
 from corehq.apps.reports.filters.users import (
     ExpandedMobileWorkerFilter as EMWF, LocationRestrictedMobileWorkerFilter
 )
@@ -55,7 +56,7 @@ from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.dates import DateSpan, today_or_tomorrow
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import json_format_date, string_to_utc_datetime
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 from django.utils.translation import ugettext_noop
 
 
@@ -145,14 +146,14 @@ class CompletionOrSubmissionTimeMixin(object):
 
 class CaseActivityReport(WorkerMonitoringCaseReportTableBase):
     """See column headers for details"""
-    name = ugettext_noop('Case Activity')
+    name = ugettext_lazy('Case Activity')
     slug = 'case_activity'
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.select.CaseTypeFilter']
     all_users = None
     display_data = ['percent']
     emailable = True
-    description = ugettext_noop("Followup rates on active cases.")
+    description = ugettext_lazy("Followup rates on active cases.")
     is_cacheable = True
     ajax_pagination = True
     exportable_all = True
@@ -689,17 +690,9 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
             mobile_user_and_group_slugs,
         ))
 
-    @quickcache(['self.domain', 'mobile_user_and_group_slugs'], timeout=10)
-    def is_query_too_big(self, mobile_user_and_group_slugs):
-        user_es_query = EMWF.user_es_query(
-            self.domain,
-            mobile_user_and_group_slugs,
-        )
-        return user_es_query.count() > USER_QUERY_LIMIT
-
     @property
     def rows(self):
-        if self.is_query_too_big(self.request.GET.getlist(EMWF.slug)):
+        if util.is_query_too_big(self.domain, self.request.GET.getlist(EMWF.slug)):
             raise BadRequestError(
                 _('Query selects too many users. Please modify your filters to select fewer users')
             )
@@ -748,8 +741,9 @@ class SubmissionsByFormReport(WorkerMonitoringFormReportTableBase,
 
 class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissionTimeMixin, DatespanMixin):
     slug = "daily_form_stats"
-    name = ugettext_noop("Daily Form Activity")
-    bad_request_error_text = ugettext_noop("Your search query was invalid. If you're using a large date range, try using a smaller one.")
+    name = ugettext_lazy("Daily Form Activity")
+    bad_request_error_text = ugettext_lazy(
+        "Your search query was invalid. If you're using a large date range, try using a smaller one.")
 
     fields = [
         'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
@@ -757,7 +751,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
         'corehq.apps.reports.filters.dates.DatespanFilter',
     ]
 
-    description = ugettext_noop("Number of submissions per day.")
+    description = ugettext_lazy("Number of submissions per day.")
 
     fix_left_col = False
     emailable = True
@@ -959,14 +953,14 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
 
 class FormCompletionTimeReport(WorkerMonitoringFormReportTableBase, DatespanMixin,
                                CompletionOrSubmissionTimeMixin):
-    name = ugettext_noop("Form Completion Time")
+    name = ugettext_lazy("Form Completion Time")
     slug = "completion_times"
     fields = ['corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
               'corehq.apps.reports.filters.forms.SingleFormByApplicationFilter',
               'corehq.apps.reports.filters.forms.CompletionOrSubmissionTimeFilter',
               'corehq.apps.reports.filters.dates.DatespanFilter']
 
-    description = ugettext_noop("Statistics on time spent on a particular form.")
+    description = ugettext_lazy("Statistics on time spent on a particular form.")
     is_cacheable = True
 
     @property
@@ -1344,11 +1338,16 @@ class WorkerActivityTimes(WorkerMonitoringChartBase,
         return chart.get_url() + '&chds=-1,24,-1,7,0,20'
 
 
+def _worker_activity_is_location_safe(view, *args, **kwargs):
+    return toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(kwargs.get("domain", None))
+
+
+@conditionally_location_safe(_worker_activity_is_location_safe)
 class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     slug = 'worker_activity'
-    name = ugettext_noop("Worker Activity")
-    description = ugettext_noop("Summary of form and case activity by user or group.")
-    section_name = ugettext_noop("Project Reports")
+    name = ugettext_lazy("Worker Activity")
+    description = ugettext_lazy("Summary of form and case activity by user or group.")
+    section_name = ugettext_lazy("Project Reports")
     num_avg_intervals = 3  # how many duration intervals we go back to calculate averages
     is_cacheable = True
 
@@ -1361,7 +1360,7 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     def fields(self):
         if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
             return [
-                'corehq.apps.reports.filters.users.ExpandedMobileWorkerFilter',
+                'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
                 'corehq.apps.reports.filters.select.MultiCaseTypeFilter',
                 'corehq.apps.reports.filters.dates.DatespanFilter',
             ]
@@ -1461,7 +1460,15 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
     @property
     def users_to_iterate(self):
         if toggles.EMWF_WORKER_ACTIVITY_REPORT.enabled(self.request.domain):
-            user_query = EMWF.user_es_query(self.domain, self.request.GET.getlist(EMWF.slug))
+            user_query = LocationRestrictedMobileWorkerFilter.user_es_query(
+                self.domain, self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug)
+            )
+            if not self.request.couch_user.has_permission(self.domain, 'access_all_locations'):
+                accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
+                    self.request.domain,
+                    self.request.couch_user)
+                )
+                user_query = user_query.location(accessible_location_ids)
             return util.get_simplified_users(user_query)
         elif not self.group_ids:
             ret = [util._report_user_dict(u) for u in list(CommCareUser.by_domain(self.domain))]
@@ -1726,7 +1733,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
         return rows
 
-    def _report_data(self):
+    @property
+    def avg_datespan(self):
         # Adjust to be have inclusive dates
         duration = (self.datespan.enddate - self.datespan.startdate) + datetime.timedelta(days=1)
         avg_datespan = DateSpan(self.datespan.startdate - (duration * self.num_avg_intervals),
@@ -1734,6 +1742,10 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
 
         if avg_datespan.startdate.year < 1900:  # srftime() doesn't work for dates below 1900
             avg_datespan.startdate = datetime.datetime(1900, 1, 1)
+        return avg_datespan
+
+    def _report_data(self):
+        avg_datespan = self.avg_datespan
 
         return WorkerActivityReportData(
             avg_submissions_by_user=get_submission_counts_by_user(self.domain, avg_datespan),

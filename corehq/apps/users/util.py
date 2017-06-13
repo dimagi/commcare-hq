@@ -6,6 +6,7 @@ from django.utils import html, safestring
 
 from couchdbkit.resource import ResourceNotFound
 from corehq import privileges
+from corehq.util.quickcache import quickcache
 
 from django.core.cache import cache
 from django_prbac.utils import has_privilege
@@ -69,6 +70,24 @@ def raw_username(username):
         return u
     else:
         return username
+
+
+@quickcache(['username'], timeout=60 * 60 * 24 * 3)
+def username_to_user_id(username):
+    '''
+    Takes a username and returns the couch user id for that user
+
+    :param username: The username name of a user
+
+    :returns: The couch user id
+    '''
+    from corehq.apps.users.models import CouchUser
+
+    user = CouchUser.get_by_username(username)
+    if not user:
+        return None
+
+    return user._id
 
 
 def user_id_to_username(user_id):
@@ -157,7 +176,7 @@ def can_add_extra_mobile_workers(request):
     if user_limit == -1 or num_web_users < user_limit:
         return True
     if not has_privilege(request, privileges.ALLOW_EXCESS_USERS):
-        current_subscription = Subscription.get_subscribed_plan_by_domain(request.domain)[1]
+        current_subscription = Subscription.get_active_subscription_by_domain(request.domain)
         if current_subscription is None or current_subscription.account.date_confirmed_extra_charges is None:
             return False
     return True

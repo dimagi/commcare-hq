@@ -3,7 +3,7 @@ from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
-USER_INDEX = es_index("hqusers_2017-03-22")
+USER_INDEX = es_index("hqusers_2017-05-22")
 USER_MAPPING = {'_all': {'analyzer': 'standard'},
  '_meta': {'created': None},
  'date_detection': False,
@@ -21,8 +21,10 @@ USER_MAPPING = {'_all': {'analyzer': 'standard'},
                                       'exact': {'index': 'not_analyzed',
                                                 'type': 'string'}},
                            'type': 'multi_field'},
+                'user_location_id': {'index': 'not_analyzed', 'type': 'string'},
                 'location_id': {'index': 'not_analyzed', 'type': 'string'},
                 'assigned_location_ids': {"type": "string"},
+                'phone_numbers': {"type": "string"},
                 'domain_membership': {'dynamic': False,
                                       'properties': {'doc_type': {'index': 'not_analyzed',
                                                                   'type': 'string'},
@@ -81,20 +83,87 @@ USER_MAPPING = {'_all': {'analyzer': 'standard'},
                                            'last_submissions': {
                                                'dynamic': False,
                                                'properties': {
-                                                    'submission_date': {'format': DATE_FORMATS_STRING,
-                                                                        'type': 'date'},
-                                                    'app_id': {'type': 'string'},
-                                                    'build_id': {'type': 'string'},
-                                                    'device_id': {'type': 'string'},
-                                                    'build_version': {'type': 'integer'},
-                                                    'commcare_version': {'type': 'string'},
+                                                   'submission_date': {'format': DATE_FORMATS_STRING,
+                                                                       'type': 'date'},
+                                                   'app_id': {'type': 'string'},
+                                                   'build_id': {'type': 'string'},
+                                                   'device_id': {'type': 'string'},
+                                                   'build_version': {'type': 'integer'},
+                                                   'commcare_version': {'type': 'string'},
                                                },
                                                'type': 'object'
-                                           }
+                                           },
+                                           'last_submission_for_user': {
+                                               'dynamic': False,
+                                               'properties': {
+                                                   'submission_date': {'format': DATE_FORMATS_STRING,
+                                                                       'type': 'date'},
+                                                   'app_id': {'type': 'string'},
+                                                   'build_id': {'type': 'string'},
+                                                   'device_id': {'type': 'string'},
+                                                   'build_version': {'type': 'integer'},
+                                                   'commcare_version': {'type': 'string'},
+                                               },
+                                               'type': 'object'
+                                           },
+                                           'last_syncs': {
+                                               'dynamic': False,
+                                               'properties': {
+                                                   'sync_date': {'format': DATE_FORMATS_STRING,
+                                                                 'type': 'date'},
+                                                   'app_id': {'type': 'string'},
+                                                   'build_version': {'type': 'integer'},
+                                               },
+                                               'type': 'object'
+                                           },
+                                           'last_sync_for_user': {
+                                               'dynamic': False,
+                                               'properties': {
+                                                   'sync_date': {'format': DATE_FORMATS_STRING,
+                                                                 'type': 'date'},
+                                                   'app_id': {'type': 'string'},
+                                                   'build_version': {'type': 'integer'},
+                                               },
+                                               'type': 'object'
+                                           },
+                                           'last_builds': {
+                                               'dynamic': False,
+                                               'properties': {
+                                                   'build_version_date': {'format': DATE_FORMATS_STRING,
+                                                                          'type': 'date'},
+                                                   'app_id': {'type': 'string'},
+                                                   'build_version': {'type': 'integer'},
+                                               },
+                                               'type': 'object'
+                                           },
+                                           'last_build_for_user': {
+                                               'dynamic': False,
+                                               'properties': {
+                                                   'build_version_date': {'format': DATE_FORMATS_STRING,
+                                                                          'type': 'date'},
+                                                   'app_id': {'type': 'string'},
+                                                   'build_version': {'type': 'integer'},
+                                               },
+                                               'type': 'object'
+                                           },
                                        },
                                        'type': 'object'},
                 'status': {'type': 'string'},
                 'user_data': {'type': 'object', 'enabled': False},
+                'user_data_es': {
+                    'type': 'nested',
+                    'dynamic': False,
+                    'properties': {
+                        'key': {
+                            'type': 'string',
+                            'index': 'not_analyzed',
+                        },
+                        'value': {
+                            'type': 'string',
+                            'index': 'analyzed',
+                        }
+                    }
+                },
                 'base_username': {'fields': {'base_username': {'index': 'analyzed',
                                                                'type': 'string'},
                                              'exact': {'index': 'not_analyzed',

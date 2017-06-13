@@ -101,6 +101,7 @@ LOCATION_ACCESS_DENIED = mark_safe(ugettext_lazy(
 LOCATION_SAFE_TASTYPIE_RESOURCES = set()
 
 LOCATION_SAFE_HQ_REPORTS = set()
+CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS = dict()
 
 NOTIFY_EXCEPTION_MSG = (
     "Someone was just denied access to a page due to location-based "
@@ -279,7 +280,10 @@ def conditionally_location_safe(conditional_function):
 
     """
     def _inner(view_fn):
-        view_fn._conditionally_location_safe_function = conditional_function
+        if isinstance(view_fn, type) and issubclass(view_fn, GenericReportView):
+            CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS[view_fn.slug] = conditional_function
+        else:
+            view_fn._conditionally_location_safe_function = conditional_function
         return view_fn
     return _inner
 
@@ -309,7 +313,12 @@ def is_location_safe(view_fn, view_args, view_kwargs):
     if getattr(view_fn, '_conditionally_location_safe_function', False):
         return view_fn._conditionally_location_safe_function(view_fn, *view_args, **view_kwargs)
     if getattr(view_fn, 'is_hq_report', False):
-        return view_kwargs['report_slug'] in LOCATION_SAFE_HQ_REPORTS
+        if view_kwargs['report_slug'] in CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS:
+            return CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS[view_kwargs['report_slug']](
+                view_fn, *view_args, **view_kwargs
+            )
+        else:
+            return view_kwargs['report_slug'] in LOCATION_SAFE_HQ_REPORTS
     return False
 
 
@@ -341,6 +350,19 @@ def user_can_access_other_user(domain, user, other_user):
             .get_sql_locations(domain)
             .accessible_to_user(domain, user)
             .exists())
+
+
+def user_can_access_case(domain, user, case):
+    from corehq.apps.reports.standard.cases.data_sources import CaseInfo
+
+    info = CaseInfo(None, case.to_json())
+    if info.owner_type == 'location':
+        return user_can_access_location_id(domain, user, info.owner_id)
+    elif info.owner_type == 'user':
+        owning_user = CouchUser.get_by_user_id(info.owner_id)
+        return user_can_access_other_user(domain, user, owning_user)
+    else:
+        return False
 
 
 def can_edit_location(view_fn):

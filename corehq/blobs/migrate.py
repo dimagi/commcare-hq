@@ -77,7 +77,6 @@ from tempfile import mkdtemp
 
 from django.conf import settings
 
-from corehq.apps.dump_reload.sql.dump import allow_form_processing_queries
 from corehq.apps.export import models as exports
 from corehq.apps.ota.models import DemoUserRestore
 from corehq.blobs import get_blob_db, DEFAULT_BUCKET, BlobInfo
@@ -290,14 +289,15 @@ class BlobDbBackendMigrator(BaseDocMigrator):
             try:
                 content = self.db.old_db.get(meta.id, bucket)
             except NotFound:
-                super(BlobDbBackendMigrator, self)._backup_doc({
-                    "doc_type": obj.doc_type,
-                    "doc_id": obj._id,
-                    "blob_identifier": meta.id,
-                    "blob_bucket": bucket,
-                    "error": "not found",
-                })
-                self.not_found += 1
+                if not self.db.new_db.exists(meta.id, bucket):
+                    super(BlobDbBackendMigrator, self)._backup_doc({
+                        "doc_type": obj.doc_type,
+                        "doc_id": obj._id,
+                        "blob_identifier": meta.id,
+                        "blob_bucket": bucket,
+                        "error": "not found",
+                    })
+                    self.not_found += 1
             else:
                 with content:
                     self.db.copy_blob(content, meta.info, bucket)
@@ -546,10 +546,6 @@ class SqlMigrator(Migrator):
         super(SqlMigrator, self).__init__(slug, types, doc_migrator)
         self.reindexer = reindexer
 
-    def migrate(self, *args, **kw):
-        with allow_form_processing_queries():
-            return super(SqlMigrator, self).migrate(*args, **kw)
-
     def _get_document_provider(self):
         return SqlDocumentProvider(self.iteration_key, self.reindexer)
 
@@ -641,12 +637,11 @@ class SqlModelMigrator(Migrator):
         migrator = self.migrator_class(self.slug, self.domain)
 
         with migrator:
-            with allow_form_processing_queries():
-                for model_class, queryset in get_all_model_querysets_for_domain(self.model_class, self.domain):
-                    for obj in queryset.iterator():
-                        migrator.process_object(obj)
-                        if migrator.total_blobs % chunk_size == 0:
-                            print("Processed {} {} objects".format(migrator.total_blobs, self.slug))
+            for model_class, queryset in get_all_model_querysets_for_domain(self.model_class, self.domain):
+                for obj in queryset.iterator():
+                    migrator.process_object(obj)
+                    if migrator.total_blobs % chunk_size == 0:
+                        print("Processed {} {} objects".format(migrator.total_blobs, self.slug))
 
         return migrator.total_blobs, 0
 

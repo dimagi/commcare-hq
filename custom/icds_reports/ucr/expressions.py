@@ -5,6 +5,7 @@ from corehq.apps.es.forms import FormES
 from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
+from corehq.elastic import mget_query
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, DictProperty, BooleanProperty
 
@@ -92,9 +93,10 @@ class GetCaseHistorySpec(JsonObject):
         case_history = []
         for f in forms:
             case_blocks = extract_case_blocks(f)
-            case_history.append(
-                next(case_block for case_block in case_blocks
-                     if case_block['@case_id'] == case_id))
+            if case_blocks:
+                case_history.append(
+                    next(case_block for case_block in case_blocks
+                         if case_block['@case_id'] == case_id))
         context.set_cache_value(cache_key, case_history)
         return case_history
 
@@ -185,6 +187,7 @@ class FormsInDateExpressionSpec(JsonObject):
             return context.get_cache_value(cache_key)
 
         def _transform_time_end(xform):
+            xform = xform.get('_source', {})
             if not xform.get('xmlns', None):
                 return None
             try:
@@ -195,12 +198,7 @@ class FormsInDateExpressionSpec(JsonObject):
             xform['timeEnd'] = datetime.strptime(time, '%Y-%m-%dT%H:%M:%S.%fZ').date()
             return xform
 
-        forms = (
-            FormES()
-            .domain(context.root_doc['domain'])
-            .doc_id(xform_ids)
-            .source(['form.meta.timeEnd', 'xmlns', '_id'])
-        ).run().hits
+        forms = mget_query('forms', xform_ids, ['form.meta.timeEnd', 'xmlns', '_id'])
         forms = filter(None, map(_transform_time_end, forms))
         context.set_cache_value(cache_key, forms)
         return forms

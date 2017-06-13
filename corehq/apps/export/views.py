@@ -115,6 +115,7 @@ from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
@@ -1389,8 +1390,15 @@ class DailySavedExportListView(BaseExportListView):
             rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
             response = rmi_helper.get_dual_model_rmi_response()
         except Exception as e:
+            message = "Problem getting Create Daily Saved Export Form: {} {}"
+            notify_exception(
+                self.request,
+                message=message.format(
+                    e.__class__, e
+                )
+            )
             return format_angular_error(
-                _("Problem getting Create Daily Saved Export Form: {} {}").format(
+                _(message).format(
                     e.__class__, e
                 ),
             )
@@ -1616,6 +1624,8 @@ class FormExportListView(BaseExportListView):
                 _("Problem getting Create Export Form: {} {}").format(
                     e.__class__, e
                 ),
+                log_error=True,
+                exception=e,
             )
         return format_angular_success(response)
 
@@ -1926,7 +1936,7 @@ class DailySavedExportMixin(object):
 
         span = datespan_from_beginning(self.domain_object, _get_timezone(self.domain, self.request.couch_user))
         instance.filters.date_period = DatePeriod(
-            period_type="range", begin=span.startdate.date(), end=span.enddate.date()
+            period_type="since", begin=span.startdate.date()
         )
         if not self.request.can_access_all_locations:
             accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
@@ -2071,6 +2081,8 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
             saved_export=export_instance,
             auto_select=auto_select
         )
+        for message in self.export_instance.error_messages():
+            messages.error(request, message)
         return super(BaseEditNewCustomExportView, self).get(request, *args, **kwargs)
 
 
@@ -2394,40 +2406,59 @@ class GenerateSchemaFromAllBuildsView(View):
         })
 
 
+def can_download_daily_saved_export(export, domain, couch_user):
+    if (export.is_deidentified
+        and user_can_view_deid_exports(domain, couch_user)
+    ):
+        return True
+    elif export.type == FORM_EXPORT and has_permission_to_view_report(
+            couch_user, domain, FORM_EXPORT_PERMISSION):
+        return True
+    elif export.type == CASE_EXPORT and has_permission_to_view_report(
+            couch_user, domain, CASE_EXPORT_PERMISSION):
+        return True
+    return False
+
+
 @location_safe
 @csrf_exempt
 @login_or_digest_or_basic_or_apikey(default='digest')
-@require_form_export_permission
 @require_GET
 def download_daily_saved_export(req, domain, export_instance_id):
-    export_instance = get_properly_wrapped_export_instance(export_instance_id)
-    assert domain == export_instance.domain
+    with CriticalSection(['export-last-accessed-{}'.format(export_instance_id)]):
+        export_instance = get_properly_wrapped_export_instance(export_instance_id)
+        assert domain == export_instance.domain
 
-    if export_instance.export_format == "html":
-        if not domain_has_privilege(domain, EXCEL_DASHBOARD):
+        if export_instance.export_format == "html":
+            if not domain_has_privilege(domain, EXCEL_DASHBOARD):
+                raise Http404
+        elif export_instance.is_daily_saved_export:
+            if not domain_has_privilege(domain, DAILY_SAVED_EXPORT):
+                raise Http404
+
+        if not export_instance.filters.is_location_safe_for_user(req):
+            return location_restricted_response(req)
+
+        if not can_download_daily_saved_export(export_instance, domain, req.couch_user):
             raise Http404
-    elif export_instance.is_daily_saved_export:
-        if not domain_has_privilege(domain, DAILY_SAVED_EXPORT):
-            raise Http404
 
-    if not export_instance.filters.is_location_safe_for_user(req):
-        return location_restricted_response(req)
+        if should_update_export(export_instance.last_accessed):
+            try:
+                from corehq.apps.export.tasks import rebuild_export_task
+                rebuild_export_task.delay(export_instance_id)
+            except Exception:
+                notify_exception(
+                    req,
+                    'Failed to rebuild export during download',
+                    {
+                        'export_instance_id': export_instance_id,
+                        'domain': domain,
+                    },
+                )
 
-    if should_update_export(export_instance.last_accessed):
-        try:
-            from corehq.apps.export.tasks import rebuild_export_task
-            rebuild_export_task.delay(export_instance_id)
-        except Exception:
-            notify_exception(
-                req,
-                'Failed to rebuild export during download',
-                {
-                    'export_instance_id': export_instance_id,
-                    'domain': domain,
-                },
-            )
-    export_instance.last_accessed = datetime.utcnow()
-    export_instance.save()
+        export_instance.last_accessed = datetime.utcnow()
+        export_instance.save()
+
     payload = export_instance.get_payload(stream=True)
     return build_download_saved_export_response(
         payload, export_instance.export_format, export_instance.filename

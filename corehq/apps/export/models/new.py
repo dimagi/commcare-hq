@@ -7,10 +7,13 @@ from collections import defaultdict, OrderedDict, namedtuple
 
 from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
+from django.utils.datastructures import OrderedSet
 from django.utils.translation import ugettext as _
 from django.urls import reverse
 from django.db import models
 from django.http import Http404
+from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
+    get_case_properties
 
 from corehq.apps.reports.models import HQUserType
 from soil.progress import set_task_progress
@@ -34,7 +37,6 @@ from corehq.apps.app_manager.dbaccessors import (
     get_app,
 )
 from corehq.apps.app_manager.models import Application, AdvancedFormActions
-from corehq.apps.app_manager.util import get_case_properties, ParentCasePropertyBuilder
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import Product
 from corehq.apps.reports.display import xmlns_to_name
@@ -146,6 +148,19 @@ class ExportItem(DocumentSchema):
     # False if the item was found in the application structure
     inferred = BooleanProperty(default=False)
     inferred_from = SetProperty(default=set)
+
+    def __key(self):
+        return'{}:{}:{}'.format(
+            _path_nodes_to_string(self.path),
+            self.doc_type,
+            self.transform,
+        )
+
+    def __hash__(self):
+        return hash(self.__key())
+
+    def __eq__(self, other):
+        return self.__key() == other.__key()
 
     @classmethod
     def wrap(cls, data):
@@ -266,6 +281,9 @@ class ExportColumn(DocumentSchema):
                 pass
         if value is None:
             value = MISSING_VALUE
+
+        if isinstance(value, list):
+            value = ' '.join(value)
         return value
 
     @staticmethod
@@ -862,6 +880,19 @@ class ExportInstance(BlobMixin, Document):
         new_export = self.__class__.wrap(export_json)
         return new_export
 
+    def error_messages(self):
+        error_messages = []
+        if self.export_format == 'xls':
+            for table in self.tables:
+                if len(table.selected_columns) > 255:
+                    error_messages.append(_(
+                        "XLS format does not support more than 255 columns. "
+                        "Please select a different file type"
+                    ))
+                    break
+
+        return error_messages
+
 
 class CaseExportInstance(ExportInstance):
     case_type = StringProperty()
@@ -912,10 +943,6 @@ class FormExportInstance(ExportInstance):
     # static filters to limit the data in this export
     # filters are only used in daily saved and HTML (dashboard feed) exports
     filters = SchemaProperty(FormExportInstanceFilters)
-
-    @property
-    def identifier(self):
-        return self.xmlns
 
     @property
     def identifier(self):
@@ -1396,7 +1423,7 @@ class ExportDataSchema(Document):
         orders = {}
         for group_schema in ordered_schema.group_schemas:
             for idx, item in enumerate(group_schema.items):
-                orders[tuple(item.path)] = idx
+                orders[item] = idx
 
         # Next iterate through current schema and order the ones that have an order
         # and put the rest at the bottom. The ones not ordered are deleted items
@@ -1404,8 +1431,8 @@ class ExportDataSchema(Document):
             ordered_items = [None] * len(group_schema.items)
             unordered_items = []
             for idx, item in enumerate(group_schema.items):
-                if tuple(item.path) in orders:
-                    ordered_items.insert(orders[tuple(item.path)], item)
+                if item in orders:
+                    ordered_items[orders[item]] = item
                 else:
                     unordered_items.append(item)
             group_schema.items = filter(None, ordered_items) + unordered_items
@@ -1425,11 +1452,7 @@ class ExportDataSchema(Document):
         def resolvefn(group_schema1, group_schema2):
 
             def keyfn(export_item):
-                return'{}:{}:{}'.format(
-                    _path_nodes_to_string(export_item.path),
-                    export_item.doc_type,
-                    export_item.transform,
-                )
+                return export_item
 
             group_schema1.last_occurrences = _merge_dicts(
                 group_schema1.last_occurrences,
@@ -1542,16 +1565,23 @@ class FormExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _process_app_build(cls, current_schema, app, form_xmlns):
-        form = app.get_form_by_xmlns(form_xmlns, log_missing=False)
-        if not form:
+        forms = app.get_forms_by_xmlns(form_xmlns, log_missing=False)
+        if not forms:
             return current_schema
 
-        case_updates = form.get_case_updates(form.get_module().case_type)
-        xform = form.wrapped_xform()
-        if isinstance(form.actions, AdvancedFormActions):
-            open_case_actions = form.actions.open_cases
-        else:
-            open_case_actions = form.actions.subcases
+        case_updates = OrderedSet()
+        for form in forms:
+            for update in form.get_case_updates(form.get_module().case_type):
+                case_updates.add(update)
+        xform = forms[0].wrapped_xform()  # This will be the same for any form in the list
+        open_case_actions = OrderedSet()
+        for form in forms:
+            if isinstance(form.actions, AdvancedFormActions):
+                actions = form.actions.open_cases
+            else:
+                actions = form.actions.subcases
+            for action in actions:
+                open_case_actions.add(action)
 
         repeats_with_subcases = {
             open_case_action for open_case_action in open_case_actions

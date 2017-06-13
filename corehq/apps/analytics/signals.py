@@ -6,13 +6,18 @@ from corehq.apps.analytics.tasks import (
     update_hubspot_properties,
 )
 from corehq.apps.analytics.utils import get_meta
+from corehq.apps.registration.views import ProcessRegistrationView
 from corehq.util.decorators import handle_uncaught_exceptions
+from corehq.util.soft_assert import soft_assert
 from .tasks import identify
 
 from django.dispatch import receiver
+from django.urls import reverse
+
 
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq.apps.accounting.models import (
+    DefaultProductPlan,
     ProBonoStatus,
     SoftwarePlanEdition,
     SoftwarePlanVisibility,
@@ -23,6 +28,9 @@ from corehq.apps.accounting.signals import subscription_upgrade_or_downgrade
 from corehq.apps.domain.signals import commcare_domain_post_save
 from corehq.apps.users.signals import couch_user_post_save
 from corehq.apps.analytics.utils import get_instance_string
+
+
+_no_cookie_soft_assert = soft_assert('{}@{}'.format('cellowitz', 'dimagi.com'), send_to_ops=False)
 
 
 @receiver(couch_user_post_save)
@@ -76,7 +84,12 @@ def get_subscription_properties_by_user(couch_user):
     paying_subscribed_editions = []
     subscribed_editions = []
     for domain_name in couch_user.domains:
-        plan_version, subscription = Subscription.get_subscribed_plan_by_domain(domain_name)
+        subscription = Subscription.get_active_subscription_by_domain(domain_name)
+        plan_version = (
+            subscription.plan_version
+            if subscription is not None
+            else DefaultProductPlan.get_default_plan_version()
+        )
         subscribed_editions.append(plan_version.plan.edition)
         if subscription is not None:
             all_subscriptions.append(subscription)
@@ -137,7 +150,12 @@ def track_user_login(sender, request, user, **kwargs):
     if couch_user and couch_user.is_web_user():
         if not request or HUBSPOT_COOKIE not in request.COOKIES:
             # API calls, form submissions etc.
-            return
+
+            user_confirming = request.path.startswith(reverse(ProcessRegistrationView.urlname))
+            if user_confirming:
+                _no_cookie_soft_assert(False, 'User confirmed account but had no cookie')
+            else:
+                return
 
         meta = get_meta(request)
         track_user_sign_in_on_hubspot.delay(couch_user, request.COOKIES, meta, request.path)

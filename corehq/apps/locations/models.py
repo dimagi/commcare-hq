@@ -1,3 +1,4 @@
+import uuid
 import warnings
 from functools import partial
 
@@ -8,7 +9,6 @@ from dimagi.ext.couchdbkit import *
 import itertools
 from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
 from dimagi.utils.couch.database import iter_docs
-from dimagi.utils.couch.migration import SyncSQLToCouchMixin, SyncCouchToSQLMixin
 from dimagi.utils.decorators.memoized import memoized
 from datetime import datetime
 from django.db import models, transaction
@@ -121,6 +121,7 @@ class LocationType(models.Model):
         on_delete=models.SET_NULL,
     )  # include all levels of this type and their ancestors
     last_modified = models.DateTimeField(auto_now=True)
+    has_user = models.BooleanField(default=False)
 
     emergency_level = StockLevelField(default=0.5)
     understock_threshold = StockLevelField(default=1.5)
@@ -138,6 +139,7 @@ class LocationType(models.Model):
     def __init__(self, *args, **kwargs):
         super(LocationType, self).__init__(*args, **kwargs)
         self._administrative_old = self.administrative
+        self._has_user_old = self.has_user
 
     @property
     def expand_from(self):
@@ -170,6 +172,8 @@ class LocationType(models.Model):
         self.overstock_threshold = config.overstock_threshold
 
     def save(self, *args, **kwargs):
+        from .tasks import update_location_users
+
         if not self.code:
             from corehq.apps.commtrack.util import unicode_slug
             self.code = unicode_slug(self.name)
@@ -185,6 +189,8 @@ class LocationType(models.Model):
 
         if is_not_first_save:
             self.sync_administrative_status()
+            if self._has_user_old != self.has_user:
+                update_location_users.delay(self)
 
         return saved
 
@@ -368,11 +374,10 @@ class OnlyUnarchivedLocationManager(LocationManager):
         return list(self.accessible_to_user(domain, user).location_ids())
 
 
-class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
+class SQLLocation(MPTTModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255, null=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
-    _migration_couch_id_name = "location_id"  # Used for SyncSQLToCouchMixin
     location_type = models.ForeignKey(LocationType, on_delete=models.CASCADE)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True, blank=True)
@@ -393,39 +398,66 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
 
     supply_point_id = models.CharField(max_length=255, db_index=True, unique=True, null=True, blank=True)
 
+    # For locations where location_type.has_user == True
+    user_id = models.CharField(max_length=255, blank=True)
+
     objects = _tree_manager = LocationManager()
     # This should really be the default location manager
     active_objects = OnlyUnarchivedLocationManager()
 
     @classmethod
-    def _migration_get_fields(cls):
+    def get_sync_fields(cls):
         return ["domain", "name", "site_code", "external_id",
                 "metadata", "is_archived"]
 
-    @classmethod
-    def _migration_get_couch_model_class(cls):
-        return Location
+    def sync_couch_location(self):
+        if self.location_id:
+            couch_obj = self.couch_location
+        else:
+            couch_obj = Location()
+            couch_obj._id = uuid.uuid4().hex
+            self.location_id = couch_obj._id
 
-    def _migration_do_sync(self):
-        couch_obj = self._migration_get_or_create_couch_object()
         couch_obj._sql_location_type = self.location_type
         couch_obj.latitude = float(self.latitude) if self.latitude else None
         couch_obj.longitude = float(self.longitude) if self.longitude else None
-        self._migration_sync_to_couch(couch_obj)
+
+        for field_name in self.get_sync_fields():
+            value = getattr(self, field_name)
+            setattr(couch_obj, field_name, value)
+
+        return couch_obj
 
     @transaction.atomic()
     def save(self, *args, **kwargs):
         from corehq.apps.commtrack.models import sync_supply_point
         from .document_store import publish_location_saved
-        self.supply_point_id = sync_supply_point(self)
+        set_site_code_if_needed(self)
 
         sync_to_couch = kwargs.pop('sync_to_couch', True)
-        kwargs['sync_to_couch'] = False  # call it here
-        super(SQLLocation, self).save(*args, **kwargs)
+
         if sync_to_couch:
-            self._migration_do_sync()
+            couch_obj = self.sync_couch_location()
+
+        self.supply_point_id = sync_supply_point(self)
+
+        if not self.location_id:
+            raise ValueError("Expected non-empty location_id")
+
+        super(SQLLocation, self).save(*args, **kwargs)
+
+        if sync_to_couch:
+            couch_obj.save(sync_to_sql=False)
 
         publish_location_saved(self.domain, self.location_id)
+
+    def delete(self, *args, **kwargs):
+        if kwargs.pop('sync_to_couch', True):
+            try:
+                self.couch_location.delete(sync_to_sql=False)
+            except ResourceNotFound:
+                pass
+        super(SQLLocation, self).delete(*args, **kwargs)
 
     def to_json(self):
         return {
@@ -442,7 +474,8 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
             'longitude': float(self.longitude) if self.longitude else None,
             'metadata': self.metadata,
             'location_type': self.location_type.name,
-            "lineage": self.lineage,
+            'location_type_code': self.location_type.code,
+            'lineage': self.lineage,
             'parent_location_id': self.parent_location_id,
         }
 
@@ -488,6 +521,12 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         # to archive the parent, we don't want to try to close again
         if sp and not sp.closed:
             close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
+
+        if self.user_id:
+            from corehq.apps.users.models import CommCareUser
+            user = CommCareUser.get(self.user_id)
+            user.active = False
+            user.save()
 
         _unassign_users_from_location(self.domain, self.location_id)
 
@@ -535,6 +574,12 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
                     action.xform.archive(user_id=COMMTRACK_USERNAME)
                     break
 
+        if self.user_id:
+            from corehq.apps.users.models import CommCareUser
+            user = CommCareUser.get(self.user_id)
+            user.active = True
+            user.save()
+
     def unarchive(self):
         """
         Unarchive a location and reopen supply point case if it
@@ -562,31 +607,16 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         to_delete = self.get_descendants(include_self=True)
 
         for loc in to_delete:
-            loc._sql_close_case_and_remove_users()
+            loc._close_case_and_remove_users()
 
         to_delete.delete()
-
-    def _sql_close_case_and_remove_users(self):
-        """
-        SQL ONLY VERSION
-        Closes linked supply point cases for a location and unassigns the users
-        assigned to that location.
-
-        Used by both archive and delete methods
-        """
-
-        sp = self.linked_supply_point()
-        # sanity check that the supply point exists and is still open.
-        # this is important because if you archive a child, then try
-        # to archive the parent, we don't want to try to close again
-        if sp and not sp.closed:
-            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
-
-        _unassign_users_from_location(self.domain, self.location_id)
 
     class Meta:
         app_label = 'locations'
         unique_together = ('domain', 'site_code',)
+        index_together = [
+            ('tree_id', 'lft', 'rght')
+        ]
 
     def __unicode__(self):
         return u"{} ({})".format(self.name, self.domain)
@@ -595,7 +625,7 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
         return u"SQLLocation(domain='{}', name='{}', location_type='{}')".format(
             self.domain,
             self.name,
-            self.location_type.name,
+            self.location_type.name if hasattr(self, 'location_type') else None,
         ).encode('utf-8')
 
     @property
@@ -723,7 +753,6 @@ class SQLLocation(SyncSQLToCouchMixin, MPTTModel):
     @property
     def sql_location(self):
         # For backwards compatability
-        notify_of_deprecation("'sql_location' was just called on a sql_location.  That's kinda silly.")
         return self
 
 
@@ -744,7 +773,44 @@ def filter_for_archived(locations, include_archive_ancestors):
         return locations.filter(is_archived=False)
 
 
-class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
+def make_location(**kwargs):
+    """API compatabile with `Location.__init__`, but returns a SQLLocation"""
+    loc_type_name = kwargs.pop('location_type')
+    try:
+        sql_location_type = LocationType.objects.get(
+            domain=kwargs['domain'],
+            name=loc_type_name,
+        )
+    except LocationType.DoesNotExist:
+        msg = "You can't create a location without a real location type"
+        raise LocationType.DoesNotExist(msg)
+    kwargs['location_type'] = sql_location_type
+    parent = kwargs.pop('parent', None)
+    kwargs['parent'] = parent.sql_location if parent else None
+    return SQLLocation(**kwargs)
+
+
+def get_location(location_id, domain=None):
+    """Drop-in replacement for `Location.get`, but returns a SQLLocation"""
+    if domain:
+        return SQLLocation.objects.get(domain=domain, location_id=location_id)
+    else:
+        return SQLLocation.objects.get(location_id=location_id)
+
+
+def set_site_code_if_needed(location):
+    from corehq.apps.commtrack.util import generate_code
+    if not location.site_code:
+        all_codes = [
+            code.lower() for code in
+            (SQLLocation.objects.exclude(location_id=location.location_id)
+                                .filter(domain=location.domain)
+                                .values_list('site_code', flat=True))
+        ]
+        location.site_code = generate_code(location.name, all_codes)
+
+
+class Location(CachedCouchDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
     site_code = StringProperty()  # should be unique, not yet enforced
@@ -845,16 +911,18 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
             raise LocationType.DoesNotExist(msg)
 
     @classmethod
-    def _migration_get_fields(cls):
+    def get_sync_fields(cls):
         return ["domain", "name", "site_code", "external_id", "metadata",
                 "is_archived", "latitude", "longitude"]
 
-    @classmethod
-    def _migration_get_sql_model_class(cls):
-        return SQLLocation
+    def sync_sql_location(self):
+        if not self._id:
+            self._id = uuid.uuid4().hex
 
-    def _migration_do_sync(self):
-        sql_location = self._migration_get_or_create_sql_object()
+        try:
+            sql_location = self.sql_location
+        except SQLLocation.DoesNotExist:
+            sql_location = SQLLocation(location_id=self._id)
 
         location_type = self._sql_location_type or sql_location.location_type
         sql_location.location_type = location_type
@@ -862,45 +930,32 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
         if hasattr(self, '_sql_parent'):
             sql_location.parent = self._sql_parent
 
-        self._migration_sync_to_sql(sql_location)
+        for field_name in self.get_sync_fields():
+            value = getattr(self, field_name)
+            setattr(sql_location, field_name, value)
+
+        return sql_location
 
     def save(self, *args, **kwargs):
         self.last_modified = datetime.utcnow()
 
         # lazy migration for site_code
-        if not self.site_code:
-            from corehq.apps.commtrack.util import generate_code
-            all_codes = [
-                code.lower() for code in
-                (SQLLocation.objects.filter(domain=self.domain)
-                                    .values_list('site_code', flat=True))
-            ]
-            self.site_code = generate_code(self.name, all_codes)
-
-        # Set the UUID here so we can save to SQL first (easier to rollback)
-        if not self._id:
-            self._id = self.get_db().server.next_uuid()
+        set_site_code_if_needed(self)
 
         sync_to_sql = kwargs.pop('sync_to_sql', True)
-        kwargs['sync_to_sql'] = False  # only sync here
         with transaction.atomic():
             if sync_to_sql:
-                self._migration_do_sync()
+                sql_location = self.sync_sql_location()
+                sql_location.save(sync_to_couch=False)
             super(Location, self).save(*args, **kwargs)
 
-    @classmethod
-    def filter_by_type(cls, domain, loc_type, root_loc=None):
-        if root_loc:
-            query = root_loc.sql_location.get_descendants(include_self=True)
-        else:
-            query = SQLLocation.objects
-        ids = (query.filter(domain=domain, location_type__name=loc_type)
-                    .location_ids())
-
-        return (
-            cls.wrap(l) for l in iter_docs(cls.get_db(), list(ids))
-            if not l.get('is_archived', False)
-        )
+    def delete(self, *args, **kwargs):
+        if kwargs.pop('sync_to_sql', True):
+            try:
+                self.sql_location.delete(sync_to_couch=False)
+            except SQLLocation.DoesNotExist:
+                pass
+        super(Location, self).delete(*args, **kwargs)
 
     @classmethod
     def by_domain(cls, domain, include_docs=True):
@@ -965,6 +1020,7 @@ class Location(SyncCouchToSQLMixin, CachedCouchDocumentMixin, Document):
     @property
     def descendants(self):
         """return list of all locations that have this location as an ancestor"""
+        notify_of_deprecation("Deprecating this - use SQL locations instead")
         return list(self.sql_location.get_descendants().couch_locations())
 
     def get_children(self):

@@ -32,6 +32,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     Template,
     Text,
     Xpath,
+    XpathVariable,
 )
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
 from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search,\
@@ -75,6 +76,8 @@ class DetailContributor(SectionContributor):
                                     print_template_path = None
                                     if detail.print_template:
                                         print_template_path = detail.print_template['path']
+                                    locale_id = id_strings.detail_title_locale(detail_type)
+                                    title = Text(locale_id=locale_id) if locale_id else Text()
                                     d = self.build_detail(
                                         module,
                                         detail_type,
@@ -82,14 +85,15 @@ class DetailContributor(SectionContributor):
                                         detail_column_infos,
                                         tabs=list(detail.get_tabs()),
                                         id=id_strings.detail(module, detail_type),
-                                        title=Text(locale_id=id_strings.detail_title_locale(
-                                            module, detail_type
-                                        )),
+                                        title=title,
                                         print_template=print_template_path,
                                     )
                                     if d:
                                         r.append(d)
-                        if detail.persist_case_context and not detail.persist_tile_on_forms:
+                        # add the persist case context if needed and if
+                        # case tiles are present and have their own persistent block
+                        if (detail.persist_case_context and
+                                not (detail.use_case_tiles and detail.persist_tile_on_forms)):
                             d = self._get_persistent_case_context_detail(module, detail.persistent_case_context_xml)
                             r.append(d)
                 if module.fixture_select.active:
@@ -484,9 +488,7 @@ class CaseTileHelper(object):
         """
         return {
             "detail_id": id_strings.detail(self.module, self.detail_type),
-            "title_text_id": id_strings.detail_title_locale(
-                self.module, self.detail_type
-            )
+            "title_text_id": id_strings.detail_title_locale(self.detail_type),
         }
 
     def _get_column_context(self, column):
@@ -506,17 +508,31 @@ class CaseTileHelper(object):
                 column.header.get(default_lang, "")
             )
         }
-        if column.format == "enum":
-            context["enum_keys"] = self._get_enum_keys(column)
+        if column.enum and column.format != "enum" and column.format != "conditional-enum":
+            raise SuiteError(
+                'Expected case tile field "{}" to be an id mapping with keys {}.'.format(
+                    column.case_tile_field,
+                    ", ".join(['"{}"'.format(i.key) for i in column.enum])
+                )
+            )
+
+        context['variables'] = ''
+        if column.format == "enum" or column.format == 'conditional-enum':
+            context["variables"] = self._get_enum_variables(column)
         return context
 
-    def _get_enum_keys(self, column):
-        keys = {}
-        for mapping in column.enum:
-            keys[mapping.key] = id_strings.detail_column_enum_variable(
-                self.module, self.detail_type, column, mapping.key_as_variable
+    def _get_enum_variables(self, column):
+        variables = []
+        for i, mapping in enumerate(column.enum):
+            variables.append(
+                XpathVariable(
+                    name=mapping.key_as_variable,
+                    locale_id=id_strings.detail_column_enum_variable(
+                        self.module, self.detail_type, column, mapping.key_as_variable
+                    )
+                ).serialize()
             )
-        return keys
+        return ''.join(variables)
 
     @property
     @memoized

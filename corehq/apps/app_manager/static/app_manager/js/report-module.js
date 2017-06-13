@@ -4,124 +4,84 @@ hqDefine('app_manager/js/report-module.js', function () {
     //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
     var select2Separator = "\u001F";
 
-    function KeyValuePair(key, value, config) {
-        var self = this;
-
-        self.key = ko.observable(key);
-        self.value = ko.observable(value);
-        self.config = config;
-
-        self.remove = function() {
-            config.keyValuePairs.remove(self);
-        };
-    }
-
-    function Config(dict) {
-        var self = this;
-
-        dict = dict || {};
-
-        self.keyValuePairs = ko.observableArray();
-        _.each(dict, function(value, key) {
-            self.keyValuePairs.push(new KeyValuePair(key, value, self));
-        });
-
-        self.addConfig = function() {
-            self.keyValuePairs.push(new KeyValuePair('', '', self));
-        };
-    }
-
-    function GraphConfig(report_id, reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton) {
-        var self = this;
+    function GraphConfig(reportId, reportName, availableReportIds, reportCharts, graph_configs,
+                         columnXpathTemplate, dataPathPlaceholders, lang, langs, changeSaveButton) {
+        var self = this,
+            columnTemplate = _.template(columnXpathTemplate);
 
         graph_configs = graph_configs || {};
 
-        this.graphConfigs = {};
+        self.graphUiElements = {};
+        var GraphConfigurationUiElement = hqImport('app_manager/js/graph-config.js').GraphConfigurationUiElement;
         for (var i = 0; i < availableReportIds.length; i++) {
             var currentReportId = availableReportIds[i];
-            self.graphConfigs[currentReportId] = {};
+            self.graphUiElements[currentReportId] = {};
             for (var j = 0; j < reportCharts[currentReportId].length; j++) {
                 var currentChart = reportCharts[currentReportId][j];
-                var graph_config = graph_configs[currentChart.chart_id] || {};
-                var series_configs = {};
-                var chart_series = [];
-                for(var k = 0; k < currentChart.y_axis_columns.length; k++) {
-                    var series = currentChart.y_axis_columns[k].column_id;
-                    chart_series.push(series);
-                    series_configs[series] = new Config(
-                        currentReportId === report_id ? (graph_config.series_configs || {})[series] || {} : {}
-                    );
-                }
-
-                self.graphConfigs[currentReportId][currentChart.chart_id] = {
-                    graph_type: ko.observable(currentReportId === report_id ? graph_config.graph_type || 'bar' : 'bar'),
-                    series_configs: series_configs,
-                    chart_series: chart_series,
-                    config: new Config(
-                        currentReportId === report_id ? graph_config.config || {} : {}
-                    )
+                var graph_config = graph_configs[currentChart.chart_id] || {
+                    graph_type: 'bar',
+                    series: _.map(currentChart.y_axis_columns, function(c) { return {}; }),
                 };
+
+                // Add series placeholders
+                _.each(currentChart.y_axis_columns, function(column, index) {
+                    if (graph_config.series[index]) {
+                        var dataPathPlaceholder = dataPathPlaceholders && dataPathPlaceholders[currentReportId]
+                            ? dataPathPlaceholders[currentReportId][currentChart.chart_id]
+                            : "[path will be automatically generated]"
+                        ;
+                        _.extend(graph_config.series[index], {
+                            data_path_placeholder: dataPathPlaceholder,
+                            x_placeholder: columnTemplate({ id: currentChart.x_axis_column }),
+                            y_placeholder: columnTemplate({ id: column.column_id }),
+                        });
+                    }
+                });
+
+                var graph_el = new GraphConfigurationUiElement({
+                    childCaseTypes: [],
+                    fixtures: [],
+                    lang: lang,
+                    langs: langs,
+                }, graph_config);
+                graph_el.setName(reportName);
+                self.graphUiElements[currentReportId][currentChart.chart_id] = graph_el;
+
+                graph_el.on("change", function() {
+                    changeSaveButton();
+                });
             }
         }
 
-        this.currentGraphConfigs = ko.computed(function() {
-            return self.graphConfigs[reportId()];
+        this.name = ko.observable(reportName);
+        this.name.subscribe(function(newValue) {
+            _.each(self.graphUiElements, function(reportGraphElements) {
+                _.each(reportGraphElements, function(uiElement) {
+                    uiElement.setName(newValue);
+                });
+            });
+        });
+
+        this.currentGraphUiElements = ko.computed(function() {
+            return self.graphUiElements[reportId()];
         });
 
         this.currentCharts = ko.computed(function() {
             return reportCharts[reportId()];
         });
 
-        this.getCurrentGraphConfig = function(chart_id) {
-            return self.currentGraphConfigs()[chart_id] || {config: {keyValuePairs: []}};
+        this.getCurrentGraphUiElement = function(chart_id) {
+            return self.currentGraphUiElements()[chart_id];
         };
 
         this.toJSON = function () {
-            function configToDict(config) {
-                var dict = {};
-                var keyValuePairs = config.keyValuePairs();
-                for (var i = 0; i < keyValuePairs.length; i++) {
-                    dict[keyValuePairs[i].key()] = keyValuePairs[i].value();
-                }
-                return dict;
-            }
-
             var chartsToConfigs = {};
-            var currentChartsToConfigs = self.currentGraphConfigs();
+            var currentChartsToConfigs = self.currentGraphUiElements();
             _.each(currentChartsToConfigs, function(graph_config, chart_id) {
-                chartsToConfigs[chart_id] = {
-                    series_configs: {}
-                };
-                _.each(graph_config.series_configs, function(series_config, series) {
-                    chartsToConfigs[chart_id].series_configs[series] = configToDict(series_config);
-                });
-                chartsToConfigs[chart_id].graph_type = graph_config.graph_type();
-                chartsToConfigs[chart_id].config = configToDict(graph_config.config);
+                chartsToConfigs[chart_id] = graph_config.val();
             });
             return chartsToConfigs;
         };
-
-        this.addSubscribersToSaveButton = function() {
-            var addSubscriberToSaveButton = function(observable) {
-                observable.subscribe(changeSaveButton);
-            };
-            var addConfigToSaveButton = function(config) {
-                addSubscriberToSaveButton(config.keyValuePairs);
-                _.each(config.keyValuePairs(), function(keyValuePair) {
-                    addSubscriberToSaveButton(keyValuePair.key);
-                    addSubscriberToSaveButton(keyValuePair.value);
-                });
-            };
-            _.each(self.graphConfigs, function(reportGraphConfigs) {
-                _.each(reportGraphConfigs, function(graphConfig) {
-                    addSubscriberToSaveButton(graphConfig.graph_type);
-                    addConfigToSaveButton(graphConfig.config);
-                    _.each(graphConfig.series_configs, addConfigToSaveButton);
-                });
-            });
-        };
-
-        this.allGraphTypes = ['bar', 'time', 'xy'];
     }
 
     /**
@@ -176,7 +136,7 @@ hqDefine('app_manager/js/report-module.js', function () {
                 });
 
                 if(filter.choices !== undefined && filter.show_all) {
-                    filter.choices.unshift({value: "_all", display: "Show All"}); // TODO: translate
+                    filter.choices.unshift({value: "_all", display: gettext("Show All")});
                 }
             }
         });
@@ -235,9 +195,9 @@ hqDefine('app_manager/js/report-module.js', function () {
     function ReportConfig(report_id, display,
                           localizedDescription, xpathDescription, useXpathDescription,
                           showDataTable, uuid, availableReportIds,
-                          reportCharts, graph_configs,
+                          reportCharts, graph_configs, columnXpathTemplate, dataPathPlaceholders,
                           filterValues, reportFilters,
-                          language, changeSaveButton) {
+                          language, languages, changeSaveButton) {
         var self = this;
         this.lang = language;
         this.fullDisplay = display || {};
@@ -259,7 +219,12 @@ hqDefine('app_manager/js/report-module.js', function () {
         this.useXpathDescription.subscribe(changeSaveButton);
         this.showDataTable.subscribe(changeSaveButton);
 
-        this.graphConfig = new GraphConfig(report_id, this.reportId, availableReportIds, reportCharts, graph_configs, changeSaveButton);
+        self.graphConfig = new GraphConfig(this.reportId, this.display(), availableReportIds, reportCharts,
+                                           graph_configs, columnXpathTemplate, dataPathPlaceholders,
+                                           this.lang, languages, changeSaveButton);
+        this.display.subscribe(function(newValue) {
+            self.graphConfig.name(newValue);
+        });
         this.filterConfig = new FilterConfig(report_id, this.reportId, filterValues, reportFilters, changeSaveButton);
 
         this.toJSON = function () {
@@ -267,7 +232,7 @@ hqDefine('app_manager/js/report-module.js', function () {
             self.fullLocalizedDescription[self.lang] = self.localizedDescription() || "";
             return {
                 report_id: self.reportId(),
-                graph_configs: self.graphConfig.toJSON(),
+                complete_graph_configs: self.graphConfig.toJSON(),
                 filters: self.filterConfig.toJSON(),
                 header: self.fullDisplay,
                 localized_description: self.fullLocalizedDescription,
@@ -295,9 +260,10 @@ hqDefine('app_manager/js/report-module.js', function () {
         var availableReports = options.availableReports || [];
         var saveURL = options.saveURL;
         self.staticFilterData = options.staticFilterData;
+        self.languages = options.languages;
         self.lang = options.lang;
         self.moduleName = options.moduleName;
-        self.moduleFilter = options.moduleFilter === "None" ? "" : options.moduleFilter;
+        self.moduleFilter = options.moduleFilter || "";
         self.currentModuleName = ko.observable(options.moduleName[self.lang]);
         self.currentModuleFilter = ko.observable(self.moduleFilter);
         self.menuImage = options.menuImage;
@@ -307,6 +273,8 @@ hqDefine('app_manager/js/report-module.js', function () {
         self.reportCharts = {};
         self.reportFilters = {};
         self.reports = ko.observableArray([]);
+        self.columnXpathTemplate = options.columnXpathTemplate || "";
+        self.dataPathPlaceholders = options.dataPathPlaceholders || {};
         for (var i = 0; i < availableReports.length; i++) {
             var report = availableReports[i];
             var report_id = report.report_id;
@@ -335,13 +303,13 @@ hqDefine('app_manager/js/report-module.js', function () {
         };
 
         self.saveButton = COMMCAREHQ.SaveButton.init({
-            unsavedMessage: "You have unsaved changes in your report list module",
+            unsavedMessage: gettext("You have unsaved changes in your report list module"),
             save: function () {
                 // validate that all reports have valid data
                 var reports = self.reports();
                 for (var i = 0; i < reports.length; i++) {
                     if (!reports[i].reportId() || !reports[i].display()) {
-                        alert('Reports must have all properties set!');
+                        alert(gettext('Reports must have all properties set!'));
                         break;
                     }
                 }
@@ -384,10 +352,13 @@ hqDefine('app_manager/js/report-module.js', function () {
                 options.uuid,
                 self.availableReportIds,
                 self.reportCharts,
-                options.graph_configs,
+                options.complete_graph_configs,
+                self.columnXpathTemplate,
+                self.dataPathPlaceholders,
                 options.filters,
                 self.reportFilters,
                 self.lang,
+                self.languages,
                 self.changeSaveButton
             );
             report.reportId.subscribe(function (reportId) {
@@ -425,3 +396,9 @@ hqDefine('app_manager/js/report-module.js', function () {
         select2Separator: select2Separator
     };
 });
+
+ko.bindingHandlers.editGraph = {
+    init: function (element, valueAccessor) {
+        $(element).find(":first").replaceWith(valueAccessor().ui);
+    },
+};

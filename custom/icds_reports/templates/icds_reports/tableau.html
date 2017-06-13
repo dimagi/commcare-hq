@@ -67,6 +67,7 @@
     <script type="text/javascript" src="{% static 'tableau_app.js' %}"></script>
 </head>
 <body>
+    <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
     <nav class="navbar navbar-default">
         <div class="container-fluid">
             <div class="navbar-header hq-header navbar-hq-main-menu">
@@ -89,7 +90,7 @@
                 <div class="nav-settings-bar pull-right">
                     <ul class="nav navbar-nav" role="menu">
                         <li class="dropdown">
-                            <a href="#" id="settingsmenu-projectSettings" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown">
+                            <a href="#" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown">
                                 <i class="fa fa-cog nav-main-icon"></i> <span class="responsive-label">{% trans "Manage" %}</span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-right" role="menu">
@@ -116,12 +117,12 @@
                                 <li class="nav-divider divider"></li>
                                 <li class="dropdown-header nav-header">{% trans 'Manage Account' %}</li>
                                 <li>
-                                    <a href="{% url "my_account_settings" %}" id="menuitem-accountsettings">
+                                    <a href="{% url "my_account_settings" %}">
                                         <i class="fa fa-user icon-user dropdown-icon"></i> {% trans 'My Account Settings' %}
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="{% url "logout" %}" id="menuitem-signout">
+                                    <a href="{% url "logout" %}">
                                         <i class="icon-signout fa fa-sign-out"></i>
                                         {% trans 'Sign Out' %}
                                     </a>

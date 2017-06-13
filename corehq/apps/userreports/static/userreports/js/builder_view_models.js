@@ -1,5 +1,6 @@
 /* global django, ReportBuilder */
 hqDefine('userreports/js/builder_view_models.js', function () {
+    'use strict';
 
     var getOrDefault = function(options, key, default_) {
         if (options[key] === undefined) {
@@ -22,28 +23,28 @@ hqDefine('userreports/js/builder_view_models.js', function () {
     var PropertyListItem = function(getDefaultDisplayText, getPropertyObject, hasDisplayText) {
         var self = this;
 
-        this.property = ko.observable("");
-        this.getPropertyObject = getPropertyObject;
-        this.hasDisplayText = hasDisplayText;
+        self.property = ko.observable("");
+        self.getPropertyObject = getPropertyObject;
+        self.hasDisplayText = hasDisplayText;
 
         // True if the property exists in the current version of the app
-        this.existsInCurrentVersion = ko.observable(true);
+        self.existsInCurrentVersion = ko.observable(true);
 
         // The header for the column or filter in the report
-        this.displayText = ko.observable("");
+        self.displayText = ko.observable("");
 
         // True if the display text has been modified by the user at least once
-        this.displayTextModifiedByUser = ko.observable(false);
+        self.displayTextModifiedByUser = ko.observable(false);
 
         // True if the display text should be updated when the property changes
-        this.inheritDisplayText = ko.observable(!this.displayText());
-        this.property.subscribe(function(newValue) {
+        self.inheritDisplayText = ko.observable(!self.displayText());
+        self.property.subscribe(function(newValue) {
             if (self.inheritDisplayText()){
                 var newDisplayText = getDefaultDisplayText(newValue);
                 self.displayText(newDisplayText);
             }
         });
-        this.displayText.subscribe(function(value){
+        self.displayText.subscribe(function(value){
             if (!value) {
                 // If the display text has been cleared, go back to inherting
                 // it from the property
@@ -54,8 +55,8 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         // A proxy for displayText that will let us know when displayText
         // has been modified by the user (by updating inheritDisplayText).
         // This is useful because sometimes the displayText is changed
-        // programatically when the user changes this.property.
-        this.inputBoundDisplayText = ko.computed({
+        // programatically when the user changes self.property.
+        self.inputBoundDisplayText = ko.computed({
             read: function() {
                 return self.displayText();
             },
@@ -65,25 +66,25 @@ hqDefine('userreports/js/builder_view_models.js', function () {
                 self.displayTextModifiedByUser(true);
                 self.displayText(value);
             },
-            owner: this,
+            owner: self,
         });
 
-        this.displayTextIsValid = ko.pureComputed(function(){
+        self.displayTextIsValid = ko.pureComputed(function(){
             // Blank display text is not allowed
             return Boolean(self.displayText() || !self.hasDisplayText);
         });
-        this.showDisplayTextError = ko.pureComputed(function(){
+        self.showDisplayTextError = ko.pureComputed(function(){
             // This should also return true if the user has tried to submit the form
             return !self.displayTextIsValid() && (self.displayTextModifiedByUser() || self.showWarnings());
         });
 
         // The format of the filter. This field is not used if the
         // PropertyListItem is representing columns
-        this.format = ko.observable("");
+
+        self.format = ko.observable("");
 
         var constants = hqImport('userreports/js/constants.js');
-
-        this.calculationOptions = ko.pureComputed(function() {
+        self.calculationOptions = ko.pureComputed(function() {
             var propObject = self.getPropertyObject(self.property());
             if (propObject) {
                 return propObject.aggregation_options;
@@ -118,20 +119,20 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         });
 
         // for default filters, the value to filter by
-        this.filterValue = ko.observable("");
+        self.filterValue = ko.observable("");
         // for default filters, the dynamic date operator to filter by
-        this.filterOperator = ko.observable("");
+        self.filterOperator = ko.observable("");
         // If this PropertyListItem represents a property that no longer
         // exists in the app, then dataSourceField will be the name of the
         // property that no longer exists
-        this.dataSourceField = ko.observable("");
-        this.isEditable = ko.pureComputed(function(){
+        self.dataSourceField = ko.observable("");
+        self.isEditable = ko.pureComputed(function(){
             return !self.existsInCurrentVersion();
         });
 
         // True if validation messages should be shown on any and all fields
-        this.showWarnings = ko.observable(false);
-        this.isValid = ko.computed(function(){
+        self.showWarnings = ko.observable(false);
+        self.isValid = ko.computed(function(){
             return Boolean(self.property() && self.existsInCurrentVersion() && self.displayTextIsValid());
         });
     };
@@ -140,13 +141,14 @@ hqDefine('userreports/js/builder_view_models.js', function () {
      * suitable for sending to the server.
      */
     PropertyListItem.prototype.toJS = function () {
+        var self = this;
         return {
-            property: this.property(),
-            display_text: this.displayText(),
-            format: this.format(),
-            calculation: this.calculation(),
-            pre_value: this.filterValue(),
-            pre_operator: this.filterOperator(),
+            property: self.property(),
+            display_text: self.displayText(),
+            format: self.format(),
+            calculation: self.calculation(),
+            pre_value: self.filterValue(),
+            pre_operator: self.filterOperator(),
         };
     };
     /**
@@ -154,8 +156,9 @@ hqDefine('userreports/js/builder_view_models.js', function () {
      *  we weren't already.
      */
     PropertyListItem.prototype.validate = function() {
-        this.showWarnings(true);
-        return this.isValid();
+        var self = this;
+        self.showWarnings(true);
+        return self.isValid();
     };
 
 
@@ -182,43 +185,43 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         // A list of objects representing the properties that can be chosen from
         // for this list. Objects are js versions of ColumnOption or
         // DataSourceProperty objects.
-        this.propertyOptions = options.propertyOptions;
+        self.propertyOptions = options.propertyOptions;
 
         // The propertyOptions transformed into a shape that either the
         // select2 or questionsSelect binding can handle.
-        this.selectablePropertyOptions = options.selectablePropertyOptions;
+        self.selectablePropertyOptions = options.selectablePropertyOptions;
 
-        this.reportType = ko.observable(options.reportType);
-        this.buttonText = getOrDefault(options, 'buttonText', 'Add property');
+        self.reportType = ko.observable(options.reportType);
+        self.buttonText = getOrDefault(options, 'buttonText', 'Add property');
         // True if at least one column is required.
-        this.requireColumns = getOrDefault(options, 'requireColumns', false);
-        this.requireColumnsText = getOrDefault(options, 'requireColumnsText', "Please select at least one property");
+        self.requireColumns = getOrDefault(options, 'requireColumns', false);
+        self.requireColumnsText = getOrDefault(options, 'requireColumnsText', "Please select at least one property");
         // This function will be called if a user tries to submit the form with no columns.
-        this.noColumnsValidationCallback = getOrDefault(options, 'noColumnsValidationCallback', null);
-        this.propertyHelpText = getOrDefault(options, 'propertyHelpText', null);
-        this.displayHelpText = getOrDefault(options, 'displayHelpText', null);
-        this.formatHelpText = getOrDefault(options, 'formatHelpText', null);
-        this.calcHelpText = getOrDefault(options, 'calcHelpText', null);
-        this.filterValueHelpText = getOrDefault(options, 'filterValueHelpText', null);
-        this.analyticsAction = getOrDefault(options, 'analyticsAction', null);
-        this.analyticsLabel = getOrDefault(options, 'analyticsLabel', this.reportType());
+        self.noColumnsValidationCallback = getOrDefault(options, 'noColumnsValidationCallback', null);
+        self.propertyHelpText = getOrDefault(options, 'propertyHelpText', null);
+        self.displayHelpText = getOrDefault(options, 'displayHelpText', null);
+        self.formatHelpText = getOrDefault(options, 'formatHelpText', null);
+        self.calcHelpText = getOrDefault(options, 'calcHelpText', null);
+        self.filterValueHelpText = getOrDefault(options, 'filterValueHelpText', null);
+        self.analyticsAction = getOrDefault(options, 'analyticsAction', null);
+        self.analyticsLabel = getOrDefault(options, 'analyticsLabel', this.reportType());
 
-        this.hasDisplayCol = getOrDefault(options, 'hasDisplayCol', true);
-        this.hasFormatCol = getOrDefault(options, 'hasFormatCol', true);
-        this.hasCalculationCol = getOrDefault(options, 'hasCalculationCol', false);
-        this.hasFilterValueCol = getOrDefault(options, 'hasFilterValueCol', false);
+        self.hasDisplayCol = getOrDefault(options, 'hasDisplayCol', true);
+        self.hasFormatCol = getOrDefault(options, 'hasFormatCol', true);
+        self.hasCalculationCol = getOrDefault(options, 'hasCalculationCol', false);
+        self.hasFilterValueCol = getOrDefault(options, 'hasFilterValueCol', false);
 
-        this.columns = ko.observableArray(_.map(getOrDefault(options, 'initialCols', []), function(i) {
+        self.columns = ko.observableArray(_.map(getOrDefault(options, 'initialCols', []), function(i) {
             return wrapListItem(i);
         }));
-        this.serializedProperties = ko.computed(function(){
+        self.serializedProperties = ko.computed(function(){
             return JSON.stringify(
                 _.map(
                     _.filter(self.columns(), function(c){return c.existsInCurrentVersion();}),
                     function(c){return c.toJS();})
             );
         });
-        this.showWarnings = ko.observable(false);
+        self.showWarnings = ko.observable(false);
     };
     PropertyList.prototype._createListItem = function() {
         return new PropertyListItem(
@@ -282,40 +285,44 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             defaultFilters,
             dataSourceIndicators,
             reportColumnOptions,
-            dateRangeOptions
+            dateRangeOptions,
+            isGroupByRequired
     ) {
-
+        var self = this;
         var constants = hqImport('userreports/js/constants.js');
 
-        this.optionsContainQuestions = _.any(dataSourceIndicators, function (o) {
+        self.optionsContainQuestions = _.any(dataSourceIndicators, function (o) {
             return o.type === 'question';
         });
-        this.dataSourceIndicators = dataSourceIndicators;
-        this.reportColumnOptions = reportColumnOptions;
+        self.dataSourceIndicators = dataSourceIndicators;
+        self.reportColumnOptions = reportColumnOptions;
+        self.groupBy = ko.observable();
+        self.isGroupByRequired = ko.observable(isGroupByRequired);
+        self.showGroupByValidationError = ko.observable(false);
 
         var utils = hqImport("userreports/js/utils.js");
 
         // Convert the DataSourceProperty and ColumnOption passed through the template
         // context into objects with the correct format for the select2 and
         // questionsSelect knockout bindings.
-        if (this.optionsContainQuestions) {
-            this.selectableDataSourceIndicators = _.compact(_.map(
-                this.dataSourceIndicators, utils.convertDataSourcePropertyToQuestionsSelectFormat
+        if (self.optionsContainQuestions) {
+            self.selectableDataSourceIndicators = _.compact(_.map(
+                self.dataSourceIndicators, utils.convertDataSourcePropertyToQuestionsSelectFormat
             ));
-            this.selectableReportColumnOptions = _.compact(_.map(
-                this.reportColumnOptions, utils.convertReportColumnOptionToQuestionsSelectFormat
+            self.selectableReportColumnOptions = _.compact(_.map(
+                self.reportColumnOptions, utils.convertReportColumnOptionToQuestionsSelectFormat
             ));
         } else {
-            this.selectableDataSourceIndicators = _.compact(_.map(
-                this.dataSourceIndicators, utils.convertDataSourcePropertyToSelect2Format
+            self.selectableDataSourceIndicators = _.compact(_.map(
+                self.dataSourceIndicators, utils.convertDataSourcePropertyToSelect2Format
             ));
-            this.selectableReportColumnOptions = _.compact(_.map(
-                this.reportColumnOptions, utils.convertReportColumnOptionToSelect2Format
+            self.selectableReportColumnOptions = _.compact(_.map(
+                self.reportColumnOptions, utils.convertReportColumnOptionToSelect2Format
             ));
         }
-        this.dateRangeOptions = dateRangeOptions;
+        self.dateRangeOptions = dateRangeOptions;
 
-        this.userFiltersList = new PropertyList({
+        self.userFiltersList = new PropertyList({
             hasFormatCol: sourceType === "case",
             hasCalculationCol: false,
             initialCols: userFilters,
@@ -325,10 +332,10 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             displayHelpText: django.gettext('Web users viewing the report will see this display text instead of the property name. Name your filter something easy for users to understand.'),
             formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this if the property is a date.<br/><strong>Choice</strong>: Select this if the property is text or multiple choice.'),
             reportType: reportType,
-            propertyOptions: this.dataSourceIndicators,
-            selectablePropertyOptions: this.selectableDataSourceIndicators,
+            propertyOptions: self.dataSourceIndicators,
+            selectablePropertyOptions: self.selectableDataSourceIndicators,
         });
-        this.defaultFiltersList = new PropertyList({
+        self.defaultFiltersList = new PropertyList({
             hasFormatCol: true,
             hasCalculationCol: false,
             hasDisplayCol: false,
@@ -340,21 +347,10 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             formatHelpText: django.gettext('What type of property is this filter?<br/><br/><strong>Date</strong>: Select this to filter the property by a date range.<br/><strong>Value</strong>: Select this to filter the property by a single value.'),
             filterValueHelpText: django.gettext('What value or date range must the property be equal to?'),
             reportType: reportType,
-            propertyOptions: this.dataSourceIndicators,
-            selectablePropertyOptions: this.selectableDataSourceIndicators,
+            propertyOptions: self.dataSourceIndicators,
+            selectablePropertyOptions: self.selectableDataSourceIndicators,
         });
-        this.defaultFiltersList.validate = function() {
-            var isColumnsValid = PropertyList.prototype.validate.call(this);
-            var isFilterValuesValid = !_.contains(
-                _.map(
-                    this.columns(),
-                    function(c) {return Boolean(c.filterValue())}
-                ),
-                false
-            );
-            return isColumnsValid && isFilterValuesValid;
-        };
-        this.columnsList = new PropertyList({
+        self.columnsList = new PropertyList({
             hasFormatCol: false,
             hasCalculationCol: reportType === constants.REPORT_TYPE_TABLE,
             initialCols: columns,
@@ -371,25 +367,33 @@ hqDefine('userreports/js/builder_view_models.js', function () {
                 );
             },
             reportType: reportType,
-            propertyOptions: this.reportColumnOptions,
-            selectablePropertyOptions: this.selectableReportColumnOptions,
+            propertyOptions: self.reportColumnOptions,
+            selectablePropertyOptions: self.selectableReportColumnOptions,
         });
-    };
-    ConfigForm.prototype.submitHandler = function (formElement) {
-        var isValid = true;
-        isValid = this.userFiltersList.validate() && isValid;
-        isValid = this.defaultFiltersList.validate() && isValid;
-        isValid = this.columnsList.validate() && isValid;
-        if (!isValid){
-            alert('Invalid report configuration. Please fix the issues and try again.');
-            // The event handler that disables the button is triggered
-            // after this handler is invoked. Therefore, we use _.defer()
-            // to re-enable it immediately after the call stack clears.
-            _.defer(function(el){
-                $(el).find('.disable-on-submit').enableButton();
-            }, formElement);
-        }
-        return isValid;
+
+        self.showValidationError = ko.observable(false);
+        self.validationErrorText = ko.observable();
+
+        self.submitHandler = function (formElement) {
+            var isValid = true;
+            isValid = self.userFiltersList.validate() && isValid;
+            isValid = self.columnsList.validate() && isValid;
+            if (self.isGroupByRequired()) {
+                isValid = !_.isEmpty(self.groupBy()) && isValid;
+            }
+            self.showValidationError(!isValid);
+            self.showGroupByValidationError(_.isEmpty(self.groupBy()) && self.isGroupByRequired());
+
+            if (!isValid) {
+                self.validationErrorText(
+                    django.gettext("Please check above for any errors in your configuration.")
+                );
+                _.defer(function(el){
+                    $(el).find('.disable-on-submit').enableButton();
+                }, formElement);
+            }
+            return isValid;
+        };
     };
 
     return {

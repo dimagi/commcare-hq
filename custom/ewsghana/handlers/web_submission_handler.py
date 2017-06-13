@@ -25,7 +25,7 @@ class WebSubmissionHandler(SOHHandler):
         return EWSStockAndReceiptParser(
             self.domain_object,
             VerifiedNumberAdapter(self.user, 'ewsghana-input-stock', self.domain, self.user.get_id),
-            self.sql_location.couch_location
+            self.sql_location
         )
 
     def respond(self, message, **kwargs):

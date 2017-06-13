@@ -1,11 +1,11 @@
-import pytz
-from django.utils.dateparse import parse_datetime
+from datetime import datetime
 
 from corehq.apps.es import filters
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 
 from custom.enikshay.const import DOSE_KNOWN_INDICATORS
+from custom.enikshay.exceptions import EnikshayTaskException
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -30,4 +30,15 @@ class AdherenceDatastore(object):
     def latest_adherence_date(self, episode_id):
         result = self.dose_known_adherences(episode_id)
         if result:
-            return pytz.UTC.localize(parse_datetime(result[0].get('adherence_date')))
+            # the result is sorted on 'adherence_date'
+            latest_date = result[0].get('adherence_date')
+            try:
+                return datetime.strptime(latest_date, '%Y-%m-%d').date()
+            except ValueError:
+                try:
+                    return datetime.strptime(latest_date, '%Y-%m-%dT%H:%M:%S').date()
+                except ValueError:
+                    raise EnikshayTaskException("Adherence row {} does not or has invalid 'adherence_date'".format(
+                        result[0]))
+        else:
+            return None

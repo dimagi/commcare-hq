@@ -1,5 +1,6 @@
 from dimagi.ext.jsonobject import (
     BooleanProperty,
+    IntegerProperty,
     JsonObject,
     ListProperty,
     StringProperty,
@@ -14,7 +15,7 @@ from corehq.apps.userreports.reports.filters.values import (
     DateFilterValue,
     NumericFilterValue,
     QuarterFilterValue,
-    LocationDrilldownFilterValue)
+    LocationDrilldownFilterValue, MultiFieldChoiceListFilterValue)
 from corehq.apps.userreports.specs import TypeProperty
 
 
@@ -39,6 +40,7 @@ class ReportFilter(JsonObject):
             'pre': PreFilterValue,
             'choice_list': ChoiceListFilterValue,
             'dynamic_choice_list': ChoiceListFilterValue,
+            'multi_field_dynamic_choice_list': MultiFieldChoiceListFilterValue,
             'location_drilldown': LocationDrilldownFilterValue,
         }[self.type](self, value)
 
@@ -100,8 +102,16 @@ class DynamicChoiceListFilterSpec(FilterSpec):
         return []
 
 
+class MultiFieldDynamicChoiceFilterSpec(DynamicChoiceListFilterSpec):
+    type = TypeProperty('multi_field_dynamic_choice_list')
+    fields = ListProperty(default=[])
+
+
 class LocationDrilldownFilterSpec(FilterSpec):
     type = TypeProperty('location_drilldown')
+    include_descendants = BooleanProperty(default=False)
+    # default to some random high number '99'
+    max_drilldown_levels = IntegerProperty(default=99)
 
 
 class PreFilterSpec(FilterSpec):

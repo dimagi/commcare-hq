@@ -5,14 +5,16 @@
 {% load hq_shared_tags %}
 {% load hqstyle_tags %}
 {% load i18n %}
-
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
     <script src="{% static 'style/js/ui-element.js' %}"></script>
-{% if strong_mobile_passwords and not hide_password_feedback %}
-    <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
-    <script src="{% static 'registration/js/password.js' %}"></script>
-{% endif %}
+    {% if strong_mobile_passwords and not hide_password_feedback %}
+        <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
+        <script src="{% static 'registration/js/password.js' %}"></script>
+    {% endif %}
+    {% if implement_password_obfuscation %}
+        {% include "nic_compliance/password_encoder.html" %}
+    {% endif %}
     <script src="{% static 'users/js/edit_commcare_user.js' %}"></script>
 {% endblock %}
 
@@ -72,6 +74,11 @@
         </div>
         {% if commtrack %}
         <div class="tab-pane" id="commtrack-data">
+            {% if couch_user.user_location_id %}
+                <a class="btn btn-default" href="{% url "edit_location" domain couch_user.user_location_id %}">
+                    <i class="fa fa-external-link"></i> {% trans "User Location" %}
+                </a>
+            {% endif %}
             {% include "users/partial/edit_commtrack_user_settings.html" %}
         </div>
         {% endif %}

@@ -639,7 +639,7 @@ def send_overdue_reminders(today=None):
                 .aggregate(Sum('balance'))['balance__sum']
             if total >= 100:
                 domain = Domain.get_by_name(invoice.get_domain())
-                current_subscription = Subscription.get_subscribed_plan_by_domain(domain)[1]
+                current_subscription = Subscription.get_active_subscription_by_domain(domain.name)
                 if (
                     current_subscription.plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY
                     and not current_subscription.skip_auto_downgrade
@@ -682,6 +682,7 @@ def _downgrade_domain(subscription):
         DefaultProductPlan.get_default_plan_version(
             SoftwarePlanEdition.COMMUNITY
         ),
+        adjustment_method=SubscriptionAdjustmentMethod.AUTOMATIC_DOWNGRADE,
         note='Automatic downgrade to community for invoice 60 days late',
         internal_change=True
     )

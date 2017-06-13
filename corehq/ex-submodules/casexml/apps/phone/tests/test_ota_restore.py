@@ -92,7 +92,7 @@ class BaseOtaRestoreTest(TestCase, TestFileMixin):
         delete_all_cases()
         delete_all_sync_logs()
         restore_config = RestoreConfig(project=self.project, restore_user=self.restore_user)
-        restore_config.cache.delete(restore_config._initial_cache_key)
+        restore_config.cache.clear()
         super(BaseOtaRestoreTest, self).tearDown()
 
 
@@ -131,10 +131,19 @@ class OtaRestoreTest(BaseOtaRestoreTest):
         self.assertIsInstance(restore_config_cached.get_payload(), CachedResponse)
         self.assertNotIsInstance(restore_config_overwrite.get_payload(), CachedResponse)
 
-        # even cached responses change the sync log id so they are not the same
-        restore_payload = restore_config.get_payload().as_string()
-        self.assertNotEqual(restore_payload, restore_config_cached.get_payload().as_string())
-        self.assertNotEqual(restore_payload, restore_config_overwrite.get_payload().as_string())
+    def testDifferentDeviceCache(self):
+        '''
+        Ensure that if restore is coming from different device, do not return cached response
+        '''
+        restore_config = get_restore_config(
+            self.project, self.restore_user, items=True, force_cache=True, device_id='123',
+        )
+        restore_config_other_device = get_restore_config(
+            self.project, self.restore_user, items=True, device_id='456'
+        )
+
+        self.assertNotIsInstance(restore_config.get_payload(), CachedResponse)
+        self.assertNotIsInstance(restore_config_other_device.get_payload(), CachedResponse)
 
     def testUserRestoreWithCase(self):
         xml_data = self.get_xml('create_short')

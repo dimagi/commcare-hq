@@ -82,9 +82,7 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
         });
 
         self.saveUsercaseButton = COMMCAREHQ.SaveButton.init({
-            unsavedMessage: COMMCAREHQ.toggleEnabled('USER_PROPERTY_EASY_REFS') ?
-                gettext("You have unchanged user properties settings") :
-                gettext("You have unchanged user case settings"),
+            unsavedMessage: gettext("You have unchanged user properties settings"),
             save: function () {
                 var actions = JSON.stringify(_(self.actions).extend(
                     HQFormActions.from_usercase_transaction(self.caseConfigViewModel.usercase_transaction)
@@ -145,7 +143,7 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
         self.change = function () {
             self.saveButton.fire('change');
             self.ensureBlankProperties();
-            self.forceRefreshTextchangeBinding($('#case-config-ko'));
+            self.forceRefreshTextchangeBinding(self.home);
         };
 
         self.usercaseChange = function () {
@@ -171,7 +169,7 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
         };
 
         self.init = function () {
-            var $home = $('#case-config-ko');
+            var $home =self.home;
             var $usercaseMgmt = $('#usercase-config-ko');
             _.delay(function () {
                 if ($home.length) {
@@ -889,7 +887,7 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
                 allow: {
                     repeats: function () {
                         // This placeholder function allows us to reuse the "case-config:case-properties:question"
-                        // template in case_config_shared.html
+                        // template in case_config_ko_templates.html
                         return true;
                     }
                 },
@@ -991,7 +989,14 @@ hqDefine('app_manager/js/case-config-ui.js', function () {
         }
     };
 
-    return {
-        CaseConfig: CaseConfig
-    };
+    $(function() {
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+        if (initial_page_data('has_form_source')) {
+            var caseConfig = new CaseConfig(_.extend({}, initial_page_data("case_config_options"), {
+                home: $('#case-config-ko'),
+                requires: ko.observable(initial_page_data("form_requires")),
+            }));
+            caseConfig.init();
+        }
+    });
 });

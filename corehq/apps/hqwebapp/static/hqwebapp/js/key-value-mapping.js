@@ -1,4 +1,4 @@
-/* globals django, COMMCAREHQ, uploaders */ // global uploaders is not great, should be fixed
+/* globals django */
 (function () {
 
 /**
@@ -29,11 +29,7 @@ var MapItem = function(item, index, mappingContext){
 
 
     var app_manager = hqImport('app_manager/js/app_manager_media.js');
-    if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
-        uploaders = hqImport('#app_manager/v2/partials/nav_menu_media_js_common.html');
-    } else {
-        uploaders = hqImport('#app_manager/v1/partials/nav_menu_media_js_common.html');
-    }
+    var uploaders = hqImport("app_manager/js/nav_menu_media_common.js");
     // attach a media-manager if item.value is a file-path to icon
     if (mappingContext.values_are_icons()) {
         var actualPath = item.value[mappingContext.lang];
@@ -100,6 +96,7 @@ function MapList(o) {
     self.items = ko.observableArray();
     self.duplicatedItems = ko.observableArray();
     self.values_are_icons = ko.observable(o.values_are_icons || false);
+    self.values_are_conditions = ko.observable(o.values_are_conditions || false);
     self.multimedia = o.multimedia;
     self.property_name = o.property_name;
 
@@ -109,6 +106,13 @@ function MapList(o) {
                 placeholder: django.gettext('Calculation'),
                 duplicated: django.gettext('Calculation is duplicated'),
                 addButton: django.gettext('Add Image'),
+            };
+        }
+        else if (this.values_are_conditions()) {
+            return {
+                placeholder: django.gettext('Calculation'),
+                duplicated: django.gettext('Calculation is duplicated'),
+                addButton: django.gettext('Add Key, Value Mapping'),
             };
         }
         else {
@@ -190,6 +194,7 @@ uiElement.key_value_mapping = function (o) {
     m.edit = ko.observable(true);
     m.buttonText = o.buttonText || "Edit",
     m.values_are_icons = ko.observable(o.values_are_icons || false);
+    m.values_are_conditions = ko.observable(o.values_are_conditions || false);
     m.openModal = function () {
         // create a throw-away modal every time
         // lets us create a sandbox for editing that you can cancel
@@ -201,6 +206,7 @@ uiElement.key_value_mapping = function (o) {
             module_id: o.module_id,
             items: m.getItems(),
             values_are_icons: m.values_are_icons(),
+            values_are_conditions: m.values_are_conditions(),
             multimedia: m.multimedia,
             property_name: o.property_name,
         });

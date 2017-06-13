@@ -5,7 +5,10 @@ from datetime import datetime, timedelta
 from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
 from django.conf import settings
+from django.db.models import F
 from django.utils.translation import ugettext as _
+from elasticsearch.exceptions import ConnectionTimeout
+from restkit import RequestError
 
 from corehq import toggles
 from corehq.apps.userreports.const import (
@@ -24,8 +27,8 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
+from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
-from corehq.util.couch import get_document_or_not_found
 from corehq.util.datadog.gauges import datadog_gauge
 from corehq.util.quickcache import quickcache
 from dimagi.utils.couch import CriticalSection
@@ -149,7 +152,7 @@ def _iteratively_build_table(config, last_id=None, resume_helper=None, in_place=
 
 
 @task(queue=UCR_CELERY_QUEUE)
-def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_order, params):
+def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, sort_order=None, params=None):
     from corehq.apps.userreports.laboratory.experiment import UCRExperiment
 
     def _run_report(backend_to_use):
@@ -160,8 +163,13 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column, sort_o
                 [(data_source.top_level_columns[int(sort_column)].column_id, sort_order.upper())]
             )
 
-        datatables_params = DatatablesParams.from_request_dict(params)
-        page = list(data_source.get_data(start=datatables_params.start, limit=datatables_params.count))
+        if params:
+            datatables_params = DatatablesParams.from_request_dict(params)
+            start = datatables_params.start
+            limit = datatables_params.count
+        else:
+            start, limit = None, None
+        page = list(data_source.get_data(start=start, limit=limit))
         total_records = data_source.get_total_records()
         json_response = {
             'aaData': page,
@@ -212,10 +220,13 @@ def queue_async_indicators():
     with CriticalSection(['queue-async-indicators'], timeout=time_for_crit_section):
         day_ago = datetime.utcnow() - timedelta(days=1)
         indicators = AsyncIndicator.objects.all()[:10000]
+        if indicators:
+            lag = (datetime.utcnow() - indicators[0].date_created).total_seconds()
+            datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
         indicators_by_domain_doc_type = defaultdict(list)
         for indicator in indicators:
             # don't requeue anything htat's be queued in the past day
-            if not indicator.date_queued or indicator.date_queued > day_ago:
+            if not indicator.date_queued or indicator.date_queued < day_ago:
                 indicators_by_domain_doc_type[(indicator.domain, indicator.doc_type)].append(indicator)
 
         for k, indicators in indicators_by_domain_doc_type.items():
@@ -239,7 +250,8 @@ def _queue_indicators(indicators):
             _queue_chunk(to_queue)
             to_queue = []
 
-    _queue_chunk(to_queue)
+    if to_queue:
+        _queue_chunk(to_queue)
 
 
 @quickcache(['config_id'])
@@ -256,7 +268,12 @@ def save_document(doc_ids):
 
     with CriticalSection(lock_keys):
         indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids)
+        if not indicators:
+            return
+
         first_indicator = indicators[0]
+        processed_indicators = []
+        failed_indicators = []
 
         for i in indicators:
             assert i.domain == first_indicator.domain
@@ -269,9 +286,26 @@ def save_document(doc_ids):
 
             eval_context = EvaluationContext(doc)
             for config_id in indicator.indicator_config_ids:
-                config = _get_config(config_id)
-                adapter = get_indicator_adapter(config, can_handle_laboratory=True)
-                adapter.best_effort_save(doc, eval_context)
-                eval_context.reset_iteration()
+                adapter = None
+                try:
+                    config = _get_config(config_id)
+                    adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+                    adapter.save(doc, eval_context)
+                    eval_context.reset_iteration()
+                except (ESError, RequestError, ConnectionTimeout):
+                    # couch or es had an issue so don't log it and go on to the next doc
+                    failed_indicators.append(indicator.pk)
+                    break
+                except Exception as e:
+                    # getting the config could fail before the adapter is set
+                    if adapter:
+                        adapter.handle_exception(doc, e)
+                    failed_indicators.append(indicator.pk)
+                    break
+                else:
+                    processed_indicators.append(indicator.pk)
 
-        indicators.delete()
+        AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
+        AsyncIndicator.objects.filter(pk__in=failed_indicators).update(
+            date_queued=None, unsuccessful_attempts=F('unsuccessful_attempts') + 1
+        )

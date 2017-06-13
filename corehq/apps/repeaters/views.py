@@ -1,7 +1,10 @@
 import json
+from couchdbkit import ResourceNotFound
+from django.http import Http404
 
 from django.urls import reverse
 from django.views.generic import View
+from corehq.apps.domain.decorators import LoginAndDomainMixin
 
 from dimagi.utils.web import json_response
 
@@ -10,13 +13,13 @@ from corehq.apps.domain.views import AddRepeaterView
 from corehq.apps.style.decorators import use_select2
 from corehq.apps.repeaters.models import RepeatRecord
 from corehq.util.xml_utils import indent_xml
-from .forms import CaseRepeaterForm
+from .forms import CaseRepeaterForm, SOAPCaseRepeaterForm
 
 
 class AddCaseRepeaterView(AddRepeaterView):
     urlname = 'add_case_repeater'
     repeater_form_class = CaseRepeaterForm
-    template_name = 'repeaters/add_case_repeater.html'
+    template_name = 'domain/admin/add_form_repeater.html'
 
     @use_select2
     def dispatch(self, request, *args, **kwargs):
@@ -33,16 +36,36 @@ class AddCaseRepeaterView(AddRepeaterView):
         return repeater
 
 
-class RepeatRecordView(View):
+class AddCustomSOAPCaseRepeaterView(AddCaseRepeaterView):
+    repeater_form_class = SOAPCaseRepeaterForm
+
+    def make_repeater(self):
+        repeater = super(AddCustomSOAPCaseRepeaterView, self).make_repeater()
+        repeater.operation = self.add_repeater_form.cleaned_data['operation']
+        return repeater
+
+
+class RepeatRecordView(LoginAndDomainMixin, View):
 
     urlname = 'repeat_record'
     http_method_names = ['get', 'post']
 
+    @staticmethod
+    def get_record_or_404(request, domain, record_id):
+        try:
+            record = RepeatRecord.get(record_id)
+        except ResourceNotFound:
+            raise Http404()
+
+        if record.domain != domain:
+            raise Http404()
+
+        return record
+
     def get(self, request, domain):
-        record = RepeatRecord.get(request.GET.get('record_id'))
-        content_type = record.repeater.get_payload_generator(
-            record.repeater.format_or_default_format()
-        ).content_type
+        record_id = request.GET.get('record_id')
+        record = self.get_record_or_404(request, domain, record_id)
+        content_type = record.repeater.generator.content_type
         try:
             payload = record.get_payload()
         except XFormNotFound:
@@ -62,8 +85,9 @@ class RepeatRecordView(View):
 
     def post(self, request, domain):
         # Retriggers a repeat record
-        record = RepeatRecord.get(request.POST.get('record_id'))
-        record.fire(max_tries=1, force_send=True)
+        record_id = request.POST.get('record_id')
+        record = self.get_record_or_404(request, domain, record_id)
+        record.fire(force_send=True)
         return json_response({
             'success': record.succeeded,
             'failure_reason': record.failure_reason,

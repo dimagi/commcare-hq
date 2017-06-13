@@ -100,6 +100,35 @@ Util.getDisplayOptionsKey = function() {
     ].join(':');
 };
 
+Util.pagesToShow = function(selectedPage, totalPages, limit) {
+    var limitHalf = Math.floor(limit / 2);
+    if (totalPages < limit) {
+        return {
+            start: 0,
+            end: totalPages,
+        };
+    }
+
+    if (selectedPage < limitHalf) {
+        return {
+            start: 0,
+            end: limit,
+        };
+    }
+
+    if (selectedPage > totalPages - limitHalf) {
+        return {
+            start: totalPages - limit,
+            end: totalPages,
+        };
+    }
+
+    return {
+        start: selectedPage - limitHalf,
+        end: selectedPage + limitHalf,
+    };
+};
+
 Util.CloudcareUrl = function (options) {
     this.appId = options.appId;
     this.sessionId = options.sessionId;
@@ -110,6 +139,10 @@ Util.CloudcareUrl = function (options) {
     this.singleApp = options.singleApp;
     this.previewCommand = options.previewCommand;
     this.installReference = options.installReference;
+
+    this.setSteps = function (steps) {
+        this.steps = steps;
+    };
 
     this.addStep = function (step) {
         if (!this.steps) {

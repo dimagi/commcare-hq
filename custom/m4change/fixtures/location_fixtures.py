@@ -1,14 +1,14 @@
-from casexml.apps.phone.models import OTARestoreUser
-from corehq.apps.locations.models import Location
+from casexml.apps.phone.fixtures import FixtureProvider
+from corehq.apps.locations.models import get_location
 from custom.m4change.constants import M4CHANGE_DOMAINS
 from lxml import etree as ElementTree
 
 
-class LocationFixtureProvider(object):
+class LocationFixtureProvider(FixtureProvider):
     id = 'user-locations'
 
-    def __call__(self, restore_user, version, last_sync=None, app=None):
-        assert isinstance(restore_user, OTARestoreUser)
+    def __call__(self, restore_state):
+        restore_user = restore_state.restore_user
 
         if restore_user.domain in M4CHANGE_DOMAINS:
             location_id = restore_user.get_commtrack_location_id()
@@ -38,10 +38,10 @@ class LocationFixtureProvider(object):
         })
 
         locations_element = ElementTree.Element('locations')
-        location = Location.get(location_id)
+        location = get_location(location_id)
         location_element = ElementTree.Element('location', attrib={
             'name': location.name,
-            'id': location.get_id
+            'id': location.location_id
         })
         locations_element.append(location_element)
 

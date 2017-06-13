@@ -5,7 +5,7 @@ from django.test.testcases import TestCase
 
 from casexml.apps.stock.models import StockTransaction, StockReport
 
-from corehq.apps.locations.forms import LocationForm
+from corehq.apps.locations.forms import LocationFormSet
 
 from custom.ilsgateway.models import SupplyPointStatus, SupplyPointStatusTypes, SupplyPointStatusValues,\
     OrganizationSummary, GroupSummary, PendingReportingDataRecalculation, ReportRun
@@ -71,8 +71,10 @@ class TestReportRunner(TestCase):
         )
 
     def _move_location(self, location, new_parent_id):
-        form = LocationForm(
+        form = LocationFormSet(
             location.sql_location,
+            request_user=mock.MagicMock(),
+            is_new=False,
             bound_data={
                 'name': location.name,
                 'parent_id': new_parent_id,
@@ -83,8 +85,10 @@ class TestReportRunner(TestCase):
         form.save()
 
     def _change_group(self, location, group):
-        form = LocationForm(
+        form = LocationFormSet(
             location.sql_location,
+            request_user=mock.MagicMock(),
+            is_new=False,
             bound_data={
                 'name': location.name,
                 'data-field-group': group,

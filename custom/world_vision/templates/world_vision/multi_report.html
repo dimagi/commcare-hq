@@ -55,6 +55,7 @@
         </div>
     </script>
     <script type="text/javascript">
+            $(function() {
         {% if report_table and report_table.datatables %}
             var reportTables = new HQReportDataTables({
                 dataTableElem: '#report_table_{{ report.slug }}',
@@ -88,6 +89,7 @@
                     fixColsWidth: {{ report_table.left_col.fixed.width }},
                 {% endif %}
             });
+            var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
             if (typeof standardHQReport !== 'undefined') {
                 standardHQReport.handleTabularReportCookies(reportTables);
             }
@@ -95,7 +97,6 @@
 
         {% endif %}
         {% if rendered_as != 'print' %}
-            $(function() {
                 $('.header-popover').popover({
                     trigger: 'hover',
                     placement: 'bottom',

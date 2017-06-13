@@ -35,7 +35,9 @@ class BlobExpireTest(TestCase):
 
         self.assertIsNotNone(self.db.get(self.identifier, self.bucket))
         with patch('corehq.blobs.tasks._utcnow', return_value=now + timedelta(minutes=61)):
-            delete_expired_blobs()
+            bytes_deleted = delete_expired_blobs()
+
+        self.assertEqual(bytes_deleted, len('content'))
 
         with self.assertRaises(NotFound):
             self.db.get(self.identifier, self.bucket)

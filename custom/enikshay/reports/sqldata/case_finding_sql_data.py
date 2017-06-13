@@ -1,5 +1,6 @@
 from sqlagg.columns import CountColumn
 from sqlagg.filters import RawFilter
+from sqlagg.filters import IN, AND, GTE, LT, EQ
 
 from corehq.apps.reports.sqlreport import DatabaseColumn
 from custom.enikshay.reports.const import AGE_RANGES, PATIENT_TYPES
@@ -104,12 +105,23 @@ class CaseFindingSqlData(EnikshaySqlData):
         return 'date_of_diagnosis'
 
     @property
+    def location_property(self):
+        return 'diagnosing_facility_id'
+
+    @property
     def columns(self):
         test_type_filter = [
             RawFilter("bacteriological_examination = 1")
         ]
 
         filters_without_episode_type = self.filters[:-1]
+        bacteriological_test_date_reported = [
+            AND([
+                GTE('bacteriological_test_date_reported', 'start_date'),
+                LT('bacteriological_test_date_reported', 'end_date')
+            ])
+        ]
+        filters_with_bacteriological_date = bacteriological_test_date_reported + self.filters[1:]
 
         return (
             generate_for_all_patient_types(
@@ -198,7 +210,7 @@ class CaseFindingSqlData(EnikshaySqlData):
                     CountColumn(
                         'doc_id',
                         filters=(
-                            self.filters + convert_to_raw_filters_list(
+                            filters_with_bacteriological_date + convert_to_raw_filters_list(
                                 "patient_type = 'new'",
                                 "disease_classification = 'pulmonary'",
                                 "diagnostic_result = 'tb_detected'"
@@ -212,7 +224,7 @@ class CaseFindingSqlData(EnikshaySqlData):
                     CountColumn(
                         'doc_id',
                         filters=(
-                            self.filters + convert_to_raw_filters_list(
+                            filters_with_bacteriological_date + convert_to_raw_filters_list(
                                 "patient_type = 'new'",
                                 "disease_classification = 'pulmonary'",
                                 "diagnostic_result = 'tb_not_detected'"
@@ -226,7 +238,7 @@ class CaseFindingSqlData(EnikshaySqlData):
                     CountColumn(
                         'doc_id',
                         filters=(
-                            self.filters + convert_to_raw_filters_list(
+                            filters_with_bacteriological_date + convert_to_raw_filters_list(
                                 "patient_type = 'new'",
                                 "disease_classification = 'extrapulmonary'",
                                 "diagnostic_result = 'tb_detected'"

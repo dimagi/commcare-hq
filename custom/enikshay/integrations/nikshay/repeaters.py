@@ -1,7 +1,7 @@
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 
-from corehq.apps.repeaters.models import CaseRepeater
+from corehq.apps.repeaters.models import CaseRepeater, SOAPRepeaterMixin
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import NIKSHAY_INTEGRATION
 from casexml.apps.case.xml.parser import CaseUpdateAction
@@ -16,7 +16,15 @@ from custom.enikshay.case_utils import (
     get_open_episode_case_from_occurrence,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
+from custom.enikshay.const import (
+    TREATMENT_OUTCOME,
+    EPISODE_PENDING_REGISTRATION,
+    PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION,
+)
 from custom.enikshay.const import TREATMENT_OUTCOME, EPISODE_PENDING_REGISTRATION
+from custom.enikshay.integrations.nikshay.repeater_generator import \
+    NikshayRegisterPatientPayloadGenerator, NikshayHIVTestPayloadGenerator, \
+    NikshayTreatmentOutcomePayload, NikshayFollowupPayloadGenerator, NikshayRegisterPrivatePatientPayloadGenerator
 from custom.enikshay.integrations.utils import (
     is_valid_person_submission,
     is_valid_test_submission,
@@ -24,20 +32,24 @@ from custom.enikshay.integrations.utils import (
 )
 
 
-from custom.enikshay.integrations.ninetyninedots.repeaters import case_properties_changed
+from custom.enikshay.integrations.utils import case_properties_changed
 from custom.enikshay.integrations.nikshay.field_mappings import treatment_outcome
 
 
-class NikshayRegisterPatientRepeater(CaseRepeater):
+class BaseNikshayRepeater(CaseRepeater):
+    @classmethod
+    def available_for_domain(cls, domain):
+        return NIKSHAY_INTEGRATION.enabled(domain)
+
+
+class NikshayRegisterPatientRepeater(BaseNikshayRepeater):
     class Meta(object):
         app_label = 'repeaters'
 
     include_app_id_param = False
     friendly_name = _("Forward eNikshay Patients to Nikshay (episode case type)")
 
-    @classmethod
-    def available_for_domain(cls, domain):
-        return NIKSHAY_INTEGRATION.enabled(domain)
+    payload_generator_classes = (NikshayRegisterPatientPayloadGenerator,)
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -66,16 +78,14 @@ class NikshayRegisterPatientRepeater(CaseRepeater):
             return False
 
 
-class NikshayHIVTestRepeater(CaseRepeater):
+class NikshayHIVTestRepeater(BaseNikshayRepeater):
     class Meta(object):
         app_label = 'repeaters'
 
     include_app_id_param = False
     friendly_name = _("Forward eNikshay Patient's HIV Test to Nikshay (person case type)")
 
-    @classmethod
-    def available_for_domain(cls, domain):
-        return NIKSHAY_INTEGRATION.enabled(domain)
+    payload_generator_classes = (NikshayHIVTestPayloadGenerator,)
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -107,15 +117,13 @@ class NikshayHIVTestRepeater(CaseRepeater):
             return False
 
 
-class NikshayTreatmentOutcomeRepeater(CaseRepeater):
+class NikshayTreatmentOutcomeRepeater(BaseNikshayRepeater):
     class Meta(object):
         app_label = 'repeaters'
 
     friendly_name = _("Forward Treatment Outcomes to Nikshay (episode case type)")
 
-    @classmethod
-    def available_for_domain(cls, domain):
-        return NIKSHAY_INTEGRATION.enabled(domain)
+    payload_generator_classes = (NikshayTreatmentOutcomePayload,)
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -136,7 +144,7 @@ class NikshayTreatmentOutcomeRepeater(CaseRepeater):
         )
 
 
-class NikshayFollowupRepeater(CaseRepeater):
+class NikshayFollowupRepeater(BaseNikshayRepeater):
     followup_for_tests = ['end_of_ip', 'end_of_cp']
 
     class Meta(object):
@@ -145,9 +153,7 @@ class NikshayFollowupRepeater(CaseRepeater):
     include_app_id_param = False
     friendly_name = _("Forward eNikshay Patient's Follow Ups to Nikshay (test case type)")
 
-    @classmethod
-    def available_for_domain(cls, domain):
-        return NIKSHAY_INTEGRATION.enabled(domain)
+    payload_generator_classes = (NikshayFollowupPayloadGenerator,)
 
     @classmethod
     def get_custom_url(cls, domain):
@@ -182,6 +188,41 @@ class NikshayFollowupRepeater(CaseRepeater):
             return False
 
 
+class NikshayRegisterPrivatePatientRepeater(SOAPRepeaterMixin, BaseNikshayRepeater):
+
+    payload_generator_classes = (NikshayRegisterPrivatePatientPayloadGenerator,)
+
+    class Meta(object):
+        app_label = 'repeaters'
+
+    include_app_id_param = False
+    friendly_name = _("Forward eNikshay Private Patients to Nikshay (episode case type)")
+
+    @classmethod
+    def get_custom_url(cls, domain):
+        from custom.enikshay.integrations.nikshay.views import RegisterNikshayPrivatePatientRepeaterView
+        return reverse(RegisterNikshayPrivatePatientRepeaterView.urlname, args=[domain])
+
+    def allowed_to_forward(self, episode_case):
+        allowed_case_types_and_users = self._allowed_case_type(episode_case) and self._allowed_user(episode_case)
+        if not allowed_case_types_and_users:
+            return False
+
+        try:
+            person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
+        except ENikshayCaseNotFound:
+            return False
+
+        episode_case_properties = episode_case.dynamic_case_properties()
+        return (
+            episode_case_properties.get('nikshay_registered', 'false') == 'false' and
+            not episode_case_properties.get('nikshay_id') and
+            case_properties_changed(episode_case, [PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION]) and
+            episode_case_properties.get(PRIVATE_PATIENT_EPISODE_PENDING_REGISTRATION, 'yes') == 'no' and
+            is_valid_person_submission(person_case)
+        )
+
+
 def person_hiv_status_changed(case):
     last_case_action = case.actions[-1]
     if last_case_action.is_case_create:
@@ -211,18 +252,11 @@ def related_dates_changed(case):
     return value_changed
 
 
-def create_case_repeat_records(sender, case, **kwargs):
+def create_nikshay_case_repeat_records(sender, case, **kwargs):
     create_repeat_records(NikshayRegisterPatientRepeater, case)
     create_repeat_records(NikshayTreatmentOutcomeRepeater, case)
     create_repeat_records(NikshayFollowupRepeater, case)
-
-
-def create_hiv_test_repeat_records(sender, case, **kwargs):
+    create_repeat_records(NikshayRegisterPrivatePatientRepeater, case)
     create_repeat_records(NikshayHIVTestRepeater, case)
 
-case_post_save.connect(create_case_repeat_records, CommCareCaseSQL)
-case_post_save.connect(create_hiv_test_repeat_records, CommCareCaseSQL)
-
-# TODO: Remove this when eNikshay gets migrated to SQL
-case_post_save.connect(create_case_repeat_records, CommCareCase)
-case_post_save.connect(create_hiv_test_repeat_records, CommCareCase)
+case_post_save.connect(create_nikshay_case_repeat_records, CommCareCaseSQL)

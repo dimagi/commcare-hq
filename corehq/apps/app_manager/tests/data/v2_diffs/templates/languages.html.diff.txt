@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,47 +1,87 @@
+@@ -1,47 +1,93 @@
  {% load i18n %}
  {% load xforms_extras %}
 -<div id="languages-and-translations" class="tab-pane">
@@ -28,7 +28,7 @@
 -                        <div id="import-export" class="panel-collapse collapse">
 -                            <div class="panel-body">
 -                                <section>
--                                    {% include "style/partials/bulk_upload.html" with bulk_upload=bulk_ui_translation_upload bulk_upload_form=bulk_ui_translation_form%}
+-                                    {% include "style/partials/bulk_upload.html" with bulk_upload=bulk_ui_translation_upload bulk_upload_form=bulk_ui_translation_form %}
 -                                </section>
 -                            </div>
 -                        </div>
@@ -46,6 +46,12 @@
 -                </div>
 -            </div>
 +{% load hq_shared_tags %}
++
++{% initial_page_data 'lang' lang %}
++{% initial_page_data 'translations' translations %}
++{% registerurl "edit_app_langs" domain app.id %}
++{% registerurl "edit_app_ui_translations" domain app.id %}
++{% registerurl "get_app_ui_translations" domain %}
 +
 +<div class="panel-group" id="language-settings-options">
 +    <div class="panel panel-appmanager">

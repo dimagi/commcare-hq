@@ -6,19 +6,19 @@ from ws4redis.redis_store import RedisMessage
 from dimagi.utils.parsing import json_format_datetime
 
 
-def notify_form_opened(domain, couch_user, app_id, unique_form_id):
+def notify_form_opened(domain, couch_user, app_id, form_unique_id):
     message = _('This form has been opened for editing by {}.').format(couch_user.username)
-    notify_event(domain, couch_user, app_id, unique_form_id, message)
+    notify_event(domain, couch_user, app_id, form_unique_id, message)
 
 
-def notify_form_changed(domain, couch_user, app_id, unique_form_id):
+def notify_form_changed(domain, couch_user, app_id, form_unique_id):
     message = _(
         'This form has been updated by {}. Reload the page to see the latest changes.'
     ).format(couch_user.username)
-    notify_event(domain, couch_user, app_id, unique_form_id, message)
+    notify_event(domain, couch_user, app_id, form_unique_id, message)
 
 
-def notify_event(domain, couch_user, app_id, unique_form_id, message):
+def notify_event(domain, couch_user, app_id, form_unique_id, message):
     doc_url = 'https://confluence.dimagi.com/display/internal/App+Builder+Notifications'
     what = _('what is this?')
     message = u'{} (<a href="{}" target="_blank">{}</a>)'.format(message, doc_url, what)
@@ -30,12 +30,12 @@ def notify_event(domain, couch_user, app_id, unique_form_id, message):
         'timestamp': json_format_datetime(datetime.datetime.utcnow()),
     }))
     RedisPublisher(
-        facility=get_facility_for_form(domain, app_id, unique_form_id), broadcast=True
+        facility=get_facility_for_form(domain, app_id, form_unique_id), broadcast=True
     ).publish_message(message_obj)
 
 
-def get_facility_for_form(domain, app_id, unique_form_id):
+def get_facility_for_form(domain, app_id, form_unique_id):
     """
     Gets the websocket facility (topic) for a particular form.
     """
-    return '{}:{}:{}'.format(domain, app_id, unique_form_id)
+    return '{}:{}:{}'.format(domain, app_id, form_unique_id)

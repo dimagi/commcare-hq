@@ -13,8 +13,11 @@ class FormResourceContributor(SectionContributor):
         self.build_profile_id = build_profile_id
 
     def get_section_elements(self):
+        from corehq.apps.app_manager.models import ShadowForm
         for form_stuff in self.app.get_forms(bare=False):
             form = form_stuff["form"]
+            if isinstance(form, ShadowForm):
+                continue
             path = './modules-{module.id}/forms-{form.id}.xml'.format(**form_stuff)
             if self.build_profile_id:
                 remote_path = '{path}?profile={profile}'.format(path=path, profile=self.build_profile_id)

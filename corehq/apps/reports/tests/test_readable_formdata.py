@@ -1,13 +1,20 @@
 import json
 import os
+import uuid
+
 from django.test import SimpleTestCase
 import yaml
+from django.test.testcases import TestCase
+
 from corehq.apps.app_manager.xform import XForm
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.reports.formdetails.readable import (
     FormQuestionResponse,
     get_questions_from_xform_node,
     get_readable_form_data,
-)
+    get_readable_data_for_submission)
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
+from corehq.form_processor.utils.xform import get_simple_form_xml
 
 
 class ReadableFormdataTest(SimpleTestCase):
@@ -269,3 +276,35 @@ class ReadableFormdataTest(SimpleTestCase):
 
     def test_top_level_refless_group(self):
         self._test_corpus('top_level_refless_group')
+
+
+class ReadableFormTest(TestCase):
+
+    def setUp(self):
+        super(ReadableFormTest, self).setUp()
+        self.domain = uuid.uuid4().hex
+
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_xforms(self.domain)
+        super(ReadableFormTest, self).tearDown()
+
+    def test_get_readable_data_for_submission(self):
+        formxml = get_simple_form_xml('123')
+
+        xform = submit_form_locally(formxml, self.domain).xform
+        actual, _ = get_readable_data_for_submission(xform)
+
+        expected = [{
+            'value': u'/data/dalmation_count',
+            'label': u'dalmation_count',
+            'response': u'yes'
+        }]
+        self.assertJSONEqual(
+            json.dumps([q.to_json() for q in actual]),
+            json.dumps([FormQuestionResponse(q).to_json() for q in expected])
+        )
+
+
+@use_sql_backend
+class ReadableFormSQLTest(ReadableFormTest):
+    pass

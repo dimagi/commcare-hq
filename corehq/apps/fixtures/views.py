@@ -15,7 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.views.generic.base import TemplateView
 
-from corehq.apps.domain.decorators import login_or_digest, login_and_domain_required
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_or_basic_or_apikey
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.fixtures.tasks import fixture_upload_async, fixture_download_async
 from corehq.apps.fixtures.dispatcher import require_can_edit_fixtures
@@ -205,7 +205,7 @@ def update_items(fields_patches, domain, data_type_id, transaction):
                 )
         setattr(item, "fields", updated_fields)
         transaction.save(item)
-    data_items = FixtureDataItem.by_data_type(domain, data_type_id)
+    data_items = FixtureDataItem.by_data_type(domain, data_type_id, bypass_cache=True)
 
 
 def create_types(fields_patches, domain, data_tag, is_global, transaction):
@@ -396,7 +396,7 @@ class UploadFixtureAPIResponse(object):
 
 @csrf_exempt
 @require_POST
-@login_or_digest
+@login_or_digest_or_basic_or_apikey()
 @require_can_edit_fixtures
 def upload_fixture_api(request, domain, **kwargs):
     """

@@ -125,6 +125,7 @@ class Command(BaseCommand):
                 yield sourcedb_name, sourcedb
 
     def handle(self, sourcedb, domain, targetdb, **options):
+        # FIXME broken b/c https://github.com/dimagi/commcare-hq/pull/15896
         self.exclude_dbs = (
             # these have data we don't want to copy
             'receiverwrapper', 'auditcare', 'fluff-bihar', 'fluff-opm',

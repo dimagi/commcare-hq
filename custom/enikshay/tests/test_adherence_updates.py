@@ -1,10 +1,10 @@
-import pytz
 import mock
-from datetime import date, datetime
+import datetime
 from django.test import TestCase
 
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
     FixtureDataItem, FieldList, FixtureItemField
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 from casexml.apps.case.mock import CaseFactory
@@ -20,7 +20,8 @@ from custom.enikshay.const import (
     HISTORICAL_CLOSURE_REASON,
 )
 from custom.enikshay.data_store import AdherenceDatastore
-from custom.enikshay.tasks import EpisodeAdherenceUpdater, EpisodeUpdate
+from custom.enikshay.tasks import EpisodeUpdater, EpisodeAdherenceUpdate
+from custom.enikshay.integrations.ninetyninedots.utils import update_episode_adherence_properties
 from custom.enikshay.tests.utils import (
     get_person_case_structure,
     get_adherence_case_structure,
@@ -53,7 +54,7 @@ class TestAdherenceUpdater(TestCase):
         self.person_id = u"person"
         self.occurrence_id = u"occurrence"
         self.episode_id = u"episode"
-        self.case_updater = EpisodeAdherenceUpdater(self.domain)
+        self.case_updater = EpisodeUpdater(self.domain)
 
     @classmethod
     def setupFixtureData(cls):
@@ -144,7 +145,7 @@ class TestAdherenceUpdater(TestCase):
     def _create_adherence_cases(self, adherence_cases):
         self.factory.create_or_update_cases([
             get_adherence_case_structure(
-                adherence_date.strftime('%Y-%m-%d-%H-%M'),
+                "adherence{}".format(i),
                 self.episode_id,
                 adherence_date,
                 extra_update={
@@ -152,28 +153,36 @@ class TestAdherenceUpdater(TestCase):
                     "adherence_value": adherence_value,
                 }
             )
-            for (adherence_date, adherence_value) in adherence_cases
+            for (i, (adherence_date, adherence_value)) in enumerate(adherence_cases)
         ])
 
     def assert_update(self, input, output):
-        update = self.calculate_adherence_update(input)
+        episode = self.create_episode_case(input)
+
+        self.case_updater.run()
+        # refetch episode case after updates
+        episode = CaseAccessors(self.domain).get_case(episode.case_id)
+
         self.assertDictEqual(
-            update.update_json(),
-            output
+            {key: episode.dynamic_case_properties()[key] for key in output},
+            {key: str(val) for key, val in output.iteritems()}  # convert values to strings
         )
 
-    def calculate_adherence_update(self, input):
-        self.case_updater.purge_date = pytz.UTC.localize(input[0])
+    def create_episode_case(self, input):
+        self.case_updater.purge_date = input[0]
         # setup episode and adherence cases
         adherence_schedule_date_start, adherence_schedule_id = input[1]
         adherence_cases = input[2]
         episode = self._create_episode_case(adherence_schedule_date_start, adherence_schedule_id)
         self._create_adherence_cases(adherence_cases)
 
+        # rebuild so that adherence UCR data gets updated
         rebuild_indicators(self.data_store.datasource._id)
         self.data_store.adapter.refresh_table()
 
-        return EpisodeUpdate(episode, self.case_updater)
+        # _get_open_episode_cases doesn't work in tests due to caseaccessors returning empty list, so override it
+        self.case_updater._get_open_episode_cases = mock.MagicMock(return_value=[episode])
+        return episode
 
     def test_adherence_schedule_date_start_late(self):
         #   Sample test case
@@ -197,16 +206,16 @@ class TestAdherenceUpdater(TestCase):
 
         self.assert_update(
             (
-                datetime(2016, 1, 15),
-                (datetime(2016, 1, 17), 'schedule1'),
+                datetime.date(2016, 1, 15),
+                (datetime.date(2016, 1, 17), 'schedule1'),
                 []
             ),
             {
-                'aggregated_score_date_calculated': date(2016, 1, 16),
+                'aggregated_score_date_calculated': datetime.date(2016, 1, 16),
                 'expected_doses_taken': 0,
                 'aggregated_score_count_taken': 0,
                 # 1 day before should be adherence_schedule_date_start,
-                'adherence_latest_date_recorded': date(2016, 1, 16),
+                'adherence_latest_date_recorded': datetime.date(2016, 1, 16),
                 'adherence_total_doses_taken': 0
             }
         )
@@ -215,7 +224,7 @@ class TestAdherenceUpdater(TestCase):
         # if adherence_schedule_date_start then don't update
         self.assert_update(
             (
-                datetime(2016, 1, 17),
+                datetime.date(2016, 1, 17),
                 (None, 'schedule1'),
                 []
             ),
@@ -226,38 +235,38 @@ class TestAdherenceUpdater(TestCase):
     def test_no_adherence_cases(self):
         self.assert_update(
             (
-                datetime(2016, 1, 20),
-                (datetime(2016, 1, 10), 'schedule1'),
+                datetime.date(2016, 1, 20),
+                (datetime.date(2016, 1, 10), 'schedule1'),
                 # if no adherence_cases for the episode
                 []
             ),
             {
                 # 1 day before adherence_schedule_date_start
-                'aggregated_score_date_calculated': date(2016, 1, 9),
+                'aggregated_score_date_calculated': datetime.date(2016, 1, 9),
                 # set to zero
                 'expected_doses_taken': 0,
                 'aggregated_score_count_taken': 0,
                 'adherence_total_doses_taken': 0,
                 # 1 day before should be adherence_schedule_date_start
-                'adherence_latest_date_recorded': date(2016, 1, 9),
+                'adherence_latest_date_recorded': datetime.date(2016, 1, 9),
             }
         )
 
     def test_adherence_date_less_than_purge_date(self):
         self.assert_update(
             (
-                datetime(2016, 1, 20),
-                (datetime(2016, 1, 10), 'schedule1'),
+                datetime.date(2016, 1, 20),
+                (datetime.date(2016, 1, 10), 'schedule1'),
                 # if adherence_date less than purge_date
-                [(datetime(2016, 1, 15), DTIndicators[0])]
+                [(datetime.date(2016, 1, 15), DTIndicators[0])]
             ),
             {
                 # set to latest adherence_date
-                'aggregated_score_date_calculated': date(2016, 1, 15),
+                'aggregated_score_date_calculated': datetime.date(2016, 1, 15),
                 # co-efficient (aggregated_score_date_calculated - adherence_schedule_date_start)
                 'expected_doses_taken': int((5.0 / 7) * int(self.fixture_data['schedule1'])),
                 'aggregated_score_count_taken': 1,
-                'adherence_latest_date_recorded': date(2016, 1, 15),
+                'adherence_latest_date_recorded': datetime.date(2016, 1, 15),
                 'adherence_total_doses_taken': 1
             }
         )
@@ -265,20 +274,20 @@ class TestAdherenceUpdater(TestCase):
     def test_adherence_date_greater_than_purge_date(self):
         self.assert_update(
             (
-                datetime(2016, 1, 20),
-                (datetime(2016, 1, 10), 'schedule1'),
+                datetime.date(2016, 1, 20),
+                (datetime.date(2016, 1, 10), 'schedule1'),
                 # if adherence_date is less than adherence_schedule_date_start
-                [(datetime(2016, 1, 22), DTIndicators[0])]
+                [(datetime.date(2016, 1, 22), DTIndicators[0])]
             ),
             {
                 # should be purge_date
-                'aggregated_score_date_calculated': date(2016, 1, 20),
+                'aggregated_score_date_calculated': datetime.date(2016, 1, 20),
                 # co-efficient (aggregated_score_date_calculated - adherence_schedule_date_start)
                 'expected_doses_taken': int((10.0 / 7) * int(self.fixture_data['schedule1'])),
                 # no doses taken before aggregated_score_date_calculated
                 'aggregated_score_count_taken': 0,
                 # latest adherence taken date
-                'adherence_latest_date_recorded': date(2016, 1, 22),
+                'adherence_latest_date_recorded': datetime.date(2016, 1, 22),
                 # no doses taken before aggregated_score_date_calculated
                 'adherence_total_doses_taken': 1
             }
@@ -287,24 +296,24 @@ class TestAdherenceUpdater(TestCase):
     def test_multiple_adherence_cases_all_greater(self):
         self.assert_update(
             (
-                datetime(2016, 1, 20),
-                (datetime(2016, 1, 10), 'schedule1'),
+                datetime.date(2016, 1, 20),
+                (datetime.date(2016, 1, 10), 'schedule1'),
                 [
                     # same day, different time
-                    (datetime(2016, 1, 21, 1), DTIndicators[0]),
-                    (datetime(2016, 1, 21, 3), DOSE_UNKNOWN),
-                    (datetime(2016, 1, 22), DTIndicators[0]),
-                    (datetime(2016, 1, 24), DTIndicators[0]),
+                    (datetime.date(2016, 1, 21), DTIndicators[0]),
+                    (datetime.date(2016, 1, 21), DOSE_UNKNOWN),
+                    (datetime.date(2016, 1, 22), DTIndicators[0]),
+                    (datetime.date(2016, 1, 24), DTIndicators[0]),
                 ]
             ),
             {   # should be purge_date
-                'aggregated_score_date_calculated': date(2016, 1, 20),
+                'aggregated_score_date_calculated': datetime.date(2016, 1, 20),
                 # co-efficient (aggregated_score_date_calculated - adherence_schedule_date_start)
                 'expected_doses_taken': int((10.0 / 7) * int(self.fixture_data['schedule1'])),
                 # no dose taken before aggregated_score_date_calculated
                 'aggregated_score_count_taken': 0,
                 # latest recorded
-                'adherence_latest_date_recorded': date(2016, 1, 24),
+                'adherence_latest_date_recorded': datetime.date(2016, 1, 24),
                 # total 3 taken, unknown is not counted
                 'adherence_total_doses_taken': 3
             }
@@ -313,21 +322,21 @@ class TestAdherenceUpdater(TestCase):
     def test_multiple_adherence_cases_all_less(self):
         self.assert_update(
             (
-                datetime(2016, 1, 20),
-                (datetime(2016, 1, 10), 'schedule1'),
+                datetime.date(2016, 1, 20),
+                (datetime.date(2016, 1, 10), 'schedule1'),
                 [
                     # same day, different time. Set hours different so that case-id becomes different
-                    (datetime(2016, 1, 11, 1), DTIndicators[0]),
-                    (datetime(2016, 1, 11, 3), DOSE_UNKNOWN),
-                    (datetime(2016, 1, 12), DTIndicators[0]),
-                    (datetime(2016, 1, 14), DOSE_UNKNOWN),
+                    (datetime.date(2016, 1, 11), DTIndicators[0]),
+                    (datetime.date(2016, 1, 11), DOSE_UNKNOWN),
+                    (datetime.date(2016, 1, 12), DTIndicators[0]),
+                    (datetime.date(2016, 1, 14), DOSE_UNKNOWN),
                 ]
             ),
             {   # set to latest adherence_date, exclude 14th because its unknown
-                'aggregated_score_date_calculated': date(2016, 1, 12),
+                'aggregated_score_date_calculated': datetime.date(2016, 1, 12),
                 'expected_doses_taken': int((2.0 / 7) * int(self.fixture_data['schedule1'])),
                 'aggregated_score_count_taken': 2,
-                'adherence_latest_date_recorded': date(2016, 1, 12),
+                'adherence_latest_date_recorded': datetime.date(2016, 1, 12),
                 'adherence_total_doses_taken': 2
             }
         )
@@ -335,20 +344,20 @@ class TestAdherenceUpdater(TestCase):
     def test_unknown_adherence_data_less_and_greater(self):
         self.assert_update(
             (
-                datetime(2016, 1, 20),
-                (datetime(2016, 1, 10), 'schedule1'),
+                datetime.date(2016, 1, 20),
+                (datetime.date(2016, 1, 10), 'schedule1'),
                 [
-                    (datetime(2016, 1, 11), DTIndicators[0]),
-                    (datetime(2016, 1, 12), DTIndicators[0]),
-                    (datetime(2016, 1, 14), DOSE_UNKNOWN),
-                    (datetime(2016, 1, 21), DOSE_UNKNOWN)
+                    (datetime.date(2016, 1, 11), DTIndicators[0]),
+                    (datetime.date(2016, 1, 12), DTIndicators[0]),
+                    (datetime.date(2016, 1, 14), DOSE_UNKNOWN),
+                    (datetime.date(2016, 1, 21), DOSE_UNKNOWN)
                 ]
             ),
             {
-                'aggregated_score_date_calculated': date(2016, 1, 12),
+                'aggregated_score_date_calculated': datetime.date(2016, 1, 12),
                 'expected_doses_taken': int((2.0 / 7) * int(self.fixture_data['schedule1'])),
                 'aggregated_score_count_taken': 2,
-                'adherence_latest_date_recorded': date(2016, 1, 12),
+                'adherence_latest_date_recorded': datetime.date(2016, 1, 12),
                 'adherence_total_doses_taken': 2
             }
         )
@@ -356,20 +365,20 @@ class TestAdherenceUpdater(TestCase):
     def test_missed_adherence_dose(self):
         self.assert_update(
             (
-                datetime(2016, 1, 20),
-                (datetime(2016, 1, 10), 'schedule1'),
+                datetime.date(2016, 1, 20),
+                (datetime.date(2016, 1, 10), 'schedule1'),
                 [
-                    (datetime(2016, 1, 11), DTIndicators[0]),
-                    (datetime(2016, 1, 12), DTIndicators[0]),
-                    (datetime(2016, 1, 14), DOSE_UNKNOWN),
-                    (datetime(2016, 1, 21), DOSE_MISSED)  # dose missed
+                    (datetime.date(2016, 1, 11), DTIndicators[0]),
+                    (datetime.date(2016, 1, 12), DTIndicators[0]),
+                    (datetime.date(2016, 1, 14), DOSE_UNKNOWN),
+                    (datetime.date(2016, 1, 21), DOSE_MISSED)  # dose missed
                 ]
             ),
             {
-                'aggregated_score_date_calculated': date(2016, 1, 20),
+                'aggregated_score_date_calculated': datetime.date(2016, 1, 20),
                 'expected_doses_taken': int((10.0 / 7) * int(self.fixture_data['schedule1'])),
                 'aggregated_score_count_taken': 2,
-                'adherence_latest_date_recorded': date(2016, 1, 21),
+                'adherence_latest_date_recorded': datetime.date(2016, 1, 21),
                 'adherence_total_doses_taken': 2
             }
         )
@@ -377,19 +386,19 @@ class TestAdherenceUpdater(TestCase):
     def test_two_doses_on_same_day(self):
         self.assert_update(
             (
-                datetime(2016, 1, 20),
-                (datetime(2016, 1, 10), 'schedule1'),
+                datetime.date(2016, 1, 20),
+                (datetime.date(2016, 1, 10), 'schedule1'),
                 [
                     # same day, different time
-                    (datetime(2016, 1, 11, 1), DTIndicators[0]),
-                    (datetime(2016, 1, 11, 3), DTIndicators[0]),
+                    (datetime.date(2016, 1, 11), DTIndicators[0]),
+                    (datetime.date(2016, 1, 11), DTIndicators[0]),
                 ]
             ),
             {
-                'aggregated_score_date_calculated': date(2016, 1, 11),
+                'aggregated_score_date_calculated': datetime.date(2016, 1, 11),
                 'expected_doses_taken': int((1.0 / 7) * int(self.fixture_data['schedule1'])),
                 'aggregated_score_count_taken': 1,
-                'adherence_latest_date_recorded': date(2016, 1, 11),
+                'adherence_latest_date_recorded': datetime.date(2016, 1, 11),
                 'adherence_total_doses_taken': 1
             }
         )
@@ -397,18 +406,18 @@ class TestAdherenceUpdater(TestCase):
     def test_two_doses_on_same_day_different_values(self):
         self.assert_update(
             (
-                datetime(2016, 1, 20),
-                (datetime(2016, 1, 10), 'schedule1'),
+                datetime.date(2016, 1, 20),
+                (datetime.date(2016, 1, 10), 'schedule1'),
                 [
-                    (datetime(2016, 1, 11, 1), DTIndicators[0]),
-                    (datetime(2016, 1, 11, 3), DTIndicators[2]),
+                    (datetime.date(2016, 1, 11), DTIndicators[0]),
+                    (datetime.date(2016, 1, 11), DTIndicators[2]),
                 ]
             ),
             {
-                'aggregated_score_date_calculated': date(2016, 1, 11),
+                'aggregated_score_date_calculated': datetime.date(2016, 1, 11),
                 'expected_doses_taken': int((1.0 / 7) * int(self.fixture_data['schedule1'])),
                 'aggregated_score_count_taken': 1,
-                'adherence_latest_date_recorded': date(2016, 1, 11),
+                'adherence_latest_date_recorded': datetime.date(2016, 1, 11),
                 'adherence_total_doses_taken': 1
             }
         )
@@ -416,17 +425,17 @@ class TestAdherenceUpdater(TestCase):
     def test_dose_unknown_less(self):
         self.assert_update(
             (
-                datetime(2016, 1, 20),
-                (datetime(2016, 1, 10), 'schedule1'),
+                datetime.date(2016, 1, 20),
+                (datetime.date(2016, 1, 10), 'schedule1'),
                 [
-                    (datetime(2016, 1, 11), DOSE_UNKNOWN),
+                    (datetime.date(2016, 1, 11), DOSE_UNKNOWN),
                 ]
             ),
             {
-                'aggregated_score_date_calculated': date(2016, 1, 9),
+                'aggregated_score_date_calculated': datetime.date(2016, 1, 9),
                 'expected_doses_taken': 0,
                 'aggregated_score_count_taken': 0,
-                'adherence_latest_date_recorded': date(2016, 1, 9),
+                'adherence_latest_date_recorded': datetime.date(2016, 1, 9),
                 'adherence_total_doses_taken': 0
             }
         )
@@ -434,17 +443,17 @@ class TestAdherenceUpdater(TestCase):
     def test_dose_missed_less(self):
         self.assert_update(
             (
-                datetime(2016, 1, 20),
-                (datetime(2016, 1, 10), 'schedule1'),
+                datetime.date(2016, 1, 20),
+                (datetime.date(2016, 1, 10), 'schedule1'),
                 [
-                    (datetime(2016, 1, 11), DOSE_MISSED),
+                    (datetime.date(2016, 1, 11), DOSE_MISSED),
                 ]
             ),
             {
-                'aggregated_score_date_calculated': date(2016, 1, 11),
+                'aggregated_score_date_calculated': datetime.date(2016, 1, 11),
                 'expected_doses_taken': int((1.0 / 7) * int(self.fixture_data['schedule1'])),
                 'aggregated_score_count_taken': 0,
-                'adherence_latest_date_recorded': date(2016, 1, 11),
+                'adherence_latest_date_recorded': datetime.date(2016, 1, 11),
                 'adherence_total_doses_taken': 0
             }
         )
@@ -452,17 +461,17 @@ class TestAdherenceUpdater(TestCase):
     def test_dose_unknown_greater(self):
         self.assert_update(
             (
-                datetime(2016, 1, 20),
-                (datetime(2016, 1, 10), 'schedule1'),
+                datetime.date(2016, 1, 20),
+                (datetime.date(2016, 1, 10), 'schedule1'),
                 [
-                    (datetime(2016, 1, 22), DOSE_UNKNOWN),
+                    (datetime.date(2016, 1, 22), DOSE_UNKNOWN),
                 ]
             ),
             {
-                'aggregated_score_date_calculated': date(2016, 1, 9),
+                'aggregated_score_date_calculated': datetime.date(2016, 1, 9),
                 'expected_doses_taken': 0,
                 'aggregated_score_count_taken': 0,
-                'adherence_latest_date_recorded': date(2016, 1, 9),
+                'adherence_latest_date_recorded': datetime.date(2016, 1, 9),
                 'adherence_total_doses_taken': 0
             }
         )
@@ -470,27 +479,28 @@ class TestAdherenceUpdater(TestCase):
     def test_dose_missed_greater(self):
         self.assert_update(
             (
-                datetime(2016, 1, 20),
-                (datetime(2016, 1, 10), 'schedule1'),
+                datetime.date(2016, 1, 20),
+                (datetime.date(2016, 1, 10), 'schedule1'),
                 [
-                    (datetime(2016, 1, 22), DOSE_MISSED),
+                    (datetime.date(2016, 1, 22), DOSE_MISSED),
                 ]
             ),
             {
-                'aggregated_score_date_calculated': date(2016, 1, 20),
+                'aggregated_score_date_calculated': datetime.date(2016, 1, 20),
                 'expected_doses_taken': int((10.0 / 7) * int(self.fixture_data['schedule1'])),
                 'aggregated_score_count_taken': 0,
-                'adherence_latest_date_recorded': date(2016, 1, 22),
+                'adherence_latest_date_recorded': datetime.date(2016, 1, 22),
                 'adherence_total_doses_taken': 0
             }
         )
 
     def test_count_taken_by_day(self):
-        episode_update = self.calculate_adherence_update((
-            datetime(2016, 1, 20),
-            (datetime(2016, 1, 10), 'schedule1'),
+        episode = self.create_episode_case((
+            datetime.date(2016, 1, 20),
+            (datetime.date(2016, 1, 10), 'schedule1'),
             []
         ))
+        episode_update = EpisodeAdherenceUpdate(episode, self.case_updater)
 
         def dose_taken_by_day(cases):
             # cases a list of tuples
@@ -513,126 +523,201 @@ class TestAdherenceUpdater(TestCase):
         # not-taken - latest_modified_on case says no dose taken
         self.assertDictEqual(
             dose_taken_by_day([
-                ('some_id', datetime(2016, 1, 21), datetime(2016, 2, 21),
+                ('some_id', datetime.date(2016, 1, 21), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', False, None),
-                ('some_id', datetime(2016, 1, 21), datetime(2016, 2, 22),
+                ('some_id', datetime.date(2016, 1, 21), datetime.date(2016, 2, 22),
                  DOSE_UNKNOWN, 'enikshay', False, None),
             ]),
-            {date(2016, 1, 21): False}
+            {datetime.date(2016, 1, 21): False}
         )
         # taken - latest_modified_on case says dose taken
         self.assertDictEqual(
             dose_taken_by_day([
-                ('some_id', datetime(2016, 1, 22), datetime(2016, 2, 22),
+                ('some_id', datetime.date(2016, 1, 22), datetime.date(2016, 2, 22),
                  DTIndicators[0], 'enikshay', False, None),
-                ('some_id', datetime(2016, 1, 22), datetime(2016, 2, 21),
+                ('some_id', datetime.date(2016, 1, 22), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, 'enikshay', False, None),
             ]),
-            {date(2016, 1, 22): True}
+            {datetime.date(2016, 1, 22): True}
         )
 
         ## test enikshay only source, closed/closure_reason cases
         # not taken - as 1st case is not relevant because closed, closure_reason. 2nd case says no dose taken
         self.assertDictEqual(
             dose_taken_by_day([
-                ('some_id', datetime(2016, 1, 23), datetime(2016, 2, 22),
+                ('some_id', datetime.date(2016, 1, 23), datetime.date(2016, 2, 22),
                  DTIndicators[0], 'enikshay', True, None),
-                ('some_id', datetime(2016, 1, 23), datetime(2016, 2, 21),
+                ('some_id', datetime.date(2016, 1, 23), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, 'enikshay', False, None),
             ]),
-            {date(2016, 1, 23): False}
+            {datetime.date(2016, 1, 23): False}
         )
         # taken - as 1st case is not relevant because closed, closure_reason. 2nd case says dose taken
         self.assertDictEqual(
             dose_taken_by_day([
-                ('some_id', datetime(2016, 1, 24), datetime(2016, 2, 22),
+                ('some_id', datetime.date(2016, 1, 24), datetime.date(2016, 2, 22),
                  DOSE_UNKNOWN, 'enikshay', True, None),
-                ('some_id', datetime(2016, 1, 24), datetime(2016, 2, 21),
+                ('some_id', datetime.date(2016, 1, 24), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', False, None),
             ]),
-            {date(2016, 1, 24): True}
+            {datetime.date(2016, 1, 24): True}
         )
         # not taken - as 1st case is relevent case with latest_modified_on and says dose not taken
         self.assertDictEqual(
             dose_taken_by_day([
-                ('some_id', datetime(2016, 1, 25), datetime(2016, 2, 22),
+                ('some_id', datetime.date(2016, 1, 25), datetime.date(2016, 2, 22),
                  DOSE_UNKNOWN, 'enikshay', True, HISTORICAL_CLOSURE_REASON),
-                ('some_id', datetime(2016, 1, 25), datetime(2016, 2, 21),
+                ('some_id', datetime.date(2016, 1, 25), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', False, None),
             ]),
-            {date(2016, 1, 25): False}
+            {datetime.date(2016, 1, 25): False}
         )
         # taken - as 1st case is relevent case with latest_modified_on and says dose is taken
         self.assertDictEqual(
             dose_taken_by_day([
-                ('some_id', datetime(2016, 1, 26), datetime(2016, 2, 22),
+                ('some_id', datetime.date(2016, 1, 26), datetime.date(2016, 2, 22),
                  DTIndicators[0], 'enikshay', True, HISTORICAL_CLOSURE_REASON),
-                ('some_id', datetime(2016, 1, 26), datetime(2016, 2, 21),
+                ('some_id', datetime.date(2016, 1, 26), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, 'enikshay', False, None),
             ]),
-            {date(2016, 1, 26): True}
+            {datetime.date(2016, 1, 26): True}
         )
 
         ## test non-enikshay source only cases
         # not taken - non-enikshay source, so consider latest_modified_on
         self.assertDictEqual(
             dose_taken_by_day([
-                ('some_id', datetime(2016, 1, 27), datetime(2016, 2, 22),
+                ('some_id', datetime.date(2016, 1, 27), datetime.date(2016, 2, 22),
                  DOSE_UNKNOWN, 'non-enikshay', True, 'a'),
-                ('some_id', datetime(2016, 1, 27), datetime(2016, 2, 21),
+                ('some_id', datetime.date(2016, 1, 27), datetime.date(2016, 2, 21),
                  DTIndicators[0], '99dots', False, None),
             ]),
-            {date(2016, 1, 27): False}
+            {datetime.date(2016, 1, 27): False}
         )
         # taken - non-enikshay source, so consider latest_modified_on
         self.assertDictEqual(
             dose_taken_by_day([
-                ('some_id', datetime(2016, 1, 28), datetime(2016, 2, 22),
+                ('some_id', datetime.date(2016, 1, 28), datetime.date(2016, 2, 22),
                  DTIndicators[0], '99', True, 'a'),
-                ('some_id', datetime(2016, 1, 28), datetime(2016, 2, 21),
+                ('some_id', datetime.date(2016, 1, 28), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, '99', False, None),
             ]),
-            {date(2016, 1, 28): True}
+            {datetime.date(2016, 1, 28): True}
         )
 
         ## test mix of enikshay, non-enikshay sources
         # taken - as enikshay source case says taken
         self.assertDictEqual(
             dose_taken_by_day([
-                ('some_id', datetime(2016, 1, 29), datetime(2016, 2, 22),
+                ('some_id', datetime.date(2016, 1, 29), datetime.date(2016, 2, 22),
                  DTIndicators[0], '99', True, 'a'),
-                ('some_id', datetime(2016, 1, 29), datetime(2016, 2, 21),
+                ('some_id', datetime.date(2016, 1, 29), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', False, None),
             ]),
-            {date(2016, 1, 29): True}
+            {datetime.date(2016, 1, 29): True}
         )
         # not taken - as enikshay source case says not taken
         self.assertDictEqual(
             dose_taken_by_day([
-                ('some_id', datetime(2016, 1, 1), datetime(2016, 2, 22),
+                ('some_id', datetime.date(2016, 1, 1), datetime.date(2016, 2, 22),
                  DTIndicators[0], '99', True, 'a'),
-                ('some_id', datetime(2016, 1, 1), datetime(2016, 2, 21),
+                ('some_id', datetime.date(2016, 1, 1), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, 'enikshay', False, None),
             ]),
-            {date(2016, 1, 1): False}
+            {datetime.date(2016, 1, 1): False}
         )
         # not taken - as the only enikshay source case is closed without valid-reason
         self.assertDictEqual(
             dose_taken_by_day([
-                ('some_id', datetime(2016, 1, 2), datetime(2016, 2, 22),
+                ('some_id', datetime.date(2016, 1, 2), datetime.date(2016, 2, 22),
                  DTIndicators[0], '99', True, 'a'),
-                ('some_id', datetime(2016, 1, 2), datetime(2016, 2, 21),
+                ('some_id', datetime.date(2016, 1, 2), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', True, None),
             ]),
-            {date(2016, 1, 2): False}
+            {datetime.date(2016, 1, 2): False}
         )
         # taken - as the only enikshay source case is closed with right closure_reason
         self.assertDictEqual(
             dose_taken_by_day([
-                ('some_id', datetime(2016, 1, 3), datetime(2016, 2, 22),
+                ('some_id', datetime.date(2016, 1, 3), datetime.date(2016, 2, 22),
                  DOSE_UNKNOWN, '99', True, 'a'),
-                ('some_id', datetime(2016, 1, 3), datetime(2016, 2, 21),
+                ('some_id', datetime.date(2016, 1, 3), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', True, HISTORICAL_CLOSURE_REASON),
             ]),
-            {date(2016, 1, 3): True}
+            {datetime.date(2016, 1, 3): True}
+        )
+
+    def test_update_by_person(self):
+        initial_data = (
+            datetime.date(2016, 1, 15),
+            (datetime.date(2016, 1, 17), 'schedule1'),
+            []
+        )
+
+        expected_update = {
+            'aggregated_score_date_calculated': datetime.date(2016, 1, 16),
+            'expected_doses_taken': 0,
+            'aggregated_score_count_taken': 0,
+            # 1 day before should be adherence_schedule_date_start,
+            'adherence_latest_date_recorded': datetime.date(2016, 1, 16),
+            'adherence_total_doses_taken': 0
+        }
+
+        episode = self.create_episode_case(initial_data)
+        update_episode_adherence_properties(self.domain, self.person_id)
+
+        episode = CaseAccessors(self.domain).get_case(episode.case_id)
+        self.assertDictEqual(
+            {key: episode.dynamic_case_properties()[key] for key in expected_update},
+            {key: str(val) for key, val in expected_update.iteritems()}  # convert values to strings
+        )
+
+    def test_adherence_score_start_date_month(self):
+        # If the start date is more than a month ago, calculate the last month's scores
+        self.case_updater.date_today_in_india = datetime.date(2016, 1, 31)
+        self.assert_update(
+            (
+                datetime.date(2016, 1, 30),
+                (datetime.date(2015, 12, 31), 'schedule1'),  # adherence_schedule_date_start
+                [
+                    (datetime.date(2015, 12, 31), DTIndicators[0]),
+                    (datetime.date(2016, 1, 15), DTIndicators[0]),
+                    (datetime.date(2016, 1, 17), DTIndicators[0]),
+                    (datetime.date(2016, 1, 20), DTIndicators[0]),
+                    (datetime.date(2016, 1, 30), DTIndicators[0]),
+                ]
+            ),
+            {
+                'one_week_score_count_taken': 1,
+                'two_week_score_count_taken': 3,
+                'month_score_count_taken': 4,
+                'one_week_adherence_score': 14.29,
+                'two_week_adherence_score': 21.43,
+                'month_adherence_score': 13.33,
+            }
+        )
+
+    def test_adherence_score_start_date_week(self):
+        # If the start date is only a week ago, don't send 2 week or month scores
+        self.case_updater.date_today_in_india = datetime.date(2016, 1, 31)
+        self.assert_update(
+            (
+                datetime.date(2016, 1, 30),
+                (datetime.date(2016, 1, 24), 'schedule1'),  # adherence_schedule_date_start
+                [
+                    (datetime.date(2015, 12, 31), DTIndicators[0]),
+                    (datetime.date(2016, 1, 15), DTIndicators[0]),
+                    (datetime.date(2016, 1, 17), DTIndicators[0]),
+                    (datetime.date(2016, 1, 20), DTIndicators[0]),
+                    (datetime.date(2016, 1, 30), DTIndicators[0]),
+                ]
+            ),
+            {
+                'one_week_score_count_taken': 1,
+                'two_week_score_count_taken': 0,
+                'month_score_count_taken': 0,
+                'one_week_adherence_score': 14.29,
+                'two_week_adherence_score': 0.0,
+                'month_adherence_score': 0.0,
+            }
         )

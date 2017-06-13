@@ -11,6 +11,8 @@ import time
 from django.core import cache
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.db import connections
+from django.db.utils import OperationalError
 from restkit import Resource
 from celery import Celery
 import requests
@@ -22,7 +24,7 @@ from corehq.apps.change_feed.connection import get_kafka_client_or_none
 from corehq.apps.es import GroupES
 from corehq.blobs import get_blob_db
 from corehq.blobs.util import random_url_id
-from corehq.elastic import send_to_elasticsearch
+from corehq.elastic import send_to_elasticsearch, refresh_elasticsearch_index
 from corehq.util.decorators import change_log_level
 from corehq.apps.hqadmin.utils import parse_celery_workers, parse_celery_pings
 
@@ -91,7 +93,7 @@ def check_elasticsearch():
     doc = {'_id': 'elasticsearch-service-check',
            'date': datetime.datetime.now().isoformat()}
     send_to_elasticsearch('groups', doc)
-    time.sleep(1)
+    refresh_elasticsearch_index('groups')
     hits = GroupES().remove_default_filters().doc_id(doc['_id']).run().hits
     send_to_elasticsearch('groups', doc, delete=True)  # clean up
     if doc in hits:
@@ -157,10 +159,27 @@ def check_heartbeat():
 
 
 def check_postgres():
+    connected = True
+    status_str = ""
+    for db in settings.DATABASES:
+        db_conn = connections[db]
+        try:
+            c = db_conn.cursor()
+            c_status = 'OK'
+        except OperationalError:
+            c_status = 'FAIL'
+            connected = False
+        status_str += "%s:%s " % (settings.DATABASES[db]['NAME'], c_status)
+
     a_user = User.objects.first()
     if a_user is None:
-        return ServiceStatus(False, "No users found in postgres")
-    return ServiceStatus(True, "Successfully got a user from postgres")
+        status_str += "No users found in postgres"
+    else:
+        status_str += "Successfully got a user from postgres"
+
+    if a_user is None or not connected:
+        return ServiceStatus(False, status_str)
+    return ServiceStatus(True, status_str)
 
 
 def check_couch():
@@ -193,4 +212,5 @@ CHECKS = {
     'elasticsearch': check_elasticsearch,
     'blobdb': check_blobdb,
     'formplayer': check_formplayer,
+    'rabbitmq': check_rabbitmq,
 }

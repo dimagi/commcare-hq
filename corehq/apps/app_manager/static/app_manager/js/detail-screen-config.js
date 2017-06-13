@@ -222,7 +222,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
     };
 
     var searchViewModel = function (searchProperties, includeClosed, defaultProperties, lang,
-                                    searchButtonDisplayCondition, saveButton) {
+                                    searchButtonDisplayCondition, blacklistedOwnerIdsExpression, saveButton) {
         var self = this,
             DEFAULT_CLAIM_RELEVANT= "count(instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]) = 0";
 
@@ -258,6 +258,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         self.includeClosed = ko.observable(includeClosed);
         self.searchProperties = ko.observableArray();
         self.defaultProperties = ko.observableArray();
+        self.blacklistedOwnerIdsExpression = ko.observable(blacklistedOwnerIdsExpression);
 
         if (searchProperties.length > 0) {
             for (var i = 0; i < searchProperties.length; i++) {
@@ -342,6 +343,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 search_button_display_condition: self.searchButtonDisplayCondition(),
                 include_closed: self.includeClosed(),
                 default_properties: self._getDefaultProperties(),
+                blacklisted_owner_ids_expression: self.blacklistedOwnerIdsExpression(),
             };
         };
 
@@ -358,6 +360,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             saveButton.fire('change');
         });
         self.searchButtonDisplayCondition.subscribe(function () {
+            saveButton.fire('change');
+        });
+        self.blacklistedOwnerIdsExpression.subscribe(function () {
             saveButton.fire('change');
         });
     };
@@ -751,6 +756,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         property_name: that.field,
                         multimedia: that.screen.config.multimedia,
                         values_are_icons: that.original.format == 'enum-image',
+                        values_are_conditions: that.original.format === 'conditional-enum',
                     };
                     that.enum_extra = uiElement.key_value_mapping(o);
                 }());
@@ -819,9 +825,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         that.filter_xpath_extra.ui.detach();
                         that.calc_xpath_extra.ui.detach();
                         that.time_ago_extra.ui.detach();
-
-                        if (this.val() === "enum" || this.val() === "enum-image") {
+                        if (this.val() === "enum" || this.val() === "enum-image" || this.val() === 'conditional-enum') {
                             that.enum_extra.values_are_icons(this.val() === 'enum-image');
+                            that.enum_extra.values_are_conditions(this.val() === 'conditional-enum');
                             that.format.ui.parent().append(that.enum_extra.ui);
                         } else if (this.val() === "graph") {
                             // Replace format select with edit button
@@ -968,6 +974,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 this.persistTileOnForms = ko.observable(spec[this.columnKey].persist_tile_on_forms || false);
                 this.enableTilePullDown = ko.observable(spec[this.columnKey].pull_down_tile || false);
                 this.allowsEmptyColumns = options.allowsEmptyColumns;
+                this.persistentCaseTileFromModule = (
+                    ko.observable(spec[this.columnKey].persistent_case_tile_from_module || ""));
 
                 this.fireChange = function() {
                     that.fire('change');
@@ -1050,6 +1058,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     that.saveButton.fire('change');
                 });
                 this.persistTileOnForms.subscribe(function(){
+                    that.saveButton.fire('change');
+                });
+                this.persistentCaseTileFromModule.subscribe(function(){
                     that.saveButton.fire('change');
                 });
                 this.enableTilePullDown.subscribe(function(){
@@ -1151,6 +1162,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     data.persistCaseContext = this.persistCaseContext();
                     data.persistentCaseContextXML = this.persistentCaseContextXML();
                     data.persistTileOnForms = this.persistTileOnForms();
+                    data.persistentCaseTileFromModule = this.persistentCaseTileFromModule();
                     data.enableTilePullDown = this.persistTileOnForms() ? this.enableTilePullDown() : false;
 
                     if (this.containsParentConfiguration) {
@@ -1351,12 +1363,34 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         spec.defaultProperties,
                         spec.lang,
                         spec.searchButtonDisplayCondition,
+                        spec.blacklistedOwnerIdsExpression,
                         this.shortScreen.saveButton
                     );
                 }
                 if (spec.state.long !== undefined) {
+                    var printModule = hqImport("app_manager/js/case_detail_print.js"),
+                        printRef = printModule.getPrintRef(),
+                        printTemplateUploader = printModule.getPrintTemplateUploader();
                     this.longScreen = addScreen(spec.state, "long");
-                    this.printTemplateReference = spec.print_ref;
+                    this.printTemplateReference = _.extend(printRef, {
+                        removePrintTemplate: function() {
+                            $.post(
+                                hqImport("hqwebapp/js/urllib.js").reverse("hqmedia_remove_detail_print_template"),
+                                {
+                                    module_unique_id: spec.moduleUniqueId,
+                                },
+                                function(data, status) {
+                                    if (status === 'success'){
+                                        printRef.setObjReference({
+                                            path: printRef.path,
+                                        });
+                                        printRef.is_matched(false);
+                                        printTemplateUploader.updateUploadFormUI();
+                                    }
+                                }
+                            );
+                        },
+                    });
                 }
             };
             DetailScreenConfig.init = function (spec) {
@@ -1387,6 +1421,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             PHONE_FORMAT: gettext('Phone Number'),
             ENUM_FORMAT: gettext('ID Mapping'),
             ENUM_IMAGE_FORMAT: gettext('Icon'),
+            CONDITIONAL_ENUM_FORMAT: gettext('Conditional Enum'),
             ENUM_EXTRA_LABEL: gettext('Mapping: '),
             LATE_FLAG_FORMAT: gettext('Late Flag'),
             LATE_FLAG_EXTRA_LABEL: gettext(' Days late '),
@@ -1437,7 +1472,11 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT + gettext(' (Preview!)')}
             );
         }
-
+        if (COMMCAREHQ.previewEnabled('CONDITIONAL_ENUM')) {
+            DetailScreenConfig.MENU_OPTIONS.push(
+                {value: "conditional-enum", label: DetailScreenConfig.message.CONDITIONAL_ENUM_FORMAT + gettext(' (Preview!)')}
+            );
+        }
         if (COMMCAREHQ.previewEnabled('CALC_XPATHS')) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "calculate", label: DetailScreenConfig.message.CALC_XPATH_FORMAT + gettext(' (Preview!)')}

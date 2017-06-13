@@ -74,7 +74,7 @@ from no_exceptions.exceptions import Http403
 
 from corehq.apps.reports.datatables import DataTablesHeader
 
-UCR_EXPORT_TO_EXCEL_ROW_LIMIT = 1000
+UCR_EXPORT_TO_EXCEL_ROW_LIMIT = 5000
 
 
 def get_filter_values(filters, request_dict, user=None):
@@ -104,7 +104,7 @@ def query_dict_to_dict(query_dict, domain):
     :param domain:
     :return: a dict
     """
-    request_dict = json_request(query_dict)
+    request_dict = json_request(query_dict, booleans_as_strings=True)
     request_dict['domain'] = domain
     return request_dict
 

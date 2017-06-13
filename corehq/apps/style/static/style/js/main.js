@@ -38,7 +38,7 @@ COMMCAREHQ.makeHqHelp = function (opts, wrap) {
             '<a href="#" tabindex="-1">' +
                 '<i class="fa fa-question-circle icon-question-sign"></i></a></div>'
     );
-    _.each(['content', 'title', 'html', 'placement'], function(attr) {
+    _.each(['content', 'title', 'html', 'placement', 'container'], function(attr) {
         $('a', el).data(attr, opts[attr]);
     });
     if (wrap) {
@@ -59,6 +59,7 @@ COMMCAREHQ.transformHelpTemplate = function ($template, wrap) {
 COMMCAREHQ.initBlock = function ($elem) {
     'use strict';
 
+    // Can delete once APP_MANAGER_V2 is released
     $('.submit_on_click', $elem).on("click", function (e) {
         e.preventDefault();
         if (!$(this).data('clicked')) {
@@ -85,6 +86,10 @@ COMMCAREHQ.initBlock = function ($elem) {
     $("input[type='text'], input[type='password'], textarea", $elem);
     $('.container', $elem).addClass('ui-widget ui-widget-content');
     $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
+
+    $('.hq-help-template').each(function () {
+        COMMCAREHQ.transformHelpTemplate($(this), true);
+    });
 };
 
 COMMCAREHQ.updateDOM = function (update) {
@@ -204,6 +209,7 @@ COMMCAREHQ.makeSaveButton = function(messageStrings, cssClass, barClass) {
                 if (lastParent) {
                     var stillAttached = lastParent.tagName.toLowerCase() == 'html';
                     if (button.state !== 'saved' && stillAttached) {
+                        if ($('.js-unhide-on-unsaved').length > 0) $('.js-unhide-on-unsaved').removeClass('hide');
                         return options.unsavedMessage || "";
                     }
                 }

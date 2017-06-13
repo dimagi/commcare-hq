@@ -70,11 +70,12 @@ class DomainInvoiceFactory(object):
 
     def _get_subscriptions(self):
         subscriptions = Subscription.objects.filter(
-            subscriber=self.subscriber, date_start__lte=self.date_end
-        ).filter(
-            Q(date_end=None) | Q(date_end__gt=self.date_start)
-        ).filter(
-            Q(date_end=None) | Q(date_end__gt=F('date_start'))
+            Q(date_end=None) | (
+                Q(date_end__gt=self.date_start)
+                & Q(date_end__gt=F('date_start'))
+            ),
+            subscriber=self.subscriber,
+            date_start__lte=self.date_end
         ).order_by('date_start', 'date_end').all()
         return list(subscriptions)
 
@@ -278,7 +279,7 @@ class DomainWireInvoiceFactory(object):
             date_paid__exact=None,
         ).order_by('-date_start')
 
-        account = BillingAccount.get_or_create_account_by_domain(
+        BillingAccount.get_or_create_account_by_domain(
             self.domain.name,
             created_by=self.__class__.__name__,
             entry_point=EntryPoint.SELF_STARTED,

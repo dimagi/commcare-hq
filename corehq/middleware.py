@@ -8,6 +8,7 @@ from django.core.exceptions import MiddlewareNotUsed
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth.views import logout as django_logout
+from django.utils.deprecation import MiddlewareMixin
 
 from corehq.apps.domain.models import Domain
 from corehq.const import OPENROSA_DEFAULT_VERSION
@@ -27,13 +28,11 @@ OPENROSA_DATE_HEADER = "HTTP_DATE"
 OPENROSA_HEADERS = [OPENROSA_VERSION_HEADER, OPENROSA_DATE_HEADER, OPENROSA_ACCEPT_LANGUAGE]
 
 
-class OpenRosaMiddleware(object):
+class OpenRosaMiddleware(MiddlewareMixin):
     """
     Middleware to support OpenRosa request/response standards compliance
     https://bitbucket.org/javarosa/javarosa/wiki/OpenRosaRequest
     """
-    def __init__(self):
-        pass
 
     def process_request(self, request):
         # if there's a date header specified add that to the request
@@ -93,7 +92,7 @@ class TimingMiddleware(object):
         return response
 
 
-class TimeoutMiddleware(object):
+class TimeoutMiddleware(MiddlewareMixin):
 
     @staticmethod
     def _session_expired(timeout, activity, time):
@@ -147,7 +146,7 @@ def always_allow_browser_caching(fn):
     return inner
 
 
-class NoCacheMiddleware(object):
+class NoCacheMiddleware(MiddlewareMixin):
 
     def process_response(self, request, response):
         if not self._explicitly_marked_safe(response):
@@ -170,11 +169,12 @@ class NoCacheMiddleware(object):
         return getattr(response, '_always_allow_browser_caching', False)
 
 
-class SentryContextMiddleware(object):
+class SentryContextMiddleware(MiddlewareMixin):
     """Add details to Sentry context.
     Should be placed after 'corehq.apps.users.middleware.UsersMiddleware'
     """
-    def __init__(self):
+    def __init__(self, get_response=None):
+        super(SentryContextMiddleware, self).__init__(get_response)
         try:
             from raven.contrib.django.raven_compat.models import client
         except ImportError:

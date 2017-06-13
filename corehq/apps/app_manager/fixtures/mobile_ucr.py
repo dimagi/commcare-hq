@@ -1,35 +1,60 @@
 from collections import defaultdict
 from datetime import datetime
 import logging
-from lxml.builder import E
+import random
+
 from django.conf import settings
+from lxml.builder import E
 
-from casexml.apps.phone.models import OTARestoreUser
-
+from casexml.apps.phone.fixtures import FixtureProvider
 from corehq import toggles
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import is_valid_mobile_select_filter_type
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.util.xml_utils import serialize
 
+from corehq.apps.userreports.const import UCR_SUPPORT_BOTH_BACKENDS
 from corehq.apps.userreports.exceptions import UserReportsError, ReportConfigurationNotFoundError
 from corehq.apps.userreports.models import get_report_config
 from corehq.apps.userreports.reports.factory import ReportFactory
+from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 
+MOBILE_UCR_RANDOM_THRESHOLD = 10000
 
-class ReportFixturesProvider(object):
+
+def _should_sync(restore_state):
+    last_sync_log = restore_state.last_sync_log
+    if not last_sync_log or restore_state.overwrite_cache:
+        return True
+
+    sync_interval = restore_state.restore_user.get_mobile_ucr_sync_interval()
+    if sync_interval is None and restore_state.params.app:
+        sync_interval = restore_state.params.app.mobile_ucr_sync_interval
+    if sync_interval is None:
+        sync_interval = restore_state.project.default_mobile_ucr_sync_interval
+
+    sync_interval = sync_interval and sync_interval * 3600  # convert to seconds
+    return (
+        not last_sync_log or
+        not sync_interval or
+        (datetime.utcnow() - last_sync_log.date).total_seconds() > sync_interval
+    )
+
+
+
+class ReportFixturesProvider(FixtureProvider):
     id = 'commcare:reports'
 
-    def __call__(self, restore_user, version, last_sync=None, app=None):
+    def __call__(self, restore_state):
         """
         Generates a report fixture for mobile that can be used by a report module
         """
-        assert isinstance(restore_user, OTARestoreUser)
-
-        if not toggles.MOBILE_UCR.enabled(restore_user.domain):
+        restore_user = restore_state.restore_user
+        if not toggles.MOBILE_UCR.enabled(restore_user.domain) or not _should_sync(restore_state):
             return []
 
+        app = restore_state.params.app
         apps = [app] if app else [a for a in get_apps_in_domain(restore_user.domain, include_remote=False)]
         report_configs = [
             report_config
@@ -60,8 +85,9 @@ class ReportFixturesProvider(object):
 
     @staticmethod
     def report_config_to_fixture(report_config, restore_user):
+        domain = restore_user.domain
         report, data_source = ReportFixturesProvider._get_report_and_data_source(
-            report_config.report_id, restore_user.domain
+            report_config.report_id, domain
         )
 
         # TODO: Convert to be compatible with restore_user
@@ -95,6 +121,10 @@ class ReportFixturesProvider(object):
         )
         filters_elem = ReportFixturesProvider._get_filters_elem(
             defer_filters, filter_options_by_field, restore_user._couch_user)
+
+        if (data_source.config.backend_id in UCR_SUPPORT_BOTH_BACKENDS and
+                random.randint(0, MOBILE_UCR_RANDOM_THRESHOLD) == MOBILE_UCR_RANDOM_THRESHOLD):
+            compare_ucr_dbs.delay(domain, report_config.report_id, filter_values)
 
         report_elem = E.report(id=report_config.uuid, report_id=report_config.report_id)
         report_elem.append(filters_elem)

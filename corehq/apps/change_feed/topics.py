@@ -23,6 +23,9 @@ WEB_USER = 'web-user'
 LOCATION = 'location'
 
 
+CASE_TOPICS = (CASE, CASE_SQL)
+FORM_TOPICS = (FORM, FORM_SQL)
+USER_TOPICS = (COMMCARE_USER, WEB_USER)
 ALL = (
     CASE,
     CASE_SQL,
@@ -106,7 +109,7 @@ def validate_offsets(expected_offsets):
     in the current kafka feed
     """
     if expected_offsets:
-        topics = [kafka_bytestring(x[0]) for x in expected_offsets.keys()]
+        topics = {kafka_bytestring(x[0]) for x in expected_offsets.keys()}
         available_offsets = get_multi_topic_first_available_offsets(topics)
         for topic_partition, offset in expected_offsets.items():
             topic, partition = topic_partition

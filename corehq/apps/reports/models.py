@@ -20,10 +20,10 @@ from django.utils.translation import ugettext_noop
 from jsonfield import JSONField
 
 from sqlalchemy.util import immutabledict
+from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import Form, RemoteApp
-from corehq.apps.app_manager.util import get_case_properties
 from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
     QuickCachedDocumentMixin,
@@ -964,9 +964,11 @@ class FormExportSchema(HQExportSchema):
     def uses_cases(self):
         if not self.app or isinstance(self.app, RemoteApp):
             return False
-        form = self.app.get_form_by_xmlns(self.xmlns)
-        if form and isinstance(form, Form):
-            return bool(form.active_actions())
+        forms = self.app.get_forms_by_xmlns(self.xmlns)
+        for form in forms:
+            if isinstance(form, Form):
+                if bool(form.active_actions()):
+                    return True
         return False
 
 

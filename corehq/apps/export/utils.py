@@ -23,6 +23,7 @@ from corehq.apps.app_manager.const import STOCK_QUESTION_TAG_NAMES
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_brief_apps_in_domain,
+    get_apps_in_domain,
 )
 from .dbaccessors import (
     get_form_export_instances,
@@ -79,13 +80,23 @@ def convert_saved_export_to_export_instance(
         getattr(saved_export, 'app_id', None),
         export_type,
     )
+
     # Build a new schema and instance
     if export_type == FORM_EXPORT:
+        xmlns = _extract_xmlns_from_index(saved_export.index)
+        if not hasattr(saved_export, 'app_id'):
+            # attempt to find app id from xmlns
+            app_id = _app_id_from_xmlns(domain, xmlns)
+        else:
+            app_id = saved_export.app_id
+
+        assert app_id, 'Form exports require an app id'
+
         instance_cls = FormExportInstance
         schema = FormExportDataSchema.generate_schema_from_builds(
             domain,
-            saved_export.app_id,
-            _extract_xmlns_from_index(saved_export.index),
+            app_id,
+            xmlns,
         )
     elif export_type == CASE_EXPORT:
         instance_cls = CaseExportInstance
@@ -114,6 +125,8 @@ def convert_saved_export_to_export_instance(
     if saved_export.type == FORM_EXPORT:
         instance.split_multiselects = getattr(saved_export, 'split_multiselects', False)
         instance.include_errors = getattr(saved_export, 'include_errors', False)
+
+    inferred_schema = None
 
     # The SavedExportSchema only saves selected columns so default all the
     # selections to False unless found in the SavedExportSchema (legacy)
@@ -242,22 +255,24 @@ def convert_saved_export_to_export_instance(
                     schema_kwargs = {
                         'domain': domain
                     }
-                    if instance.type == CASE_EXPORT:
-                        inferred_schema = get_case_inferred_schema(domain, instance.identifier)
-                        inferred_schema_cls = CaseInferredSchema
-                        schema_kwargs['case_type'] = instance.identifier
-                    elif instance.type == FORM_EXPORT:
-                        inferred_schema = get_form_inferred_schema(
-                            domain,
-                            instance.app_id,
-                            instance.identifier
-                        )
-                        inferred_schema_cls = FormInferredSchema
-                        schema_kwargs['xmlns'] = instance.identifier
-                        schema_kwargs['app_id'] = instance.app_id
-
                     if not inferred_schema:
-                        inferred_schema = inferred_schema_cls(**schema_kwargs)
+                        if instance.type == CASE_EXPORT:
+                            inferred_schema = get_case_inferred_schema(domain, instance.identifier)
+                            inferred_schema_cls = CaseInferredSchema
+                            schema_kwargs['case_type'] = instance.identifier
+                        elif instance.type == FORM_EXPORT:
+                            inferred_schema = get_form_inferred_schema(
+                                domain,
+                                instance.app_id,
+                                instance.identifier
+                            )
+                            inferred_schema_cls = FormInferredSchema
+                            schema_kwargs['xmlns'] = instance.identifier
+                            schema_kwargs['app_id'] = instance.app_id
+
+                        if not inferred_schema:
+                            inferred_schema = inferred_schema_cls(**schema_kwargs)
+
                     new_column = _create_column_from_inferred_schema(
                         inferred_schema,
                         new_table,
@@ -265,8 +280,6 @@ def convert_saved_export_to_export_instance(
                         column_path,
                         transform,
                     )
-                    if not dryrun:
-                        inferred_schema.save()
 
                     new_table.columns.append(new_column)
                     ordering.append(new_column)
@@ -288,6 +301,8 @@ def convert_saved_export_to_export_instance(
     if not dryrun:
         migration_meta.save()
         instance.save()
+        if inferred_schema:
+            inferred_schema.save()
 
         saved_export.doc_type += DELETED_SUFFIX
         saved_export.converted_saved_export_id = instance._id
@@ -337,6 +352,14 @@ def _create_user_defined_column(old_column, column_path, transform):
         is_editable=False,
     )
     return column
+
+
+def _app_id_from_xmlns(domain, xmlns):
+    apps = get_apps_in_domain(domain)
+    for app in apps:
+        if xmlns in app.get_xmlns_map():
+            return app._id
+    return None
 
 
 def _strip_repeat_index(index):

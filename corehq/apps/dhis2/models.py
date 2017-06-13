@@ -3,7 +3,9 @@ from itertools import chain
 import jsonfield
 from django.db import models
 
-from corehq.apps.dhis2.utils import get_date_filter, get_last_month, get_report_config, get_ucr_data
+from corehq.apps.dhis2.utils import get_date_filter, get_last_month, get_report_config, get_ucr_data, \
+    get_last_quarter
+from corehq.apps.dhis2.const import SEND_FREQUENCY_MONTHLY, SEND_FREQUENCY_QUARTERLY, SEND_FREQUENCIES
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     Document,
@@ -34,11 +36,13 @@ class DataSetMap(Document):
     domain = StringProperty()
     ucr_id = StringProperty()
 
+    description = StringProperty()
+    frequency = StringProperty(choices=SEND_FREQUENCIES, default=SEND_FREQUENCY_MONTHLY)
     day_to_send = IntegerProperty()
     data_set_id = StringProperty()  # If UCR adds values to an existing DataSet
     org_unit_id = StringProperty()  # If all values are for the same OrganisationUnit.
     org_unit_column = StringProperty()  # if not org_unit_id: use org_unit_column
-    period = StringProperty()  # If all values are for the same period. MVP: period is monthly, formatted YYYYMM
+    period = StringProperty()  # If all values are for the same period. Monthly is YYYYMM, quarterly is YYYYQ#
     period_column = StringProperty()  # if not period: use period_column
 
     attribute_option_combo_id = StringProperty()  # Optional. DHIS2 defaults this to categoryOptionCombo
@@ -100,7 +104,14 @@ class DataSetMap(Document):
     def get_dataset(self):
         report_config = get_report_config(self.domain, self.ucr_id)
         date_filter = get_date_filter(report_config)
-        ucr_data = get_ucr_data(report_config, date_filter)
+
+        if self.frequency == SEND_FREQUENCY_MONTHLY:
+            date_range = get_last_month()
+            period = date_range.startdate.strftime('%Y%m')
+        elif self.frequency == SEND_FREQUENCY_QUARTERLY:
+            date_range = get_last_quarter()
+            period = date_range.startdate.strftime('%Y') + 'Q' + str((date_range.startdate.month // 3) + 1)
+        ucr_data = get_ucr_data(report_config, date_filter, date_range)
 
         datavalues = (self.get_datavalues(row) for row in ucr_data)  # one UCR row may have many DataValues
         dataset = {
@@ -112,14 +123,18 @@ class DataSetMap(Document):
             dataset['orgUnit'] = self.org_unit_id
         if self.period:
             dataset['period'] = self.period
-        elif date_filter:
-            last_month = get_last_month()
-            dataset['period'] = last_month.startdate.strftime('%Y%m')
+        elif not self.period_column:
+            dataset['period'] = period
         if self.attribute_option_combo_id:
             dataset['attributeOptionCombo'] = self.attribute_option_combo_id
         if self.complete_date:
             dataset['completeDate'] = self.complete_date
         return dataset
+
+    def should_send_on_date(self, send_date):
+        return self.day_to_send == send_date.day and (
+            self.frequency == SEND_FREQUENCY_MONTHLY or
+            self.frequency == SEND_FREQUENCY_QUARTERLY and send_date.month in [1, 4, 7, 10])
 
 
 class JsonApiLog(models.Model):

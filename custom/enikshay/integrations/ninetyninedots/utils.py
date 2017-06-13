@@ -8,9 +8,11 @@ from corehq.form_processor.exceptions import CaseNotFound
 from dimagi.utils.decorators.memoized import memoized
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
+from custom.enikshay.const import ENIKSHAY_TIMEZONE
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
 from custom.enikshay.case_utils import get_open_episode_case_from_person, get_adherence_cases_between_dates
 from custom.enikshay.exceptions import ENikshayCaseNotFound
+from custom.enikshay.tasks import EpisodeUpdater
 
 
 class AdherenceCaseFactory(object):
@@ -54,25 +56,29 @@ class AdherenceCaseFactory(object):
             raise AdherenceException(e.message)
 
     def create_adherence_cases(self, adherence_points):
-        return self.case_factory.create_or_update_cases([
-            CaseStructure(
-                case_id=uuid.uuid4().hex,
-                attrs={
-                    "case_type": self.ADHERENCE_CASE_TYPE,
-                    "owner_id": UNOWNED_EXTENSION_OWNER_ID,
-                    "create": True,
-                    "update": self._get_adherence_case_properties(adherence_point),
-                },
-                indices=[CaseIndex(
-                    CaseStructure(case_id=self._episode_case.case_id, attrs={"create": False}),
-                    identifier='host',
-                    relationship=CASE_INDEX_EXTENSION,
-                    related_type=self._episode_case.type,
-                )],
-                walk_related=False,
+        case_structures = []
+        for adherence_point in adherence_points:
+            if adherence_point.get('MERM_TypeOfEvent') == "HEARTBEAT":
+                continue
+            case_structures.append(
+                CaseStructure(
+                    case_id=uuid.uuid4().hex,
+                    attrs={
+                        "case_type": self.ADHERENCE_CASE_TYPE,
+                        "owner_id": UNOWNED_EXTENSION_OWNER_ID,
+                        "create": True,
+                        "update": self._get_adherence_case_properties(adherence_point),
+                    },
+                    indices=[CaseIndex(
+                        CaseStructure(case_id=self._episode_case.case_id, attrs={"create": False}),
+                        identifier='host',
+                        relationship=CASE_INDEX_EXTENSION,
+                        related_type=self._episode_case.type,
+                    )],
+                    walk_related=False,
+                )
             )
-            for adherence_point in adherence_points
-        ])
+        return self.case_factory.create_or_update_cases(case_structures)
 
     def _get_adherence_case_properties(self, adherence_point):
         return {
@@ -82,11 +88,13 @@ class AdherenceCaseFactory(object):
             "adherence_date": self._parse_adherence_date(adherence_point["timestamp"]),
             "person_name": self._person_case.name,
             "adherence_confidence": self._default_adherence_confidence,
-            "shared_number_99_dots": adherence_point["sharedNumber"],
+            "shared_number_99_dots": adherence_point.get("sharedNumber"),
+            "merm_imei": adherence_point.get("MERM_IMEI"),
+            "merm_extra_info": adherence_point.get("MERM_ExtraInformation"),
         }
 
     def _parse_adherence_date(self, iso_datestring):
-        tz = timezone('Asia/Kolkata')
+        tz = timezone(ENIKSHAY_TIMEZONE)
         try:
             datetime_from_adherence = parser.parse(iso_datestring)
             datetime_in_india = datetime_from_adherence.astimezone(tz)
@@ -140,3 +148,20 @@ def update_adherence_confidence_level(domain, person_id, start_date, end_date, n
 
 def update_default_confidence_level(domain, person_id, new_confidence):
     return AdherenceCaseFactory(domain, person_id).update_default_confidence_level(new_confidence)
+
+
+def update_episode_adherence_properties(domain, person_id):
+    try:
+        episode_case = get_open_episode_case_from_person(domain, person_id)
+    except ENikshayCaseNotFound as e:
+        raise AdherenceException(e.message)
+    try:
+        updater = EpisodeUpdater(domain)
+        updater.update_single_case(episode_case)
+    except Exception as e:
+        raise AdherenceException(
+            "Error calculating updates for episode case_id({}): {}".format(
+                episode_case.case_id,
+                e
+            )
+        )

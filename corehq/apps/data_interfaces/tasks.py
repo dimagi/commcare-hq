@@ -1,7 +1,12 @@
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from celery.utils.log import get_task_logger
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule, AUTO_UPDATE_XMLNS
+from corehq.apps.data_interfaces.models import (
+    AutomaticUpdateRule,
+    CaseRuleActionResult,
+    DomainCaseRuleRun,
+    AUTO_UPDATE_XMLNS,
+)
 from corehq.util.decorators import serial_task
 from datetime import datetime
 
@@ -65,13 +70,33 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids)
 def run_case_update_rules(now=None):
     domains = (AutomaticUpdateRule
                .objects
-               .filter(active=True, deleted=False)
+               .filter(active=True, deleted=False, workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
                .values_list('domain', flat=True)
                .distinct()
                .order_by('domain'))
     for domain in domains:
         if not DATA_MIGRATION.enabled(domain):
             run_case_update_rules_for_domain.delay(domain, now)
+
+
+def run_rules_for_case(case, rules, now):
+    aggregated_result = CaseRuleActionResult()
+    last_result = None
+    for rule in rules:
+        if last_result:
+            if (
+                last_result.num_updates > 0 or
+                last_result.num_related_updates > 0 or
+                last_result.num_related_closes > 0
+            ):
+                case = CaseAccessors(case.domain).get_case(case.case_id)
+
+        last_result = rule.run_rule(case, now)
+        aggregated_result.add_result(last_result)
+        if last_result.num_closes > 0:
+            break
+
+    return aggregated_result
 
 
 @serial_task(
@@ -83,7 +108,15 @@ def run_case_update_rules(now=None):
 def run_case_update_rules_for_domain(domain, now=None):
     now = now or datetime.utcnow()
     start_run = datetime.utcnow()
-    all_rules = AutomaticUpdateRule.by_domain(domain)
+    run_record = DomainCaseRuleRun.objects.create(
+        domain=domain,
+        started_on=start_run,
+        status=DomainCaseRuleRun.STATUS_RUNNING,
+    )
+    cases_checked = 0
+    case_update_result = CaseRuleActionResult()
+
+    all_rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
     rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(all_rules)
 
     for case_type, rules in rules_by_case_type.iteritems():
@@ -93,20 +126,22 @@ def run_case_update_rules_for_domain(domain, now=None):
         for case_ids in case_id_chunks:
             for case in CaseAccessors(domain).iter_cases(case_ids):
                 time_elapsed = datetime.utcnow() - start_run
-                if time_elapsed.seconds > HALT_AFTER:
-                    notify_error(
-                        "Halting rule run for domain %s as it's been running for more than a day." % domain
-                    )
+                if (
+                    time_elapsed.seconds > HALT_AFTER or
+                    case_update_result.total_updates >= settings.MAX_RULE_UPDATES_IN_ONE_RUN
+                ):
+                    run_record.done(DomainCaseRuleRun.STATUS_HALTED, cases_checked, case_update_result)
+                    notify_error("Halting rule run for domain %s." % domain)
                     return
 
-                for rule in rules:
-                    stop_processing = rule.apply_rule(case, now)
-                    if stop_processing:
-                        break
+                case_update_result.add_result(run_rules_for_case(case, rules, now))
+                cases_checked += 1
 
         for rule in rules:
             rule.last_run = now
             rule.save()
+
+    run_record.done(DomainCaseRuleRun.STATUS_FINISHED, cases_checked, case_update_result)
 
 
 @task(queue='background_queue', acks_late=True, ignore_result=True)
@@ -118,9 +153,7 @@ def run_case_update_rules_on_save(case):
             last_form = FormAccessors(case.domain).get_form(case.xform_ids[-1])
             update_case = last_form.xmlns != AUTO_UPDATE_XMLNS
         if update_case:
-            rules = AutomaticUpdateRule.by_domain(case.domain).filter(case_type=case.type)
+            rules = AutomaticUpdateRule.by_domain(case.domain,
+                AutomaticUpdateRule.WORKFLOW_CASE_UPDATE).filter(case_type=case.type)
             now = datetime.utcnow()
-            for rule in rules:
-                stop_processing = rule.apply_rule(case, now)
-                if stop_processing:
-                    break
+            run_rules_for_case(case, rules, now)

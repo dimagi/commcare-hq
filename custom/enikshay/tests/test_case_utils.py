@@ -1,4 +1,6 @@
 from datetime import datetime
+from uuid import uuid4
+
 import pytz
 
 from django.test import TestCase, override_settings
@@ -19,6 +21,9 @@ from custom.enikshay.case_utils import (
     get_open_episode_case_from_occurrence,
     get_person_locations,
     get_episode_case_from_adherence,
+    get_open_referral_case_from_person,
+    get_fulfilled_prescription_vouchers_from_episode,
+    get_private_diagnostic_test_cases_from_episode,
 )
 
 
@@ -126,6 +131,54 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
         self.assertEqual(
             get_episode_case_from_adherence(self.domain, adherence_case.case_id).case_id,
             self.episode_id,
+        )
+
+    def test_get_referral_case_from_person(self):
+        referral_case_id = uuid4().hex
+        self.create_referral_case(referral_case_id)
+        self.assertEqual(
+            get_open_referral_case_from_person(self.domain, self.person_id).case_id,
+            referral_case_id
+        )
+
+    def test_get_voucher_and_prescription(self):
+        prescription1 = self.create_prescription_case()
+        voucher11 = self.create_voucher_case(prescription1.case_id)
+        voucher12 = self.create_voucher_case(prescription1.case_id)
+        prescription2 = self.create_prescription_case()
+        voucher21 = self.create_voucher_case(prescription2.case_id)
+        self.assertItemsEqual(
+            [voucher11, voucher12, voucher21],
+            get_fulfilled_prescription_vouchers_from_episode(self.domain, self.episode_id)
+        )
+
+    def test_get_private_diagnostic_test_cases_from_episode(self):
+        self.create_case_structure()
+        test1 = self.create_test_case(self.occurrence_id, {
+            'enrolled_in_private': 'true',
+            'date_reported': '2017-08-14',
+            'purpose_of_test': 'diagnostic',
+            'investigation_id': 'ABC-ABC-ABC',
+            'result_grade': 'TB Detected: 3+ scanty'
+        })
+        test2 = self.create_test_case(self.occurrence_id, {
+            'enrolled_in_private': 'true',
+            'date_reported': '2017-08-15',
+            'purpose_of_test': 'diagnostic',
+            'investigation_id': 'DEF-DEF-DEF',
+            'result_grade': 'TB Detected: 3+ scanty',
+        })
+        self.create_test_case(self.occurrence_id, {
+            'enrolled_in_private': 'false',
+            'date_reported': '2017-08-15',
+            'purpose_of_test': 'diagnostic',
+            'investigation_id': 'DEF-DEF-DEF',
+            'result_grade': 'TB Detected: 3+ scanty',
+        })
+
+        self.assertItemsEqual(
+            [test1, test2],
+            get_private_diagnostic_test_cases_from_episode(self.domain, self.episode_id)
         )
 
 

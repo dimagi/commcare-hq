@@ -662,32 +662,6 @@ class CaseTypeReminderTestCase(BaseReminderTestCase):
                 CaseReminderHandler.now + timedelta(days=self.handler2.start_offset)
             )
 
-            # Test deactivation and spawn on change of CaseReminderHandler.case_type
-            CaseReminderHandler.now = datetime(year=2012, month=2, day=16, hour=11, minute=15)
-
-            self.handler1.case_type = 'case_type_b'
-            self.handler1.save()
-            self.handler2.case_type = 'case_type_b'
-            self.handler2.save()
-            self.handler3.case_type = 'case_type_b'
-            self.handler3.save()
-
-            self.assertIsNone(self.handler1.get_reminder(case1))
-            self.assertIsNotNone(self.handler1.get_reminder(case2))
-            self.assertIsNone(self.handler2.get_reminder(case1))
-            self.assertIsNone(self.handler2.get_reminder(case2))
-            self.assertIsNone(self.handler3.get_reminder(case1))
-            self.assertIsNotNone(self.handler3.get_reminder(case2))
-
-            self.assertEqual(
-                self.handler1.get_reminder(case2).next_fire,
-                CaseReminderHandler.now + timedelta(days=self.handler1.start_offset)
-            )
-            self.assertEqual(
-                self.handler3.get_reminder(case2).next_fire,
-                CaseReminderHandler.now + timedelta(days=self.handler3.start_offset)
-            )
-
 
 class StartConditionReminderTestCase(BaseReminderTestCase):
 

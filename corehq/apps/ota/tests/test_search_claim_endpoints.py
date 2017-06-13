@@ -3,20 +3,33 @@ from uuid import uuid4
 
 from django.urls import reverse
 from django.test import TestCase, Client
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from mock import patch
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from casexml.apps.case.tests.util import delete_all_cases
-from corehq.apps.case_search.models import CLAIM_CASE_TYPE, CaseSearchConfig, SEARCH_QUERY_ADDITION_KEY, \
-    CaseSearchQueryAddition
+from corehq.apps.case_search.models import (
+    CLAIM_CASE_TYPE,
+    CaseSearchConfig,
+    SEARCH_QUERY_ADDITION_KEY,
+    CaseSearchQueryAddition,
+    IgnorePatterns,
+)
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_new, SIZE_LIMIT, ES_DEFAULT_INSTANCE
+from corehq.apps.es.case_search import CaseSearchES
+from corehq.apps.es.tests.utils import ElasticTestMixin
+from corehq.apps.ota.views import _add_blacklisted_owner_ids, _add_case_property_queries
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.case_search import get_case_search_reindexer
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO, CASE_SEARCH_INDEX
+from corehq.pillows.mappings.case_search_mapping import (
+    CASE_SEARCH_INDEX_INFO,
+    CASE_SEARCH_INDEX,
+    CASE_SEARCH_MAX_RESULTS,
+)
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index_and_mapping
 
@@ -32,6 +45,162 @@ PATTERN = r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z'
 DATE_PATTERN = r'\d{4}-\d{2}-\d{2}'
 
 # cf. http://www.theguardian.com/environment/2016/apr/17/boaty-mcboatface-wins-poll-to-name-polar-research-vessel
+
+
+class CaseSearchTests(TestCase, ElasticTestMixin):
+    def setUp(self):
+        super(CaseSearchTests, self).setUp()
+        self.search_es = CaseSearchES().domain('swashbucklers')
+
+    def test_add_blacklisted_ids(self):
+        blacklisted_owner_ids = "id1 id2 id3,id4"
+        expected = {'query':
+                    {'filtered':
+                     {'filter':
+                      {'and': [
+                          {'term': {'domain.exact': 'swashbucklers'}},
+                          {'not': {'term': {'owner_id': 'id1'}}},
+                          {'not': {'term': {'owner_id': 'id2'}}},
+                          {'not': {'term': {'owner_id': 'id3,id4'}}},
+                          {'match_all': {}}
+                      ]},
+                      "query": {
+                          "match_all": {}
+                      }}},
+                    'size': SIZE_LIMIT}
+        self.checkQuery(
+            _add_blacklisted_owner_ids(self.search_es, blacklisted_owner_ids),
+            expected
+        )
+
+    def test_add_ignore_pattern_queries(self):
+        config, created = CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
+        rc = IgnorePatterns(
+            domain=DOMAIN,
+            case_type='case_type',
+            case_property='name',
+            regex=' word',
+        )                       # remove ' word' from the name case property
+        rc.save()
+        config.ignore_patterns.add(rc)
+        rc = IgnorePatterns(
+            domain=DOMAIN,
+            case_type='case_type',
+            case_property='name',
+            regex=' gone',
+        )                       # remove ' gone' from the name case property
+        rc.save()
+        config.ignore_patterns.add(rc)
+        rc = IgnorePatterns(
+            domain=DOMAIN,
+            case_type='case_type',
+            case_property='special_id',
+            regex='-',
+        )                       # remove '-' from the special id case property
+        rc.save()
+        config.ignore_patterns.add(rc)
+        config.save()
+        criteria = {
+            'name': "this word should be gone",
+            'other_name': "this word should not be gone",
+            'special_id': 'abc-123-546',
+        }
+
+        expected = {"query": {
+            "filtered": {
+                "filter": {
+                    "and": [
+                        {
+                            "term": {
+                                "domain.exact": "swashbucklers"
+                            }
+                        },
+                        {
+                            "match_all": {}
+                        }
+                    ]
+                },
+                "query": {
+                    "bool": {
+                        "must": [
+                            {
+                                "nested": {
+                                    "path": "case_properties",
+                                    "query": {
+                                        "filtered": {
+                                            "filter": {
+                                                "term": {
+                                                    "case_properties.key": "special_id"
+                                                }
+                                            },
+                                            "query": {
+                                                "match": {
+                                                    "case_properties.value": {
+                                                        "query": "abc123546",
+                                                        "fuzziness": "0"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "nested": {
+                                    "path": "case_properties",
+                                    "query": {
+                                        "filtered": {
+                                            "filter": {
+                                                "term": {
+                                                    "case_properties.key": "name"
+                                                }
+                                            },
+                                            "query": {
+                                                "match": {
+                                                    "case_properties.value": {
+                                                        "query": "this should be",
+                                                        "fuzziness": "0"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "nested": {
+                                    "path": "case_properties",
+                                    "query": {
+                                        "filtered": {
+                                            "filter": {
+                                                "term": {
+                                                    "case_properties.key": "other_name"
+                                                }
+                                            },
+                                            "query": {
+                                                "match": {
+                                                    "case_properties.value": {
+                                                        "query": "this word should not be gone",
+                                                        "fuzziness": "0"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        },
+            "size": SIZE_LIMIT,
+        }
+
+        self.checkQuery(
+            _add_case_property_queries(DOMAIN, 'case_type', self.search_es, criteria),
+            expected,
+        )
 
 
 class CaseClaimEndpointTests(TestCase):
@@ -62,6 +231,8 @@ class CaseClaimEndpointTests(TestCase):
         self.domain.delete()
         for query_addition in CaseSearchQueryAddition.objects.all():
             query_addition.delete()
+        cache = get_redis_default_cache()
+        cache.clear()
 
     @run_with_all_backends
     def test_claim_case(self):
@@ -114,6 +285,65 @@ class CaseClaimEndpointTests(TestCase):
         response = client2.post(url, {'case_id': self.case_id})
         self.assertEqual(response.status_code, 409)
         self.assertEqual(response.content, 'You have already claimed that case')
+
+    @run_with_all_backends
+    def test_claim_restore_as(self):
+        """Server should assign cases to the correct user
+        """
+        client = Client()
+        client.login(username=USERNAME, password=PASSWORD)
+        other_user_username = 'other_user@{}.commcarehq.org'.format(DOMAIN)
+        other_user = CommCareUser.create(DOMAIN, other_user_username, PASSWORD)
+
+        url = reverse('claim_case', kwargs={'domain': DOMAIN})
+
+        client.post(url, {
+            'case_id': self.case_id,
+            'commcare_login_as': other_user_username
+        })
+
+        claim_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)
+        self.assertEqual(len(claim_ids), 1)
+
+        claim_case = CaseAccessors(DOMAIN).get_case(claim_ids[0])
+        self.assertEqual(claim_case.owner_id, other_user._id)
+
+    def test_claim_restore_as_proper_cache(self):
+        """Server should assign cases to the correct user
+        """
+        client = Client()
+        client.login(username=USERNAME, password=PASSWORD)
+        other_user_username = 'other_user@{}.commcarehq.org'.format(DOMAIN)
+        other_user = CommCareUser.create(DOMAIN, other_user_username, PASSWORD)
+
+        another_user_username = 'another_user@{}.commcarehq.org'.format(DOMAIN)
+        another_user = CommCareUser.create(DOMAIN, another_user_username, PASSWORD)
+
+        url = reverse('claim_case', kwargs={'domain': DOMAIN})
+
+        client.post(url, {
+            'case_id': self.case_id,
+            'commcare_login_as': other_user_username
+        })
+
+        claim_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)
+        self.assertEqual(len(claim_ids), 1)
+
+        claim_case = CaseAccessors(DOMAIN).get_case(claim_ids[0])
+        self.assertEqual(claim_case.owner_id, other_user._id)
+
+        client.post(url, {
+            'case_id': self.case_id,
+            'commcare_login_as': another_user_username
+        })
+
+        # We've now created two claims
+        claim_ids = CaseAccessors(DOMAIN).get_case_ids_in_domain(CLAIM_CASE_TYPE)
+        self.assertEqual(len(claim_ids), 2)
+
+        # The most recent one should be the extension owned by the other user
+        claim_cases = CaseAccessors(DOMAIN).get_cases(claim_ids)
+        self.assertIn(another_user._id, [case.owner_id for case in claim_cases])
 
     @run_with_all_backends
     def test_search_endpoint(self):
@@ -250,6 +480,11 @@ class CaseClaimEndpointTests(TestCase):
                     }
                 }
             },
-            'size': 10
+            'size': CASE_SEARCH_MAX_RESULTS
         }
-        run_query_mock.assert_called_with("case_search", expected_query, debug_host=None)
+        run_query_mock.assert_called_with(
+            "case_search",
+            expected_query,
+            debug_host=None,
+            es_instance_alias=ES_DEFAULT_INSTANCE,
+        )

@@ -125,7 +125,7 @@ class RepeaterFilter(BaseSingleOptionFilter):
 
     @property
     def options(self):
-        repeaters = get_repeaters_by_domain(self.domain)
+        repeaters = self._get_repeaters()
         return map(
             lambda repeater: (repeater.get_id, u'{}: {}'.format(
                 repeater.doc_type,
@@ -133,6 +133,9 @@ class RepeaterFilter(BaseSingleOptionFilter):
             )),
             repeaters,
         )
+
+    def _get_repeaters(self):
+        return get_repeaters_by_domain(self.domain)
 
 
 class RepeatRecordStateFilter(BaseSingleOptionFilter):

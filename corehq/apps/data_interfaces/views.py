@@ -5,11 +5,10 @@ import uuid
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.core.cache import cache
-from django.http import HttpResponseBadRequest
 
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.app_manager.util import all_case_properties_by_domain
+from corehq.apps.app_manager.app_schemas.case_properties import all_case_properties_by_domain
 from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain, \
     get_number_of_case_groups_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -28,7 +27,8 @@ from corehq.apps.data_interfaces.tasks import (
     bulk_upload_cases_to_group, bulk_archive_forms, bulk_form_management_async)
 from corehq.apps.data_interfaces.forms import (
     AddCaseGroupForm, UpdateCaseGroupForm, AddCaseToGroupForm,
-    AddAutomaticCaseUpdateRuleForm)
+    AddAutomaticCaseUpdateRuleForm, CaseUpdateRuleForm, CaseRuleCriteriaForm,
+    CaseRuleActionsForm)
 from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
                                                 AutomaticUpdateRuleCriteria,
                                                 AutomaticUpdateAction)
@@ -47,7 +47,7 @@ from .dispatcher import require_form_management_privilege
 from .interfaces import FormManagementMode, BulkFormManagementInterface
 from django.db import transaction
 from django.urls import reverse
-from django.http import HttpResponseRedirect, Http404, HttpResponseServerError
+from django.http import HttpResponseRedirect, Http404, HttpResponseServerError, HttpResponseBadRequest
 from django.shortcuts import render
 from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
 from dimagi.utils.decorators.memoized import memoized
@@ -634,7 +634,7 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
                          .user_time(self.project_timezone)
                          .done()
                          .strftime(SERVER_DATETIME_FORMAT)) if rule.last_run else '-',
-            'edit_url': reverse(EditAutomaticUpdateRuleView.urlname, args=[self.domain, rule.pk]),
+            'edit_url': reverse(EditCaseRuleView.urlname, args=[self.domain, rule.pk]),
         }
 
     @allow_remote_invocation
@@ -651,19 +651,18 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
         start = (page - 1) * limit
         stop = limit * page
 
-        rules = AutomaticUpdateRule.objects.filter(
-            domain=self.domain,
-            deleted=False
-        ).order_by('name')[start:stop]
+        rules = AutomaticUpdateRule.by_domain(
+            self.domain,
+            AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+            active_only=False,
+        )
 
-        total = AutomaticUpdateRule.objects.filter(
-            domain=self.domain,
-            deleted=False
-        ).count()
+        rule_page = rules.order_by('name')[start:stop]
+        total = rules.count()
 
         return {
             'response': {
-                'itemList': map(self._format_rule, rules),
+                'itemList': map(self._format_rule, rule_page),
                 'total': total,
                 'page': page,
             },
@@ -696,7 +695,7 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
             }
 
         try:
-            rule = AutomaticUpdateRule.objects.get(pk=rule_id)
+            rule = AutomaticUpdateRule.objects.get(pk=rule_id, workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         except AutomaticUpdateRule.DoesNotExist:
             return {
                 'error': _("Rule not found."),
@@ -800,6 +799,7 @@ class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
                 active=True,
                 server_modified_boundary=self.rule_form.cleaned_data['server_modified_boundary'],
                 filter_on_server_modified=self.rule_form.cleaned_data['filter_on_server_modified'],
+                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
             )
             self.create_criteria(rule)
             self.create_actions(rule)
@@ -832,7 +832,8 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
     @memoized
     def rule(self):
         try:
-            rule = AutomaticUpdateRule.objects.get(pk=self.rule_id)
+            rule = AutomaticUpdateRule.objects.get(pk=self.rule_id,
+                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         except AutomaticUpdateRule.DoesNotExist:
             raise Http404()
 
@@ -917,3 +918,137 @@ class EditAutomaticUpdateRuleView(AddAutomaticUpdateRuleView):
             self.update_rule(self.rule)
             return HttpResponseRedirect(reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]))
         return super(JSONResponseMixin, self).get(request, *args, **kwargs)
+
+
+class AddCaseRuleView(DataInterfaceSection):
+    template_name = "data_interfaces/case_rule.html"
+    urlname = 'add_case_rule'
+    page_title = ugettext_lazy("Add Case Rule")
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain])
+
+    @property
+    def initial_rule(self):
+        return None
+
+    @property
+    @memoized
+    def is_system_admin(self):
+        return self.request.couch_user.is_superuser
+
+    @property
+    @memoized
+    def read_only_mode(self):
+        return (
+            not self.is_system_admin and
+            (
+                self.criteria_form.requires_system_admin_to_edit or
+                self.actions_form.requires_system_admin_to_edit
+            )
+        )
+
+    @property
+    @memoized
+    def rule_form(self):
+        if self.request.method == 'POST':
+            return CaseUpdateRuleForm(self.domain, self.request.POST, rule=self.initial_rule,
+                is_system_admin=self.is_system_admin)
+
+        return CaseUpdateRuleForm(self.domain, rule=self.initial_rule, is_system_admin=self.is_system_admin)
+
+    @property
+    @memoized
+    def criteria_form(self):
+        if self.request.method == 'POST':
+            return CaseRuleCriteriaForm(self.domain, self.request.POST, rule=self.initial_rule,
+                is_system_admin=self.is_system_admin)
+
+        return CaseRuleCriteriaForm(self.domain, rule=self.initial_rule, is_system_admin=self.is_system_admin)
+
+    @property
+    @memoized
+    def actions_form(self):
+        if self.request.method == 'POST':
+            return CaseRuleActionsForm(self.domain, self.request.POST, rule=self.initial_rule,
+                is_system_admin=self.is_system_admin)
+
+        return CaseRuleActionsForm(self.domain, rule=self.initial_rule, is_system_admin=self.is_system_admin)
+
+    @property
+    def page_context(self):
+        return {
+            'rule_form': self.rule_form,
+            'criteria_form': self.criteria_form,
+            'actions_form': self.actions_form,
+            'read_only_mode': self.read_only_mode,
+        }
+
+    def post(self, request, *args, **kwargs):
+        rule_form_valid = self.rule_form.is_valid()
+        criteria_form_valid = self.criteria_form.is_valid()
+        actions_form_valid = self.actions_form.is_valid()
+
+        if self.read_only_mode:
+            # Don't allow making changes to rules that have custom
+            # criteria/actions unless the user has permission to
+            return HttpResponseBadRequest()
+
+        if rule_form_valid and criteria_form_valid and actions_form_valid:
+            if not self.is_system_admin and (
+                self.criteria_form.requires_system_admin_to_save or
+                self.actions_form.requires_system_admin_to_save
+            ):
+                # Don't allow adding custom criteria/actions to rules
+                # unless the user has permission to
+                return HttpResponseBadRequest()
+
+            with transaction.atomic():
+                if self.initial_rule:
+                    rule = self.initial_rule
+                else:
+                    rule = AutomaticUpdateRule(
+                        domain=self.domain,
+                        active=True,
+                        migrated=True,
+                        workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
+                    )
+
+                rule.name = self.rule_form.cleaned_data['name']
+                self.criteria_form.save_criteria(rule)
+                self.actions_form.save_actions(rule)
+            return HttpResponseRedirect(reverse(AutomaticUpdateRuleListView.urlname, args=[self.domain]))
+
+        return self.get(request, *args, **kwargs)
+
+
+class EditCaseRuleView(AddCaseRuleView):
+    urlname = 'edit_case_rule'
+    page_title = ugettext_lazy("Edit Case Rule")
+
+    @property
+    @memoized
+    def rule_id(self):
+        return self.kwargs.get('rule_id')
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname, args=[self.domain, self.rule_id])
+
+    @property
+    @memoized
+    def initial_rule(self):
+        try:
+            rule = AutomaticUpdateRule.objects.get(pk=self.rule_id,
+                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
+        except AutomaticUpdateRule.DoesNotExist:
+            raise Http404()
+
+        if rule.domain != self.domain or rule.deleted:
+            raise Http404()
+
+        if not rule.migrated:
+            raise Http404()
+
+        return rule

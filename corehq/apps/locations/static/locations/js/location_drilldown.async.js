@@ -25,6 +25,8 @@ function LocationSelectViewModel(options) {
     this.location_types = $.map(options.hierarchy, function(e) {
         return {type: e[0], allowed_parents: e[1]};
     });
+    // max allowed drilldown levels
+    this.max_drill_depth = options.max_drill_depth || this.location_types.length;
 
     this.show_location_filter_bool = ko.computed(function() {
         return model.show_location_filter() === 'y';
@@ -50,7 +52,9 @@ function LocationSelectViewModel(options) {
 
     // add a new level of drill-down to the tree
     this.path_push = function(loc) {
-        if (this.selected_path().length !== this.location_types.length && this.selected_path.indexOf(loc) === -1) {
+        if (this.selected_path().length !== this.location_types.length &&
+            this.selected_path.indexOf(loc) === -1 &&
+            this.selected_path().length < this.max_drill_depth) {
             this.selected_path.push(loc);
             if (this.auto_drill && loc.num_children() === 1) {
                 loc.selected_child(loc.get_child(0));

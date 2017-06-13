@@ -1,4 +1,4 @@
-from casexml.apps.phone.models import OTARestoreUser
+from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.programs.models import Program
 from corehq.apps.commtrack.fixtures import simple_fixture_generator
 
@@ -18,27 +18,20 @@ def program_fixture_generator_json(domain):
         'uri': uri,
         'path': '/programs/program',
         'name': 'Programs',
-        'structure': {
-            f: {
-                'name': f,
-                'no_option': True
-            } for f in fields},
-
-        # DEPRECATED PROPERTIES
-        'sourceUri': uri,
-        'defaultId': 'programs',
-        'initialQuery': "instance('programs')/programs/program",
+        'structure': {f: {'name': f, 'no_option': True} for f in fields},
     }
 
 
-class ProgramFixturesProvider(object):
+class ProgramFixturesProvider(FixtureProvider):
     id = 'commtrack:programs'
 
-    def __call__(self, restore_user, version, last_sync=None, app=None):
-        assert isinstance(restore_user, OTARestoreUser)
+    def __call__(self, restore_state):
+        restore_user = restore_state.restore_user
 
         data_fn = lambda: Program.by_domain(restore_user.domain)
-        return simple_fixture_generator(restore_user, self.id, "program",
-                                         PROGRAM_FIELDS, data_fn, last_sync)
+        return simple_fixture_generator(
+            restore_user, self.id, "program",
+            PROGRAM_FIELDS, data_fn, restore_state.last_sync_log
+        )
 
 program_fixture_generator = ProgramFixturesProvider()

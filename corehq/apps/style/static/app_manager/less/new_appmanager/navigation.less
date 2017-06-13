@@ -3,6 +3,7 @@
   min-width: @app-manager-sidebar-width;
   width: auto !important;
   width: @app-manager-sidebar-width;
+  max-width: @app-manager-sidebar-width;
   float: left;
 }
 
@@ -288,6 +289,7 @@ nav.appmanager-content {
     border: none;
     color: white;
     margin-top: 2px;
+    padding: 0;
   }
 }
 
@@ -322,11 +324,9 @@ nav.appmanager-content {
   padding-bottom: 50px;
 }
 
-.appnav-advanced-label {
-  background-color: fade(@cc-text, 90);
-  color: @cc-bg;
-  padding: 5px 15px;
+.appnav-toggle-label {
+  background-color: darken(@cc-bg, 10);
+  padding: 5px 15px 0 15px;
   font-weight: 600;
   font-size: 10px;
-  text-transform: uppercase;
 }

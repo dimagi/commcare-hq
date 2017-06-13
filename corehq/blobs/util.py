@@ -2,6 +2,8 @@ import os
 from base64 import urlsafe_b64encode
 from datetime import datetime, timedelta
 
+from corehq.util.datadog.gauges import datadog_counter
+
 from .models import BlobExpiration
 
 
@@ -75,6 +77,8 @@ def set_blob_expire_object(bucket, identifier, length, timeout):
     blob_expiration.expires_on = _utcnow() + timedelta(minutes=timeout)
     blob_expiration.length = length
     blob_expiration.save()
+    datadog_counter('commcare.temp_blobs.count')
+    datadog_counter('commcare.temp_blobs.bytes_added', value=length)
 
 
 def _utcnow():

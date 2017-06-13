@@ -88,6 +88,6 @@ class Command(BaseCommand):
                                                                     date_updated=date)
                 seq = checkpoint.seq
             except HistoricalPillowCheckpoint.DoesNotExist:
-                seq = DEFAULT_EMPTY_CHECKPOINT_SEQUENCE
+                seq = DEFAULT_EMPTY_CHECKPOINT_SEQUENCE[pillow.checkpoint.sequence_format]
 
             pillow.checkpoint.update_to(seq)

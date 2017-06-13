@@ -10,9 +10,11 @@ from corehq.apps.repeaters.dbaccessors import (
     get_repeaters_by_domain,
     get_success_repeat_record_count,
     iterate_repeat_records,
+    iter_repeat_records_by_domain,
+    get_domains_that_have_repeat_records,
 )
 from corehq.apps.repeaters.models import RepeatRecord, CaseRepeater
-from corehq.apps.repeaters.const import RECORD_PENDING_STATE
+from corehq.apps.repeaters.const import RECORD_PENDING_STATE, RECORD_CANCELLED_STATE
 
 
 class TestRepeatRecordDBAccessors(TestCase):
@@ -91,6 +93,14 @@ class TestRepeatRecordDBAccessors(TestCase):
         count = get_failure_repeat_record_count(self.domain, self.repeater_id)
         self.assertEqual(count, 2)
 
+    def test_get_repeat_record_count_with_state_and_no_repeater(self):
+        count = get_repeat_record_count(self.domain, state=RECORD_PENDING_STATE)
+        self.assertEqual(count, 3)
+
+    def test_get_repeat_record_count_with_repeater_id_and_no_state(self):
+        count = get_repeat_record_count(self.domain, repeater_id=self.other_id)
+        self.assertEqual(count, 1)
+
     def test_get_paged_repeat_records_with_state_and_no_records(self):
         count = get_repeat_record_count('wrong-domain', state=RECORD_PENDING_STATE)
         self.assertEqual(count, 0)
@@ -111,6 +121,10 @@ class TestRepeatRecordDBAccessors(TestCase):
         records = get_paged_repeat_records('wrong-domain', 0, 2)
         self.assertEqual(len(records), 0)
 
+    def test_get_all_paged_repeat_records(self):
+        records = get_paged_repeat_records(self.domain, 0, 10)
+        self.assertEqual(len(records), len(self.records))  # get all the records that were created
+
     def test_iterate_repeat_records(self):
         records = list(iterate_repeat_records(datetime.utcnow(), chunk_size=2))
         self.assertEqual(len(records), 4)  # Should grab all but the succeeded one
@@ -118,6 +132,51 @@ class TestRepeatRecordDBAccessors(TestCase):
     def test_get_overdue_repeat_record_count(self):
         overdue_count = get_overdue_repeat_record_count()
         self.assertEqual(overdue_count, 1)
+
+    def test_get_all_repeat_records_by_domain_wrong_domain(self):
+        records = list(iter_repeat_records_by_domain("wrong-domain"))
+        self.assertEqual(len(records), 0)
+
+    def test_get_all_repeat_records_by_domain_with_repeater_id(self):
+        records = list(iter_repeat_records_by_domain(self.domain, repeater_id=self.repeater_id))
+        self.assertEqual(len(records), 5)
+
+    def test_get_all_repeat_records_by_domain_since(self):
+        new_records = [
+            # FAIL
+            RepeatRecord(
+                domain=self.domain,
+                repeater_id=self.repeater_id,
+                last_checked=datetime(2017, 5, 24, 0, 0, 0),
+                failure_reason='some error',
+            ),
+            # CANCELLED
+            RepeatRecord(
+                domain=self.domain,
+                repeater_id=self.repeater_id,
+                last_checked=datetime(2017, 5, 10, 0, 0, 0),
+                cancelled=True,
+            ),
+            # CANCELLED
+            RepeatRecord(
+                domain=self.domain,
+                repeater_id=self.repeater_id,
+                last_checked=datetime(2017, 5, 24, 0, 0, 0),
+                cancelled=True,
+            ),
+        ]
+        RepeatRecord.bulk_save(new_records)
+        self.addCleanup(RepeatRecord.bulk_delete, new_records)
+
+        records = list(iter_repeat_records_by_domain(self.domain, state=RECORD_CANCELLED_STATE,
+                                                     since=datetime(2017, 5, 20)))
+        self.assertEqual(len(records), 1)
+        record, = records
+        self.assertEqual(record.to_json(), new_records[-1].to_json())
+
+    def test_get_all_repeat_records_by_domain(self):
+        records = list(iter_repeat_records_by_domain(self.domain))
+        self.assertEqual(len(records), len(self.records))
 
 
 class TestRepeatersDBAccessors(TestCase):
@@ -144,3 +203,21 @@ class TestRepeatersDBAccessors(TestCase):
         repeaters = get_repeaters_by_domain(self.domain)
         self.assertEqual(len(repeaters), 1)
         self.assertEqual(repeaters[0].__class__, CaseRepeater)
+
+
+class TestOtherDBAccessors(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.records = [
+            RepeatRecord(domain='a'),
+            RepeatRecord(domain='b'),
+            RepeatRecord(domain='c'),
+        ]
+        RepeatRecord.bulk_save(cls.records)
+
+    @classmethod
+    def tearDownClass(cls):
+        RepeatRecord.bulk_delete(cls.records)
+
+    def test_get_domains_that_have_repeat_records(self):
+        self.assertEqual(get_domains_that_have_repeat_records(), ['a', 'b', 'c'])

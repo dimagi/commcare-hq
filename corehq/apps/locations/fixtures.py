@@ -1,6 +1,8 @@
 from itertools import groupby
 from collections import defaultdict
 from xml.etree.ElementTree import Element
+
+from casexml.apps.phone.fixtures import FixtureProvider
 from casexml.apps.phone.models import OTARestoreUser
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.locations.models import SQLLocation, LocationType, LocationFixtureConfiguration
@@ -59,13 +61,13 @@ def should_sync_locations(last_sync, location_db, restore_user):
     return False
 
 
-class LocationFixtureProvider(object):
+class LocationFixtureProvider(FixtureProvider):
 
     def __init__(self, id, serializer):
         self.id = id
         self.serializer = serializer
 
-    def __call__(self, restore_user, version, last_sync=None, app=None):
+    def __call__(self, restore_state):
         """
         By default this will generate a fixture for the users
         location and it's "footprint", meaning the path
@@ -74,9 +76,9 @@ class LocationFixtureProvider(object):
         There is an admin feature flag that will make this generate
         a fixture with ALL locations for the domain.
         """
-        assert isinstance(restore_user, OTARestoreUser)
+        restore_user = restore_state.restore_user
         all_locations = restore_user.get_locations_to_sync()
-        if not should_sync_locations(last_sync, all_locations, restore_user):
+        if not should_sync_locations(restore_state.last_sync_log, all_locations, restore_user):
             return []
 
         data_fields = _get_location_data_fields(restore_user.domain)
@@ -235,18 +237,18 @@ def _get_include_without_expanding_locations(domain, location_type):
     """
     include_without_expanding = location_type.include_without_expanding
     if include_without_expanding is not None:
-        # add in other "forced" locations the user should have, along with their ancestors
-        forced_locations = set(SQLLocation.active_objects.filter(
-            domain__exact=domain,
-            location_type=include_without_expanding
-        ))
-        forced_ancestors = {
-            ancestor
-            for location in forced_locations
-            for ancestor in location.get_ancestors()
-        }
-
-        return forced_locations | forced_ancestors
+        forced_location_level = set(
+            SQLLocation.active_objects.
+            filter(domain__exact=domain, location_type=include_without_expanding).
+            values_list('level', flat=True)
+        ) or None
+        if forced_location_level is not None:
+            assert len(forced_location_level) == 1
+            forced_locations = set(SQLLocation.active_objects.filter(
+                domain__exact=domain,
+                level__lte=forced_location_level.pop()
+            ))
+            return forced_locations
 
     return set()
 

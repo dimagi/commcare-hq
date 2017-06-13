@@ -3,7 +3,9 @@ from jsonobject.properties import ListProperty, StringProperty
 
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from custom.enikshay.case_utils import get_open_referral_case_from_person, get_latest_trail_case_from_person
 from dimagi.ext.jsonobject import JsonObject
 from dimagi.utils.dates import force_to_datetime
 
@@ -115,6 +117,155 @@ def concatenate_strings_expression(spec, context):
     wrapped = ConcatenateStrings.wrap(spec)
     wrapped.configure(
         [ExpressionFactory.from_spec(e, context) for e in wrapped.expressions],
+    )
+    return wrapped
+
+
+class ReferralExpressionBase(JsonObject):
+    person_id_expression = DefaultProperty(required=True)
+
+    def configure(self, person_id_expression):
+        self._person_id_expression = person_id_expression
+
+    def __call__(self, item, context=None):
+        person_id = self._person_id_expression(item, context)
+        domain = context.root_doc['domain']
+        if not person_id:
+            return None
+
+        referral = self._get_referral(context, domain, person_id)
+        if referral:
+            return self._handle_referral_case(referral)
+        trail = self._get_trail(context, domain, person_id)
+        if trail:
+            return self._handle_trail_case(context, trail, domain)
+        return None
+
+    @staticmethod
+    def _get_referral(context, domain, person_id):
+        cache_key = (ReferralExpressionBase.__name__, "_get_referral", person_id)
+        if context.get_cache_value(cache_key, False) is not False:
+            return context.get_cache_value(cache_key)
+
+        referral = get_open_referral_case_from_person(domain, person_id)
+        if referral and (referral.dynamic_case_properties().get("status") == "rejected"):
+            referral = None
+        context.set_cache_value(cache_key, referral)
+        return referral
+
+    @staticmethod
+    def _get_referral_by_id(context, domain, referral_id):
+        cache_key = (ReferralExpressionBase.__name__, "_get_referral_by_id", referral_id)
+        if context.get_cache_value(cache_key, False) is not False:
+            return context.get_cache_value(cache_key)
+
+        referral = CaseAccessors(domain).get_case(referral_id)
+
+        context.set_cache_value(cache_key, referral)
+        return referral
+
+    @staticmethod
+    def _get_trail(context, domain, person_id):
+        cache_key = (ReferralExpressionBase.__name__, "_get_trail", person_id)
+
+        if context.get_cache_value(cache_key, False) is not False:
+            return context.get_cache_value(cache_key)
+
+        trail = get_latest_trail_case_from_person(domain, person_id)
+        context.set_cache_value(cache_key, trail)
+        return trail
+
+    def _handle_referral_case(self, referral):
+        raise NotImplementedError
+
+    def _handle_trail_case(self, context, trail, domain):
+        raise NotImplementedError
+
+
+class ReferredBy(ReferralExpressionBase):
+    type = TypeProperty("enikshay_referred_by")
+
+    def _handle_referral_case(self, referral):
+        return referral.opened_by
+
+    def _handle_trail_case(self, context, trail, domain):
+        return trail.owner_id
+
+
+def referred_by_expression(spec, context):
+    wrapped = ReferredBy.wrap(spec)
+    wrapped.configure(
+        ExpressionFactory.from_spec(wrapped.person_id_expression, context)
+    )
+    return wrapped
+
+
+class ReferredTo(ReferralExpressionBase):
+    """
+    An expression that returns the id of a location that the person was referred to.
+    """
+    type = TypeProperty('enikshay_referred_to')
+
+    def _handle_referral_case(self, referral):
+        return referral.owner_id
+
+    def _handle_trail_case(self, context, trail, domain):
+        # We can't use trail.accepted_by because that is a human readable name, not an id
+        referral_id = trail.dynamic_case_properties().get("referral_id")
+        if referral_id:
+            referral = self._get_referral_by_id(context, domain, referral_id)
+            return self._handle_referral_case(referral)
+        return None
+
+
+def referred_to_expression(spec, context):
+    wrapped = ReferredTo.wrap(spec)
+    wrapped.configure(
+        ExpressionFactory.from_spec(wrapped.person_id_expression, context)
+    )
+    return wrapped
+
+
+class DateOfReferral(ReferralExpressionBase):
+    type = TypeProperty('enikshay_date_of_referral')
+
+    def _handle_referral_case(self, referral):
+        return referral.dynamic_case_properties().get("date_of_referral")
+
+    def _handle_trail_case(self, context, trail, domain):
+        referral_id = trail.dynamic_case_properties().get("referral_id")
+        if referral_id:
+            referral = self._get_referral_by_id(context, domain, referral_id)
+            return self._handle_referral_case(referral)
+        return None
+
+
+def date_of_referral_expression(spec, context):
+    wrapped = DateOfReferral.wrap(spec)
+    wrapped.configure(
+        ExpressionFactory.from_spec(wrapped.person_id_expression, context)
+    )
+    return wrapped
+
+
+class DateOfAcceptance(ReferralExpressionBase):
+    type = TypeProperty("enikshay_date_of_acceptance")
+
+    def __call__(self, item, context=None):
+        person_id = self._person_id_expression(item, context)
+        domain = context.root_doc['domain']
+        if not person_id:
+            return None
+        trail = get_latest_trail_case_from_person(domain, person_id)
+        if trail:
+            return trail.opened_on
+        return None
+
+
+def date_of_acceptance_expression(spec, context):
+    wrapped = DateOfAcceptance.wrap(spec)
+    wrapped.configure(
+        ExpressionFactory.from_spec(wrapped.person_id_expression, context)
     )
     return wrapped
 

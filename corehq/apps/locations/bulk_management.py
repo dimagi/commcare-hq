@@ -13,6 +13,7 @@ from django.db import transaction
 from django.utils.translation import string_concat, ugettext as _, ugettext_lazy
 
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -159,6 +160,7 @@ class LocationStub(object):
         # Whether the db_object needs a SQL save, either because it's new or because some attributes
         #   are changed
         self.needs_save = False
+        self.moved_to_root = False
 
     @classmethod
     def from_excel_row(cls, row, index, location_type):
@@ -200,6 +202,7 @@ class LocationStub(object):
             self.db_object = copy.copy(old_collection.locations_by_id[self.location_id])
 
         self.needs_save = self._needs_save()
+        self.moved_to_root = self._moved_to_root()
 
         for attr in self.meta_data_attrs:
             setattr(self.db_object, attr, getattr(self, attr, None))
@@ -276,6 +279,12 @@ class LocationStub(object):
 
         return False
 
+    def _moved_to_root(self):
+        old_parent = self.db_object.parent.site_code if self.db_object.parent else ROOT_LOCATION_TYPE
+        if not self.is_new and self.parent_code == ROOT_LOCATION_TYPE and old_parent != ROOT_LOCATION_TYPE:
+            return True
+        return False
+
 
 class LocationCollection(object):
     """
@@ -295,6 +304,15 @@ class LocationCollection(object):
     @memoized
     def locations_by_site_code(self):
         return {l.site_code: l for l in self.locations}
+
+    @property
+    @memoized
+    def locations_by_parent_code(self):
+        locs_by_parent = defaultdict(list)
+        for loc in self.locations:
+            parent_code = loc.parent.site_code if loc.parent else ''
+            locs_by_parent[parent_code].append(loc)
+        return locs_by_parent
 
     @property
     @memoized
@@ -337,17 +355,7 @@ class LocationExcelValidator(object):
                 extra=", ".join(actual - expected),
             ))
 
-        # all listed types should have a corresponding locations sheet
         type_stubs = self._get_types(type_sheet_reader)
-        expected_sheet_names = [lt.code for lt in type_stubs] + ['types']
-        actual_sheet_names = sheets_by_title.keys()
-        missing_sheet_names = set(expected_sheet_names) - set(actual_sheet_names)
-        if missing_sheet_names:
-            raise LocationExcelSheetError(
-                _(u"Location sheets do not exist for the location types '{}' - "
-                  "All types listed in 'types' sheet should have a location sheet")
-                .format(", ".join(missing_sheet_names))
-            )
 
         # all locations sheets should have correct headers
         location_stubs = []
@@ -389,7 +397,7 @@ class NewLocationImporter(object):
     and saves the changes in a transaction.
     """
 
-    def __init__(self, domain, type_rows, location_rows, excel_importer=None):
+    def __init__(self, domain, type_rows, location_rows, excel_importer=None, chunk_size=100):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)
         self.type_rows = type_rows
@@ -397,6 +405,7 @@ class NewLocationImporter(object):
         self.result = LocationUploadResult()
         self.old_collection = LocationCollection(self.domain_obj)
         self.excel_importer = excel_importer  # excel_importer is used for providing progress feedback
+        self.chunk_size = chunk_size
 
     @classmethod
     def from_excel_importer(cls, domain, excel_importer):
@@ -421,17 +430,20 @@ class NewLocationImporter(object):
         for loc in location_stubs:
             loc.lookup_old_collection_data(self.old_collection)
 
-        with transaction.atomic():
-            type_objects = save_types(type_stubs, self.excel_importer)
-            save_locations(location_stubs, type_objects, self.excel_importer)
-            # Since we updated LocationType objects in bulk, some of the post-save logic
-            #   that occurs inside LocationType.save needs to be explicitly called here
-            for lt in type_stubs:
-                if (not lt.do_delete and lt.needs_save):
-                    obj = type_objects[lt.code]
-                    if not lt.is_new:
-                        # supply_points would have been synced while SQLLocation.save() already
-                        obj.sync_administrative_status(sync_supply_points=False)
+        type_objects = save_types(type_stubs, self.excel_importer)
+        types_changed = any(loc_type.needs_save for loc_type in type_stubs)
+        moved_to_root = any(loc.moved_to_root for loc in location_stubs)
+        delay_updates = not (types_changed or moved_to_root)
+        save_locations(location_stubs, type_objects, self.domain,
+                       delay_updates, self.excel_importer, self.chunk_size)
+        # Since we updated LocationType objects in bulk, some of the post-save logic
+        #   that occurs inside LocationType.save needs to be explicitly called here
+        for lt in type_stubs:
+            if (not lt.do_delete and lt.needs_save):
+                obj = type_objects[lt.code]
+                if not lt.is_new:
+                    # supply_points would have been synced while SQLLocation.save() already
+                    obj.sync_administrative_status(sync_supply_points=False)
 
         update_count = lambda items: sum(l.needs_save and not l.do_delete and not l.is_new for l in items)
         delete_count = lambda items: sum(l.do_delete for l in items)
@@ -468,7 +480,7 @@ class LocationTreeValidator(object):
             loc.autoset_location_id_or_site_code(self.old_collection)
 
         self.types_by_code = {lt.code: lt for lt in self.location_types}
-        self.locations_by_code = {l.site_code: l for l in self.locations}
+        self.locations_by_code = {l.site_code: l for l in self.all_listed_locations}
 
     @property
     def warnings(self):
@@ -495,8 +507,7 @@ class LocationTreeValidator(object):
         unknown_or_missing_errors = []
         if self.old_collection:
             # all old types/locations should be listed in excel
-            unknown_or_missing_errors = (self._check_unlisted_type_codes() +
-                                         self._check_unlisted_location_ids())
+            unknown_or_missing_errors = self._check_unlisted_type_codes()
 
         uniqueness_errors = (self._check_unique_type_codes() +
                              self._check_unique_location_codes() +
@@ -519,7 +530,7 @@ class LocationTreeValidator(object):
             return type_errors
 
         # Check each location's position in the tree
-        errors = self._validate_location_tree()
+        errors = self._validate_location_tree() + self._check_required_locations_missing()
 
         # Location names must be unique among siblings
         errors.extend(self._check_location_names())
@@ -545,6 +556,29 @@ class LocationTreeValidator(object):
               "at index {index} should be valid decimal numbers.")
             .format(type=l.location_type, index=l.index, lat=l.latitude, lng=l.longitude)
             for l in errors
+        ]
+
+    @memoized
+    def _check_required_locations_missing(self):
+        if not self.locations_to_be_deleted or not self.old_collection:
+            # skip this check if no old locations or no location to be deleted
+            return []
+
+        old_locs_by_parent = self.old_collection.locations_by_parent_code
+
+        missing_locs = []
+        listed_sites = {l.site_code for l in self.all_listed_locations}
+        for loc in self.locations_to_be_deleted:
+            required_locs = old_locs_by_parent[loc.site_code]
+            missing = set([l.site_code for l in required_locs]) - listed_sites
+            if missing:
+                missing_locs.append((missing, loc))
+
+        return [
+            _(u"Location '{code}' in sheet '{type}' at index {index} is being deleted, so all its "
+              "child locations must be present in the upload, but child locations '{locs}' are missing")
+            .format(code=parent.site_code, type=parent.location_type, index=parent.index, locs=', '.join(old_locs))
+            for (old_locs, parent) in missing_locs
         ]
 
     @memoized
@@ -595,19 +629,6 @@ class LocationTreeValidator(object):
             _(u"Location type code '{}' is not listed in the excel. All types should be listed")
             .format(code)
             for code in unlisted_codes
-        ]
-
-    @memoized
-    def _check_unlisted_location_ids(self):
-        # count locations not listed in excel but are present in the domain now
-        old = self.old_collection.locations_by_id
-        listed = [l.location_id for l in self.all_listed_locations]
-        unlisted = set(old.keys()) - set(listed)
-
-        return [
-            _(u"Location '{name} (id {id})' is not listed in the excel. All locations should be listed")
-            .format(name=old[location_id].name, id=location_id)
-            for location_id in unlisted
         ]
 
     @memoized
@@ -681,25 +702,37 @@ class LocationTreeValidator(object):
         def _validate_location(location):
             loc_type = self.types_by_code.get(location.location_type)
             if not loc_type:
+                # if no location_type is set
                 return (_(
                     u"Location '{}' in sheet points to a nonexistent or to be deleted location-type '{}'")
                     .format(location.site_code, location.location_type))
 
-            parent = self.locations_by_code.get(location.parent_code)
             if loc_type.parent_code == ROOT_LOCATION_TYPE:
-                if parent:
+                # if top location then it shouldn't have a parent
+                if location.parent_code != ROOT_LOCATION_TYPE:
                     return _(u"Location '{}' is a '{}' and should not have a parent").format(
                         location.site_code, location.location_type)
                 else:
                     return
             else:
+                # if not top location, its actual parent location type should match what it is set in excel
+                parent = self.locations_by_code.get(location.parent_code)
                 if not parent:
-                    return _(u"Location '{}' does not have a parent set or its parent is being deleted").format(
-                        location.site_code)
-            correct_parent_type = loc_type.parent_code
-            if parent == ROOT_LOCATION_TYPE or parent.location_type != correct_parent_type:
-                return _(u"Location '{}' is a '{}', so it should have a parent that is a '{}'").format(
-                    location.site_code, location.location_type, correct_parent_type)
+                    # check old_collection if it's not listed in current excel
+                    parent = self.old_collection.locations_by_site_code.get(location.parent_code)
+                    if not parent:
+                        return _(u"Location '{}' does not have a parent set or its parent "
+                                 "is being deleted").format(location.site_code)
+                    else:
+                        actual_parent_type = parent.location_type.code
+                else:
+                    actual_parent_type = parent.location_type
+                    if parent.do_delete and not location.do_delete:
+                        return _(u"Location points to a location that's being deleted")
+
+                if actual_parent_type != loc_type.parent_code:
+                    return _(u"Location '{}' is a '{}', so it should have a parent that is a '{}'").format(
+                        location.site_code, location.location_type, loc_type.parent_code)
 
         for location in self.locations:
             error = _validate_location(location)
@@ -817,7 +850,7 @@ def save_types(type_stubs, excel_importer=None):
     return all_objs_by_code
 
 
-def save_locations(location_stubs, types_by_code, excel_importer=None):
+def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_importer=None, chunk_size=100):
     """
     :param location_stubs: (list) List of LocationStub objects with
         attributes like 'db_object', 'needs_save', 'do_delete' set
@@ -827,47 +860,67 @@ def save_locations(location_stubs, types_by_code, excel_importer=None):
     This recursively saves tree top to bottom. Note that the bulk updates are not possible
     as the mptt.Model (inherited by SQLLocation) doesn't support bulk creation
     """
-    location_stubs_by_parent_code = defaultdict(list)
-    for l in location_stubs:
-        location_stubs_by_parent_code[l.parent_code].append(l)
 
-    to_be_deleted = []
+    def order_by_location_type():
+        # returns locations in the order from top to bottom
+        types_by_parent = defaultdict(list)
+        for _type in types_by_code.values():
+            key = _type.parent_type.code if _type.parent_type else ROOT_LOCATION_TYPE
+            types_by_parent[key].append(_type)
 
-    def update_children(parent_stub):
-        # recursively create/update locations top to bottom
-        if parent_stub == ROOT_LOCATION_TYPE:
-            parent_code = ROOT_LOCATION_TYPE
-            parent_location = None
-        else:
-            parent_code = parent_stub.site_code
-            parent_location = parent_stub.db_object
+        location_stubs_by_type = defaultdict(list)
+        for l in location_stubs:
+            location_stubs_by_type[l.location_type].append(l)
 
-        child_stubs = location_stubs_by_parent_code[parent_code]
+        top_to_bottom_locations = []
 
-        for child_stub in child_stubs:
+        def append_at_bottom(parent_type):
+            top_to_bottom_locations.extend(location_stubs_by_type[parent_type.code])
+            for child_type in types_by_parent[parent_type.code]:
+                append_at_bottom(child_type)
+
+        for top_type in types_by_parent[ROOT_LOCATION_TYPE]:
+            append_at_bottom(top_type)
+
+        return top_to_bottom_locations
+
+    def _process_locations(locs_to_process, to_be_deleted):
+        for loc in locs_to_process:
             if excel_importer:
                 excel_importer.add_progress()
-            child = child_stub.db_object
-            if child_stub.do_delete:
+            if loc.do_delete:
                 # keep track of to be deleted items to delete them in top-to-bottom order
-                to_be_deleted.append(child)
-            elif child_stub.needs_save:
-                child.location_type = types_by_code.get(child_stub.location_type)
-                if parent_location:
+                to_be_deleted.append(loc.db_object)
+            elif loc.needs_save:
+                loc_object = loc.db_object
+                loc_object.location_type = types_by_code.get(loc.location_type)
+                if loc.parent_code and loc.parent_code is not ROOT_LOCATION_TYPE:
                     # refetch parent_location object so that mptt related fields are updated consistently,
                     #   since we are saving top to bottom, parent_location would not have any pending
                     #   saves, so this is the right point to refetch the object.
-                    child.parent = SQLLocation.objects.get(
-                        domain=parent_location.domain,
-                        site_code__iexact=parent_code
+                    loc_object.parent = SQLLocation.objects.get(
+                        domain=domain,
+                        site_code__iexact=loc.parent_code
                     )
                 else:
-                    child.parent = None
-                child.save()
-            update_children(child_stub)
+                    loc_object.parent = None
+                loc.db_object.save()
 
-    update_children(ROOT_LOCATION_TYPE)
-    for l in reversed(to_be_deleted):
+    to_be_deleted = []
+
+    top_to_bottom_locations = order_by_location_type()
+    if delay_updates:
+        for locs in chunked(top_to_bottom_locations, chunk_size):
+            with transaction.atomic():
+                with SQLLocation.objects.delay_mptt_updates():
+                    _process_locations(locs, to_be_deleted)
+    else:
+        _process_locations(top_to_bottom_locations, to_be_deleted)
+
+    for locs in chunked(reversed(to_be_deleted), chunk_size):
         # Deletion has to happen bottom to top, otherwise mptt complains
         #   about missing parents
-        l.delete()
+        with transaction.atomic():
+            with SQLLocation.objects.delay_mptt_updates():
+                for l in locs:
+                    l.delete()

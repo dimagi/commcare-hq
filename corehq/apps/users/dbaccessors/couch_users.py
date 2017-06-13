@@ -3,6 +3,9 @@ from corehq.util.couch import stale_ok
 
 
 def get_user_id_by_username(username):
+    if not username:
+        return None
+
     result = CouchUser.view(
         'users/by_username',
         key=username,

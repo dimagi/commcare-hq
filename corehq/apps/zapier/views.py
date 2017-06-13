@@ -17,6 +17,7 @@ from corehq.apps.zapier.queries import get_subscription_by_url
 from corehq.apps.zapier.services import delete_subscription_with_url
 from corehq.apps.zapier.consts import EventTypes
 from corehq import privileges
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from .models import ZapierSubscription
@@ -47,7 +48,7 @@ class SubscribeView(View):
 
         if data['event'] == EventTypes.NEW_FORM:
             application = Application.get(data['application'])
-            if not application or not application.get_form_by_xmlns(data['form']):
+            if not application or not application.get_forms_by_xmlns(data['form']):
                 return HttpResponse(status=400)
             ZapierSubscription.objects.create(
                 domain=domain,
@@ -155,8 +156,13 @@ class ZapierUpdateCase(View):
         if not couch_user.is_member_of(domain):
             return HttpResponseForbidden("This user does not have access to this domain.")
 
-        if case_id not in CaseAccessors(domain).get_case_ids_in_domain(case_type):
+        try:
+            case = CaseAccessors(domain).get_case(case_id)
+        except CaseNotFound:
             return HttpResponseForbidden("Could not find case in domain")
+
+        if not case.type == case_type:
+            return HttpResponseForbidden("Case type mismatch")
 
         factory = CaseFactory(domain=domain)
         factory.update_case(

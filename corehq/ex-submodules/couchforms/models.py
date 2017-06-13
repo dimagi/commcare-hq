@@ -5,6 +5,7 @@ import datetime
 import hashlib
 import logging
 import time
+import uuid
 
 from django.db import models
 
@@ -159,7 +160,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
 
     @property
     def form_data(self):
-        return self.form
+        return DictProperty().unwrap(self.form)[1]
 
     @property
     def user_id(self):
@@ -349,7 +350,7 @@ class XFormError(XFormInstance):
         instance.problem = error_message
 
         if with_new_id:
-            new_id = XFormError.get_db().server.next_uuid()
+            new_id = uuid.uuid4().hex
             instance.orig_id = instance._id
             instance._id = new_id
             if '_rev' in instance:

@@ -17,11 +17,11 @@ def translate(t, lang, langs=None):
 
 
 @register.filter
-def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False):
+def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False, escape=False):
     langs = langs or ["default"]
     if include_lang:
         if use_delim:
-            tag = lambda lang: ' [%s]' % lang
+            tag = lambda lang: ' [%s] ' % lang
         else:
             tag = lambda lang: '''
                 <span class="btn btn-xs btn-info btn-langcode-preprocessed">%(lang)s</span>
@@ -30,12 +30,18 @@ def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False):
         tag = lambda lang: ""
     for lang in langs:
         if lang in name and name[lang]:
+            n = unicode(name[lang])
+            if escape:
+                n = html.escape(n)
             affix = ("" if langs and lang == langs[0] else tag(lang))
-            return affix + unicode(name[lang]) if prefix else unicode(name[lang]) + affix
+            return affix + n if prefix else n + affix
         # ok, nothing yet... just return anything in name
     for lang, n in sorted(name.items()):
+        n = unicode(n)
+        if escape:
+            n = html.escape(n)
         affix = tag(lang)
-        return affix + unicode(n) if prefix else unicode(n) + affix
+        return affix + n if prefix else n + affix
     return ""
 
 
@@ -43,9 +49,15 @@ def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False):
 def html_trans(name, langs=["default"]):
     return mark_safe(html.strip_tags(trans(name, langs, use_delim=False)) or EMPTY_LABEL)
 
+
 @register.filter
 def html_trans_prefix(name, langs=["default"]):
-    return mark_safe(trans(name, langs, use_delim=False, prefix=True) or EMPTY_LABEL)
+    return mark_safe(trans(name, langs, use_delim=False, prefix=True, escape=True) or EMPTY_LABEL)
+
+
+@register.filter
+def html_trans_prefix_delim(name, langs=["default"]):
+    return mark_safe(trans(name, langs, use_delim=True, prefix=True, escape=True) or EMPTY_LABEL)
 
 
 @register.filter
@@ -66,7 +78,8 @@ def input_trans(name, langs=None, input_name='name'):
 
 
 @register.simple_tag
-def inline_edit_trans(name, langs=None, url='', saveValueName='', readOnlyClass='', postSave=''):
+def inline_edit_trans(name, langs=None, url='', saveValueName='', postSave='',
+        containerClass='', iconClass='', readOnlyClass=''):
     template = '''
         <inline-edit params="
             name: 'name',
@@ -76,31 +89,12 @@ def inline_edit_trans(name, langs=None, url='', saveValueName='', readOnlyClass=
             lang: '%(lang)s',
             url: '{}',
             saveValueName: '{}',
+            containerClass: '{}',
+            iconClass: '{}',
             readOnlyClass: '{}',
             postSave: {},
         "></inline-edit>
-    '''.format(url, saveValueName, readOnlyClass, postSave)
-    return _input_trans(template, name, langs=langs, allow_blank=False)
-
-
-@register.simple_tag
-def inline_edit_trans_v2(
-        name, langs=None, url='', saveValueName='', containerClass='',
-        postSave='', iconClass=''):
-    template = '''
-        <inline-edit-v2 params="
-            name: 'name',
-            value: '%(value)s',
-            placeholder: '%(placeholder)s',
-            nodeName: 'input',
-            lang: '%(lang)s',
-            url: '{}',
-            saveValueName: '{}',
-            containerClass: '{}',
-            postSave: {},
-            iconClass: '{}',
-        "></inline-edit-v2>
-    '''.format(url, saveValueName, containerClass, postSave, iconClass)
+    '''.format(url, saveValueName, containerClass, iconClass, readOnlyClass, postSave)
     return _input_trans(template, name, langs=langs, allow_blank=False)
 
 

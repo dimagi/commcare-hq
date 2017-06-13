@@ -36,6 +36,7 @@ var ReportConfig = function (data) {
 
     self.unwrap = function () {
         var data = ko.mapping.toJS(self);
+        var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
         if (null !== standardHQReport.slug) {
             data['report_slug'] = standardHQReport.slug;
         }
@@ -254,6 +255,7 @@ var ReportConfigsViewModel = function (options) {
                     var valid = self.validate();
                     if (!valid) {
                         jqXHR.abort();
+                        $('#modal-save-button')[0].saveButton.setState('retry');
                     }
                 }
             };
