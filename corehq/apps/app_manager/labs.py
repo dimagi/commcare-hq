@@ -4,41 +4,27 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.app_manager.models import Module
 
 class Lab(object):
-    def __init__(self, slug, name, description, in_use):
+    def __init__(self, slug, name, description, used_in_module=None, used_in_form=None):
         self.slug = slug
         self.name = name
         self.description = description
-        self.in_use = in_use
 
-    def enabled(self, app, module, form):
-        return True or self.in_use(app, module, form)
-
-def display_conditions_in_use(app, module=None, form=None):
-    if form:
-        return bool(form.form_filter)
-    if module:
-        return bool(module.module_filter)
-    return False
+        self.used_in_module = used_in_module if used_in_module else lambda m: False
+        self.used_in_form = used_in_form if used_in_form else lambda f: False
 
 DISPLAY_CONDITIONS = Lab(
     slug="display_conditions",
     name="Form and Menu Display Conditions",
     description="TODO",
-    in_use=display_conditions_in_use,
+    used_in_form=lambda f: bool(f.form_filter),
+    used_in_module=lambda m: bool(m.module_filter),
 )
-
-def case_list_menu_item_in_use(app, module=None, form=None):
-    if form:
-        return False
-    if module:
-        return isinstance(module, Module) and module.case_list.show
-    return False
 
 CASE_LIST_MENU_ITEM = Lab(
     slug="case_list_menu_item",
     name="Case List Menu Item",
     description="TODO",
-    in_use=case_list_menu_item_in_use,
+    used_in_module=lambda m: isinstance(m, Module) and m.case_list.show,
 )
 
 @memoized
@@ -51,13 +37,17 @@ def all_labs(app, module=None, form=None):
     for name, lab in globals().items():
         if not name.startswith('__'):
             if isinstance(lab, Lab):
-                enabled = lab.slug in app.labs and app.labs[lab.slug]
+                show = enabled = lab.slug in app.labs and app.labs[lab.slug]
+                if form:
+                    show = show or lab.used_in_form(form)
+                elif module:
+                    show = show or lab.used_in_module(module)
                 results[lab.slug] = {
                     'slug': lab.slug,
                     'name': lab.name,
                     'description': lab.description,
                     'enabled': enabled,
-                    'show': enabled or lab.in_use(app, module, form),
+                    'show': show,
                 }
     return results
 
