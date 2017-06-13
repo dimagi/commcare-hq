@@ -360,10 +360,11 @@ def _write_export_instance(writer, export_instance, documents, progress_tracker=
     start = _time_in_milliseconds()
     total_bytes = 0
     total_rows = 0
+    compute_total = 0
+    write_total = 0
 
     for row_number, doc in enumerate(documents):
-        doc_bytes = sys.getsizeof(doc)
-        total_bytes += doc_bytes
+        total_bytes += sys.getsizeof(doc)
         for table in export_instance.selected_tables:
             compute_start = _time_in_milliseconds()
             rows = table.get_rows(
@@ -372,17 +373,14 @@ def _write_export_instance(writer, export_instance, documents, progress_tracker=
                 split_columns=export_instance.split_multiselects,
                 transform_dates=export_instance.transform_dates,
             )
-            compute_end = _time_in_milliseconds()
-            _record_datadog_export_compute_rows(compute_start, compute_end, doc_bytes, len(rows))
+            compute_total += _time_in_milliseconds() - compute_start
 
             write_start = _time_in_milliseconds()
             for row in rows:
                 # It might be bad to write one row at a time when you can do more (from a performance perspective)
                 # Regardless, we should handle the batching of rows in the _Writer class, not here.
                 writer.write(table, row)
-            write_end = _time_in_milliseconds()
-
-            _record_datadog_export_write_rows(write_start, write_end, doc_bytes, len(rows))
+            write_total += _time_in_milliseconds() - write_start
 
             total_rows += len(rows)
 
@@ -390,36 +388,38 @@ def _write_export_instance(writer, export_instance, documents, progress_tracker=
             DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
 
     end = _time_in_milliseconds()
-    _record_datadog_export_write_rows(start, end, total_bytes, total_rows)
+    _record_datadog_export_write_rows(write_total, total_bytes, total_rows)
+    _record_datadog_export_compute_rows(compute_total, total_bytes, total_rows)
+    _record_datadog_export_write_rows(end - start, total_bytes, total_rows)
 
 
 def _time_in_milliseconds():
     return int(time.time() * 1000)
 
 
-def _record_datadog_export_compute_rows(start, end, doc_bytes, n_rows):
-    __record_datadog_export(start, end, doc_bytes, n_rows, 'commcare.compute_export_rows_duration')
+def _record_datadog_export_compute_rows(duration, doc_bytes, n_rows):
+    __record_datadog_export(duration, doc_bytes, n_rows, 'commcare.compute_export_rows_duration')
 
 
-def _record_datadog_export_write_rows(start, end, doc_bytes, n_rows):
-    __record_datadog_export(start, end, doc_bytes, n_rows, 'commcare.write_export_rows_duration')
+def _record_datadog_export_write_rows(duration, doc_bytes, n_rows):
+    __record_datadog_export(duration, doc_bytes, n_rows, 'commcare.write_export_rows_duration')
 
 
-def _record_datadog_export_duration(start, end, doc_bytes, n_rows):
-    __record_datadog_export(start, end, doc_bytes, n_rows, 'commcare.export_duration')
+def _record_datadog_export_duration(duration, doc_bytes, n_rows):
+    __record_datadog_export(duration, doc_bytes, n_rows, 'commcare.export_duration')
 
 
-def __record_datadog_export(start, end, doc_bytes, n_rows, metric):
-    datadog_histogram(metric, end - start)
+def __record_datadog_export(duration, doc_bytes, n_rows, metric):
+    datadog_histogram(metric, duration)
     if doc_bytes:
         datadog_histogram(
             '{}_normalized_by_size'.format(metric),
-            (end - start) / doc_bytes,
+            duration / doc_bytes,
         )
     if n_rows:
         datadog_histogram(
             '{}_normalized_by_rows'.format(metric),
-            (end - start) / n_rows,
+            duration / n_rows,
         )
 
 
