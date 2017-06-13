@@ -211,20 +211,23 @@
             </div>
         </div>
 
-        <div data-bind="template: {
-                            name: 'datavalue_map_template',
-                            foreach: dataValueMaps,
-                            as: 'dataValueMap'
-                        }"></div>
+        <div class="col-md-offset-1">
+            <div data-bind="template: {
+                                name: 'datavalue_map_template',
+                                foreach: dataValueMaps,
+                                as: 'dataValueMap'
+                            }"></div>
 
-        <p>
-            <button type="button"
-                    class="btn btn-success"
-                    data-bind="click: addDataValueMap">
-                <i class="fa fa-plus"></i>
-                {% trans "Add DataValue map" %}
-            </button>
-        </p>
+            <p>
+                <button type="button"
+                        class="btn btn-success"
+                        data-bind="click: addDataValueMap">
+                    <i class="fa fa-plus"></i>
+                    {% trans "Add DataValue map" %}
+                </button>
+            </p>
+        </div>
 
     </fieldset>
+    <div class="spacer"></div>
 </script>
