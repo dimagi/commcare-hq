@@ -98,13 +98,12 @@ def query_dict_to_dict(query_dict, domain, string_type_params):
     """
     Transform the given QueryDict to a normal dict where each value has been
     converted from a string to a dict (if the value is JSON). params with values 'true'
-    or 'false' or casted to respective booleans, unless the key is specified in string_type_params
+    or 'false' or numbers are casted to respective datatypes, unless the key is specified in string_type_params
     Also add the domain to the dict.
 
     :param query_dict: a QueryDict
     :param domain:
-    :string_type_params: list of params that should not be boolean-casted if the values are
-        'true' or 'false'
+    :string_type_params: list of params that should not be autocasted to boolean/numbers
     :return: a dict
     """
     request_dict = json_request(query_dict)
@@ -112,9 +111,8 @@ def query_dict_to_dict(query_dict, domain, string_type_params):
 
     # json.loads casts strings 'true'/'false' to booleans, so undo it
     for key in string_type_params:
-        val = query_dict.get(key)
-        request_dict[key] = 'true' if val == 'true' else val
-        request_dict[key] = 'false' if val == 'false' else val
+        if key in query_dict:
+            request_dict[key] = query_dict[key]
     return request_dict
 
 
