@@ -45,22 +45,22 @@
     </div>
 
     <div class="page-edit-header">
-      <div class="page-edit-title">
-        <inline-edit-v2 params="
+      <div class="page-edit-title h1">
+        <inline-edit params="
           value: '{{ report_title|escapejs }}',
           id: 'report-title',
           placeholder: '{% trans "Enter report name here"|escapejs %}',
           cols: 50,
-        "></inline-edit-v2>
+        "></inline-edit>
       </div>
       <div class="page-edit-description">
-        <inline-edit-v2 params="
+        <inline-edit params="
           value: {% if report_description %}'{{ report_description|escapejs }}'{% else %}null{% endif %},
           id: 'report-description',
           placeholder: '{% trans "Enter report description here"|escapejs %}',
           readOnlyClass: 'app-comment',
           cols: 50,
-        "></inline-edit-v2>
+        "></inline-edit>
       </div>
     </div>
     <div class="row">
@@ -130,7 +130,7 @@
                 <a data-toggle="collapse"
                    data-parent="#configure-report-options"
                    href="#report-config-userfilter"
-                   class="collapse">
+                   class="collapsed">
                   <i class="fa fa-angle-double-down"></i>
                   {% trans 'User Filters'%}
                 </a>
@@ -156,7 +156,7 @@
                 <a data-toggle="collapse"
                    data-parent="#configure-report-options"
                    href="#report-config-defaultfilters"
-                   class="collapse">
+                   class="collapsed">
                   <i class="fa fa-angle-double-down"></i>
                   {% trans 'Default Filters'%}
                 </a>

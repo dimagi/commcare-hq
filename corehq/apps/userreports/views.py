@@ -705,7 +705,6 @@ class ConfigureReport(ReportBuilderView):
                     'is_static': self.existing_report.is_static,
                 })
             return self._handle_exception(error_response, e)
-<<<<<<< HEAD
 
     def _get_existing_report_type(self):
         if self.existing_report:
