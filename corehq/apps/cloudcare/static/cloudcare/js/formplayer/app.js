@@ -216,11 +216,6 @@ FormplayerFrontend.on("start", function (options) {
             } else {
                 FormplayerFrontend.trigger("apps:list", options.apps);
             }
-            if (user.displayOptions.phoneMode) {
-                // Refresh on start of preview mode so it ensures we're on the latest app
-                // since app updates do not work.
-                FormplayerFrontend.trigger('refreshApplication', appId);
-            }
         }
     }
 
