@@ -33,6 +33,27 @@ CASE_DETAIL_OVERWRITE = Lab(
     description="Ability to overwrite one case list or detail's settings with another's",
 )
 
+CONDITIONAL_FORM_ACTIONS = Lab(
+    slug="conditional_form_actions",
+    name='Allow opening or closing bases based on a condition ("Only if the answer to...")',
+    description="Allow changing form actions, deleting registration forms (TODO: rephrase?)",
+    used_in_form=lambda f: f.actions.open_case.condition.type === 'if' or f.actions.close_case.condition.type, # TODO: will this break advanced forms?
+)
+
+EDIT_FORM_ACTIONS = Lab(
+    slug="edit_form_actions",
+    name="Editing Form Actions",
+    description="Allow changing form actions and deleting registration forms",
+    #used_in_form=lambda f: bool(f.form_filter),
+)
+
+SUBCASES = Lab(
+    slug="subcases",
+    name="Child Cases",
+    description="TODO",
+    used_in_form=lambda f: bool(f.actions.subcases),    # TODO: will this break anything?
+)
+
 @memoized
 def labs_by_name(app, slug):
     return {t['slug']: t for t in all_labs(app)}
@@ -62,11 +83,7 @@ def all_labs(app, module=None, form=None):
 
 '''
 Registration from case list
-Ability to delete registration forms
 Menu mode (display menu & forms / display only forms)
-Conditional case opening/closing (in form's case management, open/close case "Only if the answer to...")
-Child cases
-Ability to change the case action of a form ("This form does not use cases", etc.)
 
 FEATURE PREVIEWS
 Conditional Enum in Case List
