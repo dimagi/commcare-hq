@@ -27,6 +27,12 @@ CASE_LIST_MENU_ITEM = Lab(
     used_in_module=lambda m: isinstance(m, Module) and m.case_list.show,
 )
 
+CASE_DETAIL_OVERWRITE = Lab(
+    slug="case_detail_overwrite",
+    name="Case Detail Overwrite",
+    description="Ability to overwrite one case list or detail's settings with another's",
+)
+
 @memoized
 def labs_by_name(app, slug):
     return {t['slug']: t for t in all_labs(app)}
@@ -55,10 +61,8 @@ def all_labs(app, module=None, form=None):
 
 
 '''
-Case list menu item
 Registration from case list
 Ability to delete registration forms
-Ability to overwrite case list/detail with another module's case list/detail
 Menu mode (display menu & forms / display only forms)
 Conditional case opening/closing (in form's case management, open/close case "Only if the answer to...")
 Child cases
