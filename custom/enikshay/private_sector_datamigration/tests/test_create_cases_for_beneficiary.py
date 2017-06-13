@@ -250,7 +250,6 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('patient_type', 'new'),
             ('private_sector_episode_pending_registration', 'no'),
             ('retreatment_reason', ''),
-            ('rx_outcome_date', '2017-05-19'),
             ('site', 'extrapulmonary'),
             ('site_choice', 'abdominal'),
             ('transfer_in', ''),
@@ -258,6 +257,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('treatment_initiated', 'yes_pcp'),
             ('treatment_initiation_date', '2017-04-19'),
             ('treatment_options', ''),
+            ('treatment_outcome_date', '2017-05-19'),
             ('treatment_phase', 'continuation_phase_cp'),
             ('weight', '50'),
         ]))
