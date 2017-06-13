@@ -44,7 +44,20 @@ EDIT_FORM_ACTIONS = Lab(
     slug="edit_form_actions",
     name="Editing Form Actions",
     description="Allow changing form actions and deleting registration forms",
-    #used_in_form=lambda f: bool(f.form_filter),
+)
+
+MENU_MODE = Lab(
+    slug="menu_mode",
+    name="Menu Mode",
+    description="TODO",
+    used_in_module=lambda m: return m.put_in_root,
+)
+
+REGISTER_FROM_CASE_LIST = Lab(
+    slug="register_from_case_list",
+    name="Register from case list",
+    description="TODO",
+    used_in_module=lambda m: module.case_list_form.form_id, # TODO: break anything
 )
 
 SUBCASES = Lab(
@@ -82,7 +95,6 @@ def all_labs(app, module=None, form=None):
 
 
 '''
-Registration from case list
 Menu mode (display menu & forms / display only forms)
 
 FEATURE PREVIEWS
