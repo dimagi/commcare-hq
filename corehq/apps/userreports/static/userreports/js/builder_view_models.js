@@ -330,7 +330,8 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             defaultFilters,
             dataSourceIndicators,
             reportColumnOptions,
-            dateRangeOptions
+            dateRangeOptions,
+            isGroupByRequired
     ) {
         var self = this;
         self.optionsContainQuestions = _.any(dataSourceIndicators, function (o) {
@@ -338,6 +339,9 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         });
         self.dataSourceIndicators = dataSourceIndicators;
         self.reportColumnOptions = reportColumnOptions;
+        self.groupBy = ko.observable();
+        self.isGroupByRequired = ko.observable(isGroupByRequired);
+        self.showGroupByValidationError = ko.observable(false);
 
         // Convert the DataSourceProperty and ColumnOption passed through the template
         // context into objects with the correct format for the select2 and
@@ -415,7 +419,12 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             var isValid = true;
             isValid = self.userFiltersList.validate() && isValid;
             isValid = self.columnsList.validate() && isValid;
+            if (self.isGroupByRequired()) {
+                isValid = !_.isEmpty(self.groupBy()) && isValid;
+            }
             self.showValidationError(!isValid);
+            self.showGroupByValidationError(_.isEmpty(self.groupBy()) && self.isGroupByRequired());
+
             if (!isValid) {
                 self.validationErrorText(
                     django.gettext("Please check above for any errors in your configuration.")

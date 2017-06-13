@@ -716,6 +716,15 @@ class ConfigureNewReportBase(forms.Form):
         )
 
     @property
+    def validation_error_text(self):
+        return crispy.HTML(
+            """<div class="alert alert-danger"
+                    data-bind="text: validationErrorText,
+                               visible: showValidationError">
+               </div>"""
+        )
+
+    @property
     def user_filter_fieldset(self):
         """
         Return a fieldset representing the markup used for configuring the
@@ -1059,7 +1068,7 @@ class ConfigureNewReportBase(forms.Form):
 
 
 class ConfigureBarChartReportForm(ConfigureNewReportBase):
-    group_by = forms.ChoiceField(label=_("Bar Chart Categories"))
+    group_by = forms.ChoiceField(label=_("Bar Chart Categories"), required=False)
     report_type = 'chart'
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
@@ -1069,7 +1078,10 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
         if self.source_type == "form":
             self.fields['group_by'].widget = QuestionSelect(attrs={'class': 'input-large'})
         else:
-            self.fields['group_by'].widget = Select2(attrs={'class': 'input-large'})
+            self.fields['group_by'].widget = Select2(
+                attrs={'class': 'input-large'},
+                ko_value='groupBy'
+            )
         self.fields['group_by'].choices = self._group_by_choices
 
         # Set initial value of group_by
@@ -1092,9 +1104,18 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
                     ),
                     placeholder=_("Select Property..."),
                 ),
+                crispy.HTML(
+                    """<div class="controls col-sm-9 col-md-8 col-lg-6 col-sm-offset-3 col-md-offset-2 col-lg-offset-2"
+                             data-bind="visible:showGroupByValidationError">
+                             <strong class="text-danger">{error}</strong>
+                     </div>""".format(
+                        error=_("Please specify a property for the category.")
+                    )
+                )
             ),
             self.user_filter_fieldset,
-            self.default_filter_fieldset
+            self.default_filter_fieldset,
+            self.validation_error_text,
         )
 
     @property
@@ -1153,7 +1174,7 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
 
 
 class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
-    group_by = forms.ChoiceField(label=_("Pie Chart Segments"))
+    group_by = forms.ChoiceField(label=_("Pie Chart Segments"), required=False)
 
     @property
     def container_fieldset(self):
@@ -1170,9 +1191,19 @@ class ConfigurePieChartReportForm(ConfigureBarChartReportForm):
                         "Select Property..."
                     ),
                 ),
+                crispy.HTML(
+                    """<div class="controls col-sm-9 col-md-8 col-lg-6 col-sm-offset-3 col-md-offset-2 col-lg-offset-2"
+                             data-bind="visible:showGroupByValidationError">
+                             <strong class="text-danger">{error}</strong>
+                     </div>""".format(
+                        error=_("Please select a property for the segment.")
+                    )
+                )
+
             ),
             self.user_filter_fieldset,
-            self.default_filter_fieldset
+            self.default_filter_fieldset,
+            self.validation_error_text,
         )
 
     @property
@@ -1214,7 +1245,8 @@ class ConfigureListReportForm(ConfigureNewReportBase):
             ),
             self.column_fieldset,
             self.user_filter_fieldset,
-            self.default_filter_fieldset
+            self.default_filter_fieldset,
+            self.validation_error_text,
         )
 
     @property
@@ -1222,7 +1254,9 @@ class ConfigureListReportForm(ConfigureNewReportBase):
         return crispy.Fieldset(
             _legend(_("Columns"), _(self.column_legend_fine_print)),
             crispy.Div(
-                crispy.HTML(self.column_config_template), id="columns-table", data_bind='with: columnsList'
+                crispy.HTML(self.column_config_template),
+                id="columns-table",
+                data_bind='with: columnsList'
             ),
             hqcrispy.HiddenFieldWithErrors('columns', data_bind="value: columnsList.serializedProperties"),
         )
@@ -1290,7 +1324,7 @@ class ConfigureListReportForm(ConfigureNewReportBase):
 class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportForm):
     report_type = 'table'
     column_legend_fine_print = ugettext_noop(u'Add columns for this report to aggregate. Each property you add will create a column for every value of that property.  For example, if you add a column for a yes or no question, the report will show a column for "yes" and a column for "no."')
-    group_by = forms.ChoiceField(label=_("Show one row for each"))
+    group_by = forms.ChoiceField(label=_("Show one row for each"), required=False)
 
     @property
     def container_fieldset(self):
@@ -1301,10 +1335,21 @@ class ConfigureTableReportForm(ConfigureListReportForm, ConfigureBarChartReportF
                     _("Rows"),
                     _('Choose which property this report will group its results by. Each value of this property will be a row in the table. For example, if you choose a yes or no question, the report will show a row for "yes" and a row for "no."'),
                 ),
-                'group_by',
+                crispy.Field(
+                    'group_by'
+                ),
+                crispy.HTML(
+                    """<div class="controls col-sm-9 col-md-8 col-lg-6 col-sm-offset-3 col-md-offset-2 col-lg-offset-2"
+                             data-bind="visible:showGroupByValidationError">
+                             <strong class="text-danger">{error}</strong>
+                     </div>""".format(
+                        error=_("Please select a row.")
+                    )
+                )
             ),
             self.user_filter_fieldset,
-            self.default_filter_fieldset
+            self.default_filter_fieldset,
+            self.validation_error_text,
         )
 
     @property
@@ -1428,13 +1473,14 @@ class ConfigureWorkerReportForm(ConfigureTableReportForm):
             ),
             self.column_fieldset,
             self.user_filter_fieldset,
-            self.default_filter_fieldset
+            self.default_filter_fieldset,
+            self.validation_error_text,
         )
 
 
 class ConfigureMapReportForm(ConfigureListReportForm):
     report_type = 'map'
-    location = forms.ChoiceField(label="Location field")
+    location = forms.ChoiceField(label="Location field", required=False)
 
     def __init__(self, report_name, app_id, source_type, report_source_id, existing_report=None, *args, **kwargs):
         super(ConfigureMapReportForm, self).__init__(
@@ -1443,7 +1489,10 @@ class ConfigureMapReportForm(ConfigureListReportForm):
         if self.source_type == "form":
             self.fields['location'].widget = QuestionSelect(attrs={'class': 'input-large'})
         else:
-            self.fields['location'].widget = Select2(attrs={'class': 'input-large'})
+            self.fields['location'].widget = Select2(
+                attrs={'class': 'input-large'},
+                ko_value="groupBy"
+            )
         self.fields['location'].choices = self._location_choices
 
         # Set initial value of location
@@ -1465,9 +1514,18 @@ class ConfigureMapReportForm(ConfigureListReportForm):
                     _('Choose which property represents the location.'),
                 ),
                 'location',
+                crispy.HTML(
+                    """<div class="controls col-sm-9 col-md-8 col-lg-6 col-sm-offset-3 col-md-offset-2 col-lg-offset-2"
+                             data-bind="visible:showGroupByValidationError">
+                             <strong class="text-danger">{error}</strong>
+                     </div>""".format(
+                        error=_("Please select a property to represent the location.")
+                    )
+                )
             ),
             self.user_filter_fieldset,
-            self.default_filter_fieldset
+            self.default_filter_fieldset,
+            self.validation_error_text,
         )
 
     @property
