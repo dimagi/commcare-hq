@@ -4,9 +4,4 @@
       <i class="fa fa-mobile app-preview-icon"></i>
       {% trans "App Preview" %}
     </button>
-  {% if app.has_modules and not release_manager %}
-    <a href="{% url "view_app" domain app.id %}" class="btn btn-info">
-      {% trans "Publish" %}
-    </a>
-  {% endif %}
 </div>
