@@ -11,11 +11,18 @@ class Toggle(object):
     def enabled(self, app, module, form):
         return True or self.in_use(app, module, form)
 
+def display_conditions_in_use(app, module=None, form=None):
+    if form:
+        return bool(form.form_filter)
+    if module:
+        return bool(module.module_filter)
+    return False
+
 DISPLAY_CONDITIONS = Toggle(
     slug="display_conditions",
     name="Form and Menu Display Conditions",
     description="these are things",
-    in_use=lambda app, module, form: False,
+    in_use=display_conditions_in_use,
 )
 
 CASE_LIST_MENU_ITEM = Toggle(
@@ -26,17 +33,23 @@ CASE_LIST_MENU_ITEM = Toggle(
 )
 
 @memoized
-def all_toggles(app):
-    results = []
+def toggles_by_name(app, slug):
+    return {t['slug']: t for t in all_toggles(app)}
+
+@memoized
+def all_toggles(app, module=None, form=None):
+    results = {}
     for toggle_name, toggle in globals().items():
         if not toggle_name.startswith('__'):
             if isinstance(toggle, Toggle):
-                results.append({
+                enabled = toggle.slug in app.labs and app.labs[toggle.slug]
+                results[toggle.slug] = {
                     'slug': toggle.slug,
                     'name': toggle.name,
                     'description': toggle.description,
-                    'enabled': toggle.slug in app.labs and app.labs[toggle.slug],
-                })
+                    'enabled': enabled,
+                    'show': enabled or toggle.in_use(app, module, form),
+                }
     return results
 
 

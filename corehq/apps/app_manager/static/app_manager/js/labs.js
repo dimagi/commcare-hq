@@ -2,7 +2,7 @@ hqDefine("app_manager/js/labs.js", function() {
     function EditLabs(labs, saveUrl) {
         var self = this;
 
-        self.labs = ko.observableArray(labs);
+        self.labs = ko.observableArray(_.values(labs));
         self.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: gettext("You have unsaved changes."),
             save: function () {

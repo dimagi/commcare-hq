@@ -186,7 +186,6 @@ def get_app_view_context(request, app):
     context.update({
         'app_view_options': app_view_options,
     })
-    context.update({'all_toggles': app_manager_toggles.all_toggles(app)})
 
     build_config = CommCareBuildConfig.fetch()
     options = build_config.get_menu()
@@ -757,7 +756,7 @@ def edit_app_attr(request, domain, app_id, attr):
 @require_can_edit_apps
 def edit_toggles(request, domain, app_id):
     app = get_app(domain, app_id)
-    for toggle in app_manager_toggles.all_toggles(app):
+    for toggle in app_manager_toggles.all_toggles(app).values():
         app.labs[toggle['slug']] = request.POST.get(toggle['slug'], 'off') == 'on'
     app.save()
     return HttpResponse(json.dumps({'success': True}))
