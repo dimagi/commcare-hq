@@ -15,7 +15,6 @@ class Command(BaseCommand):
             "Only subscription, domain-membership, and A/B Test properties are supported")
 
     def add_arguments(self, parser):
-        parser.add_argument('property_names', nargs='+')
         parser.add_argument(
             'property_names',
             metavar='property_name',

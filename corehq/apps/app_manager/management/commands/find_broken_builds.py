@@ -73,7 +73,6 @@ class Command(BaseCommand):
     help = "Print a list of broken builds"
 
     def add_arguments(self, parser):
-        parser.add_argument('check_function')
         parser.add_argument(
             'check_function',
             choices=list(CHECK_FUNCTIONS),
