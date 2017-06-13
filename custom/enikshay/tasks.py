@@ -419,10 +419,7 @@ class EpisodeAdherenceUpdate(object):
             for (k, v) in update_dict.iteritems()
         ])
         if needs_update:
-            # cast any date objects to strings, so that Django template rendering
-            # used by update_case formats dates as YYYY:MM:DD instead of (Month Date, Year)
-            return {key: str(val) if isinstance(val, datetime.date) else val
-                    for key, val in update_dict.iteritems()}
+            return update_dict
         else:
             return None
 
