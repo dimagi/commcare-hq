@@ -756,7 +756,7 @@ def edit_app_attr(request, domain, app_id, attr):
 @require_can_edit_apps
 def edit_labs(request, domain, app_id):
     app = get_app(domain, app_id)
-    for lab in labs.all_labs(app).values():
+    for lab in labs.get_all(app).values():
         app.labs[lab['slug']] = request.POST.get(lab['slug'], 'off') == 'on'
     app.save()
     return HttpResponse(json.dumps({'success': True}))

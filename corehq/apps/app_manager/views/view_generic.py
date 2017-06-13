@@ -132,7 +132,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     if app and not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(lang, {})})
 
-    context.update({'labs': labs.all_labs(app, module, form)})
+    context.update({'labs': labs.get_all(app, module, form)})
 
     if form:
         template, form_context = get_form_view_context_and_template(

@@ -1,6 +1,7 @@
 from collections import namedtuple
 from dimagi.utils.decorators.memoized import memoized
 
+from corehq.apps.app_manager.exceptions import LabNotFoundException
 from corehq.apps.app_manager.models import Module
 
 class Lab(object):
@@ -51,28 +52,35 @@ _LABS = {
         description="TODO",
         used_in_form=lambda f: bool(f.actions.subcases),    # TODO: will this break anything?
     ),
+    "unstructured_case_lists": Lab(
+        name="Customize Case List Registration",
+        description="Create new case lists without a registration form, and allow deletion of registration forms.",
+    ),
 }
 
 @memoized
-def labs_by_name(app, slug):
-    return {t['slug']: t for t in all_labs(app)}
+def get(slug, app, module=None, form=None):
+    if slug not in _LABS:
+        raise LabNotFoundException(slug)
+    lab = _LABS[slug]
+    show = enabled = slug in app.labs and app.labs[slug]
+    if form:
+        show = show or lab.used_in_form(form)
+    elif module:
+        show = show or lab.used_in_module(module)
+    return {
+        'slug': slug,
+        'name': lab.name,
+        'description': lab.description,
+        'enabled': enabled,
+        'show': show,
+    }
 
 @memoized
-def all_labs(app, module=None, form=None):
+def get_all(app, module=None, form=None):
     results = {}
     for slug, lab in _LABS.items():
-        show = enabled = slug in app.labs and app.labs[slug]
-        if form:
-            show = show or lab.used_in_form(form)
-        elif module:
-            show = show or lab.used_in_module(module)
-        results[slug] = {
-            'slug': slug,
-            'name': lab.name,
-            'description': lab.description,
-            'enabled': enabled,
-            'show': show,
-        }
+        results[slug] = get(slug, app, module, form)
     return results
 
 
