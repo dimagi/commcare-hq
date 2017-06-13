@@ -51,6 +51,7 @@ branches:
   - lwyszomi/icds_dashboard_v2  # j$ 6/5
   - mk-select-module-for-persisted-case-tile # MK 8/June
   - externalize-js-form-designer-notifications # jenny June 7
+  - gc/update-make-supervisor-conf # GC June 13
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
