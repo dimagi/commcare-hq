@@ -390,7 +390,7 @@ def _write_export_instance(writer, export_instance, documents, progress_tracker=
     end = _time_in_milliseconds()
     _record_datadog_export_write_rows(write_total, total_bytes, total_rows)
     _record_datadog_export_compute_rows(compute_total, total_bytes, total_rows)
-    _record_datadog_export_write_rows(end - start, total_bytes, total_rows)
+    _record_datadog_export_duration(end - start, total_bytes, total_rows, tags)
 
 
 def _time_in_milliseconds():
