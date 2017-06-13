@@ -80,7 +80,8 @@ class Select2(Widget):
     Requires knockout to be included on the page.
     """
 
-    def __init__(self, attrs=None, choices=()):
+    def __init__(self, attrs=None, choices=(), ko_value=None):
+        self.ko_value = ko_value
         super(Select2, self).__init__(attrs)
         self.choices = list(choices)
 
@@ -92,7 +93,9 @@ class Select2(Widget):
             '<input{0} type="text" data-bind="select2: {1}, {2}">',
             flatatt(final_attrs),
             json.dumps(self._choices_for_binding(choices)),
-            'value: {}'.format(json.dumps(value)) if value else ""
+            'value: {}'.format(
+                self.ko_value
+            ) if self.ko_value else ""
         )
 
     def _choices_for_binding(self, choices):
