@@ -67,7 +67,11 @@ domain_specific = [
     url(r'^case/', include('corehq.apps.hqcase.urls')),
     url(r'^case/', include('corehq.apps.case_search.urls')),
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
-    url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
+    # "fixtures" is not a word that we want to be user facing, therefore we have created versions of all of the
+    # fixture urls that contain 'lookup_tables' in the path instead of 'fixtures'. However, we don't want to break
+    # peoples bookmarks and such, so we've preserved the old urls containing 'fixtures' just in case.
+    url(r'^fixtures/', include('corehq.apps.fixtures.urls', namespace='deprecated_lookup_tables_url_space')),
+    url(r'^lookup_tables/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
     url(r'^fri/', include('custom.fri.urls')),
     url(r'^ilsgateway/', include('custom.ilsgateway.urls')),
