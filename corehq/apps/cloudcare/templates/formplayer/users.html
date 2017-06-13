@@ -71,8 +71,18 @@
         <h3>
             <b><%= username %></b>
             <span><%= first_name + ' ' + last_name %></span>
-            <i><small><%= location ? location.name : '' %><small></i>
+            <i><small><%= location ? location.name + ' (' + location.location_type + ')' : '' %></small></i>
         </h3>
+        {% if request|toggle_enabled:"ENIKSHAY"%}
+        <div class="row">
+            <div class="col-sm-3 col-xs-6">
+              {% trans "Phone Number: " %}<%= phoneNumbers.length ? phoneNumbers[0] : '' %>
+            </div>
+            <div class="col-sm-3 col-xs-6">
+              {% trans "Agency ID: " %}<%= customFields ? customFields.id_issuer_body : '' %>
+            </div>
+        </div>
+        {% endif %}
     </td>
 </script>
 

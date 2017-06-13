@@ -35,11 +35,13 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             addressLineOne='585 Mass Ave',
             addressLineTwo='Suite 4',
             age=25,
+            blockOrHealthPostId='101',
             caseId='3',
             caseStatus='patient',
             configureAlert='Yes',
             creationDate=datetime(2017, 1, 1),
             dateOfRegn=datetime(2017, 4, 17),
+            districtId='102',
             dob=datetime(1992, 1, 2),
             emergencyContactNo='1234567890',
             fatherHusbandName='Nick Sr.',
@@ -52,7 +54,12 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             lastName='P',
             organisationId=2,
             phoneNumber='5432109876',
-            referredQP='org123'
+            pincode=822113,
+            referredQP='org123',
+            subOrganizationId=3,
+            stateId='103',
+            villageTownCity='Cambridge',
+            wardId='104',
         )
         cls.case_accessor = CaseAccessors(cls.domain)
 
@@ -145,6 +152,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('age', '25'),
             ('age_entered', '25'),
             ('current_address', '585 Mass Ave, Suite 4'),
+            ('current_address_postal_code', '822113'),
+            ('current_address_village_town_city', 'Cambridge'),
             ('current_episode_type', 'confirmed_tb'),
             ('dataset', 'real'),
             ('diabetes_status', 'diabetic'),
@@ -162,6 +171,12 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('is_active', 'yes'),
             ('language_preference', 'hin'),
             ('last_name', 'P'),
+            ('legacy_blockOrHealthPostId', '101'),
+            ('legacy_districtId', '102'),
+            ('legacy_organisationId', '2'),
+            ('legacy_stateId', '103'),
+            ('legacy_subOrganizationId', '3'),
+            ('legacy_wardId', '104'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
             ('person_id', 'AAA-KAA-AF'),
@@ -211,6 +226,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(episode_case.opened_on, datetime(2017, 4, 19))
         self.assertEqual(episode_case.owner_id, '-')
         self.assertEqual(episode_case.dynamic_case_properties(), OrderedDict([
+            ('adherence_schedule_date_start', '2017-04-19'),
             ('adherence_total_doses_taken', '0'),
             ('adherence_tracking_mechanism', ''),
             ('basis_of_diagnosis', 'clinical_other'),

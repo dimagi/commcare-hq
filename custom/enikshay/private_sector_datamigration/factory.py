@@ -69,6 +69,12 @@ class BeneficiaryCaseFactory(object):
                     'id_original_issuer_number': self._id_issuer_number,
                     'language_preference': self.beneficiary.language_preference,
                     'last_name': self.beneficiary.lastName,
+                    'legacy_blockOrHealthPostId': self.beneficiary.blockOrHealthPostId,
+                    'legacy_districtId': self.beneficiary.districtId,
+                    'legacy_organisationId': self.beneficiary.organisationId,
+                    'legacy_subOrganizationId': self.beneficiary.subOrganizationId,
+                    'legacy_stateId': self.beneficiary.stateId,
+                    'legacy_wardId': self.beneficiary.wardId,
                     'name': self.beneficiary.name,
                     'person_id': self.person_id,
                     'person_id_flat': self.person_id_flat,
@@ -119,6 +125,12 @@ class BeneficiaryCaseFactory(object):
                 kwargs['attrs']['update']['other_id_number'] = self.beneficiary.identificationNumber
 
         kwargs['attrs']['update']['facility_assigned_to'] = self._location_owner_id
+
+        if self.beneficiary.pincode:
+            kwargs['attrs']['update']['current_address_postal_code'] = self.beneficiary.pincode
+
+        if self.beneficiary.villageTownCity is not None:
+            kwargs['attrs']['update']['current_address_village_town_city'] = self.beneficiary.villageTownCity
 
         if self._episode:
             kwargs['attrs']['update']['diabetes_status'] = self._episode.diabetes_status
@@ -200,6 +212,7 @@ class BeneficiaryCaseFactory(object):
         if self._episode:
             rx_start_datetime = self._episode.rxStartDate
             kwargs['attrs']['date_opened'] = rx_start_datetime
+            kwargs['attrs']['update']['adherence_schedule_date_start'] = rx_start_datetime.date()
             kwargs['attrs']['update']['adherence_total_doses_taken'] = self._episode.adherence_total_doses_taken
             kwargs['attrs']['update']['adherence_tracking_mechanism'] = self._episode.adherence_tracking_mechanism
             kwargs['attrs']['update']['basis_of_diagnosis'] = self._episode.basis_of_diagnosis

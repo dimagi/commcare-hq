@@ -9,7 +9,7 @@ from elasticsearch.exceptions import ElasticsearchException
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq.apps.es.utils import flatten_field_dict
-from corehq.util.datadog.gauges import datadog_gauge
+from corehq.util.datadog.gauges import datadog_histogram
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
@@ -287,7 +287,7 @@ def scan(client, query=None, scroll='5m', **kwargs):
 
             start = int(time.time() * 1000)
             resp = client.scroll(scroll_id, scroll=scroll)
-            datadog_gauge('commcare.es_scroll', (time.time() * 1000) - start, tags=[
+            datadog_histogram('commcare.es_scroll', (time.time() * 1000) - start, tags=[
                 u'iteration:{}'.format(iteration),
             ])
 

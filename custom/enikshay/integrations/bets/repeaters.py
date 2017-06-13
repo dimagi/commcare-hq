@@ -35,6 +35,83 @@ class BETSRepeaterMixin(object):
     def available_for_domain(cls, domain):
         return BETS_INTEGRATION.enabled(domain)
 
+    def _is_successful_response(self, response_json):
+        """We can't be certain of the response that BETS is going to send us.
+
+        BETS accepts multiple records, but we only ever send them one.
+
+        1. If they include a "code" param in their response, use this as a marker of success
+        2. If they include a meta block in their response, use the information in there as a marker of success.
+        3. Otherwise, loop through each result and see if all of them have succeeded.
+        4. Otherwise, this was a terrible failure. Try again.
+        """
+
+        response_code = response_json.get('code')
+        if response_code:
+            if 200 <= response_code < 300:
+                return True
+            else:
+                return False
+
+        response_meta = response_json.get('meta')
+        if response_meta:
+            success_count = response_meta.get('successCount')
+            total_count = response_meta.get('totalCount')
+            if success_count > 0 and total_count == success_count:
+                return True
+
+        response_data = response_json.get('response')
+        if response_data:
+            return all([response_datum.get('status') == "Success" for response_datum in response_data])
+
+        return False
+
+    def handle_response(self, result, repeat_record):
+        """Handle BETS custom responses. They always respond with a 200 status code. 'cause they "OK".
+
+        We only ever send one item at a time, so we should only ever get one
+        item at a time. But they send us a list of responses anyway, so we try
+        and handle that as best we can.
+
+        Failure response: {"status":"Failed","code":"400"}
+        Success response:
+            {
+                "meta": {
+                    "failCount": "0",
+                    "successCount": "1",
+                    "totalCount": "1",
+                },
+                "response": [
+                    {
+                        "status": "Success",
+                        "failureDescription": ""
+                    }
+                ]
+            }
+
+        """
+        if isinstance(result, Exception):
+            attempt = repeat_record.handle_exception(result)
+            self.generator.handle_exception(result, repeat_record)
+            return attempt
+
+        try:
+            response_json = result.json()
+        except ValueError:
+            # read the spec, bro.
+            attempt = repeat_record.handle_exception(result)
+            self.generator.handle_exception(result.text, repeat_record)
+            return attempt
+
+        if self._is_successful_response(response_json):
+            attempt = repeat_record.handle_success(result)
+            self.generator.handle_success(result, self.payload_doc(repeat_record), repeat_record)
+        else:
+            attempt = repeat_record.handle_failure(result)
+            self.generator.handle_failure(result, self.payload_doc(repeat_record), repeat_record)
+
+        return attempt
+
 
 class BaseBETSRepeater(BETSRepeaterMixin, CaseRepeater):
     def case_types_and_users_allowed(self, case):
@@ -235,12 +312,16 @@ class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
         enrolled_in_private_sector = case_properties.get(ENROLLED_IN_PRIVATE) == 'true'
         not_sent = case_properties.get("event_{}".format(SUCCESSFUL_TREATMENT_EVENT)) != "sent"
         return (
-            meets_days_threshold
-            and case_properties.get("treatment_outcome") in ("cured", "treatment_completed")
-            and case_properties_changed(episode_case, ['prescription_total_days', "treatment_outcome"])
-            and not_sent
+            not_sent
             and enrolled_in_private_sector
             and is_valid_archived_submission(episode_case)
+            and (
+                case_properties_changed(episode_case, ["treatment_outcome"])
+                and case_properties.get("treatment_outcome") in ("cured", "treatment_completed")
+            ) or (
+                case_properties_changed(episode_case, ["prescription_total_days"])
+                and meets_days_threshold
+            )
         )
 
 
@@ -271,7 +352,8 @@ class BETSDiagnosisAndNotificationRepeater(BaseBETSRepeater):
 
 
 class BETSAYUSHReferralRepeater(BaseBETSRepeater):
-    friendly_name = _("BETS - Providers: For diagnosis and notification of TB case (episode case type)")
+    friendly_name = _("AYUSH/Other provider: Registering and referral of a presumptive TB case"
+                      " in UATBC/e-Nikshay (episode case type)")
 
     payload_generator_classes = (BETSAYUSHReferralPayloadGenerator,)
 

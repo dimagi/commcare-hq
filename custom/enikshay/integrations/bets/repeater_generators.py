@@ -60,7 +60,7 @@ class BETSPayload(jsonobject.JsonObject):
         try:
             return SQLLocation.objects.get(location_id=location_id)
         except SQLLocation.DoesNotExist:
-            msg = "Location with id {location_id} not found.".format(location_id)
+            msg = "Location with id {location_id} not found.".format(location_id=location_id)
             if field_name and related_case_type and related_case_id:
                 msg += " This is the {field_name} for {related_case_type} with id: {related_case_id}".format(
                     field_name=field_name,
@@ -84,11 +84,15 @@ class IncentivePayload(BETSPayload):
             related_case_id=person_case.case_id
         )
 
+        treatment_outcome_date = episode_case_properties.get(TREATMENT_OUTCOME_DATE, None)
+        if treatment_outcome_date is None:
+            treatment_outcome_date = datetime.utcnow().strftime("%Y-%m-%d")
+
         return cls(
             EventID=TREATMENT_180_EVENT,
-            EventOccurDate=episode_case_properties.get(TREATMENT_OUTCOME_DATE),
+            EventOccurDate=treatment_outcome_date,
             BeneficiaryUUID=episode_case_properties.get(LAST_VOUCHER_CREATED_BY_ID),
-            BeneficiaryType="patient",
+            BeneficiaryType="mbbs",
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(pcp_location),
@@ -216,7 +220,7 @@ class VoucherPayload(BETSPayload):
         return cls(
             EventID=event_id,
             EventOccurDate=voucher_case_properties.get(DATE_FULFILLED),
-            VoucherID=voucher_case_properties.get(VOUCHER_ID),
+            VoucherID=voucher_case.case_id,
             BeneficiaryUUID=fulfilled_by_id,
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             Location=fulfilled_by_location_id,
@@ -247,33 +251,28 @@ class BETSBasePayloadGenerator(BasePayloadGenerator):
             })
 
     def handle_success(self, response, case, repeat_record):
-        if response.status_code == 201:
-            update_case(
-                case.domain,
-                case.case_id,
-                {
-                    self.event_property_name: "sent",
-                    "bets_{}_error".format(self.event_id): ""
-                }
-            )
+        update_case(
+            case.domain,
+            case.case_id,
+            {
+                self.event_property_name: "sent",
+                "bets_{}_error".format(self.event_id): ""
+            }
+        )
 
     def handle_failure(self, response, case, repeat_record):
-        if 400 <= response.status_code <= 500:
-            update_case(
-                case.domain,
-                case.case_id,
-                {
-                    self.event_property_name: (
-                        "error"
-                        if case.dynamic_case_properties().get(self.event_property_name) != 'sent'
-                        else 'sent'
-                    ),
-                    "bets_{}_error".format(self.event_id): "{}: {}".format(
-                        response.status_code,
-                        response.json().get('error')
-                    ),
-                }
-            )
+        update_case(
+            case.domain,
+            case.case_id,
+            {
+                self.event_property_name: (
+                    "error"
+                    if case.dynamic_case_properties().get(self.event_property_name) != 'sent'
+                    else 'sent'
+                ),
+                "bets_{}_error".format(self.event_id): unicode(response.json()),
+            }
+        )
 
 
 class BaseBETSVoucherPayloadGenerator(BETSBasePayloadGenerator):
@@ -353,35 +352,30 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
         return "event_{}_{}".format(self.event_id, n)
 
     def handle_success(self, response, case, repeat_record):
-        if response.status_code == 201:
-            event_property_name = self.get_event_property_name(case)
-            update_case(
-                case.domain,
-                case.case_id,
-                {
-                    event_property_name: "sent",
-                    "{}_sent_date".format(event_property_name): str(date.today()),
-                    "bets_{}_error".format(self.event_id): "",
-                }
-            )
+        event_property_name = self.get_event_property_name(case)
+        update_case(
+            case.domain,
+            case.case_id,
+            {
+                event_property_name: "sent",
+                "{}_sent_date".format(event_property_name): str(date.today()),
+                "bets_{}_error".format(self.event_id): "",
+            }
+        )
 
     def handle_failure(self, response, case, repeat_record):
-        if 400 <= response.status_code <= 500:
-            update_case(
-                case.domain,
-                case.case_id,
-                {
-                    self.get_event_property_name(case): (
-                        "error"
-                        if case.dynamic_case_properties().get(self.get_event_property_name(case)) != 'sent'
-                        else 'sent'
-                    ),
-                    "bets_{}_error".format(self.event_id): "{}: {}".format(
-                        response.status_code,
-                        response.json().get('error')
-                    ),
-                }
-            )
+        update_case(
+            case.domain,
+            case.case_id,
+            {
+                self.get_event_property_name(case): (
+                    "error"
+                    if case.dynamic_case_properties().get(self.get_event_property_name(case)) != 'sent'
+                    else 'sent'
+                ),
+                "bets_{}_error".format(self.event_id): unicode(response.json()),
+            }
+        )
 
 
 class BETSSuccessfulTreatmentPayloadGenerator(IncentivePayloadGenerator):
