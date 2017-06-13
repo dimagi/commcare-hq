@@ -18,7 +18,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             'domains',
-            nargs='*',
+            nargs='+',
         )
         parser.add_argument(
             '--all',
