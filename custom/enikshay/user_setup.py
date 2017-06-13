@@ -18,7 +18,7 @@ from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.locations.forms import LocationFormSet, LocationForm
 from corehq.apps.users.forms import NewMobileWorkerForm, clean_mobile_worker_username
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.signals import clean_commcare_user, commcare_user_post_save
+from corehq.apps.users.signals import commcare_user_post_save
 from .const import AGENCY_USER_FIELDS, AGENCY_LOCATION_FIELDS
 from .models import IssuerId
 
@@ -261,7 +261,6 @@ def add_drtb_hiv_to_dto(domain, user):
 
 
 def connect_signals():
-    clean_commcare_user.connect(clean_user_callback, dispatch_uid="clean_user_callback")
     commcare_user_post_save.connect(save_user_callback, dispatch_uid="save_user_callback")
 
 

@@ -71,7 +71,7 @@ hqDefine('domain/js/dhis2_map_settings.js', function () {
                 "description": self.description(),
                 "ucr_id": self.ucrId(),
                 "frequency": self.frequency(),
-                "day_to_send": self.dayOfMonth(),
+                "day_to_send": Number(self.dayOfMonth()),
                 "data_set_id": self.dataSetId(),
                 "org_unit_id": self.orgUnitId(),
                 "org_unit_column": self.orgUnitIdColumn(),
@@ -122,15 +122,15 @@ hqDefine('domain/js/dhis2_map_settings.js', function () {
             $.post(
                 form.action,
                 {'dataset_maps': JSON.stringify(dataSetMaps)},
-                function (data) { alert_user(data, "success", true); }
-            );
+                function (data) { alert_user(data['success'], 'success', true); }
+            ).fail(function () { alert_user(gettext('Unable to save DataSet maps'), 'danger'); });
         };
 
         self.sendData = function () {
             $.post(
                 sendDataUrl,
                 {},
-                function (data) { alert_user(data, "success", true); }
+                function (data) { alert_user(data['success'], 'success', true); }
             );
         };
     };

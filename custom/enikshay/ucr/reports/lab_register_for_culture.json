@@ -1,7 +1,8 @@
 {
     "domains": [
         "enikshay",
-        "sheel-enikshay"
+        "sheel-enikshay",
+        "enikshay-reports-qa"
     ],
     "server_environment": [
         "softlayer"

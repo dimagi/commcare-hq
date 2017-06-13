@@ -93,13 +93,15 @@ class BETSRepeaterMixin(object):
         if isinstance(result, Exception):
             attempt = repeat_record.handle_exception(result)
             self.generator.handle_exception(result, repeat_record)
+            return attempt
 
         try:
             response_json = result.json()
         except ValueError:
             # read the spec, bro.
             attempt = repeat_record.handle_exception(result)
-            self.generator.handle_exception(result, self.payload_doc(repeat_record), repeat_record)
+            self.generator.handle_exception(result.text, repeat_record)
+            return attempt
 
         if self._is_successful_response(response_json):
             attempt = repeat_record.handle_success(result)
@@ -310,12 +312,16 @@ class BETSSuccessfulTreatmentRepeater(BaseBETSRepeater):
         enrolled_in_private_sector = case_properties.get(ENROLLED_IN_PRIVATE) == 'true'
         not_sent = case_properties.get("event_{}".format(SUCCESSFUL_TREATMENT_EVENT)) != "sent"
         return (
-            meets_days_threshold
-            and case_properties.get("treatment_outcome") in ("cured", "treatment_completed")
-            and case_properties_changed(episode_case, ['prescription_total_days', "treatment_outcome"])
-            and not_sent
+            not_sent
             and enrolled_in_private_sector
             and is_valid_archived_submission(episode_case)
+            and (
+                case_properties_changed(episode_case, ["treatment_outcome"])
+                and case_properties.get("treatment_outcome") in ("cured", "treatment_completed")
+            ) or (
+                case_properties_changed(episode_case, ["prescription_total_days"])
+                and meets_days_threshold
+            )
         )
 
 

@@ -12,7 +12,7 @@
                 <p class="form-control-static">{{ couch_user.html_username|safe }}</p>
             </div>
         </div>
-        {% crispy form_user_update %}
+        {% crispy form_user_update.user_form %}
         {% if data_fields_form.fields or data_fields_form.data %}
             {% crispy data_fields_form %}
         {% endif %}

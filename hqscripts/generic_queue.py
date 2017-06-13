@@ -1,40 +1,10 @@
+from corehq.sql_db.util import handle_connection_failure
 from datetime import datetime
-from functools import wraps
 from time import sleep
-
-from django import db
 from django.core.management.base import BaseCommand
-from django.db.utils import InterfaceError as DjangoInterfaceError
-from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
-
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client, RedisClientError
 from dimagi.utils.logging import notify_exception
-
-
-def retry_on_connection_failure(fn):
-    @wraps(fn)
-    def _inner(*args, **kwargs):
-        retry = kwargs.pop('retry', True)
-        try:
-            return fn(*args, **kwargs)
-        except db.utils.DatabaseError:
-            # we have to do this manually to avoid issues with
-            # open transactions and already closed connections
-            db.transaction.rollback()
-            # re raise the exception for additional error handling
-            raise
-        except (Psycopg2InterfaceError, DjangoInterfaceError):
-            # force closing the connection to prevent Django from trying to reuse it.
-            # http://www.tryolabs.com/Blog/2014/02/12/long-time-running-process-and-django-orm/
-            db.connection.close()
-            if retry:
-                _inner(retry=False, *args, **kwargs)
-            else:
-                # re raise the exception for additional error handling
-                raise
-
-    return _inner
 
 
 class GenericEnqueuingOperation(BaseCommand):
@@ -67,7 +37,7 @@ class GenericEnqueuingOperation(BaseCommand):
                     message="Could not populate %s." % self.get_queue_name())
             sleep(self.get_fetching_interval())
 
-    @retry_on_connection_failure
+    @handle_connection_failure()
     def populate_queue(self):
         client = get_redis_client()
         utcnow = datetime.utcnow()
