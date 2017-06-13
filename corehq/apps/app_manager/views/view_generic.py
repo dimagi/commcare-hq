@@ -10,7 +10,7 @@ from corehq.apps.app_manager.views.modules import get_module_template, \
     get_module_view_context
 from corehq import privileges
 from corehq.apps.app_manager.forms import CopyApplicationForm
-from corehq.apps.app_manager import toggles as app_manager_toggles
+from corehq.apps.app_manager import labs
 from corehq.apps.app_manager.views.apps import get_apps_base_context, \
     get_app_view_context
 from corehq.apps.app_manager.views.forms import \
@@ -132,7 +132,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     if app and not module and hasattr(app, 'translations'):
         context.update({"translations": app.translations.get(lang, {})})
 
-    context.update({'labs': app_manager_toggles.all_toggles(app, module, form)})
+    context.update({'labs': labs.all_labs(app, module, form)})
 
     if form:
         template, form_context = get_form_view_context_and_template(

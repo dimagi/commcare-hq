@@ -1,7 +1,7 @@
 from collections import namedtuple
 from dimagi.utils.decorators.memoized import memoized
 
-class Toggle(object):
+class Lab(object):
     def __init__(self, slug, name, description, in_use):
         self.slug = slug
         self.name = name
@@ -18,14 +18,14 @@ def display_conditions_in_use(app, module=None, form=None):
         return bool(module.module_filter)
     return False
 
-DISPLAY_CONDITIONS = Toggle(
+DISPLAY_CONDITIONS = Lab(
     slug="display_conditions",
     name="Form and Menu Display Conditions",
     description="these are things",
     in_use=display_conditions_in_use,
 )
 
-CASE_LIST_MENU_ITEM = Toggle(
+CASE_LIST_MENU_ITEM = Lab(
     slug="case_list_menu_item",
     name="Case List Menu Item",
     description="these are other things",
@@ -33,22 +33,22 @@ CASE_LIST_MENU_ITEM = Toggle(
 )
 
 @memoized
-def toggles_by_name(app, slug):
-    return {t['slug']: t for t in all_toggles(app)}
+def labs_by_name(app, slug):
+    return {t['slug']: t for t in all_labs(app)}
 
 @memoized
-def all_toggles(app, module=None, form=None):
+def all_labs(app, module=None, form=None):
     results = {}
-    for toggle_name, toggle in globals().items():
-        if not toggle_name.startswith('__'):
-            if isinstance(toggle, Toggle):
-                enabled = toggle.slug in app.labs and app.labs[toggle.slug]
-                results[toggle.slug] = {
-                    'slug': toggle.slug,
-                    'name': toggle.name,
-                    'description': toggle.description,
+    for name, lab in globals().items():
+        if not name.startswith('__'):
+            if isinstance(lab, Lab):
+                enabled = lab.slug in app.labs and app.labs[lab.slug]
+                results[lab.slug] = {
+                    'slug': lab.slug,
+                    'name': lab.name,
+                    'description': lab.description,
                     'enabled': enabled,
-                    'show': enabled or toggle.in_use(app, module, form),
+                    'show': enabled or lab.in_use(app, module, form),
                 }
     return results
 

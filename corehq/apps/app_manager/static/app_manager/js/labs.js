@@ -18,7 +18,7 @@ hqDefine("app_manager/js/labs.js", function() {
                 });
             },
         });
-        self.toggle = function(lab) {
+        self.update = function(lab) {
             self.saveButton.fire('change');
         };
     }
@@ -26,7 +26,7 @@ hqDefine("app_manager/js/labs.js", function() {
     $(function() {
         $("#labs").koApplyBindings(new EditLabs(
             hqImport("hqwebapp/js/initial_page_data.js").get("labs"),
-            hqImport("hqwebapp/js/urllib.js").reverse("edit_toggles"),
+            hqImport("hqwebapp/js/urllib.js").reverse("edit_labs"),
         ));
     });
 });
