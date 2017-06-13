@@ -105,7 +105,8 @@ class EpisodeUpdater(object):
                             e
                         )
                     )
-            bulk_update_cases(self.domain, updates)
+            if len(updates) > 0:
+                bulk_update_cases(self.domain, updates)
         logger.info(
             "Summary of enikshay_task: domain: {domain}, duration (sec): {duration} "
             "Cases Updated {updates}, cases errored {errors} and {noupdates} "
