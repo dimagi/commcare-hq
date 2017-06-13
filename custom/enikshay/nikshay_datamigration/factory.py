@@ -31,9 +31,9 @@ def validate_phone_number(string_value):
     if string_value is None or string_value.strip() in ['', '0']:
         return ''
     else:
-        phone_number = str(int(string_value))
-        assert 8 <= len(phone_number) <= 10
-        return phone_number
+        assert string_value.isdigit()
+        assert 8 <= len(string_value) <= 10
+        return string_value
 
 
 def get_human_friendly_id():
@@ -143,6 +143,7 @@ class EnikshayCaseFactory(object):
                 'update': {
                     'age': self.patient_detail.page,
                     'age_entered': self.patient_detail.page,
+                    'contact_phone_number': '91' + validate_phone_number(self.patient_detail.pmob),
                     'current_address': self.patient_detail.paddress,
                     'current_episode_type': 'confirmed_tb',
                     'current_patient_type_choice': self.patient_detail.patient_type_choice,
@@ -155,7 +156,6 @@ class EnikshayCaseFactory(object):
                     'last_name': self.patient_detail.last_name,
                     'name': self.patient_detail.pname,
                     'person_id': self.patient_detail.person_id,
-                    'phone_number': validate_phone_number(self.patient_detail.pmob),
                     'secondary_contact_name_address': (
                         (self.patient_detail.cname or '')
                         + ', '

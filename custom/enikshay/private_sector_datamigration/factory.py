@@ -58,6 +58,7 @@ class BeneficiaryCaseFactory(object):
                 'case_type': PERSON_CASE_TYPE,
                 'create': True,
                 'update': {
+                    'contact_phone_number': '91' + self.beneficiary.phoneNumber,
                     'current_address': self.beneficiary.current_address,
                     'current_episode_type': self.beneficiary.current_episode_type,
                     'dataset': 'real',
