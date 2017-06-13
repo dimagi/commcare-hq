@@ -326,20 +326,23 @@
                             }
                         },
                         "prescription": {
-                            "datatype": null,
+                            "type": "nested",
+                            "argument_expression": {
+                                "type": "first_case_form_with_xmlns",
+                                "reverse": true,
+                                "xmlns": "http://openrosa.org/formdesigner/7841B351-E691-4D5B-B1FC-3A7D696AAED9",
+                                "case_id_expression": {
+                                    "type": "named",
+                                    "name": "episode_id"
+                                }
+                            },
                             "value_expression": {
-                                "datatype": null,
                                 "type": "property_path",
                                 "property_path": [
                                     "form",
                                     "new_drugs_order",
                                     "total_new_max_amount_eligible"
                                 ]
-                            },
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "named",
-                                "name": "redeem_prescription_voucher_form"
                             }
                         }
                     },
