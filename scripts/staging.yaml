@@ -47,7 +47,7 @@ name: autostaging
 branches:
   - vellum-staging # J$ 11/13
 #  - nh/240812/mw_pwd_reset  # Norman 3/23
-  - nh/new_rb  # Norman 11/22
+#  - nh/new_rb  # Norman 11/22
   - lwyszomi/icds_dashboard_v2  # j$ 6/5
   - mk-select-module-for-persisted-case-tile # MK 8/June
   - externalize-js-form-designer-notifications # jenny June 7
