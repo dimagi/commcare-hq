@@ -20,7 +20,7 @@ from django.contrib import messages
 
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
 from corehq.apps.app_manager.exceptions import ConflictingCaseTypeError, \
-    IncompatibleFormTypeException, RearrangeError
+    IncompatibleFormTypeException, RearrangeError, AppEditingError
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, CASE_TYPE_CONFLICT_MSG, overwrite_app
 from corehq import toggles, privileges
@@ -889,8 +889,9 @@ def pull_master_app(request, domain, app_id):
     master_app = get_app(None, app['master'])
     latest_master_build = get_app(None, app['master'], latest=True)
     if app['domain'] in master_app.linked_whitelist:
-        mobile_ucrs = overwrite_app(app, latest_master_build)
-        if mobile_ucrs:
+        try:
+            overwrite_app(app, latest_master_build)
+        except AppEditingError:
             messages.error(request, _('This linked application uses mobile UCRs '
                                       'which are currently not supported. For this application '
                                       'to function correctly, you will need to remove those modules '
@@ -903,8 +904,7 @@ def pull_master_app(request, domain, app_id):
             'This project is not authorized to update from the master application. '
             'Please contact the maintainer of the master app if you believe this is a mistake. ')
         )
-    params = {}
-    return HttpResponseRedirect(reverse_util('view_app', params=params, args=[domain, app_id]))
+    return HttpResponseRedirect(reverse_util('view_app', params={}, args=[domain, app_id]))
 
 
 @no_conflict_require_POST

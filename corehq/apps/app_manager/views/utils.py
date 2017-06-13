@@ -9,6 +9,7 @@ from django.template.loader import render_to_string
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app, wrap_app
 from corehq.apps.app_manager.decorators import require_deploy_apps
+from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.models import Application, ReportModule
 
 CASE_TYPE_CONFLICT_MSG = (
@@ -137,16 +138,12 @@ def overwrite_app(app, master_build, include_ucrs=False, report_map=None):
             app[key] = value
     app['version'] = master_json['version']
     wrapped_app = wrap_app(app)
-    errors = False
     for module in wrapped_app.modules:
         if isinstance(module, ReportModule):
             if include_ucrs and report_map is not None:
                 for config in module.report_configs:
                     config.report_id = report_map[config.report_id]
             else:
-                errors = True
-                break
-    if not errors:
-        wrapped_app.copy_attachments(master_build)
-        wrapped_app.save(increment_version=False)
-    return errors
+                raise AppEditingError()
+    wrapped_app.copy_attachments(master_build)
+    wrapped_app.save(increment_version=False)
