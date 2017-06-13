@@ -1,3 +1,5 @@
+/* globals hqLayout */
+
 $(function () {
     var v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2');
 
