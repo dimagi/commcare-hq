@@ -104,14 +104,14 @@ TODO:
                         attr: {disabled: !existsInCurrentVersion()}
                     "/>
                     <!-- /ko -->
-                    <label class="help-block" data-bind="if: $parent.showWarnings() && !property()">
-                        {% trans "Please select a property." %}</label>
-                    <label class="help-block" data-bind="if: !existsInCurrentVersion()">
+                    <strong class="help-block" data-bind="if: $parent.showWarnings() && !property()">
+                        {% trans "Please select a property." %}</strong>
+                    <strong class="help-block" data-bind="if: !existsInCurrentVersion()">
                         {% blocktrans %}
                         This property or question no longer exists in your app. <br>
                         You must delete this property to update this report.
                         {% endblocktrans %}
-                    </label>
+                    </strong>
                 </td>
 
                 <!--ko if: $parent.hasDisplayCol -->
