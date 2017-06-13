@@ -90,7 +90,7 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "created_by_user_type",
+                "field": "voucher_fullfilled_by_user_type",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Provider Type"
