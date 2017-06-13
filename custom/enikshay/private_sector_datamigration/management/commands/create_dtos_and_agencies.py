@@ -29,8 +29,8 @@ class Command(BaseCommand):
                 if agency.location_type is not None:
                     agency_loc = self.create_agency(domain, agency, dto, org_id)
                     self.create_user(agency, agency_loc, user_level)
-                elif agency.is_field_officer:
-                    self.create_field_officer(agency, domain, dto, user_level)
+                # elif agency.is_field_officer:
+                #     self.create_field_officer(agency, domain, dto, user_level)
 
     def create_dto(self, domain, state_code, district_code, dto_parent, org_id):
         return SQLLocation.objects.create(
