@@ -31,10 +31,9 @@ def validate_phone_number(string_value):
     if string_value is None or string_value.strip() in ['', '0']:
         return ''
     else:
-        assert int(string_value) > 0
-        phone_number = str(int(string_value))
-        assert 8 <= len(phone_number) <= 10
-        return phone_number
+        assert string_value.isdigit()
+        assert 8 <= len(string_value) <= 10
+        return string_value
 
 
 def get_human_friendly_id():
