@@ -121,7 +121,9 @@ TODO:
                             textInput: inputBoundDisplayText,
                             attr: {disabled: !isEditable},
                         ">
-                        <span data-bind="if: showDisplayTextError" class="help-block">This field is required</span>
+                        <strong data-bind="if: showDisplayTextError" class="help-block">
+                          {% trans "Display text should not be blank." %}
+                        </strong>
                     </div>
                 </td>
                 <!--/ko-->
