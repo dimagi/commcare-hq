@@ -5096,11 +5096,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 ) % ((name,) + setting_version + my_version))
 
     @property
-    def advanced_app_builder(self):
-        properties = (self.profile or {}).get('properties', {})
-        return properties.get('advanced_app_builder', 'true') == 'true'
-
-    @property
     def jad_settings(self):
         settings = {
             'JavaRosa-Admin-Password': self.admin_password,

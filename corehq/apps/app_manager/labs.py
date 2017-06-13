@@ -24,7 +24,7 @@ CASE_LIST_MENU_ITEM = Lab(
     slug="case_list_menu_item",
     name="Case List Menu Item",
     description="TODO",
-    used_in_module=lambda m: isinstance(m, Module) and m.case_list.show,
+    used_in_module=lambda m: isinstance(m, Module) and (m.case_list.show or m.task_list.show),  # TODO: will this break anything?
 )
 
 CASE_DETAIL_OVERWRITE = Lab(
@@ -95,8 +95,6 @@ def all_labs(app, module=None, form=None):
 
 
 '''
-Menu mode (display menu & forms / display only forms)
-
 FEATURE PREVIEWS
 Conditional Enum in Case List
 Custom Calculations in Case List
