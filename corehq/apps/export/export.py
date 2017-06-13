@@ -388,8 +388,9 @@ def _write_export_instance(writer, export_instance, documents, progress_tracker=
             DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
 
     end = _time_in_milliseconds()
-    _record_datadog_export_write_rows(write_total, total_bytes, total_rows)
-    _record_datadog_export_compute_rows(compute_total, total_bytes, total_rows)
+    tags = ['format:{}'.format(writer.format)]
+    _record_datadog_export_write_rows(write_total, total_bytes, total_rows, tags)
+    _record_datadog_export_compute_rows(compute_total, total_bytes, total_rows, tags)
     _record_datadog_export_duration(end - start, total_bytes, total_rows, tags)
 
 
@@ -397,29 +398,31 @@ def _time_in_milliseconds():
     return int(time.time() * 1000)
 
 
-def _record_datadog_export_compute_rows(duration, doc_bytes, n_rows):
-    __record_datadog_export(duration, doc_bytes, n_rows, 'commcare.compute_export_rows_duration')
+def _record_datadog_export_compute_rows(duration, doc_bytes, n_rows, tags):
+    __record_datadog_export(duration, doc_bytes, n_rows, 'commcare.compute_export_rows_duration', tags)
 
 
-def _record_datadog_export_write_rows(duration, doc_bytes, n_rows):
-    __record_datadog_export(duration, doc_bytes, n_rows, 'commcare.write_export_rows_duration')
+def _record_datadog_export_write_rows(duration, doc_bytes, n_rows, tags):
+    __record_datadog_export(duration, doc_bytes, n_rows, 'commcare.write_export_rows_duration', tags)
 
 
-def _record_datadog_export_duration(duration, doc_bytes, n_rows):
-    __record_datadog_export(duration, doc_bytes, n_rows, 'commcare.export_duration')
+def _record_datadog_export_duration(duration, doc_bytes, n_rows, tags):
+    __record_datadog_export(duration, doc_bytes, n_rows, 'commcare.export_duration', tags)
 
 
-def __record_datadog_export(duration, doc_bytes, n_rows, metric):
-    datadog_histogram(metric, duration)
+def __record_datadog_export(duration, doc_bytes, n_rows, metric, tags):
+    datadog_histogram(metric, duration, tags=tags)
     if doc_bytes:
         datadog_histogram(
             '{}_normalized_by_size'.format(metric),
             duration / doc_bytes,
+            tags=tags,
         )
     if n_rows:
         datadog_histogram(
             '{}_normalized_by_rows'.format(metric),
             duration / n_rows,
+            tags=tags,
         )
 
 
