@@ -2691,6 +2691,24 @@
               ],
               "end_date": {
                 "type": "icds_month_end"
+              },
+              "form_filter": {
+                "type": "not",
+                "filter": {
+                  "type": "boolean_expression",
+                  "operator": "in",
+                  "expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "zscore_grading_hfa"
+                    ]
+                  },
+                  "property_value": [
+                    null,
+                    ""
+                  ]
+                }
               }
             }
           },
@@ -2738,6 +2756,24 @@
               },
               "end_date": {
                 "type": "icds_month_end"
+              },
+              "form_filter": {
+                "type": "not",
+                "filter": {
+                  "type": "boolean_expression",
+                  "operator": "in",
+                  "expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "zscore_grading_hfa"
+                    ]
+                  },
+                  "property_value": [
+                    null,
+                    ""
+                  ]
+                }
               }
             }
           },
@@ -2782,6 +2818,24 @@
               ],
               "end_date": {
                 "type": "icds_month_end"
+              },
+              "form_filter": {
+                "type": "not",
+                "filter": {
+                  "type": "boolean_expression",
+                  "operator": "in",
+                  "expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "zscore_grading_wfh"
+                    ]
+                  },
+                  "property_value": [
+                    null,
+                    ""
+                  ]
+                }
               }
             }
           },
@@ -2829,6 +2883,24 @@
               },
               "end_date": {
                 "type": "icds_month_end"
+              },
+              "form_filter": {
+                "type": "not",
+                "filter": {
+                  "type": "boolean_expression",
+                  "operator": "in",
+                  "expression": {
+                    "type": "property_path",
+                    "property_path": [
+                      "form",
+                      "zscore_grading_wfh"
+                    ]
+                  },
+                  "property_value": [
+                    null,
+                    ""
+                  ]
+                }
               }
             }
           },
