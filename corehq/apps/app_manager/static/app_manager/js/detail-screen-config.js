@@ -1467,17 +1467,18 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             );
         }
 
-        if (COMMCAREHQ.previewEnabled('ENUM_IMAGE')) {
+        var labs = hqImport("hqwebapp/js/initial_page_data.js").get("labs");
+        if (labs.enum_image.show) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT + gettext(' (Preview!)')}
             );
         }
-        if (COMMCAREHQ.previewEnabled('CONDITIONAL_ENUM')) {
+        if (labs.conditional_enum.show) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "conditional-enum", label: DetailScreenConfig.message.CONDITIONAL_ENUM_FORMAT + gettext(' (Preview!)')}
             );
         }
-        if (COMMCAREHQ.previewEnabled('CALC_XPATHS')) {
+        if (labs.calc_xpaths.show) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "calculate", label: DetailScreenConfig.message.CALC_XPATH_FORMAT + gettext(' (Preview!)')}
             );

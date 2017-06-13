@@ -1,6 +1,7 @@
 from collections import namedtuple
 from dimagi.utils.decorators.memoized import memoized
 
+from corehq import feature_previews
 from corehq.apps.app_manager.exceptions import LabNotFoundException
 from corehq.apps.app_manager.models import Module
 
@@ -13,6 +14,17 @@ class Lab(object):
         self.used_in_form = used_in_form if used_in_form else lambda f: False
 
 _LABS = {
+    "advanced_itemsets": Lab(
+        name=feature_previews.VELLUM_ADVANCED_ITEMSETS.label,
+        description=feature_previews.VELLUM_ADVANCED_ITEMSETS.description,
+        #used_in_form=TODO
+        #privilege=LOOKUP_TABLES,   # TODO
+    ),
+    "calc_xpaths": Lab(
+        name=feature_previews.CALC_XPATHS.label,
+        description=feature_previews.CALC_XPATHS.description,
+        #used_in_module=TODO
+    ),
     "case_detail_overwrite": Lab(
         name="Case Detail Overwrite",
         description="Ability to overwrite one case list or detail's settings with another's",
@@ -21,6 +33,11 @@ _LABS = {
         name="Case List Menu Item",
         description="TODO",
         used_in_module=lambda m: isinstance(m, Module) and (m.case_list.show or m.task_list.show),  # TODO: will this break anything?
+    ),
+    "conditional_enum": Lab(
+        name=feature_previews.CONDITIONAL_ENUM.label,
+        description=feature_previews.CONDITIONAL_ENUM.description,
+        #used_in_module=TODO
     ),
     "conditional_form_actions": Lab(
         name='Allow opening or closing bases based on a condition ("Only if the answer to...")',
@@ -36,6 +53,11 @@ _LABS = {
     "edit_form_actions": Lab(
         name="Editing Form Actions",
         description="Allow changing form actions and deleting registration forms",
+    ),
+    "enum_image": Lab(
+        name=feature_previews.ENUM_IMAGE.label,
+        description=feature_previews.ENUM_IMAGE.description,
+        #used_in_module=TODO
     ),
     "menu_mode": Lab(
         name="Menu Mode",
@@ -63,7 +85,13 @@ def get(slug, app, module=None, form=None):
     if slug not in _LABS:
         raise LabNotFoundException(slug)
     lab = _LABS[slug]
-    show = enabled = slug in app.labs and app.labs[slug]
+    enabled = slug in app.labs and app.labs[slug]
+
+    previews = feature_previews.previews_dict(app.domain)
+    if slug in previews:
+        enabled = enabled or previews[slug]
+
+    show = enabled
     if form:
         show = show or lab.used_in_form(form)
     elif module:
@@ -82,14 +110,3 @@ def get_all(app, module=None, form=None):
     for slug, lab in _LABS.items():
         results[slug] = get(slug, app, module, form)
     return results
-
-
-
-
-'''
-FEATURE PREVIEWS
-Conditional Enum in Case List
-Custom Calculations in Case List
-Custom Single and Multiple Answer Questions
-Icons in Case List
-'''
