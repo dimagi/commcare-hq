@@ -248,7 +248,7 @@ def get_location_filter(location, domain, config):
 
 def get_system_usage_data(yesterday, config):
     yesterday_date = datetime(*yesterday)
-    two_days_ago = (yesterday_date - relativedelta(days=2)).date()
+    two_days_ago = (yesterday_date - relativedelta(days=1)).date()
 
     def get_data_for(date, filters):
         return AggDailyUsageView.objects.filter(
@@ -599,7 +599,7 @@ def get_cas_reach_data(config):
 
 def get_demographics_data(yesterday, config):
     yesterday_date = datetime(*yesterday)
-    two_days_ago = (yesterday_date - relativedelta(days=2)).date()
+    two_days_ago = (yesterday_date - relativedelta(days=1)).date()
 
     def get_data_for(date, filters):
         return AggAwcDailyView.objects.filter(
