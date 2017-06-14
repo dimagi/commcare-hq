@@ -161,6 +161,7 @@ class EnikshayCaseFactory(object):
                     'last_name': self.patient_detail.last_name,
                     'name': self.patient_detail.pname,
                     'person_id': self.patient_detail.person_id,
+                    'phone_number': validate_phone_number(self.patient_detail.pmob),
                     'secondary_contact_name_address': (
                         (self.patient_detail.cname or '')
                         + ', '
