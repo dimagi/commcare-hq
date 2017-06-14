@@ -16,10 +16,10 @@ from corehq.warehouse.const import (
 from corehq.sql_db.routers import db_for_read_write
 from corehq.util.test_utils import unit_testing_only
 from corehq.warehouse.etl import CustomSQLETLMixin
-from corehq.warehouse.models.shared import WarehouseTableMixin
+from corehq.warehouse.models.shared import WarehouseTable
 
 
-class BaseDim(models.Model, WarehouseTableMixin):
+class BaseDim(models.Model, WarehouseTable):
     domain = models.CharField(max_length=255)
 
     dim_last_modified = models.DateTimeField(auto_now=True)

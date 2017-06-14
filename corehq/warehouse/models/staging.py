@@ -25,11 +25,11 @@ from corehq.warehouse.const import (
     SYNCLOG_STAGING_SLUG,
 )
 
-from corehq.warehouse.models.shared import WarehouseTableMixin
+from corehq.warehouse.models.shared import WarehouseTable
 from corehq.warehouse.etl import CouchToDjangoETLMixin
 
 
-class StagingTable(models.Model, WarehouseTableMixin):
+class StagingTable(models.Model, WarehouseTable):
 
     class Meta:
         abstract = True

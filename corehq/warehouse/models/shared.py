@@ -1,7 +1,7 @@
 from django.db import transaction
 
 
-class WarehouseTableMixin(object):
+class WarehouseTable(object):
 
     @classmethod
     @transaction.atomic
