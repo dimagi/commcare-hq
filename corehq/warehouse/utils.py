@@ -9,7 +9,7 @@ def django_batch_records(cls, record_iter, field_mapping):
             if isinstance(raw_record, dict):
                 record[destination_key] = raw_record.get(source_key)
             else:
-                record[destination_key] = getattr(raw_record, source_key)
+                record[destination_key] = getattr(raw_record, source_key, None)
 
         records.append(cls(**record))
 
