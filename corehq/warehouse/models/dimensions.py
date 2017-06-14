@@ -1,4 +1,4 @@
-from django.db import models, transaction, connections
+from django.db import models, transaction
 
 from corehq.warehouse.const import (
     USER_DIM_SLUG,

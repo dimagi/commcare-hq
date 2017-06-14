@@ -1,4 +1,4 @@
-from django.db import models, transaction, connections
+from django.db import models, transaction
 
 from corehq.warehouse.const import (
     APP_STATUS_FACT_SLUG,
