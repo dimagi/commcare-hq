@@ -4,7 +4,6 @@ from django.db import transaction
 class WarehouseTable(object):
 
     @classmethod
-    @transaction.atomic
     def commit(cls, start_datetime, end_datetime):
         raise NotImplementedError
 

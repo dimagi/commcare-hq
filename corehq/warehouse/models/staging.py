@@ -35,7 +35,6 @@ class StagingTable(models.Model, WarehouseTable):
         abstract = True
 
     @classmethod
-    @transaction.atomic
     def commit(cls, start_datetime, end_datetime):
         cls.clear_records()
         cls.load(start_datetime, end_datetime)

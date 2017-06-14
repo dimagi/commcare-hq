@@ -26,9 +26,9 @@ class BaseDim(models.Model, WarehouseTable):
     deleted = models.BooleanField(default=False)
 
     @classmethod
-    @transaction.atomic
     def commit(cls, start_datetime, end_datetime):
-        cls.load(start_datetime, end_datetime)
+        with transaction.atomic(using=db_for_read_write(cls)):
+            cls.load(start_datetime, end_datetime)
 
     class Meta:
         abstract = True
