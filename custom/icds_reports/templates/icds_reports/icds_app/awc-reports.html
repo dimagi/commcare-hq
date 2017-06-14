@@ -1,15 +1,15 @@
 {% load i18n %}
 <div>
-    <div class="row filters">
-        <filters filters="$ctrl.filters" data="$ctrl.data"></filters>
-    </div>
     <div class="row no-margin">
-        <div class="col-md-11">
+        <div class="col-md-4">
             <span class="breadcrump-element" ng-bind="$ctrl.label"></span>
             <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element"> <i class="fa fa-chevron-right" aria-hidden="true"></i> </span>
             <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element" ng-bind="$ctrl.steps[$ctrl.step].label"></span>
         </div>
-        <div class="col-md-1 "><a href="#download" class="fa"><i class="fa fa-download fa-2x right pointer"></i></a></div>
+        <div class="col-md-7">
+            <filters filters="$ctrl.filters" data="$ctrl.data"></filters>
+        </div>
+        <div class="col-md-1 "><a href="#download" class="fa" style="float: right"><i class="fa fa-download fa-2x right pointer"></i></a></div>
     </div>
     <div class="report-content">
         <div class="row " ng-show="$ctrl.step === 'system_usage'">
@@ -156,17 +156,17 @@
                             <td>{$ row[$ctrl.data.last_month].fully_immunized_date $}</td>
                             <td ng-repeat-start="month in $ctrl.data.months">
                                 <span class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'weight')" popover-placement="right"  popover-trigger="'mouseenter'">
-                                    {$ row[month].nutrition_status $} <i class="fa fa-info-circle"></i>
+                                    {$ row[month].nutrition_status $}
                                 </span>
                             </td>
                             <td>
                                 <span class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'height')" popover-placement="right" popover-trigger="'mouseenter'">
-                                    {$ row[month].stunning $} <i class="fa fa-info-circle"></i>
+                                    {$ row[month].stunning $}
                                 </span>
                             </td>
                             <td>
                                 <span class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'both')" popover-placement="right" popover-trigger="'mouseenter'">
-                                    {$ row[month].wasting $} <i class="fa fa-info-circle"></i>
+                                    {$ row[month].wasting $}
                                 </span>
                             </td>
                             <td ng-repeat-end="">{$ row[month].pse_days_attended $}</td>

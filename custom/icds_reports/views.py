@@ -282,9 +282,9 @@ class PrevalenceOfUndernutritionView(View):
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
         data = []
-        if step == "1":
+        if step == "map":
             data = get_prevalence_of_undernutrition_data_map(config, loc_level)
-        elif step == "2":
+        elif step == "chart":
             data = get_prevalence_of_undernutrition_data_chart(config, loc_level)
 
         return JsonResponse(data={

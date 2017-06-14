@@ -1,11 +1,12 @@
 <div class="preogress-report-directive">
-    <div class="row filters">
-        <filters filters="$ctrl.filters" data="$ctrl.filtersData"></filters>
-    </div>
-    <div class="row" style="margin-top: 20px;">
-        <div class="col-md-11">
+    <div class="row no-margin">
+        <div class="col-md-4">
             <span class="breadcrump-element" ng-bind="$ctrl.label"></span>
         </div>
+        <div class="col-md-7">
+            <filters filters="$ctrl.filters" data="$ctrl.data"></filters>
+        </div>
+        <div class="col-md-1 "><a href="#download" class="fa" style="float: right"><i class="fa fa-download fa-2x right pointer"></i></a></div>
     </div>
     <div ng-if="$ctrl.data === void(0)">
         <h2>No Data</h2>

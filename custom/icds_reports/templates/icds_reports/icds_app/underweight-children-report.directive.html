@@ -1,22 +1,22 @@
 <div class="underweight-children-report-directive">
-    <div class="row filters">
-        <filters filters="$ctrl.filters" data="$ctrl.filtersData"></filters>
-    </div>
-    <div class="row" style="margin-top: 20px;">
-        <div class="col-md-11">
+    <div class="row no-margin">
+        <div class="col-md-4">
             <span class="breadcrump-element" ng-bind="$ctrl.label"></span>
             <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element"> <i class="fa fa-chevron-right" aria-hidden="true"></i> </span>
-            <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element" ng-bind="$ctrl.steps[$ctrl.step - 1].label"></span>
+            <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element" ng-bind="$ctrl.steps[$ctrl.step].label"></span>
         </div>
-        <div class="col-md-1 "><a href="#download" class="fa"><i class="fa fa-download fa-2x right pointer"></i></a></div>
+        <div class="col-md-7">
+            <filters filters="$ctrl.filters" data="$ctrl.data"></filters>
+        </div>
+        <div class="col-md-1 "><a href="#download" class="fa" style="float: right"><i class="fa fa-download fa-2x right pointer"></i></a></div>
     </div>
-    <div class="col-md-12" ng-if="$ctrl.step === '1'">
+    <div class="col-md-12" ng-if="$ctrl.step === 'map'">
 
         <div class="row" ng-if="$ctrl.loaded && $ctrl.mode">
             <map-or-sector-view mode="{$ $ctrl.mode $}" data="$ctrl.data"></map-or-sector-view>
         </div>
     </div>
-    <div class="col-md-12" ng-if="$ctrl.step === '2' && $ctrl.chartData !== null">
+    <div class="col-md-12" ng-if="$ctrl.step === 'chart' && $ctrl.chartData !== null">
         <div class="row">
             <nvd3 options="$ctrl.chartOptions" data="$ctrl.chartData" class="with-3d-shadow with-transitions"></nvd3>
         </div>

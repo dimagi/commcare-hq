@@ -89,14 +89,14 @@ li {
     padding: 0;
 }
 
-.navigation-directive .active {
+.navigation-directive li.active {
     background-color: #545454;
     border-right: 4px solid #00a8c6;
 }
 
 .navigation-directive li > a:hover, a:focus {
     color: #ffffff;
-    background-color: inherit;
+    background-color: inherit !important;
     text-decoration:none;
     cursor:pointer;
 }
@@ -124,6 +124,10 @@ li {
 .dot-menu-dot {
     margin: 0 auto;
     text-align: center;
+}
+
+.body {
+    font-family: "Montserrat", sans-serif;
 }
 
 .dot-menu-item {

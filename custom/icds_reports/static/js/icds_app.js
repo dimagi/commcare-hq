@@ -38,7 +38,7 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
                 template : "system_usage_tabular",
             })
             .when("/underweight_children", {
-                redirectTo : "/underweight_children/1",
+                redirectTo : "/underweight_children/map",
             })
             .when("/underweight_children/:step", {
                 template : "<underweight-children-report></underweight-children-report>",
