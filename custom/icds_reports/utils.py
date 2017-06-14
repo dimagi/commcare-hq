@@ -33,6 +33,10 @@ OPERATORS = {
     "in": operator.contains,
 }
 
+RED = '#d60000'
+ORANGE = '#df7400'
+GREEN = '#009811'
+GREY = '#9D9D9D'
 
 class MPRData(object):
     resource_file = 'resources/block_mpr.json'
@@ -242,11 +246,13 @@ def get_location_filter(location, domain, config):
     return loc_level
 
 
-def get_system_usage_data(yesterday, before_yesterday, config):
+def get_system_usage_data(yesterday, config):
+    yesterday_date = datetime(*yesterday)
+    two_days_ago = (yesterday_date - relativedelta(days=2)).date()
 
     def get_data_for(date, filters):
         return AggDailyUsageView.objects.filter(
-            date=datetime(*date), **filters
+            date=date, **filters
         ).values(
             'aggregation_level'
         ).annotate(
@@ -258,8 +264,8 @@ def get_system_usage_data(yesterday, before_yesterday, config):
             num_thr=Sum('usage_num_thr')
         )
 
-    yesterday_data = get_data_for(yesterday, config)
-    before_yesterday_data = get_data_for(before_yesterday, config)
+    yesterday_data = get_data_for(yesterday_date, config)
+    two_days_ago_data = get_data_for(two_days_ago, config)
 
     return {
         'records': [
@@ -268,7 +274,7 @@ def get_system_usage_data(yesterday, before_yesterday, config):
                     'label': _('Number of AWCs Open yesterday'),
                     'help_text': _(("Total Number of Angwanwadi Centers that were open yesterday "
                                     "by the AWW or the AWW helper")),
-                    'percent': percent_increase('daily_attendance', yesterday_data, before_yesterday_data),
+                    'percent': percent_increase('daily_attendance', yesterday_data, two_days_ago_data),
                     'value': get_value(yesterday_data, 'daily_attendance'),
                     'all': get_value(yesterday_data, 'awcs'),
                     'format': 'div'
@@ -276,7 +282,7 @@ def get_system_usage_data(yesterday, before_yesterday, config):
                 {
                     'label': _('Average number of forms hosuehold registration forms submitted yesterday'),
                     'help_text': _('Average number of household registration forms submitted by AWWs yesterday.'),
-                    'percent': percent_increase('num_forms', yesterday_data, before_yesterday_data),
+                    'percent': percent_increase('num_forms', yesterday_data, two_days_ago_data),
                     'value': get_value(yesterday_data, 'num_forms'),
                     'all': get_value(yesterday_data, 'awcs'),
                     'format': 'number'
@@ -290,7 +296,7 @@ def get_system_usage_data(yesterday, before_yesterday, config):
                          "Birth Preparedness, Delivery, Post Natal Care, Exclusive breastfeeding and "
                          "Complementary feeding")
                     ),
-                    'percent': percent_increase('num_home_visits', yesterday_data, before_yesterday_data),
+                    'percent': percent_increase('num_home_visits', yesterday_data, two_days_ago_data),
                     'value': get_value(yesterday_data, 'num_home_visits'),
                     'all': get_value(yesterday_data, 'awcs'),
                     'format': 'number'
@@ -298,7 +304,7 @@ def get_system_usage_data(yesterday, before_yesterday, config):
                 {
                     'label': _('Average number of Growth Monitoring forms submitted yesterday'),
                     'help_text': _('Average number of growth monitoring forms (GMP) submitted yesterday'),
-                    'percent': percent_increase('num_gmp', yesterday_data, before_yesterday_data),
+                    'percent': percent_increase('num_gmp', yesterday_data, two_days_ago_data),
                     'value': get_value(yesterday_data, 'num_gmp'),
                     'all': get_value(yesterday_data, 'awcs'),
                     'format': 'number'
@@ -308,7 +314,7 @@ def get_system_usage_data(yesterday, before_yesterday, config):
                 {
                     'label': _('Average number of Take Home Ration forms submitted yesterday'),
                     'help_text': _('Average number of Take Home Rations (THR) forms submitted yesterday'),
-                    'percent': percent_increase('num_thr', yesterday_data, before_yesterday_data),
+                    'percent': percent_increase('num_thr', yesterday_data, two_days_ago_data),
                     'value': get_value(yesterday_data, 'num_thr'),
                     'all': get_value(yesterday_data, 'awcs'),
                     'format': 'number'
@@ -591,7 +597,10 @@ def get_cas_reach_data(config):
     }
 
 
-def get_demographics_data(yesterday, before_yesterday, config):
+def get_demographics_data(yesterday, config):
+    yesterday_date = datetime(*yesterday)
+    two_days_ago = (yesterday_date - relativedelta(days=2)).date()
+
     def get_data_for(date, filters):
         return AggAwcDailyView.objects.filter(
             date=date, **filters
@@ -607,8 +616,8 @@ def get_demographics_data(yesterday, before_yesterday, config):
             all_persons=Sum('cases_person')
         )
 
-    yesterday_data = get_data_for(datetime(*yesterday), config)
-    before_yesterday_data = get_data_for(datetime(*before_yesterday), config)
+    yesterday_data = get_data_for(yesterday_date, config)
+    two_days_ago_data = get_data_for(two_days_ago, config)
 
     return {
         'records': [
@@ -673,7 +682,7 @@ def get_demographics_data(yesterday, before_yesterday, config):
                     'percent': percent_diff(
                         'person_aadhaar',
                         yesterday_data,
-                        before_yesterday_data,
+                        two_days_ago_data,
                         'all_persons'
                     ),
                     'value': get_value(yesterday_data, 'person_aadhaar'),
@@ -829,10 +838,10 @@ def get_awc_opened_data(filters):
                 "slug": "awc_opened",
                 "label": "Awc Opened yesterday",
                 "fills": {
-                    '0%-50%': '#d60000',
-                    '51%-75%': '#df7400',
-                    '75%-100%': '#009811',
-                    'defaultFill': '#9D9D9D',
+                    '0%-50%': RED,
+                    '51%-75%': ORANGE,
+                    '75%-100%': GREEN,
+                    'defaultFill': GRAY,
                 },
                 "rightLegend": {
                     "average": num * 100 / (denom or 1),
@@ -887,10 +896,10 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
             "slug": "moderately_underweight",
             "label": "",
             "fills": {
-                '0%-15%': '#009811',
-                '16%-30%': '#df7400',
-                '30%-100%': '#d60000',
-                'defaultFill': '#9D9D9D',
+                '0%-15%': GREEN,
+                '16%-30%': ORANGE,
+                '30%-100%': RED,
+                'defaultFill': GREY,
             },
             "rightLegend": {
                 "average": sum(average) / (len(average) or 1),
@@ -971,21 +980,21 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
                 "key": "Between 0%-15%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": "#009811"
+                "color": GREEN
             },
             {
                 "values": [[key, value / float(locations_for_lvl)] for key, value in data['orange'].iteritems()],
                 "key": "Between 16%-30%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": "#df7400"
+                "color": ORANGE
             },
             {
                 "values": [[key, value / float(locations_for_lvl)] for key, value in data['red'].iteritems()],
                 "key": "Between 31%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": "#d60000"
+                "color": RED
             }
         ],
         "top_three": top_locations[0:3],
@@ -1003,27 +1012,27 @@ def get_prevalence_of_undernutrition_sector_data(config, loc_level):
                 "key": "green",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": "#009811"
+                "color": GREEN
             },
             {
                 "values": [['Karera', 0.6], ['Koloras', 0.13], ['Pichhore', 0.3]],
                 "key": "orange",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": "#df7400"
+                "color": ORANGE
             },
             {
                 "values": [['Karera', 0.11], ['Koloras', 0.3], ['Pichhore', 0.1]],
                 "key": "red",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": "#d60000"
+                "color": RED
             }
         ]
     }
 
 
-def get_awc_reports_system_usage(config, month, prev_month, three_month, loc_level):
+def get_awc_reports_system_usage(config, month, prev_month, two_before, loc_level):
 
     def get_data_for(filters, date):
         return AggAwcMonthly.objects.filter(
@@ -1037,7 +1046,7 @@ def get_awc_reports_system_usage(config, month, prev_month, three_month, loc_lev
         )
 
     chart_data = DailyAttendanceView.objects.filter(
-        pse_date__range=(datetime(*three_month), datetime(*month)), **config
+        pse_date__range=(datetime(*two_before), datetime(*month)), **config
     ).values(
         'pse_date', 'aggregation_level'
     ).annotate(
@@ -1111,10 +1120,10 @@ def get_awc_reports_system_usage(config, month, prev_month, three_month, loc_lev
     }
 
 
-def get_awc_reports_pse(config, month, three_month):
+def get_awc_reports_pse(config, month, two_before):
 
     map_image_data = DailyAttendanceView.objects.filter(
-        pse_date__range=(datetime(*three_month), datetime(*month)), **config
+        pse_date__range=(datetime(*two_before), datetime(*month)), **config
     ).values('awc_name', 'form_location_lat', 'form_location_long', 'image_name')
 
     map_data = []
@@ -1154,8 +1163,8 @@ def get_awc_reports_pse(config, month, three_month):
                     "slug": "pse_forms",
                     "label": "",
                     "fills": {
-                        'green': 'green',
-                        'defaultFill': '#9D9D9D',
+                        'green': GREEN,
+                        'defaultFill': GREY,
                     },
                     "rightLegend": {
                     },
@@ -1167,10 +1176,10 @@ def get_awc_reports_pse(config, month, three_month):
     }
 
 
-def get_awc_reports_maternal_child(config, month, three_month):
+def get_awc_reports_maternal_child(config, month, two_before):
 
     data = AggChildHealthMonthly.objects.filter(
-        month__range=(datetime(*three_month), datetime(*month)), **config
+        month__range=(datetime(*two_before), datetime(*month)), **config
     ).values(
         'month', 'aggregation_level'
     ).annotate(
@@ -1262,9 +1271,9 @@ def get_awc_report_demographics(config, month):
         )
 
     yesterday = datetime.now() - relativedelta(days=1)
-    before_yesterday = yesterday - relativedelta(days=1)
+    two_days_ago = yesterday - relativedelta(days=1)
     kpi_yesterday = get_data_for_kpi(config, yesterday.date())
-    kpi_before_yesterday = get_data_for_kpi(config, before_yesterday.date())
+    kpi_two_days_ago = get_data_for_kpi(config, two_days_ago.date())
     return {
         'chart': [
             {
@@ -1281,7 +1290,7 @@ def get_awc_report_demographics(config, month):
                     'percent': percent_increase(
                         'ccs_pregnant',
                         kpi_yesterday,
-                        kpi_before_yesterday,
+                        kpi_two_days_ago,
                     ),
                     'value': get_value(kpi_yesterday, 'ccs_pregnant'),
                     'all': '',
@@ -1293,7 +1302,7 @@ def get_awc_report_demographics(config, month):
                     'percent': percent_increase(
                         ['ccs_lactating'],
                         kpi_yesterday,
-                        kpi_before_yesterday
+                        kpi_two_days_ago
                     ),
                     'value': get_value(kpi_yesterday, 'ccs_lactating'),
                     'all': '',
@@ -1307,7 +1316,7 @@ def get_awc_report_demographics(config, month):
                     'percent': percent_increase(
                         'adolescent',
                         kpi_yesterday,
-                        kpi_before_yesterday,
+                        kpi_two_days_ago,
                     ),
                     'value': get_value(kpi_yesterday, 'adolescent'),
                     'all': '',
@@ -1321,7 +1330,7 @@ def get_awc_report_demographics(config, month):
                     'percent': percent_diff(
                         ['has_aadhaar'],
                         kpi_yesterday,
-                        kpi_before_yesterday,
+                        kpi_two_days_ago,
                         'all_cases'
                     ),
                     'value': get_value(kpi_yesterday, 'has_aadhaar'),
@@ -1333,9 +1342,9 @@ def get_awc_report_demographics(config, month):
     }
 
 
-def get_awc_report_beneficiary(awc_site_code, month, three_before):
+def get_awc_report_beneficiary(awc_site_code, month, two_before):
     data = ChildHealthMonthlyView.objects.filter(
-        month__range=(datetime(*three_before), datetime(*month)),
+        month__range=(datetime(*two_before), datetime(*month)),
         awc_id=awc_site_code,
         open_in_month=1,
         valid_in_month=1,
@@ -1347,7 +1356,7 @@ def get_awc_report_beneficiary(awc_site_code, month, three_before):
         'months': [
             dt.strftime("%b %Y") for dt in rrule(
                 MONTHLY,
-                dtstart=datetime(*three_before),
+                dtstart=datetime(*two_before),
                 until=datetime(*month)
             )
         ],

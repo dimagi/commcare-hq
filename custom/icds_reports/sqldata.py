@@ -195,223 +195,223 @@ class AggChildHealthMonthlyDataSource(SqlData):
 
     @property
     def columns(self):
-            return [
-                DatabaseColumn('month', SimpleColumn('month')),
-                AggregateColumn(
-                    '% Weighing efficiency (Children <5 weighed)',
-                    percent_num,
-                    [
-                        SumColumn('nutrition_status_weighed'),
-                        SumColumn('wer_eligible', alias='wer_eligible')
-                    ],
-                    slug='status_weighed'
+        return [
+            DatabaseColumn('month', SimpleColumn('month')),
+            AggregateColumn(
+                '% Weighing efficiency (Children <5 weighed)',
+                percent_num,
+                [
+                    SumColumn('nutrition_status_weighed'),
+                    SumColumn('wer_eligible', alias='wer_eligible')
+                ],
+                slug='status_weighed'
+            ),
+            DatabaseColumn(
+                'Total number Unweighed',
+                SumColumn('nutrition_status_unweighed')
+            ),
+            AggregateColumn(
+                '% Children severely underweight (weight for age)',
+                percent_num,
+                [
+                    SumColumn('nutrition_status_severely_underweight'),
+                    AliasColumn('wer_eligible')
+                ],
+                slug='severely_underweight'
+            ),
+            AggregateColumn(
+                '% Children moderately underweight (weight for age)',
+                percent_num,
+                [
+                    SumColumn('nutrition_status_moderately_underweight'),
+                    AliasColumn('wer_eligible')
+                ],
+                slug='moderately_underweight'
+            ),
+            AggregateColumn(
+                '% Children normal (weight for age)',
+                percent_num,
+                [
+                    SumColumn('nutrition_status_normal'),
+                    AliasColumn('wer_eligible')
+                ],
+                slug='status_normal'
+            ),
+            AggregateColumn(
+                '% children with severe acute malnutrition (weight-for-height)',
+                percent_num,
+                [
+                    SumColumn('wasting_severe'),
+                    SumColumn('height_eligible', alias='height_eligible')
+                ],
+                slug='wasting_severe'
+            ),
+            AggregateColumn(
+                '% percent_num children with moderate acute malnutrition (weight-for-height)',
+                percent_num,
+                [
+                    SumColumn('wasting_moderate'),
+                    AliasColumn('height_eligible')
+                ],
+                slug='wasting_moderate'
+            ),
+            AggregateColumn(
+                '% children normal (weight-for-age)',
+                percent_num,
+                [
+                    SumColumn('wasting_normal'),
+                    AliasColumn('height_eligible')
+                ],
+                slug='wasting_normal'
+            ),
+            AggregateColumn(
+                '% children with severe stunting (height for age)',
+                percent_num,
+                [
+                    SumColumn('stunting_severe'),
+                    AliasColumn('height_eligible')
+                ],
+                slug='stunting_severe'
+            ),
+            AggregateColumn(
+                '% children with moderate stunting (height for age)',
+                percent_num,
+                [
+                    SumColumn('stunting_moderate'),
+                    AliasColumn('height_eligible')
+                ],
+                slug='stunting_moderate'
+            ),
+            AggregateColumn(
+                '% children with normal (height for age)',
+                percent_num,
+                [
+                    SumColumn('stunting_normal'),
+                    AliasColumn('height_eligible')
+                ],
+                slug='stunting_normal'
+            ),
+            AggregateColumn(
+                '% children immunized with 1st year immunizations',
+                lambda x, y, z: ((x or 0) + (y or 0)) * 100 / float(z or 1),
+                [
+                    SumColumn('fully_immunized_on_time'),
+                    SumColumn('fully_immunized_late'),
+                    SumColumn('fully_immunized_eligible')
+                ],
+                slug='fully_immunized'
+            ),
+            AggregateColumn(
+                '% children breastfed at birth',
+                percent_num,
+                [
+                    SumColumn('bf_at_birth'),
+                    SumColumn('born_in_month')
+                ],
+                slug='breastfed_at_birth'
+            ),
+            AggregateColumn(
+                '% children exclusively breastfed',
+                percent_num,
+                [
+                    SumColumn('ebf_in_month'),
+                    SumColumn('ebf_eligible')
+                ],
+                slug='exclusively_breastfed'
+            ),
+            AggregateColumn(
+                '% children initiated appropriate complementary feeding',
+                percent_num,
+                [
+                    SumColumn('cf_initiation_in_month'),
+                    SumColumn('cf_initiation_eligible')
+                ],
+                slug='cf_initiation'
+            ),
+            AggregateColumn(
+                '% children complementary feeding',
+                percent_num,
+                [
+                    SumColumn('cf_in_month'),
+                    SumColumn('cf_eligible')
+                ],
+                slug='complementary_feeding'
+            ),
+            AggregateColumn(
+                '% children consuming at least 4 food groups',
+                percent_num,
+                [
+                    SumColumn('cf_diet_diversity'),
+                    AliasColumn('cf_eligible')
+                ],
+                slug='diet_diversity'
+            ),
+            AggregateColumn(
+                '% children consuming adequate food',
+                percent_num,
+                [
+                    SumColumn('cf_diet_quantity'),
+                    AliasColumn('cf_eligible')
+                ],
+                slug='diet_quantity'
+            ),
+            AggregateColumn(
+                '% children whose mothers handwash before feeding',
+                percent_num,
+                [
+                    SumColumn('cf_handwashing'),
+                    AliasColumn('cf_eligible')
+                ],
+                slug='handwashing'
+            ),
+            DatabaseColumn(
+                'Children (0 - 28 Days) Seeking Services',
+                SumColumn(
+                    'valid_in_month',
+                    filters=self.filters + [EQ('age_tranche', 'age_0')]
                 ),
-                DatabaseColumn(
-                    'Total number Unweighed',
-                    SumColumn('nutrition_status_unweighed')
+                slug='zero'
+            ),
+            DatabaseColumn(
+                'Children (28 Days - 6 mo) Seeking Services',
+                SumColumn(
+                    'valid_in_month',
+                    filters=self.filters + [EQ('age_tranche', 'age_6')]
                 ),
-                AggregateColumn(
-                    '% Children severely underweight (weight for age)',
-                    percent_num,
-                    [
-                        SumColumn('nutrition_status_severely_underweight'),
-                        AliasColumn('wer_eligible')
-                    ],
-                    slug='severely_underweight'
+                slug='one'
+            ),
+            DatabaseColumn(
+                'Children (6 mo - 1 year) Seeking Services',
+                SumColumn(
+                    'valid_in_month',
+                    filters=self.filters + [EQ('age_tranche', 'age_12')]
                 ),
-                AggregateColumn(
-                    '% Children moderately underweight (weight for age)',
-                    percent_num,
-                    [
-                        SumColumn('nutrition_status_moderately_underweight'),
-                        AliasColumn('wer_eligible')
-                    ],
-                    slug='moderately_underweight'
+                slug='two'
+            ),
+            DatabaseColumn(
+                'Children (1 year - 3 years) Seeking Services',
+                SumColumn(
+                    'valid_in_month',
+                    filters=self.filters + [OR([
+                        EQ('age_tranche', 'age_24'),
+                        EQ('age_tranche', 'age_36')
+                    ])]
                 ),
-                AggregateColumn(
-                    '% Children normal (weight for age)',
-                    percent_num,
-                    [
-                        SumColumn('nutrition_status_normal'),
-                        AliasColumn('wer_eligible')
-                    ],
-                    slug='status_normal'
+                slug='three'
+            ),
+            DatabaseColumn(
+                'Children (3 years - 6 years) Seeking Services',
+                SumColumn(
+                    'valid_in_month',
+                    filters=self.filters + [OR([
+                        EQ('age_tranche', 'age_48'),
+                        EQ('age_tranche', 'age_60'),
+                        EQ('age_tranche', 'age_72')
+                    ])]
                 ),
-                AggregateColumn(
-                    '% children with severe acute malnutrition (weight-for-height)',
-                    percent_num,
-                    [
-                        SumColumn('wasting_severe'),
-                        SumColumn('height_eligible', alias='height_eligible')
-                    ],
-                    slug='wasting_severe'
-                ),
-                AggregateColumn(
-                    '% percent_num children with moderate acute malnutrition (weight-for-height)',
-                    percent_num,
-                    [
-                        SumColumn('wasting_moderate'),
-                        AliasColumn('height_eligible')
-                    ],
-                    slug='wasting_moderate'
-                ),
-                AggregateColumn(
-                    '% children normal (weight-for-age)',
-                    percent_num,
-                    [
-                        SumColumn('wasting_normal'),
-                        AliasColumn('height_eligible')
-                    ],
-                    slug='wasting_normal'
-                ),
-                AggregateColumn(
-                    '% children with severe stunting (height for age)',
-                    percent_num,
-                    [
-                        SumColumn('stunting_severe'),
-                        AliasColumn('height_eligible')
-                    ],
-                    slug='stunting_severe'
-                ),
-                AggregateColumn(
-                    '% children with moderate stunting (height for age)',
-                    percent_num,
-                    [
-                        SumColumn('stunting_moderate'),
-                        AliasColumn('height_eligible')
-                    ],
-                    slug='stunting_moderate'
-                ),
-                AggregateColumn(
-                    '% children with normal (height for age)',
-                    percent_num,
-                    [
-                        SumColumn('stunting_normal'),
-                        AliasColumn('height_eligible')
-                    ],
-                    slug='stunting_normal'
-                ),
-                AggregateColumn(
-                    '% children immunized with 1st year immunizations',
-                    lambda x, y, z: ((x or 0) + (y or 0)) * 100 / float(z or 1),
-                    [
-                        SumColumn('fully_immunized_on_time'),
-                        SumColumn('fully_immunized_late'),
-                        SumColumn('fully_immunized_eligible')
-                    ],
-                    slug='fully_immunized'
-                ),
-                AggregateColumn(
-                    '% children breastfed at birth',
-                    percent_num,
-                    [
-                        SumColumn('bf_at_birth'),
-                        SumColumn('born_in_month')
-                    ],
-                    slug='breastfed_at_birth'
-                ),
-                AggregateColumn(
-                    '% children exclusively breastfed',
-                    percent_num,
-                    [
-                        SumColumn('ebf_in_month'),
-                        SumColumn('ebf_eligible')
-                    ],
-                    slug='exclusively_breastfed'
-                ),
-                AggregateColumn(
-                    '% children initiated appropriate complementary feeding',
-                    percent_num,
-                    [
-                        SumColumn('cf_initiation_in_month'),
-                        SumColumn('cf_initiation_eligible')
-                    ],
-                    slug='cf_initiation'
-                ),
-                AggregateColumn(
-                    '% children complementary feeding',
-                    percent_num,
-                    [
-                        SumColumn('cf_in_month'),
-                        SumColumn('cf_eligible')
-                    ],
-                    slug='complementary_feeding'
-                ),
-                AggregateColumn(
-                    '% children consuming at least 4 food groups',
-                    percent_num,
-                    [
-                        SumColumn('cf_diet_diversity'),
-                        AliasColumn('cf_eligible')
-                    ],
-                    slug='diet_diversity'
-                ),
-                AggregateColumn(
-                    '% children consuming adequate food',
-                    percent_num,
-                    [
-                        SumColumn('cf_diet_quantity'),
-                        AliasColumn('cf_eligible')
-                    ],
-                    slug='diet_quantity'
-                ),
-                AggregateColumn(
-                    '% children whose mothers handwash before feeding',
-                    percent_num,
-                    [
-                        SumColumn('cf_handwashing'),
-                        AliasColumn('cf_eligible')
-                    ],
-                    slug='handwashing'
-                ),
-                DatabaseColumn(
-                    'Children (0 - 28 Days) Seeking Services',
-                    SumColumn(
-                        'valid_in_month',
-                        filters=self.filters + [EQ('age_tranche', 'age_0')]
-                    ),
-                    slug='zero'
-                ),
-                DatabaseColumn(
-                    'Children (28 Days - 6 mo) Seeking Services',
-                    SumColumn(
-                        'valid_in_month',
-                        filters=self.filters + [EQ('age_tranche', 'age_6')]
-                    ),
-                    slug='one'
-                ),
-                DatabaseColumn(
-                    'Children (6 mo - 1 year) Seeking Services',
-                    SumColumn(
-                        'valid_in_month',
-                        filters=self.filters + [EQ('age_tranche', 'age_12')]
-                    ),
-                    slug='two'
-                ),
-                DatabaseColumn(
-                    'Children (1 year - 3 years) Seeking Services',
-                    SumColumn(
-                        'valid_in_month',
-                        filters=self.filters + [OR([
-                            EQ('age_tranche', 'age_24'),
-                            EQ('age_tranche', 'age_36')
-                        ])]
-                    ),
-                    slug='three'
-                ),
-                DatabaseColumn(
-                    'Children (3 years - 6 years) Seeking Services',
-                    SumColumn(
-                        'valid_in_month',
-                        filters=self.filters + [OR([
-                            EQ('age_tranche', 'age_48'),
-                            EQ('age_tranche', 'age_60'),
-                            EQ('age_tranche', 'age_72')
-                        ])]
-                    ),
-                    slug='four'
-                )
-            ]
+                slug='four'
+            )
+        ]
 
 
 class AggCCSRecordMonthlyDataSource(SqlData):

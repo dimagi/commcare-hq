@@ -2,7 +2,7 @@
 
 import requests
 
-from datetime import datetime
+from datetime import datetime, date
 
 from dateutil.relativedelta import relativedelta
 from django.db.models.query_utils import Q
@@ -196,7 +196,6 @@ class ProgramSummaryView(View):
         test_date = datetime(year, month, day)
 
         yesterday = (test_date - relativedelta(days=1)).date()
-        before_yesterday = (test_date - relativedelta(days=2)).date()
         current_month = datetime(year, month, 1)
         prev_month = current_month - relativedelta(months=1)
 
@@ -216,7 +215,6 @@ class ProgramSummaryView(View):
         if step == 'system_usage':
             data = get_system_usage_data(
                 tuple(yesterday.timetuple())[:3],
-                tuple(before_yesterday.timetuple())[:3],
                 config
             )
         elif step == 'maternal_child':
@@ -226,7 +224,6 @@ class ProgramSummaryView(View):
         elif step == 'demographics':
             data = get_demographics_data(
                 tuple(yesterday.timetuple())[:3],
-                tuple(before_yesterday.timetuple())[:3],
                 config
             )
         elif step == 'awc_infrastructure':
@@ -242,14 +239,21 @@ class AwcOpenedView(View):
 
         data = {}
 
-        date_2 = datetime(2015, 9, 9)
-        date_1 = datetime(2015, 9, 10)
-        month = datetime(2015, 9, 1)
-        prev_month = datetime(2015, 9, 1) - relativedelta(months=1)
+        now = datetime.utcnow()
+        month = int(self.request.GET.get('month', now.month))
+        year = int(self.request.GET.get('year', now.year))
+        day = int(self.request.GET.get('day', now.day))
+
+        test_date = datetime(year, month, day)
+
+        yesterday = (test_date - relativedelta(days=1)).date()
+        two_days_ago = (test_date - relativedelta(days=2)).date()
+        month = datetime(year, month, 1)
+        prev_month = month - relativedelta(months=1)
 
         config = {
-            'yesterday': tuple(date_1.timetuple())[:3],
-            'before_yesterday': tuple(date_2.timetuple())[:3],
+            'yesterday': tuple(yesterday.timetuple())[:3],
+            'two_days_ago': tuple(two_days_ago.timetuple())[:3],
             'month': tuple(month.timetuple())[:3],
             'prev_month': tuple(prev_month.timetuple())[:3]
         }
@@ -314,7 +318,7 @@ class LocationView(View):
         parent_id = request.GET.get('parent_id')
         locations = SQLLocation.objects.accessible_to_user(self.kwargs['domain'], self.request.couch_user)
         if not parent_id:
-            locations = SQLLocation.objects.filter(parent_id__isnull=True)
+            locations = SQLLocation.objects.filter(domain=self.kwargs['domain'], parent_id__isnull=True)
         else:
             locations = locations.filter(parent__location_id=parent_id)
         return JsonResponse(data={
@@ -369,13 +373,12 @@ class AwcReportsView(View):
         year_param = int(request.GET.get('year', now.year))
         month = datetime(year_param, month_param, 1)
         prev_month = month - relativedelta(months=1)
-        three_month = month - relativedelta(months=2)
+        two_before = month - relativedelta(months=2)
         location = request.GET.get('location', None)
         aggregation_level = 5
 
         config = {
             'aggregation_level': aggregation_level,
-            'awc_site_code': "awc_214"
         }
         if location:
             try:
@@ -393,20 +396,20 @@ class AwcReportsView(View):
                 config,
                 tuple(month.timetuple())[:3],
                 tuple(prev_month.timetuple())[:3],
-                tuple(three_month.timetuple())[:3],
+                tuple(two_before.timetuple())[:3],
                 'aggregation_level'
             )
         elif step == 'pse':
             data = get_awc_reports_pse(
                 config,
                 tuple(month.timetuple())[:3],
-                tuple(three_month.timetuple())[:3]
+                tuple(two_before.timetuple())[:3]
             )
         elif step == 'maternal_child':
             data = get_awc_reports_maternal_child(
                 config,
                 tuple(month.timetuple())[:3],
-                tuple(three_month.timetuple())[:3]
+                tuple(two_before.timetuple())[:3]
             )
         elif step == 'demographics':
             data = get_awc_report_demographics(
@@ -417,7 +420,7 @@ class AwcReportsView(View):
             data = get_awc_report_beneficiary(
                 config['awc_site_code'],
                 tuple(month.timetuple())[:3],
-                tuple(three_month.timetuple())[:3],
+                tuple(two_before.timetuple())[:3],
             )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
@@ -443,7 +446,7 @@ class ExportIndicatorView(View):
 
         if month and year:
             config.update({
-                'month': datetime(year, month, 1).date(),
+                'month': date(year, month, 1),
             })
 
         location = request.POST.get('location', '')
