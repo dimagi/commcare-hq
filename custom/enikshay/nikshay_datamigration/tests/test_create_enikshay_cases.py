@@ -47,6 +47,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
                 ('person_id', 'NIK-MH-ABD-05-16-0001'),
                 ('phi', 'PHI'),
                 ('phi_assigned_to', self.phi.location_id),
+                ('phone_number', '5432109876'),
                 ('secondary_contact_name_address', 'Secondary name, Secondary address'),
                 ('secondary_contact_phone_number', '1234567890'),
                 ('sex', 'male'),
