@@ -201,7 +201,10 @@ class Command(BaseCommand):
                         num_succeeded - chunk_size, num_succeeded
                     ))
                     try:
-                        factory.create_or_update_cases(case_structures)
+                        factory.post_case_blocks([
+                            factory.get_case_block(structure.case_id, index=structure.index, **structure.attrs)
+                            for structure in case_structures
+                        ], None)
                     except Exception:
                         logger.error(
                             'Failure writing case structures',
