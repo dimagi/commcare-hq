@@ -57,9 +57,9 @@ class UserDim(BaseDim, CustomSQLETLMixin):
     email = models.CharField(max_length=255, null=True)
     doc_type = models.CharField(max_length=100)
 
-    is_active = models.BooleanField()
-    is_staff = models.BooleanField()
-    is_superuser = models.BooleanField()
+    is_active = models.NullBooleanField()
+    is_staff = models.NullBooleanField()
+    is_superuser = models.NullBooleanField()
 
     last_login = models.DateTimeField(null=True)
     date_joined = models.DateTimeField()

@@ -32,18 +32,9 @@ SELECT
     last_name,
     email,
     doc_type,
-    CASE is_active
-        WHEN is_active OR is_active IS NULL THEN true
-        ELSE false
-    END,
-    CASE is_staff
-        WHEN is_staff THEN true
-        ELSE false
-    END,
-    CASE is_superuser
-        WHEN is_superuser THEN true
-        ELSE false
-    END,
+    is_active,
+    is_staff,
+    is_superuser,
     last_login,
     date_joined,
     CASE base_doc
