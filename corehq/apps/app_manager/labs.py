@@ -5,7 +5,7 @@ from dimagi.utils.decorators.memoized import memoized
 
 from corehq import feature_previews
 from corehq.apps.app_manager.exceptions import LabNotFoundException
-from corehq.apps.app_manager.models import Module
+from corehq.apps.app_manager.models import Module, AdvancedModule, CareplanModule, ShadowModule
 
 class Lab(object):
     def __init__(self, name, description, help_link=None, used_in_module=None, used_in_form=None):
@@ -17,11 +17,14 @@ class Lab(object):
         self.used_in_form = used_in_form if used_in_form else lambda f: False
 
 def _uses_detail_format(module, column_format):
-    # TODO: advanced modules, too, and test
-    if not isinstance(module, Module):
-        return False
-    columns = module.case_details.short.columns + module.case_details.long.columns
-    return bool([c for c in columns if c.format == column_format])
+    details = []
+    if isinstance(module, Module) or isinstance(module, ShadowModule):
+        details = [module.case_details, module.ref_details]
+    elif isinstance(module, AdvancedModule):
+        details = [module.case_details, module.product_details]
+    elif isinstance(module, CareplanModule):
+        details = [module.goal_details, module.task_details]
+    return any([c.format for d in details for c in d.short.columns + d.long.columns if c.format == column_format])
 
 _LABS = {
     "advanced_itemsets": Lab(
