@@ -881,8 +881,7 @@ class EntriesHelper(object):
                 module_for_persistent_context = module.get_app().get_module_by_unique_id(
                     detail.persistent_case_tile_from_module
                 )
-                if (module_for_persistent_context and
-                        module_for_persistent_context.case_details.short.use_case_tiles):
+                if module_for_persistent_context:
                     return id_strings.detail(module_for_persistent_context, detail_type)
             if self._has_persistent_tile(detail):
                 return id_strings.detail(detail_module, detail_type)
