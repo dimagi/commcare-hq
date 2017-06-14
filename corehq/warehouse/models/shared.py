@@ -1,4 +1,3 @@
-from django.db import transaction
 
 
 class WarehouseTable(object):
