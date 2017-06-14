@@ -49,7 +49,7 @@ class AggAwcDailyView(models.Model):
     cases_ccs_pregnant = models.IntegerField(blank=True, null=True)
     cases_ccs_lactating = models.IntegerField(blank=True, null=True)
     cases_person = models.IntegerField(blank=True, null=True)
-    cases_person_adolescent = models.IntegerField(blank=True, null=True)
+    cases_person_adolescent_girls_11_18 = models.IntegerField(blank=True, null=True)
     cases_person_has_aadhaar = models.IntegerField(blank=True, null=True)
 
     class Meta:

@@ -144,7 +144,7 @@ class ExportableMixin(object):
             row_data = []
             for c in self.columns:
                 cell = row[c.slug]
-                row_data.append(cell['sort_key'] if 'sort_key' in cell else cell)
+                row_data.append(cell['sort_key'] if cell and 'sort_key' in cell else cell)
             excel_rows.append(row_data)
 
         excel_data = [

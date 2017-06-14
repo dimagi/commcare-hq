@@ -611,7 +611,7 @@ def get_demographics_data(yesterday, config):
             child_health=Sum('cases_child_health'),
             ccs_pregnant=Sum('cases_ccs_pregnant'),
             css_lactating=Sum('cases_ccs_lactating'),
-            person_adolescent=Sum('cases_person_adolescent'),
+            person_adolescent=Sum('cases_person_adolescent_girls_11_18'),
             person_aadhaar=Sum('cases_person_has_aadhaar'),
             all_persons=Sum('cases_person')
         )
@@ -1265,7 +1265,7 @@ def get_awc_report_demographics(config, month):
         ).annotate(
             ccs_pregnant=Sum('cases_ccs_pregnant'),
             ccs_lactating=Sum('cases_ccs_lactating'),
-            adolescent=Sum('cases_person_adolescent'),
+            adolescent=Sum('cases_person_adolescent_girls_11_18'),
             has_aadhaar=Sum('cases_person_has_aadhaar'),
             all_cases=Sum('cases_person')
         )

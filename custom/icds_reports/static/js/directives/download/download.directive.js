@@ -43,7 +43,7 @@ function DownloadController($location, locationHierarchy, locationsService) {
     vm.indicators = [
         {id: 1, name: 'Child'},
         {id: 2, name: 'Pregnant Women'},
-        {id: 3, name: 'Demographics'},
+        // {id: 3, name: 'Demographics'},
         {id: 4, name: 'System Usage'},
         {id: 5, name: 'AWC Infrastructure'},
     ];
