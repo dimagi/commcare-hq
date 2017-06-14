@@ -1979,6 +1979,12 @@ CUSTOM_UCR_EXPRESSION_LISTS = [
     ('custom.ucr_ext.expressions.CUSTOM_UCR_EXPRESSIONS'),
 ]
 
+CUSTOM_UCR_REPORT_FILTERS = [
+]
+
+CUSTOM_UCR_REPORT_FILTER_VALUES = [
+]
+
 CUSTOM_MODULES = [
     'custom.apps.crs_reports',
     'custom.ilsgateway',
