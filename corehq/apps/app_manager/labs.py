@@ -8,9 +8,10 @@ from corehq.apps.app_manager.exceptions import LabNotFoundException
 from corehq.apps.app_manager.models import Module
 
 class Lab(object):
-    def __init__(self, name, description, used_in_module=None, used_in_form=None):
+    def __init__(self, name, description, help_link=None, used_in_module=None, used_in_form=None):
         self.name = name
         self.description = description
+        self.help_link = help_link
 
         self.used_in_module = used_in_module if used_in_module else lambda m: False
         self.used_in_form = used_in_form if used_in_form else lambda f: False
@@ -60,6 +61,7 @@ _LABS = {
         name=feature_previews.ENUM_IMAGE.label,
         description=feature_previews.ENUM_IMAGE.description,
         #used_in_module=TODO
+        help_link=feature_previews.ENUM_IMAGE.help_link,    # TODO: more help links
     ),
     "menu_mode": Lab(
         name=_("Menu Mode"),
@@ -146,6 +148,7 @@ def get(slug, app, module=None, form=None):
         'slug': slug,
         'name': lab.name,
         'description': lab.description,
+        'help_link': lab.help_link,
         'enabled': enabled,
         'show': show,
     }

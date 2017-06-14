@@ -40,7 +40,10 @@
                     <label>
                         <input type="checkbox" data-bind="attr: {name: slug, id: 'check-' + slug}, checked: enabled, event: {change: $root.update}" />
                         <span data-bind="text: name, attr: {for: 'check-' + slug}" class="clickable"></span>
-                        <span class="help-block" data-bind="text: description"></span>
+                        <div class="help-block">
+                            <span data-bind="text: description"></span>
+                            <a target="_blank" data-bind="if: help_link, attr:{href: help_link}">{% trans "Learn more." %}</a>
+                        </div>
                     </label>
                 </div>
             </div>
