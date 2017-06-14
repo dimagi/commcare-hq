@@ -16,6 +16,7 @@ from corehq.sql_db.routers import db_for_read_write
 from corehq.util.test_utils import unit_testing_only
 from corehq.warehouse.etl import CustomSQLETLMixin
 from corehq.warehouse.models.shared import WarehouseTable
+from corehq.warehouse.utils import truncate_records_for_cls
 
 
 class BaseDim(models.Model, WarehouseTable):
@@ -36,9 +37,7 @@ class BaseDim(models.Model, WarehouseTable):
     @classmethod
     @unit_testing_only
     def clear_records(cls):
-        database = db_for_read_write(cls)
-        with connections[database].cursor() as cursor:
-            cursor.execute("TRUNCATE {}".format(cls._meta.db_table))
+        truncate_records_for_cls(cls, cascade=True)
 
 
 class UserDim(BaseDim, CustomSQLETLMixin):

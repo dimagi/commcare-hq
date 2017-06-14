@@ -25,6 +25,7 @@ from corehq.warehouse.const import (
     SYNCLOG_STAGING_SLUG,
 )
 
+from corehq.warehouse.utils import truncate_records_for_cls
 from corehq.warehouse.models.shared import WarehouseTable
 from corehq.warehouse.etl import CouchToDjangoETLMixin
 
@@ -41,9 +42,7 @@ class StagingTable(models.Model, WarehouseTable):
 
     @classmethod
     def clear_records(cls):
-        database = db_for_read_write(cls)
-        with connections[database].cursor() as cursor:
-            cursor.execute("TRUNCATE {}".format(cls._meta.db_table))
+        truncate_records_for_cls(cls, cascade=False)
 
 
 class GroupStagingTable(StagingTable, CouchToDjangoETLMixin):
