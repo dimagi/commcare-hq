@@ -17,9 +17,9 @@ class Command(BaseCommand):
         parser.add_argument('tour_slug')
         parser.add_argument('user', nargs='?')
 
-    def handle(self, tour_slug, *args, **kwargs):
-        if len(args) > 0:
-            username = args[0]
+    def handle(self, tour_slug, **options):
+        if options['user']:
+            username = options['user']
             confirm = raw_input(CONFIRM_SINGLE_USER.format(
                 tour_slug=tour_slug, username=username))
             if confirm == 'yes':
