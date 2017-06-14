@@ -139,7 +139,7 @@ class TestReferralExpressions(ENikshayCaseStructureMixin, TestCase):
     def test_person_accepted_then_pending(self):
         referral_1_case_id = uuid.uuid4().hex
         referral_1 = self.create_referral_case(referral_1_case_id)[0]
-        trail = self.accept_referral(referral_1)
+        self.accept_referral(referral_1)
 
         referral_2_case_id = uuid.uuid4().hex
         referral_2 = self.create_referral_case(referral_2_case_id)[0]
@@ -155,7 +155,7 @@ class TestReferralExpressions(ENikshayCaseStructureMixin, TestCase):
         trail = self.accept_referral(referral_1)
 
         referral_2_case_id = uuid.uuid4().hex
-        referral_2 = self.create_referral_case(referral_2_case_id)[0]
+        self.create_referral_case(referral_2_case_id)
         self.reject_referral(referral_2_case_id)
 
         self.assertEqual(
@@ -166,7 +166,7 @@ class TestReferralExpressions(ENikshayCaseStructureMixin, TestCase):
     def test_person_accepted_twice(self):
         referral_1_case_id = uuid.uuid4().hex
         referral_1 = self.create_referral_case(referral_1_case_id)[0]
-        trail = self.accept_referral(referral_1)
+        self.accept_referral(referral_1)
 
         referral_2_case_id = uuid.uuid4().hex
         referral_2 = self.create_referral_case(referral_2_case_id)[0]
