@@ -40,5 +40,5 @@ SELECT
 FROM
     {{ form_staging }} AS form_table
 JOIN {{ domain_dim }} AS domain_table ON form_table.domain = domain_table.domain
--- TODO: Should we allow records to be inserted if not found in the UserDim? Unknown Users?
-JOIN {{ user_dim }} AS user_table ON form_table.user_id = user_table.user_id
+-- Allow forms to be inserted that do not have users in the UserDim
+LEFT OUTER JOIN {{ user_dim }} AS user_table ON form_table.user_id = user_table.user_id
