@@ -2,7 +2,7 @@
 
 {% blocktrans %}{{ inviter }} has invited you to join the {{ domain }} project space at CommCareHQ. This invitation expires in {{ days }} day(s){% endblocktrans %}
 
-{% blocktrans %}To accept this invitation, access the following url browser: {{ registration_link }}{% endblocktrans %}
+{% blocktrans %}To accept this invitation, please access the following url: {{ registration_link }}{% endblocktrans %}
 
 {% blocktrans %}CommCareHQ is a data management tool used by over 500 organizations to help frontline workers around the world.{% endblocktrans %}
 
