@@ -162,9 +162,9 @@ class ReportDispatcher(View):
             and permissions_check(class_name, request, domain=domain)
             and self.toggles_enabled(cls, request)
         ):
-            report = cls(request, domain=domain, **report_kwargs)
-            report.rendered_as = render_as
             try:
+                report = cls(request, domain=domain, **report_kwargs)
+                report.rendered_as = render_as
                 report.decorator_dispatcher(
                     request, domain=domain, report_slug=report_slug, *args, **kwargs
                 )
