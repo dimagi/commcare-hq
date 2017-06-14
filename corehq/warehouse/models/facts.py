@@ -45,9 +45,9 @@ class FormFact(BaseFact, CustomSQLETLMixin):
 
     form_id = models.CharField(max_length=255, unique=True)
 
-    domain = models.CharField(max_length=255, default=None)
+    domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=255, null=True)
-    xmlns = models.CharField(max_length=255, default=None)
+    xmlns = models.CharField(max_length=255)
     user_id = models.CharField(max_length=255, null=True)
 
     user_dim = models.ForeignKey(UserDim, on_delete=models.PROTECT)
@@ -62,7 +62,6 @@ class FormFact(BaseFact, CustomSQLETLMixin):
     build_id = models.CharField(max_length=255, null=True)
     state = models.PositiveSmallIntegerField(
         choices=XFormInstanceSQL.STATES,
-        default=XFormInstanceSQL.NORMAL
     )
 
     @classmethod
