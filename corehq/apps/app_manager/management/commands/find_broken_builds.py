@@ -76,7 +76,6 @@ class Command(BaseCommand):
         parser.add_argument(
             'check_function',
             choices=list(CHECK_FUNCTIONS),
-            dest='check_fn_name'
         )
         parser.add_argument(
             '--ids',
