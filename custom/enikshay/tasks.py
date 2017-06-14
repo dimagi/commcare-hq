@@ -225,7 +225,10 @@ class EpisodeAdherenceUpdate(object):
                 )
             if valid_cases:
                 by_modified_on = sorted(valid_cases, key=lambda case: case['modified_on'])
-                return by_modified_on[-1]['adherence_value'] in DOSE_TAKEN_INDICATORS
+                latest_case = by_modified_on[-1]
+                if latest_case['adherence_value'] in DOSE_TAKEN_INDICATORS:
+                    return latest_case.get('adherence_report_source') or latest_case.get('adherence_source')
+                return False
             else:
                 return False
 
@@ -271,14 +274,13 @@ class EpisodeAdherenceUpdate(object):
             raise EnikshayTaskException("Both of start_date and end_date should be specified or niether of them")
 
         if not start_date:
-            return dose_taken_by_date.values().count(True)
+            return len([dose_taken for dose_taken in dose_taken_by_date.values() if dose_taken])
         else:
-            # any efficient way to do this - numpy, python bisect?
-            return [
+            return len([
                 is_taken
                 for date, is_taken in dose_taken_by_date.iteritems()
-                if start_date <= date <= end_date
-            ].count(True)
+                if start_date <= date <= end_date and is_taken
+            ])
 
     def update_json(self):
         debug_data = []

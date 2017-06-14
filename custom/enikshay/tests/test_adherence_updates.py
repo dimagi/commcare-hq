@@ -151,6 +151,8 @@ class TestAdherenceUpdater(TestCase):
                 extra_update={
                     "name": adherence_date,
                     "adherence_value": adherence_value,
+                    "adherence_source": 'enikshay',
+                    "adherence_report_source": 'treatment_supervisor',
                 }
             )
             for (i, (adherence_date, adherence_value)) in enumerate(adherence_cases)
@@ -538,7 +540,7 @@ class TestAdherenceUpdater(TestCase):
                 ('some_id', datetime.date(2016, 1, 22), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, 'enikshay', False, None),
             ]),
-            {datetime.date(2016, 1, 22): True}
+            {datetime.date(2016, 1, 22): 'enikshay'}
         )
 
         ## test enikshay only source, closed/closure_reason cases
@@ -560,7 +562,7 @@ class TestAdherenceUpdater(TestCase):
                 ('some_id', datetime.date(2016, 1, 24), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', False, None),
             ]),
-            {datetime.date(2016, 1, 24): True}
+            {datetime.date(2016, 1, 24): 'enikshay'}
         )
         # not taken - as 1st case is relevent case with latest_modified_on and says dose not taken
         self.assertDictEqual(
@@ -580,7 +582,7 @@ class TestAdherenceUpdater(TestCase):
                 ('some_id', datetime.date(2016, 1, 26), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, 'enikshay', False, None),
             ]),
-            {datetime.date(2016, 1, 26): True}
+            {datetime.date(2016, 1, 26): 'enikshay'}
         )
 
         ## test non-enikshay source only cases
@@ -598,11 +600,11 @@ class TestAdherenceUpdater(TestCase):
         self.assertDictEqual(
             dose_taken_by_day([
                 ('some_id', datetime.date(2016, 1, 28), datetime.date(2016, 2, 22),
-                 DTIndicators[0], '99', True, 'a'),
+                 DTIndicators[0], '99DOTS', True, 'a'),
                 ('some_id', datetime.date(2016, 1, 28), datetime.date(2016, 2, 21),
-                 DOSE_UNKNOWN, '99', False, None),
+                 DOSE_UNKNOWN, '99DOTS', False, None),
             ]),
-            {datetime.date(2016, 1, 28): True}
+            {datetime.date(2016, 1, 28): '99DOTS'}
         )
 
         ## test mix of enikshay, non-enikshay sources
@@ -614,7 +616,7 @@ class TestAdherenceUpdater(TestCase):
                 ('some_id', datetime.date(2016, 1, 29), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', False, None),
             ]),
-            {datetime.date(2016, 1, 29): True}
+            {datetime.date(2016, 1, 29): 'enikshay'}
         )
         # not taken - as enikshay source case says not taken
         self.assertDictEqual(
@@ -644,7 +646,7 @@ class TestAdherenceUpdater(TestCase):
                 ('some_id', datetime.date(2016, 1, 3), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', True, HISTORICAL_CLOSURE_REASON),
             ]),
-            {datetime.date(2016, 1, 3): True}
+            {datetime.date(2016, 1, 3): 'enikshay'}
         )
 
     def test_update_by_person(self):
