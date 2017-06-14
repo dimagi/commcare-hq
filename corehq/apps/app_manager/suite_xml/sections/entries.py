@@ -882,7 +882,9 @@ class EntriesHelper(object):
                     detail.persistent_case_tile_from_module
                 )
                 if (module_for_persistent_context and
-                        module_for_persistent_context.case_details.short.use_case_tiles):
+                        (module_for_persistent_context.case_details.short.use_case_tiles or
+                         module_for_persistent_context.case_details.short.custom_xml
+                         )):
                     return id_strings.detail(module_for_persistent_context, detail_type)
             if self._has_persistent_tile(detail):
                 return id_strings.detail(detail_module, detail_type)
