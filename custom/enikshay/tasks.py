@@ -188,13 +188,28 @@ class EpisodeAdherenceUpdate(object):
 
     @staticmethod
     def calculate_doses_taken_by_day(adherence_cases):
-        """
-        Args:
-            adherence_cases: list of 'adherence' case dicts
+        """Args:
+            adherence_cases: list of 'adherence' case dicts that come from elasticsearch
 
-        Returns:
-            dict indexed by date part of 'adherence_date' and whether a dose is taken as value.
-            Below is criteria to calculate whether a dose is taken on a day or not
+        Returns: dict indexed by date part of 'adherence_date' and the source
+            of the adherence datapoint on that day, or False.
+
+        """
+        cases_by_date = defaultdict(list)
+        for case in adherence_cases:
+            adherence_date = parse_date(case['adherence_date']) or parse_datetime(case['adherence_date']).date()
+            cases_by_date[adherence_date].append(case)
+
+        # calculate whether adherence is taken on each day
+        dose_source_by_date = defaultdict(bool)
+        for d, cases in cases_by_date.iteritems():
+            dose_source_by_date[d] = EpisodeAdherenceUpdate._get_dose_source(cases)
+
+        return dose_source_by_date
+
+    @staticmethod
+    def _get_dose_source(cases):
+        """Returns the source of a dose, or False if there is no dose
 
         If there are multiple cases on one day filter to a single case as per below
         1. Find most relevant case
@@ -209,41 +224,25 @@ class EpisodeAdherenceUpdate(object):
                 ignore non-enikshay and apply above enikshay only condition
         2. Check if 'adherence_value' of most relevent case is one of DOSE_TAKEN_INDICATORS
         """
-        def is_dose_taken(cases):
-            # runs above discribed calculation and returns whether a dose is taken or not
-            sources = set(map(lambda x: x["adherence_source"], cases))
-            if 'enikshay' not in sources:
-                valid_cases = cases
-            else:
-                valid_cases = filter(
-                    lambda case: (
-                        case.get('adherence_source') == 'enikshay' and
-                        (not case['closed'] or (case['closed'] and
-                         case.get('adherence_closure_reason') == HISTORICAL_CLOSURE_REASON))
-                    ),
-                    cases
-                )
-            if valid_cases:
-                by_modified_on = sorted(valid_cases, key=lambda case: case['modified_on'])
-                latest_case = by_modified_on[-1]
-                if latest_case['adherence_value'] in DOSE_TAKEN_INDICATORS:
-                    return latest_case.get('adherence_report_source') or latest_case.get('adherence_source')
-                return False
-            else:
-                return False
-
-        # index by 'adherence_date'
-        cases_by_date = defaultdict(list)
-        for case in adherence_cases:
-            adherence_date = parse_date(case['adherence_date']) or parse_datetime(case['adherence_date']).date()
-            cases_by_date[adherence_date].append(case)
-
-        # calculate whether adherence is taken on each day
-        dose_taken_by_date = defaultdict(bool)
-        for d, cases in cases_by_date.iteritems():
-            dose_taken_by_date[d] = is_dose_taken(cases)
-
-        return dose_taken_by_date
+        sources = set(map(lambda x: x["adherence_source"], cases))
+        if 'enikshay' not in sources:
+            valid_cases = cases
+        else:
+            valid_cases = filter(
+                lambda case: (
+                    case.get('adherence_source') == 'enikshay' and
+                    (not case['closed'] or (case['closed'] and
+                     case.get('adherence_closure_reason') == HISTORICAL_CLOSURE_REASON))
+                ),
+                cases
+            )
+        if valid_cases:
+            by_modified_on = sorted(valid_cases, key=lambda case: case['modified_on'])
+            latest_case = by_modified_on[-1]
+            if latest_case['adherence_value'] in DOSE_TAKEN_INDICATORS:
+                return latest_case.get('adherence_report_source') or latest_case.get('adherence_source')
+            return False
+        return False
 
     def get_adherence_schedule_start_date(self):
         # return property 'adherence_schedule_date_start' of episode case (is expected to be a date object)
