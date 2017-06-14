@@ -1379,7 +1379,7 @@
             "property_value": 183
           },
           {
-            "type": "or",
+            "type": "and",
             "filters": [
               {
                 "operator": "not_eq",
@@ -2085,7 +2085,7 @@
             ]
           },
           {
-            "type": "or",
+            "type": "and",
             "filters": [
               {
                 "operator": "not_eq",
