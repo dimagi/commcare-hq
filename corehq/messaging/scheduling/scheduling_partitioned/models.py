@@ -13,7 +13,9 @@ from corehq.sql_db.models import PartitionedModel
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
 from datetime import tzinfo
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.modules import to_function
 from django.db import models
+from django.conf import settings
 from django.core.exceptions import ValidationError
 
 
@@ -241,7 +243,10 @@ class CaseScheduleInstanceMixin(object):
         elif self.recipient_type == 'SubCase':
             return None
         elif self.recipient_type == 'CustomRecipient':
-            return None
+            custom_function = to_function(
+                settings.AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS[self.recipient_id][0]
+            )
+            return custom_function(self)
         else:
             return super(CaseScheduleInstanceMixin, self).recipient
 

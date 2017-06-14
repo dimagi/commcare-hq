@@ -1546,6 +1546,7 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 
+# Used by the old reminders framework
 AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
     'CASE_OWNER_LOCATION_PARENT':
         ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent',
@@ -1557,6 +1558,9 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
         ['custom.enikshay.messaging.custom_recipients.agency_user_case_from_voucher_fulfilled_by_id',
          "TB: Agency user case from voucher_fulfilled_by_id"],
 }
+
+# Used by the new reminders framework
+AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {}
 
 AVAILABLE_CUSTOM_RULE_CRITERIA = {}
 
