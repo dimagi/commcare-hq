@@ -257,14 +257,6 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         return result[0] if result else None
 
     @property
-    def server_opened_on(self):
-        try:
-            open_action = self.actions[0]
-            return open_action.server_date
-        except Exception:
-            pass
-
-    @property
     @memoized
     def reverse_indices(self):
         return get_reverse_indices(self)

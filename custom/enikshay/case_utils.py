@@ -197,7 +197,7 @@ def get_latest_trail_case_from_person(domain, person_case_id):
         case for case in reverse_indexed_cases
         if case.type == CASE_TYPE_TRAIL
     ]
-    trail_cases.sort(key=lambda c: c.opened_on)
+    trail_cases.sort(key=lambda c: c.server_opened_on)
     if trail_cases:
         return trail_cases[-1]
     else:
