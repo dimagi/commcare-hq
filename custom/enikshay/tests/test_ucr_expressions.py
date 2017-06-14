@@ -176,3 +176,30 @@ class TestReferralExpressions(ENikshayCaseStructureMixin, TestCase):
             self.get_referral_expression_case(self.person_id),
             trail_2
         )
+
+    def test_person_rejected_then_pending(self):
+        referral_1_case_id = uuid.uuid4().hex
+        self.create_referral_case(referral_1_case_id)
+        self.reject_referral(referral_1_case_id)
+
+        referral_2_case_id = uuid.uuid4().hex
+        referral_2 = self.create_referral_case(referral_2_case_id)[0]
+
+        self.assertEqual(
+            self.get_referral_expression_case(self.person_id),
+            referral_2
+        )
+
+    def test_person_rejected_then_accepted(self):
+        referral_1_case_id = uuid.uuid4().hex
+        self.create_referral_case(referral_1_case_id)
+        self.reject_referral(referral_1_case_id)
+
+        referral_2_case_id = uuid.uuid4().hex
+        referral_2 = self.create_referral_case(referral_2_case_id)[0]
+        trail = self.accept_referral(referral_2)
+
+        self.assertEqual(
+            self.get_referral_expression_case(self.person_id),
+            trail
+        )
