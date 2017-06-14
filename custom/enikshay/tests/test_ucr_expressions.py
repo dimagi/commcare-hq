@@ -54,7 +54,7 @@ class TestReferralExpressions(ENikshayCaseStructureMixin, TestCase):
         """
         Evaluate the ReferralTestExpression against the given person_id
         """
-        context = EvaluationContext({"domain":self.domain})
+        context = EvaluationContext({"domain": self.domain})
         expression = referral_test_expression({
             # "domain": self.domain,
             'person_id_expression': {
