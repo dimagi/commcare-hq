@@ -5,11 +5,11 @@
     "server_environment": [
         "softlayer"
     ],
-    "data_source_table": "episode_qa",
-    "report_id": "beneficiary_register_qa",
+    "data_source_table": "episode",
+    "report_id": "beneficiary_register",
     "config": {
         "description": "",
-        "title": "Beneficiary Register (QA)",
+        "title": "Beneficiary Register",
         "sort_expression": [],
         "visible": true,
         "configured_charts": [],
@@ -502,15 +502,47 @@
                 "aggregation": "simple"
             },
             {
-                "field": "total_adherence_score",
-                "transform": {},
+                "expression": {
+                    "type": "evaluator",
+                    "context_variables": {
+                        "a": {
+                            "type": "property_name",
+                            "property_name": "treatment_initiation_date"
+                        },
+                        "b": {
+                            "type": "property_name",
+                            "property_name": "aggregated_score_count_taken"
+                        }
+                    },
+                    "statement": "round(float(b) / (days(today - a)), 2) if days(today - a) != 0 else ''"
+                },
+                "type": "expression",
+                "display": "Total Adherence Score",
+                "column_id": "total_adherence_score"
+            },
+            {
                 "sortable": false,
                 "description": null,
                 "format": "default",
+                "visible": false,
+                "transform": {},
+                "aggregation": "simple",
+                "field": "treatment_initiation_date",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Total Adherence Score",
-                "aggregation": "simple"
+                "display": "treatment_initiation_date"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "visible": false,
+                "transform": {},
+                "aggregation": "simple",
+                "field": "aggregated_score_count_taken",
+                "calculate_total": false,
+                "type": "field",
+                "display": "aggregated_score_count_taken"
             },
             {
                 "field": "treatment_outcome",

@@ -8252,6 +8252,19 @@
                         "name": "person_id"
                     }
                 }
+            },
+            {
+                "display_name": "aggregated_score_count_taken",
+                "datatype": "string",
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
+                "column_id": "aggregated_score_count_taken",
+                "transform": {},
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "aggregated_score_count_taken"
+                }
             }
         ],
         "named_filters": {
