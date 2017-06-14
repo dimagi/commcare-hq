@@ -307,7 +307,6 @@ class TestUserSetupUtils(TestCase):
         # Two IssuerId objects should have been created - a real one and one for the bad, manual user
         self.assertEqual(IssuerId.objects.count(), starting_count + 2)
 
-
     def test_set_default_role(self):
         self.make_role(DEFAULT_MOBILE_WORKER_ROLE)
         user = self.make_user('redviper@martell.biz', 'DTO')
