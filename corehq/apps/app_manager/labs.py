@@ -16,6 +16,13 @@ class Lab(object):
         self.used_in_module = used_in_module if used_in_module else lambda m: False
         self.used_in_form = used_in_form if used_in_form else lambda f: False
 
+def _uses_detail_format(module, column_format):
+    # TODO: advanced modules, too, and test
+    if not isinstance(module, Module):
+        return False
+    columns = module.case_details.short.columns + module.case_details.long.columns
+    return bool([c for c in columns if c.format == column_format])
+
 _LABS = {
     "advanced_itemsets": Lab(
         name=feature_previews.VELLUM_ADVANCED_ITEMSETS.label,
@@ -25,7 +32,7 @@ _LABS = {
     "calc_xpaths": Lab(
         name=feature_previews.CALC_XPATHS.label,
         description=feature_previews.CALC_XPATHS.description,
-        #used_in_module=TODO
+        used_in_module=lambda m: _uses_detail_format(m, 'calculate'),
     ),
     "case_detail_overwrite": Lab(
         name=_("Case Detail Overwrite"),
@@ -39,7 +46,7 @@ _LABS = {
     "conditional_enum": Lab(
         name=feature_previews.CONDITIONAL_ENUM.label,
         description=feature_previews.CONDITIONAL_ENUM.description,
-        #used_in_module=TODO
+        used_in_module=lambda m: _uses_detail_format(m, 'conditional-enum'),
     ),
     "conditional_form_actions": Lab(
         name=_('Case Conditions'),
@@ -61,8 +68,8 @@ _LABS = {
     "enum_image": Lab(
         name=feature_previews.ENUM_IMAGE.label,
         description=feature_previews.ENUM_IMAGE.description,
-        #used_in_module=TODO
         help_link=feature_previews.ENUM_IMAGE.help_link,
+        used_in_module=lambda m: _uses_detail_format(m, 'enum-image'),
     ),
     "menu_mode": Lab(
         name=_("Menu Mode"),
