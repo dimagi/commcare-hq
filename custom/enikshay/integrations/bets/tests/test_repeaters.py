@@ -425,7 +425,7 @@ class BETSDrugRefillRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepeate
         self.assertEqual(2, len(self.repeat_records().all()))
         self.assertEqual(
             BETSDrugRefillPayloadGenerator._get_prescription_threshold_to_send(
-                CaseAccessors(case.domain).get_case(case.case_id).dynamic_case_properties()
+                CaseAccessors(case.domain).get_case(case.case_id)
             ),
             60
         )
