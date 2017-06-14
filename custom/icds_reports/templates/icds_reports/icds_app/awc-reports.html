@@ -150,7 +150,7 @@
                     </thead>
                     <tbody>
                         <tr ng-repeat="row in $ctrl.data.rows">
-                            <td><span class="pointer" ng-click="$ctrl.showBeneficiaryDetails(row)">{$ row[$ctrl.data.last_month].person_name $}</span></td>
+                            <td><span class="pointer" ng-click="$ctrl.showBeneficiaryDetails(row[$ctrl.data.last_month].case_id)">{$ row[$ctrl.data.last_month].person_name $}</span></td>
                             <td>{$ row[$ctrl.data.last_month].dob $}</td>
                             <td>{$ row[$ctrl.data.last_month].age $}</td>
                             <td>{$ row[$ctrl.data.last_month].fully_immunized_date $}</td>
@@ -181,39 +181,39 @@
                     <div class="form-group">
                         <label class="control-label col-sm-2" for="name">Name: </label>
                         <div class="col-sm-9">
-                            <span>{$ $ctrl.beneficiary[$ctrl.data.last_month].person_name $}</span>
+                            <span>{$ $ctrl.beneficiary.person_name $}</span>
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="control-label col-sm-2" for="mother_name">Mother Name: </label>
                         <div class="col-sm-9">
-                            <span>{$ $ctrl.beneficiary[$ctrl.data.last_month].mother_name $}</span>
+                            <span>{$ $ctrl.beneficiary.mother_name $}</span>
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="control-label col-sm-2" for="date_of_birth">Date of Birth: </label>
                         <div class="col-sm-9">
-                            <span>{$ $ctrl.beneficiary[$ctrl.data.last_month].dob $}</span>
+                            <span>{$ $ctrl.beneficiary.dob $}</span>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="control-label col-sm-2" for="age">Name: </label>
+                        <label class="control-label col-sm-2" for="age">Age: </label>
                         <div class="col-sm-9">
-                            <span>{$ $ctrl.beneficiary[$ctrl.data.last_month].age $}</span>
+                            <span>{$ $ctrl.beneficiary.age $}</span>
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="control-label col-sm-2" for="sex">Sex: </label>
                         <div class="col-sm-9">
-                            <span>{$ $ctrl.beneficiary[$ctrl.data.last_month].sex $}</span>
+                            <span>{$ $ctrl.beneficiary.sex $}</span>
                         </div>
                     </div>
                 </div>
                 <h4>Growth Monitoring:</h4>
                 <h4 class="center">Weight For Age:</h4>
-                <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOneOptions" data="$ctrl.beneficiaryChartOneData" config="{ visible: !($ctrl.beneficiaryChartOneData==false) }" class="with-3d-shadow with-transitions"></nvd3>
+                <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptions" data="$ctrl.beneficiaryChartOneData" class="with-3d-shadow with-transitions"></nvd3>
                 <h4 class="center">Weight For Height:</h4>
-                <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOneOptions" data="$ctrl.beneficiaryChartTwoData" config="{ visible: !($ctrl.beneficiaryChartOneData==false) }" class="with-3d-shadow with-transitions"></nvd3>
+                <nvd3 class="hideLegend" options="$ctrl.beneficiaryChartOptions" data="$ctrl.beneficiaryChartTwoData" class="with-3d-shadow with-transitions"></nvd3>
             </div>
         </div>
     </div>

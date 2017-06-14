@@ -26,7 +26,7 @@ from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_
     get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart, \
     get_awc_reports_system_usage, get_awc_reports_pse, get_awc_reports_maternal_child, \
-    get_awc_report_demographics, get_location_filter, get_awc_report_beneficiary
+    get_awc_report_demographics, get_location_filter, get_awc_report_beneficiary, get_beneficiary_details
 from . import const
 from .exceptions import TableauTokenException
 
@@ -418,6 +418,11 @@ class AwcReportsView(View):
                 config['awc_site_code'],
                 tuple(month.timetuple())[:3],
                 tuple(three_month.timetuple())[:3],
+            )
+        elif step == 'beneficiary_details':
+            data = get_beneficiary_details(
+                self.request.GET.get('case_id'),
+                tuple(month.timetuple())[:3]
             )
         return JsonResponse(data=data)
 

@@ -1356,6 +1356,7 @@ def get_awc_report_beneficiary(awc_site_code, month, three_before):
 
     def row_format(row_data):
         return dict(
+            case_id=row_data.case_id,
             person_name=row_data.person_name,
             dob=row_data.dob,
             sex=row_data.sex,
@@ -1377,3 +1378,25 @@ def get_awc_report_beneficiary(awc_site_code, month, three_before):
         config['rows'][row.case_id][row.month.strftime("%b %Y")] = row_format(row)
 
     return config
+
+
+def get_beneficiary_details(case_id, month):
+    data = ChildHealthMonthlyView.objects.filter(
+        case_id=case_id, month__lte=datetime(*month)
+    ).order_by('month')
+    beneficiary = {
+        'weight': [],
+        'height': [],
+    }
+    for row in data:
+        beneficiary.update({
+            'person_name': row.person_name,
+            'mother_name': row.mother_name,
+            'dob': row.dob,
+            'age': round((datetime(*month).date() - row.dob).days / 365.25),
+            'sex': row.sex,
+            'age_in_months': row.age_in_months,
+        })
+        beneficiary['weight'].append({'x': row.age_in_months, 'y': (row.recorded_weight or 0)})
+        beneficiary['height'].append({'x': row.age_in_months, 'y': (row.recorded_height or 0)})
+    return beneficiary
