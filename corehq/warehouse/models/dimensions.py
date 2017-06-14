@@ -9,7 +9,6 @@ from corehq.warehouse.const import (
     USER_GROUP_DIM_SLUG,
     USER_STAGING_SLUG,
     GROUP_STAGING_SLUG,
-    LOCATION_STAGING_SLUG,
     DOMAIN_STAGING_SLUG,
 )
 
@@ -119,7 +118,7 @@ class LocationDim(BaseDim, CustomSQLETLMixin):
 
     @classmethod
     def dependencies(cls):
-        return [LOCATION_STAGING_SLUG]
+        return []
 
 
 class DomainDim(BaseDim, CustomSQLETLMixin):
