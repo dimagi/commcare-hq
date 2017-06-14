@@ -163,6 +163,10 @@ class UserLocationDim(BaseDim, CustomSQLETLMixin):
     user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
     location_dim = models.ForeignKey('LocationDim', on_delete=models.CASCADE)
 
+    @classmethod
+    def dependencies(cls):
+        return [USER_DIM_SLUG, LOCATION_DIM_SLUG]
+
 
 class UserGroupDim(BaseDim, CustomSQLETLMixin):
     '''
@@ -174,3 +178,7 @@ class UserGroupDim(BaseDim, CustomSQLETLMixin):
 
     user_dim = models.ForeignKey('UserDim', on_delete=models.CASCADE)
     group_dim = models.ForeignKey('GroupDim', on_delete=models.CASCADE)
+
+    @classmethod
+    def dependencies(cls):
+        return [USER_DIM_SLUG, GROUP_DIM_SLUG]
