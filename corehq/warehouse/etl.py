@@ -33,7 +33,7 @@ class CustomSQLETLMixin(BaseETLMixin):
         their corresponding dependencies
         '''
 
-        assert isinstance(cls, WarehouseTable)
+        assert issubclass(cls, WarehouseTable)
         database = db_for_read_write(cls)
         with connections[database].cursor() as cursor:
             cursor.execute(cls._sql_query_template(cls.slug, start_datetime, end_datetime))
@@ -95,7 +95,7 @@ class CouchToDjangoETLMixin(BaseETLMixin):
     def load(cls, start_datetime, end_datetime):
         from corehq.warehouse.models.shared import WarehouseTable
 
-        assert isinstance(cls, WarehouseTable)
+        assert issubclass(cls, WarehouseTable)
         record_iter = cls.record_iter(start_datetime, end_datetime)
 
         django_batch_records(cls, record_iter, cls.field_mapping())
