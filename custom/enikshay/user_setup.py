@@ -19,7 +19,7 @@ from corehq.apps.locations.forms import LocationFormSet, LocationForm
 from corehq.apps.users.forms import NewMobileWorkerForm, clean_mobile_worker_username
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.users.signals import commcare_user_post_save
-from .const import AGENCY_USER_FIELDS, AGENCY_LOCATION_FIELDS
+from .const import AGENCY_USER_FIELDS, AGENCY_LOCATION_FIELDS, DEFAULT_MOBILE_WORKER_ROLE
 from .models import IssuerId
 
 TYPES_WITH_REQUIRED_NIKSHAY_CODES = ['sto', 'dto', 'tu', 'dmc', 'phi']
@@ -160,8 +160,20 @@ def get_site_code(name, nikshay_code, type_code, parent):
 def save_user_callback(sender, couch_user, **kwargs):
     commcare_user = couch_user  # django signals enforce param names
     if toggles.ENIKSHAY.enabled(commcare_user.domain):
+        if kwargs.get('is_new_user', False):
+            set_default_role(commcare_user.domain, commcare_user)
         set_issuer_id(commcare_user.domain, commcare_user)
         add_drtb_hiv_to_dto(commcare_user.domain, commcare_user)
+
+
+def set_default_role(domain, commcare_user):
+    from corehq.apps.users.models import UserRole
+    if commcare_user.get_role(domain):
+        return
+    roles = UserRole.by_domain_and_name(domain, DEFAULT_MOBILE_WORKER_ROLE)
+    if roles:
+        commcare_user.set_role(domain, roles[0].get_qualified_id())
+        commcare_user.save()
 
 
 def compress_nikshay_id(serial_id, body_digit_count):
