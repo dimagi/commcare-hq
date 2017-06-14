@@ -148,7 +148,7 @@ class ReferralExpressionBase(JsonObject):
             return context.get_cache_value(cache_key)
 
         referral = get_open_referral_case_from_person(domain, person_id)
-        if referral and (referral.dynamic_case_properties().get("status") == "rejected"):
+        if referral and (referral.dynamic_case_properties().get("referral_status") == "rejected"):
             referral = None
         context.set_cache_value(cache_key, referral)
         return referral
