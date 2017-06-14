@@ -39,14 +39,8 @@ SELECT
     END,
     location_restriction_for_users,
     -- Ensures all the boolean values are either true or false
-    CASE use_sql_backend
-        WHEN use_sql_backend THEN true
-        ELSE false
-    END,
-    CASE first_domain_for_user
-        WHEN first_domain_for_user THEN true
-        ELSE false
-    END,
+    use_sql_backend,
+    first_domain_for_user,
     domain_last_modified,
     domain_created_on,
     now(),

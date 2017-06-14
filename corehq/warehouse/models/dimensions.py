@@ -139,9 +139,9 @@ class DomainDim(BaseDim, CustomSQLETLMixin):
     case_sharing = models.BooleanField()
     commtrack_enabled = models.BooleanField()
     is_test = models.BooleanField()
-    location_restriction_for_users = models.BooleanField()
-    use_sql_backend = models.BooleanField()
-    first_domain_for_user = models.BooleanField()
+    location_restriction_for_users = models.NullBooleanField()
+    use_sql_backend = models.NullBooleanField()
+    first_domain_for_user = models.NullBooleanField()
 
     domain_last_modified = models.DateTimeField(null=True)
     domain_created_on = models.DateTimeField(null=True)
