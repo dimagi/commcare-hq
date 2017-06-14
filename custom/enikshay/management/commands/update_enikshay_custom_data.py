@@ -52,6 +52,7 @@ class Command(BaseCommand):
                 is_required=False,
                 label=label,
                 choices=choices,
+                is_multiple_choice=bool(choices),
             )
             for slug, label, choices in spec
         ]

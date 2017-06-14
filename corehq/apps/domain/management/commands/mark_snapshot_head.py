@@ -5,7 +5,6 @@ from corehq.apps.domain.models import Domain
 
 class Command(BaseCommand):
     help = "Marks most recent snapshot of a domain"
-    args = ""
 
     def handle(self, **options):
         print("Migrating snapshot documents to have a marked head")

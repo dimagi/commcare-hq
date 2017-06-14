@@ -35,7 +35,6 @@ $(function () {
             $('.form-data-hidden-values').each(function () {
                 var current = $(this).next();
                 while (current.is('.form-data-question')) {
-                    console.log(current);
                     if (!current.is('.form-data-skipped')) {
                         return;
                     }

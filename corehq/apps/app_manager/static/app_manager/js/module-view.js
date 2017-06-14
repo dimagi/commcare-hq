@@ -94,7 +94,10 @@ $(function () {
 
     // Module filter
     $(function () {
-        $('#module-filter').koApplyBindings({xpath: initial_page_data("module_filter") || ''});
+        var $moduleFilter = $('#module-filter');
+        if ($moduleFilter.length) {
+            $moduleFilter.koApplyBindings({xpath: initial_page_data("module_filter") || ''});
+        }
     });
 
     // Registration in case list

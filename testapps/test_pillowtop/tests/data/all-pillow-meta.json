@@ -22,7 +22,7 @@
     },
     "CaseToElasticsearchPillow": {
         "advertised_name": "CaseToElasticsearchPillow",
-        "change_feed_type": "KafkaChangeFeed",
+        "change_feed_type": "PartitionedKafkaChangeFeed",
         "checkpoint_id": "CaseToElasticsearchPillow-test_hqcases_2016-03-04",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "CaseToElasticsearchPillow"
@@ -211,7 +211,7 @@
     },
     "XFormToElasticsearchPillow": {
         "advertised_name": "XFormToElasticsearchPillow",
-        "change_feed_type": "KafkaChangeFeed",
+        "change_feed_type": "PartitionedKafkaChangeFeed",
         "checkpoint_id": "XFormToElasticsearchPillow-test_xforms_2016-07-07",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "XFormToElasticsearchPillow"

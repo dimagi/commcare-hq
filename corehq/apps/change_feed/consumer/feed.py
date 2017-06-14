@@ -80,9 +80,6 @@ class KafkaChangeFeed(ChangeFeed):
             offsets = [
                 copy(self._processed_topic_offsets)
             ]
-            topics_missing = set(self._topics) - checkpoint_topics
-            for topic in topics_missing:
-                offsets.append(topic)  # consume all available partitions
 
             # this is how you tell the consumer to start from a certain point in the sequence
             consumer.set_topic_partitions(*offsets)
@@ -188,8 +185,8 @@ class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):
     Event handler that supports checkpoints when subscribing to multiple topics.
     """
 
-    def __init__(self, checkpoint, checkpoint_frequency, change_feed):
-        super(KafkaCheckpointEventHandler, self).__init__(checkpoint, checkpoint_frequency)
+    def __init__(self, checkpoint, checkpoint_frequency, change_feed, checkpoint_callback=None):
+        super(KafkaCheckpointEventHandler, self).__init__(checkpoint, checkpoint_frequency, checkpoint_callback)
         assert isinstance(change_feed, KafkaChangeFeed)
         self.change_feed = change_feed
 

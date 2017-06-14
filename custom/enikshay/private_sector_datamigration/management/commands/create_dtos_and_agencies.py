@@ -5,7 +5,7 @@ from django.core.management import BaseCommand
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.tasks import make_location_user, _get_unique_username
 from corehq.apps.users.forms import generate_strong_password
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, UserRole
 from custom.enikshay.private_sector_datamigration.models import Agency, UserDetail
 
 from dimagi.utils.decorators.memoized import memoized
@@ -46,6 +46,7 @@ class Command(BaseCommand):
                 'enikshay_enabled': 'yes',
                 'is_test': 'no',
                 'private_sector_org_id': org_id,
+                'sector': 'private',
             },
         )
 
@@ -74,6 +75,7 @@ class Command(BaseCommand):
                 'nikshay_code': agency.nikshayId,
                 'private_sector_agency_id': agency.agencyId,
                 'private_sector_org_id': org_id,
+                'sector': 'private',
 
             },
         )
@@ -82,10 +84,16 @@ class Command(BaseCommand):
         assert agency_loc.location_type.has_user
 
         agency_loc_id = agency_loc.location_id
+        domain = agency_loc.domain
 
         user = make_location_user(agency_loc)
         user.user_location_id = agency_loc_id
         user.set_location(agency_loc, commit=False)
+        user.user_data['agency_id_legacy'] = agency_loc.metadata['private_sector_agency_id']
+        user.set_role(
+            domain,
+            UserRole.by_domain_and_name(domain, 'Default Mobile Worker')[0].get_qualified_id()
+        )
         user.user_data['user_level'] = user_level
         user.user_data['usertype'] = self.get_usertype(agency_loc.location_type.code)
         user.save()

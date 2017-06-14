@@ -1806,9 +1806,13 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_4a_6_pse.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_4b_infra_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_ccs_record_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_ccs_record_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_child_health_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_5_child_health_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6ac_child_health_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6ac_child_health_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6b_child_health_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_6b_child_health_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_7_growth_monitoring_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_8_tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_9_vhnd_forms.json'),
@@ -1855,6 +1859,9 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'beneficiary_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_register_for_culture.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'rntcp_pmdt_treatment_register.json'),
+
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'payment_register.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'beneficiary_register.json'),
 ]
 
 
@@ -1874,8 +1881,10 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'awc_mgt_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_tableau.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau.json'),
@@ -1898,6 +1907,10 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'test.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'voucher.json'),
+
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'episode.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'test.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'voucher.json'),
 
     os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
     os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json')

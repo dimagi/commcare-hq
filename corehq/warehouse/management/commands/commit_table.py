@@ -18,7 +18,6 @@ class Command(BaseCommand):
     Example: ./manage.py stage_table group_staging -s 2017-05-01 -e 2017-06-01
     """
     help = USAGE
-    args = '<slug>'
 
     def add_arguments(self, parser):
         parser.add_argument('slug')

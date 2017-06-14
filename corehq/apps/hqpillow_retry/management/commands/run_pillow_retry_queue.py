@@ -8,7 +8,6 @@ from django import db
 
 
 class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
-    args = ""
     help = "Runs the Pillow Retry Queue"
 
     def get_queue_name(self):
