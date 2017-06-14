@@ -208,7 +208,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
         string_type_params = [
             filter.name
             for filter in self.filters
-            if filter.datatype == "string"
+            if getattr(filter, 'datatype', 'string') == "string"
         ]
         if self.request.method == 'GET':
             return query_dict_to_dict(self.request.GET, self.domain, string_type_params)

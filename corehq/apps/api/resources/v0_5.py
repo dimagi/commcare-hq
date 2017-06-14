@@ -633,7 +633,7 @@ class ConfigurableReportDataResource(HqBaseResource, DomainSpecificResourceMixin
         string_type_params = [
             filter.name
             for filter in report_config.ui_filters
-            if filter.datatype == "string"
+            if getattr(filter, 'datatype', 'string') == "string"
         ]
         filter_values = get_filter_values(
             report_config.ui_filters,
