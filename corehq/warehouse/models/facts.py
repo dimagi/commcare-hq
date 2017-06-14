@@ -37,7 +37,7 @@ class BaseFact(models.Model, WarehouseTable):
 
 class FormFact(BaseFact, CustomSQLETLMixin):
     '''
-    Represents the staging table to dump data before loading into the FormFact
+    Contains all `XFormInstance`s
 
     Grain: form_id
     '''
