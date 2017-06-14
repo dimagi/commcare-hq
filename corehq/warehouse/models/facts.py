@@ -84,6 +84,9 @@ class ApplicationStatusFact(BaseFact, CustomSQLETLMixin):
     # TODO: Add app dimension
     # app_dim = models.CharField(max_length=255)
 
+    # TODO: Add domain dimension
+    # domain_dim = models.CharField(max_length=255)
+
     user_dim = models.ForeignKey(UserDim, on_delete=models.PROTECT)
 
     last_form_submission_date = models.DateTimeField(null=True)
