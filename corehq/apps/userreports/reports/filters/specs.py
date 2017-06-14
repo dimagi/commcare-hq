@@ -62,7 +62,10 @@ class FilterSpec(JsonObject):
     """
     type = StringProperty(
         required=True,
-        choices=['date', 'quarter', 'numeric', 'pre', 'choice_list', 'dynamic_choice_list', 'location_drilldown']
+        choices=[
+            'date', 'quarter', 'numeric', 'pre', 'choice_list', 'dynamic_choice_list', 'location_drilldown',
+            'enikshay_location_hierarchy'
+        ]
     )
     # this shows up as the ID in the filter HTML.
     slug = StringProperty(required=True)

@@ -1980,9 +1980,11 @@ CUSTOM_UCR_EXPRESSION_LISTS = [
 ]
 
 CUSTOM_UCR_REPORT_FILTERS = [
+    ('enikshay_location_hierarchy', "custom.enikshay.ucr_filters._build_enikshay_location_hierarchy"),
 ]
 
 CUSTOM_UCR_REPORT_FILTER_VALUES = [
+    ("enikshay_location_hierarchy", "custom.enikshay.ucr_filters.ENikshayLocationHierarchyFilterValue"),
 ]
 
 CUSTOM_MODULES = [
