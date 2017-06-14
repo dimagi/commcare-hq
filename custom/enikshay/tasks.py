@@ -318,6 +318,7 @@ class EpisodeAdherenceUpdate(object):
 
     def get_adherence_scores(self, doses_taken_by_date):
         readable_day_names = {
+            3: 'three_day',
             7: 'one_week',
             14: 'two_week',
             30: 'month',

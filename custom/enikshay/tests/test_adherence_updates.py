@@ -688,9 +688,11 @@ class TestAdherenceUpdater(TestCase):
                 ]
             ),
             {
+                'three_day_score_count_taken': 1,
                 'one_week_score_count_taken': 1,
                 'two_week_score_count_taken': 3,
                 'month_score_count_taken': 4,
+                'three_day_adherence_score': 33.33,
                 'one_week_adherence_score': 14.29,
                 'two_week_adherence_score': 21.43,
                 'month_adherence_score': 13.33,
@@ -713,9 +715,11 @@ class TestAdherenceUpdater(TestCase):
                 ]
             ),
             {
+                'three_day_score_count_taken': 1,
                 'one_week_score_count_taken': 1,
                 'two_week_score_count_taken': 0,
                 'month_score_count_taken': 0,
+                'three_day_adherence_score': 33.33,
                 'one_week_adherence_score': 14.29,
                 'two_week_adherence_score': 0.0,
                 'month_adherence_score': 0.0,
