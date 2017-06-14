@@ -31,7 +31,12 @@ def validate_phone_number(string_value):
     if string_value is None or string_value.strip() in ['', '0']:
         return ''
     else:
+        string_value = string_value.strip()
         assert string_value.isdigit()
+
+        if len(string_value) == 11 and string_value[0] == '0':
+            string_value = string_value[1:]
+
         assert 8 <= len(string_value) <= 10
         return string_value
 
