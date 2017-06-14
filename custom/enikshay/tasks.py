@@ -317,44 +317,31 @@ class EpisodeAdherenceUpdate(object):
         return self.check_and_return(update)
 
     def get_adherence_scores(self, doses_taken_by_date):
+        readable_day_names = {
+            7: 'one_week',
+            14: 'two_week',
+            30: 'month',
+        }
+        score_count_taken_property = "{}_score_count_taken"
+        adherence_score_property = "{}_adherence_score"
+
         today = self.case_updater.date_today_in_india
         start_date = self.get_adherence_schedule_start_date()
 
-        if today - datetime.timedelta(days=7) >= start_date:
-            one_week_score_count_taken = self.count_doses_taken(
-                doses_taken_by_date,
-                start_date=today - datetime.timedelta(days=7),
-                end_date=today,
+        properties = {}
+        for num_days, day_name in readable_day_names.iteritems():
+            score_count_taken = 0
+            if today - datetime.timedelta(days=num_days) >= start_date:
+                score_count_taken = self.count_doses_taken(
+                    doses_taken_by_date,
+                    start_date=today - datetime.timedelta(days=num_days),
+                    end_date=today,
+                )
+            properties[score_count_taken_property.format(day_name)] = score_count_taken
+            properties[adherence_score_property.format(day_name)] = round(
+                (score_count_taken / float(num_days)) * 100, 2
             )
-        else:
-            one_week_score_count_taken = 0
-
-        if today - datetime.timedelta(days=14) >= start_date:
-            two_week_score_count_taken = self.count_doses_taken(
-                doses_taken_by_date,
-                start_date=today - datetime.timedelta(days=14),
-                end_date=today,
-            )
-        else:
-            two_week_score_count_taken = 0
-
-        if today - datetime.timedelta(days=30) >= start_date:
-            month_score_count_taken = self.count_doses_taken(
-                doses_taken_by_date,
-                start_date=today - datetime.timedelta(days=30),
-                end_date=today,
-            )
-        else:
-            month_score_count_taken = 0
-
-        return {
-            'one_week_score_count_taken': one_week_score_count_taken,
-            'two_week_score_count_taken': two_week_score_count_taken,
-            'month_score_count_taken': month_score_count_taken,
-            'one_week_adherence_score': round((one_week_score_count_taken / 7.0) * 100, 2),
-            'two_week_adherence_score': round((two_week_score_count_taken / 14.0) * 100, 2),
-            'month_adherence_score': round((month_score_count_taken / 30.0) * 100, 2),
-        }
+        return properties
 
     def get_aggregated_scores(self, latest_adherence_date, adherence_schedule_date_start, dose_taken_by_date):
         """
