@@ -44,8 +44,9 @@ class Command(BaseCommand):
         start = options.get('start')
         end = options.get('end')
 
-        model = get_cls_by_slug(slug)
-        if not model:
+        try:
+            model = get_cls_by_slug(slug)
+        except KeyError:
             raise CommandError('{} is not a valid slug. \n\n {}'.format(slug, USAGE))
         model.commit(start, end)
 

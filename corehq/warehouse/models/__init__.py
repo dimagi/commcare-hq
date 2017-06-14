@@ -42,4 +42,4 @@ def get_cls_by_slug(slug):
 
         ApplicationStatusFact.slug: ApplicationStatusFact,
         FormFact.slug: FormFact,
-    }.get(slug)
+    }[slug]
