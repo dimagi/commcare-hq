@@ -60,6 +60,27 @@ class ENikshayLocationHierarchyFilterValue(FilterValue):
 
 
 class EnikshayLocationHiearachyFilter(DynamicChoiceListFilter):
+    """
+    A custom ucr report filter for the enikshay Referral Report.
+    This filter will use the selected filter to filter against multiple fields.
+    https://docs.google.com/document/d/1ejESqYoqSff0u4X72Fq0TYi7ll3IvH5KX3VWXzLyMQs/edit
+
+    Each referral in the data source has fields like:
+        cto
+        dto
+        sto
+        ...
+        below_cto
+        below_dto
+        below_sto
+        ...
+    corresponding to the location hieararchy levels.
+    If a person was referred to a location below a given level, then the below_<location_level> column will
+    contain the id of the location at <location_level>. The <location_level> column corresponding to the location
+    that the person was referred to will contain the location id, and the other location level columns will be
+    blank.
+    """
+
     def __init__(self, name, label, choice_provider, url_generator, css_id=None):
 
         super(EnikshayLocationHiearachyFilter, self).__init__(
