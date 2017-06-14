@@ -6,6 +6,7 @@ from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.exceptions import UnknownRecipientType
 from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
 from corehq.sql_db.models import PartitionedModel
@@ -54,10 +55,18 @@ class ScheduleInstance(PartitionedModel):
 
     @property
     @memoized
+    def recipient_is_an_individual_contact(self):
+        return (
+            isinstance(self.recipient, (CommCareUser, WebUser)) or
+            is_commcarecase(self.recipient)
+        )
+
+    @property
+    @memoized
     def timezone(self):
         timezone = None
 
-        if self.recipient_type in ('CommCareCase', 'CommCareUser', 'WebUser'):
+        if self.recipient_is_an_individual_contact:
             try:
                 timezone = self.recipient.get_time_zone()
             except ValidationError:
@@ -104,17 +113,17 @@ class ScheduleInstance(PartitionedModel):
         Can be used as a generator to iterate over all individual contacts who
         are the recipients of this ScheduleInstance.
         """
-        if self.recipient_type in ('CommCareCase', 'CommCareUser', 'WebUser'):
+        if self.recipient_is_an_individual_contact:
             yield self.recipient
-        elif self.recipient_type == 'CommCareCaseGroup':
+        elif isinstance(self.recipient, CommCareCaseGroup):
             case_group = self.recipient
             for case in case_group.get_cases():
                 yield case
-        elif self.recipient_type == 'Group':
+        elif isinstance(self.recipient, Group):
             group = self.recipient
             for user in group.get_users(is_active=True, only_commcare=False):
                 yield user
-        elif self.recipient_type == 'Location':
+        elif isinstance(self.recipient, SQLLocation):
             location = self.recipient
             if self.memoized_schedule.include_descendant_locations:
                 location_ids = location.get_descendants(include_self=True).filter(is_archived=False).location_ids()
@@ -128,7 +137,7 @@ class ScheduleInstance(PartitionedModel):
                         user_ids.add(user.get_id)
                         yield user
         else:
-            raise UnknownRecipientType(self.recipient_type)
+            raise UnknownRecipientType(self.recipient.__class__.__name__)
 
     def handle_current_event(self):
         content = self.memoized_schedule.get_current_event_content(self)
