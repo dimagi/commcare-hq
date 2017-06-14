@@ -1770,16 +1770,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             return SQLLocation.objects.none()
 
-    def add_to_assigned_locations(self, location):
+    def add_to_assigned_locations(self, location, commit=False):
         if self.location_id:
             if location.location_id in self.assigned_location_ids:
                 return
             self.assigned_location_ids.append(location.location_id)
             self.get_domain_membership(self.domain).assigned_location_ids.append(location.location_id)
             self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
-            self.save()
+            if commit:
+                self.save()
         else:
-            self.set_location(location)
+            self.set_location(location, commit=commit)
 
     @memoized
     def get_sql_location(self, domain):
