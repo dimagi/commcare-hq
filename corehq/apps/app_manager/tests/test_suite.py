@@ -609,6 +609,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         factory = AppFactory()
         module0, form0 = factory.new_advanced_module("m0", "person")
         factory.form_requires_case(form0, "person")
+        module0.case_details.short.use_case_tiles = True
         self._add_columns_for_case_details(module0)
 
         module1, form1 = factory.new_advanced_module("m1", "person")
@@ -628,6 +629,16 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         module1.case_details.short.persist_tile_on_forms = True
         self._add_columns_for_case_details(module1)
         ensure_module_session_datum_xml('detail-persistent="m0_case_short"')
+
+        # set to use case tile from a module that does not support case tiles anymore
+        # and has own persistent case tile as well
+        module0.case_details.short.use_case_tiles = False
+        ensure_module_session_datum_xml('detail-persistent="m1_case_short"')
+
+        # set to use case tile from a module that does not support case tiles anymore
+        # and does not have its own persistent case tile as well
+        module1.case_details.short.use_case_tiles = False
+        ensure_module_session_datum_xml('')
 
     def test_persistent_case_tiles_in_advanced_forms(self):
         """
