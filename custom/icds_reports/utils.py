@@ -841,7 +841,7 @@ def get_awc_opened_data(filters):
                     '0%-50%': RED,
                     '51%-75%': ORANGE,
                     '75%-100%': GREEN,
-                    'defaultFill': GRAY,
+                    'defaultFill': GREY,
                 },
                 "rightLegend": {
                     "average": num * 100 / (denom or 1),
