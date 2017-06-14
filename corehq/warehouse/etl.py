@@ -96,7 +96,7 @@ class CouchToDjangoETLMixin(BaseETLMixin):
         from corehq.warehouse.models.shared import WarehouseTable
 
         assert isinstance(cls, WarehouseTable)
-        record_iter = cls.raw_record_iter(start_datetime, end_datetime)
+        record_iter = cls.record_iter(start_datetime, end_datetime)
 
         django_batch_records(cls, record_iter, cls.field_mapping())
 

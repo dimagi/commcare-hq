@@ -80,7 +80,7 @@ class GroupStagingTable(StagingTable, CouchToDjangoETLMixin):
         return []
 
     @classmethod
-    def raw_record_iter(cls, start_datetime, end_datetime):
+    def record_iter(cls, start_datetime, end_datetime):
         group_ids = get_group_ids_by_last_modified(start_datetime, end_datetime)
 
         return iter_docs(Group.get_db(), group_ids)
@@ -136,7 +136,7 @@ class UserStagingTable(StagingTable, CouchToDjangoETLMixin):
         ]
 
     @classmethod
-    def raw_record_iter(cls, start_datetime, end_datetime):
+    def record_iter(cls, start_datetime, end_datetime):
         user_ids = get_user_ids_by_last_modified(start_datetime, end_datetime)
 
         return iter_docs(CouchUser.get_db(), user_ids)
@@ -197,7 +197,7 @@ class DomainStagingTable(StagingTable, CouchToDjangoETLMixin):
         ]
 
     @classmethod
-    def raw_record_iter(cls, start_datetime, end_datetime):
+    def record_iter(cls, start_datetime, end_datetime):
         domain_ids = get_domain_ids_by_last_modified(start_datetime, end_datetime)
 
         return iter_docs(Domain.get_db(), domain_ids)
@@ -250,7 +250,7 @@ class FormStagingTable(StagingTable, CouchToDjangoETLMixin):
         ]
 
     @classmethod
-    def raw_record_iter(cls, start_datetime, end_datetime):
+    def record_iter(cls, start_datetime, end_datetime):
         return get_forms_by_last_modified(start_datetime, end_datetime)
 
 
@@ -290,6 +290,6 @@ class SyncLogStagingTable(StagingTable, CouchToDjangoETLMixin):
         ]
 
     @classmethod
-    def raw_record_iter(cls, start_datetime, end_datetime):
+    def record_iter(cls, start_datetime, end_datetime):
         synclog_ids = get_synclog_ids_by_date(start_datetime, end_datetime)
         return iter_docs(SyncLog.get_db(), synclog_ids)
