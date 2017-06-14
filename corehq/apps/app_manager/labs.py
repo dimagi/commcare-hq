@@ -82,6 +82,50 @@ _LABS = {
     ),
 }
 
+_LAYOUT = [
+    {
+        "slug": "case_management",
+        "collapse": False,
+        "name": _("Case Management"),
+        "description": _("TODO build more complex workflows"),
+        "slugs": ["conditional_form_actions", "edit_form_actions", "unstructured_case_lists", "subcases"],
+    },
+    {
+        "slug": "mobile",
+        "collapse": True,
+        "name": _("Mobile Experience"),
+        "description": _("TODO make your mobile workers happy"),
+        "slugs": ["case_list_menu_item", "enum_image", "menu_mode", "register_from_case_list"],
+    },
+    {
+        "slug": "xpath",
+        "collapse": True,
+        "name": _("XPath Calculations"),
+        "description": _("TODO need to know xpath"),
+        "slugs": ["display_conditions", "calc_xpaths", "conditional_enum", "advanced_itemsets"],
+    },
+    {
+        "slug": "efficiency",
+        "collapse": True,
+        "name": _("App Building Efficiency"),
+        "description": _("TODO build your apps faster"),
+        "slugs": ["case_detail_overwrite"],
+    },
+]
+
+@memoized
+def get_layout():
+    all_slugs = set(_LABS.keys())
+    layout_slugs = set([lab for section in _LAYOUT for lab in section['slugs']])
+    if all_slugs != layout_slugs:
+        difference = ", ".join(all_slugs ^ layout_slugs)
+        if all_slugs - layout_slugs:
+            raise LabNotFoundException("Labs not in layout: {}".format(difference))
+        raise LabNotFoundException("Labs in layout do not exist: {}".format(difference))
+    return _LAYOUT
+    #return [dict({'labs': [_LABS[slug] for slug in section['slugs']]}, **section) for section in _LAYOUT]
+
+
 @memoized
 def get(slug, app, module=None, form=None):
     if slug not in _LABS:

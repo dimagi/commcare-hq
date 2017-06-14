@@ -1,23 +1,50 @@
 {% load i18n %}
 
-<div data-bind="saveButton: saveButton"></div>
-<div class="row">
-    <div class="col-sm-10">
-        <table class="table table-striped">
-            <thead>
-                <th class="col-sm-3">{% trans "Name" %}</th>
-                <th>{% trans "Description" %}</th>
-                <th>{% trans "Enabled" %}</th>
-            </thead>
-            <tbody data-bind="foreach: labs">
-                <tr>
-                    <td data-bind="text: name"></td>
-                    <td data-bind="text: description"></td>
-                    <td>
-                        <input type="checkbox" data-bind="attr: {name: slug}, checked: enabled, event: {change: $parent.update}" />
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+<form>
+
+    <div data-bind="saveButton: saveButton"></div>
+ 
+    <div class="section-changer btn-group" data-collapse-key="labs">
+        <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
+            <i class="fa fa-reorder"></i>
+            <span class="caret"></span>
+        </a>
+        <ul class="dropdown-menu dropdown-menu-right checklist">
+            <li class="dropdown-header">{% trans "Show" %}</li>
+            <!-- ko foreach: sections -->
+                <li>
+                    <a href="#" data-bind="attr: {'data-slug': slug, 'data-collapse': collapse}">
+                        <i class="fa fa-check"></i><span data-bind="text: name"></span>
+                    </a>
+                </li>
+            <!-- /ko -->
+        </ul>
     </div>
-</div>
+
+    <p class="lead">
+        {% blocktrans %}
+            <strong>Add-ons</strong> enable you to build more complex applications.
+        {% endblocktrans %}
+    </p>
+
+    <div data-bind="foreach: sections">
+        <div class="panel panel-appmanager" data-bind="attr: {'data-slug': slug}, css: {hide: collapse}">
+            <div class="panel-heading">
+                <h4 class="panel-title panel-title-nolink">
+                    <span data-bind="text: name"></span>
+                    <small data-bind="text: description"></small>
+                </h4>
+            </div>
+            <div class="panel-body" data-bind="foreach: slugs">
+                <div class="checkbox" data-bind="with: $root.labsBySlug()[$data]">
+                    <label>
+                        <input type="checkbox" data-bind="attr: {name: slug, id: 'check-' + slug}, checked: enabled, event: {change: $root.update}" />
+                        <span data-bind="text: name, attr: {for: 'check-' + slug}" class="clickable"></span>
+                        <span class="help-block" data-bind="text: description"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</form>
