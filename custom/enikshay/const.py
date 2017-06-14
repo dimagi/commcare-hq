@@ -96,6 +96,7 @@ ENIKSHAY_TIMEZONE = 'Asia/Kolkata'
 
 AGENCY_USER_FIELDS = [
     # (slug, label, choices)
+    ('user_level', "User Level", ["dev", "test", "real"]),
     ('tb_corner', "TB Corner", ["Yes", "No"]),
     ('pcp_qualification', "MBBS Qualification", ["MBBS", "DTCD", "MD - Chest Physician",
                                                  "MD - Medicine", "MS", "DM"]),
@@ -111,7 +112,7 @@ AGENCY_USER_FIELDS = [
     ('plc_hf_if_nikshay', "HF-ID Nikshay", []),
     ('pcc_pharmacy_name', "Pharmacy Name", []),
     ('pcc_pharmacy_affiliation', "Pharmacy Affiliation", ["IPA", "AIOCD"]),
-    ('pcc_tb_drugs_in_stock ', "TB Drugs in Stock", ["Private drugs only", "Goverment drugs (FDCs)",
+    ('pcc_tb_drugs_in_stock', "TB Drugs in Stock", ["Private drugs only", "Goverment drugs (FDCs)",
                                                      "Private and government drugs"]),
     ('agency_status', "Status", ["Registered", "Mapped", "Mapped and Targeted", "engaged- state scheme",
                                  "dropped"]),
