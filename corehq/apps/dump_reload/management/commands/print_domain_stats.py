@@ -21,9 +21,9 @@ from corehq.util.markup import CSVRowFormatter, TableRowFormatter, SimpleTableWr
 
 class Command(BaseCommand):
     help = "Print database stats for a domain. Use in conjunction with 'compare_docs_with_es'."
-    args = '<domain>'
 
     def add_arguments(self, parser):
+        parser.add_argument('domain')
         parser.add_argument('--csv', action='store_true', default=False, dest='csv',
                             help='Write output in CSV format.')
 

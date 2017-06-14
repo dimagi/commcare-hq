@@ -9,7 +9,6 @@ from corehq.apps.domainsync.config import DocumentTransform, save
 class Command(BaseCommand):
     help = ("Copy couch docs given as comma-separated list of IDs or path to file containing one ID per line. "
             "If domain is supplied save the doc with the given domain instead of its original domain.")
-    args = '<sourcedb> <doc_ids_or_file_path> (<domain>)'
     label = ""
 
     def add_arguments(self, parser):

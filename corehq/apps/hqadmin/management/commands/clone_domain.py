@@ -39,7 +39,6 @@ help_text = """Clone a domain and it's data:
 
 
 class Command(BaseCommand):
-    args = "<existing_domain> <new_domain>"
     help = help_text
 
     def add_arguments(self, parser):
