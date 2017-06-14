@@ -20,7 +20,6 @@ _LABS = {
     "advanced_itemsets": Lab(
         name=feature_previews.VELLUM_ADVANCED_ITEMSETS.label,
         description=feature_previews.VELLUM_ADVANCED_ITEMSETS.description,
-        #used_in_form=TODO
         #privilege=LOOKUP_TABLES,   # TODO
     ),
     "calc_xpaths": Lab(
@@ -30,11 +29,11 @@ _LABS = {
     ),
     "case_detail_overwrite": Lab(
         name=_("Case Detail Overwrite"),
-        description=_("Ability to overwrite one case list or detail's settings with another's"),
+        description=_("Ability to overwrite one case list or detail's settings with another's. Available in case menu's settings."),
     ),
     "case_list_menu_item": Lab(
         name=_("Case List Menu Item"),
-        description=_("TODO"),
+        description=_("Allows the mobile user to view the case list and case details without actually opening a form. Available in the case menu's settings."),
         used_in_module=lambda m: isinstance(m, Module) and (m.case_list.show or m.task_list.show),  # TODO: will this break anything?
     ),
     "conditional_enum": Lab(
@@ -43,39 +42,49 @@ _LABS = {
         #used_in_module=TODO
     ),
     "conditional_form_actions": Lab(
-        name=_('Allow opening or closing bases based on a condition ("Only if the answer to...")'),
-        description=_("Allow changing form actions, deleting registration forms (TODO: rephrase?)"),
+        name=_('Case Conditions'),
+        description=_("Open or close a case only if a specific question has a particular answer. Available in form settings."),
+        help_link="https://confluence.dimagi.com/display/commcarepublic/Case+Configuration",
         used_in_form=lambda f: f.actions.open_case.condition.type == 'if' or f.actions.close_case.condition.type, # TODO: will this break advanced forms?
     ),
-    "display_conditions": Lab(
-        name=_("Form and Menu Display Conditions"),
-        description=_("TODO"),
+    "form_display_conditions": Lab(
+        name=_("Form Display Conditions"),
+        description=_("Write logic to show or hide forms on the mobile device. Available in form settings."),
+        help_link="https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions",
         used_in_form=lambda f: bool(f.form_filter),
-        used_in_module=lambda m: bool(m.module_filter),
     ),
     "edit_form_actions": Lab(
-        name=_("Editing Form Actions"),
-        description=_("Allow changing form actions and deleting registration forms"),
+        name=_("Edit Form Actions"),
+        description=_("Allow changing form actions. Available in form settings."),
+        help_link="https://confluence.dimagi.com/display/commcarepublic/Case+Configuration",
     ),
     "enum_image": Lab(
         name=feature_previews.ENUM_IMAGE.label,
         description=feature_previews.ENUM_IMAGE.description,
         #used_in_module=TODO
-        help_link=feature_previews.ENUM_IMAGE.help_link,    # TODO: more help links
+        help_link=feature_previews.ENUM_IMAGE.help_link,
     ),
     "menu_mode": Lab(
         name=_("Menu Mode"),
-        description=_("TODO"),
+        description=_("Control whether a form's enclosing menu is displayed on the mobile device or not. Available in menu settings."),
         used_in_module=lambda m: m.put_in_root,
+    ),
+    "module_display_conditions": Lab(
+        name=_("Menu Display Conditions"),
+        description=_("Write logic to show or hide menus on the mobile device. Available in menu settings."),
+        help_link="https://confluence.dimagi.com/display/commcarepublic/Module+Filtering",
+        used_in_module=lambda m: bool(m.module_filter),
     ),
     "register_from_case_list": Lab(
         name=_("Register from case list"),
-        description=_("TODO"),
+        description=_("Minimize duplicates by making registration forms available directly from the case list on the mobile device. Availabe in menu settings."),
+        help_link="https://confluence.dimagi.com/pages/viewpage.action?pageId=30605985",
         used_in_module=lambda m: m.case_list_form.form_id, # TODO: break anything?
     ),
     "subcases": Lab(
         name=_("Child Cases"),
-        description=_("TODO"),
+        description=_("Open other types of cases for use in other modules, linking them to the case that created them. Available in form settings."),
+        help_link="https://confluence.dimagi.com/display/commcarepublic/Child+Cases",
         used_in_form=lambda f: bool(f.actions.subcases),    # TODO: will this break anything?
     ),
     "unstructured_case_lists": Lab(
@@ -89,28 +98,28 @@ _LAYOUT = [
         "slug": "case_management",
         "collapse": False,
         "name": _("Case Management"),
-        "description": _("TODO build more complex workflows"),
+        "description": _("Build more complex workflows"),
         "slugs": ["conditional_form_actions", "edit_form_actions", "unstructured_case_lists", "subcases"],
     },
     {
         "slug": "mobile",
         "collapse": True,
         "name": _("Mobile Experience"),
-        "description": _("TODO make your mobile workers happy"),
+        "description": _("Improve the user experience of your mobile workers"),
         "slugs": ["case_list_menu_item", "enum_image", "menu_mode", "register_from_case_list"],
     },
     {
         "slug": "xpath",
         "collapse": True,
-        "name": _("XPath Calculations"),
-        "description": _("TODO need to know xpath"),
-        "slugs": ["display_conditions", "calc_xpaths", "conditional_enum", "advanced_itemsets"],
+        "name": _("Calculations"),
+        "description": _("Add logic to your app with XPath expressions"),
+        "slugs": ["form_display_conditions", "module_display_conditions", "calc_xpaths", "conditional_enum", "advanced_itemsets"],
     },
     {
         "slug": "efficiency",
         "collapse": True,
         "name": _("App Building Efficiency"),
-        "description": _("TODO build your apps faster"),
+        "description": _("Tools to help build your apps faster"),
         "slugs": ["case_detail_overwrite"],
     },
 ]
