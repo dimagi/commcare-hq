@@ -552,7 +552,7 @@ class Agency(models.Model):
     agencyName = models.CharField(max_length=256, null=True)
     agencyStatus = models.CharField(max_length=256, null=True)
     agencySubTypeId = models.CharField(max_length=256, null=True)
-    agencyTypeId = models.CharField(max_length=256, null=True)
+    agencyTypeId = models.CharField(max_length=256)
     associatedFOId = models.CharField(max_length=256, null=True)
     attachedToAgency = models.CharField(max_length=256, null=True)
     creationDate = models.DateTimeField()

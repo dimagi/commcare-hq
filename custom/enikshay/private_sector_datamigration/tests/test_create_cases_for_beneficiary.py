@@ -65,6 +65,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
 
         cls.agency = Agency.objects.create(
             agencyId=1,
+            agencyTypeId='ATPR',
+            agencySubTypeId='PRQP',
             creationDate=datetime(2017, 5, 1),
             dateOfRegn=datetime(2017, 5, 1),
             modificationDate=datetime(2017, 5, 1),
