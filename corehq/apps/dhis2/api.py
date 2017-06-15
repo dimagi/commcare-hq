@@ -15,7 +15,7 @@ class JsonApiError(Exception):
 
 def log_request(func):
 
-    def log(log_level, json_api_request, request_error, response_status, response_body, method_func, path,
+    def log(log_level, json_api_request, request_error, response_status, response_body, method_func, request_url,
             data=None, **params):
         """
         Unpack function, path and data from args and kwargs in order to log them separately
@@ -24,7 +24,7 @@ def log_request(func):
             domain=json_api_request.domain_name,
             log_level=log_level,
             request_method=method_func.__name__.upper(),
-            request_url=json_api_request.server_url + path,
+            request_url=request_url,
             request_headers=json.dumps(json_api_request.headers),
             request_params=json.dumps(params),
             request_body='' if data is None else json.dumps(data, cls=DjangoJSONEncoder),
