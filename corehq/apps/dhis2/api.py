@@ -85,6 +85,9 @@ class JsonApiRequest(object):
                 raise JsonApiError('API response is not valid JSON: {}'.format(response.content))
         return response
 
+    def get_request_url(self, path):
+        return self.server_url + path.lstrip('/')
+
     @log_request
     def send_request(self, method_func, *args, **kwargs):
         try:
@@ -94,15 +97,14 @@ class JsonApiRequest(object):
         return self.json_or_error(response)
 
     def get(self, path, **kwargs):
-        path = path.lstrip('/')
         return self.send_request(
-            requests.get, self.server_url + path, headers=self.headers, auth=self.auth, **kwargs
+            requests.get, self.get_request_url(path), headers=self.headers, auth=self.auth, **kwargs
         )
 
     def delete(self, path, **kwargs):
         path = path.lstrip('/')
         return self.send_request(
-            requests.delete, self.server_url + path, headers=self.headers, auth=self.auth, **kwargs
+            requests.delete, self.get_request_url(path), headers=self.headers, auth=self.auth, **kwargs
         )
 
     def post(self, path, data, **kwargs):
@@ -111,7 +113,7 @@ class JsonApiRequest(object):
         headers = dict(self.headers, **{'Content-type': 'application/json'})
         json_data = json.dumps(data, cls=DjangoJSONEncoder)
         return self.send_request(
-            requests.post, self.server_url + path, json_data, headers=headers, auth=self.auth, **kwargs
+            requests.post, self.get_request_url(path), json_data, headers=headers, auth=self.auth, **kwargs
         )
 
     def put(self, path, data, **kwargs):
@@ -119,5 +121,5 @@ class JsonApiRequest(object):
         headers = dict(self.headers, **{'Content-type': 'application/json'})
         json_data = json.dumps(data, cls=DjangoJSONEncoder)
         return self.send_request(
-            requests.put, self.server_url + path, json_data, headers=headers, auth=self.auth, **kwargs
+            requests.put, self.get_request_url(path), json_data, headers=headers, auth=self.auth, **kwargs
         )
