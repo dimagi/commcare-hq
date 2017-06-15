@@ -865,6 +865,11 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         )
         return result[0] if result else None
 
+    @property
+    def host(self):
+        result = self.get_parent(relationship=CommCareCaseIndexSQL.EXTENSION)
+        return result[0] if result else None
+
     def __unicode__(self):
         return (
             "CommCareCase("
