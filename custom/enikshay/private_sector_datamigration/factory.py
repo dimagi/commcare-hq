@@ -71,7 +71,7 @@ class BeneficiaryCaseFactory(object):
                     'id_original_beneficiary_count': self._serial_count,
                     'id_original_device_number': 0,
                     'id_original_issuer_number': self._id_issuer_number,
-                    'language_preference': self.beneficiary.language_preference,
+                    'language_code': self.beneficiary.language_preference,
                     'last_name': self.beneficiary.lastName,
                     'legacy_blockOrHealthPostId': self.beneficiary.blockOrHealthPostId,
                     'legacy_districtId': self.beneficiary.districtId,

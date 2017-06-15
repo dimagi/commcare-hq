@@ -170,7 +170,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('id_original_device_number', '0'),
             ('id_original_issuer_number', '7'),
             ('is_active', 'yes'),
-            ('language_preference', 'hin'),
+            ('language_code', 'hin'),
             ('last_name', 'P'),
             ('legacy_blockOrHealthPostId', '101'),
             ('legacy_districtId', '102'),
