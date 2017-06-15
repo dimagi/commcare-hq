@@ -218,7 +218,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
 
         rowClick: function (e) {
             e.preventDefault();
-            FormplayerFrontend.trigger("menu:show:detail", this.options.model.get('id'), 0, false);
+            FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, false);
         },
 
         templateHelpers: function () {
