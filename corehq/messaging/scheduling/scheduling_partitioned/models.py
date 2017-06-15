@@ -133,7 +133,7 @@ class ScheduleInstance(PartitionedModel):
     def handle_current_event(self):
         content = self.memoized_schedule.get_current_event_content(self)
         for recipient in self.expand_recipients():
-            content.send(recipient)
+            content.send(recipient, self)
         # As a precaution, always explicitly move to the next event after processing the current
         # event to prevent ever getting stuck on the current event.
         self.memoized_schedule.move_to_next_event(self)
