@@ -181,7 +181,7 @@ class TestAdherenceUpdater(TestCase):
                 "name": adherence_case[0],
                 "adherence_value": adherence_case[1],
                 "adherence_source": "enikshay",
-                "adherence_source": "treatment_supervisor"
+                "adherence_report_source": "treatment_supervisor"
             }
             for adherence_case in input[2]
         ]
