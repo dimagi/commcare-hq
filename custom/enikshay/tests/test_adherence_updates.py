@@ -507,6 +507,77 @@ class TestAdherenceUpdater(TestCase):
             }
         )
 
+    def test_count_doses_taken_by_source(self):
+        adherence_cases = [
+            {
+                "name": 'Bad source shouldnt show up',
+                "adherence_source": "enikshay",
+                "adherence_report_source": "Bad source",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2017, 8, 14),
+            },
+            {
+                "name": '1',
+                "adherence_source": "99DOTS",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2017, 8, 15),
+            },
+            {
+                "name": '2',
+                "adherence_source": "99DOTS",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2017, 8, 16),
+            },
+            {
+                "name": '3',
+                "adherence_source": "99DOTS",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2017, 8, 17),
+            },
+            {
+                "name": '4',
+                "adherence_source": "MERM",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2017, 8, 18),
+            },
+            {
+                "name": 'overwrites 99DOTS case',
+                "adherence_source": "enikshay",
+                "adherence_value": 'unobserved_dose',
+                "adherence_report_source": "treatment_supervisor",
+                "adherence_date": datetime.date(2017, 8, 16),  # overwrites the 99DOTS case of this date
+            }
+        ]
+        episode = self.create_episode_case(
+            purge_date=datetime.date(2017, 8, 10),
+            adherence_schedule_date_start=datetime.date(2017, 8, 12),
+            adherence_schedule_id='schedule1',
+            adherence_cases=adherence_cases,
+        )
+
+        updater = EpisodeAdherenceUpdate(episode, self.case_updater)
+        doses_taken_by_day = updater.calculate_doses_taken_by_day(updater.get_valid_adherence_cases())
+        self.assertDictEqual(
+            {
+                '99DOTS': 2,
+                'MERM': 1,
+                'treatment_supervisor': 1,
+            },
+            EpisodeAdherenceUpdate.count_doses_taken_by_source(doses_taken_by_day)
+        )
+
+        self.assertDictEqual(
+            {
+                '99DOTS': 1,
+                'MERM': 1,
+            },
+            EpisodeAdherenceUpdate.count_doses_taken_by_source(
+                doses_taken_by_day,
+                start_date=datetime.date(2017, 8, 17),
+                end_date=datetime.date(2017, 8, 18)
+            )
+        )
+
     def test_count_taken_by_day(self):
         episode = self.create_episode_case(
             purge_date=datetime.date(2016, 1, 20),

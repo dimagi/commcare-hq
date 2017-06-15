@@ -29,6 +29,7 @@ from .const import (
     SCHEDULE_ID_FIXTURE,
     HISTORICAL_CLOSURE_REASON,
     ENIKSHAY_TIMEZONE,
+    VALID_ADHERENCE_SOURCES,
 )
 from .exceptions import EnikshayTaskException
 from .data_store import AdherenceDatastore
@@ -280,6 +281,21 @@ class EpisodeAdherenceUpdate(object):
                 for date, is_taken in dose_taken_by_date.iteritems()
                 if start_date <= date <= end_date and is_taken
             ])
+
+    @staticmethod
+    def count_doses_taken_by_source(doses_taken_by_date, start_date=None, end_date=None):
+        """Count all sources of adherence and return the count within the desired timeframe
+
+        {'99DOTS': 1, 'MERM': 1, 'treatment_supervisor': 0, ... }
+        """
+        counts = defaultdict(int)
+        for date, source in doses_taken_by_date.iteritems():
+            if source in VALID_ADHERENCE_SOURCES:
+                if start_date and end_date and start_date <= date <= end_date:
+                    counts[source] += 1
+                elif not start_date and not end_date:
+                    counts[source] += 1
+        return counts
 
     def update_json(self):
         debug_data = []
