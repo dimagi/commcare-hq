@@ -564,10 +564,18 @@ class EpisodeTestUpdate(object):
     def update_json(self):
         if self.diagnostic_tests:
             return {
-                'diagnostic_tests': ", ".join([diagnostic_test.get_case_property('investigation_id')
+                'diagnostic_tests': ", ".join([self._get_diagnostic_test_name(diagnostic_test)
                                                for diagnostic_test in self.diagnostic_tests]),
                 'diagnostic_test_results': ", ".join([diagnostic_test.get_case_property('result_grade')
                                                       for diagnostic_test in self.diagnostic_tests])
             }
         else:
             return {}
+
+    def _get_diagnostic_test_name(self, diagnostic_test):
+        site_specimen_name = diagnostic_test.get_case_property('site_specimen_name')
+        if site_specimen_name:
+            return "{}: {}".format(
+                diagnostic_test.get_case_property('investigation_type_name'), site_specimen_name)
+        else:
+            return diagnostic_test.get_case_property('investigation_type_name')
