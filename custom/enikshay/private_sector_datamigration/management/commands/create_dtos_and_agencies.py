@@ -25,8 +25,8 @@ class Command(BaseCommand):
         dto_parent = SQLLocation.active_objects.get(location_id=parent_loc_id)
         for org_id in org_ids:
             dto = self.create_dto(domain, state_code, district_code, dto_parent, org_id)
+            counter = 1
             for agency in self.get_agencies_by_state_district_org(state_code, district_code, org_id):
-                counter = 1
                 print 'handling agency %d...' % counter
                 if agency.location_type is not None:
                     agency_loc = self.create_agency(domain, agency, dto, org_id)
