@@ -4,7 +4,7 @@ hqDefine("app_manager/js/add_ons.js", function() {
     function EditAddOns(addOns, layout, saveUrl) {
         var self = this;
 
-        self.addOnsBySlug = ko.observable(addOns);
+        self.addOns = addOns;
         self.sections = _.map(layout, function(s) {
             return _.extend(s, {
                 collapse: sectionChanger.shouldCollapse("add-ons", s.slug, s.collapse),
@@ -14,7 +14,7 @@ hqDefine("app_manager/js/add_ons.js", function() {
             unsavedMessage: gettext("You have unsaved changes."),
             save: function () {
                 // Send server map of slug => enabled
-                var data = _.mapObject(self.addOnsBySlug(), function(a) { return a.enabled ? 'on' : ''; });
+                var data = _.mapObject(self.addOns, function(a) { return a ? 'on' : ''; });
                 self.saveButton.ajax({
                     url: saveUrl,
                     type: 'post',
@@ -25,7 +25,8 @@ hqDefine("app_manager/js/add_ons.js", function() {
                 });
             },
         });
-        self.update = function() {
+        self.update = function(addOn, e) {
+            self.addOns[addOn.slug] = e.currentTarget.checked;
             self.saveButton.fire('change');
         };
     }

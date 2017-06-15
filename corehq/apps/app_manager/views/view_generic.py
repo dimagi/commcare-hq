@@ -133,7 +133,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         context.update({"translations": app.translations.get(lang, {})})
 
     context.update({
-        'add_ons': add_ons.get_all(app, module, form),
+        'add_ons': add_ons.get_dict(app, module, form),
         'add_ons_layout': add_ons.get_layout(),
     })
 

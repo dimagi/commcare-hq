@@ -756,8 +756,8 @@ def edit_app_attr(request, domain, app_id, attr):
 @require_can_edit_apps
 def edit_add_ons(request, domain, app_id):
     app = get_app(domain, app_id)
-    for add_on in add_ons.get_all(app).values():
-        app.add_ons[add_on['slug']] = request.POST.get(add_on['slug'], 'off') == 'on'
+    for slug, value in request.POST.iteritems():
+        app.add_ons[slug] = value == 'on'
     app.save()
     return HttpResponse(json.dumps({'success': True}))
 

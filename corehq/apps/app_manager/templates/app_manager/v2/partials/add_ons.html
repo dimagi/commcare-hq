@@ -3,7 +3,7 @@
 <form>
 
     <div data-bind="saveButton: saveButton"></div>
- 
+
     <div class="section-changer btn-group" data-collapse-key="add-ons">
         <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
             <i class="fa fa-reorder"></i>
@@ -35,10 +35,10 @@
                     <small data-bind="text: description"></small>
                 </h4>
             </div>
-            <div class="panel-body" data-bind="foreach: slugs">
-                <div class="checkbox" data-bind="with: $root.addOnsBySlug()[$data]">
+            <div class="panel-body" data-bind="foreach: add_ons">
+                <div class="checkbox">
                     <label>
-                        <input type="checkbox" data-bind="attr: {name: slug, id: 'check-' + slug}, checked: enabled, event: {change: $root.update}" />
+                        <input type="checkbox" data-bind="attr: {name: slug, id: 'check-' + slug}, checked: $root.addOns[slug], event: {change: $root.update}" />
                         <span data-bind="text: name, attr: {for: 'check-' + slug}" class="clickable"></span>
                         <div class="help-block">
                             <span data-bind="text: description"></span>

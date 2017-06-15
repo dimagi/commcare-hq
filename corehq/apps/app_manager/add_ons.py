@@ -134,6 +134,35 @@ _LAYOUT = [
     },
 ]
 
+
+@memoized
+def show(slug, app, module=None, form=None):
+    if slug not in _ADD_ONS:
+        raise AddOnNotFoundException(slug)
+    add_on = _ADD_ONS[slug]
+
+    # Show if add-on has been enabled for app
+    show = slug in app.add_ons and app.add_ons[slug]
+
+    # Show if add-on is also a feature preview this domain has on
+    previews = feature_previews.previews_dict(app.domain)
+    if slug in previews:
+        show = show or previews[slug]
+
+    # Show if add-on is being used by the current form/module
+    if form:
+        show = show or add_on.used_in_form(form)
+    elif module:
+        show = show or add_on.used_in_module(module)
+
+    return show
+
+
+@memoized
+def get_dict(app, module=None, form=None):
+    return {slug: show(slug, app, module, form) for slug in _ADD_ONS.keys()}
+
+
 @memoized
 def get_layout():
     all_slugs = set(_ADD_ONS.keys())
@@ -143,37 +172,9 @@ def get_layout():
         if all_slugs - layout_slugs:
             raise AddOnNotFoundException("Add-ons not in layout: {}".format(difference))
         raise AddOnNotFoundException("Add-ons in layout do not exist: {}".format(difference))
-    return _LAYOUT
-
-
-@memoized
-def get(slug, app, module=None, form=None):
-    if slug not in _ADD_ONS:
-        raise AddOnNotFoundException(slug)
-    add_on = _ADD_ONS[slug]
-    enabled = slug in app.add_ons and app.add_ons[slug]
-
-    previews = feature_previews.previews_dict(app.domain)
-    if slug in previews:
-        enabled = enabled or previews[slug]
-
-    show = enabled
-    if form:
-        show = show or add_on.used_in_form(form)
-    elif module:
-        show = show or add_on.used_in_module(module)
-    return {
-        'slug': slug,
-        'name': add_on.name,
-        'description': add_on.description,
-        'help_link': add_on.help_link,
-        'enabled': enabled,
-        'show': show,
-    }
-
-@memoized
-def get_all(app, module=None, form=None):
-    results = {}
-    for slug, add_on in _ADD_ONS.items():
-        results[slug] = get(slug, app, module, form)
-    return results
+    return [dict({'add_ons': [{
+                    'slug': slug,
+                    'name': _ADD_ONS[slug].name,
+                    'description': _ADD_ONS[slug].description,
+                    'help_link': _ADD_ONS[slug].help_link,
+                } for slug in section['slugs']]}, **section) for section in _LAYOUT]
