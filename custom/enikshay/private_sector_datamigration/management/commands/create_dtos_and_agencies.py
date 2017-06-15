@@ -128,8 +128,22 @@ class Command(BaseCommand):
     def _get_org_name_by_id(org_id):
         return {
             1: 'PATH',
+            2: 'MJK',
+            3: 'Alert-India',
             4: 'WHP',
             5: 'DTO-Mehsana',
+            6: 'Vertex',
+            7: 'Accenture',
+            8: 'BMGF',
+            9: 'EY',
+            10: 'CTD',
+            11: 'Nagpur',
+            12: 'Nagpur-rural',
+            13: 'Nagpur_Corp',
+            14: 'Surat',
+            15: 'SMC',
+            16: 'Surat_Rural',
+            17: 'Rajkot',
         }[org_id]
 
     @staticmethod
