@@ -1000,7 +1000,7 @@ def new_module(request, domain, app_id):
 
         form_id = None
         if toggles.APP_MANAGER_V2.enabled(request.user.username):
-            unstructured = add_ons.show("unstructured_case_lists", app)
+            unstructured = add_ons.show("unstructured_case_lists", request, app)
             if module_type == 'case':
                 if not unstructured:
                     # registration form

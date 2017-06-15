@@ -1,4 +1,5 @@
 from collections import namedtuple
+from django_prbac.utils import has_privilege as prbac_has_privilege
 from django.utils.translation import ugettext_lazy as _
 
 from dimagi.utils.decorators.memoized import memoized
@@ -6,12 +7,14 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq import feature_previews
 from corehq.apps.app_manager.exceptions import AddOnNotFoundException
 from corehq.apps.app_manager.models import Module, AdvancedModule, CareplanModule, ShadowModule
+from corehq.privileges import LOOKUP_TABLES
 
 class AddOn(object):
-    def __init__(self, name, description, help_link=None, used_in_module=None, used_in_form=None):
+    def __init__(self, name, description, help_link=None, privilege=None, used_in_module=None, used_in_form=None):
         self.name = name
         self.description = description
         self.help_link = help_link
+        self.privilege = privilege
 
         self.used_in_module = used_in_module if used_in_module else lambda m: False
         self.used_in_form = used_in_form if used_in_form else lambda f: False
@@ -30,7 +33,7 @@ _ADD_ONS = {
     "advanced_itemsets": AddOn(
         name=feature_previews.VELLUM_ADVANCED_ITEMSETS.label,
         description=feature_previews.VELLUM_ADVANCED_ITEMSETS.description,
-        #privilege=LOOKUP_TABLES,   # TODO
+        privilege=LOOKUP_TABLES,
     ),
     "calc_xpaths": AddOn(
         name=feature_previews.CALC_XPATHS.label,
@@ -136,10 +139,14 @@ _LAYOUT = [
 
 
 @memoized
-def show(slug, app, module=None, form=None):
+def show(slug, request, app, module=None, form=None):
     if slug not in _ADD_ONS:
         raise AddOnNotFoundException(slug)
     add_on = _ADD_ONS[slug]
+
+    # Do not show if there's a required privilege missing
+    if add_on.privilege and not prbac_has_privilege(request, add_on.privilege):
+        return False
 
     # Show if add-on has been enabled for app
     show = slug in app.add_ons and app.add_ons[slug]
@@ -159,8 +166,8 @@ def show(slug, app, module=None, form=None):
 
 
 @memoized
-def get_dict(app, module=None, form=None):
-    return {slug: show(slug, app, module, form) for slug in _ADD_ONS.keys()}
+def get_dict(request, app, module=None, form=None):
+    return {slug: show(slug, request, app, module, form) for slug in _ADD_ONS.keys()}
 
 
 @memoized

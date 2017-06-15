@@ -108,7 +108,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
 
     vellum_features = toggles.toggles_dict(username=request.user.username,
                                            domain=domain)
-    vellum_features.update({'advanced_itemsets': add_ons.show("advanced_itemsets", app)})
+    vellum_features.update({'advanced_itemsets': add_ons.show("advanced_itemsets", request, app)})
     include_fullstory = not _form_too_large(app, form)
     vellum_features.update({
         'group_in_field_list': app.enable_group_in_field_list,
