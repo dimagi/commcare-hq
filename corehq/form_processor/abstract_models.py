@@ -215,14 +215,6 @@ class AbstractCommCareCase(CaseToXMLMixin):
     def set_case_id(self, case_id):
         raise NotImplementedError()
 
-    @property
-    def server_opened_on(self):
-        try:
-            open_action = self.actions[0]
-            return open_action.server_date
-        except Exception:
-            pass
-
     def _resolve_case_property(self, property_name, result):
         CasePropertyResult = collections.namedtuple('CasePropertyResult', 'case value')
 
