@@ -12,7 +12,7 @@ from toggle.shortcuts import find_domains_with_toggle_enabled
 
 
 @task(queue='background_queue')
-def send_datasets(domain_name):
+def send_datasets(domain_name, send_now=False):
     """
     Sends a data set of data values in the following format:
 
@@ -43,7 +43,7 @@ def send_datasets(domain_name):
         domain_name=domain_name,
     )
     for dataset_map in dataset_maps:
-        if dataset_map.should_send_on_date(datetime.today()):
+        if send_now or dataset_map.should_send_on_date(datetime.today()):
             api.post('dataValueSets', dataset_map.get_dataset())
 
 
