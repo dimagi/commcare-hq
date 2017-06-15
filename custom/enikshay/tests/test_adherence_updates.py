@@ -189,14 +189,18 @@ class TestAdherenceUpdater(TestCase):
             purge_date, adherence_schedule_date_start, adherence_schedule_id, adherence_cases
         )
 
-        self.case_updater.run()
-        # refetch episode case after updates
-        episode = CaseAccessors(self.domain).get_case(episode.case_id)
+        episode = self._get_updated_episode()
+        return self._assert_properties_equal(episode, output)
 
+    def _assert_properties_equal(self, episode, output):
         self.assertDictEqual(
             {key: episode.dynamic_case_properties()[key] for key in output},
             {key: str(val) for key, val in output.iteritems()}  # convert values to strings
         )
+
+    def _get_updated_episode(self):
+        self.case_updater.run()
+        return CaseAccessors(self.domain).get_case(self.episode_id)
 
     def create_episode_case(
             self,
@@ -809,3 +813,85 @@ class TestAdherenceUpdater(TestCase):
                 'month_adherence_score': 0.0,
             }
         )
+
+    def test_adherence_score_by_source(self):
+        self.case_updater.date_today_in_india = datetime.date(2016, 1, 31)
+        adherence_cases = [
+            {
+                "name": '1',
+                "adherence_source": "99DOTS",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2015, 12, 31),
+            },
+            {
+                "name": '2',
+                "adherence_source": "99DOTS",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2016, 1, 15),
+            },
+            {
+                "name": '5',
+                "adherence_source": "enikshay",
+                "adherence_report_source": "other",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2016, 1, 17),
+            },
+            {
+                "name": '3',
+                "adherence_source": "99DOTS",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2016, 1, 20),
+            },
+            {
+                "name": '4',
+                "adherence_source": "MERM",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2016, 1, 30),
+            },
+        ]
+        self.create_episode_case(
+            purge_date=datetime.date(2017, 3, 30),
+            adherence_schedule_date_start=datetime.date(2015, 12, 1),
+            adherence_schedule_id='schedule1',
+            adherence_cases=adherence_cases,
+        )
+        episode = self._get_updated_episode()
+        expected = {
+            'three_day_score_count_taken_99DOTS': 0,
+            'one_week_score_count_taken_99DOTS': 0,
+            'two_week_score_count_taken_99DOTS': 1,
+            'month_score_count_taken_99DOTS': 2,
+            'three_day_adherence_score_99DOTS': 0.0,
+            'one_week_adherence_score_99DOTS': 0.0,
+            'two_week_adherence_score_99DOTS': 7.14,
+            'month_adherence_score_99DOTS': 6.67,
+
+            'three_day_score_count_taken_MERM': 1,
+            'one_week_score_count_taken_MERM': 1,
+            'two_week_score_count_taken_MERM': 1,
+            'month_score_count_taken_MERM': 1,
+            'three_day_adherence_score_MERM': 33.33,
+            'one_week_adherence_score_MERM': 14.29,
+            'two_week_adherence_score_MERM': 7.14,
+            'month_adherence_score_MERM': 3.33,
+
+            'three_day_score_count_taken_other': 0,
+            'one_week_score_count_taken_other': 0,
+            'two_week_score_count_taken_other': 1,
+            'month_score_count_taken_other': 1,
+            'three_day_adherence_score_other': 0.0,
+            'one_week_adherence_score_other': 0.0,
+            'two_week_adherence_score_other': 7.14,
+            'month_adherence_score_other': 3.33,
+
+            'three_day_score_count_taken_treatment_supervisor': 0,
+            'one_week_score_count_taken_treatment_supervisor': 0,
+            'two_week_score_count_taken_treatment_supervisor': 0,
+            'month_score_count_taken_treatment_supervisor': 0,
+            'three_day_adherence_score_treatment_supervisor': 0.0,
+            'one_week_adherence_score_treatment_supervisor': 0.0,
+            'two_week_adherence_score_treatment_supervisor': 0.0,
+            'month_adherence_score_treatment_supervisor': 0.0,
+        }
+
+        self._assert_properties_equal(episode, expected)

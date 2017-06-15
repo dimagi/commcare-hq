@@ -334,32 +334,48 @@ class EpisodeAdherenceUpdate(object):
         return self.check_and_return(update)
 
     def get_adherence_scores(self, doses_taken_by_date):
+        """
+        https://docs.google.com/document/d/1lTGiz28REKKgAP4yPe7jKHEEd0y8wldjfYONVH_Uli0/edit#
+        https://docs.google.com/document/d/1TG9YWSdccgKeKj0mVIAsoq9LthcZfw5_OebSrkYCF3A/edit#
+        """
         readable_day_names = {
             3: 'three_day',
             7: 'one_week',
             14: 'two_week',
             30: 'month',
         }
-        score_count_taken_property = "{}_score_count_taken"
-        adherence_score_property = "{}_adherence_score"
-
         today = self.case_updater.date_today_in_india
         start_date = self.get_adherence_schedule_start_date()
 
         properties = {}
         for num_days, day_name in readable_day_names.iteritems():
-            score_count_taken = 0
             if today - datetime.timedelta(days=num_days) >= start_date:
                 score_count_taken = self.count_doses_taken(
                     doses_taken_by_date,
                     start_date=today - datetime.timedelta(days=num_days),
                     end_date=today,
                 )
-            properties[score_count_taken_property.format(day_name)] = score_count_taken
-            properties[adherence_score_property.format(day_name)] = round(
-                (score_count_taken / float(num_days)) * 100, 2
-            )
+                doses_taken_by_source = self.count_doses_taken_by_source(
+                    doses_taken_by_date,
+                    start_date=today - datetime.timedelta(days=num_days),
+                    end_date=today,
+                )
+            else:
+                score_count_taken = 0
+                doses_taken_by_source = {source: 0 for source in VALID_ADHERENCE_SOURCES}
+
+            properties["{}_score_count_taken".format(day_name)] = score_count_taken
+            properties["{}_score_count_taken_{}".format(day_name)] = self._percentage_score(
+                score_count_taken, num_days)
+            for source in VALID_ADHERENCE_SOURCES:
+                properties["{}_adherence_score".format(day_name, source)] = doses_taken_by_source[source]
+                properties["{}_adherence_score_{}".format(day_name, source)] = self._percentage_score(
+                    doses_taken_by_source[source], num_days)
+
         return properties
+
+    def _percentage_score(self, score, num_days):
+        return round(score / float(num_days) * 100, 2)
 
     def get_aggregated_scores(self, latest_adherence_date, adherence_schedule_date_start, dose_taken_by_date):
         """
