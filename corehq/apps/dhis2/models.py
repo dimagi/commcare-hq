@@ -1,10 +1,17 @@
+import json
 from itertools import chain
 
 import jsonfield
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
-from corehq.apps.dhis2.utils import get_date_filter, get_last_month, get_report_config, get_ucr_data, \
-    get_last_quarter
+from corehq.apps.dhis2.utils import (
+    get_date_filter,
+    get_last_month,
+    get_report_config,
+    get_ucr_data,
+    get_last_quarter,
+)
 from corehq.apps.dhis2.const import SEND_FREQUENCY_MONTHLY, SEND_FREQUENCY_QUARTERLY, SEND_FREQUENCIES
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
@@ -152,3 +159,19 @@ class JsonApiLog(models.Model):
     request_error = models.TextField(null=True)
     response_status = models.IntegerField(null=True)
     response_body = models.TextField(blank=True, null=True)
+
+    @staticmethod
+    def log(log_level, json_api_request, request_error, response_status, response_body, method_func, request_url,
+            data=None, **params):
+        JsonApiLog.objects.create(
+            domain=json_api_request.domain_name,
+            log_level=log_level,
+            request_method=method_func.__name__.upper(),
+            request_url=request_url,
+            request_headers=json.dumps(json_api_request.headers),
+            request_params=json.dumps(params),
+            request_body=json.dumps(data, cls=DjangoJSONEncoder) if data else data,
+            request_error=request_error,
+            response_status=response_status,
+            response_body=response_body,
+        )
