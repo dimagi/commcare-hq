@@ -23,7 +23,7 @@
 -            Read more about Module Filters <a href="https://confluence.dimagi.com/display/commcarepublic/Module+Filtering">here</a>.
 -        </script>
 +
-+{% if labs.display_conditions.show %}
++{% if add_ons.display_conditions.show %}
 +    <div class="form-group" id="module-filter">
 +        <label class="col-sm-2 control-label">
 +            {% trans "Display Condition" %}

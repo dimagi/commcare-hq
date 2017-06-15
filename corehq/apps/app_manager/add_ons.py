@@ -4,10 +4,10 @@ from django.utils.translation import ugettext_lazy as _
 from dimagi.utils.decorators.memoized import memoized
 
 from corehq import feature_previews
-from corehq.apps.app_manager.exceptions import LabNotFoundException
+from corehq.apps.app_manager.exceptions import AddOnNotFoundException
 from corehq.apps.app_manager.models import Module, AdvancedModule, CareplanModule, ShadowModule
 
-class Lab(object):
+class AddOn(object):
     def __init__(self, name, description, help_link=None, used_in_module=None, used_in_form=None):
         self.name = name
         self.description = description
@@ -26,78 +26,78 @@ def _uses_detail_format(module, column_format):
         details = [module.goal_details, module.task_details]
     return any([c.format for d in details for c in d.short.columns + d.long.columns if c.format == column_format])
 
-_LABS = {
-    "advanced_itemsets": Lab(
+_ADD_ONS = {
+    "advanced_itemsets": AddOn(
         name=feature_previews.VELLUM_ADVANCED_ITEMSETS.label,
         description=feature_previews.VELLUM_ADVANCED_ITEMSETS.description,
         #privilege=LOOKUP_TABLES,   # TODO
     ),
-    "calc_xpaths": Lab(
+    "calc_xpaths": AddOn(
         name=feature_previews.CALC_XPATHS.label,
         description=feature_previews.CALC_XPATHS.description,
         used_in_module=lambda m: _uses_detail_format(m, 'calculate'),
     ),
-    "case_detail_overwrite": Lab(
+    "case_detail_overwrite": AddOn(
         name=_("Case Detail Overwrite"),
         description=_("Ability to overwrite one case list or detail's settings with another's. Available in case menu's settings."),
     ),
-    "case_list_menu_item": Lab(
+    "case_list_menu_item": AddOn(
         name=_("Case List Menu Item"),
         description=_("Allows the mobile user to view the case list and case details without actually opening a form. Available in the case menu's settings."),
         used_in_module=lambda m: isinstance(m, Module) and (m.case_list.show or m.task_list.show),  # TODO: will this break anything?
     ),
-    "conditional_enum": Lab(
+    "conditional_enum": AddOn(
         name=feature_previews.CONDITIONAL_ENUM.label,
         description=feature_previews.CONDITIONAL_ENUM.description,
         used_in_module=lambda m: _uses_detail_format(m, 'conditional-enum'),
     ),
-    "conditional_form_actions": Lab(
+    "conditional_form_actions": AddOn(
         name=_('Case Conditions'),
         description=_("Open or close a case only if a specific question has a particular answer. Available in form settings."),
         help_link="https://confluence.dimagi.com/display/commcarepublic/Case+Configuration",
         used_in_form=lambda f: f.actions.open_case.condition.type == 'if' or f.actions.close_case.condition.type, # TODO: will this break advanced forms?
     ),
-    "form_display_conditions": Lab(
+    "form_display_conditions": AddOn(
         name=_("Form Display Conditions"),
         description=_("Write logic to show or hide forms on the mobile device. Available in form settings."),
         help_link="https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions",
         used_in_form=lambda f: bool(f.form_filter),
     ),
-    "edit_form_actions": Lab(
+    "edit_form_actions": AddOn(
         name=_("Edit Form Actions"),
         description=_("Allow changing form actions. Available in form settings."),
         help_link="https://confluence.dimagi.com/display/commcarepublic/Case+Configuration",
     ),
-    "enum_image": Lab(
+    "enum_image": AddOn(
         name=feature_previews.ENUM_IMAGE.label,
         description=feature_previews.ENUM_IMAGE.description,
         help_link=feature_previews.ENUM_IMAGE.help_link,
         used_in_module=lambda m: _uses_detail_format(m, 'enum-image'),
     ),
-    "menu_mode": Lab(
+    "menu_mode": AddOn(
         name=_("Menu Mode"),
         description=_("Control whether a form's enclosing menu is displayed on the mobile device or not. Available in menu settings."),
         used_in_module=lambda m: m.put_in_root,
     ),
-    "module_display_conditions": Lab(
+    "module_display_conditions": AddOn(
         name=_("Menu Display Conditions"),
         description=_("Write logic to show or hide menus on the mobile device. Available in menu settings."),
         help_link="https://confluence.dimagi.com/display/commcarepublic/Module+Filtering",
         used_in_module=lambda m: bool(m.module_filter),
     ),
-    "register_from_case_list": Lab(
+    "register_from_case_list": AddOn(
         name=_("Register from case list"),
         description=_("Minimize duplicates by making registration forms available directly from the case list on the mobile device. Availabe in menu settings."),
         help_link="https://confluence.dimagi.com/pages/viewpage.action?pageId=30605985",
         used_in_module=lambda m: m.case_list_form.form_id, # TODO: break anything?
     ),
-    "subcases": Lab(
+    "subcases": AddOn(
         name=_("Child Cases"),
         description=_("Open other types of cases for use in other modules, linking them to the case that created them. Available in form settings."),
         help_link="https://confluence.dimagi.com/display/commcarepublic/Child+Cases",
         used_in_form=lambda f: bool(f.actions.subcases),    # TODO: will this break anything?
     ),
-    "unstructured_case_lists": Lab(
+    "unstructured_case_lists": AddOn(
         name=_("Customize Case List Registration"),
         description=_("Create new case lists without a registration form, and allow deletion of registration forms."),
     ),
@@ -136,23 +136,22 @@ _LAYOUT = [
 
 @memoized
 def get_layout():
-    all_slugs = set(_LABS.keys())
-    layout_slugs = set([lab for section in _LAYOUT for lab in section['slugs']])
+    all_slugs = set(_ADD_ONS.keys())
+    layout_slugs = set([slug for section in _LAYOUT for slug in section['slugs']])
     if all_slugs != layout_slugs:
         difference = ", ".join(all_slugs ^ layout_slugs)
         if all_slugs - layout_slugs:
-            raise LabNotFoundException("Labs not in layout: {}".format(difference))
-        raise LabNotFoundException("Labs in layout do not exist: {}".format(difference))
+            raise AddOnNotFoundException("Add-ons not in layout: {}".format(difference))
+        raise AddOnNotFoundException("Add-ons in layout do not exist: {}".format(difference))
     return _LAYOUT
-    #return [dict({'labs': [_LABS[slug] for slug in section['slugs']]}, **section) for section in _LAYOUT]
 
 
 @memoized
 def get(slug, app, module=None, form=None):
-    if slug not in _LABS:
-        raise LabNotFoundException(slug)
-    lab = _LABS[slug]
-    enabled = slug in app.labs and app.labs[slug]
+    if slug not in _ADD_ONS:
+        raise AddOnNotFoundException(slug)
+    add_on = _ADD_ONS[slug]
+    enabled = slug in app.add_ons and app.add_ons[slug]
 
     previews = feature_previews.previews_dict(app.domain)
     if slug in previews:
@@ -160,14 +159,14 @@ def get(slug, app, module=None, form=None):
 
     show = enabled
     if form:
-        show = show or lab.used_in_form(form)
+        show = show or add_on.used_in_form(form)
     elif module:
-        show = show or lab.used_in_module(module)
+        show = show or add_on.used_in_module(module)
     return {
         'slug': slug,
-        'name': lab.name,
-        'description': lab.description,
-        'help_link': lab.help_link,
+        'name': add_on.name,
+        'description': add_on.description,
+        'help_link': add_on.help_link,
         'enabled': enabled,
         'show': show,
     }
@@ -175,6 +174,6 @@ def get(slug, app, module=None, form=None):
 @memoized
 def get_all(app, module=None, form=None):
     results = {}
-    for slug, lab in _LABS.items():
+    for slug, add_on in _ADD_ONS.items():
         results[slug] = get(slug, app, module, form)
     return results

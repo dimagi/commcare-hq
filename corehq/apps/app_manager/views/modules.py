@@ -12,7 +12,7 @@ from django.views.decorators.http import require_GET
 from django.contrib import messages
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
     get_per_type_defaults
-from corehq.apps.app_manager import labs
+from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 from corehq.apps.case_search.models import case_search_enabled_for_domain
@@ -1000,7 +1000,7 @@ def new_module(request, domain, app_id):
 
         form_id = None
         if toggles.APP_MANAGER_V2.enabled(request.user.username):
-            unstructured = labs.get("unstructured_case_lists", app)['enabled']
+            unstructured = add_ons.get("unstructured_case_lists", app)['enabled']
             if module_type == 'case':
                 if not unstructured:
                     # registration form

@@ -23,7 +23,7 @@ class IncompatibleFormTypeException(AppManagerException):
     pass
 
 
-class LabNotFoundException(AppManagerException, IndexError):
+class AddOnNotFoundException(AppManagerException, IndexError):
     pass
 
 

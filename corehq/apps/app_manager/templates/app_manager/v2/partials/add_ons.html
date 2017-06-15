@@ -4,7 +4,7 @@
 
     <div data-bind="saveButton: saveButton"></div>
  
-    <div class="section-changer btn-group" data-collapse-key="labs">
+    <div class="section-changer btn-group" data-collapse-key="add-ons">
         <a class="btn btn-default dropdown-toggle" data-toggle="dropdown" href="#">
             <i class="fa fa-reorder"></i>
             <span class="caret"></span>
@@ -36,7 +36,7 @@
                 </h4>
             </div>
             <div class="panel-body" data-bind="foreach: slugs">
-                <div class="checkbox" data-bind="with: $root.labsBySlug()[$data]">
+                <div class="checkbox" data-bind="with: $root.addOnsBySlug()[$data]">
                     <label>
                         <input type="checkbox" data-bind="attr: {name: slug, id: 'check-' + slug}, checked: enabled, event: {change: $root.update}" />
                         <span data-bind="text: name, attr: {for: 'check-' + slug}" class="clickable"></span>

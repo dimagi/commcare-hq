@@ -14,7 +14,7 @@ from corehq.apps.app_manager.app_schemas.session_schema import get_session_schem
 
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.app_manager import labs
+from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.notifications import get_facility_for_form, notify_form_opened
 
@@ -108,7 +108,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
 
     vellum_features = toggles.toggles_dict(username=request.user.username,
                                            domain=domain)
-    vellum_features.update({'advanced_itemsets': labs.get("advanced_itemsets", app)['enabled']})
+    vellum_features.update({'advanced_itemsets': add_ons.get("advanced_itemsets", app)['enabled']})
     include_fullstory = not _form_too_large(app, form)
     vellum_features.update({
         'group_in_field_list': app.enable_group_in_field_list,

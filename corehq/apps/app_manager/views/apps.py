@@ -26,7 +26,7 @@ from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
 from corehq import toggles, privileges
 from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
-from corehq.apps.app_manager import id_strings, labs
+from corehq.apps.app_manager import id_strings, add_ons
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -754,10 +754,10 @@ def edit_app_attr(request, domain, app_id, attr):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_labs(request, domain, app_id):
+def edit_add_ons(request, domain, app_id):
     app = get_app(domain, app_id)
-    for lab in labs.get_all(app).values():
-        app.labs[lab['slug']] = request.POST.get(lab['slug'], 'off') == 'on'
+    for add_on in add_ons.get_all(app).values():
+        app.add_ons[add_on['slug']] = request.POST.get(add_on['slug'], 'off') == 'on'
     app.save()
     return HttpResponse(json.dumps({'success': True}))
 
