@@ -578,10 +578,10 @@ hqDefine('cloudcare/js/backbone/apps.js', function () {
                     }
                 } else {
                     // Construct a button which will take the user to the next list of cases
-                    // Note: The case_label should be plural for this button e.g. "View Mothers"
+                    // Note: The noun should be plural for this button e.g. "View Cases"
                     //       But, in the currently selected case heading we want a singular version
                     //       e.g. "Mother: Mary"
-                    var buttonText = "View " + self.selectedModule.get("case_label")[self.options.language];
+                    var buttonText = "View Cases";
                     buttonUrl = getChildSelectUrl(self.options.urlRoot,
                                                             form.get("app_id"),
                                                             form.get("module_index"),

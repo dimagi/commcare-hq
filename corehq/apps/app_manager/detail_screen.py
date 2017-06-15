@@ -352,6 +352,35 @@ class Enum(FormattedDetailColumn):
         return variables
 
 
+@register_format_type('conditional-enum')
+class ConditionalEnum(Enum):
+    @property
+    def sort_node(self):
+        node = super(ConditionalEnum, self).sort_node
+        if node:
+            variables = self.variables
+            for key in variables:
+                node.text.xpath.node.append(
+                    sx.XpathVariable(name=key, locale_id=variables[key]).node
+                )
+        return node
+
+    def _make_xpath(self, type):
+        xpath_template = u"if({key_as_condition}, {key_as_var_name}"
+        parts = []
+        for i, item in enumerate(self.column.enum):
+            parts.append(
+                xpath_template.format(
+                    key_as_condition=item.key_as_condition(self.xpath),
+                    key_as_var_name=item.ref_to_key_variable(i, 'display')
+                )
+            )
+
+        parts.append(u"''")
+        parts.append(u")" * (len(self.column.enum)))
+        return ''.join(parts)
+
+
 @register_format_type('enum-image')
 class EnumImage(Enum):
     template_form = 'image'

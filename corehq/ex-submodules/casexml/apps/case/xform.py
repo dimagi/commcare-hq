@@ -127,11 +127,7 @@ def process_cases_with_casedb(xforms, case_db, config=None):
 
 def _update_sync_logs(xform, case_db, config, cases):
     # handle updating the sync records for apps that use sync mode
-    try:
-        relevant_log = xform.get_sync_token()
-    except ResourceNotFound:
-        relevant_log = None
-
+    relevant_log = xform.get_sync_token()
     if relevant_log:
         # in reconciliation mode, things can be unexpected
         relevant_log.strict = config.strict_asserts
@@ -289,9 +285,7 @@ def get_all_extensions_to_close(domain, case_updates):
 
 
 def get_extensions_to_close(case, domain):
-    outgoing_extension_indices = [index.relationship for index in case.indices
-                                  if index.relationship == CASE_INDEX_EXTENSION]
-    if not outgoing_extension_indices and case.closed and EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
+    if case.closed and EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
         return CaseAccessors(domain).get_extension_chain([case.case_id])
     else:
         return set()

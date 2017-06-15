@@ -120,10 +120,13 @@ hqDefine('app_manager/js/app_manager.js', function () {
                                 var requires_case_details = hqImport('app_manager/js/detail-screen-config.js').state.requires_case_details;
                                 requires_case_details(data['case_list-show']);
                             }
-                        }
+                        },
                     });
                 button.ui.appendTo($buttonHolder);
                 $buttonHolder.data('button', button);
+                if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+                    hqImport("app_manager/js/section_changer.js").attachToForm($form);
+                }
             });
         }());
 

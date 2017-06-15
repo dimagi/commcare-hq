@@ -2,3 +2,4 @@
 from custom.enikshay.integrations.nikshay.repeater_generator import (
     NikshayRegisterPatientPayloadGenerator
 )
+from custom.enikshay.integrations.nikshay import repeaters

@@ -101,7 +101,6 @@ def get_module_view_context(app, module, lang=None):
     # shared context
     context = {
         'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'name']),
-        'edit_case_label_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'case_label']),
     }
     module_brief = {
         'id': module.id,
@@ -298,11 +297,8 @@ def _get_report_module_context(app, module):
 
     ]
     from corehq.apps.app_manager.suite_xml.features.mobile_ucr import COLUMN_XPATH_CLIENT_TEMPLATE, get_data_path
-    current_reports = []
     data_path_placeholders = {}
     for r in module.report_configs:
-        r.migrate_graph_configs(app.domain)
-        current_reports.append(r.to_json())
         data_path_placeholders[r.report_id] = {}
         for chart_id in r.complete_graph_configs.keys():
             data_path_placeholders[r.report_id][chart_id] = get_data_path(r, app.domain)
@@ -312,7 +308,7 @@ def _get_report_module_context(app, module):
             'moduleName': module.name,
             'moduleFilter': module.module_filter,
             'availableReports': [_report_to_config(r) for r in all_reports],  # structure for all reports
-            'currentReports': current_reports,  # config data for app reports
+            'currentReports': [r.to_json() for r in module.report_configs],  # config data for app reports
             'columnXpathTemplate': COLUMN_XPATH_CLIENT_TEMPLATE,
             'dataPathPlaceholders': data_path_placeholders,
             'languages': app.langs,
@@ -462,7 +458,6 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     attributes = {
         "all": None,
         "auto_select_case": None,
-        "case_label": None,
         "case_list": ('case_list-show', 'case_list-label'),
         "case_list-menu_item_media_audio": None,
         "case_list-menu_item_media_image": None,
@@ -480,7 +475,6 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "name": None,
         "parent_module": None,
         "put_in_root": None,
-        "referral_label": None,
         "root_module_id": None,
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
@@ -600,12 +594,10 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         )
         module.case_list.set_audio(lang, val)
 
-    for attribute in ("name", "case_label", "referral_label"):
-        if should_edit(attribute):
-            name = request.POST.get(attribute, None)
-            module[attribute][lang] = name
-            if should_edit("name"):
-                resp['update'] = {'.variable-module_name': trans(module.name, [lang], use_delim=False)}
+    if should_edit("name"):
+        name = request.POST.get("name", None)
+        module["name"][lang] = name
+        resp['update'] = {'.variable-module_name': trans(module.name, [lang], use_delim=False)}
     if should_edit('comment'):
         module.comment = request.POST.get('comment')
     for SLUG in ('case_list', 'task_list'):
@@ -791,6 +783,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     persistent_case_context_xml = params.get('persistentCaseContextXML', None)
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
+    persistent_case_tile_from_module = params.get("persistentCaseTileFromModule", None)
     pull_down_tile = params.get("enableTilePullDown", None)
     print_template = params.get('printTemplate', None)
     case_list_lookup = params.get("case_list_lookup", None)
@@ -825,6 +818,8 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             detail.short.use_case_tiles = use_case_tiles
         if persist_tile_on_forms is not None:
             detail.short.persist_tile_on_forms = persist_tile_on_forms
+        if persistent_case_tile_from_module is not None:
+            detail.short.persistent_case_tile_from_module = persistent_case_tile_from_module
         if pull_down_tile is not None:
             detail.short.pull_down_tile = pull_down_tile
         if case_list_lookup is not None:

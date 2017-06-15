@@ -19,6 +19,7 @@ from custom.enikshay.case_utils import get_person_locations
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     MERM_ID,
+    ENIKSHAY_ID,
     PERSON_FIRST_NAME,
     PERSON_LAST_NAME,
     TREATMENT_START_DATE,
@@ -29,6 +30,7 @@ from custom.enikshay.const import (
     WEIGHT_BAND,
     CURRENT_ADDRESS,
     TREATMENT_SUPPORTER_PHONE,
+    ENROLLED_IN_PRIVATE,
 )
 from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
@@ -163,6 +165,13 @@ class TestUpdatePatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeater
         self._update_case(self.episode_id, {TREATMENT_SUPPORTER_PHONE: '999999999', })
         self.assertEqual(2, len(self.repeat_records().all()))
 
+    def test_update_owner_id(self):
+        self.create_case_structure()
+        self.assign_person_to_location(self.phi.location_id)
+        self._create_99dots_registered_case()
+        self._update_case(self.person_id, {'owner_id': self.dto.location_id})
+        self.assertEqual(1, len(self.repeat_records().all()))
+
     def test_trigger_multiple_cases(self):
         """Submitting a form with noop case blocks was throwing an exception
         """
@@ -260,31 +269,53 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
     def _get_actual_payload(self, casedb):
         raise NotImplementedError()
 
-    def _assert_payload_equal(self, casedb, expected_numbers):
+    def _assert_payload_equal(self, casedb, expected_numbers=False, sector=u'public'):
         person_case = casedb[self.person_id]
         episode_case = casedb[self.episode_id]
         person_case_properties = person_case.dynamic_case_properties()
         episode_case_properties = episode_case.dynamic_case_properties()
         person_locations = get_person_locations(person_case)
+        locations = {
+            u"state_code": person_locations.sto,
+            u"district_code": person_locations.dto,
+            u"tu_code": person_locations.tu,
+        }
+        if sector == 'public':
+            locations.update({
+                u"phi_code": person_locations.phi,
+            })
+        else:
+            locations.update({
+                u"he_code": person_locations.pcp,
+            })
+
+        expected_numbers = u"+91{}, +91{}".format(
+            self.primary_phone_number.replace("0", ""),
+            self.secondary_phone_number.replace("0", "")
+        ) if expected_numbers is False else expected_numbers
         expected_payload = {
-            "beneficiary_id": self.person_id,
-            "first_name": person_case_properties.get(PERSON_FIRST_NAME, None),
-            "last_name": person_case_properties.get(PERSON_LAST_NAME, None),
-            "state_code": person_locations.sto,
-            "district_code": person_locations.dto,
-            "tu_code": person_locations.tu,
-            "phi_code": person_locations.phi,
-            "phone_numbers": expected_numbers,
-            "merm_id": person_case_properties.get(MERM_ID, None),
-            "treatment_start_date": episode_case_properties.get(TREATMENT_START_DATE, None),
-            "treatment_supporter_name": u"{} {}".format(
+            u"beneficiary_id": self.person_id,
+            u"enikshay_id": person_case_properties.get(ENIKSHAY_ID, None),
+            u"first_name": person_case_properties.get(PERSON_FIRST_NAME, None),
+            u"last_name": person_case_properties.get(PERSON_LAST_NAME, None),
+            u"phone_numbers": expected_numbers,
+            u"treatment_start_date": episode_case_properties.get(TREATMENT_START_DATE, None),
+            u"treatment_supporter_name": u"{} {}".format(
                 episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
                 episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME, ''),
             ),
-            "treatment_supporter_phone_number": "+91{}".format(self.treatment_supporter_phone[1:]),
-            "weight_band": episode_case_properties.get(WEIGHT_BAND),
-            "address": person_case_properties.get(CURRENT_ADDRESS),
+            u"treatment_supporter_phone_number": u"+91{}".format(self.treatment_supporter_phone[1:]),
+            u"weight_band": episode_case_properties.get(WEIGHT_BAND),
+            u"address": person_case_properties.get(CURRENT_ADDRESS),
+            u"sector": sector,
         }
+        if episode_case_properties.get(MERM_ID, None) is not None:
+            expected_payload.update({
+                u"merm_params": {
+                    u"IMEI": episode_case_properties.get(MERM_ID, None),
+                }
+            })
+        expected_payload.update(locations)
         actual_payload = json.loads(self._get_actual_payload(casedb))
         self.assertDictEqual(expected_payload, actual_payload)
 
@@ -296,14 +327,10 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
         return RegisterPatientPayloadGenerator(None).get_payload(None, casedb[self.episode_id])
 
     def test_get_payload(self):
+        del self.episode.attrs['update']['merm_id']
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
-
-        expected_numbers = u"+91{}, +91{}".format(
-            self.primary_phone_number.replace("0", ""),
-            self.secondary_phone_number.replace("0", "")
-        )
-        self._assert_payload_equal(cases, expected_numbers)
+        self._assert_payload_equal(cases)
 
     def test_get_payload_no_numbers(self):
         self.primary_phone_number = None
@@ -317,6 +344,12 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
         self._assert_payload_equal(cases, u"+91{}".format(self.secondary_phone_number.replace("0", "")))
+
+    def test_get_payload_private_sector(self):
+        self.person.attrs['update'][ENROLLED_IN_PRIVATE] = 'true'
+        cases = self.create_case_structure()
+        cases[self.person_id] = self.assign_person_to_location(self.pcp.location_id)
+        self._assert_payload_equal(cases, sector='private')
 
     def test_handle_success(self):
         cases = self.create_case_structure()

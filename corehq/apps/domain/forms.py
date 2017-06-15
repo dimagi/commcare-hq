@@ -71,6 +71,7 @@ from corehq.apps.domain.models import (LOGO_ATTACHMENT, LICENSES, DATA_DICT,
     AREA_CHOICES, SUB_AREA_CHOICES, BUSINESS_UNITS, TransferDomainRequest)
 from corehq.apps.hqwebapp.tasks import send_mail_async, send_html_email_async
 from corehq.apps.reminders.models import CaseReminderHandler
+from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.sms.phonenumbers_helper import parse_phone_number
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput, Select2Ajax
@@ -80,7 +81,7 @@ from corehq.privileges import (
     REPORT_BUILDER_ADD_ON_PRIVS,
     REPORT_BUILDER_TRIAL,
 )
-from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBIE_UCR_SYNC_DELAY_CONFIG
+from corehq.toggles import HIPAA_COMPLIANCE_CHECKBOX, MOBILE_UCR
 from corehq.util.timezones.fields import TimeZoneField
 from corehq.util.timezones.forms import TimeZoneChoiceField
 from dimagi.utils.decorators.memoized import memoized
@@ -605,7 +606,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 )
                 owner_field.widget.set_domain(self.domain)
 
-        if not MOBIE_UCR_SYNC_DELAY_CONFIG.enabled(self.domain):
+        if not MOBILE_UCR.enabled(self.domain):
             del self.fields['mobile_ucr_sync_interval']
 
     def clean_default_timezone(self):
@@ -613,10 +614,6 @@ class DomainGlobalSettingsForm(forms.Form):
         timezone_field = TimeZoneField()
         timezone_field.run_validators(data)
         return smart_str(data)
-
-    def clean_mobile_ucr_sync_interval(self):
-        if self.cleaned_data.get('mobile_ucr_sync_interval'):
-            return self.cleaned_data.get('mobile_ucr_sync_interval') * 3600
 
     def clean(self):
         cleaned_data = super(DomainGlobalSettingsForm, self).clean()
@@ -1342,16 +1339,13 @@ class ConfidentialPasswordResetForm(HQPasswordResetForm):
             return self.cleaned_data['email']
 
 
-class HQSetPasswordForm(SetPasswordForm):
+class HQSetPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
     new_password1 = forms.CharField(label=ugettext_lazy("New password"),
                                     widget=forms.PasswordInput(
                                         attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
                                     help_text=mark_safe("""
                                     <span data-bind="text: passwordHelp, css: color">
                                     """))
-
-    def clean_new_password1(self):
-        return clean_password(self.cleaned_data.get('new_password1'))
 
     def save(self, commit=True):
         user = super(HQSetPasswordForm, self).save(commit)

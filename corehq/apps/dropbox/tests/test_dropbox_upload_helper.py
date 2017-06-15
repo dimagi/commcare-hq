@@ -1,3 +1,4 @@
+from mock import patch, MagicMock
 from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
@@ -6,6 +7,7 @@ from ..models import DropboxUploadHelper
 from ..exceptions import DropboxUploadAlreadyInProgress
 
 
+@patch('corehq.apps.dropbox.models.DropboxUploadHelper._ensure_valid_token', MagicMock())
 class DropboxUploadHelperTest(TestCase):
 
     @classmethod

@@ -416,18 +416,20 @@ class BillingAccount(ValidateModelMixin, models.Model):
 
     @classmethod
     def get_account_by_domain(cls, domain):
-        try:
-            last_subscription = Subscription.objects.filter(
-                is_trial=False, subscriber__domain=domain).latest('date_end')
-            return last_subscription.account
-        except Subscription.DoesNotExist:
-            pass
+        current_subscription = Subscription.get_active_subscription_by_domain(domain)
+        if current_subscription is not None:
+            return current_subscription.account
+        else:
+            return cls._get_account_by_created_by_domain(domain)
+
+    @classmethod
+    def _get_account_by_created_by_domain(cls, domain):
         try:
             return cls.objects.exclude(
                 account_type=BillingAccountType.TRIAL
             ).get(created_by_domain=domain)
         except cls.DoesNotExist:
-            pass
+            return None
         except cls.MultipleObjectsReturned:
             log_accounting_error(
                 "Multiple billing accounts showed up for the domain '%s'. The "
@@ -437,7 +439,6 @@ class BillingAccount(ValidateModelMixin, models.Model):
             return cls.objects.exclude(
                 account_type=BillingAccountType.TRIAL
             ).filter(created_by_domain=domain).latest('date_created')
-        return None
 
     @property
     def autopay_card(self):
@@ -2697,7 +2698,7 @@ class CreditLine(ValidateModelMixin, models.Model):
     @classmethod
     def get_non_general_credits_by_subscription(cls, subscription):
         return cls.objects.filter(subscription=subscription).filter(
-            Q(product_type__in=[c[0] for c in SoftwareProductType.CHOICES] + [SoftwareProductType.ANY]) |
+            Q(product_type=SoftwareProductType.ANY) |
             Q(feature_type__in=[f[0] for f in FeatureType.CHOICES])
         ).all()
 

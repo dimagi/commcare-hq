@@ -92,6 +92,14 @@ $(function () {
         }
     });
 
+    // Module filter
+    $(function () {
+        var $moduleFilter = $('#module-filter');
+        if ($moduleFilter.length) {
+            $moduleFilter.koApplyBindings({xpath: initial_page_data("module_filter") || ''});
+        }
+    });
+
     // Registration in case list
     if ($('#case-list-form').length) {
         var CaseListForm = function (data, formOptions, allowed, now_allowed_reason) {
@@ -208,6 +216,7 @@ $(function () {
         var setupValidation = hqImport('app_manager/js/app_manager.js').setupValidation;
         setupValidation(hqImport('hqwebapp/js/urllib.js').reverse('validate_module_for_build'));
     });
+
     $(function() {
         // show display style options only when module configured to show module and then forms
         var $menu_mode = $('#put_in_root');

@@ -13,6 +13,7 @@ from dimagi.utils.dates import add_months
 
 
 def get_app_submission_breakdown_es(domain_name, monthspan):
+    # takes > 1 m to load at 50k worker scale
     terms = [
         AggregationTerm('app_id', 'app_id'),
         AggregationTerm('device_id', 'form.meta.deviceID'),
@@ -73,20 +74,10 @@ def get_forms_for_users(domain, user_ids, start, end):
         .domain(domain)
         .submitted(gte=start, lte=end)
         .user_id(user_ids)
-        .aggregation(
-            TermsAggregation('user_id', 'form.meta.userID').aggregation(
-                TopHitsAggregation(
-                    name='top_hits_user_submissions',
-                    size=1000000,
-                    include=['form.case', 'form.@xmlns']
-                )
-            )
-        )
-        .size(0)
+        .source(['form.meta.userID', 'form.case', 'form.@xmlns'])
     )
 
-    aggregations = query.run().aggregations
-    return aggregations.user_id.buckets_dict
+    return query.scroll()
 
 
 def get_possibly_experienced(domain, start):

@@ -5,7 +5,7 @@ import socket
 from django.conf import settings
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.repeaters.exceptions import RequestConnectionError
-from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
+from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator, SOAPPayloadGeneratorMixin
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
@@ -344,7 +344,7 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
                                 "followup_nikshay_registered", "followup_nikshay_error")
 
 
-class NikshayRegisterPrivatePatientPayloadGenerator(BaseNikshayPayloadGenerator):
+class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, BaseNikshayPayloadGenerator):
     format_name = 'case_xml'
     format_label = 'XML'
 

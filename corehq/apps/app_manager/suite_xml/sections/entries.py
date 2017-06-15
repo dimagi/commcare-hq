@@ -583,6 +583,7 @@ class EntriesHelper(object):
             target_module_ = get_target_module(action_.case_type, action_.details_module)
             referenced_by = form.actions.actions_meta_by_parent_tag.get(action_.case_tag)
             filter_xpath = EntriesHelper.get_filter_xpath(target_module_)
+            detail_inline = self.get_detail_inline_attr(target_module_, target_module_, "case_short")
 
             return SessionDatum(
                 id=action_.case_session_var,
@@ -592,10 +593,10 @@ class EntriesHelper(object):
                 detail_select=self.details_helper.get_detail_id_safe(target_module_, 'case_short'),
                 detail_confirm=(
                     self.details_helper.get_detail_id_safe(target_module_, 'case_long')
-                    if not referenced_by or referenced_by['type'] != 'load' else None
+                    if not referenced_by or referenced_by['type'] != 'load' and not detail_inline else None
                 ),
                 detail_persistent=self.get_detail_persistent_attr(target_module_, target_module_, "case_short"),
-                detail_inline=self.get_detail_inline_attr(target_module_, target_module_, "case_short"),
+                detail_inline=detail_inline,
                 autoselect=target_module_.auto_select_case,
             )
 
@@ -874,6 +875,17 @@ class EntriesHelper(object):
     def get_detail_persistent_attr(self, module, detail_module, detail_type="case_short"):
         detail, detail_enabled = self._get_detail_from_module(module, detail_type)
         if detail_enabled:
+            # if configured to use persisted case tile context from another module which has case tiles
+            # configured then get id_string for that module
+            if detail.persistent_case_tile_from_module:
+                module_for_persistent_context = module.get_app().get_module_by_unique_id(
+                    detail.persistent_case_tile_from_module
+                )
+                if (module_for_persistent_context and
+                        (module_for_persistent_context.case_details.short.use_case_tiles or
+                         module_for_persistent_context.case_details.short.custom_xml
+                         )):
+                    return id_strings.detail(module_for_persistent_context, detail_type)
             if self._has_persistent_tile(detail):
                 return id_strings.detail(detail_module, detail_type)
             if detail.persist_case_context and detail_type == "case_short":

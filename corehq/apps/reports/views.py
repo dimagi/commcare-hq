@@ -107,6 +107,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import BadExportConfiguration
+from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.export import export_cases
@@ -116,6 +117,7 @@ from corehq.apps.locations.permissions import can_edit_form_location, location_s
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.util import default_language as ucr_default_language
+from corehq.apps.reports.util import validate_xform_for_edit
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import (
@@ -1774,6 +1776,12 @@ class EditFormInstance(View):
 
         # add usercase to session
         form = self._get_form_from_instance(instance)
+
+        try:
+            validate_xform_for_edit(form.wrapped_xform())
+        except EditFormValidationError as e:
+            return _error(e)
+
         if form.uses_usercase():
             usercase_id = user.get_usercase_id()
             if not usercase_id:

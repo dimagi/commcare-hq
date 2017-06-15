@@ -703,8 +703,13 @@
                  </div>
              </div>
              <div data-bind="visible: case_type">
-@@ -390,7 +466,7 @@
-     <div data-bind="template: 'case-config:refresh-form-questions'"></div>
+@@ -386,11 +462,11 @@
+ </script>
+ 
+ <div id="case-config-ko">
++    <div class="refresh-form-questions-container" data-bind="template: 'case-config:refresh-form-questions'"></div>
+     <div data-bind="saveButton: saveButton"></div>
+-    <div data-bind="template: 'case-config:refresh-form-questions'"></div>
      <div data-bind="with: caseConfigViewModel">
          <div class="btn-group" data-bind="visible: actionOptions().length">
 -            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

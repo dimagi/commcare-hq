@@ -8,7 +8,7 @@
         },
         getDisplay: function (question, MAXLEN) {
             return utils.getIcon(question) + utils.getLabel(question, MAXLEN)
-                    + " (" + (question.hashtagValue || question.value) + ")";
+                    + " (" + utils.truncateValue(question.hashtagValue || question.value, MAXLEN) + ")";
         },
         getLabel: function (question, MAXLEN) {
             return utils.truncateLabel((question.repeat ? '- ' : '')
@@ -19,7 +19,11 @@
             var MAXLEN = MAXLEN || 40,
                 maxlen = MAXLEN - suffix.length;
             return ((label.length <= maxlen) ? (label) : (label.slice(0, maxlen) + "...")) + suffix;
-        }
+        },
+        truncateValue: function (value, MAXLEN) {
+            MAXLEN = MAXLEN || 40;
+            return (value.length <= MAXLEN) ? (value) : (value.slice(0, MAXLEN/2) + "..." + value.slice(value.length - MAXLEN/2, value.length - 1));
+        },
     };
 
     ko.bindingHandlers.questionsSelect = {
@@ -74,20 +78,17 @@
     };
 }());
 
-ko.bindingHandlers.casePropertySelect2 = {
+ko.bindingHandlers.casePropertyAutocomplete = {
     /*
      * Strip "attachment:" prefix and show icon for attachment properties.
      * Replace any spaces in free text with underscores.
      */
     init: function (element, valueAccessor) {
-        var options = ko.bindingHandlers.autocompleteSelect2.select2Options(element),
-            old_createSearchChoice = options.createSearchChoice;
-        options.createSearchChoice = function(term, data) {
-            term = term.replace(/ /g, '_');
-            return old_createSearchChoice(term, data);
-        };
-
-        ko.bindingHandlers.autocompleteSelect2._init(element, options);
+        $(element).on('textchange', function() {
+            var $el = $(this);
+            $el.val($el.val().replace(/ /g, '_'));
+        });
+        ko.bindingHandlers.autocompleteAtwho.init(element, valueAccessor);
     },
     update: function (element, valueAccessor, allBindingsAccessor) {
         function wrappedValueAccessor() {
@@ -95,12 +96,12 @@ ko.bindingHandlers.casePropertySelect2 = {
                 if (value.indexOf("attachment:") === 0) {
                     var text = value.substring(11),
                         html = '<i class="fa fa-paperclip"></i> ' + text;
-                    return {id: text, text: html};
+                    return {name: text, content: html};
                 }
-                return {id: value, text: value};
+                return {name: value, content: value};
             })
         }
-        ko.bindingHandlers.autocompleteSelect2.update(element, wrappedValueAccessor, allBindingsAccessor);
+        ko.bindingHandlers.autocompleteAtwho.update(element, wrappedValueAccessor, allBindingsAccessor);
     },
 };
 

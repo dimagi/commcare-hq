@@ -4,7 +4,7 @@
 {% if app.advanced_app_builder or value or ko_value %}
     <div class="form-group" id="module-filter">
         <label class="col-sm-2 control-label">
-            {% trans "Filter" %}
+            {% trans "Display Condition" %}
         </label>
         <div class="col-sm-4 commcare-feature" data-since-version="2.20">
             <textarea
@@ -23,13 +23,4 @@
             </script>
         </div>
     </div>
-
-    {% if not ko_value %}
-        <script>
-            $(function () {
-                $('#module-filter').koApplyBindings({xpath: {{ value|JSON }} || ''});
-            });
-        </script>
-    {% endif %}
-
 {% endif %}

@@ -237,18 +237,18 @@ def _get_include_without_expanding_locations(domain, location_type):
     """
     include_without_expanding = location_type.include_without_expanding
     if include_without_expanding is not None:
-        # add in other "forced" locations the user should have, along with their ancestors
-        forced_locations = set(SQLLocation.active_objects.filter(
-            domain__exact=domain,
-            location_type=include_without_expanding
-        ))
-        forced_ancestors = {
-            ancestor
-            for location in forced_locations
-            for ancestor in location.get_ancestors()
-        }
-
-        return forced_locations | forced_ancestors
+        forced_location_level = set(
+            SQLLocation.active_objects.
+            filter(domain__exact=domain, location_type=include_without_expanding).
+            values_list('level', flat=True)
+        ) or None
+        if forced_location_level is not None:
+            assert len(forced_location_level) == 1
+            forced_locations = set(SQLLocation.active_objects.filter(
+                domain__exact=domain,
+                level__lte=forced_location_level.pop()
+            ))
+            return forced_locations
 
     return set()
 

@@ -378,7 +378,7 @@ class SystemInfoView(BaseAdminSectionView):
         context['celery_stats'] = get_celery_stats()
         context['heartbeat'] = service_checks.check_heartbeat()
 
-        context['elastic'] = escheck.check_es_cluster_health()
+        context['cluster_health'] = escheck.check_es_cluster_health()
 
         return context
 
@@ -1055,8 +1055,7 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
         return None
 
     def post(self, request, *args, **kwargs):
-        from corehq.apps.reminders.signals import case_changed_receiver as reminders_case_changed_receiver
-        from corehq.apps.sms.signals import case_changed_receiver as sms_case_changed_receiver
+        from corehq.messaging.signals import messaging_case_changed_receiver
 
         if self.form.is_valid():
             case_ids = self.form.cleaned_data['case_ids']
@@ -1067,8 +1066,7 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
                 if not case or case.doc_type != 'CommCareCase':
                     case_ids_not_processed.append(case_id)
                 else:
-                    reminders_case_changed_receiver(None, case)
-                    sms_case_changed_receiver(None, case)
+                    messaging_case_changed_receiver(None, case)
                     case_ids_processed.append(case_id)
 
             if case_ids_processed:

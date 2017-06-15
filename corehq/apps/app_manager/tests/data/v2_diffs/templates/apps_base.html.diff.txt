@@ -55,7 +55,7 @@
  {% endblock %}
  
  {% block js %}{{ block.super }}
-@@ -64,37 +45,17 @@
+@@ -65,37 +46,19 @@
      <script src="{% static 'style/js/ui-element.js' %}"></script>
      <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
      <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
@@ -91,13 +91,14 @@
 -  <div class="appmanager-loading appmanager-loading-body">
 -    <i class="fa fa-spin fa-spinner"></i>
 -  </div>
--</div>
++<div class="appmanager-loading-bg">
+ </div>
 -<div class="appmanager-content appmanager-content-transition-all"
 +<div class="js-unhide-on-unsaved appmanager-content appmanager-content-transition-all{% if not formdesigner %} appmanager-settings-content {% endif %}"
       id="js-appmanager-body">
      {% if app %}
          {% if error %}
-@@ -119,7 +80,7 @@
+@@ -120,7 +83,7 @@
                  {% endblocktrans %}
              </p>
              <br>
@@ -106,7 +107,7 @@
          </div>
      {% endif %}
  </div>
-@@ -153,3 +114,5 @@
+@@ -154,3 +117,5 @@
      </div>
      {% endif %}
  {% endblock modals %}

@@ -161,6 +161,8 @@ ALL_WORKFLOWS = [
     WORKFLOW_PREVIOUS,
     WORKFLOW_FORM,
 ]
+# allow all options as fallback except the one for form linking
+WORKFLOW_FALLBACK_OPTIONS = list(ALL_WORKFLOWS).remove(WORKFLOW_FORM)
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -892,6 +894,10 @@ class FormBase(DocumentSchema):
     post_form_workflow = StringProperty(
         default=WORKFLOW_DEFAULT,
         choices=ALL_WORKFLOWS
+    )
+    post_form_workflow_fallback = StringProperty(
+        choices=WORKFLOW_FALLBACK_OPTIONS,
+        default=None,
     )
     auto_gps_capture = BooleanProperty(default=False)
     no_vellum = BooleanProperty(default=False)
@@ -1816,9 +1822,19 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                 hashtag = "#case"
             return types[hashtag], name
 
+        def parse_relationship(name):
+            if '/' not in name:
+                return name
+
+            relationship, property_name = name.split('/', 1)
+            if relationship == 'grandparent':
+                relationship = 'parent/parent'
+            return '/'.join([relationship, property_name])
+
         for case_load_reference in self.case_references.get_load_references():
             for name in case_load_reference.properties:
                 case_type, name = parse_case_type(name)
+                name = parse_relationship(name)
                 self.add_property_load(
                     app_case_meta,
                     case_type,
@@ -2084,6 +2100,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     custom_xml = StringProperty()
 
     persist_tile_on_forms = BooleanProperty()
+    # use case tile context persisted over forms from another module
+    persistent_case_tile_from_module = StringProperty()
     # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
 
@@ -2531,8 +2549,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
 
     """
     module_type = 'basic'
-    case_label = DictProperty()
-    referral_label = DictProperty()
     forms = SchemaListProperty(Form)
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
@@ -2567,7 +2583,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 short=Detail(detail.to_json()),
                 long=Detail(detail.to_json()),
             ),
-            case_label={(lang or 'en'): 'Cases'},
         )
         module.get_or_create_unique_id()
         return module
@@ -3198,7 +3213,6 @@ class SchedulePhase(IndexedSchema):
 
 class AdvancedModule(ModuleBase):
     module_type = 'advanced'
-    case_label = DictProperty()
     forms = SchemaListProperty(FormBase)
     case_details = SchemaProperty(DetailPair)
     product_details = SchemaProperty(DetailPair)
@@ -3870,20 +3884,6 @@ class CareplanModule(ModuleBase):
         return errors
 
 
-class ReportGraphConfig(DocumentSchema):
-    graph_type = StringProperty(
-        choices=[
-            'bar',
-            'time',
-            'xy',
-        ],
-        default='bar',
-        required=True,
-    )
-    series_configs = DictProperty(DictProperty)
-    config = DictProperty()
-
-
 class ReportAppFilter(DocumentSchema):
 
     @classmethod
@@ -4201,33 +4201,7 @@ class ReportAppConfig(DocumentSchema):
     xpath_description = StringProperty()
     use_xpath_description = BooleanProperty(default=False)
     show_data_table = BooleanProperty(default=True)
-    graph_configs = DictProperty(ReportGraphConfig) # deprecated
     complete_graph_configs = DictProperty(GraphConfiguration)
-
-    def migrate_graph_configs(self, domain):
-        if len(self.complete_graph_configs):
-            return
-
-        self.complete_graph_configs = {}
-        from corehq.apps.userreports.reports.specs import MultibarChartSpec
-        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import MobileSelectFilterHelpers
-        for chart_config in self.report(domain).charts:
-            if isinstance(chart_config, MultibarChartSpec):
-                limited_graph_config = self.graph_configs.get(chart_config.chart_id, ReportGraphConfig())
-                self.complete_graph_configs[chart_config.chart_id] = GraphConfiguration(
-                    graph_type=limited_graph_config.graph_type,
-                    config=limited_graph_config.config,
-                    series=[GraphSeries(
-                        config=limited_graph_config.series_configs.get(c.column_id, {}),
-                        locale_specific_config={},
-                        data_path="",
-                        x_function="",
-                        y_function="",
-                    ) for c in chart_config.y_axis_columns],
-                    locale_specific_config={},
-                    annotations=[]
-                )
-        self.graph_configs = {}
 
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
@@ -5485,6 +5459,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_grid_menus = BooleanProperty(default=False)
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
+    mobile_ucr_sync_interval = IntegerProperty()
 
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
@@ -5508,15 +5483,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def wrap(cls, data):
-        for module in data.get('modules', []):
-            for attr in ('case_label', 'referral_label'):
-                if not module.has_key(attr):
-                    module[attr] = {}
-            for lang in data['langs']:
-                if not module['case_label'].get(lang):
-                    module['case_label'][lang] = commcare_translations.load_translations(lang).get('cchq.case', 'Cases')
-                if not module['referral_label'].get(lang):
-                    module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
         data.pop('commtrack_enabled', None)  # Remove me after migrating apps
         self = super(Application, cls).wrap(data)
 
@@ -6035,7 +6001,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     xmlns,
                 ))
             return []
-        non_shadow_forms = [form for form in forms if form.form_type != ShadowForm.form_type]
+        non_shadow_forms = [form for form in forms if form.form_type != 'shadow_form']
         assert len(non_shadow_forms) <= 1
         return forms
 
@@ -6069,12 +6035,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'type': 'subscription',
                 'message': _('Your application is using User Properties. You can remove User Properties '
                              'functionality by opening the User Properties tab in a form that uses it, and '
-                             'clicking "Remove User Properties".')
-                           if toggles.USER_PROPERTY_EASY_REFS.enabled(self.domain) else
-                           # old message, to be removed with USER_PROPERTY_EASY_REFS toggle
-                           _('Your application is using User Case functionality. You can remove User Case '
-                             'functionality by opening the User Case Management tab in a form that uses it, and '
-                             'clicking "Remove User Case Properties".'),
+                             'clicking "Remove User Properties".'),
             })
         return errors
 

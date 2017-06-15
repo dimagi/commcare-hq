@@ -38,14 +38,14 @@ from corehq.apps.domain.decorators import (
     check_domain_migration,
     login_or_digest_or_basic_or_apikey_or_token,
 )
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
+from corehq.util.datadog.gauges import datadog_counter, datadog_histogram
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
 from corehq.apps.ota.tasks import queue_prime_restore
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
@@ -68,8 +68,6 @@ def restore(request, domain, app_id=None):
     We override restore because we have to supply our own
     user model (and have the domain in the url)
     """
-    if toggles.ENIKSHAY.enabled(domain):
-        update_device_id(request.couch_user, request.GET.get('device_id'))
     response, timing_context = get_restore_response(domain, request.couch_user, app_id, **get_restore_params(request))
     tags = [
         u'status_code:{}'.format(response.status_code),
@@ -79,7 +77,7 @@ def restore(request, domain, app_id=None):
         for timer in timing_context.to_list(exclude_root=True):
             # Only record leaf nodes so we can sum to get the total
             if timer.is_leaf_node:
-                datadog_gauge(
+                datadog_histogram(
                     'commcare.restores.timings',
                     timer.duration,
                     tags=tags + [u'segment:{}'.format(timer.name)],
@@ -281,6 +279,7 @@ def get_restore_params(request):
         'overwrite_cache': request.GET.get('overwrite_cache') == 'true',
         'openrosa_version': openrosa_version,
         'device_id': request.GET.get('device_id'),
+        'user_id': request.GET.get('user_id'),
     }
 
 
@@ -288,9 +287,21 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
                          force_restore_mode=None,
-                         as_user=None, device_id=None,
+                         as_user=None, device_id=None, user_id=None,
                          has_data_cleanup_privelege=False,
                          openrosa_version=OPENROSA_DEFAULT_VERSION):
+
+    if user_id and user_id != couch_user.user_id:
+        # sync with a user that has been deleted but a new
+        # user was created with the same username and password
+        from couchforms.openrosa_response import get_simple_response_xml
+        from couchforms.openrosa_response import ResponseNature
+        response = get_simple_response_xml(
+            'Attempt to sync with invalid user.',
+            ResponseNature.OTA_RESTORE_ERROR
+        )
+        return HttpResponse(response, content_type="text/xml; charset=utf-8", status=412), None
+
     # not a view just a view util
     is_permitted, message = is_permitted_to_restore(
         domain,
@@ -301,7 +312,15 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     if not is_permitted:
         return HttpResponse(message, status=401), None
 
-    if couch_user.is_commcare_user() and couch_user.is_demo_user:
+    is_demo_restore = couch_user.is_commcare_user() and couch_user.is_demo_user
+    is_enikshay = toggles.ENIKSHAY.enabled(domain)
+    if is_enikshay:
+        couch_restore_user = couch_user
+        if not is_demo_restore and as_user is not None:
+            couch_restore_user = CouchUser.get_by_username(as_user)
+        update_device_id(couch_restore_user, device_id)
+
+    if is_demo_restore:
         # if user is in demo-mode, return demo restore
         return demo_user_restore_response(couch_user), None
 

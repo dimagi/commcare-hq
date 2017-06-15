@@ -10,12 +10,14 @@ from corehq.apps.locations.permissions import (
     location_restricted_exception,
 )
 from corehq.apps.reports.datatables import DataTablesHeader
+from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.util.soft_assert import soft_assert
 from custom.enikshay.case_utils import get_person_case_from_episode, get_adherence_cases_by_day
-from custom.enikshay.const import DOSE_TAKEN_INDICATORS, ENIKSHAY_TIMEZONE
+from custom.enikshay.const import DOSE_TAKEN_INDICATORS, ENIKSHAY_TIMEZONE, TREATMENT_START_DATE
 from custom.enikshay.reports.generic import EnikshayReport
 
 from django.utils.translation import ugettext_lazy
@@ -63,7 +65,10 @@ class HistoricalAdherenceReport(EnikshayReport):
 
     def __init__(self, *args, **kwargs):
         super(HistoricalAdherenceReport, self).__init__(*args, **kwargs)
-        self.episode = CaseAccessors(self.domain).get_case(self.episode_case_id)
+        try:
+            self.episode = CaseAccessors(self.domain).get_case(self.episode_case_id)
+        except CaseNotFound:
+            raise BadRequestError()
         self.episode_properties = self.episode.dynamic_case_properties()
         self.person = get_person_case_from_episode(self.domain, self.episode_case_id)
 
@@ -169,6 +174,8 @@ class HistoricalAdherenceReport(EnikshayReport):
     @property
     def adherence_schedule_date_start(self):
         day = self.episode_properties.get('adherence_schedule_date_start')
+        if not day:
+            day = self.episode_properties.get(TREATMENT_START_DATE)
         return parse(day).date()
 
     @memoized

@@ -803,9 +803,29 @@ class LastSubmission(DocumentSchema):
     commcare_version = StringProperty()
 
 
-class ReportingMetadata(DocumentSchema):
+class LastSync(DocumentSchema):
+    sync_date = DateTimeProperty()
+    build_version = IntegerProperty()
+    app_id = StringProperty()
 
+
+class LastBuild(DocumentSchema):
+    """
+    Build info for the app on the user's phone
+    when they last synced or submitted
+    """
+    build_version = IntegerProperty()
+    build_version_date = DateTimeProperty()
+    app_id = StringProperty()
+
+
+class ReportingMetadata(DocumentSchema):
     last_submissions = SchemaListProperty(LastSubmission)
+    last_submission_for_user = SchemaProperty(LastSubmission)
+    last_syncs = SchemaListProperty(LastSync)
+    last_sync_for_user = SchemaProperty(LastSync)
+    last_builds = SchemaListProperty(LastBuild)
+    last_build_for_user = SchemaProperty(LastBuild)
 
 
 class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMixin):
@@ -1703,7 +1723,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             touched.append(group)
         for to_remove in current - desired:
             group = Group.get(to_remove)
-            group.remove_user(self._id, save=False)
+            group.remove_user(self._id)
             touched.append(group)
 
         Group.bulk_save(touched)

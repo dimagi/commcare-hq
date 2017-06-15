@@ -14,6 +14,8 @@ from corehq.apps.users.util import raw_username
 
 from dimagi.utils.decorators.memoized import memoized
 
+from .models import BASIC_AUTH, DIGEST_AUTH
+
 
 class GenericRepeaterForm(forms.Form):
 
@@ -26,8 +28,8 @@ class GenericRepeaterForm(forms.Form):
     auth_type = forms.ChoiceField(
         choices=[
             (None, "None"),
-            ("basic", "Basic"),
-            ("digest", "Digest"),
+            (BASIC_AUTH, "Basic"),
+            (DIGEST_AUTH, "Digest"),
         ],
         required=False,
         label=_("Authentication protocol"),

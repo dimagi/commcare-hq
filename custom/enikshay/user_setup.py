@@ -7,7 +7,9 @@ assumptions laid out here.
 import math
 import re
 import uuid
-from django.forms import ValidationError
+from crispy_forms import layout as crispy
+from django import forms
+from django.core.validators import RegexValidator
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
@@ -16,7 +18,8 @@ from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.locations.forms import LocationFormSet, LocationForm
 from corehq.apps.users.forms import NewMobileWorkerForm, clean_mobile_worker_username
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.signals import clean_commcare_user, commcare_user_post_save
+from corehq.apps.users.signals import commcare_user_post_save
+from .const import AGENCY_USER_FIELDS, AGENCY_LOCATION_FIELDS
 from .models import IssuerId
 
 TYPES_WITH_REQUIRED_NIKSHAY_CODES = ['sto', 'dto', 'tu', 'dmc', 'phi']
@@ -33,6 +36,7 @@ LOC_TYPES_TO_USER_TYPES = {
 
 
 def skip_custom_setup(domain, request_user):
+    return True  # We're gonna revisit this, turning off for now
     return not toggles.ENIKSHAY.enabled(domain) or request_user.is_domain_admin(domain)
 
 
@@ -257,7 +261,6 @@ def add_drtb_hiv_to_dto(domain, user):
 
 
 def connect_signals():
-    clean_commcare_user.connect(clean_user_callback, dispatch_uid="clean_user_callback")
     commcare_user_post_save.connect(save_user_callback, dispatch_uid="save_user_callback")
 
 
@@ -267,10 +270,133 @@ class ENikshayNewMobileWorkerForm(NewMobileWorkerForm):
         super(ENikshayNewMobileWorkerForm, self).__init__(*args, **kwargs)
 
 
-class ENikshayUserDataEditor(CustomDataEditor):
-    """Custom User Data (everywhere it turns up)"""
-    def __init__(self, *args, **kwargs):
-        super(ENikshayUserDataEditor, self).__init__(*args, **kwargs)
+# pcp -> MBBS
+# pac -> AYUSH/other
+# plc -> Private Lab
+# pcc -> pharmacy / chemist
+# dto -> Field officer??
+
+def _make_field_visible_to(field, type_code):
+    # loc_type() is available because this is inside the location form
+    return crispy.Div(field, data_bind="visible: loc_type() === '{}'".format(type_code))
+
+
+class ENikshayLocationUserDataEditor(CustomDataEditor):
+    """Custom User Data on Virtual Location User (agency) creation"""
+
+    @property
+    @memoized
+    def fields(self):
+        # non-required fields are typically excluded from creation UIs
+        fields_to_include = [field[0] for field in AGENCY_USER_FIELDS]
+        return [
+            field for field in self.model.get_fields(required_only=False)
+            if field.is_required or field.slug in fields_to_include
+        ]
+
+    def init_form(self, post_dict=None):
+        form = super(ENikshayLocationUserDataEditor, self).init_form(post_dict)
+        fs = form.helper.layout[0]
+        assert isinstance(fs, crispy.Fieldset)
+
+        fields_to_loc_types = {
+            'pcp_professional_org_membership': 'pcp',
+            'pac_qualification': 'pac',
+            'pcp_qualification': 'pcp',
+            'plc_lab_collection_center_name': 'plc',
+            'plc_lab_or_collection_center': 'plc',
+            'plc_accredidation': 'plc',
+            'plc_tb_tests': 'plc',
+            'plc_hf_if_nikshay': 'plc',
+            'pcc_pharmacy_name': 'pcc',
+            'pcc_pharmacy_affiliation': 'pcc',
+            'pcc_tb_drugs_in_stock': 'pcc',
+        }
+
+        for i, field in enumerate(fs.fields):
+            if field in fields_to_loc_types:
+                fs[i] = _make_field_visible_to(field, fields_to_loc_types[field])
+        return form
+
+    def _make_field(self, field):
+        if field.slug == 'language_code':
+            return forms.ChoiceField(
+                label=field.label,
+                required=True,
+                choices=[
+                    ('', _('Select one')),
+                    ("en", "English"),
+                    ("hin", "Hindi"),
+                    ("mar", "Marathi"),
+                    ("bho", "Bhojpuri"),
+                    ('guj', "Gujarati"),
+                ],
+            )
+        if field.slug == 'contact_phone_number':
+            regexp = "^91[0-9]{10}$"
+            help_text = "Please enter only digits. Enter 91 followed by the 10-digit national number."
+            return forms.CharField(
+                widget=forms.TextInput(attrs={"pattern": regexp, "title": help_text}),
+                label=field.label,
+                required=True,
+                validators=[RegexValidator(regexp, help_text)],
+            )
+        if field.slug == 'user_level':
+            return forms.ChoiceField(
+                label=field.label,
+                required=field.is_required,
+                choices=[
+                    ("real", "Real"),
+                    ("dev", "Developer"),
+                    ("test", "Test"),
+                ],
+            )
+        return super(ENikshayLocationUserDataEditor, self)._make_field(field)
+
+
+class ENikshayUserLocationDataEditor(CustomDataEditor):
+    """Custom Location Data on Virtual Location User (agency) creation"""
+
+    @property
+    @memoized
+    def fields(self):
+        if not self.required_only:
+            return self.model.get_fields(required_only=False)
+
+        # non-required fields are typically excluded from creation UIs
+        fields_to_include = [field[0] for field in AGENCY_LOCATION_FIELDS]
+        return [
+            field for field in self.model.get_fields(required_only=False)
+            if field.is_required or field.slug in fields_to_include
+        ]
+
+    def _make_field(self, field):
+        if field.slug == 'private_sector_org_id':
+            return forms.ChoiceField(
+                label=field.label,
+                required=field.is_required,
+                choices=[
+                    ('', _('Select one')),
+                    ('1', "PATH"),
+                    ('2', "MJK"),
+                    ('3', "Alert-India"),
+                    ('4', "WHP"),
+                    ('5', "DTO-Mehsana"),
+                    ('6', "Vertex"),
+                    ('7', "Accenture"),
+                    ('8', "BMGF"),
+                    ('9', "EY"),
+                    ('10', "CTD"),
+                    ('11', "Nagpur"),
+                    ('12', "Nagpur-rural"),
+                    ('13', "Nagpur_Corp"),
+                    ('14', "Surat"),
+                    ('15', "SMC"),
+                    ('16', "Surat_Rural"),
+                    ('17', "Rajkot"),
+                ],
+            )
+        return super(ENikshayUserLocationDataEditor, self)._make_field(field)
 
 
 def get_new_username_and_id(domain, attempts_remaining=3):
@@ -285,7 +411,7 @@ def get_new_username_and_id(domain, attempts_remaining=3):
     compressed_issuer_id = compress_nikshay_id(issuer_id.pk, 3)
     try:
         return clean_mobile_worker_username(domain, compressed_issuer_id), user_id
-    except ValidationError:
+    except forms.ValidationError:
         issuer_id.delete()
         return get_new_username_and_id(domain, attempts_remaining - 1)
 
@@ -293,9 +419,9 @@ def get_new_username_and_id(domain, attempts_remaining=3):
 class ENikshayLocationFormSet(LocationFormSet):
     """Location, custom data, and possibly location user and data forms"""
     _location_form_class = LocationForm
-    _location_data_editor = CustomDataEditor
+    _location_data_editor = ENikshayUserLocationDataEditor
     _user_form_class = ENikshayNewMobileWorkerForm
-    _user_data_editor = ENikshayUserDataEditor
+    _user_data_editor = ENikshayLocationUserDataEditor
 
     @property
     @memoized
