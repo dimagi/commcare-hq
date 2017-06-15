@@ -10,6 +10,7 @@ from corehq.apps.locations.permissions import (
     location_restricted_exception,
 )
 from corehq.apps.reports.datatables import DataTablesHeader
+from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.base import BaseReportFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -19,7 +20,6 @@ from custom.enikshay.case_utils import get_person_case_from_episode, get_adheren
 from custom.enikshay.const import DOSE_TAKEN_INDICATORS, ENIKSHAY_TIMEZONE, TREATMENT_START_DATE
 from custom.enikshay.reports.generic import EnikshayReport
 
-from django.http import Http404
 from django.utils.translation import ugettext_lazy
 
 from custom.enikshay.tasks import EpisodeAdherenceUpdate
@@ -65,11 +65,10 @@ class HistoricalAdherenceReport(EnikshayReport):
 
     def __init__(self, *args, **kwargs):
         super(HistoricalAdherenceReport, self).__init__(*args, **kwargs)
-        self.episode = CaseAccessors(self.domain).get_case(self.episode_case_id)
         try:
             self.episode = CaseAccessors(self.domain).get_case(self.episode_case_id)
         except CaseNotFound:
-            raise Http404()
+            raise BadRequestError()
         self.episode_properties = self.episode.dynamic_case_properties()
         self.person = get_person_case_from_episode(self.domain, self.episode_case_id)
 
