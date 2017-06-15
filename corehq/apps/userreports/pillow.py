@@ -225,7 +225,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
             return
 
         domain = change.metadata.domain
-        if not domain:
+        if not domain or domain not in self.table_adapters_by_domain:
             # if no domain we won't save to any UCR table
             return
 

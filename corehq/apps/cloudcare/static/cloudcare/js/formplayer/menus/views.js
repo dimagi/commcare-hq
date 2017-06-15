@@ -209,11 +209,12 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
     Views.CaseView = Marionette.ItemView.extend({
         tagName: "tr",
         template: "#case-view-item-template",
-        className: "formplayer-request",
 
         events: {
             "click": "rowClick",
         },
+
+        className: "formplayer-request",
 
         rowClick: function (e) {
             e.preventDefault();
@@ -230,6 +231,12 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
                 },
             };
         },
+    });
+
+    Views.CaseViewUnclickable = Views.CaseView.extend({
+        events: {},
+        className: "",
+        rowClick: function () {},
     });
 
     Views.CaseTileView = Views.CaseView.extend({
@@ -384,6 +391,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
 
     Views.CaseListDetailView = Views.CaseListView.extend({
         template: "#case-view-list-detail-template",
+        childView: Views.CaseViewUnclickable,
     });
 
     Views.BreadcrumbView = Marionette.ItemView.extend({

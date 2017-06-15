@@ -17,6 +17,8 @@ def _topic_for_ddog(topic):
     # can be a string for couch pillows, but otherwise is topic, partition
     if isinstance(topic, TopicAndPartition):
         return 'topic:{}-{}'.format(topic.topic, topic.partition)
+    elif isinstance(topic, tuple) and len(topic) == 2:
+        return 'topic:{}-{}'.format(topic[0], topic[1])
     else:
         return 'topic:{}'.format(topic)
 

@@ -3,6 +3,7 @@ from django.test import TestCase, override_settings, Client
 
 from corehq.apps.ota.tests.test_restore_user_check import _get_auth_header
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.domain.models import Domain
 
 from corehq.util import reverse
 from corehq.util.test_utils import flag_enabled
@@ -15,6 +16,8 @@ class DeviceIdUpdateTest(ENikshayCaseStructureMixin, TestCase):
 
     def setUp(self):
         super(DeviceIdUpdateTest, self).setUp()
+        self.domain_obj = Domain(name=self.domain)
+        self.domain_obj.save()
         self.web_user_username = "user@example.com"
         self.web_user_password = "123"
         self.web_user = WebUser.create(
@@ -22,6 +25,10 @@ class DeviceIdUpdateTest(ENikshayCaseStructureMixin, TestCase):
             username=self.web_user_username,
             password=self.web_user_password,
         )
+
+    def tearDown(self):
+        self.domain_obj.delete()
+        super(DeviceIdUpdateTest, self).tearDown()
 
     def test_login_as(self):
 

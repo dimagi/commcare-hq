@@ -2,6 +2,7 @@
 
 from datetime import datetime
 import uuid
+from nose.tools import nottest
 
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
@@ -217,6 +218,30 @@ def get_voucher_case_structure(case_id, indexed_prescription_id, extra_update=No
     )
 
 
+@nottest
+def get_test_case_structure(case_id, indexed_occurrence_id, extra_update=None):
+    extra_update = extra_update or {}
+    update = dict(
+        date_reported=datetime(2016, 8, 6).date(),
+    )
+    update.update(extra_update)
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            "case_type": "test",
+            "create": True,
+            "update": update
+        },
+        indices=[CaseIndex(
+            CaseStructure(case_id=indexed_occurrence_id, attrs={"create": False}),
+            identifier='host',
+            relationship=CASE_INDEX_EXTENSION,
+            related_type='occurrence',
+        )],
+        walk_related=False,
+    )
+
+
 class ENikshayCaseStructureMixin(object):
     def setUp(self):
         super(ENikshayCaseStructureMixin, self).setUp()
@@ -367,6 +392,12 @@ class ENikshayCaseStructureMixin(object):
         return self.factory.create_or_update_cases([
             get_referral_case_structure(case_id, self.person_id)
         ])
+
+    @nottest
+    def create_test_case(self, occurrence_id, extra_update=None):
+        return self.factory.create_or_update_case(
+            get_test_case_structure(uuid.uuid4().hex, occurrence_id, extra_update)
+        )[0]
 
 
 class ENikshayLocationStructureMixin(object):

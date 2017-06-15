@@ -1,11 +1,14 @@
-/* globals Formplayer */
+/* globals hqImport */
 /* eslint-env mocha */
 
 describe('Debugger', function() {
+    var EvaluateXPath = hqImport('cloudcare/js/debugger/debugger.js').EvaluateXPath,
+        API = hqImport('cloudcare/js/debugger/debugger.js').API,
+        CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger.js').CloudCareDebuggerFormEntry;
 
     describe('EvaluateXPath', function() {
         it('should correctly match xpath input', function() {
-            var evalXPath = new Formplayer.ViewModels.EvaluateXPath(),
+            var evalXPath = new EvaluateXPath(),
                 result;
 
             result = evalXPath.matcher('', '');
@@ -30,20 +33,20 @@ describe('Debugger', function() {
     });
 
     describe('Update logic', function() {
-        var ccDebugger,
-            updateSpy;
+        var ccDebugger;
 
         beforeEach(function() {
-            ccDebugger = new Formplayer.ViewModels.CloudCareDebugger(),
-            updateSpy = sinon.spy();
-            $.subscribe('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS, updateSpy);
+            ccDebugger = new CloudCareDebugger();
+            sinon.stub(API, 'evaluateXPath').returns($.Deferred());
+            sinon.stub(API, 'formattedQuestions').returns($.Deferred());
             window.analytics = {
                 workflow: sinon.spy(),
             };
         });
 
         afterEach(function() {
-            $.unsubscribe('formplayer.' + Formplayer.Const.FORMATTED_QUESTIONS);
+            API.evaluateXPath.restore();
+            API.formattedQuestions.restore();
         });
 
         it('Should update when opened', function() {
@@ -51,26 +54,13 @@ describe('Debugger', function() {
 
             ccDebugger.toggleState();
             assert.isFalse(ccDebugger.isMinimized());
-            assert.isTrue(updateSpy.calledOnce);
+            assert.isTrue(API.formattedQuestions.calledOnce);
 
             ccDebugger.toggleState();
             assert.isTrue(ccDebugger.isMinimized());
-            assert.isTrue(updateSpy.calledOnce);
+            assert.isTrue(API.formattedQuestions.calledOnce);
         });
 
-        it('Should only update when opened', function() {
-            assert.isTrue(ccDebugger.isMinimized());
-
-            $.publish('debugger.update');
-            assert.isFalse(updateSpy.called);
-
-            ccDebugger.toggleState();
-            assert.isTrue(updateSpy.calledOnce);
-
-            $.publish('debugger.update');
-            // Called once on open and once on publish
-            assert.isTrue(updateSpy.calledTwice);
-        });
     });
 });
 

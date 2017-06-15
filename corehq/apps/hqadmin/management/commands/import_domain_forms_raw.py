@@ -16,7 +16,10 @@ class Command(BaseCommand):
            "Note that if the domain you are importing into is not the same domain you" \
            "exported from then there will be some inconsistencies since the new domain" \
            "won't have the same user ID's or Application / App Build ID's"
-    args = "domain folder_path"
+
+    def add_arguments(self, parser):
+        parser.add_argument('domain')
+        parser.add_argument('folder_path')
 
     def handle(self, domain, folder_path, **options):
         if not os.path.exists(folder_path):

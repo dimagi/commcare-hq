@@ -248,16 +248,6 @@ describe('Entries', function() {
         assert.isTrue(spy.calledOnce);
     });
 
-    it('Should return DateTimeEntry', function() {
-        questionJSON.datatype = Formplayer.Const.DATETIME;
-        questionJSON.answer = null;
-
-        entry = (new Question(questionJSON)).entry;
-        assert.isTrue(entry instanceof DateTimeEntry);
-        assert.equal(entry.templateType, 'datetime');
-    });
-
-
     it('Should return InfoEntry', function() {
         questionJSON.datatype = Formplayer.Const.INFO;
         entry = (new Question(questionJSON)).entry;

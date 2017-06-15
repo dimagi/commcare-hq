@@ -9,7 +9,6 @@ from hqscripts.generic_queue import GenericEnqueuingOperation
 
 
 class ReminderEnqueuingOperation(GenericEnqueuingOperation):
-    args = ""
     help = "Runs the Reminders Queue"
 
     def get_fetching_interval(self):

@@ -13,7 +13,9 @@ CONFIRM_FORM_ALL_USERS = """MARK Tour {tour_slug} as SEEN for ALL USERS?
 
 class Command(BaseCommand):
     help = "marks a tour with tour_slug as seen for all existing users"
-    args = "tour_slug"
+
+    def add_arguments(self, parser):
+        parser.add_argument('tour_slug')
 
     def handle(self, tour_slug, *args, **kwargs):
         if len(args) > 0:

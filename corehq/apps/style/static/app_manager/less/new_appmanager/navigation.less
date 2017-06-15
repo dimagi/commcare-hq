@@ -20,7 +20,7 @@ nav.appmanager-content {
 
 @appnav-width: @app-manager-sidebar-width;
 @appnav-trash-width: 32px;
-@appnav-item-height: 48px;
+@appnav-item-height: 30px;
 @appnav-secondary-width: 35px;
 
 .appnav-menu {
@@ -104,7 +104,7 @@ nav.appmanager-content {
     &:hover {
       color: @cc-dark-cool-accent-mid;
       cursor: move;
-      background-color: darken(@cc-bg, 5);
+      background-color: darken(@cc-bg, 10);
     }
   }
   &:hover {
@@ -179,9 +179,6 @@ nav.appmanager-content {
       opacity: 100;
     }
   }
-  &.active a {
-    background-color: white;
-  }
   &.settings-view .appnav-secondary {
     color: @cc-brand-mid;
   }
@@ -220,7 +217,7 @@ nav.appmanager-content {
 }
 
 .appnav-highlight {
-  background-color: darken(@cc-bg, 5);
+  background-color: darken(@cc-bg, 10);
 }
 
 .appnav-name-wrapper {
@@ -329,4 +326,36 @@ nav.appmanager-content {
   padding: 5px 15px 0 15px;
   font-weight: 600;
   font-size: 10px;
+}
+
+.appnav-menu > li > .appnav-item.active {
+  a {
+    background-color: @cc-brand-low;
+    color: white;
+
+    > .appnav-drag-icon {
+      &:hover {
+        color: white;
+        cursor: move;
+        background-color: @cc-text;
+      }
+    }
+    &:before {
+      color: darken(@cc-bg, 2);
+    }
+  }
+  .appnav-primary-icon {
+    color: white;
+  }
+  .appnav-delete:hover {
+    color: @cc-att-neg-hi;
+  }
+  .appnav-secondary {
+    &:hover, &:focus {
+      color: darken(@cc-att-pos-hi, 5);
+      &.appnav-settings {
+        color: @cc-brand-hi;
+      }
+    }
+  }
 }

@@ -34,7 +34,7 @@ def transform_case_to_report_es(doc_dict):
 
 def get_report_case_to_elasticsearch_pillow(pillow_id='ReportCaseToElasticsearchPillow', **kwargs):
     assert pillow_id == 'ReportCaseToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, REPORT_CASE_INDEX_INFO)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, REPORT_CASE_INDEX_INFO, topics.CASE_TOPICS)
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=REPORT_CASE_INDEX_INFO,

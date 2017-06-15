@@ -1,7 +1,8 @@
 {
     "domains": [
         "enikshay",
-        "sheel-enikshay"
+        "sheel-enikshay",
+        "enikshay-reports-qa"
     ],
     "server_environment": [
         "softlayer"
@@ -64,17 +65,6 @@
             }
         ],
         "columns": [
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "date_reported",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Date of Test Performed"
-            },
             {
                 "sortable": false,
                 "description": null,
