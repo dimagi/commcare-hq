@@ -2,7 +2,6 @@ import uuid
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.models import CommCareCaseIndexSQL
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseAlertScheduleInstance,
