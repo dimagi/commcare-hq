@@ -21,7 +21,7 @@
             return ((label.length <= maxlen) ? (label) : (label.slice(0, maxlen) + "...")) + suffix;
         },
         truncateValue: function (value, MAXLEN) {
-            var MAXLEN = MAXLEN || 40;
+            MAXLEN = MAXLEN || 40;
             return (value.length <= MAXLEN) ? (value) : (value.slice(0, MAXLEN/2) + "..." + value.slice(value.length - MAXLEN/2, value.length - 1));
         },
     };
