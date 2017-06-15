@@ -140,10 +140,12 @@ class TestAdherenceUpdater(TestCase):
             }
         )
         cases = {case.case_id: case for case in self.factory.create_or_update_cases([episode_structure])}
-        return cases[self.episode_id]
+        episode_case = cases[self.episode_id]
+        self.case_updater._get_open_episode_cases = mock.MagicMock(return_value=[episode_case])
+        return episode_case
 
     def _create_adherence_cases(self, case_dicts):
-        self.factory.create_or_update_cases([
+        return self.factory.create_or_update_cases([
             get_adherence_case_structure(
                 "adherence{}".format(i),
                 self.episode_id,
@@ -154,43 +156,6 @@ class TestAdherenceUpdater(TestCase):
         ])
 
     def assert_update(self, input, output):
-        episode = self.create_episode_case(input)
-
-        self.case_updater.run()
-        # refetch episode case after updates
-        episode = CaseAccessors(self.domain).get_case(episode.case_id)
-
-        self.assertDictEqual(
-            {key: episode.dynamic_case_properties()[key] for key in output},
-            {key: str(val) for key, val in output.iteritems()}  # convert values to strings
-        )
-
-    def create_episode_case(self, input):
-        self.case_updater.purge_date = input[0]
-        # setup episode and adherence cases
-        adherence_schedule_date_start, adherence_schedule_id = input[1]
-        adherence_cases = [
-            {
-                "name": adherence_case[0],
-                "adherence_value": adherence_case[1],
-                "adherence_source": "enikshay",
-                "adherence_source": "treatment_supervisor"
-            }
-            for adherence_case in input[2]
-        ]
-        episode = self._create_episode_case(adherence_schedule_date_start, adherence_schedule_id)
-        self._create_adherence_cases(adherence_cases)
-        self._rebuild_indicators()
-        # _get_open_episode_cases doesn't work in tests due to caseaccessors returning empty list, so override it
-        self.case_updater._get_open_episode_cases = mock.MagicMock(return_value=[episode])
-        return episode
-
-    def _rebuild_indicators(self):
-        # rebuild so that adherence UCR data gets updated
-        rebuild_indicators(self.data_store.datasource._id)
-        self.data_store.adapter.refresh_table()
-
-    def test_adherence_schedule_date_start_late(self):
         #   Sample test case
         #   [
         #       (
@@ -209,7 +174,49 @@ class TestAdherenceUpdater(TestCase):
         #       ),
         #       ...
         #   ]
+        purge_date = input[0]
+        adherence_schedule_date_start, adherence_schedule_id = input[1]
+        adherence_cases = [
+            {
+                "name": adherence_case[0],
+                "adherence_value": adherence_case[1],
+                "adherence_source": "enikshay",
+                "adherence_source": "treatment_supervisor"
+            }
+            for adherence_case in input[2]
+        ]
+        episode = self.create_episode_case(
+            purge_date, adherence_schedule_date_start, adherence_schedule_id, adherence_cases
+        )
 
+        self.case_updater.run()
+        # refetch episode case after updates
+        episode = CaseAccessors(self.domain).get_case(episode.case_id)
+
+        self.assertDictEqual(
+            {key: episode.dynamic_case_properties()[key] for key in output},
+            {key: str(val) for key, val in output.iteritems()}  # convert values to strings
+        )
+
+    def create_episode_case(
+            self,
+            purge_date,
+            adherence_schedule_date_start,
+            adherence_schedule_id,
+            adherence_cases
+    ):
+        self.case_updater.purge_date = purge_date
+        episode = self._create_episode_case(adherence_schedule_date_start, adherence_schedule_id)
+        adherence_cases = self._create_adherence_cases(adherence_cases)
+        self._rebuild_indicators()
+        return episode
+
+    def _rebuild_indicators(self):
+        # rebuild so that adherence UCR data gets updated
+        rebuild_indicators(self.data_store.datasource._id)
+        self.data_store.adapter.refresh_table()
+
+    def test_adherence_schedule_date_start_late(self):
         self.assert_update(
             (
                 datetime.date(2016, 1, 15),
@@ -501,11 +508,12 @@ class TestAdherenceUpdater(TestCase):
         )
 
     def test_count_taken_by_day(self):
-        episode = self.create_episode_case((
-            datetime.date(2016, 1, 20),
-            (datetime.date(2016, 1, 10), 'schedule1'),
-            []
-        ))
+        episode = self.create_episode_case(
+            purge_date=datetime.date(2016, 1, 20),
+            adherence_schedule_date_start=datetime.date(2016, 1, 10),
+            adherence_schedule_id='schedule1',
+            adherence_cases=[]
+        )
         episode_update = EpisodeAdherenceUpdate(episode, self.case_updater)
 
         def dose_taken_by_day(cases):
@@ -654,12 +662,6 @@ class TestAdherenceUpdater(TestCase):
         )
 
     def test_update_by_person(self):
-        initial_data = (
-            datetime.date(2016, 1, 15),
-            (datetime.date(2016, 1, 17), 'schedule1'),
-            []
-        )
-
         expected_update = {
             'aggregated_score_date_calculated': datetime.date(2016, 1, 16),
             'expected_doses_taken': 0,
@@ -669,7 +671,12 @@ class TestAdherenceUpdater(TestCase):
             'adherence_total_doses_taken': 0
         }
 
-        episode = self.create_episode_case(initial_data)
+        episode = self.create_episode_case(
+            datetime.date(2016, 1, 15),
+            datetime.date(2016, 1, 17),
+            'schedule1',
+            []
+        )
         update_episode_adherence_properties(self.domain, self.person_id)
 
         episode = CaseAccessors(self.domain).get_case(episode.case_id)
