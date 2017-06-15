@@ -362,6 +362,8 @@ class BeneficiaryCaseFactory(object):
         if self.location_owner:
             return self.location_owner
         else:
+            if self._agency is None:
+                return None
             return SQLLocation.active_objects.get(
                 domain=self.domain,
                 site_code=str(self._agency.agencyId),
@@ -370,6 +372,8 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _location_owner_id(self):
+        if self._location_owner is None:
+            return '-'
         return self._location_owner.location_id
 
     @property
