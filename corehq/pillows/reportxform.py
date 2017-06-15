@@ -37,7 +37,7 @@ def transform_xform_for_report_forms_index(doc_dict):
 
 def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsearchPillow', **kwargs):
     assert pillow_id == 'ReportXFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, REPORT_XFORM_INDEX_INFO)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, REPORT_XFORM_INDEX_INFO, topics.FORM_TOPICS)
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=REPORT_XFORM_INDEX_INFO,

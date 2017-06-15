@@ -13,7 +13,9 @@ TEMPLATE_NAME = '_template.sql'
 
 class Command(LabelCommand):
     help = "Create a template sql function"
-    args = "<sql_function_name.. sql_function_name>"
+
+    def add_arguments(self, parser):
+        parser.add_argument('sql_function_name')
 
     def handle_label(self, sql_function_name, **options):
         sql_function_name = os.path.splitext(sql_function_name)[0]  # strip any extension

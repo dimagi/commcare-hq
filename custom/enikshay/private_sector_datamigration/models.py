@@ -134,7 +134,7 @@ class Beneficiary(models.Model):
         return {
             '131': 'en',
             '132': 'hin',
-            '133': 'bhoj',
+            '133': 'bho',
             '152': 'mar',
             '153': 'guj',
             None: '',

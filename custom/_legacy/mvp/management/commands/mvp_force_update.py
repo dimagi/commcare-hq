@@ -24,7 +24,6 @@ POOL_SIZE = 10
 
 class Command(BaseCommand):
     help = "Update MVP indicators in existing cases and forms."
-    args = "<domain> <case or form> <case or form label> <start at record #>"
     start_at_record = 0
     domains = None
 

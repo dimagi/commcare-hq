@@ -213,6 +213,6 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
         return False
 
 
-def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info):
+def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, topics):
     checkpoint_id = u'{}-{}'.format(pillow_id, index_info.index)
-    return PillowCheckpoint(checkpoint_id, 'json')  # all ES pillows use json checkpoints
+    return KafkaPillowCheckpoint(checkpoint_id, topics)

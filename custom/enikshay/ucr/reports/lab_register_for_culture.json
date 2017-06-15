@@ -71,17 +71,6 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "date_reported",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Date of Test Performed"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
                 "field": "test_type_value",
                 "calculate_total": false,
                 "type": "field",

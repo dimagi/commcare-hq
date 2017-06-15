@@ -2083,6 +2083,43 @@
               "statement": "age_in_days / 30.4"
             },
             "property_value": 72
+          },
+          {
+            "type": "and",
+            "filters": [
+              {
+                "operator": "not_eq",
+                "type": "boolean_expression",
+                "expression": {
+                  "doc_id_expression": {
+                    "type": "icds_parent_id"
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareCase",
+                  "value_expression": {
+                    "type": "property_name",
+                    "property_name": "registered_status"
+                  }
+                },
+                "property_value": "not_registered"
+              },
+              {
+                "operator": "not_eq",
+                "type": "boolean_expression",
+                "expression": {
+                  "doc_id_expression": {
+                    "type": "icds_parent_id"
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareCase",
+                  "value_expression": {
+                    "type": "property_name",
+                    "property_name": "migrated_status"
+                  }
+                },
+                "property_value": "yes"
+              }
+            ]
           }
         ]
       },
@@ -3109,6 +3146,43 @@
               "statement": "age_in_days / 30.4"
             },
             "property_value": 72
+          },
+          {
+            "type": "and",
+            "filters": [
+              {
+                "operator": "not_eq",
+                "type": "boolean_expression",
+                "expression": {
+                  "doc_id_expression": {
+                    "type": "icds_parent_id"
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareCase",
+                  "value_expression": {
+                    "type": "property_name",
+                    "property_name": "registered_status"
+                  }
+                },
+                "property_value": "not_registered"
+              },
+              {
+                "operator": "not_eq",
+                "type": "boolean_expression",
+                "expression": {
+                  "doc_id_expression": {
+                    "type": "icds_parent_id"
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareCase",
+                  "value_expression": {
+                    "type": "property_name",
+                    "property_name": "migrated_status"
+                  }
+                },
+                "property_value": "yes"
+              }
+            ]
           }
         ]
       }

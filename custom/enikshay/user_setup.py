@@ -341,6 +341,16 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
                 required=True,
                 validators=[RegexValidator(regexp, help_text)],
             )
+        if field.slug == 'user_level':
+            return forms.ChoiceField(
+                label=field.label,
+                required=field.is_required,
+                choices=[
+                    ("real", "Real"),
+                    ("dev", "Developer"),
+                    ("test", "Test"),
+                ],
+            )
         return super(ENikshayLocationUserDataEditor, self)._make_field(field)
 
 

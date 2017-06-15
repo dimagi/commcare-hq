@@ -13,6 +13,7 @@
 <script src="{% static 'cloudcare/js/formplayer/spec/session_middleware_spec.js' %}"></script>
 <script src="{% static 'cloudcare/js/formplayer/spec/util_spec.js' %}"></script>
 <script src="{% static 'cloudcare/js/formplayer/spec/integration_spec.js' %}"></script>
+<script src="{% static 'cloudcare/js/formplayer/spec/debugger_spec.js' %}"></script>
 {% endblock %}
 
 {% block fixtures %}
@@ -25,6 +26,7 @@
     <div id="menu-region" class="container"></div>
 
     {% include 'form_entry/templates.html' %}
+    {% include 'formplayer/debugger.html' %}
     {% include 'formplayer/grid_view.html' %}
     {% include 'formplayer/settings_view.html' %}
     {% include 'formplayer/case_detail.html' %}

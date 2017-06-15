@@ -378,7 +378,7 @@ class SystemInfoView(BaseAdminSectionView):
         context['celery_stats'] = get_celery_stats()
         context['heartbeat'] = service_checks.check_heartbeat()
 
-        context['elastic'] = escheck.check_es_cluster_health()
+        context['cluster_health'] = escheck.check_es_cluster_health()
 
         return context
 
