@@ -2,6 +2,7 @@ from __future__ import print_function
 from django.conf import settings
 from corehq.apps.sms.models import SQLSMSBackend
 from corehq.apps.sms.forms import BackendForm
+from time import sleep
 
 
 class SQLTestSMSBackend(SQLSMSBackend):
@@ -33,3 +34,5 @@ class SQLTestSMSBackend(SQLSMSBackend):
             print("Message To:      %s" % msg.phone_number)
             print("Message Content: %s" % msg.text)
             print("***************************************************")
+        # Simulate latency
+        sleep(1)
