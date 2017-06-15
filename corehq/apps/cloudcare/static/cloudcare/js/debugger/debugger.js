@@ -219,7 +219,6 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 },
                 self.options.sessionType
             ).done(function(response) {
-                self.result(response.output);
                 self.success(response.status === "accepted");
                 self.recentXPathQueries.unshift({
                     status: response.status,
@@ -230,6 +229,11 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 self.recentXPathQueries(
                     self.recentXPathQueries.slice(0, 6)
                 );
+                if (self.success()) {
+                    self.result(response.output);
+                } else {
+                    self.result(response.output || 'Error evaluating expression.');
+                }
             });
             window.analytics.workflow('[app-preview] User evaluated XPath');
         };
