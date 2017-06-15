@@ -25,13 +25,12 @@ class Command(BaseCommand):
         for data_source_id in data_source_ids:
             config, _ = get_datasource_config(data_source_id, domain)
             assert config.asynchronous
-            doc_type = config.referenced_doc_type
-            assert doc_type == CASE_DOC_TYPE
+            assert config.referenced_doc_type == CASE_DOC_TYPE
             configs.append(config)
 
         fake_change_doc = {'doc_type': CASE_DOC_TYPE, 'domain': domain}
 
-        doc_store = get_document_store(domain, doc_type)
+        doc_store = get_document_store(domain, CASE_DOC_TYPE)
         case_accessor = doc_store.case_accessors
 
         case_ids = case_accessor.get_case_ids_in_domain(type=case_type)
