@@ -197,9 +197,15 @@ def get_latest_trail_case_from_person(domain, person_case_id):
         case for case in reverse_indexed_cases
         if case.type == CASE_TYPE_TRAIL
     ]
-    trail_cases.sort(key=lambda c: c.opened_on)
-    if trail_cases:
-        return trail_cases[-1]
+    trails_with_server_opened_on = []
+    for trail in trail_cases:
+        server_opened_on = trail.actions[0].server_date
+        trails_with_server_opened_on.append((server_opened_on, trail))
+
+    trails_with_server_opened_on.sort()
+    if trails_with_server_opened_on:
+        # Return the latest trail case
+        return trails_with_server_opened_on[-1][1]
     else:
         return None
 
