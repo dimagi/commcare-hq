@@ -8,7 +8,7 @@
         },
         getDisplay: function (question, MAXLEN) {
             return utils.getIcon(question) + utils.getLabel(question, MAXLEN)
-                    + " (" + (question.hashtagValue || question.value) + ")";
+                    + " (" + utils.truncateValue(question.hashtagValue || question.value, MAXLEN) + ")";
         },
         getLabel: function (question, MAXLEN) {
             return utils.truncateLabel((question.repeat ? '- ' : '')
@@ -19,7 +19,11 @@
             var MAXLEN = MAXLEN || 40,
                 maxlen = MAXLEN - suffix.length;
             return ((label.length <= maxlen) ? (label) : (label.slice(0, maxlen) + "...")) + suffix;
-        }
+        },
+        truncateValue: function (value, MAXLEN) {
+            var MAXLEN = MAXLEN || 40;
+            return (value.length <= MAXLEN) ? (value) : (value.slice(0, MAXLEN/2) + "..." + value.slice(value.length - MAXLEN/2, value.length - 1));
+        },
     };
 
     ko.bindingHandlers.questionsSelect = {
