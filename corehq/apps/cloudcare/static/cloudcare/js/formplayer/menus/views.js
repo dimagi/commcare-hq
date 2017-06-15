@@ -218,7 +218,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
 
         rowClick: function (e) {
             e.preventDefault();
-            FormplayerFrontend.trigger("menu:show:detail", this.options.model.get('id'), 0);
+            FormplayerFrontend.trigger("menu:show:detail", this.options.model.get('id'), 0, false);
         },
 
         templateHelpers: function () {
@@ -245,6 +245,13 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             var dict = Views.CaseTileView.__super__.templateHelpers.apply(this, arguments);
             dict['prefix'] = this.options.prefix;
             return dict;
+        },
+    });
+
+    Views.PersistentCaseTileView = Views.CaseTileView.extend({
+        rowClick: function (e) {
+            e.preventDefault();
+            FormplayerFrontend.trigger("menu:show:detail", this.options.model.get('id'), 0, true);
         },
     });
 
