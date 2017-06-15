@@ -184,7 +184,8 @@ def _add_case_property_queries(domain, case_type, search_es, criteria):
             case_property=key,
         )
         for removal_regex in remove_char_regexs:
-            value = re.sub(removal_regex.regex, '', value)
+            to_remove = re.escape(removal_regex.regex)
+            value = re.sub(to_remove, '', value)
         search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
 
     return search_es

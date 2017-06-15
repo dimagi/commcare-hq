@@ -100,10 +100,21 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
         rc.save()
         config.ignore_patterns.add(rc)
         config.save()
+        rc = IgnorePatterns(
+            domain=DOMAIN,
+            case_type='case_type',
+            case_property='phone_number',
+            regex='+',
+        )                       # remove '+' from the phone_number case property
+        rc.save()
+        config.ignore_patterns.add(rc)
+        config.save()
+
         criteria = {
             'name': "this word should be gone",
             'other_name': "this word should not be gone",
             'special_id': 'abc-123-546',
+            'phone_number': '+91999',
         }
 
         expected = {"query": {
@@ -123,6 +134,28 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
                 "query": {
                     "bool": {
                         "must": [
+                            {
+                                "nested": {
+                                    "path": "case_properties",
+                                    "query": {
+                                        "filtered": {
+                                            "filter": {
+                                                "term": {
+                                                    "case_properties.key": "phone_number"
+                                                }
+                                            },
+                                            "query": {
+                                                "match": {
+                                                    "case_properties.value": {
+                                                        "query": "91999",
+                                                        "fuzziness": "0"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
                             {
                                 "nested": {
                                     "path": "case_properties",
