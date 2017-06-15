@@ -365,10 +365,9 @@ class EpisodeAdherenceUpdate(object):
                 doses_taken_by_source = {source: 0 for source in VALID_ADHERENCE_SOURCES}
 
             properties["{}_score_count_taken".format(day_name)] = score_count_taken
-            properties["{}_score_count_taken_{}".format(day_name)] = self._percentage_score(
-                score_count_taken, num_days)
+            properties["{}_adherence_score".format(day_name)] = self._percentage_score(score_count_taken, num_days)
             for source in VALID_ADHERENCE_SOURCES:
-                properties["{}_adherence_score".format(day_name, source)] = doses_taken_by_source[source]
+                properties["{}_score_count_taken_{}".format(day_name, source)] = doses_taken_by_source[source]
                 properties["{}_adherence_score_{}".format(day_name, source)] = self._percentage_score(
                     doses_taken_by_source[source], num_days)
 
