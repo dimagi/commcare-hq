@@ -115,7 +115,9 @@ class ScheduleInstance(PartitionedModel):
         Can be used as a generator to iterate over all individual contacts who
         are the recipients of this ScheduleInstance.
         """
-        if self.recipient_is_an_individual_contact:
+        if self.recipient is None:
+            return
+        elif self.recipient_is_an_individual_contact:
             yield self.recipient
         elif isinstance(self.recipient, CommCareCaseGroup):
             case_group = self.recipient
