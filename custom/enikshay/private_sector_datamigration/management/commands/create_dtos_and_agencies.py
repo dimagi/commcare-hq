@@ -28,7 +28,7 @@ class Command(BaseCommand):
             for agency in self.get_agencies_by_state_district_org(state_code, district_code, org_id):
                 if agency.location_type is not None:
                     agency_loc = self.create_agency(domain, agency, dto, org_id)
-                    self.create_user(agency_loc, user_level)
+                    self.create_user(agency, agency_loc, user_level)
                 elif agency.is_field_officer:
                     self.create_field_officer(agency, domain, dto, user_level)
 
@@ -80,7 +80,7 @@ class Command(BaseCommand):
             },
         )
 
-    def create_user(self, agency_loc, user_level):
+    def create_user(self, agency, agency_loc, user_level):
         assert agency_loc.location_type.has_user
 
         agency_loc_id = agency_loc.location_id
@@ -95,7 +95,7 @@ class Command(BaseCommand):
             UserRole.by_domain_and_name(domain, 'Default Mobile Worker')[0].get_qualified_id()
         )
         user.user_data['user_level'] = user_level
-        user.user_data['usertype'] = self.get_usertype(agency_loc.location_type.code)
+        user.user_data['usertype'] = agency.usertype
         user.save()
 
         agency_loc.user_id = user._id
@@ -112,17 +112,8 @@ class Command(BaseCommand):
         )
         field_officer.set_location(parent, commit=False)
         field_officer.user_data['user_level'] = user_level
-        field_officer.user_data['usertype'] = 'ps-fieldstaff'
+        field_officer.user_data['usertype'] = agency.usertype
         field_officer.save()
-
-    @staticmethod
-    def get_usertype(code):
-        return {
-            'pac': 'pac',
-            'pcc': 'pcc-chemist',
-            'pcp': 'pcp',
-            'plc': 'plc',
-        }[code]
 
     @staticmethod
     def _get_org_name_by_id(org_id):

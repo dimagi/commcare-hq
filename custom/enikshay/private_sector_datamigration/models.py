@@ -607,6 +607,18 @@ class Agency(models.Model):
                 'ATPH': 'pcc',
             }[self.agencyTypeId]
 
+
+    @property
+    def usertype(self):
+        if self.agencyTypeId == 'ATFO':
+            return 'ps-fieldstaff'
+        return {
+            'pac': 'pac',
+            'pcc': 'pcc-chemist',
+            'pcp': 'pcp',
+            'plc': 'plc',
+        }[self.location_type]
+
     @property
     def is_field_officer(self):
         return self.agencyTypeId == 'ATFO'
