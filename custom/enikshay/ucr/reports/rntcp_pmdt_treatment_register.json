@@ -178,21 +178,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "rft_drtb_diagnosis",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Reason for Testing"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
                 "field": "site_of_disease",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Site of Disease (P/EP)"
+                "display": "Site of Disease"
             },
             {
                 "sortable": false,
@@ -204,6 +193,17 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Type (New, Recurrent, TALFU, Failure, Other)"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "rft_drtb_diagnosis",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Reason for Testing"
             },
             {
                 "sortable": false,
