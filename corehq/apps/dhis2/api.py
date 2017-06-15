@@ -15,24 +15,6 @@ class JsonApiError(Exception):
 
 def log_request(func):
 
-    def log(log_level, json_api_request, request_error, response_status, response_body, method_func, request_url,
-            data=None, **params):
-        """
-        Unpack function, path and data from args and kwargs in order to log them separately
-        """
-        JsonApiLog.objects.create(
-            domain=json_api_request.domain_name,
-            log_level=log_level,
-            request_method=method_func.__name__.upper(),
-            request_url=request_url,
-            request_headers=json.dumps(json_api_request.headers),
-            request_params=json.dumps(params),
-            request_body='' if data is None else json.dumps(data, cls=DjangoJSONEncoder),
-            request_error=request_error,
-            response_status=response_status,
-            response_body=response_body,
-        )
-
     def request_wrapper(self, *args, **kwargs):
         dhis2_conn = get_dhis2_connection(self.domain_name)
         domain_log_level = getattr(dhis2_conn, 'log_level', logging.INFO)
@@ -52,7 +34,7 @@ def log_request(func):
             return response
         finally:
             if log_level >= domain_log_level:
-                log(log_level, self, request_error, response_status, response_body, *args, **kwargs)
+                JsonApiLog.log(log_level, self, request_error, response_status, response_body, *args, **kwargs)
 
     return request_wrapper
 
