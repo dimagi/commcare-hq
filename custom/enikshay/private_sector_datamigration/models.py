@@ -104,6 +104,11 @@ class Beneficiary(models.Model):
         return self.age
 
     @property
+    @memoized
+    def creating_agency(self):
+        return get_agency_by_motech_user_name(self.creator)
+
+    @property
     def current_address(self):
         if not self.addressLineOne:
             return self.addressLineTwo or ''
