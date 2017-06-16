@@ -74,9 +74,6 @@ hqDefine('app_manager/js/app_manager.js', function () {
             }
             }
             }
-        function getVar(name) {
-            var r = $('input[name="' + name + '"]').first().val();
-            return JSON.parse(r);
         }
         function updateRelatedTags($elem, name, value) {
             var relatedTags = $elem.find("[data-" + name +"]");
