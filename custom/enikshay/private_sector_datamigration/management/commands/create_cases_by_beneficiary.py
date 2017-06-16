@@ -125,8 +125,6 @@ class Command(BaseCommand):
             start, limit, case_ids, owner_state_id, owner_district_id, owner_organisation_ids
         )
 
-        self.assert_always_null(beneficiaries)
-
         self.migrate_to_enikshay(domain, beneficiaries, skip_adherence, chunk_size, location_owner, default_location_owner)
 
     def beneficiaries(self, start, limit, case_ids, owner_state_id, owner_district_id, owner_organisation_ids):
