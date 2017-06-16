@@ -1,4 +1,4 @@
-/* globals hqDefine COMMCAREHQ django */
+/* globals hqDefine COMMCAREHQ django hqLayout */
 hqDefine('app_manager/js/app_manager.js', function () {
     'use strict';
     var module = eventize({});
@@ -92,7 +92,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
         } else {
             $(hqLayout.selector.publishStatus).fadeOut();
         }
-    }
+    };
 
     module.init = function (args) {
 
@@ -178,7 +178,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
                 url: currentAppVersionUrl,
                 success: function (data) {
                     module.setPublishStatus((!data.latestRelease && data.currentVersion > 1) || (data.latestRelease !== null && data.latestRelease < data.currentVersion));
-                }
+                },
             });
         };
         _checkPublishStatus();
