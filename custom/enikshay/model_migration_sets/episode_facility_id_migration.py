@@ -42,8 +42,13 @@ class EpisodeFacilityIDMigration(object):
         if(self.episode.get_case_property('treatment_initiating_facility_id')
            or self.episode.get_case_property('diagnosing_facility_id')):
             return False
+
         if self.episode.get_case_property('facility_id_migration_complete') == 'true':
             return False
+
+        if self.episode.get_case_property('enrolled_in_private') == 'true':
+            return False
+
         return self.episode.get_case_property('episode_type') == 'confirmed_tb'
 
     @property
