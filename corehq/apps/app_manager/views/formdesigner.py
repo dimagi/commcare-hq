@@ -256,6 +256,9 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         context.update({'requirejs_url': "formdesigner/_build/src"})
     else:
         context.update({'requirejs_url': "formdesigner/src"})
+
+    context['current_app_version_url'] = reverse('current_app_version', args=[domain, app_id])
+
     context.update({
         'requirejs_args': 'version={}{}'.format(
             cachebuster("app_manager/js/vellum/src/main-components.js"),

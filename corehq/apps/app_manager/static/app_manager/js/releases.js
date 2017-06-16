@@ -435,6 +435,7 @@ hqDefine('app_manager/js/releases.js', function () {
                         self.addSavedApp(app, true);
                     }
                     self.buildState('');
+                    hqImport('app_manager/js/app_manager.js').setPublishStatus(false);
                 },
                 error: function() {
                     self.buildState('error');
