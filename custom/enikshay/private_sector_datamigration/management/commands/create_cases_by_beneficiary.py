@@ -72,6 +72,9 @@ class Command(BaseCommand):
             '--location-owner-id',
         )
         parser.add_argument(
+            '--default-location-owner-id',
+        )
+        parser.add_argument(
             '--owner-state-id',
         )
         parser.add_argument(
@@ -95,6 +98,15 @@ class Command(BaseCommand):
         skip_adherence = options['skip_adherence']
         start = options['start']
 
+        default_location_owner_id = options['default_location_owner_id']
+        if default_location_owner_id:
+            default_location_owner = SQLLocation.objects.get(
+                domain=domain,
+                location_id=default_location_owner_id,
+            )
+        else:
+            default_location_owner = None
+
         location_owner_id = options['location_owner_id']
         if location_owner_id:
             location_owner = SQLLocation.objects.get(
@@ -114,7 +126,7 @@ class Command(BaseCommand):
 
         self.assert_always_null(beneficiaries)
 
-        self.migrate_to_enikshay(domain, beneficiaries, skip_adherence, chunk_size, location_owner)
+        self.migrate_to_enikshay(domain, beneficiaries, skip_adherence, chunk_size, location_owner, default_location_owner)
 
     @staticmethod
     def beneficiaries(start, limit, case_ids, owner_state_id, owner_district_id, owner_organisation_ids):
@@ -171,7 +183,7 @@ class Command(BaseCommand):
             return beneficiaries_query[start:]
 
     @staticmethod
-    def migrate_to_enikshay(domain, beneficiaries, skip_adherence, chunk_size, location_owner):
+    def migrate_to_enikshay(domain, beneficiaries, skip_adherence, chunk_size, location_owner, default_location_owner):
         total = beneficiaries.count()
         counter = 0
         num_succeeded = 0
@@ -183,7 +195,7 @@ class Command(BaseCommand):
         for beneficiary in beneficiaries:
             counter += 1
             try:
-                case_factory = BeneficiaryCaseFactory(domain, beneficiary, location_owner)
+                case_factory = BeneficiaryCaseFactory(domain, beneficiary, location_owner, default_location_owner)
                 case_structures.extend(case_factory.get_case_structures_to_create(skip_adherence))
             except Exception:
                 num_failed += 1

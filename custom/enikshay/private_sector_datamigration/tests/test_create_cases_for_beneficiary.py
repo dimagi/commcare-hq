@@ -105,8 +105,22 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.pcp.user_id = self.virtual_location_user._id
         self.pcp.save()
 
+        self.default_location = SQLLocation.objects.create(
+            domain=self.domain,
+            location_type=self.pcp.location_type,
+            site_code='default',
+        )
+
+        self.default_location_user = make_location_user(self.default_location)
+        self.default_location_user.save()
+        set_issuer_id(self.domain, self.default_location_user)
+
+        self.default_location.user_id = self.default_location_user._id
+        self.default_location.save()
+
     def tearDown(self):
         self.virtual_location_user.delete()
+        self.default_location_user.delete()
         super(TestCreateCasesByBeneficiary, self).tearDown()
 
     @patch('custom.enikshay.private_sector_datamigration.factory.datetime')
@@ -422,6 +436,26 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
                 person_case_ids[1]).dynamic_case_properties()['id_original_beneficiary_count'])),
             1
         )
+
+    def test_default_location_owner(self):
+        self.agency.agencyTypeId = 'ATFO'
+        self.agency.save()
+
+        call_command('create_cases_by_beneficiary', self.domain, default_location_owner_id=self.default_location.location_id)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(len(person_case_ids), 1)
+        person_case = self.case_accessor.get_case(person_case_ids[0])
+        self.assertEqual(person_case.owner_id, self.default_location.location_id)
+
+    def test_default_location_owner_not_used(self):
+
+        call_command('create_cases_by_beneficiary', self.domain, default_location_owner_id=self.default_location.location_id)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(len(person_case_ids), 1)
+        person_case = self.case_accessor.get_case(person_case_ids[0])
+        self.assertEqual(person_case.owner_id, self.pcp.location_id)
 
     def test_adherence(self):
         episode = Episode.objects.create(
