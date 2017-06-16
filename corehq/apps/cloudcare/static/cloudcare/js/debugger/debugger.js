@@ -221,6 +221,11 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
             ).done(function(response) {
                 self.result(response.output);
                 self.success(response.status === "accepted");
+                self.recentXPathQueries.push({
+                    status: response.status,
+                    output: response.output,
+                    xpath: xpath,
+                });
             });
             window.analytics.workflow('[app-preview] User evaluated XPath');
         };
