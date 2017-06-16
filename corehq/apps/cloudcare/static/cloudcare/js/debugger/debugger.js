@@ -241,6 +241,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 readOnly: true,
             };
             self.codeMirrorResult = CodeMirror.fromTextArea($('#evaluate-result')[0], options);
+            self.codeMirrorResult.setSize(null, 200);
         };
 
         self.result.subscribe(function(newResult) {
