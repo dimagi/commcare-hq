@@ -6,9 +6,11 @@ hqDefine('app_manager/js/app_manager.js', function () {
     module.setCommcareVersion = function (version) {
         module.commcareVersion(version);
     };
+
     module.checkCommcareVersion = function (version) {
         return module.versionGE(module.commcareVersion(), version);
     };
+
     module.checkAreWeThereYet = function (version) {
         if (!module.latestCommcareVersion()) {
             // We don't know the latest version. Assume this version has arrived
@@ -17,6 +19,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
             return module.versionGE(module.latestCommcareVersion(), version);
         }
     };
+
     module.versionGE = function (commcareVersion1, commcareVersion2) {
         function parse(version) {
             version = version.split('.');
