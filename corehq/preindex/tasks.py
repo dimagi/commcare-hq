@@ -11,7 +11,7 @@ def run_continuous_indexing_task():
     preindex_couch_views.delay()
 
 
-@serial_task('couch-continuous-indexing', timeout=60 * 60, queue='background_queue', max_retries=0)
+@serial_task('couch-continuous-indexing', timeout=60 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
 def preindex_couch_views():
     for design in get_preindex_designs():
         index_design_doc(design)
