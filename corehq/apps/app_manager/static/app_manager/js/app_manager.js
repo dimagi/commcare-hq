@@ -38,6 +38,20 @@ hqDefine('app_manager/js/app_manager.js', function () {
         }
     };
 
+    module.updateDOM = function (update) {
+        if (update.hasOwnProperty('app-version')) {
+            appVersion = update['app-version'];
+            $('.variable-version').text(appVersion);
+        }
+        if (update.hasOwnProperty('commcare-version')) {
+            module.setCommcareVersion(update['commcare-version']);
+        }
+        if (module.fetchAndShowFormValidation) {
+            module.fetchAndShowFormValidation();
+        }
+        COMMCAREHQ.updateDOM(update);
+    };
+
     module.setupValidation = function (validation_url) {
         module.fetchAndShowFormValidation = function () {
             $.getJSON(validation_url, function (data) {
@@ -57,20 +71,9 @@ hqDefine('app_manager/js/app_manager.js', function () {
         module.latestCommcareVersion = ko.observable();
         module.latestCommcareVersion(args.latestCommcareVersion);
 
-        function updateDOM(update) {
-            if (update.hasOwnProperty('app-version')) {
-                appVersion = update['app-version'];
-                $('.variable-version').text(appVersion);
             }
-            if (update.hasOwnProperty('commcare-version')) {
-                module.setCommcareVersion(update['commcare-version']);
             }
-            if (module.fetchAndShowFormValidation) {
-                module.fetchAndShowFormValidation();
             }
-            COMMCAREHQ.updateDOM(update);
-        }
-        module.updateDOM = updateDOM;
         function getVar(name) {
             var r = $('input[name="' + name + '"]').first().val();
             return JSON.parse(r);
