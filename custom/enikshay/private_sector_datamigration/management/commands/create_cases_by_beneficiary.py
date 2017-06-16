@@ -110,6 +110,7 @@ class Command(BaseCommand):
         location_owner_id = options['location_owner_id']
         if location_owner_id:
             location_owner = SQLLocation.objects.get(
+                domain=domain,
                 location_id=location_owner_id,
             )
         else:
