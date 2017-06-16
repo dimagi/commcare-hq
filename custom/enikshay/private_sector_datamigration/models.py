@@ -613,7 +613,6 @@ class Agency(models.Model):
                 'ATPH': 'pcc',
             }[self.agencyTypeId]
 
-
     @property
     def usertype(self):
         if self.agencyTypeId == 'ATFO':
