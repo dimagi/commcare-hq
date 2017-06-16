@@ -203,3 +203,23 @@ class TestReferralExpressions(ENikshayCaseStructureMixin, TestCase):
             self.get_referral_expression_case(self.person_id),
             trail
         )
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestEpisodeFromPersonExpression(ENikshayCaseStructureMixin, TestCase):
+
+    def setUp(self):
+        super(TestEpisodeFromPersonExpression, self).setUp()
+        self.cases = self.create_case_structure()
+
+    def tearDown(self):
+        super(TestEpisodeFromPersonExpression, self).tearDown()
+        delete_all_cases()
+
+    def test_expression(self):
+        context = EvaluationContext({"domain": self.domain})
+        expression = ExpressionFactory.from_spec({
+            "type": "enikshay_episode_from_person",
+            "person_id_expression": self.person_id,
+        })
+        self.assertEqual(expression({}, context), self.cases[self.episode_id].to_json())
