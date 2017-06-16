@@ -26,8 +26,8 @@ class LocationHierarchyFilterTests(ENikshayLocationStructureMixin, TestCase):
 
         else:
             # Need to implement other filter types
-            raise NotImplementedError, "assertFiltersEqual has not been defined for {} type filters".format(
-                type(filter_1)
+            raise NotImplementedError(
+                "assertFiltersEqual has not been defined for {} type filters".format(type(filter_1))
             )
 
     def test_filter(self):
