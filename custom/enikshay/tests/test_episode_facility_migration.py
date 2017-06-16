@@ -21,12 +21,17 @@ class TestEpisodeFacilityIDMigration(ENikshayCaseStructureMixin, TestCase):
         self.updater = EpisodeFacilityIDMigration(self.domain, self.episode_case)
 
     def _update_person(self, update):
-        self.person_case = self.factory.create_or_update_case(
+        self.person_case = self._update_case(self.person_id, update)
+
+    def _update_episode(self, update):
+        self.episode_case = self._update_case(self.episode_id, update)
+
+    def _update_case(self, case_id, update):
+        return self.factory.create_or_update_case(
             CaseStructure(
-                case_id=self.person_id,
+                case_id=case_id,
                 attrs={
                     'create': False,
-                    'case_type': 'person',
                     "update": update
                     }
                 )
@@ -48,5 +53,10 @@ class TestEpisodeFacilityIDMigration(ENikshayCaseStructureMixin, TestCase):
         self.assertEqual(self.updater.diagnosing_facility_id, 'new_owner')
 
     def test_get_treatment_initiating_facility_id(self):
-        self._create_cases(treatment_initiated='yes_phi', episode_pending_registration='no')
-        self.assertEqual(self.updater.treatment_initiating_facility_id, self.person_case.owner_id)
+        self._create_cases(treatment_initiated='yes_phi', episode_pending_registration='yes')
+
+        self._update_person({'owner_id': "new_owner"})
+        self._update_episode({'episode_pending_registration': "no"})
+        self._update_person({'owner_id': "newer_owner"})
+
+        self.assertEqual(self.updater.treatment_initiating_facility_id, 'new_owner')
