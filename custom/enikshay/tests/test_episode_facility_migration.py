@@ -13,6 +13,7 @@ class TestEpisodeFacilityIDMigration(ENikshayCaseStructureMixin, TestCase):
                       treatment_initiated=None,
                       episode_pending_registration='yes'):
         self.person.attrs['update']['current_episode_type'] = episode_type
+        self.episode.attrs['update']['episode_type'] = episode_type
 
         self.episode.attrs['update']['treatment_initiated'] = treatment_initiated
         self.episode.attrs['update']['episode_pending_registration'] = episode_pending_registration
@@ -69,9 +70,7 @@ class TestEpisodeFacilityIDMigration(ENikshayCaseStructureMixin, TestCase):
         self.assertDictEqual(
             self.updater.update_json(),
             {
-                'diagnosing_facility_id': None,
                 'facility_id_migration_complete': 'true',
-                'treatment_initiating_facility_id': None
             }
         )
 
@@ -80,6 +79,7 @@ class TestEpisodeFacilityIDMigration(ENikshayCaseStructureMixin, TestCase):
         self._update_episode({'treatment_initiated': "yes_phi"})
         self._update_person({'owner_id': "newer_owner"})
         self._update_person({'current_episode_type': 'confirmed_tb'})
+        self._update_episode({'episode_type': 'confirmed_tb'})
 
         self.assertDictEqual(
             self.updater.update_json(),
@@ -89,3 +89,18 @@ class TestEpisodeFacilityIDMigration(ENikshayCaseStructureMixin, TestCase):
                 'facility_id_migration_complete': 'true',
             }
         )
+
+    def test_should_update(self):
+        self._create_cases(episode_type='presumptive_tb')
+        self.assertFalse(self.updater.should_update)
+
+        self._update_episode({'episode_pending_registration': "no"})
+        self._update_episode({'episode_type': "confirmed_tb"})
+        self.assertTrue(self.updater.should_update)
+
+        self._update_episode({'treatment_initiating_facility_id': "abc"})
+        self.assertFalse(self.updater.should_update)
+
+        self._update_episode({'treatment_initiating_facility_id': ""})
+        self._update_episode({'facility_id_migration_complete': "true"})
+        self.assertFalse(self.updater.should_update)

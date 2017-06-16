@@ -27,7 +27,9 @@ class EpisodeFacilityIDMigration(object):
 
     def update_json(self):
         if not self.should_update:
-            return {}
+            return {
+                'facility_id_migration_complete': 'true',
+            }
 
         return {
             'diagnosing_facility_id': self.diagnosing_facility_id,
@@ -37,16 +39,12 @@ class EpisodeFacilityIDMigration(object):
 
     @property
     def should_update(self):
-        return (
-            self.episode.get_case_property('episode_type') == 'confirmed_tb'
-            and (
-                self.episode.get_case_property('facility_id_migration_complete') != 'true'
-                or (
-                    not self.episode.get_case_property('treatment_initiating_facility_id')
-                    and not self.episode.get_case_property('diagnosing_facility_id')
-                )
-            )
-        )
+        if(self.episode.get_case_property('treatment_initiating_facility_id')
+           or self.episode.get_case_property('diagnosing_facility_id')):
+            return False
+        if self.episode.get_case_property('facility_id_migration_complete') == 'true':
+            return False
+        return self.episode.get_case_property('episode_type') == 'confirmed_tb'
 
     @property
     def diagnosing_facility_id(self):
