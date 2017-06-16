@@ -324,4 +324,3 @@ def episode_from_person_expression(spec, context):
         ExpressionFactory.from_spec(wrapped.person_id_expression, context)
     )
     return wrapped
-
