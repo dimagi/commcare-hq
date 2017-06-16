@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from datetime import datetime
+from datetime import date, datetime
 
 from django.core.management import call_command
 from django.test import TestCase, override_settings
@@ -457,7 +457,10 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         person_case = self.case_accessor.get_case(person_case_ids[0])
         self.assertEqual(person_case.owner_id, self.pcp.location_id)
 
-    def test_adherence(self):
+    @patch('custom.enikshay.private_sector_datamigration.factory.date')
+    def test_closed_adherence(self, mock_today):
+        mock_today.today.return_value = date(2017, 6, 1)
+
         episode = Episode.objects.create(
             adherenceScore=0.5,
             alertFrequencyId=2,
@@ -503,12 +506,13 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         adherence_case_ids = self.case_accessor.get_case_ids_in_domain(type='adherence')
         self.assertEqual(len(adherence_case_ids), 1)
         adherence_case = self.case_accessor.get_case(adherence_case_ids[0])
-        self.assertFalse(adherence_case.closed)  # TODO
+        self.assertTrue(adherence_case.closed)
         self.assertIsNone(adherence_case.external_id)
         self.assertEqual(adherence_case.name, '2017-04-22')
         self.assertEqual(adherence_case.opened_on, datetime(2017, 4, 21))
         self.assertEqual(adherence_case.owner_id, '-')
         self.assertEqual(adherence_case.dynamic_case_properties(), OrderedDict([
+            ('adherence_closure_reason', 'historical'),
             ('adherence_date', '2017-04-22'),
             ('adherence_report_source', 'treatment_supervisor'),
             ('adherence_source', 'enikshay'),
@@ -527,6 +531,53 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             )
         )
         self.assertEqual(len(adherence_case.xform_ids), 1)
+
+    @patch('custom.enikshay.private_sector_datamigration.factory.date')
+    def test_open_adherence(self, mock_today):
+        mock_today.today.return_value = date(2017, 4, 23)
+
+        episode = Episode.objects.create(
+            adherenceScore=0.5,
+            alertFrequencyId=2,
+            basisOfDiagnosis='Clinical - Other',
+            beneficiaryID=self.beneficiary.caseId,
+            creationDate=datetime(2017, 4, 20),
+            dateOfDiagnosis=datetime(2017, 4, 18),
+            dstStatus='Rifampicin sensitive',
+            episodeDisplayID=3,
+            episodeID=1,
+            extraPulmonary='Abdomen',
+            hiv='Negative',
+            lastMonthAdherencePct=0.6,
+            lastTwoWeeksAdherencePct=0.7,
+            missedDosesPct=0.8,
+            newOrRetreatment='New',
+            nikshayID='02139-02215',
+            patientWeight=50,
+            rxStartDate=datetime(2017, 4, 19),
+            site='Extrapulmonary',
+            unknownAdherencePct=0.9,
+            unresolvedMissedDosesPct=0.1,
+        )
+        Adherence.objects.create(
+            adherenceId=5,
+            creationDate=datetime(2017, 4, 21),
+            dosageStatusId=0,
+            doseDate=datetime(2017, 4, 22),
+            doseReasonId=3,
+            episodeId=episode.episodeID,
+            reportingMechanismId=86,
+        )
+
+        call_command('create_cases_by_beneficiary', self.domain)
+
+        adherence_case_ids = self.case_accessor.get_case_ids_in_domain(type='adherence')
+        self.assertEqual(len(adherence_case_ids), 1)
+        adherence_case = self.case_accessor.get_case(adherence_case_ids[0])
+        self.assertFalse(adherence_case.closed)
+        self.assertEqual(adherence_case.opened_on, datetime(2017, 4, 21))
+        self.assertEqual(adherence_case.dynamic_case_properties()['adherence_date'], '2017-04-22')
+        self.assertNotIn('adherence_closure_reason', adherence_case.dynamic_case_properties())
 
     def test_multiple_adherences(self):
         episode = Episode.objects.create(

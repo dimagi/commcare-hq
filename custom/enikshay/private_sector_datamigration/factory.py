@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from dateutil.relativedelta import relativedelta
 
@@ -286,7 +286,6 @@ class BeneficiaryCaseFactory(object):
         kwargs = {
             'attrs': {
                 'case_type': ADHERENCE_CASE_TYPE,
-                'close': False,
                 'create': True,
                 'date_opened': adherence.creationDate,
                 'owner_id': '-',
@@ -308,6 +307,14 @@ class BeneficiaryCaseFactory(object):
                 related_type=EPISODE_CASE_TYPE,
             )],
         }
+
+        if date.today() - adherence.doseDate.date() > timedelta(days=30):
+            kwargs['attrs']['close'] = True
+            kwargs['attrs']['update']['adherence_closure_reason'] = 'historical'
+        else:
+            kwargs['attrs']['close'] = False
+
+
         return CaseStructure(**kwargs)
 
     def get_prescription_case_structure(self, prescription, episode_structure):
