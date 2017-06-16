@@ -292,6 +292,8 @@ class BeneficiaryCaseFactory(object):
                 'owner_id': '-',
                 'update': {
                     'adherence_date': adherence.doseDate.date(),
+                    'adherence_report_source': adherence.adherence_report_source,
+                    'adherence_source': adherence.adherence_source,
                     'adherence_value': adherence.adherence_value,
                     'name': adherence.doseDate.date(),
 

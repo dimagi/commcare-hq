@@ -480,6 +480,26 @@ class Adherence(models.Model):
     unknwDoseReasonId = models.CharField(max_length=8, null=True)
 
     @property
+    def adherence_report_source(self):
+        return {
+            REPORTING_MECHANISM_99_DOTS: '',
+            REPORTING_MECHANISM_FIELD_OFFICER: 'field_officer',
+            REPORTING_MECHANISM_TREATMENT_SUPPORTER: 'treatment_supervisor',
+            REPORTING_MECHANISM_MERM: '',
+            REPORTING_MECHANISM_NONE: 'other',
+        }[self.reportingMechanismId]
+
+    @property
+    def adherence_source(self):
+        return {
+            REPORTING_MECHANISM_99_DOTS: '99DOTS',
+            REPORTING_MECHANISM_FIELD_OFFICER: 'enikshay',
+            REPORTING_MECHANISM_TREATMENT_SUPPORTER: 'enikshay',
+            REPORTING_MECHANISM_MERM: 'MERM',
+            REPORTING_MECHANISM_NONE: 'enikshay',
+        }[self.reportingMechanismId]
+
+    @property
     def adherence_value(self):
         return {
             DIRECTLY_OBSERVED_DOSE: 'directly_observed_dose',
