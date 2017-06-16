@@ -34,7 +34,7 @@ from .const import (
 from .exceptions import EnikshayTaskException
 from .data_store import AdherenceDatastore
 
-from .model_reconcilliation_sets import EpisodeFacilityIDMigration
+from .model_migration_sets import EpisodeFacilityIDMigration
 
 logger = get_task_logger(__name__)
 

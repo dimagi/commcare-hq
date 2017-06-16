@@ -3,7 +3,7 @@ from casexml.apps.case.mock import CaseStructure
 
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
 
-from custom.enikshay.model_reconcilliation_sets.episode_facility_id_migration import EpisodeFacilityIDMigration
+from custom.enikshay.model_migration_sets.episode_facility_id_migration import EpisodeFacilityIDMigration
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
