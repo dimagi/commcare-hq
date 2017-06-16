@@ -158,7 +158,8 @@ class BeneficiaryCaseFactory(object):
         if self.beneficiary.creating_agency:
             kwargs['attrs']['update']['created_by_user_type'] = self.beneficiary.creating_agency.usertype
             creating_loc = self._location_by_agency(self.beneficiary.creating_agency)
-            kwargs['attrs']['update']['created_by_user_location_id'] = creating_loc.location_id
+            if creating_loc:
+                kwargs['attrs']['update']['created_by_user_location_id'] = creating_loc.location_id
 
         return CaseStructure(**kwargs)
 
@@ -275,8 +276,9 @@ class BeneficiaryCaseFactory(object):
         if self.beneficiary.creating_agency:
             kwargs['attrs']['update']['created_by_user_type'] = self.beneficiary.creating_agency.usertype
             creating_loc = self._location_by_agency(self.beneficiary.creating_agency)
-            kwargs['attrs']['update']['created_by_user_id'] = creating_loc.user_id
-            kwargs['attrs']['update']['created_by_user_location_id'] = creating_loc.location_id
+            if creating_loc:
+                kwargs['attrs']['update']['created_by_user_id'] = creating_loc.user_id
+                kwargs['attrs']['update']['created_by_user_location_id'] = creating_loc.location_id
 
         return CaseStructure(**kwargs)
 
