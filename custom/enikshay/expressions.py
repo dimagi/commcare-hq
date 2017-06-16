@@ -7,6 +7,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from custom.enikshay.case_utils import get_open_referral_case_from_person, get_latest_trail_case_from_person, \
     get_open_episode_case_from_person
+from custom.enikshay.exceptions import ENikshayCaseNotFound
 from dimagi.ext.jsonobject import JsonObject
 from dimagi.utils.dates import force_to_datetime
 
@@ -308,7 +309,13 @@ class EpisodeFromPersonExpression(JsonObject):
         domain = context.root_doc['domain']
         if not person_id:
             return None
-        return get_open_episode_case_from_person(domain, person_id).to_json()
+        try:
+            episode = get_open_episode_case_from_person(domain, person_id)
+        except ENikshayCaseNotFound:
+            return None
+        if episode:
+            return episode.to_json()
+        return None
 
 
 def episode_from_person_expression(spec, context):
