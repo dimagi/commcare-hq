@@ -372,6 +372,9 @@ class ENikshayLocationStructureMixin(object):
         self.project.save()
         _, locations = setup_enikshay_locations(self.domain)
         self.locations = locations
+
+        self.ctd = locations['CTD']
+
         self.sto = locations['STO']
         self.sto.metadata = {
             'nikshay_code': 'MH',

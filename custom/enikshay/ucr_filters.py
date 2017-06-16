@@ -94,6 +94,7 @@ class EnikshayLocationHiearachyFilter(DynamicChoiceListFilter):
             css_id=css_id,
         )
 
+
 def _build_enikshay_location_hierarchy(spec, report):
     wrapped = FilterSpec.wrap(spec)
     choice_provider = LocationChoiceProvider(report, wrapped.slug)
