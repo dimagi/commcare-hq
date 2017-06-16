@@ -179,7 +179,7 @@ class Command(BaseCommand):
             )
 
         if limit is not None:
-            return beneficiaries_query[start:limit]
+            return beneficiaries_query[start:start + limit]
         else:
             return beneficiaries_query[start:]
 
