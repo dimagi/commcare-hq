@@ -26,7 +26,7 @@ class EpisodeFacilityIDMigration(object):
         return self.episode.actions
 
     def update_json(self):
-        if not self._should_update:
+        if not self.should_update:
             return {}
 
         return {
@@ -55,6 +55,7 @@ class EpisodeFacilityIDMigration(object):
         ownership that may have taken place since)
 
         """
+
         date_of_change = self.get_date_case_property_changed(
             'current_episode_type', 'confirmed_tb', case_type='person'
         )
@@ -85,6 +86,9 @@ class EpisodeFacilityIDMigration(object):
         return date_of_change
 
     def get_owner_id_at_date(self, date):
+        if date is None:
+            return None
+
         for transaction in reversed(self._person_actions()):
             # go backwards in time, and find the first changed owner_id of the person case
             owner_id = self._get_owner_id_from_transaction(transaction)

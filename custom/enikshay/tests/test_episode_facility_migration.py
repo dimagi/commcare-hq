@@ -9,7 +9,9 @@ from custom.enikshay.model_reconcilliation_sets.episode_facility_id_migration im
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class TestEpisodeFacilityIDMigration(ENikshayCaseStructureMixin, TestCase):
 
-    def _create_cases(self, episode_type='confirmed_tb', treatment_initiated=None, episode_pending_registration='yes'):
+    def _create_cases(self, episode_type='confirmed_tb',
+                      treatment_initiated=None,
+                      episode_pending_registration='yes'):
         self.person.attrs['update']['current_episode_type'] = episode_type
 
         self.episode.attrs['update']['treatment_initiated'] = treatment_initiated
@@ -25,6 +27,7 @@ class TestEpisodeFacilityIDMigration(ENikshayCaseStructureMixin, TestCase):
 
     def _update_episode(self, update):
         self.episode_case = self._update_case(self.episode_id, update)
+        self.updater = EpisodeFacilityIDMigration(self.domain, self.episode_case)
 
     def _update_case(self, case_id, update):
         return self.factory.create_or_update_case(
@@ -60,3 +63,29 @@ class TestEpisodeFacilityIDMigration(ENikshayCaseStructureMixin, TestCase):
         self._update_person({'owner_id': "newer_owner"})
 
         self.assertEqual(self.updater.treatment_initiating_facility_id, 'new_owner')
+
+    def test_get_json(self):
+        self._create_cases(episode_type='presumptive_tb')
+        self.assertDictEqual(
+            self.updater.update_json(),
+            {
+                'diagnosing_facility_id': None,
+                'facility_id_migration_complete': 'true',
+                'treatment_initiating_facility_id': None
+            }
+        )
+
+        self._update_person({'owner_id': "new_owner"})
+        self._update_episode({'episode_pending_registration': "no"})
+        self._update_episode({'treatment_initiated': "yes_phi"})
+        self._update_person({'owner_id': "newer_owner"})
+        self._update_person({'current_episode_type': 'confirmed_tb'})
+
+        self.assertDictEqual(
+            self.updater.update_json(),
+            {
+                'diagnosing_facility_id': 'newer_owner',
+                'treatment_initiating_facility_id': 'new_owner',
+                'facility_id_migration_complete': 'true',
+            }
+        )
