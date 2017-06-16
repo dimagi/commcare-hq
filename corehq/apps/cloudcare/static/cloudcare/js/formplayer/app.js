@@ -240,6 +240,9 @@ FormplayerFrontend.on('configureDebugger', function(menuSessionId) {
         cloudCareDebugger,
         $debug = $('#cloudcare-debugger');
 
+    if (!$debug.length)
+        return;
+
     $debug.html('');
     cloudCareDebugger = new CloudCareDebugger({
         baseUrl: user.formplayer_url,
