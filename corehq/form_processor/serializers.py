@@ -175,7 +175,6 @@ class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
             'date_closed',
             'date_modified',
             'server_date_modified',
-            'server_date_opened',
             'properties',
             'indices',
             'reverse_indices',
