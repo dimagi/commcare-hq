@@ -26,7 +26,9 @@ class LocationHierarchyFilterTests(ENikshayLocationStructureMixin, TestCase):
 
         else:
             # Need to implement other filter types
-            raise NotImplementedError, "assertFiltersEqual has not been defined for {} type filters".format(type(filter_1))
+            raise NotImplementedError, "assertFiltersEqual has not been defined for {} type filters".format(
+                type(filter_1)
+            )
 
     def test_filter(self):
         slug = "hierarchy_filter_slug"
@@ -43,7 +45,10 @@ class LocationHierarchyFilterTests(ENikshayLocationStructureMixin, TestCase):
             table_id="123",
         )
 
-        with patch("corehq.apps.userreports.reports.data_source.get_datasource_config", MagicMock(return_value=(data_source_config, None))):
+        with patch(
+                "corehq.apps.userreports.reports.data_source.get_datasource_config",
+                MagicMock(return_value=(data_source_config, None))
+        ):
             report_config = ReportConfiguration(
                 config_id="123",
                 filters=[filter_spec]
@@ -55,7 +60,6 @@ class LocationHierarchyFilterTests(ENikshayLocationStructureMixin, TestCase):
                 user=MagicMock(),
             )
             report.set_filter_values(filter_values)
-
 
         expected_filter_vals = {
             '{}_ctd'.format(slug): self.ctd.location_id,
