@@ -37,6 +37,20 @@ hqDefine('app_manager/js/app_manager.js', function () {
             return false;
         }
     };
+
+    module.setupValidation = function (validation_url) {
+        module.fetchAndShowFormValidation = function () {
+            $.getJSON(validation_url, function (data) {
+                $('#build_errors').html(data.error_html);
+            });
+        };
+        if ($.cookie('suppress_build_errors')) {
+            $.removeCookie('suppress_build_errors', { path: '/' });
+        } else {
+            module.fetchAndShowFormValidation();
+        }
+    };
+
     module.init = function (args) {
         var appVersion = args.appVersion;
         module.commcareVersion = ko.observable();
@@ -406,17 +420,5 @@ hqDefine('app_manager/js/app_manager.js', function () {
         module.setCommcareVersion(args.commcareVersion);
     };
 
-    module.setupValidation = function (validation_url) {
-        module.fetchAndShowFormValidation = function () {
-            $.getJSON(validation_url, function (data) {
-                $('#build_errors').html(data.error_html);
-            });
-        };
-        if ($.cookie('suppress_build_errors')) {
-            $.removeCookie('suppress_build_errors', { path: '/' });
-        } else {
-            module.fetchAndShowFormValidation();
-        }
-    };
     return module;
 });
