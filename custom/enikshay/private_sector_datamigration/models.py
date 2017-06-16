@@ -104,6 +104,11 @@ class Beneficiary(models.Model):
         return self.age
 
     @property
+    @memoized
+    def creating_agency(self):
+        return get_agency_by_motech_user_name(self.creator)
+
+    @property
     def current_address(self):
         if not self.addressLineOne:
             return self.addressLineTwo or ''
@@ -145,6 +150,7 @@ class Beneficiary(models.Model):
         return ' '.join([self.firstName, self.lastName])
 
     @property
+    @memoized
     def referred_provider(self):
         return get_agency_by_motech_user_name(self.referredQP)
 
@@ -606,6 +612,17 @@ class Agency(models.Model):
                 'ATLC': 'plc',
                 'ATPH': 'pcc',
             }[self.agencyTypeId]
+
+    @property
+    def usertype(self):
+        if self.agencyTypeId == 'ATFO':
+            return 'ps-fieldstaff'
+        return {
+            'pac': 'pac',
+            'pcc': 'pcc-chemist',
+            'pcp': 'pcp',
+            'plc': 'plc',
+        }[self.location_type]
 
     @property
     def is_field_officer(self):

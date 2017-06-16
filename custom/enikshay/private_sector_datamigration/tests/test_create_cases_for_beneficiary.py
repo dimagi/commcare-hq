@@ -9,6 +9,7 @@ from mock import Mock, patch
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.tasks import make_location_user
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.private_sector_datamigration.models import (
@@ -40,6 +41,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             caseStatus='patient',
             configureAlert='Yes',
             creationDate=datetime(2017, 1, 1),
+            creator='creator',
             dateOfRegn=datetime(2017, 4, 17),
             districtId='102',
             dob=datetime(1992, 1, 2),
@@ -103,8 +105,22 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.pcp.user_id = self.virtual_location_user._id
         self.pcp.save()
 
+        self.default_location = SQLLocation.objects.create(
+            domain=self.domain,
+            location_type=self.pcp.location_type,
+            site_code='default',
+        )
+
+        self.default_location_user = make_location_user(self.default_location)
+        self.default_location_user.save()
+        set_issuer_id(self.domain, self.default_location_user)
+
+        self.default_location.user_id = self.default_location_user._id
+        self.default_location.save()
+
     def tearDown(self):
         self.virtual_location_user.delete()
+        self.default_location_user.delete()
         super(TestCreateCasesByBeneficiary, self).tearDown()
 
     @patch('custom.enikshay.private_sector_datamigration.factory.datetime')
@@ -113,6 +129,38 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         mock_counter.get_next_counter.return_value = 4
         mock_datetime.utcnow.return_value = datetime(2016, 9, 8, 1, 2, 3, 4123)
 
+        creating_loc = SQLLocation.active_objects.create(
+            domain=self.domain,
+            location_type=LocationType.objects.get(code='pcp'),
+            name='creating location',
+            site_code='2',
+            user_id='dummy_user_id',
+        )
+
+        creating_agency = Agency.objects.create(
+            agencyId=2,
+            agencyTypeId='ATPR',
+            agencySubTypeId='PRQP',
+            creationDate=datetime(2017, 5, 1),
+            dateOfRegn=datetime(2017, 5, 1),
+            modificationDate=datetime(2017, 5, 1),
+            nikshayId='123457',
+            organisationId=2,
+            parentAgencyId=3,
+            subOrganisationId=4,
+        )
+        UserDetail.objects.create(
+            id=1,
+            agencyId=creating_agency.agencyId,
+            isPrimary=True,
+            motechUserName='creator',
+            organisationId=2,
+            passwordResetFlag=False,
+            pincode=3,
+            subOrganisationId=4,
+            userId=5,
+            valid=True,
+        )
 
         Episode.objects.create(
             adherenceScore=0.5,
@@ -154,6 +202,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('age', '25'),
             ('age_entered', '25'),
             ('contact_phone_number', '915432109876'),
+            ('created_by_user_location_id', creating_loc.location_id),
+            ('created_by_user_type', 'pcp'),
             ('current_address', '585 Mass Ave, Suite 4'),
             ('current_address_postal_code', '822113'),
             ('current_address_village_town_city', 'Cambridge'),
@@ -234,6 +284,9 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('adherence_tracking_mechanism', ''),
             ('basis_of_diagnosis', 'clinical_other'),
             ('case_definition', 'clinical'),
+            ('created_by_user_id', 'dummy_user_id'),
+            ('created_by_user_location_id', creating_loc.location_id),
+            ('created_by_user_type', 'pcp'),
             ('date_of_diagnosis', '2017-04-18'),
             ('date_of_mo_signature', '2017-04-17'),
             ('diagnosing_facility_id', self.pcp.location_id),
@@ -383,6 +436,26 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
                 person_case_ids[1]).dynamic_case_properties()['id_original_beneficiary_count'])),
             1
         )
+
+    def test_default_location_owner(self):
+        self.agency.agencyTypeId = 'ATFO'
+        self.agency.save()
+
+        call_command('create_cases_by_beneficiary', self.domain, default_location_owner_id=self.default_location.location_id)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(len(person_case_ids), 1)
+        person_case = self.case_accessor.get_case(person_case_ids[0])
+        self.assertEqual(person_case.owner_id, self.default_location.location_id)
+
+    def test_default_location_owner_not_used(self):
+
+        call_command('create_cases_by_beneficiary', self.domain, default_location_owner_id=self.default_location.location_id)
+
+        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
+        self.assertEqual(len(person_case_ids), 1)
+        person_case = self.case_accessor.get_case(person_case_ids[0])
+        self.assertEqual(person_case.owner_id, self.pcp.location_id)
 
     def test_adherence(self):
         episode = Episode.objects.create(
