@@ -37,8 +37,8 @@ class TestEpisodeFacilityIDMigration(ENikshayCaseStructureMixin, TestCase):
                 attrs={
                     'create': False,
                     "update": update
-                    }
-                )
+                }
+            )
         )[0]
 
     def test_get_diagnosing_facility_id_simple(self):
