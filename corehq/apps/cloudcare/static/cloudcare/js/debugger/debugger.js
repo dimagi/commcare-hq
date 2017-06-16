@@ -164,6 +164,21 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
     };
     CloudCareDebuggerMenu.prototype = Object.create(CloudCareDebugger.prototype);
     CloudCareDebuggerMenu.prototype.constructor = CloudCareDebugger;
+    CloudCareDebuggerMenu.prototype.onUpdate = function() {
+        API.menuDebuggerContent(
+            this.options.baseUrl,
+            {
+                session_id: this.options.menuSessionId,
+                username: this.options.username,
+                restoreAs: this.options.restoreAs,
+                domain: this.options.domain,
+            }
+        ).done(function(response) {
+            this.evalXPath.autocomplete(response.autoCompletableItems);
+            this.evalXPath.recentXPathQueries(response.recentXPathQueries || []);
+            this.updating(false);
+        }.bind(this));
+    };
 
     var EvaluateXPath = function(options) {
         var self = this;
@@ -396,6 +411,9 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
         },
         formattedQuestions: function(url, params) {
             return API.request(url, 'formatted_questions', params);
+        },
+        menuDebuggerContent: function(url, params) {
+            return API.request(url, 'menu_debugger_content', params);
         },
         request: function(url, action, params) {
             return $.ajax({
