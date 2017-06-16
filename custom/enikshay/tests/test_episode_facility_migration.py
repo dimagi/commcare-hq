@@ -1,0 +1,52 @@
+from django.test import TestCase, override_settings
+from casexml.apps.case.mock import CaseStructure
+
+from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
+
+from custom.enikshay.model_reconcilliation_sets.episode_facility_id_migration import EpisodeFacilityIDMigration
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestEpisodeFacilityIDMigration(ENikshayCaseStructureMixin, TestCase):
+
+    def _create_cases(self, episode_type='confirmed_tb', treatment_initiated=None, episode_pending_registration='yes'):
+        self.person.attrs['update']['current_episode_type'] = episode_type
+
+        self.episode.attrs['update']['treatment_initiated'] = treatment_initiated
+        self.episode.attrs['update']['episode_pending_registration'] = episode_pending_registration
+
+        self.cases = self.create_case_structure()
+        self.episode_case = self.cases[self.episode_id]
+        self.person_case = self.cases[self.person_id]
+        self.updater = EpisodeFacilityIDMigration(self.domain, self.episode_case)
+
+    def _update_person(self, update):
+        self.person_case = self.factory.create_or_update_case(
+            CaseStructure(
+                case_id=self.person_id,
+                attrs={
+                    'create': False,
+                    'case_type': 'person',
+                    "update": update
+                    }
+                )
+        )[0]
+
+    def test_get_diagnosing_facility_id_simple(self):
+        self._create_cases()
+        self.assertEqual(self.updater.diagnosing_facility_id, self.person_case.owner_id)
+
+    def test_get_diagnosing_facility_id_many_updates(self):
+        self._create_cases(episode_type='presumptive_tb')
+        self._update_person({'owner_id': 'old_owner'})
+
+        self._update_person({'boop': 'barp'})
+        self._update_person({'owner_id': 'new_owner'})
+        self._update_person({'current_episode_type': 'confirmed_tb'})
+        self._update_person({'owner_id': 'newer_owner'})
+
+        self.assertEqual(self.updater.diagnosing_facility_id, 'new_owner')
+
+    def test_get_treatment_initiating_facility_id(self):
+        self._create_cases(treatment_initiated='yes_phi', episode_pending_registration='no')
+        self.assertEqual(self.updater.treatment_initiating_facility_id, self.person_case.owner_id)
