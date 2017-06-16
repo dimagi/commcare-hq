@@ -1,4 +1,4 @@
-/* globals hqDefine COMMCAREHQ */
+/* globals hqDefine COMMCAREHQ django */
 hqDefine('app_manager/js/app_manager.js', function () {
     'use strict';
     var module = eventize({});
@@ -40,7 +40,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
 
     module.updateDOM = function (update) {
         if (update.hasOwnProperty('app-version')) {
-            appVersion = update['app-version'];
+            var appVersion = update['app-version'];
             $('.variable-version').text(appVersion);
         }
         if (update.hasOwnProperty('commcare-version')) {
@@ -139,7 +139,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
             });
         });
         module.setCommcareVersion(args.commcareVersion);
-    }
+    };
 
     /**
      * Initialize the add item popover in the app v2 navigation menu. Make sure
@@ -159,7 +159,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
             html: true,
             trigger: 'manual',
             placement: 'right',
-            template: $('#js-popover-template-add-item').text()
+            template: $('#js-popover-template-add-item').text(),
         }).on('show.bs.popover', function () {
             // Close any other open popover
             $('.js-add-new-item').not($(this)).popover('hide');
