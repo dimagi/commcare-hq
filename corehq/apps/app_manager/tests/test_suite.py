@@ -587,7 +587,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         )
 
     def test_inline_case_detail_from_another_module(self):
-        def ensure_module_session_datum_xml(detail_inline_attr, detail_persistent_or_select_attr):
+        def ensure_module_session_datum_xml(detail_inline_attr, detail_persistent_attr):
             suite = factory.app.create_suite()
             self.assertXmlPartialEqual(
                 """
@@ -595,7 +595,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                     <datum
                         detail-confirm="m1_case_long"
                         {detail_inline_attr}
-                        {detail_persistent_or_select_attr}
+                        {detail_persistent_attr}
                         detail-select="m1_case_short"
                         id="case_id_load_person_0"
                         nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
@@ -603,7 +603,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                     />
                 </partial>
                 """.format(detail_inline_attr=detail_inline_attr,
-                           detail_persistent_or_select_attr=detail_persistent_or_select_attr),
+                           detail_persistent_attr=detail_persistent_attr),
                 suite,
                 'entry/command[@id="m1-f0"]/../session/datum',
             )
@@ -624,6 +624,13 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         # configured to use other module's persistent case tile
         module1.case_details.short.persistent_case_tile_from_module = module0.unique_id
         ensure_module_session_datum_xml('', 'detail-persistent="m0_case_short"')
+
+        # configured to use other module's persistent case tile that has custom xml
+        module0.case_details.short.use_case_tiles = False
+        module0.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
+        ensure_module_session_datum_xml('', 'detail-persistent="m0_case_short"')
+        module0.case_details.short.custom_xml = ''
+        module0.case_details.short.use_case_tiles = True
 
         # configured to use pull down tile from the other module
         module1.case_details.short.pull_down_tile = True
@@ -683,6 +690,13 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         # configured to use other module's persistent case tile
         module1.case_details.short.persistent_case_tile_from_module = module0.unique_id
         ensure_module_session_datum_xml('detail-persistent="m0_case_short"')
+
+        # configured to use other module's persistent case tile that has custom xml
+        module0.case_details.short.use_case_tiles = False
+        module0.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
+        ensure_module_session_datum_xml('detail-persistent="m0_case_short"')
+        module0.case_details.short.custom_xml = ''
+        module0.case_details.short.use_case_tiles = True
 
         # set to use persistent case tile of its own as well but it would still
         # persists case tiles from another module
