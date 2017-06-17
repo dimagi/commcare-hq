@@ -586,6 +586,67 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./entry/session"
         )
 
+    def test_inline_case_detail_from_another_module(self):
+        def ensure_module_session_datum_xml(detail_inline_attr, detail_persistent_or_select_attr):
+            suite = factory.app.create_suite()
+            self.assertXmlPartialEqual(
+                """
+                <partial>
+                    <datum
+                        detail-confirm="m1_case_long"
+                        {detail_inline_attr}
+                        {detail_persistent_or_select_attr}
+                        detail-select="m1_case_short"
+                        id="case_id_load_person_0"
+                        nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                        value="./@case_id"
+                    />
+                </partial>
+                """.format(detail_inline_attr=detail_inline_attr,
+                           detail_persistent_or_select_attr=detail_persistent_or_select_attr),
+                suite,
+                'entry/command[@id="m1-f0"]/../session/datum',
+            )
+
+        factory = AppFactory()
+        module0, form0 = factory.new_advanced_module("m0", "person")
+        factory.form_requires_case(form0, "person")
+        module0.case_details.short.use_case_tiles = True
+        self._add_columns_for_case_details(module0)
+
+        module1, form1 = factory.new_advanced_module("m1", "person")
+        factory.form_requires_case(form1, "person")
+
+        # not configured to use other module's persistent case tile so
+        # has no detail-inline and detail-persistent attr
+        ensure_module_session_datum_xml('', '')
+
+        # configured to use other module's persistent case tile
+        module1.case_details.short.persistent_case_tile_from_module = module0.unique_id
+        ensure_module_session_datum_xml('', 'detail-persistent="m0_case_short"')
+
+        # configured to use pull down tile from the other module
+        module1.case_details.short.pull_down_tile = True
+        ensure_module_session_datum_xml('detail-inline="m0_case_long"', 'detail-persistent="m0_case_short"')
+
+        # set to use persistent case tile of its own as well but it would still
+        # persists case tiles and detail inline from another module
+        module1.case_details.short.use_case_tiles = True
+        module1.case_details.short.persist_tile_on_forms = True
+        self._add_columns_for_case_details(module1)
+        ensure_module_session_datum_xml('detail-inline="m0_case_long"', 'detail-persistent="m0_case_short"')
+
+        # set to use case tile from a module that does not support case tiles anymore
+        # and has own persistent case tile as well
+        # So now detail inline from its own details
+        module0.case_details.short.use_case_tiles = False
+        ensure_module_session_datum_xml('detail-inline="m1_case_long"', 'detail-persistent="m1_case_short"')
+
+        # set to use case tile from a module that does not support case tiles anymore
+        # and does not have its own persistent case tile as well
+        module1.case_details.short.use_case_tiles = False
+        ensure_module_session_datum_xml('', '')
+
     def test_persistent_case_tiles_from_another_module(self):
         def ensure_module_session_datum_xml(detail_persistent_attr):
             suite = factory.app.create_suite()

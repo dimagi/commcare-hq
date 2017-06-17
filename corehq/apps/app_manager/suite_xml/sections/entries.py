@@ -896,9 +896,21 @@ class EntriesHelper(object):
     def get_detail_inline_attr(self, module, detail_module, detail_type="case_short"):
         assert detail_type in ["case_short", "product_short"]
         detail, detail_enabled = self._get_detail_from_module(module, detail_type)
-        if detail_enabled and self._has_persistent_tile(detail) and detail.pull_down_tile:
+        if (detail_enabled and
+                (self._has_persistent_tile(detail) or detail.persistent_case_tile_from_module) and
+                detail.pull_down_tile):
             list_type = "case_long" if detail_type == "case_short" else "product_long"
-            return self.details_helper.get_detail_id_safe(detail_module, list_type)
+            if detail.persistent_case_tile_from_module:
+                module_for_persistent_context = module.get_app().get_module_by_unique_id(
+                    detail.persistent_case_tile_from_module
+                )
+                if (module_for_persistent_context and
+                        (module_for_persistent_context.case_details.short.use_case_tiles or
+                         module_for_persistent_context.case_details.short.custom_xml
+                         )):
+                    return self.details_helper.get_detail_id_safe(module_for_persistent_context, list_type)
+            if self._has_persistent_tile(detail):
+                return self.details_helper.get_detail_id_safe(detail_module, list_type)
         return None
 
     def _get_detail_from_module(self, module, detail_type):
