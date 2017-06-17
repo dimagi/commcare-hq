@@ -3,6 +3,7 @@ from django.db import models
 from dimagi.utils.decorators.memoized import memoized
 
 
+REPORTING_MECHANISM_MISSED_CALL = 83
 REPORTING_MECHANISM_99_DOTS = 84
 REPORTING_MECHANISM_FIELD_OFFICER = 85
 REPORTING_MECHANISM_TREATMENT_SUPPORTER = 86
@@ -485,6 +486,7 @@ class Adherence(models.Model):
     @property
     def adherence_report_source(self):
         return {
+            REPORTING_MECHANISM_MISSED_CALL: 'missed_call',
             REPORTING_MECHANISM_99_DOTS: '',
             REPORTING_MECHANISM_FIELD_OFFICER: 'field_officer',
             REPORTING_MECHANISM_TREATMENT_SUPPORTER: 'treatment_supervisor',
@@ -498,6 +500,7 @@ class Adherence(models.Model):
     @property
     def adherence_source(self):
         return {
+            REPORTING_MECHANISM_MISSED_CALL: 'enikshay',
             REPORTING_MECHANISM_99_DOTS: '99DOTS',
             REPORTING_MECHANISM_FIELD_OFFICER: 'enikshay',
             REPORTING_MECHANISM_TREATMENT_SUPPORTER: 'enikshay',
