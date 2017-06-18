@@ -87,6 +87,13 @@ class Command(BaseCommand):
             nargs='+',
         )
 
+        parser.add_argument(
+            '--owner-suborganisation-ids',
+            default=None,
+            metavar='owner_suborganisation_id',
+            nargs='+',
+        )
+
     @mock_ownership_cleanliness_checks()
     def handle(self, domain, **options):
         case_ids = options['caseIds']
@@ -94,6 +101,7 @@ class Command(BaseCommand):
         limit = options['limit']
         owner_district_id = options['owner_district_id']
         owner_organisation_ids = options['owner_organisation_ids']
+        owner_suborganisation_ids = options['owner_suborganisation_ids']
         owner_state_id = options['owner_state_id']
         skip_adherence = options['skip_adherence']
         start = options['start']
@@ -120,14 +128,18 @@ class Command(BaseCommand):
             raise CommandError('Cannot specify both caseIds and owner-state-id')
         if not owner_state_id and owner_district_id:
             raise CommandError('Cannot specify owner-district-id without owner-state-id')
+        if not owner_organisation_ids and owner_suborganisation_ids:
+            raise CommandError('Cannot specify owner-suborganisation-ids without owner-organisation-ids')
 
         beneficiaries = self.beneficiaries(
-            start, limit, case_ids, owner_state_id, owner_district_id, owner_organisation_ids
+            start, limit, case_ids, owner_state_id, owner_district_id,
+            owner_organisation_ids, owner_suborganisation_ids
         )
 
         self.migrate_to_enikshay(domain, beneficiaries, skip_adherence, chunk_size, location_owner, default_location_owner)
 
-    def beneficiaries(self, start, limit, case_ids, owner_state_id, owner_district_id, owner_organisation_ids):
+    def beneficiaries(self, start, limit, case_ids, owner_state_id, owner_district_id,
+                      owner_organisation_ids, owner_suborganisation_ids):
         beneficiaries_query = Beneficiary.objects.filter(
             (
                 Q(caseStatus='suspect')
@@ -160,6 +172,9 @@ class Command(BaseCommand):
                 isPrimary=True
             )
             user_details = user_details.filter(organisationId__in=owner_organisation_ids)
+
+        if owner_suborganisation_ids:
+            user_details = user_details.filter(subOrganisationId__in=owner_suborganisation_ids)
 
         if user_details:
             # Check that there is an actual agency object for the motech username
