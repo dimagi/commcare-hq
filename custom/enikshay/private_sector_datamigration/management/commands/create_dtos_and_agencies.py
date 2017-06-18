@@ -27,19 +27,38 @@ class Command(BaseCommand):
         for org_id in org_ids:
             dto = self.create_dto(domain, state_code, district_code, dto_parent, org_id)
             counter = 1
-            for agency in self.get_agencies_by_state_district_org(state_code, district_code, org_id)[:5]:
-                print 'handling agency %d...' % counter
-                print datetime.utcnow()
-                if agency.location_type is not None:
-                    print datetime.utcnow()
-                    agency_loc = self.create_agency(domain, agency, dto, org_id)
-                    print 'done creating agency'
-                    print datetime.utcnow()
-                    self.create_user(agency, agency_loc, user_level)
-                    print datetime.utcnow()
-                # elif agency.is_field_officer:
-                #     self.create_field_officer(agency, domain, dto, user_level)
-                counter += 1
+
+            print 'making agency objects'
+            print datetime.utcnow()
+
+            agency_objs = [
+                self.get_agency(domain, agency, dto, org_id)
+                for agency in self.get_agencies_by_state_district_org(state_code, district_code, org_id)[:5]
+            ]
+
+            print 'bulk_creating'
+            print datetime.utcnow()
+
+            SQLLocation.objects.bulk_create(
+                agency_objs
+            )
+
+            print 'done bulk_creating'
+            print datetime.utcnow()
+
+            # for agency in self.get_agencies_by_state_district_org(state_code, district_code, org_id)[:5]:
+            #     print 'handling agency %d...' % counter
+            #     print datetime.utcnow()
+            #     if agency.location_type is not None:
+            #         print datetime.utcnow()
+            #         agency_loc = self.create_agency(domain, agency, dto, org_id)
+            #         print 'done creating agency'
+            #         print datetime.utcnow()
+            #         self.create_user(agency, agency_loc, user_level)
+            #         print datetime.utcnow()
+            #     # elif agency.is_field_officer:
+            #     #     self.create_field_officer(agency, domain, dto, user_level)
+            #     counter += 1
 
     def create_dto(self, domain, state_code, district_code, dto_parent, org_id):
         org_id = org_id or 1
@@ -73,13 +92,13 @@ class Command(BaseCommand):
         return Agency.objects.filter(agencyId__in=agency_ids).order_by('agencyId')
 
     @staticmethod
-    def create_agency(domain, agency, dto, org_id):
+    def get_agency(domain, agency, dto, org_id):
         print 'get loc_type'
         print datetime.utcnow()
         location_type = Command.get_location_type_by_domain_and_code(domain, agency.location_type)
         print 'creating'
         print datetime.utcnow()
-        return SQLLocation.objects.create(
+        return SQLLocation(
             domain=domain,
             name=agency.agencyName,
             site_code=str(agency.agencyId),
