@@ -36,7 +36,6 @@ class Command(BaseCommand):
                 counter += 1
 
     def create_dto(self, domain, state_code, district_code, dto_parent, org_id):
-        org_id = 0 or 1
         return SQLLocation.objects.create(
             domain=domain,
             name=self._get_org_name_by_id(org_id),
@@ -60,8 +59,8 @@ class Command(BaseCommand):
             isPrimary=True,
         ).filter(
             districtId=district_code,
-            organisationId=org_id,
-            subOrganisationId=0,
+            organisationId=1,
+            subOrganisationId=org_id,
             stateId=state_code,
         ).values('agencyId').distinct()
         return Agency.objects.filter(agencyId__in=agency_ids).order_by('agencyId')
