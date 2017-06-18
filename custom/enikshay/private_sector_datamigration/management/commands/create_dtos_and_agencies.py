@@ -27,7 +27,7 @@ class Command(BaseCommand):
         for org_id in org_ids:
             dto = self.create_dto(domain, state_code, district_code, dto_parent, org_id)
             counter = 1
-            for agency in self.get_agencies_by_state_district_org(state_code, district_code, org_id):
+            for agency in self.get_agencies_by_state_district_org(state_code, district_code, org_id)[:5]:
                 print 'handling agency %d...' % counter
                 print datetime.utcnow()
                 if agency.location_type is not None:
