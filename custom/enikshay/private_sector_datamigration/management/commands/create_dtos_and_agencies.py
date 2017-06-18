@@ -33,7 +33,6 @@ class Command(BaseCommand):
                 if agency.location_type is not None:
                     print datetime.utcnow()
                     agency_loc = self.create_agency(domain, agency, dto, org_id)
-                    print 'done creating agency'
                     print datetime.utcnow()
                     self.create_user(agency, agency_loc, user_level)
                     print datetime.utcnow()
@@ -74,16 +73,11 @@ class Command(BaseCommand):
 
     @staticmethod
     def create_agency(domain, agency, dto, org_id):
-        print 'get loc_type'
-        print datetime.utcnow()
-        location_type = Command.get_location_type_by_domain_and_code(domain, agency.location_type)
-        print 'creating'
-        print datetime.utcnow()
         return SQLLocation.objects.create(
             domain=domain,
             name=agency.agencyName,
             site_code=str(agency.agencyId),
-            location_type=location_type,
+            location_type=Command.get_location_type_by_domain_and_code(domain, agency.location_type),
             parent=dto,
             metadata={
                 'enikshay_enabled': 'yes',
