@@ -96,20 +96,36 @@ class Command(BaseCommand):
         agency_loc_id = agency_loc.location_id
         domain = agency_loc.domain
 
+        print 'make_location_user'
+        print datetime.utcnow()
         user = make_location_user(agency_loc)
         user.user_location_id = agency_loc_id
         user.set_location(agency_loc, commit=False)
         user.user_data['agency_id_legacy'] = agency_loc.metadata['private_sector_agency_id']
+        print 'get role'
+        print datetime.utcnow()
+        role = UserRole.by_domain_and_name(domain, 'Default Mobile Worker')[0].get_qualified_id()
+        print 'set role'
+        print datetime.utcnow()
         user.set_role(
             domain,
-            UserRole.by_domain_and_name(domain, 'Default Mobile Worker')[0].get_qualified_id()
+            role
         )
+        print 'other stuff'
+        print datetime.utcnow()
         user.user_data['user_level'] = user_level
         user.user_data['usertype'] = agency.usertype
+        print 'user save'
+        print datetime.utcnow()
         user.save()
+
+        print 'setting loc settings'
+        print datetime.utcnow()
 
         agency_loc.user_id = user._id
         agency_loc.save()
+        print 'done'
+        print datetime.utcnow()
 
     @staticmethod
     def create_field_officer(agency, domain, parent, user_level):
