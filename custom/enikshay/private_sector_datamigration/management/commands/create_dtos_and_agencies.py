@@ -91,7 +91,9 @@ class Command(BaseCommand):
         agency_loc_id = agency_loc.location_id
         domain = agency_loc.domain
 
-        user = make_location_user(agency_loc)
+        user = CommCareUser.get_by_username('%s@%s.commcarehq.org' % (agency_loc.site_code, agency_loc.domain))
+        if user is None:
+            user = make_location_user(agency_loc)
         user.user_location_id = agency_loc_id
         user.set_location(agency_loc, commit=False)
         user.user_data['agency_id_legacy'] = agency_loc.metadata['private_sector_agency_id']
