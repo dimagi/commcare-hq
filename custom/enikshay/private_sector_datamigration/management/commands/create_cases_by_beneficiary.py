@@ -154,29 +154,21 @@ class Command(BaseCommand):
         if case_ids:
             beneficiaries_query = beneficiaries_query.filter(caseId__in=case_ids)
 
-        user_details = None
+        if owner_state_id or owner_district_id or owner_organisation_ids or owner_suborganisation_ids:
+            user_details = UserDetail.objects.filter(isPrimary=True)
 
-        if owner_state_id:
-            user_details = user_details or UserDetail.objects.filter(
-                isPrimary=True
-            )
-            user_details = user_details.filter(
-                stateId=owner_state_id,
-            )
+            if owner_state_id:
+                user_details = user_details.filter(stateId=owner_state_id)
 
-            if owner_district_id:
-                user_details = user_details.filter(districtId=owner_district_id)
+                if owner_district_id:
+                    user_details = user_details.filter(districtId=owner_district_id)
 
-        if owner_organisation_ids:
-            user_details = user_details or UserDetail.objects.filter(
-                isPrimary=True
-            )
-            user_details = user_details.filter(organisationId__in=owner_organisation_ids)
+            if owner_organisation_ids:
+                user_details = user_details.filter(organisationId__in=owner_organisation_ids)
 
-        if owner_suborganisation_ids:
-            user_details = user_details.filter(subOrganisationId__in=owner_suborganisation_ids)
+            if owner_suborganisation_ids:
+                user_details = user_details.filter(subOrganisationId__in=owner_suborganisation_ids)
 
-        if user_details:
             # Check that there is an actual agency object for the motech username
             agency_ids = Agency.objects.filter(agencyId__in=user_details.values('agencyId')).values('agencyId')
             motech_usernames = UserDetail.objects.filter(agencyId__in=agency_ids).values('motechUserName')
