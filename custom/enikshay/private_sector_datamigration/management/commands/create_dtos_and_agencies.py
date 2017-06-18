@@ -29,13 +29,9 @@ class Command(BaseCommand):
             counter = 1
             for agency in self.get_agencies_by_state_district_org(state_code, district_code, org_id)[:5]:
                 print 'handling agency %d...' % counter
-                print datetime.utcnow()
                 if agency.location_type is not None:
-                    print datetime.utcnow()
                     agency_loc = self.create_agency(domain, agency, dto, org_id)
-                    print datetime.utcnow()
                     self.create_user(agency, agency_loc, user_level)
-                    print datetime.utcnow()
                 # elif agency.is_field_officer:
                 #     self.create_field_officer(agency, domain, dto, user_level)
                 counter += 1
