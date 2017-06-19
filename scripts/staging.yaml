@@ -50,6 +50,7 @@ branches:
   - nh/new_rb  # Norman 11/22
   - lwyszomi/icds_dashboard_v2  # j$ 6/5
   - mk-inline-from-persisted-module # mk June/17
+  - app-manager-labs # Jenny 6/19
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
