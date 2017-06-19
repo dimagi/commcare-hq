@@ -12,6 +12,7 @@ import six
 from django.conf import settings
 from django.db import connections, InternalError, transaction
 from django.db.models import Q
+from django.db.models.functions import Greatest
 
 from corehq.blobs import get_blob_db
 from corehq.form_processor.exceptions import (
@@ -307,11 +308,14 @@ class FormAccessorSQL(AbstractFormAccessor):
         '''
         from corehq.sql_db.util import run_query_across_partitioned_databases
 
+        annotate = {
+            'last_modified': Greatest('received_on', 'edited_on', 'deleted_on'),
+        }
+
         return run_query_across_partitioned_databases(
             XFormInstanceSQL,
-            (Q(received_on__gt=start_datetime) & Q(received_on__lte=end_datetime)) |
-            (Q(deleted_on__gt=start_datetime) & Q(deleted_on__lte=end_datetime)) |
-            (Q(edited_on__gt=start_datetime) & Q(edited_on__lte=end_datetime))
+            Q(last_modified__gt=start_datetime),
+            annotate=annotate,
         )
 
     @staticmethod
