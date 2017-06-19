@@ -69,7 +69,7 @@ class DataSetMap(Document):
 
     def get_datavalues(self, ucr_row):
         """
-        Returns rows of "dataElementID", "categoryOptionComboID", "value", and optionally "period", "orgUnit" and
+        Returns rows of "dataElement", "categoryOptionCombo", "value", and optionally "period", "orgUnit" and
         "comment" for this DataSet where ucr_row looks like::
 
             {
@@ -93,8 +93,8 @@ class DataSetMap(Document):
                     period = value
                 else:
                     datavalue = {
-                        'dataElementID': dv_map[key]['data_element_id'],
-                        'categoryOptionComboID': dv_map[key]['category_option_combo_id'],
+                        'dataElement': dv_map[key]['data_element_id'],
+                        'categoryOptionCombo': dv_map[key]['category_option_combo_id'],
                         'value': value,
                     }
                     if dv_map[key].get('comment'):
