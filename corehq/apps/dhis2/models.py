@@ -166,6 +166,9 @@ class JsonApiLog(models.Model):
     @staticmethod
     def log(log_level, json_api_request, request_error, response_status, response_body, method_func, request_url,
             data=None, **params):
+        # Don't log credentials
+        if 'auth' in params:
+            params['auth'] = '******'
         JsonApiLog.objects.create(
             domain=json_api_request.domain_name,
             log_level=log_level,
