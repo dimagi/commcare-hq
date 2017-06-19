@@ -409,7 +409,7 @@ class AwcReportsView(View):
             data = get_awc_reports_maternal_child(
                 config,
                 tuple(month.timetuple())[:3],
-                tuple(two_before.timetuple())[:3]
+                tuple(prev_month.timetuple())[:3]
             )
         elif step == 'demographics':
             data = get_awc_report_demographics(

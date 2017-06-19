@@ -1176,43 +1176,172 @@ def get_awc_reports_pse(config, month, two_before):
     }
 
 
-def get_awc_reports_maternal_child(config, month, two_before):
+def get_awc_reports_maternal_child(config, month, prev_month):
 
-    data = AggChildHealthMonthly.objects.filter(
-        month__range=(datetime(*two_before), datetime(*month)), **config
-    ).values(
-        'month', 'aggregation_level'
-    ).annotate(
-        underweight=(
-            Sum('nutrition_status_moderately_underweight') + Sum('nutrition_status_severely_underweight')
-        ),
-        valid_in_month=Sum('valid_in_month'),
-        immunized=Sum('fully_immunized_on_time') + Sum('fully_immunized_late'),
-        eligible=Sum('fully_immunized_eligible')
-    ).order_by('month')
+    def get_data_for(date):
+        return AggChildHealthMonthly.objects.filter(
+            month=date, **config
+        ).values(
+            'month', 'aggregation_level'
+        ).annotate(
+            underweight=(
+                Sum('nutrition_status_moderately_underweight') + Sum('nutrition_status_severely_underweight')
+            ),
+            valid_in_month=Sum('valid_in_month'),
+            immunized=(
+                Sum('fully_immunized_on_time') + Sum('fully_immunized_late')
+            ),
+            eligible=Sum('fully_immunized_eligible'),
+            wasting=(
+                Sum('wasting_moderate') + Sum('wasting_severe')
+            ),
+            height=Sum('height_eligible'),
+            stunting=(
+                Sum('stunting_moderate') + Sum('stunting_severe')
+            ),
+            low_birth=Sum('low_birth_weight_in_month'),
+            birth=Sum('bf_at_birth'),
+            born=Sum('born_in_month'),
+            month_ebf=Sum('ebf_in_month'),
+            ebf=Sum('ebf_eligible'),
+            month_cf=Sum('cf_initiation_in_month'),
+            cf=Sum('cf_initiation_eligible')
 
-    prevalence = []
-    immunized = []
-    for row in data:
-        month = row['month']
-        month_in_milliseconds = int(month.strftime("%s")) * 1000
-        prevalence.append([month_in_milliseconds, row['underweight'] / float(row['valid_in_month'] or 1)])
-        immunized.append([month_in_milliseconds, row['immunized'] / float(row['eligible'] or 1)])
+        )
+
+    this_month_data = get_data_for(datetime(*month))
+    prev_month_data = get_data_for(datetime(*prev_month))
+
     return {
-        'charts': [
+        'kpi': [
             [
                 {
-                    'key': 'Prevalence of undernutrition (weight-for-age)',
-                    'values': prevalence,
-                    "classed": "dashed",
-                }
+                    'label': _('Prevalence of undernutrition (weight-for-age)'),
+                    'help_text': _((
+                        "Percentage of children with weight-for-age less than -2 standard deviations of the "
+                        "WHO Child Growth Standards median. Children who are moderately or severely underweight "
+                        "have a higher risk of mortality."
+                    )),
+                    'percent': percent_diff(
+                        'underweight',
+                        this_month_data,
+                        prev_month_data,
+                        'valid_in_month'
+                    ),
+                    'value': get_value(this_month_data, 'underweight'),
+                    'all': get_value(this_month_data, 'valid_in_month'),
+                    'format': 'percent_and_div'
+                },
+                {
+                    'label': _('% Immunization coverage (at age 1 year)'),
+                    'help_text': _((
+                        "Percentage of children 1 year+ who have recieved complete immunization as per "
+                        "National Immunization Schedule of India required by age 1"
+                    )),
+                    'percent': percent_diff(
+                        'immunized',
+                        this_month_data,
+                        prev_month_data,
+                        'eligible'
+                    ),
+                    'value': get_value(this_month_data, 'immunized'),
+                    'all': get_value(this_month_data, 'eligible'),
+                    'format': 'percent_and_div'
+                },
             ],
             [
                 {
-                    'key': '% Immunization coverage (at age 1 year)',
-                    'values': immunized,
-                    "classed": "dashed",
-                }
+                    'label': _('% Wasting (weight-for-height)'),
+                    'help_text': _((
+                        "Percentage of children (6-60 months) with weight-for-height below -3 standard "
+                        "deviations of the WHO Child Growth Standards median. Severe Acute Malnutrition "
+                        "(SAM) or wasting in children is a symptom of acute undernutrition usually "
+                        "as a consequence"
+                    )),
+                    'percent': percent_diff(
+                        'wasting',
+                        this_month_data,
+                        prev_month_data,
+                        'height'
+                    ),
+                    'value': get_value(this_month_data, 'wasting'),
+                    'all': get_value(this_month_data, 'height'),
+                    'format': 'percent_and_div'
+                },
+                {
+                    'label': _('% Stunting (height-for-age)'),
+                    'help_text': _((
+                        "Percentage of children (6-60 months) with height-for-age below -2Z standard "
+                        "deviations of the WHO Child Growth Standards median. Stunting in children is a "
+                        "sign of chronic undernutrition and has long lasting harmful consequences on the "
+                        "growth of a child"
+                    )),
+                    'percent': percent_diff(
+                        'stunting',
+                        this_month_data,
+                        prev_month_data,
+                        'height'
+                    ),
+                    'value': get_value(this_month_data, 'stunting'),
+                    'all': get_value(this_month_data, 'height'),
+                    'format': 'percent_and_div'
+                },
+            ],
+            [
+                {
+                    'label': _('% Newborns with Low Birth Weight'),
+                    'help_text': None,
+                    'percent': percent_diff(
+                        'low_birth',
+                        this_month_data,
+                        prev_month_data,
+                        'born'
+                    ),
+                    'value': get_value(this_month_data, 'low_birth'),
+                    'all': get_value(this_month_data, 'born'),
+                    'format': 'percent_and_div'
+                },
+                {
+                    'label': _('% Early Initiation of Breastfeeding'),
+                    'help_text': None,
+                    'percent': percent_diff(
+                        'birth',
+                        this_month_data,
+                        prev_month_data,
+                        'born'
+                    ),
+                    'value': get_value(this_month_data, 'birth'),
+                    'all': get_value(this_month_data, 'born'),
+                    'format': 'percent_and_div'
+                },
+            ],
+            [
+                {
+                    'label': _('% Exclusive breastfeeding'),
+                    'help_text': None,
+                    'percent': percent_diff(
+                        'month_ebf',
+                        this_month_data,
+                        prev_month_data,
+                        'ebf'
+                    ),
+                    'value': get_value(this_month_data, 'month_ebf'),
+                    'all': get_value(this_month_data, 'ebf'),
+                    'format': 'percent_and_div'
+                },
+                {
+                    'label': _('% Children initiated appropriate complementary feeding'),
+                    'help_text': None,
+                    'percent': percent_diff(
+                        'month_cf',
+                        this_month_data,
+                        prev_month_data,
+                        'cf'
+                    ),
+                    'value': get_value(this_month_data, 'month_cf'),
+                    'all': get_value(this_month_data, 'cf'),
+                    'format': 'percent_and_div'
+                },
             ]
         ]
     }
@@ -1220,14 +1349,14 @@ def get_awc_reports_maternal_child(config, month, two_before):
 
 def get_awc_report_demographics(config, month):
 
-    # map_data = AggAwcMonthly.objects.filter(
-    #     month=datetime(*month), **config
-    # ).values(
-    #     'month', 'aggregation_level'
-    # ).annotate(
-    #     household=Sum('household')
-    # ).order_by('month')
-    #
+    map_data = AggAwcMonthly.objects.filter(
+        month=datetime(*month), **config
+    ).values(
+        'month', 'aggregation_level'
+    ).annotate(
+        household=Sum('cases_household')
+    ).order_by('month')
+
     chart = AggChildHealthMonthly.objects.filter(
         month=datetime(*month), **config
     ).values(

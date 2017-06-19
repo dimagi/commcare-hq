@@ -13,45 +13,7 @@
     </div>
     <div class="report-content">
         <div class="row " ng-show="$ctrl.step === 'system_usage'">
-            <div class="row" ng-repeat="section in $ctrl.data.kpi">
-                <div class="col-md-6" ng-repeat="cell in section">
-                    <div class="report-cell">
-                        <div class="row">
-                            <div class="col-md-1"
-                                 uib-popover-html="cell.help_text"
-                                 popover-placement="right"
-                                 popover-trigger="'mouseenter'">
-                                <i class="fa fa-info-circle fa-2x" ></i>
-                            </div>
-                            <div class="col-md-11 center">
-                                <div class="row">
-                                    <span class="title" ng-bind="cell.label"></span>
-                                </div>
-                                <div class="row">
-                                    <div class="numbers">
-                                        <span ng-if="cell.format == 'div'"><span ng-bind="cell.value | number:0"></span>/<span ng-bind="cell.all | number:0"></span></span>
-                                        <span ng-if="cell.format == 'number'" ng-bind="cell.value | number:0"></span>
-                                        <div ng-if="cell.format == 'percent_and_div'">
-                                            <div><span ng-bind="(cell.value / (cell.all || 1) * 100) | number:2"></span> %</div>
-                                            <div>(<span ng-bind="cell.value | number:0"></span>/<span ng-bind="cell.all | number:0"></span>)</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row" >
-                                    <p>
-                                        <span ng-show="cell.percent !== null">
-                                            <i class="fa" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0}"></i>
-                                            <span ng-bind="cell.percent | number:2"></span>
-                                            {% trans '% from the day before last' %}
-                                        </span>
-                                        <i class="fa fa-ellipsis-h fa-2x" aria-hidden="true"></i>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <kpi data="$ctrl.data.kpi"></kpi>
         </div>
         <div class="row black" ng-show="$ctrl.step === 'pse'">
             <div class="row no-margin" ng-repeat="chart in $ctrl.data.charts">
@@ -73,11 +35,8 @@
                 </div>
             </div>
         </div>
-        <div class="row black" ng-show="$ctrl.step === 'maternal_child'">
-            <div class="row no-margin" ng-repeat="chart in $ctrl.data.charts">
-                <h2 class="center">{$ chart[0].key $}</h2>
-                <nvd3 options="$ctrl.chartOptions" data="chart" class="with-3d-shadow with-transitions"></nvd3>
-            </div>
+        <div class="row" ng-show="$ctrl.step === 'maternal_child'">
+            <kpi data="$ctrl.data.kpi"></kpi>
         </div>
         <div class="row" ng-show="$ctrl.step === 'demographics'">
 {#            <div class="row no-margin">#}
@@ -88,45 +47,7 @@
                 <h2 class="center">{$ $ctrl.data.chart[0].key $}</h2>
                 <nvd3 options="$ctrl.chartOptions" data="$ctrl.data.chart" class="with-3d-shadow with-transitions"></nvd3>
             </div>
-            <div class="row no-margin" ng-repeat="section in $ctrl.data.kpi">
-                <div class="col-md-6" ng-repeat="cell in section">
-                    <div class="report-cell">
-                        <div class="row">
-                            <div class="col-md-1"
-                                 uib-popover-html="cell.help_text"
-                                 popover-placement="right"
-                                 popover-trigger="'mouseenter'">
-                                <i class="fa fa-info-circle fa-2x" ></i>
-                            </div>
-                            <div class="col-md-11 center">
-                                <div class="row">
-                                    <span class="title" ng-bind="cell.label"></span>
-                                </div>
-                                <div class="row">
-                                    <div class="numbers">
-                                        <span ng-if="cell.format == 'div'"><span ng-bind="cell.value | number:0"></span>/<span ng-bind="cell.all | number:0"></span></span>
-                                        <span ng-if="cell.format == 'number'" ng-bind="cell.value | number:0"></span>
-                                        <div ng-if="cell.format == 'percent_and_div'">
-                                            <div><span ng-bind="(cell.value / (cell.all || 1) * 100) | number:2"></span> %</div>
-                                            <div>(<span ng-bind="cell.value | number:0"></span>/<span ng-bind="cell.all | number:0"></span>)</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row" >
-                                    <p>
-                                        <span ng-show="cell.percent !== null">
-                                            <i class="fa" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0}"></i>
-                                            <span ng-bind="cell.percent | number:2"></span>
-                                            {% trans '% from the day before last' %}
-                                        </span>
-                                        <i class="fa fa-ellipsis-h fa-2x" aria-hidden="true"></i>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <kpi data="$ctrl.data.kpi"></kpi>
         </div>
         <div class="row black" ng-show="$ctrl.step === 'beneficiary'">
             <div ng-show="$ctrl.showTable" ng-if="$ctrl.data.months" class="col-md-12">
