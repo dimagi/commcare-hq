@@ -9,7 +9,6 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     delete_all_users,
     hard_delete_deleted_users,
 )
-from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 
 from corehq.warehouse.dbaccessors import (
     get_group_ids_by_last_modified,
