@@ -45,6 +45,10 @@ preview_app/less */
   width: -moz-calc(~"100% - " @preview-toggler-width);
   width: calc(~"100% - " @preview-toggler-width);
 }
+#formdesigner > .full-screen .fd-content-right {
+  padding-right: @preview-toggler-width;
+  .transition(padding-right @transition-speed);
+}
 
 #js-appmanager-body.offset-for-preview,
 #formdesigner.offset-for-preview {
@@ -54,6 +58,10 @@ preview_app/less */
   width: calc(~"100% - " @preview-phone-wrapper-width);
 }
 
+#formdesigner.offset-for-preview > .full-screen .fd-content-right {
+  padding-right: @preview-phone-wrapper-width;
+}
+
 #js-appmanager-body.offset-for-tablet,
 #formdesigner.offset-for-tablet {
   margin-right: @preview-tablet-wrapper-width;
@@ -61,6 +69,10 @@ preview_app/less */
   width: -moz-calc(~"100% - " @preview-tablet-wrapper-width);
   width: calc(~"100% - " @preview-tablet-wrapper-width);
   .transition(all @transition-speed);
+}
+
+#formdesigner.offset-for-tablet > .full-screen .fd-content-right {
+  padding-right: @preview-tablet-wrapper-width;
 }
 
 #hq-messages-container > div > div > .alert {
