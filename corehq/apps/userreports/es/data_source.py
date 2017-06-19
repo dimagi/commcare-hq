@@ -34,11 +34,13 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
     @property
     def order_by(self):
         if self._order_by:
-            return [
-                (col.field, order)
-                for sort_column_id, order in self._order_by
-                for col in [self._column_configs[sort_column_id]]
-            ]
+            ret = []
+            for sort_column_id, order in self._order_by:
+                if sort_column_id in self._column_configs:
+                    for col in [self._column_configs[sort_column_id]]:
+                        ret.append((col.field, order))
+                else:
+                    ret.append((sort_column_id, order))
         elif self.top_level_columns:
             # can only sort by columns that come from the DB
             col = list(ifilter(lambda col: hasattr(col, 'field'), self.top_level_columns))
