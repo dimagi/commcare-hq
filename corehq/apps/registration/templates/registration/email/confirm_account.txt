@@ -1,3 +1,5 @@
+{% load i18n %}
+
 {% blocktrans %}Hey there,{% endblocktrans %},
 
 {% blocktrans %}{{ inviter }} has invited you to join the {{ domain }} project space at CommCareHQ. This invitation expires in {{ days }} day(s){% endblocktrans %}
