@@ -25,12 +25,15 @@ class Command(BaseCommand):
         dto_parent = SQLLocation.active_objects.get(location_id=parent_loc_id)
         for org_id in org_ids:
             dto = self.create_dto(domain, state_code, district_code, dto_parent, org_id)
+            counter = 1
             for agency in self.get_agencies_by_state_district_org(state_code, district_code, org_id):
+                print 'handling agency %d...' % counter
                 if agency.location_type is not None:
                     agency_loc = self.create_agency(domain, agency, dto, org_id)
                     self.create_user(agency, agency_loc, user_level)
                 elif agency.is_field_officer:
                     self.create_field_officer(agency, domain, dto, user_level)
+                counter += 1
 
     def create_dto(self, domain, state_code, district_code, dto_parent, org_id):
         return SQLLocation.objects.create(
