@@ -127,6 +127,7 @@ def default_new_app(request, domain):
         identify.delay(request.couch_user.username, {'First Template App Chosen': 'blank'})
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
+    add_ons.init_app(request, app)
 
     if not toggles.APP_MANAGER_V2.enabled(request.user.username):
         # APP MANAGER V2 is completely blank on new app

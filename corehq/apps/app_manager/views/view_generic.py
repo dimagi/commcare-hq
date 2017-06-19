@@ -134,7 +134,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
 
     context.update({
         'add_ons': add_ons.get_dict(request, app, module, form),
-        'add_ons_layout': add_ons.get_layout(),
+        'add_ons_layout': add_ons.get_layout(request),
     })
 
     if form:

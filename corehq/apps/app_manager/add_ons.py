@@ -19,6 +19,11 @@ class AddOn(object):
         self.used_in_module = used_in_module if used_in_module else lambda m: False
         self.used_in_form = used_in_form if used_in_form else lambda f: False
 
+    def has_privilege(self, request):
+        if not self.privilege:
+            return True
+        return prbac_has_privilege(self.privilege)
+
 def _uses_case_list_menu_item(module):
     if getattr(module, 'case_list', False) and module.case_list.show:
         return True
@@ -160,7 +165,7 @@ def show(slug, request, app, module=None, form=None):
     add_on = _ADD_ONS[slug]
 
     # Do not show if there's a required privilege missing
-    if add_on.privilege and not prbac_has_privilege(request, add_on.privilege):
+    if not add_ons.has_privilege(request):
         return False
 
     # Show if add-on has been enabled for app
@@ -180,13 +185,34 @@ def show(slug, request, app, module=None, form=None):
     return show
 
 
+def init_app(request, app):
+    if app.add_ons:
+        return
+
+    previews = feature_previews.previews_dict(app.domain)
+    for slug in _ADD_ONS.keys():
+        add_on = _ADD_ONS[slug]
+        enable = False
+        if add_on.has_privilege(request):
+            # Enable if it's an enabled preview
+            if slug in previews:
+                enable = previews[slug]
+            # Turn on if it's used anywhere
+            enable = enable or any([add_on.used_in_module(m) for m in app.modules])
+            enable = enable or any([add_on.used_in_form(f) for m in app.modules for f in m.forms])
+        app.add_ons[slug] = enable
+
+    app.save()
+
+
 @memoized
 def get_dict(request, app, module=None, form=None):
+    init_app(request, app)
     return {slug: show(slug, request, app, module, form) for slug in _ADD_ONS.keys()}
 
 
 @memoized
-def get_layout():
+def get_layout(request):
     all_slugs = set(_ADD_ONS.keys())
     layout_slugs = set([slug for section in _LAYOUT for slug in section['slugs']])
     if all_slugs != layout_slugs:
@@ -199,4 +225,4 @@ def get_layout():
                     'name': _ADD_ONS[slug].name,
                     'description': _ADD_ONS[slug].description,
                     'help_link': _ADD_ONS[slug].help_link,
-                } for slug in section['slugs']]}, **section) for section in _LAYOUT]
+                } for slug in section['slugs'] if _ADD_ONS[slug].has_privilege(request)]}, **section) for section in _LAYOUT]
