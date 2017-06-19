@@ -53,12 +53,6 @@
     {% registerurl 'edit_form_attr' app.domain app.id form.unique_id '---' %}
     <div id="formdesigner" class="clearfix app-manager-v2 loading"></div>
 
-    {% if can_preview_form %}
-    <script type="text/html" id="js-fd-app-preview-btn-template">
-        {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
-    </script>
-    {% endif %}
-
     <script type="text/html" id="js-fd-manage-case">
       <div class="btn-group pull-right">
         <a class="btn btn-manage" href="{% url "view_form" domain app.id module.id form.id %}">

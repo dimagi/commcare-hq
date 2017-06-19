@@ -8,14 +8,16 @@ EXTERNAL styling of the preview app container in app manager.
 For the styling of the app preview content and layout, please check out
 preview_app/less */
 
-@preview-phone-wrapper-width: 310px;
+@preview-phone-wrapper-width: 315px;
 @preview-phone-width: 250px;
-@preview-tablet-wrapper-width: 515px;
+@preview-tablet-wrapper-width: 520px;
 @preview-tablet-width: 450px;
 @preview-tablet-height: 644px;
 @preview-phone-height: 444px;
 @preview-phone-case-offset-y: 40px;
 @preview-phone-case-offset-x: 15px;
+
+@preview-toggler-width: 15px;
 
 @transition-speed: .5s;
 
@@ -36,6 +38,12 @@ preview_app/less */
 
   .box-shadow(0 0px 10px 3px rgba(0,0,0,.45));
   .transition(all @transition-speed);
+}
+#formdesigner {
+  margin-right: @preview-toggler-width;
+  width: -webkit-calc(~"100% - " @preview-toggler-width);
+  width: -moz-calc(~"100% - " @preview-toggler-width);
+  width: calc(~"100% - " @preview-toggler-width);
 }
 
 #js-appmanager-body.offset-for-preview,
@@ -69,17 +77,16 @@ preview_app/less */
   right: 0;
   position: fixed;
   z-index: @zindex-app-preview;
-  width: 0;
+  width: @preview-toggler-width;
   background-color: @cc-light-cool-accent-hi;
   .transition(width @transition-speed);
   overflow: hidden;
-  border-left: 0px;
+  border-left: 0;
 
 
   &.open {
     width: @preview-phone-wrapper-width;
     .box-shadow(0 0px 10px 3px rgba(0,0,0,.35));
-    border-left: 10px solid @cc-light-cool-accent-mid;
   }
 
   &.open.small-height  {
@@ -95,6 +102,29 @@ preview_app/less */
   &.fullscreen {
     z-index: 1040 !important;
     background-color: fade(@cc-light-cool-accent-hi, 50);
+  }
+}
+
+.preview-toggler {
+  cursor: pointer;
+  width: @preview-toggler-width;
+  height: 100%;
+  background-color: @cc-light-cool-accent-mid;
+  .transition(background-color @transition-speed);
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  &:hover {
+    background-color: @cc-light-cool-accent-low;
+  }
+
+  .fa {
+    position: absolute;
+    left: 3px;
+    top: 50%;
+    font-size: 11px;
+    color: white;
   }
 }
 
