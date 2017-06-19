@@ -1,5 +1,6 @@
 import json
 from itertools import chain
+from pprint import pformat
 
 import jsonfield
 from django.core.serializers.json import DjangoJSONEncoder
@@ -181,3 +182,20 @@ class JsonApiLog(models.Model):
             response_status=response_status,
             response_body=response_body,
         )
+
+    @property
+    def pp_request_body(self):
+        """
+        Pretty-print the request body
+        """
+        return pformat(self.request_body)
+
+    @property
+    def pp_response_body(self):
+        """
+        Pretty-print the response body
+        """
+        try:
+            return pformat(json.loads(self.response_body))
+        except ValueError:
+            return self.response_body
