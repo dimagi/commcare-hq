@@ -488,12 +488,12 @@ class ProgressReportView(View):
         aggregation_level = 1
 
         this_month = datetime(year, month, 1).date()
-        three_before = this_month - relativedelta(months=2)
+        two_before = this_month - relativedelta(months=2)
 
         config = {
             'aggregation_level': aggregation_level,
             'month': this_month,
-            'three_before': three_before
+            'two_before': two_before
         }
 
         loc_level = get_location_filter(location, self.kwargs['domain'], config)

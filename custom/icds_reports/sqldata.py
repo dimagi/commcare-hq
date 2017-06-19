@@ -186,7 +186,7 @@ class AggChildHealthMonthlyDataSource(SqlData):
         if self.loc_key in self.config and self.config[self.loc_key]:
             filters.append(EQ(self.loc_key, self.loc_key))
         if 'month' in self.config and self.config['month']:
-            filters.append(BETWEEN('month', 'three_before', 'month'))
+            filters.append(BETWEEN('month', 'two_before', 'month'))
         return filters
 
     @property
@@ -432,7 +432,7 @@ class AggCCSRecordMonthlyDataSource(SqlData):
         if self.loc_key in self.config and self.config[self.loc_key]:
             filters.append(EQ(self.loc_key, self.loc_key))
         if 'month' in self.config and self.config['month']:
-            filters.append(BETWEEN('month', 'three_before', 'month'))
+            filters.append(BETWEEN('month', 'two_before', 'month'))
         return filters
 
     @property
@@ -542,7 +542,7 @@ class AggAWCMonthlyDataSource(SqlData):
         if self.loc_key in self.config and self.config[self.loc_key]:
             filters.append(EQ(self.loc_key, self.loc_key))
         if 'month' in self.config and self.config['month']:
-            filters.append(BETWEEN('month', 'three_before', 'month'))
+            filters.append(BETWEEN('month', 'two_before', 'month'))
         return filters
 
     @property
@@ -559,7 +559,8 @@ class AggAWCMonthlyDataSource(SqlData):
             DatabaseColumn('month', SimpleColumn('month')),
             DatabaseColumn(
                 'Number of AWCs Open in Month',
-                SumColumn('awc_num_open')
+                SumColumn('num_awcs'),
+                slug='awc_num_open'
             ),
             DatabaseColumn(
                 'Number of Household Registration Forms',
@@ -626,7 +627,16 @@ class AggAWCMonthlyDataSource(SqlData):
             ),
             DatabaseColumn(
                 'Total Number of Members Enrolled for Services for services at AWC',
-                SumColumn('cases_person')
+                SumColumn('cases_person', alias='cases_person')
+            ),
+            AggregateColumn(
+                'Percentage of Beneficiaries with Aadhar',
+                lambda x, y: (x or 0) * 100 / float(y or 1),
+                [
+                    SumColumn('cases_person_has_aadhaar'),
+                    AliasColumn('cases_person')
+                ],
+                slug='aadhar'
             ),
             DatabaseColumn(
                 'Total Pregnant women',
@@ -1734,9 +1744,10 @@ class ProgressReport(object):
                     {'header': 'Number of Households', 'slug': 'cases_household'},
                     {'header': 'Total Number of Household Members', 'slug': 'cases_person_all'},
                     {
-                        'header': 'Total Number of Members Enrolled for Services for services at AW',
+                        'header': 'Total Number of Members Enrolled for Services for services at AWC',
                         'slug': 'cases_person'
                     },
+                    {'header': 'Percentage of Beneficiaries with Aadhar', 'slug': 'aadhar'},
                     {'header': 'Total Pregnant women', 'slug': 'cases_ccs_pregnant_all'},
                     {'header': 'Total Pregnant Women Enrolled for services at AWC', 'slug': 'cases_ccs_pregnant'},
                     {'header': 'Total Lactating women', 'slug': 'cases_ccs_lactating_all'},
@@ -1825,7 +1836,7 @@ class ProgressReport(object):
         months = [
             dt.strftime("%b %Y") for dt in rrule(
                 MONTHLY,
-                dtstart=self.config['three_before'],
+                dtstart=self.config['two_before'],
                 until=self.config['month'])
         ]
 
