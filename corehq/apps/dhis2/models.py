@@ -155,7 +155,10 @@ class JsonApiLog(models.Model):
     request_url = models.CharField(max_length=255)
     request_headers = jsonfield.JSONField(blank=True)
     request_params = jsonfield.JSONField(blank=True)
-    request_body = jsonfield.JSONField(blank=True, null=True)  # NULL for GET, but POST can take an empty body
+    request_body = jsonfield.JSONField(
+        blank=True, null=True,  # NULL for GET, but POST can take an empty body
+        dump_kwargs={'cls': DjangoJSONEncoder, 'separators': (',', ':')}  # Use DjangoJSONEncoder for dates, etc.
+    )
     request_error = models.TextField(null=True)
     response_status = models.IntegerField(null=True)
     response_body = models.TextField(blank=True, null=True)
@@ -168,9 +171,9 @@ class JsonApiLog(models.Model):
             log_level=log_level,
             request_method=method_func.__name__.upper(),
             request_url=request_url,
-            request_headers=json.dumps(json_api_request.headers),
-            request_params=json.dumps(params),
-            request_body=json.dumps(data, cls=DjangoJSONEncoder) if data else data,
+            request_headers=json_api_request.headers,
+            request_params=params,
+            request_body=data,
             request_error=request_error,
             response_status=response_status,
             response_body=response_body,
