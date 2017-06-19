@@ -22,7 +22,7 @@
 </script>
 
 <script type="text/html" id="case-config:case-transaction">
-    {% if app.advanced_app_builder or form.actions.open_case.condition.type == 'if' %}
+    {% if add_ons.conditional_form_actions %}
     <div class="panel panel-appmanager" data-bind="visible: allow.condition()">
         <div class="panel-heading">
             <h4 class="panel-title panel-title-nolink">
@@ -56,7 +56,7 @@
                 <input type="checkbox" data-bind="checked: close_case"/>
                 {% trans "Close this case when the form is complete" %}
             </label>
-            {% if app.advanced_app_builder or form.actions.close_case.condition.type == 'if' %}
+            {% if add_ons.conditional_form_actions %}
             <div data-bind="template: {
                 name: 'case-config:condition',
                 data: {condition: $data.close_condition, config: $data},
@@ -74,7 +74,7 @@
     <div data-bind="saveButton: saveButton"></div>
 
     <p class="lead">
-        {% if not app.advanced_app_builder %}
+        {% if not add_ons.edit_form_actions %}
             {% if form.get_action_type == 'open' %}
                 This is a <strong><i class="fcc fcc-app-createform"></i> Registration</strong> form. Use the Registration form to add new cases to your <strong><i class="fa fa-bars"></i> Case List</strong>.
             {% else %}
@@ -88,7 +88,7 @@
     </p>
 
     <div data-bind="with: caseConfigViewModel">
-        {% if app.advanced_app_builder or form.actions.subcases %}
+        {% if add_ons.subcases %}
         <div class="panel panel-appmanager">
             <div class="panel-heading">
                 <h4 class="panel-title panel-title-nolink">
@@ -122,7 +122,7 @@
             <!--ko if: actionType() === 'open' -->
             <div data-bind="template: {name: 'case-config:case-transaction', data: case_transaction}"></div>
             <!--/ko-->
-            {% if app.advanced_app_builder or form.actions.subcases %}
+            {% if add_ons.subcases %}
                 <!--ko if: actionType() !== 'none'-->
                 <hr />
                 <p class="lead">
