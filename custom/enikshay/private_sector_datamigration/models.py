@@ -3,10 +3,14 @@ from django.db import models
 from dimagi.utils.decorators.memoized import memoized
 
 
+REPORTING_MECHANISM_MISSED_CALL = 83
 REPORTING_MECHANISM_99_DOTS = 84
 REPORTING_MECHANISM_FIELD_OFFICER = 85
 REPORTING_MECHANISM_TREATMENT_SUPPORTER = 86
+REPORTING_MECHANISM_TREATMENT_PROVIDER = 87
+REPORTING_MECHANISM_PATIENT = 88
 REPORTING_MECHANISM_MERM = 96
+REPORTING_MECHANISM_AYUSH_OTHER_PROVIDER = 97
 REPORTING_MECHANISM_NONE = 0
 
 DIRECTLY_OBSERVED_DOSE = 0
@@ -478,6 +482,34 @@ class Adherence(models.Model):
     owner = models.CharField(max_length=255, null=True)
     reportingMechanismId = models.IntegerField(db_index=True)
     unknwDoseReasonId = models.CharField(max_length=8, null=True)
+
+    @property
+    def adherence_report_source(self):
+        return {
+            REPORTING_MECHANISM_MISSED_CALL: 'missed_call',
+            REPORTING_MECHANISM_99_DOTS: '',
+            REPORTING_MECHANISM_FIELD_OFFICER: 'field_officer',
+            REPORTING_MECHANISM_TREATMENT_SUPPORTER: 'treatment_supervisor',
+            REPORTING_MECHANISM_TREATMENT_PROVIDER: 'provider',
+            REPORTING_MECHANISM_PATIENT: 'patient',
+            REPORTING_MECHANISM_MERM: '',
+            REPORTING_MECHANISM_AYUSH_OTHER_PROVIDER: 'other',
+            REPORTING_MECHANISM_NONE: 'other',
+        }[self.reportingMechanismId]
+
+    @property
+    def adherence_source(self):
+        return {
+            REPORTING_MECHANISM_MISSED_CALL: 'enikshay',
+            REPORTING_MECHANISM_99_DOTS: '99DOTS',
+            REPORTING_MECHANISM_FIELD_OFFICER: 'enikshay',
+            REPORTING_MECHANISM_TREATMENT_SUPPORTER: 'enikshay',
+            REPORTING_MECHANISM_TREATMENT_PROVIDER: 'enikshay',
+            REPORTING_MECHANISM_PATIENT: 'enikshay',
+            REPORTING_MECHANISM_MERM: 'MERM',
+            REPORTING_MECHANISM_AYUSH_OTHER_PROVIDER: 'enikshay',
+            REPORTING_MECHANISM_NONE: 'enikshay',
+        }[self.reportingMechanismId]
 
     @property
     def adherence_value(self):
