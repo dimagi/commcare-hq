@@ -135,6 +135,7 @@
         $scope.showLabels = true;
         $scope.showCalculations = false;
         $scope.showRelevance = false;
+        $scope.showConstraints = false;
         $scope.showComments = false;
         $scope.appLangs = summaryConfig.appLangs;
         $scope.getFormUrl = utils.getFormUrl;
@@ -307,6 +308,7 @@
                 questions: '=',
                 showConditions: '=',
                 showCalculations: '=',
+                showConstraints: '=',
                 showLabels: '=',
                 lang: '='
             },

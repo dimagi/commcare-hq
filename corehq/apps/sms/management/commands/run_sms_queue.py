@@ -8,7 +8,6 @@ from hqscripts.generic_queue import GenericEnqueuingOperation
 
 
 class SMSEnqueuingOperation(GenericEnqueuingOperation):
-    args = ""
     help = "Runs the SMS Queue"
 
     def get_queue_name(self):

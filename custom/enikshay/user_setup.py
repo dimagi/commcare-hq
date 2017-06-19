@@ -9,6 +9,7 @@ import re
 import uuid
 from crispy_forms import layout as crispy
 from django import forms
+from django.core.validators import RegexValidator
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
@@ -17,7 +18,7 @@ from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.locations.forms import LocationFormSet, LocationForm
 from corehq.apps.users.forms import NewMobileWorkerForm, clean_mobile_worker_username
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.signals import clean_commcare_user, commcare_user_post_save
+from corehq.apps.users.signals import commcare_user_post_save
 from .const import AGENCY_USER_FIELDS, AGENCY_LOCATION_FIELDS
 from .models import IssuerId
 
@@ -260,7 +261,6 @@ def add_drtb_hiv_to_dto(domain, user):
 
 
 def connect_signals():
-    clean_commcare_user.connect(clean_user_callback, dispatch_uid="clean_user_callback")
     commcare_user_post_save.connect(save_user_callback, dispatch_uid="save_user_callback")
 
 
@@ -317,6 +317,41 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
             if field in fields_to_loc_types:
                 fs[i] = _make_field_visible_to(field, fields_to_loc_types[field])
         return form
+
+    def _make_field(self, field):
+        if field.slug == 'language_code':
+            return forms.ChoiceField(
+                label=field.label,
+                required=True,
+                choices=[
+                    ('', _('Select one')),
+                    ("en", "English"),
+                    ("hin", "Hindi"),
+                    ("mar", "Marathi"),
+                    ("bho", "Bhojpuri"),
+                    ('guj', "Gujarati"),
+                ],
+            )
+        if field.slug == 'contact_phone_number':
+            regexp = "^91[0-9]{10}$"
+            help_text = "Please enter only digits. Enter 91 followed by the 10-digit national number."
+            return forms.CharField(
+                widget=forms.TextInput(attrs={"pattern": regexp, "title": help_text}),
+                label=field.label,
+                required=True,
+                validators=[RegexValidator(regexp, help_text)],
+            )
+        if field.slug == 'user_level':
+            return forms.ChoiceField(
+                label=field.label,
+                required=field.is_required,
+                choices=[
+                    ("real", "Real"),
+                    ("dev", "Developer"),
+                    ("test", "Test"),
+                ],
+            )
+        return super(ENikshayLocationUserDataEditor, self)._make_field(field)
 
 
 class ENikshayUserLocationDataEditor(CustomDataEditor):

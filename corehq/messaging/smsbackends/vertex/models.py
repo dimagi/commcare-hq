@@ -65,7 +65,17 @@ class VertexBackend(SQLSMSBackend):
         }
         return params
 
+    def phone_number_is_valid(self, phone_number):
+        phone_number = strip_plus(phone_number)
+        # Phone number must be an Indian phone number
+        # Also avoid processing numbers that are obviously too short
+        return phone_number.startswith('91') and len(phone_number) > 3
+
     def send(self, msg_obj, *args, **kwargs):
+        if not self.phone_number_is_valid(msg_obj.phone_number):
+            msg_obj.set_system_error(SMS.ERROR_INVALID_DESTINATION_NUMBER)
+            return
+
         params = self.populate_params(msg_obj)
         resp = requests.get(VERTEX_URL, params=params)
         self.handle_response(msg_obj, resp.status_code, resp.text)

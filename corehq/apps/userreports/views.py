@@ -592,13 +592,14 @@ class ConfigureChartReport(ReportBuilderView):
                     'is_static': self.existing_report.is_static,
                 })
             return self._handle_exception(error_response, e)
-
+        field_names = report_form.fields.keys()
         return {
             'report': {
                 "title": self.page_name
             },
             'report_type': self.report_type,
             'form': report_form,
+            'is_group_by_required': 'group_by' in field_names or 'location' in field_names,
             'editing_existing_report': bool(self.existing_report),
             'report_column_options': [p.to_dict() for p in report_form.report_column_options.values()],
             'data_source_indicators': [p._asdict() for p in report_form.data_source_properties.values()],

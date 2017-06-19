@@ -579,18 +579,6 @@ DateEntry.prototype.clientDateFormat = 'MM/DD/YYYY';
 DateEntry.prototype.serverFormat = 'YYYY-MM-DD';
 
 
-function DateTimeEntry(question, options) {
-    this.templateType = 'datetime';
-    this.timepicker = true;
-    this.datepicker = true;
-    DateTimeEntryBase.call(this, question, options);
-}
-DateTimeEntry.prototype = Object.create(DateTimeEntryBase.prototype);
-DateTimeEntry.prototype.constructor = DateTimeEntryBase;
-DateTimeEntry.prototype.clientTimeFormat = 'HH:mm';
-DateTimeEntry.prototype.clientDateFormat = 'MM/DD/YYYY';
-DateTimeEntry.prototype.clientFormat = 'MM/DD/YYYY HH:mm';
-
 function TimeEntry(question, options) {
     this.templateType = 'time';
     this.timepicker = true;
@@ -759,9 +747,6 @@ function getEntry(question) {
         break;
     case Formplayer.Const.TIME:
         entry = new TimeEntry(question, {});
-        break;
-    case Formplayer.Const.DATETIME:
-        entry = new DateTimeEntry(question, {});
         break;
     case Formplayer.Const.GEO:
         entry = new GeoPointEntry(question, {});

@@ -19,6 +19,7 @@ from django_countries.data import COUNTRIES
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
+from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
@@ -1175,3 +1176,38 @@ class AddPhoneNumberForm(forms.Form):
             )
         )
         self.fields['phone_number'].label = ugettext_lazy('Phone number')
+
+
+class CommCareUserFormSet(object):
+    """Combines the CommCareUser form and the Custom Data form"""
+
+    def __init__(self, domain, editable_user, request_user, data=None, *args, **kwargs):
+        self.domain = domain
+        self.editable_user = editable_user
+        self.request_user = request_user
+        self.data = data
+
+    @property
+    @memoized
+    def user_form(self):
+        return UpdateCommCareUserInfoForm(
+            data=self.data, domain=self.domain, existing_user=self.editable_user)
+
+    @property
+    @memoized
+    def custom_data(self):
+        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+        return CustomDataEditor(
+            domain=self.domain,
+            field_view=UserFieldsView,
+            existing_custom_data=self.editable_user.user_data,
+            post_dict=self.data,
+        )
+
+    def is_valid(self):
+        return (self.data is not None
+                and all([self.user_form.is_valid(), self.custom_data.is_valid()]))
+
+    def update_user(self):
+        self.user_form.existing_user.user_data = self.custom_data.get_data_to_save()
+        return self.user_form.update_user()

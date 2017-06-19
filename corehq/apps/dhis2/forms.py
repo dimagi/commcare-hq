@@ -27,7 +27,8 @@ SEND_FREQUENCY_CHOICES = (
 
 
 class Dhis2ConnectionForm(forms.Form):
-    server_url = forms.CharField(label=_('DHIS2 Server URL'), required=True)
+    server_url = forms.CharField(label=_('DHIS2 API URL'), required=True,
+                                 help_text=_('e.g. "https://play.dhis2.org/demo/api/"'))
     username = forms.CharField(label=_('Username'), required=True)
     password = forms.CharField(label=_('Password'), widget=forms.PasswordInput, required=False)
     log_level = forms.TypedChoiceField(label=_('Log Level'), required=False, choices=LOG_LEVEL_CHOICES, coerce=int)

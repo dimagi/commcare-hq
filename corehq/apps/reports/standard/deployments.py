@@ -160,7 +160,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 last_submissions = reporting_metadata.get('last_submissions')
                 if last_submissions:
                     last_sub = self.get_data_for_app(last_submissions, self.selected_app_id)
-                last_syncs = reporting_metadata.get('last_sync')
+                last_syncs = reporting_metadata.get('last_syncs')
                 if last_syncs:
                     last_sync = self.get_data_for_app(last_syncs, self.selected_app_id)
                     if last_sync is None:

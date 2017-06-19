@@ -7,8 +7,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     save_timed_schedule_instance,
     delete_alert_schedule_instance,
     delete_timed_schedule_instance,
-    get_active_alert_schedule_instance_ids,
-    get_active_timed_schedule_instance_ids,
+    get_active_schedule_instance_ids,
     get_alert_schedule_instances_for_schedule,
     get_timed_schedule_instances_for_schedule,
 )
@@ -171,35 +170,53 @@ class TestSchedulingNonPartitionedDBAccessorsDeleteAndFilter(BaseSchedulingNontP
             get_timed_schedule_instance(self.uuid4)
 
     def test_get_active_alert_schedule_instance_ids(self):
-        self.assertEqual(
-            set(get_active_alert_schedule_instance_ids(datetime(2017, 2, 1), datetime(2017, 4, 1))),
-            set([self.alert_instance1.schedule_instance_id, self.alert_instance2.schedule_instance_id])
+        self.assertItemsEqual(
+            get_active_schedule_instance_ids(
+                AlertScheduleInstance,
+                datetime(2017, 4, 1),
+                due_after=datetime(2017, 2, 1),
+            ),
+            [(self.domain, self.alert_instance1.schedule_instance_id, self.alert_instance1.next_event_due),
+             (self.domain, self.alert_instance2.schedule_instance_id, self.alert_instance2.next_event_due)]
         )
 
-        self.assertEqual(
-            set(get_active_alert_schedule_instance_ids(datetime(2016, 2, 1), datetime(2016, 4, 1))),
-            set([])
+        self.assertItemsEqual(
+            get_active_schedule_instance_ids(
+                AlertScheduleInstance,
+                datetime(2016, 4, 1),
+                due_after=datetime(2016, 2, 1),
+            ),
+            []
         )
 
     def test_get_active_timed_schedule_instance_ids(self):
-        self.assertEqual(
-            set(get_active_timed_schedule_instance_ids(datetime(2017, 2, 1), datetime(2017, 4, 1))),
-            set([self.timed_instance1.schedule_instance_id, self.timed_instance2.schedule_instance_id])
+        self.assertItemsEqual(
+            get_active_schedule_instance_ids(
+                TimedScheduleInstance,
+                datetime(2017, 4, 1),
+                due_after=datetime(2017, 2, 1),
+            ),
+            [(self.domain, self.timed_instance1.schedule_instance_id, self.timed_instance1.next_event_due),
+             (self.domain, self.timed_instance2.schedule_instance_id, self.timed_instance2.next_event_due)],
         )
 
-        self.assertEqual(
-            set(get_active_timed_schedule_instance_ids(datetime(2016, 2, 1), datetime(2016, 4, 1))),
-            set([])
+        self.assertItemsEqual(
+            get_active_schedule_instance_ids(
+                TimedScheduleInstance,
+                datetime(2016, 4, 1),
+                due_after=datetime(2016, 2, 1),
+            ),
+            []
         )
 
     def test_get_alert_schedule_instances_for_schedule(self):
-        self.assertEqual(
-            set(get_alert_schedule_instances_for_schedule(AlertSchedule(schedule_id=self.schedule_id1))),
-            set([self.alert_instance2, self.alert_instance3])
+        self.assertItemsEqual(
+            get_alert_schedule_instances_for_schedule(AlertSchedule(schedule_id=self.schedule_id1)),
+            [self.alert_instance2, self.alert_instance3]
         )
 
     def test_get_timed_schedule_instances_for_schedule(self):
-        self.assertEqual(
-            set(get_timed_schedule_instances_for_schedule(TimedSchedule(schedule_id=self.schedule_id2))),
-            set([self.timed_instance2, self.timed_instance3])
+        self.assertItemsEqual(
+            get_timed_schedule_instances_for_schedule(TimedSchedule(schedule_id=self.schedule_id2)),
+            [self.timed_instance2, self.timed_instance3]
         )

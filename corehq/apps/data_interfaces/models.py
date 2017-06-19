@@ -716,22 +716,25 @@ class CaseRuleActionResult(object):
         if not isinstance(value, int):
             raise ValueError("Expected int")
 
-    def __init__(self, num_updates=0, num_closes=0, num_related_updates=0, num_related_closes=0):
+    def __init__(self, num_updates=0, num_closes=0, num_related_updates=0, num_related_closes=0, num_creates=0):
         self._validate_int(num_updates)
         self._validate_int(num_closes)
         self._validate_int(num_related_updates)
         self._validate_int(num_related_closes)
+        self._validate_int(num_creates)
 
         self.num_updates = num_updates
         self.num_closes = num_closes
         self.num_related_updates = num_related_updates
         self.num_related_closes = num_related_closes
+        self.num_creates = num_creates
 
     def add_result(self, result):
         self.num_updates += result.num_updates
         self.num_closes += result.num_closes
         self.num_related_updates += result.num_related_updates
         self.num_related_closes += result.num_related_closes
+        self.num_creates += result.num_creates
 
     @property
     def total_updates(self):
@@ -739,7 +742,8 @@ class CaseRuleActionResult(object):
             self.num_updates +
             self.num_closes +
             self.num_related_updates +
-            self.num_related_closes
+            self.num_related_closes +
+            self.num_creates
         )
 
 
@@ -1066,6 +1070,7 @@ class DomainCaseRuleRun(models.Model):
     num_closes = models.IntegerField(null=True)
     num_related_updates = models.IntegerField(null=True)
     num_related_closes = models.IntegerField(null=True)
+    num_creates = models.IntegerField(null=True)
 
     class Meta:
         index_together = (
@@ -1082,5 +1087,6 @@ class DomainCaseRuleRun(models.Model):
         self.num_closes = result.num_closes
         self.num_related_updates = result.num_related_updates
         self.num_related_closes = result.num_related_closes
+        self.num_creates = result.num_creates
         self.finished_on = datetime.utcnow()
         self.save()

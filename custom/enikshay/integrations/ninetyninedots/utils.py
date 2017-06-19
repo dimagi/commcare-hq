@@ -56,25 +56,29 @@ class AdherenceCaseFactory(object):
             raise AdherenceException(e.message)
 
     def create_adherence_cases(self, adherence_points):
-        return self.case_factory.create_or_update_cases([
-            CaseStructure(
-                case_id=uuid.uuid4().hex,
-                attrs={
-                    "case_type": self.ADHERENCE_CASE_TYPE,
-                    "owner_id": UNOWNED_EXTENSION_OWNER_ID,
-                    "create": True,
-                    "update": self._get_adherence_case_properties(adherence_point),
-                },
-                indices=[CaseIndex(
-                    CaseStructure(case_id=self._episode_case.case_id, attrs={"create": False}),
-                    identifier='host',
-                    relationship=CASE_INDEX_EXTENSION,
-                    related_type=self._episode_case.type,
-                )],
-                walk_related=False,
+        case_structures = []
+        for adherence_point in adherence_points:
+            if adherence_point.get('MERM_TypeOfEvent') == "HEARTBEAT":
+                continue
+            case_structures.append(
+                CaseStructure(
+                    case_id=uuid.uuid4().hex,
+                    attrs={
+                        "case_type": self.ADHERENCE_CASE_TYPE,
+                        "owner_id": UNOWNED_EXTENSION_OWNER_ID,
+                        "create": True,
+                        "update": self._get_adherence_case_properties(adherence_point),
+                    },
+                    indices=[CaseIndex(
+                        CaseStructure(case_id=self._episode_case.case_id, attrs={"create": False}),
+                        identifier='host',
+                        relationship=CASE_INDEX_EXTENSION,
+                        related_type=self._episode_case.type,
+                    )],
+                    walk_related=False,
+                )
             )
-            for adherence_point in adherence_points
-        ])
+        return self.case_factory.create_or_update_cases(case_structures)
 
     def _get_adherence_case_properties(self, adherence_point):
         return {
@@ -84,7 +88,9 @@ class AdherenceCaseFactory(object):
             "adherence_date": self._parse_adherence_date(adherence_point["timestamp"]),
             "person_name": self._person_case.name,
             "adherence_confidence": self._default_adherence_confidence,
-            "shared_number_99_dots": adherence_point["sharedNumber"],
+            "shared_number_99_dots": adherence_point.get("sharedNumber"),
+            "merm_imei": adherence_point.get("MERM_IMEI"),
+            "merm_extra_info": adherence_point.get("MERM_ExtraInformation"),
         }
 
     def _parse_adherence_date(self, iso_datestring):

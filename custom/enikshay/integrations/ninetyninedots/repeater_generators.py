@@ -17,9 +17,8 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE,
 )
 from custom.enikshay.const import (
-    PRIMARY_PHONE_NUMBER,
-    BACKUP_PHONE_NUMBER,
-    MERM_ID,
+    NINETYNINEDOTS_NUMBERS,
+    ENIKSHAY_ID,
     PERSON_FIRST_NAME,
     PERSON_LAST_NAME,
     TREATMENT_START_DATE,
@@ -30,22 +29,48 @@ from custom.enikshay.const import (
     TREATMENT_OUTCOME_DATE,
     WEIGHT_BAND,
     CURRENT_ADDRESS,
+    ENROLLED_IN_PRIVATE,
+    MERM_ID,
+    MERM_DAILY_REMINDER_STATUS,
+    MERM_DAILY_REMINDER_TIME,
+    MERM_REFILL_REMINDER_STATUS,
+    MERM_REFILL_REMINDER_DATE,
+    MERM_REFILL_REMINDER_TIME,
+    MERM_RT_HOURS,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 
 
+class MermParams(jsonobject.JsonObject):
+    IMEI = jsonobject.StringProperty(required=False, exclude_if_none=True)
+    daily_reminder_status = jsonobject.StringProperty(required=False, exclude_if_none=True)
+    daily_reminder_time = jsonobject.StringProperty(required=False, exclude_if_none=True)  # HH:mm
+    refill_reminder_status = jsonobject.StringProperty(required=False, exclude_if_none=True)
+    refill_reminder_datetime = jsonobject.StringProperty(
+        required=False,
+        exclude_if_none=True
+    )  # yy/MM/dd HH:mm:ss
+    RT_hours = jsonobject.StringProperty(
+        required=False,
+        exclude_if_none=True
+    )  # 1 = 12 hours; i.e. for 3 days - RT_hours = 6
+
+
 class PatientPayload(jsonobject.JsonObject):
     beneficiary_id = jsonobject.StringProperty(required=True)
+    enikshay_id = jsonobject.StringProperty(required=False)
+
     first_name = jsonobject.StringProperty(required=False)
     last_name = jsonobject.StringProperty(required=False)
 
     state_code = jsonobject.StringProperty(required=False)
     district_code = jsonobject.StringProperty(required=False)
     tu_code = jsonobject.StringProperty(required=False)
-    phi_code = jsonobject.StringProperty(required=False)
+    phi_code = jsonobject.StringProperty(required=False, exclude_if_none=True)
+    he_code = jsonobject.StringProperty(required=False, exclude_if_none=True)
 
     phone_numbers = jsonobject.StringProperty(required=False)
-    merm_id = jsonobject.StringProperty(required=False)
+    merm_params = jsonobject.ObjectProperty(MermParams, required=False, exclude_if_none=True)
 
     treatment_start_date = jsonobject.StringProperty(required=False)
 
@@ -57,16 +82,44 @@ class PatientPayload(jsonobject.JsonObject):
         person_case_properties = person_case.dynamic_case_properties()
         episode_case_properties = episode_case.dynamic_case_properties()
         person_locations = get_person_locations(person_case)
+        try:
+            locations = dict(
+                state_code=person_locations.sto,
+                district_code=person_locations.dto,
+                tu_code=person_locations.tu,
+                phi_code=person_locations.phi,
+            )
+        except AttributeError:
+            locations = dict(
+                state_code=person_locations.sto,
+                district_code=person_locations.dto,
+                tu_code=person_locations.tu,
+                he_code=person_locations.pcp,
+            )
+
+        refill_reminder_date = episode_case_properties.get(MERM_REFILL_REMINDER_DATE, None)
+        refill_reminder_time = episode_case_properties.get(MERM_REFILL_REMINDER_TIME, None)
+        if refill_reminder_time and refill_reminder_date:
+            refill_reminder_datetime = "{}T{}".format(refill_reminder_date, refill_reminder_time)
+        else:
+            refill_reminder_datetime = None
+
+        merm_params = MermParams(
+            IMEI=episode_case_properties.get(MERM_ID, None),
+            daily_reminder_status=episode_case_properties.get(MERM_DAILY_REMINDER_STATUS, None),
+            daily_reminder_time=episode_case_properties.get(MERM_DAILY_REMINDER_TIME, None),
+            refill_reminder_status=episode_case_properties.get(MERM_REFILL_REMINDER_STATUS, None),
+            refill_reminder_datetime=refill_reminder_datetime,
+            RT_hours=episode_case_properties.get(MERM_RT_HOURS, None),
+        )
+
         return cls(
             beneficiary_id=person_case.case_id,
+            enikshay_id=person_case_properties.get(ENIKSHAY_ID, None),
             first_name=person_case_properties.get(PERSON_FIRST_NAME, None),
             last_name=person_case_properties.get(PERSON_LAST_NAME, None),
-            state_code=person_locations.sto,
-            district_code=person_locations.dto,
-            tu_code=person_locations.tu,
-            phi_code=person_locations.phi,
             phone_numbers=_get_phone_numbers(person_case_properties),
-            merm_id=person_case_properties.get(MERM_ID, None),
+            merm_params=merm_params if episode_case_properties.get(MERM_ID, '') != '' else None,
             treatment_start_date=episode_case_properties.get(TREATMENT_START_DATE, None),
             treatment_supporter_name=u"{} {}".format(
                 episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
@@ -79,6 +132,8 @@ class PatientPayload(jsonobject.JsonObject):
             ),
             weight_band=episode_case_properties.get(WEIGHT_BAND),
             address=person_case_properties.get(CURRENT_ADDRESS),
+            sector='private' if person_case_properties.get(ENROLLED_IN_PRIVATE) == 'true' else 'public',
+            **locations
         )
 
 
@@ -101,7 +156,9 @@ class RegisterPatientPayloadGenerator(NinetyNineDotsBasePayloadGenerator):
         return json.dumps(PatientPayload(
             beneficiary_id=uuid.uuid4().hex,
             phone_numbers=_format_number(_parse_number("0123456789")),
-            merm_id=uuid.uuid4().hex,
+            merm_params=MermParams(
+                IMEI=uuid.uuid4().hex,
+            )
         ).to_json())
 
     def get_payload(self, repeat_record, episode_case):
@@ -297,14 +354,12 @@ class TreatmentOutcomePayloadGenerator(NinetyNineDotsBasePayloadGenerator):
 
 
 def _get_phone_numbers(case_properties):
-    primary_number = _parse_number(case_properties.get(PRIMARY_PHONE_NUMBER))
-    backup_number = _parse_number(case_properties.get(BACKUP_PHONE_NUMBER))
-    if primary_number and backup_number:
-        return ", ".join([_format_number(primary_number), _format_number(backup_number)])
-    elif primary_number:
-        return _format_number(primary_number)
-    elif backup_number:
-        return _format_number(backup_number)
+    numbers = []
+    for potential_number in NINETYNINEDOTS_NUMBERS:
+        number = _parse_number(case_properties.get(potential_number))
+        if number:
+            numbers.append(_format_number(number))
+    return ", ".join(numbers) if numbers else None
 
 
 def _parse_number(number):

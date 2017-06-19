@@ -1,18 +1,20 @@
 from base64 import b64decode
-from datetime import datetime
-
 import bz2
+from datetime import datetime
+import logging
+
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 
 from corehq import toggles
 from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
 from corehq.apps.dhis2.api import JsonApiRequest
+from corehq.apps.dhis2.models import JsonApiLog
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
 
 @task(queue='background_queue')
-def send_datasets(domain_name):
+def send_datasets(domain_name, send_now=False):
     """
     Sends a data set of data values in the following format:
 
@@ -42,9 +44,26 @@ def send_datasets(domain_name):
         bz2.decompress(b64decode(dhis2_conn.password)),
         domain_name=domain_name,
     )
+    endpoint = 'dataValueSets'
     for dataset_map in dataset_maps:
-        if dataset_map.should_send_on_date(datetime.today()):
-            api.post('dataValueSets', dataset_map.get_dataset())
+        if send_now or dataset_map.should_send_on_date(datetime.today()):
+            try:
+                dataset = dataset_map.get_dataset()
+            except Exception as err:
+                domain_log_level = getattr(dhis2_conn, 'log_level', logging.INFO)
+                log_level = logging.ERROR
+                if log_level >= domain_log_level:
+                    JsonApiLog.log(
+                        log_level,
+                        api,
+                        str(err),
+                        response_status=None,
+                        response_body=None,
+                        method_func=api.post,
+                        request_url=api.get_request_url(endpoint),
+                    )
+            else:
+                api.post(endpoint, dataset)
 
 
 @periodic_task(

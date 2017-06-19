@@ -7,3 +7,6 @@ class PillowProcessor(object):
     @abstractmethod
     def process_change(self, pillow_instance, change):
         pass
+
+    def checkpoint_updated(self):
+        pass

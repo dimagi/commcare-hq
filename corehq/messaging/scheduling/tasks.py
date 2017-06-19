@@ -9,13 +9,18 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     delete_timed_schedule_instance,
     get_alert_schedule_instances_for_schedule,
     get_timed_schedule_instances_for_schedule,
+    get_alert_schedule_instance,
     save_alert_schedule_instance,
+    get_timed_schedule_instance,
     save_timed_schedule_instance,
     get_case_alert_schedule_instances_for_schedule,
     get_case_timed_schedule_instances_for_schedule,
+    get_case_schedule_instance,
     save_case_schedule_instance,
     delete_case_schedule_instance,
 )
+from corehq.util.celery_utils import no_result_task
+from datetime import datetime
 
 
 @task(ignore_result=True)
@@ -172,3 +177,33 @@ def reactivate_schedule_instances(schedule):
 @task(ignore_result=True)
 def delete_broadcast(broadcast):
     pass
+
+
+def _handle_schedule_instance(instance, save_function):
+    if instance.active and instance.next_event_due < datetime.utcnow():
+        instance.handle_current_event()
+        save_function(instance)
+
+
+@no_result_task(queue='reminder_queue')
+def handle_alert_schedule_instance(schedule_instance_id):
+    instance = get_alert_schedule_instance(schedule_instance_id)
+    _handle_schedule_instance(instance, save_alert_schedule_instance)
+
+
+@no_result_task(queue='reminder_queue')
+def handle_timed_schedule_instance(schedule_instance_id):
+    instance = get_timed_schedule_instance(schedule_instance_id)
+    _handle_schedule_instance(instance, save_timed_schedule_instance)
+
+
+@no_result_task(queue='reminder_queue')
+def handle_case_alert_schedule_instance(case_id, schedule_instance_id):
+    instance = get_case_schedule_instance(CaseAlertScheduleInstance, case_id, schedule_instance_id)
+    _handle_schedule_instance(instance, save_case_schedule_instance)
+
+
+@no_result_task(queue='reminder_queue')
+def handle_case_timed_schedule_instance(case_id, schedule_instance_id):
+    instance = get_case_schedule_instance(CaseTimedScheduleInstance, case_id, schedule_instance_id)
+    _handle_schedule_instance(instance, save_case_schedule_instance)
