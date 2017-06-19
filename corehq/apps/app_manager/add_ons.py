@@ -9,6 +9,9 @@ from corehq.apps.app_manager.exceptions import AddOnNotFoundException
 from corehq.apps.app_manager.models import Module, AdvancedModule, CareplanModule, ShadowModule
 from corehq.privileges import LOOKUP_TABLES
 
+# Similar to feature flags and/or feature previews, but specific to an individual application
+# and with the additional notion of a feature being "in use" in a specific module or form
+# even if the add-on isn't enabled.
 class AddOn(object):
     def __init__(self, name, description, help_link=None, privilege=None, used_in_module=None, used_in_form=None):
         self.name = name
@@ -22,7 +25,7 @@ class AddOn(object):
     def has_privilege(self, request):
         if not self.privilege:
             return True
-        return prbac_has_privilege(self.privilege)
+        return prbac_has_privilege(request, self.privilege)
 
 def _uses_case_list_menu_item(module):
     if getattr(module, 'case_list', False) and module.case_list.show:
@@ -158,6 +161,8 @@ _LAYOUT = [
 ]
 
 
+# Determine whether or not UI should show a feature, based on
+# availability and whether or not it's in use.
 @memoized
 def show(slug, request, app, module=None, form=None):
     if slug not in _ADD_ONS:
@@ -165,7 +170,7 @@ def show(slug, request, app, module=None, form=None):
     add_on = _ADD_ONS[slug]
 
     # Do not show if there's a required privilege missing
-    if not add_ons.has_privilege(request):
+    if not add_on.has_privilege(request):
         return False
 
     # Show if add-on has been enabled for app
@@ -185,6 +190,33 @@ def show(slug, request, app, module=None, form=None):
     return show
 
 
+# Get a slug => bool dictionary signifying which add-ons to display in UI
+@memoized
+def get_dict(request, app, module=None, form=None):
+    init_app(request, app)
+    return {slug: show(slug, request, app, module, form) for slug in _ADD_ONS.keys()}
+
+
+# Get add-ons for display in settings UI
+@memoized
+def get_layout(request):
+    all_slugs = set(_ADD_ONS.keys())
+    layout_slugs = set([slug for section in _LAYOUT for slug in section['slugs']])
+    if all_slugs != layout_slugs:
+        difference = ", ".join(all_slugs ^ layout_slugs)
+        if all_slugs - layout_slugs:
+            raise AddOnNotFoundException("Add-ons not in layout: {}".format(difference))
+        raise AddOnNotFoundException("Add-ons in layout do not exist: {}".format(difference))
+    return [dict({'add_ons': [{
+                    'slug': slug,
+                    'name': _ADD_ONS[slug].name,
+                    'description': _ADD_ONS[slug].description,
+                    'help_link': _ADD_ONS[slug].help_link,
+                } for slug in section['slugs'] if _ADD_ONS[slug].has_privilege(request)]}, **section) for section in _LAYOUT]
+
+
+# Lazily migrate an app that doesn't have any add_ons configured yet.
+# Turns on any add-ons that map to feature previews, leaves the rest off.
 def init_app(request, app):
     if app.add_ons:
         return
@@ -203,26 +235,3 @@ def init_app(request, app):
         app.add_ons[slug] = enable
 
     app.save()
-
-
-@memoized
-def get_dict(request, app, module=None, form=None):
-    init_app(request, app)
-    return {slug: show(slug, request, app, module, form) for slug in _ADD_ONS.keys()}
-
-
-@memoized
-def get_layout(request):
-    all_slugs = set(_ADD_ONS.keys())
-    layout_slugs = set([slug for section in _LAYOUT for slug in section['slugs']])
-    if all_slugs != layout_slugs:
-        difference = ", ".join(all_slugs ^ layout_slugs)
-        if all_slugs - layout_slugs:
-            raise AddOnNotFoundException("Add-ons not in layout: {}".format(difference))
-        raise AddOnNotFoundException("Add-ons in layout do not exist: {}".format(difference))
-    return [dict({'add_ons': [{
-                    'slug': slug,
-                    'name': _ADD_ONS[slug].name,
-                    'description': _ADD_ONS[slug].description,
-                    'help_link': _ADD_ONS[slug].help_link,
-                } for slug in section['slugs'] if _ADD_ONS[slug].has_privilege(request)]}, **section) for section in _LAYOUT]
