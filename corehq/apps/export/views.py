@@ -1006,6 +1006,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
             "export_type_plural": _("exports"),
             "model_type": self.form_or_case,
             "static_model_type": True,
+            'max_exportable_rows': MAX_EXPORTABLE_ROWS,
         }
 
     @property
