@@ -73,7 +73,7 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
     be a generator of single values. If a list with multiple values is given, the result
     will be a generator of tuples.
 
-    :param annotate: (optional} If specified, should by a dictionary of annotated fields
+    :param annotate: (optional) If specified, should by a dictionary of annotated fields
     and their calculations. The dictionary will be splatted into the `.annotate` function
 
     :return: A generator with the results
