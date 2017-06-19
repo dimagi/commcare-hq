@@ -44,10 +44,11 @@ def get_domain_ids_by_last_modified(start_datetime, end_datetime):
 
 
 def _get_ids_by_last_modified(cls, doc_types, start_datetime, end_datetime):
+    json_start_datetime = json_format_datetime(start_datetime)
     for doc_type in doc_types:
         results = cls.view(
             'last_modified/by_last_modified',
-            startkey=[doc_type, json_format_datetime(start_datetime)],
+            startkey=[doc_type, json_start_datetime],
             endkey=[doc_type, json_format_datetime(end_datetime)],
             include_docs=False,
             reduce=False,
@@ -56,7 +57,7 @@ def _get_ids_by_last_modified(cls, doc_types, start_datetime, end_datetime):
             result_modified_datetime = result['key'][1]
             # Skip the record if the datetime is equal to the start because this should return
             # records with an exclusive start date.
-            if result_modified_datetime == json_format_datetime(start_datetime):
+            if result_modified_datetime == json_start_datetime:
                 continue
             yield result['id']
 
@@ -67,10 +68,11 @@ def get_synclog_ids_by_date(start_datetime, end_datetime):
     exclusive while the end date is inclusive (start_datetime, end_datetime].
     '''
     from casexml.apps.phone.models import SyncLog
+    json_start_datetime = json_format_datetime(start_datetime)
 
     results = SyncLog.view(
         "sync_logs_by_date/view",
-        startkey=[json_format_datetime(start_datetime)],
+        startkey=[json_start_datetime],
         endkey=[json_format_datetime(end_datetime)],
         reduce=False,
         include_docs=False
@@ -79,7 +81,7 @@ def get_synclog_ids_by_date(start_datetime, end_datetime):
         result_modified_datetime = result['key'][0]
         # Skip the record if the datetime is equal to the start because this should return
         # records with an exclusive start date.
-        if result_modified_datetime == json_format_datetime(start_datetime):
+        if result_modified_datetime == json_start_datetime:
             continue
         yield result['id']
 
