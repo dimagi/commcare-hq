@@ -59,7 +59,6 @@ function IndieMapController($scope, $compile, $location) {
         data: vm.data && vm.data[0] !== void(0) ? vm.data[0].data : null,
         fills: vm.data && vm.data[0] !== void(0) ? vm.data[0].fills : null,
         height: Datamap.prototype[vm.type].objects[vm.scope].height,
-        zoomable: true,
         setProjection: function (element) {
             var div = vm.scope === "ind" ? 3 : 2;
             var projection = d3.geo.equirectangular()
@@ -99,7 +98,7 @@ function IndieMapController($scope, $compile, $location) {
                 html.push('</table>');
                 d3.select(this.options.element).append('div')
                     .attr('class', 'datamaps-legend text-center')
-                    .attr('style', 'width: 150px; left 5% !imporetant; bottom: 5%; border: 1px solid black;')
+                    .attr('style', 'width: 150px; left 5% !imporetant; bottom: 40%; border: 1px solid black;')
                     .html(html.join(''));
             },
         });
@@ -123,7 +122,7 @@ function IndieMapController($scope, $compile, $location) {
                     ];
                     d3.select(this.options.element).append('div')
                         .attr('class', '')
-                        .attr('style', 'position: absolute; width: 150px; bottom: 5%; right: 10%;')
+                        .attr('style', 'position: absolute; width: 150px; bottom: 40%; right: 10%;')
                         .html(html.join(''));
                 }
             },
@@ -163,7 +162,7 @@ window.angular.module('icdsApp').directive('indieMap', function() {
             legendTitle: '@?',
             bubbles: '=?',
         },
-        template: '<div class="indie-map-directive"><datamap zoomable on-click="$ctrl.updateMap" map="$ctrl.map" plugins="$ctrl.mapPlugins" plugin-data="$ctrl.mapPluginData"></datamap></div>',
+        template: '<div class="indie-map-directive"><datamap on-click="$ctrl.updateMap" map="$ctrl.map" plugins="$ctrl.mapPlugins" plugin-data="$ctrl.mapPluginData"></datamap></div>',
         bindToController: true,
         controller: IndieMapController,
         controllerAs: '$ctrl',

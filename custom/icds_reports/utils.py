@@ -280,7 +280,7 @@ def get_system_usage_data(yesterday, config):
                     'format': 'div'
                 },
                 {
-                    'label': _('Average number of forms hosuehold registration forms submitted yesterday'),
+                    'label': _('Average number of household registration forms submitted yesterday'),
                     'help_text': _('Average number of household registration forms submitted by AWWs yesterday.'),
                     'percent': percent_increase('num_forms', yesterday_data, two_days_ago_data),
                     'value': get_value(yesterday_data, 'num_forms'),
@@ -1349,13 +1349,13 @@ def get_awc_reports_maternal_child(config, month, prev_month):
 
 def get_awc_report_demographics(config, month):
 
-    map_data = AggAwcMonthly.objects.filter(
-        month=datetime(*month), **config
-    ).values(
-        'month', 'aggregation_level'
-    ).annotate(
-        household=Sum('cases_household')
-    ).order_by('month')
+    # map_data = AggAwcMonthly.objects.filter(
+    #     month=datetime(*month), **config
+    # ).values(
+    #     'month', 'aggregation_level'
+    # ).annotate(
+    #     household=Sum('cases_household')
+    # ).order_by('month')
 
     chart = AggChildHealthMonthly.objects.filter(
         month=datetime(*month), **config

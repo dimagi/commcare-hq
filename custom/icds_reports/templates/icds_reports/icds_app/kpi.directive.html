@@ -9,7 +9,7 @@
                     <i ng-show="cell.help_text !== null" class="fa fa-info-circle fa-2x" ></i>
                 </div>
                 <div class="col-md-11 center">
-                    <div class="row">
+                    <div class="row crop">
                         <span class="title" ng-bind="cell.label"></span>
                     </div>
                     <div class="row">
@@ -29,7 +29,7 @@
                                 <span ng-bind="cell.percent | number:2"></span>
                                 % from the day before last
                             </span>
-                            <i class="fa fa-ellipsis-h fa-2x" aria-hidden="true"></i>
+                            <span class="see-more" aria-hidden="true">See More</span>
                         </p>
                     </div>
                 </div>

@@ -138,12 +138,12 @@ class ExportableMixin(object):
         excel_rows = []
         headers = []
         for column in self.columns:
-            headers.append(column.header)
+            headers.append(column['header'])
         excel_rows.append(headers)
         for row in self.get_data():
             row_data = []
             for c in self.columns:
-                cell = row[c.slug]
+                cell = row[c['slug']]
                 row_data.append(cell['sort_key'] if cell and 'sort_key' in cell else cell)
             excel_rows.append(row_data)
 
@@ -1048,23 +1048,22 @@ class PregnantWomenExport(ExportableMixin, SqlData):
         return columns + agg_columns
 
 
-class DemographicsExport(ExportableMixin, SqlData):
-    title = 'Demographics'
-    table_name = 'agg_awc_monthly'
-
+class DemographicsChildHealth(ExportableMixin, SqlData):
     engine_id = 'icds-test-ucr'
 
+    table_name = 'agg_child_health_monthly'
+
     def __init__(self, config=None, loc_level=1):
-        super(DemographicsExport, self).__init__(config, loc_level)
+        super(DemographicsChildHealth, self).__init__(config, loc_level)
         self.config.update({
-            'age_0': 0,
-            'age_6': 6,
-            'age_12': 12,
-            'age_24': 24,
-            'age_36': 36,
-            'age_48': 48,
-            'age_60': 60,
-            'age_72': 72
+            'age_0': '0',
+            'age_6': '6',
+            'age_12': '12',
+            'age_24': '24',
+            'age_36': '36',
+            'age_48': '48',
+            'age_60': '60',
+            'age_72': '72'
         })
 
     @property
@@ -1111,51 +1110,6 @@ class DemographicsExport(ExportableMixin, SqlData):
         columns = self.get_columns_by_loc_level
         agg_columns = [
             DatabaseColumn(
-                'num_households',
-                SumColumn('cases_households'),
-                slug='num_households'
-            ),
-            DatabaseColumn(
-                'num_people',
-                SumColumn('cases_person_all'),
-                slug='num_people'
-            ),
-            DatabaseColumn(
-                'num_people_enrolled_for_services',
-                SumColumn('cases_person'),
-                slug='num_people_enrolled_for_services'
-            ),
-            DatabaseColumn(
-                'num_pregnant_women',
-                SumColumn('cases_ccs_pregnant_all'),
-                slug='num_pregnant_women'
-            ),
-            DatabaseColumn(
-                'num_pregnant_women_enrolled_for_services',
-                SumColumn('cases_ccs_pregnant'),
-                slug='num_pregnant_women_enrolled_for_services'
-            ),
-            DatabaseColumn(
-                'num_lactating_women',
-                SumColumn('cases_ccs_lactating_all'),
-                slug='num_lactating_women'
-            ),
-            DatabaseColumn(
-                'num_lactating_women_enrolled_for_services',
-                SumColumn('cases_ccs_lactating'),
-                slug='num_lactating_women_enrolled_for_services'
-            ),
-            DatabaseColumn(
-                'num_children_0_6years',
-                SumColumn('cases_child_health_all'),
-                slug='num_children_0_6years'
-            ),
-            DatabaseColumn(
-                'num_children_0_6years_enrolled_for_services',
-                SumColumn('cases_child_health'),
-                slug='num_children_0_6years_enrolled_for_services'
-            ),
-            DatabaseColumn(
                 'num_children_0_28days_enrolled_for_services',
                 SumColumn('valid_in_month', filters=self.filters + [EQ('age_tranche', 'age_0')]),
                 slug='num_children_0_28days_enrolled_for_services'
@@ -1197,28 +1151,266 @@ class DemographicsExport(ExportableMixin, SqlData):
                 ),
                 slug='num_children_3yr6yr_enrolled_for_services'
             ),
+        ]
+        return columns + agg_columns
+
+
+class DemographicsAWCMonthly(ExportableMixin, SqlData):
+    table_name = 'agg_awc_monthly'
+    engine_id = 'icds-test-ucr'
+
+    @property
+    def get_columns_by_loc_level(self):
+        columns = [
+            DatabaseColumn('State', SimpleColumn('state_name'))
+        ]
+        if self.loc_level > 1:
+            columns.append(DatabaseColumn('District', SimpleColumn('district_name'), slug='district_name'))
+        if self.loc_level > 2:
+            columns.append(DatabaseColumn('Block', SimpleColumn('block_name'), slug='block_name'))
+        if self.loc_level > 3:
+            columns.append(DatabaseColumn('Supervisor', SimpleColumn('supervisor_name'), slug='supervisor_name'))
+        if self.loc_level > 4:
+            columns.append(DatabaseColumn('AWC', SimpleColumn('awc_name'), slug='awc_name'))
+        return columns
+
+    @property
+    def group_by(self):
+        group_by_columns = self.get_columns_by_loc_level
+        group_by = ['aggregation_level']
+        for column in group_by_columns:
+            group_by.append(column.slug)
+        return group_by
+
+    @property
+    def order_by(self):
+        order_by_columns = self.get_columns_by_loc_level
+        order_by = []
+        for column in order_by_columns:
+            order_by.append(OrderBy(column.slug))
+        return order_by
+
+    @property
+    def columns(self):
+        columns = self.get_columns_by_loc_level
+        agg_columns = [
+            DatabaseColumn(
+                'num_households',
+                SumColumn('cases_household'),
+                slug='num_households'
+            ),
+            DatabaseColumn(
+                'num_people',
+                SumColumn('cases_person_all'),
+                slug='num_people'
+            ),
+            DatabaseColumn(
+                'num_people_enrolled_for_services',
+                SumColumn('cases_person'),
+                slug='num_people_enrolled_for_services'
+            ),
+            DatabaseColumn(
+                'num_people_with_aadhar',
+                SumColumn('cases_person_has_aadhaar'),
+                slug='num_people_with_aadhar'
+            ),
+            DatabaseColumn(
+                'num_pregnant_women',
+                SumColumn('cases_ccs_pregnant_all'),
+                slug='num_pregnant_women'
+            ),
+            DatabaseColumn(
+                'num_pregnant_women_enrolled_for_services',
+                SumColumn('cases_ccs_pregnant'),
+                slug='num_pregnant_women_enrolled_for_services'
+            ),
+            DatabaseColumn(
+                'num_lactating_women',
+                SumColumn('cases_ccs_lactating_all'),
+                slug='num_lactating_women'
+            ),
+            DatabaseColumn(
+                'num_lactating_women_enrolled_for_services',
+                SumColumn('cases_ccs_lactating'),
+                slug='num_lactating_women_enrolled_for_services'
+            ),
+            DatabaseColumn(
+                'num_children_0_6years',
+                SumColumn('cases_child_health_all'),
+                slug='num_children_0_6years'
+            ),
+            DatabaseColumn(
+                'num_children_0_6years_enrolled_for_services',
+                SumColumn('cases_child_health'),
+                slug='num_children_0_6years_enrolled_for_services'
+            ),
             DatabaseColumn(
                 'num_adolescent_girls_11yr14yr',
-                SumColumn('cases_adolescent_girls_11_14_all'),
+                SumColumn('cases_person_adolescent_girls_11_14_all'),
                 slug='num_adolescent_girls_11yr14yr'
             ),
             DatabaseColumn(
                 'num_adolescent_girls_15yr18yr',
-                SumColumn('cases_adolescent_girls_15_18_all'),
+                SumColumn('cases_person_adolescent_girls_15_18_all'),
                 slug='num_adolescent_girls_15yr18yr'
             ),
             DatabaseColumn(
                 'num_adolescent_girls_11yr14yr_enrolled_for_services',
-                SumColumn('cases_adolescent_girls_11_14'),
+                SumColumn('cases_person_adolescent_girls_11_14'),
                 slug='num_adolescent_girls_11yr14yr_enrolled_for_services'
             ),
             DatabaseColumn(
                 'num_adolescent_girls_15yr18yr_enrolled_for_services',
-                SumColumn('cases_adolescent_girls_15_18'),
+                SumColumn('cases_person_adolescent_girls_15_18'),
                 slug='num_adolescent_girls_15yr18yr_enrolled_for_services'
             )
         ]
         return columns + agg_columns
+
+
+class DemographicsExport(ExportableMixin):
+    title = 'Demographics'
+
+    @property
+    def get_columns_by_loc_level(self):
+        columns = [
+            {
+                'header': 'State',
+                'slug': 'state_name'
+            }
+        ]
+        if self.loc_level > 1:
+            columns.append(
+                {
+                    'header': 'District',
+                    'slug': 'district_name'
+                }
+            )
+        if self.loc_level > 2:
+            columns.append(
+                {
+                    'header': 'Block',
+                    'slug': 'block_name'
+                }
+            )
+        if self.loc_level > 3:
+            columns.append(
+                {
+                    'header': 'Supervisor',
+                    'slug': 'supervisor_name'
+                }
+            )
+        if self.loc_level > 4:
+            columns.append(
+                {
+                    'header': 'AWC',
+                    'slug': 'awc_name'
+                }
+            )
+        return columns
+
+    def get_data(self):
+        awc_monthly = DemographicsAWCMonthly(self.config, self.loc_level).get_data()
+        child_health = DemographicsChildHealth(self.config, self.loc_level).get_data()
+        connect_column = 'state_name'
+        if self.loc_level == 2:
+            connect_column = 'district_name'
+        elif self.loc_level == 3:
+            connect_column = 'block_name'
+        elif self.loc_level == 4:
+            connect_column = 'supervisor_name'
+        elif self.loc_level == 5:
+            connect_column = 'awc_name'
+
+        for awc_row in awc_monthly:
+            for child_row in child_health:
+                if awc_row[connect_column] == child_row[connect_column]:
+                    awc_row.update(child_row)
+                    break
+
+        return awc_monthly
+
+    @property
+    def columns(self):
+        columns = self.get_columns_by_loc_level
+        return columns + [
+            {
+                'header': 'num_households',
+                'slug': 'num_households'
+            },
+            {
+                'header': 'num_people',
+                'slug': 'num_people'
+            },
+            {
+                'header': 'num_people_enrolled_for_services',
+                'slug': 'num_people_enrolled_for_services'
+            },
+            {
+                'header': 'num_people_with_aadhar',
+                'slug': 'num_people_with_aadhar'
+            },
+            {
+                'header': 'num_pregnant_women',
+                'slug': 'num_pregnant_women'
+            },
+            {
+                'header': 'num_pregnant_women_enrolled_for_services',
+                'slug': 'num_pregnant_women_enrolled_for_services'
+            },
+            {
+                'header': 'num_lactating_women',
+                'slug': 'num_lactating_women'
+            },
+            {
+                'header': 'num_lactating_women_enrolled_for_services',
+                'slug': 'num_lactating_women_enrolled_for_services'
+            },
+            {
+                'header': 'num_children_0_6years',
+                'slug': 'num_children_0_6years'
+            },
+            {
+                'header': 'num_children_0_6years_enrolled_for_services',
+                'slug': 'num_children_0_6years_enrolled_for_services'
+            },
+            {
+                'header': 'num_children_0_28days_enrolled_for_services',
+                'slug': 'num_children_0_28days_enrolled_for_services'
+            },
+            {
+                'header': 'num_children_28days6mo_enrolled_for_services',
+                'slug': 'num_children_28days6mo_enrolled_for_services'
+            },
+            {
+                'header': 'num_children_6mo1yr_enrolled_for_services',
+                'slug': 'num_children_6mo1yr_enrolled_for_services'
+            },
+            {
+                'header': 'num_children_1yr3yr_enrolled_for_services',
+                'slug': 'num_children_1yr3yr_enrolled_for_services'
+            },
+            {
+                'header': 'num_children_3yr6yr_enrolled_for_services',
+                'slug': 'num_children_3yr6yr_enrolled_for_services'
+            },
+            {
+                'header': 'num_adolescent_girls_11yr14yr',
+                'slug': 'num_adolescent_girls_11yr14yr'
+            },
+            {
+                'header': 'num_adolescent_girls_15yr18yr',
+                'slug': 'num_adolescent_girls_15yr18yr'
+            },
+            {
+                'header': 'num_adolescent_girls_11yr14yr_enrolled_for_services',
+                'slug': 'num_adolescent_girls_11yr14yr_enrolled_for_services'
+            },
+            {
+                'header': 'num_adolescent_girls_15yr18yr_enrolled_for_services',
+                'slug': 'num_adolescent_girls_15yr18yr_enrolled_for_services'
+            }
+        ]
 
 
 class SystemUsageExport(ExportableMixin, SqlData):
@@ -1244,7 +1436,7 @@ class SystemUsageExport(ExportableMixin, SqlData):
     def columns(self):
         columns = self.get_columns_by_loc_level
         agg_columns = [
-            DatabaseColumn('num_awc_open', SumColumn('awc_num_open'), slug='num_awc_open'),
+            DatabaseColumn('num_awc_open', SumColumn('num_awcs'), slug='num_awc_open'),
             DatabaseColumn('num_hh_reg_forms', SumColumn('usage_num_hh_reg'), slug='num_hh_reg_forms'),
             DatabaseColumn(
                 'num_add_pregnancy_forms',

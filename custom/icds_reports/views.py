@@ -200,7 +200,9 @@ class ProgramSummaryView(View):
         prev_month = current_month - relativedelta(months=1)
 
         if step == 'system_usage' or step == 'demographics':
-            config = {}
+            config = {
+                'aggregation_level': 1
+            }
         else:
             config = {
                 'month': tuple(current_month.timetuple())[:3],
@@ -379,6 +381,7 @@ class AwcReportsView(View):
 
         config = {
             'aggregation_level': aggregation_level,
+            'awc_site_code': 'd5d0fce5e73ff2b04417f40bd2bc5f7c'
         }
         if location:
             try:
