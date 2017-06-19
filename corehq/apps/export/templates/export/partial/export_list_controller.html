@@ -8,7 +8,9 @@
      ng-cloak>
     {% if request|toggle_enabled:"PAGINATED_EXPORTS" %}
     <div class="alert alert-info">
-        These exports are paginated. That means exports that have over {{ max_exportable_rows|intcomma }} rows will be split into multiple files.
+        {% blocktrans with max_rows=max_exportable_rows|intcomma %}
+        These exports are paginated. That means exports that have over {{ max_rows }} rows will be split into multiple files.
+        {% endblocktrans %}
     </div>
     {% endif %}
     {% if is_deid %}
