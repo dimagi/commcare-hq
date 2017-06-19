@@ -138,7 +138,9 @@ class KafkaChangeFeed(ChangeFeed):
 
     def _filter_offsets(self, offsets):
         return {
-            tp: offsets[tp] for tp in self.topic_and_partitions
+            tp: offsets[tp]
+            for tp in self.topic_and_partitions
+            if tp in offsets
         }
 
     def _get_partitioned_offsets(self, offsets):
