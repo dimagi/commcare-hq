@@ -1,4 +1,3 @@
-from collections import namedtuple
 from django_prbac.utils import has_privilege as prbac_has_privilege
 from django.utils.translation import ugettext_lazy as _
 
@@ -8,6 +7,7 @@ from corehq import feature_previews
 from corehq.apps.app_manager.exceptions import AddOnNotFoundException
 from corehq.apps.app_manager.models import Module, AdvancedModule, CareplanModule, ShadowModule
 from corehq.privileges import LOOKUP_TABLES
+
 
 # Similar to feature flags and/or feature previews, but specific to an individual application
 # and with the additional notion of a feature being "in use" in a specific module or form
@@ -27,6 +27,7 @@ class AddOn(object):
             return True
         return prbac_has_privilege(request, self.privilege)
 
+
 def _uses_case_list_menu_item(module):
     if getattr(module, 'case_list', False) and module.case_list.show:
         return True
@@ -36,11 +37,13 @@ def _uses_case_list_menu_item(module):
         return True
     return False
 
+
 def _uses_conditional_form_actions(form):
     if form.form_type != 'module_form':
         # Don't bother restricting non-basic forms
         return True
     return form.actions.open_case.condition.type == 'if' or form.actions.close_case.condition.type == 'if',
+
 
 def _uses_detail_format(module, column_format):
     details = []
@@ -51,6 +54,7 @@ def _uses_detail_format(module, column_format):
     elif isinstance(module, CareplanModule):
         details = [module.goal_details, module.task_details]
     return any([c.format for d in details for c in d.short.columns + d.long.columns if c.format == column_format])
+
 
 _ADD_ONS = {
     "advanced_itemsets": AddOn(
@@ -65,11 +69,13 @@ _ADD_ONS = {
     ),
     "case_detail_overwrite": AddOn(
         name=_("Case Detail Overwrite"),
-        description=_("Ability to overwrite one case list or detail's settings with another's. Available in case menu's settings."),
+        description=_("Ability to overwrite one case list or detail's settings with another's. "
+        "Available in case menu's settings."),
     ),
     "case_list_menu_item": AddOn(
         name=_("Case List Menu Item"),
-        description=_("Allows the mobile user to view the case list and case details without actually opening a form. Available in the case menu's settings."),
+        description=_("Allows the mobile user to view the case list and case details without actually opening "
+        "a form. Available in the case menu's settings."),
         used_in_module=lambda m: _uses_case_list_menu_item(m),
     ),
     "conditional_enum": AddOn(
@@ -79,7 +85,8 @@ _ADD_ONS = {
     ),
     "conditional_form_actions": AddOn(
         name=_('Case Conditions'),
-        description=_("Open or close a case only if a specific question has a particular answer. Available in form settings."),
+        description=_("Open or close a case only if a specific question has a particular answer. "
+        "Available in form settings."),
         help_link="https://confluence.dimagi.com/display/commcarepublic/Case+Configuration",
         used_in_form=lambda f: _uses_conditional_form_actions(f)
     ),
@@ -102,7 +109,8 @@ _ADD_ONS = {
     ),
     "menu_mode": AddOn(
         name=_("Menu Mode"),
-        description=_("Control whether a form's enclosing menu is displayed on the mobile device or not. Available in menu settings."),
+        description=_("Control whether a form's enclosing menu is displayed on the mobile device or not. "
+        "Available in menu settings."),
         used_in_module=lambda m: getattr(m, 'put_in_root', False),
     ),
     "module_display_conditions": AddOn(
@@ -113,19 +121,22 @@ _ADD_ONS = {
     ),
     "register_from_case_list": AddOn(
         name=_("Register from case list"),
-        description=_("Minimize duplicates by making registration forms available directly from the case list on the mobile device. Availabe in menu settings."),
+        description=_("Minimize duplicates by making registration forms available directly from the case list "
+        "on the mobile device. Availabe in menu settings."),
         help_link="https://confluence.dimagi.com/pages/viewpage.action?pageId=30605985",
         used_in_module=lambda m: m.case_list_form.form_id,
     ),
     "subcases": AddOn(
         name=_("Child Cases"),
-        description=_("Open other types of cases for use in other modules, linking them to the case that created them. Available in form settings."),
+        description=_("Open other types of cases for use in other modules, linking them to the case that "
+        "created them. Available in form settings."),
         help_link="https://confluence.dimagi.com/display/commcarepublic/Child+Cases",
-        used_in_form=lambda f: bool(f.actions.subcases),
+        used_in_form=lambda f: f.form_type != "module_form" or bool(f.actions.subcases),
     ),
     "unstructured_case_lists": AddOn(
         name=_("Customize Case List Registration"),
-        description=_("Create new case lists without a registration form, and allow deletion of registration forms."),
+        description=_("Create new case lists without a registration form, "
+        "and allow deletion of registration forms."),
     ),
 }
 
@@ -212,7 +223,7 @@ def get_layout(request):
                     'name': _ADD_ONS[slug].name,
                     'description': _ADD_ONS[slug].description,
                     'help_link': _ADD_ONS[slug].help_link,
-                } for slug in section['slugs'] if _ADD_ONS[slug].has_privilege(request)]}, **section) for section in _LAYOUT]
+           } for slug in section['slugs'] if _ADD_ONS[slug].has_privilege(request)]}, **section) for section in _LAYOUT]
 
 
 # Lazily migrate an app that doesn't have any add_ons configured yet.
