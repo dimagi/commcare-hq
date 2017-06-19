@@ -1,18 +1,19 @@
 from datetime import datetime, date, timedelta
+import urllib
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import SuspiciousOperation
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
+from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse
 from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
-from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification
+from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
@@ -27,7 +28,7 @@ from django.utils.decorators import method_decorator
 import json
 import re
 from django.utils.safestring import mark_safe
-from django.views.generic import View
+from django.views.generic import View, ListView, DetailView
 
 from djangular.views.mixins import allow_remote_invocation
 import pytz
@@ -1519,6 +1520,58 @@ class DashboardFeedListView(DailySavedExportListView):
             combined_exports.extend(_get_case_exports_by_domain(self.domain, self.has_deid_view_permissions))
         combined_exports = sorted(combined_exports, key=lambda x: x.name)
         return filter(lambda x: x.is_daily_saved_export and x.export_format == "html", combined_exports)
+
+
+@location_safe
+class DataFileDownloadList(BaseProjectDataView):
+    urlname = 'download_data_files'
+    template_name = 'export/download_data_files.html'
+    page_title = ugettext_lazy("Download Data Files")
+
+    def get_context_data(self, **kwargs):
+        context = super(DataFileDownloadList, self).get_context_data(**kwargs)
+        perms = self.request.user.get_all_permissions()
+        context.update({
+            'data_files': DataFile.objects.filter(domain=self.domain).order_by('filename').all(),
+            'can_add': 'export.add_datafile' in perms,
+            'can_delete': 'export.delete_datafile' in perms,
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        # TODO: Use a form for validation
+        # TODO: Limit file size
+        data_file = DataFile()
+        data_file.domain = self.domain
+        data_file.filename = request.FILES['file'].name
+        data_file.description = request.POST['description']
+        data_file.content_type = request.FILES['file'].content_type  # save_blob() uses libmagic to check this
+        data_file.save_blob(request.FILES['file'])
+        messages.success(request, _('Data file "{}" uploaded'.format(data_file.description)))
+        return HttpResponseRedirect(reverse(self.urlname, kwargs={'domain': self.domain}))
+
+
+class DataFileDownloadDetail(BaseProjectDataView):
+    urlname = 'download_data_file'
+
+    def get(self, request, *args, **kwargs):
+        try:
+            data_file = DataFile.objects.filter(domain=self.domain).get(pk=kwargs['pk'])
+            blob = data_file.get_blob()
+            response = HttpResponse(blob.read(), content_type=data_file.content_type)
+        except DataFile.DoesNotExist:
+            raise Http404
+        response['Content-Disposition'] = 'attachment; filename="' + data_file.filename + '"'
+        response['Content-Length'] = data_file.content_length
+        return response
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            data_file = DataFile.objects.filter(domain=self.domain).get(pk=kwargs['pk'])
+        except DataFile.DoesNotExist:
+            raise Http404
+        data_file.delete()
+        return HttpResponse(status=204)
 
 
 class DailySavedExportPaywall(BaseProjectDataView):
