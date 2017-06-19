@@ -12,11 +12,14 @@ CONFIRM_ALL_USERS = """Unmark Tour {tour_slug} for as seen ALL USERS?
 
 class Command(BaseCommand):
     help = "marks a tour with tour_slug as not seen for all existing users"
-    args = "tour_slug <specific user>"
 
-    def handle(self, tour_slug, *args, **kwargs):
-        if len(args) > 0:
-            username = args[0]
+    def add_arguments(self, parser):
+        parser.add_argument('tour_slug')
+        parser.add_argument('user', nargs='?')
+
+    def handle(self, tour_slug, **options):
+        if options['user']:
+            username = options['user']
             confirm = raw_input(CONFIRM_SINGLE_USER.format(
                 tour_slug=tour_slug, username=username))
             if confirm == 'yes':

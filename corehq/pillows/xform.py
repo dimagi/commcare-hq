@@ -9,7 +9,7 @@ from casexml.apps.case.exceptions import PhoneDateValueError
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case.xml.parser import CaseGenerationException, case_update_from_block
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import PartitionedKafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
@@ -129,7 +129,8 @@ def transform_xform_for_elasticsearch(doc_dict):
     return doc_ret
 
 
-def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', **kwargs):
+def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', num_processes=1,
+                                      process_num=0, **kwargs):
     assert pillow_id == 'XFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, XFORM_INDEX_INFO, topics.FORM_TOPICS)
     form_processor = ElasticProcessor(
@@ -138,7 +139,9 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', **
         doc_prep_fn=transform_xform_for_elasticsearch,
         doc_filter_fn=xform_pillow_filter,
     )
-    kafka_change_feed = KafkaChangeFeed(topics=topics.FORM_TOPICS, group_id='forms-to-es')
+    kafka_change_feed = PartitionedKafkaChangeFeed(
+        topics=topics.FORM_TOPICS, group_id='forms-to-es', num_processes=num_processes, process_num=process_num
+    )
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,

@@ -59,6 +59,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 "previewCommand": params.previewCommand,
                 "installReference": params.installReference,
                 "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
+                "isPersistent": params.isPersistent,
             });
             options.url = formplayerUrl + '/' + route;
 
@@ -76,7 +77,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
         return Menus.API.queryFormplayer(options, 'navigate_menu');
     });
 
-    FormplayerFrontend.reqres.setHandler("entity:get:details", function (options) {
+    FormplayerFrontend.reqres.setHandler("entity:get:details", function (options, isPersistent) {
+        options.isPersistent = isPersistent;
         return Menus.API.queryFormplayer(options, 'get_details');
     });
 });

@@ -127,11 +127,7 @@ def process_cases_with_casedb(xforms, case_db, config=None):
 
 def _update_sync_logs(xform, case_db, config, cases):
     # handle updating the sync records for apps that use sync mode
-    try:
-        relevant_log = xform.get_sync_token()
-    except ResourceNotFound:
-        relevant_log = None
-
+    relevant_log = xform.get_sync_token()
     if relevant_log:
         # in reconciliation mode, things can be unexpected
         relevant_log.strict = config.strict_asserts

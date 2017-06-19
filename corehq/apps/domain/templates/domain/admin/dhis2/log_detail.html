@@ -36,7 +36,7 @@
                 <tr>
                     <th>{% trans "Request body" %}:</th>
                     <td>{% if log.request_body %}
-                        <pre>{{ log.request_body }}</pre>{% else %}&nbsp;
+                        <pre>{{ log.pp_request_body }}</pre>{% else %}&nbsp;
                     {% endif %}</td>
                 </tr>
                 <tr>
@@ -48,7 +48,7 @@
                 <tr>
                     <th>{% trans "Response body" %}:</th>
                     <td>{% if log.response_body %}
-                        <pre>{{ log.response_body }}</pre>{% else %}&nbsp;
+                        <pre>{{ log.pp_response_body }}</pre>{% else %}&nbsp;
                     {% endif %}</td>
                 </tr>
             </table>

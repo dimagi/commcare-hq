@@ -47,7 +47,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-06-06 21:05+0000\n"
+"POT-Creation-Date: 2017-06-13 19:23+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -108,7 +108,7 @@ msgstr ""
 msgid "You have unsaved changes"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:336
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:338
 msgid "Add"
 msgstr ""
 
@@ -140,25 +140,25 @@ msgstr ""
 msgid "Two properties load to the same question"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:155
+#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:158
 #, javascript-format
 msgid "Upgrade to CommCare %s for this option!"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:157
+#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:160
 #, javascript-format
 msgid "Upgrade to CommCare %s!"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:168
+#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:171
 msgid "Auto-set by "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:317
+#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:321
 msgid "You have unsaved settings."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:420
+#: corehq/apps/app_manager/static/app_manager/js/commcaresettings.js:426
 #: corehq/apps/app_manager/static/app_manager/js/graph-config.js:528
 msgid "Copied!"
 msgstr ""
@@ -199,147 +199,152 @@ msgstr ""
 msgid "Select One"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1081
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1087
 msgid "There are errors in your property names"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1086
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1092
 msgid "There are errors in your tabs"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1094
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1100
 msgid "All properties must be below a tab"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1397
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1404
 msgid "Property"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1398
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1405
 msgid "Display Text"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1399
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1406
 msgid "Format"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1401
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1408
 msgid "Plain"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1402
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1409
 msgid "Date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1403
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1410
 msgid "Time Since or Until Date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1404
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1411
 msgid " Measuring "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1406
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1413
 msgid "Years since date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1407
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1414
 msgid "Months since date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1408
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1415
 msgid "Weeks since date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1409
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1416
 msgid "Days since date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1410
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1417
 msgid "Days until date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1411
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1418
 msgid "Weeks until date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1412
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1419
 msgid "Months until date"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1414
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1421
 msgid "Phone Number"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1415
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1422
 msgid "ID Mapping"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1416
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1423
 msgid "Icon"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1417
-msgid "Mapping: "
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1418
-msgid "Late Flag"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1419
-msgid " Days late "
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1421
-msgid "Search Only"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1422
-msgid "Address"
-msgstr ""
-
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1423
-msgid "Picture"
-msgstr ""
-
 #: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1424
-msgid "Audio"
+msgid "Conditional Enum"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1425
-msgid "Calculate"
+msgid "Mapping: "
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1426
+msgid "Late Flag"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1427
-msgid "Distance from current location"
+msgid " Days late "
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1429
-msgid "Add to list"
+msgid "Search Only"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1430
-msgid "Duplicate"
+msgid "Address"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1431
+msgid "Picture"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1432
+msgid "Audio"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1433
+msgid "Calculate"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1435
+msgid "Distance from current location"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1437
+msgid "Add to list"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1438
+msgid "Duplicate"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1439
 #: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:40
 #: corehq/apps/style/static/style/js/main.js:257
 #: corehq/apps/style/static/style/js/ui-element.js:358
 msgid "Delete"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1433
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1441
 msgid "You have unsaved detail screen configurations."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1464
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1470
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1472
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1477
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1482
 msgid " (Preview!)"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1474
+#: corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js:1486
 msgid ""
 "Must begin with a letter and contain only letters, numbers, '-', and '_'"
 msgstr ""
@@ -348,6 +353,30 @@ msgstr ""
 msgid ""
 "Sorry, something went wrong with the download. If you see this repeatedly "
 "please report an issue."
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/form_view.js:125
+msgid "Home Screen"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/form_view.js:126
+msgid "Module Menu"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/form_view.js:127
+msgid "Module: "
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/form_view.js:129
+msgid "Parent Module: "
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/form_view.js:131
+msgid "Previous Screen"
+msgstr ""
+
+#: corehq/apps/app_manager/static/app_manager/js/form_view.js:140
+msgid "Link to other form"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/form_workflow.js:58
@@ -396,7 +425,7 @@ msgstr ""
 msgid "'commcare-user' is a reserved case type. Please change the case type"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/module-view.js:118
+#: corehq/apps/app_manager/static/app_manager/js/module-view.js:126
 msgid "Unknown Form (missing)"
 msgstr ""
 
@@ -497,7 +526,7 @@ msgid "Form successfully saved"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:329
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:24
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:25
 msgid "Waiting for server progress"
 msgstr ""
 
@@ -515,7 +544,7 @@ msgstr ""
 msgid "Completed: "
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:40
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:41
 msgid ""
 "Unable to connect to form playing service. Please report an issue if you "
 "continue to see this message."
@@ -596,6 +625,10 @@ msgstr ""
 
 #: corehq/apps/domain/static/domain/js/add_form_repeater.js:38
 msgid "HQ was unable to make the request: "
+msgstr ""
+
+#: corehq/apps/domain/static/domain/js/dhis2_map_settings.js:133
+msgid "Unable to save DataSet maps"
 msgstr ""
 
 #: corehq/apps/domain/static/domain/js/internal_settings.js:58
@@ -739,28 +772,31 @@ msgstr ""
 msgid "Upload "
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/key-value-mapping.js:105
+#: corehq/apps/hqwebapp/static/hqwebapp/js/key-value-mapping.js:106
+#: corehq/apps/hqwebapp/static/hqwebapp/js/key-value-mapping.js:113
 msgid "Calculation"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/key-value-mapping.js:106
+#: corehq/apps/hqwebapp/static/hqwebapp/js/key-value-mapping.js:107
+#: corehq/apps/hqwebapp/static/hqwebapp/js/key-value-mapping.js:114
 msgid "Calculation is duplicated"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/key-value-mapping.js:107
+#: corehq/apps/hqwebapp/static/hqwebapp/js/key-value-mapping.js:108
 msgid "Add Image"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/key-value-mapping.js:112
+#: corehq/apps/hqwebapp/static/hqwebapp/js/key-value-mapping.js:115
+#: corehq/apps/hqwebapp/static/hqwebapp/js/key-value-mapping.js:122
+msgid "Add Key, Value Mapping"
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/key-value-mapping.js:120
 msgid "Key"
 msgstr ""
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/key-value-mapping.js:113
+#: corehq/apps/hqwebapp/static/hqwebapp/js/key-value-mapping.js:121
 msgid "Key is duplicated"
-msgstr ""
-
-#: corehq/apps/hqwebapp/static/hqwebapp/js/key-value-mapping.js:114
-msgid "Add Key, Value Mapping"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/rollout_modal.js:40
@@ -1097,38 +1133,42 @@ msgid ""
 "the dropdown in the top left."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:360
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:375
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:372
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:387
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:361
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:373
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:362
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:374
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
 "the property is text or multiple choice."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:376
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:388
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
 "Select this to filter the property by a single value."
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:377
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:389
 msgid "What value or date range must the property be equal to?"
 msgstr ""
 
-#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:399
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:400
 msgid ""
 "Column format selection will determine how each row's value is calculated."
+msgstr ""
+
+#: corehq/apps/userreports/static/userreports/js/builder_view_models.js:430
+msgid "Please check above for any errors in your configuration."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/configurable_report.js:65

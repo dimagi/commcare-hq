@@ -47,6 +47,15 @@
             {
                 "type": "expression",
                 "datatype": "string",
+                "column_id": "testing_facility_name",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "testing_facility_name"
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
                 "column_id": "person_owner_id",
                 "expression": {
                     "type": "related_doc",
