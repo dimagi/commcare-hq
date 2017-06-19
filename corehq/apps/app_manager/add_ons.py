@@ -19,6 +19,21 @@ class AddOn(object):
         self.used_in_module = used_in_module if used_in_module else lambda m: False
         self.used_in_form = used_in_form if used_in_form else lambda f: False
 
+def _uses_case_list_menu_item(module):
+    if getattr(module, 'case_list', False) and module.case_list.show:
+        return True
+    if getattr(module, 'task_list', False) and module.task_list.show:
+        return True
+    if getattr(module, 'referral_list', False) and module.referral_list.show:
+        return True
+    return False
+
+def _uses_conditional_form_actions(form):
+    if form.form_type != 'module_form':
+        # Don't bother restricting non-basic forms
+        return True
+    return form.actions.open_case.condition.type == 'if' or form.actions.close_case.condition.type == 'if',
+
 def _uses_detail_format(module, column_format):
     details = []
     if isinstance(module, Module) or isinstance(module, ShadowModule):
@@ -47,7 +62,7 @@ _ADD_ONS = {
     "case_list_menu_item": AddOn(
         name=_("Case List Menu Item"),
         description=_("Allows the mobile user to view the case list and case details without actually opening a form. Available in the case menu's settings."),
-        used_in_module=lambda m: isinstance(m, Module) and (m.case_list.show or m.task_list.show),  # TODO: will this break anything?
+        used_in_module=lambda m: _uses_case_list_menu_item(m),
     ),
     "conditional_enum": AddOn(
         name=feature_previews.CONDITIONAL_ENUM.label,
@@ -58,7 +73,7 @@ _ADD_ONS = {
         name=_('Case Conditions'),
         description=_("Open or close a case only if a specific question has a particular answer. Available in form settings."),
         help_link="https://confluence.dimagi.com/display/commcarepublic/Case+Configuration",
-        used_in_form=lambda f: f.actions.open_case.condition.type == 'if' or f.actions.close_case.condition.type, # TODO: will this break advanced forms?
+        used_in_form=lambda f: _uses_conditional_form_actions(f)
     ),
     "form_display_conditions": AddOn(
         name=_("Form Display Conditions"),
@@ -80,7 +95,7 @@ _ADD_ONS = {
     "menu_mode": AddOn(
         name=_("Menu Mode"),
         description=_("Control whether a form's enclosing menu is displayed on the mobile device or not. Available in menu settings."),
-        used_in_module=lambda m: m.put_in_root,
+        used_in_module=lambda m: getattr(m, 'put_in_root', False),
     ),
     "module_display_conditions": AddOn(
         name=_("Menu Display Conditions"),
@@ -92,13 +107,13 @@ _ADD_ONS = {
         name=_("Register from case list"),
         description=_("Minimize duplicates by making registration forms available directly from the case list on the mobile device. Availabe in menu settings."),
         help_link="https://confluence.dimagi.com/pages/viewpage.action?pageId=30605985",
-        used_in_module=lambda m: m.case_list_form.form_id, # TODO: break anything?
+        used_in_module=lambda m: m.case_list_form.form_id,
     ),
     "subcases": AddOn(
         name=_("Child Cases"),
         description=_("Open other types of cases for use in other modules, linking them to the case that created them. Available in form settings."),
         help_link="https://confluence.dimagi.com/display/commcarepublic/Child+Cases",
-        used_in_form=lambda f: bool(f.actions.subcases),    # TODO: will this break anything?
+        used_in_form=lambda f: bool(f.actions.subcases),
     ),
     "unstructured_case_lists": AddOn(
         name=_("Customize Case List Registration"),
