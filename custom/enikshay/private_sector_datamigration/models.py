@@ -657,10 +657,6 @@ class Agency(models.Model):
         }[self.location_type]
 
     @property
-    def is_field_officer(self):
-        return self.agencyTypeId == 'ATFO'
-
-    @property
     def name(self):
         return ' '.join(filter(
             None,
