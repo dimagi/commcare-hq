@@ -1026,7 +1026,7 @@ class FormBase(DocumentSchema):
         }
 
         xml_valid = False
-        if self.source == '':
+        if self.source == '' and self.form_type != 'shadow_form':
             errors.append(dict(type="blank form", **meta))
         else:
             try:
@@ -1050,7 +1050,7 @@ class FormBase(DocumentSchema):
             errors.append(error)
 
         if not errors:
-            if len(questions) == 0:
+            if len(questions) == 0 and self.form_type != 'shadow_form':
                 errors.append(dict(type="blank form", **meta))
             else:
                 try:
