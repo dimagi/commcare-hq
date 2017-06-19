@@ -1421,7 +1421,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         if (COMMCAREHQ.toggleEnabled('MM_CASE_PROPERTIES')) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "picture", label: gettext('Picture')},
-                {value: "audio", label: gettext('Audio')},
+                {value: "audio", label: gettext('Audio')}
             );
         }
 
