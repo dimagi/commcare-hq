@@ -4,7 +4,7 @@ from django.test import TestCase
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser
-from casexml.apps.phone.restore import SimplifiedSyncLog
+from casexml.apps.phone.models import SimplifiedSyncLog
 from corehq.apps.users.dbaccessors.all_commcare_users import (
     delete_all_users,
     hard_delete_deleted_users,
@@ -23,7 +23,11 @@ class TestDbAccessors(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        delete_all_docs_by_doc_type(SimplifiedSyncLog.get_db(), ['SyncLog'])
+        db = SimplifiedSyncLog.get_db()
+        # datetime.min is not compatible for `json_format_datetime`
+        for synclog_id in get_synclog_ids_by_date(datetime(1970, 1, 1), datetime.max):
+            db.delete_doc(synclog_id)
+
         # Needed because other tests do not always clean up their users.
         delete_all_users()
         hard_delete_deleted_users()
