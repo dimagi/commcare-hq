@@ -137,6 +137,9 @@ class KafkaChangeFeed(ChangeFeed):
         )
 
     def _filter_offsets(self, offsets):
+        if offsets is None:
+            return offsets
+
         return {
             tp: offsets[tp]
             for tp in self.topic_and_partitions
