@@ -10,6 +10,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from casexml.apps.phone.models import SyncLog
 from corehq.form_processor.models import XFormInstanceSQL
+from corehq.apps.locations.models import SQLLocation
 from corehq.warehouse.dbaccessors import (
     get_group_ids_by_last_modified,
     get_user_ids_by_last_modified,
@@ -23,11 +24,12 @@ from corehq.warehouse.const import (
     DOMAIN_STAGING_SLUG,
     FORM_STAGING_SLUG,
     SYNCLOG_STAGING_SLUG,
+    LOCATION_STAGING_SLUG,
 )
 
 from corehq.warehouse.utils import truncate_records_for_cls
 from corehq.warehouse.models.shared import WarehouseTable
-from corehq.warehouse.etl import CouchToDjangoETLMixin
+from corehq.warehouse.etl import CouchToDjangoETLMixin, CustomSQLETLMixin
 
 
 class StagingTable(models.Model, WarehouseTable):
@@ -43,6 +45,42 @@ class StagingTable(models.Model, WarehouseTable):
     @classmethod
     def clear_records(cls):
         truncate_records_for_cls(cls, cascade=False)
+
+
+class LocationStagingTable(StagingTable, CustomSQLETLMixin):
+    '''
+    Represents the staging table to dump data before loading into the LocationDim
+
+    Grain: location_id
+    '''
+    slug = LOCATION_STAGING_SLUG
+
+    domain = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
+    site_code = models.CharField(max_length=100)
+    location_id = models.CharField(max_length=255)
+    external_id = models.CharField(max_length=255)
+    supply_point_id = models.CharField(max_length=255)
+    user_id = models.CharField(max_length=255)
+
+    sql_location_id = models.IntegerField()
+    sql_parent_location_id = models.IntegerField()
+
+    location_last_modified = models.DateTimeField(null=True)
+    is_archived = models.NullBooleanField()
+
+    latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
+    longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
+
+    @classmethod
+    def dependencies(cls):
+        return []
+
+    @classmethod
+    def additional_sql_context(cls):
+        return {
+            'sqllocation_table': SQLLocation._meta.db_table
+        }
 
 
 class GroupStagingTable(StagingTable, CouchToDjangoETLMixin):
