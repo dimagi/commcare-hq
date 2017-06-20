@@ -125,12 +125,9 @@ class Command(BaseCommand):
             start, limit, case_ids, owner_state_id, owner_district_id, owner_organisation_ids
         )
 
-        self.assert_always_null(beneficiaries)
-
         self.migrate_to_enikshay(domain, beneficiaries, skip_adherence, chunk_size, location_owner, default_location_owner)
 
-    @staticmethod
-    def beneficiaries(start, limit, case_ids, owner_state_id, owner_district_id, owner_organisation_ids):
+    def beneficiaries(self, start, limit, case_ids, owner_state_id, owner_district_id, owner_organisation_ids):
         beneficiaries_query = Beneficiary.objects.filter(
             (
                 Q(caseStatus='suspect')
@@ -177,6 +174,8 @@ class Command(BaseCommand):
                 Q(caseId__in=bene_ids_treating)
                 | ((~Q(caseId__in=bene_ids_treating_away)) & Q(caseId__in=bene_ids_from_referred))
             )
+
+        self._assert_always_null(beneficiaries_query)
 
         if limit is not None:
             return beneficiaries_query[start:start + limit]
@@ -244,7 +243,7 @@ class Command(BaseCommand):
         logger.info('Done!')
 
     @staticmethod
-    def assert_always_null(beneficiaries):
+    def _assert_always_null(beneficiaries):
         assert not beneficiaries.filter(mdrTBSuspected__isnull=False).exists()
         assert not beneficiaries.filter(middleName__isnull=False).exists()
         assert not beneficiaries.filter(nikshayId__isnull=False).exists()
