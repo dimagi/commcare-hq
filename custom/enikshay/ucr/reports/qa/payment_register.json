@@ -9,7 +9,7 @@
     "report_id": "payment_register_qa",
     "config": {
         "description": "",
-        "title": "Payment Register (QA)",
+        "title": "Payment Register",
         "sort_expression": [],
         "visible": true,
         "configured_charts": [],
