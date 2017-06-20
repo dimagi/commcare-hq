@@ -9,6 +9,7 @@ INSERT INTO {{ location_staging }} (
     sql_location_id,
     sql_parent_location_id,
     location_last_modified,
+    location_created_on,
     is_archived,
     latitude,
     longitude
@@ -24,6 +25,7 @@ SELECT
     id,
     parent_id,
     last_modified,
+    created_at,
     is_archived,
     latitude,
     longitude

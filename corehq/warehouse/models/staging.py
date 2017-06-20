@@ -67,6 +67,8 @@ class LocationStagingTable(StagingTable, CustomSQLETLMixin):
     sql_parent_location_id = models.IntegerField(null=True)
 
     location_last_modified = models.DateTimeField(null=True)
+    location_created_on = models.DateTimeField(null=True)
+
     is_archived = models.NullBooleanField()
 
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
