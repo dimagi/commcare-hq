@@ -10,6 +10,8 @@ from corehq.warehouse.const import (
     USER_STAGING_SLUG,
     GROUP_STAGING_SLUG,
     DOMAIN_STAGING_SLUG,
+    LOCATION_STAGING_SLUG,
+    LOCATION_TYPE_STAGING_SLUG,
 )
 
 from corehq.sql_db.routers import db_for_read_write
@@ -98,26 +100,39 @@ class LocationDim(BaseDim, CustomSQLETLMixin):
     slug = LOCATION_DIM_SLUG
 
     location_id = models.CharField(max_length=100)
+    sql_location_id = models.IntegerField()
     name = models.CharField(max_length=255)
     site_code = models.CharField(max_length=255)
-    external_id = models.CharField(max_length=255)
+    external_id = models.CharField(max_length=255, null=True)
     supply_point_id = models.CharField(max_length=255, null=True)
+    level = models.IntegerField()
 
     location_type_id = models.CharField(max_length=255)
     location_type_name = models.CharField(max_length=255)
     location_type_code = models.CharField(max_length=255)
 
-    is_archived = models.BooleanField()
+    # List of location levels flattened out. If a location is at level 3
+    # then this should have levels 0, 1, 2, 3 populated.
+    location_level_0 = models.CharField(max_length=255)
+    location_level_1 = models.CharField(max_length=255, null=True)
+    location_level_2 = models.CharField(max_length=255, null=True)
+    location_level_3 = models.CharField(max_length=255, null=True)
+    location_level_4 = models.CharField(max_length=255, null=True)
+    location_level_5 = models.CharField(max_length=255, null=True)
+    location_level_6 = models.CharField(max_length=255, null=True)
+    location_level_7 = models.CharField(max_length=255, null=True)
+
+    is_archived = models.NullBooleanField()
 
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True)
 
     location_last_modified = models.DateTimeField()
-    location_created_on = models.DateTimeField()
+    location_created_on = models.DateTimeField(null=True)
 
     @classmethod
     def dependencies(cls):
-        return []
+        return [LOCATION_STAGING_SLUG, LOCATION_TYPE_STAGING_SLUG]
 
 
 class DomainDim(BaseDim, CustomSQLETLMixin):
