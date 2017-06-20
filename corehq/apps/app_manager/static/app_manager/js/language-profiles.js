@@ -60,7 +60,9 @@ hqDefine('app_manager/js/language-profiles.js', function () {
             profile.name.subscribe(changeSaveButton);
             profile.langs.subscribe(changeSaveButton);
             profile.defaultLang.subscribe(changeSaveButton);
-            profile.practiceUser.subscribe(changeSaveButton);
+            if (self.enable_practice_users){
+                profile.practiceUser.subscribe(changeSaveButton);
+            }
             self.app_profiles.push(profile);
         };
         _.each(app_profiles, function(value, key) {
