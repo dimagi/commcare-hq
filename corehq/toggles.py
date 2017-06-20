@@ -378,6 +378,15 @@ CASE_DETAIL_PRINT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+DATA_FILE_DOWNLOAD = StaticToggle(
+    'data_file_download',
+    'Offer hosting and sharing data files for downloading, e.g. cleaned and anonymised form exports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    # TODO: Create Confluence docs and add help link
+)
+
+
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
