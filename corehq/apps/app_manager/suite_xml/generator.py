@@ -49,7 +49,7 @@ class SuiteGenerator(object):
             DetailContributor(self.suite, self.app, self.modules, self.build_profile_id),
         ])
 
-        if self.app.get_practice_user(self.build_profile_id):
+        if self.app.enable_practice_users and self.app.get_practice_user(self.build_profile_id):
             self._add_sections([
                 PracticeUserRestoreContributor(self.suite, self.app, self.modules, self.build_profile_id)
             ])

@@ -1,5 +1,7 @@
 from django.test import TestCase
 
+from couchdbkit import ResourceNotFound
+
 from corehq.apps.app_manager.exceptions import PracticeUserException
 from corehq.apps.app_manager.models import Application, BuildProfile
 from corehq.apps.domain.shortcuts import create_domain
@@ -125,4 +127,19 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
             "./user-restore"
         )
 
-    # def test_commcare_version(self):
+    def test_commcare_version(self):
+        turn_on_demo_mode(self.user, self.domain)
+        app = self.factory.app
+        app.practice_mobile_worker_id = self.user._id
+        app.build_spec.version = '2.20.0'  # less than supported version
+        app.save()
+
+        self.assertXmlDoesNotHaveXpath(
+            app.create_suite(),
+            "./user-restore"
+        )
+
+        app.create_build_files(save=True)
+        app.save()
+        with self.assertRaises(ResourceNotFound):
+            self.assertTrue(app.lazy_fetch_attachment('files/practice_user_restore.xml'))

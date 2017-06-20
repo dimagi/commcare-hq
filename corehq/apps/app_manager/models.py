@@ -5772,6 +5772,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             Raises a PracticeUserException if the user is not practice user
         """
         from corehq.apps.ota.models import DemoUserRestore
+        if not self.enable_practice_users:
+            return None
         user = self.get_practice_user(build_profile_id)
         if user:
             user_restore = DemoUserRestore.objects.get(id=user.demo_restore_id)
@@ -5782,6 +5784,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def validate_practice_users(self):
         # validate practice_mobile_worker of app and all app profiles
         # raises PracticeUserException in case of misconfiguration
+        if not self.enable_practice_users:
+            return
         self.get_practice_user()
         try:
             for build_profile_id in self.build_profiles:
