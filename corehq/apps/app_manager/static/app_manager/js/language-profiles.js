@@ -15,10 +15,11 @@ hqDefine('app_manager/js/language-profiles.js', function () {
         _p.profileUrl = url;
     }
 
-    function ProfileManager(app_profiles, app_langs, practice_users) {
+    function ProfileManager(app_profiles, app_langs, enable_practice_users, practice_users) {
         var self = this;
         this.app_profiles = ko.observableArray([]);
         this.app_langs = app_langs;
+        this.enable_practice_users = enable_practice_users;
         this.practice_users = [{'id': '', 'text': ''}].concat(practice_users);
         this.saveButton = COMMCAREHQ.SaveButton.init({
             unsavedMessage: gettext("You have unsaved changes to your application profiles"),

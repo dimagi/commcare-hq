@@ -35,7 +35,12 @@
                 <th>{% trans "Profile Name" %}</th>
                 <th>{% trans "Languages" %}</th>
                 <th>{% trans "Default Language" %}</th>
-                <th>{% trans "Practice Mobile Worker" %}</th>
+                <th>{% trans "Practice Mobile Worker" %}
+                    <div class="text-warning">
+                    <i class="fa fa-arrow-down"></i>
+                    {% trans "Upgrade to CommCare 2.30!" %}
+                    </div>
+                </th>
                 <th></th>
             </tr>
         </thead>
@@ -55,7 +60,7 @@
                 </td>
                 <td class="col-sm-3">
                     <span class="form-inline">
-                        <select class="practice-user" data-bind="foreach: $root.practice_users,  attr: {id: 'practice-user-' + $index()}, value: $data.practiceUser">
+                        <select class="practice-user" data-bind="foreach: $root.practice_users,  attr: {id: 'practice-user-' + $index()}, value: $data.practiceUser, enable: $root.enable_practice_users">
                             <option data-bind="value: $data.id, text: $data.text"></option>
                         </select>
                     </span>
