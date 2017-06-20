@@ -294,8 +294,8 @@ class SubmissionPost(object):
         return errors
 
     def _get_open_rosa_response(self, instance, errors):
-        if instance.is_normal:
-            response = self.get_success_response(instance, errors)
+        if instance.is_normal and not errors:
+            response = self.get_success_response()
         else:
             response = self.get_failure_response(instance)
 
@@ -307,22 +307,13 @@ class SubmissionPost(object):
         return response
 
     @staticmethod
-    def get_success_response(doc, errors):
-
-        if errors:
-            response = OpenRosaResponse(
-                message=doc.problem,
-                nature=ResponseNature.SUBMIT_ERROR,
-                status=201,
-            ).response()
-        else:
-            response = OpenRosaResponse(
-                # would have done ✓ but our test Nokias' fonts don't have that character
-                message=u'   √   ',
-                nature=ResponseNature.SUBMIT_SUCCESS,
-                status=201,
-            ).response()
-        return response
+    def get_success_response():
+        return OpenRosaResponse(
+            # would have done ✓ but our test Nokias' fonts don't have that character
+            message=u'   √   ',
+            nature=ResponseNature.SUBMIT_SUCCESS,
+            status=201,
+        ).response()
 
     @staticmethod
     def submission_ignored_response():
