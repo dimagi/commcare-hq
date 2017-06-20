@@ -93,7 +93,7 @@ def convert_to_tuple_of_tuples(list_of_lists):
     return tuple(list_of_tuples)
 
 
-def refresh_case_alert_schedule_instances(case_id, schedule, recipients, rule):
+def refresh_case_alert_schedule_instances(case, schedule, recipients, rule):
     """
     :param case_id: the case_id of the CommCareCase/SQL
     :param schedule: the AlertSchedule
@@ -104,7 +104,7 @@ def refresh_case_alert_schedule_instances(case_id, schedule, recipients, rule):
 
     existing_instances = {
         (instance.recipient_type, instance.recipient_id): instance
-        for instance in get_case_alert_schedule_instances_for_schedule(case_id, schedule)
+        for instance in get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
     }
 
     if existing_instances:
@@ -119,13 +119,13 @@ def refresh_case_alert_schedule_instances(case_id, schedule, recipients, rule):
             recipient_type,
             recipient_id,
             move_to_next_event_not_in_the_past=False,
-            case_id=case_id,
+            case_id=case.case_id,
             rule_id=rule.pk
         )
         save_case_schedule_instance(instance)
 
 
-def refresh_case_timed_schedule_instances(case_id, schedule, recipients, rule, start_date=None):
+def refresh_case_timed_schedule_instances(case, schedule, recipients, rule, start_date=None):
     """
     :param case_id: the case_id of the CommCareCase/SQL
     :param schedule: the TimedSchedule
@@ -137,7 +137,7 @@ def refresh_case_timed_schedule_instances(case_id, schedule, recipients, rule, s
 
     existing_instances = {
         (instance.recipient_type, instance.recipient_id): instance
-        for instance in get_case_timed_schedule_instances_for_schedule(case_id, schedule)
+        for instance in get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
     }
 
     recipients = convert_to_tuple_of_tuples(recipients)
@@ -151,7 +151,7 @@ def refresh_case_timed_schedule_instances(case_id, schedule, recipients, rule, s
                 recipient_id,
                 start_date=start_date,
                 move_to_next_event_not_in_the_past=True,
-                case_id=case_id,
+                case_id=case.case_id,
                 rule_id=rule.pk
             )
             save_case_schedule_instance(instance)

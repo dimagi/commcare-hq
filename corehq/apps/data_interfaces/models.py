@@ -931,9 +931,9 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
     def when_case_matches(self, case, rule):
         schedule = self.schedule
         if isinstance(schedule, AlertSchedule):
-            refresh_case_alert_schedule_instances(case.case_id, schedule, self.recipients, rule)
+            refresh_case_alert_schedule_instances(case, schedule, self.recipients, rule)
         elif isinstance(schedule, TimedSchedule):
-            refresh_case_timed_schedule_instances(case.case_id, schedule, self.recipients, rule)
+            refresh_case_timed_schedule_instances(case, schedule, self.recipients, rule)
 
         return CaseRuleActionResult()
 
