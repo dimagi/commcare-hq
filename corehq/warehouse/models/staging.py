@@ -59,12 +59,12 @@ class LocationStagingTable(StagingTable, CustomSQLETLMixin):
     name = models.CharField(max_length=255)
     site_code = models.CharField(max_length=100)
     location_id = models.CharField(max_length=255)
-    external_id = models.CharField(max_length=255)
-    supply_point_id = models.CharField(max_length=255)
+    external_id = models.CharField(max_length=255, null=True)
+    supply_point_id = models.CharField(max_length=255, null=True)
     user_id = models.CharField(max_length=255)
 
     sql_location_id = models.IntegerField()
-    sql_parent_location_id = models.IntegerField()
+    sql_parent_location_id = models.IntegerField(null=True)
 
     location_last_modified = models.DateTimeField(null=True)
     is_archived = models.NullBooleanField()
