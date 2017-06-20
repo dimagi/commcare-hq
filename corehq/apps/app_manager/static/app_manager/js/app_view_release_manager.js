@@ -33,7 +33,6 @@ hqDefine("app_manager/js/app_view_release_manager.js", function() {
         var practice_users = initial_page_data('practice_users');
         var profileManager = new ProfileManager(app_profiles, app_langs, practice_users);
         $profilesTab.koApplyBindings(profileManager);
-        $("#practice-users").select2({"allowClear": true, "data": practice_users});
     }
 
     if (initial_page_data('intro_only')) {

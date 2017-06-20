@@ -124,7 +124,6 @@ hqDefine("app_manager/js/app_view.js", function() {
                             var practice_users = initial_page_data('practice_users');
                             var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
                             $profileManager.koApplyBindings(new ProfileManager(app_profiles, app_langs, practice_users));
-                            $("#practice-users").select2({"allowClear": true, "data": practice_users});
                         }
 
                         // App diff
