@@ -62,8 +62,8 @@ class CustomSQLETLMixin(BaseETLMixin):
         for dep in cls.dependencies():
             dep_cls = get_cls_by_slug(dep)
             context[dep] = dep_cls._meta.db_table
-        context['start_datetime'] = start_datetime
-        context['end_datetime'] = end_datetime
+        context['start_datetime'] = start_datetime.isoformat()
+        context['end_datetime'] = end_datetime.isoformat()
         context.update(cls.additional_sql_context())
         return context
 
