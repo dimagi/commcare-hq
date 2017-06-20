@@ -10,7 +10,7 @@ from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from casexml.apps.phone.models import SyncLog
 from corehq.form_processor.models import XFormInstanceSQL
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.warehouse.dbaccessors import (
     get_group_ids_by_last_modified,
     get_user_ids_by_last_modified,
@@ -25,6 +25,7 @@ from corehq.warehouse.const import (
     FORM_STAGING_SLUG,
     SYNCLOG_STAGING_SLUG,
     LOCATION_STAGING_SLUG,
+    LOCATION_TYPE_STAGING_SLUG,
 )
 
 from corehq.warehouse.utils import truncate_records_for_cls
@@ -82,6 +83,27 @@ class LocationStagingTable(StagingTable, CustomSQLETLMixin):
     def additional_sql_context(cls):
         return {
             'sqllocation_table': SQLLocation._meta.db_table
+        }
+
+
+class LocationTypeStagingTable(StagingTable, CustomSQLETLMixin):
+    slug = LOCATION_TYPE_STAGING_SLUG
+
+    domain = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
+    code = models.SlugField(db_index=False, null=True)
+    location_type_id = models.IntegerField()
+
+    location_type_last_modified = models.DateTimeField(null=True)
+
+    @classmethod
+    def dependencies(cls):
+        return []
+
+    @classmethod
+    def additional_sql_context(cls):
+        return {
+            'locationtype_table': LocationType._meta.db_table
         }
 
 
