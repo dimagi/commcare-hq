@@ -13,3 +13,6 @@ SELECT
     last_modified
 FROM
     {{ locationtype_table }}
+WHERE
+    last_modified > '{{ start_datetime }}' AND
+    last_modified <= '{{ end_datetime }}'
