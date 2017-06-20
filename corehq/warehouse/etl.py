@@ -26,6 +26,14 @@ class CustomSQLETLMixin(BaseETLMixin):
     '''
 
     @classmethod
+    def additional_sql_context(cls):
+        '''
+        Override this method to provide additional context
+        vars to the SQL script
+        '''
+        return {}
+
+    @classmethod
     def load(cls, start_datetime, end_datetime):
         from corehq.warehouse.models.shared import WarehouseTable
         '''
@@ -56,6 +64,7 @@ class CustomSQLETLMixin(BaseETLMixin):
             context[dep] = dep_cls._meta.db_table
         context['start_datetime'] = start_datetime
         context['end_datetime'] = start_datetime
+        context.update(cls.additional_sql_context())
         return context
 
     @classmethod
