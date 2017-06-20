@@ -63,7 +63,7 @@ class CustomSQLETLMixin(BaseETLMixin):
             dep_cls = get_cls_by_slug(dep)
             context[dep] = dep_cls._meta.db_table
         context['start_datetime'] = start_datetime
-        context['end_datetime'] = start_datetime
+        context['end_datetime'] = end_datetime
         context.update(cls.additional_sql_context())
         return context
 
