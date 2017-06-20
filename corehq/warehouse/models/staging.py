@@ -87,6 +87,11 @@ class LocationStagingTable(StagingTable, CustomSQLETLMixin):
 
 
 class LocationTypeStagingTable(StagingTable, CustomSQLETLMixin):
+    '''
+    Represents the staging table to dump data before loading into the LocationDim
+
+    Grain: location_type_id
+    '''
     slug = LOCATION_TYPE_STAGING_SLUG
 
     domain = models.CharField(max_length=100)
