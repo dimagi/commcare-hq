@@ -64,10 +64,15 @@
                 <!--ko if: isTab -->
                     <!--ko if: $data.hasNodeset -->
                         <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
-                        <td class="col-sm-5 form-group" colspan="2" data-bind="css: {'has-error': showWarning}">
+                        <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}">
                             <div data-bind="jqueryElement: nodeset.ui"></div>
                             <span class="help-block"
                                   data-bind="text: 'A nodeset must be specified.', visible: showWarning"></span>
+                        </td>
+                        <td class="col-sm-3 form-group">
+                            <div data-bind="jqueryElement: condition.ui"></div>
+                            <span class="help-block"
+                                  data-bind="text: 'A display condition can be specified.'"></span>
                         </td>
                     <!--/ko-->
                     <!--ko ifnot: $data.hasNodeset -->
