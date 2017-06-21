@@ -86,7 +86,11 @@ ko.bindingHandlers.casePropertyAutocomplete = {
     init: function (element, valueAccessor) {
         $(element).on('textchange', function() {
             var $el = $(this);
-            $el.val($el.val().replace(/ /g, '_'));
+            if ($el.val().match(/\s/)) {
+                var pos = $el.caret('pos');
+                $el.val($el.val().replace(/\s/g, '_'));
+                $el.caret('pos', pos);
+            }
         });
         ko.bindingHandlers.autocompleteAtwho.init(element, valueAccessor);
     },
