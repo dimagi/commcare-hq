@@ -811,13 +811,15 @@ class SimplifiedSyncLog(AbstractSyncLog):
         """
         _get_logger().debug("purging: {}".format(case_id))
         self.dependent_case_ids_on_phone.add(case_id)
-        relevant = self._get_relevant_cases(case_id)
-        available = self._get_available_cases(relevant)
-        live = self._get_live_cases(available)
+        cached_child_map = _reverse_index_map(self.index_tree.indices)
+        cached_extension_map =  _reverse_index_map(self.extension_index_tree.indices)
+        relevant = self._get_relevant_cases(case_id, cached_child_map, cached_extension_map)
+        available = self._get_available_cases(relevant, cached_extension_map)
+        live = self._get_live_cases(available, cached_extension_map)
         to_remove = relevant - live
         self._remove_cases_purge_indices(to_remove, case_id, quiet_errors)
 
-    def _get_relevant_cases(self, case_id):
+    def _get_relevant_cases(self, case_id, cached_child_map=None, cached_extension_map=None):
         """
         Mark all open cases owned by the user relevant. Traversing all outgoing child
         and extension indexes, as well as all incoming extension indexes,
@@ -827,19 +829,19 @@ class SimplifiedSyncLog(AbstractSyncLog):
             case_id,
             child_index_tree=self.index_tree,
             extension_index_tree=self.extension_index_tree,
-            cached_child_map=_reverse_index_map(self.index_tree.indices),
-            cached_extension_map=_reverse_index_map(self.extension_index_tree.indices),
+            cached_child_map=cached_child_map or _reverse_index_map(self.index_tree.indices),
+            cached_extension_map=cached_extension_map or _reverse_index_map(self.extension_index_tree.indices),
         )
         _get_logger().debug("Relevant cases of {}: {}".format(case_id, relevant))
         return relevant
 
-    def _get_available_cases(self, relevant):
+    def _get_available_cases(self, relevant, cached_map=None):
         """
         Mark all relevant cases that are open and have no outgoing extension indexes
         as available. Traverse incoming extension indexes which don't lead to closed
         cases, mark all touched cases as available
         """
-        incoming_extensions = _reverse_index_map(self.extension_index_tree.indices)
+        incoming_extensions = cached_map or _reverse_index_map(self.extension_index_tree.indices)
         available = {case for case in relevant
                      if case not in self.closed_cases
                      and (not self.extension_index_tree.indices.get(case) or self.index_tree.indices.get(case))}
@@ -854,13 +856,13 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         return available
 
-    def _get_live_cases(self, available):
+    def _get_live_cases(self, available, cached_map=None):
         """
         Mark all relevant, owned, available cases as live. Traverse incoming
         extension indexes which don't lead to closed cases, mark all touched
         cases as available.
         """
-        incoming_extensions = _reverse_index_map(self.extension_index_tree.indices)
+        incoming_extensions = cached_map or _reverse_index_map(self.extension_index_tree.indices)
         live = {case for case in available if case in self.primary_case_ids}
         new_live = set() | live
         checked = set()
