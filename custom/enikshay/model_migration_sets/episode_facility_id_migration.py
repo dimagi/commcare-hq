@@ -77,6 +77,8 @@ class EpisodeFacilityIDMigration(object):
         return self.get_owner_id_at_date(date_of_change)
 
     def get_date_case_property_changed(self, case_property, value, case_type="episode"):
+        """Returns the date a particular case property was changed to a specific value
+        """
         date_of_change = None
         actions = self._episode_actions() if case_type == 'episode' else self._person_actions()
         for i, transactions in enumerate(actions):
@@ -89,6 +91,8 @@ class EpisodeFacilityIDMigration(object):
         return date_of_change
 
     def get_owner_id_at_date(self, date):
+        """Returns the owner_id of the person case at the specified date
+        """
         if date is None:
             return None
 
