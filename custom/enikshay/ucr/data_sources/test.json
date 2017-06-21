@@ -9,6 +9,7 @@
     ],
     "config": {
         "referenced_doc_type": "CommCareCase",
+        "asynchronous": true,
         "engine_id": "ucr",
         "description": "",
         "base_item_expression": {
