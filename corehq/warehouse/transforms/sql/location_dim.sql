@@ -61,6 +61,8 @@ WITH RECURSIVE location_hierarchy(
 
     FROM
         {{ location_staging }}
+    WHERE
+        sql_parent_location_id is NULL
 
     UNION
 
