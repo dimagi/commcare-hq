@@ -107,7 +107,7 @@ class LocationDim(BaseDim, CustomSQLETLMixin):
     supply_point_id = models.CharField(max_length=255, null=True)
     level = models.IntegerField()
 
-    location_type_id = models.CharField(max_length=255)
+    location_type_id = models.IntegerField()
     location_type_name = models.CharField(max_length=255)
     location_type_code = models.CharField(max_length=255)
 
