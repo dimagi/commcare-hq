@@ -112,15 +112,16 @@ class LocationDim(BaseDim, CustomSQLETLMixin):
     location_type_code = models.CharField(max_length=255)
 
     # List of location levels flattened out. If a location is at level 3
-    # then this should have levels 0, 1, 2, 3 populated.
-    location_level_0 = models.CharField(max_length=255)
-    location_level_1 = models.CharField(max_length=255, null=True)
-    location_level_2 = models.CharField(max_length=255, null=True)
-    location_level_3 = models.CharField(max_length=255, null=True)
-    location_level_4 = models.CharField(max_length=255, null=True)
-    location_level_5 = models.CharField(max_length=255, null=True)
-    location_level_6 = models.CharField(max_length=255, null=True)
-    location_level_7 = models.CharField(max_length=255, null=True)
+    # then this should have levels 0, 1, 2, 3 populated. Each level contains
+    # the sql id of the location.
+    location_level_0 = models.IntegerField()
+    location_level_1 = models.IntegerField(null=True)
+    location_level_2 = models.IntegerField(null=True)
+    location_level_3 = models.IntegerField(null=True)
+    location_level_4 = models.IntegerField(null=True)
+    location_level_5 = models.IntegerField(null=True)
+    location_level_6 = models.IntegerField(null=True)
+    location_level_7 = models.IntegerField(null=True)
 
     is_archived = models.NullBooleanField()
 
