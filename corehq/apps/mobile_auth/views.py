@@ -69,8 +69,7 @@ def fetch_key_records(request, domain):
         last_issued = string_to_datetime(last_issued).replace(tzinfo=None)
     user_id = request.couch_user.user_id
     payload = FetchKeyRecords(domain, user_id, last_issued).get_payload()
-    if ENIKSHAY.enabled(domain):
-        update_device_id(request.couch_user, request.GET.get('device_id'))
+    update_device_id(request.couch_user, request.GET.get('device_id'))
     return HttpResponse(payload)
 
 

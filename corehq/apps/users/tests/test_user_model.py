@@ -98,3 +98,13 @@ class UserDeviceTest(SimpleTestCase):
         self.assertEqual(set([first_device, second_device]), set(device_date_mapping.keys()))
         self.assertEqual(later, device_date_mapping[first_device])
         self.assertEqual(way_later, device_date_mapping[second_device])
+
+    def test_only_update_once_per_day(self):
+        user = CommCareUser()
+        now = datetime.utcnow()
+        later = now + timedelta(hours=1)
+        way_later = now + timedelta(days=1)
+        device = 'device'
+        self.assertTrue(user.update_device_id_last_used(device, now))
+        self.assertTrue(user.update_device_id_last_used(device, later))
+        self.assertFalse(user.update_device_id_last_used(device, way_later))
