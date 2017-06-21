@@ -50,6 +50,7 @@ WITH RECURSIVE location_hierarchy(
         site_code,
         external_id,
         location_id,
+        location_type_id,
         supply_point_id,
         is_archived,
         latitude,
@@ -75,6 +76,7 @@ WITH RECURSIVE location_hierarchy(
         l.site_code,
         l.external_id,
         l.location_id,
+        l.location_type_id,
         l.supply_point_id,
         l.is_archived,
         l.latitude,
@@ -123,4 +125,4 @@ FROM
     location_hierarchy
 INNER JOIN
     {{ location_type_staging }} as lt_table
-ON location_hierarchy.site_code = lt_table.code AND location_hierarchy.domain = lt_table.domain
+ON location_hierarchy.location_type_id = lt_table.location_type_id AND location_hierarchy.domain = lt_table.domain

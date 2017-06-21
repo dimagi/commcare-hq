@@ -60,6 +60,7 @@ class LocationStagingTable(StagingTable, CustomSQLETLMixin):
     name = models.CharField(max_length=255)
     site_code = models.CharField(max_length=100)
     location_id = models.CharField(max_length=255)
+    location_type_id = models.IntegerField()
     external_id = models.CharField(max_length=255, null=True)
     supply_point_id = models.CharField(max_length=255, null=True)
     user_id = models.CharField(max_length=255)
