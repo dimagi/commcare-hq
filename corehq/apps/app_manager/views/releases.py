@@ -472,7 +472,7 @@ class LanguageProfilesView(View):
                 if not id:
                     id = uuid.uuid4().hex
                 def practice_user_id():
-                    if not app.enable_practice_users:
+                    if not app.enable_practice_users or not domain_has_privilege(privileges.PRACTICE_MOBILE_WORKERS):
                         return ''
                     try:
                         practice_user_id = profile.get('practice_user_id')

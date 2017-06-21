@@ -42,6 +42,7 @@
   name: 'Practice Mobile Worker'
   widget: select
   since: '2.28'
+  privilege: 'practice_mobile_workers'
 
 # RemoteApp Only
 - id: profile_url

@@ -209,12 +209,19 @@ def get_app_view_context(request, app):
 
     def _get_setting(setting_type, setting_id):
         # get setting dict from settings_layout
-        (setting, ) = filter(
+        if not settings_layout:
+            return None
+        matched = filter(
             lambda x: x['type'] == setting_type and x['id'] == setting_id,
-            [setting for section in settings_layout
-             for setting in section['settings']]
-        ) if settings_layout else (None,)
-        return setting
+            [
+                setting for section in settings_layout
+                for setting in section['settings']
+            ]
+        )
+        if matched:
+            return matched[0]
+        else:
+            return None
 
     build_spec_setting = _get_setting('hq', 'build_spec')
     if build_spec_setting:
@@ -222,7 +229,7 @@ def get_app_view_context(request, app):
         build_spec_setting['default_app_version'] = app.application_version
 
     practice_user_setting = _get_setting('hq', 'practice_mobile_worker_id')
-    if practice_user_setting:
+    if has_privilege(request, privileges.PRACTICE_MOBILE_WORKERS) and practice_user_setting:
         practice_users = get_practice_mode_mobile_workers(request.domain)
         practice_user_setting['values'] = [''] + [u['_id'] for u in practice_users]
         practice_user_setting['value_names'] = ['Not set'] + [u['username'] for u in practice_users]
@@ -739,6 +746,8 @@ def edit_app_attr(request, domain, app_id, attr):
         user_id = hq_settings['practice_mobile_worker_id']
         if user_id:
             get_and_assert_practice_user_in_domain(user_id, request.domain)
+        if not has_privilege(request, privileges.PRACTICE_MOBILE_WORKERS):
+            app.practice_mobile_worker_id = None
 
     if should_edit("admin_password"):
         admin_password = hq_settings.get('admin_password')
