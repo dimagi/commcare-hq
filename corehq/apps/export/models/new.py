@@ -1,4 +1,6 @@
 from __future__ import print_function
+
+from StringIO import StringIO
 from copy import copy
 from datetime import datetime
 from itertools import groupby
@@ -12,10 +14,15 @@ from django.utils.translation import ugettext as _
 from django.urls import reverse
 from django.db import models
 from django.http import Http404
+import magic
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
     get_case_properties
 
 from corehq.apps.reports.models import HQUserType
+from corehq.blobs import get_blob_db
+from corehq.blobs.atomic import AtomicBlobs
+from corehq.blobs.exceptions import NotFound
+from corehq.blobs.util import random_url_id
 from soil.progress import set_task_progress
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
@@ -2469,6 +2476,48 @@ class DailySavedExportNotification(models.Model):
                 domain_has_excel_dashboard_access(domain)
             )
         )
+
+
+class DataFile(models.Model):
+    domain = models.CharField(max_length=126, db_index=True)
+    filename = models.CharField(max_length=255)
+    description = models.CharField(max_length=255)
+    content_type = models.CharField(max_length=255)
+    blob_id = models.CharField(max_length=255)
+    content_length = models.IntegerField(null=True)
+
+    class Meta(object):
+        app_label = 'export'
+
+    def get_blob(self):
+        db = get_blob_db()
+        try:
+            blob = db.get(self.blob_id)
+        except (KeyError, NotFound) as err:
+            raise self.DoesNotExist(str(err))
+        return blob
+
+    def save_blob(self, uploaded_file):
+        content_string = StringIO()
+        for chunk in uploaded_file.chunks():
+            content_string.write(chunk)
+        self.content_type = magic.from_buffer(content_string.read(1024))
+        content_string.seek(0)
+        with AtomicBlobs(get_blob_db()) as db:
+            info = db.put(content_string, random_url_id(16))
+            self.blob_id = info.identifier
+            self.content_length = info.length
+            self.save()
+
+    def _delete_blob(self):
+        db = get_blob_db()
+        db.delete(self.blob_id)
+        self.blob_id = ''
+
+    def delete(self, using=None, keep_parents=False):
+        self._delete_blob()
+        return super(DataFile, self).delete(using, keep_parents)
+
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js
 MAIN_TABLE = []
