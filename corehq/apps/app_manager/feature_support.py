@@ -130,7 +130,7 @@ class CommCareFeatureSupportMixin(object):
         return self._require_minimum_version('2.35')
 
     @property
-    def enable_practice_users(self):
+    def supports_practice_users(self):
         """
         Ability to configure practice mobile workers for apps
         """

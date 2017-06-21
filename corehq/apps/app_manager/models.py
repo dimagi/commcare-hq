@@ -5744,6 +5744,14 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         else:
             return self.practice_mobile_worker_id
 
+    @property
+    @memoized
+    def enable_practice_users(self):
+        return (
+            self.supports_practice_users and
+            domain_has_privilege(self.domain, privileges.PRACTICE_MOBILE_WORKERS)
+        )
+
     @memoized
     def get_practice_user(self, build_profile_id=None):
         """
