@@ -260,6 +260,9 @@ class CaseAlertScheduleInstance(CaseScheduleInstanceMixin, AbstractAlertSchedule
     # Points to the AutomaticUpdateRule that spawned this schedule instance
     rule_id = models.IntegerField()
 
+    # See corehq.apps.data_interfaces.models.CreateScheduleInstanceActionDefinition.reset_case_property_name
+    last_reset_case_property_value = models.TextField(null=True)
+
     class Meta(AbstractAlertScheduleInstance.Meta):
         db_table = 'scheduling_casealertscheduleinstance'
         index_together = AbstractAlertScheduleInstance.Meta.index_together + (
@@ -273,6 +276,9 @@ class CaseTimedScheduleInstance(CaseScheduleInstanceMixin, AbstractTimedSchedule
 
     # Points to the AutomaticUpdateRule that spawned this schedule instance
     rule_id = models.IntegerField()
+
+    # See corehq.apps.data_interfaces.models.CreateScheduleInstanceActionDefinition.reset_case_property_name
+    last_reset_case_property_value = models.TextField(null=True)
 
     class Meta(AbstractTimedScheduleInstance.Meta):
         db_table = 'scheduling_casetimedscheduleinstance'
