@@ -634,20 +634,23 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         # configured to use pull down tile from the other module
         module1.case_details.short.pull_down_tile = True
-        self.ensure_module_session_datum_xml(factory, 'detail-inline="m0_case_long"', 'detail-persistent="m0_case_short"')
+        self.ensure_module_session_datum_xml(factory, 'detail-inline="m0_case_long"',
+                                             'detail-persistent="m0_case_short"')
 
         # set to use persistent case tile of its own as well but it would still
         # persists case tiles and detail inline from another module
         module1.case_details.short.use_case_tiles = True
         module1.case_details.short.persist_tile_on_forms = True
         self._add_columns_for_case_details(module1)
-        self.ensure_module_session_datum_xml(factory, 'detail-inline="m0_case_long"', 'detail-persistent="m0_case_short"')
+        self.ensure_module_session_datum_xml(factory, 'detail-inline="m0_case_long"',
+                                             'detail-persistent="m0_case_short"')
 
         # set to use case tile from a module that does not support case tiles anymore
         # and has own persistent case tile as well
         # So now detail inline from its own details
         module0.case_details.short.use_case_tiles = False
-        self.ensure_module_session_datum_xml(factory, 'detail-inline="m1_case_long"', 'detail-persistent="m1_case_short"')
+        self.ensure_module_session_datum_xml(factory, 'detail-inline="m1_case_long"',
+                                             'detail-persistent="m1_case_short"')
 
         # set to use case tile from a module that does not support case tiles anymore
         # and does not have its own persistent case tile as well
