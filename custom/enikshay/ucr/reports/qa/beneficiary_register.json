@@ -527,18 +527,6 @@
                 "visible": false,
                 "transform": {},
                 "aggregation": "simple",
-                "field": "treatment_initiation_date",
-                "calculate_total": false,
-                "type": "field",
-                "display": "treatment_initiation_date"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "visible": false,
-                "transform": {},
-                "aggregation": "simple",
                 "field": "aggregated_score_count_taken",
                 "calculate_total": false,
                 "type": "field",
