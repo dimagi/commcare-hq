@@ -81,8 +81,8 @@ class GroupDim(BaseDim, CustomSQLETLMixin):
     group_id = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
 
-    case_sharing = models.BooleanField()
-    reporting = models.BooleanField()
+    case_sharing = models.NullBooleanField()
+    reporting = models.NullBooleanField()
 
     group_last_modified = models.DateTimeField()
 

@@ -124,6 +124,7 @@ class GroupStagingTable(StagingTable, CouchToDjangoETLMixin):
     group_id = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
     doc_type = models.CharField(max_length=100)
+    domain = models.CharField(max_length=100)
 
     case_sharing = models.NullBooleanField()
     reporting = models.NullBooleanField()
@@ -134,6 +135,7 @@ class GroupStagingTable(StagingTable, CouchToDjangoETLMixin):
     def field_mapping(cls):
         return [
             ('_id', 'group_id'),
+            ('domain', 'domain'),
             ('name', 'name'),
             ('case_sharing', 'case_sharing'),
             ('reporting', 'reporting'),
