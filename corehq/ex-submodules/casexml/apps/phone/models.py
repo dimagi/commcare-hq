@@ -812,7 +812,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         _get_logger().debug("purging: {}".format(case_id))
         self.dependent_case_ids_on_phone.add(case_id)
         cached_child_map = _reverse_index_map(self.index_tree.indices)
-        cached_extension_map =  _reverse_index_map(self.extension_index_tree.indices)
+        cached_extension_map = _reverse_index_map(self.extension_index_tree.indices)
         relevant = self._get_relevant_cases(case_id, cached_child_map, cached_extension_map)
         available = self._get_available_cases(relevant, cached_extension_map)
         live = self._get_live_cases(available, cached_extension_map)
