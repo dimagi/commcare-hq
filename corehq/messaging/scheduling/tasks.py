@@ -83,7 +83,7 @@ def refresh_timed_schedule_instances(schedule, recipients, start_date=None):
     for key, schedule_instance in existing_instances.iteritems():
         if key not in new_recipients:
             delete_timed_schedule_instance(schedule_instance)
-        else:
+        elif start_date and start_date != schedule_instance.start_date:
             schedule_instance.recalculate_schedule(schedule, new_start_date=start_date)
             save_timed_schedule_instance(schedule_instance)
 
@@ -145,6 +145,14 @@ def refresh_case_timed_schedule_instances(case, schedule, action_definition, rul
     recipients = convert_to_tuple_of_tuples(action_definition.recipients)
     new_recipients = set(recipients)
 
+    # Only allow dynamic case properties here since the formatting of
+    # the value is very important if we're comparing from one time to
+    # the next
+    reset_case_property_value = (
+        case.dynamic_case_properties().get(action_definition.reset_case_property_name, '')
+        if action_definition.reset_case_property_name else None
+    )
+
     for recipient_type, recipient_id in new_recipients:
         if (recipient_type, recipient_id) not in existing_instances:
             instance = CaseTimedScheduleInstance.create_for_recipient(
@@ -154,7 +162,8 @@ def refresh_case_timed_schedule_instances(case, schedule, action_definition, rul
                 start_date=start_date,
                 move_to_next_event_not_in_the_past=True,
                 case_id=case.case_id,
-                rule_id=rule.pk
+                rule_id=rule.pk,
+                last_reset_case_property_value=reset_case_property_value,
             )
             save_case_schedule_instance(instance)
 
@@ -162,8 +171,14 @@ def refresh_case_timed_schedule_instances(case, schedule, action_definition, rul
         if key not in new_recipients:
             delete_case_schedule_instance(schedule_instance)
         else:
-            schedule_instance.recalculate_schedule(schedule, new_start_date=start_date)
-            save_case_schedule_instance(schedule_instance)
+            if action_definition.reset_case_property_name:
+                if reset_case_property_value != schedule_instance.last_reset_case_property_value:
+                    schedule_instance.recalculate_schedule(schedule)
+                    schedule_instance.last_reset_case_property_value = reset_case_property_value
+                    save_case_schedule_instance(schedule_instance)
+            elif start_date and start_date != schedule_instance.start_date:
+                schedule_instance.recalculate_schedule(schedule, new_start_date=start_date)
+                save_case_schedule_instance(schedule_instance)
 
 
 @task(ignore_result=True)
