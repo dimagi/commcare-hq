@@ -93,13 +93,14 @@ def convert_to_tuple_of_tuples(list_of_lists):
     return tuple(list_of_tuples)
 
 
-def refresh_case_alert_schedule_instances(case, schedule, recipients, rule):
+def refresh_case_alert_schedule_instances(case, schedule, action_definition, rule):
     """
-    :param case_id: the case_id of the CommCareCase/SQL
+    :param case: the CommCareCase/SQL
     :param schedule: the AlertSchedule
-    :param recipients: a list of (recipient_type, recipient_id) tuples; the
-    recipient type should be one of the values checked in ScheduleInstance.recipient
-    or CaseScheduleInstanceMixin.recipient
+    :param action_definition: the CreateScheduleInstanceActionDefinition that is
+    causing the schedule instances to be refreshed
+    :param rule: the AutomaticUpdateRule that is causing the schedule instances
+    to be refreshed
     """
 
     existing_instances = {
@@ -112,7 +113,7 @@ def refresh_case_alert_schedule_instances(case, schedule, recipients, rule):
         # to avoid sending old alerts to new recipients
         return
 
-    recipients = set(convert_to_tuple_of_tuples(recipients))
+    recipients = set(convert_to_tuple_of_tuples(action_definition.recipients))
     for recipient_type, recipient_id in recipients:
         instance = CaseAlertScheduleInstance.create_for_recipient(
             schedule,
@@ -125,13 +126,14 @@ def refresh_case_alert_schedule_instances(case, schedule, recipients, rule):
         save_case_schedule_instance(instance)
 
 
-def refresh_case_timed_schedule_instances(case, schedule, recipients, rule, start_date=None):
+def refresh_case_timed_schedule_instances(case, schedule, action_definition, rule, start_date=None):
     """
-    :param case_id: the case_id of the CommCareCase/SQL
+    :param case: the CommCareCase/SQL
     :param schedule: the TimedSchedule
-    :param recipients: a list of (recipient_type, recipient_id) tuples; the
-    recipient type should be one of the values checked in ScheduleInstance.recipient
-    or CaseScheduleInstanceMixin.recipient
+    :param action_definition: the CreateScheduleInstanceActionDefinition that is
+    causing the schedule instances to be refreshed
+    :param rule: the AutomaticUpdateRule that is causing the schedule instances
+    to be refreshed
     :param start_date: the date to start the TimedSchedule
     """
 
@@ -140,7 +142,7 @@ def refresh_case_timed_schedule_instances(case, schedule, recipients, rule, star
         for instance in get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
     }
 
-    recipients = convert_to_tuple_of_tuples(recipients)
+    recipients = convert_to_tuple_of_tuples(action_definition.recipients)
     new_recipients = set(recipients)
 
     for recipient_type, recipient_id in new_recipients:
