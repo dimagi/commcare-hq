@@ -909,7 +909,8 @@ class EntriesHelper(object):
         detail, detail_enabled = self._get_detail_from_module(module, detail_type)
         if detail_enabled and detail.pull_down_tile:
             if detail_type == "case_short" and detail.persistent_case_tile_from_module:
-                inline_attr = self._get_detail_inline_attr_from_module(module, detail.persistent_case_tile_from_module)
+                inline_attr = self._get_detail_inline_attr_from_module(
+                    module, detail.persistent_case_tile_from_module)
                 if inline_attr:
                     return inline_attr
             if self._has_persistent_tile(detail):
