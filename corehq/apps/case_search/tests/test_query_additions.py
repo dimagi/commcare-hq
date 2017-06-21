@@ -1,6 +1,6 @@
 from corehq.apps.case_search.models import merge_queries, QueryMergeException
 from django.test import SimpleTestCase, TestCase
-from corehq.apps.case_search.models import CaseSearchConfig, IgnorePatterns,
+from corehq.apps.case_search.models import CaseSearchConfig, IgnorePatterns
 from corehq.util.test_utils import generate_cases
 
 from corehq.apps.case_search.models import SEARCH_QUERY_CUSTOM_VALUE, replace_custom_query_variables
