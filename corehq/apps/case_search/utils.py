@@ -107,9 +107,10 @@ class CaseSearchCriteria(object):
     def _add_case_search_additions(self):
         query_addition_id = self.criteria.pop(SEARCH_QUERY_ADDITION_KEY, None)
         if query_addition_id:
+            ignore_patterns = self.config.ignore_patterns.filter(domain=self.domain, case_type=self.case_type)
             query_addition = CaseSearchQueryAddition.objects.get(
                 id=query_addition_id, domain=self.domain).query_addition
-            query_addition = replace_custom_query_variables(query_addition, self.criteria)
+            query_addition = replace_custom_query_variables(query_addition, self.criteria, ignore_patterns)
             self.query_addition_debug_details['original_query'] = self.search_es.get_query()
             self.query_addition_debug_details['query_addition'] = query_addition
             new_query = merge_queries(self.search_es.get_query(), query_addition)
