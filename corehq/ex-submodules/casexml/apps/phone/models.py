@@ -680,7 +680,8 @@ class IndexTree(DocumentSchema):
         """traverse open incoming extensions"""
         all_cases = set([case_id])
         new_cases = set([case_id])
-        cached_map = cached_map or _reverse_index_map(extension_index_tree.indices)
+        if cached_map is None:
+            cached_map = _reverse_index_map(extension_index_tree.indices)
         while new_cases:
             case_to_check = new_cases.pop()
             open_incoming_extension_indices = {
@@ -695,7 +696,8 @@ class IndexTree(DocumentSchema):
         return all_cases
 
     def get_cases_that_directly_depend_on_case(self, case_id, cached_map=None):
-        cached_map = cached_map or _reverse_index_map(self.indices)
+        if cached_map is None:
+            cached_map = _reverse_index_map(self.indices)
         return cached_map.get(case_id, [])
 
     def delete_index(self, from_case_id, index_name):
@@ -819,8 +821,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
         """
         _get_logger().debug("purging: {}".format(case_id))
         self.dependent_case_ids_on_phone.add(case_id)
-        cached_child_map = cached_child_map or _reverse_index_map(self.index_tree.indices)
-        cached_extension_map = cached_extension_map or _reverse_index_map(self.extension_index_tree.indices)
+        if cached_child_map is None:
+            cached_child_map = _reverse_index_map(self.index_tree.indices)
+        if cached_extension_map is None:
+            cached_extension_map = _reverse_index_map(self.extension_index_tree.indices)
         relevant = self._get_relevant_cases(case_id, cached_child_map, cached_extension_map)
         available = self._get_available_cases(relevant, cached_extension_map)
         live = self._get_live_cases(available, cached_extension_map)
@@ -833,12 +837,17 @@ class SimplifiedSyncLog(AbstractSyncLog):
         and extension indexes, as well as all incoming extension indexes,
         mark all touched cases relevant.
         """
+        if cached_child_map is None:
+            cached_child_map = _reverse_index_map(self.index_tree.indices)
+        if cached_extension_map is None:
+            cached_extension_map = _reverse_index_map(self.extension_index_tree.indices)
+
         relevant = IndexTree.get_all_dependencies(
             case_id,
             child_index_tree=self.index_tree,
             extension_index_tree=self.extension_index_tree,
-            cached_child_map=cached_child_map or _reverse_index_map(self.index_tree.indices),
-            cached_extension_map=cached_extension_map or _reverse_index_map(self.extension_index_tree.indices),
+            cached_child_map=cached_child_map,
+            cached_extension_map=cached_extension_map,
         )
         _get_logger().debug("Relevant cases of {}: {}".format(case_id, relevant))
         return relevant
@@ -849,7 +858,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
         as available. Traverse incoming extension indexes which don't lead to closed
         cases, mark all touched cases as available
         """
-        incoming_extensions = cached_map or _reverse_index_map(self.extension_index_tree.indices)
+        if cached_map is None:
+            incoming_extensions = _reverse_index_map(self.extension_index_tree.indices)
+        else:
+            incoming_extensions = cached_map
         available = {case for case in relevant
                      if case not in self.closed_cases
                      and (not self.extension_index_tree.indices.get(case) or self.index_tree.indices.get(case))}
@@ -872,8 +884,12 @@ class SimplifiedSyncLog(AbstractSyncLog):
         extension indexes which don't lead to closed cases, mark all touched
         cases as available.
         """
-        incoming_extensions = cached_map or _reverse_index_map(self.extension_index_tree.indices)
-        live = {case for case in available if case in self.primary_case_ids}
+        if cached_map is None:
+            incoming_extensions = _reverse_index_map(self.extension_index_tree.indices)
+        else:
+            incoming_extensions = cached_map
+        primary_case_ids = self.primary_case_ids
+        live = {case for case in available if case in primary_case_ids}
         new_live = set() | live
         checked = set()
         while new_live:
