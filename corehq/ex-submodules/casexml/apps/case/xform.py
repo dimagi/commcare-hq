@@ -275,6 +275,8 @@ def _validate_indices(case_db, cases):
                                 commcare_version < LooseVersion("2.35"),
                                 "Invalid Case Index in CC version >= 2.35", {
                                     'domain': case_db.domain,
+                                    'xform_id': xform.form_id,
+                                    'missing_case_id': index.referenced_id,
                                     'version': str(commcare_version)
                                 }
                             )
