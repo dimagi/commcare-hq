@@ -5,8 +5,6 @@ from corehq.util.soft_assert.api import soft_assert
 from dimagi.utils.couch import release_lock
 from corehq.form_processor.interfaces.processor import CaseUpdateMetadata, FormProcessorInterface
 
-_soft_assert = soft_assert(to="{}@{}.com".format('skelly', 'dimagi'), notify_admins=True)
-
 
 def _get_id_for_case(case):
     if isinstance(case, dict):
@@ -154,9 +152,11 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
                 from distutils.version import LooseVersion
                 commcare_version = xform.metadata.commcare_version
                 message = "Case created without create block"
+                send_to = None
                 if commcare_version >= LooseVersion("2.35"):
+                    send_to = "{}@{}.com".format('skelly', 'dimagi')
                     message += " in CC version >= 2.35"
-                _soft_assert(
+                soft_assert(to=send_to)(
                     case_update.creates_case(),
                     message, {
                         'xform_id': xform.form_id,
