@@ -754,7 +754,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
     @property
     def purged_cases(self):
-        if not self._purged_cases:
+        if self._purged_cases is None:
             self._purged_cases = set()
         return self._purged_cases
 
