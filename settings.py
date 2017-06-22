@@ -908,6 +908,10 @@ AUTHPROXY_CERT = None
 ENIKSHAY_PRIVATE_API_USERS = {}
 ENIKSHAY_PRIVATE_API_PASSWORD = None
 
+# number of docs for UCR to queue asynchronously at once
+# ideally # of documents it takes to process in ~30 min
+ASYNC_INDICATORS_TO_QUEUE = 10000
+
 from env_settings import *
 
 try:
