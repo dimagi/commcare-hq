@@ -941,12 +941,12 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
         severely_underweight = row['severely_underweight']
         moderately_underweight = row['moderately_underweight']
 
-        value = ((moderately_underweight or 0) + (severely_underweight or 0)) * 100 / (valid or 1)
+        underweight = ((moderately_underweight or 0) + (severely_underweight or 0)) * 100 / (valid or 1)
 
         if location in best_worst:
-            best_worst[location].append(value)
+            best_worst[location].append(underweight)
         else:
-            best_worst[location] = [value]
+            best_worst[location] = [underweight]
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
@@ -955,11 +955,11 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
             data['orange'][date_in_miliseconds] = 0
             data['red'][date_in_miliseconds] = 0
 
-        if value <= 20:
+        if underweight <= 20:
             data['green'][date_in_miliseconds] += 1
-        elif 21 <= value <= 35:
+        elif 21 <= underweight <= 35:
             data['orange'][date_in_miliseconds] += 1
-        elif value > 35:
+        elif underweight > 35:
             data['red'][date_in_miliseconds] += 1
 
     top_locations = sorted(
