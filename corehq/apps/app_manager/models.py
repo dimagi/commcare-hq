@@ -2085,6 +2085,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     get_tabs = IndexedSchema.Getter('tabs')
 
     sort_elements = SchemaListProperty(SortElement)
+    sort_nodeset_fields = BooleanProperty()
     filter = StringProperty()
 
     # If True, a small tile will display the case name after selection.
