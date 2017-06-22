@@ -1111,10 +1111,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
         _get_logger().debug('index tree mid update: {}'.format(self.index_tree))
         _get_logger().debug('extension index tree mid update: {}'.format(self.extension_index_tree))
 
+        cached_child_map = _reverse_index_map(self.index_tree.indices)
+        cached_extension_map = _reverse_index_map(self.extension_index_tree.indices)
         for update in non_live_updates:
             if update.case_id in self.case_ids_on_phone:
                 # try purging the case
-                self.purge(update.case_id)
+                self.purge(update.case_id,
+                           cached_child_map=cached_child_map,
+                           cached_extension_map=cached_extension_map)
                 if update.case_id in self.case_ids_on_phone:
                     # if unsuccessful, process the rest of the update
                     for index in update.indices_to_add:
