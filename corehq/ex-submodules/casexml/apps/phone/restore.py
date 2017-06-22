@@ -605,9 +605,11 @@ class RestoreConfig(object):
     :param params:          The RestoreParams associated with this (see above).
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
     :param async:           Whether to get the restore response using a celery task
+    :param do_livequery:    Use livequery algorithm for cases.
     """
 
-    def __init__(self, project=None, restore_user=None, params=None, cache_settings=None, async=False):
+    def __init__(self, project=None, restore_user=None, params=None,
+                 cache_settings=None, async=False, do_livequery=False):
         assert isinstance(restore_user, OTARestoreUser)
         self.project = project
         self.domain = project.name if project else ''
@@ -623,6 +625,7 @@ class RestoreConfig(object):
             self.params, async,
             self.cache_settings.overwrite_cache
         )
+        self.restore_state.do_livequery = do_livequery
 
         self.force_cache = self.cache_settings.force_cache or self.async
         self.cache_timeout = self.cache_settings.cache_timeout
