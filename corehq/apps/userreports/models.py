@@ -363,6 +363,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     columns = ListProperty()
     configured_charts = ListProperty()
     sort_expression = ListProperty()
+    soft_rollout = IntegerProperty(default=0)
     report_meta = SchemaProperty(ReportMeta)
 
     def __unicode__(self):
