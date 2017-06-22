@@ -853,10 +853,8 @@ def get_awc_opened_data(filters):
     }
 
 
-@quickcache(['config', 'loc_level'], timeout=24 * 60 * 60)
+# @quickcache(['config', 'loc_level'], timeout=24 * 60 * 60)
 def get_prevalence_of_undernutrition_data_map(config, loc_level):
-    if loc_level in [LocationTypes.BLOCK, LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-        return get_prevalence_of_undernutrition_sector_data(config, loc_level)
 
     def get_data_for(filters):
         filters['month'] = datetime(*filters['month'])
@@ -879,26 +877,24 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
         severely_underweight = row['severely_underweight']
         moderately_underweight = row['moderately_underweight']
 
-        moderately_percent = (moderately_underweight or 0) * 100 / (valid or 1)
-        severely_percent = (severely_underweight or 0) * 100 / (valid or 1)
+        value = ((moderately_underweight or 0) + (severely_underweight or 0)) * 100 / (valid or 1)
+        average.append(value)
 
-        average.extend([moderately_percent, moderately_percent])
-
-        if 0 <= moderately_percent < 16 or 0 <= severely_percent < 6:
-            map_data.update({name: {'fillKey': '0%-15%'}})
-        elif 16 <= moderately_percent <= 30 or 6 <= severely_percent <= 10:
-            map_data.update({name: {'fillKey': '16%-30%'}})
-        elif moderately_percent > 30 or severely_percent > 10:
-            map_data.update({name: {'fillKey': '30%-100%'}})
+        if value <= 20:
+            map_data.update({name: {'fillKey': '0%-20%'}})
+        elif 21 <= value <= 35:
+            map_data.update({name: {'fillKey': '21%-35%'}})
+        elif value > 35:
+            map_data.update({name: {'fillKey': '36%-100%'}})
 
     return [
         {
             "slug": "moderately_underweight",
             "label": "",
             "fills": {
-                '0%-15%': GREEN,
-                '16%-30%': ORANGE,
-                '30%-100%': RED,
+                '0%-20%': GREEN,
+                '21%-35%': ORANGE,
+                '36%-100%': RED,
                 'defaultFill': GREY,
             },
             "rightLegend": {
@@ -945,13 +941,12 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
         severely_underweight = row['severely_underweight']
         moderately_underweight = row['moderately_underweight']
 
-        moderately_percent = (moderately_underweight or 0) * 100 / (valid or 1)
-        severely_percent = (severely_underweight or 0) * 100 / (valid or 1)
+        value = ((moderately_underweight or 0) + (severely_underweight or 0)) * 100 / (valid or 1)
 
         if location in best_worst:
-            best_worst[location].extend([moderately_percent, severely_percent])
+            best_worst[location].append(value)
         else:
-            best_worst[location] = [moderately_percent, severely_percent]
+            best_worst[location] = [value]
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
@@ -960,11 +955,11 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
             data['orange'][date_in_miliseconds] = 0
             data['red'][date_in_miliseconds] = 0
 
-        if 0 <= moderately_percent < 16 or 0 <= severely_percent < 6:
+        if value <= 20:
             data['green'][date_in_miliseconds] += 1
-        elif 16 <= moderately_percent <= 30 or 6 <= severely_percent <= 10:
+        elif 21 <= value <= 35:
             data['orange'][date_in_miliseconds] += 1
-        elif moderately_percent > 30 or severely_percent > 10:
+        elif value > 35:
             data['red'][date_in_miliseconds] += 1
 
     top_locations = sorted(
@@ -977,21 +972,21 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
         "chart_data": [
             {
                 "values": [[key, value / float(locations_for_lvl)] for key, value in data['green'].iteritems()],
-                "key": "Between 0%-15%",
+                "key": "Between 0%-20%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": GREEN
             },
             {
                 "values": [[key, value / float(locations_for_lvl)] for key, value in data['orange'].iteritems()],
-                "key": "Between 16%-30%",
+                "key": "Between 11%-35%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
                 "values": [[key, value / float(locations_for_lvl)] for key, value in data['red'].iteritems()],
-                "key": "Between 31%-100%",
+                "key": "Between 36%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
@@ -1003,27 +998,89 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
     }
 
 
-@quickcache(['config', 'loc_level'], timeout=24 * 60 * 60)
 def get_prevalence_of_undernutrition_sector_data(config, loc_level):
+    group_by = ['%s_name' % loc_level]
+    if loc_level == LocationTypes.SUPERVISOR:
+        config['aggregation_level'] += 1
+        group_by.append('%s_name' % LocationTypes.AWC)
+
+    config['month'] = datetime(*config['month'])
+    data = AggChildHealthMonthly.objects.filter(
+        **config
+    ).values(
+        *group_by
+    ).annotate(
+        moderately_underweight=Sum('nutrition_status_moderately_underweight'),
+        severely_underweight=Sum('nutrition_status_severely_underweight'),
+        valid=Sum('valid_in_month'),
+    ).order_by('%s_name' % loc_level)
+
+    loc_data = {
+        'green': 0,
+        'orange': 0,
+        'red': 0
+    }
+    tmp_name = ''
+    rows_for_location = 0
+
+    chart_data = {
+        'green': [],
+        'orange': [],
+        'red': []
+    }
+
+    for row in data:
+        valid = row['valid']
+        name = row['%s_name' % loc_level]
+
+        if tmp_name and name != tmp_name:
+            chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location))])
+            chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location))])
+            chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location))])
+            rows_for_location = 0
+            loc_data = {
+                'green': 0,
+                'orange': 0,
+                'red': 0
+            }
+        severely_underweight = row['severely_underweight']
+        moderately_underweight = row['moderately_underweight']
+
+        value = ((moderately_underweight or 0) + (severely_underweight or 0)) * 100 / float(valid or 1)
+
+        if value <= 20.0:
+            loc_data['green'] += 1
+        elif 20.0 <= value <= 35.0:
+            loc_data['orange'] += 1
+        elif value > 35.0:
+            loc_data['red'] += 1
+
+        tmp_name = name
+        rows_for_location += 1
+
+    chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location))])
+    chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location))])
+    chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location))])
+
     return {
         "chart_data": [
             {
-                "values": [['Karera', 0.17], ['Koloras', 0.42], ['Pichhore', 0.11]],
-                "key": "green",
+                "values": chart_data['green'],
+                "key": "0%-20%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": GREEN
             },
             {
-                "values": [['Karera', 0.6], ['Koloras', 0.13], ['Pichhore', 0.3]],
-                "key": "orange",
+                "values": chart_data['orange'],
+                "key": "11%-35%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
-                "values": [['Karera', 0.11], ['Koloras', 0.3], ['Pichhore', 0.1]],
-                "key": "red",
+                "values": chart_data['red'],
+                "key": "36%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
@@ -1348,17 +1405,19 @@ def get_awc_reports_maternal_child(config, month, prev_month):
 
 
 def get_awc_report_demographics(config, month):
+    selected_month = datetime(*month)
 
-    # map_data = AggAwcMonthly.objects.filter(
-    #     month=datetime(*month), **config
-    # ).values(
-    #     'month', 'aggregation_level'
-    # ).annotate(
-    #     household=Sum('cases_household')
-    # ).order_by('month')
+    def get_data_for(date, filters):
+        return AggAwcMonthly.objects.filter(
+            month=date, **filters
+        ).values(
+            'aggregation_level'
+        ).annotate(
+            household=Sum('cases_household')
+        )
 
     chart = AggChildHealthMonthly.objects.filter(
-        month=datetime(*month), **config
+        month=selected_month, **config
     ).values(
         'age_tranche', 'aggregation_level'
     ).annotate(
@@ -1403,6 +1462,10 @@ def get_awc_report_demographics(config, month):
     two_days_ago = yesterday - relativedelta(days=1)
     kpi_yesterday = get_data_for_kpi(config, yesterday.date())
     kpi_two_days_ago = get_data_for_kpi(config, two_days_ago.date())
+
+    this_month = get_data_for(selected_month, config)
+    prev_month = get_data_for(selected_month - relativedelta(months=1), config)
+
     return {
         'chart': [
             {
@@ -1412,6 +1475,20 @@ def get_awc_report_demographics(config, month):
             }
         ],
         'kpi': [
+            [
+                {
+                    'label': _('Registered Households'),
+                    'help_text': _("Total number of households registered using ICDS CAS"),
+                    'percent': percent_increase(
+                        'household',
+                        this_month,
+                        prev_month,
+                    ),
+                    'value': get_value(this_month, 'household'),
+                    'all': '',
+                    'format': 'number'
+                }
+            ],
             [
                 {
                     'label': _('Pregnant Women'),

@@ -16,6 +16,7 @@ from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
+from custom.icds_reports.const import LocationTypes
 from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFilter, \
     ResidentFilter, MaternalStatusFilter, ChildAgeFilter, THRBeneficiaryType, ICDSMonthFilter, \
     TableauLocationFilter, ICDSYearFilter
@@ -26,7 +27,8 @@ from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_
     get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart, \
     get_awc_reports_system_usage, get_awc_reports_pse, get_awc_reports_maternal_child, \
-    get_awc_report_demographics, get_location_filter, get_awc_report_beneficiary, get_beneficiary_details
+    get_awc_report_demographics, get_location_filter, get_awc_report_beneficiary, get_beneficiary_details, \
+    get_prevalence_of_undernutrition_sector_data
 from . import const
 from .exceptions import TableauTokenException
 
@@ -272,13 +274,10 @@ class PrevalenceOfUndernutritionView(View):
 
     def get(self, request, *args, **kwargs):
         step = kwargs.get('step')
-
         now = datetime.utcnow()
         month = int(self.request.GET.get('month', now.month))
         year = int(self.request.GET.get('year', now.year))
-        day = int(self.request.GET.get('day', now.day))
-
-        test_date = datetime(year, month, day)
+        test_date = datetime(year, month, 1)
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
@@ -289,7 +288,10 @@ class PrevalenceOfUndernutritionView(View):
 
         data = []
         if step == "map":
-            data = get_prevalence_of_undernutrition_data_map(config, loc_level)
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_prevalence_of_undernutrition_sector_data(config, loc_level)
+            else:
+                data = get_prevalence_of_undernutrition_data_map(config, loc_level)
         elif step == "chart":
             data = get_prevalence_of_undernutrition_data_chart(config, loc_level)
 
@@ -381,7 +383,6 @@ class AwcReportsView(View):
 
         config = {
             'aggregation_level': aggregation_level,
-            'awc_site_code': 'd5d0fce5e73ff2b04417f40bd2bc5f7c'
         }
         if location:
             try:

@@ -1,12 +1,14 @@
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function SystemUsageController($http, $log, $routeParams, $location) {
+function SystemUsageController($http, $log, $routeParams, $location, storageService) {
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
     vm.tooltipPlacement = "right";
     vm.filters = ['gender', 'age'];
     vm.step = $routeParams.step;
+    $location.search(storageService.get());
+    vm.filtersData = $location.search();
 
     vm.getDataForStep = function(step) {
         var get_url = url('program_summary', step);
@@ -35,7 +37,7 @@ function SystemUsageController($http, $log, $routeParams, $location) {
     vm.getDataForStep(vm.step);
 }
 
-SystemUsageController.$inject = ['$http', '$log', '$routeParams', '$location'];
+SystemUsageController.$inject = ['$http', '$log', '$routeParams', '$location', 'storageService'];
 
 window.angular.module('icdsApp').directive('systemUsage', function() {
     return {

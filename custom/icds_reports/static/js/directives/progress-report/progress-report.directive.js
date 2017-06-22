@@ -2,9 +2,9 @@
 
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function ProgressReportController($scope, $location, progressReportService) {
+function ProgressReportController($scope, $location, progressReportService, storageService) {
     var vm = this;
-
+    $location.search(storageService.get());
     vm.filtersData = $location.search();
     vm.filters = ['gender', 'age'];
     vm.label = "Progress Report";
@@ -29,7 +29,7 @@ function ProgressReportController($scope, $location, progressReportService) {
     vm.loadData();
 }
 
-ProgressReportController.$inject = ['$scope', '$location', 'progressReportService'];
+ProgressReportController.$inject = ['$scope', '$location', 'progressReportService', 'storageService'];
 
 window.angular.module('icdsApp').directive('progressReport', function() {
     return {

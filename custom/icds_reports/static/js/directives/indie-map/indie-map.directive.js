@@ -1,6 +1,6 @@
-/* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON */
+/* global d3, _, Datamap, STATES_TOPOJSON, DISTRICT_TOPOJSON, BLOCK_TOPOJSON */
 
-function IndieMapController($scope, $compile, $location) {
+function IndieMapController($scope, $compile, $location, storageService) {
     var vm = this;
     $scope.$watch(function () {
         return vm.data;
@@ -33,12 +33,24 @@ function IndieMapController($scope, $compile, $location) {
         }
         vm.map.rightLegend = newValue;
     }, true);
-
+    $location.search(storageService.get());
+    var location_level = $location.search()['selectedLocationLevel'];
     var location = $location.search()['location_name'];
+    vm.type = '';
 
-    vm.scope = location !== void(0) ? location : "ind";
-    vm.type = vm.scope + "Topo";
-    Datamap.prototype[vm.type] = vm.scope === "ind" ? STATES_TOPOJSON : DISTRICT_TOPOJSON;
+    if (location_level === void(0) || location_level === -1) {
+        vm.scope = "ind";
+        vm.type = vm.scope + "Topo";
+        Datamap.prototype[vm.type] = STATES_TOPOJSON;
+    } else if (location_level === 0) {
+        vm.scope = location;
+        vm.type = vm.scope + "Topo";
+        Datamap.prototype[vm.type] = DISTRICT_TOPOJSON;
+    } else if (location_level === 1) {
+        vm.scope = location;
+        vm.type = vm.scope + "Topo";
+        Datamap.prototype[vm.type] = BLOCK_TOPOJSON;
+    }
 
     vm.indicator = vm.data && vm.data[0] !== void(0) ? vm.data[0].slug : null;
 
@@ -73,10 +85,9 @@ function IndieMapController($scope, $compile, $location) {
     };
 
     vm.updateMap = function (geography) {
-        if ($location.search()['location_name'] === void(0)) {
-            $location.search('location_name', geography.id);
-            $scope.$apply();
-        }
+        $location.search('location_name', geography.id);
+        storageService.set($location.search());
+        $scope.$apply();
     };
 
     vm.mapPlugins = {
@@ -98,7 +109,7 @@ function IndieMapController($scope, $compile, $location) {
                 html.push('</table>');
                 d3.select(this.options.element).append('div')
                     .attr('class', 'datamaps-legend text-center')
-                    .attr('style', 'width: 150px; left 5% !imporetant; bottom: 40%; border: 1px solid black;')
+                    .attr('style', 'width: 150px; left 5%; bottom: 40%; border: 1px solid black;')
                     .html(html.join(''));
             },
         });
@@ -152,7 +163,7 @@ function IndieMapController($scope, $compile, $location) {
 
 }
 
-IndieMapController.$inject = ['$scope', '$compile', '$location'];
+IndieMapController.$inject = ['$scope', '$compile', '$location', 'storageService'];
 
 window.angular.module('icdsApp').directive('indieMap', function() {
     return {

@@ -1,10 +1,10 @@
-function LocationModalController($uibModalInstance, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel) {
+function LocationModalController($uibModalInstance, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId) {
     var vm = this;
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
 
     vm.locationsCache = locationsCache;
-
+    vm.userLocationId = userLocationId;
     vm.selectedLocationId = selectedLocationId;
     vm.hierarchy = hierarchy;
     vm.selectedLocations = selectedLocations;
@@ -40,6 +40,13 @@ function LocationModalController($uibModalInstance, locationsService, selectedLo
         }
     };
 
+    vm.disabled = function(level) {
+        if (vm.userLocationId === null) {
+            return false;
+        }
+        return selectedLocationIndex() !== -1 && selectedLocationIndex() >= level;
+    };
+
     vm.onSelect = function($item, level) {
         resetLevelsBelow(level);
 
@@ -64,8 +71,9 @@ function LocationModalController($uibModalInstance, locationsService, selectedLo
 }
 
 
-function LocationFilterController($scope, $location, $uibModal, locationHierarchy, locationsService) {
+function LocationFilterController($scope, $location, $uibModal, locationHierarchy, locationsService, storageService) {
     var vm = this;
+    $location.search(storageService.get());
     vm.animationsEnabled = true;
     vm.selectedLocationId = $location.search()['location'] || vm.selectedLocationId;
     vm.locationsCache = {};
@@ -222,7 +230,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
 
             var selectedLocationId = vm.selectedLocationId;
 
-            if (selectedLocationIndex() === 0) {
+            if (selectedLocationIndex() >= 0) {
                 var locations = vm.getLocationsForLevel(selectedLocationIndex());
                 var loc = _.filter(locations, function (loc) {
                     return loc.location_id === vm.selectedLocationId;
@@ -233,6 +241,8 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
                 selectedLocationId = ALL_OPTION.location_id;
             }
             $location.search('location', selectedLocationId);
+            $location.search('selectedLocationLevel', selectedLocationIndex());
+            storageService.set($location.search());
             $scope.$emit('filtersChange');
         });
     };
@@ -243,21 +253,22 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
         if (newValue === oldValue) {
             return;
         }
-        var location = _.filter(vm.getLocationsForLevel(vm.currentLevel), function(loc) {
+        var location = _.filter(vm.getLocationsForLevel(selectedLocationIndex() + 1), function(loc) {
             return loc.name === $location.search()['location_name'];
         });
         if (location.length > 0) {
             var loc_from_map = location[0];
             if (loc_from_map['name'] === newValue['location_name']) {
                 vm.selectedLocationId = loc_from_map['location_id'];
+                $location.search('selectedLocationLevel', selectedLocationIndex() + 1);
                 $location.search('location', location[0]['location_id']);
             }
         }
     }, true);
 }
 
-LocationFilterController.$inject = ['$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService'];
-LocationModalController.$inject = ['$uibModalInstance', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel'];
+LocationFilterController.$inject = ['$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService'];
+LocationModalController.$inject = ['$uibModalInstance', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId'];
 
 window.angular.module('icdsApp').directive("locationFilter", function() {
     var url = hqImport('hqwebapp/js/urllib.js').reverse;

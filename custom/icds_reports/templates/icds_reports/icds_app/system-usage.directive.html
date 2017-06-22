@@ -7,9 +7,11 @@
             <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element" ng-bind="$ctrl.steps[$ctrl.step].label"></span>
         </div>
         <div class="col-md-7">
-            <filters filters="$ctrl.filters" data="$ctrl.data"></filters>
+            <filters filters="$ctrl.filters" data="$ctrl.filtersData"></filters>
         </div>
-        <div class="col-md-1 "><a href="#download" class="fa" style="float: right"><i class="fa fa-download fa-2x right pointer"></i></a></div>
+        <div class="col-md-1">
+            <print-report></print-report>
+        </div>
     </div>
     <div class="report-content">
         <kpi data="$ctrl.data"></kpi>

@@ -2,9 +2,9 @@
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
 function UnderweightChildrenReportController($scope, $routeParams, $location, maternalChildService,
-                                             locationsService, userLocationId) {
+                                             locationsService, userLocationId, storageService) {
     var vm = this;
-
+    $location.search(storageService.get());
     vm.filtersData = $location.search();
     vm.label = "Prevalence of Undernutrition (weight-for-age)";
     vm.step = $routeParams.step;
@@ -108,7 +108,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, ma
     };
 }
 
-UnderweightChildrenReportController.$inject = ['$scope', '$routeParams', '$location', 'maternalChildService', 'locationsService', 'userLocationId'];
+UnderweightChildrenReportController.$inject = ['$scope', '$routeParams', '$location', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
 
 window.angular.module('icdsApp').directive('underweightChildrenReport', function() {
     return {

@@ -47,7 +47,7 @@ function MonthModalController($location, $uibModalInstance) {
     };
 }
 
-function MonthFilterController($scope, $location, $uibModal) {
+function MonthFilterController($scope, $location, $uibModal, storageService) {
     var vm = this;
 
     vm.open = function () {
@@ -66,12 +66,13 @@ function MonthFilterController($scope, $location, $uibModal) {
             $location.search('month', data['month']);
             $location.search('year', data['year']);
             $location.search('day', data['day']);
+            storageService.set($location.search());
             $scope.$emit('filtersChange');
         });
     };
 }
 
-MonthFilterController.$inject = ['$scope', '$location', '$uibModal'];
+MonthFilterController.$inject = ['$scope', '$location', '$uibModal', 'storageService'];
 MonthModalController.$inject = ['$location', '$uibModalInstance'];
 
 window.angular.module('icdsApp').directive("monthFilter", function() {

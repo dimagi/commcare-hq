@@ -1,10 +1,12 @@
 /* global moment */
 
-function DownloadController($location, locationHierarchy, locationsService) {
+function DownloadController($location, locationHierarchy, locationsService, userLocationId) {
     var vm = this;
 
     vm.months = [];
     vm.years = [];
+
+    vm.userLocationId = userLocationId;
 
     window.angular.forEach(moment.months(), function(key, value) {
         vm.months.push({
@@ -24,7 +26,7 @@ function DownloadController($location, locationHierarchy, locationsService) {
     vm.selectedYear = new Date().getFullYear();
     vm.selectedIndicator = 1;
     vm.selectedFormat = 'xls';
-    vm.selectedLocationId = '';
+    vm.selectedLocationId = userLocationId;
     vm.selectedLevel = 1;
 
     vm.levels = [
@@ -161,6 +163,13 @@ function DownloadController($location, locationHierarchy, locationsService) {
         });
     };
 
+    vm.disabled = function(level) {
+        if (vm.userLocationId === null) {
+            return false;
+        }
+        return selectedLocationIndex() !== -1 && selectedLocationIndex() >= level;
+    };
+
     vm.onSelect = function($item, level) {
         resetLevelsBelow(level);
 
@@ -177,7 +186,7 @@ function DownloadController($location, locationHierarchy, locationsService) {
     };
 }
 
-DownloadController.$inject = ['$location', 'locationHierarchy', 'locationsService'];
+DownloadController.$inject = ['$location', 'locationHierarchy', 'locationsService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive("download", function() {
     var url = hqImport('hqwebapp/js/urllib.js').reverse;

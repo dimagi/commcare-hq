@@ -10,7 +10,7 @@
                 <label class="control-label col-sm-2" for="location">Location: </label>
                 <div class="col-sm-6">
                     <div style="margin-bottom: 15px;" ng-repeat="locationTypes in $ctrl.hierarchy" ng-show="$ctrl.isVisible($index)">
-                        <ui-select ng-model="$ctrl.selectedLocations[$index]" theme="bootstrap" on-select="$ctrl.onSelect($item, $index)">
+                        <ui-select ng-disabled="$ctrl.disabled($index)" ng-model="$ctrl.selectedLocations[$index]" theme="bootstrap" on-select="$ctrl.onSelect($item, $index)">
                             <ui-select-match placeholder="{$ $ctrl.getPlaceholder(locationTypes) $}"><span ng-bind="$select.selected.name"></span></ui-select-match>
                               <ui-select-choices repeat="location.location_id as location in $ctrl.getLocationsForLevel($index) | propsFilter: {name: $select.search}">
                                 <div ng-bind-html="location.name | highlight: $select.search"></div>

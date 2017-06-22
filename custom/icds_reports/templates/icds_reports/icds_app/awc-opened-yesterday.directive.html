@@ -6,26 +6,25 @@
             <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element" ng-bind="$ctrl.steps[$ctrl.step].label"></span>
         </div>
         <div class="col-md-7">
-            <filters filters="$ctrl.filters" data="$ctrl.data"></filters>
+            <filters filters="$ctrl.filters" data="$ctrl.filtersData"></filters>
         </div>
-        <div class="col-md-1 "><a href="#download" class="fa" style="float: right"><i class="fa fa-download fa-2x right pointer"></i></a></div>
+        <div class="col-md-1">
+            <print-report></print-report>
+        </div>
     </div>
-    <div class="col-md-12" ng-if="$ctrl.step === 'map'">
-        <div class="row">
-            <div class="col-md-12">
+    <div class="report-content">
+        <div class="row" ng-if="$ctrl.step === 'map'">
+            <div class="row">
                 <h2 class="dashboard-title">Percentage of AWCs Opened Yesterday</h2>
             </div>
+            <div class="row">
+                <indie-map legend-title="Percentage of AWCs" data="$ctrl.mapData"></indie-map>
+            </div>
         </div>
-        <div class="row">
-            <indie-map legend-title="Percentage of AWCs" data="$ctrl.mapData"></indie-map>
-        </div>
-    </div>
-    <div class="col-md-12" ng-if="$ctrl.step === 'chart'">
-        <div class="row">
+        <div class="row" ng-if="$ctrl.step === 'chart'">
             chart
         </div>
     </div>
-
     <div class="row fixed-dots">
         <div class="dot-menu">
             <div class="dot-menu-item pointer" ng-repeat="step in $ctrl.steps">
@@ -33,5 +32,4 @@
             </div>
         </div>
     </div>
-
 </div>

@@ -844,34 +844,39 @@ var height_for_age = {
 
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder) {
+function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, storageService) {
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
     vm.tooltipPlacement = "right";
     vm.step = $routeParams.step;
-    vm.data = [];
+    vm.data = null;
     vm.filters = [];
     vm.dtOptions = DTOptionsBuilder.newOptions().withBootstrap().withOption('scrollX', '100%');
     vm.showTable = true;
     vm.showBeneficiary = false;
     vm.beneficiary = null;
+    $location.search(storageService.get());
+    vm.filtersData = $location.search();
     vm.xTicks = [];
+    vm.selectedLocationLevel = storageService.getKey('selectedLocationLevel') || 0;
 
     vm.getDataForStep = function(step) {
         var get_url = url('awc_reports', step);
-        $http({
-            method: "GET",
-            url: get_url,
-            params: $location.search(),
-        }).then(
-            function (response) {
-                vm.data = response.data;
-            },
-            function (error) {
-                $log.error(error);
-            }
-        );
+        if (vm.selectedLocationLevel === 4) {
+            $http({
+                method: "GET",
+                url: get_url,
+                params: $location.search(),
+            }).then(
+                function (response) {
+                    vm.data = response.data;
+                },
+                function (error) {
+                    $log.error(error);
+                }
+            );
+        }
     };
 
     vm.getPopoverContent = function (data, type) {
@@ -1071,7 +1076,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 
 }
 
-AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder'];
+AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'storageService'];
 
 window.angular.module('icdsApp').directive('awcReports', function() {
     return {
