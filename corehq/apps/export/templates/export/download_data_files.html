@@ -58,7 +58,7 @@
                         <i class="fa fa-download text-success"></i>
                     </a>
 
-                    {% if can_delete %}
+                    {% if is_admin %}
                     <a href="#"
                        onclick="(function () {
                                     $.ajax({
@@ -83,7 +83,7 @@
 <p>{% trans "There are no data files available to download at the moment." %}</p>
 {% endif %}
 
-{% if can_add %}
+{% if is_admin %}
 <div class="spacer"></div>
 <div class="row">
     <div class="col-sm-9 col-md-8 col-lg-8">

@@ -1530,11 +1530,9 @@ class DataFileDownloadList(BaseProjectDataView):
 
     def get_context_data(self, **kwargs):
         context = super(DataFileDownloadList, self).get_context_data(**kwargs)
-        perms = self.request.user.get_all_permissions()
         context.update({
             'data_files': DataFile.objects.filter(domain=self.domain).order_by('filename').all(),
-            'can_add': 'export.add_datafile' in perms,
-            'can_delete': 'export.delete_datafile' in perms,
+            'is_admin': self.request.couch_user.is_domain_admin(self.domain),
         })
         return context
 
