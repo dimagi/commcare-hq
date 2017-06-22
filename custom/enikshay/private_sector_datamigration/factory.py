@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from dateutil.relativedelta import relativedelta
 
@@ -32,10 +32,11 @@ def get_human_friendly_id():
 
 class BeneficiaryCaseFactory(object):
 
-    def __init__(self, domain, beneficiary, location_owner):
+    def __init__(self, domain, beneficiary, location_owner, default_location_owner):
         self.domain = domain
         self.beneficiary = beneficiary
         self.location_owner = location_owner
+        self.default_location_owner = default_location_owner
 
     def get_case_structures_to_create(self, skip_adherence):
         person_structure = self.get_person_case_structure()
@@ -154,6 +155,12 @@ class BeneficiaryCaseFactory(object):
         else:
             kwargs['attrs']['owner_id'] = self._location_owner_id
 
+        if self.beneficiary.creating_agency:
+            kwargs['attrs']['update']['created_by_user_type'] = self.beneficiary.creating_agency.usertype
+            creating_loc = self._location_by_agency(self.beneficiary.creating_agency)
+            if creating_loc:
+                kwargs['attrs']['update']['created_by_user_location_id'] = creating_loc.location_id
+
         return CaseStructure(**kwargs)
 
     def get_occurrence_case_structure(self, person_structure):
@@ -266,18 +273,26 @@ class BeneficiaryCaseFactory(object):
             kwargs['attrs']['update']['private_sector_episode_pending_registration'] = 'yes'
             kwargs['attrs']['update']['treatment_initiated'] = 'no'
 
+        if self.beneficiary.creating_agency:
+            kwargs['attrs']['update']['created_by_user_type'] = self.beneficiary.creating_agency.usertype
+            creating_loc = self._location_by_agency(self.beneficiary.creating_agency)
+            if creating_loc:
+                kwargs['attrs']['update']['created_by_user_id'] = creating_loc.user_id
+                kwargs['attrs']['update']['created_by_user_location_id'] = creating_loc.location_id
+
         return CaseStructure(**kwargs)
 
     def get_adherence_case_structure(self, adherence, episode_structure):
         kwargs = {
             'attrs': {
                 'case_type': ADHERENCE_CASE_TYPE,
-                'close': False,
                 'create': True,
                 'date_opened': adherence.creationDate,
                 'owner_id': '-',
                 'update': {
                     'adherence_date': adherence.doseDate.date(),
+                    'adherence_report_source': adherence.adherence_report_source,
+                    'adherence_source': adherence.adherence_source,
                     'adherence_value': adherence.adherence_value,
                     'name': adherence.doseDate.date(),
 
@@ -292,6 +307,14 @@ class BeneficiaryCaseFactory(object):
                 related_type=EPISODE_CASE_TYPE,
             )],
         }
+
+        if date.today() - adherence.doseDate.date() > timedelta(days=30):
+            kwargs['attrs']['close'] = True
+            kwargs['attrs']['update']['adherence_closure_reason'] = 'historical'
+        else:
+            kwargs['attrs']['close'] = False
+
+
         return CaseStructure(**kwargs)
 
     def get_prescription_case_structure(self, prescription, episode_structure):
@@ -362,6 +385,8 @@ class BeneficiaryCaseFactory(object):
         if self.location_owner:
             return self.location_owner
         else:
+            if self._agency is None or self._agency.location_type not in ['pcp', 'pac']:
+                return self.default_location_owner
             return SQLLocation.active_objects.get(
                 domain=self.domain,
                 site_code=str(self._agency.agencyId),
@@ -370,6 +395,8 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _location_owner_id(self):
+        if self._location_owner is None:
+            return '-'
         return self._location_owner.location_id
 
     @property
@@ -413,3 +440,13 @@ class BeneficiaryCaseFactory(object):
             self.person_id_flat[i:i + num_chars_between_hyphens]
             for i in range(0, len(self.person_id_flat), num_chars_between_hyphens)
         ])
+
+    @memoized
+    def _location_by_agency(self, agency):
+        try:
+            return SQLLocation.active_objects.get(
+                domain=self.domain,
+                site_code=str(agency.agencyId),
+            )
+        except SQLLocation.DoesNotExist:
+            return None

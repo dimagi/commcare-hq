@@ -1891,11 +1891,13 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_tableau.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_tableau2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'hardware_cases.json'),
@@ -1904,6 +1906,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms.json'),
@@ -1992,12 +1995,21 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('enikshay_referred_by', 'custom.enikshay.expressions.referred_by_expression'),
     ('enikshay_date_of_referral', 'custom.enikshay.expressions.date_of_referral_expression'),
     ('enikshay_date_of_acceptance', 'custom.enikshay.expressions.date_of_acceptance_expression'),
+    ('enikshay_episode_from_person', 'custom.enikshay.expressions.episode_from_person_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [
     ('mvp.ucr.reports.expressions.CUSTOM_UCR_EXPRESSIONS'),
     ('custom.icds_reports.ucr.expressions.CUSTOM_UCR_EXPRESSIONS'),
     ('custom.ucr_ext.expressions.CUSTOM_UCR_EXPRESSIONS'),
+]
+
+CUSTOM_UCR_REPORT_FILTERS = [
+    ('enikshay_location_hierarchy', "custom.enikshay.ucr_filters._build_enikshay_location_hierarchy"),
+]
+
+CUSTOM_UCR_REPORT_FILTER_VALUES = [
+    ("enikshay_location_hierarchy", "custom.enikshay.ucr_filters.ENikshayLocationHierarchyFilterValue"),
 ]
 
 CUSTOM_MODULES = [

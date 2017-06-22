@@ -17,7 +17,8 @@ def transform_app_for_es(doc_dict):
     return doc.to_json()
 
 
-def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow', **kwargs):
+def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow', num_processes=1,
+                                    process_num=0, **kwargs):
     assert pillow_id == 'ApplicationToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, APP_INDEX_INFO, [topics.APP])
     app_processor = ElasticProcessor(
@@ -25,7 +26,9 @@ def get_app_to_elasticsearch_pillow(pillow_id='ApplicationToElasticsearchPillow'
         index_info=APP_INDEX_INFO,
         doc_prep_fn=transform_app_for_es
     )
-    change_feed = KafkaChangeFeed(topics=[topics.APP], group_id='apps-to-es')
+    change_feed = KafkaChangeFeed(
+        topics=[topics.APP], group_id='apps-to-es', num_processes=num_processes, process_num=process_num
+    )
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,

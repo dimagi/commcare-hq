@@ -144,23 +144,44 @@
      margin-top: 7.5px;
      margin-bottom: 2px;
   }
-  .read-write.app-comment {
-    white-space: normal;
-  }
+}
+
+.appmanager-edit-title {
+  margin-right: 185px;
+}
+.appmanager-edit-app-title {
+  margin-right: 248px;
 }
 
 .appmanager-edit-title .ko-inline-edit {
-  margin-left: -12px;
-
+  width: 100%;
+  .read-only {
+    margin-left: 15px;
+    margin-top: 8px;
+  }
+  .read-only .prefixed-icon {
+    margin-left: -30px;
+  }
+  .read-write {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
   .read-write.h3 input{
-    margin-left: 12px;
+    margin-left: 0;
+    width: 100%
+  }
+  .read-write .form-group:first-child {
+    min-width: 80%;
+  }
+}
+.appmanager-edit-app-title .ko-inline-edit {
+  .read-only {
+    margin-left: -12px;
+    margin-top: 12px;
   }
 }
 .appmanager-edit-description .ko-inline-edit {
   margin-left: -8px;
-  .read-write.app-comment {
-    margin-left: 8px;
-  }
 }
 
 .appmanager-page-actions {

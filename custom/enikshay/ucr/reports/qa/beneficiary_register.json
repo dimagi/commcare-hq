@@ -5,8 +5,8 @@
     "server_environment": [
         "softlayer"
     ],
-    "data_source_table": "episode",
-    "report_id": "beneficiary_register",
+    "data_source_table": "episode_qa",
+    "report_id": "beneficiary_register_qa",
     "config": {
         "description": "",
         "title": "Beneficiary Register",
@@ -49,7 +49,7 @@
         ],
         "columns": [
             {
-                "field": "external_id",
+                "field": "beneficiary_id",
                 "transform": {},
                 "sortable": false,
                 "description": null,
@@ -519,18 +519,6 @@
                 "type": "expression",
                 "display": "Total Adherence Score",
                 "column_id": "total_adherence_score"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "visible": false,
-                "transform": {},
-                "aggregation": "simple",
-                "field": "treatment_initiation_date",
-                "calculate_total": false,
-                "type": "field",
-                "display": "treatment_initiation_date"
             },
             {
                 "sortable": false,

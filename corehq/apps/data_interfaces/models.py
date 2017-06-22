@@ -905,6 +905,12 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
     # A List of [recipient_type, recipient_id]
     recipients = jsonfield.JSONField(default=list)
 
+    # (Optional, ignored if None) The name of a case property whose value will be tracked
+    # over time on the schedule instance as last_reset_case_property_value.
+    # Every time the case property's value changes, the schedule's start date is
+    # reset to the current date.
+    reset_case_property_name = models.CharField(max_length=126, null=True)
+
     @property
     def schedule(self):
         if self.alert_schedule_id:
@@ -931,9 +937,9 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
     def when_case_matches(self, case, rule):
         schedule = self.schedule
         if isinstance(schedule, AlertSchedule):
-            refresh_case_alert_schedule_instances(case.case_id, schedule, self.recipients, rule)
+            refresh_case_alert_schedule_instances(case, schedule, self, rule)
         elif isinstance(schedule, TimedSchedule):
-            refresh_case_timed_schedule_instances(case.case_id, schedule, self.recipients, rule)
+            refresh_case_timed_schedule_instances(case, schedule, self, rule)
 
         return CaseRuleActionResult()
 
