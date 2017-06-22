@@ -338,8 +338,8 @@ class FundamentalCaseTests(TestCase):
         with self.assertRaisesMessage(AssertionError, 'Case created without create block in CC version >= 2.35'):
             _submit_form_with_cc_version("2.35")
 
-        # no assertion error raised
-        _submit_form_with_cc_version("2.34")
+        with self.assertRaisesMessage(AssertionError, 'Case created without create block'):
+            _submit_form_with_cc_version("2.34")
 
     def test_globally_unique_form_id(self):
         form_id = uuid.uuid4().hex
