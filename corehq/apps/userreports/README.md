@@ -2035,6 +2035,8 @@ It is also possible achieve greater parallelization than is
 currently available via pillows since multiple Celery workers can process
 the changes.
 
+A diagram of this workflow can be found [here](examples/async_indicator.png)
+
 ## Inspecting database tables
 
 The easiest way to inspect the database tables is to use the sql command line utility.
