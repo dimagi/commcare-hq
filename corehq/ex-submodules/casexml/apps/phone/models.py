@@ -750,7 +750,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
     closed_cases = SetProperty(unicode)
     extensions_checked = BooleanProperty(default=False)
 
-    _purged_cases = set()
+    _purged_cases = None
 
     @property
     def purged_cases(self):
