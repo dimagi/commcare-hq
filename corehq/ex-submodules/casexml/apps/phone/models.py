@@ -873,7 +873,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
         cases as available.
         """
         incoming_extensions = cached_map or _reverse_index_map(self.extension_index_tree.indices)
-        live = {case for case in available if case in self.primary_case_ids}
+        primary_case_ids = self.primary_case_ids
+        live = {case for case in available if case in primary_case_ids}
         new_live = set() | live
         checked = set()
         while new_live:
