@@ -1,5 +1,4 @@
 from datetime import datetime, date, timedelta
-import urllib
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
@@ -28,7 +27,7 @@ from django.utils.decorators import method_decorator
 import json
 import re
 from django.utils.safestring import mark_safe
-from django.views.generic import View, ListView, DetailView
+from django.views.generic import View
 
 from djangular.views.mixins import allow_remote_invocation
 import pytz

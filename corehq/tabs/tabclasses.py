@@ -721,11 +721,11 @@ class ProjectDataTab(UITab):
             from corehq.apps.export.views import DataFileDownloadList
 
             export_data_views.append({
-                    'title': _(DataFileDownloadList.page_title),
-                    'url': reverse(DataFileDownloadList.urlname, args=(self.domain,)),
-                    'show_in_dropdown': True,
-                    'subpages': []
-                })
+                'title': _(DataFileDownloadList.page_title),
+                'url': reverse(DataFileDownloadList.urlname, args=(self.domain,)),
+                'show_in_dropdown': True,
+                'subpages': []
+            })
 
         if export_data_views:
             items.append([_("Export Data"), export_data_views])
