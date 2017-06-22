@@ -167,7 +167,7 @@ class SubcaseRepeatTest(SimpleTestCase, TestXmlMixin):
                             app.get_module(0).get_form(0).render_xform())
 
 
-class SubcaseParentRefTeset(SimpleTestCase, TestXmlMixin):
+class SubcaseParentRefTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'form_preparation_v2')
 
     def setUp(self):
@@ -181,6 +181,31 @@ class SubcaseParentRefTeset(SimpleTestCase, TestXmlMixin):
         self.app = Application.wrap(self.get_json('subcase-parent-ref'))
         self.assertXmlEqual(self.app.get_module(1).get_form(0).render_xform(),
                             self.get_xml('subcase-parent-ref'))
+
+
+class SubcaseTest(SimpleTestCase, TestXmlMixin):
+    file_path = ('data', 'form_preparation_v2')
+
+    def test_subcase_action_only(self):
+        app = Application.new_app(None, "Untitled Application")
+        module_0 = app.add_module(Module.new_module('parent', None))
+        module_0.unique_id = 'm0'
+        module_0.case_type = 'parent'
+        form = app.new_form(0, "Untitled Form", "en")
+        form.source = self.get_xml('original_form', override_path=('data',))
+
+        module_1 = app.add_module(Module.new_module('subcase', None))
+        module_1.unique_id = 'm1'
+        module_1.case_type = 'subcase'
+
+        form.actions.subcases.append(OpenSubCaseAction(
+            case_type=module_1.case_type,
+            case_name="/data/first_child_name",
+            condition=FormActionCondition(type='always')
+        ))
+
+        self.assertXmlEqual(self.get_xml('subcase_action_only'),
+                            app.get_module(0).get_form(0).render_xform())
 
 
 class CaseSharingFormPrepTest(SimpleTestCase, TestXmlMixin):
