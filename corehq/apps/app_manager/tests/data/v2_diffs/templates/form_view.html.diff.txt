@@ -15,7 +15,7 @@
      {% include 'hqmedia/partials/multimedia_js.html' %}
      <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
      <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
-@@ -68,6 +68,38 @@
+@@ -68,6 +68,40 @@
      {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
          <script src="{% static 'app_manager/js/custom_instances.js' %}"></script>
      {% endif %}
@@ -29,13 +29,15 @@
 +    {% endif %}
 +
 +    <div class="appmanager-edit-title">
++      {% with postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update);}" %}
 +      {% if form.get_action_type == 'open' %}
-+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
++        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave=postSave %}
 +      {% elif form.requires_case %}
-+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
++        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave=postSave %}
 +      {% else %}
-+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-file-o' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
++        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-file-o' postSave=postSvae %}
 +      {% endif %}
++      {% endwith %}
 +    </div>
 +
 +    <div class="appmanager-edit-description">
@@ -54,7 +56,7 @@
  {% endblock %}
  
  {% block form-view %}
-@@ -104,80 +136,21 @@
+@@ -104,80 +138,21 @@
      {% initial_page_data 'uses_form_workflow' uses_form_workflow %}
      {% registerurl "get_form_datums" domain app.id %}
  
@@ -144,7 +146,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -185,35 +158,36 @@
+@@ -185,35 +160,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -198,7 +200,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -225,77 +199,72 @@
+@@ -225,77 +201,72 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -326,7 +328,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -304,14 +273,15 @@
+@@ -304,14 +275,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -344,7 +346,7 @@
              {% endif %}
          </div>
      </div>
-@@ -319,12 +289,13 @@
+@@ -319,12 +291,13 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
