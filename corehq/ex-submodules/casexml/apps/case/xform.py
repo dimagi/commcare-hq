@@ -272,7 +272,7 @@ def _validate_indices(case_db, cases):
                         _soft_assert(
                             not commcare_version or commcare_version < LooseVersion("2.35"),
                             "Invalid Case Index in CC version >= 2.35", {
-                                'domain': case_db.domain
+                                'domain': case_db.domain,
                                 'version': str(commcare_version)
                             }
                         )
