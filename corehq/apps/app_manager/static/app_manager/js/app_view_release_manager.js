@@ -1,3 +1,4 @@
+/* globals hqDefine hqImport django */
 hqDefine("app_manager/js/app_view_release_manager.js", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
     

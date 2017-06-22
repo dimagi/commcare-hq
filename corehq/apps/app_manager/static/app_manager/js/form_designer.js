@@ -1,4 +1,4 @@
-/* globals COMMCAREHQ, define, require, analytics, form_tour_start, WS4Redis */
+/* globals COMMCAREHQ, define, require, analytics, form_tour_start, WS4Redis, django */
 hqDefine("app_manager/js/form_designer.js", function() {
     $(function() {
         var v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2'),

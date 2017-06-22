@@ -1,4 +1,4 @@
-/*globals $, COMMCAREHQ, _, ko */
+/*globals $, COMMCAREHQ, _, ko, django */
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
         v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2'),
