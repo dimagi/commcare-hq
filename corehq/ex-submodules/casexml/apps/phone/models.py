@@ -750,6 +750,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
     closed_cases = SetProperty(unicode)
     extensions_checked = BooleanProperty(default=False)
 
+    _purged_cases = set()
+
+    @property
+    def purged_cases(self):
+        if not self._purged_cases:
+            self._purged_cases = set()
+        return self._purged_cases
+
     def save(self, *args, **kwargs):
         # force doc type to SyncLog to avoid changing the couch view.
         self.doc_type = "SyncLog"
@@ -816,7 +824,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         relevant = self._get_relevant_cases(case_id, cached_child_map, cached_extension_map)
         available = self._get_available_cases(relevant, cached_extension_map)
         live = self._get_live_cases(available, cached_extension_map)
-        to_remove = relevant - live
+        to_remove = (relevant - self.purged_cases) - live
         self._remove_cases_purge_indices(to_remove, case_id, quiet_errors, cached_child_map, cached_extension_map)
 
     def _get_relevant_cases(self, case_id, cached_child_map=None, cached_extension_map=None):
@@ -849,7 +857,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
         while new_available:
             case_to_check = new_available.pop()
             for incoming_extension in incoming_extensions.get(case_to_check, []):
-                if incoming_extension not in self.closed_cases:
+                closed = incoming_extension in self.closed_cases
+                purged = incoming_extension in self.purged_cases
+                if not closed and not purged:
                     new_available.add(incoming_extension)
             available = available | new_available
         _get_logger().debug("Available cases: {}".format(available))
@@ -873,12 +883,12 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 case_to_check,
                 self.index_tree,
                 self.extension_index_tree
-            )
+            ) - self.purged_cases
             new_live = new_live | IndexTree.traverse_incoming_extensions(
                 case_to_check,
                 self.extension_index_tree,
                 self.closed_cases, cached_map=incoming_extensions
-            )
+            ) - self.purged_cases
             new_live = new_live - checked
             live = live | new_live
 
@@ -920,6 +930,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 # we should convert back to a real Exception when we stop getting any of these
                 _assert = soft_assert(notify_admins=True, exponential_backoff=False)
                 _assert(False, 'case {} already removed from sync log {}'.format(to_remove, self._id))
+        else:
+            self.purged_cases.add(to_remove)
 
         if to_remove in self.dependent_case_ids_on_phone:
             self.dependent_case_ids_on_phone.remove(to_remove)
