@@ -472,14 +472,16 @@ class LanguageProfilesView(View):
                 if not id:
                     id = uuid.uuid4().hex
                 def practice_user_id():
-                    if not app.enable_practice_users or not domain_has_privilege(privileges.PRACTICE_MOBILE_WORKERS):
+                    if not app.enable_practice_users:
                         return ''
                     try:
                         practice_user_id = profile.get('practice_user_id')
                         if practice_user_id:
                             get_and_assert_practice_user_in_domain(practice_user_id, domain)
+                        return practice_user_id
                     except PracticeUserException:
                         return HttpResponse(status=400)
+
                 build_profiles[id] = BuildProfile(
                     langs=profile['langs'], name=profile['name'], practice_mobile_worker_id=practice_user_id())
         app.build_profiles = build_profiles
