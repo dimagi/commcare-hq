@@ -750,6 +750,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
     closed_cases = SetProperty(unicode)
     extensions_checked = BooleanProperty(default=False)
 
+    _purged_cases = None
+
+    @property
+    def purged_cases(self):
+        if self._purged_cases is None:
+            self._purged_cases = set()
+        return self._purged_cases
+
     def save(self, *args, **kwargs):
         # force doc type to SyncLog to avoid changing the couch view.
         self.doc_type = "SyncLog"
@@ -771,7 +779,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def primary_case_ids(self):
         return self.case_ids_on_phone - self.dependent_case_ids_on_phone
 
-    def purge(self, case_id, quiet_errors=False):
+    def purge(self, case_id, quiet_errors=False, cached_child_map=None, cached_extension_map=None):
         """
         This happens in 3 phases, and recursively tries to purge outgoing indices of purged cases.
         Definitions:
@@ -811,13 +819,13 @@ class SimplifiedSyncLog(AbstractSyncLog):
         """
         _get_logger().debug("purging: {}".format(case_id))
         self.dependent_case_ids_on_phone.add(case_id)
-        cached_child_map = _reverse_index_map(self.index_tree.indices)
-        cached_extension_map = _reverse_index_map(self.extension_index_tree.indices)
+        cached_child_map = cached_child_map or _reverse_index_map(self.index_tree.indices)
+        cached_extension_map = cached_extension_map or _reverse_index_map(self.extension_index_tree.indices)
         relevant = self._get_relevant_cases(case_id, cached_child_map, cached_extension_map)
         available = self._get_available_cases(relevant, cached_extension_map)
         live = self._get_live_cases(available, cached_extension_map)
-        to_remove = relevant - live
-        self._remove_cases_purge_indices(to_remove, case_id, quiet_errors)
+        to_remove = (relevant - self.purged_cases) - live
+        self._remove_cases_purge_indices(to_remove, case_id, quiet_errors, cached_child_map, cached_extension_map)
 
     def _get_relevant_cases(self, case_id, cached_child_map=None, cached_extension_map=None):
         """
@@ -849,7 +857,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
         while new_available:
             case_to_check = new_available.pop()
             for incoming_extension in incoming_extensions.get(case_to_check, []):
-                if incoming_extension not in self.closed_cases:
+                closed = incoming_extension in self.closed_cases
+                purged = incoming_extension in self.purged_cases
+                if not closed and not purged:
                     new_available.add(incoming_extension)
             available = available | new_available
         _get_logger().debug("Available cases: {}".format(available))
@@ -873,12 +883,12 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 case_to_check,
                 self.index_tree,
                 self.extension_index_tree
-            )
+            ) - self.purged_cases
             new_live = new_live | IndexTree.traverse_incoming_extensions(
                 case_to_check,
                 self.extension_index_tree,
                 self.closed_cases, cached_map=incoming_extensions
-            )
+            ) - self.purged_cases
             new_live = new_live - checked
             live = live | new_live
 
@@ -886,8 +896,10 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         return live
 
-    def _remove_cases_purge_indices(self, all_to_remove, checked_case_id, quiet_errors):
+    def _remove_cases_purge_indices(self, all_to_remove, checked_case_id, quiet_errors,
+                                    cached_child_map=None, cached_extension_map=None):
         """Remove all cases marked for removal. Traverse child cases and try to purge those too."""
+
         _get_logger().debug("cases to to_remove: {}".format(all_to_remove))
         for to_remove in all_to_remove:
             indices = self.index_tree.indices.get(to_remove, {})
@@ -896,7 +908,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 is_dependent_case = referenced_case in self.dependent_case_ids_on_phone
                 already_primed_for_removal = referenced_case in all_to_remove
                 if is_dependent_case and not already_primed_for_removal and referenced_case != checked_case_id:
-                    self.purge(referenced_case, quiet_errors)
+                    self.purge(referenced_case, quiet_errors, cached_child_map, cached_extension_map)
 
     def _remove_case(self, to_remove, all_to_remove, checked_case_id, quiet_errors):
         """Removes case from index trees, case_ids_on_phone and dependent_case_ids_on_phone if pertinent"""
@@ -918,6 +930,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 # we should convert back to a real Exception when we stop getting any of these
                 _assert = soft_assert(notify_admins=True, exponential_backoff=False)
                 _assert(False, 'case {} already removed from sync log {}'.format(to_remove, self._id))
+        else:
+            self.purged_cases.add(to_remove)
 
         if to_remove in self.dependent_case_ids_on_phone:
             self.dependent_case_ids_on_phone.remove(to_remove)
@@ -1139,12 +1153,16 @@ class SimplifiedSyncLog(AbstractSyncLog):
         """
         # this is done when migrating from old formats or during initial sync
         # to purge non-relevant dependencies
+        cached_child_map = _reverse_index_map(self.index_tree.indices)
+        cached_extension_map = _reverse_index_map(self.extension_index_tree.indices)
         for dependent_case_id in list(self.dependent_case_ids_on_phone):
             # need this additional check since the case might have already been purged/remove
             # as a result of purging the child case
             if dependent_case_id in self.dependent_case_ids_on_phone:
                 # this will be a no-op if the case cannot be purged due to dependencies
-                self.purge(dependent_case_id, quiet_errors=True)
+                self.purge(dependent_case_id, quiet_errors=True,
+                           cached_child_map=cached_child_map,
+                           cached_extension_map=cached_extension_map)
 
     @classmethod
     def from_other_format(cls, other_sync_log):
