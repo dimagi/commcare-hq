@@ -153,7 +153,7 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
             from distutils.version import LooseVersion
             commcare_version = xform.metadata.commcare_version
             _soft_assert(
-                case_update.creates_case() or (commcare_version and commcare_version < LooseVersion("2.35")),
+                case_update.creates_case() or (not commcare_version or commcare_version < LooseVersion("2.35")),
                 "Case created without create block in CC version >= 2.35", {
                     'xform_id': xform.form_id,
                     'case_id': case_update.id,

@@ -270,7 +270,7 @@ def _validate_indices(case_db, cases):
                     if case_db.cached_forms:
                         commcare_version = case_db.cached_forms[0].metadata.commcare_version
                         _soft_assert(
-                            commcare_version and commcare_version < LooseVersion("2.35"),
+                            not commcare_version or commcare_version < LooseVersion("2.35"),
                             "Invalid Case Index in CC version >= 2.35", {
                                 'domain': case_db.domain
                                 'version': str(commcare_version)
