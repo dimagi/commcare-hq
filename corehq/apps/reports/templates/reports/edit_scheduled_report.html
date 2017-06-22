@@ -12,9 +12,10 @@
 {% block js-inline %}{{ block.super }}
 <script>
 $(function(){
-    var isConfigurableMap = {{ is_configurable_map|JSON }};
-    var languagesMap = {{ languages_map|JSON }};
-    var languagesForSelect = {{ languages_for_select|JSON }};
+    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+    var isConfigurableMap = initial_page_data('is_configurable_map');
+    var languagesMap = initial_page_data('languages_map');
+    var languagesForSelect = initial_page_data('languages_for_select');
 
     var updateUcrElements = function(selectedConfigs){
         var showUcrElements = _.any(
@@ -70,17 +71,14 @@ $(function(){
         django.gettext("Search Reports...")
     );
     updateUcrElements($("#id_config_ids").val());
-});
-</script>
-<script>
+
     var scheduled_report_form_helper = new ScheduledReportFormHelper({
-        weekly_options: {{ weekly_day_options|JSON }},
-        monthly_options: {{ monthly_day_options|JSON }},
-        day_value: {{ day_value }}
+        weekly_options: initial_page_data('weekly_day_options'),
+        monthly_options: initial_page_data('monthly_day_options'),
+        day_value: initial_page_data('day_value'),
     });
     scheduled_report_form_helper.init();
-</script>
-<script>
+
     $('#id-scheduledReportForm').submit(function() {
         ga_track_event('Scheduled Reports', 'Create a scheduled report', '-', {
             'hitCallback': function () {
@@ -89,10 +87,17 @@ $(function(){
         });
         return false;
     });
+});
 </script>
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'is_configurable_map' is_configurable_map %}
+    {% initial_page_data 'languages_map' languages_map %}
+    {% initial_page_data 'languages_for_select' languages_for_select %}
+    {% initial_page_data 'weekly_day_options' weekly_day_options %}
+    {% initial_page_data 'monthly_day_options' monthly_day_options %}
+    {% initial_page_data 'day_value' day_value %}
     <div class="row">
         <div class="col-sm-12">
             {% if form %}
