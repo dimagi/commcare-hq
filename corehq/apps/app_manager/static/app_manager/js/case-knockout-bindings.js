@@ -8,6 +8,10 @@
         },
         getDisplay: function (question, MAXLEN) {
             return utils.getIcon(question) + utils.getLabel(question, MAXLEN)
+                    + " (" + (question.hashtagValue || question.value) + ")";
+        },
+        getTruncatedDisplay: function (question, MAXLEN) {
+            return utils.getIcon(question) + utils.getLabel(question, MAXLEN)
                     + " (" + utils.truncateValue(question.hashtagValue || question.value, MAXLEN) + ")";
         },
         getLabel: function (question, MAXLEN) {
@@ -65,10 +69,10 @@
                         })
                     },
                     formatSelection: function (o) {
-                        return utils.getDisplay(o.question);
+                        return utils.getTruncatedDisplay(o.question);
                     },
                     formatResult: function (o) {
-                        return utils.getDisplay(o.question, 90);
+                        return utils.getTruncatedDisplay(o.question, 90);
                     },
                     dropdownCssClass: 'bigdrop'
                 });
