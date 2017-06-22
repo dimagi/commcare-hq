@@ -164,6 +164,7 @@ hqDefine("app_manager/js/form_designer.js", function() {
             editDetails.setUpdateCallbackFn(function (name) {
                 $('#formdesigner .fd-content-left .fd-head-text').text(name);
                 $('.variable-form_name').text(name);
+                document.title = name + ' - CammCare HQ';
                 $('#edit-form-name-modal').modal('hide');
             });
             $('#edit-form-name-modal').koApplyBindings(editDetails);
