@@ -152,20 +152,19 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
         if case is None:
             if xform.metadata and xform.metadata.commcare_version:
                 from distutils.version import LooseVersion
-                if xform.metadata and xform.metadata.commcare_version:
-                    commcare_version = xform.metadata.commcare_version
-                    message = "Case created without create block"
-                    if commcare_version >= LooseVersion("2.35"):
-                        message += " in CC version >= 2.35"
-                    _soft_assert(
-                        case_update.creates_case(),
-                        message, {
-                            'xform_id': xform.form_id,
-                            'case_id': case_update.id,
-                            'domain': xform.domain,
-                            'version': str(commcare_version)
-                        }
-                    )
+                commcare_version = xform.metadata.commcare_version
+                message = "Case created without create block"
+                if commcare_version >= LooseVersion("2.35"):
+                    message += " in CC version >= 2.35"
+                _soft_assert(
+                    case_update.creates_case(),
+                    message, {
+                        'xform_id': xform.form_id,
+                        'case_id': case_update.id,
+                        'domain': xform.domain,
+                        'version': str(commcare_version)
+                    }
+                )
             case = self.case_update_strategy.case_from_case_update(case_update, xform)
             self.set(case.case_id, case)
             return CaseUpdateMetadata(case, is_creation=True, previous_owner_id=None)
