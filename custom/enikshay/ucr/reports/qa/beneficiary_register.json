@@ -49,7 +49,7 @@
         ],
         "columns": [
             {
-                "field": "external_id",
+                "field": "beneficiary_id",
                 "transform": {},
                 "sortable": false,
                 "description": null,
