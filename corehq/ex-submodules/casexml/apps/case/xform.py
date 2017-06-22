@@ -268,14 +268,16 @@ def _validate_indices(case_db, cases):
                     # fail hard on invalid indices
                     from distutils.version import LooseVersion
                     if case_db.cached_xforms:
-                        commcare_version = case_db.cached_xforms[0].metadata.commcare_version
-                        _soft_assert(
-                            not commcare_version or commcare_version < LooseVersion("2.35"),
-                            "Invalid Case Index in CC version >= 2.35", {
-                                'domain': case_db.domain,
-                                'version': str(commcare_version)
-                            }
-                        )
+                        xform = case_db.cached_xforms[0]
+                        if xform.metadata and xform.metadata.commcare_version:
+                            commcare_version = xform.metadata.commcare_version
+                            _soft_assert(
+                                commcare_version < LooseVersion("2.35"),
+                                "Invalid Case Index in CC version >= 2.35", {
+                                    'domain': case_db.domain,
+                                    'version': str(commcare_version)
+                                }
+                            )
                     raise InvalidCaseIndex(
                         "Case '%s' references non-existent case '%s'" % (case.case_id, index.referenced_id)
                     )
