@@ -6,6 +6,8 @@ $(function () {
         moduleType = moduleBrief.module_type,
         options = initial_page_data('js_options') || {};
 
+    hqImport('app_manager/js/app_manager.js').setAppendedPageTitle(django.gettext("Module Settings"));
+
     // Set up details
     if (!v2 || moduleBrief.case_type) {
         var state = hqImport('app_manager/js/detail-screen-config.js').state;

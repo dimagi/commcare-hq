@@ -121,6 +121,8 @@ hqDefine("app_manager/js/form_designer.js", function() {
         });
         analytics.workflow('Entered the Form Builder');
 
+        hqImport('app_manager/js/app_manager.js').setAppendedPageTitle(django.gettext("Edit Form"));
+
         if (v2) {
             var previewApp = hqImport('app_manager/js/preview_app.js');
 
@@ -164,7 +166,7 @@ hqDefine("app_manager/js/form_designer.js", function() {
             editDetails.setUpdateCallbackFn(function (name) {
                 $('#formdesigner .fd-content-left .fd-head-text').text(name);
                 $('.variable-form_name').text(name);
-                document.title = name + ' - CommCare HQ';
+                hqImport('app_manager/js/app_manager.js').updatePageTitle(name);
                 $('#edit-form-name-modal').modal('hide');
             });
             $('#edit-form-name-modal').koApplyBindings(editDetails);

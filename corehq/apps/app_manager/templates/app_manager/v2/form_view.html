@@ -4,7 +4,7 @@
 {% load compress %}
 {% load i18n %}
 
-{% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
+{% block title %}{{ form.name|clean_trans:langs }} - {% trans 'Form Settings' %}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
@@ -78,7 +78,7 @@
     {% endif %}
 
     <div class="appmanager-edit-title">
-      {% with postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update);}" %}
+      {% with postSave="function(data) { var appManager = hqImport('app_manager/js/app_manager.js'); appManager.updatePageTitle(data.update['.variable-form_name']); return appManager.updateDOM(data.update);}" %}
       {% if form.get_action_type == 'open' %}
         {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave=postSave %}
       {% elif form.requires_case %}

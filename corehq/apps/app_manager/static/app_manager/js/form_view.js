@@ -1,6 +1,7 @@
 /* globals analytics, COMMCAREHQ, SyntaxHighlighter, Util */
 hqDefine("app_manager/js/form_view.js", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+    hqImport('app_manager/js/app_manager.js').setAppendedPageTitle(django.gettext("Form Settings"));
 
     function formFilterMatches(filter, pattern_matches, substring_matches) {
         if (typeof(filter) !== 'string') {
