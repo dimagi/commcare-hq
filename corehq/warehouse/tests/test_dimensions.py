@@ -101,11 +101,11 @@ class TestLocationDim(TestCase):
     domain = 'location-dim-test'
 
     @classmethod
-    def teardDownClass(cls):
+    def tearDownClass(cls):
         LocationStagingTable.clear_records()
         LocationTypeStagingTable.clear_records()
         LocationDim.clear_records()
-        super(TestLocationDim, cls).teardDownClass()
+        super(TestLocationDim, cls).tearDownClass()
 
     def test_location_dim(self):
         start = datetime.utcnow() - timedelta(days=3)
