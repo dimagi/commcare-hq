@@ -25,12 +25,13 @@ class ENikshayLocationHierarchyFilterValue(FilterValue):
         location = SQLLocation.objects.get(location_id=location_id)
         filters = []
         for ancestor in location.get_ancestors():
-            column = ancestor.location_type.name
-            parameter = "{slug}_{column}".format(slug=self.filter.slug, column=column)
-            value = ancestor.location_id
-            filters.append(
-                _LocationFilter(column, parameter, value)
-            )
+            if ancestor.location_type.name in ["sto", "cto", "dto", "tu", "phi"]:
+                column = ancestor.location_type.name
+                parameter = "{slug}_{column}".format(slug=self.filter.slug, column=column)
+                value = ancestor.location_id
+                filters.append(
+                    _LocationFilter(column, parameter, value)
+                )
 
         below_column = "below_{}".format(location.location_type.name)
         below_parameter = "{slug}_{column}".format(slug=self.filter.slug, column=below_column)
