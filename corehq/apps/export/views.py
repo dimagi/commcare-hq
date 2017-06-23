@@ -116,7 +116,7 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_date
-from dimagi.utils.web import json_response
+from dimagi.utils.web import json_response, get_url_base
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from soil import DownloadBase
@@ -1534,6 +1534,7 @@ class DataFileDownloadList(BaseProjectDataView):
         context.update({
             'data_files': DataFile.objects.filter(domain=self.domain).order_by('filename').all(),
             'is_admin': self.request.couch_user.is_domain_admin(self.domain),
+            'url_base': get_url_base(),
         })
         return context
 

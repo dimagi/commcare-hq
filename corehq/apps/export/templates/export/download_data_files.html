@@ -32,12 +32,12 @@
                 </td>
                 <td>
                     {{ data_file.description }}
-                    <textarea id="url_{{ data_file.id }}" style="display: none">{% if request.is_secure %}https://{% else %}http://{% endif %}{{ request.get_host }}{% url 'download_data_file' domain data_file.id data_file.filename %}</textarea>
+                    <textarea id="url_{{ data_file.id }}" style="display: none">{{ url_base }}{% url 'download_data_file' domain data_file.id data_file.filename %}</textarea>
                 </td>
                 <td style="width: 6em; text-align: right;">
                     <a href="#"
                        onclick="copyDataFileUrl(
-                                    '{% if request.is_secure %}https://{% else %}http://{% endif %}{{ request.get_host }}{% url 'download_data_file' domain data_file.id data_file.filename %}',
+                                    '{{ url_base }}{% url 'download_data_file' domain data_file.id data_file.filename %}',
                                     $('#url_{{ data_file.id }}')
                                 )">
                         <i class="fa fa-link text-info"></i>
