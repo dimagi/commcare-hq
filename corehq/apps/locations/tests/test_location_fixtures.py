@@ -30,7 +30,7 @@ from .util import (
 from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations, location_fixture_generator, \
     flat_location_fixture_generator, should_sync_flat_fixture, should_sync_hierarchical_fixture, \
     _get_location_data_fields
-from ..models import SQLLocation, LocationType, Location, LocationFixtureConfiguration
+from ..models import SQLLocation, LocationType, make_location, LocationFixtureConfiguration
 
 
 class FixtureHasLocationsMixin(TestXmlMixin):
@@ -638,15 +638,13 @@ class ShouldSyncLocationFixturesTest(TestCase):
         """
         When locations are archived, we should resync them
         """
-        couch_location = Location(
+        location = make_location(
             domain=self.domain,
             name='winterfell',
             location_type=self.location_type.name,
         )
-        couch_location.save()
+        location.save()
         after_save = datetime.utcnow()
-        location = SQLLocation.objects.last()
-        self.assertEqual(couch_location.location_id, location.location_id)
         self.assertEqual('winterfell', location.name)
         location_db = LocationSet([location])
         self.assertFalse(
