@@ -7,7 +7,10 @@ from corehq.apps.es import filters
 
 from dimagi.utils.chunked import chunked
 
-CHILD_PROPERTIES = ['case_id', 'owner_id', 'opened_on', 'server_modified_on', 'name', 'indices', 'aadhar_number', 'dob', 'died']
+from corehq.util.log import with_progress_bar
+
+CHILD_PROPERTIES = ['case_id', 'owner_id', 'opened_on', 'server_modified_on',
+                    'name', 'indices', 'aadhar_number', 'dob', 'died']
 
 class Command(BaseCommand):
 
@@ -26,7 +29,7 @@ class Command(BaseCommand):
         with open(hh_file, 'w') as hh_csv, open(child_file, 'w') as child_csv:
             hh_writer = csv.writer(hh_csv)
             child_writer = csv.writer(child_csv)
-            for cases in chunked(hh_cases.hits, 500):
+            for cases in chunked(with_progress_bar(hh_cases.hits), 500):
                 household_ids = []
                 for hh in cases:
                     hh_writer.writerow([hh['case_id'], hh['date_closed']])
