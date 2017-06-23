@@ -8,6 +8,7 @@ import magic
 from couchdbkit.exceptions import ResourceConflict
 from django.template.defaultfilters import filesizeformat
 
+from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs
 from dimagi.utils.couch.resource_conflict import retry_resource
@@ -707,7 +708,16 @@ class HQMediaMixin(Document):
         for path in paths:
             if path not in permitted_paths:
                 map_changed = True
+                map_item = self.multimedia_map[path]
                 del self.multimedia_map[path]
+                if self.domain == 'icds':
+                    soft_assert(to='{}@{}'.format('skelly', 'dimagi.com'))(
+                        False, "path deleted from multimedia map", {
+                            'domain': self.domain,
+                            'path': path,
+                            'map_item': map_item.to_json()
+                        }
+                    )
         if map_changed:
             self.save()
 
@@ -754,6 +764,14 @@ class HQMediaMixin(Document):
                     yield path, media_cls.wrap(media_item)
                 else:
                     # delete media reference from multimedia map so this doesn't pop up again!
+                    if self.domain == 'icds':
+                        soft_assert(to='{}@{}'.format('skelly', 'dimagi.com'))(
+                            False, "path deleted from multimedia map", {
+                                'domain': self.domain,
+                                'path': path,
+                                'map_item': map_item.to_json()
+                            }
+                        )
                     del self.multimedia_map[path]
                     found_missing_mm = True
         if found_missing_mm:
