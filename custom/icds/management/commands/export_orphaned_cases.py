@@ -29,7 +29,7 @@ class Command(BaseCommand):
         with open(hh_file, 'w') as hh_csv, open(child_file, 'w') as child_csv:
             hh_writer = csv.writer(hh_csv)
             child_writer = csv.writer(child_csv)
-            for cases in chunked(with_progress_bar(hh_cases.hits), 500):
+            for cases in chunked(with_progress_bar(hh_cases), 500):
                 household_ids = []
                 for hh in cases:
                     hh_writer.writerow([hh['case_id'], hh['date_closed']])
