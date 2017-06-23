@@ -575,4 +575,8 @@ def get_form_data(domain, app):
 
 
 def sort_nodeset_fields_for_detail(detail_type, detail):
-    return detail_type == "case_long" and detail.sort_nodeset_fields
+    return (
+        detail_type == "case_long" and
+        detail.sort_nodeset_fields and
+        any(tab for tab in detail.get_tabs() if tab.has_nodeset)
+    )
