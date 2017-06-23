@@ -1,3 +1,4 @@
+/* globals django, ScheduledReportFormHelper */
 hqDefine("reports/js/edit_scheduled_report.js", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
     var isConfigurableMap = initial_page_data('is_configurable_map');
@@ -8,7 +9,6 @@ hqDefine("reports/js/edit_scheduled_report.js", function() {
         var showUcrElements = _.any(
             selectedConfigs, function(i){return isConfigurableMap[i] === true;}
         );
-        var currentLanguageOptions = [];
 
         if (showUcrElements){
             $("#ucr-privacy-warning").show();
@@ -70,7 +70,7 @@ hqDefine("reports/js/edit_scheduled_report.js", function() {
         ga_track_event('Scheduled Reports', 'Create a scheduled report', '-', {
             'hitCallback': function () {
                 document.getElementById('id-scheduledReportForm').submit();
-            }
+            },
         });
         return false;
     });
