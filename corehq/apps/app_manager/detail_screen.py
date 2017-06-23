@@ -1,7 +1,7 @@
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml import xml_models as sx
 from corehq.apps.app_manager.suite_xml import const
-from corehq.apps.app_manager.util import sort_nodeset_fields
+from corehq.apps.app_manager.util import sort_nodeset_fields_for_detail
 from corehq.apps.app_manager.xpath import (
     CaseXPath,
     CommCareSession,
@@ -101,8 +101,11 @@ class FormattedDetailColumn(object):
         self.id_strings = id_strings
         self.nodeset = nodeset
 
-    def sort_nodeset_fields(self):
-        return sort_nodeset_fields(self.detail_type, self.detail) and self.nodeset
+    def add_sort_node_for_nodeset_field(self):
+        return (self.nodeset and
+                self.column.format == 'invisible' and
+                sort_nodeset_fields_for_detail(self.detail_type, self.detail)
+                )
 
     @property
     def locale_id(self):
@@ -139,7 +142,7 @@ class FormattedDetailColumn(object):
     def sort_node(self):
         if not (self.app.enable_multi_sort and (
                     self.detail.display == 'short' or
-                    self.sort_nodeset_fields())
+                    self.add_sort_node_for_nodeset_field())
                 ):
             return
 
@@ -263,7 +266,7 @@ class HideShortHeaderColumn(FormattedDetailColumn):
 
     @property
     def header(self):
-        if self.detail.display == 'short' or self.sort_nodeset_fields():
+        if self.detail.display == 'short' or self.add_sort_node_for_nodeset_field():
             header = sx.Header(
                 text=sx.Text(),
                 width=self.template_width
@@ -277,7 +280,7 @@ class HideShortColumn(HideShortHeaderColumn):
 
     @property
     def template_width(self):
-        if self.detail.display == 'short' or self.sort_nodeset_fields():
+        if self.detail.display == 'short' or self.add_sort_node_for_nodeset_field():
             return 0
 
 

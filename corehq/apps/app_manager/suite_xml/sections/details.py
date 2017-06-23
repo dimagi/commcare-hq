@@ -36,7 +36,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
 )
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
 from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search, \
-    get_sort_and_sort_only_columns, sort_nodeset_fields
+    get_sort_and_sort_only_columns, sort_nodeset_fields_for_detail
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.xpath import session_var, XPath
@@ -51,6 +51,9 @@ class DetailContributor(SectionContributor):
         self.build_profile_id = build_profile_id
 
     def get_section_elements(self):
+        def include_sort(detail_type, detail):
+            return detail_type.endswith('short') or sort_nodeset_fields_for_detail(detail_type, detail)
+
         r = []
         if not self.app.use_custom_suite:
             for module in self.modules:
@@ -63,14 +66,10 @@ class DetailContributor(SectionContributor):
                             )
                             r.append(d)
                         else:
-                            should_include_sort = (
-                                detail_type.endswith('short') or
-                                sort_nodeset_fields(detail_type, detail)
-                            )
                             detail_column_infos = get_detail_column_infos(
                                 detail_type,
                                 detail,
-                                include_sort=should_include_sort,
+                                include_sort=include_sort(detail_type, detail),
                             )  # list of DetailColumnInfo named tuples
                             if detail_column_infos:
                                 if detail.use_case_tiles:
@@ -375,14 +374,18 @@ def get_default_sort_elements(detail_type, detail):
         else:
             return dict(type='string', direction='ascending')
 
-    if sort_nodeset_fields(detail_type, detail):
+    if sort_nodeset_fields_for_detail(detail_type, detail):
         sort_elements = []
-        for column in detail.columns:
-            if column.format == 'invisible':
-                sort_elements.append(SortElement(
-                    field=column.field,
-                    **get_sort_params(column)
-                ))
+        tab_spans = detail.get_tab_spans()
+        for tab in detail.get_tabs():
+            if tab.nodeset:
+                tab_span = tab_spans[tab.id]
+                for column in detail.columns[tab_span[0]:tab_span[1]]:
+                    if column.format == 'invisible':
+                        sort_elements.append(SortElement(
+                            field=column.field,
+                            **get_sort_params(column)
+                        ))
     else:
         col_0 = detail.get_column(0)
         sort_elements = [SortElement(
@@ -396,7 +399,6 @@ def get_default_sort_elements(detail_type, detail):
                     field=column.field,
                     **get_sort_params(column)
                 ))
-
     return sort_elements
 
 
