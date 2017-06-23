@@ -1,6 +1,5 @@
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseIndexSQL
+from corehq.form_processor.models import XFormInstanceSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from custom.icds.messaging.custom_recipients import get_child_health_host_case
 from custom.icds.messaging.indicators import DEFAULT_LANGUAGE
