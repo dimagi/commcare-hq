@@ -501,6 +501,17 @@ class ApplicationMediaReference(object):
         return self._get_name(self.form_name, lang=lang)
 
 
+def _log_media_deletion(domain, map_item, path):
+    if domain == 'icds':
+        soft_assert(to='{}@{}'.format('skelly', 'dimagi.com'))(
+            False, "path deleted from multimedia map", {
+                'domain': domain,
+                'path': path,
+                'map_item': map_item.to_json()
+            }
+        )
+
+
 class HQMediaMixin(Document):
     """
         Mix this guy in with Application to support multimedia.
@@ -709,15 +720,8 @@ class HQMediaMixin(Document):
             if path not in permitted_paths:
                 map_changed = True
                 map_item = self.multimedia_map[path]
+                _log_media_deletion(self.domain, map_item, path)
                 del self.multimedia_map[path]
-                if self.domain == 'icds':
-                    soft_assert(to='{}@{}'.format('skelly', 'dimagi.com'))(
-                        False, "path deleted from multimedia map", {
-                            'domain': self.domain,
-                            'path': path,
-                            'map_item': map_item.to_json()
-                        }
-                    )
         if map_changed:
             self.save()
 
@@ -764,14 +768,7 @@ class HQMediaMixin(Document):
                     yield path, media_cls.wrap(media_item)
                 else:
                     # delete media reference from multimedia map so this doesn't pop up again!
-                    if self.domain == 'icds':
-                        soft_assert(to='{}@{}'.format('skelly', 'dimagi.com'))(
-                            False, "path deleted from multimedia map", {
-                                'domain': self.domain,
-                                'path': path,
-                                'map_item': map_item.to_json()
-                            }
-                        )
+                    _log_media_deletion(self.domain, map_item, path)
                     del self.multimedia_map[path]
                     found_missing_mm = True
         if found_missing_mm:
