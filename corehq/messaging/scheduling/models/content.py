@@ -42,7 +42,10 @@ class SMSContent(Content):
             return
 
         language_code = recipient.get_language_code()
-        message = self.message.get(language_code) or self.message.get('en')
+        message = (
+            self.message.get(language_code) or
+            self.message.get(schedule_instance.memoized_schedule.default_language_code)
+        )
         message = self.render_message(message, schedule_instance)
 
         if message:

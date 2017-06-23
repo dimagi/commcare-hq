@@ -1548,7 +1548,10 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
 }
 
 # Used by the new reminders framework
-AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {}
+AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
+    "ICDS_STATIC_NEGATIVE_GROWTH_MESSAGE":
+        "custom.icds.messaging.custom_content.static_negative_growth_indicator",
+}
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 
