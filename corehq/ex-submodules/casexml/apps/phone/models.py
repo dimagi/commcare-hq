@@ -623,13 +623,10 @@ class IndexTree(DocumentSchema):
     # and the values are the referenced case IDs
     indices = SchemaDictProperty()
 
-    _reverse_indices = None
-
     @property
+    @memoized
     def reverse_indices(self):
-        if self._reverse_indices is None:
-            self._reverse_indices = _reverse_index_map(self.indices)
-        return self._reverse_indices
+        return _reverse_index_map(self.indices)
 
     def __repr__(self):
         return json.dumps(self.indices, indent=2)
