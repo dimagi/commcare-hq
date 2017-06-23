@@ -85,6 +85,9 @@ class SMSIndicator(object):
     # For LSIndicator, this is the LS CommCareUser
     user = None
 
+    # This is used to identify the indicator in the SMS data
+    slug = None
+
     def __init__(self, domain, user):
         self.domain = domain
         self.user = user
@@ -171,6 +174,7 @@ class LSIndicator(SMSIndicator):
 
 class AWWAggregatePerformanceIndicator(AWWIndicator):
     template = 'aww_aggregate_performance.txt'
+    slug = 'aww_2'
 
     def get_value_from_fixture(self, fixture, attribute):
         xpath = './rows/row[@is_total_row="False"]'
@@ -214,6 +218,7 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
 class AWWSubmissionPerformanceIndicator(AWWIndicator):
     template = 'aww_no_submissions.txt'
     last_submission_date = None
+    slug = 'aww_1'
 
     def __init__(self, domain, user):
         super(AWWSubmissionPerformanceIndicator, self).__init__(domain, user)
@@ -251,6 +256,7 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
 
 class LSSubmissionPerformanceIndicator(LSIndicator):
     template = 'ls_no_submissions.txt'
+    slug = 'ls_6'
 
     def __init__(self, domain, user):
         super(LSSubmissionPerformanceIndicator, self).__init__(domain, user)
@@ -295,6 +301,7 @@ class LSSubmissionPerformanceIndicator(LSIndicator):
 
 class LSVHNDSurveyIndicator(LSIndicator):
     template = 'ls_vhnd_survey.txt'
+    slug = 'ls_2'
 
     def __init__(self, domain, user):
         super(LSVHNDSurveyIndicator, self).__init__(domain, user)
@@ -331,6 +338,7 @@ class LSVHNDSurveyIndicator(LSIndicator):
 
 class LSAggregatePerformanceIndicator(LSIndicator):
     template = 'ls_aggregate_performance.txt'
+    slug = 'ls_1'
 
     @property
     @memoized
