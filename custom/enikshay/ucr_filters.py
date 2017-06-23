@@ -9,7 +9,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter
 from corehq.apps.userreports.reports.filters.choice_providers import LocationChoiceProvider
 from corehq.apps.userreports.reports.filters.specs import FilterSpec
-from corehq.apps.userreports.reports.filters.values import FilterValue, dynamic_choice_list_url
+from corehq.apps.userreports.reports.filters.values import FilterValue, dynamic_choice_list_url, SHOW_ALL_CHOICE
 
 _LocationFilter = namedtuple("_LocationFilter", "column parameter_slug filter_value")
 
@@ -39,19 +39,29 @@ class ENikshayLocationHierarchyFilterValue(FilterValue):
         )
         return filters
 
+    @property
+    def show_all(self):
+        return SHOW_ALL_CHOICE in [choice.value for choice in self.value]
+
     def to_sql_filter(self):
+        if self.show_all:
+            return None
         location_id = self.value[0].value
         return ORFilter([
             EQFilter(x.column, x.parameter_slug) for x in self.get_hierarchy(location_id)
         ])
 
     def to_sql_values(self):
+        if self.show_all:
+            return {}
         location_id = self.value[0].value
         return {
             x.parameter_slug: x.filter_value for x in self.get_hierarchy(location_id)
         }
 
     def to_es_filter(self):
+        if self.show_all:
+            return None
         location_id = self.value[0].value
         fs = [
             filters.term(x.column, x.filter_value) for x in self.get_hierarchy(location_id)
