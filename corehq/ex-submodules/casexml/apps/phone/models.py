@@ -663,6 +663,7 @@ class IndexTree(DocumentSchema):
         return all_cases
 
     @staticmethod
+    @memoized
     def get_all_outgoing_cases(case_id, child_index_tree, extension_index_tree):
         """traverse all outgoing child and extension indices"""
         all_cases = set([case_id])
