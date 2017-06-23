@@ -23,9 +23,9 @@ def get_last_growth_monitoring_form(domain, case_id):
             form_id__in=form_ids,
             xmlns=GROWTH_MONITORING_XMLNS,
             state=XFormInstanceSQL.NORMAL,
-        ).order_by('-received_on')[0:1]
-        result = list(result)
-        forms_under_consideration.extend(result)
+        ).order_by('-received_on').first()
+        if result:
+            forms_under_consideration.append(result)
 
     if not forms_under_consideration:
         return None
