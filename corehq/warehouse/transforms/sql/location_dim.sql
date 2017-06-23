@@ -1,4 +1,3 @@
-BEGIN
 -- First insert all records into location dim from staging tables without foreign keys
 INSERT INTO {{ location_dim }} (
     domain,
@@ -96,4 +95,3 @@ LEFT JOIN {{ location_dim }} l7 ON l6.location_level_1 = l7.location_level_0
 
 WHERE
     location_dim_target.sql_location_id = l0.sql_location_id;
-COMMIT;
