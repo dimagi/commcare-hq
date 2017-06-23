@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import SuspiciousOperation
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, StreamingHttpResponse
 from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
@@ -1563,7 +1563,7 @@ class DataFileDownloadDetail(BaseProjectDataView):
         try:
             data_file = DataFile.objects.filter(domain=self.domain).get(pk=kwargs['pk'])
             blob = data_file.get_blob()
-            response = HttpResponse(blob.read(), content_type=data_file.content_type)
+            response = StreamingHttpResponse(blob, content_type=data_file.content_type)
         except (DataFile.DoesNotExist, NotFound):
             raise Http404
         response['Content-Disposition'] = 'attachment; filename="' + data_file.filename + '"'
