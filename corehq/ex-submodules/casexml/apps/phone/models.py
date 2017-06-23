@@ -657,8 +657,11 @@ class IndexTree(DocumentSchema):
                     _recursive_call(indexed_case, all_cases, cached_child_map, cached_extension_map)
 
         all_cases = set()
-        cached_child_map = cached_child_map or _reverse_index_map(child_index_tree.indices)
-        cached_extension_map = cached_extension_map or _reverse_index_map(extension_index_tree.indices)
+        if cached_child_map is None:
+            cached_child_map = _reverse_index_map(child_index_tree.indices)
+        if cached_extension_map is None:
+            cached_extension_map = _reverse_index_map(extension_index_tree.indices)
+
         _recursive_call(case_id, all_cases, cached_child_map, cached_extension_map)
         return all_cases
 
