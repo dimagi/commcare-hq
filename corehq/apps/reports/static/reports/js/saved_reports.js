@@ -279,7 +279,7 @@ $.fn.reportUserConfigurableConfigEditor = function (options) {
 
 $(function() {
     var $configList = $("#ko-report-config-list");
-    if ($configList) {
+    if ($configList.length) {
         $configList.koApplyBindings(new ReportConfigsViewModel({
             items: hqImport("hqwebapp/js/initial_page_data.js").get('configs'),
             saveUrl: hqImport("hqwebapp/js/urllib.js").reverse("add_report_config"),
