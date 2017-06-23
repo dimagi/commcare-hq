@@ -4,8 +4,9 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.scheduling.models.abstract import Content
 from corehq.apps.reminders.event_handlers import get_message_template_params
 from corehq.apps.reminders.models import Message
-from corehq.apps.reminders.util import get_one_way_number_for_recipient
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.modules import to_function
+from django.conf import settings
 from django.db import models
 
 
@@ -36,10 +37,8 @@ class SMSContent(Content):
         return message
 
     def send(self, recipient, schedule_instance):
-        phone_number = get_one_way_number_for_recipient(recipient)
-        if not phone_number or len(phone_number) <= 3:
-            # Avoid processing phone numbers that are obviously fake to
-            # save on processing time
+        phone_number = self.get_one_way_phone_number(recipient)
+        if not phone_number:
             return
 
         language_code = recipient.get_language_code()
@@ -83,3 +82,30 @@ class IVRSurveyContent(Content):
         print 'To:', recipient
         print 'IVR Survey: ', self.form_unique_id
         print '*******************************'
+
+
+class CustomContent(Content):
+    # Should be a key in settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT
+    # which points to a function to call at runtime to get a list of
+    # messsages to send to the recipient.
+    custom_content_id = models.CharField(max_length=126)
+
+    def send(self, recipient, schedule_instance):
+        phone_number = self.get_one_way_phone_number(recipient)
+        if not phone_number:
+            return
+
+        if self.custom_content_id not in settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT:
+            raise ValueError("Encountered unexpected custom content id %s" % self.custom_content_id)
+
+        custom_function = to_function(
+            settings.AVAILABLE_CUSTOM_SCHEDULING_CONTENT[self.custom_content_id]
+        )
+        content = custom_function(recipient, schedule_instance)
+
+        if not isinstance(content, list):
+            raise TypeError("Expected content to be a list of messages")
+
+        # Empty list is ok, we just won't send anything
+        for message in content:
+            send_sms_with_backend_name(recipient.domain, phone_number, message, 'TEST')
