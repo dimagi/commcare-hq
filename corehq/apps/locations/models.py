@@ -463,55 +463,15 @@ class SQLLocation(MPTTModel):
 
         _unassign_users_from_location(self.domain, self.location_id)
 
-    def _archive_single_location(self):
-        """
-        Archive a single location, caller is expected to handle
-        archiving children as well.
-
-        This is just used to prevent having to do recursive
-        couch queries in `archive()`.
-        """
-        self.is_archived = True
-        self.save()
-
-        self._close_case_and_remove_users()
-
     def archive(self):
         """
-        Mark a location and its descendants as archived.
-        This will cause it (and its data) to not show up in default Couch and
-        SQL views.  This also unassigns users assigned to the location.
+        Mark a location and its descendants as archived and unassigns users
+        assigned to the location.
         """
         for loc in self.get_descendants(include_self=True):
-            loc._archive_single_location()
-
-    def _unarchive_single_location(self):
-        """
-        Unarchive a single location, caller is expected to handle
-        unarchiving children as well.
-
-        This is just used to prevent having to do recursive
-        couch queries in `unarchive()`.
-        """
-        self.is_archived = False
-        self.save()
-
-        # reopen supply point case if needed
-        sp = self.linked_supply_point()
-        # sanity check that the supply point exists and is not open.
-        # this is important because if you unarchive a child, then try
-        # to unarchive the parent, we don't want to try to open again
-        if sp and sp.closed:
-            for action in sp.actions:
-                if action.action_type == 'close':
-                    action.xform.archive(user_id=COMMTRACK_USERNAME)
-                    break
-
-        if self.user_id:
-            from corehq.apps.users.models import CommCareUser
-            user = CommCareUser.get(self.user_id)
-            user.active = True
-            user.save()
+            loc.is_archived = True
+            loc.save()
+            loc._close_case_and_remove_users()
 
     def unarchive(self):
         """
@@ -519,7 +479,25 @@ class SQLLocation(MPTTModel):
         exists.
         """
         for loc in self.get_descendants(include_self=True):
-            loc._unarchive_single_location()
+            loc.is_archived = False
+            loc.save()
+
+            # reopen supply point case if needed
+            sp = loc.linked_supply_point()
+            # sanity check that the supply point exists and is not open.
+            # this is important because if you unarchive a child, then try
+            # to unarchive the parent, we don't want to try to open again
+            if sp and sp.closed:
+                for action in sp.actions:
+                    if action.action_type == 'close':
+                        action.xform.archive(user_id=COMMTRACK_USERNAME)
+                        break
+
+            if loc.user_id:
+                from corehq.apps.users.models import CommCareUser
+                user = CommCareUser.get(loc.user_id)
+                user.active = True
+                user.save()
 
     def full_delete(self):
         """
