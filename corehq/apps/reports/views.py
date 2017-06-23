@@ -1814,7 +1814,12 @@ class EditFormInstance(View):
                         case_name=case.name,
                     ))
                 elif case.is_deleted:
-                    return _error(_(u'Case <a href="{}" is deleted. Cannot edit this form.').format(case.case_id))
+                    return _error(
+                        _(u'Case <a href="{}">{}</a> is deleted. Cannot edit this form.').format(
+                            case.case_id,
+                            case.name,
+                        )
+                    )
 
         edit_session_data['is_editing'] = True
         edit_session_data['function_context'] = {
