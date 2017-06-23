@@ -623,25 +623,29 @@ class IndexTree(DocumentSchema):
     # and the values are the referenced case IDs
     indices = SchemaDictProperty()
 
+    _reverse_indices = None
+
+    @property
+    def reverse_indices(self):
+        if self._reverse_indices is None:
+            self._reverse_indices = _reverse_index_map(self.indices)
+        return self._reverse_indices
+
     def __repr__(self):
         return json.dumps(self.indices, indent=2)
 
     @staticmethod
-    def get_all_dependencies(case_id, child_index_tree, extension_index_tree,
-                             cached_child_map=None, cached_extension_map=None):
+    def get_all_dependencies(case_id, child_index_tree, extension_index_tree):
         """Takes a child and extension index tree and returns returns a set of all dependencies of <case_id>
 
         Traverse each incoming index, return each touched case.
         Traverse each outgoing index in the extension tree, return each touched case
         """
-        def _recursive_call(case_id, all_cases, cached_child_map, cached_extension_map):
+        def _recursive_call(case_id, all_cases):
             all_cases.add(case_id)
-            incoming_extension_indices = extension_index_tree.get_cases_that_directly_depend_on_case(
-                case_id,
-                cached_map=cached_extension_map
-            )
+            incoming_extension_indices = extension_index_tree.get_cases_that_directly_depend_on_case(case_id)
             all_incoming_indices = itertools.chain(
-                child_index_tree.get_cases_that_directly_depend_on_case(case_id, cached_map=cached_child_map),
+                child_index_tree.get_cases_that_directly_depend_on_case(case_id),
                 incoming_extension_indices,
             )
 
@@ -649,20 +653,15 @@ class IndexTree(DocumentSchema):
                 # incoming indices
                 if dependent_case not in all_cases:
                     all_cases.add(dependent_case)
-                    _recursive_call(dependent_case, all_cases, cached_child_map, cached_extension_map)
+                    _recursive_call(dependent_case, all_cases)
             for indexed_case in extension_index_tree.indices.get(case_id, {}).values():
                 # outgoing extension indices
                 if indexed_case not in all_cases:
                     all_cases.add(indexed_case)
-                    _recursive_call(indexed_case, all_cases, cached_child_map, cached_extension_map)
+                    _recursive_call(indexed_case, all_cases)
 
         all_cases = set()
-        if cached_child_map is None:
-            cached_child_map = _reverse_index_map(child_index_tree.indices)
-        if cached_extension_map is None:
-            cached_extension_map = _reverse_index_map(extension_index_tree.indices)
-
-        _recursive_call(case_id, all_cases, cached_child_map, cached_extension_map)
+        _recursive_call(case_id, all_cases)
         return all_cases
 
     @staticmethod
@@ -680,18 +679,15 @@ class IndexTree(DocumentSchema):
         return all_cases
 
     @staticmethod
-    def traverse_incoming_extensions(case_id, extension_index_tree, closed_cases, cached_map=None):
+    def traverse_incoming_extensions(case_id, extension_index_tree, closed_cases):
         """traverse open incoming extensions"""
         all_cases = set([case_id])
         new_cases = set([case_id])
-        if cached_map is None:
-            cached_map = _reverse_index_map(extension_index_tree.indices)
         while new_cases:
             case_to_check = new_cases.pop()
             open_incoming_extension_indices = {
                 case for case in
-                extension_index_tree.get_cases_that_directly_depend_on_case(case_to_check,
-                                                                            cached_map=cached_map)
+                extension_index_tree.get_cases_that_directly_depend_on_case(case_to_check)
                 if case not in closed_cases
             }
             for incoming_case in open_incoming_extension_indices:
@@ -699,10 +695,8 @@ class IndexTree(DocumentSchema):
                 all_cases.add(incoming_case)
         return all_cases
 
-    def get_cases_that_directly_depend_on_case(self, case_id, cached_map=None):
-        if cached_map is None:
-            cached_map = _reverse_index_map(self.indices)
-        return cached_map.get(case_id, [])
+    def get_cases_that_directly_depend_on_case(self, case_id):
+        return self.reverse_indices.get(case_id, [])
 
     def delete_index(self, from_case_id, index_name):
         prior_ids = self.indices.pop(from_case_id, {})
@@ -785,7 +779,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def primary_case_ids(self):
         return self.case_ids_on_phone - self.dependent_case_ids_on_phone
 
-    def purge(self, case_id, quiet_errors=False, cached_child_map=None, cached_extension_map=None):
+    def purge(self, case_id, quiet_errors=False):
         """
         This happens in 3 phases, and recursively tries to purge outgoing indices of purged cases.
         Definitions:
@@ -825,47 +819,33 @@ class SimplifiedSyncLog(AbstractSyncLog):
         """
         _get_logger().debug("purging: {}".format(case_id))
         self.dependent_case_ids_on_phone.add(case_id)
-        if cached_child_map is None:
-            cached_child_map = _reverse_index_map(self.index_tree.indices)
-        if cached_extension_map is None:
-            cached_extension_map = _reverse_index_map(self.extension_index_tree.indices)
-        relevant = self._get_relevant_cases(case_id, cached_child_map, cached_extension_map)
-        available = self._get_available_cases(relevant, cached_extension_map)
-        live = self._get_live_cases(available, cached_extension_map)
+        relevant = self._get_relevant_cases(case_id)
+        available = self._get_available_cases(relevant)
+        live = self._get_live_cases(available)
         to_remove = (relevant - self.purged_cases) - live
-        self._remove_cases_purge_indices(to_remove, case_id, quiet_errors, cached_child_map, cached_extension_map)
+        self._remove_cases_purge_indices(to_remove, case_id, quiet_errors)
 
-    def _get_relevant_cases(self, case_id, cached_child_map=None, cached_extension_map=None):
+    def _get_relevant_cases(self, case_id):
         """
         Mark all open cases owned by the user relevant. Traversing all outgoing child
         and extension indexes, as well as all incoming extension indexes,
         mark all touched cases relevant.
         """
-        if cached_child_map is None:
-            cached_child_map = _reverse_index_map(self.index_tree.indices)
-        if cached_extension_map is None:
-            cached_extension_map = _reverse_index_map(self.extension_index_tree.indices)
-
         relevant = IndexTree.get_all_dependencies(
             case_id,
             child_index_tree=self.index_tree,
             extension_index_tree=self.extension_index_tree,
-            cached_child_map=cached_child_map,
-            cached_extension_map=cached_extension_map,
         )
         _get_logger().debug("Relevant cases of {}: {}".format(case_id, relevant))
         return relevant
 
-    def _get_available_cases(self, relevant, cached_map=None):
+    def _get_available_cases(self, relevant):
         """
         Mark all relevant cases that are open and have no outgoing extension indexes
         as available. Traverse incoming extension indexes which don't lead to closed
         cases, mark all touched cases as available
         """
-        if cached_map is None:
-            incoming_extensions = _reverse_index_map(self.extension_index_tree.indices)
-        else:
-            incoming_extensions = cached_map
+        incoming_extensions = self.extension_index_tree.reverse_indices
         available = {case for case in relevant
                      if case not in self.closed_cases
                      and (not self.extension_index_tree.indices.get(case) or self.index_tree.indices.get(case))}
@@ -882,16 +862,12 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         return available
 
-    def _get_live_cases(self, available, cached_map=None):
+    def _get_live_cases(self, available):
         """
         Mark all relevant, owned, available cases as live. Traverse incoming
         extension indexes which don't lead to closed cases, mark all touched
         cases as available.
         """
-        if cached_map is None:
-            incoming_extensions = _reverse_index_map(self.extension_index_tree.indices)
-        else:
-            incoming_extensions = cached_map
         primary_case_ids = self.primary_case_ids
         live = available & primary_case_ids
         new_live = set() | live
@@ -907,7 +883,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
             new_live = new_live | IndexTree.traverse_incoming_extensions(
                 case_to_check,
                 self.extension_index_tree,
-                self.closed_cases, cached_map=incoming_extensions
+                self.closed_cases
             ) - self.purged_cases
             new_live = new_live - checked
             live = live | new_live
@@ -916,8 +892,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         return live
 
-    def _remove_cases_purge_indices(self, all_to_remove, checked_case_id, quiet_errors,
-                                    cached_child_map=None, cached_extension_map=None):
+    def _remove_cases_purge_indices(self, all_to_remove, checked_case_id, quiet_errors):
         """Remove all cases marked for removal. Traverse child cases and try to purge those too."""
 
         _get_logger().debug("cases to to_remove: {}".format(all_to_remove))
@@ -928,7 +903,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 is_dependent_case = referenced_case in self.dependent_case_ids_on_phone
                 already_primed_for_removal = referenced_case in all_to_remove
                 if is_dependent_case and not already_primed_for_removal and referenced_case != checked_case_id:
-                    self.purge(referenced_case, quiet_errors, cached_child_map, cached_extension_map)
+                    self.purge(referenced_case, quiet_errors)
 
     def _remove_case(self, to_remove, all_to_remove, checked_case_id, quiet_errors):
         """Removes case from index trees, case_ids_on_phone and dependent_case_ids_on_phone if pertinent"""
@@ -1173,16 +1148,12 @@ class SimplifiedSyncLog(AbstractSyncLog):
         """
         # this is done when migrating from old formats or during initial sync
         # to purge non-relevant dependencies
-        cached_child_map = _reverse_index_map(self.index_tree.indices)
-        cached_extension_map = _reverse_index_map(self.extension_index_tree.indices)
         for dependent_case_id in list(self.dependent_case_ids_on_phone):
             # need this additional check since the case might have already been purged/remove
             # as a result of purging the child case
             if dependent_case_id in self.dependent_case_ids_on_phone:
                 # this will be a no-op if the case cannot be purged due to dependencies
-                self.purge(dependent_case_id, quiet_errors=True,
-                           cached_child_map=cached_child_map,
-                           cached_extension_map=cached_extension_map)
+                self.purge(dependent_case_id, quiet_errors=True)
 
     @classmethod
     def from_other_format(cls, other_sync_log):
