@@ -137,9 +137,8 @@ class FormattedDetailColumn(object):
 
     @property
     def sort_node(self):
-        if not (self.app.enable_multi_sort and (
-                    self.detail.display == 'short' or
-                    self.add_sort_node_for_nodeset_field())
+        if not (self.app.enable_multi_sort and
+                (self.detail.display == 'short' or self.add_sort_node_for_nodeset_field())
                 ):
             return
 
