@@ -76,6 +76,7 @@ from corehq.apps.export.const import (
     FORM_EXPORT,
     CASE_EXPORT,
     MAX_EXPORTABLE_ROWS,
+    MAX_DATA_FILE_SIZE,
 )
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
@@ -1537,13 +1538,19 @@ class DataFileDownloadList(BaseProjectDataView):
         return context
 
     def post(self, request, *args, **kwargs):
-        # TODO: Use a form for validation
-        # TODO: Limit file size
+        if request.FILES['file'].size > MAX_DATA_FILE_SIZE:
+            messages.warning(
+                request,
+                _('The data file exceeds the maximum size of {} MB.').format(MAX_DATA_FILE_SIZE / (1024 * 1024))
+            )
+            return self.get(request, *args, **kwargs)
+
         data_file = DataFile()
         data_file.domain = self.domain
         data_file.filename = request.FILES['file'].name
         data_file.description = request.POST['description']
         data_file.content_type = request.FILES['file'].content_type  # save_blob() uses libmagic to check this
+        data_file.content_length = request.FILES['file'].size
         data_file.save_blob(request.FILES['file'])
         messages.success(request, _('Data file "{}" uploaded'.format(data_file.description)))
         return HttpResponseRedirect(reverse(self.urlname, kwargs={'domain': self.domain}))
