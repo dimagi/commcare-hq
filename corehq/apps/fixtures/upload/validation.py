@@ -91,13 +91,16 @@ def _validate_fixture_upload(workbook):
                         error_messages.append(
                             _(FAILURE_MESSAGES["invalid_field_with_property"])
                             .format(field=field.field_name))
-                    field_prop_len = len(data_item['field'][field.field_name])
+                        field_prop_len = None
+                    else:
+                        field_prop_len = len(data_item['field'][field.field_name])
+
                     for prop in sheet_props:
                         if type(sheet_props[prop]) != list:
                             error_messages.append(
                                 _(FAILURE_MESSAGES["invalid_property"])
                                 .format(field=field.field_name, prop=prop))
-                        if len(sheet_props[prop]) != field_prop_len:
+                        if field_prop_len is not None and len(sheet_props[prop]) != field_prop_len:
                             error_messages.append(
                                 _(FAILURE_MESSAGES["wrong_field_property_combos"])
                                 .format(field=field.field_name, prop=prop))
