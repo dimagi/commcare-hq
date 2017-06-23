@@ -693,6 +693,7 @@ class IndexTree(DocumentSchema):
                 all_cases.add(incoming_case)
         return all_cases
 
+    @memoized
     def get_cases_that_directly_depend_on_case(self, case_id):
         return self.reverse_indices.get(case_id, [])
 
