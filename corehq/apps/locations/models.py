@@ -16,8 +16,6 @@ from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 
-LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
-
 
 class LocationTypeManager(models.Manager):
 
@@ -562,35 +560,6 @@ class SQLLocation(MPTTModel):
         return '/'.join(self.get_ancestors(include_self=True)
                             .values_list('name', flat=True))
 
-    def _make_group_object(self, user_id, case_sharing):
-        from corehq.apps.groups.models import UnsavableGroup
-
-        g = UnsavableGroup()
-        g.domain = self.domain
-        g.users = [user_id] if user_id else []
-        g.last_modified = datetime.utcnow()
-
-        if case_sharing:
-            g.name = self.get_path_display() + '-Cases'
-            g._id = self.location_id
-            g.case_sharing = True
-            g.reporting = False
-        else:
-            # reporting groups
-            g.name = self.get_path_display()
-            g._id = LOCATION_REPORTING_PREFIX + self.location_id
-            g.case_sharing = False
-            g.reporting = True
-
-        g.metadata = {
-            'commcare_location_type': self.location_type.name,
-            'commcare_location_name': self.name,
-        }
-        for key, val in self.metadata.items():
-            g.metadata['commcare_location_' + key] = val
-
-        return g
-
     def get_case_sharing_groups(self, for_user_id=None):
         if self.location_type.shares_cases:
             yield self.case_sharing_group_object(for_user_id)
@@ -602,15 +571,29 @@ class SQLLocation(MPTTModel):
         """
         Returns a fake group object that cannot be saved.
 
-        This is used for giving users access via case
-        sharing groups, without having a real group
-        for every location that we have to manage/hide.
+        This is used for giving users access via case sharing groups, without
+        having a real group for every location that we have to manage/hide.
         """
+        from corehq.apps.groups.models import UnsavableGroup
 
-        return self._make_group_object(
-            user_id,
+        group = UnsavableGroup(
+            domain=self.domain,
+            users=[user_id] if user_id else [],
+            last_modified=datetime.utcnow(),
+            name=self.get_path_display() + '-Cases',
+            _id=self.location_id,
             case_sharing=True,
+            reporting=False,
+            metadata={
+                'commcare_location_type': self.location_type.name,
+                'commcare_location_name': self.name,
+            },
         )
+
+        for key, val in self.metadata.items():
+            group.metadata['commcare_location_' + key] = val
+
+        return group
 
     def is_direct_ancestor_of(self, location):
         return (location.get_ancestors(include_self=True)
