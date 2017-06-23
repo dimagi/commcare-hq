@@ -532,10 +532,7 @@ class NewLocationView(BaseLocationView):
 @location_safe
 @can_edit_location
 def archive_location(request, domain, loc_id):
-    try:
-        loc = SQLLocation.objects.get(domain=domain, location_id=loc_id)
-    except SQLLocation.DoesNotExist:
-        raise Http404()
+    loc = get_object_or_404(SQLLocation, domain=domain, location_id=loc_id)
     loc.archive()
     return json_response({
         'success': True,
@@ -551,22 +548,8 @@ def archive_location(request, domain, loc_id):
 @lock_locations
 @location_safe
 def delete_location(request, domain, loc_id):
-    try:
-        loc = SQLLocation.objects.get(domain=domain, location_id=loc_id)
-    except SQLLocation.DoesNotExist:
-        raise Http404()
-    try:
-        loc.full_delete()
-    except (ResourceNotFound, BulkSaveError):
-        # Sometimes the couch and sql locations go out of sync and we can end up
-        # in a state where the couch doc is deleted and the sql doc still exists.
-        # delete the sql locations anyway
-        loc.sql_full_delete()
-        logger.error(
-            'Location with ID [{}] in domain [{}] was missing its couch doc '
-            'upon deletion. If this is recurring it might be worth checking '
-            'out any couch to postrgres issues.'.format(loc_id, domain)
-        )
+    loc = get_object_or_404(SQLLocation, domain=domain, location_id=loc_id)
+    loc.full_delete()
     return json_response({
         'success': True,
         'message': _("Location '{location_name}' has successfully been {action}.").format(
@@ -576,11 +559,11 @@ def delete_location(request, domain, loc_id):
     })
 
 
+@can_edit_location
+@location_safe
 def location_descendants_count(request, domain, loc_id):
-    location = SQLLocation.objects.get(location_id=loc_id)
-    if location.domain != domain:
-        raise Http404()
-    count = len(location.get_descendants(include_self=True))
+    loc = get_object_or_404(SQLLocation, domain=domain, location_id=loc_id)
+    count = loc.get_descendants(include_self=True).count()
     return json_response({
         'count': count
     })
@@ -589,10 +572,7 @@ def location_descendants_count(request, domain, loc_id):
 @can_edit_location
 @location_safe
 def unarchive_location(request, domain, loc_id):
-    try:
-        loc = SQLLocation.objects.get(domain=domain, location_id=loc_id)
-    except SQLLocation.DoesNotExist:
-        raise Http404()
+    loc = get_object_or_404(SQLLocation, domain=domain, location_id=loc_id)
     loc.unarchive()
     return json_response({
         'success': True,
@@ -624,23 +604,6 @@ class EditLocationView(NewLocationView):
                                  location_id=self.location_id)
 
     @property
-    @memoized
-    def sql_location(self):
-        try:
-            location = SQLLocation.objects.get(location_id=self.location_id)
-            if location.domain != self.domain:
-                raise Http404()
-        except ResourceNotFound:
-            raise Http404()
-        else:
-            return location
-
-    @property
-    @memoized
-    def supply_point(self):
-        return self.location.linked_supply_point()
-
-    @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.location_id])
 
@@ -652,9 +615,7 @@ class EditLocationView(NewLocationView):
                 self.domain,
                 product._id,
                 self.location.location_type_name,
-                # FIXME accessing this value from the sql location
-                # would be faster
-                self.supply_point.case_id if self.supply_point else None,
+                self.location.supply_point_id or None,
             )
             if consumption:
                 consumptions.append((product.name, consumption))
@@ -702,7 +663,7 @@ class EditLocationView(NewLocationView):
 
     @property
     def products_at_location(self):
-        return [p.product_id for p in self.sql_location.products.all()]
+        return [p.product_id for p in self.location.products.all()]
 
     @property
     def page_name(self):
@@ -732,8 +693,8 @@ class EditLocationView(NewLocationView):
         products = SQLProduct.objects.filter(
             product_id__in=request.POST.getlist('products-selected_ids', [])
         )
-        self.sql_location.products = products
-        self.sql_location.save()
+        self.location.products = products
+        self.location.save()
         return self.form_valid()
 
     @method_decorator(lock_locations)
@@ -872,7 +833,7 @@ def location_export(request, domain):
 @locations_access_required
 @location_safe
 def child_locations_for_select2(request, domain):
-    id = request.GET.get('id')
+    location_id = request.GET.get('id')
     ids = request.GET.get('ids')
     query = request.GET.get('name', '').lower()
     user = request.couch_user
@@ -882,14 +843,14 @@ def child_locations_for_select2(request, domain):
     def loc_to_payload(loc):
         return {'id': loc.location_id, 'name': loc.get_path_display()}
 
-    if id:
+    if location_id:
         try:
-            loc = base_queryset.get(location_id=id)
+            loc = base_queryset.get(location_id=location_id)
             if loc.domain != domain:
                 raise SQLLocation.DoesNotExist()
         except SQLLocation.DoesNotExist:
             return json_response(
-                {'message': 'no location with id %s found' % id},
+                {'message': 'no location with id %s found' % location_id},
                 status_code=404,
             )
         else:
