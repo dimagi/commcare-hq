@@ -2494,7 +2494,7 @@ class DataFile(models.Model):
         try:
             blob = db.get(self.blob_id)
         except (KeyError, NotFound) as err:
-            raise self.DoesNotExist(str(err))
+            raise NotFound(str(err))
         return blob
 
     def save_blob(self, uploaded_file):

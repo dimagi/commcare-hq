@@ -10,6 +10,7 @@ from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
+from corehq.blobs.exceptions import NotFound
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile
@@ -1556,7 +1557,7 @@ class DataFileDownloadDetail(BaseProjectDataView):
             data_file = DataFile.objects.filter(domain=self.domain).get(pk=kwargs['pk'])
             blob = data_file.get_blob()
             response = HttpResponse(blob.read(), content_type=data_file.content_type)
-        except DataFile.DoesNotExist:
+        except (DataFile.DoesNotExist, NotFound):
             raise Http404
         response['Content-Disposition'] = 'attachment; filename="' + data_file.filename + '"'
         response['Content-Length'] = data_file.content_length
