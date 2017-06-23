@@ -890,7 +890,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         else:
             incoming_extensions = cached_map
         primary_case_ids = self.primary_case_ids
-        live = {case for case in available if case in primary_case_ids}
+        live = available & primary_case_ids
         new_live = set() | live
         checked = set()
         while new_live:
