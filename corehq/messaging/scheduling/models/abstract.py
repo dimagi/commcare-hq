@@ -106,7 +106,7 @@ class Content(models.Model):
     class Meta:
         abstract = True
 
-    def send(self, recipient):
+    def send(self, recipient, schedule_instance):
         """
         :param recipient: a CommCareUser, WebUser, or CommCareCase/SQL
         representing the contact who should receive the content.
