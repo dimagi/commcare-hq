@@ -1,5 +1,5 @@
 import jsonfield
-from corehq.apps.sms.api import send_sms_with_backend_name
+from corehq.apps.sms.api import send_sms_with_backend_name, send_sms
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.scheduling.models.abstract import Content
 from corehq.apps.reminders.event_handlers import get_message_template_params
@@ -8,6 +8,16 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.db import models
+
+
+def send_sms_for_schedule_instance(schedule_instance, recipient, phone_number, message):
+    if not message:
+        return
+
+    if schedule_instance.memoized_schedule.is_test:
+        send_sms_with_backend_name(schedule_instance.domain, phone_number, message, 'TEST')
+    else:
+        send_sms(schedule_instance.domain, recipient, phone_number, message)
 
 
 class SMSContent(Content):
@@ -48,8 +58,7 @@ class SMSContent(Content):
         )
         message = self.render_message(message, schedule_instance)
 
-        if message:
-            send_sms_with_backend_name(recipient.domain, phone_number, message, 'TEST')
+        send_sms_for_schedule_instance(schedule_instance, recipient, phone_number, message)
 
 
 class EmailContent(Content):
@@ -111,4 +120,4 @@ class CustomContent(Content):
 
         # Empty list is ok, we just won't send anything
         for message in content:
-            send_sms_with_backend_name(recipient.domain, phone_number, message, 'TEST')
+            send_sms_for_schedule_instance(schedule_instance, recipient, phone_number, message)

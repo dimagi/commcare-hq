@@ -23,6 +23,10 @@ class Schedule(models.Model):
     # inspected and the default language there will be used.
     default_language_code = models.CharField(max_length=126, null=True)
 
+    # If True, the framework looks for a backend named TEST to send messages for
+    # this schedule.
+    is_test = models.BooleanField(default=True)
+
     class Meta:
         abstract = True
 
