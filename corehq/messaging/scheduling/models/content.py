@@ -4,6 +4,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.scheduling.models.abstract import Content
 from corehq.apps.reminders.event_handlers import get_message_template_params
 from corehq.apps.reminders.models import Message
+from corehq.apps.sms.api import MessageMetadata
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.modules import to_function
 from django.conf import settings
@@ -14,10 +15,14 @@ def send_sms_for_schedule_instance(schedule_instance, recipient, phone_number, m
     if not message:
         return
 
+    metadata = MessageMetadata(
+        custom_metadata=schedule_instance.memoized_schedule.custom_metadata,
+    )
+
     if schedule_instance.memoized_schedule.is_test:
-        send_sms_with_backend_name(schedule_instance.domain, phone_number, message, 'TEST')
+        send_sms_with_backend_name(schedule_instance.domain, phone_number, message, 'TEST', metadata=metadata)
     else:
-        send_sms(schedule_instance.domain, recipient, phone_number, message)
+        send_sms(schedule_instance.domain, recipient, phone_number, message, metadata=metadata)
 
 
 class SMSContent(Content):

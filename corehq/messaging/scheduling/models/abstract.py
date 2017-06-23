@@ -1,3 +1,4 @@
+import jsonfield
 import uuid
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models
@@ -26,6 +27,9 @@ class Schedule(models.Model):
     # If True, the framework looks for a backend named TEST to send messages for
     # this schedule.
     is_test = models.BooleanField(default=True)
+
+    # This metadata will be passed to any messages generated from this schedule.
+    custom_metadata = jsonfield.JSONField(null=True, default=None)
 
     class Meta:
         abstract = True
