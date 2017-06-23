@@ -1815,9 +1815,9 @@ class EditFormInstance(View):
                     ))
                 elif case.is_deleted:
                     return _error(
-                        _(u'Case <a href="{}">{}</a> is deleted. Cannot edit this form.').format(
-                            case.case_id,
-                            case.name,
+                        _(u'Case <a href="{case_url}">{case_name}</a> is deleted. Cannot edit this form.').format(
+                            case_url=reverse('case_details', args=[domain, case.case_id]),
+                            case_name=case.name,
                         )
                     )
 
