@@ -502,7 +502,7 @@ class ApplicationMediaReference(object):
 
 
 def _log_media_deletion(domain, map_item, path):
-    if domain == 'icds':
+    if domain in {'icds-cas', 'icds-test'}:
         soft_assert(to='{}@{}'.format('skelly', 'dimagi.com'))(
             False, "path deleted from multimedia map", {
                 'domain': domain,
