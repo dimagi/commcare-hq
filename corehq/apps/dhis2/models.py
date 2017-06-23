@@ -1,10 +1,18 @@
+import json
 from itertools import chain
+from pprint import pformat
 
 import jsonfield
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
-from corehq.apps.dhis2.utils import get_date_filter, get_last_month, get_report_config, get_ucr_data, \
-    get_last_quarter
+from corehq.apps.dhis2.utils import (
+    get_date_filter,
+    get_last_month,
+    get_report_config,
+    get_ucr_data,
+    get_last_quarter,
+)
 from corehq.apps.dhis2.const import SEND_FREQUENCY_MONTHLY, SEND_FREQUENCY_QUARTERLY, SEND_FREQUENCIES
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
@@ -61,7 +69,7 @@ class DataSetMap(Document):
 
     def get_datavalues(self, ucr_row):
         """
-        Returns rows of "dataElementID", "categoryOptionComboID", "value", and optionally "period", "orgUnit" and
+        Returns rows of "dataElement", "categoryOptionCombo", "value", and optionally "period", "orgUnit" and
         "comment" for this DataSet where ucr_row looks like::
 
             {
@@ -85,8 +93,8 @@ class DataSetMap(Document):
                     period = value
                 else:
                     datavalue = {
-                        'dataElementID': dv_map[key]['data_element_id'],
-                        'categoryOptionComboID': dv_map[key]['category_option_combo_id'],
+                        'dataElement': dv_map[key]['data_element_id'],
+                        'categoryOptionCombo': dv_map[key]['category_option_combo_id'],
                         'value': value,
                     }
                     if dv_map[key].get('comment'):
@@ -148,7 +156,46 @@ class JsonApiLog(models.Model):
     request_url = models.CharField(max_length=255)
     request_headers = jsonfield.JSONField(blank=True)
     request_params = jsonfield.JSONField(blank=True)
-    request_body = jsonfield.JSONField(blank=True, null=True)  # NULL for GET, but POST can take an empty body
+    request_body = jsonfield.JSONField(
+        blank=True, null=True,  # NULL for GET, but POST can take an empty body
+        dump_kwargs={'cls': DjangoJSONEncoder, 'separators': (',', ':')}  # Use DjangoJSONEncoder for dates, etc.
+    )
     request_error = models.TextField(null=True)
     response_status = models.IntegerField(null=True)
     response_body = models.TextField(blank=True, null=True)
+
+    @staticmethod
+    def log(log_level, json_api_request, request_error, response_status, response_body, method_func, request_url,
+            data=None, **params):
+        # Don't log credentials
+        if 'auth' in params:
+            params['auth'] = '******'
+        JsonApiLog.objects.create(
+            domain=json_api_request.domain_name,
+            log_level=log_level,
+            request_method=method_func.__name__.upper(),
+            request_url=request_url,
+            request_headers=json_api_request.headers,
+            request_params=params,
+            request_body=data,
+            request_error=request_error,
+            response_status=response_status,
+            response_body=response_body,
+        )
+
+    @property
+    def pp_request_body(self):
+        """
+        Pretty-print the request body
+        """
+        return pformat(self.request_body)
+
+    @property
+    def pp_response_body(self):
+        """
+        Pretty-print the response body
+        """
+        try:
+            return pformat(json.loads(self.response_body))
+        except ValueError:
+            return self.response_body

@@ -22,6 +22,12 @@ class SupervisorConfCommand(BaseCommand):
             default=None,
         )
         parser.add_argument(
+            '--conf_destination_filename',
+            help='(Optional) Rendered supervisor configuration file name; defaults to the value from --conf_file',
+            dest='conf_destination_filename',
+            default=None,
+        )
+        parser.add_argument(
             '--params',
             type=str,
             dest='params',
@@ -35,6 +41,7 @@ class SupervisorConfCommand(BaseCommand):
     def handle(self, **options):
         self.conf_file_template = options['conf_file']
         self.conf_dest = options['conf_destination']
+        self.conf_destination_filename = options['conf_destination_filename'] or self.conf_file_template
         self.params = options['params'] or {}
         if self.params:
             self.params = self.extend_params(json.loads(self.params))
@@ -51,7 +58,10 @@ class SupervisorConfCommand(BaseCommand):
         conf_template_string = None
         with open(conf_template_fullpath, 'r') as fin:
             conf_template_string = fin.read()
-        dest_filepath = os.path.join(self.conf_dest, '%s_%s' % (settings.SERVER_ENVIRONMENT, self.conf_file_template))
+        dest_filepath = os.path.join(
+            self.conf_dest,
+            '%s_%s' % (settings.SERVER_ENVIRONMENT, self.conf_destination_filename)
+        )
         rendered_conf = self.render_configuration_file(conf_template_string, self.params)
 
         self.write_configuration_file(dest_filepath, rendered_conf)

@@ -13,15 +13,18 @@ from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 SMS_PILLOW_KAFKA_CONSUMER_GROUP_ID = 'sql-sms-to-es'
 
 
-def get_sql_sms_pillow(pillow_id='SqlSMSPillow', **kwargs):
+def get_sql_sms_pillow(pillow_id='SqlSMSPillow', num_processes=1, process_num=0, **kwargs):
     assert pillow_id == 'SqlSMSPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, SMS_INDEX_INFO)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, SMS_INDEX_INFO, [topics.SMS])
     processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=SMS_INDEX_INFO,
         doc_prep_fn=lambda x: x
     )
-    change_feed = KafkaChangeFeed(topics=[topics.SMS], group_id=SMS_PILLOW_KAFKA_CONSUMER_GROUP_ID)
+    change_feed = KafkaChangeFeed(
+        topics=[topics.SMS], group_id=SMS_PILLOW_KAFKA_CONSUMER_GROUP_ID,
+        num_processes=num_processes, process_num=process_num
+    )
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,

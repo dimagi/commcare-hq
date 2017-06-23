@@ -378,7 +378,7 @@ class SystemInfoView(BaseAdminSectionView):
         context['celery_stats'] = get_celery_stats()
         context['heartbeat'] = service_checks.check_heartbeat()
 
-        context['elastic'] = escheck.check_es_cluster_health()
+        context['cluster_health'] = escheck.check_es_cluster_health()
 
         return context
 
@@ -503,7 +503,7 @@ class AdminRestoreView(TemplateView):
                 xml_payload = E.error(response.content)
             elif response.status_code == 412:
                 # RestoreConfig.get_response returned HttpResponse 412. Response content is already XML
-                xml_payload = response.content
+                xml_payload = etree.fromstring(response.content)
             else:
                 message = _('Unexpected restore response {}: {}. '
                             'If you believe this is a bug please report an issue.').format(response.status_code,

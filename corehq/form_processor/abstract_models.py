@@ -124,10 +124,7 @@ class AbstractXFormInstance(object):
             try:
                 return get_properly_wrapped_sync_log(self.last_sync_token)
             except ResourceNotFound:
-                logging.exception('No sync token with ID {} found. Form is {} in domain {}'.format(
-                    self.last_sync_token, self.form_id, self.domain,
-                ))
-                raise
+                pass
         return None
 
 

@@ -1,7 +1,6 @@
 import datetime
 from collections import defaultdict
 import pytz
-from xml.etree import ElementTree
 
 from celery.task import periodic_task
 from celery.schedules import crontab
@@ -9,16 +8,20 @@ from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.utils.dateparse import parse_datetime, parse_date
 
-from casexml.apps.case.mock import CaseBlock
 from corehq import toggles
-from corehq.apps.hqcase.utils import submit_case_blocks
+from corehq.apps.hqcase.utils import update_case, bulk_update_cases
 from corehq.apps.fixtures.models import FixtureDataItem
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.decorators.memoized import memoized
 
+from .case_utils import (
+    CASE_TYPE_EPISODE,
+    get_prescription_vouchers_from_episode,
+    get_private_diagnostic_test_cases_from_episode,
+    get_prescription_from_voucher,
+)
 from custom.enikshay.exceptions import ENikshayCaseNotFound
-from .case_utils import CASE_TYPE_EPISODE, get_prescription_vouchers_from_episode, get_prescription_from_voucher
 from .const import (
     DOSE_TAKEN_INDICATORS,
     DAILY_SCHEDULE_FIXTURE_NAME,
@@ -26,15 +29,18 @@ from .const import (
     SCHEDULE_ID_FIXTURE,
     HISTORICAL_CLOSURE_REASON,
     ENIKSHAY_TIMEZONE,
+    VALID_ADHERENCE_SOURCES,
 )
 from .exceptions import EnikshayTaskException
 from .data_store import AdherenceDatastore
+
+from .model_migration_sets import EpisodeFacilityIDMigration
 
 logger = get_task_logger(__name__)
 
 
 @periodic_task(
-    run_every=crontab(day_of_week=[1], hour=0, minute=0),  # every Monday
+    run_every=crontab(hour=0, minute=0),  # every day at midnight
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def enikshay_task():
@@ -76,21 +82,26 @@ class EpisodeUpdater(object):
         noupdate_count = 0
         error_count = 0
         with Timer() as t:
+            batch_size = 100
+            updates = []
             for episode in self._get_open_episode_cases():
                 adherence_update = EpisodeAdherenceUpdate(episode, self)
                 voucher_update = EpisodeVoucherUpdate(self.domain, episode)
+                test_update = EpisodeTestUpdate(self.domain, episode)
+                episode_facility_id_migration = EpisodeFacilityIDMigration(self.domain, episode)
                 try:
                     update_json = adherence_update.update_json()
                     update_json.update(voucher_update.update_json())
-                    case_block = self._get_case_block(update_json, episode.case_id)
-                    if case_block:
-                        submit_case_blocks(
-                            [ElementTree.tostring(case_block.as_xml())],
-                            self.domain
-                        )
+                    update_json.update(test_update.update_json())
+                    update_json.update(episode_facility_id_migration.update_json())
+                    if update_json:
+                        updates.append((episode.case_id, update_json, False))
                         update_count += 1
                     else:
                         noupdate_count += 1
+                    if len(updates) == batch_size:
+                        bulk_update_cases(self.domain, updates)
+                        updates = []
                 except Exception, e:
                     error_count += 1
                     logger.error(
@@ -99,6 +110,8 @@ class EpisodeUpdater(object):
                             e
                         )
                     )
+            if len(updates) > 0:
+                bulk_update_cases(self.domain, updates)
         logger.info(
             "Summary of enikshay_task: domain: {domain}, duration (sec): {duration} "
             "Cases Updated {updates}, cases errored {errors} and {noupdates} "
@@ -111,27 +124,8 @@ class EpisodeUpdater(object):
         # updates a single episode_case.
         assert episode_case.domain == self.domain
         update_json = EpisodeAdherenceUpdate(episode_case, self).update_json()
-        case_block = self._get_case_block(update_json, episode_case.case_id)
-        if case_block:
-            submit_case_blocks(
-                [ElementTree.tostring(case_block.as_xml())],
-                self.domain
-            )
-
-    @staticmethod
-    def _get_case_block(update, episode_id):
-        """
-        Returns:
-            CaseBlock object with episode updates. If no update is necessary, None is returned
-        """
-        if update:
-            return CaseBlock(**{
-                'case_id': episode_id,
-                'create': False,
-                'update': update
-            })
-        else:
-            return None
+        if update_json:
+            update_case(self.domain, episode_case.case_id, update_json)
 
     def _get_open_episode_cases(self):
         # return all open 'episode' cases
@@ -199,13 +193,28 @@ class EpisodeAdherenceUpdate(object):
 
     @staticmethod
     def calculate_doses_taken_by_day(adherence_cases):
-        """
-        Args:
-            adherence_cases: list of 'adherence' case dicts
+        """Args:
+            adherence_cases: list of 'adherence' case dicts that come from elasticsearch
 
-        Returns:
-            dict indexed by date part of 'adherence_date' and whether a dose is taken as value.
-            Below is criteria to calculate whether a dose is taken on a day or not
+        Returns: dict indexed by date part of 'adherence_date' and the source
+            of the adherence datapoint on that day, or False.
+
+        """
+        cases_by_date = defaultdict(list)
+        for case in adherence_cases:
+            adherence_date = parse_date(case['adherence_date']) or parse_datetime(case['adherence_date']).date()
+            cases_by_date[adherence_date].append(case)
+
+        # calculate whether adherence is taken on each day
+        dose_source_by_date = defaultdict(bool)
+        for d, cases in cases_by_date.iteritems():
+            dose_source_by_date[d] = EpisodeAdherenceUpdate._get_dose_source(cases)
+
+        return dose_source_by_date
+
+    @staticmethod
+    def _get_dose_source(cases):
+        """Returns the source of a dose, or False if there is no dose
 
         If there are multiple cases on one day filter to a single case as per below
         1. Find most relevant case
@@ -220,38 +229,25 @@ class EpisodeAdherenceUpdate(object):
                 ignore non-enikshay and apply above enikshay only condition
         2. Check if 'adherence_value' of most relevent case is one of DOSE_TAKEN_INDICATORS
         """
-        def is_dose_taken(cases):
-            # runs above discribed calculation and returns whether a dose is taken or not
-            sources = set(map(lambda x: x["adherence_source"], cases))
-            if 'enikshay' not in sources:
-                valid_cases = cases
-            else:
-                valid_cases = filter(
-                    lambda case: (
-                        case.get('adherence_source') == 'enikshay' and
-                        (not case['closed'] or (case['closed'] and
-                         case.get('adherence_closure_reason') == HISTORICAL_CLOSURE_REASON))
-                    ),
-                    cases
-                )
-            if valid_cases:
-                by_modified_on = sorted(valid_cases, key=lambda case: case['modified_on'])
-                return by_modified_on[-1]['adherence_value'] in DOSE_TAKEN_INDICATORS
-            else:
-                return False
-
-        # index by 'adherence_date'
-        cases_by_date = defaultdict(list)
-        for case in adherence_cases:
-            adherence_date = parse_date(case['adherence_date']) or parse_datetime(case['adherence_date']).date()
-            cases_by_date[adherence_date].append(case)
-
-        # calculate whether adherence is taken on each day
-        dose_taken_by_date = defaultdict(bool)
-        for d, cases in cases_by_date.iteritems():
-            dose_taken_by_date[d] = is_dose_taken(cases)
-
-        return dose_taken_by_date
+        sources = set(map(lambda x: x["adherence_source"], cases))
+        if 'enikshay' not in sources:
+            valid_cases = cases
+        else:
+            valid_cases = filter(
+                lambda case: (
+                    case.get('adherence_source') == 'enikshay' and
+                    (not case['closed'] or (case['closed'] and
+                     case.get('adherence_closure_reason') == HISTORICAL_CLOSURE_REASON))
+                ),
+                cases
+            )
+        if valid_cases:
+            by_modified_on = sorted(valid_cases, key=lambda case: case['modified_on'])
+            latest_case = by_modified_on[-1]
+            if latest_case['adherence_value'] in DOSE_TAKEN_INDICATORS:
+                return latest_case.get('adherence_report_source') or latest_case.get('adherence_source')
+            return False
+        return False
 
     def get_adherence_schedule_start_date(self):
         # return property 'adherence_schedule_date_start' of episode case (is expected to be a date object)
@@ -282,14 +278,28 @@ class EpisodeAdherenceUpdate(object):
             raise EnikshayTaskException("Both of start_date and end_date should be specified or niether of them")
 
         if not start_date:
-            return dose_taken_by_date.values().count(True)
+            return len([dose_taken for dose_taken in dose_taken_by_date.values() if dose_taken])
         else:
-            # any efficient way to do this - numpy, python bisect?
-            return [
+            return len([
                 is_taken
                 for date, is_taken in dose_taken_by_date.iteritems()
-                if start_date <= date <= end_date
-            ].count(True)
+                if start_date <= date <= end_date and is_taken
+            ])
+
+    @staticmethod
+    def count_doses_taken_by_source(doses_taken_by_date, start_date=None, end_date=None):
+        """Count all sources of adherence and return the count within the desired timeframe
+
+        {'99DOTS': 1, 'MERM': 1, 'treatment_supervisor': 0, ... }
+        """
+        counts = defaultdict(int)
+        for date, source in doses_taken_by_date.iteritems():
+            if source in VALID_ADHERENCE_SOURCES:
+                if start_date and end_date and start_date <= date <= end_date:
+                    counts[source] += 1
+                elif not start_date and not end_date:
+                    counts[source] += 1
+        return counts
 
     def update_json(self):
         debug_data = []
@@ -305,7 +315,7 @@ class EpisodeAdherenceUpdate(object):
         debug_data.append("latest_adherence_date: {}".format(latest_adherence_date))
 
         if (adherence_schedule_date_start > self.case_updater.purge_date) or not latest_adherence_date:
-            return {
+            return self.check_and_return({
                 'aggregated_score_date_calculated': adherence_schedule_date_start - datetime.timedelta(days=1),
                 'expected_doses_taken': 0,
                 'aggregated_score_count_taken': 0,
@@ -317,7 +327,7 @@ class EpisodeAdherenceUpdate(object):
                 'one_week_adherence_score': 0,
                 'two_week_adherence_score': 0,
                 'month_adherence_score': 0,
-            }
+            })
 
         adherence_cases = self.get_valid_adherence_cases()
         dose_taken_by_date = self.calculate_doses_taken_by_day(adherence_cases)
@@ -325,50 +335,50 @@ class EpisodeAdherenceUpdate(object):
             latest_adherence_date, adherence_schedule_date_start, dose_taken_by_date)
         update.update(self.get_adherence_scores(dose_taken_by_date))
 
-        if self.check_if_needs_update(update):
-            return update
-        else:
-            return None
+        return self.check_and_return(update)
 
     def get_adherence_scores(self, doses_taken_by_date):
+        """
+        https://docs.google.com/document/d/1lTGiz28REKKgAP4yPe7jKHEEd0y8wldjfYONVH_Uli0/edit#
+        https://docs.google.com/document/d/1TG9YWSdccgKeKj0mVIAsoq9LthcZfw5_OebSrkYCF3A/edit#
+        """
+        readable_day_names = {
+            3: 'three_day',
+            7: 'one_week',
+            14: 'two_week',
+            30: 'month',
+        }
         today = self.case_updater.date_today_in_india
         start_date = self.get_adherence_schedule_start_date()
 
-        if today - datetime.timedelta(days=7) >= start_date:
-            one_week_score_count_taken = self.count_doses_taken(
-                doses_taken_by_date,
-                start_date=today - datetime.timedelta(days=7),
-                end_date=today,
-            )
-        else:
-            one_week_score_count_taken = 0
+        properties = {}
+        for num_days, day_name in readable_day_names.iteritems():
+            if today - datetime.timedelta(days=num_days) >= start_date:
+                score_count_taken = self.count_doses_taken(
+                    doses_taken_by_date,
+                    start_date=today - datetime.timedelta(days=num_days),
+                    end_date=today,
+                )
+                doses_taken_by_source = self.count_doses_taken_by_source(
+                    doses_taken_by_date,
+                    start_date=today - datetime.timedelta(days=num_days),
+                    end_date=today,
+                )
+            else:
+                score_count_taken = 0
+                doses_taken_by_source = {source: 0 for source in VALID_ADHERENCE_SOURCES}
 
-        if today - datetime.timedelta(days=14) >= start_date:
-            two_week_score_count_taken = self.count_doses_taken(
-                doses_taken_by_date,
-                start_date=today - datetime.timedelta(days=14),
-                end_date=today,
-            )
-        else:
-            two_week_score_count_taken = 0
+            properties["{}_score_count_taken".format(day_name)] = score_count_taken
+            properties["{}_adherence_score".format(day_name)] = self._percentage_score(score_count_taken, num_days)
+            for source in VALID_ADHERENCE_SOURCES:
+                properties["{}_score_count_taken_{}".format(day_name, source)] = doses_taken_by_source[source]
+                properties["{}_adherence_score_{}".format(day_name, source)] = self._percentage_score(
+                    doses_taken_by_source[source], num_days)
 
-        if today - datetime.timedelta(days=30) >= start_date:
-            month_score_count_taken = self.count_doses_taken(
-                doses_taken_by_date,
-                start_date=today - datetime.timedelta(days=30),
-                end_date=today,
-            )
-        else:
-            month_score_count_taken = 0
+        return properties
 
-        return {
-            'one_week_score_count_taken': one_week_score_count_taken,
-            'two_week_score_count_taken': two_week_score_count_taken,
-            'month_score_count_taken': month_score_count_taken,
-            'one_week_adherence_score': round((one_week_score_count_taken / 7.0) * 100, 2),
-            'two_week_adherence_score': round((two_week_score_count_taken / 14.0) * 100, 2),
-            'month_adherence_score': round((month_score_count_taken / 30.0) * 100, 2),
-        }
+    def _percentage_score(self, score, num_days):
+        return round(score / float(num_days) * 100, 2)
 
     def get_aggregated_scores(self, latest_adherence_date, adherence_schedule_date_start, dose_taken_by_date):
         """
@@ -418,18 +428,25 @@ class EpisodeAdherenceUpdate(object):
 
         return update
 
-    def check_if_needs_update(self, case_properties_expected):
+    def check_and_return(self, update_dict):
         """
         Args:
-            case_properties_expected: dict of case property name to values
+            update_dict: dict of case property name to values
 
         Returns:
-            True if any one of case_properties_expected is not set on self.episode case
+            Checks if any one of update_dict is not set on self.episode case,
+                if any of them are not returns update_dict after formatting any
+                date values to string.
+                If all of them are set as expected, returns None
         """
-        return any([
+        needs_update = any([
             self.get_property(k) != v
-            for (k, v) in case_properties_expected.iteritems()
+            for (k, v) in update_dict.iteritems()
         ])
+        if needs_update:
+            return update_dict
+        else:
+            return None
 
 
 class EpisodeVoucherUpdate(object):
@@ -555,3 +572,34 @@ class EpisodeVoucherUpdate(object):
             'first_voucher_validation_date': (fulfilled_voucher_cases[0].get_case_property('date_fulfilled')
                                               if fulfilled_voucher_cases else '')
         }
+
+
+class EpisodeTestUpdate(object):
+
+    def __init__(self, domain, episode_case):
+        self.domain = domain
+        self.episode = episode_case
+
+    @property
+    @memoized
+    def diagnostic_tests(self):
+        return get_private_diagnostic_test_cases_from_episode(self.domain, self.episode.case_id)
+
+    def update_json(self):
+        if self.diagnostic_tests:
+            return {
+                'diagnostic_tests': ", ".join([self._get_diagnostic_test_name(diagnostic_test)
+                                               for diagnostic_test in self.diagnostic_tests]),
+                'diagnostic_test_results': ", ".join([diagnostic_test.get_case_property('result_grade')
+                                                      for diagnostic_test in self.diagnostic_tests])
+            }
+        else:
+            return {}
+
+    def _get_diagnostic_test_name(self, diagnostic_test):
+        site_specimen_name = diagnostic_test.get_case_property('site_specimen_name')
+        if site_specimen_name:
+            return "{}: {}".format(
+                diagnostic_test.get_case_property('investigation_type_name'), site_specimen_name)
+        else:
+            return diagnostic_test.get_case_property('investigation_type_name')

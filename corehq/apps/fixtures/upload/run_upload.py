@@ -30,6 +30,7 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
     return_val = FixtureUploadResult()
     group_memoizer = GroupMemoizer(domain)
     get_location = get_memoized_location_getter(domain)
+    data_types = []
 
     with CouchTransaction() as transaction:
         type_sheets = workbook.get_all_type_sheets()
@@ -80,7 +81,7 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
             except (ResourceNotFound, KeyError):
                 data_type = new_data_type
             transaction.save(data_type)
-
+            data_types.append(data_type)
             data_items = list(workbook.get_data_sheet(data_type.tag))
             items_in_table = len(data_items)
             for sort_key, di in enumerate(data_items):
@@ -189,4 +190,22 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
                         old_data_item.add_location(location_cache.location,
                                                    transaction=transaction)
 
+    clear_fixture_quickcache(data_types)
     return return_val
+
+
+def clear_fixture_quickcache(data_types):
+    """
+    Clears quickcache for fixtures.dbaccessors
+
+    Args:
+        List of FixtureDataType objects in a domain
+    """
+    if not data_types:
+        return
+    type_ids = []
+    for data_type in data_types:
+        data_type.clear_caches()
+        type_ids.append(data_type.get_id)
+    from corehq.apps.fixtures.dbaccessors import get_fixture_items_for_data_types
+    get_fixture_items_for_data_types.clear(data_types[0].domain, set(type_ids))

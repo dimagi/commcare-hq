@@ -142,6 +142,12 @@ def _add_parent_case_to_template_params(case, result):
         result['case']['parent'] = _get_obj_template_info(parent_case)
 
 
+def _add_host_case_to_template_params(case, result):
+    host_case = case.host
+    if host_case:
+        result['case']['host'] = _get_obj_template_info(host_case)
+
+
 def _add_owner_to_template_params(case, result):
     owner = get_wrapped_owner(get_owner_id(case))
     if owner:
@@ -189,6 +195,7 @@ def get_message_template_params(case=None):
     if case:
         _add_case_to_template_params(case, result)
         _add_parent_case_to_template_params(case, result)
+        _add_host_case_to_template_params(case, result)
         _add_owner_to_template_params(case, result)
         _add_modified_by_to_template_params(case, result)
     return result

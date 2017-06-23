@@ -27,6 +27,7 @@ QUESTIONS = [
                      "instance('casedb')/casedb/case[@case_id=instance('casedb')/casedb/case["
                      "@case_id=instance('commcaresession')/session/data/case_id]/index/parent"
                      "]/parent_property_1"),
+        'constraint': "1 + instance('casedb')/casedb/case[@case_id=instance('commcaresession')/session/data/case_id]/child_property_1",
         'comment': None,
     },
     {
@@ -40,6 +41,7 @@ QUESTIONS = [
         'type': 'Text',
         'required': False,
         'relevant': None,
+        'constraint': None,
         'comment': "This is a comment",
     },
     {
@@ -53,6 +55,7 @@ QUESTIONS = [
         'type': 'Text',
         'required': False,
         'relevant': None,
+        'constraint': None,
         'comment': None,
     },
     {
@@ -66,6 +69,7 @@ QUESTIONS = [
         'type': 'Trigger',
         'required': False,
         'relevant': None,
+        'constraint': None,
         'comment': None,
     },
     {
@@ -79,6 +83,7 @@ QUESTIONS = [
         'type': 'Text',
         'required': False,
         'relevant': None,
+        'constraint': '1',
         'comment': None,
     },
     {
@@ -99,6 +104,7 @@ QUESTIONS = [
         'type': 'Select',
         'required': False,
         'relevant': None,
+        'constraint': None,
         'comment': None,
     },
     {
@@ -112,6 +118,7 @@ QUESTIONS = [
         'type': 'Int',
         'required': False,
         'relevant': None,
+        'constraint': None,
         'comment': None,
     },
     {
@@ -125,6 +132,7 @@ QUESTIONS = [
         'type': 'Text',
         'required': False,
         'relevant': None,
+        'constraint': None,
         'comment': None,
     },
     {
@@ -137,7 +145,9 @@ QUESTIONS = [
         'translations': {},
         'type': 'DataBindOnly',
         'relevant': None,
-        'calculate': None
+        'calculate': None,
+        'constraint': None,
+        'comment': None,
     },
 ]
 

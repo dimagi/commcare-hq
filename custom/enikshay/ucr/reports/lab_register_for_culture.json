@@ -1,7 +1,8 @@
 {
     "domains": [
         "enikshay",
-        "sheel-enikshay"
+        "sheel-enikshay",
+        "enikshay-reports-qa"
     ],
     "server_environment": [
         "softlayer"
@@ -10,7 +11,7 @@
     "report_id": "lab_register_for_culture",
     "config": {
         "description": "",
-        "title": "Lab Register for Culture, CBNAAT and Drug",
+        "title": "RNTCP Laboratory Register for Culture, CBNAAT and Drug Susceptibility Testing",
         "sort_expression": [],
         "visible": true,
         "configured_charts": [],
@@ -70,10 +71,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "date_reported",
+                "field": "test_type_value",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Date of Test Performed"
+                "display": "Test Type"
             },
             {
                 "sortable": false,
@@ -81,10 +82,21 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "test_type_value",
+                "field": "testing_facility_name",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Test Type"
+                "display": "Testing Facility Name"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "lab_serial_number",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Lab Serial Number"
             },
             {
                 "sortable": false,
@@ -103,10 +115,21 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
+                "field": "person_name",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Patient's Full Name"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
                 "field": "person_details",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Patient's Full Name (Current Address and phone number)"
+                "display": "Address and Contact Details"
             },
             {
                 "sortable": false,
@@ -180,6 +203,17 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
+                "field": "criteria_for_testing",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Criteria for Testing"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
                 "field": "predominant_symptoms_and_durations",
                 "calculate_total": false,
                 "type": "field",
@@ -238,7 +272,7 @@
                 "field": "specimen_type_from_case",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Type of Specimen (sputum or other) For C&DST Lab Microscopy"
+                "display": "Type of Specimen"
             },
             {
                 "sortable": false,
@@ -249,7 +283,16 @@
                 "field": "sputum_visual_appearance",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Specimen Condition For C&DST Lab Microscopy"
+                "display": "Sputum Specimen Condition"
+            },
+            {
+                "type": "expression",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                },
+                "display": "eNikshay Specimen Condition",
+                "column_id": "enikshay_specimen_condition"
             },
             {
                 "sortable": false,
@@ -293,7 +336,7 @@
                 "field": "r_drug",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Rifampicin"
+                "display": "Rif"
             },
             {
                 "sortable": false,
@@ -323,76 +366,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "s_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Streptomycin"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "e_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Ethambutol"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "z_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Pyrazinamide"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "km_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Kanamycin"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "cm_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Capreomycin"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "am_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Amikacin"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
                 "field": "lfx_drug",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Levofloxacin"
+                "display": "Lfx"
             },
             {
                 "sortable": false,
@@ -400,87 +377,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "mfx05_drug",
+                "field": "other_drugs",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Moxifloxacin (0.5)"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "mfx20_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Moxifloxacin (2.0)"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "eto_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Ethionamide"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "pas_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "PAS"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "lzd_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Linezolid"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "cfz_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Clofazimine"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "bdg_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Bedaquiline"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "dlm_drug",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Delamanid"
+                "display": "Other"
             }
         ]
     }

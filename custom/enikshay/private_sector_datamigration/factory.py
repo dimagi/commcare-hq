@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 from dateutil.relativedelta import relativedelta
 
@@ -32,10 +32,11 @@ def get_human_friendly_id():
 
 class BeneficiaryCaseFactory(object):
 
-    def __init__(self, domain, beneficiary, location_owner):
+    def __init__(self, domain, beneficiary, location_owner, default_location_owner):
         self.domain = domain
         self.beneficiary = beneficiary
         self.location_owner = location_owner
+        self.default_location_owner = default_location_owner
 
     def get_case_structures_to_create(self, skip_adherence):
         person_structure = self.get_person_case_structure()
@@ -50,7 +51,10 @@ class BeneficiaryCaseFactory(object):
                 self.get_adherence_case_structure(adherence, episode_structure)
                 for adherence in self._adherences
             )
-        return episode_descendants or [episode_structure]
+        case_structures = [person_structure, occurrence_structure, episode_structure] + episode_descendants
+        for case_structure in case_structures:
+            case_structure.walk_related = False
+        return case_structures
 
     def get_person_case_structure(self):
         kwargs = {
@@ -58,6 +62,7 @@ class BeneficiaryCaseFactory(object):
                 'case_type': PERSON_CASE_TYPE,
                 'create': True,
                 'update': {
+                    'contact_phone_number': '91' + self.beneficiary.phoneNumber,
                     'current_address': self.beneficiary.current_address,
                     'current_episode_type': self.beneficiary.current_episode_type,
                     'dataset': 'real',
@@ -67,8 +72,14 @@ class BeneficiaryCaseFactory(object):
                     'id_original_beneficiary_count': self._serial_count,
                     'id_original_device_number': 0,
                     'id_original_issuer_number': self._id_issuer_number,
-                    'language_preference': self.beneficiary.language_preference,
+                    'language_code': self.beneficiary.language_preference,
                     'last_name': self.beneficiary.lastName,
+                    'legacy_blockOrHealthPostId': self.beneficiary.blockOrHealthPostId,
+                    'legacy_districtId': self.beneficiary.districtId,
+                    'legacy_organisationId': self.beneficiary.organisationId,
+                    'legacy_subOrganizationId': self.beneficiary.subOrganizationId,
+                    'legacy_stateId': self.beneficiary.stateId,
+                    'legacy_wardId': self.beneficiary.wardId,
                     'name': self.beneficiary.name,
                     'person_id': self.person_id,
                     'person_id_flat': self.person_id_flat,
@@ -120,6 +131,12 @@ class BeneficiaryCaseFactory(object):
 
         kwargs['attrs']['update']['facility_assigned_to'] = self._location_owner_id
 
+        if self.beneficiary.pincode:
+            kwargs['attrs']['update']['current_address_postal_code'] = self.beneficiary.pincode
+
+        if self.beneficiary.villageTownCity is not None:
+            kwargs['attrs']['update']['current_address_village_town_city'] = self.beneficiary.villageTownCity
+
         if self._episode:
             kwargs['attrs']['update']['diabetes_status'] = self._episode.diabetes_status
             kwargs['attrs']['update']['hiv_status'] = self._episode.hiv_status
@@ -137,6 +154,12 @@ class BeneficiaryCaseFactory(object):
                 kwargs['attrs']['update']['is_active'] = 'yes'
         else:
             kwargs['attrs']['owner_id'] = self._location_owner_id
+
+        if self.beneficiary.creating_agency:
+            kwargs['attrs']['update']['created_by_user_type'] = self.beneficiary.creating_agency.usertype
+            creating_loc = self._location_by_agency(self.beneficiary.creating_agency)
+            if creating_loc:
+                kwargs['attrs']['update']['created_by_user_location_id'] = creating_loc.location_id
 
         return CaseStructure(**kwargs)
 
@@ -200,6 +223,7 @@ class BeneficiaryCaseFactory(object):
         if self._episode:
             rx_start_datetime = self._episode.rxStartDate
             kwargs['attrs']['date_opened'] = rx_start_datetime
+            kwargs['attrs']['update']['adherence_schedule_date_start'] = rx_start_datetime.date()
             kwargs['attrs']['update']['adherence_total_doses_taken'] = self._episode.adherence_total_doses_taken
             kwargs['attrs']['update']['adherence_tracking_mechanism'] = self._episode.adherence_tracking_mechanism
             kwargs['attrs']['update']['basis_of_diagnosis'] = self._episode.basis_of_diagnosis
@@ -231,7 +255,7 @@ class BeneficiaryCaseFactory(object):
                 kwargs['attrs']['update']['nikshay_id'] = self._episode.nikshayID
 
             if self._episode.rxOutcomeDate is not None:
-                kwargs['attrs']['update']['rx_outcome_date'] = self._episode.rxOutcomeDate.date()
+                kwargs['attrs']['update']['treatment_outcome_date'] = self._episode.rxOutcomeDate.date()
 
             if self._episode.disease_classification == 'extra_pulmonary':
                 kwargs['attrs']['update']['site_choice'] = self._episode.site_choice
@@ -249,18 +273,26 @@ class BeneficiaryCaseFactory(object):
             kwargs['attrs']['update']['private_sector_episode_pending_registration'] = 'yes'
             kwargs['attrs']['update']['treatment_initiated'] = 'no'
 
+        if self.beneficiary.creating_agency:
+            kwargs['attrs']['update']['created_by_user_type'] = self.beneficiary.creating_agency.usertype
+            creating_loc = self._location_by_agency(self.beneficiary.creating_agency)
+            if creating_loc:
+                kwargs['attrs']['update']['created_by_user_id'] = creating_loc.user_id
+                kwargs['attrs']['update']['created_by_user_location_id'] = creating_loc.location_id
+
         return CaseStructure(**kwargs)
 
     def get_adherence_case_structure(self, adherence, episode_structure):
         kwargs = {
             'attrs': {
                 'case_type': ADHERENCE_CASE_TYPE,
-                'close': False,
                 'create': True,
                 'date_opened': adherence.creationDate,
                 'owner_id': '-',
                 'update': {
                     'adherence_date': adherence.doseDate.date(),
+                    'adherence_report_source': adherence.adherence_report_source,
+                    'adherence_source': adherence.adherence_source,
                     'adherence_value': adherence.adherence_value,
                     'name': adherence.doseDate.date(),
 
@@ -275,6 +307,14 @@ class BeneficiaryCaseFactory(object):
                 related_type=EPISODE_CASE_TYPE,
             )],
         }
+
+        if date.today() - adherence.doseDate.date() > timedelta(days=30):
+            kwargs['attrs']['close'] = True
+            kwargs['attrs']['update']['adherence_closure_reason'] = 'historical'
+        else:
+            kwargs['attrs']['close'] = False
+
+
         return CaseStructure(**kwargs)
 
     def get_prescription_case_structure(self, prescription, episode_structure):
@@ -345,6 +385,8 @@ class BeneficiaryCaseFactory(object):
         if self.location_owner:
             return self.location_owner
         else:
+            if self._agency is None or self._agency.location_type not in ['pcp', 'pac']:
+                return self.default_location_owner
             return SQLLocation.active_objects.get(
                 domain=self.domain,
                 site_code=str(self._agency.agencyId),
@@ -353,6 +395,8 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _location_owner_id(self):
+        if self._location_owner is None:
+            return '-'
         return self._location_owner.location_id
 
     @property
@@ -396,3 +440,13 @@ class BeneficiaryCaseFactory(object):
             self.person_id_flat[i:i + num_chars_between_hyphens]
             for i in range(0, len(self.person_id_flat), num_chars_between_hyphens)
         ])
+
+    @memoized
+    def _location_by_agency(self, agency):
+        try:
+            return SQLLocation.active_objects.get(
+                domain=self.domain,
+                site_code=str(agency.agencyId),
+            )
+        except SQLLocation.DoesNotExist:
+            return None

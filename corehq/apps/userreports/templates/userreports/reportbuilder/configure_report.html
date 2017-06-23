@@ -31,6 +31,7 @@
         var dataSourceIndicators = {{ data_source_indicators|JSON }};
         var reportColumnOptions = {{ report_column_options|JSON }};
         var dateRangeOptions = {{ date_range_options|JSON }};
+        var isGroupByRequired = {{ is_group_by_required|JSON }};
 
         var ConfigForm = hqImport('userreports/js/builder_view_models.js').ConfigForm;
         $("#report-config-form").koApplyBindings(
@@ -42,7 +43,8 @@
                 initialDefaultFilters,
                 dataSourceIndicators,
                 reportColumnOptions,
-                dateRangeOptions
+                dateRangeOptions,
+                isGroupByRequired
             )
         );
 

@@ -24,7 +24,7 @@ class AppAwareSyncTests(TestCase):
     @classmethod
     def setUpClass(cls):
         delete_all_users()
-        create_domain(cls.domain)
+        cls.domain_obj = create_domain(cls.domain)
         toggles.MOBILE_UCR.set(cls.domain, True, toggles.NAMESPACE_DOMAIN)
         cls.user = create_restore_user(cls.domain)
 
@@ -101,3 +101,17 @@ class AppAwareSyncTests(TestCase):
             get_data_mock.return_value = self.rows
             fixtures = call_fixture_generator(report_fixture_generator, self.user, app=self.app3)
         self.assertEqual(len(fixtures), 0)
+
+    def test_user_restore(self):
+        from casexml.apps.phone.tests.utils import generate_restore_payload
+        from casexml.apps.case.xml import V3
+        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+
+        with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
+            get_data_mock.return_value = self.rows
+            with mock_sql_backend():
+                with mock_datasource_config():
+                    restore = generate_restore_payload(self.domain_obj, self.user, version=V3)
+                    self.assertIn('<fixture id="commcare:reports"', restore)
+                    self.assertIn('report_id="{id}"'.format(id=self.report_config1._id), restore)
+                    self.assertIn('report_id="{id}"'.format(id=self.report_config2._id), restore)

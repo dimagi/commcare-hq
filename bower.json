@@ -72,7 +72,7 @@
   "devDependencies": {
     "chai": "3.3.0",
     "mocha": "2.3.3",
-    "sinon": "http://sinonjs.org/releases/sinon-1.17.7.js",
+    "sinon": "http://sinonjs.org/releases/sinon-2.3.2.js",
     "angular-mocks": "1.4.4",
     "jasmine-fixture": "2.0.0"
   },
