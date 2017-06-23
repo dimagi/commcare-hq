@@ -1,6 +1,7 @@
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml import xml_models as sx
 from corehq.apps.app_manager.suite_xml import const
+from corehq.apps.app_manager.util import sort_nodeset_fields
 from corehq.apps.app_manager.xpath import (
     CaseXPath,
     CommCareSession,
@@ -26,9 +27,9 @@ CASE_PROPERTY_MAP = {
 
 
 def get_column_generator(app, module, detail, column, sort_element=None,
-                         order=None, detail_type=None):
+                         order=None, detail_type=None, nodeset=None):
     cls = get_class_for_format(column.format)  # cls will be FormattedDetailColumn or a subclass of it
-    return cls(app, module, detail, column, sort_element, order, detail_type=detail_type)
+    return cls(app, module, detail, column, sort_element, order, detail_type=detail_type, nodeset=nodeset)
 
 
 def get_class_for_format(slug):
@@ -89,7 +90,7 @@ class FormattedDetailColumn(object):
     SORT_TYPE = 'string'
 
     def __init__(self, app, module, detail, column, sort_element=None,
-                 order=None, detail_type=None):
+                 order=None, detail_type=None, nodeset=None):
         self.app = app
         self.module = module
         self.detail = detail
@@ -98,6 +99,10 @@ class FormattedDetailColumn(object):
         self.sort_element = sort_element
         self.order = order
         self.id_strings = id_strings
+        self.nodeset = nodeset
+
+    def sort_nodeset_fields(self):
+        return sort_nodeset_fields(self.detail_type, self.detail) and self.nodeset
 
     @property
     def locale_id(self):
@@ -132,7 +137,10 @@ class FormattedDetailColumn(object):
 
     @property
     def sort_node(self):
-        if not (self.app.enable_multi_sort and self.detail.display == 'short'):
+        if not (self.app.enable_multi_sort and (
+                    self.detail.display == 'short' or
+                    self.sort_nodeset_fields())
+                ):
             return
 
         sort = None
@@ -255,7 +263,7 @@ class HideShortHeaderColumn(FormattedDetailColumn):
 
     @property
     def header(self):
-        if self.detail.display == 'short':
+        if self.detail.display == 'short' or self.sort_nodeset_fields():
             header = sx.Header(
                 text=sx.Text(),
                 width=self.template_width
@@ -269,7 +277,7 @@ class HideShortColumn(HideShortHeaderColumn):
 
     @property
     def template_width(self):
-        if self.detail.display == 'short':
+        if self.detail.display == 'short' or self.sort_nodeset_fields():
             return 0
 
 

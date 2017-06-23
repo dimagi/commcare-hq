@@ -572,3 +572,7 @@ def get_form_data(domain, app):
         module_meta['forms'] = forms
         modules.append(module_meta)
     return modules, errors
+
+
+def sort_nodeset_fields(detail_type, detail):
+    return detail_type == "case_long" and detail.sort_nodeset_fields
