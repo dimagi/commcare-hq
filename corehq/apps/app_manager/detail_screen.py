@@ -102,10 +102,7 @@ class FormattedDetailColumn(object):
         self.nodeset = nodeset
 
     def add_sort_node_for_nodeset_field(self):
-        return (self.nodeset and
-                self.column.format == 'invisible' and
-                sort_nodeset_fields_for_detail(self.detail_type, self.detail)
-                )
+        return False
 
     @property
     def locale_id(self):
@@ -444,6 +441,10 @@ class LateFlag(HideShortHeaderColumn):
 
 @register_format_type('invisible')
 class Invisible(HideShortColumn):
+
+    def add_sort_node_for_nodeset_field(self):
+        return self.nodeset and sort_nodeset_fields_for_detail(self.detail_type, self.detail)
+
     @property
     def header(self):
         """

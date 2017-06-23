@@ -381,7 +381,7 @@ def get_default_sort_elements(detail_type, detail):
             if tab.nodeset:
                 tab_span = tab_spans[tab.id]
                 for column in detail.columns[tab_span[0]:tab_span[1]]:
-                    if column.format == 'invisible':
+                    if column.invisible:
                         sort_elements.append(SortElement(
                             field=column.field,
                             **get_sort_params(column)

@@ -2030,6 +2030,9 @@ class DetailColumn(IndexedSchema):
                     item.value[lang] = interpolate_media_path(path)
         return to_ret
 
+    def invisible(self):
+        return self.format == 'invisible'
+
 
 class SortElement(IndexedSchema):
     field = StringProperty()
