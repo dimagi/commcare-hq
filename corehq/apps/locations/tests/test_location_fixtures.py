@@ -237,7 +237,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
 
     def test_include_without_expanding_same_level(self):
         # I want a list of all the counties, but only the cities in my county
-        self.user._couch_user.set_location(self.locations['Boston'].couch_location)
+        self.user._couch_user.set_location(self.locations['Boston'])
         location_type = self.locations['Boston'].location_type
 
         # Get all the counties
@@ -252,7 +252,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
 
     def test_include_without_expanding_lower_level(self):
         # I want all all the cities, but am at the state level
-        self.user._couch_user.set_location(self.locations['Massachusetts'].couch_location)
+        self.user._couch_user.set_location(self.locations['Massachusetts'])
         location_type = self.locations['Massachusetts'].location_type
 
         # Get all the cities
@@ -348,7 +348,7 @@ class ForkedHierarchiesTest(TestCase, FixtureHasLocationsMixin):
         delete_all_users()
 
     def test_include_without_expanding_includes_all_ancestors(self):
-        self.user._couch_user.set_location(self.locations['DTO'].couch_location)
+        self.user._couch_user.set_location(self.locations['DTO'])
         location_type = self.locations['DTO'].location_type
 
         location_type.include_without_expanding = self.locations['DTO'].location_type
