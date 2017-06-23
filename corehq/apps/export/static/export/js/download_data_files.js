@@ -1,4 +1,4 @@
-/* globals hqDefine, django, $ */
+/* globals hqDefine, django, $, alert_user */
 hqDefine("export/js/download_data_files.js", function() {
 
     /**
@@ -42,10 +42,10 @@ hqDefine("export/js/download_data_files.js", function() {
         $.ajax({
             url: url,
             type: "DELETE",
-            success: function (data, status, jqxhr) {
+            success: function () {
                 rowElem.remove();
                 alert_user(django.gettext("Data file deleted."), "success", true);
-            }
+            },
         });
     };
 
