@@ -679,6 +679,7 @@ class IndexTree(DocumentSchema):
         return all_cases
 
     @staticmethod
+    @memoized
     def traverse_incoming_extensions(case_id, extension_index_tree, closed_cases):
         """traverse open incoming extensions"""
         all_cases = set([case_id])
@@ -757,6 +758,16 @@ class SimplifiedSyncLog(AbstractSyncLog):
         if self._purged_cases is None:
             self._purged_cases = set()
         return self._purged_cases
+
+    _frozen_closed_cases = None
+
+    @property
+    def frozen_closed_cases(self):
+        """Used so that we can memoize a function that requires this
+        """
+        if self._frozen_closed_cases is None:
+            self._frozen_closed_cases = frozenset(self.closed_cases)
+        return self._frozen_closed_cases
 
     def save(self, *args, **kwargs):
         # force doc type to SyncLog to avoid changing the couch view.
@@ -883,7 +894,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
             new_live = new_live | IndexTree.traverse_incoming_extensions(
                 case_to_check,
                 self.extension_index_tree,
-                self.closed_cases
+                self.frozen_closed_cases,
             ) - self.purged_cases
             new_live = new_live - checked
             live = live | new_live
