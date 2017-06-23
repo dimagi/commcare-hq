@@ -5,6 +5,14 @@
 
 {% block title %}{% trans "Download Data Files" %}{% endblock %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'export/js/download_data_files.js' %}"></script>
+    <script>
+        var copyDataFileUrl = hqImport('export/js/download_data_files.js').copyDataFileUrl;
+        var deleteDataFile = hqImport('export/js/download_data_files.js').deleteDataFile;
+    </script>
+{% endblock %}
+
 {% block page_content %}
     {% block main_column_content %}
 
@@ -28,29 +36,10 @@
                 </td>
                 <td style="width: 6em; text-align: right;">
                     <a href="#"
-                       onclick="(function () {
-                                    var showCopyDialog = function () {
-                                        var url = '{% if request.is_secure %}https://{% else %}http://{% endif %}{{ request.get_host }}{% url 'download_data_file' domain data_file.id data_file.filename %}';
-                                        window.prompt('{% trans 'Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)' %}',
-                                                      url);
-                                    };
-                                    try {
-                                        // Most browsers since Sept 2015
-                                        var urlElem = $('#url_{{ data_file.id }}');
-                                        urlElem.show();
-                                        urlElem.select();
-                                        var copied = document.execCommand('copy');
-                                        urlElem.hide();
-                                        if (copied) {
-                                            alert_user('{% trans 'Data file URL copied to clipboard.' %}', 'success', true);
-                                        } else {
-                                            showCopyDialog();
-                                        }
-                                    } catch (err) {
-                                        // Older browsers
-                                        showCopyDialog();
-                                    }
-                                }())">
+                       onclick="copyDataFileUrl(
+                                    '{% if request.is_secure %}https://{% else %}http://{% endif %}{{ request.get_host }}{% url 'download_data_file' domain data_file.id data_file.filename %}',
+                                    $('#url_{{ data_file.id }}')
+                                )">
                         <i class="fa fa-link text-info"></i>
                     </a>
 
@@ -60,16 +49,10 @@
 
                     {% if is_admin %}
                     <a href="#"
-                       onclick="(function () {
-                                    $.ajax({
-                                        url: '{% url 'download_data_file' domain data_file.id data_file.filename %}',
-                                        type: 'DELETE',
-                                        success: function (data, status, jqxhr) {
-                                            $('#row_{{ data_file.id }}').remove();
-                                            alert_user('{% trans 'Data file deleted.' %}', 'success', true);
-                                        }
-                                    });
-                                }())">
+                       onclick="deleteDataFile(
+                                    '{% url 'download_data_file' domain data_file.id data_file.filename %}',
+                                    $('#row_{{ data_file.id }}')
+                                )">
                         <i class="fa fa-close text-danger"></i>
                     </a>
                     {% endif %}
