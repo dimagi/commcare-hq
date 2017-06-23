@@ -1,1 +1,3 @@
-As per the latest records of your AWC, the weight of your child {child_name} has reduced in the last month. Please consult your AWW for necessary advice.
+{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
+
+आपके बच्चे {{ child_name }} के वजन में पिछले महीने में कमी हुई हैं| कृपया अपने आंगनवाड़ी केंद्र पर तुरंत संपर्क करें|
