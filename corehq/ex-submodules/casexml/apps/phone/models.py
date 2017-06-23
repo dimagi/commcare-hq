@@ -638,27 +638,28 @@ class IndexTree(DocumentSchema):
         Traverse each incoming index, return each touched case.
         Traverse each outgoing index in the extension tree, return each touched case
         """
-        def _recursive_call(case_id, all_cases):
-            all_cases.add(case_id)
-            incoming_extension_indices = extension_index_tree.get_cases_that_directly_depend_on_case(case_id)
-            all_incoming_indices = itertools.chain(
-                child_index_tree.get_cases_that_directly_depend_on_case(case_id),
-                incoming_extension_indices,
-            )
-
-            for dependent_case in all_incoming_indices:
-                # incoming indices
-                if dependent_case not in all_cases:
-                    all_cases.add(dependent_case)
-                    _recursive_call(dependent_case, all_cases)
-            for indexed_case in extension_index_tree.indices.get(case_id, {}).values():
-                # outgoing extension indices
-                if indexed_case not in all_cases:
-                    all_cases.add(indexed_case)
-                    _recursive_call(indexed_case, all_cases)
-
         all_cases = set()
-        _recursive_call(case_id, all_cases)
+        cases_to_check = set([case_id])
+        while cases_to_check:
+            case_to_check = cases_to_check.pop()
+            if case_to_check not in all_cases:
+                all_cases.add(case_to_check)
+                incoming_extension_indices = extension_index_tree.get_cases_that_directly_depend_on_case(
+                    case_to_check
+                )
+                all_incoming_indices = itertools.chain(
+                    child_index_tree.get_cases_that_directly_depend_on_case(case_to_check),
+                    incoming_extension_indices,
+                )
+                for dependent_case in all_incoming_indices:
+                    # incoming indices
+                    if dependent_case not in all_cases:
+                        cases_to_check.add(dependent_case)
+                for indexed_case in extension_index_tree.indices.get(case_to_check, {}).values():
+                    # outgoing extension indices
+                    if indexed_case not in all_cases:
+                        cases_to_check.add(indexed_case)
+
         return all_cases
 
     @staticmethod
