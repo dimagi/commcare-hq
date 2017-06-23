@@ -130,7 +130,7 @@ class TestLocationDim(TestCase):
 
         self.assertIsNotNone(home_location.location_level_0)
         self.assertIsNotNone(home_location.location_level_1)
-        self.assertEqual(home_location.location_level_2, home_location.sql_location_id)
+        self.assertEqual(home_location.location_level_0, home_location.sql_location_id)
 
         self.assertEqual(home_location.level, 2)
         self.assertEqual(home_location.location_type_name, 'home')
