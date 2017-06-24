@@ -362,13 +362,6 @@ class DetailsHelper(object):
         return detail_id if detail_id in self.active_details else None
 
 
-def get_sort_params(column):
-    if column.field_type == FIELD_TYPE_LEDGER:
-        return dict(type='int', direction='descending')
-    else:
-        return dict(type='string', direction='ascending')
-
-
 def get_nodeset_sort_elements(detail):
     from corehq.apps.app_manager.models import SortElement
     sort_elements = []
@@ -380,7 +373,8 @@ def get_nodeset_sort_elements(detail):
                 if column.invisible:
                     sort_elements.append(SortElement(
                         field=column.field,
-                        **get_sort_params(column)
+                        type='string',
+                        direction='ascending'
                     ))
     return sort_elements
 
@@ -390,6 +384,12 @@ def get_default_sort_elements(detail):
 
     if not detail.columns:
         return []
+
+    def get_sort_params(column):
+        if column.field_type == FIELD_TYPE_LEDGER:
+            return dict(type='int', direction='descending')
+        else:
+            return dict(type='string', direction='ascending')
 
     col_0 = detail.get_column(0)
     sort_elements = [SortElement(
@@ -403,6 +403,7 @@ def get_default_sort_elements(detail):
                 field=column.field,
                 **get_sort_params(column)
             ))
+
     return sort_elements
 
 
