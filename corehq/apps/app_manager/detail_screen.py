@@ -1,7 +1,7 @@
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml import xml_models as sx
 from corehq.apps.app_manager.suite_xml import const
-from corehq.apps.app_manager.util import sort_nodeset_fields_for_detail
+from corehq.apps.app_manager.util import sort_nodeset_columns_for_detail
 from corehq.apps.app_manager.xpath import (
     CaseXPath,
     CommCareSession,
@@ -443,7 +443,7 @@ class LateFlag(HideShortHeaderColumn):
 class Invisible(HideShortColumn):
 
     def add_sort_node_for_nodeset_field(self):
-        return self.parent_tab_nodeset and sort_nodeset_fields_for_detail(self.detail_type, self.detail)
+        return self.parent_tab_nodeset and sort_nodeset_columns_for_detail(self.detail_type, self.detail)
 
     @property
     def header(self):

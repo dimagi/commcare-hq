@@ -574,7 +574,7 @@ def get_form_data(domain, app):
     return modules, errors
 
 
-def sort_nodeset_fields_for_detail(detail_type, detail):
+def sort_nodeset_columns_for_detail(detail_type, detail):
     return (
         detail_type == "case_long" and
         detail.sort_nodeset_columns and

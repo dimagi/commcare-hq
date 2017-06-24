@@ -36,7 +36,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
 )
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
 from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search, \
-    get_sort_and_sort_only_columns, sort_nodeset_fields_for_detail
+    get_sort_and_sort_only_columns, sort_nodeset_columns_for_detail
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.xpath import session_var, XPath
@@ -52,7 +52,7 @@ class DetailContributor(SectionContributor):
 
     def get_section_elements(self):
         def include_sort(detail_type, detail):
-            return detail_type.endswith('short') or sort_nodeset_fields_for_detail(detail_type, detail)
+            return detail_type.endswith('short') or sort_nodeset_columns_for_detail(detail_type, detail)
 
         r = []
         if not self.app.use_custom_suite:
@@ -418,7 +418,7 @@ def get_detail_column_infos(detail_type, detail, include_sort):
 
     if detail.sort_elements:
         sort_elements = detail.sort_elements
-    elif sort_nodeset_fields_for_detail(detail_type, detail):
+    elif sort_nodeset_columns_for_detail(detail_type, detail):
         sort_elements = get_nodeset_sort_elements(detail)
     else:
         sort_elements = get_default_sort_elements(detail)
