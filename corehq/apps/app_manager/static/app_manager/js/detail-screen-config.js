@@ -731,7 +731,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         }
 
                         // Observe condition values for the sake of validation
-                        if (that.condition) {
+                        if (that.original.condition) {
                             that.condition.observableVal = ko.observable(that.original.condition);
                             that.condition.on("change", function(){
                                 that.condition.observableVal(that.condition.val());
@@ -1026,7 +1026,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         0,
                         _.extend({
                             hasNodeset: tabs[i].has_nodeset,
-                        }, _.pick(tabs[i], ["header", "nodeset", "isTab"]))
+                        }, _.pick(tabs[i], ["header", "nodeset", "isTab", "condition"]))
                     );
                 }
                 if (this.columnKey === 'long') {

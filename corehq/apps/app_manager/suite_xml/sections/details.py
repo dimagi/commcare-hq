@@ -102,13 +102,13 @@ class DetailContributor(SectionContributor):
         return r
 
     def build_detail(self, module, detail_type, detail, detail_column_infos,
-                     tabs=None, id=None, title=None, nodeset=None, print_template=None, start=0, end=None):
+                     tabs=None, id=None, title=None, nodeset=None, print_template=None, start=0, end=None, relevant=None):
         """
         Recursively builds the Detail object.
         (Details can contain other details for each of their tabs)
         """
         from corehq.apps.app_manager.detail_screen import get_column_generator
-        d = Detail(id=id, title=title, nodeset=nodeset, print_template=print_template)
+        d = Detail(id=id, title=title, nodeset=nodeset, print_template=print_template, relevant=relevant)
         self._add_custom_variables(detail, d)
         if tabs:
             tab_spans = detail.get_tab_spans()
@@ -123,7 +123,8 @@ class DetailContributor(SectionContributor):
                     )),
                     nodeset=tab.nodeset if tab.has_nodeset else None,
                     start=tab_spans[tab.id][0],
-                    end=tab_spans[tab.id][1]
+                    end=tab_spans[tab.id][1],
+                    relevant=tab.condition if tab.condition else None,
                 )
                 if sub_detail:
                     d.details.append(sub_detail)

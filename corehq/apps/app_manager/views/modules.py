@@ -98,7 +98,6 @@ def get_module_template(user, module):
 
 
 def get_module_view_context(app, module, lang=None):
-    import ipdb; ipdb.set_trace()
     # shared context
     context = {
         'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'name']),
@@ -770,7 +769,6 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     provided in the request. Components are short, long, filter, parent_select,
     fixture_select and sort_elements.
     """
-    import ipdb; ipdb.set_trace()
     params = json_request(request.POST)
     detail_type = params.get('type')
     short = params.get('short', None)
