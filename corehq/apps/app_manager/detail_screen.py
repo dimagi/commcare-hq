@@ -27,9 +27,10 @@ CASE_PROPERTY_MAP = {
 
 
 def get_column_generator(app, module, detail, column, sort_element=None,
-                         order=None, detail_type=None, nodeset=None):
+                         order=None, detail_type=None, parent_tab_nodeset=None):
     cls = get_class_for_format(column.format)  # cls will be FormattedDetailColumn or a subclass of it
-    return cls(app, module, detail, column, sort_element, order, detail_type=detail_type, nodeset=nodeset)
+    return cls(app, module, detail, column, sort_element, order,
+               detail_type=detail_type, parent_tab_nodeset=parent_tab_nodeset)
 
 
 def get_class_for_format(slug):
@@ -90,7 +91,7 @@ class FormattedDetailColumn(object):
     SORT_TYPE = 'string'
 
     def __init__(self, app, module, detail, column, sort_element=None,
-                 order=None, detail_type=None, nodeset=None):
+                 order=None, detail_type=None, parent_tab_nodeset=None):
         self.app = app
         self.module = module
         self.detail = detail
@@ -99,7 +100,7 @@ class FormattedDetailColumn(object):
         self.sort_element = sort_element
         self.order = order
         self.id_strings = id_strings
-        self.nodeset = nodeset
+        self.parent_tab_nodeset = parent_tab_nodeset
 
     def add_sort_node_for_nodeset_field(self):
         return False
@@ -442,7 +443,7 @@ class LateFlag(HideShortHeaderColumn):
 class Invisible(HideShortColumn):
 
     def add_sort_node_for_nodeset_field(self):
-        return self.nodeset and sort_nodeset_fields_for_detail(self.detail_type, self.detail)
+        return self.parent_tab_nodeset and sort_nodeset_fields_for_detail(self.detail_type, self.detail)
 
     @property
     def header(self):

@@ -154,7 +154,7 @@
 +    {{ request|toggle_tag_info:"DETAIL_LIST_TAB_NODESETS" }}
 +    {% if request|toggle_enabled:'DETAIL_LIST_TAB_NODESETS' %}
 +    <div data-bind="with: shortScreen">
-+        <input data-bind="checked: sortNodesetFields" type="checkbox">
++        <input data-bind="checked: sortNodesetColumns" type="checkbox">
 +        <span>
 +            {% trans "Sort entries in the Nodeset tabs" %}
 +        </span>
@@ -395,7 +395,7 @@
 -{{ request|toggle_tag_info:"DETAIL_LIST_TAB_NODESETS" }}
 -{% if request|toggle_enabled:'DETAIL_LIST_TAB_NODESETS' %}
 -<div data-bind="with: shortScreen">
--    <input data-bind="checked: sortNodesetFields" type="checkbox">
+-    <input data-bind="checked: sortNodesetColumns" type="checkbox">
 -    <span>
 -        {% trans "Sort entries in the Nodeset tabs" %}
 -    </span>
