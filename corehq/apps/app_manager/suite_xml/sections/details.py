@@ -161,7 +161,7 @@ class DetailContributor(SectionContributor):
                 #   column_info.sort_element: an instance of app_manager.models.SortElement
                 #   column_info.order: an integer
                 fields = get_column_generator(
-                    self.app, module, detail, nodeset=nodeset,
+                    self.app, module, detail, parent_tab_nodeset=nodeset,
                     detail_type=detail_type, *column_info
                 ).fields
                 d.fields.extend(fields)
