@@ -87,6 +87,13 @@ class Command(BaseCommand):
             nargs='+',
         )
 
+        parser.add_argument(
+            '--owner-suborganisation-ids',
+            default=None,
+            metavar='owner_suborganisation_id',
+            nargs='+',
+        )
+
     @mock_ownership_cleanliness_checks()
     def handle(self, domain, **options):
         case_ids = options['caseIds']
@@ -94,6 +101,7 @@ class Command(BaseCommand):
         limit = options['limit']
         owner_district_id = options['owner_district_id']
         owner_organisation_ids = options['owner_organisation_ids']
+        owner_suborganisation_ids = options['owner_suborganisation_ids']
         owner_state_id = options['owner_state_id']
         skip_adherence = options['skip_adherence']
         start = options['start']
@@ -120,17 +128,18 @@ class Command(BaseCommand):
             raise CommandError('Cannot specify both caseIds and owner-state-id')
         if not owner_state_id and owner_district_id:
             raise CommandError('Cannot specify owner-district-id without owner-state-id')
+        if not owner_organisation_ids and owner_suborganisation_ids:
+            raise CommandError('Cannot specify owner-suborganisation-ids without owner-organisation-ids')
 
         beneficiaries = self.beneficiaries(
-            start, limit, case_ids, owner_state_id, owner_district_id, owner_organisation_ids
+            start, limit, case_ids, owner_state_id, owner_district_id,
+            owner_organisation_ids, owner_suborganisation_ids
         )
-
-        self.assert_always_null(beneficiaries)
 
         self.migrate_to_enikshay(domain, beneficiaries, skip_adherence, chunk_size, location_owner, default_location_owner)
 
-    @staticmethod
-    def beneficiaries(start, limit, case_ids, owner_state_id, owner_district_id, owner_organisation_ids):
+    def beneficiaries(self, start, limit, case_ids, owner_state_id, owner_district_id,
+                      owner_organisation_ids, owner_suborganisation_ids):
         beneficiaries_query = Beneficiary.objects.filter(
             (
                 Q(caseStatus='suspect')
@@ -145,26 +154,21 @@ class Command(BaseCommand):
         if case_ids:
             beneficiaries_query = beneficiaries_query.filter(caseId__in=case_ids)
 
-        user_details = None
+        if owner_state_id or owner_district_id or owner_organisation_ids or owner_suborganisation_ids:
+            user_details = UserDetail.objects.filter(isPrimary=True)
 
-        if owner_state_id:
-            user_details = user_details or UserDetail.objects.filter(
-                isPrimary=True
-            )
-            user_details = user_details.filter(
-                stateId=owner_state_id,
-            )
+            if owner_state_id:
+                user_details = user_details.filter(stateId=owner_state_id)
 
-            if owner_district_id:
-                user_details = user_details.filter(districtId=owner_district_id)
+                if owner_district_id:
+                    user_details = user_details.filter(districtId=owner_district_id)
 
-        if owner_organisation_ids:
-            user_details = user_details or UserDetail.objects.filter(
-                isPrimary=True
-            )
-            user_details = user_details.filter(organisationId__in=owner_organisation_ids)
+            if owner_organisation_ids:
+                user_details = user_details.filter(organisationId__in=owner_organisation_ids)
 
-        if user_details:
+            if owner_suborganisation_ids:
+                user_details = user_details.filter(subOrganisationId__in=owner_suborganisation_ids)
+
             # Check that there is an actual agency object for the motech username
             agency_ids = Agency.objects.filter(agencyId__in=user_details.values('agencyId')).values('agencyId')
             motech_usernames = UserDetail.objects.filter(agencyId__in=agency_ids).values('motechUserName')
@@ -177,6 +181,8 @@ class Command(BaseCommand):
                 Q(caseId__in=bene_ids_treating)
                 | ((~Q(caseId__in=bene_ids_treating_away)) & Q(caseId__in=bene_ids_from_referred))
             )
+
+        self._assert_always_null(beneficiaries_query)
 
         if limit is not None:
             return beneficiaries_query[start:start + limit]
@@ -244,7 +250,7 @@ class Command(BaseCommand):
         logger.info('Done!')
 
     @staticmethod
-    def assert_always_null(beneficiaries):
+    def _assert_always_null(beneficiaries):
         assert not beneficiaries.filter(mdrTBSuspected__isnull=False).exists()
         assert not beneficiaries.filter(middleName__isnull=False).exists()
         assert not beneficiaries.filter(nikshayId__isnull=False).exists()

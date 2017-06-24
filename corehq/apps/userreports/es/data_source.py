@@ -33,19 +33,21 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
 
     @property
     def order_by(self):
+        ret = []
         if self._order_by:
-            return [
-                (col.field, order)
-                for sort_column_id, order in self._order_by
-                for col in [self._column_configs[sort_column_id]]
-            ]
+            for sort_column_id, order in self._order_by:
+                if sort_column_id in self._column_configs:
+                    for col in [self._column_configs[sort_column_id]]:
+                        ret.append((col.field, order))
+                else:
+                    ret.append((sort_column_id, order))
         elif self.top_level_columns:
             # can only sort by columns that come from the DB
             col = list(ifilter(lambda col: hasattr(col, 'field'), self.top_level_columns))
             if col:
                 col = col[0]
-                return [(col.field, ASCENDING)]
-        return []
+                ret.append((col.field, ASCENDING))
+        return ret
 
     @property
     def columns(self):
@@ -183,7 +185,12 @@ class ConfigurableReportEsDataSource(ConfigurableReportDataSourceMixin, ReportDa
             # todo sort by more than one column
             # todo sort by by something other than the first aggregate column
             col, desc = self.order_by[0]
-            if col == self.aggregation_columns[0] or col == self.top_level_columns[0].field:
+            valid_columns = (
+                self.aggregation_columns[0],
+                self.top_level_columns[0].field,
+                self.top_level_columns[0].column_id
+            )
+            if col in valid_columns:
                 top_agg = top_agg.order('_term', desc)
 
         query = query.aggregation(top_agg)

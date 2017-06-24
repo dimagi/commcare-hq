@@ -96,6 +96,12 @@ validation_test_cases = [
     ('wrong_index_syntax', [
         u"'field 1' is not correctly formatted in 'types' sheet. Whether a field is indexed should be specified "
         "as 'field 1: is_indexed?'. Its value should be 'yes' or 'no'.",
+    ]),
+    ('field_type_error', [
+        u"Fields with attributes should be numbered as 'field: name integer'"
+    ]),
+    ('property_type_error', [
+        u"Attribute should be written as 'name: lang integer'"
     ])
 ]
 

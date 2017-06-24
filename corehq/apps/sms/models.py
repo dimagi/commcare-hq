@@ -238,6 +238,9 @@ class SMSBase(UUIDGeneratorMixin, Log):
     fri_id = models.CharField(max_length=126, null=True)
     fri_risk_profile = models.CharField(max_length=1, null=True)
 
+    # Holds any custom metadata for this SMS
+    custom_metadata = jsonfield.JSONField(null=True, default=None)
+
     class Meta:
         abstract = True
         app_label = 'sms'

@@ -38,7 +38,7 @@ hqDefine("app_manager/js/form_designer.js", function() {
                 },
                 formLoadedCallback: function() {
                     $('#formdesigner').removeClass('loading');
-                    $('#formdesigner .fd-content-left .fd-head-text').after(
+                    $('#formdesigner .fd-content-left .fd-head-text').before(
                         $('#fd-hq-edit-formname-button').html()
                     );
                 },

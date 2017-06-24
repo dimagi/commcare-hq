@@ -233,6 +233,31 @@ FormplayerFrontend.on("start", function (options) {
     }
 });
 
+FormplayerFrontend.on('configureDebugger', function(menuSessionId) {
+    var CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger.js').CloudCareDebuggerMenu,
+        TabIDs = hqImport('cloudcare/js/debugger/debugger.js').TabIDs,
+        user = FormplayerFrontend.request('currentUser'),
+        cloudCareDebugger,
+        $debug = $('#cloudcare-debugger');
+
+    if (!$debug.length)
+        return;
+
+    $debug.html('');
+    cloudCareDebugger = new CloudCareDebugger({
+        baseUrl: user.formplayer_url,
+        menuSessionId: menuSessionId,
+        username: user.username,
+        restoreAs: user.restoreAs,
+        domain: user.domain,
+        tabs: [
+            TabIDs.EVAL_XPATH,
+        ],
+    });
+    ko.cleanNode($debug[0]);
+    $debug.koApplyBindings(cloudCareDebugger);
+});
+
 FormplayerFrontend.reqres.setHandler('getCurrentApp', function() {
     var appId = FormplayerFrontend.request('getCurrentAppId');
     var currentApp = FormplayerFrontend.request("appselect:getApp", appId);

@@ -443,7 +443,10 @@ class BeneficiaryCaseFactory(object):
 
     @memoized
     def _location_by_agency(self, agency):
-        return SQLLocation.active_objects.get(
-            domain=self.domain,
-            site_code=str(agency.agencyId),
-        )
+        try:
+            return SQLLocation.active_objects.get(
+                domain=self.domain,
+                site_code=str(agency.agencyId),
+            )
+        except SQLLocation.DoesNotExist:
+            return None
