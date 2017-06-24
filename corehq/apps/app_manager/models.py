@@ -2030,6 +2030,7 @@ class DetailColumn(IndexedSchema):
                     item.value[lang] = interpolate_media_path(path)
         return to_ret
 
+    @property
     def invisible(self):
         return self.format == 'invisible'
 
