@@ -671,7 +671,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     isTab: false,
                     hasNodeset: false,
                     nodeset: "",
-                    condition: "",
+                    relevant: "",
                 };
                 _.each(_.keys(tabDefaults), function(key) {
                     that.original[key] = that.original[key] || tabDefaults[key];
@@ -713,13 +713,13 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     that.header.setVisibleValue(visibleVal);
 
                     that.nodeset = uiElement.input().val(that.original.nodeset);
-                    that.condition = uiElement.input().val(that.original.condition);
+                    that.relevant = uiElement.input().val(that.original.relevant);
                     if (that.isTab) {
                         // hack to wait until the input's there to prepend the Tab: label.
                         setTimeout(function () {
                             that.header.ui.addClass('input-group').prepend($('<span class="input-group-addon">Tab</span>'));
                             that.nodeset.ui.addClass('input-group').prepend($('<span class="input-group-addon">Nodeset</span>'));
-                            that.condition.ui.addClass('input-group').prepend($('<span class="input-group-addon">DisplayCondition</span>'));
+                            that.relevant.ui.addClass('input-group').prepend($('<span class="input-group-addon">DisplayCondition</span>'));
                         }, 0);
 
                         // Observe nodeset values for the sake of validation
@@ -731,10 +731,10 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         }
 
                         // Observe condition values for the sake of validation
-                        if (that.original.condition) {
-                            that.condition.observableVal = ko.observable(that.original.condition);
-                            that.condition.on("change", function(){
-                                that.condition.observableVal(that.condition.val());
+                        if (that.original.relevant) {
+                            that.relevant.observableVal = ko.observable(that.original.relevant);
+                            that.relevant.on("change", function(){
+                                that.relevant.observableVal(that.relevant.val());
                             });
                         }
                     }
@@ -813,7 +813,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     'field',
                     'header',
                     'nodeset',
-                    'condition',
+                    'relevant',
                     'format',
                     'enum_extra',
                     'graph_extra',
@@ -895,7 +895,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     column.field = this.field.val();
                     column.header[this.lang] = this.header.val();
                     column.nodeset = this.nodeset.val();
-                    column.condition = this.condition.val();
+                    column.relevant = this.relevant.val();
                     column.format = this.format.val();
                     column.enum = this.enum_extra.getItems();
                     column.graph_configuration =
@@ -910,7 +910,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         return _.extend({
                             starting_index: this.starting_index,
                             has_nodeset: column.hasNodeset,
-                        }, _.pick(column, ['header', 'isTab', 'nodeset', 'condition']));
+                        }, _.pick(column, ['header', 'isTab', 'nodeset', 'relevant']));
                     }
                     return column;
                 },
@@ -1026,7 +1026,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         0,
                         _.extend({
                             hasNodeset: tabs[i].has_nodeset,
-                        }, _.pick(tabs[i], ["header", "nodeset", "isTab", "condition"]))
+                        }, _.pick(tabs[i], ["header", "nodeset", "isTab", "relevant"]))
                     );
                 }
                 if (this.columnKey === 'long') {

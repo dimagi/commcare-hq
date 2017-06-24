@@ -1931,7 +1931,7 @@ class DetailTab(IndexedSchema):
     # iterates through sub-nodes of an entity rather than a single entity
     has_nodeset = BooleanProperty(default=False)
     nodeset = StringProperty()
-    condition = StringProperty()
+    relevant = StringProperty()
 
 
 class DetailColumn(IndexedSchema):

@@ -124,7 +124,7 @@ class DetailContributor(SectionContributor):
                     nodeset=tab.nodeset if tab.has_nodeset else None,
                     start=tab_spans[tab.id][0],
                     end=tab_spans[tab.id][1],
-                    relevant=tab.condition if tab.condition else None,
+                    relevant=tab.relevant if tab.relevant else None,
                 )
                 if sub_detail:
                     d.details.append(sub_detail)
