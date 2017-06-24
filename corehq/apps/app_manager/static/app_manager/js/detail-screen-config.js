@@ -730,7 +730,6 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                             });
                         }
 
-                        // Observe condition values for the sake of validation
                         if (that.original.relevant) {
                             that.relevant.observableVal = ko.observable(that.original.relevant);
                             that.relevant.on("change", function(){
