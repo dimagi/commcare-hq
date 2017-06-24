@@ -362,43 +362,47 @@ class DetailsHelper(object):
         return detail_id if detail_id in self.active_details else None
 
 
-def get_default_sort_elements(detail_type, detail):
+def get_sort_params(column):
+    if column.field_type == FIELD_TYPE_LEDGER:
+        return dict(type='int', direction='descending')
+    else:
+        return dict(type='string', direction='ascending')
+
+
+def get_nodeset_sort_elements(detail):
+    from corehq.apps.app_manager.models import SortElement
+    sort_elements = []
+    tab_spans = detail.get_tab_spans()
+    for tab in detail.get_tabs():
+        if tab.nodeset:
+            tab_span = tab_spans[tab.id]
+            for column in detail.columns[tab_span[0]:tab_span[1]]:
+                if column.invisible:
+                    sort_elements.append(SortElement(
+                        field=column.field,
+                        **get_sort_params(column)
+                    ))
+    return sort_elements
+
+
+def get_default_sort_elements(detail):
     from corehq.apps.app_manager.models import SortElement
 
     if not detail.columns:
         return []
 
-    def get_sort_params(column):
+    col_0 = detail.get_column(0)
+    sort_elements = [SortElement(
+        field=col_0.field,
+        **get_sort_params(col_0)
+    )]
+
+    for column in detail.columns[1:]:
         if column.field_type == FIELD_TYPE_LEDGER:
-            return dict(type='int', direction='descending')
-        else:
-            return dict(type='string', direction='ascending')
-
-    if sort_nodeset_fields_for_detail(detail_type, detail):
-        sort_elements = []
-        tab_spans = detail.get_tab_spans()
-        for tab in detail.get_tabs():
-            if tab.nodeset:
-                tab_span = tab_spans[tab.id]
-                for column in detail.columns[tab_span[0]:tab_span[1]]:
-                    if column.invisible:
-                        sort_elements.append(SortElement(
-                            field=column.field,
-                            **get_sort_params(column)
-                        ))
-    else:
-        col_0 = detail.get_column(0)
-        sort_elements = [SortElement(
-            field=col_0.field,
-            **get_sort_params(col_0)
-        )]
-
-        for column in detail.columns[1:]:
-            if column.field_type == FIELD_TYPE_LEDGER:
-                sort_elements.append(SortElement(
-                    field=column.field,
-                    **get_sort_params(column)
-                ))
+            sort_elements.append(SortElement(
+                field=column.field,
+                **get_sort_params(column)
+            ))
     return sort_elements
 
 
@@ -414,8 +418,10 @@ def get_detail_column_infos(detail_type, detail, include_sort):
 
     if detail.sort_elements:
         sort_elements = detail.sort_elements
+    elif sort_nodeset_fields_for_detail(detail_type, detail):
+        sort_elements = get_nodeset_sort_elements(detail)
     else:
-        sort_elements = get_default_sort_elements(detail_type, detail)
+        sort_elements = get_default_sort_elements(detail)
 
     sort_only, sort_columns = get_sort_and_sort_only_columns(detail, sort_elements)
 
