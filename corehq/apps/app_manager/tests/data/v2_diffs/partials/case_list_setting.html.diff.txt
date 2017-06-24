@@ -18,7 +18,7 @@
 -            <option value="true" {% if case_list.show %}selected{% endif %}>Show</option>
 -        </select>
 +
-+{% if app.advanced_app_builder or case_list.show %}
++{% if add_ons.case_list_menu_item %}
 +
 +    <div class="form-group">
 +        <label class="col-sm-2 control-label">
