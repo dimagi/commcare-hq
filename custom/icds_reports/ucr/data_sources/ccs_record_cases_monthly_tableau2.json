@@ -875,12 +875,8 @@
           "type": "and",
           "filters": [
             {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "expression": {
-                "type": "icds_ccs_pregnant"
-              },
-              "property_value": "yes"
+              "type": "named",
+              "name": "pregnant"
             },
             {
               "type": "boolean_expression",
@@ -933,6 +929,10 @@
             {
               "type": "named",
               "name": "ifa_four_plus_consumed_last_seven_days"
+            },
+            {
+              "type": "named",
+              "name": "pregnant"
             }
           ]
         },
@@ -942,13 +942,22 @@
         "column_id": "anemic_severe",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": "severe",
-          "expression": {
-            "type": "named",
-            "name": "last_anemia_update"
-          }
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "pregnant"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "severe",
+              "expression": {
+                "type": "named",
+                "name": "last_anemia_update"
+              }
+            }
+          ]
         },
         "type": "boolean"
       },
@@ -956,13 +965,22 @@
         "column_id": "anemic_moderate",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": "moderate",
-          "expression": {
-            "type": "named",
-            "name": "last_anemia_update"
-          }
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "pregnant"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "moderate",
+              "expression": {
+                "type": "named",
+                "name": "last_anemia_update"
+              }
+            }
+          ]
         },
         "type": "boolean"
       },
@@ -970,13 +988,22 @@
         "column_id": "anemic_normal",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": "normal",
-          "expression": {
-            "type": "named",
-            "name": "last_anemia_update"
-          }
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "pregnant"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "normal",
+              "expression": {
+                "type": "named",
+                "name": "last_anemia_update"
+              }
+            }
+          ]
         },
         "type": "boolean"
       },
@@ -984,8 +1011,17 @@
         "column_id": "anemic_unknown",
         "display_name": null,
         "filter": {
-          "type": "named",
-          "name": "no_anemia_update"
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "pregnant"
+            },
+            {
+              "type": "named",
+              "name": "no_anemia_update"
+            }
+          ]
         },
         "type": "boolean"
       },
