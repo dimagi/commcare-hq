@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import SuspiciousOperation
+from django.db.models import Sum
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, StreamingHttpResponse
 from django.template.defaultfilters import filesizeformat
@@ -1547,15 +1548,13 @@ class DataFileDownloadList(BaseProjectDataView):
             )
             return self.get(request, *args, **kwargs)
 
-        file_size_total = (
-            sum(f.content_length for f in DataFile.objects.filter(domain=self.domain).all()) +
-            request.FILES['file'].size
-        )
-        if file_size_total > MAX_DATA_FILE_SIZE_TOTAL:
+        aggregate = DataFile.objects.filter(domain=self.domain).aggregate(total_size=Sum('content_length'))
+        if aggregate['total_size'] + request.FILES['file'].size > MAX_DATA_FILE_SIZE_TOTAL:
             messages.warning(
                 request,
-                _('Uploading this data file would exceed the total allowance of {} GB for this project space'
-                  ).format(MAX_DATA_FILE_SIZE_TOTAL / (1024 * 1024 * 1024))
+                _('Uploading this data file would exceed the total allowance of {} GB for this project space. '
+                  'Please remove some files in order to upload new files.').format(
+                    MAX_DATA_FILE_SIZE_TOTAL / (1024 * 1024 * 1024))
             )
             return self.get(request, *args, **kwargs)
 
