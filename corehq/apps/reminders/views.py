@@ -1,28 +1,24 @@
 from datetime import timedelta, datetime, time
 import json
+
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.db import transaction
-from django.utils.decorators import method_decorator
-import pytz
-from django.urls import reverse
 from django.http import HttpResponseRedirect, Http404, HttpResponse
+from django.urls import reverse
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
+import pytz
+
+from corehq import privileges, toggles
+from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.models import Form
+from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, DataTablesAJAXPaginationMixin
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_timepicker, use_select2
-from corehq.apps.translations.models import StandaloneTranslationDoc
-from corehq.const import SERVER_DATETIME_FORMAT
-from corehq.util.timezones.conversions import ServerTime
-from dimagi.utils.couch.cache.cache_core import get_redis_client
-from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
-from corehq import privileges
-from corehq.apps.accounting.decorators import requires_privilege_with_fallback
-from corehq.apps.app_manager.models import Form
-from corehq.apps.hqwebapp.views import (CRUDPaginatedViewMixin,
-    DataTablesAJAXPaginationMixin)
-from corehq import toggles
-from dimagi.utils.logging import notify_exception
 
 from corehq.apps.reminders.forms import (
     BroadcastForm,
@@ -42,20 +38,29 @@ from corehq.apps.reminders.models import (
     REMINDER_TYPE_DEFAULT,
     SEND_LATER,
     METHOD_SMS_SURVEY,
-    METHOD_STRUCTURED_SMS,
-    RECIPIENT_SENDER,
     METHOD_IVR_SURVEY,
+    UI_SIMPLE_FIXED,
+    UI_COMPLEX,
+)
+from corehq.apps.reminders.util import (
+    can_use_survey_reminders,
+    get_form_list,
+    get_form_name,
+    get_recipient_name,
 )
 from corehq.apps.sms.models import Keyword, KeywordAction
 from corehq.apps.sms.views import BaseMessagingSectionView
+from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
-from dimagi.utils.decorators.memoized import memoized
-from .models import UI_SIMPLE_FIXED, UI_COMPLEX
-from .util import can_use_survey_reminders, get_form_list, get_form_name, get_recipient_name
-from corehq.apps.domain.models import Domain
+from corehq.const import SERVER_DATETIME_FORMAT
+from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from custom.ewsghana.forms import EWSBroadcastForm
+
+from dimagi.utils.couch.cache.cache_core import get_redis_client
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.logging import notify_exception
 
 ACTION_ACTIVATE = 'activate'
 ACTION_DEACTIVATE = 'deactivate'
