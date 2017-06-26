@@ -893,6 +893,7 @@ class MessagingTab(UITab):
     view = "sms_default"
 
     url_prefix_formats = (
+        '/a/{domain}/messaging/',
         '/a/{domain}/sms/',
         '/a/{domain}/reminders/',
         '/a/{domain}/data/edit/case_groups/',
@@ -1005,10 +1006,20 @@ class MessagingTab(UITab):
 
         if self.can_access_reminders:
             if self.project.uses_new_reminders:
-                pass
+                from corehq.messaging.scheduling.views import (
+                    BroadcastListView as NewBroadcastListView,
+                )
+                messages_urls.extend([
+                    {
+                        'title': _("Schedule a Message"),
+                        'url': reverse(NewBroadcastListView.urlname, args=[self.domain]),
+                        'subpages': [],
+                        'show_in_dropdown': True,
+                    },
+                ])
             else:
                 from corehq.apps.reminders.views import (
-                    BroadcastListView,
+                    BroadcastListView as OldBroadcastListView,
                     CreateBroadcastView,
                     EditBroadcastView,
                     CopyBroadcastView,
@@ -1016,7 +1027,7 @@ class MessagingTab(UITab):
                 messages_urls.extend([
                     {
                         'title': _("Broadcast Messages"),
-                        'url': reverse(BroadcastListView.urlname, args=[self.domain]),
+                        'url': reverse(OldBroadcastListView.urlname, args=[self.domain]),
                         'subpages': [
                             {
                                 'title': _("Edit Broadcast"),
