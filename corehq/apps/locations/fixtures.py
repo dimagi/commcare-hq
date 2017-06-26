@@ -38,6 +38,12 @@ class LocationSet(object):
         return item in self.by_id
 
 
+class FlatLocationSet(object):
+    def __init__(self, locations):
+        self.sorted_locations = sorted(locations, key=lambda loc: loc.site_code)
+        self.by_id = {location.id: location for location in locations}
+
+
 def should_sync_locations(last_sync, location_db, restore_user):
     """
     Determine if any locations (already filtered to be relevant
@@ -81,7 +87,7 @@ class LocationFixtureProvider(FixtureProvider):
         if not self.serializer.should_sync(restore_user):
             return []
 
-        all_locations = restore_user.get_locations_to_sync()
+        all_locations = get_all_locations_to_sync(restore_user, self.serializer.location_set)
         if not should_sync_locations(restore_state.last_sync_log, all_locations, restore_user):
             return []
 
@@ -90,6 +96,7 @@ class LocationFixtureProvider(FixtureProvider):
 
 
 class HierarchicalLocationSerializer(object):
+    location_set = LocationSet
 
     def should_sync(self, restore_user):
         return should_sync_hierarchical_fixture(restore_user.project)
@@ -105,6 +112,7 @@ class HierarchicalLocationSerializer(object):
 
 
 class FlatLocationSerializer(object):
+    location_set = FlatLocationSet
 
     def should_sync(self, restore_user):
         return should_sync_flat_fixture(restore_user.project)
@@ -124,17 +132,31 @@ class FlatLocationSerializer(object):
         root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id, 'indexed': 'true'})
         outer_node = Element('locations')
         root_node.append(outer_node)
-        for location in sorted(all_locations.by_id.values(), key=lambda l: l.site_code):
+        for location in all_locations.sorted_locations:
             attrs = {
                 'type': location.location_type.code,
                 'id': location.location_id,
             }
             attrs.update({attr: '' for attr in location_type_attrs})
             attrs['{}_id'.format(location.location_type.code)] = location.location_id
-            tmp_location = location
-            while tmp_location.parent:
-                tmp_location = tmp_location.parent
-                attrs['{}_id'.format(tmp_location.location_type.code)] = tmp_location.location_id
+
+            current_location = location
+            while current_location.parent_id:
+                try:
+                    current_location = all_locations.by_id[current_location.parent_id]
+                except KeyError:
+                    current_location = current_location.parent
+
+                    # For some reason this wasn't included in the locations we already fetched
+                    from corehq.util.soft_assert import soft_assert
+                    _soft_assert = soft_assert('{}@{}.com'.format('frener', 'dimagi'))
+                    message = """
+                        The flat location fixture didn't prefetch all parent locations:
+                        {domain}: {location_id}
+                    """.format(current_location.domain, current_location.location_id)
+                    _soft_assert(False, msg=message)
+
+                attrs['{}_id'.format(current_location.location_type.code)] = current_location.location_id
 
             location_node = Element('location', attrs)
             _fill_in_location_element(location_node, location, data_fields)
@@ -181,9 +203,9 @@ flat_location_fixture_generator = LocationFixtureProvider(
 )
 
 
-def get_all_locations_to_sync(user):
+def get_all_locations_to_sync(user, location_set=LocationSet):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
-        return LocationSet(SQLLocation.active_objects.filter(domain=user.domain))
+        return location_set(SQLLocation.active_objects.filter(domain=user.domain).prefetch_related('location_type'))
     else:
         all_locations = set()
 
@@ -205,7 +227,7 @@ def get_all_locations_to_sync(user):
 
             all_locations |= _get_include_without_expanding_locations(user.domain, location_type)
 
-        return LocationSet(all_locations)
+        return location_set(all_locations)
 
 
 def _get_expand_from_level(domain, user_location, expand_from):
@@ -218,6 +240,7 @@ def _get_expand_from_level(domain, user_location, expand_from):
             user_location
             .get_ancestors(include_self=True)
             .filter(location_type=expand_from, is_archived=False)
+            .prefetch_related('location_type')
         )
         return ancestors
 
@@ -231,7 +254,7 @@ def _get_children(domain, root, expand_to):
         values_list('level', flat=True)
     ) or None
 
-    children = root.get_descendants(include_self=True).filter(is_archived=False)
+    children = root.get_descendants(include_self=True).prefetch_related('location_type').filter(is_archived=False)
     if expand_to_level is not None:
         assert len(expand_to_level) == 1
         children = children.filter(level__lte=expand_to_level.pop())
@@ -251,10 +274,12 @@ def _get_include_without_expanding_locations(domain, location_type):
         ) or None
         if forced_location_level is not None:
             assert len(forced_location_level) == 1
-            forced_locations = set(SQLLocation.active_objects.filter(
-                domain__exact=domain,
-                level__lte=forced_location_level.pop()
-            ))
+            forced_locations = set(
+                SQLLocation
+                .active_objects
+                .filter(domain__exact=domain, level__lte=forced_location_level.pop())
+                .prefetch_related('location_type')
+            )
             return forced_locations
 
     return set()
