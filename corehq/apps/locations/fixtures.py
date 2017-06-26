@@ -38,6 +38,11 @@ class LocationSet(object):
         return item in self.by_id
 
 
+class FlatLocationSet(object):
+    def __init__(self, locations):
+        self.sorted_locations = sorted(locations, key=lambda loc: loc.site_code)
+
+
 def should_sync_locations(last_sync, location_db, restore_user):
     """
     Determine if any locations (already filtered to be relevant
@@ -81,7 +86,7 @@ class LocationFixtureProvider(FixtureProvider):
         if not self.serializer.should_sync(restore_user):
             return []
 
-        all_locations = restore_user.get_locations_to_sync()
+        all_locations = get_all_locations_to_sync(restore_user, self.serializer.location_set)
         if not should_sync_locations(restore_state.last_sync_log, all_locations, restore_user):
             return []
 
@@ -90,6 +95,7 @@ class LocationFixtureProvider(FixtureProvider):
 
 
 class HierarchicalLocationSerializer(object):
+    location_set = LocationSet
 
     def should_sync(self, restore_user):
         return should_sync_hierarchical_fixture(restore_user.project)
@@ -105,6 +111,7 @@ class HierarchicalLocationSerializer(object):
 
 
 class FlatLocationSerializer(object):
+    location_set = FlatLocationSet
 
     def should_sync(self, restore_user):
         return should_sync_flat_fixture(restore_user.project)
@@ -124,7 +131,7 @@ class FlatLocationSerializer(object):
         root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id, 'indexed': 'true'})
         outer_node = Element('locations')
         root_node.append(outer_node)
-        for location in sorted(all_locations.by_id.values(), key=lambda l: l.site_code):
+        for location in all_locations.sorted_locations:
             attrs = {
                 'type': location.location_type.code,
                 'id': location.location_id,
@@ -181,9 +188,9 @@ flat_location_fixture_generator = LocationFixtureProvider(
 )
 
 
-def get_all_locations_to_sync(user):
+def get_all_locations_to_sync(user, location_set=LocationSet):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
-        return LocationSet(SQLLocation.active_objects.filter(domain=user.domain))
+        return location_set(SQLLocation.active_objects.filter(domain=user.domain))
     else:
         all_locations = set()
 
@@ -205,7 +212,7 @@ def get_all_locations_to_sync(user):
 
             all_locations |= _get_include_without_expanding_locations(user.domain, location_type)
 
-        return LocationSet(all_locations)
+        return location_set(all_locations)
 
 
 def _get_expand_from_level(domain, user_location, expand_from):
