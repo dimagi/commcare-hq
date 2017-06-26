@@ -1550,7 +1550,7 @@ class DataFileDownloadList(BaseProjectDataView):
         data_file.domain = self.domain
         data_file.filename = request.FILES['file'].name
         data_file.description = request.POST['description']
-        data_file.content_type = request.FILES['file'].content_type  # save_blob() uses libmagic to check this
+        data_file.content_type = request.FILES['file'].content_type
         data_file.content_length = request.FILES['file'].size
         data_file.save_blob(request.FILES['file'])
         messages.success(request, _('Data file "{}" uploaded'.format(data_file.description)))

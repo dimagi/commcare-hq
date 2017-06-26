@@ -2497,14 +2497,9 @@ class DataFile(models.Model):
             raise NotFound(str(err))
         return blob
 
-    def save_blob(self, uploaded_file):
-        content_string = StringIO()
-        for chunk in uploaded_file.chunks():
-            content_string.write(chunk)
-        self.content_type = magic.from_buffer(content_string.read(1024))
-        content_string.seek(0)
+    def save_blob(self, file_obj):
         with AtomicBlobs(get_blob_db()) as db:
-            info = db.put(content_string, random_url_id(16))
+            info = db.put(file_obj, random_url_id(16))
             self.blob_id = info.identifier
             self.content_length = info.length
             self.save()
