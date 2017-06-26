@@ -204,16 +204,12 @@ def get_location_fixture_queryset(user):
                             .values_list('level', flat=True)
                             .first())
         expand_from_locations = _get_expand_from_level(user.domain, user_location, expand_from)
-
-        # TODO can we drop this loop?  expand_from_locations can be big
-        # move out of loop, add queryset_ancestors/descendants?
-        for expand_from_location in expand_from_locations:
-            all_locations |= _get_children(user.domain, expand_from_location, expand_to_level)
-            all_locations |= expand_from_location.get_ancestors()
+        all_locations |= _get_children(user.domain, expand_from_locations, expand_to_level)
+        all_locations |= (SQLLocation.active_objects
+                          .get_queryset_ancestors(expand_from_locations, include_self=True))
 
     # TODO do we need to add a `.distinct('location_id')`?
     return all_locations
-
 
 
 def _get_expand_from_level(domain, user_location, expand_from):
@@ -231,10 +227,10 @@ def _get_expand_from_level(domain, user_location, expand_from):
         return ancestors
 
 
-def _get_children(domain, root, expand_to_level):
+def _get_children(domain, expand_from_locations, expand_to_level):
     """From the topmost location, get all the children we want to sync
     """
-    children = root.get_descendants(include_self=True).filter(is_archived=False)
+    children = SQLLocation.active_objects.get_queryset_descendants(expand_from_locations)
     if expand_to_level is not None:
         children = children.filter(level__lte=expand_to_level)
     return children
