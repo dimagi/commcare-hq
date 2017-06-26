@@ -66,7 +66,7 @@ hqDefine('app_manager/js/language-profiles.js', function () {
             self.app_profiles.push(profile);
         };
         _.each(app_profiles, function(value, key) {
-            self.addProfile(value.langs, value.name, key, value.practice_mobile_worker_id);
+            self.addProfile(value.langs, value.name, key, value.practice_mobile_worker_id || '');
         });
         this.newProfile = function() {
             self.addProfile([], '', '', '');
