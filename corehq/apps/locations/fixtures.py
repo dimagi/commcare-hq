@@ -194,6 +194,8 @@ def get_location_fixture_queryset(user):
 
     user_locations = user.get_sql_locations(user.domain)
 
+    all_locations |= _get_include_without_expanding_locations(user.domain, user_locations)
+
     for user_location in user_locations:
         location_type = user_location.location_type
         expand_from = location_type.expand_from or location_type
@@ -208,9 +210,6 @@ def get_location_fixture_queryset(user):
         for expand_from_location in expand_from_locations:
             all_locations |= _get_children(user.domain, expand_from_location, expand_to_level)
             all_locations |= expand_from_location.get_ancestors()
-
-        # TODO this need only be called once per loc type
-        all_locations |= _get_include_without_expanding_locations(user.domain, location_type)
 
     # TODO do we need to add a `.distinct('location_id')`?
     return all_locations
@@ -241,20 +240,28 @@ def _get_children(domain, root, expand_to_level):
     return children
 
 
-def _get_include_without_expanding_locations(domain, location_type):
+def _get_include_without_expanding_locations(domain, assigned_locations):
     """returns all locations set for inclusion along with their ancestors
     """
-    include_without_expanding = location_type.include_without_expanding
-    if include_without_expanding is not None:
-        forced_location_level = (SQLLocation.active_objects
-                                 .filter(domain__exact=domain, location_type=include_without_expanding)
-                                 .values_list('level', flat=True)
-                                 .first())
-        if forced_location_level is not None:
-            return (SQLLocation.active_objects
-                    .filter(domain__exact=domain,
-                            level__lte=forced_location_level))
-    return SQLLocation.objects.none()
+    # all loctypes to include, based on all assigned location types
+    location_types = (LocationType.objects
+                      .filter(sqllocation__in=assigned_locations)
+                      .exclude(include_without_expanding=None)
+                      .distinct()
+                      .values_list('include_without_expanding', flat=True))
+    # all levels to include, based on the above loctypes
+    forced_levels = (SQLLocation.active_objects
+                     .filter(domain__exact=domain,
+                             location_type__in=location_types)
+                     .values_list('level', flat=True)
+                     .order_by('level')
+                     .distinct('level'))
+    if forced_levels:
+        return (SQLLocation.active_objects
+                .filter(domain__exact=domain,
+                        level__lte=max(forced_levels)))
+    else:
+        return SQLLocation.objects.none()
 
 
 def _valid_parent_type(location):
