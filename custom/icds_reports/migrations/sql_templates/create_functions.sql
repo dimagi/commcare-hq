@@ -602,7 +602,11 @@ BEGIN
 		'sum(counsel_fp_vid), ' ||
 		'sum(counsel_immediate_conception), ' ||
 		'sum(counsel_accessible_postpartum_fp), ' ||
-		'sum(has_aadhar_id) ';
+		'sum(has_aadhar_id), ' ||
+		'sum(valid_all_registered_in_month), ' ||
+		'sum(institutional_delivery_in_month), ' ||
+		'sum(lactating_all), ' ||
+		'sum(pregnant_all) ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
