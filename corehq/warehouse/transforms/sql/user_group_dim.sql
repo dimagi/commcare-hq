@@ -6,23 +6,38 @@ INSERT INTO {{ user_group_dim }} (
     dim_created_on,
     deleted
 )
+
 SELECT
     ud.domain,
     ud.id,
     gd.id,
     now(),
     now(),
-    false
+    combined_user_group_table.deleted
 FROM
-    {{ user_dim }} AS ud
-INNER JOIN (
+(
+(
     SELECT
         UNNEST(user_ids) AS user_id,
-        group_id
+        group_id AS group_id,
+        false AS deleted
     FROM
         {{ group_staging }}
-) group_user_table
-ON (ud.user_id = group_user_table.user_id)
-INNER JOIN
-    {{ group_dim }} AS gd
-ON gd.group_id = group_user_table.group_id
+)
+
+UNION
+
+(
+    SELECT
+        UNNEST(removed_user_ids) AS removed_user_id,
+        group_id AS group_id,
+        true AS deleted
+    FROM
+        {{ group_staging }}
+)
+) combined_user_group_table
+INNER JOIN {{ group_dim }} AS gd
+ON combined_user_group_table.group_id = gd.group_id
+
+INNER JOIN {{ user_dim }} AS ud
+ON combined_user_group_table.user_id = ud.user_id
