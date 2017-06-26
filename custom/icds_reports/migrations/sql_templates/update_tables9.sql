@@ -16,15 +16,15 @@ ALTER TABLE agg_awc ADD COLUMN cases_person_adolescent_girls_11_14_all integer;
 ALTER TABLE agg_awc ADD COLUMN cases_person_adolescent_girls_15_18_all integer;
 
 ALTER TABLE agg_child_health ADD COLUMN pnc_eligible integer;
-ALTER TABLE agg_child_health ADD COLUMN cf_initiation_in_month integer;
-ALTER TABLE agg_child_health ADD COLUMN cf_initiation_eligible integer;
-ALTER TABLE agg_child_health ADD COLUMN height_measured_in_month integer;
 ALTER TABLE agg_child_health ADD COLUMN height_eligible integer;
 ALTER TABLE agg_child_health ADD COLUMN wasting_moderate integer;
 ALTER TABLE agg_child_health ADD COLUMN wasting_severe integer;
-ALTER TABLE agg_child_health ADD COLUMN wasting_normal integer;
 ALTER TABLE agg_child_health ADD COLUMN stunting_moderate integer;
 ALTER TABLE agg_child_health ADD COLUMN stunting_severe integer;
+ALTER TABLE agg_child_health ADD COLUMN cf_initiation_in_month integer;
+ALTER TABLE agg_child_health ADD COLUMN cf_initiation_eligible integer;
+ALTER TABLE agg_child_health ADD COLUMN height_measured_in_month integer;
+ALTER TABLE agg_child_health ADD COLUMN wasting_normal integer;
 ALTER TABLE agg_child_health ADD COLUMN stunting_normal integer;
 ALTER TABLE agg_child_health ADD COLUMN valid_all_registered_in_month integer;
 
