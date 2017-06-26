@@ -1,14 +1,15 @@
 --- 
 +++ 
-@@ -1,5 +1,7 @@
+@@ -1,5 +1,8 @@
  {% load i18n %}
  {% load hq_shared_tags %}
-+{% if app.advanced_app_builder or form.form_filter %}
++
++{% if add_ons.form_display_conditions %}
 +
  <div class="form-group">
      <label class="control-label col-sm-2">
          {% trans "Display Condition" %}
-@@ -19,9 +21,9 @@
+@@ -19,9 +22,9 @@
                      {% blocktrans %}
                      To use display conditions which reference a case, <br/>
                          (1) the <strong>Menu Mode</strong> setting must be set to
@@ -21,7 +22,7 @@
                              display condition may use user properties.
                      {% endblocktrans %}
                  </span>
-@@ -41,3 +43,5 @@
+@@ -41,3 +44,5 @@
          </span>
      </div>
  </div>
