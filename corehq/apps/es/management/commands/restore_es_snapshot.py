@@ -1,4 +1,5 @@
 from __future__ import print_function
+import json
 from django.core.management.base import BaseCommand, CommandError
 from datetime import date, timedelta
 from corehq.elastic import get_es_new
@@ -86,12 +87,13 @@ class Command(BaseCommand):
     @staticmethod
     def rewind_pillows(date):
         for pillow in get_all_pillow_instances():
-            checkpoint = pillow.checkpoint
-            try:
-                checkpoint = HistoricalPillowCheckpoint.objects.get(checkpoint_id=checkpoint.checkpoint_id,
-                                                                    date_updated=date)
-                seq = checkpoint.seq
-            except HistoricalPillowCheckpoint.DoesNotExist:
-                seq = DEFAULT_EMPTY_CHECKPOINT_SEQUENCE_FOR_RESTORE[pillow.checkpoint.sequence_format]
+            if pillow.checkpoint_id == 'ReportCaseToElasticsearchPillow-report_cases_czei39du507m9mmpqk3y01x72a3ux4p0':
+                checkpoint = pillow.checkpoint
+                try:
+                    checkpoint = HistoricalPillowCheckpoint.objects.get(checkpoint_id=checkpoint.checkpoint_id,
+                                                                        date_updated=date)
+                    seq = json.loads(checkpoint.seq)
+                except HistoricalPillowCheckpoint.DoesNotExist:
+                    seq = DEFAULT_EMPTY_CHECKPOINT_SEQUENCE_FOR_RESTORE[pillow.checkpoint.sequence_format]
 
-            pillow.checkpoint.update_to(seq)
+                pillow.checkpoint.update_to(seq)
