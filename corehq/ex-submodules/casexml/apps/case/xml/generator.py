@@ -5,6 +5,8 @@ from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dateutil.parser import parse as parse_datetime
 
 from corehq.toggles import MM_CASE_PROPERTIES
+from corehq.util.quickcache import quickcache
+
 
 def datetime_to_xml_string(datetime_string):
     if isinstance(datetime_string, basestring):
@@ -187,7 +189,7 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
             element.append(index_elem)
 
     def add_attachments(self, element):
-        if MM_CASE_PROPERTIES.enabled(self.case.domain):
+        if _sync_attachments(self.case.domain):
             if self.case.case_attachments:
                 attachment_elem = safe_element("attachment")
                 for k, a in self.case.case_attachments.items():
@@ -199,6 +201,11 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
                     }
                     attachment_elem.append(aroot)
                 element.append(attachment_elem)
+
+
+@quickcache(['domain'])
+def _sync_attachments(domain):
+    return MM_CASE_PROPERTIES.enabled(domain)
 
 
 def get_generator(version, case):
