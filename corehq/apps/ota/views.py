@@ -172,7 +172,7 @@ def get_restore_params(request):
 
     return {
         'since': request.GET.get('since'),
-        'version': request.GET.get('version', "1.0"),
+        'version': request.GET.get('version', "2.0"),
         'state': request.GET.get('state'),
         'items': request.GET.get('items') == 'true',
         'as_user': request.GET.get('as'),
