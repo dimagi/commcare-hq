@@ -113,7 +113,14 @@ class LocationDim(BaseDim, CustomSQLETLMixin):
 
     # List of location levels flattened out. If a location is at level 3
     # then this should have levels 0, 1, 2, 3 populated. Each level contains
-    # the sql id of the location.
+    # the sql id of the location. The lowest level location is always 0 and the
+    # root location is always the highest location level 3.
+    #
+    # In an example of Canada -> Quebec -> Montreal and we are looking at the Montreal location:
+    #
+    # location_level_0 = Montreal.sql_location_id
+    # location_level_1 = Quebec.sql_location_id
+    # location_level_2 = Canada.sql_location_id
     location_level_0 = models.IntegerField(db_index=True)
     location_level_1 = models.IntegerField(db_index=True, null=True)
     location_level_2 = models.IntegerField(db_index=True, null=True)
