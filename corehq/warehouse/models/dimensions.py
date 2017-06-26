@@ -202,4 +202,4 @@ class UserGroupDim(BaseDim, CustomSQLETLMixin):
 
     @classmethod
     def dependencies(cls):
-        return [USER_DIM_SLUG, GROUP_DIM_SLUG]
+        return [USER_DIM_SLUG, GROUP_DIM_SLUG, GROUP_STAGING_SLUG]
