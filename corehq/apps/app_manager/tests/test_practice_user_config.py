@@ -5,6 +5,7 @@ from couchdbkit import ResourceNotFound
 
 from corehq.apps.app_manager.exceptions import PracticeUserException
 from corehq.apps.app_manager.models import Application, BuildProfile
+from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.ota.utils import turn_on_demo_mode, turn_off_demo_mode
 from corehq.apps.users.models import CommCareUser
@@ -149,3 +150,54 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
         app.save()
         with self.assertRaises(ResourceNotFound):
             self.assertTrue(app.lazy_fetch_attachment('files/practice_user_restore.xml'))
+
+
+class TestUnsetPracticeUserUtil(TestCase):
+
+    def setUp(self):
+        # app with no practice user
+        self.domain = "test-domain"
+        self.app1 = AppFactory(build_version='2.28.0', domain=self.domain).app
+
+        self.app2 = AppFactory(build_version='2.28.0', domain=self.domain).app
+        self.app2.practice_mobile_worker_id = "user1"
+
+        self.app3 = AppFactory(build_version='2.28.0', domain=self.domain).app
+        self.app3.build_profiles['build1'] = BuildProfile(
+            langs=['en'], name='en-profile', practice_mobile_worker_id="user1"
+        )
+        self.app3.build_profiles['build2'] = BuildProfile(
+            langs=['en'], name='en-profile', practice_mobile_worker_id="user2"
+        )
+        self.apps = [self.app1, self.app2, self.app3]
+        for app in self.apps:
+            app.save()
+
+    def reset_apps(self):
+        self.app1 = Application.get(self.app1.get_id)
+        self.app2 = Application.get(self.app2.get_id)
+        self.app3 = Application.get(self.app3.get_id)
+
+    def tearDown(self):
+        for app in self.apps:
+            app.delete()
+
+    def app_to_ids(self, apps):
+        return set([app.get_id for app in apps])
+
+    def test_unset_all(self):
+        unset_practice_mode_configured_apps(self.domain)
+        self.reset_apps()
+
+        self.assertEqual(self.app1.practice_mobile_worker_id, None)
+        self.assertEqual(self.app2.practice_mobile_worker_id, None)
+        self.assertEqual(self.app3.build_profiles['build1'].practice_mobile_worker_id, None)
+        self.assertEqual(self.app3.build_profiles['build2'].practice_mobile_worker_id, None)
+
+    def test_unset_by_user(self):
+        unset_practice_mode_configured_apps(self.domain, "user2")
+        self.reset_apps()
+        self.assertEqual(self.app1.practice_mobile_worker_id, None)
+        self.assertEqual(self.app2.practice_mobile_worker_id, 'user1')
+        self.assertEqual(self.app3.build_profiles['build1'].practice_mobile_worker_id, 'user1')
+        self.assertEqual(self.app3.build_profiles['build2'].practice_mobile_worker_id, None)

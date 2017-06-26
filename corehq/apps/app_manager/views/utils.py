@@ -7,7 +7,7 @@ from django.http import HttpResponseRedirect
 from django.template.loader import render_to_string
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_app, wrap_app
+from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import AppEditingError
 from corehq.apps.app_manager.models import Application, ReportModule
@@ -147,3 +147,46 @@ def overwrite_app(app, master_build, include_ucrs=False, report_map=None):
                 raise AppEditingError()
     wrapped_app.copy_attachments(master_build)
     wrapped_app.save(increment_version=False)
+
+
+def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
+    """
+    Unset practice user for apps that have a practice user configured directly or
+    on a build profile of apps in the domain. If a mobile_worker_id is specified,
+    only apps configured with that user will be unset
+
+    returns:
+        list of apps on which the practice user was unset
+
+    kwargs:
+        mobile_worker_id: id of mobile worker. If this is specified, only those apps
+        configured with this mobile worker will be unset. If not, apps that are configured
+        with any mobile worker are unset
+    """
+    apps = {app.get_id: app for app in get_apps_in_domain(domain)}
+
+    def unset_user(app_or_profile):
+        if mobile_worker_id:
+            if app_or_profile.practice_mobile_worker_id == mobile_worker_id:
+                app_or_profile.practice_mobile_worker_id = None
+                return True
+        else:
+            if app_or_profile.practice_mobile_worker_id:
+                app_or_profile.practice_mobile_worker_id = None
+                return True
+
+    to_save = []
+    for _id, app in apps.iteritems():
+        unset = unset_user(app)
+        if unset:
+            to_save.append(_id)
+        for a, profile in app.build_profiles.iteritems():
+            unset = unset_user(profile)
+            if unset:
+                to_save.append(_id)
+
+    to_save = set(to_save)  # avoid multiple saves
+    for _id in to_save:
+        apps[_id].save()
+
+    return [apps[_id] for _id in to_save]
