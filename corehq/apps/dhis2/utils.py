@@ -35,7 +35,7 @@ def get_last_month():
 
 def get_last_quarter():
     today = date.today()
-    current_quarter_start = ((today.month // 3) * 3) + 1
+    current_quarter_start = (((today.month - 1) // 3) * 3) + 1
     startdate = date(year=today.year, month=current_quarter_start, day=1) - relativedelta(months=3)
     enddate = date(year=today.year, month=current_quarter_start, day=1) + relativedelta(months=4) - timedelta(days=1) \
         - relativedelta(months=3)

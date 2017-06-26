@@ -1,25 +1,16 @@
 from django.core.management import BaseCommand, CommandError
 from dimagi.utils.parsing import string_to_utc_datetime
-from corehq.warehouse.models import (
-    GroupStagingTable,
-    DomainStagingTable,
-    UserStagingTable,
-)
+from corehq.warehouse.const import ALL_TABLES
+from corehq.warehouse.models import get_cls_by_slug
 
 
-SLUG_TO_STAGING_TABLE = {
-    GroupStagingTable.slug: GroupStagingTable,
-    DomainStagingTable.slug: DomainStagingTable,
-    UserStagingTable.slug: UserStagingTable,
-}
-
-USAGE = """Usage: ./manage.py stage_table <slug> -s <start_datetime> -e <end_datetime>
+USAGE = """Usage: ./manage.py commit_table <slug> -s <start_datetime> -e <end_datetime>
 
 Slugs:
 
 {}
 
-""".format('\n'.join(sorted(SLUG_TO_STAGING_TABLE.keys())))
+""".format('\n'.join(sorted(ALL_TABLES)))
 
 
 class Command(BaseCommand):
@@ -52,10 +43,11 @@ class Command(BaseCommand):
         start = options.get('start')
         end = options.get('end')
 
-        model = SLUG_TO_STAGING_TABLE.get(slug)
-        if not model:
+        try:
+            model = get_cls_by_slug(slug)
+        except KeyError:
             raise CommandError('{} is not a valid slug. \n\n {}'.format(slug, USAGE))
-        model.stage_records(start, end)
+        model.commit(start, end)
 
 
 def _valid_date(date_str):

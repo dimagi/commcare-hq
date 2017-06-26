@@ -8,7 +8,7 @@ from corehq.apps.locations.dbaccessors import (
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.tasks import CELERY_REMINDERS_QUEUE
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
-from corehq.apps.sms.api import send_sms
+from corehq.apps.sms.api import send_sms, MessageMetadata
 from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
 from custom.icds.messaging.indicators import (
@@ -65,8 +65,12 @@ def run_indicator(domain, user_id, indicator_class, language_code=None):
     if not isinstance(messages, list):
         raise ValueError("Expected a list of messages")
 
+    metadata = MessageMetadata(custom_metadata={
+        'icds_indicator': indicator_class.slug,
+    })
+
     for message in messages:
-        send_sms(domain, usercase, phone_number, message)
+        send_sms(domain, usercase, phone_number, message, metadata=metadata)
 
 
 def get_awc_location_ids(domain):

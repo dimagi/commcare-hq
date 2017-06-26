@@ -528,9 +528,12 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
 
     name = "download_multimedia_zip"
     compress_zip = False
-    zip_name = 'commcare.zip'
     include_multimedia_files = True
     include_index_files = False
+
+    @property
+    def zip_name(self):
+        return 'commcare_v{}.zip'.format(self.app.version)
 
     def check_before_zipping(self):
         if not self.app.multimedia_map and self.include_multimedia_files:

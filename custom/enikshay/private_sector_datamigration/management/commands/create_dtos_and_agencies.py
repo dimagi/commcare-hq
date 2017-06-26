@@ -25,12 +25,11 @@ class Command(BaseCommand):
         dto_parent = SQLLocation.active_objects.get(location_id=parent_loc_id)
         for org_id in org_ids:
             dto = self.create_dto(domain, state_code, district_code, dto_parent, org_id)
-            for agency in self.get_agencies_by_state_district_org(state_code, district_code, org_id):
+            for i, agency in enumerate(self.get_agencies_by_state_district_org(state_code, district_code, org_id)):
+                print 'handling agency %d...' % i
                 if agency.location_type is not None:
                     agency_loc = self.create_agency(domain, agency, dto, org_id)
                     self.create_user(agency, agency_loc, user_level)
-                elif agency.is_field_officer:
-                    self.create_field_officer(agency, domain, dto, user_level)
 
     def create_dto(self, domain, state_code, district_code, dto_parent, org_id):
         return SQLLocation.objects.create(
@@ -86,7 +85,9 @@ class Command(BaseCommand):
         agency_loc_id = agency_loc.location_id
         domain = agency_loc.domain
 
-        user = make_location_user(agency_loc)
+        user = CommCareUser.get_by_username('%s@%s.commcarehq.org' % (agency_loc.site_code, agency_loc.domain))
+        if user is None:
+            user = make_location_user(agency_loc)
         user.user_location_id = agency_loc_id
         user.set_location(agency_loc, commit=False)
         user.user_data['agency_id_legacy'] = agency_loc.metadata['private_sector_agency_id']
@@ -100,20 +101,6 @@ class Command(BaseCommand):
 
         agency_loc.user_id = user._id
         agency_loc.save()
-
-    @staticmethod
-    def create_field_officer(agency, domain, parent, user_level):
-        field_officer = CommCareUser.create(
-            domain,
-            _get_unique_username(domain, str(agency.agencyId)),
-            generate_strong_password(),
-            uuid=uuid.uuid4().hex,
-            commit=False,
-        )
-        field_officer.set_location(parent, commit=False)
-        field_officer.user_data['user_level'] = user_level
-        field_officer.user_data['usertype'] = agency.usertype
-        field_officer.save()
 
     @staticmethod
     def _get_org_name_by_id(org_id):
