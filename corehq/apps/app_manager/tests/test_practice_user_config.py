@@ -5,7 +5,8 @@ from couchdbkit import ResourceNotFound
 
 from corehq.apps.app_manager.exceptions import PracticeUserException
 from corehq.apps.app_manager.models import Application, BuildProfile
-from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
+from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps, \
+    get_practice_mode_configured_apps
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.ota.utils import turn_on_demo_mode, turn_off_demo_mode
 from corehq.apps.users.models import CommCareUser
@@ -184,6 +185,16 @@ class TestUnsetPracticeUserUtil(TestCase):
 
     def app_to_ids(self, apps):
         return set([app.get_id for app in apps])
+
+    def test_get_practice_mode_apps(self):
+        self.assertEqual(
+            {app.get_id for app in get_practice_mode_configured_apps(self.domain)},
+            {self.app2.get_id, self.app3.get_id}
+        )
+        self.assertEqual(
+            {app.get_id for app in get_practice_mode_configured_apps(self.domain, 'user2')},
+            {self.app3.get_id}
+        )
 
     def test_unset_all(self):
         unset_practice_mode_configured_apps(self.domain)

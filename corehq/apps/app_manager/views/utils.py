@@ -149,6 +149,27 @@ def overwrite_app(app, master_build, include_ucrs=False, report_map=None):
     wrapped_app.save(increment_version=False)
 
 
+def get_practice_mode_configured_apps(domain, mobile_worker_id=None):
+    app_ids = set()
+    apps = {app.get_id: app for app in get_apps_in_domain(domain)}
+
+    def is_set(app_or_profile):
+        if mobile_worker_id:
+            if app_or_profile.practice_mobile_worker_id == mobile_worker_id:
+                return True
+        else:
+            if app_or_profile.practice_mobile_worker_id:
+                return True
+
+    for _id, app in apps.iteritems():
+        if is_set(app):
+            app_ids.add(_id)
+        for _, profile in app.build_profiles.iteritems():
+            if is_set(profile):
+                app_ids.add(_id)
+    return [apps[_id] for _id in app_ids]
+
+
 def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
     """
     Unset practice user for apps that have a practice user configured directly or
@@ -163,7 +184,6 @@ def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
         configured with this mobile worker will be unset. If not, apps that are configured
         with any mobile worker are unset
     """
-    apps = {app.get_id: app for app in get_apps_in_domain(domain)}
 
     def unset_user(app_or_profile):
         if mobile_worker_id:
@@ -175,18 +195,11 @@ def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
                 app_or_profile.practice_mobile_worker_id = None
                 return True
 
-    to_save = []
-    for _id, app in apps.iteritems():
-        unset = unset_user(app)
-        if unset:
-            to_save.append(_id)
-        for a, profile in app.build_profiles.iteritems():
-            unset = unset_user(profile)
-            if unset:
-                to_save.append(_id)
+    apps = get_practice_mode_configured_apps(domain, mobile_worker_id)
+    for app in apps:
+        unset_user(app)
+        for _, profile in app.build_profiles.iteritems():
+            unset_user(profile)
+        app.save()
 
-    to_save = set(to_save)  # avoid multiple saves
-    for _id in to_save:
-        apps[_id].save()
-
-    return [apps[_id] for _id in to_save]
+    return apps
