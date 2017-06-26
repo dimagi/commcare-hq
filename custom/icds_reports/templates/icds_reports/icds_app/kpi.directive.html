@@ -1,0 +1,39 @@
+<div class="row" ng-repeat="section in $ctrl.data track by $index">
+    <div class="col-md-6" ng-repeat="cell in section track by $index">
+        <div class="report-cell">
+            <div class="row">
+                <div class="col-md-1"
+                     uib-popover-html="cell.help_text"
+                     popover-placement="right"
+                     popover-trigger="'mouseenter'">
+                    <i ng-show="cell.help_text !== null" class="fa fa-info-circle fa-2x" ></i>
+                </div>
+                <div class="col-md-11 center">
+                    <div class="row crop">
+                        <span class="title" ng-bind="cell.label"></span>
+                    </div>
+                    <div class="row">
+                        <div class="numbers">
+                            <span ng-if="cell.format == 'div'"><span ng-bind="cell.value | number:0"></span>/<span ng-bind="cell.all | number:0"></span></span>
+                            <span ng-if="cell.format == 'number'" ng-bind="cell.value | number:0"></span>
+                            <div ng-if="cell.format == 'percent_and_div'">
+                                <div><span ng-bind="(cell.value / (cell.all || 1) * 100) | number:2"></span> %</div>
+                                <div>(<span ng-bind="cell.value | number:0"></span>/<span ng-bind="cell.all | number:0"></span>)</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row" >
+                        <p>
+                            <span ng-show="cell.percent !== null">
+                                <i class="fa" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0}"></i>
+                                <span ng-bind="cell.percent | number:2"></span>
+                                % from the day before last
+                            </span>
+                            <span class="see-more" aria-hidden="true">See More</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
