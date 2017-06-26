@@ -33,11 +33,13 @@ hqDefine("app_manager/js/add_ons.js", function() {
 
     $(function() {
         var $addOns = $("#add-ons");
-        $addOns.koApplyBindings(new EditAddOns(
-            hqImport("hqwebapp/js/initial_page_data.js").get("add_ons"),
-            hqImport("hqwebapp/js/initial_page_data.js").get("add_ons_layout"),
-            hqImport("hqwebapp/js/urllib.js").reverse("edit_add_ons")
-        ));
-        sectionChanger.attachToForm($addOns.find("form"));
+        if ($addOns.length) {
+            $addOns.koApplyBindings(new EditAddOns(
+                hqImport("hqwebapp/js/initial_page_data.js").get("add_ons"),
+                hqImport("hqwebapp/js/initial_page_data.js").get("add_ons_layout"),
+                hqImport("hqwebapp/js/urllib.js").reverse("edit_add_ons")
+            ));
+            sectionChanger.attachToForm($addOns.find("form"));
+        }
     });
 });
