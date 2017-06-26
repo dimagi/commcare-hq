@@ -203,7 +203,7 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
                 element.append(attachment_elem)
 
 
-@quickcache(['domain'])
+@quickcache(['domain'], memoize_timeout=12 * 60 * 60, timeout=12 * 60 * 60)
 def _sync_attachments(domain):
     return MM_CASE_PROPERTIES.enabled(domain)
 
