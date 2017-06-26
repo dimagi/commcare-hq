@@ -1,0 +1,343 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<suite version="18" descriptor="Suite File">
+  <xform>
+    <resource id="589b45d13944b5c846587cded826fe364f6f7ff0" version="14" descriptor="Form: (Module Short and Long Details) - Register">
+      <location authority="local">./modules-0/forms-0.xml</location>
+      <location authority="remote">./modules-0/forms-0.xml</location>
+    </resource>
+  </xform>
+  <xform>
+    <resource id="f93b3ad1daa0ce3ca48eaec14489e6f851c7e49c" version="14" descriptor="Form: (Module Short and Long Details) - Followup">
+      <location authority="local">./modules-0/forms-1.xml</location>
+      <location authority="remote">./modules-0/forms-1.xml</location>
+    </resource>
+  </xform>
+  <xform>
+    <resource id="a1056e591c77ee314a04f1344f74a1e094e68cfc" version="14" descriptor="Form: (Module Inline and Persistent Details) - Register">
+      <location authority="local">./modules-1/forms-0.xml</location>
+      <location authority="remote">./modules-1/forms-0.xml</location>
+    </resource>
+  </xform>
+  <xform>
+    <resource id="5780265d2e0b18ce5b79b0bc384316632e5b1b27" version="14" descriptor="Form: (Module Inline and Persistent Details) - Followup">
+      <location authority="local">./modules-1/forms-1.xml</location>
+      <location authority="remote">./modules-1/forms-1.xml</location>
+    </resource>
+  </xform>
+  <locale language="default">
+    <resource id="app_default_strings" version="18" descriptor="Translations: Default Language">
+      <location authority="local">./default/app_strings.txt</location>
+      <location authority="remote">./default/app_strings.txt</location>
+    </resource>
+  </locale>
+  <locale language="en">
+    <resource id="app_en_strings" version="18" descriptor="Translations: English">
+      <location authority="local">./en/app_strings.txt</location>
+      <location authority="remote">./en/app_strings.txt</location>
+    </resource>
+  </locale>
+  <detail id="m0_case_short">
+    <title>
+      <text>
+        <locale id="cchq.case"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_short.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+      <sort type="string" order="1" direction="ascending">
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </sort>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_short.case_name_2.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="count(instance('item-list:short')/short_list/short)"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+  <detail id="m0_case_long">
+    <title>
+      <text>
+        <locale id="cchq.case"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_long.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m0.case_long.case_name_2.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="count(instance('item-list:long')/long_list/long)"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+  <detail id="m1_case_short">
+    <title>
+      <text>
+        <locale id="cchq.case"/>
+      </text>
+    </title>
+    <action>
+    	<display>
+	      <text>
+	        <locale id="forms.m0f0"/>
+	      </text>
+	      <media image="jr://media/plus.png"/>
+      </display>
+      <stack>
+      	<push>
+      		<command value="'m0-f0'"/>
+      	    <datum id="case_id_new_rec_child_0" value="uuid()"/>
+      	</push>
+      </stack>
+    </action>
+    <field>
+      <style horz-align="center" vert-align="center" font-size="medium">
+      	<grid grid-height="3" grid-width="2" grid-x="0" grid-y="0"/>
+       </style>
+      <header>
+        <text/>
+      </header>
+      <template form="image">
+        <text>
+          <xpath function="'jr://media/child_profile.png'"/>
+        </text>
+      </template>
+    </field>
+
+
+    <field>
+      <style horz-align="left" vert-align="center" font-size="medium">
+      	<grid grid-height="1" grid-width="10" grid-x="2" grid-y="0"/>
+       </style>
+      <header>
+        <text>
+          <locale id="m1.case_short.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          &lt;b&gt;Name &lt;/b&gt;
+          <xpath function="case_name">
+            
+          </xpath>
+        </text>
+      </template>
+      <sort type="string" order="-2" direction="ascending">
+        <text>
+          <xpath function="case_name">
+            
+          </xpath>
+        </text>
+      </sort>
+    </field>
+    <field>
+      <style horz-align="left" vert-align="center" font-size="small">
+      	<grid grid-height="1" grid-width="5" grid-x="2" grid-y="1"/>
+       </style>
+      <header>
+        <text>
+          <locale id="m1.case_short.case_name_2.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          &lt;b&gt;Name &lt;/b&gt;
+          <xpath function="count(instance('item-list:persistent')/persistent_list/persistent)">
+            
+          </xpath>
+        </text>
+      </template>
+      <sort type="string" order="-2" direction="ascending">
+        <text>
+          <xpath function="count(instance('item-list:persistent')/persistent_list/persistent)">
+            
+          </xpath>
+        </text>
+      </sort>
+    </field>
+    <field>
+      <style horz-align="left" vert-align="center" font-size="small">
+      	<grid grid-height="1" grid-width="5" grid-x="7" grid-y="1"/>
+       </style>
+      <header>
+        <text>
+          <locale id="m1.case_short.case_name_4.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          &lt;b&gt;Name &lt;/b&gt;
+          <xpath function="case_name">
+            
+          </xpath>
+        </text>
+      </template>
+    </field>
+    <field>
+      <style horz-align="left" vert-align="center" font-size="small">
+      	<grid grid-height="1" grid-width="5" grid-x="2" grid-y="2"/>
+       </style>
+      <header>
+        <text>
+          <locale id="m1.case_short.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          &lt;b&gt;Name &lt;/b&gt;
+          <xpath function="case_name">
+            
+          </xpath>
+        </text>
+      </template>
+      <sort type="string" order="-2" direction="ascending">
+        <text>
+          <xpath function="case_name">
+            
+          </xpath>
+        </text>
+      </sort>
+    </field>
+    <field>
+      <style horz-align="left" vert-align="center" font-size="small">
+      	<grid grid-height="1" grid-width="5" grid-x="7" grid-y="2"/>
+       </style>
+      <header>
+        <text>
+          <locale id="m1.case_short.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>&lt;b&gt;Name &lt;/b&gt; <xpath function="case_name"/></text>
+      </template>
+    </field>
+  </detail>
+  <detail id="m1_case_long">
+    <title>
+      <text>
+        <locale id="cchq.case"/>
+      </text>
+    </title>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.case_long.case_name_1.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="case_name"/>
+        </text>
+      </template>
+    </field>
+    <field>
+      <header>
+        <text>
+          <locale id="m1.case_long.case_name_2.header"/>
+        </text>
+      </header>
+      <template>
+        <text>
+          <xpath function="count(instance('item-list:inline')/inline_list/inline)"/>
+        </text>
+      </template>
+    </field>
+  </detail>
+  <entry>
+    <form>http://openrosa.org/formdesigner/EFB9997B-2ABF-475E-A08E-E79CF5A4FF07</form>
+    <command id="m0-f0">
+      <text>
+        <locale id="forms.m0f0"/>
+      </text>
+    </command>
+    <session>
+      <datum id="case_id_new_case_0" function="uuid()"/>
+    </session>
+  </entry>
+  <entry>
+    <form>http://openrosa.org/formdesigner/E0339DDD-3DDF-4BA7-947D-81CA287166AE</form>
+    <command id="m0-f1">
+      <text>
+        <locale id="forms.m0f1"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="item-list:long" src="jr://fixture/item-list:long"/>
+    <instance id="item-list:short" src="jr://fixture/item-list:short"/>
+    <session>
+      <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='case'][@status='open']" value="./@case_id" detail-select="m0_case_short" detail-confirm="m0_case_long"/>
+    </session>
+  </entry>
+  <entry>
+    <form>http://openrosa.org/formdesigner/B2428C03-BB1A-44CA-AC2E-1376AC2B6F49</form>
+    <command id="m1-f0">
+      <text>
+        <locale id="forms.m1f0"/>
+      </text>
+    </command>
+    <session>
+      <datum id="case_id_new_case_0" function="uuid()"/>
+    </session>
+  </entry>
+  <entry>
+    <form>http://openrosa.org/formdesigner/F46714CE-4E1C-4F12-BB04-77D7965E7410</form>
+    <command id="m1-f1">
+      <text>
+        <locale id="forms.m1f1"/>
+      </text>
+    </command>
+    <instance id="casedb" src="jr://instance/casedb"/>
+    <instance id="item-list:inline" src="jr://fixture/item-list:inline"/>
+    <instance id="item-list:persistent" src="jr://fixture/item-list:persistent"/>
+    <session>
+      <datum id="case_id" nodeset="instance('casedb')/casedb/case[@case_type='case'][@status='open']" value="./@case_id" detail-select="m1_case_short" detail-persistent="m1_case_short" detail-inline="m1_case_long"/>
+    </session>
+  </entry>
+  <menu id="m0">
+    <text>
+      <locale id="modules.m0"/>
+    </text>
+    <command id="m0-f0"/>
+    <command id="m0-f1"/>
+  </menu>
+  <menu id="m1">
+    <text>
+      <locale id="modules.m1"/>
+    </text>
+    <command id="m1-f0"/>
+    <command id="m1-f1"/>
+  </menu>
+</suite>

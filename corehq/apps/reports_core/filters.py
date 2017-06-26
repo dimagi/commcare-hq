@@ -472,7 +472,7 @@ class LocationDrilldownFilter(BaseFilter):
             user_location_id = self.user_location_id(request_user)
             if user_location_id:
                 return self.valid_location_ids(user_location_id)
-            elif request_user.is_domain_admin(self.domain):
+            elif request_user.has_permission(self.domain, 'access_all_locations'):
                 return LocationDrilldownFilterValue.SHOW_ALL
             else:
                 return LocationDrilldownFilterValue.SHOW_NONE

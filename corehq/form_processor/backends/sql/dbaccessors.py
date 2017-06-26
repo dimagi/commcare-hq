@@ -11,6 +11,8 @@ import csiphash
 import six
 from django.conf import settings
 from django.db import connections, InternalError, transaction
+from django.db.models import Q
+from django.db.models.functions import Greatest
 
 from corehq.blobs import get_blob_db
 from corehq.form_processor.exceptions import (
@@ -290,6 +292,31 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def get_attachments(form_id):
         return list(XFormAttachmentSQL.objects.raw('SELECT * from get_form_attachments(%s)', [form_id]))
+
+    @staticmethod
+    def iter_forms_by_last_modified(start_datetime, end_datetime):
+        '''
+        Returns all forms that have been modified within a time range. The start date is
+        exclusive while the end date is inclusive (start_datetime, end_datetime].
+
+        NOTE: This does not include archived forms
+
+        :param start_datetime: The start date of which modified forms must be greater than
+        :param end_datetime: The end date of which modified forms must be less than or equal to
+
+        :returns: An iterator of XFormInstanceSQL objects
+        '''
+        from corehq.sql_db.util import run_query_across_partitioned_databases
+
+        annotate = {
+            'last_modified': Greatest('received_on', 'edited_on', 'deleted_on'),
+        }
+
+        return run_query_across_partitioned_databases(
+            XFormInstanceSQL,
+            Q(last_modified__gt=start_datetime),
+            annotate=annotate,
+        )
 
     @staticmethod
     def get_with_attachments(form_id):

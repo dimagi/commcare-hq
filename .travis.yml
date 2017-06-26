@@ -1,5 +1,6 @@
 language: python
 sudo: required
+group: edge
 branches:
   only:
     - master

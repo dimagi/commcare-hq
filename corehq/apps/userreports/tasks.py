@@ -211,7 +211,7 @@ def queue_async_indicators():
 
     with CriticalSection(['queue-async-indicators'], timeout=time_for_crit_section):
         day_ago = datetime.utcnow() - timedelta(days=1)
-        indicators = AsyncIndicator.objects.all()[:10000]
+        indicators = AsyncIndicator.objects.all()[:settings.ASYNC_INDICATORS_TO_QUEUE]
         if indicators:
             lag = (datetime.utcnow() - indicators[0].date_created).total_seconds()
             datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)

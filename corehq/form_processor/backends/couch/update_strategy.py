@@ -312,7 +312,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
 
         properties = self.case.properties()
         for item in update_action.updated_unknown_properties:
-            if item not in const.CASE_TAGS:
+            if item not in const.RESTRICTED_PROPERTIES:
                 value = update_action.updated_unknown_properties[item]
                 if isinstance(properties.get(item), StringProperty):
                     value = unicode(value)

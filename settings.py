@@ -908,6 +908,11 @@ AUTHPROXY_CERT = None
 ENIKSHAY_PRIVATE_API_USERS = {}
 ENIKSHAY_PRIVATE_API_PASSWORD = None
 
+# number of docs for UCR to queue asynchronously at once
+# ideally # of documents it takes to process in ~30 min
+ASYNC_INDICATORS_TO_QUEUE = 10000
+DAYS_TO_KEEP_DEVICE_LOGS = 60
+
 from env_settings import *
 
 try:
@@ -1532,6 +1537,7 @@ IVR_GATEWAY_TIMEOUT = 60
 # These are functions that can be called
 # to retrieve custom content in a reminder event.
 # If the function is not in here, it will not be called.
+# Used by the old reminders framework
 ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "FRI_SMS_CONTENT": "custom.fri.api.custom_content_handler",
     "FRI_SMS_CATCHUP_CONTENT": "custom.fri.api.catchup_custom_content_handler",
@@ -1542,6 +1548,12 @@ ALLOWED_CUSTOM_CONTENT_HANDLERS = {
     "UCLA_SEXUAL_HEALTH": "custom.ucla.api.sexual_health_message_bank_content",
     "UCLA_MED_ADHERENCE": "custom.ucla.api.med_adherence_message_bank_content",
     "UCLA_SUBSTANCE_USE": "custom.ucla.api.substance_use_message_bank_content",
+}
+
+# Used by the new reminders framework
+AVAILABLE_CUSTOM_SCHEDULING_CONTENT = {
+    "ICDS_STATIC_NEGATIVE_GROWTH_MESSAGE":
+        "custom.icds.messaging.custom_content.static_negative_growth_indicator",
 }
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
@@ -1995,6 +2007,7 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('enikshay_referred_by', 'custom.enikshay.expressions.referred_by_expression'),
     ('enikshay_date_of_referral', 'custom.enikshay.expressions.date_of_referral_expression'),
     ('enikshay_date_of_acceptance', 'custom.enikshay.expressions.date_of_acceptance_expression'),
+    ('enikshay_episode_from_person', 'custom.enikshay.expressions.episode_from_person_expression'),
 ]
 
 CUSTOM_UCR_EXPRESSION_LISTS = [

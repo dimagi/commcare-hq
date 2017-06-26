@@ -2,7 +2,7 @@ import calendar
 from corehq.messaging.scheduling.exceptions import InvalidMonthlyScheduleConfiguration
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast
 from corehq.messaging.scheduling import util
-from corehq.util.timezones.conversions import ServerTime, UserTime
+from corehq.util.timezones.conversions import UserTime
 from datetime import timedelta, datetime, date
 from dimagi.utils.decorators.memoized import memoized
 from django.db import models, transaction
@@ -33,7 +33,7 @@ class TimedSchedule(Schedule):
         if start_date:
             instance.start_date = start_date
         else:
-            instance.start_date = ServerTime(util.utcnow()).user_time(instance.timezone).done().date()
+            instance.start_date = instance.today_for_recipient
 
         self.set_next_event_due_timestamp(instance)
 

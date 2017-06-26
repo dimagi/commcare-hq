@@ -174,6 +174,13 @@ hqDefine('app_manager/js/app_manager.js', function () {
                     if (!form.data('clicked')) {
                         form.data('clicked', 'true');
                         $('.new-module-icon').removeClass().addClass("fa fa-refresh fa-spin");
+                        if (dataType === "case") {
+                            window.analytics.usage("Added Case List Menu");
+                            window.analytics.workflow("Added Case List Menu");
+                        } else if (dataType === "survey") {
+                            window.analytics.usage("Added Surveys Menu");
+                            window.analytics.workflow("Added Surveys Menu");
+                        }
                         form.submit();
                     }
                 }
