@@ -190,6 +190,8 @@ def get_location_fixture_queryset(user):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
         return SQLLocation.active_objects.filter(domain=user.domain)
 
+    all_locations = SQLLocation.objects.none()
+
     user_locations = user.get_sql_locations(user.domain)
 
     for user_location in user_locations:
@@ -199,31 +201,25 @@ def get_location_fixture_queryset(user):
                             .filter(domain__exact=user.domain, location_type=location_type.expand_to)
                             .values_list('level', flat=True)
                             .first())
-        # this is still a queryset
         expand_from_locations = _get_expand_from_level(user.domain, user_location, expand_from)
 
+        # TODO can we drop this loop?  expand_from_locations can be big
+        # move out of loop, add queryset_ancestors/descendants?
         for expand_from_location in expand_from_locations:
-            children = _get_children(user.domain, expand_from_location, expand_to_level)
-            # TODO just add directly
-            for child in _get_children(user.domain, expand_from_location, expand_to_level):
-                # Walk down the tree and get all the children we want to sync
-                all_locations.add(child)
+            all_locations |= _get_children(user.domain, expand_from_location, expand_to_level)
+            all_locations |= expand_from_location.get_ancestors()
 
-            # move out of loop, add queryset_ancestors?
-            for ancestor in expand_from_location.get_ancestors():
-                # We sync all ancestors of the highest location
-                all_locations.add(ancestor)
-
-        # this need only be called once per loc type
+        # TODO this need only be called once per loc type
         all_locations |= _get_include_without_expanding_locations(user.domain, location_type)
 
     # TODO do we need to add a `.distinct('location_id')`?
-    return LocationSet(all_locations)
+    return all_locations
 
 
 
 def _get_expand_from_level(domain, user_location, expand_from):
-    """From the users current location, returns the highest location they want to start expanding from
+    """From the users current location, return all locations of the highest
+    level they want to start expanding from.
     """
     if user_location.location_type.expand_from_root:
         return SQLLocation.root_locations(domain=domain)
@@ -250,20 +246,15 @@ def _get_include_without_expanding_locations(domain, location_type):
     """
     include_without_expanding = location_type.include_without_expanding
     if include_without_expanding is not None:
-        forced_location_level = set(
-            SQLLocation.active_objects.
-            filter(domain__exact=domain, location_type=include_without_expanding).
-            values_list('level', flat=True)
-        ) or None
+        forced_location_level = (SQLLocation.active_objects
+                                 .filter(domain__exact=domain, location_type=include_without_expanding)
+                                 .values_list('level', flat=True)
+                                 .first())
         if forced_location_level is not None:
-            assert len(forced_location_level) == 1
-            forced_locations = set(SQLLocation.active_objects.filter(
-                domain__exact=domain,
-                level__lte=forced_location_level.pop()
-            ))
-            return forced_locations
-
-    return set()
+            return (SQLLocation.active_objects
+                    .filter(domain__exact=domain,
+                            level__lte=forced_location_level))
+    return SQLLocation.objects.none()
 
 
 def _valid_parent_type(location):
