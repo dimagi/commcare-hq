@@ -4,6 +4,7 @@ import logging
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dateutil.parser import parse as parse_datetime
 
+from corehq.toggles import MM_CASE_PROPERTIES
 
 def datetime_to_xml_string(datetime_string):
     if isinstance(datetime_string, basestring):
@@ -186,17 +187,18 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
             element.append(index_elem)
 
     def add_attachments(self, element):
-        if self.case.case_attachments:
-            attachment_elem = safe_element("attachment")
-            for k, a in self.case.case_attachments.items():
-                aroot = safe_element(k)
-                # moved to attrs in v2
-                aroot.attrib = {
-                    "src": self.case.get_attachment_server_url(k),
-                    "from": "remote"
-                }
-                attachment_elem.append(aroot)
-            element.append(attachment_elem)
+        if MM_CASE_PROPERTIES.enabled(self.case.domain):
+            if self.case.case_attachments:
+                attachment_elem = safe_element("attachment")
+                for k, a in self.case.case_attachments.items():
+                    aroot = safe_element(k)
+                    # moved to attrs in v2
+                    aroot.attrib = {
+                        "src": self.case.get_attachment_server_url(k),
+                        "from": "remote"
+                    }
+                    attachment_elem.append(aroot)
+                element.append(attachment_elem)
 
 
 def get_generator(version, case):
