@@ -1,5 +1,5 @@
 from __future__ import print_function
-import json
+import ast
 from django.core.management.base import BaseCommand, CommandError
 from datetime import date, timedelta
 from corehq.elastic import get_es_new
@@ -92,7 +92,7 @@ class Command(BaseCommand):
                 try:
                     checkpoint = HistoricalPillowCheckpoint.objects.get(checkpoint_id=checkpoint.checkpoint_id,
                                                                         date_updated=date)
-                    seq = json.loads(checkpoint.seq)
+                    seq = ast.literal_eval(checkpoint.seq)
                 except HistoricalPillowCheckpoint.DoesNotExist:
                     seq = DEFAULT_EMPTY_CHECKPOINT_SEQUENCE_FOR_RESTORE[pillow.checkpoint.sequence_format]
 
