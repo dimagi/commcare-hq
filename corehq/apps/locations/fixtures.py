@@ -205,7 +205,7 @@ flat_location_fixture_generator = LocationFixtureProvider(
 
 def get_all_locations_to_sync(user, location_set=LocationSet):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
-        return location_set(SQLLocation.active_objects.filter(domain=user.domain))
+        return location_set(SQLLocation.active_objects.filter(domain=user.domain).prefetch_related('location_type'))
     else:
         all_locations = set()
 
@@ -240,6 +240,7 @@ def _get_expand_from_level(domain, user_location, expand_from):
             user_location
             .get_ancestors(include_self=True)
             .filter(location_type=expand_from, is_archived=False)
+            .prefetch_related('location_type')
         )
         return ancestors
 
@@ -253,7 +254,7 @@ def _get_children(domain, root, expand_to):
         values_list('level', flat=True)
     ) or None
 
-    children = root.get_descendants(include_self=True).filter(is_archived=False)
+    children = root.get_descendants(include_self=True).prefetch_related('location_type').filter(is_archived=False)
     if expand_to_level is not None:
         assert len(expand_to_level) == 1
         children = children.filter(level__lte=expand_to_level.pop())
@@ -273,10 +274,12 @@ def _get_include_without_expanding_locations(domain, location_type):
         ) or None
         if forced_location_level is not None:
             assert len(forced_location_level) == 1
-            forced_locations = set(SQLLocation.active_objects.filter(
-                domain__exact=domain,
-                level__lte=forced_location_level.pop()
-            ))
+            forced_locations = set(
+                SQLLocation
+                .active_objects
+                .filter(domain__exact=domain, level__lte=forced_location_level.pop())
+                .prefetch_related('location_type')
+            )
             return forced_locations
 
     return set()
