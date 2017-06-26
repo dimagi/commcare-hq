@@ -182,34 +182,44 @@ flat_location_fixture_generator = LocationFixtureProvider(
 
 
 def get_all_locations_to_sync(user):
+    return LocationSet(get_location_fixture_queryset(user))
+
+
+# testing out a different approach to get_all_locations_to_sync
+def get_location_fixture_queryset(user):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
-        return LocationSet(SQLLocation.active_objects.filter(domain=user.domain))
-    else:
-        all_locations = set()
+        return SQLLocation.active_objects.filter(domain=user.domain)
 
-        user_locations = set(user.get_sql_locations(user.domain))
-        for user_location in user_locations:
-            location_type = user_location.location_type
-            expand_from = location_type.expand_from or location_type
-            expand_to_level = (SQLLocation.active_objects
-                               .filter(domain__exact=user.domain, location_type=location_type.expand_to)
-                               .values_list('level', flat=True)
-                               .first())
+    user_locations = user.get_sql_locations(user.domain)
 
-            expand_from_locations = _get_expand_from_level(user.domain, user_location, expand_from)
+    for user_location in user_locations:
+        location_type = user_location.location_type
+        expand_from = location_type.expand_from or location_type
+        expand_to_level = (SQLLocation.active_objects
+                            .filter(domain__exact=user.domain, location_type=location_type.expand_to)
+                            .values_list('level', flat=True)
+                            .first())
+        # this is still a queryset
+        expand_from_locations = _get_expand_from_level(user.domain, user_location, expand_from)
 
-            for expand_from_location in expand_from_locations:
-                for child in _get_children(user.domain, expand_from_location, expand_to_level):
-                    # Walk down the tree and get all the children we want to sync
-                    all_locations.add(child)
+        for expand_from_location in expand_from_locations:
+            children = _get_children(user.domain, expand_from_location, expand_to_level)
+            # TODO just add directly
+            for child in _get_children(user.domain, expand_from_location, expand_to_level):
+                # Walk down the tree and get all the children we want to sync
+                all_locations.add(child)
 
-                for ancestor in expand_from_location.get_ancestors():
-                    # We sync all ancestors of the highest location
-                    all_locations.add(ancestor)
+            # move out of loop, add queryset_ancestors?
+            for ancestor in expand_from_location.get_ancestors():
+                # We sync all ancestors of the highest location
+                all_locations.add(ancestor)
 
-            all_locations |= _get_include_without_expanding_locations(user.domain, location_type)
+        # this need only be called once per loc type
+        all_locations |= _get_include_without_expanding_locations(user.domain, location_type)
 
-        return LocationSet(all_locations)
+    # TODO do we need to add a `.distinct('location_id')`?
+    return LocationSet(all_locations)
+
 
 
 def _get_expand_from_level(domain, user_location, expand_from):
