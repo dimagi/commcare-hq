@@ -200,9 +200,9 @@ def get_location_fixture_queryset(user):
         location_type = user_location.location_type
         expand_from = location_type.expand_from or location_type
         expand_to_level = (SQLLocation.active_objects
-                            .filter(domain__exact=user.domain, location_type=location_type.expand_to)
-                            .values_list('level', flat=True)
-                            .first())
+                           .filter(domain__exact=user.domain, location_type=location_type.expand_to)
+                           .values_list('level', flat=True)
+                           .first())
         expand_from_locations = _get_expand_from_level(user.domain, user_location, expand_from)
         all_locations |= _get_children(user.domain, expand_from_locations, expand_to_level)
         all_locations |= (SQLLocation.active_objects
