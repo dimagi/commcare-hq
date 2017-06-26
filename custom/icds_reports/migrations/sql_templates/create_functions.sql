@@ -127,7 +127,16 @@ BEGIN
 		'height_recorded_in_month, ' ||
 		'has_aadhar_id, ' ||
 		'thr_eligible, ' ||
-		'pnc_eligible FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
+		'pnc_eligible, ' ||
+		'cf_initiation_in_month, ' ||
+		'cf_initiation_eligible, ' ||
+		'height_measured_in_month, ' ||
+		'current_month_stunting, ' ||
+		'stunting_last_recorded, ' ||
+		'wasting_last_recorded, ' ||
+		'current_month_wasting, ' ||
+		'valid_in_month, ' ||
+		'valid_all_registered_in_month FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
 
@@ -303,7 +312,19 @@ BEGIN
 		'sum(fully_immunized_on_time), ' ||
 		'sum(fully_immunized_late), ' ||
 		'sum(has_aadhar_id), ' ||
-		'5 ' ||
+		'5, ' ||
+		'sum(pnc_eligible), ' ||
+		'sum(height_eligible), ' ||
+		'sum(wasting_moderate), ' ||
+		'sum(wasting_severe), ' ||
+		'sum(stunting_moderate), ' ||
+		'sum(stunting_severe), ' ||
+		'sum(cf_initiation_in_month), ' ||
+		'sum(cf_initiation_eligible), ' ||
+		'sum(height_measured_in_month), ' ||
+		'sum(wasting_normal), ' ||
+		'sum(stunting_normal), ' ||
+		'sum(valid_all_registered_in_month) ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, disabled, minority, resident)';
 
@@ -357,7 +378,19 @@ BEGIN
 		'sum(fully_immunized_eligible), ' ||
 		'sum(fully_immunized_on_time), ' ||
 		'sum(fully_immunized_late), ' ||
-		'sum(has_aadhar_id) ';
+		'sum(has_aadhar_id), ' ||
+		'sum(pnc_eligible), ' ||
+		'sum(height_eligible), ' ||
+	    'sum(wasting_moderate), ' ||
+	    'sum(wasting_severe), ' ||
+	    'sum(stunting_moderate), ' ||
+	    'sum(stunting_severe), ' ||
+	    'sum(cf_initiation_in_month), ' ||
+	    'sum(cf_initiation_eligible), ' ||
+	    'sum(height_measured_in_month), ' ||
+	    'sum(wasting_normal), ' ||
+	    'sum(stunting_normal), ' ||
+	    'sum(valid_all_registered_in_month) ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
