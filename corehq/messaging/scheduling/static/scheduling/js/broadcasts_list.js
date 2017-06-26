@@ -1,6 +1,7 @@
 hqDefine("scheduling/js/broadcasts_list.js", function() {
     $(function() {
-        var past_table,
+        var immediate_table,
+            scheduled_table,
             list_broadcasts_url = hqImport("hqwebapp/js/urllib.js").reverse("new_list_broadcasts"),
             loader_src = hqImport("hqwebapp/js/initial_page_data.js").get("loader_src");
 
@@ -27,7 +28,7 @@ hqDefine("scheduling/js/broadcasts_list.js", function() {
             "columnDefs": [
                 {
                     "targets": [0],
-                    "render": function(data) {
+                    "render": function() {
                         // TODO construct this from ID
                         return 'Delete button';
                     },
@@ -47,7 +48,7 @@ hqDefine("scheduling/js/broadcasts_list.js", function() {
                 },
                 {
                     "targets": [4],
-                    "render": function(data) {
+                    "render": function() {
                         // TODO construct this from ID
                         return 'activate or deactivate button';
                     },
