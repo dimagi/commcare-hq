@@ -629,6 +629,6 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             },
             [mark_safe('<a href="%(url)s">%(title)s</a>') % {
                 'title': app['name'],
-                'url': reverse('view_app', args=[domain.name, app['_id']])
+                'url': reverse('view_app', args=[project.name, app['_id']])
             } for app in apps],
         )
