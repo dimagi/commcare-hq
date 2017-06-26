@@ -40,6 +40,7 @@ from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.xpath import session_var, XPath
+from corehq import toggles
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -105,18 +106,23 @@ class DetailContributor(SectionContributor):
                     r.append(d)
         return r
 
-    def build_detail(self, module, detail_type, detail, detail_column_infos,
-                     tabs=None, id=None, title=None, nodeset=None, print_template=None, start=0, end=None):
+    def build_detail(self, module, detail_type, detail, detail_column_infos, tabs=None, id=None,
+                     title=None, nodeset=None, print_template=None, start=0, end=None, relevant=None):
         """
         Recursively builds the Detail object.
         (Details can contain other details for each of their tabs)
         """
         from corehq.apps.app_manager.detail_screen import get_column_generator
-        d = Detail(id=id, title=title, nodeset=nodeset, print_template=print_template)
+        d = Detail(id=id, title=title, nodeset=nodeset, print_template=print_template, relevant=relevant)
         self._add_custom_variables(detail, d)
         if tabs:
             tab_spans = detail.get_tab_spans()
             for tab in tabs:
+                # relevant should be set to None even in case its ''
+                tab_relevant = None
+                if tab.relevant and toggles.DISPLAY_CONDITION_ON_NODESET.enabled(module.get_app().domain):
+                    tab_relevant = tab.relevant
+
                 sub_detail = self.build_detail(
                     module,
                     detail_type,
@@ -127,7 +133,8 @@ class DetailContributor(SectionContributor):
                     )),
                     nodeset=tab.nodeset if tab.has_nodeset else None,
                     start=tab_spans[tab.id][0],
-                    end=tab_spans[tab.id][1]
+                    end=tab_spans[tab.id][1],
+                    relevant=tab_relevant,
                 )
                 if sub_detail:
                     d.details.append(sub_detail)
