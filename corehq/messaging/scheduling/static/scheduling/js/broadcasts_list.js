@@ -1,11 +1,9 @@
 hqDefine("scheduling/js/broadcasts_list.js", function() {
     $(function() {
-        var immediate_table,
-            scheduled_table,
-            list_broadcasts_url = hqImport("hqwebapp/js/urllib.js").reverse("new_list_broadcasts"),
+        var list_broadcasts_url = hqImport("hqwebapp/js/urllib.js").reverse("new_list_broadcasts"),
             loader_src = hqImport("hqwebapp/js/initial_page_data.js").get("loader_src");
 
-        scheduled_table = $("#scheduled-table").dataTable({
+        $("#scheduled-table").dataTable({
             "lengthChange": false,
             "filter": false,
             "sort": false,
@@ -55,7 +53,8 @@ hqDefine("scheduling/js/broadcasts_list.js", function() {
                 },
             ],
         });
-        immediate_table = $("#immediate-table").dataTable({
+
+        $("#immediate-table").dataTable({
             "lengthChange": false,
             "filter": false,
             "sort": false,
