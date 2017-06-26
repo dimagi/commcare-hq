@@ -127,6 +127,7 @@ class GroupStagingTable(StagingTable, CouchToDjangoETLMixin):
     doc_type = models.CharField(max_length=100)
     domain = models.CharField(max_length=100)
     user_ids = ArrayField(models.CharField(max_length=255), null=True)
+    removed_user_ids = ArrayField(models.CharField(max_length=255), null=True)
 
     case_sharing = models.NullBooleanField()
     reporting = models.NullBooleanField()
@@ -144,6 +145,7 @@ class GroupStagingTable(StagingTable, CouchToDjangoETLMixin):
             ('last_modified', 'group_last_modified'),
             ('doc_type', 'doc_type'),
             ('users', 'user_ids'),
+            ('removed_users', 'removed_user_ids'),
         ]
 
     @classmethod
