@@ -118,4 +118,8 @@ SKIPPABLE_PROPERTIES = frozenset([
 
 SAVED_EXPORTS_QUEUE = 'saved_exports_queue'
 
-MAX_DATA_FILE_SIZE = 104857600  # 100 * 1024 * 1024 = 100 MB
+# The maximum file size of one DataFile
+MAX_DATA_FILE_SIZE = 104857600  # 100 MB
+
+# The total space allowance of a domain for DataFiles
+MAX_DATA_FILE_SIZE_TOTAL = 2147483648  # 2 GB

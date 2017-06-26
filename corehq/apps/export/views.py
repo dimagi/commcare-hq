@@ -77,6 +77,7 @@ from corehq.apps.export.const import (
     CASE_EXPORT,
     MAX_EXPORTABLE_ROWS,
     MAX_DATA_FILE_SIZE,
+    MAX_DATA_FILE_SIZE_TOTAL,
 )
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
@@ -1543,6 +1544,18 @@ class DataFileDownloadList(BaseProjectDataView):
             messages.warning(
                 request,
                 _('The data file exceeds the maximum size of {} MB.').format(MAX_DATA_FILE_SIZE / (1024 * 1024))
+            )
+            return self.get(request, *args, **kwargs)
+
+        file_size_total = (
+            sum(f.content_length for f in DataFile.objects.filter(domain=self.domain).all()) +
+            request.FILES['file'].size
+        )
+        if file_size_total > MAX_DATA_FILE_SIZE_TOTAL:
+            messages.warning(
+                request,
+                _('Uploading this data file would exceed the total allowance of {} GB for this project space'
+                  ).format(MAX_DATA_FILE_SIZE_TOTAL / (1024 * 1024 * 1024))
             )
             return self.get(request, *args, **kwargs)
 
