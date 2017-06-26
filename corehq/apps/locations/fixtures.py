@@ -41,6 +41,7 @@ class LocationSet(object):
 class FlatLocationSet(object):
     def __init__(self, locations):
         self.sorted_locations = sorted(locations, key=lambda loc: loc.site_code)
+        self.by_id = {location.id: location for location in locations}
 
 
 def should_sync_locations(last_sync, location_db, restore_user):
@@ -138,10 +139,24 @@ class FlatLocationSerializer(object):
             }
             attrs.update({attr: '' for attr in location_type_attrs})
             attrs['{}_id'.format(location.location_type.code)] = location.location_id
-            tmp_location = location
-            while tmp_location.parent:
-                tmp_location = tmp_location.parent
-                attrs['{}_id'.format(tmp_location.location_type.code)] = tmp_location.location_id
+
+            current_location = location
+            while current_location.parent_id:
+                try:
+                    current_location = all_locations.by_id[current_location.parent_id]
+                except KeyError:
+                    current_location = current_location.parent
+
+                    # For some reason this wasn't included in the locations we already fetched
+                    from corehq.util.soft_assert import soft_assert
+                    _soft_assert = soft_assert('{}@{}.com'.format('frener', 'dimagi'))
+                    message = """
+                        The flat location fixture didn't prefetch all parent locations:
+                        {domain}: {location_id}
+                    """.format(current_location.domain, current_location.location_id)
+                    _soft_assert(False, msg=message)
+
+                attrs['{}_id'.format(current_location.location_type.code)] = current_location.location_id
 
             location_node = Element('location', attrs)
             _fill_in_location_element(location_node, location, data_fields)
