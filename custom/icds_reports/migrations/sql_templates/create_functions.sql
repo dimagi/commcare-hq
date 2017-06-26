@@ -201,7 +201,12 @@ BEGIN
 		'pnc_complete, ' ||
 		'postnatal, ' ||
 		'has_aadhar_id, ' ||
-		'counsel_fp_methods FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
+		'counsel_fp_methods, ' ||
+		'pregnant, ' ||
+		'pregnant_all, ' ||
+		'lactating, ' ||
+		'lactating_all, ' ||
+		'institutional_delivery_in_month FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
 		EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
         -- There may be better indexes to put here. Should investigate what tableau queries
@@ -538,7 +543,11 @@ BEGIN
 		'sum(counsel_fp_vid), ' ||
 		'sum(counsel_immediate_conception), ' ||
 		'sum(counsel_accessible_postpartum_fp), ' ||
-		'sum(has_aadhar_id) ' ||
+		'sum(has_aadhar_id), ' ||
+		'sum(valid_all_registered_in_month), ' ||
+		'sum(institutional_delivery_in_month), ' ||
+		'sum(lactating_all), ' ||
+		'sum(pregnant_all) ' ||
 		'FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
 
