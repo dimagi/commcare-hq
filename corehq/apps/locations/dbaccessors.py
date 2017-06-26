@@ -2,6 +2,7 @@ from itertools import imap, chain
 
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.database import iter_docs
+from corehq.apps.es import UserES
 from corehq.apps.locations.models import SQLLocation
 
 
