@@ -15,8 +15,6 @@ from corehq.apps.accounting.utils import (
     log_accounting_error,
     get_privileges,
 )
-from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps, \
-    get_practice_mode_configured_apps
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
@@ -218,7 +216,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         return True
 
     @staticmethod
-    def response_practice_mobile_workers(project, new_plan_version)
+    def response_practice_mobile_workers(project, new_plan_version):
+        from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
         unset_practice_mode_configured_apps(project.name)
 
 
@@ -616,6 +615,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
 
     @staticmethod
     def response_practice_mobile_workers(project, new_plan_version):
+        from corehq.apps.app_manager.views.utils import get_practice_mode_configured_apps
         apps = get_practice_mode_configured_apps(project.name)
         return _fmt_alert(
             ungettext(
