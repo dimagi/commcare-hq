@@ -134,5 +134,4 @@ class CommCareFeatureSupportMixin(object):
         """
         Ability to configure practice mobile workers for apps
         """
-        # todo update to 2.30
-        return self._require_minimum_version('2.28')
+        return self._require_minimum_version('2.30')

@@ -41,7 +41,7 @@
 - id: practice_mobile_worker_id
   name: 'Practice Mobile Worker'
   widget: select
-  since: '2.28'
+  since: '2.30'
   privilege: 'practice_mobile_workers'
 
 # RemoteApp Only

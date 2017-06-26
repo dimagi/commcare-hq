@@ -28,7 +28,7 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
         cls.user = CommCareUser.create(cls.domain, 'test@main-domain.commcarehq.org', 'secret')
 
     def setUp(self):
-        self.factory = AppFactory(build_version='2.28.0', domain=self.domain)
+        self.factory = AppFactory(build_version='2.30.0', domain=self.domain)
         module, form = self.factory.new_basic_module('register', 'case')
         form.source = self.get_xml('very_simple_form')
         self.factory.app.save()
@@ -159,12 +159,12 @@ class TestUnsetPracticeUserUtil(TestCase):
     def setUp(self):
         # app with no practice user
         self.domain = "test-domain"
-        self.app1 = AppFactory(build_version='2.28.0', domain=self.domain).app
+        self.app1 = AppFactory(build_version='2.30.0', domain=self.domain).app
 
-        self.app2 = AppFactory(build_version='2.28.0', domain=self.domain).app
+        self.app2 = AppFactory(build_version='2.30.0', domain=self.domain).app
         self.app2.practice_mobile_worker_id = "user1"
 
-        self.app3 = AppFactory(build_version='2.28.0', domain=self.domain).app
+        self.app3 = AppFactory(build_version='2.30.0', domain=self.domain).app
         self.app3.build_profiles['build1'] = BuildProfile(
             langs=['en'], name='en-profile', practice_mobile_worker_id="user1"
         )
