@@ -56,7 +56,8 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
         """.format(version=version, extra=extra)
 
     @patch('corehq.apps.app_manager.models.domain_has_privilege', lambda x, y: True)
-    def test_app_specific(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_app_specific(self, mock):
         turn_on_demo_mode(self.user, self.domain)
         app = self.factory.app
         app.practice_mobile_worker_id = self.user._id
@@ -73,7 +74,8 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
         self.assertTrue(app.lazy_fetch_attachment('files/practice_user_restore.xml'))
 
     @patch('corehq.apps.app_manager.models.domain_has_privilege', lambda x, y: True)
-    def test_profile_specific(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_profile_specific(self, mock):
         turn_on_demo_mode(self.user, self.domain)
         app = self.factory.app
         build_profile_id = "some_uuid"
@@ -93,7 +95,8 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
         )))
 
     @patch('corehq.apps.app_manager.models.domain_has_privilege', lambda x, y: True)
-    def test_bad_config(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_bad_config(self, mock):
         # if the user set as practice user for an app is not practice user, build should raise error
         app = self.factory.app
         app.practice_mobile_worker_id = self.user._id
@@ -106,7 +109,8 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
             app.create_all_files()
 
     @patch('corehq.apps.app_manager.models.domain_has_privilege', lambda x, y: True)
-    def test_update_user_restore(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_update_user_restore(self, mock):
         # updating user restore should result in version change in restore resource
         #   so that CommCare mobile will refetch the resource
         turn_on_demo_mode(self.user, self.domain)
@@ -136,7 +140,8 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
         )
 
     @patch('corehq.apps.app_manager.models.domain_has_privilege', lambda x, y: True)
-    def test_commcare_version(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_commcare_version(self, mock):
         turn_on_demo_mode(self.user, self.domain)
         app = self.factory.app
         app.practice_mobile_worker_id = self.user._id
