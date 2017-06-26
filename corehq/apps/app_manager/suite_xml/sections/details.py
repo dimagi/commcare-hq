@@ -102,8 +102,8 @@ class DetailContributor(SectionContributor):
                     r.append(d)
         return r
 
-    def build_detail(self, module, detail_type, detail, detail_column_infos,
-                     tabs=None, id=None, title=None, nodeset=None, print_template=None, start=0, end=None, relevant=None):
+    def build_detail(self, module, detail_type, detail, detail_column_infos, tabs=None, id=None,
+                     title=None, nodeset=None, print_template=None, start=0, end=None, relevant=None):
         """
         Recursively builds the Detail object.
         (Details can contain other details for each of their tabs)
@@ -114,6 +114,11 @@ class DetailContributor(SectionContributor):
         if tabs:
             tab_spans = detail.get_tab_spans()
             for tab in tabs:
+                # relevant should be set to None even in case its ''
+                tab_relevant = None
+                if tab.relevant and toggles.DISPLAY_CONDITION_ON_NODESET.enabled(module.get_app().domain):
+                    tab_relevant = tab.relevant
+
                 sub_detail = self.build_detail(
                     module,
                     detail_type,
@@ -125,7 +130,7 @@ class DetailContributor(SectionContributor):
                     nodeset=tab.nodeset if tab.has_nodeset else None,
                     start=tab_spans[tab.id][0],
                     end=tab_spans[tab.id][1],
-                    relevant=tab.relevant if (tab.relevant and toggles.DISPLAY_CONDITION_ON_NODESET.enabled(module.get_app().domain)) else None,
+                    relevant=tab_relevant,
                 )
                 if sub_detail:
                     d.details.append(sub_detail)
