@@ -454,6 +454,8 @@ class AdminRestoreView(TemplateView):
     def dispatch(self, request, *args, **kwargs):
         return super(AdminRestoreView, self).dispatch(request, *args, **kwargs)
 
+    def _validate_user_access(self, user):
+        return True
 
     def get(self, request, *args, **kwargs):
         full_username = request.GET.get('as', '')
@@ -468,10 +470,8 @@ class AdminRestoreView(TemplateView):
         if not self.user:
             return HttpResponseNotFound('User %s not found.' % full_username)
 
-        if 'domain' in kwargs:
-            # domain check when this get's called as domain level admin restore.
-            if self.user.domain != kwargs['domain']:
-                raise Http404()
+        if not self._validate_user_access(self.user):
+            raise Http404()
 
         self.app_id = kwargs.get('app_id', None)
 
@@ -537,8 +537,11 @@ class DomainAdminRestoreView(AdminRestoreView):
     @method_decorator(login_or_basic)
     @method_decorator(domain_admin_required)
     def get(self, request, domain, **kwargs):
-        kwargs['domain'] = domain
+        self.domain = domain
         return super(DomainAdminRestoreView, self).get(request, **kwargs)
+
+    def _validate_user_access(self, user):
+        return self.domain == user.domain
 
 
 @require_POST
