@@ -219,6 +219,9 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
     def touch(self, min_interval):
         return False
 
+    def reset(self):
+        KafkaCheckpoint.objects.filter(checkpoint_id=self.checkpoint_id).delete()
+
 
 def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, topics):
     checkpoint_id = u'{}-{}'.format(pillow_id, index_info.index)
