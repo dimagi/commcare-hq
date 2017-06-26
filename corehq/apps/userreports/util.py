@@ -16,6 +16,7 @@ from corehq.apps.userreports.const import (
 from django_prbac.utils import has_privilege
 
 from corehq.apps.userreports.dbaccessors import get_all_es_data_sources
+from corehq.apps.userreports.exceptions import UserReportsError
 
 
 def localize(value, lang):
@@ -201,12 +202,14 @@ def get_static_report_mapping(from_domain, to_domain, report_map):
                 ''
             )
             is_custom_report = False
-        else:
+        elif static_report.get_id.startswith(CUSTOM_REPORT_PREFIX):
             report_id = static_report.get_id.replace(
                 CUSTOM_REPORT_PREFIX + from_domain + '-',
                 ''
             )
             is_custom_report = True
+        else:
+            raise UserReportsError("Found dynamic UCR when static expected")
         new_id = StaticReportConfiguration.get_doc_id(
             to_domain, report_id, is_custom_report
         )

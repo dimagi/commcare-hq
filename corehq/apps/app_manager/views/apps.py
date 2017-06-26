@@ -33,7 +33,6 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.tour import tours
 from corehq.apps.translations.models import Translation
 from corehq.apps.app_manager.const import (
-    APP_V2,
     MAJOR_RELEASE_TO_VERSION,
     AUTO_SELECT_USERCASE,
     DEFAULT_FETCH_LIMIT,
@@ -44,15 +43,14 @@ from corehq.apps.app_manager.util import (
     get_app_manager_template,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.userreports.exceptions import UserReportsError
+from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.compression import decompress
 from corehq.apps.app_manager.xform import (
-    XFormException, XForm)
+    XFormException)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.util.view_utils import set_file_download
-from couchexport.export import FormattedRow
-from couchexport.models import Format
-from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.web import json_response, json_request
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.domain.decorators import (
@@ -835,13 +833,14 @@ def pull_master_app(request, domain, app_id):
     latest_master_build = get_app(None, app['master'], latest=True)
     if app['domain'] in master_app.linked_whitelist:
         try:
-            overwrite_app(app, latest_master_build)
-        except AppEditingError:
-            messages.error(request, _('This linked application uses mobile UCRs '
+            report_map = get_static_report_mapping(master_app.domain, app['domain'], {})
+        except UserReportsError:
+            messages.error(request, _('This linked application uses dynamic mobile UCRs '
                                       'which are currently not supported. For this application '
                                       'to function correctly, you will need to remove those modules '
                                       'or revert to a previous version that did not include them.'))
         else:
+            overwrite_app(app, latest_master_build, report_map)
             messages.success(request,
                              _('Your linked application was successfully updated to the latest version.'))
     else:
