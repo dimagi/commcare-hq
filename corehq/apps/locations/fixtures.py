@@ -23,13 +23,12 @@ class LocationSet(object):
                 self.add_location(loc)
 
     def add_location(self, location):
-        if _valid_parent_type(location):
-            self.by_id[location.location_id] = location
-            parent = location.parent
-            parent_id = parent.location_id if parent else None
-            if parent_id is None:  # this is a root
-                self.add_root(location)
-            self.by_parent[parent_id].add(location)
+        self.by_id[location.location_id] = location
+        parent = location.parent
+        parent_id = parent.location_id if parent else None
+        if parent_id is None:  # this is a root
+            self.add_root(location)
+        self.by_parent[parent_id].add(location)
 
     def add_root(self, location):
         self.root_locations.add(location)
@@ -258,12 +257,6 @@ def _get_include_without_expanding_locations(domain, assigned_locations):
                         level__lte=max(forced_levels)))
     else:
         return SQLLocation.objects.none()
-
-
-def _valid_parent_type(location):
-    parent = location.parent
-    parent_type = parent.location_type if parent else None
-    return parent_type == location.location_type.parent_type
 
 
 def _append_children(node, location_db, locations, data_fields):
