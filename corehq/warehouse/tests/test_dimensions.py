@@ -106,6 +106,12 @@ class TestUserGroupDim(TestCase):
     domain = 'user-group-dim-test'
 
     @classmethod
+    def setUpClass(cls):
+        cls.blue_dog = create_user_staging_record(cls.domain, username='blue-dog')
+        cls.black_dog = create_user_staging_record(cls.domain, username='black-dog')
+        cls.yellow_cat = create_user_staging_record(cls.domain, username='yellow-cat')
+
+    @classmethod
     def tearDownClass(cls):
         GroupStagingTable.clear_records()
         UserStagingTable.clear_records()
@@ -116,9 +122,6 @@ class TestUserGroupDim(TestCase):
     def test_basic_user_group_insert(self):
         start = datetime.utcnow() - timedelta(days=3)
         end = datetime.utcnow() + timedelta(days=3)
-        blue_dog = create_user_staging_record(self.domain, username='blue-dog')
-        black_dog = create_user_staging_record(self.domain, username='black-dog')
-        yellow_cat = create_user_staging_record(self.domain, username='yellow-cat')
 
         UserDim.commit(start, end)
         self.assertEqual(UserDim.objects.count(), 3)
@@ -127,12 +130,12 @@ class TestUserGroupDim(TestCase):
         dogs = create_group_staging_record(
             self.domain,
             'dogs',
-            user_ids=[blue_dog.user_id, black_dog.user_id],
+            user_ids=[self.blue_dog.user_id, self.black_dog.user_id],
         )
         create_group_staging_record(
             self.domain,
             'cats',
-            user_ids=[yellow_cat.user_id],
+            user_ids=[self.yellow_cat.user_id],
         )
         GroupDim.commit(start, end)
         self.assertEqual(GroupDim.objects.count(), 2)
@@ -147,7 +150,7 @@ class TestUserGroupDim(TestCase):
         self.assertEqual(
             set(dog_relations.values_list('user_dim_id', flat=True)),
             set(UserDim.objects.filter(
-                user_id__in=[blue_dog.user_id, black_dog.user_id]
+                user_id__in=[self.blue_dog.user_id, self.black_dog.user_id]
             ).values_list('id', flat=True)),
         )
 
