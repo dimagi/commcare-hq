@@ -689,7 +689,7 @@ class IndexTree(DocumentSchema):
 
     @memoized
     def get_cases_that_directly_depend_on_case(self, case_id):
-        return set(self.reverse_indices.get(case_id, []))
+        return self.reverse_indices.get(case_id, set([]))
 
     def delete_index(self, from_case_id, index_name):
         prior_ids = self.indices.pop(from_case_id, {})
