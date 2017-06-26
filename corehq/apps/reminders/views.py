@@ -987,7 +987,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_datatables
     def dispatch(self, *args, **kwargs):
-        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+        return super(BroadcastListView, self).dispatch(*args, **kwargs)
 
     @property
     @memoized
