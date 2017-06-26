@@ -2347,12 +2347,20 @@
             "property_value": "yes"
           },
           {
-            "name": "alive_in_month",
-            "type": "named"
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+              "type": "icds_alive_in_month"
+            },
+            "property_value": "yes"
           },
           {
-            "name": "open_in_month",
-            "type": "named"
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+              "type": "icds_open_in_month"
+            },
+            "property_value": "yes"
           }
         ]
       }
