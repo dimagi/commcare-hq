@@ -136,6 +136,18 @@
           </text>
         </template>
       </field>
+      <field>
+        <header>
+          <text>
+            <locale id="m0.case_long.case_gender_6.header"/>
+          </text>
+        </header>
+        <template>
+          <text>
+            <xpath function="gender"/>
+          </text>
+        </template>
+       </field>
     </detail>
     <variables>
         <case_id function="./@case_id"/>

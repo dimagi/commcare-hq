@@ -137,6 +137,8 @@ class Command(BaseCommand):
              description='Allows for specifying custom intents'),
         Role(slug=privileges.ADVANCED_DOMAIN_SECURITY, name='Advanced Domain Security',
              description='Allows domains to set security policies for all web users'),
+        Role(slug=privileges.PRACTICE_MOBILE_WORKERS, name='Practice mode for mobile workers',
+             description='Allows turning on practice mode for mobile workers and link them to applications'),
         Role(slug=privileges.BUILD_PROFILES, name='Application Profiles',
              description='Allows domains to create application profiles to customize app deploys'),
         Role(slug=privileges.EXCEL_DASHBOARD, name="Excel Dashbord",
@@ -183,7 +185,8 @@ class Command(BaseCommand):
         privileges.LOCATIONS,
         privileges.USER_CASE,
         privileges.ZAPIER_INTEGRATION,
-        privileges.LOGIN_AS
+        privileges.LOGIN_AS,
+        privileges.PRACTICE_MOBILE_WORKERS,
     ]
 
     pro_plan_features = standard_plan_features + [
