@@ -188,12 +188,12 @@ CREATE VIEW agg_ccs_record_monthly AS
         "awc_location_months"."state_site_code" AS "state_site_code",
         "awc_location_months"."aggregation_level" AS "aggregation_level",
         "awc_location_months"."month" AS "month",
-        "ccs_record_categories"."ccs_status" AS "ccs_status",
-        "ccs_record_categories"."trimester" AS "trimester",
-        "ccs_record_categories"."caste" AS "caste",
-        "ccs_record_categories"."disabled" AS "disabled",
-        "ccs_record_categories"."minority" AS "minority",
-        "ccs_record_categories"."resident" AS "resident",
+        "agg_ccs_record"."ccs_status" AS "ccs_status",
+        "agg_ccs_record"."trimester" AS "trimester",
+        "agg_ccs_record"."caste" AS "caste",
+        "agg_ccs_record"."disabled" AS "disabled",
+        "agg_ccs_record"."minority" AS "minority",
+        "agg_ccs_record"."resident" AS "resident",
         COALESCE("agg_ccs_record"."valid_in_month", 0) AS "valid_in_month",
         COALESCE("agg_ccs_record"."valid_all_registered_in_month", 0) AS "valid_all_registered_in_month",
         COALESCE("agg_ccs_record"."lactating", 0) AS "lactating",
@@ -240,13 +240,7 @@ CREATE VIEW agg_ccs_record_monthly AS
         ("awc_location_months"."district_id" = "agg_ccs_record"."district_id") AND
         ("awc_location_months"."block_id" = "agg_ccs_record"."block_id") AND
         ("awc_location_months"."supervisor_id" = "agg_ccs_record"."supervisor_id") AND
-        ("awc_location_months"."awc_id" = "agg_ccs_record"."awc_id") AND
-        ("ccs_record_categories"."ccs_status" = "agg_ccs_record"."ccs_status") AND
-        ("ccs_record_categories"."trimester" = "agg_ccs_record"."trimester") AND
-        ("ccs_record_categories"."caste" = "agg_ccs_record"."caste") AND
-        ("ccs_record_categories"."disabled" = "agg_ccs_record"."disabled") AND
-        ("ccs_record_categories"."minority" = "agg_ccs_record"."minority") AND
-        ("ccs_record_categories"."resident" = "agg_ccs_record"."resident")
+        ("awc_location_months"."awc_id" = "agg_ccs_record"."awc_id")
     );
 
 DROP VIEW IF EXISTS agg_child_health_monthly CASCADE;
@@ -270,12 +264,12 @@ CREATE VIEW agg_child_health_monthly AS
         "awc_location_months"."aggregation_level" AS "aggregation_level",
         "awc_location_months"."month" AS "month",
         "awc_location_months"."month_display" AS "month_display",
-        "child_health_categories"."gender" AS "gender",
-        "child_health_categories"."age_tranche" AS "age_tranche",
-        "child_health_categories"."caste" AS "caste",
-        "child_health_categories"."disabled" AS "disabled",
-        "child_health_categories"."minority" AS "minority",
-        "child_health_categories"."resident" AS "resident",
+        "agg_child_health"."gender" AS "gender",
+        "agg_child_health"."age_tranche" AS "age_tranche",
+        "agg_child_health"."caste" AS "caste",
+        "agg_child_health"."disabled" AS "disabled",
+        "agg_child_health"."minority" AS "minority",
+        "agg_child_health"."resident" AS "resident",
         COALESCE("agg_child_health"."valid_in_month", 0) AS "valid_in_month",
         COALESCE("agg_child_health"."valid_all_registered_in_month", 0) AS "valid_all_registered_in_month",
         COALESCE("agg_child_health"."nutrition_status_weighed", 0) AS "nutrition_status_weighed",
@@ -320,7 +314,6 @@ CREATE VIEW agg_child_health_monthly AS
         COALESCE("agg_child_health"."fully_immunized_on_time", 0) AS "fully_immunized_on_time",
         COALESCE("agg_child_health"."fully_immunized_late", 0) AS "fully_immunized_late"
     FROM "public"."awc_location_months" "awc_location_months"
-    CROSS JOIN "public"."child_health_categories" "child_health_categories"
     LEFT JOIN "public"."agg_child_health" "agg_child_health" ON (
         ("awc_location_months"."month" = "agg_child_health"."month") AND
         ("awc_location_months"."aggregation_level" = "agg_child_health"."aggregation_level") AND
@@ -328,13 +321,7 @@ CREATE VIEW agg_child_health_monthly AS
         ("awc_location_months"."district_id" = "agg_child_health"."district_id") AND
         ("awc_location_months"."block_id" = "agg_child_health"."block_id") AND
         ("awc_location_months"."supervisor_id" = "agg_child_health"."supervisor_id") AND
-        ("awc_location_months"."awc_id" = "agg_child_health"."awc_id") AND
-        ("child_health_categories"."gender" = "agg_child_health"."gender") AND
-        ("child_health_categories"."age_tranche" = "agg_child_health"."age_tranche") AND
-        ("child_health_categories"."caste" = "agg_child_health"."caste") AND
-        ("child_health_categories"."disabled" = "agg_child_health"."disabled") AND
-        ("child_health_categories"."minority" = "agg_child_health"."minority") AND
-        ("child_health_categories"."resident" = "agg_child_health"."resident")
+        ("awc_location_months"."awc_id" = "agg_child_health"."awc_id")
     );
 
 DROP VIEW IF EXISTS agg_thr_monthly CASCADE;
