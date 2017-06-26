@@ -48,6 +48,7 @@ def all_previews_by_name():
     return all_toggles_by_name_in_scope(globals())
 
 
+@quickcache(['domain'])
 def previews_dict(domain):
     return {t.slug: True for t in all_previews() if t.enabled(domain)}
 
