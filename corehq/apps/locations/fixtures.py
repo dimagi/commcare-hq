@@ -191,11 +191,10 @@ def get_all_locations_to_sync(user):
         for user_location in user_locations:
             location_type = user_location.location_type
             expand_from = location_type.expand_from or location_type
-            expand_to_level = set(
-                SQLLocation.active_objects.
-                filter(domain__exact=domain, location_type=location_type.expand_to).
-                values_list('level', flat=True)
-            ) or None
+            expand_to_level = (SQLLocation.active_objects
+                               .filter(domain__exact=user.domain, location_type=location_type.expand_to)
+                               .values_list('level', flat=True)
+                               .first())
 
             expand_from_locations = _get_expand_from_level(user.domain, user_location, expand_from)
 
@@ -232,9 +231,7 @@ def _get_children(domain, root, expand_to_level):
     """
     children = root.get_descendants(include_self=True).filter(is_archived=False)
     if expand_to_level is not None:
-        assert len(expand_to_level) == 1
-        children = children.filter(level__lte=expand_to_level.pop())
-
+        children = children.filter(level__lte=expand_to_level)
     return children
 
 
