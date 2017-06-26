@@ -128,6 +128,7 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
 
         # refetch so that memoized app.get_practice_user gets busted`
         app = Application.get(app._id)
+        app.build_spec.version = '2.30'  # for some reason, this gets set to an old version, after refetch
         self.assertXmlPartialEqual(
             self._get_restore_resource(version_after),
             app.create_suite(),

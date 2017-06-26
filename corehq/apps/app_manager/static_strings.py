@@ -151,6 +151,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('One Year'),
     ugettext_noop('Oops! This setting has been discontinued. We recommend you change this setting to Version 2, and it will no longer appear on your settings page.'),
     ugettext_noop('Password Format'),
+    ugettext_noop('Practice Mobile Worker'),
     ugettext_noop('Profile URL'),
     ugettext_noop('Purge Frequency'),
     ugettext_noop('Push Only'),
