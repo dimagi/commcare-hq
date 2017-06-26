@@ -40,6 +40,7 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
     @classmethod
     def tearDownClass(cls):
         cls.project.delete()
+        super(TestPracticeUserRestore, cls).tearDownClass()
 
     @staticmethod
     def _get_restore_resource(version, build_profile_id=None):
