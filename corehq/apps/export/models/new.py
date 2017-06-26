@@ -1,6 +1,5 @@
 from __future__ import print_function
 
-from StringIO import StringIO
 from copy import copy
 from datetime import datetime
 from itertools import groupby
@@ -14,7 +13,6 @@ from django.utils.translation import ugettext as _
 from django.urls import reverse
 from django.db import models
 from django.http import Http404
-import magic
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
     get_case_properties
 
