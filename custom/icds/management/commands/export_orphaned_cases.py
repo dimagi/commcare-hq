@@ -12,6 +12,7 @@ from corehq.util.log import with_progress_bar
 CHILD_PROPERTIES = ['case_id', 'owner_id', 'opened_on', 'server_modified_on',
                     'name', 'indices', 'aadhar_number', 'dob', 'died']
 
+
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
