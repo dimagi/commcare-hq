@@ -1,6 +1,22 @@
 --- 
 +++ 
-@@ -102,12 +102,12 @@
+@@ -76,11 +76,10 @@
+                         </td>
+                         {{ request|toggle_tag_info:"DISPLAY_CONDITION_ON_NODESET" }}
+                         {% if request|toggle_enabled:'DISPLAY_CONDITION_ON_NODESET' %}
+-                        <td class="col-sm-3 form-group">
+-                            <div data-bind="jqueryElement: relevant.ui"></div>
+-                            <span class="help-block"
+-                                  data-bind="text: 'A display condition can be specified.'"></span>
+-                        </td>
++                         <td class="col-sm-3 form-group">
++                             <div data-bind="jqueryElement: relevant.ui"></div>
++                             <span class="help-block" data-bind="text: 'A display condition can be specified.'"></span>
++                         </td>
+                         {% endif %}
+                     <!--/ko-->
+                     <!--ko ifnot: $data.hasNodeset -->
+@@ -115,12 +114,12 @@
              <tr>
                  <td></td>
                  <td colspan="4">

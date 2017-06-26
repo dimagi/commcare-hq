@@ -712,6 +712,7 @@ class Detail(OrderedXmlObject, IdNode):
     actions = NodeListField('action', Action)
     details = NodeListField('detail', "self")
     _variables = NodeField('variables', DetailVariableList)
+    relevant = StringField('@relevant')
 
     def _init_variables(self):
         if self._variables is None:
