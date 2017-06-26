@@ -20,6 +20,7 @@ from django.http import (
     JsonResponse,
     StreamingHttpResponse,
 )
+from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -467,6 +468,11 @@ class AdminRestoreView(TemplateView):
         if not self.user:
             return HttpResponseNotFound('User %s not found.' % full_username)
 
+        if 'domain' in kwargs:
+            # domain check when this get's called as domain level admin restore.
+            if self.user.domain != kwargs['domain']:
+                raise Http404()
+
         self.app_id = kwargs.get('app_id', None)
 
         raw = request.GET.get('raw') == 'true'
@@ -530,8 +536,9 @@ class DomainAdminRestoreView(AdminRestoreView):
 
     @method_decorator(login_or_basic)
     @method_decorator(domain_admin_required)
-    def get(self, request, *args, **kwargs):
-        return super(DomainAdminRestoreView, self).get(request, *args, **kwargs)
+    def get(self, request, domain, **kwargs):
+        kwargs['domain'] = domain
+        return super(DomainAdminRestoreView, self).get(request, **kwargs)
 
 
 @require_POST
