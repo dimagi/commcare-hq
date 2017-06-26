@@ -768,6 +768,13 @@ ICDS_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+DASHBOARD_ICDS_REPORT = StaticToggle(
+    'dashboard_icds_reports',
+    'Enable access to the dashboard reports for ICDS',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 NINETYNINE_DOTS = StaticToggle(
     '99dots_integration',
     'Enable access to 99DOTS',
