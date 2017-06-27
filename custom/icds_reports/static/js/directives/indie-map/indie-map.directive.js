@@ -73,6 +73,16 @@ function IndieMapController($scope, $compile, $location, storageService) {
             data: vm.data && vm.data[0] !== void(0) ? vm.data[0].data : null,
             fills: vm.data && vm.data[0] !== void(0) ? vm.data[0].fills : null,
             height: Datamap.prototype[vm.type].objects[vm.scope].height,
+            geographyConfig: {
+                popupTemplate: function(geography, data) {
+                    return vm.templatePopup({
+                        loc: {
+                            loc: geography,
+                            row: data,
+                        },
+                    });
+                },
+            },
             setProjection: function (element) {
                 var div = vm.scope === "ind" ? 3 : 2;
                 var projection = d3.geo.equirectangular()
@@ -176,6 +186,7 @@ window.angular.module('icdsApp').directive('indieMap', function() {
             data: '=?',
             legendTitle: '@?',
             bubbles: '=?',
+            templatePopup: '&',
         },
         template: '<div class="indie-map-directive"><datamap on-click="$ctrl.updateMap" map="$ctrl.map" plugins="$ctrl.mapPlugins" plugin-data="$ctrl.mapPluginData"></datamap></div>',
         bindToController: true,

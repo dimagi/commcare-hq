@@ -1,6 +1,6 @@
 /* global d3 */
 
-function MapOrSectorController($scope) {
+function MapOrSectorController() {
     var vm = this;
 
     if (vm.data.mapData && vm.data.mapData.chart_data) {
@@ -34,7 +34,7 @@ function MapOrSectorController($scope) {
     }
 }
 
-MapOrSectorController.$inject = ['$scope'];
+MapOrSectorController.$inject = [];
 
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
@@ -44,6 +44,7 @@ window.angular.module('icdsApp').directive('mapOrSectorView', function() {
         scope: {
             mode: '@',
             data: '=',
+            templatePopup: '&',
         },
         templateUrl: url('icds-ng-template', 'map-or-sector-view.directive'),
         bindToController: true,

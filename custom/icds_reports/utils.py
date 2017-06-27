@@ -963,7 +963,8 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
         ).annotate(
             moderately_underweight=Sum('nutrition_status_moderately_underweight'),
             severely_underweight=Sum('nutrition_status_severely_underweight'),
-            valid=Sum('valid_in_month'),
+            normal=Sum('nutrition_status_normal'),
+            valid=Sum('wer_eligible'),
         )
 
     map_data = {}
@@ -974,16 +975,24 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
 
         severely_underweight = row['severely_underweight']
         moderately_underweight = row['moderately_underweight']
+        normal = row['normal']
 
         value = ((moderately_underweight or 0) + (severely_underweight or 0)) * 100 / (valid or 1)
         average.append(value)
-
+        row_values = {
+            'severely_underweight': severely_underweight or 0,
+            'moderately_underweight': moderately_underweight or 0,
+            'total': valid or 0,
+            'normal': normal
+        }
         if value <= 20:
-            map_data.update({name: {'fillKey': '0%-20%'}})
+            row_values.update({'fillKey': '0%-20%'})
         elif 21 <= value <= 35:
-            map_data.update({name: {'fillKey': '21%-35%'}})
+            row_values.update({'fillKey': '21%-35%'})
         elif value > 35:
-            map_data.update({name: {'fillKey': '36%-100%'}})
+            row_values.update({'fillKey': '36%-100%'})
+
+        map_data.update({name: row_values})
 
     fills = OrderedDict()
     fills.update({'0%-20%': GREEN})

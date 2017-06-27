@@ -27,6 +27,10 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, ma
         info: "Percentage of children with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median. Children who are moderately or severely underweight have a higher risk of mortality.",
     };
 
+    vm.templatePopup = function(loc, row) {
+        return '<div class="hoverinfo" style="max-width: 200px !important;"' + loc.properties.name + '<p>' + vm.rightLegend.info + '</p>' + '<div>Total Children weighed in given month: <strong>' + row.total + '</strong></div><div>Severely Underweight: <strong>' + row.severely_underweight + '</strong></div><div>Moderately Underweight: <strong>' + row.moderately_underweight +'</strong></div><div>Normal: <strong>' + row.normal + '</strong></div></ul>';
+    };
+
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';

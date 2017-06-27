@@ -15,7 +15,7 @@
     <div class="report-content">
         <div class="row black" ng-if="$ctrl.step === 'map'">
             <div class="col-md-12" ng-if="$ctrl.loaded && $ctrl.mode">
-                <map-or-sector-view mode="{$ $ctrl.mode $}" data="$ctrl.data"></map-or-sector-view>
+                <map-or-sector-view template-popup="$ctrl.templatePopup(loc, row)" mode="{$ $ctrl.mode $}" data="$ctrl.data"></map-or-sector-view>
             </div>
         </div>
         <div class="row black" ng-if="$ctrl.step === 'chart' && $ctrl.chartData !== null">
