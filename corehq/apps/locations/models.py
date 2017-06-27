@@ -1,16 +1,10 @@
 import uuid
-import warnings
+from datetime import datetime
 from functools import partial
 
 from bulk_update.helper import bulk_update as bulk_update_helper
 
-from couchdbkit import ResourceNotFound
-from dimagi.ext.couchdbkit import *
-import itertools
-from corehq.apps.cachehq.mixins import CachedCouchDocumentMixin
-from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.decorators.memoized import memoized
-from datetime import datetime
 from django.db import models, transaction
 import jsonfield
 from casexml.apps.case.cleanup import close_case
@@ -20,17 +14,9 @@ from corehq.apps.commtrack.const import COMMTRACK_USERNAME
 from corehq.apps.domain.models import Domain
 from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
-from corehq.util.soft_assert import soft_assert
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 
-
 LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
-
-
-def notify_of_deprecation(msg):
-    _assert = soft_assert(notify_admins=True, fail_if_debug=True)
-    message = "Deprecated Locations feature used: {}".format(msg)
-    _assert(False, message)
 
 
 class LocationTypeManager(models.Manager):
@@ -267,21 +253,6 @@ class LocationQueriesMixin(object):
     def location_ids(self):
         return self.values_list('location_id', flat=True)
 
-    def couch_locations(self, wrapped=True):
-        """
-        Returns the couch locations corresponding to this queryset.
-        """
-        warnings.warn(
-            "Converting SQLLocations to couch locations.  This should be "
-            "used for backwards compatability only - not new features.",
-            DeprecationWarning,
-        )
-        ids = self.location_ids()
-        locations = iter_docs(Location.get_db(), ids)
-        if wrapped:
-            return itertools.imap(Location.wrap, locations)
-        return locations
-
     def accessible_to_user(self, domain, user):
         if user.has_permission(domain, 'access_all_locations'):
             return self.filter(domain=domain)
@@ -410,54 +381,17 @@ class SQLLocation(MPTTModel):
         return ["domain", "name", "site_code", "external_id",
                 "metadata", "is_archived"]
 
-    def sync_couch_location(self):
-        if self.location_id:
-            couch_obj = self.couch_location
-        else:
-            couch_obj = Location()
-            couch_obj._id = uuid.uuid4().hex
-            self.location_id = couch_obj._id
-
-        couch_obj._sql_location_type = self.location_type
-        couch_obj.latitude = float(self.latitude) if self.latitude else None
-        couch_obj.longitude = float(self.longitude) if self.longitude else None
-
-        for field_name in self.get_sync_fields():
-            value = getattr(self, field_name)
-            setattr(couch_obj, field_name, value)
-
-        return couch_obj
-
     @transaction.atomic()
     def save(self, *args, **kwargs):
         from corehq.apps.commtrack.models import sync_supply_point
         from .document_store import publish_location_saved
-        set_site_code_if_needed(self)
-
-        sync_to_couch = kwargs.pop('sync_to_couch', True)
-
-        if sync_to_couch:
-            couch_obj = self.sync_couch_location()
-
-        self.supply_point_id = sync_supply_point(self)
 
         if not self.location_id:
-            raise ValueError("Expected non-empty location_id")
-
+            self.location_id = uuid.uuid4().hex
+        set_site_code_if_needed(self)
+        self.supply_point_id = sync_supply_point(self)
         super(SQLLocation, self).save(*args, **kwargs)
-
-        if sync_to_couch:
-            couch_obj.save(sync_to_sql=False)
-
         publish_location_saved(self.domain, self.location_id)
-
-    def delete(self, *args, **kwargs):
-        if kwargs.pop('sync_to_couch', True):
-            try:
-                self.couch_location.delete(sync_to_sql=False)
-            except ResourceNotFound:
-                pass
-        super(SQLLocation, self).delete(*args, **kwargs)
 
     def to_json(self):
         return {
@@ -483,7 +417,6 @@ class SQLLocation(MPTTModel):
     def lineage(self):
         return list(self.get_ancestors(ascending=True).location_ids())
 
-    # # A few aliases for location_id to be compatible with couch locs
     _id = property(lambda self: self.location_id)
     get_id = property(lambda self: self.location_id)
     group_id = property(lambda self: self.location_id)
@@ -593,11 +526,8 @@ class SQLLocation(MPTTModel):
         Delete a location and its dependants.
         This also unassigns users assigned to the location.
         """
-        to_delete = list(self.get_descendants(include_self=True).couch_locations())
-        # if there are errors deleting couch locations, roll back sql delete
         with transaction.atomic():
             self.sql_full_delete()
-            Location.get_db().bulk_delete(to_delete)
 
     def sql_full_delete(self):
         """
@@ -704,11 +634,6 @@ class SQLLocation(MPTTModel):
             case_sharing=True,
         )
 
-    @property
-    @memoized
-    def couch_location(self):
-        return Location.get(self.location_id)
-
     def is_direct_ancestor_of(self, location):
         return (location.get_ancestors(include_self=True)
                 .filter(pk=self.pk).exists())
@@ -808,243 +733,6 @@ def set_site_code_if_needed(location):
                                 .values_list('site_code', flat=True))
         ]
         location.site_code = generate_code(location.name, all_codes)
-
-
-class Location(CachedCouchDocumentMixin, Document):
-    domain = StringProperty()
-    name = StringProperty()
-    site_code = StringProperty()  # should be unique, not yet enforced
-    # unique id from some external data source
-    external_id = StringProperty()
-    metadata = DictProperty()
-    last_modified = DateTimeProperty()
-    is_archived = BooleanProperty(default=False)
-
-    latitude = FloatProperty()
-    longitude = FloatProperty()
-
-    @classmethod
-    def wrap(cls, data):
-        last_modified = data.get('last_modified')
-        data.pop('location_type', None)  # Only store location type in SQL
-        data.pop('lineage', None)  # Don't try to store lineage
-        # if it's missing a Z because of the Aug. 2014 migration
-        # that added this in iso_format() without Z, then add a Z
-        # (See also Group class)
-        from corehq.apps.groups.models import dt_no_Z_re
-        if last_modified and dt_no_Z_re.match(last_modified):
-            data['last_modified'] += 'Z'
-        return super(Location, cls).wrap(data)
-
-    def __init__(self, *args, **kwargs):
-        if 'parent' in kwargs:
-            # if parent is in the kwargs, this was set from a constructor
-            # if parent isn't in kwargs, this was probably pulled from the db
-            # and we should look to SQL as source of truth
-            parent = kwargs['parent']
-            if parent:
-                if isinstance(parent, Document):
-                    self._sql_parent = parent.sql_location
-                else:
-                    # 'parent' is a doc id
-                    self._sql_parent = SQLLocation.objects.get(location_id=parent)
-            else:
-                self._sql_parent = None
-            del kwargs['parent']
-
-        location_type = kwargs.pop('location_type', None)
-        super(Document, self).__init__(*args, **kwargs)
-        if location_type:
-            self.set_location_type(location_type)
-
-    def __unicode__(self):
-        return u"{} ({})".format(self.name, self.domain)
-
-    def __repr__(self):
-        return u"Location(domain='{}', name='{}', location_type='{}')".format(
-            self.domain,
-            self.name,
-            self.location_type_name,
-        ).encode('utf-8')
-
-    def __eq__(self, other):
-        if isinstance(other, Location):
-            return self._id == other._id
-        else:
-            return False
-
-    def __hash__(self):
-        return hash(self._id)
-
-    @property
-    def sql_location(self):
-        return (SQLLocation.objects.prefetch_related('location_type')
-                                   .get(location_id=self._id))
-
-    @property
-    def location_id(self):
-        return self._id
-
-    @property
-    def location_type(self):
-        notify_of_deprecation(
-            "You should use either location_type_name or location_type_object")
-        return self.location_type_object.name
-
-    _sql_location_type = None
-
-    @location_type.setter
-    def location_type(self, value):
-        notify_of_deprecation("You should set location_type using `set_location_type`")
-        self.set_location_type(value)
-
-    def set_location_type(self, location_type_name):
-        msg = "You can't create a location without a real location type"
-        if not location_type_name:
-            raise LocationType.DoesNotExist(msg)
-        try:
-            self._sql_location_type = LocationType.objects.get(
-                domain=self.domain,
-                name=location_type_name,
-            )
-        except LocationType.DoesNotExist:
-            raise LocationType.DoesNotExist(msg)
-
-    @classmethod
-    def get_sync_fields(cls):
-        return ["domain", "name", "site_code", "external_id", "metadata",
-                "is_archived", "latitude", "longitude"]
-
-    def sync_sql_location(self):
-        if not self._id:
-            self._id = uuid.uuid4().hex
-
-        try:
-            sql_location = self.sql_location
-        except SQLLocation.DoesNotExist:
-            sql_location = SQLLocation(location_id=self._id)
-
-        location_type = self._sql_location_type or sql_location.location_type
-        sql_location.location_type = location_type
-        # sync parent connection
-        if hasattr(self, '_sql_parent'):
-            sql_location.parent = self._sql_parent
-
-        for field_name in self.get_sync_fields():
-            value = getattr(self, field_name)
-            setattr(sql_location, field_name, value)
-
-        return sql_location
-
-    def save(self, *args, **kwargs):
-        self.last_modified = datetime.utcnow()
-
-        # lazy migration for site_code
-        set_site_code_if_needed(self)
-
-        sync_to_sql = kwargs.pop('sync_to_sql', True)
-        with transaction.atomic():
-            if sync_to_sql:
-                sql_location = self.sync_sql_location()
-                sql_location.save(sync_to_couch=False)
-            super(Location, self).save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        if kwargs.pop('sync_to_sql', True):
-            try:
-                self.sql_location.delete(sync_to_couch=False)
-            except SQLLocation.DoesNotExist:
-                pass
-        super(Location, self).delete(*args, **kwargs)
-
-    @classmethod
-    def by_domain(cls, domain, include_docs=True):
-        relevant_ids = SQLLocation.objects.filter(domain=domain).location_ids()
-        if not include_docs:
-            return relevant_ids
-        else:
-            return (
-                cls.wrap(l) for l in iter_docs(cls.get_db(), list(relevant_ids))
-                if not l.get('is_archived', False)
-            )
-
-    @classmethod
-    def by_site_code(cls, domain, site_code):
-        """
-        This method directly looks up a single location
-        and can return archived locations.
-        """
-        try:
-            return (SQLLocation.objects.get(domain=domain,
-                                            site_code__iexact=site_code)
-                    .couch_location)
-        except (SQLLocation.DoesNotExist, ResourceNotFound):
-            return None
-
-    @classmethod
-    def root_locations(cls, domain):
-        """
-        Return all active top level locations for this domain
-        """
-        return list(SQLLocation.root_locations(domain).couch_locations())
-
-    @property
-    def parent_location_id(self):
-        return self.parent.location_id if self.parent else None
-
-    @property
-    def parent_id(self):
-        # TODO this is deprecated as of 2016-07-19
-        # delete after we're sure this isn't called dynamically
-        # Django automagically reserves field_name+_id for foreign key fields,
-        # so because we have SQLLocation.parent, SQLLocation.parent_id refers
-        # to the Django primary key
-        notify_of_deprecation("parent_id should be replaced by parent_location_id")
-        return self.parent_location_id
-
-    @property
-    def parent(self):
-        if hasattr(self, '_sql_parent'):
-            return self._sql_parent.couch_location if self._sql_parent else None
-        else:
-            return self.sql_location.parent.couch_location if self.sql_location.parent else None
-
-    @property
-    def lineage(self):
-        return self.sql_location.lineage
-
-    @property
-    def path(self):
-        return self.sql_location.path
-
-    @property
-    def descendants(self):
-        """return list of all locations that have this location as an ancestor"""
-        notify_of_deprecation("Deprecating this - use SQL locations instead")
-        return list(self.sql_location.get_descendants().couch_locations())
-
-    def get_children(self):
-        """return list of immediate children of this location"""
-        return self.sql_location.get_children().couch_locations()
-
-    def linked_supply_point(self):
-        return self.sql_location.linked_supply_point()
-
-    @property
-    def group_id(self):
-        """
-        This just returns the location's id. It used to add
-        a prefix.
-        """
-        return self.location_id
-
-    @property
-    def location_type_object(self):
-        return self._sql_location_type or self.sql_location.location_type
-
-    @property
-    def location_type_name(self):
-        return self.location_type_object.name
 
 
 class LocationFixtureConfiguration(models.Model):

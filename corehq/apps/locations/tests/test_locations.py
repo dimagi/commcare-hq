@@ -6,7 +6,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.groups.tests.test_groups import WrapGroupTestMixin
 from corehq.apps.products.models import SQLProduct
 
-from ..models import Location, LocationType, SQLLocation
+from ..models import LocationType, SQLLocation
 from .util import LocationHierarchyPerTest, make_loc
 
 
@@ -26,8 +26,7 @@ class LocationProducts(TestCase):
         make_product(self.domain.name, 'banana', 'banana')
         make_product(self.domain.name, 'pear', 'pear')
 
-        couch_loc = make_loc('loc', type='outlet', domain=self.domain.name)
-        self.loc = couch_loc.sql_location
+        self.loc = make_loc('loc', type='outlet', domain=self.domain.name)
 
     def tearDown(self):
         # domain delete cascades to everything else
@@ -85,19 +84,6 @@ class LocationsTest(TestCase):
         cls.domain.delete()
         super(LocationsTest, cls).tearDownClass()
 
-    def test_storage_types(self):
-        # make sure we can go between sql/couch locs
-        sql_loc = SQLLocation.objects.get(name=self.loc.name)
-        self.assertEqual(
-            sql_loc.couch_location._id,
-            self.loc.location_id
-        )
-
-        self.assertEqual(
-            sql_loc.id,
-            self.loc.sql_location.id
-        )
-
     def test_location_queries(self):
         test_state1 = make_loc(
             'teststate1',
@@ -128,8 +114,8 @@ class LocationsTest(TestCase):
 
         def compare(list1, list2):
             self.assertEqual(
-                set([l._id for l in list1]),
-                set([l._id for l in list2])
+                set(l.location_id for l in list1),
+                set(l.location_id for l in list2)
             )
 
         # descendants
@@ -151,13 +137,12 @@ class LocationsTest(TestCase):
         )
         self.assertEqual(
             self.loc.location_id,
-            test_state1.parent._id
+            test_state1.parent.location_id
         )
 
-        # Location.root_locations
         compare(
             [self.loc],
-            Location.root_locations(self.domain.name)
+            SQLLocation.objects.filter(domain=self.domain.name, parent=None)
         )
 
         create_domain('rejected')
@@ -168,26 +153,6 @@ class LocationsTest(TestCase):
             {loc.location_id for loc in [self.loc, test_state1, test_state2, test_village1]},
             set(SQLLocation.objects.filter(domain=self.domain.name).location_ids()),
         )
-
-        # Location.by_site_code
-        self.assertEqual(
-            test_village1._id,
-            Location.by_site_code(self.domain.name, 'tv1')._id
-        )
-        self.assertIsNone(
-            None,
-            Location.by_site_code(self.domain.name, 'notreal')
-        )
-
-        # Location.by_domain
-        compare(
-            [self.loc, test_state1, test_state2, test_village1],
-            Location.by_domain(self.domain.name)
-        )
-
-
-class WrapLocationTest(WrapGroupTestMixin, SimpleTestCase):
-    document_class = Location
 
 
 class TestDeleteLocations(LocationHierarchyPerTest):
