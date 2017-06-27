@@ -40,7 +40,7 @@ def get_case_structures_from_row(domain, row):
     person_case_properties = get_person_case_properties(domain, row)
     occurrence_case_properties = get_occurrence_case_properties(row)
     episode_case_properties = get_episode_case_properties(row)
-    test_case_properties = get_test_case_properties(row)
+    test_case_properties = get_test_case_properties(domain, row)
     drug_resistance_case_properties = get_drug_resistance_case_properties(row)
     followup_test_cases_properties = get_follow_up_test_case_properties(row)
     # TODO: convert all these case properties to the appropriate linked up case structures
@@ -142,8 +142,9 @@ def get_episode_regimen_change_history(row, episode_treatment_initiation_date):
     return value
 
 
-def get_test_case_properties(row):
-    facility_name, facility_id = match_facility(Mehsana2016ColumnMapping.get_value("testing_facility", row))
+def get_test_case_properties(domain, row):
+    facility_name, facility_id = match_facility(
+        domain, Mehsana2016ColumnMapping.get_value("testing_facility", row))
     properties = {
         "testing_facility_saved_name": facility_name,
         "testing_facility_id": facility_id,
@@ -248,13 +249,12 @@ def match_district(domain, xlsx_district_name):
     return location.name, location.location_id
 
 
-def match_facility(xlsx_facility_name):
+def match_facility(domain, xlsx_facility_name):
     """
-    Given facility name taken from the spreadsheet, return the id name and id of the matching location in HQ.
+    Given facility name taken from the spreadsheet, return the name and id of the matching location in HQ.
     """
-    # TODO: This might be the same as match_district()
-    # TODO: Query the locations
-    pass
+    # TODO: Consider filtering by location type
+    return match_district(domain, xlsx_facility_name)
 
 
 class ColumnMapping(object):
