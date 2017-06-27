@@ -37,8 +37,8 @@ class Command(BaseCommand):
                                                                          '4049fded0acc987d53cfc23173cf2bb0',
                                                                          'd982a6fb4cca0824fbde59db18d3721b'])
         owners = SQLLocation.objects.get_queryset_descendants(relevant_districts, include_self=True)
-	    owner_name_mapping = {loc.location_id: loc.name for loc in owners}
-	    hh_cases = self._get_closed_hh_cases(owner_name_mapping.keys())
+        owner_name_mapping = {loc.location_id: loc.name for loc in owners}
+        hh_cases = self._get_closed_hh_cases(owner_name_mapping.keys())
         with open(hh_file, 'w') as hh_csv, open(child_file, 'w') as child_csv:
             hh_writer = csv.writer(hh_csv)
             child_writer = csv.writer(child_csv)
@@ -55,7 +55,7 @@ class Command(BaseCommand):
                     if any(True for index in child['indices'] if index['referenced_id'] in ids and index['identifier'] == 'parent'):
                         row = [child.get(prop, '').encode('utf-8') for prop in CHILD_PROPERTIES]
                         row.append(owner_name_mapping.get(child.get('owner_id', ''), '').encode('utf-8'))
-			child_writer.writerow(row)
+            child_writer.writerow(row)
 
     def _get_closed_hh_cases(self, owners):
         query = (CaseES(es_instance_alias='export')
