@@ -99,8 +99,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.pcp.save()
 
         self.virtual_location_user = make_location_user(self.pcp)
-        self.virtual_location_user.save()
         set_issuer_id(self.domain, self.virtual_location_user)
+        self.virtual_location_user.save()
 
         self.pcp.user_id = self.virtual_location_user._id
         self.pcp.save()
@@ -112,8 +112,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         )
 
         self.default_location_user = make_location_user(self.default_location)
-        self.default_location_user.save()
         set_issuer_id(self.domain, self.default_location_user)
+        self.default_location_user.save()
 
         self.default_location.user_id = self.default_location_user._id
         self.default_location.save()
