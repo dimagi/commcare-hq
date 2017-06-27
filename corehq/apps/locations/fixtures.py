@@ -3,7 +3,6 @@ from collections import defaultdict
 from xml.etree.ElementTree import Element
 
 from casexml.apps.phone.fixtures import FixtureProvider
-from casexml.apps.phone.models import OTARestoreUser
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.locations.models import SQLLocation, LocationType, LocationFixtureConfiguration
 from corehq import toggles
@@ -196,11 +195,10 @@ def get_location_fixture_queryset(user):
                            .values_list('level', flat=True)
                            .first())
         expand_from_locations = _get_expand_from_level(user.domain, user_location, expand_from)
-        all_locations |= _get_children(user.domain, expand_from_locations, expand_to_level)
+        all_locations |= _get_children(expand_from_locations, expand_to_level)
         all_locations |= (SQLLocation.active_objects
                           .get_queryset_ancestors(expand_from_locations, include_self=True))
 
-    # TODO do we need to add a `.distinct('location_id')`?
     return all_locations
 
 
@@ -219,7 +217,7 @@ def _get_expand_from_level(domain, user_location, expand_from):
         return ancestors
 
 
-def _get_children(domain, expand_from_locations, expand_to_level):
+def _get_children(expand_from_locations, expand_to_level):
     """From the topmost location, get all the children we want to sync
     """
     children = SQLLocation.active_objects.get_queryset_descendants(expand_from_locations)
