@@ -1540,7 +1540,10 @@ class DataFileDownloadList(BaseProjectDataView):
             return self.get(request, *args, **kwargs)
 
         aggregate = DataFile.objects.filter(domain=self.domain).aggregate(total_size=Sum('content_length'))
-        if aggregate['total_size'] + request.FILES['file'].size > MAX_DATA_FILE_SIZE_TOTAL:
+        if (
+            aggregate['total_size'] and
+            aggregate['total_size'] + request.FILES['file'].size > MAX_DATA_FILE_SIZE_TOTAL
+        ):
             messages.warning(
                 request,
                 _('Uploading this data file would exceed the total allowance of {} GB for this project space. '
