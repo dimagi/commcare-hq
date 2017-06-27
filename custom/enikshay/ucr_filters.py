@@ -48,9 +48,14 @@ class ENikshayLocationHierarchyFilterValue(FilterValue):
         if self.show_all:
             return None
         location_id = self.value[0].value
-        return ORFilter([
-            EQFilter(x.column, x.parameter_slug) for x in self.get_hierarchy(location_id)
-        ])
+        hierarchy = self.get_hierarchy(location_id)
+        if len(hierarchy) == 1:
+            f = self.get_hierarchy(location_id)[0]
+            return EQFilter(f.column, f.parameter_slug)
+        else:
+            return ORFilter([
+                EQFilter(x.column, x.parameter_slug) for x in self.get_hierarchy(location_id)
+            ])
 
     def to_sql_values(self):
         if self.show_all:
