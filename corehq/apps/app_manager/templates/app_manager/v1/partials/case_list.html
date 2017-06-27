@@ -116,16 +116,6 @@
 
 {% include 'app_manager/v1/partials/case_list_filtering.html' %}
 
-{{ request|toggle_tag_info:"DETAIL_LIST_TAB_NODESETS" }}
-{% if request|toggle_enabled:'DETAIL_LIST_TAB_NODESETS' %}
-<div data-bind="with: shortScreen">
-    <input data-bind="checked: sortNodesetColumns" type="checkbox">
-    <span>
-        {% trans "Sort entries in the Nodeset tabs" %}
-    </span>
-</div>
-{% endif %}
-
 <div data-bind="with: sortRows">
 {% if app.enable_multi_sort %}
 

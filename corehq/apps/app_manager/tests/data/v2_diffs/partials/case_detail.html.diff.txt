@@ -37,8 +37,65 @@
  </div>
  
  {{ request|toggle_tag_info:"DETAIL_LIST_TAB_NODESETS" }}
-@@ -45,39 +49,45 @@
- </span>
+@@ -48,68 +52,79 @@
+ {{ request|toggle_tag_info:"DETAIL_LIST_TAB_NODESETS" }}
+ {% if request|toggle_enabled:'DETAIL_LIST_TAB_NODESETS' %}
+ <div class="spacer"></div>
+-<legend>
+-    {% trans "Sorting" %}
+-</legend>
+-<div data-bind="with: longScreen">
+-    <label>
+-        <input data-bind="checked: sortNodesetColumns" type="checkbox">
+-        <span>
+-            {% trans "Sort entries in the Nodeset tabs" %}
++<div class="panel panel-appmanager">
++  <div class="panel-heading">
++    <h4 class="panel-title panel-title-nolink">
++      {% trans "Sorting" %}
++    </h4>
++  </div>
++  <div class="panel-body">
++    <div data-bind="with: longScreen">
++        <label>
++            <input data-bind="checked: sortNodesetColumns" type="checkbox">
++            <span>
++                {% trans "Sort entries in the Nodeset tabs" %}
++            </span>
++        </label>
++        <span class="hq-help-template"
++              data-title="{% trans "Sort Nodeset Entries" %}"
++              data-content=
++                  "{% blocktrans %}
++                      This makes 'Search Only' fields added under
++                      nodesets to be used for sorting. This
++                      is useful if for example you want higher
++                      priority entries to appear closer to the
++                      top of the list. The list under nodeset will sort
++                      by the first 'Search Only' property, then the second,
++                      etc.
++                  {% endblocktrans %}" >
+         </span>
+-    </label>
+-    <span class="hq-help-template"
+-          data-title="{% trans "Sort Nodeset Entries" %}"
+-          data-content=
+-              "{% blocktrans %}
+-                  This makes 'Search Only' fields added under
+-                  nodesets to be used for sorting. This
+-                  is useful if for example you want higher
+-                  priority entries to appear closer to the
+-                  top of the list. The list under nodeset will sort
+-                  by the first 'Search Only' property, then the second,
+-                  etc.
+-              {% endblocktrans %}" >
+-    </span>
++    </div>
++  </div>
+ </div>
+-<div class="spacer"></div>
+ {% endif %}
+ {% endif %}
  
  {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
 -    <br><br>
