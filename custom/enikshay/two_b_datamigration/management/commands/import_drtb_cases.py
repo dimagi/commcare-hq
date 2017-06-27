@@ -40,7 +40,7 @@ def get_case_structures_from_row(row):
     episode_case_properties = get_episode_case_properties(row)
     test_case_properties = get_test_case_properties(row)
     drug_resistance_case_properties = get_drug_resistance_case_properties(row)
-    # TODO: Add a get_followup_test_case_properties(row) function that returns one dict per followup
+    followup_test_cases_properties = get_follow_up_test_case_properties(row)
     # TODO: convert all these case properties to the appropriate linked up case structures
         # TODO: Create drug resistance cases!
         # TODO: Create secondary_owner cases
@@ -170,6 +170,59 @@ def get_drug_resistances(row):
     drugs = get_resistance_properties(row).get("drug_resistance_list", "").split(" ")
     return drugs
 
+
+def get_follow_up_test_case_properties(row):
+    properties_list = []
+    for follow_up in (3, 4, 6):
+        # TODO: Should I check for existance of all the values?
+        if Mehsana2016ColumnMapping.get_value("month_{}_follow_up_send_date".format(follow_up), row):
+            properties = {
+                "date_tested": clean_date(
+                    Mehsana2016ColumnMapping.get_value("month_{}_follow_up_send_date".format(follow_up), row)),
+                "date_reported": clean_date(
+                    Mehsana2016ColumnMapping.get_value("month_{}_follow_up_result_date".format(follow_up), row)),
+                "result": clean_result(
+                    Mehsana2016ColumnMapping.get_value("month_{}_follow_up_result".format(follow_up), row)),
+                "test_type_value": "culture",
+                "test_type_label": "culture",
+                "rft_general": "follow_up_drtb",
+                "rft_drtb_follow_up_treatment_month": str(follow_up)
+            }
+            properties["result_summary_label"] = result_label(properties['result'])
+
+            properties_list.append(properties)
+    return properties_list
+
+
+DETECTED = "tb_detected"
+NOT_DETECTED = "tb_not_detected"
+NO_RESULT = "no_result"
+
+
+def clean_result(value):
+    return {
+        "": NO_RESULT,
+        "Conta": None,  # TODO: Which should this be?
+        "CONTA": None, # TODO: Which should this be?
+        "NA": NO_RESULT,
+        "NEG": NOT_DETECTED,
+        "Negative": NOT_DETECTED,
+        "pos": DETECTED,
+        "Positive": DETECTED,
+    }[value]
+
+
+def result_label(result):
+    if result == NO_RESULT:
+        return "Unknown"
+    elif result == DETECTED:
+        return "TB Detected"
+    elif result == NOT_DETECTED:
+        return "TB Not Detected"
+    else:
+        raise Exception("Unexpected test result value")
+
+
 def clean_date(messy_date_string):
     if messy_date_string:
         # TODO: Might be safer to assume a format and raise an exception if its in a different format
@@ -209,6 +262,15 @@ mehsana_2016_mapping = {
     "mdr_selection_criteria": 4,
     "testing_facility": 1,
     "dst_result": 6,
+    "month_3_follow_up_send_date": 50,
+    "month_3_follow_up_result_date": 51,
+    "month_3_follow_up_result": 52,
+    "month_4_follow_up_send_date": 53,
+    "month_4_follow_up_result_date": 54,
+    "month_4_follow_up_result": 55,
+    "month_6_follow_up_send_date": 56,
+    "month_6_follow_up_result_date": 57,
+    "month_6_follow_up_result": 58,
 }
 
 
