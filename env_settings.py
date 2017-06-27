@@ -2,6 +2,7 @@ ES_META = {
     # Default settings for all indexes on ElasticSearch
     'default': {
         "settings": {
+            "number_of_replicas": 0,
             "analysis": {
                 "analyzer": {
                     "default": {
