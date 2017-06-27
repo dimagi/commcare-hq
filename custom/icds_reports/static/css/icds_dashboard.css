@@ -1,21 +1,26 @@
 .dashboard-title {
     color: #0a6aa1;
     font-size: 25px;
+    margin-top: 10px;
 }
 
 .fixed-title {
     position: fixed;
-    z-index: 1;
+    z-index: 2;
     width: inherit;
 }
 
 .fixes-filters {
     position: fixed;
-    z-index: 2;
+    z-index: 1;
     top: 80px;
     background-color: white;
     width: 83%;
     padding: 10px 0;
+}
+
+.kpi {
+    z-index: -1;
 }
 
 .fixed-dots {
@@ -222,8 +227,8 @@ li {
     text-align: center;
 }
 
-.body {
-    font-family: "Montserrat", sans-serif;
+body {
+    font-family: "Montserrat" !important;
 }
 
 .dot-menu-item {
@@ -268,6 +273,14 @@ h4 {
     margin-right: 40px;
 }
 
+.see-more > a {
+    color: #ffffff;
+}
+
+.dropdown-menu {
+    z-index: 4;
+}
+
 .title {
     font-weight: bold;
     font-size: 15px;
@@ -292,18 +305,21 @@ h4 {
 @media screen and (min-width: 1501px) {
     .indie-map-directive .datamaps-legend {
         left: 10%;
+        z-index: -1;
     }
 }
 
 @media screen and (min-width: 901px) and (max-width: 1500px) {
     .indie-map-directive .datamaps-legend {
         left: 8%;
+        z-index: -1;
     }
 }
 
 @media screen and (min-width: 0px) and (max-width: 900px) {
     .indie-map-directive .datamaps-legend {
         left: 5px;
+        z-index: -1;
     }
 }
 

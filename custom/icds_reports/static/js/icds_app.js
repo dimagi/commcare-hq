@@ -16,7 +16,7 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
 
         $routeProvider
             .when("/", {
-                redirectTo : '/program_summary/system_usage',
+                redirectTo : '/program_summary/maternal_child',
             }).when("/program_summary/:step", {
                 template : "<system-usage></system-usage>",
             }).when("/awc_opened", {

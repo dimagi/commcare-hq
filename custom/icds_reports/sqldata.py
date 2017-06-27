@@ -14,7 +14,6 @@ from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 
 
-
 class BaseIdentification(object):
 
     title = 'a. Identification'
@@ -1120,32 +1119,28 @@ class DemographicsChildHealth(ExportableMixin, SqlData):
         columns = self.get_columns_by_loc_level
         agg_columns = [
             DatabaseColumn(
-                'num_children_0_28days_enrolled_for_services',
-                SumColumn('valid_in_month', filters=self.filters + [EQ('age_tranche', 'age_0')]),
-                slug='num_children_0_28days_enrolled_for_services'
+                'num_children_0_6mo_enrolled_for_services',
+                SumColumn('valid_in_month', filters=self.filters + [
+                    OR([
+                        EQ('age_tranche', 'age_0'),
+                        EQ('age_tranche', 'age_6')
+                    ])
+                ]),
+                slug='num_children_0_6mo_enrolled_for_services'
             ),
             DatabaseColumn(
-                'num_children_28days6mo_enrolled_for_services',
-                SumColumn('valid_in_month', filters=self.filters + [EQ('age_tranche', 'age_6')]),
-                slug='num_children_28days6mo_enrolled_for_services'
-            ),
-            DatabaseColumn(
-                'num_children_6mo1yr_enrolled_for_services',
-                SumColumn('valid_in_month', filters=self.filters + [EQ('age_tranche', 'age_12')]),
-                slug='num_children_6mo1yr_enrolled_for_services'
-            ),
-            DatabaseColumn(
-                'num_children_1yr3yr_enrolled_for_services',
+                'num_children_6mo3yr_enrolled_for_services',
                 SumColumn(
                     'valid_in_month',
                     filters=self.filters + [
                         OR([
+                            EQ('age_tranche', 'age_12'),
                             EQ('age_tranche', 'age_24'),
                             EQ('age_tranche', 'age_36')
                         ])
                     ]
                 ),
-                slug='num_children_1yr3yr_enrolled_for_services'
+                slug='num_children_6mo3yr_enrolled_for_services'
             ),
             DatabaseColumn(
                 'num_children_3yr6yr_enrolled_for_services',
@@ -1385,20 +1380,12 @@ class DemographicsExport(ExportableMixin):
                 'slug': 'num_children_0_6years_enrolled_for_services'
             },
             {
-                'header': 'num_children_0_28days_enrolled_for_services',
-                'slug': 'num_children_0_28days_enrolled_for_services'
+                'header': 'num_children_0_6mo_enrolled_for_services',
+                'slug': 'num_children_0_6mo_enrolled_for_services'
             },
             {
-                'header': 'num_children_28days6mo_enrolled_for_services',
-                'slug': 'num_children_28days6mo_enrolled_for_services'
-            },
-            {
-                'header': 'num_children_6mo1yr_enrolled_for_services',
-                'slug': 'num_children_6mo1yr_enrolled_for_services'
-            },
-            {
-                'header': 'num_children_1yr3yr_enrolled_for_services',
-                'slug': 'num_children_1yr3yr_enrolled_for_services'
+                'header': 'num_children_6mo3yr_enrolled_for_services',
+                'slug': 'num_children_6mo3yr_enrolled_for_services'
             },
             {
                 'header': 'num_children_3yr6yr_enrolled_for_services',

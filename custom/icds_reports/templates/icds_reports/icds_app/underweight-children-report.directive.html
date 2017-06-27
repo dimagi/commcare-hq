@@ -13,12 +13,12 @@
         </div>
     </div>
     <div class="report-content">
-        <div class="col-md-12 black" ng-if="$ctrl.step === 'map'">
-            <div class="row" ng-if="$ctrl.loaded && $ctrl.mode">
+        <div class="row black" ng-if="$ctrl.step === 'map'">
+            <div class="col-md-12" ng-if="$ctrl.loaded && $ctrl.mode">
                 <map-or-sector-view mode="{$ $ctrl.mode $}" data="$ctrl.data"></map-or-sector-view>
             </div>
         </div>
-        <div class="col-md-12 black" ng-if="$ctrl.step === 'chart' && $ctrl.chartData !== null">
+        <div class="row black" ng-if="$ctrl.step === 'chart' && $ctrl.chartData !== null">
             <div class="row">
                 <nvd3 options="$ctrl.chartOptions" data="$ctrl.chartData" class="with-3d-shadow with-transitions"></nvd3>
             </div>

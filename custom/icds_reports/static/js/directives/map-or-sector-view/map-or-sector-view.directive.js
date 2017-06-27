@@ -3,7 +3,7 @@
 function MapOrSectorController($scope) {
     var vm = this;
 
-    setTimeout(function() {
+    if (vm.data.mapData && vm.data.mapData.chart_data) {
         vm.chartOptions = {
             chart: {
                 type: 'multiBarHorizontalChart',
@@ -31,8 +31,7 @@ function MapOrSectorController($scope) {
                 },
             },
         };
-        $scope.$apply();
-    }, 500);
+    }
 }
 
 MapOrSectorController.$inject = ['$scope'];

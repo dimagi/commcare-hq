@@ -115,6 +115,9 @@ window.angular.module('icdsApp').directive('underweightChildrenReport', function
         restrict: 'E',
         templateUrl: url('icds-ng-template', 'underweight-children-report.directive'),
         bindToController: true,
+        scope: {
+            data: '=',
+        },
         controller: UnderweightChildrenReportController,
         controllerAs: '$ctrl',
     };

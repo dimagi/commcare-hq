@@ -93,19 +93,19 @@
                             </div>
                             <div class="nav navbar-nav">
                                 <h2 class="dashboard-title">
-                                    <img src="{% static "img/dashboard-logo.png" %}" alt="Logo" style="width: 40px; height: 40px;">
-                                    <strong>{% trans "ICT-RTM DASHBOARD OF ICDS" %}</strong>
+                                    <img src="{% static "img/dashboard-logo.png" %}" alt="Logo" style="width: 60px; height: 60px;">
+                                    <strong>{% trans "ICT-RTM of ICDS Dashboard" %}</strong>
                                 </h2>
                             </div>
                             <nav class="navbar-menus fullmenu" id="hq-full-menu" role="navigation">
                                 <div class="nav-settings-bar pull-right">
                                     <ul class="nav navbar-nav" role="menu">
                                         <li class="dropdown">
-                                            <a href="#" id="settingsmenu-projectSettings"
-                                               class="dropdown-toggle dropdown-toggle-with-icon"
+                                            <span id="settingsmenu-projectSettings"
+                                               class="dropdown-toggle dropdown-toggle-with-icon pointer"
                                                data-toggle="dropdown">
-                                                <i class="fa fa-cog nav-main-icon  fa-2x"></i>
-                                            </a>
+                                                <i class="fa fa-cog nav-main-icon  fa-2x" style="margin-top: 15px;"></i>
+                                            </span>
                                             <ul class="dropdown-menu dropdown-menu-right" role="menu">
                                                 <li class="dropdown-header nav-header">{% trans 'Logged in As' %}</li>
                                                 <li class="nav-login-header">

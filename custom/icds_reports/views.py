@@ -216,15 +216,13 @@ class ProgramSummaryView(View):
         get_location_filter(location, self.kwargs['domain'], config)
 
         data = {}
-        if step == 'system_usage':
-            data = get_system_usage_data(
+        if step == 'maternal_child':
+            data = get_maternal_child_data(config)
+        elif step == 'icds_cas_reach':
+            data = get_cas_reach_data(
                 tuple(yesterday.timetuple())[:3],
                 config
             )
-        elif step == 'maternal_child':
-            data = get_maternal_child_data(config)
-        elif step == 'icds_cas_reach':
-            data = get_cas_reach_data(config)
         elif step == 'demographics':
             data = get_demographics_data(
                 tuple(yesterday.timetuple())[:3],
