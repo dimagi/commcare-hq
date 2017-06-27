@@ -524,7 +524,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(TestBuildingCaseSchemaFromApplication, cls).setUpClass()
+        super(TestBuildingSchemaFromApplication, cls).setUpClass()
         cls.current_app = Application.wrap(cls.get_json('basic_application'))
 
         cls.first_build = Application.wrap(cls.get_json('basic_application'))
@@ -559,7 +559,7 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
     def tearDownClass(cls):
         for app in cls.apps:
             app.delete()
-        super(TestBuildingCaseSchemaFromApplication, cls).tearDownClass()
+        super(TestBuildingSchemaFromApplication, cls).tearDownClass()
 
     def setUp(self):
         self.inferred_schema = CaseInferredSchema(
