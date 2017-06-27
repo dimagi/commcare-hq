@@ -202,14 +202,12 @@ def get_static_report_mapping(from_domain, to_domain, report_map):
                 ''
             )
             is_custom_report = False
-        elif static_report.get_id.startswith(CUSTOM_REPORT_PREFIX):
+        else:
             report_id = static_report.get_id.replace(
                 CUSTOM_REPORT_PREFIX + from_domain + '-',
                 ''
             )
             is_custom_report = True
-        else:
-            raise UserReportsError("Found dynamic UCR when static expected")
         new_id = StaticReportConfiguration.get_doc_id(
             to_domain, report_id, is_custom_report
         )

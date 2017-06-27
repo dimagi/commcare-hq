@@ -832,15 +832,15 @@ def pull_master_app(request, domain, app_id):
     master_app = get_app(None, app['master'])
     latest_master_build = get_app(None, app['master'], latest=True)
     if app['domain'] in master_app.linked_whitelist:
+        report_map = get_static_report_mapping(master_app.domain, app['domain'], {})
         try:
-            report_map = get_static_report_mapping(master_app.domain, app['domain'], {})
-        except UserReportsError:
+            overwrite_app(app, latest_master_build, report_map)
+        except AppEditingError:
             messages.error(request, _('This linked application uses dynamic mobile UCRs '
                                       'which are currently not supported. For this application '
                                       'to function correctly, you will need to remove those modules '
                                       'or revert to a previous version that did not include them.'))
         else:
-            overwrite_app(app, latest_master_build, report_map)
             messages.success(request,
                              _('Your linked application was successfully updated to the latest version.'))
     else:

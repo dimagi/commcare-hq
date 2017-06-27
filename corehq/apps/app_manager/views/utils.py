@@ -142,7 +142,10 @@ def overwrite_app(app, master_build, report_map=None):
         if isinstance(module, ReportModule):
             if report_map is not None:
                 for config in module.report_configs:
-                    config.report_id = report_map[config.report_id]
+                    try:
+                        config.report_id = report_map[config.report_id]
+                    except KeyError:
+                        raise AppEditingError('Dynamic UCR used in linked app')
             else:
                 raise AppEditingError('Report map not passed to overwrite_app')
     wrapped_app.copy_attachments(master_build)
