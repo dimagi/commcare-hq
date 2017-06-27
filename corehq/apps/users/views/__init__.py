@@ -22,7 +22,7 @@ from django_otp.plugins.otp_static.models import StaticToken
 from djangular.views.mixins import allow_remote_invocation
 
 from couchdbkit.exceptions import ResourceNotFound
-from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
+from corehq.apps.users.landing_pages import get_allowed_landing_pages
 from corehq.util.view_utils import json_error
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
@@ -490,7 +490,7 @@ class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
             {'id': None, 'name': _('Use Default')}
         ] + [
             {'id': page.id, 'name': _(page.name)}
-            for page in ALLOWED_LANDING_PAGES
+            for page in get_allowed_landing_pages(self.domain)
         ]
 
     @property
@@ -744,7 +744,7 @@ class UserInvitationView(object):
 
     @property
     def success_msg(self):
-        return "You have been added to the %s domain" % self.domain
+        return _('You have been added to the "%s" project space.') % self.domain
 
     @property
     def redirect_to_on_success(self):

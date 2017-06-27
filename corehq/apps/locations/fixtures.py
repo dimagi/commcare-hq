@@ -127,10 +127,24 @@ class FlatLocationSerializer(object):
             }
             attrs.update({attr: '' for attr in location_type_attrs})
             attrs['{}_id'.format(location.location_type.code)] = location.location_id
-            tmp_location = location
-            while tmp_location.parent:
-                tmp_location = tmp_location.parent
-                attrs['{}_id'.format(tmp_location.location_type.code)] = tmp_location.location_id
+
+            current_location = location
+            while current_location.parent_id:
+                try:
+                    current_location = all_locations.by_id[current_location.parent_id]
+                except KeyError:
+                    current_location = current_location.parent
+
+                    # For some reason this wasn't included in the locations we already fetched
+                    from corehq.util.soft_assert import soft_assert
+                    _soft_assert = soft_assert('{}@{}.com'.format('frener', 'dimagi'))
+                    message = """
+                        The flat location fixture didn't prefetch all parent locations:
+                        {domain}: {location_id}
+                    """.format(current_location.domain, current_location.location_id)
+                    _soft_assert(False, msg=message)
+
+                attrs['{}_id'.format(current_location.location_type.code)] = current_location.location_id
 
             location_node = Element('location', attrs)
             _fill_in_location_element(location_node, location, data_fields)
@@ -179,7 +193,7 @@ flat_location_fixture_generator = LocationFixtureProvider(
 
 def get_location_fixture_queryset(user):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
-        return SQLLocation.active_objects.filter(domain=user.domain)
+        return SQLLocation.active_objects.filter(domain=user.domain).prefetch_related('location_type')
 
     all_locations = SQLLocation.objects.none()
 
@@ -213,6 +227,7 @@ def _get_expand_from_level(domain, user_location, expand_from):
             user_location
             .get_ancestors(include_self=True)
             .filter(location_type=expand_from, is_archived=False)
+            .prefetch_related('location_type')
         )
         return ancestors
 
@@ -220,7 +235,7 @@ def _get_expand_from_level(domain, user_location, expand_from):
 def _get_children(expand_from_locations, expand_to_level):
     """From the topmost location, get all the children we want to sync
     """
-    children = SQLLocation.active_objects.get_queryset_descendants(expand_from_locations)
+    children = SQLLocation.active_objects.get_queryset_descendants(expand_from_locations).prefetch_related('location_type')
     if expand_to_level is not None:
         children = children.filter(level__lte=expand_to_level)
     return children
@@ -245,7 +260,8 @@ def _get_include_without_expanding_locations(domain, assigned_locations):
     if forced_levels:
         return (SQLLocation.active_objects
                 .filter(domain__exact=domain,
-                        level__lte=max(forced_levels)))
+                        level__lte=max(forced_levels))
+                .prefetch_related('location_type'))
     else:
         return SQLLocation.objects.none()
 

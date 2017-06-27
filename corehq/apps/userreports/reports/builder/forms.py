@@ -189,7 +189,8 @@ class DataSourceBuilder(object):
             self.source_xform = XForm(self.source_form.source)
         if self.source_type == 'case':
             prop_map = get_case_properties(
-                self.app, [self.source_id], defaults=DEFAULT_CASE_PROPERTY_DATATYPES.keys()
+                self.app, [self.source_id], defaults=DEFAULT_CASE_PROPERTY_DATATYPES.keys(),
+                include_parent_properties=False
             )
             self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed'})
 

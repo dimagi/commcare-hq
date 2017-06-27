@@ -1,0 +1,52 @@
+<div class="preogress-report-directive">
+    <div class="row no-margin fixes-filters">
+        <div class="col-md-4">
+            <span class="breadcrump-element" ng-bind="$ctrl.label"></span>
+        </div>
+        <div class="col-md-7">
+            <filters filters="$ctrl.filters" data="$ctrl.filtersData"></filters>
+        </div>
+        <div class="col-md-1">
+            <print-report></print-report>
+        </div>
+    </div>
+    <div ng-if="$ctrl.data === void(0)">
+        <h2>No Data</h2>
+    </div>
+    <div class="report-content">
+        <div class="row" ng-repeat="section in $ctrl.data">
+            <h2 ng-bind-html="section.section_title"></h2>
+            <table class="table black">
+                <thead>
+                    <tr>
+                        <th>Indicator</th>
+                        <th ng-repeat="month in section.months">
+                            <span ng-bind-html="month"></span>
+                        </th>
+                        <th>Average</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr ng-if="row.data" ng-repeat="row in section.rows_config">
+                        <td ng-repeat="cell in row.data">
+                            <span ng-if="$index === 0">{$ cell.html $}</span>
+                            <span ng-if="$index !== 0 && row.average !== void(0)">{$ cell.html | number:2 $} %</span>
+                            <span ng-if="$index !== 0 && row.average === void(0)">{$ cell.html | number:0 $}</span>
+                        </td>
+                        <td>
+                            <span ng-if="row.average !== void(0)">{$ $ctrl.sumValues(row.average) | number:2 $} %</span>
+                            <span ng-if="row.average === void(0)">---</span>
+                        </td>
+                    </tr>
+                    <tr ng-if="!row.data" ng-repeat="row in section.rows_config">
+                        <td>{$ row.header $}</td>
+                        <td>---</td>
+                        <td>---</td>
+                        <td>---</td>
+                        <td>---</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

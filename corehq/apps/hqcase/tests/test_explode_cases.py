@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from couchdbkit import ResourceNotFound
 from django.test import SimpleTestCase, TestCase
 from mock import patch
+from corehq.util.test_utils import flag_enabled
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.models import CommCareCase
@@ -94,6 +95,7 @@ def mock_fetch_case_attachment(case_id, attachments):
 class ExplodeCasesTest(SimpleTestCase, TestXmlMixin):
     maxDiff = 1000000
 
+    @flag_enabled('MM_CASE_PROPERTIES')
     def test_make_creating_casexml(self):
         for input, files, output in TESTS:
             with mock_fetch_case_attachment(input.case_id, files):

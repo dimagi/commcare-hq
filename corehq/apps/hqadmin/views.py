@@ -20,6 +20,7 @@ from django.http import (
     JsonResponse,
     StreamingHttpResponse,
 )
+from django.http.response import Http404
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_lazy
@@ -453,6 +454,8 @@ class AdminRestoreView(TemplateView):
     def dispatch(self, request, *args, **kwargs):
         return super(AdminRestoreView, self).dispatch(request, *args, **kwargs)
 
+    def _validate_user_access(self, user):
+        return True
 
     def get(self, request, *args, **kwargs):
         full_username = request.GET.get('as', '')
@@ -466,6 +469,9 @@ class AdminRestoreView(TemplateView):
         self.user = CommCareUser.get_by_username(full_username)
         if not self.user:
             return HttpResponseNotFound('User %s not found.' % full_username)
+
+        if not self._validate_user_access(self.user):
+            raise Http404()
 
         self.app_id = kwargs.get('app_id', None)
 
@@ -530,8 +536,12 @@ class DomainAdminRestoreView(AdminRestoreView):
 
     @method_decorator(login_or_basic)
     @method_decorator(domain_admin_required)
-    def get(self, request, *args, **kwargs):
-        return super(DomainAdminRestoreView, self).get(request, *args, **kwargs)
+    def get(self, request, domain, **kwargs):
+        self.domain = domain
+        return super(DomainAdminRestoreView, self).get(request, **kwargs)
+
+    def _validate_user_access(self, user):
+        return self.domain == user.domain
 
 
 @require_POST

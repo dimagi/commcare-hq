@@ -99,8 +99,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.pcp.save()
 
         self.virtual_location_user = make_location_user(self.pcp)
-        self.virtual_location_user.save()
         set_issuer_id(self.domain, self.virtual_location_user)
+        self.virtual_location_user.save()
 
         self.pcp.user_id = self.virtual_location_user._id
         self.pcp.save()
@@ -112,8 +112,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         )
 
         self.default_location_user = make_location_user(self.default_location)
-        self.default_location_user.save()
         set_issuer_id(self.domain, self.default_location_user)
+        self.default_location_user.save()
 
         self.default_location.user_id = self.default_location_user._id
         self.default_location.save()
@@ -253,6 +253,12 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(occurrence_case.owner_id, '-')
         self.assertEqual(occurrence_case.dynamic_case_properties(), OrderedDict([
             ('current_episode_type', 'confirmed_tb'),
+            ('legacy_blockOrHealthPostId', '101'),
+            ('legacy_districtId', '102'),
+            ('legacy_organisationId', '2'),
+            ('legacy_stateId', '103'),
+            ('legacy_subOrganizationId', '3'),
+            ('legacy_wardId', '104'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
             ('occurrence_episode_count', '1'),
@@ -298,6 +304,12 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('episode_id', '20160908010203004'),
             ('episode_pending_registration', 'no'),
             ('episode_type', 'confirmed_tb'),
+            ('legacy_blockOrHealthPostId', '101'),
+            ('legacy_districtId', '102'),
+            ('legacy_organisationId', '2'),
+            ('legacy_stateId', '103'),
+            ('legacy_subOrganizationId', '3'),
+            ('legacy_wardId', '104'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
             ('new_retreatment', 'new'),
