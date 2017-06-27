@@ -433,7 +433,7 @@ CREATE VIEW agg_awc_daily_view AS
         COALESCE("agg_awc"."cases_person_adolescent_girls_11_14_all", 0) AS "cases_person_adolescent_girls_11_14_all",
         COALESCE("agg_awc"."cases_person_adolescent_girls_15_18_all", 0) AS "cases_person_adolescent_girls_15_18_all",
         COALESCE("agg_awc"."cases_person_adolescent_girls_11_14", 0) + COALESCE("agg_awc"."cases_person_adolescent_girls_15_18", 0) AS "cases_person_adolescent_girls_11_18",
-        COALESCE("agg_awc"."cases_person_adolescent_girls_11_14_all", 0) + COALESCE("agg_awc"."cases_person_adolescent_girls_15_18_al", 0) AS "cases_person_adolescent_girls_11_18_all",
+        COALESCE("agg_awc"."cases_person_adolescent_girls_11_14_all", 0) + COALESCE("agg_awc"."cases_person_adolescent_girls_15_18_all", 0) AS "cases_person_adolescent_girls_11_18_all",
         COALESCE("agg_awc"."cases_ccs_pregnant", 0) AS "cases_ccs_pregnant",
         COALESCE("agg_awc"."cases_ccs_lactating", 0) AS "cases_ccs_lactating",
         COALESCE("agg_awc"."cases_child_health", 0) AS "cases_child_health",
@@ -448,13 +448,13 @@ CREATE VIEW agg_awc_daily_view AS
         "agg_awc"."num_launched_supervisors" AS "num_launched_supervisors",
         "agg_awc"."num_launched_awcs" AS "num_launched_awcs"
     FROM "public"."awc_location" "awc_location"
-    LEFT JOIN "public"."agg_awc" "agg_awc_daily" ON (
+    LEFT JOIN "public"."agg_awc_daily" "agg_awc" ON (
         ("awc_location"."aggregation_level" = "agg_awc"."aggregation_level") AND
         ("awc_location"."state_id" = "agg_awc"."state_id") AND
         ("awc_location"."district_id" = "agg_awc"."district_id") AND
         ("awc_location"."block_id" = "agg_awc"."block_id") AND
         ("awc_location"."supervisor_id" = "agg_awc"."supervisor_id") AND
-        ("awc_location"."awc_id" = "agg_awc"."awc_id")
+        ("awc_location"."doc_id" = "agg_awc"."awc_id")
     );
 
 DROP VIEW IF EXISTS child_health_monthly_view CASCADE;
