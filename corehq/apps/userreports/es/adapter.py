@@ -18,6 +18,9 @@ import six
 
 # These settings tell ES to not tokenize strings
 UCR_INDEX_SETTINGS = {
+    "settings": {
+        "number_of_replicas": 0,
+    },
     "mappings": {
         "indicator": {
             "dynamic": "true",
@@ -216,6 +219,7 @@ class IndicatorESAdapter(IndicatorAdapter):
         except NotFoundError:
             pass
 
+
 def build_es_mapping(data_source_config):
     properties = {}
     for indicator in data_source_config.configured_indicators:
@@ -228,6 +232,6 @@ def build_es_mapping(data_source_config):
         if datatype == 'string':
             properties[indicator['column_id']]['index'] = 'not_analyzed'
     mapping = deepcopy(UCR_INDEX_SETTINGS)
-    mapping.update(data_source_config.get_es_index_settings())
+    mapping['settings'].update(data_source_config.get_es_index_settings()['settings'])
     mapping['mappings']['indicator']['properties'] = properties
     return mapping
