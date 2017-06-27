@@ -11,6 +11,7 @@ class GetCaseTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(GetCaseTest, cls).setUpClass()
         cls.domain = Domain(name='foo')
         cls.domain.save()
         cls.user = CommCareUser.create(cls.domain.name, 'username', 's3cr3t')
@@ -18,6 +19,7 @@ class GetCaseTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
+        super(GetCaseTest, cls).tearDownClass()
 
     def setUp(self):
         factory = CaseFactory(domain='foo')

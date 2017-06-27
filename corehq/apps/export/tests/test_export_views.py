@@ -28,6 +28,7 @@ class ExportViewTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ExportViewTest, cls).setUpClass()
         cls.domain = Domain(name="donkeykong", is_active=True)
         cls.domain.save()
 
@@ -41,6 +42,7 @@ class ExportViewTest(TestCase):
     def tearDownClass(cls):
         cls.user.delete()
         cls.domain.delete()
+        super(ExportViewTest, cls).tearDownClass()
 
     def setUp(self):
         self.client.login(username=self.username, password=self.password)

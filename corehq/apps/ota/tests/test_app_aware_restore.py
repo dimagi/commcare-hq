@@ -23,6 +23,7 @@ class AppAwareSyncTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(AppAwareSyncTests, cls).setUpClass()
         delete_all_users()
         cls.domain_obj = create_domain(cls.domain)
         toggles.MOBILE_UCR.set(cls.domain, True, toggles.NAMESPACE_DOMAIN)
@@ -65,6 +66,7 @@ class AppAwareSyncTests(TestCase):
         delete_all_users()
         domain = Domain.get_by_name(cls.domain)
         domain.delete()
+        super(AppAwareSyncTests, cls).tearDownClass()
 
     def test_report_fixtures_provider_without_app(self):
         """

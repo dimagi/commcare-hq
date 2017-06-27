@@ -1498,6 +1498,7 @@ class TestBulkUserAPI(APIResourceTest):
 
     @classmethod
     def setUpClass(cls):
+        super(TestBulkUserAPI, cls).setUpClass()
         Role.get_cache().clear()
         cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
         cls.username = 'rudolph@qwerty.commcarehq.org'
@@ -1529,6 +1530,7 @@ class TestBulkUserAPI(APIResourceTest):
         for domain in Domain.get_all():
             domain.delete()
         v0_5.MOCK_BULK_USER_ES = None
+        super(TestBulkUserAPI, cls).tearDownClass()
 
     @classmethod
     def make_users(cls):

@@ -12,6 +12,7 @@ class GroupTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(GroupTest, cls).setUpClass()
         cls.active_user = CommCareUser.create(domain=DOMAIN, username='activeguy', password='secret')
         cls.inactive_user = CommCareUser.create(domain=DOMAIN, username='inactivegal', password='secret')
         cls.inactive_user.is_active = False
@@ -27,6 +28,7 @@ class GroupTest(TestCase):
     def tearDownClass(cls):
         for user in CommCareUser.all():
             user.delete()
+        super(GroupTest, cls).tearDownClass()
 
     def testGetUsers(self):
         group = Group(domain=DOMAIN, name='group',

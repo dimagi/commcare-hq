@@ -24,6 +24,7 @@ class TestRepeatRecordDBAccessors(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestRepeatRecordDBAccessors, cls).setUpClass()
         before = datetime.utcnow() - timedelta(minutes=5)
 
         failed = RepeatRecord(
@@ -80,6 +81,7 @@ class TestRepeatRecordDBAccessors(TestCase):
     def tearDownClass(cls):
         for record in cls.records:
             record.delete()
+        super(TestRepeatRecordDBAccessors, cls).tearDownClass()
 
     def test_get_pending_repeat_record_count(self):
         count = get_pending_repeat_record_count(self.domain, self.repeater_id)
@@ -184,6 +186,7 @@ class TestRepeatersDBAccessors(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestRepeatersDBAccessors, cls).setUpClass()
         repeater = CaseRepeater(
             domain=cls.domain,
         )
@@ -198,6 +201,7 @@ class TestRepeatersDBAccessors(TestCase):
     def tearDownClass(cls):
         for repeater in cls.repeaters:
             repeater.delete()
+        super(TestRepeatersDBAccessors, cls).tearDownClass()
 
     def test_get_repeaters_by_domain(self):
         repeaters = get_repeaters_by_domain(self.domain)
@@ -208,6 +212,7 @@ class TestRepeatersDBAccessors(TestCase):
 class TestOtherDBAccessors(TestCase):
     @classmethod
     def setUpClass(cls):
+        super(TestOtherDBAccessors, cls).setUpClass()
         cls.records = [
             RepeatRecord(domain='a'),
             RepeatRecord(domain='b'),
@@ -218,6 +223,7 @@ class TestOtherDBAccessors(TestCase):
     @classmethod
     def tearDownClass(cls):
         RepeatRecord.bulk_delete(cls.records)
+        super(TestOtherDBAccessors, cls).tearDownClass()
 
     def test_get_domains_that_have_repeat_records(self):
         self.assertEqual(get_domains_that_have_repeat_records(), ['a', 'b', 'c'])

@@ -7,6 +7,7 @@ from corehq.pillows.utils import get_all_expected_es_indices
 class ProdIndexManagementTest(SimpleTestCase):
     @classmethod
     def setUpClass(cls):
+        super(ProdIndexManagementTest, cls).setUpClass()
         cls._PILLOWTOPS = settings.PILLOWTOPS
         if not settings.PILLOWTOPS:
             # assumes HqTestSuiteRunner, which blanks this out and saves a copy here
@@ -15,6 +16,7 @@ class ProdIndexManagementTest(SimpleTestCase):
     @classmethod
     def tearDownClass(cls):
         settings.PILLOWTOPS = cls._PILLOWTOPS
+        super(ProdIndexManagementTest, cls).tearDownClass()
 
     @override_settings(SERVER_ENVIRONMENT='production')
     def test_prod_config(self):
