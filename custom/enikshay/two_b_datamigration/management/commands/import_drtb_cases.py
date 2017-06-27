@@ -41,8 +41,11 @@ def get_case_structures_from_row(row):
     test_case_properties = get_test_case_properties(row)
     drug_resistance_case_properties = get_drug_resistance_case_properties(row)
     # TODO: Add a get_followup_test_case_properties(row) function that returns one dict per followup
-    # TODO: Create drug resistance cases!
     # TODO: convert all these case properties to the appropriate linked up case structures
+        # TODO: Create drug resistance cases!
+        # TODO: Create secondary_owner cases
+
+
 
 
 def get_person_case_properties(row):
@@ -217,6 +220,7 @@ class Mehsana2016ColumnMapping(ColumnMapping):
         column_index = mehsana_2016_mapping[normalized_column_name]
         return row[column_index]
 
+# TODO: Add 2017 mapping
 
 class Command(BaseCommand):
 
