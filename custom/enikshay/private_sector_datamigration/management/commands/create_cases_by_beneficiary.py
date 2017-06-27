@@ -136,7 +136,9 @@ class Command(BaseCommand):
             owner_organisation_ids, owner_suborganisation_ids
         )
 
-        migrate_to_enikshay(domain, beneficiaries, skip_adherence, chunk_size, location_owner, default_location_owner)
+        migrate_to_enikshay(
+            domain, beneficiaries, skip_adherence, chunk_size, location_owner, default_location_owner
+        )
 
 
 def get_beneficiaries(start, limit, case_ids, owner_state_id, owner_district_id,
