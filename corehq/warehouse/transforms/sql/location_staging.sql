@@ -13,7 +13,8 @@ INSERT INTO {{ location_staging }} (
     location_created_on,
     is_archived,
     latitude,
-    longitude
+    longitude,
+    batch_id
 )
 SELECT
     domain,
@@ -30,7 +31,8 @@ SELECT
     created_at,
     is_archived,
     latitude,
-    longitude
+    longitude,
+    '{{ batch_id }}'
 FROM
     {{ sqllocation_table }}
 WHERE
