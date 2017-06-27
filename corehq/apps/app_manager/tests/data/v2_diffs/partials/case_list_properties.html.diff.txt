@@ -1,26 +1,6 @@
 --- 
 +++ 
-@@ -71,14 +71,14 @@
-                         <td class="col-sm-5 form-group" colspan="2" data-bind="css: {'has-error': showWarning}">
-                         {% endif %}
-                             <div data-bind="jqueryElement: nodeset.ui"></div>
-+                            <span class="help-block"
-+                                  data-bind="text: 'A nodeset must be specified.', visible: showWarning"></span>
-                         </td>
-                         {{ request|toggle_tag_info:"DISPLAY_CONDITION_ON_NODESET" }}
-                         {% if request|toggle_enabled:'DISPLAY_CONDITION_ON_NODESET' %}
--                        <td class="col-sm-3 form-group">
--                            <div data-bind="jqueryElement: relevant.ui"></div>
--                            <span class="help-block"
--                                  data-bind="text: 'A display condition can be specified.'"></span>
--                        </td>
-+                         <td class="col-sm-3 form-group">
-+                             <div data-bind="jqueryElement: relevant.ui"></div>
-+                         </td>
-                         {% endif %}
-                     <!--/ko-->
-                     <!--ko ifnot: $data.hasNodeset -->
-@@ -113,12 +113,12 @@
+@@ -119,12 +119,12 @@
              <tr>
                  <td></td>
                  <td colspan="4">
