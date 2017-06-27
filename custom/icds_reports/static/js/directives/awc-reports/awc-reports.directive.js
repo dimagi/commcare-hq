@@ -929,7 +929,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             },
         };
         $scope.$apply();
-    }, 500)
+    }, 500);
 
     vm.beneficiaryChartOptions = {
         chart: {

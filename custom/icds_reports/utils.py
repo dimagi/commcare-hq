@@ -758,7 +758,11 @@ def get_demographics_data(yesterday, config):
                         "Total number of adolescent girls (11 - 18 years) "
                         "who are registered and enrolled for ICDS services"
                     )),
-                    'percent': percent_increase('cases_person_adolescent_girls_11_18', yesterday, two_days_ago_data),
+                    'percent': percent_increase(
+                        'cases_person_adolescent_girls_11_18',
+                        yesterday,
+                        two_days_ago_data
+                    ),
                     'value': get_value(yesterday_data, 'cases_person_adolescent_girls_11_18'),
                     'all': None,
                     'format': 'number',
