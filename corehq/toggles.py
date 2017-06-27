@@ -505,7 +505,8 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     'Enable extension syncing',
     TAG_EXPERIMENTAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Extension+Cases',
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    always_enabled={'enikshay'},
 )
 
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
