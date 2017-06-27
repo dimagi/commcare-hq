@@ -120,7 +120,9 @@ class FlatLocationSerializer(object):
         root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id, 'indexed': 'true'})
         outer_node = Element('locations')
         root_node.append(outer_node)
-        for location in locations_queryset.order_by('site_code'):
+        all_locations = list(locations_queryset.order_by('site_code'))
+        locations_by_id = {location.pk: location for location in all_locations}
+        for location in all_locations:
             attrs = {
                 'type': location.location_type.code,
                 'id': location.location_id,
@@ -131,7 +133,7 @@ class FlatLocationSerializer(object):
             current_location = location
             while current_location.parent_id:
                 try:
-                    current_location = all_locations.by_id[current_location.parent_id]
+                    current_location = locations_by_id[current_location.parent_id]
                 except KeyError:
                     current_location = current_location.parent
 
