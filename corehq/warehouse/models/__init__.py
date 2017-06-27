@@ -8,7 +8,8 @@ from corehq.warehouse.models.dimensions import (
 )
 
 from corehq.warehouse.models.meta import (
-    TableState,
+    BatchRecord,
+    CommitRecord,
 )
 
 from corehq.warehouse.models.facts import (

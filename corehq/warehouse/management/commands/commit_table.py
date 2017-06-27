@@ -1,10 +1,10 @@
 from django.core.management import BaseCommand, CommandError
 from dimagi.utils.parsing import string_to_utc_datetime
 from corehq.warehouse.const import ALL_TABLES
-from corehq.warehouse.models import get_cls_by_slug
+from corehq.warehouse.models import get_cls_by_slug, BatchRecord, CommitRecord
 
 
-USAGE = """Usage: ./manage.py commit_table <slug> -s <start_datetime> -e <end_datetime>
+USAGE = """Usage: ./manage.py commit_table <slug> <batch_id>
 
 Slugs:
 
@@ -15,39 +15,42 @@ Slugs:
 
 class Command(BaseCommand):
     """
-    Example: ./manage.py stage_table group_staging -s 2017-05-01 -e 2017-06-01
+    Example: ./manage.py stage_table group_staging 222617b9-8cf0-40a2-8462-7f872e1f1344
     """
     help = USAGE
 
     def add_arguments(self, parser):
         parser.add_argument('slug')
+        parser.add_argument('batch_id')
 
-        parser.add_argument(
-            '-s',
-            '--start_datetime',
-            dest='start',
-            required=True,
-            help='Specifies the last modified datetime at which records should start being included',
-            type=_valid_date
-        )
-        parser.add_argument(
-            '-e',
-            '--end_datetime',
-            dest='end',
-            required=True,
-            help='Specifies the last modified datetime at which records should stop being included',
-            type=_valid_date
-        )
+    def handle(self, slug, batch_id, **options):
+        try:
+            batch_record = BatchRecord.get(batch_id)
+        except BatchRecord.DoesNotExist:
+            raise CommandError('Invalid batch ID: {}'.format(batch_id))
 
-    def handle(self, slug, **options):
-        start = options.get('start')
-        end = options.get('end')
+        start = batch_record.start_datetime
+        end = batch_record.end_datetime
 
         try:
             model = get_cls_by_slug(slug)
         except KeyError:
             raise CommandError('{} is not a valid slug. \n\n {}'.format(slug, USAGE))
-        model.commit(start, end)
+
+        commit_record = CommitRecord(
+            slug=slug,
+            batch_record=batch_record
+        )
+        verified = False
+        try:
+            verified = model.commit(batch_id, start, end)
+        except Exception as e:
+            commit_record.error = e
+            commit_record.success = False
+        else:
+            commit_record.success = True
+        commit_record.verified = verified
+        commit_record.save()
 
 
 def _valid_date(date_str):
