@@ -189,11 +189,9 @@ def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
         if mobile_worker_id:
             if app_or_profile.practice_mobile_worker_id == mobile_worker_id:
                 app_or_profile.practice_mobile_worker_id = None
-                return True
         else:
             if app_or_profile.practice_mobile_worker_id:
                 app_or_profile.practice_mobile_worker_id = None
-                return True
 
     apps = get_practice_mode_configured_apps(domain, mobile_worker_id)
     for app in apps:
