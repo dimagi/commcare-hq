@@ -89,6 +89,7 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             privileges.DATA_CLEANUP: cls.response_data_cleanup,
             privileges.COMMCARE_LOGO_UPLOADER: cls.response_commcare_logo_uploader,
             privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security,
+            privileges.PRACTICE_MOBILE_WORKERS: cls.response_practice_mobile_workers,
         }
         privs_to_responses.update({
             p: cls.response_report_builder
@@ -214,6 +215,11 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
 
         return True
 
+    @staticmethod
+    def response_practice_mobile_workers(project, new_plan_version):
+        from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
+        unset_practice_mode_configured_apps(project.name)
+
 
 class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
     """
@@ -320,6 +326,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             privileges.ROLE_BASED_ACCESS: cls.response_role_based_access,
             privileges.DATA_CLEANUP: cls.response_data_cleanup,
             privileges.ADVANCED_DOMAIN_SECURITY: cls.response_domain_security,
+            privileges.PRACTICE_MOBILE_WORKERS: cls.response_practice_mobile_workers,
         }
         privs_to_responses.update({
             p: cls.response_report_builder
@@ -605,3 +612,23 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
                     "You have %(number_of_reports)d report builder reports. "
                     "By selecting this plan you will lose access to those reports."
                 ) % {'number_of_reports': len(reports)})
+
+    @staticmethod
+    def response_practice_mobile_workers(project, new_plan_version):
+        from corehq.apps.app_manager.views.utils import get_practice_mode_configured_apps
+        apps = get_practice_mode_configured_apps(project.name)
+        return _fmt_alert(
+            ungettext(
+                "You have %(num_apps)d application that has a practice mobile worker "
+                "configured, it will be unset on downgrade.",
+                "You have %(num_apps)d applications that has a practice mobile worker "
+                "configured, it will be unset on downgrade.",
+                len(apps)
+            ) % {
+                'num_apps': len(apps),
+            },
+            [mark_safe('<a href="%(url)s">%(title)s</a>') % {
+                'title': app['name'],
+                'url': reverse('view_app', args=[project.name, app['_id']])
+            } for app in apps],
+        )

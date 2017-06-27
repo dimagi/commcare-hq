@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,204 +1,94 @@
+@@ -1,206 +1,97 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -64,6 +64,7 @@
 +      <script src="{% static 'app_manager/js/app_view_application.js' %}"></script>
 +      <script src="{% static 'translations/js/translations.js' %}"></script>
 +  {% endif %}
++  <script src="{% static 'app_manager/js/add_ons.js' %}"></script>
 +{% endblock js %}
 +
 +{% block pre_form_content %}
@@ -108,6 +109,8 @@
 -    {% initial_page_data 'app_version' app.version %}
 -    {% initial_page_data 'domain_names' domain_names %}
 -    {% initial_page_data 'fetch_limit' fetchLimit %}
+-    {% initial_page_data 'practice_users' practice_users %}
+-    {% initial_page_data 'enable_practice_users' app.enable_practice_users %}
 -    {% initial_page_data 'is_remote_app' app.is_remote_app %}
 -    {% initial_page_data 'is_superuser' request.user.is_superuser %}
 -    {% initial_page_data 'lang' lang %}
@@ -163,7 +166,8 @@
 -    {% registerurl "download_multimedia_zip" app.domain '---' %}
 -    {% registerurl "project_report_dispatcher" app.domain 'application_error' %}
 -    {% registerurl "app_data_json" app.domain '---' %}
--
++  {% registerurl "edit_add_ons" domain app.id %}
+ 
 -    <div class="tab-content">
 -        <div class="tab-pane" id="releases">
 -            <!-- templates only; will be populated asynchronously -->

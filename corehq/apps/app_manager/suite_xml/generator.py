@@ -11,7 +11,11 @@ from corehq.apps.app_manager.suite_xml.features.scheduler import SchedulerFixtur
 from corehq.apps.app_manager.suite_xml.sections.fixtures import FixtureContributor
 from corehq.apps.app_manager.suite_xml.post_process.instances import EntryInstances
 from corehq.apps.app_manager.suite_xml.sections.menus import MenuContributor
-from corehq.apps.app_manager.suite_xml.sections.resources import FormResourceContributor, LocaleResourceContributor
+from corehq.apps.app_manager.suite_xml.sections.resources import(
+    FormResourceContributor,
+    LocaleResourceContributor,
+    PracticeUserRestoreContributor,
+)
 from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowHelper
 from corehq.apps.app_manager.suite_xml.sections.remote_requests import RemoteRequestContributor
 from corehq.apps.app_manager.suite_xml.xml_models import Suite, MediaResource
@@ -44,6 +48,11 @@ class SuiteGenerator(object):
             LocaleResourceContributor(self.suite, self.app, self.modules, self.build_profile_id),
             DetailContributor(self.suite, self.app, self.modules, self.build_profile_id),
         ])
+
+        if self.app.supports_practice_users and self.app.get_practice_user(self.build_profile_id):
+            self._add_sections([
+                PracticeUserRestoreContributor(self.suite, self.app, self.modules, self.build_profile_id)
+            ])
 
         # by module
         entries = EntriesContributor(self.suite, self.app, self.modules)

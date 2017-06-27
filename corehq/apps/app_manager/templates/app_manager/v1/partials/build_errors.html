@@ -295,6 +295,16 @@
                                     must go in a different module).
                                 {% endblocktrans %}
                             {% endif %}
+                        {% case "practice user config error" %}
+                            {% if error.build_profile_id %}
+                                {% blocktrans with profile=app.build_profiles|getattr:error.build_profile_id %}
+                                    Error with Practice Mobile Worker in Application Profile {{ profile.name }}.
+                                {% endblocktrans %}
+                            {% else %}
+                                {% blocktrans%}
+                                    Error with Practice Mobile Worker in Application Settings.
+                                {% endblocktrans %}
+                            {% endif %}
                         {% case "invalid user property xpath reference" %}
                             {% if error.form %}
                                 {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
