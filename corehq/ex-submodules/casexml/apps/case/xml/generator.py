@@ -1,3 +1,4 @@
+import settings
 from casexml.apps.case.xml import V1, V2, V3, check_version, V2_NAMESPACE
 from xml.etree import ElementTree
 import logging
@@ -203,7 +204,10 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
                 element.append(attachment_elem)
 
 
-@quickcache(['domain'], memoize_timeout=12 * 60 * 60, timeout=12 * 60 * 60)
+@quickcache(['domain'],
+            skip_arg=lambda _: settings.UNIT_TESTING,
+            memoize_timeout=12 * 60 * 60,
+            timeout=12 * 60 * 60)
 def _sync_attachments(domain):
     return MM_CASE_PROPERTIES.enabled(domain)
 
