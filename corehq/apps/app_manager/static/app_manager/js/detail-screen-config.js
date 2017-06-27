@@ -719,7 +719,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         setTimeout(function () {
                             that.header.ui.addClass('input-group').prepend($('<span class="input-group-addon">Tab</span>'));
                             that.nodeset.ui.addClass('input-group').prepend($('<span class="input-group-addon">Nodeset</span>'));
-                            that.relevant.ui.addClass('input-group').prepend($('<span class="input-group-addon">DisplayCondition</span>'));
+                            that.relevant.ui.addClass('input-group').prepend($('<span class="input-group-addon">Display Condition</span>'));
                         }, 0);
 
                         // Observe nodeset values for the sake of validation

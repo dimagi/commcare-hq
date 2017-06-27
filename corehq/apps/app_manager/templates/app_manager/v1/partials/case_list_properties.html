@@ -71,8 +71,6 @@
                         <td class="col-sm-5 form-group" colspan="2" data-bind="css: {'has-error': showWarning}">
                         {% endif %}
                             <div data-bind="jqueryElement: nodeset.ui"></div>
-                            <span class="help-block"
-                                  data-bind="text: 'A nodeset must be specified.', visible: showWarning"></span>
                         </td>
                         {{ request|toggle_tag_info:"DISPLAY_CONDITION_ON_NODESET" }}
                         {% if request|toggle_enabled:'DISPLAY_CONDITION_ON_NODESET' %}
