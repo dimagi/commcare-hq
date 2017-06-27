@@ -39,6 +39,7 @@ def get_case_structures_from_row(row):
     occurrence_case_properties = get_occurrence_case_properties(row)
     episode_case_properties = get_episode_case_properties(row)
     test_case_properties = get_test_case_properties(row)
+    drug_resistance_case_properties = get_drug_resistance_case_properties(row)
     # TODO: Add a get_followup_test_case_properties(row) function that returns one dict per followup
     # TODO: Create drug resistance cases!
     # TODO: convert all these case properties to the appropriate linked up case structures
@@ -147,6 +148,24 @@ def get_test_case_properties(row):
     properties.update(get_resistance_properties(row))
     return properties
 
+
+def get_drug_resistance_case_properties(row):
+    resistant_drugs = get_drug_resistances(row)
+    case_properties = []
+    for drug in resistant_drugs:
+        properties = {
+            "name": drug,  # TODO: case_name?
+            "owner_id": "-",
+            "sensitivity": "resistant",
+            "drug_id": drug,
+        }
+        case_properties.append(properties)
+    return case_properties
+
+
+def get_drug_resistances(row):
+    drugs = get_resistance_properties(row).get("drug_resistance_list", "").split(" ")
+    return drugs
 
 def clean_date(messy_date_string):
     if messy_date_string:
