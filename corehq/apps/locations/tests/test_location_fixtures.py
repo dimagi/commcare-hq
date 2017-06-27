@@ -618,20 +618,20 @@ class ShouldSyncLocationFixturesTest(TestCase):
 
         SQLLocation.objects.filter(pk=location.pk).update(last_modified=day_before_yesterday)
         location = SQLLocation.objects.last()
-        location_db = LocationSet([location])
+        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
 
         self.assertFalse(
-            should_sync_locations(SyncLog(date=yesterday), location_db, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=yesterday), locations_queryset, self.user.to_ota_restore_user())
         )
 
         self.location_type.shares_cases = True
         self.location_type.save()
 
         location = SQLLocation.objects.last()
-        location_db = LocationSet([location])
+        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
 
         self.assertTrue(
-            should_sync_locations(SyncLog(date=yesterday), location_db, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=yesterday), locations_queryset, self.user.to_ota_restore_user())
         )
 
     def test_archiving_location_should_resync(self):
@@ -648,9 +648,9 @@ class ShouldSyncLocationFixturesTest(TestCase):
         location = SQLLocation.objects.last()
         self.assertEqual(couch_location.location_id, location.location_id)
         self.assertEqual('winterfell', location.name)
-        location_db = LocationSet([location])
+        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
         self.assertFalse(
-            should_sync_locations(SyncLog(date=after_save), location_db, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
         )
 
         # archive the location
@@ -658,12 +658,12 @@ class ShouldSyncLocationFixturesTest(TestCase):
         after_archive = datetime.utcnow()
 
         location = SQLLocation.objects.last()
-        location_db = LocationSet([location])
+        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
         self.assertTrue(
-            should_sync_locations(SyncLog(date=after_save), location_db, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
         )
         self.assertFalse(
-            should_sync_locations(SyncLog(date=after_archive), location_db, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=after_archive), locations_queryset, self.user.to_ota_restore_user())
         )
 
 

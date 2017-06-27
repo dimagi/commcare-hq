@@ -37,7 +37,7 @@ class LocationSet(object):
         return item in self.by_id
 
 
-def should_sync_locations(last_sync, location_db, restore_user):
+def should_sync_locations(last_sync, locations_queryset, restore_user):
     """
     Determine if any locations (already filtered to be relevant
     to this user) require syncing.
@@ -49,15 +49,11 @@ def should_sync_locations(last_sync, location_db, restore_user):
     ):
         return True
 
-    for location in location_db.by_id.values():
-        if (
-            not location.last_modified or
-            location.last_modified >= last_sync.date or
-            location.location_type.last_modified >= last_sync.date
-        ):
-            return True
-
-    return False
+    return (
+        locations_queryset.filter(last_modified__gte=last_sync.date).exists()
+        or LocationType.objects.filter(domain=restore_user.domain,
+                                       last_modified__gte=last_sync.date).exists()
+    )
 
 
 class LocationFixtureProvider(FixtureProvider):
@@ -80,12 +76,13 @@ class LocationFixtureProvider(FixtureProvider):
         if not self.serializer.should_sync(restore_user):
             return []
 
-        all_locations = restore_user.get_locations_to_sync()
-        if not should_sync_locations(restore_state.last_sync_log, all_locations, restore_user):
+        # This just calls get_location_fixture_queryset but is memoized to the user
+        locations_queryset = restore_user.get_locations_to_sync()
+        if not should_sync_locations(restore_state.last_sync_log, locations_queryset, restore_user):
             return []
 
         data_fields = _get_location_data_fields(restore_user.domain)
-        return self.serializer.get_xml_nodes(self.id, restore_user, all_locations, data_fields)
+        return self.serializer.get_xml_nodes(self.id, restore_user, locations_queryset, data_fields)
 
 
 class HierarchicalLocationSerializer(object):
@@ -93,13 +90,14 @@ class HierarchicalLocationSerializer(object):
     def should_sync(self, restore_user):
         return should_sync_hierarchical_fixture(restore_user.project)
 
-    def get_xml_nodes(self, fixture_id, restore_user, all_locations, data_fields):
+    def get_xml_nodes(self, fixture_id, restore_user, locations_queryset, data_fields):
+        locations_db = LocationSet(locations_queryset)
 
         root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id})
-        root_locations = all_locations.root_locations
+        root_locations = locations_db.root_locations
 
         if root_locations:
-            _append_children(root_node, all_locations, root_locations, data_fields)
+            _append_children(root_node, locations_db, root_locations, data_fields)
         return [root_node]
 
 
@@ -108,7 +106,7 @@ class FlatLocationSerializer(object):
     def should_sync(self, restore_user):
         return should_sync_flat_fixture(restore_user.project)
 
-    def get_xml_nodes(self, fixture_id, restore_user, all_locations, data_fields):
+    def get_xml_nodes(self, fixture_id, restore_user, locations_queryset, data_fields):
 
         all_types = LocationType.objects.filter(domain=restore_user.domain).values_list(
             'code', flat=True
@@ -117,13 +115,13 @@ class FlatLocationSerializer(object):
         attrs_to_index = location_type_attrs + ['id', 'type']
 
         return [self._get_schema_node(fixture_id, attrs_to_index),
-                self._get_fixture_node(fixture_id, restore_user, all_locations, location_type_attrs, data_fields)]
+                self._get_fixture_node(fixture_id, restore_user, locations_queryset, location_type_attrs, data_fields)]
 
-    def _get_fixture_node(self, fixture_id, restore_user, all_locations, location_type_attrs, data_fields):
+    def _get_fixture_node(self, fixture_id, restore_user, locations_queryset, location_type_attrs, data_fields):
         root_node = Element('fixture', {'id': fixture_id, 'user_id': restore_user.user_id, 'indexed': 'true'})
         outer_node = Element('locations')
         root_node.append(outer_node)
-        for location in sorted(all_locations.by_id.values(), key=lambda l: l.site_code):
+        for location in locations_queryset.order_by('site_code'):
             attrs = {
                 'type': location.location_type.code,
                 'id': location.location_id,
@@ -180,11 +178,6 @@ flat_location_fixture_generator = LocationFixtureProvider(
 )
 
 
-def get_all_locations_to_sync(user):
-    return LocationSet(get_location_fixture_queryset(user))
-
-
-# testing out a different approach to get_all_locations_to_sync
 def get_location_fixture_queryset(user):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
         return SQLLocation.active_objects.filter(domain=user.domain)
