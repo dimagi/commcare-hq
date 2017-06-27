@@ -22,7 +22,7 @@ from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
-from corehq.util.test_utils import TestFileMixin, trap_extra_setup
+from corehq.util.test_utils import TestFileMixin, trap_extra_setup, flag_enabled
 
 TEST_CASE_ID = "EOL9FIAKIQWOFXFOH0QAMWU64"
 CREATE_XFORM_ID = "6RGAZTETE3Z2QC0PE2DKM88MO"
@@ -236,11 +236,13 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
             attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
             self.assertEqual(2, len(attach_actions))
 
+    @flag_enabled('MM_CASE_PROPERTIES')
     def testOTARestoreSingle(self):
         _, case = self._doCreateCaseWithMultimedia()
         restore_attachments = ['fruity_file']
         self._validateOTARestore(case.case_id, restore_attachments)
 
+    @flag_enabled('MM_CASE_PROPERTIES')
     def testOTARestoreMultiple(self):
         _, case = self._doCreateCaseWithMultimedia()
         restore_attachments = ['commcare_logo_file', 'dimagi_logo_file']
