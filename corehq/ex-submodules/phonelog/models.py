@@ -3,7 +3,7 @@ from django.db import models
 COUCH_UUID_MAX_LEN = 50
 
 
-class DeviceReportEntry(models.Model):
+class OldDeviceReportEntry(models.Model):
     xform_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, db_index=True)
     i = models.IntegerField()
     msg = models.TextField()
@@ -17,6 +17,7 @@ class DeviceReportEntry(models.Model):
     user_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, null=True)
 
     class Meta:
+        db_table = 'phonelog_devicereportentry'
         app_label = 'phonelog'
         unique_together = [('xform_id', 'i')]
         index_together = [
@@ -27,7 +28,10 @@ class DeviceReportEntry(models.Model):
         ]
 
     def __repr__(self):
-        return u"DeviceReportEntry(domain='{}', msg='{}')".format(self.domain, self.msg)
+        return u"OldDeviceReportEntry(domain='{}', msg='{}')".format(self.domain, self.msg)
+
+
+DeviceReportEntry = OldDeviceReportEntry
 
 
 class UserErrorEntry(models.Model):
