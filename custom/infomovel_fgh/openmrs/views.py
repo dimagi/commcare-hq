@@ -60,10 +60,14 @@ def openmrs_person_attribute_types(request, domain, repeater_id):
 
 @login_and_domain_required
 def openmrs_raw_api(request, domain, repeater_id, rest_uri):
+    get_params = dict(request.GET)
+    no_links = get_params.pop('nolinks', None) is not None
     repeater = OpenmrsRepeater.get(repeater_id)
     assert repeater.domain == domain
     requests = Requests(repeater.url, repeater.username, repeater.password)
-    raw_json = requests.get('/ws/rest/v1' + rest_uri, dict(request.GET)).json()
+    raw_json = requests.get('/ws/rest/v1' + rest_uri, get_params).json()
+    if no_links:
+        return JsonResponse(_filter_out_links(raw_json))
     return JsonResponse(raw_json)
 
 
