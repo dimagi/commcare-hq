@@ -25,12 +25,9 @@ class Command(BaseCommand):
 
     def handle(self, slug, batch_id, **options):
         try:
-            batch_record = BatchRecord.get(batch_id)
+            batch_record = BatchRecord.objects.get(batch_id=batch_id)
         except BatchRecord.DoesNotExist:
             raise CommandError('Invalid batch ID: {}'.format(batch_id))
-
-        start = batch_record.start_datetime
-        end = batch_record.end_datetime
 
         try:
             model = get_cls_by_slug(slug)
@@ -39,18 +36,19 @@ class Command(BaseCommand):
 
         commit_record = CommitRecord(
             slug=slug,
-            batch_record=batch_record
+            batch_record=batch_record,
+            verified=False,
         )
-        verified = False
         try:
-            verified = model.commit(batch_id, start, end)
+            commit_record.verified = model.commit(batch_record)
         except Exception as e:
             commit_record.error = e
             commit_record.success = False
+            commit_record.save()
+            raise
         else:
             commit_record.success = True
-        commit_record.verified = verified
-        commit_record.save()
+            commit_record.save()
 
 
 def _valid_date(date_str):

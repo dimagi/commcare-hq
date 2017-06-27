@@ -2,7 +2,7 @@ from django.db import models
 
 
 class BatchRecord(models.Model):
-    batch_id = models.CharField(max_length=255, unique=True, db_index=True)
+    batch_id = models.UUIDField(unique=True, db_index=True)
 
     start_datetime = models.DateTimeField()
     end_datetime = models.DateTimeField()
@@ -18,7 +18,7 @@ class CommitRecord(models.Model):
     batch_record = models.ForeignKey('BatchRecord', on_delete=models.PROTECT)
 
     slug = models.CharField(max_length=100)
-    error = models.CharField(max_length=255)
+    error = models.TextField()
     success = models.NullBooleanField()
     verified = models.NullBooleanField()
 

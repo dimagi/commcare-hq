@@ -35,14 +35,16 @@ from corehq.warehouse.etl import CouchToDjangoETLMixin, CustomSQLETLMixin
 
 
 class StagingTable(models.Model, WarehouseTable):
+    batch_id = models.UUIDField()
 
     class Meta:
         abstract = True
 
     @classmethod
-    def commit(cls, start_datetime, end_datetime):
+    def commit(cls, batch_record):
         cls.clear_records()
-        cls.load(start_datetime, end_datetime)
+        cls.load(batch_record)
+        return True
 
     @classmethod
     def clear_records(cls):
