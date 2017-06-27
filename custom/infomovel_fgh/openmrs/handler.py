@@ -1,6 +1,6 @@
 from custom.infomovel_fgh.openmrs.field_mappings import IdMatcher
 from custom.infomovel_fgh.openmrs.repeater_helpers import CaseTriggerInfo, get_patient_by_id, \
-    update_person_attribute, create_person_attribute, create_visit
+    update_person_attribute, create_person_attribute, create_visit, set_person_properties
 from dimagi.utils.parsing import string_to_utc_datetime
 
 
@@ -57,6 +57,18 @@ def sync_openmrs_patient(requests, info, openmrs_config, problem_log):
         return
 
     person_uuid = patient['person']['uuid']
+
+    # update properties
+
+    properties = {
+        person_property: value_source.get_value(info)
+        for person_property, value_source in openmrs_config.case_config.person_properties.items()
+        if value_source.get_value(info)
+    }
+    set_person_properties(requests, person_uuid, properties)
+
+    # update attributes
+
     existing_person_attributes = {
         attribute['attributeType']['uuid']: (attribute['uuid'], attribute['value'])
         for attribute in patient['person']['attributes']

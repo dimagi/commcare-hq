@@ -51,6 +51,24 @@ def update_person_attribute(requests, person_uuid, attribute_uuid, attribute_typ
     ).json()
 
 
+def set_person_properties(requests, person_uuid, properties):
+    allowed_properties = (
+        'gender', 'birthdate', 'birthdateEstimated', 'dead', 'deathDate', 'causeOfDeath')
+    for p in properties:
+        assert p in allowed_properties
+
+    import requests as r
+    response = requests.post('/ws/rest/v1/person/{person_uuid}'.format(
+        person_uuid=person_uuid), json=properties
+    )
+    try:
+        response.raise_for_status()
+    except r.HTTPError:
+        print response.json()
+        raise
+    return response.json()
+
+
 def server_datetime_to_openmrs_timestamp(dt):
     openmrs_timestamp = dt.isoformat()[:-3] + '+0000'
     # todo: replace this with tests
