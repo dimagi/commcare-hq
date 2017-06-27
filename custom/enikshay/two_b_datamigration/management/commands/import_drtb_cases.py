@@ -4,7 +4,9 @@ from dateutil.parser import parse
 from django.core.management import (
     BaseCommand,
 )
+from django.db import models
 
+from corehq.apps.locations.models import SQLLocation
 from corehq.util.workbook_reading import open_any_workbook
 
 logger = logging.getLogger('tow_b_datamigration')
@@ -34,8 +36,8 @@ SELECTION_CRITERIA_MAP = {
 }
 
 
-def get_case_structures_from_row(row):
-    person_case_properties = get_person_case_properties(row)
+def get_case_structures_from_row(domain, row):
+    person_case_properties = get_person_case_properties(domain, row)
     occurrence_case_properties = get_occurrence_case_properties(row)
     episode_case_properties = get_episode_case_properties(row)
     test_case_properties = get_test_case_properties(row)
@@ -48,10 +50,10 @@ def get_case_structures_from_row(row):
 
 
 
-def get_person_case_properties(row):
+def get_person_case_properties(domain, row):
     person_name = Mehsana2016ColumnMapping.get_value("person_name", row)
     xlsx_district_name = Mehsana2016ColumnMapping.get_value("district_name", row)
-    district_name, district_id = match_district(xlsx_district_name)
+    district_name, district_id = match_district(domain, xlsx_district_name)
     properties = {
         # TODO: Do they want first_name or last_name?
         "name": person_name,  # TODO: Should this be `name` or `case_name`?
@@ -231,12 +233,20 @@ def clean_date(messy_date_string):
         return cleaned_datetime.date()
 
 
-def match_district(xlsx_district_name):
+def match_district(domain, xlsx_district_name):
     """
-    Given district name taken from the spreadsheet, return the id name and id of the matching location in HQ.
+    Given district name taken from the spreadsheet, return the name and id of the matching location in HQ.
     """
-    # TODO: Query the locations
-    pass
+    try:
+        location = SQLLocation.active_objects.get(domain=domain, name__iexact=xlsx_district_name)
+    except SQLLocation.DoesNotExist:
+        possible_matches = SQLLocation.active_objects.filter(domain=domain).filter(models.Q(name__icontains=xlsx_district_name))
+        if len(possible_matches) == 1:
+            location = possible_matches[0]
+        else:
+            return None, None
+    return location.name, location.location_id
+
 
 def match_facility(xlsx_facility_name):
     """
@@ -294,5 +304,5 @@ class Command(BaseCommand):
 
         with open_any_workbook(excel_file_path) as workbook:
             for row in workbook.worksheets[0].iter_rows():
-                case_structures = get_case_structures_from_row(row)
+                case_structures = get_case_structures_from_row(domain, row)
                 # TODO: submit forms with case structures
