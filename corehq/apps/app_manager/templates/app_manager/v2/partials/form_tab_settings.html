@@ -37,6 +37,35 @@
                 </div>
                 <div class="panel-body" data-bind="visible: visible, css: {error: hasError()}">
                     {% include "app_manager/v2/partials/nav_menu_media.html" with ICON_LABEL="Icon" AUDIO_LABEL="Audio" %}
+                    <div>
+                      <div class="form-group container-fluid">
+                        <label class="control-label col-sm-2">{% trans "Custom Icon" %}</label>
+                        <div class="col-sm-10 commcare-feature" data-since-version="1.3">
+                          <label>
+                            <span>
+                              {% trans "Form" %}
+                            </span>
+                            <input class="form-control" name="custom_icon_form" id="custom_icon_form"
+                              value="{{ form_icon.form }}">
+                            </label>
+                            <label>
+                              <span>
+                                {% trans "Text Body" %}
+                              </span>
+                              <input class="form-control" name="custom_icon_text_body" id="custom_icon_text_body"
+                                     value="{{ form_icon.text|trans:langs }}">
+                            </label>
+                            <label>
+                              <span>
+                                {% trans "Is Xpath" %}
+                              </span>
+                              <input type="checkbox" name="custom_icon_is_xpath" id="custom_icon_is_xpath"
+                                     {% if form_icon.is_xpath %} checked="checked" {% endif %}>
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                 </div>
             </div>
 

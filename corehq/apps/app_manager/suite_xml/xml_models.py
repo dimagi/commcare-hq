@@ -217,7 +217,7 @@ class TextOrDisplay(XmlObject):
     text = NodeField('text', Text)
     display = NodeField('display', LocalizedMediaDisplay)
 
-    def __init__(self, node=None, context=None,
+    def __init__(self, node=None, context=None, custom_icon_locale_id=None, custom_icon_name=None,
                  menu_locale_id=None, image_locale_id=None, audio_locale_id=None,
                  media_image=None, media_audio=None, for_action_menu=False, **kwargs):
         super(TextOrDisplay, self).__init__(node, context, **kwargs)
@@ -235,6 +235,11 @@ class TextOrDisplay(XmlObject):
                 form_name='audio'
             ))
 
+        if custom_icon_locale_id and custom_icon_name:
+            media_text.append(MediaText(
+                locale=LocaleId(locale_id=custom_icon_locale_id),
+                form_name=custom_icon_name
+            ))
         if media_text:
             self.display = LocalizedMediaDisplay(
                 media_text=[text] + media_text if text else media_text

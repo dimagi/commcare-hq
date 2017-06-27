@@ -85,7 +85,7 @@ from corehq.apps.app_manager.models import (
     CaseReferences,
     AdvancedModule,
     ShadowForm,
-)
+    CustomIcon)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary, get_case_property_description_dict
@@ -379,6 +379,16 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     if should_edit("shadow_parent"):
         form.shadow_parent_form_id = request.POST['shadow_parent']
 
+    if should_edit("custom_icon_form") and should_edit("custom_icon_text_body"):
+        # a module should have just one module custom icon for now
+        # so this just adds a new one with params or replaces the existing one with new params
+        form_custom_icon = (form.custom_icon if form.custom_icon else CustomIcon())
+        form_custom_icon.text[lang] = request.POST.get("custom_icon_text_body")
+        # jquery serialize returns a "On" in case the checkbox is checked and nothing otherwise
+        form_custom_icon.is_xpath = bool(request.POST.get("custom_icon_is_xpath"))
+        form_custom_icon.form = request.POST.get("custom_icon_form")
+        form.custom_icons = [form_custom_icon]
+
     handle_media_edits(request, form, should_edit, resp, lang)
 
     app.save(resp)
@@ -611,7 +621,8 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             {'instanceId': instance.instance_id, 'instancePath': instance.instance_path}
             for instance in form.custom_instances
         ],
-        'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
+        'can_preview_form': request.couch_user.has_permission(domain, 'edit_data'),
+        'form_icon': form.custom_icon if form.custom_icon else CustomIcon()
     }
 
     if tours.NEW_APP.is_enabled(request.user) and not toggles.APP_MANAGER_V2.enabled(request.user.username):

@@ -63,7 +63,7 @@ from corehq.apps.app_manager.models import (
     ReportAppConfig,
     UpdateCaseAction,
     FixtureSelect,
-    DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations)
+    DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations, CustomIcon)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
 
@@ -479,7 +479,10 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
         "excl_form_ids": None,
-        "display_style": None
+        "display_style": None,
+        "custom_icon_form": None,
+        "custom_icon_text_body": None,
+        "custom_icon_is_xpath": None,
     }
 
     if attr not in attributes:
@@ -501,6 +504,16 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     module = app.get_module(module_id)
     lang = request.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}, 'corrections': {}}
+    if should_edit("custom_icon_form") and should_edit("custom_icon_text_body"):
+        # a module should have just one module custom icon for now
+        # so this just adds a new one with params or replaces the existing one with new params
+        module_custom_icon = (module.custom_icon if module.custom_icon else CustomIcon())
+        module_custom_icon.text[lang] = request.POST.get("custom_icon_text_body")
+        # jquery serialize returns a "On" in case the checkbox is checked and nothing otherwise
+        module_custom_icon.is_xpath = bool(request.POST.get("custom_icon_is_xpath"))
+        module_custom_icon.form = request.POST.get("custom_icon_form")
+        module.custom_icons = [module_custom_icon]
+
     if should_edit("case_type"):
         case_type = request.POST.get("case_type", None)
         if case_type == USERCASE_TYPE and not isinstance(module, AdvancedModule):

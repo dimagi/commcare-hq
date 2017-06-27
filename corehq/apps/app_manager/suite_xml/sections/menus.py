@@ -107,12 +107,17 @@ class MenuContributor(SuiteContributorByModule):
                         menu_kwargs['relevant'] = interpolate_xpath(module.module_filter)
 
                     if self.app.enable_localized_menu_media:
+                        module_custom_icon = module.custom_icon
                         menu_kwargs.update({
                             'menu_locale_id': id_strings.module_locale(module),
                             'media_image': bool(len(module.all_image_paths())),
                             'media_audio': bool(len(module.all_audio_paths())),
                             'image_locale_id': id_strings.module_icon_locale(module),
                             'audio_locale_id': id_strings.module_audio_locale(module),
+                            'custom_icon_locale_id': (
+                                id_strings.module_custom_icon_locale(module, module_custom_icon.form)
+                                if module_custom_icon else None),
+                            'custom_icon_name': (module_custom_icon.form if module_custom_icon else None)
                         })
                         menu = LocalizedMenu(**menu_kwargs)
                     else:

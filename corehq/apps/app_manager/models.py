@@ -1377,6 +1377,12 @@ class JRResourceProperty(StringProperty):
         return value
 
 
+class CustomIcon(DocumentSchema):
+    form = StringProperty()
+    text = DictProperty(unicode)
+    is_xpath = BooleanProperty(default=False)
+
+
 class NavMenuItemMediaMixin(DocumentSchema):
     """
         Language-specific icon and audio.
@@ -1384,6 +1390,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
     """
     media_image = SchemaDictProperty(JRResourceProperty)
     media_audio = SchemaDictProperty(JRResourceProperty)
+    custom_icons = SchemaListProperty(CustomIcon)
 
     @classmethod
     def wrap(cls, data):
@@ -1436,6 +1443,12 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     def audio_by_language(self, lang, strict=False):
         return self._get_media_by_language('media_audio', lang, strict=strict)
+
+    def custom_icon_form_and_text_by_language(self, lang):
+        custom_icon = self.custom_icon
+        if custom_icon:
+            return custom_icon.form, custom_icon.text[lang]
+        return None, None
 
     def _set_media(self, media_attr, lang, media_path):
         """
@@ -1491,6 +1504,11 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
         if for_default:
             return self.audio_by_language(lang, strict=False)
+
+    @property
+    def custom_icon(self):
+        if self.custom_icons:
+            return self.custom_icons[0]
 
 
 class Form(IndexedFormBase, NavMenuItemMediaMixin):
