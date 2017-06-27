@@ -5,7 +5,12 @@ from testil import replattr
 
 import corehq.blobs.migratingdb as mod
 from corehq.blobs import DEFAULT_BUCKET
-from corehq.blobs.tests.util import get_id, TemporaryFilesystemBlobDB, TemporaryMigratingBlobDB
+from corehq.blobs.tests.util import (
+    get_id,
+    TemporaryFilesystemBlobDB,
+    TemporaryMigratingBlobDB,
+    TemporaryS3BlobDB,
+)
 
 
 def get_base_class():
@@ -19,7 +24,7 @@ class TestMigratingBlobDB(get_base_class()):
     @classmethod
     def setUpClass(cls):
         super(TestMigratingBlobDB, cls).setUpClass()
-
+        assert isinstance(cls.db, TemporaryS3BlobDB), cls.db
         cls.s3db = cls.db
         cls.fsdb = TemporaryFilesystemBlobDB()
         cls.db = TemporaryMigratingBlobDB(cls.s3db, cls.fsdb)
