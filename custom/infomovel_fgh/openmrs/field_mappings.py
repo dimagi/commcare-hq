@@ -40,8 +40,22 @@ class OpenmrsCaseConfig(DocumentSchema):
     person_attributes = SchemaDictProperty(ValueSource)
 
 
+class ObservationMapping(DocumentSchema):
+    concept = StringProperty()
+    value = SchemaProperty(ValueSource)
+
+
+class OpenmrsFormConfig(DocumentSchema):
+    xmlns = StringProperty()
+    openmrs_visit_type = StringProperty()
+    openmrs_encounter_type = StringProperty()
+    openmrs_form = StringProperty()
+    openmrs_observations = ListProperty(ObservationMapping)
+
+
 class OpenmrsConfig(DocumentSchema):
     case_config = SchemaProperty(OpenmrsCaseConfig)
+    form_configs = ListProperty(OpenmrsFormConfig)
 
 
 # http://fghomrsmpt.fgh.org.mz/openmrs/ws/rest/v1/patientidentifiertype/e2b966d0-1d5f-11e0-b929-000c29ad1d07

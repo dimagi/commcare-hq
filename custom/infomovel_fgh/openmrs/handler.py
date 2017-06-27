@@ -1,13 +1,44 @@
 from custom.infomovel_fgh.openmrs.field_mappings import IdMatcher
 from custom.infomovel_fgh.openmrs.repeater_helpers import CaseTriggerInfo, get_patient_by_id, \
-    update_person_attribute, create_person_attribute
+    update_person_attribute, create_person_attribute, create_visit
+from dimagi.utils.parsing import string_to_utc_datetime
 
 
 def send_openmrs_data(requests, form_json, case_trigger_infos, openmrs_config):
     problem_log = []
+    person_uuids = []
+    print case_trigger_infos
     for info in case_trigger_infos:
         assert isinstance(info, CaseTriggerInfo)
-        sync_openmrs_patient(requests, info, openmrs_config, problem_log)
+        # todo: create patient if it doesn't exist?
+        person_uuid = sync_openmrs_patient(requests, info, openmrs_config, problem_log)
+        person_uuids.append(person_uuid)
+
+    print person_uuids
+    # todo: find a better way to correlate to the correct or "main" patient
+    if len(person_uuids) == 1 and all(person_uuid for person_uuid in person_uuids):
+        person_uuid, = person_uuids
+        info, = case_trigger_infos
+        for form_config in openmrs_config.form_configs:
+            print 'send_openmrs_visit?', form_config, form_json
+            if form_config.xmlns == form_json['form']['@xmlns']:
+                print 'yes'
+                send_openmrs_visit(requests, info, form_config, person_uuid,
+                                   visit_datetime=string_to_utc_datetime(form_json['form']['meta']['timeEnd']))
+
+
+def send_openmrs_visit(requests, info, form_config, person_uuid, visit_datetime):
+    create_visit(
+        requests,
+        person_uuid=person_uuid,
+        visit_datetime=visit_datetime,
+        values_for_concept={obs.concept: [obs.value.get_value(info)]
+                            for obs in form_config.openmrs_observations
+                            if obs.value.get_value(info)},
+        encounter_type=form_config.openmrs_encounter_type,
+        openmrs_form=form_config.openmrs_form,
+        visit_type=form_config.openmrs_visit_type,
+    )
 
 
 def sync_openmrs_patient(requests, info, openmrs_config, problem_log):
@@ -39,3 +70,5 @@ def sync_openmrs_patient(requests, info, openmrs_config, problem_log):
                 update_person_attribute(requests, person_uuid, attribute_uuid, person_attribute_type, value)
         else:
             create_person_attribute(requests, person_uuid, person_attribute_type, value)
+
+    return person_uuid

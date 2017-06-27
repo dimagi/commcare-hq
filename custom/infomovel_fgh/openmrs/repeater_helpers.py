@@ -51,6 +51,76 @@ def update_person_attribute(requests, person_uuid, attribute_uuid, attribute_typ
     ).json()
 
 
+def server_datetime_to_openmrs_timestamp(dt):
+    openmrs_timestamp = dt.isoformat()[:-3] + '+0000'
+    # todo: replace this with tests
+    assert len(openmrs_timestamp) == len('2017-06-27T09:36:47.000-0400'), openmrs_timestamp
+    return openmrs_timestamp
+
+
+def create_visit(requests, person_uuid, visit_datetime, values_for_concept, encounter_type,
+                 openmrs_form, visit_type, patient_uuid=None):
+    print values_for_concept
+    import requests as r
+    timestamp = server_datetime_to_openmrs_timestamp(visit_datetime)
+    patient_uuid = patient_uuid or person_uuid
+    observations = [
+        {
+            "concept": concept_uuid,
+            "value": value,
+            "person": person_uuid,
+            "obsDatetime": timestamp,
+        }
+        for concept_uuid, values in values_for_concept.items()
+        for value in values
+    ]
+    observation_uuids = []
+    for observation in observations:
+        response = requests.post('/ws/rest/v1/obs', json=observation)
+        try:
+            response.raise_for_status()
+        except r.HTTPError:
+            print response.json()
+            raise
+        observation_uuids.append(response.json()['uuid'])
+
+    print 'observations', observation_uuids
+    encounters = [
+        {
+            "encounterType": encounter_type,
+            "form": openmrs_form,
+            "obs": observation_uuids,
+            "patient": patient_uuid,
+        }
+    ]
+    encounter_uuids = []
+    for encounter in encounters:
+        response = requests.post('/ws/rest/v1/encounter', json=encounter)
+
+        try:
+            response.raise_for_status()
+        except r.HTTPError:
+            print response.json()
+            raise
+        encounter_uuids.append(response.json()['uuid'])
+
+    print 'encounters', encounter_uuids
+
+    visit = {
+        "encounters": encounter_uuids,
+        "patient": patient_uuid,
+        "visitType": visit_type,
+    }
+
+    response = requests.post('/ws/rest/v1/visit', json=visit)
+    try:
+        response.raise_for_status()
+    except r.HTTPError:
+        print response.json()
+        raise
+    print response.json()['uuid']
+
+
 def search_patients(requests, search_string):
     return requests.get('/ws/rest/v1/patient', {'q': search_string, 'v': 'full'}).json()
 
