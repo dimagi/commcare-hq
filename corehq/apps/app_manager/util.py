@@ -594,11 +594,3 @@ def get_and_assert_practice_user_in_domain(practice_user_id, domain):
             "User {username} is not a practice user, "
             "please turn on practice mode for this user".format(username=user.username)))
     return user
-
-
-def sort_nodeset_columns_for_detail(detail_type, detail):
-    return (
-        detail_type == "case_long" and
-        detail.sort_nodeset_columns and
-        any(tab for tab in detail.get_tabs() if tab.has_nodeset)
-    )
