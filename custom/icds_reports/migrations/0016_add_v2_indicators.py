@@ -17,4 +17,5 @@ class Migration(migrations.Migration):
         migrator.get_migration('update_tables9.sql'),
         migrator.get_migration('setup_agg_awc_daily.sql'),
         migrator.get_migration('create_datasource_views.sql'),
+        migrator.get_migration('create_functions.sql'),
     ]
