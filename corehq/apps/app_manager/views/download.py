@@ -41,7 +41,7 @@ def download_odk_profile(request, domain, app_id):
 
     """
     if not request.app.copy_of:
-        username = request.GET.get('username', '')
+        username = request.GET.get('username', 'unknown user')
         make_async_build.delay(request.app, username)
     return HttpResponse(
         request.app.create_profile(is_odk=True),
@@ -52,7 +52,7 @@ def download_odk_profile(request, domain, app_id):
 @safe_download
 def download_odk_media_profile(request, domain, app_id):
     if not request.app.copy_of:
-        username = request.GET.get('username', '')
+        username = request.GET.get('username', 'unknown user')
         make_async_build.delay(request.app, username)
     return HttpResponse(
         request.app.create_profile(is_odk=True, with_media=True),
@@ -325,7 +325,7 @@ def download_profile(request, domain, app_id):
 
     """
     if not request.app.copy_of:
-        username = request.GET.get('username', '')
+        username = request.GET.get('username', 'unknown user')
         make_async_build.delay(request.app, username)
     return HttpResponse(
         request.app.create_profile()
@@ -335,7 +335,7 @@ def download_profile(request, domain, app_id):
 @safe_download
 def download_media_profile(request, domain, app_id):
     if not request.app.copy_of:
-        username = request.GET.get('username', '')
+        username = request.GET.get('username', 'unknown user')
         make_async_build.delay(request.app, username)
     return HttpResponse(
         request.app.create_profile(with_media=True)
