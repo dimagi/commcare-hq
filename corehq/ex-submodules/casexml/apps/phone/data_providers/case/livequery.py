@@ -199,7 +199,7 @@ def compile_response(timing_context, batches, restore_state):
 
         with timing_context("get_xml_for_response (%s updates)" % len(updates)):
             response.extend(item
-                for update in updates
+                for update in updates.itervalues()
                 for item in get_xml_for_response(update, restore_state))
 
     return response

@@ -75,7 +75,7 @@ class CleanOwnerSyncPayload(object):
         )
         self.potential_updates_to_sync.update(new_updates)
 
-        for case_id, update in new_updates.iteritems():
+        for update in new_updates.itervalues():
             self._process_case_update(update)
             self._mark_case_as_checked(update.case)
 
