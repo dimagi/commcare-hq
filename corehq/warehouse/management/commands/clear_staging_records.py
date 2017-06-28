@@ -4,12 +4,14 @@ from corehq.warehouse.models import get_cls_by_slug
 
 
 USAGE = """Usage: ./manage.py clear_staging_records
+
+Removes all records from staging tables
 """
 
 
 class Command(BaseCommand):
     """
-    Example: ./manage.py stage_table group_staging 222617b9-8cf0-40a2-8462-7f872e1f1344
+    Example: ./manage.py clear_staging_records
     """
     help = USAGE
 
