@@ -63,10 +63,12 @@ class LocationHierarchyFilterTests(ENikshayLocationStructureMixin, TestCase):
 
         expected_filter_vals = {
             '{}_sto'.format(slug): self.sto.location_id,
+            '{}_cto'.format(slug): self.cto.location_id,
             '{}_below_cto'.format(slug): self.cto.location_id,
         }
         expected_filter = OR([
             EQ("sto", "{}_sto".format(slug)),
+            EQ("cto", "{}_cto".format(slug)),
             EQ("below_cto", "{}_below_cto".format(slug))
         ])
 
