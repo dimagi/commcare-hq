@@ -62,10 +62,11 @@ def get_payload(timing_context, restore_state):
                 enliven(next_id)
 
     log = logging.getLogger(__name__)
-    if 0 and log.isEnabledFor(logging.DEBUG):
+    if log.isEnabledFor(logging.DEBUG):
         debug = log.debug
     else:
-        debug = lambda *a: None
+        def debug(*args):
+            return None
     live_ids = set()
     extensions_by_host = defaultdict(set)  # host_id -> extension_ids
     hosts_by_extension = defaultdict(set)  # extension_id -> host_ids
@@ -185,8 +186,12 @@ def compile_response(timing_context, batches, restore_state):
     response = restore_state.restore_class()
 
     for cases in batches:
-        with timing_context("get_commtrack_elements"):
-            response.extend(get_commtrack_elements(cases, restore_state))
+        with timing_context("get_stock_payload"):
+            response.extend(get_stock_payload(
+                restore_state.project,
+                restore_state.stock_settings,
+                cases,
+            ))
 
         with timing_context("get_case_sync_updates (%s cases)" % len(cases)):
             updates = get_case_sync_updates(
@@ -198,11 +203,3 @@ def compile_response(timing_context, batches, restore_state):
                 for item in get_xml_for_response(update, restore_state))
 
     return response
-
-
-def get_commtrack_elements(cases, restore_state):
-    return get_stock_payload(
-        restore_state.project,
-        restore_state.stock_settings,
-        [CaseStub(case.case_id, case.type) for case in cases],
-    )
