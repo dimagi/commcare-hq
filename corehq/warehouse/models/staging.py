@@ -35,7 +35,11 @@ from corehq.warehouse.etl import CouchToDjangoETLMixin, CustomSQLETLMixin
 
 
 class StagingTable(models.Model, WarehouseTable):
-    batch_id = models.UUIDField()
+    batch = models.ForeignKey(
+        'BatchRecord',
+        on_delete=models.PROTECT,
+        db_column='batch_id',
+    )
 
     class Meta:
         abstract = True

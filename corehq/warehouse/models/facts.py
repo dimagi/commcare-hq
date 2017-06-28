@@ -20,7 +20,11 @@ from corehq.warehouse.utils import truncate_records_for_cls
 
 class BaseFact(models.Model, WarehouseTable):
 
-    batch_id = models.UUIDField()
+    batch = models.ForeignKey(
+        'BatchRecord',
+        on_delete=models.PROTECT,
+        db_column='batch_id',
+    )
 
     @classmethod
     def commit(cls, batch_record):

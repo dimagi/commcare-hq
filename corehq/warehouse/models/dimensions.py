@@ -23,7 +23,11 @@ from corehq.warehouse.utils import truncate_records_for_cls
 
 class BaseDim(models.Model, WarehouseTable):
     domain = models.CharField(max_length=255)
-    batch_id = models.UUIDField()
+    batch = models.ForeignKey(
+        'BatchRecord',
+        on_delete=models.PROTECT,
+        db_column='batch_id',
+    )
 
     dim_last_modified = models.DateTimeField(auto_now=True)
     dim_created_on = models.DateTimeField(auto_now_add=True)
