@@ -10,7 +10,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.toggles import OPENMRS_INTEGRATION
 from corehq.motech.repeaters.signals import create_repeat_records
 from couchforms.signals import successful_form_received
-from custom.infomovel_fgh.openmrs.field_mappings import OpenmrsConfig
+from custom.infomovel_fgh.openmrs.openmrs_config import OpenmrsConfig
 from custom.infomovel_fgh.openmrs.handler import send_openmrs_data
 from custom.infomovel_fgh.openmrs.repeater_helpers import get_relevant_case_updates_from_form_json, \
     Requests

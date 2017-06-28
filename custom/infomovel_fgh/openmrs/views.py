@@ -5,7 +5,7 @@ from django.views.decorators.http import require_http_methods
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views import AddCaseRepeaterView
-from custom.infomovel_fgh.openmrs.field_mappings import OpenmrsCaseConfig, OpenmrsFormConfig
+from custom.infomovel_fgh.openmrs.openmrs_config import OpenmrsCaseConfig, OpenmrsFormConfig
 from custom.infomovel_fgh.openmrs.forms import OpenmrsConfigForm
 from custom.infomovel_fgh.openmrs.repeater_helpers import Requests, \
     get_patient_identifier_types, get_person_attribute_types
