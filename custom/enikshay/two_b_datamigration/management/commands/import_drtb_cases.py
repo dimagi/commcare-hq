@@ -91,7 +91,7 @@ def get_episode_case_properties(row):
         "diagnosis_test_result_date": report_sending_date,
         "treatment_initiation_date": treatment_initiation_date,
         "treatment_card_completed_date": treatment_card_completed_date,
-        "episode_regimen_change_history": get_episode_regimen_change_history(row, treatment_initiation_date)
+        "regimen_change_history": get_episode_regimen_change_history(row, treatment_initiation_date)
     }
     properties.update(get_selection_criteria_properties(row))
     if treatment_initiation_date:
@@ -206,8 +206,8 @@ NO_RESULT = "no_result"
 def clean_result(value):
     return {
         "": NO_RESULT,
-        "Conta": None,  # TODO: Which should this be?
-        "CONTA": None, # TODO: Which should this be?
+        "Conta": NO_RESULT,
+        "CONTA": NO_RESULT,
         "NA": NO_RESULT,
         "NEG": NOT_DETECTED,
         "Negative": NOT_DETECTED,
