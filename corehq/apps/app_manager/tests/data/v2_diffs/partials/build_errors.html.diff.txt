@@ -313,7 +313,7 @@
                                  references a question that no longer exists: "{{ error.path }}". It is likely that
                                  this question has been renamed or deleted. Please update or delete this question
                                  reference before you make a new version.
-@@ -259,50 +252,40 @@
+@@ -259,40 +252,40 @@
                              One of your languages is empty. Check your <a href="{% url "view_app" domain app.id %}">app settings</a>.
                          {% case "missing parent tag" %}
                              A subcase is referencing a parent case tag that does not exist: "{{ error.case_tag }}"
@@ -360,23 +360,13 @@
 -                                    the case reference or (1) make sure that the module is set to display the module first and then form,
 -                                    and (2) make sure that all forms in this module update or close a case (which means registration forms
 -                                    must go in a different module).
--                                {% endblocktrans %}
--                            {% endif %}
--                        {% case "practice user config error" %}
--                            {% if error.build_profile_id %}
--                                {% blocktrans with profile=app.build_profiles|getattr:error.build_profile_id %}
--                                    Error with Practice Mobile Worker in Application Profile {{ profile.name }}.
--                                {% endblocktrans %}
--                            {% else %}
--                                {% blocktrans%}
--                                    Error with Practice Mobile Worker in Application Settings.
 +                                    the case reference or (1) make sure that the case list is set to display the case list first and then form,
 +                                    and (2) make sure that all forms in this case list update or close a case (which means registration forms
 +                                    must go in a different case list).
                                  {% endblocktrans %}
                              {% endif %}
-                         {% case "invalid user property xpath reference" %}
-@@ -349,14 +332,14 @@
+                         {% case "practice user config error" %}
+@@ -349,14 +342,14 @@
                  </li>
              {% endfor %}
          </ul>
