@@ -641,11 +641,17 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             raise CaseNotFound
 
     @staticmethod
-    def get_cases(case_ids, ordered=False):
+    def get_cases(case_ids, ordered=False, prefetched_indices=None):
         assert isinstance(case_ids, list)
         cases = RawQuerySetWrapper(CommCareCaseSQL.objects.raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
+
         if ordered:
             cases = _order_list(case_ids, cases, 'case_id')
+
+        if prefetched_indices:
+            cases_by_id = {case.case_id: case for case in cases}
+            _attach_prefetch_models(
+                cases_by_id, prefetched_indices, 'case_id', 'cached_indices')
 
         return cases
 

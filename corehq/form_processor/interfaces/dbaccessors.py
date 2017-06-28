@@ -178,7 +178,7 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_cases(case_ids):
+    def get_cases(case_ids, ordered=False, prefetched_indices=None):
         raise NotImplementedError
 
     @abstractmethod
@@ -295,8 +295,9 @@ class CaseAccessors(object):
     def get_case(self, case_id):
         return self.db_accessor.get_case(case_id)
 
-    def get_cases(self, case_ids, ordered=False):
-        return self.db_accessor.get_cases(case_ids, ordered=ordered)
+    def get_cases(self, case_ids, ordered=False, prefetched_indices=None):
+        return self.db_accessor.get_cases(
+            case_ids, ordered=ordered, prefetched_indices=prefetched_indices)
 
     def iter_cases(self, case_ids):
         for chunk in chunked(case_ids, 100):

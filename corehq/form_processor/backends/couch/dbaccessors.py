@@ -122,7 +122,8 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return CommCareCase.get(case_id)
 
     @staticmethod
-    def get_cases(case_ids, ordered=False):
+    def get_cases(case_ids, ordered=False, prefetched_indices=None):
+        # prefetched_indices is ignored sinces cases already have them
         return [
             CommCareCase.wrap(doc) for doc in iter_docs(
                 CommCareCase.get_db(),

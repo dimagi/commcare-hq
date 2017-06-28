@@ -152,13 +152,28 @@ def get_payload(timing_context, restore_state):
         # TODO? tell phone to remove no-longer-relevant cases?
 
         with timing_context("compile_response"):
-            batches = batch_cases(accessor, live_ids, indices)
+            iaccessor = PrefetchIndexCaseAccessor(accessor, indices)
+            batches = batch_cases(iaccessor, live_ids)
             response = compile_response(timing_context, batches, restore_state)
 
     return response
 
 
-def batch_cases(accessor, case_ids, indices):
+class PrefetchIndexCaseAccessor(object):
+
+    def __init__(self, accessor, indices):
+        self.accessor = accessor
+        self.indices = indices
+
+    def get_cases(self, case_ids, **kw):
+        assert 'prefetched_indices' not in kw
+        kw['prefetched_indices'] = [ix
+            for case_id in case_ids
+            for ix in self.indices[case_id]]
+        return self.accessor.get_cases(case_ids, **kw)
+
+
+def batch_cases(accessor, case_ids):
     def take(n, iterable):
         # https://docs.python.org/2/library/itertools.html#recipes
         return list(islice(iterable, n))
@@ -168,7 +183,6 @@ def batch_cases(accessor, case_ids, indices):
         next_ids = take(1000, ids)
         if not next_ids:
             break
-        # TODO assign indices to cases (SQL only)
         yield accessor.get_cases(next_ids)
 
 
