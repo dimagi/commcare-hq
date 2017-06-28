@@ -1,14 +1,19 @@
 import logging
 
 import datetime
+import uuid
+
 from dateutil.parser import parse
 from django.core.management import (
     BaseCommand,
 )
 from django.db import models
 
+from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from casexml.apps.case.mock import CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.workbook_reading import open_any_workbook
+from custom.enikshay.case_utils import CASE_TYPE_PERSON, CASE_TYPE_OCCURRENCE
 
 logger = logging.getLogger('tow_b_datamigration')
 
@@ -44,11 +49,45 @@ def get_case_structures_from_row(domain, row):
     test_case_properties = get_test_case_properties(domain, row)
     drug_resistance_case_properties = get_drug_resistance_case_properties(row)
     followup_test_cases_properties = get_follow_up_test_case_properties(row)
+
+    person_case_structure = get_person_case_structure(person_case_properties)
+
     # TODO: convert all these case properties to the appropriate linked up case structures
         # TODO: Create drug resistance cases!
         # TODO: Create secondary_owner cases
 
 
+def get_person_case_structure(properties):
+    owner_id = properties.pop("owner_id")
+    return CaseStructure(
+        case_id=uuid.uuid4().hex,
+        attrs={
+            "case_type": CASE_TYPE_PERSON,
+            "create": True,
+            "owner_id": owner_id,
+            # "user_id": None,  # TODO: Is this needed?
+            "update": properties,
+    })
+
+
+def get_occurrence_case_structure(properties, person_case_structure):
+    return CaseStructure(
+        case_id=uuid.uuid4().hex,
+        # TODO: indices
+        attrs={
+            "case_type": CASE_TYPE_OCCURRENCE,
+            "create": True,
+            # TODO: Does this need a name?
+            # TODO: owner_id
+            "update": properties,  # TODO: Nick creates a lot more properties
+        },
+        indices=[CaseIndex(
+            person_case_structure,
+            identifier='host',
+            relationship=CASE_INDEX_EXTENSION,
+            related_type=person_case_structure.attrs['case_type'],
+        )],
+    )
 
 
 def get_person_case_properties(domain, row):
@@ -57,7 +96,7 @@ def get_person_case_properties(domain, row):
     district_name, district_id = match_district(domain, xlsx_district_name)
     properties = {
         # TODO: Do they want first_name or last_name?
-        "name": person_name,  # TODO: Should this be `name` or `case_name`?
+        "name": person_name,
         "district_name": district_name,
         "district_id": district_id,
         "owner_id": "-",
@@ -172,7 +211,7 @@ def get_drug_resistances_from_individual_drug_columns(row):
     for drug_column_key, (drug_id, drug_name) in DRUG_MAP.iteritems():
         value = Mehsana2016ColumnMapping.get_value(drug_column_key, row)
         properties = {
-            "name": drug_id,  # TODO: Should this be case_name? Is this even the right name?
+            "name": drug_id,
             "owner_id": "-",
             "sensitivity": convert_sensitivity(value),
             "drug_id": drug_id,
@@ -197,7 +236,7 @@ def get_drug_resistances_from_drug_resistance_list(row):
     case_properties = []
     for drug in drugs:
         properties = {
-            "name": drug,  # TODO: case_name?
+            "name": drug,
             "owner_id": "-",
             "sensitivity": "resistant",
             "drug_id": drug,
@@ -237,6 +276,7 @@ NO_RESULT = "no_result"
 def clean_result(value):
     return {
         "": NO_RESULT,
+        # TODO: Confirm with Sheel that "Contaminated" should be "no result"
         "Conta": NO_RESULT,
         "CONTA": NO_RESULT,
         "NA": NO_RESULT,
@@ -272,6 +312,7 @@ def match_district(domain, xlsx_district_name):
     """
     Given district name taken from the spreadsheet, return the name and id of the matching location in HQ.
     """
+    # TODO: Consider filtering by location type
     try:
         location = SQLLocation.active_objects.get(domain=domain, name__iexact=xlsx_district_name)
     except SQLLocation.DoesNotExist:
@@ -362,7 +403,9 @@ class Command(BaseCommand):
         with open_any_workbook(excel_file_path) as workbook:
             for i, row in enumerate(workbook.worksheets[0].iter_rows()):
                 if i == 0:
+                    import ipdb; ipdb.set_trace()
                     # Skip the headers row
                     continue
+                import ipdb; ipdb.set_trace()
                 case_structures = get_case_structures_from_row(domain, row)
                 # TODO: submit forms with case structures
