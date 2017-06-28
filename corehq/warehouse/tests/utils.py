@@ -18,8 +18,8 @@ def get_default_batch():
     return BatchRecord.objects.get(batch_id=DEFAULT_BATCH_ID)
 
 
-def create_batch(start, end):
-    batch_id = str(uuid.uuid4())
+def create_batch(start, end, batch_id=None):
+    batch_id = batch_id or str(uuid.uuid4())
     call_command(
         'create_batch',
         batch_id,
