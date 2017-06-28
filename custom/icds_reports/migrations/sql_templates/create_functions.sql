@@ -895,6 +895,7 @@ BEGIN
 	-- Aggregate monthly child health table
 	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
 		'cases_child_health = ut.cases_child_health, ' ||
+		'cases_child_health_all = ut.cases_child_health_all, ' ||
 		'wer_weighed = ut.wer_weighed, ' ||
 		'wer_eligible = ut.wer_eligible, ' ||
 		'wer_score = ut.wer_score, ' ||
@@ -904,6 +905,7 @@ BEGIN
 		'awc_id, ' ||
 		'month, ' ||
 		'sum(valid_in_month) AS cases_child_health, ' ||
+		'sum(valid_all_registered_in_month) AS cases_child_health_all, ' ||
 		'sum(nutrition_status_weighed) AS wer_weighed, ' ||
 		'sum(wer_eligible) AS wer_eligible, ' ||
 		'CASE WHEN sum(wer_eligible) = 0 THEN 1 ' ||
@@ -920,6 +922,8 @@ BEGIN
 	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
 		'cases_ccs_pregnant = ut.cases_ccs_pregnant, ' ||
 		'cases_ccs_lactating = ut.cases_ccs_lactating, ' ||
+		'cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all, ' ||
+		'cases_ccs_lactating_all = ut.cases_ccs_lactating_all, ' ||
 		'thr_eligible_ccs = ut.thr_eligible_ccs, ' ||
 		'thr_rations_21_plus_distributed_ccs = ut.thr_rations_21_plus_distributed_ccs ' ||
 	'FROM (SELECT ' ||
@@ -927,6 +931,8 @@ BEGIN
 		'month, ' ||
 		'sum(pregnant) AS cases_ccs_pregnant, ' ||
 		'sum(lactating) AS cases_ccs_lactating, ' ||
+		'sum(pregnant_all) AS cases_ccs_pregnant_all, ' ||
+		'sum(lactating_all) AS cases_ccs_lactating_all, ' ||
 		'sum(thr_eligible) AS thr_eligible_ccs, ' ||
 		'sum(rations_21_plus_distributed) AS thr_rations_21_plus_distributed_ccs '
 		'FROM ' || quote_ident(_ccs_record_tablename) || ' ' ||
@@ -1251,7 +1257,10 @@ BEGIN
 		'sum(trained_phase_3), ' ||
 		'sum(trained_phase_4), ';
 
-    _rollup_text2 = 'sum(cases_household) ';
+    _rollup_text2 = 'sum(cases_household), ' ||
+        'sum(cases_ccs_pregnant_all), ' ||
+		'sum(cases_ccs_lactating_all), ' ||
+		'sum(cases_child_health_all) ';
 
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
