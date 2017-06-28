@@ -415,7 +415,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')
 
     def test_case_detail_tabs_with_nodesets(self):
-        with flag_enabled('DISPLAY_CONDITION_ON_NODESET'):
+        with flag_enabled('DISPLAY_CONDITION_ON_TABS'):
             self._test_generic_suite("app_case_detail_tabs_with_nodesets", 'suite-case-detail-tabs-with-nodesets')
 
     def test_case_tile_suite(self):

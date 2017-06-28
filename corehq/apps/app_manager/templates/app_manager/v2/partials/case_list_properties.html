@@ -64,8 +64,8 @@
                 <!--ko if: isTab -->
                     <!--ko if: $data.hasNodeset -->
                         <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
-                        {{ request|toggle_tag_info:"DISPLAY_CONDITION_ON_NODESET" }}
-                        {% if request|toggle_enabled:'DISPLAY_CONDITION_ON_NODESET' %}
+                        {{ request|toggle_tag_info:"DISPLAY_CONDITION_ON_TABS" }}
+                        {% if request|toggle_enabled:'DISPLAY_CONDITION_ON_TABS' %}
                         <td class="col-sm-3 form-group">
                              <div data-bind="jqueryElement: relevant.ui"></div>
                          </td>
@@ -79,8 +79,8 @@
                         </td>
                     <!--/ko-->
                     <!--ko ifnot: $data.hasNodeset -->
-                        {{ request|toggle_tag_info:"DISPLAY_CONDITION_ON_NODESET" }}
-                        {% if request|toggle_enabled:'DISPLAY_CONDITION_ON_NODESET' %}
+                        {{ request|toggle_tag_info:"DISPLAY_CONDITION_ON_TABS" }}
+                        {% if request|toggle_enabled:'DISPLAY_CONDITION_ON_TABS' %}
                         <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
                         <td class="col-sm-3 form-group">
                              <div data-bind="jqueryElement: relevant.ui"></div>

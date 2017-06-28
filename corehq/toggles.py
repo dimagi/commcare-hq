@@ -1212,7 +1212,7 @@ ENTERPRISE_OPTIMIZATIONS = StaticToggle(
     always_enabled={'icds-cas'}
 )
 
-DISPLAY_CONDITION_ON_NODESET = StaticToggle(
+DISPLAY_CONDITION_ON_TABS = StaticToggle(
     'display_condition_on_nodeset',
     'Show Display Condition on Case Detail Tabs',
     TAG_ONE_OFF,
