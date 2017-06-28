@@ -47,7 +47,7 @@ class WorkflowHelper(PostProcessor):
 
                 self.create_workflow_stack(form_command, stack_frames)
 
-    def get_frame_children(self, target_form, module_only=False):
+    def get_frame_children(self, target_form, module_only=False, include_target_root=False):
         """
         For a form return the list of stack frame children that are required
         to navigate to that form.
@@ -83,6 +83,9 @@ class WorkflowHelper(PostProcessor):
             datums_list = self.root_module_datums
         else:
             datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
+            root_module = target_form.get_module().root_module
+            if root_module and include_target_root:
+                datums_list = datums_list + self.get_module_datums(id_strings.menu_id(root_module)).values()
 
         common_datums = commonprefix(datums_list)
         remaining_datums = form_datums[len(common_datums):]
@@ -266,7 +269,7 @@ class EndOfFormNavigationWorkflow(object):
                 frame_children = frame_children_for_module(root_module)
                 return StackFrameMeta(xpath, frame_children)
             elif form_workflow == WORKFLOW_PREVIOUS:
-                frame_children = self.helper.get_frame_children(form)
+                frame_children = self.helper.get_frame_children(form, include_target_root=True)
 
                 # since we want to go the 'previous' screen we need to drop the last
                 # datum
