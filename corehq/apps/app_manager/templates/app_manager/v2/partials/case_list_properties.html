@@ -64,14 +64,31 @@
                 <!--ko if: isTab -->
                     <!--ko if: $data.hasNodeset -->
                         <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
+                        {{ request|toggle_tag_info:"DISPLAY_CONDITION_ON_NODESET" }}
+                        {% if request|toggle_enabled:'DISPLAY_CONDITION_ON_NODESET' %}
+                        <td class="col-sm-3 form-group">
+                             <div data-bind="jqueryElement: relevant.ui"></div>
+                         </td>
+                        <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}">
+                        {% else %}
                         <td class="col-sm-5 form-group" colspan="2" data-bind="css: {'has-error': showWarning}">
+                        {% endif %}
                             <div data-bind="jqueryElement: nodeset.ui"></div>
                             <span class="help-block"
                                   data-bind="text: 'A nodeset must be specified.', visible: showWarning"></span>
                         </td>
                     <!--/ko-->
                     <!--ko ifnot: $data.hasNodeset -->
+                        {{ request|toggle_tag_info:"DISPLAY_CONDITION_ON_NODESET" }}
+                        {% if request|toggle_enabled:'DISPLAY_CONDITION_ON_NODESET' %}
+                        <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
+                        <td class="col-sm-3 form-group">
+                             <div data-bind="jqueryElement: relevant.ui"></div>
+                        </td>
+                        <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}"></td>
+                        {% else %}
                         <td class="col-sm-8" colspan="3" data-bind="jqueryElement: header.ui"></td>
+                        {% endif %}
                     <!--/ko-->
                 <!--/ko-->
                 <!-- ko if: $parent.showCaseTileColumn() -->

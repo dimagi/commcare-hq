@@ -671,6 +671,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     isTab: false,
                     hasNodeset: false,
                     nodeset: "",
+                    relevant: "",
                 };
                 _.each(_.keys(tabDefaults), function(key) {
                     that.original[key] = that.original[key] || tabDefaults[key];
@@ -712,11 +713,13 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     that.header.setVisibleValue(visibleVal);
 
                     that.nodeset = uiElement.input().val(that.original.nodeset);
+                    that.relevant = uiElement.input().val(that.original.relevant);
                     if (that.isTab) {
                         // hack to wait until the input's there to prepend the Tab: label.
                         setTimeout(function () {
                             that.header.ui.addClass('input-group').prepend($('<span class="input-group-addon">Tab</span>'));
                             that.nodeset.ui.addClass('input-group').prepend($('<span class="input-group-addon">Nodeset</span>'));
+                            that.relevant.ui.addClass('input-group').prepend($('<span class="input-group-addon">Display Condition</span>'));
                         }, 0);
 
                         // Observe nodeset values for the sake of validation
@@ -724,6 +727,13 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                             that.nodeset.observableVal = ko.observable(that.original.nodeset);
                             that.nodeset.on("change", function(){
                                 that.nodeset.observableVal(that.nodeset.val());
+                            });
+                        }
+
+                        if (that.original.relevant) {
+                            that.relevant.observableVal = ko.observable(that.original.relevant);
+                            that.relevant.on("change", function(){
+                                that.relevant.observableVal(that.relevant.val());
                             });
                         }
                     }
@@ -802,6 +812,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     'field',
                     'header',
                     'nodeset',
+                    'relevant',
                     'format',
                     'enum_extra',
                     'graph_extra',
@@ -883,6 +894,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     column.field = this.field.val();
                     column.header[this.lang] = this.header.val();
                     column.nodeset = this.nodeset.val();
+                    column.relevant = this.relevant.val();
                     column.format = this.format.val();
                     column.enum = this.enum_extra.getItems();
                     column.graph_configuration =
@@ -897,7 +909,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         return _.extend({
                             starting_index: this.starting_index,
                             has_nodeset: column.hasNodeset,
-                        }, _.pick(column, ['header', 'isTab', 'nodeset']));
+                        }, _.pick(column, ['header', 'isTab', 'nodeset', 'relevant']));
                     }
                     return column;
                 },
@@ -1013,7 +1025,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         0,
                         _.extend({
                             hasNodeset: tabs[i].has_nodeset,
-                        }, _.pick(tabs[i], ["header", "nodeset", "isTab"]))
+                        }, _.pick(tabs[i], ["header", "nodeset", "isTab", "relevant"]))
                     );
                 }
                 if (this.columnKey === 'long') {

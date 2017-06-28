@@ -436,7 +436,8 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')
 
     def test_case_detail_tabs_with_nodesets(self):
-        self._test_generic_suite("app_case_detail_tabs_with_nodesets", 'suite-case-detail-tabs-with-nodesets')
+        with flag_enabled('DISPLAY_CONDITION_ON_NODESET'):
+            self._test_generic_suite("app_case_detail_tabs_with_nodesets", 'suite-case-detail-tabs-with-nodesets')
 
     def test_case_detail_tabs_with_nodesets_for_sorting(self):
         app = Application.wrap(self.get_json("app_case_detail_tabs_with_nodesets"))

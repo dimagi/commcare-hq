@@ -1228,3 +1228,10 @@ ENTERPRISE_OPTIMIZATIONS = StaticToggle(
     [NAMESPACE_DOMAIN],
     always_enabled={'icds-cas'}
 )
+
+DISPLAY_CONDITION_ON_NODESET = StaticToggle(
+    'display_condition_on_nodeset',
+    'Show Display Condition on Case Detail Tabs',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
