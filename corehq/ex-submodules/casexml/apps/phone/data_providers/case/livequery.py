@@ -30,10 +30,7 @@ from casexml.apps.phone.data_providers.case.load_testing import (
     get_xml_for_response,
 )
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
-from casexml.apps.phone.data_providers.case.utils import (
-    CaseStub,
-    get_case_sync_updates,
-)
+from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
