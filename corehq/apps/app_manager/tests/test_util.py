@@ -29,28 +29,24 @@ class TestGetFormData(SimpleTestCase):
 
 class TestOverwriteApp(TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        super(TestOverwriteApp, cls).setUpClass()
+        cls.master_app = Application.new_app('domain', "Master Application")
+        cls.linked_app = Application.new_app('domain-2', "Linked Application")
+        module = cls.master_app.add_module(ReportModule.new_module('Reports', None))
+        module.report_configs = [
+            ReportAppConfig(report_id='id', header={'en': 'CommBugz'}),
+        ]
+        cls.linked_app.save()
+        cls.target_json = cls.linked_app.to_json()
 
     def test_missing_ucrs(self):
-        master_app = Application.new_app('domain', "Master Application")
-        linked_app = Application.new_app('domain-2', "Linked Application")
-        target_json = linked_app.to_json()
-        module = master_app.add_module(ReportModule.new_module('Reports', None))
-        module.report_configs = [
-            ReportAppConfig(report_id='id', header={'en': 'CommBugz'}),
-        ]
         with self.assertRaises(AppEditingError):
-            overwrite_app(target_json, master_app, {})
+            overwrite_app(self.target_json, self.master_app, {})
 
-    def test_static_ucrs(self):
-        master_app = Application.new_app('domain', "Master Application")
-        linked_app = Application.new_app('domain-2', "Linked Application")
-        linked_app.save()
-        target_json = linked_app.to_json()
-        module = master_app.add_module(ReportModule.new_module('Reports', None))
-        module.report_configs = [
-            ReportAppConfig(report_id='id', header={'en': 'CommBugz'}),
-        ]
+    def test_report_mapping(self):
         report_map = {'id': 'mapped_id'}
-        overwrite_app(target_json, master_app, report_map)
-        linked_app = Application.get(linked_app._id)
+        overwrite_app(self.target_json, self.master_app, report_map)
+        linked_app = Application.get(self.linked_app._id)
         self.assertEqual(linked_app.modules[0].report_configs[0].report_id, 'mapped_id')
