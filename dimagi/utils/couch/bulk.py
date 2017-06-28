@@ -3,9 +3,16 @@ from collections import defaultdict
 import json
 import logging
 import requests
+from requests.exceptions import HTTPError
+from simplejson import JSONDecodeError
+
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.requestskit import get_auth
+
+
+class BulkFetchException(Exception):
+    pass
 
 
 class CouchTransaction(object):
@@ -96,10 +103,13 @@ def get_docs(db, keys, **query_params):
                       params=query_params)
 
     try:
+        r.raise_for_status()
         return [row.get('doc') for row in r.json()['rows'] if row.get('doc')]
     except KeyError:
         logging.exception('%r has no key %r' % (r.json(), 'rows'))
         raise
+    except (HTTPError, JSONDecodeError) as e:
+        raise BulkFetchException(e)
 
 
 def wrapped_docs(cls, keys):
