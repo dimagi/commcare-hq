@@ -786,6 +786,10 @@ DECLARE
 	_rollup_text2 text;
 	_yes_text text;
 	_no_text text;
+	_month_end_11yr date;
+	_month_start_15yr date;
+	_month_end_15yr date;
+	_month_start_18yr date;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_end_date = (date_trunc('MONTH', $1) + INTERVAL '1 MONTH - 1 day')::DATE;
