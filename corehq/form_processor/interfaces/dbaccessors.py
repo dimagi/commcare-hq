@@ -182,10 +182,6 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_related_cases(domain, case_ids, exclude_ids)
-        raise NotImplementedError
-
-    @abstractmethod
     def case_exists(case_id):
         raise NotImplementedError
 
@@ -202,10 +198,6 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_open_cases_by_owners(domain, owner_ids):
-        raise NotImplementedError
-
-    @abstractmethod
     def get_open_case_ids_for_owner(domain, owner_id):
         raise NotImplementedError
 
@@ -215,6 +207,14 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def get_open_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_open_case_ids(case_ids):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_related_indices(case_ids, exclude_ids):
         raise NotImplementedError
 
     @abstractmethod
@@ -298,9 +298,6 @@ class CaseAccessors(object):
     def get_cases(self, case_ids, ordered=False):
         return self.db_accessor.get_cases(case_ids, ordered=ordered)
 
-    def get_related_cases(self, case_ids, exclude_ids)
-        return self.db_accessor.get_related_cases(case_ids, exclude_ids)
-
     def iter_cases(self, case_ids):
         for chunk in chunked(case_ids, 100):
             chunk = list(filter(None, chunk))
@@ -326,15 +323,17 @@ class CaseAccessors(object):
         """
         return self.db_accessor.get_case_ids_in_domain_by_owners(self.domain, owner_ids, closed=closed)
 
-    def get_open_cases_by_owners(self, owner_ids):
-        """like get_case_ids_by_owners except get full cases"""
-        return self.db_accessor.get_open_cases_by_owners(self.domain, owner_ids)
-
     def get_open_case_ids_for_owner(self, owner_id):
         return self.db_accessor.get_open_case_ids_for_owner(self.domain, owner_id)
 
     def get_open_case_ids_in_domain_by_type(self, case_type, owner_ids=None):
         return self.db_accessor.get_open_case_ids_in_domain_by_type(self.domain, case_type, owner_ids)
+
+    def filter_open_case_ids(self, case_ids):
+        return self.db_accessor.filter_open_case_ids(self, case_ids)
+
+    def get_related_indices(self, case_ids, exclude_ids):
+        return self.db_accessor.get_related_indices(self.domain, case_ids, exclude_ids)
 
     def get_case_ids_modified_with_owner_since(self, owner_id, reference_date):
         return self.db_accessor.get_case_ids_modified_with_owner_since(self.domain, owner_id, reference_date)

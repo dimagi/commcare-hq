@@ -1,9 +1,14 @@
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 
-from casexml.apps.case.dbaccessors import get_extension_case_ids, \
-    get_indexed_case_ids, get_all_reverse_indices_info, get_open_case_ids_in_domain, \
-    get_reverse_indexed_cases
+from casexml.apps.case.dbaccessors import (
+    get_extension_case_ids,
+    get_indexed_case_ids,
+    get_all_reverse_indices_info,
+    get_open_case_ids_in_domain,
+    get_reverse_indexed_cases,
+    get_related_indices,
+)
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.stock.models import StockTransaction
@@ -125,15 +130,19 @@ class CaseAccessorCouch(AbstractCaseAccessor):
             )
         ]
 
-    @classmethod
-    def get_related_cases(cls, domain, case_ids, exclude_ids):
-        # parent and host cases
-        related_ids = set(cls.get_indexed_case_ids(domain, case_ids))
-        # extension cases
-        related_ids.update(cls.get_extension_case_ids(domain, case_ids))
-        related_ids -= exclude_ids
-        return [CommCareCase.wrap(doc)
-            for doc in iter_docs(CommCareCase.get_db(), related_ids)]
+    @staticmethod
+    def get_related_indices(domain, case_ids, exclude_ids):
+        return get_related_indices(domain, case_ids, exclude_ids)
+
+    @staticmethod
+    def filter_open_case_ids(accessor, case_ids):
+        """Filter given set of case ids, yielding only open case ids
+
+        WARNING this is inefficient (better version in SQL).
+        """
+        for case in accessor.iter_cases(case_ids):
+            if not case.closed:
+                yield case.case_id
 
     @staticmethod
     def case_exists(case_id):
@@ -150,13 +159,6 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def get_case_ids_in_domain_by_owners(domain, owner_ids, closed=None):
         return get_case_ids_in_domain_by_owner(domain, owner_id__in=owner_ids, closed=closed)
-
-    @classmethod
-    def get_open_cases_by_owners(cls, domain, owner_ids):
-        # not sure if this could be made more efficient (one query?)
-        case_ids = cls.get_open_case_ids_for_owner(domain, owner_ids)
-        return [CommCareCase.wrap(doc)
-            for doc in iter_docs(CommCareCase.get_db(), case_ids)]
 
     @staticmethod
     def get_open_case_ids_for_owner(domain, owner_id):

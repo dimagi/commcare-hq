@@ -90,3 +90,44 @@ def get_reverse_indices(case):
 def get_reverse_indices_for_case_id(domain, case_id):
     return [CommCareCaseIndex.wrap(raw)
             for raw in get_reverse_indices_json(domain, case_id)]
+
+
+def get_related_indices(domain, case_ids, exclude_ids):
+    """Get related index records (parents and children, non-recursive)
+
+    Excludes closed extension cases.
+
+    WARNING this is inefficient (better version in SQL).
+    """
+    from casexml.apps.case.models import CommCareCase
+    def _index(row):
+        return CaseIndexInfo(
+            case_id=row['id'],
+            identifier=row['value']['identifier'],
+            referenced_id=row['value']['referenced_id'],
+            referenced_type=row['value']['referenced_type'],
+            relationship=row['value']['relationship']
+        )
+
+    assert isinstance(exclude_ids, (set, dict)), exclude_ids
+
+    # parent and host indices
+    keys = [[domain, case_id, 'index'] for case_id in case_ids]
+    indices = [_index(r) for r in CommCareCase.get_db().view(
+        'case_indices/related',
+        keys=keys,
+        reduce=False,
+    ) if r['value']['referenced_id'] not in exclude_ids]
+
+    # open extension indices
+    extension_ids = get_extension_case_ids(domain, case_ids)
+    if extension_ids:
+        extension_ids = [x for x in extension_ids if x not in exclude_ids]
+        for doc in iter_docs(CommCareCase.get_db(), extension_ids):
+            if not doc["closed"]:
+                for val in doc["indices"]:
+                    if val["referenced_id"] in case_ids \
+                            and val['relationship'] == CASE_INDEX_EXTENSION:
+                        indices.append(_index({'id': doc['_id'], 'value': val}))
+
+    return indices
