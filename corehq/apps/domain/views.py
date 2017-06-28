@@ -646,8 +646,8 @@ def logo(request, domain):
 @require_POST
 @domain_admin_required
 def send_dhis2_data(request, domain):
-    send_datasets.delay(domain)
-    return HttpResponse(_('Data is being sent to DHIS2.'))
+    send_datasets.delay(domain, send_now=True)
+    return json_response({'success': _('Data is being sent to DHIS2.')}, status_code=202)
 
 
 class DomainAccountingSettings(BaseProjectSettingsView):
@@ -3168,25 +3168,28 @@ class DataSetMapView(BaseAdminProjectSettingsView):
                     value = [DataValueMap(**v) for v in value]
                 instance[key] = value
 
-        dataset_maps = json.loads(request.POST['dataset_maps'])
-        current_dataset_maps = get_dataset_maps(request.domain)
-        i = 0
-        for i, dataset_map in enumerate(current_dataset_maps):
-            if i < len(dataset_maps):
-                # Update current dataset maps
-                update_dataset_map(dataset_map, dataset_maps[i])
-                dataset_map.save()
-            else:
-                # Delete removed dataset maps
-                dataset_map.delete()
-        if (i + 1) < len(dataset_maps):
-            # Insert new dataset maps
-            for j in range(i + 1, len(dataset_maps)):
-                dataset_map = DataSetMap(domain=request.domain)
-                update_dataset_map(dataset_map, dataset_maps[j])
-                dataset_map.save()
-        get_dataset_maps.clear(request.domain)
-        return HttpResponse(_('DHIS2 DataSet Maps saved'))
+        try:
+            new_dataset_maps = json.loads(request.POST['dataset_maps'])
+            current_dataset_maps = get_dataset_maps(request.domain)
+            i = -1
+            for i, dataset_map in enumerate(current_dataset_maps):
+                if i < len(new_dataset_maps):
+                    # Update current dataset maps
+                    update_dataset_map(dataset_map, new_dataset_maps[i])
+                    dataset_map.save()
+                else:
+                    # Delete removed dataset maps
+                    dataset_map.delete()
+            if i + 1 < len(new_dataset_maps):
+                # Insert new dataset maps
+                for j in range(i + 1, len(new_dataset_maps)):
+                    dataset_map = DataSetMap(domain=request.domain)
+                    update_dataset_map(dataset_map, new_dataset_maps[j])
+                    dataset_map.save()
+            get_dataset_maps.clear(request.domain)
+            return json_response({'success': _('DHIS2 DataSet Maps saved')})
+        except Exception as err:
+            return json_response({'error': str(err)}, status_code=500)
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):

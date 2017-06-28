@@ -28,15 +28,17 @@
      <script src="{% static 'app_manager/js/form_designer.js' %}"></script>
  {% endblock %}
  
-@@ -44,11 +54,113 @@
+@@ -32,12 +42,114 @@
      {% initial_page_data 'CKEDITOR_BASEPATH' CKEDITOR_BASEPATH|static %}
      {% initial_page_data 'days_since_created' request.couch_user.days_since_created %}
      {% initial_page_data 'guided_tour' request.guided_tour %}
 +    {% initial_page_data 'form_name' form.name|trans:app.langs %}
 +    {% initial_page_data 'form_comment' form.comment %}
 +    {% initial_page_data 'form_uses_cases' form.uses_cases %}
++    {% initial_page_data 'notification_options' notification_options %}
      {% initial_page_data 'requirejs_args' requirejs_args %}
      {% initial_page_data 'requirejs_url' requirejs_url|static %}
+-    {% initial_page_data 'notification_options' notification_options %}
      {% initial_page_data 'vellum_debug' vellum_debug %}
      {% initial_page_data 'vellum_options' vellum_options %}
 -    <div id="formdesigner" class="clearfix"></div>
@@ -134,7 +136,7 @@
 +                  </div>
 +                  <div class="modal-footer">
 +                      <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
-+                      <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
++                      <button type="submit disable-on-submit" class="btn btn-primary">{% trans "Save" %}</button>
 +                  </div>
 +              </form>
 +          </div>

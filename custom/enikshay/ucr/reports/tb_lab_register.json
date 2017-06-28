@@ -1,6 +1,7 @@
 {
     "domains": [
-        "enikshay"
+        "enikshay",
+        "enikshay-reports-qa"
     ],
     "server_environment": [
         "softlayer"
@@ -61,6 +62,13 @@
                 "type": "pre",
                 "field": "has_date_reported",
                 "slug": "date_reported_pre",
+                "datatype": "integer",
+                "pre_value": 1
+            },
+            {
+                "type": "pre",
+                "field": "is_microscopy",
+                "slug": "is_microscopy",
                 "datatype": "integer",
                 "pre_value": 1
             }

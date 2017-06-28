@@ -378,6 +378,15 @@ CASE_DETAIL_PRINT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+DATA_FILE_DOWNLOAD = StaticToggle(
+    'data_file_download',
+    'Offer hosting and sharing data files for downloading, e.g. cleaned and anonymised form exports',
+    TAG_PRODUCT_PATH,
+    [NAMESPACE_DOMAIN],
+    # TODO: Create Confluence docs and add help link
+)
+
+
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
@@ -496,7 +505,8 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     'Enable extension syncing',
     TAG_EXPERIMENTAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Extension+Cases',
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    always_enabled={'enikshay'},
 )
 
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
@@ -759,6 +769,13 @@ ICDS_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+DASHBOARD_ICDS_REPORT = StaticToggle(
+    'dashboard_icds_reports',
+    'Enable access to the dashboard reports for ICDS',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
 NINETYNINE_DOTS = StaticToggle(
     '99dots_integration',
     'Enable access to 99DOTS',
@@ -864,7 +881,7 @@ MESSAGE_LOG_METADATA = StaticToggle(
 
 ABT_REMINDER_RECIPIENT = StaticToggle(
     'abt_reminder_recipient',
-    "Ability to send a reminder to the case owner's location's parent location",
+    "Custom reminder recipients",
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
 )

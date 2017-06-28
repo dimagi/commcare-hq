@@ -223,7 +223,7 @@ class ESCase(DictObject, CaseToXMLMixin):
         from corehq.apps.api.util import case_to_es_case
         accessor = CaseAccessors(self.domain)
         return {
-            index.identifier: case_to_es_case(accessor.get_case(index.case_id))
+            index.case_id: case_to_es_case(accessor.get_case(index.case_id))
             for index in self._reverse_indices
         }
 

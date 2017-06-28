@@ -15,6 +15,7 @@ class MessageTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(MessageTestCase, cls).setUpClass()
         cls.domain = 'message-formatting-test'
         cls.domain_obj = Domain(name=cls.domain)
         cls.domain_obj.save()
@@ -58,6 +59,7 @@ class MessageTestCase(TestCase):
         cls.group.delete()
         cls.location.delete()
         cls.location_type.delete()
+        super(MessageTestCase, cls).tearDownClass()
 
     def test_render_context(self):
         message = 'The EDD for client with ID {case.external_id} is approaching in {case.edd.days_until} days.'
@@ -144,6 +146,24 @@ class MessageTestCase(TestCase):
             parent_expected_result['case']['owner'] = self.get_expected_template_params_for_mobile()
             parent_expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_mobile()
             self.assertEqual(get_message_template_params(parent_case), parent_expected_result)
+
+    @run_with_all_backends
+    def test_extension_case_template_params(self):
+        with self.create_child_case() as extension_case, self.create_parent_case() as host_case:
+            set_parent_case(self.domain, extension_case, host_case, relationship='extension')
+            extension_case = CaseAccessors(self.domain).get_case(extension_case.case_id)
+            host_case = CaseAccessors(self.domain).get_case(host_case.case_id)
+
+            extension_expected_result = {'case': extension_case.to_json()}
+            extension_expected_result['case']['host'] = host_case.to_json()
+            extension_expected_result['case']['owner'] = self.get_expected_template_params_for_mobile()
+            extension_expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_mobile()
+            self.assertEqual(get_message_template_params(extension_case), extension_expected_result)
+
+            host_expected_result = {'case': host_case.to_json()}
+            host_expected_result['case']['owner'] = self.get_expected_template_params_for_mobile()
+            host_expected_result['case']['last_modified_by'] = self.get_expected_template_params_for_mobile()
+            self.assertEqual(get_message_template_params(host_case), host_expected_result)
 
     @run_with_all_backends
     def test_owner_template_params(self):

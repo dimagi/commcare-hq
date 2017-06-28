@@ -4,8 +4,9 @@
 */
 hqDefine("hqwebapp/js/rollout_modal.js", function() {
     function snooze(slug) {
-        $.cookie(cookieName(slug), true, { expires: 7, path: '/' });
+        $.cookie(cookieName(slug), true, { expires: 3, path: '/' });
         window.analytics.usage("Soft Rollout", "snooze", slug);
+        window.analytics.workflow("Soft Rollout snooze " + slug);
     }
 
     function cookieName(slug) {
@@ -42,6 +43,7 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
                 },
             });
             window.analytics.usage("Soft Rollout", "enable", slug);
+            window.analytics.workflow("Soft Rollout enable " + slug);
         });
 
         // User clicks to snooze
@@ -71,6 +73,7 @@ hqDefine("hqwebapp/js/rollout_modal.js", function() {
                 },
             });
             window.analytics.usage("Soft Rollout", "disable", slug);
+            window.analytics.workflow("Soft Rollout disable " + slug);
         });
     });
 });

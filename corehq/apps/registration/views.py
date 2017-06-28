@@ -174,7 +174,7 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
 
     @property
     def prefilled_email(self):
-        return self.request.POST.get('e', '')
+        return self.request.GET.get('e', '') or self.request.POST.get('e', '')
 
     @property
     def atypical_user(self):

@@ -191,7 +191,11 @@ def download_raw_jar(request, domain, app_id):
 class DownloadCCZ(DownloadMultimediaZip):
     name = 'download_ccz'
     compress_zip = True
-    zip_name = 'commcare.ccz'
+
+    @property
+    def zip_name(self):
+        return 'commcare_v{}.ccz'.format(self.app.version)
+
     include_index_files = True
 
     def check_before_zipping(self):

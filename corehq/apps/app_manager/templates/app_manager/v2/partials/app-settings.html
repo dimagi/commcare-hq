@@ -193,9 +193,6 @@
             </a>
         </div>
         {% endif %}
-        <div class="tab-pane" id="commcare-settings">
-            {% include 'app_manager/v2/partials/commcare_settings.html' %}
-        </div>
         {% if app.get_doc_type == 'Application' %}
             <div class="tab-pane" id="multimedia-tab">
                 <div data-bind="if: load_state() === 'loading'">

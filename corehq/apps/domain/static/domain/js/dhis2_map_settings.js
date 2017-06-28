@@ -33,10 +33,17 @@ hqDefine('domain/js/dhis2_map_settings.js', function () {
         self.frequency = ko.observable(properties["frequency"]);
         self.dayOfMonth = ko.observable(properties["day_to_send"]);
         self.dataSetId = ko.observable(properties["data_set_id"]);
+
         self.orgUnitId = ko.observable(properties["org_unit_id"]);
         self.orgUnitIdColumn = ko.observable(properties["org_unit_column"]);
+        self.orgUnitIdRadio = ko.observable(properties["org_unit_id"] ? "value" : "column");
+
         self.period = ko.observable(properties["period"]);
         self.periodColumn = ko.observable(properties["period_column"]);
+        self.periodRadio = ko.observable(
+            properties["period"] ? "value" : properties["period_column"] ? "column" : "filter"
+        );
+
         self.attributeOptionComboId = ko.observable(properties["attribute_option_combo_id"]);
         self.completeDate = ko.observable(properties["complete_date"]);
         self.dataValueMaps = ko.observableArray();
@@ -71,7 +78,7 @@ hqDefine('domain/js/dhis2_map_settings.js', function () {
                 "description": self.description(),
                 "ucr_id": self.ucrId(),
                 "frequency": self.frequency(),
-                "day_to_send": self.dayOfMonth(),
+                "day_to_send": Number(self.dayOfMonth()),
                 "data_set_id": self.dataSetId(),
                 "org_unit_id": self.orgUnitId(),
                 "org_unit_column": self.orgUnitIdColumn(),
@@ -122,15 +129,15 @@ hqDefine('domain/js/dhis2_map_settings.js', function () {
             $.post(
                 form.action,
                 {'dataset_maps': JSON.stringify(dataSetMaps)},
-                function (data) { alert_user(data, "success", true); }
-            );
+                function (data) { alert_user(data['success'], 'success', true); }
+            ).fail(function () { alert_user(gettext('Unable to save DataSet maps'), 'danger'); });
         };
 
         self.sendData = function () {
             $.post(
                 sendDataUrl,
                 {},
-                function (data) { alert_user(data, "success", true); }
+                function (data) { alert_user(data['success'], 'success', true); }
             );
         };
     };

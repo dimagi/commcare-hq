@@ -55,17 +55,17 @@ class MessageMetadata(object):
         self.ignore_opt_out = kwargs.get("ignore_opt_out", None)
         self.location_id = kwargs.get('location_id', None)
         self.messaging_subevent_id = kwargs.get('messaging_subevent_id', None)
+        self.custom_metadata = kwargs.get('custom_metadata', None)
 
 
 def add_msg_tags(msg, metadata):
     if msg and metadata:
         fields = ('workflow', 'xforms_session_couch_id', 'reminder_id', 'chat_user_id',
-                  'ignore_opt_out', 'location_id', 'messaging_subevent_id')
+                  'ignore_opt_out', 'location_id', 'messaging_subevent_id', 'custom_metadata')
         for field in fields:
             value = getattr(metadata, field)
             if value is not None:
                 setattr(msg, field, value)
-        msg.save()
 
 
 def log_sms_exception(msg):

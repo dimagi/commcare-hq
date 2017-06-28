@@ -44,3 +44,8 @@ class TestVertexBackendRequestContent(TestCase):
         params = self.vertex_backend.populate_params(self.queued_sms)
         self.assertEqual(params['message'], TEST_UNICODE_MESSAGE.encode('utf-8'))
         self.assertEqual(params['msgtype'], UNICODE_MSG_TYPE)
+
+    def test_phone_number_is_valid(self):
+        self.assertFalse(VertexBackend().phone_number_is_valid('+91'))
+        self.assertFalse(VertexBackend().phone_number_is_valid('+123456789'))
+        self.assertTrue(VertexBackend().phone_number_is_valid('+910123456789'))

@@ -89,8 +89,9 @@ def case_properties_changed(case, case_properties):
     property_changed = any(
         action for action in update_actions
         if isinstance(action, CaseUpdateAction)
-        and any(
-            case_property in action.dynamic_properties for case_property in case_properties
+        and (
+            any(case_property in action.dynamic_properties for case_property in case_properties)
+            or ("owner_id" in case_properties and action.owner_id)
         )
     )
     return property_changed

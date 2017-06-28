@@ -10,6 +10,10 @@
             return utils.getIcon(question) + utils.getLabel(question, MAXLEN)
                     + " (" + (question.hashtagValue || question.value) + ")";
         },
+        getTruncatedDisplay: function (question, MAXLEN) {
+            return utils.getIcon(question) + utils.getLabel(question, MAXLEN)
+                    + " (" + utils.truncateValue(question.hashtagValue || question.value, MAXLEN) + ")";
+        },
         getLabel: function (question, MAXLEN) {
             return utils.truncateLabel((question.repeat ? '- ' : '')
                     + question.label, question.tag === 'hidden' ? ' (Hidden)' : '', MAXLEN);
@@ -19,7 +23,11 @@
             var MAXLEN = MAXLEN || 40,
                 maxlen = MAXLEN - suffix.length;
             return ((label.length <= maxlen) ? (label) : (label.slice(0, maxlen) + "...")) + suffix;
-        }
+        },
+        truncateValue: function (value, MAXLEN) {
+            MAXLEN = MAXLEN || 40;
+            return (value.length <= MAXLEN) ? (value) : (value.slice(0, MAXLEN/2) + "..." + value.slice(value.length - MAXLEN/2, value.length - 1));
+        },
     };
 
     ko.bindingHandlers.questionsSelect = {
@@ -61,10 +69,10 @@
                         })
                     },
                     formatSelection: function (o) {
-                        return utils.getDisplay(o.question);
+                        return utils.getTruncatedDisplay(o.question);
                     },
                     formatResult: function (o) {
-                        return utils.getDisplay(o.question, 90);
+                        return utils.getTruncatedDisplay(o.question, 90);
                     },
                     dropdownCssClass: 'bigdrop'
                 });
@@ -82,7 +90,11 @@ ko.bindingHandlers.casePropertyAutocomplete = {
     init: function (element, valueAccessor) {
         $(element).on('textchange', function() {
             var $el = $(this);
-            $el.val($el.val().replace(/ /g, '_'));
+            if ($el.val().match(/\s/)) {
+                var pos = $el.caret('pos');
+                $el.val($el.val().replace(/\s/g, '_'));
+                $el.caret('pos', pos);
+            }
         });
         ko.bindingHandlers.autocompleteAtwho.init(element, valueAccessor);
     },

@@ -328,7 +328,7 @@ class UserPayloadGenerator(BasePayloadGenerator):
         from corehq.apps.api.resources.v0_5 import CommCareUserResource
         resource = CommCareUserResource(api_name='v0.5')
         bundle = resource.build_bundle(obj=user)
-        return json.dumps(resource.full_dehydrate(bundle).data)
+        return json.dumps(resource.full_dehydrate(bundle).data, cls=DjangoJSONEncoder)
 
 
 class LocationPayloadGenerator(BasePayloadGenerator):

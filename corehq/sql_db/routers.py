@@ -6,6 +6,7 @@ PROXY_APP = 'sql_proxy_accessors'
 FORM_PROCESSOR_APP = 'form_processor'
 SQL_ACCESSORS_APP = 'sql_accessors'
 ICDS_REPORTS_APP = 'icds_reports'
+ICDS_MODEL = 'icds_model'
 SCHEDULING_PARTITIONED_APP = 'scheduling_partitioned'
 WAREHOUSE_APP = 'warehouse'
 
@@ -61,5 +62,9 @@ def db_for_read_write(model):
         error_msg = 'Cannot read/write to warehouse db without warehouse database defined'
         assert hasattr(settings, "WAREHOUSE_DATABASE_ALIAS"), error_msg
         return settings.WAREHOUSE_DATABASE_ALIAS
+    elif app_label == ICDS_MODEL:
+        assert hasattr(settings, "ICDS_UCR_TEST_DATABASE_ALIAS")
+        return settings.ICDS_UCR_TEST_DATABASE_ALIAS
+
     else:
         return partition_config.get_main_db()

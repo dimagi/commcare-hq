@@ -12,7 +12,7 @@ django-braces==1.8.1
 django-celery==3.2.1
 django-crispy-forms==1.6.1
 jsonfield==1.0.3
-dropbox==7.1.1
+dropbox==7.3.1
 defusedxml==0.4.1
 diff-match-patch==20120106
 django-tastypie==0.13.3
@@ -55,7 +55,7 @@ socketpool==0.5.3
 markdown==2.2.1
 amqp==1.4.7
 amqplib==1.0.2
-sqlagg==0.7.0
+sqlagg==0.8.0
 django-redis==4.2
 redis==2.10.5
 # WeasyPrint==0.20.2

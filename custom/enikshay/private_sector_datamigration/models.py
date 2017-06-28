@@ -3,10 +3,14 @@ from django.db import models
 from dimagi.utils.decorators.memoized import memoized
 
 
+REPORTING_MECHANISM_MISSED_CALL = 83
 REPORTING_MECHANISM_99_DOTS = 84
 REPORTING_MECHANISM_FIELD_OFFICER = 85
 REPORTING_MECHANISM_TREATMENT_SUPPORTER = 86
+REPORTING_MECHANISM_TREATMENT_PROVIDER = 87
+REPORTING_MECHANISM_PATIENT = 88
 REPORTING_MECHANISM_MERM = 96
+REPORTING_MECHANISM_AYUSH_OTHER_PROVIDER = 97
 REPORTING_MECHANISM_NONE = 0
 
 DIRECTLY_OBSERVED_DOSE = 0
@@ -104,6 +108,11 @@ class Beneficiary(models.Model):
         return self.age
 
     @property
+    @memoized
+    def creating_agency(self):
+        return get_agency_by_motech_user_name(self.creator)
+
+    @property
     def current_address(self):
         if not self.addressLineOne:
             return self.addressLineTwo or ''
@@ -134,7 +143,7 @@ class Beneficiary(models.Model):
         return {
             '131': 'en',
             '132': 'hin',
-            '133': 'bhoj',
+            '133': 'bho',
             '152': 'mar',
             '153': 'guj',
             None: '',
@@ -145,6 +154,7 @@ class Beneficiary(models.Model):
         return ' '.join([self.firstName, self.lastName])
 
     @property
+    @memoized
     def referred_provider(self):
         return get_agency_by_motech_user_name(self.referredQP)
 
@@ -474,6 +484,34 @@ class Adherence(models.Model):
     unknwDoseReasonId = models.CharField(max_length=8, null=True)
 
     @property
+    def adherence_report_source(self):
+        return {
+            REPORTING_MECHANISM_MISSED_CALL: 'missed_call',
+            REPORTING_MECHANISM_99_DOTS: '',
+            REPORTING_MECHANISM_FIELD_OFFICER: 'field_officer',
+            REPORTING_MECHANISM_TREATMENT_SUPPORTER: 'treatment_supervisor',
+            REPORTING_MECHANISM_TREATMENT_PROVIDER: 'provider',
+            REPORTING_MECHANISM_PATIENT: 'patient',
+            REPORTING_MECHANISM_MERM: '',
+            REPORTING_MECHANISM_AYUSH_OTHER_PROVIDER: 'other',
+            REPORTING_MECHANISM_NONE: 'other',
+        }[self.reportingMechanismId]
+
+    @property
+    def adherence_source(self):
+        return {
+            REPORTING_MECHANISM_MISSED_CALL: 'enikshay',
+            REPORTING_MECHANISM_99_DOTS: '99DOTS',
+            REPORTING_MECHANISM_FIELD_OFFICER: 'enikshay',
+            REPORTING_MECHANISM_TREATMENT_SUPPORTER: 'enikshay',
+            REPORTING_MECHANISM_TREATMENT_PROVIDER: 'enikshay',
+            REPORTING_MECHANISM_PATIENT: 'enikshay',
+            REPORTING_MECHANISM_MERM: 'MERM',
+            REPORTING_MECHANISM_AYUSH_OTHER_PROVIDER: 'enikshay',
+            REPORTING_MECHANISM_NONE: 'enikshay',
+        }[self.reportingMechanismId]
+
+    @property
     def adherence_value(self):
         return {
             DIRECTLY_OBSERVED_DOSE: 'directly_observed_dose',
@@ -546,50 +584,13 @@ class Voucher(models.Model):
     voucherAmountSystem = models.CharField(max_length=255, null=True)
 
 
-class LabTest(models.Model):
-    id = models.BigIntegerField(primary_key=True)
-    cancelledBy = models.CharField(max_length=10, null=True)
-    caseId = models.CharField(max_length=18, null=True)
-    creationDate = models.DateTimeField(null=True)
-    creator = models.CharField(max_length=255, null=True)
-    dateOfTest = models.DateTimeField(null=True)
-    episodeId = models.ForeignKey(Episode, null=True, on_delete=models.CASCADE)
-    labId = models.IntegerField()
-    modificationDate = models.DateTimeField(null=True)
-    modifiedBy = models.CharField(max_length=255, null=True)
-    onBehalfOf = models.CharField(max_length=10, null=True)
-    orderedBy = models.CharField(max_length=10, null=True)
-    owner = models.CharField(max_length=255, null=True)
-    reason = models.CharField(max_length=5, null=True)
-    resultDate = models.DateTimeField(null=True)
-    # `resultFileContent` mediumblob,
-    resultFileFormat = models.CharField(max_length=10, null=True)
-    resultFileName = models.CharField(max_length=255, null=True)
-    sampleACollectionDate = models.DateTimeField(null=True)
-    sampleADeliveryDate = models.DateTimeField(null=True)
-    sampleBCollectionDate = models.DateTimeField(null=True)
-    sampleBDeliveryDate = models.DateTimeField(null=True)
-    sampleCollectionDate = models.DateTimeField(null=True)
-    sampleDeliveryDate = models.DateTimeField(null=True)
-    tbStatusId = models.IntegerField()
-    testId = models.IntegerField()
-    testSiteId = models.IntegerField()
-    testSiteSpecimenId = models.IntegerField()
-    testSpecimenId = models.IntegerField()
-    testStatus = models.CharField(max_length=20, null=True)
-    treatmentCardId = models.IntegerField()
-    treatmentFileId = models.IntegerField()
-    voucherNumber = models.IntegerField()
-    physicalVoucherNumber = models.CharField(max_length=255, null=True)
-
-
 class Agency(models.Model):
     id = models.IntegerField(null=True, unique=True)
     agencyId = models.IntegerField(primary_key=True)
     agencyName = models.CharField(max_length=256, null=True)
     agencyStatus = models.CharField(max_length=256, null=True)
     agencySubTypeId = models.CharField(max_length=256, null=True)
-    agencyTypeId = models.CharField(max_length=256, null=True)
+    agencyTypeId = models.CharField(max_length=256)
     associatedFOId = models.CharField(max_length=256, null=True)
     attachedToAgency = models.CharField(max_length=256, null=True)
     creationDate = models.DateTimeField()
@@ -645,8 +646,15 @@ class Agency(models.Model):
             }[self.agencyTypeId]
 
     @property
-    def is_field_officer(self):
-        return self.agencyTypeId == 'ATFO'
+    def usertype(self):
+        if self.agencyTypeId == 'ATFO':
+            return 'ps-fieldstaff'
+        return {
+            'pac': 'pac',
+            'pcc': 'pcc-chemist',
+            'pcp': 'pcp',
+            'plc': 'plc',
+        }[self.location_type]
 
     @property
     def name(self):

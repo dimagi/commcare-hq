@@ -7,7 +7,7 @@ from django.db import transaction
 
 from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
-from pillowtop.models import DjangoPillowCheckpoint, KafkaCheckpoint, kafka_seq_to_str
+from pillowtop.models import DjangoPillowCheckpoint, KafkaCheckpoint, kafka_seq_to_str, str_to_kafka_seq
 from pillowtop.pillow.interface import ChangeEventHandler
 
 MAX_CHECKPOINT_DELAY = 300
@@ -114,7 +114,8 @@ class PillowCheckpoint(object):
 
 class PillowCheckpointEventHandler(ChangeEventHandler):
 
-    def __init__(self, checkpoint, checkpoint_frequency, max_checkpoint_delay=MAX_CHECKPOINT_DELAY):
+    def __init__(self, checkpoint, checkpoint_frequency,
+                 max_checkpoint_delay=MAX_CHECKPOINT_DELAY, checkpoint_callback=None):
         """
         :param checkpoint: PillowCheckpoint object
         :param checkpoint_frequency: Number of changes between checkpoint updates
@@ -129,6 +130,7 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
         self.checkpoint_frequency = checkpoint_frequency
         self.max_checkpoint_delay = max_checkpoint_delay
         self.last_update = datetime.utcnow()
+        self.checkpoint_callback = checkpoint_callback
 
     def should_update_checkpoint(self, context):
         frequency_hit = context.changes_seen % self.checkpoint_frequency == 0
@@ -141,6 +143,8 @@ class PillowCheckpointEventHandler(ChangeEventHandler):
     def update_checkpoint(self, new_seq):
         self.checkpoint.update_to(new_seq)
         self.last_update = datetime.utcnow()
+        if self.checkpoint_callback:
+            self.checkpoint_callback.checkpoint_updated()
 
     def fire_change_processed(self, change, context):
         if self.should_update_checkpoint(context):
@@ -183,15 +187,22 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
 
         return WrappedCheckpoint(ret, timestamp)
 
-    def get_current_sequence_id(self):
+    def get_current_sequence_as_dict(self):
         return {
             (checkpoint.topic, checkpoint.partition): checkpoint.offset
             for checkpoint in self._get_checkpoints()
         }
 
+    def get_current_sequence_id(self):
+        return kafka_seq_to_str(self.get_current_sequence_as_dict())
+
     def update_to(self, seq):
-        kafka_seq = seq
-        seq = kafka_seq_to_str(seq)
+        if isinstance(seq, basestring):
+            kafka_seq = str_to_kafka_seq(seq)
+        else:
+            kafka_seq = seq
+            seq = kafka_seq_to_str(seq)
+
         pillow_logging.info(
             "(%s) setting checkpoint: %s" % (self.checkpoint_id, seq)
         )
@@ -208,7 +219,10 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
     def touch(self, min_interval):
         return False
 
+    def reset(self):
+        KafkaCheckpoint.objects.filter(checkpoint_id=self.checkpoint_id).delete()
 
-def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info):
+
+def get_checkpoint_for_elasticsearch_pillow(pillow_id, index_info, topics):
     checkpoint_id = u'{}-{}'.format(pillow_id, index_info.index)
-    return PillowCheckpoint(checkpoint_id, 'json')  # all ES pillows use json checkpoints
+    return KafkaPillowCheckpoint(checkpoint_id, topics)

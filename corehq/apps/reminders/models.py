@@ -24,6 +24,7 @@ from corehq.util.timezones.conversions import ServerTime, UserTime
 from dimagi.utils.couch import LockableMixIn, CriticalSection
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.modules import to_function
 from random import randint
 from django.conf import settings
 from dimagi.utils.couch.database import iter_docs
@@ -96,12 +97,11 @@ RECIPIENT_SUBCASE = "SUBCASE"
 RECIPIENT_SURVEY_SAMPLE = "SURVEY_SAMPLE"
 RECIPIENT_USER_GROUP = "USER_GROUP"
 RECIPIENT_LOCATION = "LOCATION"
-RECIPIENT_CASE_OWNER_LOCATION_PARENT = "CASE_OWNER_LOCATION_PARENT"
 RECIPIENT_CHOICES = [
     RECIPIENT_USER, RECIPIENT_OWNER, RECIPIENT_CASE, RECIPIENT_SURVEY_SAMPLE,
     RECIPIENT_PARENT_CASE, RECIPIENT_SUBCASE, RECIPIENT_USER_GROUP,
-    RECIPIENT_LOCATION, RECIPIENT_CASE_OWNER_LOCATION_PARENT,
-]
+    RECIPIENT_LOCATION
+] + settings.AVAILABLE_CUSTOM_REMINDER_RECIPIENTS.keys()
 
 KEYWORD_RECIPIENT_CHOICES = [RECIPIENT_SENDER, RECIPIENT_OWNER, RECIPIENT_USER_GROUP]
 KEYWORD_ACTION_CHOICES = [METHOD_SMS, METHOD_SMS_SURVEY, METHOD_STRUCTURED_SMS]
@@ -1792,7 +1792,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
 
     @property
     def user(self):
-        if self.handler.recipient == RECIPIENT_USER:
+        if self.handler.recipient == RECIPIENT_USER and self.user_id:
             return CouchUser.get_by_user_id(self.user_id)
         else:
             return None
@@ -1834,35 +1834,9 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
             return Group.get(handler.user_group_id)
         elif handler.recipient == RECIPIENT_LOCATION:
             return handler.locations
-        elif handler.recipient == RECIPIENT_CASE_OWNER_LOCATION_PARENT:
-            """
-            This is pretty specific right now which is why it's behind a one-off
-            feature flag. When I move reminders to postgres I'm planning on
-            expanding the model to make this kind of recipient choice configurable.
-            """
-
-            # Get the case
-            case = self.case
-            if not case:
-                return None
-
-            # Get the case owner, which we always expect to be a mobile worker in
-            # this one-off feature
-            owner = self.case_owner
-            if not isinstance(owner, CommCareUser):
-                return None
-
-            # Get the case owner's location
-            owner_location = owner.sql_location
-            if not owner_location:
-                return None
-
-            # Get that location's parent location
-            parent_location = owner_location.parent
-            if not parent_location:
-                return None
-
-            return [parent_location]
+        elif handler.recipient in settings.AVAILABLE_CUSTOM_REMINDER_RECIPIENTS:
+            custom_function = to_function(settings.AVAILABLE_CUSTOM_REMINDER_RECIPIENTS[handler.recipient][0])
+            return custom_function(handler, self)
         else:
             return None
 

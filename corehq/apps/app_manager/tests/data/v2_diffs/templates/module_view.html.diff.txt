@@ -15,7 +15,7 @@
  {% endblock %}
  {% block js-inline %}{{ block.super }}
      {% include 'hqmedia/partials/multimedia_js.html' %}
-@@ -36,89 +36,91 @@
+@@ -36,90 +36,92 @@
      <script src="{% static 'app_manager/js/shadow-module-settings.js' %}"></script>
  
      {% include 'style/partials/key_value_mapping.html' %}
@@ -29,6 +29,7 @@
  
  {% block form-view %}
 -    {% initial_page_data 'module_brief' module_brief %}
+-    {% initial_page_data 'module_filter' module.module_filter %}
 -    {% initial_page_data 'details' details %}
 -    {% initial_page_data 'js_options' js_options %}
 -    {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
@@ -54,6 +55,7 @@
 -    {% if module.module_type != 'shadow' %}
 -    <li><a href="#case-settings" data-toggle="tab">{% trans "Case Management" %}</a></li>
 +  {% initial_page_data 'module_brief' module_brief %}
++  {% initial_page_data 'module_filter' module.module_filter %}
 +  {% initial_page_data 'details' details %}
 +  {% initial_page_data 'js_options' js_options %}
 +  {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
@@ -184,7 +186,7 @@
  <script type="text/html" id="module-forms-template">
      <div class="checkbox">
          <label>
-@@ -132,7 +134,7 @@
+@@ -133,7 +135,7 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
@@ -193,7 +195,7 @@
  {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
      {% with print_uploader as uploader %}
          {% include 'hqmedia/partials/multimedia_uploader.html' %}
-@@ -142,5 +144,5 @@
+@@ -143,5 +145,5 @@
  
  {% block breadcrumbs %}
      {{ block.super }}

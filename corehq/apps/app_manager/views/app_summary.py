@@ -280,6 +280,7 @@ FORM_SUMMARY_EXPORT_HEADER_NAMES = [
     "options",
     "calculate",
     "relevant",
+    "constraint",
     "required",
     "comment",
 ]
@@ -342,6 +343,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                     ),
                     calculate=question_response.calculate,
                     relevant=question_response.relevant,
+                    constraint=question_response.constraint,
                     required="true" if question_response.required else "false",
                     comment=question_response.comment,
                 )

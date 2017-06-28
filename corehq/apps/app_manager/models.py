@@ -1026,7 +1026,7 @@ class FormBase(DocumentSchema):
         }
 
         xml_valid = False
-        if self.source == '':
+        if self.source == '' and self.form_type != 'shadow_form':
             errors.append(dict(type="blank form", **meta))
         else:
             try:
@@ -1050,7 +1050,7 @@ class FormBase(DocumentSchema):
             errors.append(error)
 
         if not errors:
-            if len(questions) == 0:
+            if len(questions) == 0 and self.form_type != 'shadow_form':
                 errors.append(dict(type="blank form", **meta))
             else:
                 try:
@@ -2100,6 +2100,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     custom_xml = StringProperty()
 
     persist_tile_on_forms = BooleanProperty()
+    # use case tile context persisted over forms from another module
+    persistent_case_tile_from_module = StringProperty()
     # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
 
@@ -5999,7 +6001,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     xmlns,
                 ))
             return []
-        non_shadow_forms = [form for form in forms if form.form_type != ShadowForm.form_type]
+        non_shadow_forms = [form for form in forms if form.form_type != 'shadow_form']
         assert len(non_shadow_forms) <= 1
         return forms
 

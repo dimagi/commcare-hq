@@ -9,6 +9,7 @@ import re
 import uuid
 from crispy_forms import layout as crispy
 from django import forms
+from django.core.validators import RegexValidator
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from dimagi.utils.decorators.memoized import memoized
@@ -17,8 +18,8 @@ from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.locations.forms import LocationFormSet, LocationForm
 from corehq.apps.users.forms import NewMobileWorkerForm, clean_mobile_worker_username
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.signals import clean_commcare_user, commcare_user_post_save
-from .const import AGENCY_USER_FIELDS, AGENCY_LOCATION_FIELDS
+from corehq.apps.users.signals import commcare_user_post_save
+from .const import AGENCY_USER_FIELDS, AGENCY_LOCATION_FIELDS, DEFAULT_MOBILE_WORKER_ROLE
 from .models import IssuerId
 
 TYPES_WITH_REQUIRED_NIKSHAY_CODES = ['sto', 'dto', 'tu', 'dmc', 'phi']
@@ -159,8 +160,23 @@ def get_site_code(name, nikshay_code, type_code, parent):
 def save_user_callback(sender, couch_user, **kwargs):
     commcare_user = couch_user  # django signals enforce param names
     if toggles.ENIKSHAY.enabled(commcare_user.domain):
-        set_issuer_id(commcare_user.domain, commcare_user)
-        add_drtb_hiv_to_dto(commcare_user.domain, commcare_user)
+        changed = False
+        if kwargs.get('is_new_user', False):
+            changed = set_default_role(commcare_user.domain, commcare_user) or changed
+        changed = set_issuer_id(commcare_user.domain, commcare_user) or changed
+        changed = add_drtb_hiv_to_dto(commcare_user.domain, commcare_user) or changed
+        if changed:
+            commcare_user.save()
+
+
+def set_default_role(domain, commcare_user):
+    from corehq.apps.users.models import UserRole
+    if commcare_user.get_role(domain):
+        return
+    roles = UserRole.by_domain_and_name(domain, DEFAULT_MOBILE_WORKER_ROLE)
+    if roles:
+        commcare_user.set_role(domain, roles[0].get_qualified_id())
+        commcare_user.save()
 
 
 def compress_nikshay_id(serial_id, body_digit_count):
@@ -244,10 +260,7 @@ def set_issuer_id(domain, user):
         user.user_data['id_device_body'] = compress_nikshay_id(device_number, 0)
         changed = True
 
-    if changed:
-        # note that this is saving the user a second time 'cause it needs a
-        # user id first, but if refactoring, be wary of a loop!
-        user.save()
+    return changed
 
 
 def add_drtb_hiv_to_dto(domain, user):
@@ -256,11 +269,11 @@ def add_drtb_hiv_to_dto(domain, user):
         # also assign user to the parent DTO
         loc_ids = user.get_location_ids(domain)
         if location.parent.location_id not in loc_ids:
-            user.add_to_assigned_locations(location.parent)
+            user.add_to_assigned_locations(location.parent, commit=False)
+            return True
 
 
 def connect_signals():
-    clean_commcare_user.connect(clean_user_callback, dispatch_uid="clean_user_callback")
     commcare_user_post_save.connect(save_user_callback, dispatch_uid="save_user_callback")
 
 
@@ -317,6 +330,41 @@ class ENikshayLocationUserDataEditor(CustomDataEditor):
             if field in fields_to_loc_types:
                 fs[i] = _make_field_visible_to(field, fields_to_loc_types[field])
         return form
+
+    def _make_field(self, field):
+        if field.slug == 'language_code':
+            return forms.ChoiceField(
+                label=field.label,
+                required=True,
+                choices=[
+                    ('', _('Select one')),
+                    ("en", "English"),
+                    ("hin", "Hindi"),
+                    ("mar", "Marathi"),
+                    ("bho", "Bhojpuri"),
+                    ('guj', "Gujarati"),
+                ],
+            )
+        if field.slug == 'contact_phone_number':
+            regexp = "^91[0-9]{10}$"
+            help_text = "Please enter only digits. Enter 91 followed by the 10-digit national number."
+            return forms.CharField(
+                widget=forms.TextInput(attrs={"pattern": regexp, "title": help_text}),
+                label=field.label,
+                required=True,
+                validators=[RegexValidator(regexp, help_text)],
+            )
+        if field.slug == 'user_level':
+            return forms.ChoiceField(
+                label=field.label,
+                required=field.is_required,
+                choices=[
+                    ("real", "Real"),
+                    ("dev", "Developer"),
+                    ("test", "Test"),
+                ],
+            )
+        return super(ENikshayLocationUserDataEditor, self)._make_field(field)
 
 
 class ENikshayUserLocationDataEditor(CustomDataEditor):

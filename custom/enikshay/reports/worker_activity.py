@@ -8,12 +8,13 @@ from corehq.apps.reports.standard.monitoring import WorkerActivityReport
 from corehq.apps.reports.util import get_simplified_users
 from custom.enikshay.reports.filters import EnikshayLocationFilter
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 
 from dimagi.utils.decorators.memoized import memoized
 
 
 class EnikshayWorkerActivityReport(WorkerActivityReport, CustomProjectReport):
+    name = ugettext_lazy('Worker Form Activity')
     slug = 'enikshay_worker_activity_report'
     num_avg_intervals = 4
     ajax_pagination = True

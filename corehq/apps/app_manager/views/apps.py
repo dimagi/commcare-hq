@@ -20,9 +20,9 @@ from django.contrib import messages
 
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
 from corehq.apps.app_manager.exceptions import ConflictingCaseTypeError, \
-    IncompatibleFormTypeException, RearrangeError
+    IncompatibleFormTypeException, RearrangeError, AppEditingError
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
-    validate_langs, CASE_TYPE_CONFLICT_MSG
+    validate_langs, CASE_TYPE_CONFLICT_MSG, overwrite_app
 from corehq import toggles, privileges
 from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
@@ -802,61 +802,6 @@ def rearrange(request, domain, app_id, key):
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
 
 
-@require_can_edit_apps
-def formdefs(request, domain, app_id):
-    # TODO: Looks like this function is never used
-    langs = [json.loads(request.GET.get('lang', '"en"'))]
-    format = request.GET.get('format', 'json')
-    app = get_app(domain, app_id)
-
-    def get_questions(form):
-        xform = XForm(form.source)
-        prefix = '/%s/' % xform.data_node.tag_name
-
-        def remove_prefix(string):
-            if string.startswith(prefix):
-                return string[len(prefix):]
-            else:
-                raise Exception()
-
-        def transform_question(q):
-            return {
-                'id': remove_prefix(q['value']),
-                'type': q['tag'],
-                'text': q['label'] if q['tag'] != 'hidden' else ''
-            }
-        return [transform_question(q) for q in xform.get_questions(langs)]
-    formdefs = [{
-        'name': "%s, %s" % (
-            f['form'].get_module().name['en'],
-            f['form'].name['en']
-        ) if f['type'] == 'module_form' else 'User Registration',
-        'columns': ['id', 'type', 'text'],
-        'rows': get_questions(f['form'])
-    } for f in app.get_forms(bare=False)]
-
-    if format == 'xlsx':
-        f = StringIO()
-        writer = Excel2007ExportWriter()
-        writer.open([(sheet['name'], [FormattedRow(sheet['columns'])]) for sheet in formdefs], f)
-        writer.write([(
-            sheet['name'],
-            [
-                FormattedRow([
-                    cell for (_, cell) in
-                    sorted(row.items(), key=lambda item: sheet['columns'].index(item[0]))
-                ])
-                for row in sheet['rows']
-            ]
-        ) for sheet in formdefs])
-        writer.close()
-        response = HttpResponse(f.getvalue(), content_type=Format.from_format('xlsx').mimetype)
-        set_file_download(response, 'formdefs.xlsx')
-        return response
-    else:
-        return json_response(formdefs)
-
-
 @require_GET
 @require_can_edit_apps
 def drop_user_case(request, domain, app_id):
@@ -888,23 +833,10 @@ def pull_master_app(request, domain, app_id):
     app = get_current_app_doc(domain, app_id)
     master_app = get_app(None, app['master'])
     latest_master_build = get_app(None, app['master'], latest=True)
-    params = {}
     if app['domain'] in master_app.linked_whitelist:
-        excluded_fields = set(Application._meta_fields).union(
-            ['date_created', 'build_profiles', 'copy_history', 'copy_of', 'name', 'comment', 'doc_type']
-        )
-        master_json = latest_master_build.to_json()
-        for key, value in master_json.iteritems():
-            if key not in excluded_fields:
-                app[key] = value
-        app['version'] = master_json['version']
-        wrapped_app = wrap_app(app)
-        mobile_ucrs = False
-        for module in wrapped_app.modules:
-            if isinstance(module, ReportModule):
-                mobile_ucrs = True
-                break
-        if mobile_ucrs:
+        try:
+            overwrite_app(app, latest_master_build)
+        except AppEditingError:
             messages.error(request, _('This linked application uses mobile UCRs '
                                       'which are currently not supported. For this application '
                                       'to function correctly, you will need to remove those modules '
@@ -912,14 +844,12 @@ def pull_master_app(request, domain, app_id):
         else:
             messages.success(request,
                              _('Your linked application was successfully updated to the latest version.'))
-        wrapped_app.copy_attachments(latest_master_build)
-        wrapped_app.save(increment_version=False)
     else:
         messages.error(request, _(
             'This project is not authorized to update from the master application. '
             'Please contact the maintainer of the master app if you believe this is a mistake. ')
         )
-    return HttpResponseRedirect(reverse_util('view_app', params=params, args=[domain, app_id]))
+    return HttpResponseRedirect(reverse_util('view_app', params={}, args=[domain, app_id]))
 
 
 @no_conflict_require_POST

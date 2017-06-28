@@ -3,9 +3,31 @@ import re
 
 from corehq.apps.app_manager.util import get_app_manager_template
 from dimagi.utils.decorators.memoized import memoized
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_noop, ugettext
+from corehq.apps.app_manager import static_strings
 import os
 import yaml
+
+
+PROFILE_SETTINGS_TO_TRANSLATE = [
+    'name',
+    'description',
+    'value_names',
+    'disabled_txt',
+    'values_txt',
+]
+
+LAYOUT_SETTINGS_TO_TRANSLATE = [
+    'title'
+]
+
+
+def _translate_setting(setting, prop):
+    value = setting[prop]
+    if not isinstance(value, basestring):
+        return [ugettext(v) for v in value]
+    else:
+        return ugettext(value)
 
 
 def _load_custom_commcare_settings(user=None):
@@ -36,8 +58,10 @@ def _load_custom_commcare_settings(user=None):
     for setting in settings:
         if not setting.get('widget'):
             setting['widget'] = 'select'
-        # i18n; not statically analyzable
-        setting['name'] = ugettext_noop(setting['name'])
+
+        for prop in PROFILE_SETTINGS_TO_TRANSLATE:
+            if prop in setting:
+                setting[prop] = _translate_setting(setting, prop)
     return settings
 
 
@@ -68,6 +92,9 @@ def _load_commcare_settings_layout(doc_type, user):
         section['settings'] = filter(None, section['settings'])
         for setting in section['settings']:
             setting['value'] = None
+            for prop in LAYOUT_SETTINGS_TO_TRANSLATE:
+                if prop in setting:
+                    setting[prop] = _translate_setting(setting, prop)
 
     if settings:
         raise Exception(

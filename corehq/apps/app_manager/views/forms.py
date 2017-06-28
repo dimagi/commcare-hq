@@ -601,10 +601,12 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'is_module_filter_enabled': app.enable_module_filtering,
         'is_case_list_form': form.is_case_list_form,
         'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
-        'case_xpath_pattern_matches': CASE_XPATH_PATTERN_MATCHES,
-        'case_xpath_substring_matches': CASE_XPATH_SUBSTRING_MATCHES,
-        'user_case_xpath_pattern_matches': USER_CASE_XPATH_PATTERN_MATCHES,
-        'user_case_xpath_substring_matches': USER_CASE_XPATH_SUBSTRING_MATCHES,
+        'form_filter_patterns': {
+            'case': CASE_XPATH_PATTERN_MATCHES,
+            'case_substring': CASE_XPATH_SUBSTRING_MATCHES,
+            'usercase': USER_CASE_XPATH_PATTERN_MATCHES,
+            'usercase_substring': USER_CASE_XPATH_SUBSTRING_MATCHES,
+        },
         'custom_instances': [
             {'instanceId': instance.instance_id, 'instancePath': instance.instance_path}
             for instance in form.custom_instances
@@ -679,7 +681,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
                 'actions': form.actions,
                 'isShadowForm': False,
             })
-        if module.has_schedule:
+        if getattr(module, 'has_schedule', False):
             schedule_options = get_schedule_context(form)
             schedule_options.update({
                 'phase': schedule_options['schedule_phase'],

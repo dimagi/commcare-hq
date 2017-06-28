@@ -23,6 +23,7 @@ from custom.enikshay.case_utils import (
     get_episode_case_from_adherence,
     get_open_referral_case_from_person,
     get_fulfilled_prescription_vouchers_from_episode,
+    get_private_diagnostic_test_cases_from_episode,
 )
 
 
@@ -149,6 +150,35 @@ class ENikshayCaseUtilsTests(ENikshayCaseStructureMixin, TestCase):
         self.assertItemsEqual(
             [voucher11, voucher12, voucher21],
             get_fulfilled_prescription_vouchers_from_episode(self.domain, self.episode_id)
+        )
+
+    def test_get_private_diagnostic_test_cases_from_episode(self):
+        self.create_case_structure()
+        test1 = self.create_test_case(self.occurrence_id, {
+            'enrolled_in_private': 'true',
+            'date_reported': '2017-08-14',
+            'purpose_of_test': 'diagnostic',
+            'investigation_id': 'ABC-ABC-ABC',
+            'result_grade': 'TB Detected: 3+ scanty'
+        })
+        test2 = self.create_test_case(self.occurrence_id, {
+            'enrolled_in_private': 'true',
+            'date_reported': '2017-08-15',
+            'purpose_of_test': 'diagnostic',
+            'investigation_id': 'DEF-DEF-DEF',
+            'result_grade': 'TB Detected: 3+ scanty',
+        })
+        self.create_test_case(self.occurrence_id, {
+            'enrolled_in_private': 'false',
+            'date_reported': '2017-08-15',
+            'purpose_of_test': 'diagnostic',
+            'investigation_id': 'DEF-DEF-DEF',
+            'result_grade': 'TB Detected: 3+ scanty',
+        })
+
+        self.assertItemsEqual(
+            [test1, test2],
+            get_private_diagnostic_test_cases_from_episode(self.domain, self.episode_id)
         )
 
 

@@ -1,0 +1,77 @@
+{% load i18n %}
+{% load static %}
+
+<div class="navigation-directive">
+    <div style="padding: 5px; margin: 0 auto; text-align: center;">
+        <img src="{% static "img/BBBP_Logo.png" %}" alt="Logo" style="width: 40%;">
+    </div>
+    <ul class="nav nav-list">
+        <li ng-class="{'active': $location.path().indexOf('/program_summary') !== -1}">
+            <a href="#/"><i class="fa fa-home"
+                            aria-hidden="true"> {% trans "Program Summary" %}</i></a>
+        </li>
+        <li class="nav-header">
+            <div class="pointer" ng-click="systemUsageCollapsed = !systemUsageCollapsed">
+                <i class="fa fa-bar-chart" aria-hidden="true"> {% trans "System Usage" %}</i>
+                <span class="pull-right"><i class="fa fa-angle-down" aria-hidden="true"></i></span>
+            </div>
+            <ul class="nav nav-list collapse" uib-collapse="systemUsageCollapsed">
+                <li ng-class="{'active': $location.path().indexOf( '/awc_opened') !== -1}"><a href="#awc_opened" class="fa">{% trans "AWCs Opened Yesterday" %}</a></li>
+                <li ng-class="{'active': $location.path() === '/active_awws'}"><a href="#active_awws" class="fa">{% trans "% Active AWWS" %}</a></li>
+                <li ng-class="{'active': $location.path() === '/submitted_yesterday'}"><a href="#submitted_yesterday" class="fa">{% trans "Any Submitted Yesterday" %}</a></li>
+                <li ng-class="{'active': $location.path() === '/submitted'}"><a href="#submitted" class="fa">{% trans "THR Submitted Yesterday" %}</a></li>
+                <li ng-class="{'active': $location.path() === '/system_usage_tabular'}"><a href="#system_usage_tabular" class="fa">{% trans "Tabular Report" %}</a></li>
+            </ul>
+        </li>
+        <li class="nav-header" >
+            <div class="pointer" ng-click="healthCollapsed = !healthCollapsed">
+                <i class="fa fa-child" aria-hidden="true"> {% trans "Matenal & Child Nutrition" %}</i>
+                <span class="pull-right"><i class="fa fa-angle-down" aria-hidden="true"></i></span>
+            </div>
+            <ul class="nav nav-list collapse" uib-collapse="healthCollapsed">
+                <li ng-class="{'active': $location.path().indexOf('/underweight_children') !== -1}">
+                    <a href="#underweight_children" class="fa">{% trans "Prevalence of Undernutrition (weight-for-age)" %}
+                    </a>
+                </li>
+                <li ng-class="{'active': $location.path() === '/breastfeeding'}"><a href="#breastfeeding" class="fa">{% trans "% Breastfeeding" %}</a></li>
+                <li ng-class="{'active': $location.path() === '/exclusive_bf'}"><a href="#exclusive_bf" class="fa">{% trans "% Exclusive BF" %}</a></li>
+                <li ng-class="{'active': $location.path() === '/comp_feeding'}"><a href="#comp_feeding" class="fa">{% trans "% Comp. Feeding" %}</a></li>
+                <li ng-class="{'active': $location.path() === '/health_tabular_report'}"><a href="#health_tabular_report" class="fa">{% trans "Tabular Report" %}</a></li>
+            </ul>
+        </li>
+        <li class="nav-header" data-toggle="collapse" data-target="">
+            <div class="pointer">
+                <i class="fa fa-female" aria-hidden="true"> {% trans "ICDS-CAS Reach" %}</i>
+                <span class="pull-right"><i class="fa fa-angle-down" aria-hidden="true"></i></span>
+            </div>
+        </li>
+        <li class="nav-header" data-toggle="collapse" data-target="">
+            <div class="pointer">
+                <i class="fa fa-users" aria-hidden="true"> {% trans "Demographics" %}</i>
+                <span class="pull-right"><i class="fa fa-angle-down" aria-hidden="true"></i></span>
+            </div>
+        </li>
+        <li class="nav-header" data-toggle="collapse" data-target="">
+            <div class="pointer">
+                <i class="fa fa-building" aria-hidden="true"> {% trans "AWC Infrastructure" %}</i>
+                <span class="pull-right"><i class="fa fa-angle-down" aria-hidden="true"></i></span>
+            </div>
+        </li>
+        <hr>
+        <li ng-class="{'active': $location.path().indexOf('/awc_reports') !== -1}">
+            <a href="#awc_reports" class="fa"> <i class="fa fa-file" aria-hidden="true"> {% trans "AWC Report" %}</i></a>
+        </li>
+        <li  ng-class="{'active': $location.path().indexOf('/progress_report') !== -1}">
+            <a href="#progress_report" class="fa"> <i class="fa fa-file-text-o" aria-hidden="true"> {% trans "Progress Report" %}</i></a>
+        </li>
+        <li ng-class="">
+            <a href="#download" class="fa"> <i class="fa fa-download" aria-hidden="true"> {% trans "Excel Download" %}</i></a>
+        </li>
+        <li class="fa">
+            <a href="{% url 'saved_reports' domain %}"><img
+                    src="{% static 'hqstyle/images/commcare-flower.png' %}" alt=""
+                    style=" vertical-align: middle;width:16px;height:16px;"/> <span
+                    style="vertical-align: middle;">{% trans "CommCare HQ Report" %}</span></a>
+        </li>
+    </ul>
+</div>

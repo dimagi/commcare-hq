@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,30 +1,35 @@
+@@ -1,23 +1,26 @@
  {% load hq_shared_tags %}
  {% load i18n %}
 -<div class="form-group" id="module-filter">
@@ -21,11 +21,12 @@
 -            There is something wrong with the logic in the Module Filter.
 -            Check to make sure your parentheses match.
 -            Read more about Module Filters <a href="https://confluence.dimagi.com/display/commcarepublic/Module+Filtering">here</a>.
+-        </script>
 +
 +{% if app.advanced_app_builder or value or ko_value %}
 +    <div class="form-group" id="module-filter">
 +        <label class="col-sm-2 control-label">
-+            {% trans "Filter" %}
++            {% trans "Display Condition" %}
 +        </label>
 +        <div class="col-sm-4 commcare-feature" data-since-version="2.20">
 +            <textarea
@@ -43,22 +44,6 @@
 +                Read more about filters <a href="https://confluence.dimagi.com/display/commcarepublic/Module+Filtering">here</a>.
 +            </script>
 +        </div>
-+    </div>
-+
-+    {% if not ko_value %}
-+        <script>
-+            $(function () {
-+                $('#module-filter').koApplyBindings({xpath: {{ value|JSON }} || ''});
-+            });
-         </script>
--    </div>
+     </div>
 -</div>
--{% if not ko_value %}
--<script>
--$(function () {
--    $('#module-filter').koApplyBindings({xpath: {{ value|JSON }} || ''});
--});
--</script>
-+    {% endif %}
-+
- {% endif %}
++{% endif %}

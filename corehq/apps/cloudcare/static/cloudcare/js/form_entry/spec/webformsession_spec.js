@@ -101,19 +101,6 @@ describe('WebForm', function() {
             $.unsubscribe();
         });
 
-        it('Should determine whether to update debugger', function() {
-            var sess = new WebFormSession(params);
-
-            sess.debuggerEnabled = false;
-            assert.isFalse(sess.shouldUpdateDebugger(Formplayer.Const.ANSWER));
-
-            sess.debuggerEnabled = true;
-            assert.isTrue(sess.shouldUpdateDebugger(Formplayer.Const.ANSWER));
-
-            sess.debuggerEnabled = true;
-            assert.isFalse(sess.shouldUpdateDebugger('bogus-action'));
-        });
-
         it('Should queue requests', function() {
             var sess = new WebFormSession(params);
             sess.serverRequest({}, sinon.spy(), false);

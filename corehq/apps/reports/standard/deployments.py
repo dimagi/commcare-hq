@@ -10,7 +10,8 @@ from casexml.apps.phone.models import SyncLog, SyncLogAssertionError
 from couchdbkit import ResourceNotFound
 from couchexport.export import SCALAR_NEVER_WAS
 
-from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter, LocationRestrictedMobileWorkerFilter
+from corehq.apps.reports.filters.users import LocationRestrictedMobileWorkerFilter, ExpandedMobileWorkerFilter
+from corehq.apps.es import filters
 from dimagi.utils.dates import safe_strftime
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.parsing import string_to_utc_datetime
@@ -27,16 +28,12 @@ from corehq.const import USER_DATE_FORMAT
 from corehq.util.couch import get_document_or_404
 
 from corehq.apps.locations.permissions import location_safe
-from corehq.apps.reports.analytics.esaccessors import (
-    get_last_form_submissions_by_user,
-    get_all_user_ids_submitted,
-)
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn, DTSortType
 from corehq.apps.reports.filters.select import SelectApplicationFilter
-from corehq.apps.reports.generic import GenericTabularReport
+from corehq.apps.reports.generic import GenericTabularReport, GetParamsMixin, PaginatedReportMixin
 from corehq.apps.reports.standard import ProjectReportParametersMixin, ProjectReport
-from corehq.apps.reports.exceptions import BadRequestError
-from corehq.apps.reports.util import format_datatables_data, numcell, is_query_too_big
+from corehq.apps.reports.util import format_datatables_data
+from corehq.util.quickcache import quickcache
 
 
 class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParametersMixin):
@@ -46,11 +43,13 @@ class DeploymentsReport(GenericTabularReport, ProjectReport, ProjectReportParame
 
 
 @location_safe
-class ApplicationStatusReport(DeploymentsReport):
+class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsReport):
     name = ugettext_noop("Application Status")
     slug = "app_status"
     emailable = True
     exportable = True
+    exportable_all = True
+    ajax_pagination = True
     fields = [
         'corehq.apps.reports.filters.users.LocationRestrictedMobileWorkerFilter',
         'corehq.apps.reports.filters.select.SelectApplicationFilter'
@@ -59,113 +58,155 @@ class ApplicationStatusReport(DeploymentsReport):
     @property
     def headers(self):
         headers = DataTablesHeader(
-            DataTablesColumn(_("Username")),
+            DataTablesColumn(_("Username"), prop_name='username.exact'),
             DataTablesColumn(_("Last Submission"),
-                             sort_type=DTSortType.NUMERIC),
+                             prop_name='reporting_metadata.last_submissions.submission_date',
+                             alt_prop_name='reporting_metadata.last_submission_for_user.submission_date'),
             DataTablesColumn(_("Last Sync"),
-                             sort_type=DTSortType.NUMERIC),
+                             prop_name='reporting_metadata.last_syncs.sync_date',
+                             alt_prop_name='reporting_metadata.last_sync_for_user.sync_date'),
             DataTablesColumn(_("Application"),
-                             help_text=_("Displays application of last submitted form")),
+                             help_text=_("Displays application of last submitted form"),
+                             sortable=False),
             DataTablesColumn(_("Application Version"),
                              help_text=_("Displays application version of the user's last sync."),
-                             sort_type=DTSortType.NUMERIC),
+                             prop_name='reporting_metadata.last_builds.build_version',
+                             alt_prop_name='reporting_metadata.last_build_for_user.build_version'),
             DataTablesColumn(_("CommCare Version"),
                              help_text=_("""Displays CommCare version the user last submitted with;
                                          The currently deployed version may be different."""),
-                             sort_type=DTSortType.NUMERIC),
+                             prop_name='reporting_metadata.last_submissions.commcare_version',
+                             alt_prop_name='reporting_metadata.last_submission_for_user.commcare_version'),
         )
         headers.custom_sort = [[1, 'desc']]
         return headers
+
+    @property
+    def default_sort(self):
+        if self.selected_app_id:
+            return {'reporting_metadata.last_submissions.submission_date': 'desc'}
+        else:
+            return {'reporting_metadata.last_submission_for_user.submission_date': 'desc'}
+
+    def get_sorting_block(self):
+        sort_prop_name = 'prop_name' if self.selected_app_id else 'alt_prop_name'
+        res = []
+        #the NUMBER of cols sorting
+        sort_cols = int(self.request.GET.get('iSortingCols', 0))
+        if sort_cols > 0:
+            for x in range(sort_cols):
+                col_key = 'iSortCol_%d' % x
+                sort_dir = self.request.GET['sSortDir_%d' % x]
+                col_id = int(self.request.GET[col_key])
+                col = self.headers.header[col_id]
+                sort_prop = getattr(col, sort_prop_name) or col.prop_name
+                sort_dict = {sort_prop: sort_dir}
+                res.append(sort_dict)
+        if len(res) == 0 and self.default_sort is not None:
+            res.append(self.default_sort)
+        return res
 
     @property
     @memoized
     def selected_app_id(self):
         return self.request_params.get(SelectApplicationFilter.slug, None)
 
-    @property
+    @quickcache(['app_id'], timeout=60 * 60)
+    def get_app_name(self, app_id):
+        try:
+            app = get_app(self.domain, app_id)
+        except ResourceNotFound:
+            pass
+        else:
+            return app.name
+
+    def get_data_for_app(self, options, app_id):
+        try:
+            data = filter(lambda option: option['app_id'] == app_id,
+                          options)[0]
+            return data
+        except IndexError:
+            return {}
+
     @memoized
-    def users(self):
+    def user_query(self, pagination=True):
         mobile_user_and_group_slugs = set(
             self.request.GET.getlist(LocationRestrictedMobileWorkerFilter.slug) +
             self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)  # Cater for old ReportConfigs
         )
-
-        limit_user_ids = []
-        if self.selected_app_id:
-            limit_user_ids = get_all_user_ids_submitted(self.domain, self.selected_app_id)
-
-        users_data = ExpandedMobileWorkerFilter.pull_users_and_groups(
+        user_query = LocationRestrictedMobileWorkerFilter.user_es_query(
             self.domain,
             mobile_user_and_group_slugs,
-            include_inactive=False,
-            limit_user_ids=limit_user_ids,
         )
-        return users_data.combined_users
+        user_query = (user_query
+                      .set_sorting_block(self.get_sorting_block()))
+        if pagination:
+            user_query = (user_query
+                          .size(self.pagination.count)
+                          .start(self.pagination.start))
+        if self.selected_app_id:
+            user_query = user_query.filter(
+                filters.term('reporting_metadata.last_submissions.app_id', self.selected_app_id)
+            )
+        return user_query
 
-    @property
-    def rows(self):
+    def process_rows(self, users, fmt_for_export=False):
         rows = []
-
-        if is_query_too_big(self.domain, self.request.GET.getlist(ExpandedMobileWorkerFilter.slug)):
-            raise BadRequestError(
-                _('Query selects too many users. Please modify your filters to select fewer users')
-            )
-
-        user_ids = map(lambda user: user.user_id, self.users)
-        user_xform_dicts_map = get_last_form_submissions_by_user(self.domain, user_ids, self.selected_app_id)
-
-        for user in self.users:
-            xform_dict = last_seen = last_sync = app_name = None
-            app_version_info_from_form = app_version_info_from_sync = None
-            if user_xform_dicts_map.get(user.user_id):
-                xform_dict = user_xform_dicts_map[user.user_id][0]
-
-            if xform_dict:
-                last_seen = string_to_utc_datetime(xform_dict.get('received_on'))
-
-                if xform_dict.get('app_id'):
-                    try:
-                        app = get_app(self.domain, xform_dict.get('app_id'))
-                    except ResourceNotFound:
-                        pass
-                    else:
-                        app_name = app.name
-                else:
-                    app_name = get_meta_appversion_text(xform_dict['form']['meta'])
-
-                app_version_info_from_form = get_app_version_info(
-                    self.domain,
-                    xform_dict.get('build_id'),
-                    xform_dict.get('version'),
-                    xform_dict['form']['meta'],
-                )
-
-            if app_name is None and self.selected_app_id:
-                continue
-
-            last_sync_log = SyncLog.last_for_user(user.user_id)
-            if last_sync_log:
-                last_sync = last_sync_log.date
-                if last_sync_log.build_id:
-                    build_version = get_version_from_build_id(self.domain, last_sync_log.build_id)
-                    app_version_info_from_sync = AppVersionInfo(
-                        build_version,
-                        app_version_info_from_form.commcare_version if app_version_info_from_form else None,
-                        BuildVersionSource.BUILD_ID
-                    )
-
-            app_version_info_to_use = _choose_latest_version(
-                app_version_info_from_sync, app_version_info_from_form,
-            )
-
-            commcare_version = _get_commcare_version(app_version_info_to_use)
-            build_version = _get_build_version(app_version_info_to_use)
-
+        for user in users:
+            last_build = last_seen = last_sub = last_sync = last_sync_date = app_name = None
+            build_version = _("Unknown")
+            reporting_metadata = user.get('reporting_metadata', {})
+            if self.selected_app_id:
+                last_submissions = reporting_metadata.get('last_submissions')
+                if last_submissions:
+                    last_sub = self.get_data_for_app(last_submissions, self.selected_app_id)
+                last_syncs = reporting_metadata.get('last_syncs')
+                if last_syncs:
+                    last_sync = self.get_data_for_app(last_syncs, self.selected_app_id)
+                    if last_sync is None:
+                        last_sync = self.get_data_for_app(last_syncs, None)
+                last_builds = reporting_metadata.get('last_builds')
+                if last_builds:
+                    last_build = self.get_data_for_app(last_builds, self.selected_app_id)
+            else:
+                last_sub = reporting_metadata.get('last_submission_for_user', {})
+                last_sync = reporting_metadata.get('last_sync_for_user', {})
+                last_build = reporting_metadata.get('last_build_for_user', {})
+            commcare_version = _get_commcare_version(last_sub.get('commcare_version'))
+            if last_sub and last_sub.get('submission_date'):
+                last_seen = string_to_utc_datetime(last_sub['submission_date'])
+            if last_sync and last_sync.get('sync_date'):
+                last_sync_date = string_to_utc_datetime(last_sync['sync_date'])
+            if last_build:
+                build_version = last_build.get('build_version') or build_version
+                if last_build.get('app_id'):
+                    app_name = self.get_app_name(last_build['app_id'])
             rows.append([
-                user.username_in_report, _fmt_date(last_seen), _fmt_date(last_sync),
+                user_display_string(user.get('username', ''),
+                                    user.get('first_name', ''),
+                                    user.get('last_name', '')),
+                _fmt_date(last_seen, fmt_for_export), _fmt_date(last_sync_date, fmt_for_export),
                 app_name or "---", build_version, commcare_version
             ])
         return rows
+
+    @property
+    def total_records(self):
+        if self._total_records:
+            return self._total_records
+        else:
+            return 0
+
+    @property
+    def rows(self):
+        users = self.user_query().run()
+        self._total_records = users.total
+        return self.process_rows(users.hits)
+
+    @property
+    def get_all_rows(self):
+        users = self.user_query(False).scroll()
+        return self.process_rows(users, True)
 
     @property
     def export_table(self):
@@ -185,22 +226,12 @@ class ApplicationStatusReport(DeploymentsReport):
 
 
 def _get_commcare_version(app_version_info):
-    commcare_version = (_("Unknown CommCare Version"), 0)
-    if app_version_info:
-        version_text = (
-            'CommCare {}'.format(app_version_info.commcare_version)
-            if app_version_info.commcare_version
-            else _("Unknown CommCare Version")
-        )
-        commcare_version = (version_text, app_version_info.commcare_version or 0)
-    return numcell(commcare_version[0], commcare_version[1], convert="float")
-
-
-def _get_build_version(app_version_info):
-    build_version = (_("Unknown"), 0)
-    if app_version_info and app_version_info.build_version:
-        build_version = (app_version_info.build_version, app_version_info.build_version)
-    return numcell(build_version[0], value=build_version[1])
+    commcare_version = (
+        'CommCare {}'.format(app_version_info)
+        if app_version_info
+        else _("Unknown CommCare Version")
+    )
+    return commcare_version
 
 
 def _choose_latest_version(*app_versions):
@@ -333,20 +364,28 @@ class SyncHistoryReport(DeploymentsReport):
             return self.DEFAULT_LIMIT
 
 
-def _fmt_date(date):
+def _get_sort_key(date):
+    if not date:
+        return -1
+    else:
+        return int(date.strftime("%s"))
+
+
+def _fmt_date(date, include_sort_key=True):
     def _timedelta_class(delta):
         return _bootstrap_class(delta, timedelta(days=7), timedelta(days=3))
 
     if not date:
-        return format_datatables_data(u'<span class="label label-default">{0}</span>'.format(_("Never")), -1)
+        text = u'<span class="label label-default">{0}</span>'.format(_("Never"))
     else:
-        return format_datatables_data(
-            u'<span class="{cls}">{text}</span>'.format(
+        text = u'<span class="{cls}">{text}</span>'.format(
                 cls=_timedelta_class(datetime.utcnow() - date),
                 text=_(_naturaltime_with_hover(date)),
-            ),
-            int(date.strftime("%s")),
         )
+    if include_sort_key:
+        return format_datatables_data(text, _get_sort_key(date))
+    else:
+        return text
 
 
 def _naturaltime_with_hover(date):

@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,204 +1,95 @@
+@@ -1,204 +1,94 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -77,7 +77,7 @@
 +      </a>
 +  </div>
 +
-+  <div class="appmanager-edit-title">
++  <div class="appmanager-edit-title appmanager-edit-app-title">
 +    <inline-edit params="
 +        value: '{{ app.name|escapejs }}',
 +        containerClass: 'h3 app-title',
@@ -96,7 +96,6 @@
 +        url: '{% url "edit_app_attr" domain app.id 'comment' %}',
 +        placeholder: '{% trans "Enter app description here"|escapejs %}',
 +        saveValueName: 'comment',
-+        containerClass: 'app-comment',
 +        cols: 50,
 +    "></inline-edit>
 +  </div>

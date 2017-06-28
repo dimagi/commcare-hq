@@ -20,13 +20,17 @@ from pillowtop.processors.form import FormSubmissionMetadataTrackerProcessor
 from pillowtop.reindexer.reindexer import Reindexer
 
 
-def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadataTrackerProcessor', **kwargs):
+def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadataTrackerProcessor',
+                                                num_processes=1, process_num=0, **kwargs):
     """
     This gets a pillow which iterates through all forms and marks the corresponding app
     as having submissions. This could be expanded to be more generic and include
     other processing that needs to happen on each form
     """
-    change_feed = KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], group_id='form-processsor')
+    change_feed = KafkaChangeFeed(
+        topics=[topics.FORM, topics.FORM_SQL], group_id='form-processsor',
+        num_processes=num_processes, process_num=process_num
+    )
     checkpoint = PillowCheckpoint('form-submission-metadata-tracker', change_feed.sequence_format)
     form_processor = FormSubmissionMetadataTrackerProcessor()
     return ConstructedPillow(

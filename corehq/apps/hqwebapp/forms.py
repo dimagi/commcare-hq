@@ -25,7 +25,7 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
     password = forms.CharField(label=_("Password"), widget=forms.PasswordInput(attrs={'class': 'form-control'}))
 
     def clean_username(self):
-        username = self.cleaned_data['username'].lower()
+        username = self.cleaned_data.get('username', '').lower()
         return username
 
     def clean_password(self):

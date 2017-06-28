@@ -1408,7 +1408,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         self.assertEqual(DomainCaseRuleRun.objects.count(), count)
 
     def assertLastRuleRun(self, cases_checked, num_updates=0, num_closes=0, num_related_updates=0,
-            num_related_closes=0):
+            num_related_closes=0, num_creates=0):
         last_run = DomainCaseRuleRun.objects.filter(domain=self.domain).order_by('-finished_on')[0]
         self.assertEqual(last_run.status, DomainCaseRuleRun.STATUS_FINISHED)
         self.assertEqual(last_run.cases_checked, cases_checked)
@@ -1416,6 +1416,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         self.assertEqual(last_run.num_closes, num_closes)
         self.assertEqual(last_run.num_related_updates, num_related_updates)
         self.assertEqual(last_run.num_related_closes, num_related_closes)
+        self.assertEqual(last_run.num_creates, num_creates)
 
     @run_with_all_backends
     def test_scheduled_task_run(self):

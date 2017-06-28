@@ -58,12 +58,17 @@
       </header>
       <template>
         <text>
-          &lt;b&gt;{header[prefix]} &lt;/b&gt; <xpath function="{header[xpath_function]}"/>
+          &lt;b&gt;{header[prefix]} &lt;/b&gt;
+          <xpath function="{header[xpath_function]}">
+            {header[variables]}
+          </xpath>
         </text>
       </template>
       <sort type="string" order="-2" direction="ascending">
         <text>
-          <xpath function="{header[xpath_function]}"/>
+          <xpath function="{header[xpath_function]}">
+            {header[variables]}
+          </xpath>
         </text>
       </sort>
     </field>
@@ -84,11 +89,18 @@
         </text>
       </header>
       <template>
-        <text>&lt;b&gt;{top_left[prefix]} &lt;/b&gt; <xpath function="{top_left[xpath_function]}"/></text>
+        <text>
+          &lt;b&gt;{top_left[prefix]} &lt;/b&gt;
+          <xpath function="{top_left[xpath_function]}">
+            {top_left[variables]}
+          </xpath>
+        </text>
       </template>
       <sort type="string" order="-2" direction="ascending">
         <text>
-          <xpath function="{top_left[xpath_function]}"/>
+          <xpath function="{top_left[xpath_function]}">
+            {top_left[variables]}
+          </xpath>
         </text>
       </sort>
     </field>
@@ -109,14 +121,12 @@
         </text>
       </header>
       <template>
-        <text>&lt;b&gt;{sex[prefix]} &lt;/b&gt;<xpath function="{sex[xpath_function]}">
-            <variable name="kfemale">
-              <locale id="{sex[enum_keys][female]}"/>
-            </variable>
-            <variable name="kmale">
-              <locale id="{sex[enum_keys][male]}"/>
-            </variable>
-          </xpath></text>
+        <text>
+          &lt;b&gt;{sex[prefix]} &lt;/b&gt;
+          <xpath function="{sex[xpath_function]}">
+            {sex[variables]}
+          </xpath>
+        </text>
       </template>
     </field>
     <field>
@@ -136,11 +146,18 @@
         </text>
       </header>
       <template>
-        <text>&lt;b&gt;{bottom_left[prefix]} &lt;/b&gt; <xpath function="{bottom_left[xpath_function]}"/></text>
+        <text>
+          &lt;b&gt;{bottom_left[prefix]} &lt;/b&gt;
+          <xpath function="{bottom_left[xpath_function]}">
+            {bottom_left[variables]}
+          </xpath>
+        </text>
       </template>
       <sort type="string" order="-2" direction="ascending">
         <text>
-          <xpath function="{bottom_left[xpath_function]}"/>
+          <xpath function="{bottom_left[xpath_function]}">
+            {bottom_left[variables]}
+          </xpath>
         </text>
       </sort>
     </field>

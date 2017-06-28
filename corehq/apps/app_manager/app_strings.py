@@ -63,7 +63,7 @@ def _create_custom_app_strings(app, lang, for_default=False):
             for column in detail.get_columns():
                 yield id_strings.detail_column_header_locale(module, detail_type, column), trans(column.header)
 
-                if column.format in ('enum', 'enum-image'):
+                if column.format in ('enum', 'enum-image', 'conditional-enum'):
                     for item in column.enum:
                         yield id_strings.detail_column_enum_variable(
                             module, detail_type, column, item.key_as_variable

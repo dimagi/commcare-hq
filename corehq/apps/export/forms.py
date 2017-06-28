@@ -102,8 +102,13 @@ class DateSpanField(forms.CharField):
     def clean(self, value):
         date_range = super(DateSpanField, self).clean(value)
         dates = date_range.split(DateRangePickerWidget.separator)
-        startdate = dateutil.parser.parse(dates[0])
-        enddate = dateutil.parser.parse(dates[1])
+        if len(dates) != 2:
+            return
+        try:
+            startdate = dateutil.parser.parse(dates[0])
+            enddate = dateutil.parser.parse(dates[1])
+        except ValueError:
+            raise ValueError(_("Date range invalid. Pleaes select a valid date range."))
         return DateSpan(startdate, enddate)
 
 
@@ -674,17 +679,10 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
         super(GenericFilterFormExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
 
         self.fields['date_range'].help_text = _(
-            "The timezone for this export is %(timezone)s."
+            "Filters forms by date received. The timezone for this export is %(timezone)s."
         ) % {
             'timezone': self.timezone,
         }
-
-        # update date_range filter's initial values to span the entirety of
-        # the domain's submission range
-        default_datespan = datespan_from_beginning(self.domain_object, self.timezone)
-        self.fields['date_range'].widget = DateRangePickerWidget(
-            default_datespan=default_datespan
-        )
 
     @property
     def extra_fields(self):

@@ -55,9 +55,9 @@ from corehq.apps.domain.decorators import require_superuser, login_and_domain_re
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.dropbox.decorators import require_dropbox_session
-from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
+from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress, DropboxInvalidToken
 from corehq.apps.dropbox.models import DropboxUploadHelper
-from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN
+from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN, DropboxAuthInitiate
 from corehq.apps.hqadmin import service_checks as checks
 from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
@@ -453,6 +453,8 @@ def dropbox_upload(request, download_id):
                 download_id=download_id,
                 user=request.user,
             )
+        except DropboxInvalidToken:
+            return HttpResponseRedirect(reverse(DropboxAuthInitiate.slug))
         except DropboxUploadAlreadyInProgress:
             uploader = DropboxUploadHelper.objects.get(download_id=download_id)
             messages.warning(

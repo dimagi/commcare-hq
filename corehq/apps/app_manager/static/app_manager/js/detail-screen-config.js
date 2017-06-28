@@ -756,6 +756,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         property_name: that.field,
                         multimedia: that.screen.config.multimedia,
                         values_are_icons: that.original.format == 'enum-image',
+                        values_are_conditions: that.original.format === 'conditional-enum',
                     };
                     that.enum_extra = uiElement.key_value_mapping(o);
                 }());
@@ -774,24 +775,24 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
 
                 this.late_flag_extra = uiElement.input().val(this.original.late_flag.toString());
                 this.late_flag_extra.ui.find('input').css('width', 'auto').css("display", "inline-block");
-                this.late_flag_extra.ui.prepend($('<span>' + DetailScreenConfig.message.LATE_FLAG_EXTRA_LABEL + '</span>'));
+                this.late_flag_extra.ui.prepend($('<span>' + gettext(' Days late ') + '</span>'));
 
                 this.filter_xpath_extra = uiElement.input().val(this.original.filter_xpath.toString());
-                this.filter_xpath_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.FILTER_XPATH_EXTRA_LABEL));
+                this.filter_xpath_extra.ui.prepend($('<div/>'));
 
                 this.calc_xpath_extra = uiElement.input().val(this.original.calc_xpath.toString());
-                this.calc_xpath_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.CALC_XPATH_EXTRA_LABEL));
+                this.calc_xpath_extra.ui.prepend($('<div/>'));
 
                 this.time_ago_extra = uiElement.select([
-                    {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.YEARS, value: DetailScreenConfig.TIME_AGO.year},
-                    {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.MONTHS, value: DetailScreenConfig.TIME_AGO.month},
-                    {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.WEEKS, value: DetailScreenConfig.TIME_AGO.week},
-                    {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.DAYS, value: DetailScreenConfig.TIME_AGO.day},
-                    {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.DAYS_UNTIL, value: -DetailScreenConfig.TIME_AGO.day},
-                    {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.WEEKS_UNTIL, value: -DetailScreenConfig.TIME_AGO.week},
-                    {label: DetailScreenConfig.message.TIME_AGO_INTERVAL.MONTHS_UNTIL, value: -DetailScreenConfig.TIME_AGO.month}
+                    {label: gettext('Years since date'), value: DetailScreenConfig.TIME_AGO.year},
+                    {label: gettext('Months since date'), value: DetailScreenConfig.TIME_AGO.month},
+                    {label: gettext('Weeks since date'), value: DetailScreenConfig.TIME_AGO.week},
+                    {label: gettext('Days since date'), value: DetailScreenConfig.TIME_AGO.day},
+                    {label: gettext('Days until date'), value: -DetailScreenConfig.TIME_AGO.day},
+                    {label: gettext('Weeks until date'), value: -DetailScreenConfig.TIME_AGO.week},
+                    {label: gettext('Months until date'), value: -DetailScreenConfig.TIME_AGO.month}
                 ]).val(this.original.time_ago_interval.toString());
-                this.time_ago_extra.ui.prepend($('<div/>').text(DetailScreenConfig.message.TIME_AGO_EXTRA_LABEL));
+                this.time_ago_extra.ui.prepend($('<div/>').text(gettext(' Measuring ')));
 
                 function fireChange() {
                     that.fire('change');
@@ -824,9 +825,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                         that.filter_xpath_extra.ui.detach();
                         that.calc_xpath_extra.ui.detach();
                         that.time_ago_extra.ui.detach();
-
-                        if (this.val() === "enum" || this.val() === "enum-image") {
+                        if (this.val() === "enum" || this.val() === "enum-image" || this.val() === 'conditional-enum') {
                             that.enum_extra.values_are_icons(this.val() === 'enum-image');
+                            that.enum_extra.values_are_conditions(this.val() === 'conditional-enum');
                             that.format.ui.parent().append(that.enum_extra.ui);
                         } else if (this.val() === "graph") {
                             // Replace format select with edit button
@@ -973,6 +974,8 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 this.persistTileOnForms = ko.observable(spec[this.columnKey].persist_tile_on_forms || false);
                 this.enableTilePullDown = ko.observable(spec[this.columnKey].pull_down_tile || false);
                 this.allowsEmptyColumns = options.allowsEmptyColumns;
+                this.persistentCaseTileFromModule = (
+                    ko.observable(spec[this.columnKey].persistent_case_tile_from_module || ""));
 
                 this.fireChange = function() {
                     that.fire('change');
@@ -1037,7 +1040,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 }
 
                 this.saveButton = COMMCAREHQ.SaveButton.init({
-                    unsavedMessage: DetailScreenConfig.message.UNSAVED_MESSAGE,
+                    unsavedMessage: gettext('You have unsaved detail screen configurations.'),
                     save: function () {
                         that.save();
                     }
@@ -1055,6 +1058,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     that.saveButton.fire('change');
                 });
                 this.persistTileOnForms.subscribe(function(){
+                    that.saveButton.fire('change');
+                });
+                this.persistentCaseTileFromModule.subscribe(function(){
                     that.saveButton.fire('change');
                 });
                 this.enableTilePullDown.subscribe(function(){
@@ -1156,6 +1162,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     data.persistCaseContext = this.persistCaseContext();
                     data.persistentCaseContextXML = this.persistentCaseContextXML();
                     data.persistTileOnForms = this.persistTileOnForms();
+                    data.persistentCaseTileFromModule = this.persistentCaseTileFromModule();
                     data.enableTilePullDown = this.persistTileOnForms() ? this.enableTilePullDown() : false;
 
                     if (this.containsParentConfiguration) {
@@ -1392,47 +1399,6 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             return DetailScreenConfig;
         }());
 
-        DetailScreenConfig.message = {
-
-            FIELD: gettext('Property'),
-            HEADER: gettext('Display Text'),
-            FORMAT: gettext('Format'),
-
-            PLAIN_FORMAT: gettext('Plain'),
-            DATE_FORMAT: gettext('Date'),
-            TIME_AGO_FORMAT: gettext('Time Since or Until Date'),
-            TIME_AGO_EXTRA_LABEL: gettext(' Measuring '),
-            TIME_AGO_INTERVAL: {
-                YEARS: gettext('Years since date'),
-                MONTHS: gettext('Months since date'),
-                WEEKS: gettext('Weeks since date'),
-                DAYS: gettext('Days since date'),
-                DAYS_UNTIL: gettext('Days until date'),
-                WEEKS_UNTIL: gettext('Weeks until date'),
-                MONTHS_UNTIL: gettext('Months until date'),
-            },
-            PHONE_FORMAT: gettext('Phone Number'),
-            ENUM_FORMAT: gettext('ID Mapping'),
-            ENUM_IMAGE_FORMAT: gettext('Icon'),
-            ENUM_EXTRA_LABEL: gettext('Mapping: '),
-            LATE_FLAG_FORMAT: gettext('Late Flag'),
-            LATE_FLAG_EXTRA_LABEL: gettext(' Days late '),
-            FILTER_XPATH_EXTRA_LABEL: '',
-            INVISIBLE_FORMAT: gettext('Search Only'),
-            ADDRESS_FORMAT: gettext('Address'),
-            PICTURE_FORMAT: gettext('Picture'),
-            AUDIO_FORMAT: gettext('Audio'),
-            CALC_XPATH_FORMAT: gettext('Calculate'),
-            CALC_XPATH_EXTRA_LABEL: '',
-            DISTANCE_FORMAT: gettext('Distance from current location'),
-
-            ADD_COLUMN: gettext('Add to list'),
-            COPY_COLUMN: gettext('Duplicate'),
-            DELETE_COLUMN: gettext('Delete'),
-
-            UNSAVED_MESSAGE: gettext('You have unsaved detail screen configurations.'),
-        };
-
         DetailScreenConfig.TIME_AGO = {
             year: 365.25,
             month: 365.25 / 12,
@@ -1441,33 +1407,37 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
         };
 
         DetailScreenConfig.MENU_OPTIONS = [
-            {value: "plain", label: DetailScreenConfig.message.PLAIN_FORMAT},
-            {value: "date", label: DetailScreenConfig.message.DATE_FORMAT},
-            {value: "time-ago", label: DetailScreenConfig.message.TIME_AGO_FORMAT},
-            {value: "phone", label: DetailScreenConfig.message.PHONE_FORMAT},
-            {value: "enum", label: DetailScreenConfig.message.ENUM_FORMAT},
-            {value: "late-flag", label: DetailScreenConfig.message.LATE_FLAG_FORMAT},
-            {value: "invisible", label: DetailScreenConfig.message.INVISIBLE_FORMAT},
-            {value: "address", label: DetailScreenConfig.message.ADDRESS_FORMAT},
-            {value: "distance", label: DetailScreenConfig.message.DISTANCE_FORMAT}
+            {value: "plain", label: gettext('Plain')},
+            {value: "date", label: gettext('Date')},
+            {value: "time-ago", label: gettext('Time Since or Until Date')},
+            {value: "phone", label: gettext('Phone Number')},
+            {value: "enum", label: gettext('ID Mapping')},
+            {value: "late-flag", label: gettext('Late Flag')},
+            {value: "invisible", label: gettext('Search Only')},
+            {value: "address", label: gettext('Address')},
+            {value: "distance", label: gettext('Distance from current location')}
         ];
 
         if (COMMCAREHQ.toggleEnabled('MM_CASE_PROPERTIES')) {
             DetailScreenConfig.MENU_OPTIONS.push(
-                {value: "picture", label: DetailScreenConfig.message.PICTURE_FORMAT},
-                {value: "audio", label: DetailScreenConfig.message.AUDIO_FORMAT}
+                {value: "picture", label: gettext('Picture')},
+                {value: "audio", label: gettext('Audio')}
             );
         }
 
         if (COMMCAREHQ.previewEnabled('ENUM_IMAGE')) {
             DetailScreenConfig.MENU_OPTIONS.push(
-                {value: "enum-image", label: DetailScreenConfig.message.ENUM_IMAGE_FORMAT + gettext(' (Preview!)')}
+                {value: "enum-image", label: gettext('Icon') + gettext(' (Preview!)')}
             );
         }
-
+        if (COMMCAREHQ.previewEnabled('CONDITIONAL_ENUM')) {
+            DetailScreenConfig.MENU_OPTIONS.push(
+                {value: "conditional-enum", label: gettext('Conditional ID Mapping') + gettext(' (Preview!)')}
+            );
+        }
         if (COMMCAREHQ.previewEnabled('CALC_XPATHS')) {
             DetailScreenConfig.MENU_OPTIONS.push(
-                {value: "calculate", label: DetailScreenConfig.message.CALC_XPATH_FORMAT + gettext(' (Preview!)')}
+                {value: "calculate", label: gettext('Calculate') + gettext(' (Preview!)')}
             );
         }
 

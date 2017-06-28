@@ -716,22 +716,25 @@ class CaseRuleActionResult(object):
         if not isinstance(value, int):
             raise ValueError("Expected int")
 
-    def __init__(self, num_updates=0, num_closes=0, num_related_updates=0, num_related_closes=0):
+    def __init__(self, num_updates=0, num_closes=0, num_related_updates=0, num_related_closes=0, num_creates=0):
         self._validate_int(num_updates)
         self._validate_int(num_closes)
         self._validate_int(num_related_updates)
         self._validate_int(num_related_closes)
+        self._validate_int(num_creates)
 
         self.num_updates = num_updates
         self.num_closes = num_closes
         self.num_related_updates = num_related_updates
         self.num_related_closes = num_related_closes
+        self.num_creates = num_creates
 
     def add_result(self, result):
         self.num_updates += result.num_updates
         self.num_closes += result.num_closes
         self.num_related_updates += result.num_related_updates
         self.num_related_closes += result.num_related_closes
+        self.num_creates += result.num_creates
 
     @property
     def total_updates(self):
@@ -739,7 +742,8 @@ class CaseRuleActionResult(object):
             self.num_updates +
             self.num_closes +
             self.num_related_updates +
-            self.num_related_closes
+            self.num_related_closes +
+            self.num_creates
         )
 
 
@@ -901,6 +905,12 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
     # A List of [recipient_type, recipient_id]
     recipients = jsonfield.JSONField(default=list)
 
+    # (Optional, ignored if None) The name of a case property whose value will be tracked
+    # over time on the schedule instance as last_reset_case_property_value.
+    # Every time the case property's value changes, the schedule's start date is
+    # reset to the current date.
+    reset_case_property_name = models.CharField(max_length=126, null=True)
+
     @property
     def schedule(self):
         if self.alert_schedule_id:
@@ -927,9 +937,9 @@ class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
     def when_case_matches(self, case, rule):
         schedule = self.schedule
         if isinstance(schedule, AlertSchedule):
-            refresh_case_alert_schedule_instances(case.case_id, schedule, self.recipients, rule)
+            refresh_case_alert_schedule_instances(case, schedule, self, rule)
         elif isinstance(schedule, TimedSchedule):
-            refresh_case_timed_schedule_instances(case.case_id, schedule, self.recipients, rule)
+            refresh_case_timed_schedule_instances(case, schedule, self, rule)
 
         return CaseRuleActionResult()
 
@@ -1066,6 +1076,7 @@ class DomainCaseRuleRun(models.Model):
     num_closes = models.IntegerField(null=True)
     num_related_updates = models.IntegerField(null=True)
     num_related_closes = models.IntegerField(null=True)
+    num_creates = models.IntegerField(null=True)
 
     class Meta:
         index_together = (
@@ -1082,5 +1093,6 @@ class DomainCaseRuleRun(models.Model):
         self.num_closes = result.num_closes
         self.num_related_updates = result.num_related_updates
         self.num_related_closes = result.num_related_closes
+        self.num_creates = result.num_creates
         self.finished_on = datetime.utcnow()
         self.save()

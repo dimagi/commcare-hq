@@ -6,7 +6,7 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load compress %}
-@@ -56,7 +56,7 @@
+@@ -57,7 +57,7 @@
          <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
      {% endif %}
  
@@ -15,41 +15,12 @@
      {% include 'hqmedia/partials/multimedia_js.html' %}
      <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
      <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
-@@ -172,15 +172,18 @@
-             });
-         }
- 
--        $('#form-filter').koApplyBindings(new FormFilter());
--
+@@ -68,6 +68,38 @@
+     {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
+         <script src="{% static 'app_manager/js/custom_instances.js' %}"></script>
+     {% endif %}
++{% endblock %}
 +
-+        var $formFilter = $('#form-filter');
-+        if ($formFilter.length) {
-+            $formFilter.koApplyBindings(new FormFilter());
-+        };
-         {% endif %}
- 
-         {% if allow_form_workflow %}
-             var FormWorkflow = hqImport('app_manager/js/form_workflow.js').FormWorkflow;
-             var labels = {};
-             labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
--            labels[FormWorkflow.Values.ROOT] = "{% trans "Module Menu" %}";
-+            labels[FormWorkflow.Values.ROOT] = "{% trans "Main Menu" %}";
-             {% with module_name=module.name|trans:langs %}
-             labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
-             {% endwith %}
-@@ -224,7 +227,7 @@
-         });
-         {% endif %}
- 
--        {% if allow_cloudcare %}
-+        {% if can_preview_form and allow_cloudcare %}
-             // tag the 'preview in cloudcare' button with the right url
-             // unfortunately, has to be done in javascript
-             var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-@@ -290,6 +293,39 @@
-     </script>
- {% endblock %}
- 
 +{% block pre_form_content %}
 +    {% if can_preview_form %}
 +    <div class="appmanager-page-actions">
@@ -71,7 +42,6 @@
 +      <inline-edit params="
 +          name: 'comment',
 +          id:'comment-id',
-+          containerClass: 'app-comment',
 +          value: '{{ form.comment|escapejs }}',
 +          placeholder: '{% trans "Enter form description here"|escapejs %}',
 +          url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',
@@ -81,22 +51,29 @@
 +    </div>
 +
 +    <div id="build_errors"></div>
-+{% endblock %}
-+
+ {% endblock %}
+ 
  {% block form-view %}
-     {% initial_page_data 'case_config_options' case_config_options %}
-     {% initial_page_data 'form_requires' form.requires %}
-@@ -299,71 +335,21 @@
-     {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
-     {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
-     {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
+@@ -104,80 +136,21 @@
+     {% initial_page_data 'uses_form_workflow' uses_form_workflow %}
+     {% registerurl "get_form_datums" domain app.id %}
+ 
+-    {# CloudCare #}
+-    {% initial_page_data 'app_id' app.id %}
+-    {% initial_page_data 'module_id' module.id %}
+-    {% initial_page_data 'form_id' nav_form.id %}
+-    {% initial_page_data 'allow_cloudcare' allow_cloudcare %}
+-    {% initial_page_data 'can_preview_form' can_preview_form %}
+-    {% initial_page_data 'user_age_in_days' request.couch_user.days_since_created %}
+-    {% registerurl "cloudcare_main" domain '' %}
+-    {% registerurl "formplayer_single_app" domain app.id %}
+-
 -    <div id="build_errors"></div>
 -    {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update);}" %}
 -    <br />
 -    <inline-edit params="
 -        name: 'comment',
 -        id:'comment-id',
--        readOnlyClass: 'app-comment',
 -        value: '{{ form.comment|escapejs }}',
 -        placeholder: '{% trans "Enter form description here"|escapejs %}',
 -        url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',
@@ -167,7 +144,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -371,35 +357,36 @@
+@@ -185,35 +158,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -221,7 +198,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -411,77 +398,72 @@
+@@ -225,77 +199,72 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -349,7 +326,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -490,14 +472,15 @@
+@@ -304,14 +273,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -367,7 +344,7 @@
              {% endif %}
          </div>
      </div>
-@@ -505,12 +488,13 @@
+@@ -319,12 +289,13 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}

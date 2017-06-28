@@ -68,13 +68,12 @@ from corehq.apps.users.bulkupload import (
 from corehq.apps.users.dbaccessors.all_commcare_users import get_mobile_user_ids
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import (
-    CommCareAccountForm, UpdateCommCareUserInfoForm, CommtrackUserForm,
+    CommCareAccountForm, CommCareUserFormSet, CommtrackUserForm,
     MultipleSelectionForm, ConfirmExtraUserChargesForm, NewMobileWorkerForm,
     SelfRegistrationForm, SetUserPasswordForm, NewAnonymousMobileWorkerForm
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.const import ANONYMOUS_USERNAME, ANONYMOUS_FIRSTNAME, ANONYMOUS_LASTNAME
-from corehq.apps.users.signals import clean_commcare_user
 from corehq.apps.users.tasks import bulk_upload_async, turn_on_demo_mode_task, reset_demo_user_restore_task, \
     bulk_download_users_async
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
@@ -107,7 +106,6 @@ def _can_edit_workers_location(web_user, mobile_worker):
 @location_safe
 class EditCommCareUserView(BaseEditUserView):
     urlname = "edit_commcare_user"
-    user_update_form_class = UpdateCommCareUserInfoForm
     page_title = ugettext_noop("Edit Mobile Worker")
 
     @property
@@ -131,17 +129,6 @@ class EditCommCareUserView(BaseEditUserView):
             'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
         })
         return context
-
-    @property
-    @memoized
-    def custom_data(self):
-        is_custom_data_post = self.request.method == "POST" and self.request.POST['form_type'] == "update-user"
-        return CustomDataEditor(
-            field_view=UserFieldsView,
-            domain=self.domain,
-            existing_custom_data=self.editable_user.user_data,
-            post_dict=self.request.POST if is_custom_data_post else None,
-        )
 
     @property
     @memoized
@@ -218,7 +205,7 @@ class EditCommCareUserView(BaseEditUserView):
             'group_form': self.group_form,
             'reset_password_form': self.reset_password_form,
             'is_currently_logged_in_user': self.is_currently_logged_in_user,
-            'data_fields_form': self.custom_data.form,
+            'data_fields_form': self.form_user_update.custom_data.form,
             'can_use_inbound_sms': domain_has_privilege(self.domain, privileges.INBOUND_SMS),
             'can_create_groups': (
                 self.request.couch_user.has_permission(self.domain, 'edit_commcare_users') and
@@ -261,8 +248,20 @@ class EditCommCareUserView(BaseEditUserView):
     @property
     @memoized
     def form_user_update(self):
-        form = super(EditCommCareUserView, self).form_user_update
-        form.load_language(language_choices=get_domain_languages(self.domain))
+        if self.request.method == "POST" and self.request.POST['form_type'] == "update-user":
+            data = self.request.POST
+        else:
+            data = None
+        form = CommCareUserFormSet(data=data, domain=self.domain,
+            editable_user=self.editable_user, request_user=self.request.couch_user)
+
+        form.user_form.load_language(language_choices=get_domain_languages(self.domain))
+
+        if self.can_change_user_roles:
+            form.user_form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
+        else:
+            del form.user_form.fields['role']
+
         return form
 
     @property
@@ -277,27 +276,12 @@ class EditCommCareUserView(BaseEditUserView):
             phone_number = self.request.POST['phone_number']
             phone_number = re.sub('\s', '', phone_number)
             if re.match(r'\d+$', phone_number):
-                clean_commcare_user.send(
-                    'EditCommCareUserView.phone_number',
-                    domain=self.domain,
-                    request_user=self.request.couch_user,
-                    user=self.editable_user,
-                    forms={'phone_number': phone_number},
-                )
                 self.editable_user.add_phone_number(phone_number)
                 self.editable_user.save()
                 messages.success(request, _("Phone number added!"))
             else:
                 messages.error(request, _("Please enter digits only."))
         return super(EditCommCareUserView, self).post(request, *args, **kwargs)
-
-    def custom_user_is_valid(self):
-        if self.custom_data.is_valid():
-            self.editable_user.user_data = self.custom_data.get_data_to_save()
-            self.editable_user.save()
-            return True
-        else:
-            return False
 
 
 class ConfirmBillingAccountForExtraUsersView(BaseUserSettingsView, AsyncHandlerMixin):
@@ -404,7 +388,7 @@ def toggle_demo_mode(request, domain, user_id):
 
     if demo_mode:
         download = DownloadBase()
-        res = turn_on_demo_mode_task.delay(user, domain)
+        res = turn_on_demo_mode_task.delay(user.get_id, domain)
         download.set_task(res)
         return HttpResponseRedirect(
             reverse(
@@ -483,7 +467,7 @@ def reset_demo_user_restore(request, domain, user_id):
         return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
 
     download = DownloadBase()
-    res = reset_demo_user_restore_task.delay(user, domain)
+    res = reset_demo_user_restore_task.delay(user.get_id, domain)
     download.set_task(res)
 
     return HttpResponseRedirect(
@@ -759,16 +743,10 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
                 return {'error': _("Forms did not validate")}
             couch_user = self._build_anonymous_commcare_user()
         else:
-            is_valid()
-            couch_user = self._build_commcare_user()
-            self.send_clean_commcare_user_signal(couch_user)
             if not is_valid():
                 return {'error': _("Forms did not validate")}
 
-            couch_user.save()
-            location_id = self.new_mobile_worker_form.cleaned_data['location_id']
-            if location_id:
-                couch_user.set_location(SQLLocation.objects.get(location_id=location_id))
+            couch_user = self._build_commcare_user()
 
         return {
             'success': True,
@@ -778,18 +756,6 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             )
         }
 
-    def send_clean_commcare_user_signal(self, couch_user):
-        clean_commcare_user.send(
-            'MobileWorkerListView.create_mobile_worker',
-            domain=self.domain,
-            request_user=self.request.couch_user,
-            user=couch_user,
-            forms={
-                self._mobile_worker_form.__class__.__name__: self._mobile_worker_form,
-                self.custom_data.__class__.__name__: self.custom_data,
-            }
-        )
-
     def _build_anonymous_commcare_user(self):
         username = ANONYMOUS_USERNAME
         password = self.new_anonymous_mobile_worker_form.cleaned_data['password']
@@ -797,7 +763,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
         last_name = ANONYMOUS_LASTNAME
         location_id = self.new_anonymous_mobile_worker_form.cleaned_data['location_id']
 
-        couch_user = CommCareUser.create(
+        return CommCareUser.create(
             self.domain,
             format_username(username, self.domain),
             password,
@@ -806,16 +772,15 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             last_name=last_name,
             user_data=self.custom_data.get_data_to_save(),
             is_anonymous=True,
+            location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
         )
-        if location_id:
-            couch_user.set_location(SQLLocation.objects.get(location_id=location_id))
-        return couch_user
 
     def _build_commcare_user(self):
         username = self.new_mobile_worker_form.cleaned_data['username']
         password = self.new_mobile_worker_form.cleaned_data['password']
         first_name = self.new_mobile_worker_form.cleaned_data['first_name']
         last_name = self.new_mobile_worker_form.cleaned_data['last_name']
+        location_id = self.new_mobile_worker_form.cleaned_data['location_id']
 
         return CommCareUser.create(
             self.domain,
@@ -825,7 +790,7 @@ class MobileWorkerListView(JSONResponseMixin, BaseUserSettingsView):
             first_name=first_name,
             last_name=last_name,
             user_data=self.custom_data.get_data_to_save(),
-            commit=False,
+            location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
         )
 
     def _ensure_proper_request(self, in_data):

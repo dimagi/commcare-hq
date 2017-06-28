@@ -25,6 +25,7 @@
     <script src="{% static 'syntaxhighlighter/scripts/shCore.js' %}"></script>
     <script src="{% static 'syntaxhighlighter/scripts/shBrushXml.js' %}"></script>
     <script src="{% static 'style/js/knockout_subscribables.ko.js' %}"></script>
+    <script src="{% static 'app_manager/js/form_view.js' %}"></script>
     {% endcompress %}
 {% endblock %}
 
@@ -67,245 +68,58 @@
     {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
         <script src="{% static 'app_manager/js/custom_instances.js' %}"></script>
     {% endif %}
-    <script>
-        $(function(){
-            // Do file upload check
-            (function(){
-                $("#xform_file_input").change(function(){
-                    if ($(this).val()) {
-                        $("#xform_file_submit").show();
-                    } else {
-                        $("#xform_file_submit").hide();
-                    }
-                }).trigger('change');
-            }());
-
-            // Configure form source ajax
-            (function(){
-                $("#xform-source-opener").click(function(evt){
-                    if (evt.shiftKey) {
-                        // Shift+click: edit form source
-                        $(".source-readonly").hide();
-                        $(".source-edit").show();
-                        $.get($(this).data('href'), function (data) {
-                            $("#xform-source-edit").text(data).blur();
-                        }, 'json');
-                    } else {
-                        // Plain click: view form source
-                        $(".source-edit").hide();
-                        $(".source-readonly").show();
-                        $("#xform-source").text("Loading...");
-                        $.get($(this).data('href'), function (data) {
-                            var brush = new SyntaxHighlighter.brushes.Xml();
-                            brush.init({ toolbar: false });
-                            // brush.getDiv seems to escape inconsistently, so I'm helping it out
-                            data = data.replace(/&/g, '&amp;');
-                            $("#xform-source").html(brush.getDiv(data));
-                        }, 'json');
-                    }
-                    $(".xml-source").modal();
-                });
-            }());
-
-        {% if allow_form_filtering %}
-
-        function formFilterMatches(filter, pattern_matches, substring_matches) {
-            if(typeof(filter) != 'string') {
-                return false;
-            }
-
-            var result = false;
-            $.each(pattern_matches, function(index, pattern) {
-                result = result || filter.match(pattern);
-            });
-
-            $.each(substring_matches, function(index, sub) {
-                result = result || filter.indexOf(sub) != -1;
-            });
-
-            return result;
-        }
-
-        var form_requires = ko.observable({{ form.requires|JSON }});
-        var putInRoot = {{ module.put_in_root|BOOL }};
-        var isUserCaseInUse = {{ is_usercase_in_use|BOOL }};
-        var allOtherFormsRequireACase = {{ form.all_other_forms_require_a_case|BOOL }};
-        var caseXpathPatternMatches = {{ case_xpath_pattern_matches|JSON }};
-        var caseXpathSubstringMatches = {{ case_xpath_substring_matches|JSON }};
-        var userCaseXpathPatternMatches = {{ user_case_xpath_pattern_matches|JSON }};
-        var userCaseXpathSubstringMatches = {{ user_case_xpath_substring_matches|JSON }};
-
-        function FormFilter() {
-            var self = this;
-
-            self.formFilter = ko.observable({{ form.form_filter|JSON }});
-
-            self.caseReferenceNotAllowed = ko.computed(function() {
-                var moduleUsesCase = allOtherFormsRequireACase && form_requires() === 'case';
-                if (!moduleUsesCase || putInRoot) {
-                    // We want to determine here if the filter expression references
-                    // any case but the user case.
-                    var filter = self.formFilter();
-                    if (typeof(filter) !== 'string') {
-                        return true;
-                    }
-
-                    $.each(userCaseXpathSubstringMatches, function(index, sub) {
-                        filter = filter.replace(sub, '');
-                    });
-
-                    if (formFilterMatches(filter, caseXpathPatternMatches, caseXpathSubstringMatches)) {
-                        return true;
-                    }
-                }
-                return false;
-            });
-
-            self.userCaseReferenceNotAllowed = ko.computed(function() {
-                return !isUserCaseInUse && formFilterMatches(
-                    self.formFilter(), userCaseXpathPatternMatches, userCaseXpathSubstringMatches
-                );
-            });
-
-            self.allowed = ko.computed(function () {
-                return !self.formFilter() || !self.caseReferenceNotAllowed() && !self.userCaseReferenceNotAllowed();
-            });
-        }
-
-        $('#form-filter').koApplyBindings(new FormFilter());
-
-        {% endif %}
-
-        {% if allow_form_workflow %}
-            var FormWorkflow = hqImport('app_manager/js/form_workflow.js').FormWorkflow;
-            var labels = {};
-            labels[FormWorkflow.Values.DEFAULT] = "{% trans "Home Screen" %}";
-            labels[FormWorkflow.Values.ROOT] = "{% trans "Module Menu" %}";
-            {% with module_name=module.name|trans:langs %}
-            labels[FormWorkflow.Values.MODULE] = "{% trans "Module:" %} {{ module_name|escapejs }}";
-            {% endwith %}
-            {% if module.root_module_id %}
-            {% with root_module_name=module.root_module.name|trans:langs %}
-            labels[FormWorkflow.Values.PARENT_MODULE] = "{% trans "Parent Module:" %} {{ root_module_name|escapejs }}";
-            {% endwith %}
-            {% endif %}
-            labels[FormWorkflow.Values.PREVIOUS_SCREEN] = "{% trans "Previous Screen" %}";
-
-            var options = {
-                labels: labels,
-                workflow: '{{ form.post_form_workflow }}',
-                workflow_fallback: '{{ form.post_form_workflow_fallback }}',
-            };
-
-            {% if request|toggle_enabled:"FORM_LINK_WORKFLOW" or uses_form_workflow %}
-            labels[FormWorkflow.Values.FORM] = "{% trans "Link to other form" %}";
-            options.forms = {{ linkable_forms|JSON}}
-            options.formLinks = {{ form.form_links|JSON }}
-            options.formDatumsUrl = '{% url 'get_form_datums' domain app.id %}'
-            {% endif %}
-
-            $('#form-workflow').koApplyBindings(new FormWorkflow(options))
-        {% endif %}
-
-        $('#auto-gps-capture').koApplyBindings({
-            auto_gps_capture: ko.observable({{ form.auto_gps_capture|JSON }})
-        });
-
-        var $shadowParent = $('#shadow-parent');
-        if ($shadowParent.length) {
-            $shadowParent.koApplyBindings({
-                shadow_parent: ko.observable({{ form.shadow_parent_form_id|JSON }})
-            });
-        }
-
-        {% if request|toggle_enabled:'NO_VELLUM' and form.form_type != "shadow_form" %}
-        $('#no-vellum').koApplyBindings({
-            no_vellum: ko.observable({{ form.no_vellum|JSON }})
-        });
-        {% endif %}
-
-        {% if allow_cloudcare %}
-            // tag the 'preview in cloudcare' button with the right url
-            // unfortunately, has to be done in javascript
-            var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {
-                var url = urlRoot;
-                if (appId !== undefined) {
-                    url = url + "view/" + appId;
-                    if (moduleId !== undefined) {
-                        url = url + "/" + moduleId;
-                        if (formId !== undefined) {
-                            url = url + "/" + formId;
-                            if (caseId !== undefined) {
-                                url = url + "/" + caseId;
-                            }
-                        }
-                    }
-                }
-                return url;
-            };
-            // build the previewCommand in the format that the CommCareSession will understand
-            var getFormplayerUrl = function(urlRoot, appId, moduleId, formId) {
-                var urlObject = new Util.CloudcareUrl({
-                    'appId': appId,
-                    'previewCommand': 'm' + moduleId + '-f' + formId
-                });
-                return urlRoot + '#' + Util.objectToEncodedUrl(urlObject.toJson());
-            };
-
-            {% if not request|toggle_enabled:"USE_OLD_CLOUDCARE"%}
-            var cloudCareUrl = getFormplayerUrl("{% url "formplayer_single_app" domain app.id %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}");
-            {% else %}
-                var cloudCareUrl = getCloudCareUrl("{% url "cloudcare_main" domain '' %}", "{{ app.id }}", "{{ module.id }}", "{{ nav_form.id }}") + "?preview=true";
-            {% endif %}
-
-            $("#cloudcare-preview-url").attr("href", cloudCareUrl);
-            $('#cloudcare-preview-url').click(function(e) {
-                ga_track_event('CloudCare', 'Click "Preview Form"');
-                analytics.workflow("Clicked Preview Form");
-                {% if request.couch_user.days_since_created == 0 %}
-                    ga_track_event('CloudCare', 'Clicked "Preview Form" within first 24 hours');
-                    analytics.workflow('Clicked "Preview Form" within first 24 hours');
-                {% endif %}
-            });
-        {% endif %}
-        {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
-            var customInstances = hqImport('app_manager/js/custom_intances.js').wrap(
-                {
-                    customInstances:{{ custom_instances|JSON }}
-                })
-            $('#custom-instances').koApplyBindings(customInstances);
-        {% endif %}
-        });
-    </script>
-    <script>
-        $(function () {
-            var setupValidation = hqImport('app_manager/js/app_manager.js').setupValidation;
-            setupValidation('{% url "validate_form_for_build" domain app.id form.unique_id %}');
-        });
-    </script>
-    <script>
-        $(function (){
-            $('.property-description').popover();
-        });
-    </script>
 {% endblock %}
 
 {% block form-view %}
+    {% initial_page_data 'all_other_forms_require_a_case' form.all_other_forms_require_a_case %}
+    {% initial_page_data 'allow_form_filtering' allow_form_filtering %}
+    {% initial_page_data 'auto_gps_capture' form.auto_gps_capture %}
     {% initial_page_data 'case_config_options' case_config_options %}
+    {% initial_page_data 'custom_instances' custom_instances %}
+    {% initial_page_data 'form_filter' form.form_filter %}
+    {% initial_page_data 'form_filter_patterns' form_filter_patterns %}
     {% initial_page_data 'form_requires' form.requires %}
     {% initial_page_data 'has_form_source' form.source|yesno:"1," %}
+    {% initial_page_data 'is_usercase_in_use' is_usercase_in_use %}
     {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
     {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
     {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
+    {% initial_page_data 'no_vellum' form.no_vellum %}
+    {% initial_page_data 'put_in_root' module.put_in_root %}
     {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
+    {% initial_page_data 'shadow_parent_form_id' form.shadow_parent_form_id %}
     {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
+    {% registerurl "validate_form_for_build" domain app.id form.unique_id %}
+
+    {# End of form navigation #}
+    {% initial_page_data 'allow_form_workflow' allow_form_workflow %}
+    {% initial_page_data 'form_links' form.form_links %}
+    {% initial_page_data 'linkable_forms' linkable_forms %}
+    {% initial_page_data 'module_name' module.name|trans:langs %}
+    {% if module.root_module_id %}
+        {% initial_page_data 'root_module_name' module.root_module.name|trans:langs %}
+    {% endif %}
+    {% initial_page_data 'post_form_workflow' form.post_form_workflow %}
+    {% initial_page_data 'post_form_workflow_fallback' form.post_form_workflow_fallback %}
+    {% initial_page_data 'uses_form_workflow' uses_form_workflow %}
+    {% registerurl "get_form_datums" domain app.id %}
+
+    {# CloudCare #}
+    {% initial_page_data 'app_id' app.id %}
+    {% initial_page_data 'module_id' module.id %}
+    {% initial_page_data 'form_id' nav_form.id %}
+    {% initial_page_data 'allow_cloudcare' allow_cloudcare %}
+    {% initial_page_data 'can_preview_form' can_preview_form %}
+    {% initial_page_data 'user_age_in_days' request.couch_user.days_since_created %}
+    {% registerurl "cloudcare_main" domain '' %}
+    {% registerurl "formplayer_single_app" domain app.id %}
+
     <div id="build_errors"></div>
     {% inline_edit_trans form.name langs edit_name_url saveValueName='name' readOnlyClass='h3' postSave="function(data) { document.title = data.update['.variable-form_name'] + ' - CommCare HQ'; return hqImport('app_manager/js/app_manager.js').updateDOM(data.update);}" %}
     <br />
     <inline-edit params="
         name: 'comment',
         id:'comment-id',
-        readOnlyClass: 'app-comment',
         value: '{{ form.comment|escapejs }}',
         placeholder: '{% trans "Enter form description here"|escapejs %}',
         url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',

@@ -5,7 +5,7 @@ from django.core.management import BaseCommand
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.tasks import make_location_user, _get_unique_username
 from corehq.apps.users.forms import generate_strong_password
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, UserRole
 from custom.enikshay.private_sector_datamigration.models import Agency, UserDetail
 
 from dimagi.utils.decorators.memoized import memoized
@@ -25,12 +25,11 @@ class Command(BaseCommand):
         dto_parent = SQLLocation.active_objects.get(location_id=parent_loc_id)
         for org_id in org_ids:
             dto = self.create_dto(domain, state_code, district_code, dto_parent, org_id)
-            for agency in self.get_agencies_by_state_district_org(state_code, district_code, org_id):
+            for i, agency in enumerate(self.get_agencies_by_state_district_org(state_code, district_code, org_id)):
+                print 'handling agency %d...' % i
                 if agency.location_type is not None:
                     agency_loc = self.create_agency(domain, agency, dto, org_id)
-                    self.create_user(agency_loc, user_level)
-                elif agency.is_field_officer:
-                    self.create_field_officer(agency, domain, dto, user_level)
+                    self.create_user(agency, agency_loc, user_level)
 
     def create_dto(self, domain, state_code, district_code, dto_parent, org_id):
         return SQLLocation.objects.create(
@@ -45,7 +44,8 @@ class Command(BaseCommand):
             metadata={
                 'enikshay_enabled': 'yes',
                 'is_test': 'no',
-                'private_sector_org_id': org_id,
+                'private_sector_org_id': str(org_id),
+                'sector': 'private',
             },
         )
 
@@ -72,56 +72,56 @@ class Command(BaseCommand):
                 'enikshay_enabled': 'yes',
                 'is_test': 'no',
                 'nikshay_code': agency.nikshayId,
-                'private_sector_agency_id': agency.agencyId,
-                'private_sector_org_id': org_id,
+                'private_sector_agency_id': str(agency.agencyId),
+                'private_sector_org_id': str(org_id),
+                'sector': 'private',
 
             },
         )
 
-    def create_user(self, agency_loc, user_level):
+    def create_user(self, agency, agency_loc, user_level):
         assert agency_loc.location_type.has_user
 
         agency_loc_id = agency_loc.location_id
+        domain = agency_loc.domain
 
-        user = make_location_user(agency_loc)
+        user = CommCareUser.get_by_username('%s@%s.commcarehq.org' % (agency_loc.site_code, agency_loc.domain))
+        if user is None:
+            user = make_location_user(agency_loc)
         user.user_location_id = agency_loc_id
         user.set_location(agency_loc, commit=False)
+        user.user_data['agency_id_legacy'] = agency_loc.metadata['private_sector_agency_id']
+        user.set_role(
+            domain,
+            UserRole.by_domain_and_name(domain, 'Default Mobile Worker')[0].get_qualified_id()
+        )
         user.user_data['user_level'] = user_level
-        user.user_data['usertype'] = self.get_usertype(agency_loc.location_type.code)
+        user.user_data['usertype'] = agency.usertype
         user.save()
 
         agency_loc.user_id = user._id
         agency_loc.save()
 
     @staticmethod
-    def create_field_officer(agency, domain, parent, user_level):
-        field_officer = CommCareUser.create(
-            domain,
-            _get_unique_username(domain, str(agency.agencyId)),
-            generate_strong_password(),
-            uuid=uuid.uuid4().hex,
-            commit=False,
-        )
-        field_officer.set_location(parent, commit=False)
-        field_officer.user_data['user_level'] = user_level
-        field_officer.user_data['usertype'] = 'ps-fieldstaff'
-        field_officer.save()
-
-    @staticmethod
-    def get_usertype(code):
-        return {
-            'pac': 'pac',
-            'pcc': 'pcc-chemist',
-            'pcp': 'pcp',
-            'plc': 'plc',
-        }[code]
-
-    @staticmethod
     def _get_org_name_by_id(org_id):
         return {
             1: 'PATH',
+            2: 'MJK',
+            3: 'Alert-India',
             4: 'WHP',
             5: 'DTO-Mehsana',
+            6: 'Vertex',
+            7: 'Accenture',
+            8: 'BMGF',
+            9: 'EY',
+            10: 'CTD',
+            11: 'Nagpur',
+            12: 'Nagpur-rural',
+            13: 'Nagpur_Corp',
+            14: 'Surat',
+            15: 'SMC',
+            16: 'Surat_Rural',
+            17: 'Rajkot',
         }[org_id]
 
     @staticmethod

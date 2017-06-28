@@ -460,9 +460,7 @@ class AsyncIndicatorTest(TestCase):
         self.pillow.process_changes(since=since, forever=False)
         self.assertEqual(indicators.count(), 1)
 
-        # ensure the save errors and fails to produce a row
-        with self.assertRaises(AttributeError):
-            queue_async_indicators()
+        queue_async_indicators()
 
         rows = self.adapter.get_query_object()
         self.assertEqual(rows.count(), 0)

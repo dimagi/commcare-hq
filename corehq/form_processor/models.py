@@ -305,8 +305,6 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         if const.TAG_META in self.form_data:
             return XFormPhoneMetadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
 
-        return None
-
     def soft_delete(self):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         FormAccessorSQL.soft_delete_forms(self.domain, [self.form_id])
@@ -550,6 +548,14 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
     username = jsonobject.StringProperty()
     appVersion = jsonobject.StringProperty()
     location = GeoPointProperty()
+
+    @property
+    def commcare_version(self):
+        from corehq.apps.receiverwrapper.util import get_commcare_version_from_appversion_text
+        from distutils.version import LooseVersion
+        version_text = get_commcare_version_from_appversion_text(self.appVersion)
+        if version_text:
+            return LooseVersion(version_text)
 
 
 class SupplyPointCaseMixin(object):
@@ -863,6 +869,11 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             identifier=DEFAULT_PARENT_IDENTIFIER,
             relationship=CommCareCaseIndexSQL.CHILD
         )
+        return result[0] if result else None
+
+    @property
+    def host(self):
+        result = self.get_parent(relationship=CommCareCaseIndexSQL.EXTENSION)
         return result[0] if result else None
 
     def __unicode__(self):

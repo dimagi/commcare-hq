@@ -56,6 +56,7 @@
         },
         "is_primary_key": false,
         "is_nullable": true,
+        "create_index": true,
         "column_id": "awc_id",
         "type": "expression"
       },
@@ -283,6 +284,7 @@
         "is_primary_key": false,
         "transform": {},
         "is_nullable": true,
+        "create_index": true,
         "expression": {
           "type": "root_doc",
           "expression": {

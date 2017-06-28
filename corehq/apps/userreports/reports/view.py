@@ -104,7 +104,7 @@ def query_dict_to_dict(query_dict, domain):
     :param domain:
     :return: a dict
     """
-    request_dict = json_request(query_dict)
+    request_dict = json_request(query_dict, booleans_as_strings=True)
     request_dict['domain'] = domain
     return request_dict
 

@@ -18,6 +18,7 @@ from celery import Celery
 import requests
 from soil import heartbeat
 
+from corehq.apps.hqadmin.escheck import check_es_cluster_health
 from corehq.apps.nimbus_api.utils import get_nimbus_url
 from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
@@ -90,6 +91,10 @@ def check_touchforms():
 
 @change_log_level('urllib3.connectionpool', logging.WARNING)
 def check_elasticsearch():
+    cluster_health = check_es_cluster_health()
+    if cluster_health != 'green':
+        return ServiceStatus(False, "Cluster health at %s" % cluster_health)
+
     doc = {'_id': 'elasticsearch-service-check',
            'date': datetime.datetime.now().isoformat()}
     send_to_elasticsearch('groups', doc)

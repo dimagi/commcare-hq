@@ -14,7 +14,7 @@ TODO:
 
 <div class="row">
    <div class="col-sm-12">
-        <table class="table table-condensed">
+        <table class="table table-condensed table-properties">
 
             <thead data-bind="visible: columns().length > 0">
                 <tr>
@@ -104,14 +104,14 @@ TODO:
                         attr: {disabled: !existsInCurrentVersion()}
                     "/>
                     <!-- /ko -->
-                    <label class="help-block" data-bind="if: $parent.showWarnings() && !property()">
-                        {% trans "Please select a property." %}</label>
-                    <label class="help-block" data-bind="if: !existsInCurrentVersion()">
+                    <strong class="help-block" data-bind="if: $parent.showWarnings() && !property()">
+                        {% trans "Please select a property." %}</strong>
+                    <strong class="help-block" data-bind="if: !existsInCurrentVersion()">
                         {% blocktrans %}
                         This property or question no longer exists in your app. <br>
                         You must delete this property to update this report.
                         {% endblocktrans %}
-                    </label>
+                    </strong>
                 </td>
 
                 <!--ko if: $parent.hasDisplayCol -->
@@ -121,7 +121,9 @@ TODO:
                             textInput: inputBoundDisplayText,
                             attr: {disabled: !isEditable},
                         ">
-                        <span data-bind="if: showDisplayTextError" class="help-block">This field is required</span>
+                        <strong data-bind="if: showDisplayTextError" class="help-block">
+                          {% trans "Display text should not be blank." %}
+                        </strong>
                     </div>
                 </td>
                 <!--/ko-->

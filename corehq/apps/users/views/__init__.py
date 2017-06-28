@@ -22,7 +22,7 @@ from django_otp.plugins.otp_static.models import StaticToken
 from djangular.views.mixins import allow_remote_invocation
 
 from couchdbkit.exceptions import ResourceNotFound
-from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
+from corehq.apps.users.landing_pages import get_allowed_landing_pages
 from corehq.util.view_utils import json_error
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
@@ -73,7 +73,6 @@ from corehq.apps.users.forms import (
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
                                       DomainRemovalRecord, UserRole, AdminUserRole, Invitation,
                                       DomainMembershipError)
-from corehq.apps.users.signals import clean_commcare_user
 from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.util.couch import get_document_or_404
 from corehq import toggles
@@ -146,7 +145,6 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
 
 
 class BaseEditUserView(BaseUserSettingsView):
-    user_update_form_class = None
 
     @use_select2
     def dispatch(self, request, *args, **kwargs):
@@ -201,24 +199,8 @@ class BaseEditUserView(BaseUserSettingsView):
             )
         )
 
-    @property
-    @memoized
     def form_user_update(self):
-        if self.user_update_form_class is None:
-            raise NotImplementedError("You must specify a form to update the user!")
-
-        if self.request.method == "POST" and self.request.POST['form_type'] == "update-user":
-            form = self.user_update_form_class(
-                data=self.request.POST, domain=self.domain, existing_user=self.editable_user)
-        else:
-            form = self.user_update_form_class(domain=self.domain, existing_user=self.editable_user)
-
-        if self.can_change_user_roles:
-            form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
-        else:
-            del form.fields['role']
-
-        return form
+        raise NotImplementedError()
 
     @property
     def main_context(self):
@@ -270,37 +252,14 @@ class BaseEditUserView(BaseUserSettingsView):
                         self.request.session['django_language'] = new_lang
                 return True
 
-    def custom_user_is_valid(self):
-        return True
-
     def post(self, request, *args, **kwargs):
         saved = False
         if self.request.POST['form_type'] == "commtrack":
             if self.commtrack_form.is_valid():
-                clean_commcare_user.send(
-                    'BaseEditUserView.commtrack',
-                    domain=self.domain,
-                    request_user=self.request.couch_user,
-                    user=self.editable_user,
-                    forms={self.commtrack_form.__class__.__name__: self.commtrack_form}
-                )
-                if self.commtrack_form.is_valid():
-                    self.commtrack_form.save(self.editable_user)
-                    saved = True
+                self.commtrack_form.save(self.editable_user)
+                saved = True
         elif self.request.POST['form_type'] == "update-user":
-            self.form_user_update.is_valid()
-            forms = {self.form_user_update.__class__.__name__: self.form_user_update}
-            if hasattr(self, 'custom_data'):
-                self.custom_data.is_valid()
-                forms[self.custom_data.__class__.__name__] = self.custom_data
-            clean_commcare_user.send(
-                'BaseEditUserView.update_user',
-                domain=self.domain,
-                request_user=self.request.couch_user,
-                user=self.editable_user,
-                forms=forms
-            )
-            if all([self.update_user(), self.custom_user_is_valid()]):
+            if self.update_user():
                 messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
                 saved = True
         if saved:
@@ -313,7 +272,22 @@ class EditWebUserView(BaseEditUserView):
     template_name = "users/edit_web_user.html"
     urlname = "user_account"
     page_title = ugettext_noop("Edit User Role")
-    user_update_form_class = UpdateUserRoleForm
+
+    @property
+    @memoized
+    def form_user_update(self):
+        if self.request.method == "POST" and self.request.POST['form_type'] == "update-user":
+            data = self.request.POST
+        else:
+            data = None
+        form = UpdateUserRoleForm(data=data, domain=self.domain, existing_user=self.editable_user)
+
+        if self.can_change_user_roles:
+            form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
+        else:
+            del form.fields['role']
+
+        return form
 
     @property
     def user_role_choices(self):
@@ -516,7 +490,7 @@ class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
             {'id': None, 'name': _('Use Default')}
         ] + [
             {'id': page.id, 'name': _(page.name)}
-            for page in ALLOWED_LANDING_PAGES
+            for page in get_allowed_landing_pages(self.domain)
         ]
 
     @property
@@ -770,7 +744,7 @@ class UserInvitationView(object):
 
     @property
     def success_msg(self):
-        return "You have been added to the %s domain" % self.domain
+        return _('You have been added to the "%s" project space.') % self.domain
 
     @property
     def redirect_to_on_success(self):

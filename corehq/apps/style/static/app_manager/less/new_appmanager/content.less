@@ -4,10 +4,6 @@
   background-color: @cc-brand-low;
   position:relative;
   box-sizing: border-box;
-  background-image: url('img/loading.gif');
-  background-repeat: no-repeat;
-  background-position: center 100px;
-  background-size: 25% auto;
 
   width: -webkit-calc(~"100% - " @app-manager-sidebar-width);
   width: -moz-calc(~"100% - " @app-manager-sidebar-width);
@@ -38,6 +34,44 @@
       margin-right: -2px;
     }
   }
+}
+
+.appmanager-loading-bg {
+  width: 224px;
+  height: 224px;
+
+  position: absolute;
+  top: 15vh;
+  left: 50%;
+  margin-left: -112px;
+
+  background-image: url('img/loading_flower.png');
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  background-size: 100% auto;
+
+  &:before {
+    display: block;
+    content: '';
+    width: 100%;
+    height: 100%;
+    background-image: url('img/loading_spiral.png');
+    background-size: 100% auto;
+    background-repeat: no-repeat;
+    background-position: 0 0;
+    animation: spin 4s infinite linear;
+    -webkit-animation: spin 4s infinite linear;
+  }
+}
+
+@keyframes spin {
+  0%  {-webkit-transform: rotate(0deg);}
+  100% {-webkit-transform: rotate(360deg);}
+}
+
+@-webkit-keyframes spin {
+  0%  {-webkit-transform: rotate(0deg);}
+  100% {-webkit-transform: rotate(360deg);}
 }
 
 .appmanager-content {
@@ -110,23 +144,44 @@
      margin-top: 7.5px;
      margin-bottom: 2px;
   }
-  .read-write.app-comment {
-    white-space: normal;
-  }
+}
+
+.appmanager-edit-title {
+  margin-right: 185px;
+}
+.appmanager-edit-app-title {
+  margin-right: 248px;
 }
 
 .appmanager-edit-title .ko-inline-edit {
-  margin-left: -12px;
-
+  width: 100%;
+  .read-only {
+    margin-left: 15px;
+    margin-top: 8px;
+  }
+  .read-only .prefixed-icon {
+    margin-left: -30px;
+  }
+  .read-write {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
   .read-write.h3 input{
-    margin-left: 12px;
+    margin-left: 0;
+    width: 100%
+  }
+  .read-write .form-group:first-child {
+    min-width: 80%;
+  }
+}
+.appmanager-edit-app-title .ko-inline-edit {
+  .read-only {
+    margin-left: -12px;
+    margin-top: 12px;
   }
 }
 .appmanager-edit-description .ko-inline-edit {
   margin-left: -8px;
-  .read-write.app-comment {
-    margin-left: 8px;
-  }
 }
 
 .appmanager-page-actions {

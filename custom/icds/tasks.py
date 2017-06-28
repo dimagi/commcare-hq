@@ -8,7 +8,7 @@ from corehq.apps.locations.dbaccessors import (
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.tasks import CELERY_REMINDERS_QUEUE
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
-from corehq.apps.sms.api import send_sms
+from corehq.apps.sms.api import send_sms, MessageMetadata
 from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
 from custom.icds.messaging.indicators import (
@@ -65,8 +65,12 @@ def run_indicator(domain, user_id, indicator_class, language_code=None):
     if not isinstance(messages, list):
         raise ValueError("Expected a list of messages")
 
+    metadata = MessageMetadata(custom_metadata={
+        'icds_indicator': indicator_class.slug,
+    })
+
     for message in messages:
-        send_sms(domain, usercase, phone_number, message)
+        send_sms(domain, usercase, phone_number, message, metadata=metadata)
 
 
 def get_awc_location_ids(domain):
@@ -101,7 +105,7 @@ def get_language_code(user_id, telugu_user_ids, marathi_user_ids):
 
 
 @periodic_task(
-    run_every=crontab(hour=3, minute=30, day_of_week='mon'),
+    run_every=crontab(hour=9, minute=0, day_of_week='tue'),
     queue=settings.CELERY_PERIODIC_QUEUE,
     ignore_result=True
 )
