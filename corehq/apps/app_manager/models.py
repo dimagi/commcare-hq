@@ -2031,6 +2031,10 @@ class DetailColumn(IndexedSchema):
                     item.value[lang] = interpolate_media_path(path)
         return to_ret
 
+    @property
+    def invisible(self):
+        return self.format == 'invisible'
+
 
 class SortElement(IndexedSchema):
     field = StringProperty()
@@ -2086,6 +2090,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     get_tabs = IndexedSchema.Getter('tabs')
 
     sort_elements = SchemaListProperty(SortElement)
+    sort_nodeset_columns = BooleanProperty()
     filter = StringProperty()
 
     # If True, a small tile will display the case name after selection.
@@ -2131,6 +2136,13 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     def rename_lang(self, old_lang, new_lang):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
+
+    def sort_nodeset_columns_for_detail(self):
+        return (
+            self.display == "long" and
+            self.sort_nodeset_columns and
+            any(tab for tab in self.get_tabs() if tab.has_nodeset)
+        )
 
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):

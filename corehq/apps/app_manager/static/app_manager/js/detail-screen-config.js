@@ -988,7 +988,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 this.allowsEmptyColumns = options.allowsEmptyColumns;
                 this.persistentCaseTileFromModule = (
                     ko.observable(spec[this.columnKey].persistent_case_tile_from_module || ""));
-
+                this.sortNodesetColumns = ko.observable(spec[this.columnKey].sort_nodeset_columns || false);
                 this.fireChange = function() {
                     that.fire('change');
                 };
@@ -1076,6 +1076,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     that.saveButton.fire('change');
                 });
                 this.enableTilePullDown.subscribe(function(){
+                    that.saveButton.fire('change');
+                });
+                this.sortNodesetColumns.subscribe(function(){
                     that.saveButton.fire('change');
                 });
                 this.columns.subscribe(function () {
@@ -1176,6 +1179,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     data.persistTileOnForms = this.persistTileOnForms();
                     data.persistentCaseTileFromModule = this.persistentCaseTileFromModule();
                     data.enableTilePullDown = this.persistTileOnForms() ? this.enableTilePullDown() : false;
+                    data.sortNodesetColumns = this.sortNodesetColumns() ? this.sortNodesetColumns() : false;
 
                     if (this.containsParentConfiguration) {
                         var parentSelect;

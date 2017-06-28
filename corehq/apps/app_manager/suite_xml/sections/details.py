@@ -35,7 +35,7 @@ from corehq.apps.app_manager.suite_xml.xml_models import (
     XpathVariable,
 )
 from corehq.apps.app_manager.suite_xml.features.scheduler import schedule_detail_variables
-from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search,\
+from corehq.apps.app_manager.util import create_temp_sort_column, module_offers_search, \
     get_sort_and_sort_only_columns
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import SuiteError
@@ -52,6 +52,9 @@ class DetailContributor(SectionContributor):
         self.build_profile_id = build_profile_id
 
     def get_section_elements(self):
+        def include_sort(detail_type, detail):
+            return detail_type.endswith('short') or detail.sort_nodeset_columns_for_detail()
+
         r = []
         if not self.app.use_custom_suite:
             for module in self.modules:
@@ -65,8 +68,9 @@ class DetailContributor(SectionContributor):
                             r.append(d)
                         else:
                             detail_column_infos = get_detail_column_infos(
+                                detail_type,
                                 detail,
-                                include_sort=detail_type.endswith('short'),
+                                include_sort=include_sort(detail_type, detail),
                             )  # list of DetailColumnInfo named tuples
                             if detail_column_infos:
                                 if detail.use_case_tiles:
@@ -164,7 +168,7 @@ class DetailContributor(SectionContributor):
                 #   column_info.sort_element: an instance of app_manager.models.SortElement
                 #   column_info.order: an integer
                 fields = get_column_generator(
-                    self.app, module, detail,
+                    self.app, module, detail, parent_tab_nodeset=nodeset,
                     detail_type=detail_type, *column_info
                 ).fields
                 d.fields.extend(fields)
@@ -365,6 +369,23 @@ class DetailsHelper(object):
         return detail_id if detail_id in self.active_details else None
 
 
+def get_nodeset_sort_elements(detail):
+    from corehq.apps.app_manager.models import SortElement
+    sort_elements = []
+    tab_spans = detail.get_tab_spans()
+    for tab in detail.get_tabs():
+        if tab.nodeset:
+            tab_span = tab_spans[tab.id]
+            for column in detail.columns[tab_span[0]:tab_span[1]]:
+                if column.invisible:
+                    sort_elements.append(SortElement(
+                        field=column.field,
+                        type='string',
+                        direction='ascending'
+                    ))
+    return sort_elements
+
+
 def get_default_sort_elements(detail):
     from corehq.apps.app_manager.models import SortElement
 
@@ -393,7 +414,7 @@ def get_default_sort_elements(detail):
     return sort_elements
 
 
-def get_detail_column_infos(detail, include_sort):
+def get_detail_column_infos(detail_type, detail, include_sort):
     """
     This is not intented to be a widely used format
     just a packaging of column info into a form most convenient for rendering
@@ -405,6 +426,8 @@ def get_detail_column_infos(detail, include_sort):
 
     if detail.sort_elements:
         sort_elements = detail.sort_elements
+    elif detail.sort_nodeset_columns_for_detail():
+        sort_elements = get_nodeset_sort_elements(detail)
     else:
         sort_elements = get_default_sort_elements(detail)
 
