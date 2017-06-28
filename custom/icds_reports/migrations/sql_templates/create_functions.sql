@@ -778,9 +778,11 @@ DECLARE
 	_vhnd_tablename text;
 	_ls_tablename text;
 	_infra_tablename text;
+	_household_tablename text;
 	_all_text text;
 	_null_value text;
 	_rollup_text text;
+	_rollup_text2 text;
 	_yes_text text;
 	_no_text text;
 BEGIN
@@ -801,6 +803,7 @@ BEGIN
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('vhnd') INTO _vhnd_tablename;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('awc_mgmt') INTO _ls_tablename;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('infrastructure') INTO _infra_tablename;
+	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('household') INTO _household_tablename;
 
 	-- Setup base locations and month
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
@@ -929,6 +932,16 @@ BEGIN
 		'FROM ' || quote_ident(_ccs_record_tablename) || ' ' ||
 		'WHERE month = ' || quote_literal(_start_date) || ' AND caste != ' || quote_literal(_all_text) || ' GROUP BY awc_id, month) ut ' ||
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
+
+	-- Aggregate household table
+	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
+		'cases_household = ut.cases_household ' ||
+	'FROM (SELECT ' ||
+		'owner_id, ' ||
+		'sum(open_count) AS cases_household ' ||
+		'FROM ' || quote_ident(_household_tablename) || ' ' ||
+		'GROUP BY owner_id) ut ' ||
+	'WHERE ut.owner_id = agg_awc.awc_id';
 
 	-- Pass to combine THR information from ccs record and child health table
 	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' SET thr_score = ' ||
@@ -1238,6 +1251,8 @@ BEGIN
 		'sum(trained_phase_3), ' ||
 		'sum(trained_phase_4), ';
 
+    _rollup_text2 = 'sum(cases_household) ';
+
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
@@ -1252,7 +1267,8 @@ BEGIN
 		quote_nullable(_null_value) || ', ' ||
 		quote_nullable(_null_value) || ', ' ||
 		'1, ' ||
-		'sum(num_launched_awcs) ' ||
+		'sum(num_launched_awcs), ' ||
+		_rollup_text2 ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, month)';
 
@@ -1269,7 +1285,8 @@ BEGIN
 		quote_nullable(_null_value) || ', ' ||
 		'1, ' ||
 		'sum(num_launched_supervisors), ' ||
-		'sum(num_launched_awcs) ' ||
+		'sum(num_launched_awcs), ' ||
+		_rollup_text2 ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE awc_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, month)';
@@ -1287,7 +1304,8 @@ BEGIN
 		'1, ' ||
 		'sum(num_launched_blocks), ' ||
 		'sum(num_launched_supervisors), ' ||
-		'sum(num_launched_awcs) ' ||
+		'sum(num_launched_awcs), ' ||
+		_rollup_text2 ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE supervisor_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, district_id, month)';
@@ -1305,7 +1323,8 @@ BEGIN
 		'sum(num_launched_districts), ' ||
 		'sum(num_launched_blocks), ' ||
 		'sum(num_launched_supervisors), ' ||
-		'sum(num_launched_awcs) ' ||
+		'sum(num_launched_awcs), ' ||
+		_rollup_text2 ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE block_id = ' || quote_literal(_all_text) || ' ' ||
 		'GROUP BY state_id, month)';
