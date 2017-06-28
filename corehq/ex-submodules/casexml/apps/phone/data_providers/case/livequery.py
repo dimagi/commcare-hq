@@ -119,7 +119,7 @@ def get_payload(timing_context, restore_state):
                     # traverse to open extension
                     assert ref_id in prev_ids, (index, prev_ids)
                     assert relation == EXTENSION, index
-                    if sub_id in all_ids:  # exclude circular
+                    if sub_id not in all_ids:  # exclude circular
                         next_ids.add(sub_id)
 
                     if ref_id in live_ids:
