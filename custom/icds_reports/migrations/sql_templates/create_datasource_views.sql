@@ -146,6 +146,7 @@ CREATE VIEW agg_awc_monthly AS
         "agg_awc"."infra_baby_weighing_scale" AS "infra_baby_weighing_scale",
         "agg_awc"."infra_flat_weighing_scale" AS "infra_flat_weighing_scale",
         "agg_awc"."infra_adult_weighing_scale" AS "infra_adult_weighing_scale",
+        "agg_awc"."infra_infant_weighing_scale" AS "infra_infant_weighing_scale",
         "agg_awc"."infra_cooking_utensils" AS "infra_cooking_utensils",
         "agg_awc"."infra_medicine_kits" AS "infra_medicine_kits",
         "agg_awc"."infra_adequate_space_pse" AS "infra_adequate_space_pse",
