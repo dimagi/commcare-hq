@@ -166,6 +166,7 @@ class ScheduledReportSendingTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ScheduledReportSendingTest, cls).setUpClass()
         cls.domain_obj = create_domain(cls.domain)
         cls.user = WebUser.create(
             domain=cls.domain,
@@ -177,6 +178,7 @@ class ScheduledReportSendingTest(TestCase):
     def tearDownClass(cls):
         cls.domain_obj.delete()
         cls.user.delete()
+        super(ScheduledReportSendingTest, cls).tearDownClass()
 
     def test_get_scheduled_report_response(self):
         domain = self.domain

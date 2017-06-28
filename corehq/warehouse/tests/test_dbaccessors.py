@@ -22,6 +22,7 @@ class TestDbAccessors(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestDbAccessors, cls).setUpClass()
         db = SimplifiedSyncLog.get_db()
         # datetime.min is not compatible for `json_format_datetime`
         for synclog_id in get_synclog_ids_by_date(datetime(1970, 1, 1), datetime.max):
@@ -61,6 +62,7 @@ class TestDbAccessors(TestCase):
         cls.web_user.delete()
         cls.domain_obj.delete()
         cls.synclog.delete()
+        super(TestDbAccessors, cls).tearDownClass()
 
     def test_get_group_ids_by_last_modified(self):
         start = datetime.utcnow() - timedelta(days=3)

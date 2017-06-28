@@ -48,6 +48,9 @@ VISIBILITY_CHOICES = (
 )
 
 
+SOFT_ROLLOUT_HELP_TEXT = "Percentage of requests to send to ES. Only useful for Laboratory reports"
+
+
 class ConfigurableReportEditForm(DocumentFormBase):
 
     config_id = forms.ChoiceField()  # gets overridden on instantiation
@@ -59,7 +62,7 @@ class ConfigurableReportEditForm(DocumentFormBase):
     columns = JsonField(expected_type=list)
     configured_charts = JsonField(expected_type=list)
     sort_expression = JsonField(expected_type=list)
-    soft_rollout = forms.DecimalField(min_value=0, max_value=1)
+    soft_rollout = forms.DecimalField(min_value=0, max_value=1, help_text=SOFT_ROLLOUT_HELP_TEXT)
 
     def __init__(self, domain, instance=None, read_only=False, *args, **kwargs):
         super(ConfigurableReportEditForm, self).__init__(instance, read_only, *args, **kwargs)

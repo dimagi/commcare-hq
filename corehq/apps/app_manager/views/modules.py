@@ -785,6 +785,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     persist_tile_on_forms = params.get("persistTileOnForms", None)
     persistent_case_tile_from_module = params.get("persistentCaseTileFromModule", None)
     pull_down_tile = params.get("enableTilePullDown", None)
+    sort_nodeset_columns = params.get("sortNodesetColumns", None)
     print_template = params.get('printTemplate', None)
     case_list_lookup = params.get("case_list_lookup", None)
     search_properties = params.get("search_properties")
@@ -855,6 +856,9 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
                 "There was an issue with your custom variables: {}".format(error.message)
             )
         detail.long.custom_variables = custom_variables['long']
+
+    if sort_nodeset_columns is not None:
+        detail.long.sort_nodeset_columns = sort_nodeset_columns
 
     if sort_elements is not None:
         detail.short.sort_elements = []

@@ -44,7 +44,7 @@ class Command(BaseCommand):
             metadata={
                 'enikshay_enabled': 'yes',
                 'is_test': 'no',
-                'private_sector_org_id': org_id,
+                'private_sector_org_id': str(org_id),
                 'sector': 'private',
             },
         )
@@ -72,8 +72,8 @@ class Command(BaseCommand):
                 'enikshay_enabled': 'yes',
                 'is_test': 'no',
                 'nikshay_code': agency.nikshayId,
-                'private_sector_agency_id': agency.agencyId,
-                'private_sector_org_id': org_id,
+                'private_sector_agency_id': str(agency.agencyId),
+                'private_sector_org_id': str(org_id),
                 'sector': 'private',
 
             },

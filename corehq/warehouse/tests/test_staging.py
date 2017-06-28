@@ -20,6 +20,7 @@ class BaseStagingTableTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(BaseStagingTableTest, cls).setUpClass()
         for record in cls.records:
             record.save()
 
@@ -30,6 +31,7 @@ class BaseStagingTableTest(TestCase):
     def tearDownClass(cls):
         for record in cls.records:
             record.delete()
+        super(BaseStagingTableTest, cls).tearDownClass()
 
 
 class StagingRecordsTestsMixin(object):

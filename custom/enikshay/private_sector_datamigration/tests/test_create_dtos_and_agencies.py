@@ -58,7 +58,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
             {
                 'enikshay_enabled': 'yes',
                 'is_test': 'no',
-                'private_sector_org_id': 1,
+                'private_sector_org_id': '1',
                 'sector': 'private',
             }
         )
@@ -72,7 +72,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
             {
                 'enikshay_enabled': 'yes',
                 'is_test': 'no',
-                'private_sector_org_id': 4,
+                'private_sector_org_id': '4',
                 'sector': 'private',
             }
         )
@@ -127,8 +127,8 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
                 'enikshay_enabled': 'yes',
                 'is_test': 'no',
                 'nikshay_code': '988765',
-                'private_sector_agency_id': agency_id,
-                'private_sector_org_id': 1,
+                'private_sector_agency_id': str(agency_id),
+                'private_sector_org_id': '1',
                 'sector': 'private',
 
             }
@@ -143,7 +143,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
             {
                 'enikshay_enabled': 'yes',
                 'is_test': 'no',
-                'private_sector_org_id': 1,
+                'private_sector_org_id': '1',
                 'sector': 'private',
             }
         )
@@ -157,7 +157,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
         self.assertDictEqual(
             user_data_minus_commcare_primary_case_sharing_id,
             {
-                'agency_id_legacy': 100789,
+                'agency_id_legacy': '100789',
                 'commcare_location_id': agency.location_id,
                 'commcare_location_ids': agency.location_id,
                 'commcare_project': self.domain,

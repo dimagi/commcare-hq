@@ -26,6 +26,7 @@ class FormFactIntegrationTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(FormFactIntegrationTest, cls).setUpClass()
         delete_all_docs_by_doc_type(Domain.get_db(), ['Domain', 'Domain-Deleted'])
         delete_all_docs_by_doc_type(CommCareUser.get_db(), ['CommCareUser', 'WebUser'])
         cls.domain_records = [
@@ -83,6 +84,7 @@ class FormFactIntegrationTest(TestCase):
         UserDim.clear_records()
         FormStagingTable.clear_records()
         FormFact.clear_records()
+        super(FormFactIntegrationTest, cls).tearDownClass()
 
     def test_loading_form_fact(self):
         start = datetime.utcnow() - timedelta(days=3)

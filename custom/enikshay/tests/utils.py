@@ -417,6 +417,8 @@ class ENikshayLocationStructureMixin(object):
         }
         self.sto.save()
 
+        self.cto = locations['CTO']
+
         self.dto = locations['DTO']
         self.dto.metadata = {
             'nikshay_code': 'ABD',

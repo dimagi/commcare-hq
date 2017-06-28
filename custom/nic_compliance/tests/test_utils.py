@@ -18,6 +18,7 @@ OBFUSCATED_PASSWORD_MAPPING = {
 class TestDecodePassword(TestCase):
     @classmethod
     def setUpClass(cls):
+        super(TestDecodePassword, cls).setUpClass()
         cls.domain = Domain(name="delhi", is_active=True)
         cls.domain.save()
         cls.username = "username@test.com"
@@ -27,6 +28,7 @@ class TestDecodePassword(TestCase):
     def tearDownClass(cls):
         cls.domain.delete()
         cls.web_user.delete()
+        super(TestDecodePassword, cls).tearDownClass()
 
     def test_login_attempt(self):
         get_redis_client().clear()

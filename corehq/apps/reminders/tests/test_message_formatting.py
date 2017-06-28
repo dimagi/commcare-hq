@@ -15,6 +15,7 @@ class MessageTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(MessageTestCase, cls).setUpClass()
         cls.domain = 'message-formatting-test'
         cls.domain_obj = Domain(name=cls.domain)
         cls.domain_obj.save()
@@ -58,6 +59,7 @@ class MessageTestCase(TestCase):
         cls.group.delete()
         cls.location.delete()
         cls.location_type.delete()
+        super(MessageTestCase, cls).tearDownClass()
 
     def test_render_context(self):
         message = 'The EDD for client with ID {case.external_id} is approaching in {case.edd.days_until} days.'
