@@ -927,7 +927,7 @@ class MessagingTab(UITab):
     def reminders_urls(self):
         reminders_urls = []
 
-        if self.can_access_reminders:
+        if self.can_access_reminders and not self.project.uses_new_reminders:
             from corehq.apps.reminders.views import (
                 EditScheduledReminderView,
                 CreateScheduledReminderView,
@@ -997,7 +997,7 @@ class MessagingTab(UITab):
     def messages_urls(self):
         messages_urls = []
 
-        if self.can_use_outbound_sms:
+        if self.can_use_outbound_sms and not self.project.uses_new_reminders:
             messages_urls.extend([
                 {
                     'title': _('Compose SMS Message'),

@@ -92,6 +92,7 @@ class ScheduledRemindersCalendarView(BaseMessagingSectionView):
     page_title = ugettext_noop("Reminder Calendar")
     template_name = 'reminders/partial/scheduled_reminders.html'
 
+    @method_decorator(requires_old_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @method_decorator(reminders_framework_permission)
     def dispatch(self, *args, **kwargs):
@@ -158,6 +159,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     template_name = 'reminders/manage_scheduled_reminder.html'
     ui_type = UI_SIMPLE_FIXED
 
+    @method_decorator(requires_old_reminder_framework())
     @method_decorator(reminders_framework_permission)
     @use_jquery_ui
     @use_timepicker
