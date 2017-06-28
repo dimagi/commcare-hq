@@ -37,6 +37,7 @@ class BaseDim(models.Model, WarehouseTable):
     def commit(cls, batch_record):
         with transaction.atomic(using=db_for_read_write(cls)):
             cls.load(batch_record)
+        return True
 
     class Meta:
         abstract = True
