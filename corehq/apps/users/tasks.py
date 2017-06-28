@@ -215,11 +215,13 @@ def resend_pending_invitations():
 
 
 @task
-def turn_on_demo_mode_task(couch_user, domain):
+def turn_on_demo_mode_task(commcare_user_id, domain):
     from corehq.apps.ota.utils import turn_on_demo_mode
+    from corehq.apps.users.models import CommCareUser
 
+    user = CommCareUser.get(commcare_user_id)
     DownloadBase.set_progress(turn_on_demo_mode_task, 0, 100)
-    results = turn_on_demo_mode(couch_user, domain)
+    results = turn_on_demo_mode(user, domain)
     DownloadBase.set_progress(turn_on_demo_mode_task, 100, 100)
 
     return {
@@ -228,13 +230,16 @@ def turn_on_demo_mode_task(couch_user, domain):
 
 
 @task
-def reset_demo_user_restore_task(couch_user, domain):
+def reset_demo_user_restore_task(commcare_user_id, domain):
     from corehq.apps.ota.utils import reset_demo_user_restore
+    from corehq.apps.users.models import CommCareUser
+
+    user = CommCareUser.get(commcare_user_id)
 
     DownloadBase.set_progress(reset_demo_user_restore_task, 0, 100)
 
     try:
-        reset_demo_user_restore(couch_user, domain)
+        reset_demo_user_restore(user, domain)
         results = {'errors': []}
     except Exception as e:
         notify_exception(None, message=e.message)
