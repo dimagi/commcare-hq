@@ -16,17 +16,6 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
         cls.domain = 'test_domain'
         super(TestCreateDTOsAndAgencies, cls).setUpClass()
 
-        cls.user_role = UserRole(
-            domain=cls.domain,
-            name='Default Mobile Worker',
-        )
-        cls.user_role.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user_role.delete()
-        super(TestCreateDTOsAndAgencies, cls).tearDownClass()
-
     def setUp(self):
         super(TestCreateDTOsAndAgencies, self).setUp()
         LocationType.objects.filter(
@@ -39,6 +28,16 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
                 'plc',
             ],
         ).update(has_user=True)
+
+        self.user_role = UserRole(
+            domain=self.domain,
+            name='Default Mobile Worker',
+        )
+        self.user_role.save()
+
+    def tearDown(self):
+        self.user_role.delete()
+        super(TestCreateDTOsAndAgencies, self).tearDown()
 
     def test_create_dtos(self):
         start_loc_count = SQLLocation.objects.filter(domain=self.domain).count()
