@@ -157,9 +157,45 @@ def get_test_case_properties(domain, row):
 
 
 def get_drug_resistance_case_properties(row):
-    resistant_drugs = get_drug_resistances(row)
+    resistant_drugs = {
+        d['drug_id']: d
+        for d in get_drug_resistances_from_drug_resistance_list(row)
+    }
+    additional_drug_case_properties = get_drug_resistances_from_individual_drug_columns(row)
+    for drug in additional_drug_case_properties:
+        resistant_drugs[drug['drug_id']] = drug
+    return resistant_drugs.values()
+
+
+def get_drug_resistances_from_individual_drug_columns(row):
     case_properties = []
-    for drug in resistant_drugs:
+    for drug_column_key, (drug_id, drug_name) in DRUG_MAP.iteritems():
+        value = Mehsana2016ColumnMapping.get_value(drug_column_key, row)
+        properties = {
+            "name": drug_id,  # TODO: Should this be case_name? Is this even the right name?
+            "owner_id": "-",
+            "sensitivity": convert_sensitivity(value),
+            "drug_id": drug_id,
+            "drug_name": drug_name,  # TODO: This property isn't in the case summary (but it is in the sheet sheel made)
+        }
+        case_properties.append(properties)
+    return case_properties
+
+
+def convert_sensitivity(sensitivity_value):
+    return {
+        "S": "sensitive",
+        "R": "resistant",
+        "Conta": "unknown",
+        "": "unknown",
+        None: "unknown",
+    }[sensitivity_value]
+
+
+def get_drug_resistances_from_drug_resistance_list(row):
+    drugs = get_resistance_properties(row).get("drug_resistance_list", "").split(" ")
+    case_properties = []
+    for drug in drugs:
         properties = {
             "name": drug,  # TODO: case_name?
             "owner_id": "-",
@@ -168,11 +204,6 @@ def get_drug_resistance_case_properties(row):
         }
         case_properties.append(properties)
     return case_properties
-
-
-def get_drug_resistances(row):
-    drugs = get_resistance_properties(row).get("drug_resistance_list", "").split(" ")
-    return drugs
 
 
 def get_follow_up_test_case_properties(row):
@@ -284,6 +315,29 @@ mehsana_2016_mapping = {
     "month_6_follow_up_send_date": 56,
     "month_6_follow_up_result_date": 57,
     "month_6_follow_up_result": 58,
+    "S": 28,
+    "H (0.1)": 29,
+    "H (0.4)": 30,
+    "R": 31,
+    "Z": 32,
+    "Km": 33,
+    "Cm": 34,
+    # "Lfx": 35,
+    # "Mfx (0,5)": 36,
+    # "Mfx (2)": 37,
+    # "PAS": 38,
+    # "Lzd": 39,
+}
+
+DRUG_MAP = {
+    # column key -> (id, name)
+    "S": ("s", "S"),
+    "H (0.1)": ("h_inha", "H (inhA)"),
+    "H (0.4)": ("h_katg", "H (katG)"),
+    "R": ("r", "R"),
+    "Z": ("z", "Z"),
+    "Km": ("km", "KM"),
+    "Cm": ("cm", "CM"),
 }
 
 
