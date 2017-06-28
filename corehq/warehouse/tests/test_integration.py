@@ -7,6 +7,7 @@ from corehq.apps.domain.models import Domain
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils
 
+from corehq.warehouse.tests.utils import DEFAULT_BATCH_ID, create_batch, get_default_batch
 from corehq.warehouse.models import (
     UserStagingTable,
     DomainStagingTable,
@@ -14,7 +15,18 @@ from corehq.warehouse.models import (
     DomainDim,
     FormStagingTable,
     FormFact,
+    BatchRecord,
 )
+
+
+def setup_module():
+    start = datetime.utcnow() - timedelta(days=3)
+    end = datetime.utcnow() + timedelta(days=3)
+    create_batch(start, end, DEFAULT_BATCH_ID)
+
+
+def teardown_module():
+    BatchRecord.objects.all().delete()
 
 
 class FormFactIntegrationTest(TestCase):
@@ -87,23 +99,22 @@ class FormFactIntegrationTest(TestCase):
         super(FormFactIntegrationTest, cls).tearDownClass()
 
     def test_loading_form_fact(self):
-        start = datetime.utcnow() - timedelta(days=3)
-        end = datetime.utcnow() + timedelta(days=3)
+        batch = get_default_batch()
 
-        DomainStagingTable.commit(start, end)
+        DomainStagingTable.commit(batch)
         self.assertEqual(DomainStagingTable.objects.count(), len(self.domain_records))
 
-        DomainDim.commit(start, end)
+        DomainDim.commit(batch)
         self.assertEqual(DomainDim.objects.count(), len(self.domain_records))
 
-        UserStagingTable.commit(start, end)
+        UserStagingTable.commit(batch)
         self.assertEqual(UserStagingTable.objects.count(), len(self.user_records))
 
-        UserDim.commit(start, end)
+        UserDim.commit(batch)
         self.assertEqual(UserDim.objects.count(), len(self.user_records))
 
-        FormStagingTable.commit(start, end)
+        FormStagingTable.commit(batch)
         self.assertEqual(FormStagingTable.objects.count(), len(self.form_records))
 
-        FormFact.commit(start, end)
+        FormFact.commit(batch)
         self.assertEqual(FormFact.objects.count(), len(self.form_records))
