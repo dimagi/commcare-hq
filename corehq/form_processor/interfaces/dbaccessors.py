@@ -430,7 +430,7 @@ class AbstractLedgerAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def get_latest_transaction(case_id, section_id, entry_id):
-        raise NotImplementedError\
+        raise NotImplementedError
 
     @abstractmethod
     def get_current_ledger_state(case_ids, ensure_form_id=False):

@@ -100,6 +100,7 @@ def get_related_indices(domain, case_ids, exclude_ids):
     WARNING this is inefficient (better version in SQL).
     """
     from casexml.apps.case.models import CommCareCase
+
     def _index(row):
         return CaseIndexInfo(
             case_id=row['id'],

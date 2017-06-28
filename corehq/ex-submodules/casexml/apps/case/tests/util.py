@@ -136,7 +136,7 @@ def extract_caseblocks_from_xml(payload_string, version=V2):
 
 @contextmanager
 def cached_restore(testcase, user, restore_id="", version=V2,
-                  purge_restore_cache=False):
+                   purge_restore_cache=False):
     assert not hasattr(testcase, 'restore_config'), testcase
     assert not hasattr(testcase, 'payload_string'), testcase
 

@@ -41,11 +41,11 @@ def get_payload(timing_context, restore_state):
     """Get case sync restore response
     """
     def enliven(case_id):
-        """Bring life to extensions of live case and hosts of those
+        """Mark the given case, its extensions and their hosts as live
 
         This closure mutates `live_ids`, `extensions_by_host`, and
         `hosts_by_extension`, which are data structures local to the
-        encloding function.
+        enclosing function.
         """
         if case_id in live_ids:
             # already live
@@ -97,9 +97,8 @@ def get_payload(timing_context, restore_state):
                 debug("%s --%s--> %s", sub_id, relation, ref_id)
                 if sub_id in prev_ids:
                     # traverse to parent/host
-                    if ref_id in all_ids:  # exclude circular
-                        raise NotImplementedError('circular %r' % index)
-                    next_ids.add(ref_id)
+                    if ref_id not in all_ids:  # exclude circular
+                        next_ids.add(ref_id)
 
                     if (sub_id in live_ids
                             or (relation == EXTENSION and ref_id in live_ids)
@@ -120,8 +119,7 @@ def get_payload(timing_context, restore_state):
                     assert ref_id in prev_ids, (index, prev_ids)
                     assert relation == EXTENSION, index
                     if sub_id in all_ids:  # exclude circular
-                        raise NotImplementedError('circular %r' % index)
-                    next_ids.add(sub_id)
+                        next_ids.add(sub_id)
 
                     if ref_id in live_ids:
                         # sub is the extension of a live case
@@ -147,9 +145,6 @@ def get_payload(timing_context, restore_state):
             enliven(case_id)
 
         debug('live: %r', live_ids)
-
-        # TODO? save updated sync logs (is this part of a restore? hopefully not)
-        # TODO? tell phone to remove no-longer-relevant cases?
 
         with timing_context("compile_response"):
             iaccessor = PrefetchIndexCaseAccessor(accessor, indices)
@@ -194,7 +189,6 @@ def compile_response(timing_context, batches, restore_state):
             response.extend(get_commtrack_elements(cases, restore_state))
 
         with timing_context("get_case_sync_updates (%s cases)" % len(cases)):
-            # TODO verify that clean_owners.py:process_case_batch does not change persistent state
             updates = get_case_sync_updates(
                 restore_state.domain, cases, restore_state.last_sync_log)
 
