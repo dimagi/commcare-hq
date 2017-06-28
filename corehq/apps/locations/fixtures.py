@@ -199,7 +199,7 @@ def get_location_fixture_queryset(user):
 
     all_locations = SQLLocation.objects.none()
 
-    user_locations = user.get_sql_locations(user.domain)
+    user_locations = user.get_sql_locations(user.domain).prefetch_related('location_type')
 
     all_locations |= _get_include_without_expanding_locations(user.domain, user_locations)
 
@@ -247,15 +247,15 @@ def _get_include_without_expanding_locations(domain, assigned_locations):
     """returns all locations set for inclusion along with their ancestors
     """
     # all loctypes to include, based on all assigned location types
-    location_types = (LocationType.objects
-                      .filter(sqllocation__in=assigned_locations)
-                      .exclude(include_without_expanding=None)
-                      .distinct()
-                      .values_list('include_without_expanding', flat=True))
+    location_type_ids = {
+        loc.location_type.include_without_expanding_id
+        for loc in assigned_locations
+        if loc.location_type.include_without_expanding_id is not None
+    }
     # all levels to include, based on the above loctypes
     forced_levels = (SQLLocation.active_objects
                      .filter(domain__exact=domain,
-                             location_type__in=location_types)
+                             location_type_id__in=location_type_ids)
                      .values_list('level', flat=True)
                      .order_by('level')
                      .distinct('level'))
