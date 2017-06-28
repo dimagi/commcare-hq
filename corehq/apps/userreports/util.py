@@ -16,7 +16,6 @@ from corehq.apps.userreports.const import (
 from django_prbac.utils import has_privilege
 
 from corehq.apps.userreports.dbaccessors import get_all_es_data_sources
-from corehq.apps.userreports.exceptions import UserReportsError
 
 
 def localize(value, lang):

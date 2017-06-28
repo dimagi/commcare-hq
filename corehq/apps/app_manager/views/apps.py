@@ -4,7 +4,6 @@ import os
 import tempfile
 import zipfile
 from collections import defaultdict
-from StringIO import StringIO
 from wsgiref.util import FileWrapper
 
 from django.utils.text import slugify
@@ -43,7 +42,6 @@ from corehq.apps.app_manager.util import (
     get_app_manager_template,
 )
 from corehq.apps.domain.models import Domain
-from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.compression import decompress
