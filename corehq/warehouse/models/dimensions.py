@@ -26,7 +26,7 @@ class BaseDim(models.Model, WarehouseTable):
 
     dim_last_modified = models.DateTimeField(auto_now=True)
     dim_created_on = models.DateTimeField(auto_now_add=True)
-    deleted = models.BooleanField(default=False)
+    deleted = models.BooleanField()
 
     @classmethod
     def commit(cls, start_datetime, end_datetime):

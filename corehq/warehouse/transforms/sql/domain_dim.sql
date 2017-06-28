@@ -25,9 +25,9 @@ SELECT
     hr_name,
     creating_user_id,
     project_type,
-    CASE doc_type
-        WHEN 'Domain' THEN false
-        WHEN 'Domain-Deleted' THEN true
+    CASE
+        WHEN doc_type = 'Domain' THEN false
+        WHEN doc_type LIKE 'Domain-Deleted%' THEN true
     END,
     is_active,
     case_sharing,

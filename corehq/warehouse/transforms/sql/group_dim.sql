@@ -16,9 +16,9 @@ SELECT
     case_sharing,
     reporting,
     group_last_modified,
-    CASE doc_type
-        WHEN 'Group' THEN false
-        WHEN 'Group-Deleted' THEN true
+    CASE
+        WHEN doc_type = 'Group' THEN false
+        WHEN doc_type LIKE 'Group-Deleted%' THEN true
     END,
     now(),
     now()
