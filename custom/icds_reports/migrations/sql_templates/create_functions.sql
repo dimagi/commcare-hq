@@ -128,7 +128,7 @@ BEGIN
 		'has_aadhar_id, ' ||
 		'thr_eligible, ' ||
 		'pnc_eligible, ' ||
-		'cf_initiation_in_month, ' ||
+		'cf_initiated, ' ||
 		'cf_initiation_eligible, ' ||
 		'height_measured_in_month, ' ||
 		'current_month_stunting, ' ||
@@ -324,7 +324,7 @@ BEGIN
 		'sum(wasting_severe), ' ||
 		'sum(stunting_moderate), ' ||
 		'sum(stunting_severe), ' ||
-		'sum(cf_initiation_in_month), ' ||
+		'sum(cf_initiated), ' ||
 		'sum(cf_initiation_eligible), ' ||
 		'sum(height_measured_in_month), ' ||
 		'sum(wasting_normal), ' ||

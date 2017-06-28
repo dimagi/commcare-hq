@@ -32,10 +32,10 @@ ALTER TABLE agg_child_health ADD COLUMN valid_all_registered_in_month integer;
 ALTER TABLE child_health_monthly ADD COLUMN cf_initiation_in_month integer;
 ALTER TABLE child_health_monthly ADD COLUMN cf_initiation_eligible integer;
 ALTER TABLE child_health_monthly ADD COLUMN height_measured_in_month integer;
-ALTER TABLE child_health_monthly ADD COLUMN current_month_stunting integer;
-ALTER TABLE child_health_monthly ADD COLUMN stunting_last_recorded integer;
-ALTER TABLE child_health_monthly ADD COLUMN wasting_last_recorded integer;
-ALTER TABLE child_health_monthly ADD COLUMN current_month_wasting integer;
+ALTER TABLE child_health_monthly ADD COLUMN current_month_stunting text;
+ALTER TABLE child_health_monthly ADD COLUMN stunting_last_recorded text;
+ALTER TABLE child_health_monthly ADD COLUMN wasting_last_recorded text;
+ALTER TABLE child_health_monthly ADD COLUMN current_month_wasting text;
 ALTER TABLE child_health_monthly ADD COLUMN valid_in_month integer;
 ALTER TABLE child_health_monthly ADD COLUMN valid_all_registered_in_month integer;
 
