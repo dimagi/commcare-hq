@@ -14,6 +14,7 @@ ALTER TABLE agg_awc ADD COLUMN cases_person_adolescent_girls_11_14 integer;
 ALTER TABLE agg_awc ADD COLUMN cases_person_adolescent_girls_15_18 integer;
 ALTER TABLE agg_awc ADD COLUMN cases_person_adolescent_girls_11_14_all integer;
 ALTER TABLE agg_awc ADD COLUMN cases_person_adolescent_girls_15_18_all integer;
+ALTER TABLE agg_awc ADD COLUMN infra_infant_weighing_scale integer;
 
 ALTER TABLE agg_child_health ADD COLUMN pnc_eligible integer;
 ALTER TABLE agg_child_health ADD COLUMN height_eligible integer;
