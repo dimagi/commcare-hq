@@ -12,6 +12,9 @@ RATE_LIMITED_EXCEPTIONS = {
     'redis.exceptions.ConnectionError': 'redis',
     'restkit.errors.RequestError': 'couchdb',
     'restkit.errors.RequestFailed': 'couchdb',
+    'dimagi.utils.couch.bulk.BulkFetchException': 'couchdb',
+    'socketpool.pool.MaxTriesError': 'couchdb',
+    'corehq.elastic.ESError': 'elastic',
 }
 
 
