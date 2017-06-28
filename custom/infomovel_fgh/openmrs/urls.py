@@ -6,6 +6,7 @@ from custom.infomovel_fgh.openmrs.views import (
     openmrs_raw_api,
     openmrs_test_fire,
     OpenmrsRepeaterView,
+    openmrs_edit_config,
 )
 
 urlpatterns = [
@@ -14,6 +15,11 @@ urlpatterns = [
         OpenmrsRepeaterView.as_view(),
         {'repeater_type': 'OpenmrsRepeater'},
         name=OpenmrsRepeaterView.urlname
+    ),
+    url(
+        r'^(?P<repeater_id>\w+)/edit_config/$',
+        openmrs_edit_config,
+        name='openmrs_edit_config',
     ),
     url(
         r'^(?P<repeater_id>\w+)/patientidentifiertypes/$',

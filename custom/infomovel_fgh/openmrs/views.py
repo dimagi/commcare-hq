@@ -1,10 +1,12 @@
-
+import json
 from django.http import JsonResponse
-from django.utils.decorators import method_decorator
-from django.views import View
-from corehq.apps.domain.decorators import login_and_domain_required, LoginAndDomainMixin
+from django.shortcuts import render
+from django.views.decorators.http import require_http_methods
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.views import AddCaseRepeaterView
+from custom.infomovel_fgh.openmrs.field_mappings import OpenmrsCaseConfig, OpenmrsFormConfig
+from custom.infomovel_fgh.openmrs.forms import OpenmrsConfigForm
 from custom.infomovel_fgh.openmrs.repeater_helpers import Requests, \
     get_patient_identifier_types, get_person_attribute_types
 from custom.infomovel_fgh.openmrs.repeaters import OpenmrsRepeater
@@ -15,6 +17,38 @@ class OpenmrsRepeaterView(AddCaseRepeaterView):
     urlname = 'new_openmrs_repeater$'
     page_title = "Forward to OpenMRS"
     page_name = "Forward to OpenMRS"
+
+
+@login_and_domain_required
+@require_http_methods(["GET", "POST"])
+def openmrs_edit_config(request, domain, repeater_id):
+    helper = OpenmrsModelListViewHelper(request, domain, repeater_id)
+    repeater = helper.repeater
+    print repeater.to_json()
+    if request.method == 'POST':
+        repeater.clear_caches()
+        form = OpenmrsConfigForm(data=request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            repeater.openmrs_config.case_config = OpenmrsCaseConfig.wrap(data['case_config'])
+            repeater.openmrs_config.form_configs = map(OpenmrsFormConfig.wrap, data['form_configs'])
+            repeater.save()
+            repeater.clear_caches()
+            print repeater
+
+    form = OpenmrsConfigForm(
+        data={
+            'form_configs': json.dumps([
+                form_config.to_json()
+                for form_config in repeater.openmrs_config.form_configs]),
+            'case_config':  json.dumps(repeater.openmrs_config.case_config.to_json()),
+        }
+    )
+    return render(request, 'openmrs/edit_config.html', {
+        'domain': domain,
+        'repeater_id': repeater_id,
+        'form': form
+    })
 
 
 class OpenmrsModelListViewHelper(object):
