@@ -3,13 +3,14 @@ import uuid
 from urllib import urlencode
 from django.contrib import messages
 from django.urls import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from django.template.loader import render_to_string
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain
 from corehq.apps.app_manager.decorators import require_deploy_apps
-from corehq.apps.app_manager.exceptions import AppEditingError
+from corehq.apps.app_manager.exceptions import AppEditingError, \
+    ModuleNotFoundException, FormNotFoundException
 from corehq.apps.app_manager.models import Application, ReportModule, enable_usercase_if_necessary
 
 from corehq.apps.app_manager.util import update_unique_ids
@@ -24,7 +25,7 @@ CASE_TYPE_CONFLICT_MSG = (
 
 @require_deploy_apps
 def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
-                 form_unique_id=None):
+                 form_unique_id=None, module_unique_id=None):
     """
     returns an HttpResponseRedirect back to the main page for the App Manager app
     with the correct GET parameters.
@@ -33,40 +34,43 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
     which then redirect to the main page.
 
     """
-    # TODO: Refactor this function. The length of the args matters :(
-
     page = None
     params = {}
-
     args = [domain]
-    form_view = 'view_form' if toggles.APP_MANAGER_V1.enabled(request.user.username) else 'form_source'
+    view_name = 'default_app'
 
     if app_id is not None:
+        view_name = 'view_app'
         args.append(app_id)
-        if form_unique_id is not None:
-            app = get_app(domain, app_id)
-            obj = app.get_form(form_unique_id, bare=False)
-            module_id = obj['module'].id
-            form_id = obj['form'].id
-            if obj['form'].no_vellum:
-                form_view = 'view_form'
+
+        app = get_app(domain, app_id)
+
+        module = None
         if module_id is not None:
-            args.append(module_id)
-            if form_id is not None:
-                args.append(form_id)
-                app = get_app(domain, app_id)
-                if app.get_module(module_id).get_form(form_id).no_vellum:
-                    form_view = 'view_form'
+            module = app.get_module(module_id)
+            module_unique_id = module.unique_id
+
+        if module_unique_id is not None:
+            view_name = 'view_module'
+            args.append(module_unique_id)
+
+        form = None
+        if form_id is not None and module is not None:
+            form = module.get_form(form_id)
+            form_unique_id = form.unique_id
+
+        if form_unique_id is not None:
+            args.append(form_unique_id)
+            if form is None:
+                form = app.get_form(form_unique_id)
+
+        if form is not None:
+            view_name = 'form_source' if not form.no_vellum else 'view_form'
+            if toggles.APP_MANAGER_V1.enabled(request.user.username):
+                view_name = 'view_form'
 
     if page:
         view_name = page
-    else:
-        view_name = {
-            1: 'default_app',
-            2: 'view_app',
-            3: 'view_module',
-            4: form_view,
-        }[len(args)]
 
     return HttpResponseRedirect(
         "%s%s" % (
