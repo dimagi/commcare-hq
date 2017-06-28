@@ -178,7 +178,7 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
         tags=[PROPERTY_TAG_SERVER],
         label="edited_on",
         item=ExportItem(path=[PathNode(name="edited_on")]),
-        selected=True,
+        is_advanced=True,
         help_text=_("The time at which this form was last edited."),
     ),
     ExportColumn(
