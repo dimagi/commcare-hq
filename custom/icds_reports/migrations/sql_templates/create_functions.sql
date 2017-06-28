@@ -1130,6 +1130,7 @@ BEGIN
 		'infra_baby_weighing_scale = ut.infra_baby_weighing_scale, ' ||
 		'infra_flat_weighing_scale = ut.infra_flat_weighing_scale, ' ||
 		'infra_adult_weighing_scale = ut.infra_adult_weighing_scale, ' ||
+		'infra_infant_weighing_scale = ut.infra_infant_weighing_scale, ' ||
 		'infra_cooking_utensils = ut.infra_cooking_utensils, ' ||
 		'infra_medicine_kits = ut.infra_medicine_kits, ' ||
 		'infra_adequate_space_pse = ut.infra_adequate_space_pse ' ||
@@ -1147,6 +1148,7 @@ BEGIN
 		'baby_scale_usable AS infra_baby_weighing_scale, ' ||
 		'flat_scale_usable AS infra_flat_weighing_scale, ' ||
 		'adult_scale_available AS infra_adult_weighing_scale, ' ||
+		'GREATEST(baby_scale_usable, flat_scale_usable) AS infra_infant_weighing_scale, ' ||
 		'cooking_utensils_usable AS infra_cooking_utensils, ' ||
 		'medicine_kits_usable AS infra_medicine_kits, ' ||
 		'has_adequate_space_pse AS infra_adequate_space_pse ' ||
@@ -1260,8 +1262,8 @@ BEGIN
     _rollup_text2 = 'sum(cases_household), ' ||
         'sum(cases_ccs_pregnant_all), ' ||
 		'sum(cases_ccs_lactating_all), ' ||
-		'sum(cases_child_health_all) ';
-
+		'sum(cases_child_health_all), ' ||
+		'sum(infra_infant_weighing_scale) ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
