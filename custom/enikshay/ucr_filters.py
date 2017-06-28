@@ -22,10 +22,11 @@ class ENikshayLocationHierarchyFilterValue(FilterValue):
         Return a list of _LocationFilter(column, parameter_slug, filter_value) objects to be used in constructing
         the filter.
         """
+        relevant_location_types = ["sto", "cto", "dto", "tu", "phi"]
         location = SQLLocation.objects.get(location_id=location_id)
         filters = []
-        for ancestor in location.get_ancestors():
-            if ancestor.location_type.name in ["sto", "cto", "dto", "tu", "phi"]:
+        for ancestor in location.get_ancestors(include_self=True):
+            if ancestor.location_type.name in relevant_location_types:
                 column = ancestor.location_type.name
                 parameter = "{slug}_{column}".format(slug=self.filter.slug, column=column)
                 value = ancestor.location_id
