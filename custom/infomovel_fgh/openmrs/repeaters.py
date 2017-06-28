@@ -13,7 +13,7 @@ from couchforms.signals import successful_form_received
 from custom.infomovel_fgh.openmrs.openmrs_config import OpenmrsConfig
 from custom.infomovel_fgh.openmrs.handler import send_openmrs_data
 from custom.infomovel_fgh.openmrs.repeater_helpers import get_relevant_case_updates_from_form_json, \
-    Requests
+    Requests, create_patient_and_person
 from dimagi.utils.decorators.memoized import memoized
 
 
@@ -53,9 +53,11 @@ class OpenmrsRepeater(CaseRepeater):
             extra_fields=[id_matcher.case_property
                           for id_matcher in self.openmrs_config.case_config.id_matchers])
 
-        send_openmrs_data(Requests(self.url, self.username, self.password), form_json,
-                          trigger_case_infos, self.openmrs_config)
+        create_patient_and_person(Requests(self.url, self.username, self.password))
 
+        # send_openmrs_data(Requests(self.url, self.username, self.password), form_json,
+        #                   trigger_case_infos, self.openmrs_config)
+        #
         return repeat_record.handle_success(None)
 
 

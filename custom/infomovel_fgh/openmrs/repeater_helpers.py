@@ -33,6 +33,48 @@ def url(url_format_string, **kwargs):
     return url_format_string.format(**kwargs)
 
 
+def create_patient_and_person(requests):
+    response = requests.post('/ws/rest/v1/person', json={
+        'gender': 'M',
+        'names': [{
+            "givenName": "Daniel",
+            "middleName": "Mattos",
+            "familyName": "Roberts",
+            "preferred": True,
+        }],
+        'addresses': [{
+            'address1': "1350 Road Rd",
+            'postalCode': '12345',
+            'preferred': True,
+        }],
+    })
+
+    try:
+        response.raise_for_status()
+    except HTTPError:
+        print response.json()
+        raise
+
+    person_uuid = response.json()['uuid']
+    print person_uuid
+
+    response = requests.post('/ws/rest/v1/patient', json={
+        'uuid': person_uuid,
+        'person': person_uuid,
+        'identifiers': [{
+            'identifierType': "05a29f94-c0ed-11e2-94be-8c13b969e334",
+            "identifier": "99999K",
+            "location": "58c57d25-8d39-41ab-8422-108a0c277d98",
+        }],
+    })
+    try:
+        response.raise_for_status()
+    except HTTPError:
+        print response.json()
+        raise
+    print response.json()
+
+
 def create_person_attribute(requests, person_uuid, attribute_type_uuid, value):
     # todo: not tested against real openmrs instance
     return requests.post('/ws/rest/v1/person/{person_uuid}/attribute'.format(
