@@ -945,6 +945,7 @@ BEGIN
 		'usage_num_thr = ut.usage_num_thr, ' ||
 		'usage_num_hh_reg = ut.usage_num_hh_reg, ' ||
 		'is_launched = ut.is_launched, ' ||
+		'num_launched_awcs = ut.num_launched_awcs, ' ||
 		'training_phase = ut.training_phase, ' ||
 		'usage_num_add_person = ut.usage_num_add_person, ' ||
 		'usage_num_add_pregnancy = ut.usage_num_add_pregnancy, ' ||
@@ -975,6 +976,7 @@ BEGIN
 		'sum(thr) AS usage_num_thr, ' ||
 		'sum(add_household) AS usage_num_hh_reg, ' ||
 		'CASE WHEN sum(add_household) > 0 THEN ' || quote_literal(_yes_text) || ' ELSE ' || quote_literal(_no_text) || ' END as is_launched, '
+		'CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs, '
 		'CASE WHEN sum(thr) > 0 THEN 4 WHEN (sum(due_list_ccs) + sum(due_list_child)) > 0 THEN 3 WHEN sum(add_pregnancy) > 0 THEN 2 WHEN sum(add_household) > 0 THEN 1 ELSE 0 END AS training_phase, '
 		'sum(add_person) AS usage_num_add_person, ' ||
 		'sum(add_pregnancy) AS usage_num_add_pregnancy, ' ||
@@ -1003,8 +1005,9 @@ BEGIN
 
 	-- Update num launched AWCs based on previous month as well
 	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
-	   'is_launched = ut.is_launched ' ||
-    'FROM (SELECT is_launched, awc_id ' ||
+	   'is_launched = ut.is_launched, ' ||
+	   'num_launched_awcs = ut.num_launched_awcs ' ||
+    'FROM (SELECT is_launched, num_launched_awcs, awc_id ' ||
        'FROM agg_awc ' ||
 	'WHERE month = ' || quote_literal(_previous_month_date) || ' AND is_launched = ' || quote_literal(_yes_text) || ' AND awc_id <> ' || quote_literal(_all_text) || ') ut ' ||
 	'WHERE ut.awc_id = agg_awc.awc_id';
@@ -1228,12 +1231,12 @@ BEGIN
 		'sum(usage_num_hh_reg), ' ||
 		'sum(usage_num_add_person), ' ||
 		'sum(usage_num_add_pregnancy), ' ||
-		'is_launched, ' ||
+		quote_literal(_yes_text) || ', ' ||
 		quote_nullable(_null_value) || ', ' ||
 		'sum(trained_phase_1), ' ||
 		'sum(trained_phase_2), ' ||
 		'sum(trained_phase_3), ' ||
-		'sum(trained_phase_4) ';
+		'sum(trained_phase_4), ';
 
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
@@ -1244,9 +1247,14 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
 		_rollup_text ||
-		', 4 ' ||
+		'4, ' ||
+		quote_nullable(_null_value) || ', ' ||
+		quote_nullable(_null_value) || ', ' ||
+		quote_nullable(_null_value) || ', ' ||
+		'1, ' ||
+		'sum(num_launched_awcs) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, month, is_launched)';
+		'GROUP BY state_id, district_id, block_id, supervisor_id, month)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
@@ -1256,10 +1264,15 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
 		_rollup_text ||
-		', 3 ' ||
+		'3, ' ||
+		quote_nullable(_null_value) || ', ' ||
+		quote_nullable(_null_value) || ', ' ||
+		'1, ' ||
+		'sum(num_launched_supervisors), ' ||
+		'sum(num_launched_awcs) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE awc_id = ' || quote_literal(_all_text) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, month, is_launched)';
+		'GROUP BY state_id, district_id, block_id, month)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
@@ -1269,10 +1282,15 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
 		_rollup_text ||
-		', 2 ' ||
+		'2, ' ||
+		quote_nullable(_null_value) || ', ' ||
+		'1, ' ||
+		'sum(num_launched_blocks), ' ||
+		'sum(num_launched_supervisors), ' ||
+		'sum(num_launched_awcs) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE supervisor_id = ' || quote_literal(_all_text) || ' ' ||
-		'GROUP BY state_id, district_id, month, is_launched)';
+		'GROUP BY state_id, district_id, month)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
@@ -1282,10 +1300,15 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
 		_rollup_text ||
-		', 1 ' ||
+		'1, ' ||
+		'1, ' ||
+		'sum(num_launched_districts), ' ||
+		'sum(num_launched_blocks), ' ||
+		'sum(num_launched_supervisors), ' ||
+		'sum(num_launched_awcs) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
 		'WHERE block_id = ' || quote_literal(_all_text) || ' ' ||
-		'GROUP BY state_id, month, is_launched)';
+		'GROUP BY state_id, month)';
 
 END;
 $BODY$
