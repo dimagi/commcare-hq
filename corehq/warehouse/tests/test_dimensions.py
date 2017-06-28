@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 from django.test import TestCase
-from django.core.management import call_command
 
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
@@ -17,6 +16,8 @@ from corehq.warehouse.tests.utils import (
     create_location_staging_record,
     create_group_staging_record,
     DEFAULT_BATCH_ID,
+    get_default_batch,
+    create_batch,
 )
 from corehq.warehouse.models import (
     BatchRecord,
@@ -29,6 +30,16 @@ from corehq.warehouse.models import (
     LocationStagingTable,
     LocationTypeStagingTable,
 )
+
+
+def setup_module():
+    start = datetime.utcnow() - timedelta(days=3)
+    end = datetime.utcnow() + timedelta(days=3)
+    create_batch(start, end, DEFAULT_BATCH_ID)
+
+
+def teardown_module():
+    BatchRecord.objects.all().delete()
 
 
 class TestUserDim(TestCase):
@@ -66,15 +77,7 @@ class TestUserDim(TestCase):
                 username='mobile',
             ),
         ]
-        start = datetime.utcnow() - timedelta(days=3)
-        end = datetime.utcnow() + timedelta(days=3)
-        call_command(
-            'create_batch',
-            DEFAULT_BATCH_ID,
-            '-s={}'.format(start.isoformat()),
-            '-e={}'.format(end.isoformat()),
-        )
-        cls.batch = BatchRecord.objects.get(batch_id=DEFAULT_BATCH_ID)
+        cls.batch = get_default_batch()
 
     @classmethod
     def tearDownClass(cls):
@@ -82,7 +85,6 @@ class TestUserDim(TestCase):
             record.delete()
         UserDim.clear_records()
         UserStagingTable.clear_records()
-        cls.batch.delete()
         super(TestUserDim, cls).tearDownClass()
 
     def test_user_types(self):
@@ -122,15 +124,7 @@ class TestUserGroupDim(TestCase):
         cls.black_dog = create_user_staging_record(cls.domain, username='black-dog')
         cls.yellow_cat = create_user_staging_record(cls.domain, username='yellow-cat')
 
-        start = datetime.utcnow() - timedelta(days=3)
-        end = datetime.utcnow() + timedelta(days=3)
-        call_command(
-            'create_batch',
-            DEFAULT_BATCH_ID,
-            '-s={}'.format(start.isoformat()),
-            '-e={}'.format(end.isoformat()),
-        )
-        cls.batch = BatchRecord.objects.get(batch_id=DEFAULT_BATCH_ID)
+        cls.batch = get_default_batch()
 
     @classmethod
     def tearDownClass(cls):
@@ -139,7 +133,6 @@ class TestUserGroupDim(TestCase):
         GroupDim.clear_records()
         UserDim.clear_records()
         UserGroupDim.clear_records()
-        cls.batch.delete()
         super(TestUserGroupDim, cls).tearDownClass()
 
     def test_basic_user_group_insert(self):
@@ -181,22 +174,15 @@ class TestLocationDim(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        start = datetime.utcnow() - timedelta(days=3)
-        end = datetime.utcnow() + timedelta(days=3)
-        call_command(
-            'create_batch',
-            DEFAULT_BATCH_ID,
-            '-s={}'.format(start.isoformat()),
-            '-e={}'.format(end.isoformat()),
-        )
-        cls.batch = BatchRecord.objects.get(batch_id=DEFAULT_BATCH_ID)
+        super(TestLocationDim, cls).setUpClass()
+        cls.batch = get_default_batch()
 
     @classmethod
     def tearDownClass(cls):
         LocationStagingTable.clear_records()
         LocationTypeStagingTable.clear_records()
         LocationDim.clear_records()
-        cls.batch.delete()
+        super(TestLocationDim, cls).tearDownClass()
 
     def test_location_dim(self):
         tree = {
