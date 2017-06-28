@@ -1,10 +1,7 @@
-import uuid
-
 from django.core.management import BaseCommand
 
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.locations.tasks import make_location_user, _get_unique_username
-from corehq.apps.users.forms import generate_strong_password
+from corehq.apps.locations.tasks import make_location_user
 from corehq.apps.users.models import CommCareUser, UserRole
 from custom.enikshay.private_sector_datamigration.models import Agency, UserDetail
 
