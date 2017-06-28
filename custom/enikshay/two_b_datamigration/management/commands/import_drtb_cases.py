@@ -1,5 +1,6 @@
 import logging
 
+import datetime
 from dateutil.parser import parse
 from django.core.management import (
     BaseCommand,
@@ -228,6 +229,8 @@ def result_label(result):
 
 def clean_date(messy_date_string):
     if messy_date_string:
+        if isinstance(messy_date_string, datetime.date):
+            return messy_date_string
         # TODO: Might be safer to assume a format and raise an exception if its in a different format
         # parse("") returns today, which we don't want.
         cleaned_datetime = parse(messy_date_string)
@@ -290,7 +293,7 @@ class Mehsana2016ColumnMapping(ColumnMapping):
     def get_value(normalized_column_name, row):
         # TODO: Confirm what this returns if cell is empty (we probably don't want None, do want "")
         column_index = mehsana_2016_mapping[normalized_column_name]
-        return row[column_index]
+        return row[column_index].value
 
 # TODO: Add 2017 mapping
 
@@ -303,6 +306,9 @@ class Command(BaseCommand):
     def handle(self, domain, excel_file_path, **options):
 
         with open_any_workbook(excel_file_path) as workbook:
-            for row in workbook.worksheets[0].iter_rows():
+            for i, row in enumerate(workbook.worksheets[0].iter_rows()):
+                if i == 0:
+                    # Skip the headers row
+                    continue
                 case_structures = get_case_structures_from_row(domain, row)
                 # TODO: submit forms with case structures
