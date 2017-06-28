@@ -1,4 +1,5 @@
 from collections import namedtuple
+from requests import HTTPError
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
@@ -57,13 +58,12 @@ def set_person_properties(requests, person_uuid, properties):
     for p in properties:
         assert p in allowed_properties
 
-    import requests as r
     response = requests.post('/ws/rest/v1/person/{person_uuid}'.format(
         person_uuid=person_uuid), json=properties
     )
     try:
         response.raise_for_status()
-    except r.HTTPError:
+    except HTTPError:
         print response.json()
         raise
     return response.json()
@@ -78,8 +78,6 @@ def server_datetime_to_openmrs_timestamp(dt):
 
 def create_visit(requests, person_uuid, visit_datetime, values_for_concept, encounter_type,
                  openmrs_form, visit_type, patient_uuid=None):
-    print values_for_concept
-    import requests as r
     timestamp = server_datetime_to_openmrs_timestamp(visit_datetime)
     patient_uuid = patient_uuid or person_uuid
     observations = [
@@ -97,7 +95,7 @@ def create_visit(requests, person_uuid, visit_datetime, values_for_concept, enco
         response = requests.post('/ws/rest/v1/obs', json=observation)
         try:
             response.raise_for_status()
-        except r.HTTPError:
+        except HTTPError:
             print response.json()
             raise
         observation_uuids.append(response.json()['uuid'])
@@ -117,7 +115,7 @@ def create_visit(requests, person_uuid, visit_datetime, values_for_concept, enco
 
         try:
             response.raise_for_status()
-        except r.HTTPError:
+        except HTTPError:
             print response.json()
             raise
         encounter_uuids.append(response.json()['uuid'])
@@ -133,7 +131,7 @@ def create_visit(requests, person_uuid, visit_datetime, values_for_concept, enco
     response = requests.post('/ws/rest/v1/visit', json=visit)
     try:
         response.raise_for_status()
-    except r.HTTPError:
+    except HTTPError:
         print response.json()
         raise
     print response.json()['uuid']
