@@ -24,16 +24,14 @@ class OpenmrsRepeaterView(AddCaseRepeaterView):
 def openmrs_edit_config(request, domain, repeater_id):
     helper = OpenmrsModelListViewHelper(request, domain, repeater_id)
     repeater = helper.repeater
-    print repeater.to_json()
+
     if request.method == 'POST':
-        repeater.clear_caches()
         form = OpenmrsConfigForm(data=request.POST)
         if form.is_valid():
             data = form.cleaned_data
             repeater.openmrs_config.case_config = OpenmrsCaseConfig.wrap(data['case_config'])
             repeater.openmrs_config.form_configs = map(OpenmrsFormConfig.wrap, data['form_configs'])
             repeater.save()
-            repeater.clear_caches()
             print repeater
 
     form = OpenmrsConfigForm(
