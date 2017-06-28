@@ -1,7 +1,6 @@
 from mock import patch
 from datetime import datetime, timedelta
 from django.test import TestCase
-from django.core.management import call_command
 
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.groups.models import Group
@@ -20,12 +19,7 @@ from corehq.warehouse.models import (
 def setup_module():
     start = datetime.utcnow() - timedelta(days=3)
     end = datetime.utcnow() + timedelta(days=3)
-    call_command(
-        'create_batch',
-        DEFAULT_BATCH_ID,
-        '-s={}'.format(start.isoformat()),
-        '-e={}'.format(end.isoformat()),
-    )
+    create_batch(start, end, DEFAULT_BATCH_ID)
 
 
 def teardown_module():
