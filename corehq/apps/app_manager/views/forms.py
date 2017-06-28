@@ -76,9 +76,10 @@ from corehq.apps.app_manager.models import (
     FormActionCondition,
     FormDatum,
     FormLink,
-    UpdateCaseAction,
+    OpenCaseAction,
     IncompatibleFormTypeException,
     ModuleNotFoundException,
+    UpdateCaseAction,
     load_case_reserved_words,
     WORKFLOW_FORM,
     CustomInstance,
@@ -395,8 +396,9 @@ def new_form(request, domain, app_id, module_id):
     "Adds a form to an app (under a module)"
     app = get_app(domain, app_id)
     lang = request.COOKIES.get('lang', app.langs[0])
-    name = request.POST.get('name')
     form_type = request.POST.get('form_type', 'form')
+    case_action = request.POST.get('case_action', 'none')
+    name = _("Register") if case_action == 'open' else (_("Followup") if case_action == 'update' else "Survey")
     if form_type == "shadow":
         app = get_app(domain, app_id)
         module = app.get_module(module_id)
@@ -408,11 +410,13 @@ def new_form(request, domain, app_id, module_id):
         form = app.new_form(module_id, name, lang)
 
     if toggles.APP_MANAGER_V2.enabled(request.user.username) and form_type != "shadow":
-        case_action = request.POST.get('case_action', 'none')
         if case_action == 'update':
             form.requires = 'case'
             form.actions.update_case = UpdateCaseAction(
                 condition=FormActionCondition(type='always'))
+        elif case_action == 'open':
+            form.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
+            form.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 
     app.save()
     # add form_id to locals()

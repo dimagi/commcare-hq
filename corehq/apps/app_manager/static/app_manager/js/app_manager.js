@@ -255,7 +255,6 @@ hqDefine('app_manager/js/app_manager.js', function () {
                 $form.attr("action", hqImport("hqwebapp/js/urllib.js").reverse("new_form", moduleId));
                 $form.find("input[name='case_action']").val(action);
                 $form.find("input[name='form_type']").val($a.data("form-type"));
-                $form.find("input[name='name']").val(action === "update" ? "Followup" : "Survey");
                 if (!$form.data('clicked')) {
                     $form.data('clicked', 'true');
                     $trigger.find(".fa-plus").removeClass("fa-plus").addClass("fa fa-refresh fa-spin");
