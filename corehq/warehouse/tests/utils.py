@@ -1,14 +1,33 @@
 import uuid
 import random
 from datetime import datetime
+from django.core.management import call_command
+
 from corehq.warehouse.models import (
     UserStagingTable,
     GroupStagingTable,
     LocationStagingTable,
     LocationTypeStagingTable,
+    BatchRecord,
 )
 
 DEFAULT_BATCH_ID = '222617b9-8cf0-40a2-8462-7f872e1f1344'
+
+
+def get_default_batch():
+    return BatchRecord.objects.get(batch_id=DEFAULT_BATCH_ID)
+
+
+def create_batch(start, end):
+    batch_id = str(uuid.uuid4())
+    call_command(
+        'create_batch',
+        batch_id,
+        '-s={}'.format(start.isoformat()),
+        '-e={}'.format(end.isoformat()),
+    )
+    return BatchRecord.objects.get(batch_id=batch_id)
+
 
 def create_user_staging_record(
         domain,

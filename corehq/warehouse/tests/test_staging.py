@@ -1,17 +1,35 @@
 from mock import patch
 from datetime import datetime, timedelta
 from django.test import TestCase
+from django.core.management import call_command
 
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 
+from corehq.warehouse.tests.utils import DEFAULT_BATCH_ID, get_default_batch, create_batch
 from corehq.warehouse.models import (
     GroupStagingTable,
     DomainStagingTable,
     UserStagingTable,
+    BatchRecord,
 )
+
+
+def setup_module():
+    start = datetime.utcnow() - timedelta(days=3)
+    end = datetime.utcnow() + timedelta(days=3)
+    call_command(
+        'create_batch',
+        DEFAULT_BATCH_ID,
+        '-s={}'.format(start.isoformat()),
+        '-e={}'.format(end.isoformat()),
+    )
+
+
+def teardown_module():
+    BatchRecord.objects.all().delete()
 
 
 class BaseStagingTableTest(TestCase):
@@ -37,22 +55,22 @@ class BaseStagingTableTest(TestCase):
 class StagingRecordsTestsMixin(object):
 
     def test_stage_records(self):
-        start = datetime.utcnow() - timedelta(days=3)
-        end = datetime.utcnow() + timedelta(days=3)
+        batch = get_default_batch()
 
         self.assertEqual(self.staging_table_cls.objects.count(), 0)
-        self.staging_table_cls.commit(start, end)
+        self.staging_table_cls.commit(batch)
         self.assertEqual(self.staging_table_cls.objects.count(), len(self.records))
 
-        self.staging_table_cls.commit(start, end)
+        self.staging_table_cls.commit(batch)
         self.assertEqual(self.staging_table_cls.objects.count(), len(self.records))
 
     def test_stage_records_no_data(self):
         start = datetime.utcnow() - timedelta(days=3)
         end = datetime.utcnow() - timedelta(days=2)
+        batch = create_batch(start, end)
 
         self.assertEqual(self.staging_table_cls.objects.count(), 0)
-        self.staging_table_cls.commit(start, end)
+        self.staging_table_cls.commit(batch)
         self.assertEqual(self.staging_table_cls.objects.count(), 0)
 
 
@@ -71,19 +89,18 @@ class TestGroupStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
         super(TestGroupStagingTable, cls).setUpClass()
 
     def test_stage_records_bulk(self):
-        start = datetime.utcnow() - timedelta(days=3)
-        end = datetime.utcnow() + timedelta(days=3)
+        batch = get_default_batch()
 
         # 1 Query for clearing records
         # 1 Query for inserting recorrds
         with self.assertNumQueries(2):
-            GroupStagingTable.commit(start, end)
+            GroupStagingTable.commit(batch)
 
         # 1 Query for clearing records
         # 2 Queries for inserting recorrds
         with self.assertNumQueries(3):
             with patch('corehq.warehouse.utils.DJANGO_MAX_BATCH_SIZE', 2):
-                GroupStagingTable.commit(start, end)
+                GroupStagingTable.commit(batch)
         self.assertEqual(GroupStagingTable.objects.count(), 3)
 
 
