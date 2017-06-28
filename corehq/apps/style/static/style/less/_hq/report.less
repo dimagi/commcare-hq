@@ -36,3 +36,26 @@
     // Fade for backdrop
     .opacity(0.8);
 }
+
+.property-name-display {
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+}
+
+.ucr-preview-container {
+  overflow-x: scroll;
+  background-color: white;
+  padding: 10px 10px 15px;
+  box-shadow: 0 0 11px rgba(0,0,0,.1);
+  margin-bottom: 15px;
+  &:last-child {
+    margin-bottom: 0;
+  }
+  h3 {
+    margin: 4px 0;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: @cc-neutral-mid;
+    font-weight: 600;
+  }
+}
