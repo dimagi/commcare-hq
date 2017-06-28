@@ -26,7 +26,9 @@
           {% else %}appnav-title-survey
           {% endif %}
           appnav-responsive">
+    {% if form.get_action_type != 'open' %}
         <i class="drag_handle appnav-drag-icon"></i>
+    {% endif %}
     <i
     {% if form.get_action_type == 'open' %}
         class="fcc fcc-app-createform appnav-primary-icon appnav-primary-icon-lg"
