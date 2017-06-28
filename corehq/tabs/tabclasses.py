@@ -893,6 +893,7 @@ class MessagingTab(UITab):
     view = "sms_default"
 
     url_prefix_formats = (
+        '/a/{domain}/messaging/',
         '/a/{domain}/sms/',
         '/a/{domain}/reminders/',
         '/a/{domain}/data/edit/case_groups/',
@@ -1004,33 +1005,46 @@ class MessagingTab(UITab):
             ])
 
         if self.can_access_reminders:
-            from corehq.apps.reminders.views import (
-                BroadcastListView,
-                CreateBroadcastView,
-                EditBroadcastView,
-                CopyBroadcastView,
-            )
-            messages_urls.extend([
-                {
-                    'title': _("Broadcast Messages"),
-                    'url': reverse(BroadcastListView.urlname, args=[self.domain]),
-                    'subpages': [
-                        {
-                            'title': _("Edit Broadcast"),
-                            'urlname': EditBroadcastView.urlname,
-                        },
-                        {
-                            'title': _("New Broadcast"),
-                            'urlname': CreateBroadcastView.urlname,
-                        },
-                        {
-                            'title': _("Copy Broadcast"),
-                            'urlname': CopyBroadcastView.urlname,
-                        },
-                    ],
-                    'show_in_dropdown': True,
-                },
-            ])
+            if self.project.uses_new_reminders:
+                from corehq.messaging.scheduling.views import (
+                    BroadcastListView as NewBroadcastListView,
+                )
+                messages_urls.extend([
+                    {
+                        'title': _("Schedule a Message"),
+                        'url': reverse(NewBroadcastListView.urlname, args=[self.domain]),
+                        'subpages': [],
+                        'show_in_dropdown': True,
+                    },
+                ])
+            else:
+                from corehq.apps.reminders.views import (
+                    BroadcastListView as OldBroadcastListView,
+                    CreateBroadcastView,
+                    EditBroadcastView,
+                    CopyBroadcastView,
+                )
+                messages_urls.extend([
+                    {
+                        'title': _("Broadcast Messages"),
+                        'url': reverse(OldBroadcastListView.urlname, args=[self.domain]),
+                        'subpages': [
+                            {
+                                'title': _("Edit Broadcast"),
+                                'urlname': EditBroadcastView.urlname,
+                            },
+                            {
+                                'title': _("New Broadcast"),
+                                'urlname': CreateBroadcastView.urlname,
+                            },
+                            {
+                                'title': _("Copy Broadcast"),
+                                'urlname': CopyBroadcastView.urlname,
+                            },
+                        ],
+                        'show_in_dropdown': True,
+                    },
+                ])
 
         return messages_urls
 
