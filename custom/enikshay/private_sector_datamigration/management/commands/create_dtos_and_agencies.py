@@ -78,7 +78,6 @@ class Command(BaseCommand):
                 'private_sector_agency_id': str(agency.agencyId),
                 'private_sector_org_id': str(organisation_id),
                 'sector': 'private',
-
             },
         )
 
