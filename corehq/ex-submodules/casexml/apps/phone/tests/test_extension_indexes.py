@@ -157,3 +157,8 @@ class IndexTreeTestSQL(IndexTreeTest):
 
 class LiveQueryIndexTreeTest(IndexTreeTest):
     restore_options = {'do_livequery': True}
+
+
+@use_sql_backend
+class LiveQueryIndexTreeTestSQL(LiveQueryIndexTreeTest):
+    pass

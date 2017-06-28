@@ -650,13 +650,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return cases
 
     @staticmethod
-    def get_related_cases(domain, case_ids, exclude_ids):
-        assert isinstance(case_ids, list), case_ids
-        return RawQuerySetWrapper(CommCareCaseSQL.objects.raw(
-            'SELECT * FROM get_related_cases(%s, %s, %s)',
-            [domain, case_ids, exclude_ids]))
-
-    @staticmethod
     def case_exists(case_id):
         from corehq.sql_db.util import get_db_alias_for_partitioned_doc
         db = get_db_alias_for_partitioned_doc(case_id)
@@ -820,13 +813,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         return CaseAccessorSQL._get_case_ids_in_domain(domain, owner_ids=owner_ids, is_closed=closed)
 
     @staticmethod
-    def get_open_cases_by_owners(domain, owner_ids):
-        return list(CommCareCaseSQL.objects.raw(
-            'SELECT * FROM get_open_cases_by_owners(%s, %s)',
-            [domain, location_id],
-        ))
-
-    @staticmethod
     @transaction.atomic
     def save_case(case):
         transactions_to_save = case.get_tracked_models_to_create(CaseTransaction)
@@ -899,6 +885,24 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             )
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
+
+    @staticmethod
+    def filter_open_case_ids(accessor, case_ids):
+        assert isinstance(case_ids, list), case_ids
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT case_id FROM filter_open_case_ids(%s, %s)',
+                [accessor.domain, case_ids]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
+
+    @staticmethod
+    def get_related_indices(domain, case_ids, exclude_ids):
+        assert isinstance(case_ids, list), case_ids
+        return RawQuerySetWrapper(CommCareCaseIndexSQL.objects.raw(
+            'SELECT * FROM get_related_indices(%s, %s, %s)',
+            [domain, case_ids, list(exclude_ids)]))
 
     @staticmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
