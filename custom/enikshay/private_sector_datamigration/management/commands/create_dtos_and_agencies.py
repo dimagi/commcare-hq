@@ -66,14 +66,13 @@ class Command(BaseCommand):
         ).values('agencyId').distinct()
         return Agency.objects.filter(agencyId__in=agency_ids).order_by('agencyId')
 
-    @staticmethod
-    def create_agency(domain, agency, dto, org_id, sub_org_id):
+    def create_agency(self, domain, agency, dto, org_id, sub_org_id):
         organisation_id = sub_org_id or org_id
         return SQLLocation.objects.create(
             domain=domain,
             name=agency.agencyName,
             site_code=str(agency.agencyId),
-            location_type=Command.get_location_type_by_domain_and_code(domain, agency.location_type),
+            location_type=self.get_location_type_by_domain_and_code(domain, agency.location_type),
             parent=dto,
             metadata={
                 'enikshay_enabled': 'yes',
@@ -138,9 +137,8 @@ class Command(BaseCommand):
             agencyId=agency.agencyId,
         ).motechUserName
 
-    @staticmethod
     @memoized
-    def get_location_type_by_domain_and_code(domain, location_type_code):
+    def get_location_type_by_domain_and_code(self, domain, location_type_code):
         return LocationType.objects.get(
             domain=domain,
             code=location_type_code,
