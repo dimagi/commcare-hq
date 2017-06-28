@@ -112,6 +112,7 @@ class ExplodeCasesDbTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ExplodeCasesDbTest, cls).setUpClass()
         delete_all_cases()
         cls.domain = Domain(name='foo')
         cls.domain.save()
@@ -131,6 +132,7 @@ class ExplodeCasesDbTest(TestCase):
     def tearDownClass(cls):
         cls.user.delete()
         cls.domain.delete()
+        super(ExplodeCasesDbTest, cls).tearDownClass()
 
     @run_with_all_backends
     def test_simple(self):

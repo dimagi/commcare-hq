@@ -7,6 +7,7 @@ class DBAccessorsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(DBAccessorsTest, cls).setUpClass()
         cls.domain = 'forwarding-rules-dbaccessors'
         cls.forwarding_rules = [
             ForwardingRule(domain=cls.domain),
@@ -18,6 +19,7 @@ class DBAccessorsTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         ForwardingRule.get_db().bulk_delete(cls.forwarding_rules)
+        super(DBAccessorsTest, cls).tearDownClass()
 
     def test_get_forwarding_rules_for_domain(self):
         self.assertItemsEqual(

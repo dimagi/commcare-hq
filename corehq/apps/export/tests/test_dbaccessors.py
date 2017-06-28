@@ -29,6 +29,7 @@ class TestExportDBAccessors(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestExportDBAccessors, cls).setUpClass()
         cls.form_schema = FormExportDataSchema(
             domain=cls.domain,
             app_id=cls.app_id,
@@ -76,6 +77,7 @@ class TestExportDBAccessors(TestCase):
     def tearDownClass(cls):
         for schema in cls.schemas:
             schema.delete()
+        super(TestExportDBAccessors, cls).tearDownClass()
 
     def test_get_latest_form_export_schema(self):
         schema = get_latest_form_export_schema(self.domain, self.app_id, self.xmlns)
@@ -104,6 +106,7 @@ class TestExportInstanceDBAccessors(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestExportInstanceDBAccessors, cls).setUpClass()
         cls.form_instance_deid = FormExportInstance(
             domain=cls.domain,
             name='Forms',
@@ -147,6 +150,7 @@ class TestExportInstanceDBAccessors(TestCase):
     def tearDownClass(cls):
         for instance in cls.instances:
             instance.delete()
+        super(TestExportInstanceDBAccessors, cls).tearDownClass()
 
     def test_get_form_export_instances(self):
         instances = get_form_export_instances(self.domain)
@@ -184,6 +188,7 @@ class TestInferredSchemasDBAccessors(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestInferredSchemasDBAccessors, cls).setUpClass()
         cls.inferred_schema = CaseInferredSchema(
             domain=cls.domain,
             case_type=cls.case_type,
@@ -216,6 +221,7 @@ class TestInferredSchemasDBAccessors(TestCase):
     def tearDownClass(cls):
         for schema in cls.schemas:
             schema.delete()
+        super(TestInferredSchemasDBAccessors, cls).tearDownClass()
 
     def test_get_case_inferred_schema(self):
         result = get_case_inferred_schema(self.domain, self.case_type)

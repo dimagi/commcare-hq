@@ -14,6 +14,7 @@ class LoadtestUserTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(LoadtestUserTest, cls).setUpClass()
         cls.domain = Domain(name='foo')
         cls.domain.save()
         cls.user = CommCareUser.create(cls.domain.name, 'somebody', 'password')
@@ -29,6 +30,7 @@ class LoadtestUserTest(TestCase):
     def tearDownClass(cls):
         cls.user.delete()
         cls.domain.delete()
+        super(LoadtestUserTest, cls).tearDownClass()
 
     @run_with_all_backends
     def test_no_factor_set(self):

@@ -23,6 +23,7 @@ class OtaWebUserFixtureTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(OtaWebUserFixtureTest, cls).setUpClass()
         cls.domain = Domain.get_or_create_with_name(DOMAIN, is_active=True)
         cls.restore_user = create_restore_user(domain=DOMAIN, is_mobile_user=False)
 
@@ -30,6 +31,7 @@ class OtaWebUserFixtureTest(TestCase):
     def tearDownClass(cls):
         cls.domain.delete()
         delete_all_users()
+        super(OtaWebUserFixtureTest, cls).tearDownClass()
 
     def test_basic_fixture_generation(self):
         fixture_xml = list(generator.get_fixtures(self.restore_user))
@@ -46,6 +48,7 @@ class OtaFixtureTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(OtaFixtureTest, cls).setUpClass()
         cls.domain = Domain.get_or_create_with_name(DOMAIN, is_active=True)
         cls.user = CommCareUser.create(DOMAIN, 'bob', 'mechanic')
         cls.group1 = Group(domain=DOMAIN, name='group1', case_sharing=True, users=[cls.user._id])
@@ -71,6 +74,7 @@ class OtaFixtureTest(TestCase):
             item_list[1].delete()
 
         cls.domain.delete()
+        super(OtaFixtureTest, cls).tearDownClass()
 
     def _check_fixture(self, fixture_xml, has_groups=True, item_lists=None):
         fixture_xml = list(fixture_xml)

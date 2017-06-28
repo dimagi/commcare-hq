@@ -163,12 +163,14 @@ class TestFixtureUpload(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestFixtureUpload, cls).setUpClass()
         cls.domain = 'fixture-upload-test'
         cls.project = create_domain(cls.domain)
 
     @classmethod
     def tearDownClass(cls):
         cls.project.delete()
+        super(TestFixtureUpload, cls).tearDownClass()
 
     def _get_workbook(self, filename):
         return get_workbook(_make_path('test_upload', '{}.xlsx'.format(filename)))

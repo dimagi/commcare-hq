@@ -10,11 +10,13 @@ class TestFilesystemBlobDB(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestFilesystemBlobDB, cls).setUpClass()
         cls.db = TemporaryFilesystemBlobDB()
 
     @classmethod
     def tearDownClass(cls):
         cls.db.close()
+        super(TestFilesystemBlobDB, cls).tearDownClass()
 
     def test_put(self):
         with AtomicBlobs(self.db) as db:

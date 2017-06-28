@@ -30,6 +30,7 @@ class IndicatorPillowTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(IndicatorPillowTests, cls).setUpClass()
         set_domain_namespace_entry(INDICATOR_TEST_DOMAIN, [
             [INDICATOR_TEST_NAMESPACE, "INDICATOR TEST Namespace"],
         ])
@@ -45,6 +46,7 @@ class IndicatorPillowTests(TestCase):
         delete_indicator_doc()
         FormProcessorTestUtils.delete_all_xforms()
         FormProcessorTestUtils.delete_all_cases()
+        super(IndicatorPillowTests, cls).tearDownClass()
 
     def _save_doc_to_db(self, docname, doc_class):
         doc_dict = _get_doc_data(docname)

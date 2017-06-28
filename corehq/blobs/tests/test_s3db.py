@@ -85,6 +85,7 @@ class TestS3BlobDB(TestCase, _BlobDBTests):
 
     @classmethod
     def setUpClass(cls):
+        super(TestS3BlobDB, cls).setUpClass()
         with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
             config = settings.S3_BLOB_DB_SETTINGS
         cls.db = TemporaryS3BlobDB(config)
@@ -92,6 +93,7 @@ class TestS3BlobDB(TestCase, _BlobDBTests):
     @classmethod
     def tearDownClass(cls):
         cls.db.close()
+        super(TestS3BlobDB, cls).tearDownClass()
 
     def test_bucket_path(self):
         bucket = join("doctype", "8cd98f0")

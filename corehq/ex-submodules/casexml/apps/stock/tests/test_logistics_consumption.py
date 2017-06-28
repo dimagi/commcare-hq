@@ -17,6 +17,7 @@ class LogisticsConsumptionTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(LogisticsConsumptionTest, cls).setUpClass()
         cls.domain = Domain(name='test')
         cls.domain.save()
 
@@ -32,6 +33,7 @@ class LogisticsConsumptionTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
+        super(LogisticsConsumptionTest, cls).tearDownClass()
 
     def create_transactions(self, domain=None):
         report = StockReport.objects.create(

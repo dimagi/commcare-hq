@@ -9,6 +9,7 @@ class TestDailySavedExports(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestDailySavedExports, cls).setUpClass()
         cls.exports = [
             FormExportInstance(is_daily_saved_export=True),
             FormExportInstance(is_daily_saved_export=False),
@@ -21,6 +22,7 @@ class TestDailySavedExports(TestCase):
     def tearDownClass(cls):
         for export in cls.exports:
             export.delete()
+        super(TestDailySavedExports, cls).tearDownClass()
 
     def test_saved_exports_task(self):
 

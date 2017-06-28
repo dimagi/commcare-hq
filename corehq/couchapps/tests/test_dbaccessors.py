@@ -39,6 +39,7 @@ class AttachmentsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(AttachmentsTest, cls).setUpClass()
         for app_id, xmlns, with_attachments in COMBOS:
             AttachmentsTest._create_form(app_id, xmlns, with_attachments)
 
@@ -56,6 +57,7 @@ class AttachmentsTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
+        super(AttachmentsTest, cls).tearDownClass()
 
     def test_forms_have_multimedia(self):
         for app_id, xmlns, with_attachments in COMBOS:

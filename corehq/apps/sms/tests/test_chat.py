@@ -15,6 +15,7 @@ class LastReadMessageTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(LastReadMessageTestCase, cls).setUpClass()
         cls.domain = 'sms-chat-test-domain'
         cls.domain_obj = Domain(name=cls.domain)
         cls.domain_obj.save()
@@ -22,6 +23,7 @@ class LastReadMessageTestCase(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
+        super(LastReadMessageTestCase, cls).tearDownClass()
 
     def test_last_read_message(self):
         self.assertIsNone(SQLLastReadMessage.by_anyone(self.domain, 'contact-id-1'))
@@ -59,6 +61,7 @@ class ChatHistoryTestCase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(ChatHistoryTestCase, cls).setUpClass()
         cls.domain = 'sms-chat-history-test-domain'
         cls.domain_obj = Domain(name=cls.domain)
         cls.domain_obj.save()
@@ -187,6 +190,7 @@ class ChatHistoryTestCase(TestCase):
         cls.contact3.delete()
         cls.chat_user.delete()
         cls.domain_obj.delete()
+        super(ChatHistoryTestCase, cls).tearDownClass()
 
     def patch_contact_id(self, contact_id):
         return patch('corehq.apps.sms.views.ChatMessageHistory.contact_id', contact_id)
