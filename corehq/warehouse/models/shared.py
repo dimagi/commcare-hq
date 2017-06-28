@@ -3,11 +3,11 @@
 class WarehouseTable(object):
 
     @classmethod
-    def commit(cls, batch_id):
+    def commit(cls, batch_record):
         '''
         Commits records based on a time frame.
 
-        :param batch_id: The id of the batch being committed
+        :param batch_record: The BatchRecord of the batch being committed
 
         :returns: True if commit passed validations, False otherwise
         '''
