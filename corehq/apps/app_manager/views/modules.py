@@ -12,6 +12,7 @@ from django.views.decorators.http import require_GET
 from django.contrib import messages
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
     get_per_type_defaults
+from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 from corehq.apps.case_search.models import case_search_enabled_for_domain
@@ -785,6 +786,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     persist_tile_on_forms = params.get("persistTileOnForms", None)
     persistent_case_tile_from_module = params.get("persistentCaseTileFromModule", None)
     pull_down_tile = params.get("enableTilePullDown", None)
+    sort_nodeset_columns = params.get("sortNodesetColumns", None)
     print_template = params.get('printTemplate', None)
     case_list_lookup = params.get("case_list_lookup", None)
     search_properties = params.get("search_properties")
@@ -855,6 +857,9 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
                 "There was an issue with your custom variables: {}".format(error.message)
             )
         detail.long.custom_variables = custom_variables['long']
+
+    if sort_nodeset_columns is not None:
+        detail.long.sort_nodeset_columns = sort_nodeset_columns
 
     if sort_elements is not None:
         detail.short.sort_elements = []
@@ -999,12 +1004,14 @@ def new_module(request, domain, app_id):
 
         form_id = None
         if toggles.APP_MANAGER_V2.enabled(request.user.username):
+            unstructured = add_ons.show("unstructured_case_lists", request, app)
             if module_type == 'case':
-                # registration form
-                register = app.new_form(module_id, "Register", lang)
-                register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
-                register.actions.update_case = UpdateCaseAction(
-                    condition=FormActionCondition(type='always'))
+                if not unstructured:
+                    # registration form
+                    register = app.new_form(module_id, "Register", lang)
+                    register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
+                    register.actions.update_case = UpdateCaseAction(
+                        condition=FormActionCondition(type='always'))
 
                 # one followup form
                 followup = app.new_form(module_id, "Followup", lang)

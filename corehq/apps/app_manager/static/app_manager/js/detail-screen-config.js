@@ -976,7 +976,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                 this.allowsEmptyColumns = options.allowsEmptyColumns;
                 this.persistentCaseTileFromModule = (
                     ko.observable(spec[this.columnKey].persistent_case_tile_from_module || ""));
-
+                this.sortNodesetColumns = ko.observable(spec[this.columnKey].sort_nodeset_columns || false);
                 this.fireChange = function() {
                     that.fire('change');
                 };
@@ -1064,6 +1064,9 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     that.saveButton.fire('change');
                 });
                 this.enableTilePullDown.subscribe(function(){
+                    that.saveButton.fire('change');
+                });
+                this.sortNodesetColumns.subscribe(function(){
                     that.saveButton.fire('change');
                 });
                 this.columns.subscribe(function () {
@@ -1164,6 +1167,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     data.persistTileOnForms = this.persistTileOnForms();
                     data.persistentCaseTileFromModule = this.persistentCaseTileFromModule();
                     data.enableTilePullDown = this.persistTileOnForms() ? this.enableTilePullDown() : false;
+                    data.sortNodesetColumns = this.sortNodesetColumns() ? this.sortNodesetColumns() : false;
 
                     if (this.containsParentConfiguration) {
                         var parentSelect;
@@ -1425,17 +1429,18 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             );
         }
 
-        if (COMMCAREHQ.previewEnabled('ENUM_IMAGE')) {
+        var addOns = hqImport("hqwebapp/js/initial_page_data.js").get("add_ons");
+        if (addOns.enum_image.show) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "enum-image", label: gettext('Icon') + gettext(' (Preview!)')}
             );
         }
-        if (COMMCAREHQ.previewEnabled('CONDITIONAL_ENUM')) {
+        if (addOns.conditional_enum.show) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "conditional-enum", label: gettext('Conditional ID Mapping') + gettext(' (Preview!)')}
             );
         }
-        if (COMMCAREHQ.previewEnabled('CALC_XPATHS')) {
+        if (addOns.calc_xpaths.show) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "calculate", label: gettext('Calculate') + gettext(' (Preview!)')}
             );
