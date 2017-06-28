@@ -779,6 +779,7 @@ DECLARE
 	_ls_tablename text;
 	_infra_tablename text;
 	_household_tablename text;
+	_person_tablename text;
 	_all_text text;
 	_null_value text;
 	_rollup_text text;
@@ -789,6 +790,10 @@ BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_end_date = (date_trunc('MONTH', $1) + INTERVAL '1 MONTH - 1 day')::DATE;
 	_previous_month_date = (date_trunc('MONTH', _start_date) + INTERVAL '- 1 MONTH')::DATE;
+	_month_end_11yr = (_end_date + INTERVAL ' - 11 YEAR')::DATE;
+	_month_start_15yr = (_start_date + INTERVAL ' - 15 YEAR')::DATE;
+	_month_end_15yr = (_end_date + INTERVAL ' - 15 YEAR')::DATE;
+	_month_start_18yr = (_start_date + INTERVAL ' - 18 YEAR')::DATE;
 	_all_text = 'All';
 	_null_value = NULL;
 	_yes_text = 'yes';
@@ -804,6 +809,7 @@ BEGIN
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('awc_mgmt') INTO _ls_tablename;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('infrastructure') INTO _infra_tablename;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('household') INTO _household_tablename;
+	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('person') INTO _person_tablename;
 
 	-- Setup base locations and month
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
@@ -948,6 +954,59 @@ BEGIN
 		'FROM ' || quote_ident(_household_tablename) || ' ' ||
 		'GROUP BY owner_id) ut ' ||
 	'WHERE ut.owner_id = agg_awc.awc_id';
+
+	-- Aggregate person table (pass 1)
+	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
+		'cases_person = ut.cases_person, ' ||
+		'cases_person_all = ut.cases_person_all ' ||
+	'FROM (SELECT ' ||
+		'awc_id, ' ||
+		'sum(seeking_services) AS cases_person, ' ||
+		'sum(count) AS cases_person_all ' ||
+		'FROM ' || quote_ident(_person_tablename) || ' ' ||
+		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
+		'GROUP BY awc_id) ut ' ||
+	'WHERE ut.awc_id = agg_awc.awc_id';
+
+	-- Aggregate person table (pass 2)
+	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
+		'cases_person_has_aadhaar = ut.cases_person_has_aadhaar ' ||
+	'FROM (SELECT ' ||
+		'awc_id, ' ||
+		'sum(seeking_services) AS cases_person_has_aadhaar ' ||
+		'FROM ' || quote_ident(_person_tablename) || ' ' ||
+		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
+		    'AND aadhar_date <= '  || quote_literal(_end_date) || ' ' ||
+		'GROUP BY awc_id) ut ' ||
+	'WHERE ut.awc_id = agg_awc.awc_id';
+
+	-- Aggregate person table (pass 3)
+	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
+		'cases_person_adolescent_girls_11_14 = ut.cases_person_adolescent_girls_11_14, ' ||
+		'cases_person_adolescent_girls_11_14_all = ut.cases_person_adolescent_girls_11_14_all ' ||
+	'FROM (SELECT ' ||
+		'awc_id, ' ||
+		'sum(seeking_services) AS cases_person_adolescent_girls_11_14, ' ||
+		'sum(count) AS cases_person_adolescent_girls_11_14_all ' ||
+		'FROM ' || quote_ident(_person_tablename) || ' ' ||
+		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
+		    'AND ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob ' ||
+		'GROUP BY awc_id) ut ' ||
+	'WHERE ut.awc_id = agg_awc.awc_id';
+
+    -- Aggregate person table (pass 4)
+	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
+		'cases_person_adolescent_girls_15_18 = ut.cases_person_adolescent_girls_15_18, ' ||
+		'cases_person_adolescent_girls_15_18_all = ut.cases_person_adolescent_girls_15_18_all ' ||
+	'FROM (SELECT ' ||
+		'awc_id, ' ||
+		'sum(seeking_services) AS cases_person_adolescent_girls_15_18, ' ||
+		'sum(count) AS cases_person_adolescent_girls_15_18_all ' ||
+		'FROM ' || quote_ident(_person_tablename) || ' ' ||
+		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
+		    'AND ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob ' ||
+		'GROUP BY awc_id) ut ' ||
+	'WHERE ut.awc_id = agg_awc.awc_id';
 
 	-- Pass to combine THR information from ccs record and child health table
 	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' SET thr_score = ' ||
@@ -1260,10 +1319,17 @@ BEGIN
 		'sum(trained_phase_4), ';
 
     _rollup_text2 = 'sum(cases_household), ' ||
+        'sum(cases_person), ' ||
+        'sum(cases_person_all), ' ||
+        'sum(cases_person_has_aadhaar), ' ||
         'sum(cases_ccs_pregnant_all), ' ||
-		'sum(cases_ccs_lactating_all), ' ||
-		'sum(cases_child_health_all), ' ||
-		'sum(infra_infant_weighing_scale) ';
+        'sum(cases_ccs_lactating_all), ' ||
+        'sum(cases_child_health_all), ' ||
+        'sum(cases_person_adolescent_girls_11_14), ' ||
+        'sum(cases_person_adolescent_girls_15_18), ' ||
+        'sum(cases_person_adolescent_girls_11_14_all), ' ||
+        'sum(cases_person_adolescent_girls_15_18_all), ' ||
+        'sum(infra_infant_weighing_scale) ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||
