@@ -1521,7 +1521,7 @@ LANGUAGE plpgsql;
 
 -- Aggregate a single daily  for the AWC
 -- Depends on generation of the agg_awc table
-CREATE OR REPLACE FUNCTION aggregate_awc_data(date) RETURNS VOID AS
+CREATE OR REPLACE FUNCTION aggregate_awc_daily(date) RETURNS VOID AS
 $BODY$
 DECLARE
 	_table_date date;
@@ -1568,7 +1568,7 @@ BEGIN
 	    'num_launched_districts, ' ||
 	    'num_launched_blocks, ' ||
 	    'num_launched_supervisors, ' ||
-	    'num_launched_awcs ' ||
+	    'num_launched_awcs ';
 
 	-- DROP and create daily table
 	EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(_tablename);
@@ -1578,7 +1578,7 @@ BEGIN
 
 	-- Copy from the current month agg_awc table (skipping daily_attendance_open which will be a separate query)
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
-	    '( '|| quote_literal(_table_columns) || ') '
+	    '( '|| _table_columns || ') '
 	     '(SELECT ' ||
 	        'state_id, ' ||
             'district_id, ' ||
@@ -1608,7 +1608,7 @@ BEGIN
             'num_launched_blocks, ' ||
             'num_launched_supervisors, ' ||
             'num_launched_awcs ' ||
-         'FROM agg_awc WHERE aggregation_level = 1 AND month = ' || quote_literal(_current_month) ||
+         'FROM agg_awc WHERE aggregation_level = 5 AND month = ' || quote_literal(_current_month) ||
          ')';
 
 	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
@@ -1647,10 +1647,10 @@ BEGIN
 		'sum(cases_person_adolescent_girls_11_14_all), ' ||
 		'sum(cases_person_adolescent_girls_15_18_all), ' ||
 		'sum(daily_attendance_open), ' ||
-		'sum(num_awcs) ';
+		'sum(num_awcs), ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
-	    '( '|| quote_literal(_table_columns) || ') '
+	    '( '|| _table_columns || ') '
 	    '(SELECT ' ||
 		'state_id, ' ||
 		'district_id, ' ||
@@ -1666,10 +1666,11 @@ BEGIN
 		'1, ' ||
 		'sum(num_launched_awcs) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
+		'WHERE aggregation_level = 5 ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, date)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
-	    '( '|| quote_literal(_table_columns) || ') '
+	    '( '|| _table_columns || ') '
 	    '(SELECT ' ||
 		'state_id, ' ||
 		'district_id, ' ||
@@ -1683,12 +1684,13 @@ BEGIN
 		quote_nullable(_null_value) || ', ' ||
 		'1, ' ||
 		'sum(num_launched_supervisors), ' ||
-		'sum(num_launched_awcs), ' ||
+		'sum(num_launched_awcs) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, date)';
+		'WHERE aggregation_level = 4 ' ||
+		'GROUP BY state_id, district_id, block_id, date)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
-	    '( '|| quote_literal(_table_columns) || ') '
+	    '( '|| _table_columns || ') '
 	    '(SELECT ' ||
 		'state_id, ' ||
 		'district_id, ' ||
@@ -1702,12 +1704,13 @@ BEGIN
 		'1, ' ||
 		'sum(num_launched_blocks), ' ||
 		'sum(num_launched_supervisors), ' ||
-		'sum(num_launched_awcs), ' ||
+		'sum(num_launched_awcs) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, date)';
+		'WHERE aggregation_level = 3 ' ||
+		'GROUP BY state_id, district_id, date)';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
-	    '( '|| quote_literal(_table_columns) || ') '
+	    '( '|| _table_columns || ') '
 	    '(SELECT ' ||
 		'state_id, ' ||
 		quote_literal(_all_text) || ', ' ||
@@ -1721,9 +1724,10 @@ BEGIN
 		'sum(num_launched_districts), ' ||
 		'sum(num_launched_blocks), ' ||
 		'sum(num_launched_supervisors), ' ||
-		'sum(num_launched_awcs), ' ||
+		'sum(num_launched_awcs) ' ||
 		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, date)';
+		'WHERE aggregation_level = 2 ' ||
+		'GROUP BY state_id, date)';
 
 END;
 $BODY$
