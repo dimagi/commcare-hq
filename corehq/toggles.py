@@ -517,6 +517,13 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+LIVEQUERY_SYNC = StaticToggle(
+    'livequery_sync',
+    'Enable livequery sync algorithm',
+    TAG_PRODUCT_PATH,
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
 NO_VELLUM = StaticToggle(
     'no_vellum',
     'Allow disabling Form Builder per form '
