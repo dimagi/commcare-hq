@@ -3,6 +3,7 @@ import random
 from datetime import datetime
 from corehq.warehouse.models import (
     UserStagingTable,
+    GroupStagingTable,
     LocationStagingTable,
     LocationTypeStagingTable,
 )
@@ -19,6 +20,26 @@ def create_user_staging_record(domain, user_id=None, username=None, doc_type=Non
         is_staff=False,
         is_superuser=False,
         date_joined=datetime.utcnow(),
+    )
+    record.save()
+    return record
+
+
+def create_group_staging_record(
+        domain,
+        group_id=None,
+        name=None,
+        doc_type=None,
+        user_ids=None,
+        removed_user_ids=None):
+    record = GroupStagingTable(
+        domain=domain,
+        group_id=group_id or uuid.uuid4().hex,
+        name=name or 'group-name',
+        doc_type=doc_type or 'Group',
+        user_ids=user_ids or [],
+        removed_user_ids=removed_user_ids or [],
+        group_last_modified=datetime.utcnow(),
     )
     record.save()
     return record
