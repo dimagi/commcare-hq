@@ -175,7 +175,7 @@ def get_app_view_context(request, app):
         'values': get_settings_values(app),
         'warning': _("This is not an allowed value for this field"),
     }
-    if toggles.CUSTOM_PROPERTIES.enabled(request.domain) and 'custom_properties' in app.profile:
+    if toggles.CUSTOM_PROPERTIES.enabled(request.domain) and 'custom_properties' in getattr(app, 'profile', {}):
         custom_properties_array = map(lambda p: {'key': p[0], 'value': p[1]},
                                       app.profile.get('custom_properties').items())
         app_view_options.update({'customProperties': custom_properties_array})
