@@ -332,7 +332,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             reportColumnOptions,
             dateRangeOptions,
             isGroupByRequired,
-            groupByInitialValue,
+            groupByInitialValue
     ) {
         var self = this;
         self.optionsContainQuestions = _.any(dataSourceIndicators, function (o) {

@@ -32,7 +32,7 @@
         var reportColumnOptions = {{ report_column_options|JSON }};
         var dateRangeOptions = {{ date_range_options|JSON }};
         var isGroupByRequired = {{ is_group_by_required|JSON }};
-        var groupByInitialValue = {{ form.fields.group_by.widget.value|JSON}};
+        var groupByInitialValue = {{ form.fields.group_by.widget.value|JSON }};
 
         var ConfigForm = hqImport('userreports/js/builder_view_models.js').ConfigForm;
         $("#report-config-form").koApplyBindings(
