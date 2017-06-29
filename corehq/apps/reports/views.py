@@ -2029,6 +2029,11 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
         return start, end
 
 
+def _can_view_report(domain, user, report_class):
+    return (user.has_permission(domain, Permissions.view_reports)
+            or user.has_permission(domain, Permissions.view_report, data=report_class))
+
+
 @login_and_domain_required
 @require_GET
 def export_report(request, domain, export_hash, format):
@@ -2039,8 +2044,7 @@ def export_report(request, domain, export_hash, format):
 
         if isinstance(content, list):
             report_class, report_file = content
-            if not request.couch_user.has_permission(
-                    domain, Permissions.view_report, data=report_class):
+            if not _can_view_report(domain, request.couch_user, report_class):
                 raise PermissionDenied()
         # TODO drop this after all existing reports have expired
         else:
