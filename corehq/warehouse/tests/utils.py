@@ -8,14 +8,14 @@ from corehq.warehouse.models import (
     GroupStagingTable,
     LocationStagingTable,
     LocationTypeStagingTable,
-    BatchRecord,
+    Batch,
 )
 
 DEFAULT_BATCH_ID = '222617b9-8cf0-40a2-8462-7f872e1f1344'
 
 
 def get_default_batch():
-    return BatchRecord.objects.get(batch_id=DEFAULT_BATCH_ID)
+    return Batch.objects.get(batch_id=DEFAULT_BATCH_ID)
 
 
 def create_batch(start, end, batch_id=None):
@@ -26,7 +26,7 @@ def create_batch(start, end, batch_id=None):
         '-s={}'.format(start.isoformat()),
         '-e={}'.format(end.isoformat()),
     )
-    return BatchRecord.objects.get(batch_id=batch_id)
+    return Batch.objects.get(batch_id=batch_id)
 
 
 def create_user_staging_record(

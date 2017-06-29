@@ -20,7 +20,7 @@ from corehq.warehouse.tests.utils import (
     create_batch,
 )
 from corehq.warehouse.models import (
-    BatchRecord,
+    Batch,
     UserStagingTable,
     UserDim,
     GroupStagingTable,
@@ -39,7 +39,7 @@ def setup_module():
 
 
 def teardown_module():
-    BatchRecord.objects.all().delete()
+    Batch.objects.all().delete()
 
 
 class TestUserDim(TestCase):

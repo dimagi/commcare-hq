@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand, CommandError
 from dimagi.utils.parsing import string_to_utc_datetime
-from corehq.warehouse.models import BatchRecord
+from corehq.warehouse.models import Batch
 
 
 USAGE = """Usage: ./manage.py create_batch <batch_id> -s <start_datetime> -e <end_datetime>
@@ -37,7 +37,7 @@ class Command(BaseCommand):
         start = options.get('start')
         end = options.get('end')
 
-        BatchRecord.objects.create(
+        Batch.objects.create(
             batch_id=batch_id,
             start_datetime=start,
             end_datetime=end,

@@ -12,7 +12,7 @@ from corehq.warehouse.models import (
     GroupStagingTable,
     DomainStagingTable,
     UserStagingTable,
-    BatchRecord,
+    Batch,
 )
 
 
@@ -23,7 +23,7 @@ def setup_module():
 
 
 def teardown_module():
-    BatchRecord.objects.all().delete()
+    Batch.objects.all().delete()
 
 
 class BaseStagingTableTest(TestCase):

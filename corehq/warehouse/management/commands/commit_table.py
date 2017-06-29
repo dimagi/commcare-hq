@@ -1,7 +1,7 @@
 from datetime import datetime
 from django.core.management import BaseCommand, CommandError
 from corehq.warehouse.const import ALL_TABLES
-from corehq.warehouse.models import get_cls_by_slug, BatchRecord, CommitRecord
+from corehq.warehouse.models import get_cls_by_slug, Batch, CommitRecord
 
 
 USAGE = """Usage: ./manage.py commit_table <slug> <batch_id>
@@ -25,8 +25,8 @@ class Command(BaseCommand):
 
     def handle(self, slug, batch_id, **options):
         try:
-            batch = BatchRecord.objects.get(batch_id=batch_id)
-        except BatchRecord.DoesNotExist:
+            batch = Batch.objects.get(batch_id=batch_id)
+        except Batch.DoesNotExist:
             raise CommandError('Invalid batch ID: {}'.format(batch_id))
 
         try:

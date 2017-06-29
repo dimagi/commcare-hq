@@ -15,7 +15,7 @@ from corehq.warehouse.models import (
     DomainDim,
     FormStagingTable,
     FormFact,
-    BatchRecord,
+    Batch,
 )
 
 
@@ -26,7 +26,7 @@ def setup_module():
 
 
 def teardown_module():
-    BatchRecord.objects.all().delete()
+    Batch.objects.all().delete()
 
 
 class FormFactIntegrationTest(TestCase):

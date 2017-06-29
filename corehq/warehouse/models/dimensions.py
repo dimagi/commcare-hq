@@ -24,9 +24,8 @@ from corehq.warehouse.utils import truncate_records_for_cls
 class BaseDim(models.Model, WarehouseTable):
     domain = models.CharField(max_length=255)
     batch = models.ForeignKey(
-        'BatchRecord',
+        'Batch',
         on_delete=models.PROTECT,
-        db_column='batch_id',
     )
 
     dim_last_modified = models.DateTimeField(auto_now=True)
@@ -34,9 +33,9 @@ class BaseDim(models.Model, WarehouseTable):
     deleted = models.BooleanField()
 
     @classmethod
-    def commit(cls, batch_record):
+    def commit(cls, batch):
         with transaction.atomic(using=db_for_read_write(cls)):
-            cls.load(batch_record)
+            cls.load(batch)
         return True
 
     class Meta:

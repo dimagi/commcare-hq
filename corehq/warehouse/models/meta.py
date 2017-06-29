@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class BatchRecord(models.Model):
+class Batch(models.Model):
     batch_id = models.UUIDField(unique=True, db_index=True, primary_key=True)
 
     start_datetime = models.DateTimeField()
@@ -15,7 +15,7 @@ class CommitRecord(models.Model):
     A CommitRecord records meta data about a certain warehouse table's
     batch.
     '''
-    batch = models.ForeignKey('BatchRecord', on_delete=models.PROTECT)
+    batch = models.ForeignKey('Batch', on_delete=models.PROTECT)
 
     slug = models.CharField(max_length=100)
     error = models.TextField()

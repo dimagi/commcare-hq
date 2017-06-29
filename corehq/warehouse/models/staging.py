@@ -36,18 +36,17 @@ from corehq.warehouse.etl import CouchToDjangoETLMixin, CustomSQLETLMixin
 
 class StagingTable(models.Model, WarehouseTable):
     batch = models.ForeignKey(
-        'BatchRecord',
+        'Batch',
         on_delete=models.PROTECT,
-        db_column='batch_id',
     )
 
     class Meta:
         abstract = True
 
     @classmethod
-    def commit(cls, batch_record):
+    def commit(cls, batch):
         cls.clear_records()
-        cls.load(batch_record)
+        cls.load(batch)
         return True
 
     @classmethod
