@@ -13,17 +13,24 @@ hqDefine('case_importer/js/import_history.js', function () {
         };
         self.case_uploads = ko.observableArray(null);
         self.state = ko.observable(self.states.NOT_STARTED);
+        var uploadIdsInDataMatchCurrent = function (data) {
+            return _.chain(self.case_uploads()).pluck('upload_id').isEqual(_(data).pluck('upload_id')).value();
+        };
+        var taskStatusesInDataMatchCurrent = function (data) {
+            return (
+                _.chain(self.case_uploads()).pluck('task_status').map(function (task_status) {return task_status()})
+                            .isEqual(_(data).pluck('task_status').map(function (task_status) {return task_status()})).value()
+            );
+        };
         var shouldUpdate = function (data) {
             // do not update DOM
             // if we're not either adding new uploads or updating the status
             // this prevents some jumpiness when not necessary
             // and is particularly bad if you're in the middle of editing a comment
-            return !(_.chain(self.case_uploads()).pluck('upload_id').isEqual(_(data).pluck('upload_id')).value() &&
-                _.chain(self.case_uploads()).pluck('task_status').map(function (task_status) {return task_status()})
-                    .isEqual(_(data).pluck('task_status').map(function (task_status) {return task_status()})).value());
+            return !(uploadIdsInDataMatchCurrent(data) && taskStatusesInDataMatchCurrent(data));
         };
         self.updateCaseUploads = function (data) {
-            if (_.chain(self.case_uploads()).pluck('upload_id').isEqual(_(data).pluck('upload_id')).value()) {
+            if (uploadIdsInDataMatchCurrent(data)) {
                 // in the easy case, update just the essential information (task_status) in place
                 // this prevents some jumpiness when not necessary
                 // and is particularly bad if you're in the middle of editing a comment
