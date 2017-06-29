@@ -136,6 +136,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         return True
 
     def clear_caches(self):
+        super(Repeater, self).clear_caches()
         if self.__class__ == Repeater:
             cls = self.get_class_from_doc_type(self.doc_type)
         else:
