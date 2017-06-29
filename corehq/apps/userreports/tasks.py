@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from botocore.vendored.requests import ReadTimeout
+from botocore.vendored.requests.exceptions import ReadTimeout
 from botocore.vendored.requests.packages.urllib3.exceptions import ProtocolError
 from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
