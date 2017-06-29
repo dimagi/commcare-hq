@@ -109,12 +109,7 @@ def get_payload(timing_context, restore_state):
         return CIRCULAR_REF
 
     CIRCULAR_REF = object()
-    log = logging.getLogger(__name__)
-    if log.isEnabledFor(logging.DEBUG):
-        debug = log.debug
-    else:
-        def debug(*args):
-            return None
+    debug = logging.getLogger(__name__).debug
     live_ids = set()
     extensions_by_host = defaultdict(set)  # host_id -> extension_ids
     hosts_by_extension = defaultdict(set)  # extension_id -> host_ids
@@ -125,8 +120,8 @@ def get_payload(timing_context, restore_state):
         with timing_context("get_case_ids_by_owners"):
             owner_ids = list(restore_state.owner_ids)
             open_ids = accessor.get_case_ids_by_owners(owner_ids, closed=False)
+            debug("open: %r", open_ids)
 
-        debug("open: %r", open_ids)
         next_ids = all_ids = set(open_ids)
         open_ids = set(open_ids)
         level = 0
