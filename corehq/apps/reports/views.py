@@ -2029,7 +2029,6 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
         return start, end
 
 
-@require_case_view_permission
 @login_and_domain_required
 @require_GET
 def export_report(request, domain, export_hash, format):
@@ -2037,8 +2036,17 @@ def export_report(request, domain, export_hash, format):
 
     content = cache.get(export_hash)
     if content is not None:
+
+        if isinstance(content, list):
+            report_class, report_file = content
+            if not request.couch_user.has_permission(
+                    domain, Permissions.view_report, data=report_class):
+                raise PermissionDenied()
+        # TODO drop this after all existing reports have expired
+        else:
+            report_file = content
         if format in Format.VALID_FORMATS:
-            file = ContentFile(content)
+            file = ContentFile(report_file)
             response = HttpResponse(file, Format.FORMAT_DICT[format])
             response['Content-Length'] = file.size
             response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(
