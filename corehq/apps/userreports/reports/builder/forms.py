@@ -86,16 +86,14 @@ class Select2(Widget):
         self.choices = list(choices)
 
     def render(self, name, value, attrs=None, choices=()):
-        value = '' if value is None else value
+        self.value = '' if value is None else value
         final_attrs = self.build_attrs(attrs, name=name)
 
         return format_html(
             '<input{0} type="text" data-bind="select2: {1}, {2}">',
             flatatt(final_attrs),
             json.dumps(self._choices_for_binding(choices)),
-            'value: {}'.format(
-                self.ko_value
-            ) if self.ko_value else ""
+            'value: {}'.format(self.ko_value or self.value)
         )
 
     def _choices_for_binding(self, choices):
@@ -108,25 +106,26 @@ class QuestionSelect(Widget):
     Requires knockout to be included on the page.
     """
 
-    def __init__(self, attrs=None, choices=()):
+    def __init__(self, attrs=None, choices=(), ko_value=None):
+        self.ko_value = ko_value
         super(QuestionSelect, self).__init__(attrs)
         self.choices = list(choices)
 
     def render(self, name, value, attrs=None, choices=()):
-        value = '' if value is None else value
+        self.value = '' if value is None else value
         final_attrs = self.build_attrs(attrs, name=name)
 
         return format_html(
             """
             <input{0} data-bind='
                questionsSelect: {1},
-               value: "{2}",
-               optionsCaption: " "
+               optionsCaption: " ",
+               {2}
             '/>
             """,
             flatatt(final_attrs),
             mark_safe(self.render_options(choices)),
-            value
+            "value: {}".format(self.ko_value or self.value)
         )
 
     def render_options(self, choices):
@@ -1077,7 +1076,10 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
             report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
         )
         if self.source_type == "form":
-            self.fields['group_by'].widget = QuestionSelect(attrs={'class': 'input-large'})
+            self.fields['group_by'].widget = QuestionSelect(
+                attrs={'class': 'input-large'},
+                ko_value='groupBy'
+            )
         else:
             self.fields['group_by'].widget = Select2(
                 attrs={'class': 'input-large'},
@@ -1488,7 +1490,10 @@ class ConfigureMapReportForm(ConfigureListReportForm):
             report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
         )
         if self.source_type == "form":
-            self.fields['location'].widget = QuestionSelect(attrs={'class': 'input-large'})
+            self.fields['group_by'].widget = QuestionSelect(
+                attrs={'class': 'input-large'},
+                ko_value='groupBy'
+            )
         else:
             self.fields['location'].widget = Select2(
                 attrs={'class': 'input-large'},
