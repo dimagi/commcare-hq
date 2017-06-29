@@ -130,13 +130,13 @@ def get_payload(timing_context, restore_state):
             level += 1
             with timing_context("get_related_indices(level %s)" % level):
                 related = accessor.get_related_indices(list(next_ids), all_ids)
-            if not related:
-                break
-            next_ids = {classify(index, next_ids) for index in related}
-            next_ids.discard(None)
+                if not related:
+                    break
+                next_ids = {classify(index, next_ids) for index in related}
+                next_ids.discard(None)
 
-            debug('next: %r all: %r', next_ids, all_ids)
-            all_ids.update(next_ids)
+                debug('next: %r all: %r', next_ids, all_ids)
+                all_ids.update(next_ids)
 
         # owned, open, not an extension -> live
         for case_id in open_ids:
