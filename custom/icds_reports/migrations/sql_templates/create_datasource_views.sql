@@ -297,6 +297,7 @@ CREATE VIEW agg_child_health_monthly AS
         COALESCE("agg_child_health"."bf_at_birth", 0) AS "bf_at_birth",
         COALESCE("agg_child_health"."ebf_eligible", 0) AS "ebf_eligible",
         COALESCE("agg_child_health"."ebf_in_month", 0) AS "ebf_in_month",
+        COALESCE("agg_child_health"."ebf_no_info_recorded", 0) AS "ebf_no_info_recorded",
         COALESCE("agg_child_health"."cf_initiation_in_month", 0) AS "cf_initiation_in_month",
         COALESCE("agg_child_health"."cf_initiation_eligible", 0) AS "cf_initiation_eligible",
         COALESCE("agg_child_health"."cf_eligible", 0) AS "cf_eligible",
