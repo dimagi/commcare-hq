@@ -9,7 +9,7 @@ class CasePayloadProvider(FullResponseDataProvider):
     """
 
     def get_response(self, restore_state):
-        if not self.async_task and restore_state.is_livequery:
-            return do_livequery(self.timing_context, restore_state)
+        if restore_state.is_livequery:
+            return do_livequery(self.timing_context, restore_state, self.async_task)
         sync_op = CleanOwnerCaseSyncOperation(self.timing_context, restore_state, self.async_task)
         return sync_op.get_payload()

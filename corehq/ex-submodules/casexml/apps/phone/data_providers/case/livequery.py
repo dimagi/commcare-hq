@@ -29,12 +29,14 @@ from casexml.apps.case.const import CASE_INDEX_EXTENSION as EXTENSION
 from casexml.apps.phone.data_providers.case.load_testing import (
     get_xml_for_response,
 )
+from casexml.apps.phone.const import ASYNC_RETRY_AFTER
 from casexml.apps.phone.data_providers.case.stock import get_stock_payload
 from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates
+from casexml.apps.phone.tasks import ASYNC_RESTORE_SENT
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
-def do_livequery(timing_context, restore_state):
+def do_livequery(timing_context, restore_state, async_task=None):
     """Get case sync restore response
     """
     def enliven(case_id):
@@ -153,8 +155,12 @@ def do_livequery(timing_context, restore_state):
 
         with timing_context("compile_response"):
             iaccessor = PrefetchIndexCaseAccessor(accessor, indices)
-            batches = batch_cases(iaccessor, live_ids)
-            response = compile_response(timing_context, batches, restore_state)
+            response = compile_response(
+                timing_context,
+                restore_state,
+                batch_cases(iaccessor, live_ids),
+                init_progress(async_task, len(live_ids)),
+            )
 
     return response
 
@@ -186,9 +192,28 @@ def batch_cases(accessor, case_ids):
         yield accessor.get_cases(next_ids)
 
 
-def compile_response(timing_context, batches, restore_state):
+def init_progress(async_task, total):
+    if not async_task:
+        return lambda done: None
+
+    def update_progress(done):
+        async_task.update_state(
+            state=ASYNC_RESTORE_SENT,
+            meta={
+                'done': done,
+                'total': total,
+                'retry-after': ASYNC_RETRY_AFTER
+            }
+        )
+
+    update_progress(0)
+    return update_progress
+
+
+def compile_response(timing_context, restore_state, batches, update_progress):
     response = restore_state.restore_class()
 
+    done = 0
     for cases in batches:
         with timing_context("get_stock_payload"):
             response.extend(get_stock_payload(
@@ -205,5 +230,8 @@ def compile_response(timing_context, batches, restore_state):
             response.extend(item
                 for update in updates.itervalues()
                 for item in get_xml_for_response(update, restore_state))
+
+        done += len(cases)
+        update_progress(done)
 
     return response
