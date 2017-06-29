@@ -26,7 +26,7 @@ class BaseDim(models.Model, WarehouseTable):
 
     dim_last_modified = models.DateTimeField(auto_now=True)
     dim_created_on = models.DateTimeField(auto_now_add=True)
-    deleted = models.BooleanField(default=False)
+    deleted = models.BooleanField()
 
     @classmethod
     def commit(cls, start_datetime, end_datetime):
@@ -81,8 +81,8 @@ class GroupDim(BaseDim, CustomSQLETLMixin):
     group_id = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
 
-    case_sharing = models.BooleanField()
-    reporting = models.BooleanField()
+    case_sharing = models.NullBooleanField()
+    reporting = models.NullBooleanField()
 
     group_last_modified = models.DateTimeField()
 
@@ -202,4 +202,4 @@ class UserGroupDim(BaseDim, CustomSQLETLMixin):
 
     @classmethod
     def dependencies(cls):
-        return [USER_DIM_SLUG, GROUP_DIM_SLUG]
+        return [USER_DIM_SLUG, GROUP_DIM_SLUG, GROUP_STAGING_SLUG]

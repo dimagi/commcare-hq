@@ -14,10 +14,14 @@ from corehq.warehouse.tests.utils import (
     create_user_staging_record,
     create_location_records_from_tree,
     create_location_staging_record,
+    create_group_staging_record,
 )
 from corehq.warehouse.models import (
     UserStagingTable,
     UserDim,
+    GroupStagingTable,
+    GroupDim,
+    UserGroupDim,
     LocationDim,
     LocationStagingTable,
     LocationTypeStagingTable,
@@ -94,6 +98,62 @@ class TestUserDim(TestCase):
         self.assertEqual(
             UserDim.objects.filter(user_type=WEB_USER_TYPE).first().user_id,
             'beeboobop',
+        )
+
+
+class TestUserGroupDim(TestCase):
+
+    domain = 'user-group-dim-test'
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestUserGroupDim, cls).setUpClass()
+        cls.blue_dog = create_user_staging_record(cls.domain, username='blue-dog')
+        cls.black_dog = create_user_staging_record(cls.domain, username='black-dog')
+        cls.yellow_cat = create_user_staging_record(cls.domain, username='yellow-cat')
+
+    @classmethod
+    def tearDownClass(cls):
+        GroupStagingTable.clear_records()
+        UserStagingTable.clear_records()
+        GroupDim.clear_records()
+        UserDim.clear_records()
+        UserGroupDim.clear_records()
+        super(TestUserGroupDim, cls).tearDownClass()
+
+    def test_basic_user_group_insert(self):
+        start = datetime.utcnow() - timedelta(days=3)
+        end = datetime.utcnow() + timedelta(days=3)
+
+        UserDim.commit(start, end)
+        self.assertEqual(UserDim.objects.count(), 3)
+
+        # Setup group records to have multiple users
+        dogs = create_group_staging_record(
+            self.domain,
+            'dogs',
+            user_ids=[self.blue_dog.user_id, self.black_dog.user_id],
+        )
+        create_group_staging_record(
+            self.domain,
+            'cats',
+            user_ids=[self.yellow_cat.user_id],
+        )
+        GroupDim.commit(start, end)
+        self.assertEqual(GroupDim.objects.count(), 2)
+
+        UserGroupDim.commit(start, end)
+        self.assertEqual(UserGroupDim.objects.count(), 3)
+        dog_relations = UserGroupDim.objects.filter(group_dim=GroupDim.objects.get(group_id=dogs.group_id))
+        self.assertEqual(
+            dog_relations.count(),
+            2,
+        )
+        self.assertEqual(
+            set(dog_relations.values_list('user_dim_id', flat=True)),
+            set(UserDim.objects.filter(
+                user_id__in=[self.blue_dog.user_id, self.black_dog.user_id]
+            ).values_list('id', flat=True)),
         )
 
 

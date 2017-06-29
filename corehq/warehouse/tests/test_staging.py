@@ -59,9 +59,9 @@ class StagingRecordsTestsMixin(object):
 class TestGroupStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
 
     records = [
-        Group(name='one', case_sharing=True, reporting=True),
-        Group(name='two'),
-        Group(name='three'),
+        Group(domain='group-staging-test', name='one', case_sharing=True, reporting=True),
+        Group(domain='group-staging-test', name='two'),
+        Group(domain='group-staging-test', name='three'),
     ]
     staging_table_cls = GroupStagingTable
 

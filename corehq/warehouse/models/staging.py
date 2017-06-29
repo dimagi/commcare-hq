@@ -1,6 +1,7 @@
 from contextlib import closing
 
 from django.db import models, transaction, connections
+from django.contrib.postgres.fields import ArrayField
 
 from dimagi.utils.couch.database import iter_docs
 
@@ -124,6 +125,9 @@ class GroupStagingTable(StagingTable, CouchToDjangoETLMixin):
     group_id = models.CharField(max_length=255)
     name = models.CharField(max_length=255)
     doc_type = models.CharField(max_length=100)
+    domain = models.CharField(max_length=100)
+    user_ids = ArrayField(models.CharField(max_length=255), null=True)
+    removed_user_ids = ArrayField(models.CharField(max_length=255), null=True)
 
     case_sharing = models.NullBooleanField()
     reporting = models.NullBooleanField()
@@ -134,11 +138,14 @@ class GroupStagingTable(StagingTable, CouchToDjangoETLMixin):
     def field_mapping(cls):
         return [
             ('_id', 'group_id'),
+            ('domain', 'domain'),
             ('name', 'name'),
             ('case_sharing', 'case_sharing'),
             ('reporting', 'reporting'),
             ('last_modified', 'group_last_modified'),
             ('doc_type', 'doc_type'),
+            ('users', 'user_ids'),
+            ('removed_users', 'removed_user_ids'),
         ]
 
     @classmethod
