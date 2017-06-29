@@ -27,11 +27,8 @@ class Command(BaseCommand):
 
     def handle(self, child_file, **options):
         relevant_districts = SQLLocation.objects.filter(domain='icds-cas',
-                                                        location_id__in=['fd0e25031bab6d778d7391c1d1ba715a',
-                                                                         'a2fcb186e9be8464e167bb1c56ce8260',
-                                                                         '46befa842d7484d50097c810f4d592cf',
-                                                                         '4049fded0acc987d53cfc23173cf2bb0',
-                                                                         'd982a6fb4cca0824fbde59db18d3721b'])
+                                                        location_id__in=['d982a6fb4cca0824fbde59db18d2d422',
+                                                                         '0ffe4a1f110ffc17bb9b749abdfd697c'])
         owners = SQLLocation.objects.get_queryset_descendants(relevant_districts, include_self=True)
         owner_name_mapping = {loc.location_id: loc.name for loc in owners}
         hh_cases = self._get_closed_hh_cases(owner_name_mapping.keys())
