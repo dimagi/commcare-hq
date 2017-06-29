@@ -34,7 +34,7 @@ from casexml.apps.phone.data_providers.case.utils import get_case_sync_updates
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
-def get_payload(timing_context, restore_state):
+def do_livequery(timing_context, restore_state):
     """Get case sync restore response
     """
     def enliven(case_id):
