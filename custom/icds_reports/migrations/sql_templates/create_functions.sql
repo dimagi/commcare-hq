@@ -80,7 +80,8 @@ BEGIN
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_health_monthly') INTO _ucr_child_monthly_table;
 
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
+	'(SELECT ' ||
 		'awc_id, ' ||
 		'case_id, ' ||
 		'month, ' ||
@@ -136,7 +137,9 @@ BEGIN
 		'wasting_last_recorded, ' ||
 		'current_month_wasting, ' ||
 		'valid_in_month, ' ||
-		'valid_all_registered_in_month FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
+		'valid_all_registered_in_month, ' ||
+		'ebf_no_info_recorded ' ||
+		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
 
@@ -329,7 +332,8 @@ BEGIN
 		'sum(height_measured_in_month), ' ||
 		'sum(wasting_normal), ' ||
 		'sum(stunting_normal), ' ||
-		'sum(valid_all_registered_in_month) ' ||
+		'sum(valid_all_registered_in_month), ' ||
+		'sum(ebf_no_info_recorded) ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, disabled, minority, resident)';
 
@@ -395,7 +399,8 @@ BEGIN
 	    'sum(height_measured_in_month), ' ||
 	    'sum(wasting_normal), ' ||
 	    'sum(stunting_normal), ' ||
-	    'sum(valid_all_registered_in_month) ';
+	    'sum(valid_all_registered_in_month), ' ||
+	    'sum(ebf_no_info_recorded) ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
 		'state_id, ' ||

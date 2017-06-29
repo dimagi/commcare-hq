@@ -28,6 +28,7 @@ ALTER TABLE agg_child_health ADD COLUMN height_measured_in_month integer;
 ALTER TABLE agg_child_health ADD COLUMN wasting_normal integer;
 ALTER TABLE agg_child_health ADD COLUMN stunting_normal integer;
 ALTER TABLE agg_child_health ADD COLUMN valid_all_registered_in_month integer;
+ALTER TABLE agg_child_health ADD COLUMN ebf_no_info_recorded integer;
 
 ALTER TABLE child_health_monthly ADD COLUMN cf_initiation_in_month integer;
 ALTER TABLE child_health_monthly ADD COLUMN cf_initiation_eligible integer;
@@ -38,6 +39,7 @@ ALTER TABLE child_health_monthly ADD COLUMN wasting_last_recorded text;
 ALTER TABLE child_health_monthly ADD COLUMN current_month_wasting text;
 ALTER TABLE child_health_monthly ADD COLUMN valid_in_month integer;
 ALTER TABLE child_health_monthly ADD COLUMN valid_all_registered_in_month integer;
+ALTER TABLE child_health_monthly ADD COLUMN ebf_no_info_recorded integer;
 
 ALTER TABLE agg_ccs_record ADD COLUMN valid_all_registered_in_month integer;
 ALTER TABLE agg_ccs_record ADD COLUMN institutional_delivery_in_month integer;
