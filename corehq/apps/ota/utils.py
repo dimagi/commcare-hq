@@ -1,4 +1,4 @@
-from django.conf import settings
+import time
 from django.utils.translation import ugettext as _
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
@@ -62,7 +62,11 @@ def reset_demo_user_restore(commcare_user, domain):
     ).get_payload().as_file()
     demo_restore = DemoUserRestore.create(commcare_user._id, restore)
 
-    # set reference to new restore
+    # Set reference to new restore
+    # Wait and refetch because CommCareUser.report_metadata gets updated by sync log pillow,
+    #   after a restore is generated, otherwise there will be a DocumentUpdate conflict
+    time.sleep(5)
+    commcare_user = CommCareUser.get(commcare_user.get_id)
     commcare_user.demo_restore_id = demo_restore.id
     commcare_user.save()
 
