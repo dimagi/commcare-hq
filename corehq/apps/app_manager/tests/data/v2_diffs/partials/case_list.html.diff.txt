@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -3,294 +3,303 @@
+@@ -3,284 +3,293 @@
  {% load app_manager_extras %}
  {% load xforms_extras %}
  
@@ -140,26 +140,8 @@
 -                <option value="yes">{% trans "Use Case Tiles" %}</option>
 -            </select>
 -        </div>
-+
-+{% if detail.type == 'case' %}
-+<div class="panel panel-appmanager">
-+  <div class="panel-heading">
-+    <h4 class="panel-title panel-title-nolink">
-+      {% trans "Filtering and Sorting" %}
-+    </h4>
-+  </div>
-+  <div class="panel-body">
-+    {% include 'app_manager/v2/partials/case_list_filtering.html' %}
-+
-+    {{ request|toggle_tag_info:"DETAIL_LIST_TAB_NODESETS" }}
-+    {% if request|toggle_enabled:'DETAIL_LIST_TAB_NODESETS' %}
-+    <div data-bind="with: shortScreen">
-+        <input data-bind="checked: sortNodesetColumns" type="checkbox">
-+        <span>
-+            {% trans "Sort entries in the Nodeset tabs" %}
-+        </span>
-     </div>
-     {% endif %}
+-    </div>
+-    {% endif %}
 -
 -    {{ request|toggle_tag_info:"SHOW_PERSIST_CASE_CONTEXT_SETTING" }}
 -    {% if request|toggle_enabled:'SHOW_PERSIST_CASE_CONTEXT_SETTING' %}
@@ -211,6 +193,16 @@
 -                </div>
 -            </div>
 -        </div>
++
++{% if detail.type == 'case' %}
++<div class="panel panel-appmanager">
++  <div class="panel-heading">
++    <h4 class="panel-title panel-title-nolink">
++      {% trans "Filtering and Sorting" %}
++    </h4>
++  </div>
++  <div class="panel-body">
++    {% include 'app_manager/v2/partials/case_list_filtering.html' %}
 +    <div data-bind="with: sortRows">
 +        {% if app.enable_multi_sort %}
 +            <div class="ui-sortable">
@@ -392,16 +384,6 @@
 -
 -{% include 'app_manager/v1/partials/case_list_filtering.html' %}
 -
--{{ request|toggle_tag_info:"DETAIL_LIST_TAB_NODESETS" }}
--{% if request|toggle_enabled:'DETAIL_LIST_TAB_NODESETS' %}
--<div data-bind="with: shortScreen">
--    <input data-bind="checked: sortNodesetColumns" type="checkbox">
--    <span>
--        {% trans "Sort entries in the Nodeset tabs" %}
--    </span>
--</div>
--{% endif %}
--
 -<div data-bind="with: sortRows">
 -{% if app.enable_multi_sort %}
 -
@@ -577,7 +559,7 @@
          <div class="form-group">
              <label class="control-label col-sm-2">
                  {% trans "Select Parent First" %}
-@@ -303,7 +312,7 @@
+@@ -293,7 +302,7 @@
          </div>
          <div class="form-group" data-bind="visible: active">
              <label class="control-label col-sm-2">
@@ -586,7 +568,7 @@
              </label>
              <div class="col-sm-4">
                  <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
-@@ -316,15 +325,14 @@
+@@ -306,15 +315,14 @@
  
  {{ request|toggle_tag_info:"CASE_LIST_LOOKUP" }}
  {% if request|toggle_enabled:"CASE_LIST_LOOKUP" %}

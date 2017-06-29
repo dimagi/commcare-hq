@@ -1934,6 +1934,7 @@ class DetailTab(IndexedSchema):
     # iterates through sub-nodes of an entity rather than a single entity
     has_nodeset = BooleanProperty(default=False)
     nodeset = StringProperty()
+    relevant = StringProperty()
 
 
 class DetailColumn(IndexedSchema):
@@ -2138,6 +2139,13 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     def rename_lang(self, old_lang, new_lang):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
+
+    def sort_nodeset_columns_for_detail(self):
+        return (
+            self.display == "long" and
+            self.sort_nodeset_columns and
+            any(tab for tab in self.get_tabs() if tab.has_nodeset)
+        )
 
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):

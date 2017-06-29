@@ -388,7 +388,7 @@ def toggle_demo_mode(request, domain, user_id):
 
     if demo_mode:
         download = DownloadBase()
-        res = turn_on_demo_mode_task.delay(user, domain)
+        res = turn_on_demo_mode_task.delay(user.get_id, domain)
         download.set_task(res)
         return HttpResponseRedirect(
             reverse(
@@ -469,7 +469,7 @@ def reset_demo_user_restore(request, domain, user_id):
         return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
 
     download = DownloadBase()
-    res = reset_demo_user_restore_task.delay(user, domain)
+    res = reset_demo_user_restore_task.delay(user.get_id, domain)
     download.set_task(res)
 
     return HttpResponseRedirect(

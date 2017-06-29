@@ -875,12 +875,8 @@
           "type": "and",
           "filters": [
             {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "expression": {
-                "type": "icds_ccs_pregnant"
-              },
-              "property_value": "yes"
+              "type": "named",
+              "name": "pregnant"
             },
             {
               "type": "boolean_expression",
@@ -933,6 +929,10 @@
             {
               "type": "named",
               "name": "ifa_four_plus_consumed_last_seven_days"
+            },
+            {
+              "type": "named",
+              "name": "pregnant"
             }
           ]
         },
@@ -942,13 +942,22 @@
         "column_id": "anemic_severe",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": "severe",
-          "expression": {
-            "type": "named",
-            "name": "last_anemia_update"
-          }
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "pregnant"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "severe",
+              "expression": {
+                "type": "named",
+                "name": "last_anemia_update"
+              }
+            }
+          ]
         },
         "type": "boolean"
       },
@@ -956,13 +965,22 @@
         "column_id": "anemic_moderate",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": "moderate",
-          "expression": {
-            "type": "named",
-            "name": "last_anemia_update"
-          }
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "pregnant"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "moderate",
+              "expression": {
+                "type": "named",
+                "name": "last_anemia_update"
+              }
+            }
+          ]
         },
         "type": "boolean"
       },
@@ -970,13 +988,22 @@
         "column_id": "anemic_normal",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": "normal",
-          "expression": {
-            "type": "named",
-            "name": "last_anemia_update"
-          }
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "pregnant"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "normal",
+              "expression": {
+                "type": "named",
+                "name": "last_anemia_update"
+              }
+            }
+          ]
         },
         "type": "boolean"
       },
@@ -984,8 +1011,17 @@
         "column_id": "anemic_unknown",
         "display_name": null,
         "filter": {
-          "type": "named",
-          "name": "no_anemia_update"
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "pregnant"
+            },
+            {
+              "type": "named",
+              "name": "no_anemia_update"
+            }
+          ]
         },
         "type": "boolean"
       },
@@ -993,8 +1029,17 @@
         "column_id": "extra_meal",
         "display_name": null,
         "filter": {
-          "type": "named",
-          "name": "extra_meal_eaten_last_visit"
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "pregnant"
+            },
+            {
+              "type": "named",
+              "name": "extra_meal_eaten_last_visit"
+            }
+          ]
         },
         "type": "boolean"
       },
@@ -1002,8 +1047,17 @@
         "column_id": "resting_during_pregnancy",
         "display_name": null,
         "filter": {
-          "type": "named",
-          "name": "resting_last_visit"
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "pregnant"
+            },
+            {
+              "type": "named",
+              "name": "resting_last_visit"
+            }
+          ]
         },
         "type": "boolean"
       },
@@ -1029,13 +1083,22 @@
         "column_id": "trimester_2",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 2,
-          "expression": {
-            "type": "named",
-            "name": "trimester"
-          }
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "pregnant"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": 2,
+              "expression": {
+                "type": "named",
+                "name": "trimester"
+              }
+            }
+          ]
         },
         "type": "boolean"
       },
@@ -1043,13 +1106,22 @@
         "column_id": "trimester_3",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 3,
-          "expression": {
-            "type": "named",
-            "name": "trimester"
-          }
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "pregnant"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": 3,
+              "expression": {
+                "type": "named",
+                "name": "trimester"
+              }
+            }
+          ]
         },
         "type": "boolean"
       },
@@ -1059,6 +1131,10 @@
         "filter": {
           "type": "and",
           "filters": [
+            {
+              "type": "named",
+              "name": "pregnant"
+            },
             {
               "type": "boolean_expression",
               "operator": "eq",
@@ -1110,6 +1186,10 @@
           "type": "and",
           "filters": [
             {
+              "type": "named",
+              "name": "pregnant"
+            },
+            {
               "type": "boolean_expression",
               "operator": "eq",
               "property_value": 3,
@@ -1159,6 +1239,10 @@
         "filter": {
           "type": "and",
           "filters": [
+            {
+              "type": "named",
+              "name": "pregnant"
+            },
             {
               "type": "boolean_expression",
               "operator": "eq",
@@ -1210,6 +1294,10 @@
           "type": "and",
           "filters": [
             {
+              "type": "named",
+              "name": "pregnant"
+            },
+            {
               "type": "boolean_expression",
               "operator": "eq",
               "property_value": 3,
@@ -1258,6 +1346,10 @@
         "filter": {
           "type": "and",
           "filters": [
+            {
+              "type": "named",
+              "name": "pregnant"
+            },
             {
               "type": "boolean_expression",
               "operator": "eq",
@@ -1308,6 +1400,10 @@
           "type": "and",
           "filters": [
             {
+              "type": "named",
+              "name": "pregnant"
+            },
+            {
               "type": "boolean_expression",
               "operator": "eq",
               "property_value": 3,
@@ -1355,35 +1451,49 @@
         "column_id": "counsel_fp_methods",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "gt",
-          "property_value": 0,
-          "expression": {
-            "type": "reduce_items",
-            "aggregation_fn": "count",
-            "items_expression": {
-              "type": "icds_get_case_forms_by_date",
-              "xmlns": [
-                "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE",
-                "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D"
-              ],
-              "end_date": {
-                "type": "icds_month_end"
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "expression": {
+                "type": "named",
+                "name": "seeking_services"
               },
-              "form_filter": {
-                "operator": "eq",
-                "type": "boolean_expression",
-                "expression": {
-                  "type": "property_path",
-                  "property_path": [
-                    "form",
-                    "counsel_methods"
-                  ]
-                },
-                "property_value": "yes"
+              "property_value": "yes"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "gt",
+              "property_value": 0,
+              "expression": {
+                "type": "reduce_items",
+                "aggregation_fn": "count",
+                "items_expression": {
+                  "type": "icds_get_case_forms_by_date",
+                  "xmlns": [
+                    "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE",
+                    "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D"
+                  ],
+                  "end_date": {
+                    "type": "icds_month_end"
+                  },
+                  "form_filter": {
+                    "operator": "eq",
+                    "type": "boolean_expression",
+                    "expression": {
+                      "type": "property_path",
+                      "property_path": [
+                        "form",
+                        "counsel_methods"
+                      ]
+                    },
+                    "property_value": "yes"
+                  }
+                }
               }
             }
-          }
+          ]
         },
         "type": "boolean"
       },
@@ -1404,126 +1514,11 @@
         "column_id": "bp1_complete",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "gte",
-          "property_value": 0,
-          "expression": {
-            "type": "diff_days",
-            "from_date_expression": {
-              "type": "root_doc",
-              "expression": {
-                "datatype": "date",
-                "type": "property_name",
-                "property_name": "bp1_date"
-              }
-            },
-            "to_date_expression": {
-              "type": "named",
-              "name": "month_end"
-            }
-          }
-        },
-        "type": "boolean"
-      },
-      {
-        "column_id": "bp2_complete",
-        "display_name": null,
-        "filter": {
-          "type": "boolean_expression",
-          "operator": "gte",
-          "property_value": 0,
-          "expression": {
-            "type": "diff_days",
-            "from_date_expression": {
-              "type": "root_doc",
-              "expression": {
-                "datatype": "date",
-                "type": "property_name",
-                "property_name": "bp2_date"
-              }
-            },
-            "to_date_expression": {
-              "type": "named",
-              "name": "month_end"
-            }
-          }
-        },
-        "type": "boolean"
-      },
-      {
-        "column_id": "bp3_complete",
-        "display_name": null,
-        "filter": {
-          "type": "boolean_expression",
-          "operator": "gte",
-          "property_value": 0,
-          "expression": {
-            "type": "diff_days",
-            "from_date_expression": {
-              "type": "root_doc",
-              "expression": {
-                "datatype": "date",
-                "type": "property_name",
-                "property_name": "bp3_date"
-              }
-            },
-            "to_date_expression": {
-              "type": "named",
-              "name": "month_end"
-            }
-          }
-        },
-        "type": "boolean"
-      },
-      {
-        "column_id": "pnc_complete",
-        "display_name": null,
-        "filter": {
-          "type": "boolean_expression",
-          "operator": "gte",
-          "property_value": 0,
-          "expression": {
-            "type": "diff_days",
-            "from_date_expression": {
-              "type": "root_doc",
-              "expression": {
-                "datatype": "date",
-                "type": "property_name",
-                "property_name": "pnc1_date"
-              }
-            },
-            "to_date_expression": {
-              "type": "named",
-              "name": "month_end"
-            }
-          }
-        },
-        "type": "boolean"
-      },
-      {
-        "column_id": "postnatal",
-        "display_name": null,
-        "filter": {
           "type": "and",
           "filters": [
             {
-              "type": "not",
-              "filter": {
-                "operator": "in",
-                "type": "boolean_expression",
-                "expression": {
-                  "type": "root_doc",
-                  "expression": {
-                    "datatype": "date",
-                    "type": "property_name",
-                    "property_name": "add"
-                  }
-                },
-                "property_value": [
-                  "",
-                  null
-                ]
-              }
+              "type": "named",
+              "name": "pregnant"
             },
             {
               "type": "boolean_expression",
@@ -1536,7 +1531,7 @@
                   "expression": {
                     "datatype": "date",
                     "type": "property_name",
-                    "property_name": "add"
+                    "property_name": "bp1_date"
                   }
                 },
                 "to_date_expression": {
@@ -1544,11 +1539,25 @@
                   "name": "month_end"
                 }
               }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "bp2_complete",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "pregnant"
             },
             {
               "type": "boolean_expression",
-              "operator": "lte",
-              "property_value": 21,
+              "operator": "gte",
+              "property_value": 0,
               "expression": {
                 "type": "diff_days",
                 "from_date_expression": {
@@ -1556,16 +1565,93 @@
                   "expression": {
                     "datatype": "date",
                     "type": "property_name",
-                    "property_name": "add"
+                    "property_name": "bp2_date"
                   }
                 },
                 "to_date_expression": {
                   "type": "named",
-                  "name": "month_start"
+                  "name": "month_end"
                 }
               }
             }
           ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "bp3_complete",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "pregnant"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "gte",
+              "property_value": 0,
+              "expression": {
+                "type": "diff_days",
+                "from_date_expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "bp3_date"
+                  }
+                },
+                "to_date_expression": {
+                  "type": "named",
+                  "name": "month_end"
+                }
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "pnc_complete",
+        "display_name": null,
+        "filter": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "named",
+              "name": "postnatal"
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "gte",
+              "property_value": 0,
+              "expression": {
+                "type": "diff_days",
+                "from_date_expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "datatype": "date",
+                    "type": "property_name",
+                    "property_name": "pnc1_date"
+                  }
+                },
+                "to_date_expression": {
+                  "type": "named",
+                  "name": "month_end"
+                }
+              }
+            }
+          ]
+        },
+        "type": "boolean"
+      },
+      {
+        "column_id": "postnatal",
+        "display_name": null,
+        "filter": {
+          "type": "named",
+          "name": "postnatal"
         },
         "type": "boolean"
       }
@@ -2002,6 +2088,15 @@
                 }
               }
             }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+              "type": "named",
+              "name": "seeking_services"
+            },
+            "property_value": "yes"
           }
         ]
       },
@@ -2179,6 +2274,95 @@
           },
           "count": true
         }
+      },
+      "postnatal": {
+        "type": "and",
+        "filters": [
+          {
+            "type": "not",
+            "filter": {
+              "operator": "in",
+              "type": "boolean_expression",
+              "expression": {
+                "type": "root_doc",
+                "expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "add"
+                }
+              },
+              "property_value": [
+                "",
+                null
+              ]
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "gte",
+            "property_value": 0,
+            "expression": {
+              "type": "diff_days",
+              "from_date_expression": {
+                "type": "root_doc",
+                "expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "add"
+                }
+              },
+              "to_date_expression": {
+                "type": "named",
+                "name": "month_end"
+              }
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "lte",
+            "property_value": 21,
+            "expression": {
+              "type": "diff_days",
+              "from_date_expression": {
+                "type": "root_doc",
+                "expression": {
+                  "datatype": "date",
+                  "type": "property_name",
+                  "property_name": "add"
+                }
+              },
+              "to_date_expression": {
+                "type": "named",
+                "name": "month_start"
+              }
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+              "type": "named",
+              "name": "seeking_services"
+            },
+            "property_value": "yes"
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+              "type": "icds_alive_in_month"
+            },
+            "property_value": "yes"
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "expression": {
+              "type": "icds_open_in_month"
+            },
+            "property_value": "yes"
+          }
+        ]
       }
     },
     "asynchronous": true,

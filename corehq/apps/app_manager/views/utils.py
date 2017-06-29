@@ -128,7 +128,7 @@ def get_blank_form_xml(form_name):
     })
 
 
-def overwrite_app(app, master_build, include_ucrs=False, report_map=None):
+def overwrite_app(app, master_build, report_map=None):
     excluded_fields = set(Application._meta_fields).union(
         ['date_created', 'build_profiles', 'copy_history', 'copy_of', 'name', 'comment', 'doc_type']
     )
@@ -140,11 +140,14 @@ def overwrite_app(app, master_build, include_ucrs=False, report_map=None):
     wrapped_app = wrap_app(app)
     for module in wrapped_app.modules:
         if isinstance(module, ReportModule):
-            if include_ucrs and report_map is not None:
+            if report_map is not None:
                 for config in module.report_configs:
-                    config.report_id = report_map[config.report_id]
+                    try:
+                        config.report_id = report_map[config.report_id]
+                    except KeyError:
+                        raise AppEditingError('Dynamic UCR used in linked app')
             else:
-                raise AppEditingError()
+                raise AppEditingError('Report map not passed to overwrite_app')
     wrapped_app.copy_attachments(master_build)
     wrapped_app.save(increment_version=False)
 

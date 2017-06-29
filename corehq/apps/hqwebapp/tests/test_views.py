@@ -22,6 +22,7 @@ class TestBugReport(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestBugReport, cls).setUpClass()
         delete_all_users()
         cls.project = create_domain(cls.domain)
         cls.web_user = WebUser.create(
@@ -42,6 +43,7 @@ class TestBugReport(TestCase):
     def tearDownClass(cls):
         delete_all_users()
         cls.project.delete()
+        super(TestBugReport, cls).tearDownClass()
 
     def _default_payload(self, username):
         return {

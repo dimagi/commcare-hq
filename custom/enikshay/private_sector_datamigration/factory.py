@@ -175,6 +175,13 @@ class BeneficiaryCaseFactory(object):
                     'occurrence_episode_count': 1,
                     'occurrence_id': get_human_friendly_id(),
 
+                    'legacy_blockOrHealthPostId': self.beneficiary.blockOrHealthPostId,
+                    'legacy_districtId': self.beneficiary.districtId,
+                    'legacy_organisationId': self.beneficiary.organisationId,
+                    'legacy_subOrganizationId': self.beneficiary.subOrganizationId,
+                    'legacy_stateId': self.beneficiary.stateId,
+                    'legacy_wardId': self.beneficiary.wardId,
+
                     'migration_created_case': 'true',
                     'migration_created_from_record': self.beneficiary.caseId,
                 }
@@ -207,6 +214,13 @@ class BeneficiaryCaseFactory(object):
                     'name': self.beneficiary.episode_name,
                     'transfer_in': '',
                     'treatment_options': '',
+
+                    'legacy_blockOrHealthPostId': self.beneficiary.blockOrHealthPostId,
+                    'legacy_districtId': self.beneficiary.districtId,
+                    'legacy_organisationId': self.beneficiary.organisationId,
+                    'legacy_subOrganizationId': self.beneficiary.subOrganizationId,
+                    'legacy_stateId': self.beneficiary.stateId,
+                    'legacy_wardId': self.beneficiary.wardId,
 
                     'migration_created_case': 'true',
                     'migration_created_from_record': self.beneficiary.caseId,

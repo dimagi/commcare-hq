@@ -172,7 +172,7 @@ def get_restore_params(request):
 
     return {
         'since': request.GET.get('since'),
-        'version': request.GET.get('version', "1.0"),
+        'version': request.GET.get('version', "2.0"),
         'state': request.GET.get('state'),
         'items': request.GET.get('items') == 'true',
         'as_user': request.GET.get('as'),
@@ -181,6 +181,7 @@ def get_restore_params(request):
         'openrosa_version': openrosa_version,
         'device_id': request.GET.get('device_id'),
         'user_id': request.GET.get('user_id'),
+        'do_livequery': request.GET.get('livequery') == 'true',
     }
 
 
@@ -190,7 +191,8 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          force_restore_mode=None,
                          as_user=None, device_id=None, user_id=None,
                          has_data_cleanup_privelege=False,
-                         openrosa_version=OPENROSA_DEFAULT_VERSION):
+                         openrosa_version=OPENROSA_DEFAULT_VERSION,
+                         do_livequery=False):
 
     if user_id and user_id != couch_user.user_id:
         # sync with a user that has been deleted but a new
@@ -251,7 +253,8 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             cache_timeout=cache_timeout,
             overwrite_cache=overwrite_cache
         ),
-        async=async_restore_enabled
+        async=async_restore_enabled,
+        do_livequery=do_livequery,
     )
     return restore_config.get_response(), restore_config.timing_context
 

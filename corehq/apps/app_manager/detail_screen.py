@@ -1,7 +1,6 @@
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml import xml_models as sx
 from corehq.apps.app_manager.suite_xml import const
-from corehq.apps.app_manager.util import sort_nodeset_columns_for_detail
 from corehq.apps.app_manager.xpath import (
     CaseXPath,
     CommCareSession,
@@ -102,7 +101,7 @@ class FormattedDetailColumn(object):
         self.id_strings = id_strings
         self.parent_tab_nodeset = parent_tab_nodeset
 
-    def add_sort_node_for_nodeset_field(self):
+    def has_sort_node_for_nodeset_column(self):
         return False
 
     @property
@@ -139,7 +138,7 @@ class FormattedDetailColumn(object):
     @property
     def sort_node(self):
         if not (self.app.enable_multi_sort and
-                (self.detail.display == 'short' or self.add_sort_node_for_nodeset_field())
+                (self.detail.display == 'short' or self.has_sort_node_for_nodeset_column())
                 ):
             return
 
@@ -263,7 +262,7 @@ class HideShortHeaderColumn(FormattedDetailColumn):
 
     @property
     def header(self):
-        if self.detail.display == 'short' or self.add_sort_node_for_nodeset_field():
+        if self.detail.display == 'short' or self.has_sort_node_for_nodeset_column():
             header = sx.Header(
                 text=sx.Text(),
                 width=self.template_width
@@ -277,7 +276,7 @@ class HideShortColumn(HideShortHeaderColumn):
 
     @property
     def template_width(self):
-        if self.detail.display == 'short' or self.add_sort_node_for_nodeset_field():
+        if self.detail.display == 'short' or self.has_sort_node_for_nodeset_column():
             return 0
 
 
@@ -442,8 +441,8 @@ class LateFlag(HideShortHeaderColumn):
 @register_format_type('invisible')
 class Invisible(HideShortColumn):
 
-    def add_sort_node_for_nodeset_field(self):
-        return self.parent_tab_nodeset and sort_nodeset_columns_for_detail(self.detail_type, self.detail)
+    def has_sort_node_for_nodeset_column(self):
+        return self.parent_tab_nodeset and self.detail.sort_nodeset_columns_for_detail()
 
     @property
     def header(self):

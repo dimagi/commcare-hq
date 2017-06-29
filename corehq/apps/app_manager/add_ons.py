@@ -42,7 +42,7 @@ def _uses_conditional_form_actions(form):
     if form.form_type != 'module_form':
         # Don't bother restricting non-basic forms
         return True
-    return form.actions.open_case.condition.type == 'if' or form.actions.close_case.condition.type == 'if',
+    return form.actions.open_case.condition.type == 'if' or form.actions.close_case.condition.type == 'if'
 
 
 def _uses_detail_format(module, column_format):

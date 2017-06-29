@@ -636,7 +636,8 @@
                             "header":{  
                                 "en":"External Data"
                             },
-                            "starting_index":4
+                            "starting_index":4,
+                            "relevant": "gender='male'"
                         }
                     ],
                     "lookup_responses":[  
