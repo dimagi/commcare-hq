@@ -1,4 +1,3 @@
-import re
 from distutils.version import LooseVersion
 
 from django.http import JsonResponse
@@ -57,7 +56,8 @@ def restore(request, domain, app_id=None):
     We override restore because we have to supply our own
     user model (and have the domain in the url)
     """
-    response, timing_context = get_restore_response(domain, request.couch_user, app_id, **get_restore_params(request))
+    response, timing_context = get_restore_response(
+        domain, request.couch_user, app_id, **get_restore_params(request))
     tags = [
         u'status_code:{}'.format(response.status_code),
     ]

@@ -1,17 +1,17 @@
 from __future__ import absolute_import
 
-from io import FileIO
-from cStringIO import StringIO
+import hashlib
+import logging
 import os
-from uuid import uuid4
 import shutil
 import tempfile
-import hashlib
+from io import FileIO
+from cStringIO import StringIO
+from uuid import uuid4
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
 
-from couchdbkit import ResourceConflict, ResourceNotFound
-from casexml.apps.phone.cache_utils import copy_payload_and_synclog_and_get_new_file
+from couchdbkit import ResourceNotFound
 from casexml.apps.phone.data_providers import get_element_providers, get_full_response_providers
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
@@ -26,13 +26,10 @@ from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.phone.models import (
     SyncLog,
     get_properly_wrapped_sync_log,
-    LOG_FORMAT_SIMPLIFIED,
-    get_sync_log_class_by_format,
     OTARestoreUser,
     SimplifiedSyncLog,
 )
-import logging
-from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
+from dimagi.utils.couch.database import get_db
 from casexml.apps.phone import xml as xml_util
 from datetime import datetime, timedelta
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
