@@ -63,6 +63,9 @@ def get_payload(timing_context, restore_state):
 
         This closure mutates `indices` from the enclosing function as
         well as the same data structres mutated by `enliven()`.
+
+        :returns: Case id for next related index fetch or CIRCULAR_REF
+        if the related case has already been seen.
         """
         indices[index.case_id].append(index)
         sub_id = index.case_id
@@ -86,7 +89,7 @@ def get_payload(timing_context, restore_state):
                 extensions_by_host[ref_id].add(sub_id)
                 hosts_by_extension[sub_id].add(ref_id)
 
-            if ref_id not in all_ids:  # exclude circular
+            if ref_id not in all_ids:
                 return ref_id
         else:
             # traverse to open extension
@@ -101,10 +104,11 @@ def get_payload(timing_context, restore_state):
                 extensions_by_host[ref_id].add(sub_id)
                 hosts_by_extension[sub_id].add(ref_id)
 
-            if sub_id not in all_ids:  # exclude circular
+            if sub_id not in all_ids:
                 return sub_id
-        return None
+        return CIRCULAR_REF
 
+    CIRCULAR_REF = object()
     log = logging.getLogger(__name__)
     if log.isEnabledFor(logging.DEBUG):
         debug = log.debug
@@ -133,8 +137,7 @@ def get_payload(timing_context, restore_state):
                 if not related:
                     break
                 next_ids = {classify(index, next_ids) for index in related}
-                next_ids.discard(None)
-
+                next_ids.discard(CIRCULAR_REF)
                 debug('next: %r all: %r', next_ids, all_ids)
                 all_ids.update(next_ids)
 
