@@ -15,7 +15,7 @@ class CommitRecord(models.Model):
     A CommitRecord records meta data about a certain warehouse table's
     batch.
     '''
-    batch_record = models.ForeignKey('BatchRecord', on_delete=models.PROTECT)
+    batch = models.ForeignKey('BatchRecord', on_delete=models.PROTECT)
 
     slug = models.CharField(max_length=100)
     error = models.TextField()

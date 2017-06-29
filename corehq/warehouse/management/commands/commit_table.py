@@ -25,7 +25,7 @@ class Command(BaseCommand):
 
     def handle(self, slug, batch_id, **options):
         try:
-            batch_record = BatchRecord.objects.get(batch_id=batch_id)
+            batch = BatchRecord.objects.get(batch_id=batch_id)
         except BatchRecord.DoesNotExist:
             raise CommandError('Invalid batch ID: {}'.format(batch_id))
 
@@ -36,11 +36,11 @@ class Command(BaseCommand):
 
         commit_record = CommitRecord(
             slug=slug,
-            batch_record=batch_record,
+            batch=batch,
             verified=False,
         )
         try:
-            commit_record.verified = model.commit(batch_record)
+            commit_record.verified = model.commit(batch)
         except Exception as e:
             commit_record.error = e
             commit_record.success = False
