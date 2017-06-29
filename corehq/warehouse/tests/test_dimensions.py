@@ -156,26 +156,6 @@ class TestUserGroupDim(TestCase):
             ).values_list('id', flat=True)),
         )
 
-    def test_removed_users(self):
-        '''
-        This test ensures that we properly remove users when they are in
-        the removed users field on the group.
-        '''
-        start = datetime.utcnow() - timedelta(days=3)
-        end = datetime.utcnow() + timedelta(days=3)
-        create_group_staging_record(
-            self.domain,
-            'dogs',
-            user_ids=[self.blue_dog.user_id],
-            removed_user_ids=[self.black_dog.user_id],
-        )
-
-        UserDim.commit(start, end)
-        GroupDim.commit(start, end)
-        UserGroupDim.commit(start, end)
-        self.assertEqual(UserGroupDim.objects.count(), 2)
-        self.assertEqual(UserGroupDim.objects.filter(deleted=True).count(), 1)
-
 
 class TestLocationDim(TestCase):
 

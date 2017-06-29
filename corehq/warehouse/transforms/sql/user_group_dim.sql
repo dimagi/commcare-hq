@@ -1,3 +1,13 @@
+-- First delete all records in UserGroupDim that are in the
+-- GroupStagingTable
+DELETE FROM {{ user_group_dim }} AS ug_dim
+USING {{ group_staging }} AS group_staging
+INNER JOIN {{ group_dim }} AS gd
+ON gd.group_id = group_staging.group_id
+
+WHERE ug_dim.group_dim_id = gd.id;
+
+-- Repopulate the UserGroupDim
 INSERT INTO {{ user_group_dim }} (
     domain,
     user_dim_id,
@@ -13,31 +23,18 @@ SELECT
     gd.id,
     now(),
     now(),
-    combined_user_group_table.deleted
+    false
 FROM
-(
 (
     SELECT
         UNNEST(user_ids) AS user_id,
-        group_id AS group_id,
-        false AS deleted
+        group_id AS group_id
     FROM
         {{ group_staging }}
-)
-
-UNION
-
-(
-    SELECT
-        UNNEST(removed_user_ids) AS removed_user_id,
-        group_id AS group_id,
-        true AS deleted
-    FROM
-        {{ group_staging }}
-)
-) combined_user_group_table
+    WHERE doc_type = 'Group'
+) user_group_table
 INNER JOIN {{ group_dim }} AS gd
-ON combined_user_group_table.group_id = gd.group_id
+ON user_group_table.group_id = gd.group_id
 
 INNER JOIN {{ user_dim }} AS ud
-ON combined_user_group_table.user_id = ud.user_id
+ON user_group_table.user_id = ud.user_id;
