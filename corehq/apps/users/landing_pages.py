@@ -20,15 +20,23 @@ def get_cloudcare_urlname(domain):
         return 'corehq.apps.cloudcare.views.default'
 
 
-ALLOWED_LANDING_PAGES = (
+ALL_LANDING_PAGES = (
     LandingPage('dashboard', ugettext_noop('Dashboard'), 'dashboard_default'),
     LandingPage('webapps', ugettext_noop('Web Apps'), get_cloudcare_urlname),
     LandingPage('reports', ugettext_noop('Reports'), 'reports_home'),
+    # Only allowed if toggles.DATA_FILE_DOWNLOAD.enabled(domain)
+    LandingPage('downloads', ugettext_noop('Data File Downloads'), 'download_data_files'),
 )
 
 
+def get_allowed_landing_pages(domain):
+    if toggles.DATA_FILE_DOWNLOAD.enabled(domain):
+        return ALL_LANDING_PAGES
+    return [page for page in ALL_LANDING_PAGES if page.id != 'downloads']
+
+
 def get_landing_page(id):
-    for landing_page in ALLOWED_LANDING_PAGES:
+    for landing_page in ALL_LANDING_PAGES:
         if landing_page.id == id:
             return landing_page
     raise ValueError(_("No landing page found with id {}".format(id)))

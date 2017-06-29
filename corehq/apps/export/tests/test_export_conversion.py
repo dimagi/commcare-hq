@@ -108,6 +108,7 @@ class TestIsRemoteAppConversion(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestIsRemoteAppConversion, cls).setUpClass()
         cls.project = Domain(name=cls.domain)
         cls.project.save()
 
@@ -132,6 +133,7 @@ class TestIsRemoteAppConversion(TestCase):
         for app in cls.apps:
             app.delete()
         cls.project.delete()
+        super(TestIsRemoteAppConversion, cls).tearDownClass()
 
     def test_form_remote_app_conversion(self):
         self.assertFalse(_is_remote_app_conversion(self.domain, self.apps[0]._id, FORM_EXPORT))

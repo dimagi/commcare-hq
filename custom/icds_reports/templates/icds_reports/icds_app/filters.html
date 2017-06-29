@@ -1,0 +1,9 @@
+<div class="col-md-4">
+    <month-filter ng-show="$ctrl.filters.indexOf('month') === -1"></month-filter>
+</div>
+<div class="col-md-4">
+    <additional-filter ng-show="$ctrl.filters.indexOf('gender') === -1 && $ctrl.filters.indexOf('gender') === -1" filters="$ctrl.filters"></additional-filter>
+</div>
+<div class="col-md-4">
+    <location-filter ng-show="$ctrl.filters.indexOf('location') === -1" ng-model="$ctrl.data.location"></location-filter>
+</div>

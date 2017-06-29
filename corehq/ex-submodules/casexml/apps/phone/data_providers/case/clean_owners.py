@@ -36,7 +36,7 @@ class CleanOwnerSyncPayload(object):
         self.extension_indices = defaultdict(set)
         self.all_dependencies_syncing = set()
         self.closed_cases = set()
-        self.potential_elements_to_sync = {}
+        self.potential_updates_to_sync = {}
 
         self.timing_context = timing_context
 
@@ -70,46 +70,44 @@ class CleanOwnerSyncPayload(object):
         ]
 
     def process_case_batch(self, case_batch):
-        updates = get_case_sync_updates(
+        new_updates = get_case_sync_updates(
             self.restore_state.domain, case_batch, self.restore_state.last_sync_log
         )
+        self.potential_updates_to_sync.update(new_updates)
 
-        for update in updates:
-            case = update.case
-            self.potential_elements_to_sync[case.case_id] = PotentialSyncElement(
-                case_stub=CaseStub(case.case_id, case.type),
-                sync_xml_items=get_xml_for_response(update, self.restore_state)
-            )
-            self._process_case_update(case)
-            self._mark_case_as_checked(case)
+        for update in new_updates.itervalues():
+            self._process_case_update(update)
+            self._mark_case_as_checked(update.case)
 
-    def _process_case_update(self, case):
-        if case.indices:
-            self._update_indices_in_new_synclog(case)
-            self._add_unchecked_indices_to_be_checked(case)
+    def _process_case_update(self, update):
+        if update.case_indices:
+            self._update_indices_in_new_synclog(update)
+            self._add_unchecked_indices_to_be_checked(update)
 
-        if not _is_live(case, self.restore_state):
-            self.all_dependencies_syncing.add(case.case_id)
-            if case.closed:
-                self.closed_cases.add(case.case_id)
+        if not _is_live(update.case, self.restore_state):
+            self.all_dependencies_syncing.add(update.case_id)
+            if update.case.closed:
+                self.closed_cases.add(update.case_id)
 
     def _mark_case_as_checked(self, case):
         self.checked_cases.add(case.case_id)
 
-    def _update_indices_in_new_synclog(self, case):
-        self.extension_indices[case.case_id] = {
-            index.identifier: index.referenced_id
-            for index in case.indices
-            if index.relationship == CASE_INDEX_EXTENSION
-        }
-        self.child_indices[case.case_id] = {
-            index.identifier: index.referenced_id
-            for index in case.indices
-            if index.relationship == CASE_INDEX_CHILD
-        }
+    def _update_indices_in_new_synclog(self, update):
+        if update.is_extension:
+            self.extension_indices[update.case_id] = {
+                index.identifier: index.referenced_id
+                for index in update.case_indices
+                if index.relationship == CASE_INDEX_EXTENSION
+            }
+        if update.is_child:
+            self.child_indices[update.case_id] = {
+                index.identifier: index.referenced_id
+                for index in update.case_indices
+                if index.relationship == CASE_INDEX_CHILD
+            }
 
-    def _add_unchecked_indices_to_be_checked(self, case):
-        for index in case.indices:
+    def _add_unchecked_indices_to_be_checked(self, update):
+        for index in update.case_indices:
             if index.referenced_id not in self.all_maybe_syncing:
                 self.case_ids_to_sync.add(index.referenced_id)
         self.all_maybe_syncing |= self.case_ids_to_sync
@@ -140,7 +138,7 @@ class CleanOwnerSyncPayload(object):
         self.restore_state.current_sync_log.extension_index_tree = extension_index_tree
 
     def update_case_ids_on_phone(self):
-        case_ids_on_phone = self.checked_cases
+        case_ids_on_phone = set(self.checked_cases)
         primary_cases_syncing = self.checked_cases - self.all_dependencies_syncing
         if not self.restore_state.is_initial:
             case_ids_on_phone |= self.restore_state.last_sync_log.case_ids_on_phone
@@ -165,30 +163,30 @@ class CleanOwnerSyncPayload(object):
         return irrelevant_cases
 
     def compile_response(self, irrelevant_cases):
-        relevant_sync_elements = [
-            potential_sync_element
-            for syncable_case_id, potential_sync_element in self.potential_elements_to_sync.iteritems()
-            if syncable_case_id not in irrelevant_cases
+        syncable_ids = self.checked_cases - irrelevant_cases
+        relevant_sync_updates = [
+            self.potential_updates_to_sync[syncable_id]
+            for syncable_id in syncable_ids
         ]
 
         with self.timing_context('add_commtrack_elements_to_response'):
-            self._add_commtrack_elements_to_response(relevant_sync_elements)
+            self._add_commtrack_elements_to_response(relevant_sync_updates)
 
-        self._add_case_elements_to_response(relevant_sync_elements)
+        self._add_case_elements_to_response(relevant_sync_updates)
 
-    def _add_commtrack_elements_to_response(self, relevant_sync_elements):
+    def _add_commtrack_elements_to_response(self, relevant_sync_updates):
         commtrack_elements = get_stock_payload(
             self.restore_state.project, self.restore_state.stock_settings,
             [
-                potential_sync_element.case_stub
-                for potential_sync_element in relevant_sync_elements
+                potential_sync_element.case
+                for potential_sync_element in relevant_sync_updates
             ]
         )
         self.response.extend(commtrack_elements)
 
     def _add_case_elements_to_response(self, relevant_sync_elements):
         for relevant_case in relevant_sync_elements:
-            for xml_item in relevant_case.sync_xml_items:
+            for xml_item in get_xml_for_response(relevant_case, self.restore_state):
                 self.response.append(xml_item)
 
 
@@ -348,20 +346,27 @@ def filter_cases_modified_since(case_accessor, case_ids, reference_date):
 
 
 def case_needs_to_sync(case, last_sync_log):
+    # initial sync or new owner IDs always sync down everything
+    if not last_sync_log:
+        return True
+
+    # if this is a new owner_id and the case wasn't previously on the phone
+    # if it's an extension, and it was already on the phone, don't sync it
     owner_id = case.owner_id or case.user_id  # need to fallback to user_id for v1 cases
-    extension_cases = [index for index in case.indices
-                       if index.relationship == CASE_INDEX_EXTENSION]
-    if (not last_sync_log or
-        (owner_id not in last_sync_log.owner_ids_on_phone and
-         not (extension_cases and case.case_id in last_sync_log.case_ids_on_phone))):
-        # initial sync or new owner IDs always sync down everything
-        # extension cases don't get synced again if they haven't changed
+    if (owner_id not in last_sync_log.owner_ids_on_phone and (
+            case.case_id not in last_sync_log.case_ids_on_phone or not _is_extension(case))):
         return True
     elif case.server_modified_on >= last_sync_log.date:
         return case.modified_since_sync(last_sync_log)
     # if the case wasn't touched since last sync, and the phone was aware of this owner_id last time
     # don't worry about it
     return False
+
+
+@memoized
+def _is_extension(case):
+    return len([index for index in case.indices
+                if index.relationship == CASE_INDEX_EXTENSION]) > 0
 
 
 def pop_ids(set_, how_many):

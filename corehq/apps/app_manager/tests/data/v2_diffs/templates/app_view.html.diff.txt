@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,204 +1,97 @@
+@@ -1,204 +1,79 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -130,23 +130,7 @@
 -    {% registerurl "release_manager_ajax" domain app.get_id %}
 -    {% registerurl "toggle_diff" domain %}
 -    {% registerurl "update_linked_whitelist" domain app.id %}
-+  {# release page URLs #}
-+  {% registerurl "paginate_releases" domain app.id %}
-+  {% registerurl "delete_copy" domain app.id %}
-+  {% registerurl "download_jad" domain '---' %}
-+  {% registerurl "download_jar" domain '---' %}
-+  {% registerurl "odk_install" domain '---' %}
-+  {% registerurl "odk_media_install" domain '---' %}
-+  {% registerurl "download_index" domain '---' %}
-+  {% registerurl "release_build" domain app.id '---' %}
-+  {% registerurl "save_copy" domain app.id %}
-+  {% registerurl "revert_to_copy" domain app.id %}
-+  {% registerurl "current_app_version" domain app.id %}
-+  {% registerurl "hubspot_click_deploy" %}
-+  {% registerurl "download_ccz" app.domain '---' %}
-+  {% registerurl "download_multimedia_zip" app.domain '---' %}
-+  {% registerurl "project_report_dispatcher" app.domain 'application_error' %}
- 
+-
 -    {# release page URLs #}
 -    {% registerurl "paginate_releases" domain app.id %}
 -    {% registerurl "delete_copy" domain app.id %}
@@ -164,8 +148,7 @@
 -    {% registerurl "download_multimedia_zip" app.domain '---' %}
 -    {% registerurl "project_report_dispatcher" app.domain 'application_error' %}
 -    {% registerurl "app_data_json" app.domain '---' %}
-+  {% registerurl "edit_add_ons" domain app.id %}
- 
+-
 -    <div class="tab-content">
 -        <div class="tab-pane" id="releases">
 -            <!-- templates only; will be populated asynchronously -->
@@ -268,6 +251,7 @@
 -            </form>
 -        </div>
 -    </div>
++  {% registerurl "edit_add_ons" domain app.id %}
 +  <div class="appmanager-tabs-container">
 +  {% block app_view_tabs %}{% endblock app_view_tabs %}
 +  </div>

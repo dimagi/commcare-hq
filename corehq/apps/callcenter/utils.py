@@ -177,7 +177,8 @@ def _get_user_case_fields(commcare_user):
         'username': commcare_user.raw_username,
         'email': commcare_user.email,
         'language': commcare_user.language or '',
-        'phone_number': commcare_user.phone_number or ''
+        'phone_number': commcare_user.phone_number or '',
+        'last_device_id_used': commcare_user.devices[0].device_id if commcare_user.devices else '',
     })
 
     return fields

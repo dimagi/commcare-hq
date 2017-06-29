@@ -22,7 +22,7 @@
                 <div class="col-xs-12">
                     <h3>Response Status Code: {{ status_code }}</h3>
                     <ul class="list-inline">
-                        <li><a href="https://confluence.dimagi.com/display/commcarehq/Hidden+features#Hiddenfeatures-PhoneRestore" target="_blank">Docs</a></li>
+                        <li><a href="https://help.commcarehq.org/display/commcarepublic/CommCare+Sync+Data" target="_blank">Docs</a></li>
                         <li><a href="{{request.get_full_path}}&raw=true">Raw</a></li>
                         <li><a href="{{request.get_full_path}}&overwrite_cache=true">Overwrite Cache</a></li>
                         <li><a href="?{% url_replace 'since' restore_id %}">Next Sync</a></li>

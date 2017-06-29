@@ -15,6 +15,7 @@ class UpdateCasePropertyViewTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(UpdateCasePropertyViewTest, cls).setUpClass()
         cls.domain = create_domain(cls.domain_name)
         cls.couch_user = WebUser.create(None, "test", "foobar")
         cls.couch_user.add_domain_membership(cls.domain_name, is_admin=True)
@@ -28,6 +29,7 @@ class UpdateCasePropertyViewTest(TestCase):
         cls.case_type_obj.delete()
         cls.couch_user.delete()
         cls.domain.delete()
+        super(UpdateCasePropertyViewTest, cls).tearDownClass()
 
     def setUp(self):
         self.url = reverse('update_case_property', args=[self.domain_name])
