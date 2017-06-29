@@ -1,4 +1,3 @@
-import time
 from django.utils.translation import ugettext as _
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
