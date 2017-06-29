@@ -136,19 +136,20 @@ def get_payload(timing_context, restore_state):
                 debug('next: %r all: %r', next_ids, all_ids)
                 all_ids.update(next_ids)
 
-        # owned, open, not an extension -> live
-        for case_id in open_ids:
-            if case_id not in hosts_by_extension:
+        with timing_context("enliven open root cases"):
+            # owned, open, not an extension -> live
+            for case_id in open_ids:
+                if case_id not in hosts_by_extension:
+                    enliven(case_id)
+
+            # open root nodes and their extensions -> live
+            # TODO store referenced_id open/closed status in case index to avoid this query
+            root_ids = [r for r in extensions_by_host if r not in hosts_by_extension]
+            debug('roots: %r', root_ids)
+            for case_id in accessor.filter_open_case_ids(root_ids):
                 enliven(case_id)
 
-        # open root nodes and their extensions -> live
-        # TODO store referenced_id open/closed status in case index to avoid this query
-        root_ids = [r for r in extensions_by_host if r not in hosts_by_extension]
-        debug('roots: %r', root_ids)
-        for case_id in accessor.filter_open_case_ids(root_ids):
-            enliven(case_id)
-
-        debug('live: %r', live_ids)
+            debug('live: %r', live_ids)
 
         with timing_context("compile_response"):
             iaccessor = PrefetchIndexCaseAccessor(accessor, indices)
