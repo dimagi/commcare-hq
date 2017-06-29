@@ -1,5 +1,4 @@
 from django.core.management import BaseCommand, CommandError
-from dimagi.utils.parsing import string_to_utc_datetime
 from corehq.warehouse.const import ALL_TABLES
 from corehq.warehouse.models import get_cls_by_slug, BatchRecord, CommitRecord
 
@@ -49,10 +48,3 @@ class Command(BaseCommand):
         else:
             commit_record.success = True
             commit_record.save()
-
-
-def _valid_date(date_str):
-    try:
-        return string_to_utc_datetime(date_str)
-    except ValueError:
-        raise CommandError('Not a valid date string: {}'.format(date_str))
