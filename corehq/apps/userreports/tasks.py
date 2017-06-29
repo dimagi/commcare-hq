@@ -280,6 +280,7 @@ def save_document(doc_ids):
             indicator = indicator_by_doc_id[doc['_id']]
 
             eval_context = EvaluationContext(doc)
+            failed_config_ids = []
             for config_id in indicator.indicator_config_ids:
                 adapter = None
                 try:
@@ -290,16 +291,23 @@ def save_document(doc_ids):
                 except (DatabaseError, ESError, InternalError, RequestError,
                         ConnectionTimeout, ProtocolError, ReadTimeout):
                     # a database had an issue so don't log it and go on to the next doc
+                    failed_config_ids.append(config_id)
                     failed_indicators.append(indicator.pk)
                     break
                 except Exception as e:
                     # getting the config could fail before the adapter is set
                     if adapter:
                         adapter.handle_exception(doc, e)
+                    failed_config_ids.append(config_id)
                     failed_indicators.append(indicator.pk)
                     break
                 else:
                     processed_indicators.append(indicator.pk)
+
+            if failed_config_ids:
+                AsyncIndicator.objects.filter(pk=indicator.pk).update(
+                    indicator_config_ids=failed_config_ids
+                )
 
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
         AsyncIndicator.objects.filter(pk__in=failed_indicators).update(
