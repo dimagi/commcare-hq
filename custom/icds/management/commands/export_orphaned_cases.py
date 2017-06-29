@@ -62,7 +62,7 @@ class Command(BaseCommand):
                  .domain('icds-cas')
                  .case_type('household')
                  .owner(owners)
-		         .source(['case_id', 'closed_on', 'name'])
+                 .source(['case_id', 'closed_on', 'name'])
                  .size(100)
                  )
         return query.scroll()
