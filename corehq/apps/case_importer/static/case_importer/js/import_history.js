@@ -22,28 +22,23 @@ hqDefine('case_importer/js/import_history.js', function () {
                             .isEqual(_(data).pluck('task_status').map(function (task_status) {return task_status()})).value()
             );
         };
-        var shouldUpdate = function (data) {
-            // do not update DOM
-            // if we're not either adding new uploads or updating the status
-            // this prevents some jumpiness when not necessary
-            // and is particularly bad if you're in the middle of editing a comment
-            return !(uploadIdsInDataMatchCurrent(data) && taskStatusesInDataMatchCurrent(data));
-        };
         self.updateCaseUploads = function (data) {
-            if (uploadIdsInDataMatchCurrent(data)) {
-                // in the easy case, update just the essential information (task_status) in place
-                // this prevents some jumpiness when not necessary
-                // and is particularly bad if you're in the middle of editing a comment
-                _.each(_.zip(self.case_uploads(), data), function (pair) {
-                    var case_upload = pair[0];
-                    var new_case_upload = pair[1];
-                    if (case_upload.upload_id !== new_case_upload.upload_id) {
-                        throw {message: "Somehow even after checking, the case upload lists didn't line up."};
-                    }
-                    case_upload.task_status(new_case_upload.task_status());
-                });
-            } else {
-                self.case_uploads(data);
+            if (!uploadIdsInDataMatchCurrent(data) || !taskStatusesInDataMatchCurrent(data)) {
+                if (uploadIdsInDataMatchCurrent(data)) {
+                    // in the easy case, update just the essential information (task_status) in place
+                    // this prevents some jumpiness when not necessary
+                    // and is particularly bad if you're in the middle of editing a comment
+                    _.each(_.zip(self.case_uploads(), data), function (pair) {
+                        var case_upload = pair[0];
+                        var new_case_upload = pair[1];
+                        if (case_upload.upload_id !== new_case_upload.upload_id) {
+                            throw {message: "Somehow even after checking, the case upload lists didn't line up."};
+                        }
+                        case_upload.task_status(new_case_upload.task_status());
+                    });
+                } else {
+                    self.case_uploads(data);
+                }
             }
         };
         self.fetchCaseUploads = function () {
@@ -57,9 +52,7 @@ hqDefine('case_importer/js/import_history.js', function () {
                     case_upload.comment = ko.observable(case_upload.comment || '');
                     case_upload.task_status = ko.observable(case_upload.task_status);
                 });
-                if (shouldUpdate(data)) {
-                    self.updateCaseUploads(data);
-                }
+                self.updateCaseUploads(data);
 
                 var anyInProgress = _.any(self.case_uploads(), function (case_upload) {
                     return case_upload.task_status().state === self.states.STARTED ||
