@@ -229,7 +229,7 @@ def get_app_view_context(request, app):
     if has_privilege(request, privileges.PRACTICE_MOBILE_WORKERS) and practice_user_setting:
         practice_users = get_practice_mode_mobile_workers(request.domain)
         practice_user_setting['values'] = [''] + [u['_id'] for u in practice_users]
-        practice_user_setting['value_names'] = ['Not set'] + [u['username'] for u in practice_users]
+        practice_user_setting['value_names'] = [_('Not set')] + [u['username'] for u in practice_users]
 
     context.update({
         'bulk_ui_translation_upload': {
@@ -742,10 +742,10 @@ def edit_app_attr(request, domain, app_id, attr):
 
     if should_edit("practice_mobile_worker_id"):
         user_id = hq_settings['practice_mobile_worker_id']
-        if user_id:
-            get_and_assert_practice_user_in_domain(user_id, request.domain)
         if not has_privilege(request, privileges.PRACTICE_MOBILE_WORKERS):
             app.practice_mobile_worker_id = None
+        elif user_id:
+            get_and_assert_practice_user_in_domain(user_id, request.domain)
 
     if should_edit("admin_password"):
         admin_password = hq_settings.get('admin_password')

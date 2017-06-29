@@ -153,8 +153,6 @@ def overwrite_app(app, master_build, report_map=None):
 
 
 def get_practice_mode_configured_apps(domain, mobile_worker_id=None):
-    app_ids = set()
-    apps = {app.get_id: app for app in get_apps_in_domain(domain)}
 
     def is_set(app_or_profile):
         if mobile_worker_id:
@@ -164,13 +162,12 @@ def get_practice_mode_configured_apps(domain, mobile_worker_id=None):
             if app_or_profile.practice_mobile_worker_id:
                 return True
 
-    for _id, app in apps.iteritems():
+    def _practice_mode_configured(app):
         if is_set(app):
-            app_ids.add(_id)
-        for _, profile in app.build_profiles.iteritems():
-            if is_set(profile):
-                app_ids.add(_id)
-    return [apps[_id] for _id in app_ids]
+            return True
+        return any(is_set(profile) for _, profile in app.build_profiles.items())
+
+    return [app for app in get_apps_in_domain(domain) if _practice_mode_configured(app)]
 
 
 def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
@@ -192,11 +189,9 @@ def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
         if mobile_worker_id:
             if app_or_profile.practice_mobile_worker_id == mobile_worker_id:
                 app_or_profile.practice_mobile_worker_id = None
-                return True
         else:
             if app_or_profile.practice_mobile_worker_id:
                 app_or_profile.practice_mobile_worker_id = None
-                return True
 
     apps = get_practice_mode_configured_apps(domain, mobile_worker_id)
     for app in apps:

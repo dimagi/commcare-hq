@@ -40,13 +40,13 @@ from corehq.apps.users.models import CommCareUser
 from corehq.util.view_utils import reverse
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST, require_can_edit_apps, require_deploy_apps)
-from corehq.apps.app_manager.exceptions import ModuleIdMissingException, ModuleNotFoundException, \
-    PracticeUserException
+from corehq.apps.app_manager.exceptions import ModuleIdMissingException, PracticeUserException
 from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.utils import (back_to_main, encode_if_unicode, get_langs)
 from corehq.apps.builds.models import CommCareBuildConfig
+
 
 def _get_error_counts(domain, app_id, version_numbers):
     res = (UserErrorEntry.objects
