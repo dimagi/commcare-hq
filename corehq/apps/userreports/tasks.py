@@ -2,9 +2,12 @@ from __future__ import absolute_import
 from collections import defaultdict
 from datetime import datetime, timedelta
 
+from botocore.vendored.requests import ReadTimeout
+from botocore.vendored.requests.packages.urllib3.exceptions import ProtocolError
 from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
 from django.conf import settings
+from django.db import InternalError, DatabaseError
 from django.db.models import F
 from django.utils.translation import ugettext as _
 from elasticsearch.exceptions import ConnectionTimeout
@@ -284,8 +287,9 @@ def save_document(doc_ids):
                     adapter = get_indicator_adapter(config, can_handle_laboratory=True)
                     adapter.save(doc, eval_context)
                     eval_context.reset_iteration()
-                except (ESError, RequestError, ConnectionTimeout):
-                    # couch or es had an issue so don't log it and go on to the next doc
+                except (DatabaseError, ESError, InternalError, RequestError,
+                        ConnectionTimeout, ProtocolError, ReadTimeout):
+                    # a database had an issue so don't log it and go on to the next doc
                     failed_indicators.append(indicator.pk)
                     break
                 except Exception as e:
