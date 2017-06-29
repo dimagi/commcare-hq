@@ -698,9 +698,20 @@ def get_form_datums(request, domain, app_id):
 
 @require_GET
 @require_deploy_apps
-def view_form(request, domain, app_id, module_id, form_id):
+def view_form_legacy(request, domain, app_id, module_id, form_id):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, module_id, form_id)
+
+
+@require_GET
+@require_deploy_apps
+def view_form(request, domain, app_id, module_unique_id, form_unique_id):
+    from corehq.apps.app_manager.views.view_generic import view_generic
+    return view_generic(
+        request, domain, app_id,
+        module_unique_id=module_unique_id,
+        form_unique_id=form_unique_id
+    )
 
 
 def _get_xform_source(request, app, form, filename="form.xml"):
