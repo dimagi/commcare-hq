@@ -39,6 +39,11 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
     args = [domain]
     view_name = 'default_app'
 
+    form_view = (
+        'view_form' if toggles.APP_MANAGER_V1.enabled(request.user.username)
+        else 'form_source'
+    )
+
     if app_id is not None:
         view_name = 'view_app'
         args.append(app_id)
@@ -48,26 +53,24 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
         module = None
         if module_id is not None:
             module = app.get_module(module_id)
-            module_unique_id = module.unique_id
-
-        if module_unique_id is not None:
-            view_name = 'view_module'
+            args.append(module.unique_id)
+        elif module_unique_id is not None:
+            module = app.get_module_by_unique_id(module_unique_id)
             args.append(module_unique_id)
 
         form = None
         if form_id is not None and module is not None:
+            view_name = form_view
             form = module.get_form(form_id)
-            form_unique_id = form.unique_id
-
-        if form_unique_id is not None:
+            args.append(form.unique_id)
+        elif form_unique_id is not None:
             args.append(form_unique_id)
-            if form is None:
-                form = app.get_form(form_unique_id)
+            form = app.get_form(form_unique_id)
 
         if form is not None:
-            view_name = 'form_source' if not form.no_vellum else 'view_form'
-            if toggles.APP_MANAGER_V1.enabled(request.user.username):
-                view_name = 'view_form'
+            view_name = 'view_form' if form.no_vellum else form_view
+        elif module is not None:
+            view_name = 'view_module'
 
     if page:
         view_name = page
