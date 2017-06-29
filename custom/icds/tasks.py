@@ -30,6 +30,8 @@ MADHYA_PRADESH_SITE_CODE = '23'
 BIHAR_SITE_CODE = '10'
 CHHATTISGARH_SITE_CODE = '22'
 JHARKHAND_SITE_CODE = '20'
+RAJASTHAN_SITE_CODE = '08'
+UTTAR_PRADESH_SITE_CODE = 'state9'
 
 ENGLISH = 'en'
 HINDI = 'hin'
@@ -123,7 +125,9 @@ def run_weekly_indicators(phased_rollout=True):
         hindi_user_ids |= get_user_ids_under_location(domain, BIHAR_SITE_CODE)
         hindi_user_ids |= get_user_ids_under_location(domain, CHHATTISGARH_SITE_CODE)
         hindi_user_ids |= get_user_ids_under_location(domain, JHARKHAND_SITE_CODE)
-        user_ids_to_send_to = telugu_user_ids | hindi_user_ids
+        hindi_user_ids |= get_user_ids_under_location(domain, RAJASTHAN_SITE_CODE)
+        hindi_user_ids |= get_user_ids_under_location(domain, UTTAR_PRADESH_SITE_CODE)
+        user_ids_to_send_to = marathi_user_ids | telugu_user_ids | hindi_user_ids
 
         for user_id in generate_user_ids_from_primary_location_ids_from_couch(domain,
                 get_awc_location_ids(domain)):
