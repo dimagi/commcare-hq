@@ -11,7 +11,12 @@
   "config": {
     "description": "",
     "title": "Referred in Report",
-    "sort_expression": [],
+    "sort_expression": [
+      {
+        "field": "referred_to_name",
+        "order": "ASC"
+      }
+    ],
     "visible": true,
     "configured_charts": [],
     "aggregation_columns": [
