@@ -9,7 +9,7 @@ from casexml.apps.case.tests.util import assert_user_doesnt_have_cases, \
     assert_user_has_cases, cached_restore
 from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
-from corehq.form_processor.tests.utils import use_sql_backend
+from corehq.form_processor.tests.utils import partitioned, use_sql_backend
 from corehq.util.test_utils import softer_assert
 
 
@@ -159,6 +159,7 @@ class LiveQueryIndexTreeTest(IndexTreeTest):
     restore_options = {'do_livequery': True}
 
 
+@partitioned
 @use_sql_backend
 class LiveQueryIndexTreeTestSQL(LiveQueryIndexTreeTest):
     pass
