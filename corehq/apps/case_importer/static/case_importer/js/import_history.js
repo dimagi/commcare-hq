@@ -18,8 +18,11 @@ hqDefine('case_importer/js/import_history.js', function () {
         };
         var taskStatusesInDataMatchCurrent = function (data) {
             return (
-                _.chain(self.case_uploads()).pluck('task_status').map(function (task_status) {return task_status()})
-                            .isEqual(_(data).pluck('task_status').map(function (task_status) {return task_status()})).value()
+                _.chain(self.case_uploads()).pluck('task_status').map(function (task_status) {
+                    return task_status();
+                }).isEqual(_(data).pluck('task_status').map(function (task_status) {
+                    return task_status();
+                })).value()
             );
         };
         self.updateCaseUploads = function (data) {
