@@ -2,6 +2,8 @@ import time
 from django.utils.translation import ugettext as _
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
+from couchdbkit import ResourceConflict
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.util import format_username
 from corehq.apps.users.models import CommCareUser
@@ -63,12 +65,14 @@ def reset_demo_user_restore(commcare_user, domain):
     demo_restore = DemoUserRestore.create(commcare_user._id, restore)
 
     # Set reference to new restore
-    # Wait and refetch because CommCareUser.report_metadata gets updated by sync log pillow,
-    #   after a restore is generated, otherwise there will be a DocumentUpdate conflict
-    time.sleep(5)
-    commcare_user = CommCareUser.get(commcare_user.get_id)
-    commcare_user.demo_restore_id = demo_restore.id
-    commcare_user.save()
+    try:
+        commcare_user.demo_restore_id = demo_restore.id
+        commcare_user.save()
+    except ResourceConflict:
+        # If CommCareUser.report_metadata gets updated by sync log pillow, after a restore is
+        #   generated or for any other reason, there will be a DocumentUpdate conflict
+        commcare_user = CommCareUser.get(commcare_user.get_id)
+        commcare_user.save()
 
 
 def delete_demo_restore_for_user(commcare_user):
