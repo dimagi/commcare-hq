@@ -3,6 +3,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import render
 from corehq.apps.app_manager.const import APP_V1
+from corehq.apps.app_manager.exceptions import FormNotFoundException
 
 from corehq.apps.app_manager.views.modules import get_module_template, \
     get_module_view_context
@@ -48,18 +49,20 @@ from django_prbac.utils import has_privilege
 
 @retry_resource(3)
 def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
-                 copy_app_form=None, release_manager=False):
+                 copy_app_form=None, release_manager=False,
+                 module_unique_id=None, form_unique_id=None):
     """
     This is the main view for the app. All other views redirect to here.
 
     """
-    if form_id and not module_id:
+    if form_id and not module_id and module_unique_id is None:
         return bail(request, domain, app_id)
 
     app = module = form = None
     try:
         if app_id:
             app = get_app(domain, app_id)
+
         if module_id:
             try:
                 module = app.get_module(module_id)
@@ -68,11 +71,25 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             if not module.unique_id:
                 module.get_or_create_unique_id()
                 app.save()
+        elif module_unique_id:
+            try:
+                module = app.get_module_by_unique_id(module_unique_id)
+            except ModuleNotFoundException:
+                raise Http404()
+            module_id = module.id
+
         if form_id:
             try:
                 form = module.get_form(form_id)
             except IndexError:
                 raise Http404()
+        elif form_unique_id:
+            try:
+                form = app.get_form(form_unique_id)
+            except FormNotFoundException:
+                raise Http404()
+            form_id = form.id
+
     except ModuleNotFoundException:
         return bail(request, domain, app_id)
 
