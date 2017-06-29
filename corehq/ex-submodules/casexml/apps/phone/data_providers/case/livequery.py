@@ -58,22 +58,19 @@ def get_payload(timing_context, restore_state):
             for next_id in chain(ext_ids, host_ids):
                 enliven(next_id)
 
-    def classify(index):
+    def classify(index, prev_ids):
         """Classify index as either live or extension with live status pending
 
-        This closuer mutates `next_ids`, `extensions_by_host`,
-        `hosts_by_extension`, and calls `enliven`, which also mutates
-        data structures from the enclosing function.
+        This closure mutates `indices` from the enclosing function as
+        well as the same data structres mutated by `enliven()`.
         """
+        indices[index.case_id].append(index)
         sub_id = index.case_id
         ref_id = index.referenced_id  # aka parent/host/super
         relationship = index.relationship
         debug("%s --%s--> %s", sub_id, relationship, ref_id)
         if sub_id in prev_ids:
             # traverse to parent/host
-            if ref_id not in all_ids:  # exclude circular
-                next_ids.add(ref_id)
-
             if (sub_id in live_ids
                     or (relationship == EXTENSION and ref_id in live_ids)
                     or (relationship != EXTENSION and sub_id in open_ids)):
@@ -88,12 +85,13 @@ def get_payload(timing_context, restore_state):
                 # need to know if parent is live before -> live
                 extensions_by_host[ref_id].add(sub_id)
                 hosts_by_extension[sub_id].add(ref_id)
+
+            if ref_id not in all_ids:  # exclude circular
+                return ref_id
         else:
             # traverse to open extension
             assert ref_id in prev_ids, (index, prev_ids)
             assert relationship == EXTENSION, index
-            if sub_id not in all_ids:  # exclude circular
-                next_ids.add(sub_id)
 
             if ref_id in live_ids:
                 # sub is the extension of a live case
@@ -102,6 +100,10 @@ def get_payload(timing_context, restore_state):
                 # need to know if parent is live before -> live
                 extensions_by_host[ref_id].add(sub_id)
                 hosts_by_extension[sub_id].add(ref_id)
+
+            if sub_id not in all_ids:  # exclude circular
+                return sub_id
+        return None
 
     log = logging.getLogger(__name__)
     if log.isEnabledFor(logging.DEBUG):
@@ -112,6 +114,7 @@ def get_payload(timing_context, restore_state):
     live_ids = set()
     extensions_by_host = defaultdict(set)  # host_id -> extension_ids
     hosts_by_extension = defaultdict(set)  # extension_id -> host_ids
+    indices = defaultdict(list)
     accessor = CaseAccessors(restore_state.domain)
 
     with timing_context("livequery"):
@@ -122,7 +125,6 @@ def get_payload(timing_context, restore_state):
         debug("open: %r", open_ids)
         next_ids = all_ids = set(open_ids)
         open_ids = set(open_ids)
-        indices = defaultdict(list)
         level = 0
         while next_ids:
             level += 1
@@ -130,11 +132,8 @@ def get_payload(timing_context, restore_state):
                 related = accessor.get_related_indices(list(next_ids), all_ids)
             if not related:
                 break
-            prev_ids = next_ids
-            next_ids = set()
-            for index in related:
-                indices[index.case_id].append(index)
-                classify(index)
+            next_ids = {classify(index, next_ids) for index in related}
+            next_ids.discard(None)
 
             debug('next: %r all: %r', next_ids, all_ids)
             all_ids.update(next_ids)
