@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.core.management import BaseCommand, CommandError
 from corehq.warehouse.const import ALL_TABLES
 from corehq.warehouse.models import get_cls_by_slug, BatchRecord, CommitRecord
@@ -43,8 +44,9 @@ class Command(BaseCommand):
         except Exception as e:
             commit_record.error = e
             commit_record.success = False
-            commit_record.save()
             raise
         else:
             commit_record.success = True
+        finally:
+            commit_record.completed_on = datetime.utcnow()
             commit_record.save()
