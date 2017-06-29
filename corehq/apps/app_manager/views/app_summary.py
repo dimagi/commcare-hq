@@ -100,26 +100,30 @@ class AppDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
                     'errors': errors,
                 },
                 'case_data': self.app.get_case_metadata().to_json(),
-                'form_name_map': _get_name_map(self.app),
+                'form_name_map': _get_name_map(self.app, request),
             },
             'success': True,
         })
 
 
-def _get_name_map(app):
+def _get_name_map(app, request):
     name_map = {}
     for module in app.get_modules():
-        keywords = {'domain': app.domain, 'app_id': app.id, 'module_id': module.id}
-        module_url = reverse('view_module', kwargs=keywords)
+        keywords = {'domain': app.domain, 'app_id': app.id, 'module_unique_id': module.unique_id}
+        module_url = reverse('view_module_unique', kwargs=keywords)
+
         name_map[module.unique_id] = {
             'module_name': module.name,
             'module_url': module_url,
         }
         for form in module.get_forms():
-            keywords = {'domain': app.domain, 'app_id': app.id, 'module_id': module.id}
-            module_url = reverse('view_module', kwargs=keywords)
-            keywords['form_id'] = form.id
+
+            keywords = {'domain': app.domain, 'app_id': app.id,
+                        'module_unique_id': module.id}
+            module_url = reverse('view_module_unique', kwargs=keywords)
+            keywords['form_unique_id'] = form.unique_id
             form_url = reverse('view_form', kwargs=keywords)
+
             name_map[form.unique_id] = {
                 'form_name': form.name,
                 'module_name': module.name,

@@ -13,7 +13,8 @@ from corehq.apps.app_manager.views import (
     view_app,
     download_bulk_ui_translations, download_bulk_app_translations, upload_bulk_ui_translations,
     upload_bulk_app_translations, multimedia_ajax, releases_ajax, current_app_version, paginate_releases,
-    release_build, view_module, view_form, get_form_datums, form_designer, update_build_comment, export_gzip,
+    release_build, view_module, view_module_legacy, view_form, view_form_legacy,
+    get_form_datums, form_designer, update_build_comment, export_gzip,
     xform_display, get_xform_source, form_casexml, app_source, import_app, app_from_template, copy_app,
     get_form_data_schema, new_module, new_app, default_new_app, new_form, drop_user_case, delete_app,
     delete_module, delete_form, copy_form, undo_delete_app, undo_delete_module, undo_delete_form, edit_form_attr,
@@ -48,8 +49,12 @@ app_urls = [
     url(r'^releases/unrelease/(?P<saved_app_id>[\w-]+)/$', release_build,
         name='unrelease_build', kwargs={'is_released': False}),
     url(r'^releases/profiles/$', LanguageProfilesView.as_view(), name=LanguageProfilesView.urlname),
-    url(r'^modules-(?P<module_id>[\w-]+)/$', view_module, name='view_module'),
+    url(r'^modules-(?P<module_id>[\w-]+)/$', view_module_legacy,
+        name='view_module_legacy'),  # keep legacy around for docs
+    url(r'^m-(?P<module_unique_id>[\w-]+)/$', view_module, name='view_module'),
     url(r'^modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/$',
+        view_form, name='view_form_legacy'),  # keep legacy around for docs
+    url(r'^m-(?P<module_unique_id>[\w-]+)/f-(?P<form_unique_id>[\w-]+)/$',
         view_form, name='view_form'),
     url(r'^get_form_datums/$', get_form_datums, name='get_form_datums'),
     url(r'^get_form_questions/$', get_form_questions, name='get_form_questions'),

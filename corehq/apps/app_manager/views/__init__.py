@@ -71,6 +71,7 @@ from corehq.apps.app_manager.views.forms import (
     new_form,
     patch_xform,
     undo_delete_form,
+    view_form_legacy,
     view_form,
     xform_display,
     get_form_questions,
@@ -84,6 +85,7 @@ from corehq.apps.app_manager.views.modules import (
     overwrite_module_case_list,
     undo_delete_module,
     validate_module_for_build,
+    view_module_legacy,
     view_module,
 )
 from corehq.apps.app_manager.views.multimedia import (

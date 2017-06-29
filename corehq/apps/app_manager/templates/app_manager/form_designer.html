@@ -55,7 +55,7 @@
 
     <script type="text/html" id="js-fd-manage-case">
       <div class="btn-group pull-right">
-        <a class="btn btn-manage" href="{% url "view_form" domain app.id module.id form.id %}">
+        <a class="btn btn-manage" href="{% url "view_form" domain app.id module.unique_id form.unique_id %}">
           <i class="fa fa-cog"></i> {% trans 'Manage Case' %}
         </a>
       </div>
