@@ -5,7 +5,7 @@ from corehq.warehouse.models import get_cls_by_slug
 
 USAGE = """Usage: ./manage.py clear_staging_records
 
-Removes all records from staging tables
+Removes all records from staging tables. Should only be used during development.
 """
 
 
