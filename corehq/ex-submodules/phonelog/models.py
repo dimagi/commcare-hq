@@ -1,9 +1,10 @@
+import architect
 from django.db import models
 
 COUCH_UUID_MAX_LEN = 50
 
 
-class DeviceReportEntry(models.Model):
+class OldDeviceReportEntry(models.Model):
     xform_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, db_index=True)
     i = models.IntegerField()
     msg = models.TextField()
@@ -17,6 +18,36 @@ class DeviceReportEntry(models.Model):
     user_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, null=True)
 
     class Meta:
+        db_table = 'phonelog_devicereportentry'
+        app_label = 'phonelog'
+        unique_together = [('xform_id', 'i')]
+        index_together = [
+            ("domain", "date"),
+            ("domain", "device_id"),
+            ("domain", "username"),
+            ("domain", "type"),
+        ]
+
+    def __repr__(self):
+        return u"OldDeviceReportEntry(domain='{}', msg='{}')".format(self.domain, self.msg)
+
+
+@architect.install('partition', type='range', subtype='date', constraint='day', column='server_date')
+class DeviceReportEntry(models.Model):
+    xform_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, db_index=True)
+    i = models.IntegerField()
+    msg = models.TextField()
+    type = models.CharField(max_length=32)
+    date = models.DateTimeField()
+    server_date = models.DateTimeField(db_index=True)
+    domain = models.CharField(max_length=100)
+    device_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, null=True)
+    app_version = models.TextField(null=True)
+    username = models.CharField(max_length=100, null=True)
+    user_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, null=True)
+
+    class Meta(object):
+        db_table = 'phonelog_daily_partitioned_devicereportentry'
         app_label = 'phonelog'
         unique_together = [('xform_id', 'i')]
         index_together = [
