@@ -330,7 +330,7 @@ HQ_APPS = (
     'corehq.apps.styleguide',
     'corehq.messaging.smsbackends.grapevine',
     'corehq.apps.dashboard',
-    'corehq.apps.dhis2',
+    'corehq.motech.dhis2',
     'corehq.util',
     'dimagi.ext',
     'corehq.doctypemigrations',

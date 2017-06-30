@@ -6,10 +6,10 @@ from django.utils.translation import ugettext_lazy, ugettext
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView, DetailView
 from corehq import toggles
-from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
-from corehq.apps.dhis2.forms import Dhis2ConnectionForm
-from corehq.apps.dhis2.models import DataValueMap, DataSetMap, JsonApiLog
-from corehq.apps.dhis2.tasks import send_datasets
+from corehq.motech.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
+from corehq.motech.dhis2.forms import Dhis2ConnectionForm
+from corehq.motech.dhis2.models import DataValueMap, DataSetMap, JsonApiLog
+from corehq.motech.dhis2.tasks import send_datasets
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseAdminProjectSettingsView
 from dimagi.utils.decorators.memoized import memoized
