@@ -24,3 +24,8 @@
     <h4 class="text-hq-nav-header">{{ facet_report.facet_title }}</h4>
     {% include 'appstore/partials/sidebar.html' with search_name="es_search" search_for=facet_report.search_for %}
 {% endblock %}
+
+{% block page_content %}
+    {% initial_page_data 'js_options' report.js_options %}
+    {{ block.super }}
+{% endblock %}

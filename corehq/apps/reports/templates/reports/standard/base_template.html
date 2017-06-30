@@ -35,8 +35,9 @@
 {% block reports-js-inline %}
     <script>
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
-            standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
-        if (initial_page_data('slug') && initial_page_data('async')) {
+            standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport(),
+            reportOptions = initial_page_data('js_options');
+        if (reportOptions.slug && reportOptions.async) {
             var asyncHQReport = new HQAsyncReport({
                 standardReport: standardHQReport,
             });
@@ -99,19 +100,7 @@
 {% endblock %}
 
 {% block page_content %}
-    {% initial_page_data 'async' report.is_async %}
-    {% initial_page_data 'domain' domain %}
-    {% initial_page_data 'url_root' report.url_root %}
-    {% initial_page_data 'slug' report.slug %}
-    {% initial_page_data 'sub_slug' report.sub_slug %}
-    {% initial_page_data 'type' report.type %}
-    {% initial_page_data 'filter_set' report.filter_set %}
-    {% initial_page_data 'needs_filters' report.needs_filters %}
-    {% initial_page_data 'is_exportable' report.is_exportable %}
-    {% initial_page_data 'is_export_all' report.is_export_all %}
-    {% initial_page_data 'is_emailable' report.is_emailable %}
-    {% initial_page_data 'title' report.title %}
-
+    {% initial_page_data 'js_options' report.js_options %}
     {% if request.datespan %}
         {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
         {% initial_page_data 'enddate' datespan.enddate|date:"Y-m-d" %}

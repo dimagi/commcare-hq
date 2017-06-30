@@ -84,6 +84,7 @@
 {% endblock %}
 
 {% block page_content %}{{ block.super }}
+    {% initial_page_data 'js_options' report.js_options %}
     <div class="well">
         <form id="all-charts-filter" style="margin: 0;" class="form-inline">
             <span>
