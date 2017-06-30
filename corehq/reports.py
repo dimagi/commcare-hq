@@ -30,6 +30,7 @@ from corehq.apps.userreports.reports.view import (
     ConfigurableReport,
     CustomConfigurableReportDispatcher,
 )
+from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
 from corehq.form_processor.utils import should_use_sql_backend
 import phonelog.reports as phonelog
 from corehq.apps.reports import commtrack
@@ -260,7 +261,11 @@ def _get_configurable_reports(project):
     configs = _safely_get_report_configs(project.name)
 
     if configs:
-        yield (_('Reports'), [_make_report_class(config, show_in_nav=True) for config in configs])
+        yield (
+            _('Reports'),
+            [_make_report_class(config, show_in_nav=not config.title.startswith(TEMP_REPORT_PREFIX))
+             for config in configs]
+        )
 
 
 def _get_report_builder_reports(project):
@@ -285,7 +290,8 @@ def _get_report_builder_reports(project):
     if configs:
         yield (
             _('Report Builder Reports'),
-            [_make_report_class(config, show_in_dropdown=True) for config in report_builder_reports]
+            [_make_report_class(config, show_in_dropdown=not config.title.startswith(TEMP_REPORT_PREFIX))
+             for config in report_builder_reports]
         )
 
 DATA_INTERFACES = (

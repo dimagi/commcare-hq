@@ -84,29 +84,19 @@ class ProjectReportsTab(UITab):
         ])]
 
     def _get_report_builder_items(self):
+        from corehq.apps.userreports.views import ReportBuilderDataSourceSelect
         user_reports = []
         if self.couch_user.can_edit_data():
             user_reports = [(
                 _("Create Reports"),
                 [{
                     "title": _('Create new report'),
-                    "url": self._get_create_report_url(),
+                    "url": reverse(ReportBuilderDataSourceSelect.urlname, args=[self.domain]),
                     "icon": "icon-plus fa fa-plus",
                     "id": "create-new-report-left-nav",
                 }]
             )]
         return user_reports
-
-    def _get_create_report_url(self):
-        """
-        Return the url for the start of the report builder, or the paywall.
-        """
-        if has_report_builder_access(self._request):
-            url = reverse("report_builder_select_type", args=[self.domain])
-        else:
-            from corehq.apps.userreports.views import paywall_home
-            url = paywall_home(self.domain)
-        return url
 
     @staticmethod
     def _filter_sidebar_items(sidebar_items):
