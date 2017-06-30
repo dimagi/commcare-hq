@@ -24,7 +24,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     vm.filters = [];
 
     vm.rightLegend = {
-        info: 'Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median.'
+        info: 'Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median.',
     };
 
     vm.templatePopup = function(loc, row) {

@@ -948,7 +948,8 @@ class ChildrenExport(ExportableMixin, SqlData):
                 slug='percent_cf_diet_quanity'
             ),
             AggregateColumn(
-                'Percentage of children receiving complementary feeding with appropriate handwashing before feeding',
+                "Percentage of children receiving complementary feeding "
+                "with appropriate handwashing before feeding",
                 percent,
                 [
                     SumColumn('cf_handwashing'),
@@ -1499,23 +1500,6 @@ class SystemUsageExport(ExportableMixin, SqlData):
 class AWCInfrastructureExport(ExportableMixin, SqlData):
     title = 'AWC Infrastructure'
     table_name = 'agg_awc_monthly'
-
-    @property
-    def column_mapping(self):
-        return [
-            ['Slug', 'Full Name'],
-            ['state_name', 'State'],
-            ['district_name', 'District'],
-            ['block_name', 'Block'],
-            ['supervisor_name', 'Supervisor'],
-            ['awc_name', 'AWC'],
-            ['percent_with_drinking_water', 'Percentage AWCs with drinking water'],
-            ['percent_with_functional_toilet', 'Percentage AWCs with functional toilet'],
-            ['percent_with_medicine_kit', 'Percentage AWCs with medicine kit'],
-            ['percent_adult_scale', 'Percentage AWCs with weighing scale: infants'],
-            ['percent_baby_scale', 'Percentage AWCs with weighing scale: mother and child'],
-
-        ]
 
     @property
     def get_columns_by_loc_level(self):

@@ -1,5 +1,3 @@
-
-
 import requests
 
 from datetime import datetime, date
@@ -23,14 +21,15 @@ from custom.icds_reports.filters import CasteFilter, MinorityFilter, DisabledFil
 
 from custom.icds_reports.sqldata import ChildrenExport, ProgressReport, PregnantWomenExport, \
     DemographicsExport, SystemUsageExport, AWCInfrastructureExport
-from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_data, get_cas_reach_data, \
+from custom.icds_reports.utils import get_maternal_child_data, get_cas_reach_data, \
     get_demographics_data, get_awc_infrastructure_data, get_awc_opened_data, \
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart, \
     get_awc_reports_system_usage, get_awc_reports_pse, get_awc_reports_maternal_child, \
     get_awc_report_demographics, get_location_filter, get_awc_report_beneficiary, get_beneficiary_details, \
     get_prevalence_of_undernutrition_sector_data, get_prevalence_of_severe_sector_data, \
-    get_prevalence_of_severe_data_map, get_prevalence_of_severe_data_chart, get_prevalence_of_stunning_sector_data, \
-    get_prevalence_of_stunning_data_map, get_prevalence_of_stunning_data_chart
+    get_prevalence_of_severe_data_map, get_prevalence_of_severe_data_chart, \
+    get_prevalence_of_stunning_sector_data, get_prevalence_of_stunning_data_map, \
+    get_prevalence_of_stunning_data_chart
 from . import const
 from .exceptions import TableauTokenException
 
@@ -475,7 +474,9 @@ class ExportIndicatorView(View):
         elif indicator == 4:
             return SystemUsageExport(config=config, loc_level=aggregation_level).to_export(export_format, location)
         elif indicator == 5:
-            return AWCInfrastructureExport(config=config, loc_level=aggregation_level).to_export(export_format, location)
+            return AWCInfrastructureExport(
+                config=config, loc_level=aggregation_level
+            ).to_export(export_format, location)
 
 
 @method_decorator([login_and_domain_required], name='dispatch')

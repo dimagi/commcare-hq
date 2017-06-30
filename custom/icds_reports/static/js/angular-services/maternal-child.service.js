@@ -25,6 +25,6 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                 url: get_url,
                 params: params,
             });
-        }
+        },
     };
 }]);

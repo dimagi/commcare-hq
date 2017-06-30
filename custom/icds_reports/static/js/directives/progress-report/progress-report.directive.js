@@ -39,7 +39,7 @@ function ProgressReportController($scope, $location, progressReportService, stor
         } else {
             return false;
         }
-    }
+    };
 
     vm.loadData();
 }

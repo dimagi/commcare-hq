@@ -112,7 +112,7 @@ function IndieMapController($scope, $compile, $location, storageService) {
             _.extend(vm.mapPlugins, {
                 customLegend: function () {
                     var html = ['<div style="height: 20px !important"><span style="float: left">' + vm.legendTitle + '</span></div>'];
-                    html.push('<div style="height: 20px !important">')
+                    html.push('<div style="height: 20px !important">');
                     for (var fillKey in this.options.fills) {
                         if (fillKey === 'defaultFill') continue;
                         html.push('<span style="color: '+ this.options.fills[fillKey] +';background-color: ' + this.options.fills[fillKey] + '; width: 20px; height: 20px;">__',
