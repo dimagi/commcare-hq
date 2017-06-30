@@ -13,7 +13,8 @@ from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.workbook_reading import open_any_workbook
-from custom.enikshay.case_utils import CASE_TYPE_PERSON, CASE_TYPE_OCCURRENCE
+from custom.enikshay.case_utils import CASE_TYPE_PERSON, CASE_TYPE_OCCURRENCE, CASE_TYPE_EPISODE, CASE_TYPE_TEST, \
+    CASE_TYPE_DRUG_RESISTANCE, CASE_TYPE_SECONDARY_OWNER
 
 logger = logging.getLogger('tow_b_datamigration')
 
@@ -51,41 +52,52 @@ def get_case_structures_from_row(domain, column_mapping, row):
     followup_test_cases_properties = get_follow_up_test_case_properties(column_mapping, row)
     secondary_owner_case_properties = get_secondary_owner_case_properties(domain, column_mapping, row)
 
-    person_case_structure = get_person_case_structure(person_case_properties)
+    person_case_structure = get_case_structure(CASE_TYPE_PERSON, person_case_properties)
+    occurrence_case_structure = get_case_structure(
+        CASE_TYPE_OCCURRENCE, occurrence_case_properties, host=person_case_structure)
+    episode_case_structure = get_case_structure(
+        CASE_TYPE_EPISODE, episode_case_properties, host=occurrence_case_structure)
+    test_case_structure = get_case_structure(
+        CASE_TYPE_TEST, test_case_properties, host=occurrence_case_structure)
+    drug_resistance_case_structures = [
+        get_case_structure(CASE_TYPE_DRUG_RESISTANCE, props, host=occurrence_case_structure)
+        for props in drug_resistance_case_properties
+    ]
+    followup_test_case_structures = [
+        get_case_structure(CASE_TYPE_TEST, props, host=occurrence_case_structure)
+        for props in followup_test_cases_properties
+    ]
+    secondary_owner_case_structure = get_case_structure(
+        CASE_TYPE_SECONDARY_OWNER, secondary_owner_case_properties, host=occurrence_case_structure)
 
-    # TODO: convert all these case properties to the appropriate linked up case structures
+    return [
+        person_case_structure,
+        occurrence_case_structure,
+        episode_case_structure,
+        test_case_structure,
+        secondary_owner_case_structure
+    ] + drug_resistance_case_structures + followup_test_case_structures
 
 
-def get_person_case_structure(properties):
+def get_case_structure(case_type, properties, host=None):
     owner_id = properties.pop("owner_id")
-    return CaseStructure(
-        case_id=uuid.uuid4().hex,
-        attrs={
-            "case_type": CASE_TYPE_PERSON,
+    kwargs = {
+        "case_id": uuid.uuid4().hex,
+        "attrs": {
+            "case_type": case_type,
             "create": True,
             "owner_id": owner_id,
-            # TODO: What are the require case properties?
             "update": properties,
-    })
-
-
-def get_occurrence_case_structure(properties, person_case_structure):
-    return CaseStructure(
-        case_id=uuid.uuid4().hex,
-        attrs={
-            "case_type": CASE_TYPE_OCCURRENCE,
-            "create": True,
-            # TODO: Does this need a name?
-            # TODO: owner_id
-            "update": properties,  # TODO: Nick creates a lot more properties
         },
-        indices=[CaseIndex(
-            person_case_structure,
+    }
+    if host:
+        kwargs['indices'] = [CaseIndex(
+            host,
             identifier='host',
             relationship=CASE_INDEX_EXTENSION,
-            related_type=person_case_structure.attrs['case_type'],
+            related_type=host.attrs['case_type'],
         )],
-    )
+    return CaseStructure(**kwargs)
 
 
 def get_person_case_properties(domain, column_mapping, row):
@@ -104,6 +116,7 @@ def get_person_case_properties(domain, column_mapping, row):
 
 def get_occurrence_case_properties(row):
     return {
+        "owner_id": "-",
         "current_episode_type": "confirmed_drtb"
     }
 
@@ -120,6 +133,7 @@ def get_episode_case_properties(column_mapping, row):
     treatment_card_completed_date = clean_date(treatment_card_completed_date)
 
     properties = {
+        "owner_id": "-",
         "episode_type": "confirmed_drtb",
         "episode_pending_registration": "no",
         "is_active": "yes",
@@ -183,6 +197,7 @@ def get_test_case_properties(domain, column_mapping, row):
     facility_name, facility_id = match_facility(
         domain, column_mapping.get_value("testing_facility", row))
     properties = {
+        "owner_id": "-",
         "testing_facility_saved_name": facility_name,
         "testing_facility_id": facility_id,
         "date_reported": column_mapping.get_value("report_sending_date", row),
@@ -247,6 +262,7 @@ def get_follow_up_test_case_properties(column_mapping, row):
         # TODO: Should I check for existance of all the values?
         if column_mapping.get_value("month_{}_follow_up_send_date".format(follow_up), row):
             properties = {
+                "owner_id": "-",
                 "date_tested": clean_date(
                     column_mapping.get_value("month_{}_follow_up_send_date".format(follow_up), row)),
                 "date_reported": clean_date(
