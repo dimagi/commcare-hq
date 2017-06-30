@@ -8,9 +8,9 @@ from crispy_forms.helper import FormHelper
 from django import forms
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.motech.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
+from corehq.motech.dhis2.dbaccessors import get_dhis2_connection
 from corehq.motech.dhis2.const import SEND_FREQUENCY_MONTHLY, SEND_FREQUENCY_QUARTERLY
-from corehq.motech.dhis2.models import Dhis2Connection, DataSetMap, DataValueMap
+from corehq.motech.dhis2.models import Dhis2Connection
 from corehq.apps.style import crispy as hqcrispy
 
 
