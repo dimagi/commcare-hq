@@ -893,6 +893,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
             'groups': groups,
             'access': access,
             'user_fields': user_fields,
+            'enable_userdata_permissions': toggles.USERDATA_WEBAPPS_PERMISSIONS.enabled(self.domain),
         }
 
     def put(self, request, *args, **kwargs):

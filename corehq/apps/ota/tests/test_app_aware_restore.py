@@ -1,6 +1,8 @@
 from django.test import TestCase
 from mock import patch
 
+from corehq.util.test_utils import flag_enabled
+
 from casexml.apps.phone.tests.utils import create_restore_user, call_fixture_generator
 from corehq import toggles
 from corehq.apps.app_manager.fixtures.mobile_ucr import report_fixture_generator
@@ -98,6 +100,7 @@ class AppAwareSyncTests(TestCase):
         self.assertEqual(len(reports), 1)
         self.assertEqual(reports[0].attrib.get('id'), '123456')
 
+    @flag_enabled('USERDATA_WEBAPPS_PERMISSIONS')
     def test_report_fixtures_provider_with_cloudcare(self):
         """
         ReportFixturesProvider should iterate only allowed apps if sync is from cloudcare
