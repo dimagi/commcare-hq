@@ -7,28 +7,48 @@
     if it exists at all.
 */
 hqDefine("reports/js/standard_hq_report.js", function() {
-    var get = function() {
+    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
+        standardReport = undefined,
+        asyncReport = undefined;
+
+    var getStandard = function() {
+        if (typeof standardReport !== 'undefined') {
+            return standardReport;
+        }
+
         if (typeof standardHQReport !== 'undefined') {
-            return standardHQReport;
+            standardReport = standardHQReport;
+        } else {
+            var ucr = "userreports/js/configurable_report.js";
+            if (typeof COMMCAREHQ_MODULES[ucr] !== 'undefined') {
+                standardReport = hqImport(ucr).getStandardHQReport();
+            } else {
+                var reportOptions = _.extend({}, initial_page_data('js_options'), {
+                    emailSuccessMessage: gettext('Report successfully emailed'),
+                    emailErrorMessage: gettext('An error occurred emailing you report. Please try again.'),
+                });
+                if (initial_page_data('startdate')) {
+                    reportOptions.datespan = {
+                        startdate: initial_page_data('startdate'),
+                        enddate: initial_page_data('enddate'),
+                    };
+                }
+                var standardHQReport = new HQReport(reportOptions);
+                standardHQReport.init();
+                standardReport = standardHQReport;
+            }
         }
-        var ucr = "userreports/js/configurable_report.js";
-        if (typeof COMMCAREHQ_MODULES[ucr] !== 'undefined') {
-            return hqImport(ucr).getStandardHQReport();
+        return standardReport;
+    };
+
+    var getAsync = function() {
+        var reportOptions = initial_page_data('js_options');
+        if (reportOptions.slug && reportOptions.async) {
+            var asyncHQReport = new HQAsyncReport({
+                standardReport: getStandard(),
+            });
+            asyncHQReport.init();
         }
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
-        var reportOptions = _.extend({}, initial_page_data('js_options'), {
-            emailSuccessMessage: gettext('Report successfully emailed'),
-            emailErrorMessage: gettext('An error occurred emailing you report. Please try again.'),
-        });
-        if (initial_page_data('startdate')) {
-            reportOptions.datespan = {
-                startdate: initial_page_data('startdate'),
-                enddate: initial_page_data('enddate'),
-            };
-        }
-        var standardHQReport = new HQReport(reportOptions);
-        standardHQReport.init();
-        return standardHQReport;
     };
 
     $(function() {
@@ -39,6 +59,7 @@ hqDefine("reports/js/standard_hq_report.js", function() {
     });
 
     return {
-        getStandardHQReport: get,
+        getAsyncHQReport: getAsync,
+        getStandardHQReport: getStandard,
     };
 });

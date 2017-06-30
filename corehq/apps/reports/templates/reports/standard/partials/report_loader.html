@@ -1,13 +1,6 @@
 {% load hq_shared_tags %}
 <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
 <script>
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
-        standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport(),
-        reportOptions = initial_page_data('js_options');
-    if (reportOptions.slug && reportOptions.async) {
-        var asyncHQReport = new HQAsyncReport({
-            standardReport: standardHQReport,
-        });
-        asyncHQReport.init();
-    }
+    var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport(),
+        asyncHQReport = hqImport("reports/js/standard_hq_report.js").getAsyncHQReport();
 </script>
