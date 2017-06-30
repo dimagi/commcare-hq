@@ -2,9 +2,12 @@ from __future__ import absolute_import
 from collections import defaultdict
 from datetime import datetime, timedelta
 
+from botocore.vendored.requests.exceptions import ReadTimeout
+from botocore.vendored.requests.packages.urllib3.exceptions import ProtocolError
 from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
 from django.conf import settings
+from django.db import InternalError, DatabaseError
 from django.db.models import F
 from django.utils.translation import ugettext as _
 from elasticsearch.exceptions import ConnectionTimeout
@@ -277,6 +280,8 @@ def save_document(doc_ids):
             indicator = indicator_by_doc_id[doc['_id']]
 
             eval_context = EvaluationContext(doc)
+            working_config_ids = []
+            failed_config_ids = []
             for config_id in indicator.indicator_config_ids:
                 adapter = None
                 try:
@@ -284,18 +289,28 @@ def save_document(doc_ids):
                     adapter = get_indicator_adapter(config, can_handle_laboratory=True)
                     adapter.save(doc, eval_context)
                     eval_context.reset_iteration()
-                except (ESError, RequestError, ConnectionTimeout):
-                    # couch or es had an issue so don't log it and go on to the next doc
+                    working_config_ids.append(config_id)
+                except (DatabaseError, ESError, InternalError, RequestError,
+                        ConnectionTimeout, ProtocolError, ReadTimeout):
+                    # a database had an issue so don't log it and go on to the next doc
+                    failed_config_ids.append(config_id)
                     failed_indicators.append(indicator.pk)
                     break
                 except Exception as e:
                     # getting the config could fail before the adapter is set
                     if adapter:
                         adapter.handle_exception(doc, e)
+                    failed_config_ids.append(config_id)
                     failed_indicators.append(indicator.pk)
                     break
                 else:
                     processed_indicators.append(indicator.pk)
+
+            # only want to change if there were some that worked and failed
+            if failed_config_ids and working_config_ids:
+                AsyncIndicator.objects.filter(pk=indicator.pk).update(
+                    indicator_config_ids=failed_config_ids
+                )
 
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
         AsyncIndicator.objects.filter(pk__in=failed_indicators).update(
