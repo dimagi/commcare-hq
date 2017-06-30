@@ -170,7 +170,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
             # But if we do not know about it, then may as well return nothing now
             return []
 
-        raw_docs = cls.view('receiverwrapper/repeaters',
+        raw_docs = cls.view('repeaters/repeaters',
             startkey=key,
             endkey=key + [{}],
             include_docs=True,
@@ -497,7 +497,7 @@ class RepeatRecord(Document):
     @classmethod
     def all(cls, domain=None, due_before=None, limit=None):
         json_now = json_format_datetime(due_before or datetime.utcnow())
-        repeat_records = RepeatRecord.view("receiverwrapper/repeat_records_by_next_check",
+        repeat_records = RepeatRecord.view("repeaters/repeat_records_by_next_check",
             startkey=[domain],
             endkey=[domain, json_now, {}],
             include_docs=True,
@@ -508,7 +508,7 @@ class RepeatRecord(Document):
 
     @classmethod
     def count(cls, domain=None):
-        results = RepeatRecord.view("receiverwrapper/repeat_records_by_next_check",
+        results = RepeatRecord.view("repeaters/repeat_records_by_next_check",
             startkey=[domain],
             endkey=[domain, {}],
             reduce=True,
