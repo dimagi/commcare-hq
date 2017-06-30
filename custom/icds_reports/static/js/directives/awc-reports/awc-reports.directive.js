@@ -892,41 +892,44 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 
     vm.getDataForStep(vm.step);
 
-    vm.chartOptions = {
-        chart: {
-            type: 'multiBarChart',
-            height: 450,
-            margin: {
-                top: 20,
-                right: 20,
-                bottom: 50,
-                left: 80,
-            },
-            x: function (d) {
-                return d[0];
-            },
-            y: function (d) {
-                return d[1];
-            },
-            showValues: true,
-            useInteractiveGuideline: true,
-            clipVoronoi: false,
-            duration: 500,
-            xAxis: {
-                axisLabel: '',
-                tickFormat: function (d) {
-                    if (typeof d === 'number') {
-                        return d3.time.format('%m/%d/%y')(new Date(d));
-                    } else if (typeof d === 'string') {
-                        return d;
-                    }
+    setTimeout(function() {
+        vm.chartOptions = {
+            chart: {
+                type: 'multiBarChart',
+                height: 450,
+                margin: {
+                    top: 20,
+                    right: 20,
+                    bottom: 50,
+                    left: 80,
+                },
+                x: function (d) {
+                    return d[0];
+                },
+                y: function (d) {
+                    return d[1];
+                },
+                showValues: true,
+                useInteractiveGuideline: true,
+                clipVoronoi: false,
+                duration: 500,
+                xAxis: {
+                    axisLabel: '',
+                    tickFormat: function (d) {
+                        if (typeof d === 'number') {
+                            return d3.time.format('%m/%d/%y')(new Date(d));
+                        } else if (typeof d === 'string') {
+                            return d;
+                        }
+                    },
+                },
+                yAxis: {
+                    axisLabel: '',
                 },
             },
-            yAxis: {
-                axisLabel: '',
-            },
-        },
-    };
+        };
+        $scope.$apply();
+    }, 500);
 
     vm.beneficiaryChartOptions = {
         chart: {

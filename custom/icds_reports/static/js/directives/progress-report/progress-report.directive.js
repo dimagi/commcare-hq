@@ -10,8 +10,11 @@ function ProgressReportController($scope, $location, progressReportService, stor
     vm.label = "Progress Report";
     vm.data = {};
     vm.dates = [];
+    vm.now = new Date().getMonth() + 1;
+    vm.showWarning = storageService.getKey('month') === void(0) || vm.now === storageService.getKey('month');
 
     $scope.$on('filtersChange', function() {
+        vm.showWarning =  vm.now === storageService.getKey('month');
         vm.loadData();
     });
 
@@ -24,6 +27,18 @@ function ProgressReportController($scope, $location, progressReportService, stor
     vm.sumValues = function(values) {
         var sum = _.reduce(values, function(memo, num) { return memo + num; }, 0);
         return sum / values.length;
+    };
+
+    vm.checkColor = function(color, index, data) {
+        if (color === 'black') {
+            return index === 1 || (index > 0 && data[index]['html'] === data[index - 1]['html']);
+        } else if (color ==='red') {
+            return index > 0 && data[index]['html'] < data[index - 1]['html'];
+        } else if (color === 'green') {
+            return  index > 0 && data[index]['html'] > data[index - 1]['html'];
+        } else {
+            return false;
+        }
     };
 
     vm.loadData();
