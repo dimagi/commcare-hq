@@ -25,10 +25,11 @@ from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
 from corehq import toggles, privileges
 from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
-from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager import id_strings, add_ons
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
 from corehq.apps.tour import tours
 from corehq.apps.translations.models import Translation
 from corehq.apps.app_manager.const import (
@@ -40,6 +41,7 @@ from corehq.apps.app_manager.util import (
     get_settings_values,
     app_doc_types,
     get_app_manager_template,
+    get_and_assert_practice_user_in_domain,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.userreports.util import get_static_report_mapping
@@ -123,6 +125,7 @@ def default_new_app(request, domain):
         identify.delay(request.couch_user.username, {'First Template App Chosen': 'blank'})
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
+    add_ons.init_app(request, app)
 
     if not toggles.APP_MANAGER_V2.enabled(request.user.username):
         # APP MANAGER V2 is completely blank on new app
@@ -140,7 +143,12 @@ def default_new_app(request, domain):
 
 
 def get_app_view_context(request, app):
+    """
+    This provides the context to render commcare settings on Edit Application Settings page
 
+    This is where additional app or domain specific context can be added to any individual
+    commcare-setting defined in commcare-app-settings.yaml or commcare-profile-settings.yaml
+    """
     context = {}
 
     settings_layout = copy.deepcopy(
@@ -196,14 +204,32 @@ def get_app_view_context(request, app):
             app_ver = MAJOR_RELEASE_TO_VERSION[option.build.major_release()]
             builds["default"] = build_config.get_default(app_ver).to_string()
 
-    (build_spec_setting,) = filter(
-        lambda x: x['type'] == 'hq' and x['id'] == 'build_spec',
-        [setting for section in settings_layout
-            for setting in section['settings']]
-    ) if settings_layout else (None,)
+    def _get_setting(setting_type, setting_id):
+        # get setting dict from settings_layout
+        if not settings_layout:
+            return None
+        matched = filter(
+            lambda x: x['type'] == setting_type and x['id'] == setting_id,
+            [
+                setting for section in settings_layout
+                for setting in section['settings']
+            ]
+        )
+        if matched:
+            return matched[0]
+        else:
+            return None
+
+    build_spec_setting = _get_setting('hq', 'build_spec')
     if build_spec_setting:
         build_spec_setting['options_map'] = options_map
         build_spec_setting['default_app_version'] = app.application_version
+
+    practice_user_setting = _get_setting('hq', 'practice_mobile_worker_id')
+    if has_privilege(request, privileges.PRACTICE_MOBILE_WORKERS) and practice_user_setting:
+        practice_users = get_practice_mode_mobile_workers(request.domain)
+        practice_user_setting['values'] = [''] + [u['_id'] for u in practice_users]
+        practice_user_setting['value_names'] = [_('Not set')] + [u['username'] for u in practice_users]
 
     context.update({
         'bulk_ui_translation_upload': {
@@ -233,6 +259,7 @@ def get_app_view_context(request, app):
             context_key="bulk_app_translation_upload"
         )
     })
+    # Not used in APP_MANAGER_V2
     context['is_app_view'] = True
     try:
         context['fetchLimit'] = int(request.GET.get('limit', DEFAULT_FETCH_LIMIT))
@@ -290,6 +317,8 @@ def get_apps_base_context(request, domain, app):
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
             'show_shadow_forms': show_advanced,
+            'practice_users': [
+                {"id": u['_id'], "text": u["username"]} for u in get_practice_mode_mobile_workers(domain)],
         })
 
     if toggles.APP_MANAGER_V2.enabled(request.user.username):
@@ -672,6 +701,7 @@ def edit_app_attr(request, domain, app_id, attr):
     # For either type of app
     easy_attrs = (
         ('build_spec', BuildSpec.from_string),
+        ('practice_mobile_worker_id', None),
         ('case_sharing', None),
         ('cloudcare_enabled', None),
         ('anonymous_cloudcare_enabled', None),
@@ -710,6 +740,13 @@ def edit_app_attr(request, domain, app_id, attr):
     if should_edit("build_spec"):
         resp['update']['commcare-version'] = app.commcare_minor_release
 
+    if should_edit("practice_mobile_worker_id"):
+        user_id = hq_settings['practice_mobile_worker_id']
+        if not has_privilege(request, privileges.PRACTICE_MOBILE_WORKERS):
+            app.practice_mobile_worker_id = None
+        elif user_id:
+            get_and_assert_practice_user_in_domain(user_id, request.domain)
+
     if should_edit("admin_password"):
         admin_password = hq_settings.get('admin_password')
         if admin_password:
@@ -745,6 +782,16 @@ def edit_app_attr(request, domain, app_id, attr):
         app.set_custom_suite(hq_settings['custom_suite'])
 
     return HttpResponse(json.dumps(resp))
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def edit_add_ons(request, domain, app_id):
+    app = get_app(domain, app_id)
+    for slug, value in request.POST.iteritems():
+        app.add_ons[slug] = value == 'on'
+    app.save()
+    return HttpResponse(json.dumps({'success': True}))
 
 
 @no_conflict_require_POST

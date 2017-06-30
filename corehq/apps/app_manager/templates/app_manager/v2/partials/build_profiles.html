@@ -35,21 +35,34 @@
                 <th>{% trans "Profile Name" %}</th>
                 <th>{% trans "Languages" %}</th>
                 <th>{% trans "Default Language" %}</th>
+                <th>{% trans "Practice Mobile Worker" %}
+                    <div class="text-warning">
+                    <i class="fa fa-arrow-down"></i>
+                    {% trans "Upgrade to CommCare 2.30!" %}
+                    </div>
+                </th>
                 <th></th>
             </tr>
         </thead>
         <tbody data-bind="foreach: app_profiles">
             <tr class="row form-group">
-                <td class="col-sm-5"><span class="form-inline"><input class="form-control" data-bind="value: $data.name"/></span></td>
-                <td class="col-sm-2">
+                <td class="col-sm-3"><span class="form-inline"><input class="form-control" data-bind="value: $data.name"/></span></td>
+                <td class="col-sm-3">
                     <select class="language-select form-control"
                             multiple="true"
                             data-bind="options: $root.app_langs, selectedOptions: langs, attr: {id: 'profile-' + $index()}">
                     </select>
                 </td>
-                <td class="col-sm-4">
+                <td class="col-sm-3">
                     <span class="form-inline">
                         <select class="form-control" data-bind="value: defaultLang, options: langs"></select>
+                    </span>
+                </td>
+                <td class="col-sm-3">
+                    <span class="form-inline">
+                        <select class="practice-user" data-bind="foreach: $root.practice_users,  attr: {id: 'practice-user-' + $index()}, value: $data.practiceUser, enable: $root.enable_practice_users">
+                            <option data-bind="value: $data.id, text: $data.text"></option>
+                        </select>
                     </span>
                 </td>
                 <td><a href="#"><i class="fa fa-remove" data-bind="click: $root.removeProfile"></i></a></td>
