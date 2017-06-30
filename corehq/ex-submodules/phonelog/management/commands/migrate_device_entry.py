@@ -32,7 +32,7 @@ class Command(BaseCommand):
                     "SELECT " +
                     ','.join(COLUMNS) + " " +
                     "FROM " + old_table + " " +
-                    "WHERE server_date BETWEEN %s AND %s",
+                    "WHERE server_date > %s AND server_date <= %s",
                     [hour_ago, current]
                 )
             print("Inserted device logs from %s to %s" % (hour_ago, current))
