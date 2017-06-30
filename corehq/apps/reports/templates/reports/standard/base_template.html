@@ -10,7 +10,6 @@
 {% block page_content_classes %}col-xs-12 col-sm-9 col-lg-10{% endblock %}
 
 {% block js %}{{ block.super }}
-    {% block reports-js %}
     {% compress js %}
     <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.history.js' %}"></script>
@@ -19,18 +18,7 @@
     <script src="{% static 'reports/js/reports.util.js' %}"></script>
     <script src="{% static 'reports/js/reports.async.js' %}"></script>
     <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
-
     {% endcompress %}
-    {% endblock %}
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-{% block reports-js-inline %}
-    <script>
-        var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport(),
-            asyncHQReport = hqImport("reports/js/standard_hq_report.js").getAsyncHQReport();
-    </script>
-{% endblock %}
 {% endblock %}
 
 {% block stylesheets %}
