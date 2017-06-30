@@ -235,7 +235,7 @@ class CloudcareMain(View):
             "username": request.user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
             'use_sqlite_backend': use_sqlite_backend(domain),
-            'use_live_query': toggles.USE_LIVE_QUERY.enabled(domain),
+            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
         }
         context.update(_url_context())
         if not toggles.USE_OLD_CLOUDCARE.enabled(domain):
@@ -299,7 +299,7 @@ class FormplayerMain(View):
             "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
-            'use_live_query': toggles.USE_LIVE_QUERY.enabled(domain),
+            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -357,7 +357,7 @@ class FormplayerPreviewSingleApp(View):
             "single_app_mode": True,
             "home_url": reverse(self.urlname, args=[domain, app_id]),
             "environment": WEB_APPS_ENVIRONMENT,
-            'use_live_query': toggles.USE_LIVE_QUERY.enabled(domain),
+            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
