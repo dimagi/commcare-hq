@@ -849,13 +849,6 @@ USE_OLD_CLOUDCARE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-USE_LIVE_QUERY = StaticToggle(
-    'use_live_query',
-    'Use LiveQuery on Web Apps',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-)
-
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',
