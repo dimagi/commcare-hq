@@ -49,11 +49,11 @@ def get_case_structures_from_row(domain, column_mapping, row):
     test_case_properties = get_test_case_properties(domain, column_mapping, row)
     drug_resistance_case_properties = get_drug_resistance_case_properties(column_mapping, row)
     followup_test_cases_properties = get_follow_up_test_case_properties(column_mapping, row)
+    secondary_owner_case_properties = get_secondary_owner_case_properties(domain, column_mapping, row)
 
     person_case_structure = get_person_case_structure(person_case_properties)
 
     # TODO: convert all these case properties to the appropriate linked up case structures
-        # TODO: Create secondary_owner cases
 
 
 def get_person_case_structure(properties):
@@ -262,6 +262,17 @@ def get_follow_up_test_case_properties(column_mapping, row):
 
             properties_list.append(properties)
     return properties_list
+
+
+def get_secondary_owner_case_properties(domain, column_mapping, row):
+    # TODO: Is the district the same thing as the DRTB center?
+    xlsx_district_name = column_mapping.get_value("district_name", row)
+    district_name, district_id = match_district(domain, xlsx_district_name)
+    return {
+        "secondary_owner_name": district_name,
+        "secondary_owner_type": "DRTB",
+        "owner_id": district_id,
+    }
 
 
 DETECTED = "tb_detected"
