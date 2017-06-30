@@ -14,7 +14,11 @@
 
 {% block js-inline %}{{ block.super }}
     <script src="{% static 'appstore/js/facet_sidebar.js' %}"></script>
-    {% include "reports/standard/partials/report_loader.html" %}
+    <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
+    <script>
+        var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport(),
+            asyncHQReport = hqImport("reports/js/standard_hq_report.js").getAsyncHQReport();
+    </script>
 {% endblock %}
 
 {% block page_navigation %}
