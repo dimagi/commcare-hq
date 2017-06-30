@@ -1,11 +1,6 @@
 from django.conf.urls import url
-from corehq.apps.domain.views import (
-    DataSetMapView,
-    Dhis2ConnectionView,
-    Dhis2LogListView,
-    Dhis2LogDetailView,
-    send_dhis2_data,
-)
+from corehq.apps.dhis2.view import Dhis2ConnectionView, DataSetMapView, Dhis2LogListView, \
+    Dhis2LogDetailView, send_dhis2_data
 
 
 urlpatterns = [
