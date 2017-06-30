@@ -1441,17 +1441,18 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
             );
         }
 
-        if (COMMCAREHQ.previewEnabled('ENUM_IMAGE')) {
+        var addOns = hqImport("hqwebapp/js/initial_page_data.js").get("add_ons");
+        if (addOns.enum_image.show) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "enum-image", label: gettext('Icon') + gettext(' (Preview!)')}
             );
         }
-        if (COMMCAREHQ.previewEnabled('CONDITIONAL_ENUM')) {
+        if (addOns.conditional_enum.show) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "conditional-enum", label: gettext('Conditional ID Mapping') + gettext(' (Preview!)')}
             );
         }
-        if (COMMCAREHQ.previewEnabled('CALC_XPATHS')) {
+        if (addOns.calc_xpaths.show) {
             DetailScreenConfig.MENU_OPTIONS.push(
                 {value: "calculate", label: gettext('Calculate') + gettext(' (Preview!)')}
             );

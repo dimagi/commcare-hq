@@ -365,8 +365,8 @@
 +                                    must go in a different case list).
                                  {% endblocktrans %}
                              {% endif %}
-                         {% case "invalid user property xpath reference" %}
-@@ -339,14 +332,14 @@
+                         {% case "practice user config error" %}
+@@ -349,14 +342,14 @@
                  </li>
              {% endfor %}
          </ul>
