@@ -39,7 +39,7 @@ class DeviceReportEntry(models.Model):
     msg = models.TextField()
     type = models.CharField(max_length=32)
     date = models.DateTimeField()
-    server_date = models.DateTimeField(null=True, db_index=True)
+    server_date = models.DateTimeField(db_index=True)
     domain = models.CharField(max_length=100)
     device_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, null=True)
     app_version = models.TextField(null=True)
