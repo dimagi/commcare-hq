@@ -55,7 +55,7 @@ socketpool==0.5.3
 markdown==2.2.1
 amqp==1.4.7
 amqplib==1.0.2
-sqlagg==0.7.0
+sqlagg==0.8.0
 django-redis==4.2
 redis==2.10.5
 # WeasyPrint==0.20.2
@@ -94,7 +94,7 @@ csiphash==0.0.5
 json-delta==2.0
 email_validator==1.0.2
 dnspython==1.15.0
-raven==6.0.0
+raven==6.1.0
 quickcache==0.0.1
 zeep==1.6.0
 django_fsm==2.5.0

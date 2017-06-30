@@ -13,11 +13,13 @@ class StockTestBase(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(StockTestBase, cls).setUpClass()
         cls.domain = create_domain("stock-report-test")
 
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
+        super(StockTestBase, cls).tearDownClass()
 
     def setUp(self):
         # create case

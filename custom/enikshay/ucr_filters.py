@@ -9,7 +9,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter
 from corehq.apps.userreports.reports.filters.choice_providers import LocationChoiceProvider
 from corehq.apps.userreports.reports.filters.specs import FilterSpec
-from corehq.apps.userreports.reports.filters.values import FilterValue, dynamic_choice_list_url
+from corehq.apps.userreports.reports.filters.values import FilterValue, dynamic_choice_list_url, SHOW_ALL_CHOICE
 
 _LocationFilter = namedtuple("_LocationFilter", "column parameter_slug filter_value")
 
@@ -22,15 +22,17 @@ class ENikshayLocationHierarchyFilterValue(FilterValue):
         Return a list of _LocationFilter(column, parameter_slug, filter_value) objects to be used in constructing
         the filter.
         """
+        relevant_location_types = ["sto", "cto", "dto", "tu", "phi"]
         location = SQLLocation.objects.get(location_id=location_id)
         filters = []
-        for ancestor in location.get_ancestors():
-            column = ancestor.location_type.name
-            parameter = "{slug}_{column}".format(slug=self.filter.slug, column=column)
-            value = ancestor.location_id
-            filters.append(
-                _LocationFilter(column, parameter, value)
-            )
+        for ancestor in location.get_ancestors(include_self=True):
+            if ancestor.location_type.name in relevant_location_types:
+                column = ancestor.location_type.name
+                parameter = "{slug}_{column}".format(slug=self.filter.slug, column=column)
+                value = ancestor.location_id
+                filters.append(
+                    _LocationFilter(column, parameter, value)
+                )
 
         below_column = "below_{}".format(location.location_type.name)
         below_parameter = "{slug}_{column}".format(slug=self.filter.slug, column=below_column)
@@ -39,19 +41,34 @@ class ENikshayLocationHierarchyFilterValue(FilterValue):
         )
         return filters
 
+    @property
+    def show_all(self):
+        return SHOW_ALL_CHOICE in [choice.value for choice in self.value]
+
     def to_sql_filter(self):
+        if self.show_all:
+            return None
         location_id = self.value[0].value
-        return ORFilter([
-            EQFilter(x.column, x.parameter_slug) for x in self.get_hierarchy(location_id)
-        ])
+        hierarchy = self.get_hierarchy(location_id)
+        if len(hierarchy) == 1:
+            f = self.get_hierarchy(location_id)[0]
+            return EQFilter(f.column, f.parameter_slug)
+        else:
+            return ORFilter([
+                EQFilter(x.column, x.parameter_slug) for x in self.get_hierarchy(location_id)
+            ])
 
     def to_sql_values(self):
+        if self.show_all:
+            return {}
         location_id = self.value[0].value
         return {
             x.parameter_slug: x.filter_value for x in self.get_hierarchy(location_id)
         }
 
     def to_es_filter(self):
+        if self.show_all:
+            return None
         location_id = self.value[0].value
         fs = [
             filters.term(x.column, x.filter_value) for x in self.get_hierarchy(location_id)

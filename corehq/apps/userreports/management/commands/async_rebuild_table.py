@@ -4,7 +4,7 @@ from collections import namedtuple
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.userreports.document_stores import get_document_store
+from corehq.form_processor.models import CommCareCaseSQL
 from corehq.apps.userreports.models import AsyncIndicator, get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter
 
@@ -30,22 +30,33 @@ class Command(BaseCommand):
 
         fake_change_doc = {'doc_type': CASE_DOC_TYPE, 'domain': domain}
 
-        doc_store = get_document_store(domain, CASE_DOC_TYPE)
-        case_accessor = doc_store.case_accessors
-
-        case_ids = case_accessor.get_case_ids_in_domain(type=case_type)
-        num_case_ids = len(case_ids)
-        print("inserting %d docs" % num_case_ids)
-
         for config in configs:
             adapter = get_indicator_adapter(config, can_handle_laboratory=True)
             adapter.build_table()
             # normally called after rebuilding finishes
             adapter.after_table_build()
 
+        self.domain = domain
+        self.case_type = case_type
+
         config_ids = [config._id for config in configs]
-        for i, case_id in enumerate(case_ids):
+        for case_id in self._get_case_ids_to_process():
             change = FakeChange(case_id, fake_change_doc)
             AsyncIndicator.update_indicators(change, config_ids)
-            if i % 1000 == 0:
-                print("inserted %d / %d docs" % (i, num_case_ids))
+
+    def _get_case_ids_to_process(self):
+        from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+        dbs = get_db_aliases_for_partitioned_query()
+        for db in dbs:
+            case_ids = (
+                CommCareCaseSQL.objects
+                .using(db)
+                .filter(domain=self.domain, type=self.case_type)
+                .values_list('case_id', flat=True)
+            )
+            num_case_ids = len(case_ids)
+            print("processing %d docs from db %s" % (num_case_ids, db))
+            for i, case_id in enumerate(case_ids):
+                yield case_id
+                if i % 1000 == 0:
+                    print("processed %d / %d docs from db %s" % (i, num_case_ids, db))

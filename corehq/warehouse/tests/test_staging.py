@@ -20,6 +20,7 @@ class BaseStagingTableTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(BaseStagingTableTest, cls).setUpClass()
         for record in cls.records:
             record.save()
 
@@ -30,6 +31,7 @@ class BaseStagingTableTest(TestCase):
     def tearDownClass(cls):
         for record in cls.records:
             record.delete()
+        super(BaseStagingTableTest, cls).tearDownClass()
 
 
 class StagingRecordsTestsMixin(object):
@@ -57,9 +59,9 @@ class StagingRecordsTestsMixin(object):
 class TestGroupStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
 
     records = [
-        Group(name='one', case_sharing=True, reporting=True),
-        Group(name='two'),
-        Group(name='three'),
+        Group(domain='group-staging-test', name='one', case_sharing=True, reporting=True),
+        Group(domain='group-staging-test', name='two'),
+        Group(domain='group-staging-test', name='three'),
     ]
     staging_table_cls = GroupStagingTable
 

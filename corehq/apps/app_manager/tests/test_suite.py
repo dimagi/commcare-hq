@@ -436,7 +436,33 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')
 
     def test_case_detail_tabs_with_nodesets(self):
-        self._test_generic_suite("app_case_detail_tabs_with_nodesets", 'suite-case-detail-tabs-with-nodesets')
+        with flag_enabled('DISPLAY_CONDITION_ON_TABS'):
+            self._test_generic_suite("app_case_detail_tabs_with_nodesets", 'suite-case-detail-tabs-with-nodesets')
+
+    def test_case_detail_tabs_with_nodesets_for_sorting(self):
+        app = Application.wrap(self.get_json("app_case_detail_tabs_with_nodesets"))
+        app.modules[0].case_details.long.sort_nodeset_columns = True
+        xml_partial = """
+        <partial>
+          <field>
+            <header width="0">
+              <text/>
+            </header>
+            <template width="0">
+              <text>
+                <xpath function="gender"/>
+              </text>
+            </template>
+            <sort direction="ascending" order="1" type="string">
+              <text>
+                <xpath function="gender"/>
+              </text>
+            </sort>
+          </field>
+        </partial>"""
+        self.assertXmlPartialEqual(
+            xml_partial, app.create_suite(),
+            './detail[@id="m0_case_long"]/detail/field/template/text/xpath[@function="gender"]/../../..')
 
     def test_case_detail_instance_adding(self):
         # Tests that post-processing adds instances used in calculations

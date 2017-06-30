@@ -3372,6 +3372,15 @@
         "filters": [
           {
             "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "named",
+              "name": "seeking_services"
+            }
+          },
+          {
+            "type": "boolean_expression",
             "operator": "gte",
             "property_value": 0,
             "expression": {
