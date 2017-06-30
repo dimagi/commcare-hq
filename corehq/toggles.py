@@ -509,6 +509,15 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     always_enabled={'enikshay'},
 )
 
+
+USERDATA_WEBAPPS_PERMISSIONS = StaticToggle(
+    'userdata_webapps_permissions',
+    'Toggle which webapps to see based on userdata',
+    TAG_PRODUCT_PATH,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
