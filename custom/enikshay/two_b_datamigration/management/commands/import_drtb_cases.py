@@ -42,18 +42,17 @@ SELECTION_CRITERIA_MAP = {
 }
 
 
-def get_case_structures_from_row(domain, row):
-    person_case_properties = get_person_case_properties(domain, row)
+def get_case_structures_from_row(domain, column_mapping, row):
+    person_case_properties = get_person_case_properties(domain, column_mapping, row)
     occurrence_case_properties = get_occurrence_case_properties(row)
-    episode_case_properties = get_episode_case_properties(row)
-    test_case_properties = get_test_case_properties(domain, row)
-    drug_resistance_case_properties = get_drug_resistance_case_properties(row)
-    followup_test_cases_properties = get_follow_up_test_case_properties(row)
+    episode_case_properties = get_episode_case_properties(column_mapping, row)
+    test_case_properties = get_test_case_properties(domain, column_mapping, row)
+    drug_resistance_case_properties = get_drug_resistance_case_properties(column_mapping, row)
+    followup_test_cases_properties = get_follow_up_test_case_properties(column_mapping, row)
 
     person_case_structure = get_person_case_structure(person_case_properties)
 
     # TODO: convert all these case properties to the appropriate linked up case structures
-        # TODO: Create drug resistance cases!
         # TODO: Create secondary_owner cases
 
 
@@ -65,7 +64,7 @@ def get_person_case_structure(properties):
             "case_type": CASE_TYPE_PERSON,
             "create": True,
             "owner_id": owner_id,
-            # "user_id": None,  # TODO: Is this needed?
+            # TODO: What are the require case properties?
             "update": properties,
     })
 
@@ -73,7 +72,6 @@ def get_person_case_structure(properties):
 def get_occurrence_case_structure(properties, person_case_structure):
     return CaseStructure(
         case_id=uuid.uuid4().hex,
-        # TODO: indices
         attrs={
             "case_type": CASE_TYPE_OCCURRENCE,
             "create": True,
@@ -90,12 +88,11 @@ def get_occurrence_case_structure(properties, person_case_structure):
     )
 
 
-def get_person_case_properties(domain, row):
-    person_name = Mehsana2016ColumnMapping.get_value("person_name", row)
-    xlsx_district_name = Mehsana2016ColumnMapping.get_value("district_name", row)
+def get_person_case_properties(domain, column_mapping, row):
+    person_name = column_mapping.get_value("person_name", row)
+    xlsx_district_name = column_mapping.get_value("district_name", row)
     district_name, district_id = match_district(domain, xlsx_district_name)
     properties = {
-        # TODO: Do they want first_name or last_name?
         "name": person_name,
         "district_name": district_name,
         "district_id": district_id,
@@ -111,15 +108,15 @@ def get_occurrence_case_properties(row):
     }
 
 
-def get_episode_case_properties(row):
+def get_episode_case_properties(column_mapping, row):
 
-    report_sending_date = Mehsana2016ColumnMapping.get_value("report_sending_date", row)
+    report_sending_date = column_mapping.get_value("report_sending_date", row)
     report_sending_date = clean_date(report_sending_date)
 
-    treatment_initiation_date = Mehsana2016ColumnMapping.get_value("treatment_initiation_date", row)
+    treatment_initiation_date = column_mapping.get_value("treatment_initiation_date", row)
     treatment_initiation_date = clean_date(treatment_initiation_date)
 
-    treatment_card_completed_date = Mehsana2016ColumnMapping.get_value("registration_date", row)
+    treatment_card_completed_date = column_mapping.get_value("registration_date", row)
     treatment_card_completed_date = clean_date(treatment_card_completed_date)
 
     properties = {
@@ -130,17 +127,17 @@ def get_episode_case_properties(row):
         "diagnosis_test_result_date": report_sending_date,
         "treatment_initiation_date": treatment_initiation_date,
         "treatment_card_completed_date": treatment_card_completed_date,
-        "regimen_change_history": get_episode_regimen_change_history(row, treatment_initiation_date)
+        "regimen_change_history": get_episode_regimen_change_history(column_mapping, row, treatment_initiation_date)
     }
-    properties.update(get_selection_criteria_properties(row))
+    properties.update(get_selection_criteria_properties(column_mapping, row))
     if treatment_initiation_date:
         properties["treatment_initiated"] = "yes_phi"
 
     return properties
 
 
-def get_selection_criteria_properties(row):
-    selection_criteria_value = Mehsana2016ColumnMapping.get_value("mdr_selection_criteria", row)
+def get_selection_criteria_properties(column_mapping, row):
+    selection_criteria_value = column_mapping.get_value("mdr_selection_criteria", row)
     rft_drtb_diagnosis, rft_drtb_diagnosis_ext_dst = SELECTION_CRITERIA_MAP[selection_criteria_value]
 
     properties = {
@@ -153,14 +150,14 @@ def get_selection_criteria_properties(row):
     return properties
 
 
-def get_resistance_properties(row):
+def get_resistance_properties(column_mapping, row):
     property_map = {
         "Rif-Resi": ("r", "R: Res"),
         "Rif Resi+Levo Resi": ("r lfx", "R: Res\nLFX: Res"),
         "Rif Resi+Levo Resi+K Resi": ("r lfx km", "R: Res\nLFX: Res\nKM: Res"),
         "Rif Resi+K Resi": ("r km", "R: Res\nKM: Res"),
     }
-    dst_result_value = Mehsana2016ColumnMapping.get_value("dst_result", row)
+    dst_result_value = column_mapping.get_value("dst_result", row)
     if dst_result_value:
         return {
             "drug_resistance_list": property_map[dst_result_value][0],
@@ -170,46 +167,46 @@ def get_resistance_properties(row):
         return {}
 
 
-def get_episode_regimen_change_history(row, episode_treatment_initiation_date):
-    put_on_treatment = Mehsana2016ColumnMapping.get_value("date_put_on_mdr_treatment", row)
+def get_episode_regimen_change_history(column_mapping, row, episode_treatment_initiation_date):
+    put_on_treatment = column_mapping.get_value("date_put_on_mdr_treatment", row)
     put_on_treatment = clean_date(put_on_treatment)
     value = "{}: MDR/RR".format(episode_treatment_initiation_date)
     if put_on_treatment:
         value += "\n{}: {}".format(
             put_on_treatment,
-            Mehsana2016ColumnMapping.get_value("type_of_treatment_initiated", row)
+            column_mapping.get_value("type_of_treatment_initiated", row)
         )
     return value
 
 
-def get_test_case_properties(domain, row):
+def get_test_case_properties(domain, column_mapping, row):
     facility_name, facility_id = match_facility(
-        domain, Mehsana2016ColumnMapping.get_value("testing_facility", row))
+        domain, column_mapping.get_value("testing_facility", row))
     properties = {
         "testing_facility_saved_name": facility_name,
         "testing_facility_id": facility_id,
-        "date_reported": Mehsana2016ColumnMapping.get_value("report_sending_date", row),
+        "date_reported": column_mapping.get_value("report_sending_date", row),
     }
-    properties.update(get_selection_criteria_properties(row))
-    properties.update(get_resistance_properties(row))
+    properties.update(get_selection_criteria_properties(column_mapping, row))
+    properties.update(get_resistance_properties(column_mapping, row))
     return properties
 
 
-def get_drug_resistance_case_properties(row):
+def get_drug_resistance_case_properties(column_mapping, row):
     resistant_drugs = {
         d['drug_id']: d
-        for d in get_drug_resistances_from_drug_resistance_list(row)
+        for d in get_drug_resistances_from_drug_resistance_list(column_mapping, row)
     }
-    additional_drug_case_properties = get_drug_resistances_from_individual_drug_columns(row)
+    additional_drug_case_properties = get_drug_resistances_from_individual_drug_columns(column_mapping, row)
     for drug in additional_drug_case_properties:
         resistant_drugs[drug['drug_id']] = drug
     return resistant_drugs.values()
 
 
-def get_drug_resistances_from_individual_drug_columns(row):
+def get_drug_resistances_from_individual_drug_columns(column_mapping, row):
     case_properties = []
     for drug_column_key, drug_id in DRUG_MAP.iteritems():
-        value = Mehsana2016ColumnMapping.get_value(drug_column_key, row)
+        value = column_mapping.get_value(drug_column_key, row)
         properties = {
             "name": drug_id,
             "owner_id": "-",
@@ -230,8 +227,8 @@ def convert_sensitivity(sensitivity_value):
     }[sensitivity_value]
 
 
-def get_drug_resistances_from_drug_resistance_list(row):
-    drugs = get_resistance_properties(row).get("drug_resistance_list", "").split(" ")
+def get_drug_resistances_from_drug_resistance_list(column_mapping, row):
+    drugs = get_resistance_properties(column_mapping, row).get("drug_resistance_list", "").split(" ")
     case_properties = []
     for drug in drugs:
         properties = {
@@ -244,18 +241,18 @@ def get_drug_resistances_from_drug_resistance_list(row):
     return case_properties
 
 
-def get_follow_up_test_case_properties(row):
+def get_follow_up_test_case_properties(column_mapping, row):
     properties_list = []
     for follow_up in (3, 4, 6):
         # TODO: Should I check for existance of all the values?
-        if Mehsana2016ColumnMapping.get_value("month_{}_follow_up_send_date".format(follow_up), row):
+        if column_mapping.get_value("month_{}_follow_up_send_date".format(follow_up), row):
             properties = {
                 "date_tested": clean_date(
-                    Mehsana2016ColumnMapping.get_value("month_{}_follow_up_send_date".format(follow_up), row)),
+                    column_mapping.get_value("month_{}_follow_up_send_date".format(follow_up), row)),
                 "date_reported": clean_date(
-                    Mehsana2016ColumnMapping.get_value("month_{}_follow_up_result_date".format(follow_up), row)),
+                    column_mapping.get_value("month_{}_follow_up_result_date".format(follow_up), row)),
                 "result": clean_result(
-                    Mehsana2016ColumnMapping.get_value("month_{}_follow_up_result".format(follow_up), row)),
+                    column_mapping.get_value("month_{}_follow_up_result".format(follow_up), row)),
                 "test_type_value": "culture",
                 "test_type_label": "culture",
                 "rft_general": "follow_up_drtb",
@@ -415,6 +412,9 @@ class Command(BaseCommand):
 
     def handle(self, domain, excel_file_path, **options):
 
+        # TODO: Add format option to management command
+        column_mapping = Mehsana2016ColumnMapping
+
         with open_any_workbook(excel_file_path) as workbook:
             for i, row in enumerate(workbook.worksheets[0].iter_rows()):
                 if i == 0:
@@ -422,5 +422,5 @@ class Command(BaseCommand):
                     # Skip the headers row
                     continue
                 import ipdb; ipdb.set_trace()
-                case_structures = get_case_structures_from_row(domain, row)
+                case_structures = get_case_structures_from_row(domain, column_mapping, row)
                 # TODO: submit forms with case structures
