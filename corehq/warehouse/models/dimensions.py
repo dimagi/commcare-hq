@@ -12,6 +12,8 @@ from corehq.warehouse.const import (
     DOMAIN_STAGING_SLUG,
     LOCATION_STAGING_SLUG,
     LOCATION_TYPE_STAGING_SLUG,
+    APPLICATION_DIM_SLUG,
+    APPLICATION_STAGING_SLUG
 )
 
 from corehq.sql_db.routers import db_for_read_write
@@ -208,3 +210,20 @@ class UserGroupDim(BaseDim, CustomSQLETLMixin):
     @classmethod
     def dependencies(cls):
         return [USER_DIM_SLUG, GROUP_DIM_SLUG, GROUP_STAGING_SLUG]
+
+
+class ApplicationDim(BaseDim, CustomSQLETLMixin):
+    '''
+    Dimension for Applications
+
+    Grain: application_id
+    '''
+    slug = APPLICATION_DIM_SLUG
+
+    application_id = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    application_last_modified = models.DateTimeField(null=True)
+
+    @classmethod
+    def dependencies(cls):
+        return [APPLICATION_STAGING_SLUG]

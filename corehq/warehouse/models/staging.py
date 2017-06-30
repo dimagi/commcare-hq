@@ -6,6 +6,7 @@ from django.contrib.postgres.fields import ArrayField
 from dimagi.utils.couch.database import iter_docs
 
 from corehq.sql_db.routers import db_for_read_write
+from corehq.apps.app_manager.models import Application
 from corehq.apps.users.models import CouchUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
@@ -18,6 +19,7 @@ from corehq.warehouse.dbaccessors import (
     get_domain_ids_by_last_modified,
     get_synclog_ids_by_date,
     get_forms_by_last_modified,
+    get_application_ids_by_last_modified
 )
 from corehq.warehouse.const import (
     GROUP_STAGING_SLUG,
@@ -27,6 +29,7 @@ from corehq.warehouse.const import (
     SYNCLOG_STAGING_SLUG,
     LOCATION_STAGING_SLUG,
     LOCATION_TYPE_STAGING_SLUG,
+    APPLICATION_STAGING_SLUG
 )
 
 from corehq.warehouse.utils import truncate_records_for_cls
@@ -371,3 +374,38 @@ class SyncLogStagingTable(StagingTable, CouchToDjangoETLMixin):
     def record_iter(cls, start_datetime, end_datetime):
         synclog_ids = get_synclog_ids_by_date(start_datetime, end_datetime)
         return iter_docs(SyncLog.get_db(), synclog_ids)
+
+
+class ApplicationStagingTable(StagingTable, CouchToDjangoETLMixin):
+    '''
+    Represents the staging table to dump data before loading into the ApplicationDim
+
+    Grain: application_id
+    '''
+    slug = APPLICATION_STAGING_SLUG
+
+    application_id = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    domain = models.CharField(max_length=100)
+    application_last_modified = models.DateTimeField(null=True)
+    base_doc = models.CharField(max_length=100)
+
+    @classmethod
+    def field_mapping(cls):
+        return [
+            ('_id', 'application_id'),
+            ('domain', 'domain'),
+            ('name', 'name'),
+            ('last_modified', 'application_last_modified'),
+            ('base_doc', 'base_doc')
+        ]
+
+    @classmethod
+    def dependencies(cls):
+        return []
+
+    @classmethod
+    def record_iter(cls, start_datetime, end_datetime):
+        application_ids = get_application_ids_by_last_modified(start_datetime, end_datetime)
+
+        return iter_docs(Application.get_db(), application_ids)
