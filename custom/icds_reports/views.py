@@ -28,7 +28,9 @@ from custom.icds_reports.utils import get_system_usage_data, get_maternal_child_
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_data_chart, \
     get_awc_reports_system_usage, get_awc_reports_pse, get_awc_reports_maternal_child, \
     get_awc_report_demographics, get_location_filter, get_awc_report_beneficiary, get_beneficiary_details, \
-    get_prevalence_of_undernutrition_sector_data
+    get_prevalence_of_undernutrition_sector_data, get_prevalence_of_severe_sector_data, \
+    get_prevalence_of_severe_data_map, get_prevalence_of_severe_data_chart, get_prevalence_of_stunning_sector_data, \
+    get_prevalence_of_stunning_data_map, get_prevalence_of_stunning_data_chart
 from . import const
 from .exceptions import TableauTokenException
 
@@ -465,15 +467,15 @@ class ExportIndicatorView(View):
                 pass
 
         if indicator == 1:
-            return ChildrenExport(config=config, loc_level=aggregation_level).to_export(export_format)
+            return ChildrenExport(config=config, loc_level=aggregation_level).to_export(export_format, location)
         elif indicator == 2:
-            return PregnantWomenExport(config=config, loc_level=aggregation_level).to_export(export_format)
+            return PregnantWomenExport(config=config, loc_level=aggregation_level).to_export(export_format, location)
         elif indicator == 3:
-            return DemographicsExport(config=config, loc_level=aggregation_level).to_export(export_format)
+            return DemographicsExport(config=config, loc_level=aggregation_level).to_export(export_format, location)
         elif indicator == 4:
-            return SystemUsageExport(config=config, loc_level=aggregation_level).to_export(export_format)
+            return SystemUsageExport(config=config, loc_level=aggregation_level).to_export(export_format, location)
         elif indicator == 5:
-            return AWCInfrastructureExport(config=config, loc_level=aggregation_level).to_export(export_format)
+            return AWCInfrastructureExport(config=config, loc_level=aggregation_level).to_export(export_format, location)
 
 
 @method_decorator([login_and_domain_required], name='dispatch')
@@ -499,3 +501,65 @@ class ProgressReportView(View):
 
         data = ProgressReport(config=config, loc_level=loc_level).get_data()
         return JsonResponse(data=data)
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class PrevalenceOfSevereView(View):
+
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        month = int(self.request.GET.get('month', now.month))
+        year = int(self.request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1l,
+        }
+        location = request.GET.get('location', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        data = []
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_prevalence_of_severe_sector_data(config, loc_level)
+            else:
+                data = get_prevalence_of_severe_data_map(config, loc_level)
+        elif step == "chart":
+            data = get_prevalence_of_severe_data_chart(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class PrevalenceOfStunningView(View):
+
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        month = int(self.request.GET.get('month', now.month))
+        year = int(self.request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1l,
+        }
+        location = request.GET.get('location', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        data = []
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_prevalence_of_stunning_sector_data(config, loc_level)
+            else:
+                data = get_prevalence_of_stunning_data_map(config, loc_level)
+        elif step == "chart":
+            data = get_prevalence_of_stunning_data_chart(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })

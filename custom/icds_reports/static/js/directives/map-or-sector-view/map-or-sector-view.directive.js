@@ -2,36 +2,35 @@
 
 function MapOrSectorController() {
     var vm = this;
+    vm.height = 750;
 
-    if (vm.data.mapData && vm.data.mapData.chart_data) {
-        vm.chartOptions = {
-            chart: {
-                type: 'multiBarHorizontalChart',
-                height: vm.data.mapData.chart_data[0].values.length < 8 ? 450 : vm.data.mapData.chart_data[0].values.length * 60,
-                margin: {
-                    bottom: 120,
-                    left: 200,
-                },
-                x: function (d) {
-                    return d[0];
-                },
-                y: function (d) {
-                    return d[1];
-                },
-                showControls: false,
-                showValues: true,
-                duration: 500,
-                xAxis: {
-                    showMaxMin: false,
-                },
-                yAxis: {
-                    tickFormat: function (d) {
-                        return d3.format(".4r")(d);
-                    },
+    vm.chartOptions = {
+        chart: {
+            type: 'multiBarHorizontalChart',
+            height: vm.height,
+            margin: {
+                bottom: 120,
+                left: 200,
+            },
+            x: function (d) {
+                return d[0];
+            },
+            y: function (d) {
+                return d[1];
+            },
+            showControls: false,
+            showValues: true,
+            duration: 500,
+            xAxis: {
+                showMaxMin: false,
+            },
+            yAxis: {
+                tickFormat: function (d) {
+                    return d3.format(".4r")(d);
                 },
             },
-        };
-    }
+        },
+    };
 }
 
 MapOrSectorController.$inject = [];

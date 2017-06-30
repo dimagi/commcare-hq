@@ -43,11 +43,17 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/underweight_children/:step", {
                 template : "<underweight-children-report></underweight-children-report>",
             })
-            .when("/breastfeeding", {
-                template : "breastfeeding",
+            .when("/wasting", {
+                redirectTo : "/wasting/map",
             })
-            .when("/exclusive_bf", {
-                template : "exclusive_bf",
+            .when("/wasting/:step", {
+                template : "<prevalence-of-severe></prevalence-of-severe>",
+            })
+            .when("/stunning", {
+                redirectTo : "/stunning/map",
+            })
+            .when("/stunning/:step", {
+                template : "<prevalence-of-stunning></prevalence-of-stunning>",
             })
             .when("/comp_feeding", {
                 template : "comp_feeding",

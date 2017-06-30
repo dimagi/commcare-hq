@@ -1,7 +1,8 @@
 .dashboard-title {
     color: #0a6aa1;
     font-size: 25px;
-    margin-top: 10px;
+    margin-top: 2px;
+    margin-bottom: 2px;
 }
 
 .fixed-title {
@@ -13,14 +14,10 @@
 .fixes-filters {
     position: fixed;
     z-index: 1;
-    top: 80px;
+    top: 45px;
     background-color: white;
     width: 83%;
     padding: 10px 0;
-}
-
-.kpi {
-    z-index: -1;
 }
 
 .fixed-dots {
@@ -28,7 +25,7 @@
     bottom: 0;
     width: 83%;
     background-color: white;
-    padding: 20px;
+    padding: 5px;
 }
 
 .filters {
@@ -130,6 +127,14 @@
     color: #0a0a0a;
 }
 
+.red {
+    color: #d60000;
+}
+
+.green {
+    color: #009811;
+}
+
 .left-menu {
     height: 100%;
     position: fixed;
@@ -138,6 +143,14 @@
     font-size: 16px;
     padding-right: 0;
     padding-left: 0;
+}
+
+.navbar-default {
+    margin-bottom: 0;
+}
+
+.black:hover {
+    color: #0a0a0a;
 }
 
 .main-container {
@@ -155,7 +168,7 @@
 
 .report-content {
     color: #ffffff !important;
-    margin-top: 140px;
+    margin-top: 85px;
     padding: 20px 20px 80px;
 }
 
@@ -236,6 +249,7 @@ body {
     width: 15%;
     margin: 0 auto;
     text-align: center;
+    vertical-align: text-top;
 
 }
 
@@ -281,14 +295,22 @@ h4 {
     z-index: 4;
 }
 
+.dropdown {
+    padding: 2px;
+}
+
 .title {
     font-weight: bold;
     font-size: 15px;
 }
 
-.numbers {
+.number {
     font-weight: bold;
-    font-size: 35px;
+    font-size: 45px;
+}
+
+.second_number {
+    font-size: 28px;
 }
 
 .report-cell > .row {
@@ -336,6 +358,27 @@ h4 {
     color: white;
     margin: 0 auto;
     text-align: center;
+}
+
+.kpi {
+    height: 200px;
+}
+
+.kpi-content {
+    position: relative;
+    height: 100%;
+}
+
+.kpi-percents {
+    bottom: 0;
+    width: 100%;
+    position: absolute;
+}
+
+.kpi-numbers {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
 }
 
 .small-table > .small-table-record {

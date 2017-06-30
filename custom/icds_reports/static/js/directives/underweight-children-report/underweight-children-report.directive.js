@@ -1,7 +1,7 @@
 /* global d3 */
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function UnderweightChildrenReportController($scope, $routeParams, $location, maternalChildService,
+function UnderweightChildrenReportController($scope, $routeParams, $location, $filter, maternalChildService,
                                              locationsService, userLocationId, storageService) {
     var vm = this;
     $location.search(storageService.get());
@@ -23,12 +23,15 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, ma
     vm.filters = [];
 
     vm.rightLegend = {
-        average: 10,
-        info: "Percentage of children with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median. Children who are moderately or severely underweight have a higher risk of mortality.",
+        info: 'Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.',
     };
 
     vm.templatePopup = function(loc, row) {
-        return '<div class="hoverinfo" style="max-width: 200px !important;"' + loc.properties.name + '<p>' + vm.rightLegend.info + '</p>' + '<div>Total Children weighed in given month: <strong>' + row.total + '</strong></div><div>Severely Underweight: <strong>' + row.severely_underweight + '</strong></div><div>Moderately Underweight: <strong>' + row.moderately_underweight +'</strong></div><div>Normal: <strong>' + row.normal + '</strong></div></ul>';
+        var total = $filter('indiaNumbers')(row ? row.total : 0);
+        var severely_underweight = $filter('indiaNumbers')(row ? row.severely_underweight : 0);
+        var moderately_underweight = $filter('indiaNumbers')(row ? row.moderately_underweight : 0);
+        var normal = $filter('indiaNumbers')(row ? row.normal : 0);
+        return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total Children weighed in given month: <strong>' + total + '</strong></div><div>Severely Underweight: <strong>' + severely_underweight + '</strong></div><div>Moderately Underweight: <strong>' + moderately_underweight +'</strong></div><div>Normal: <strong>' + normal + '</strong></div></ul>';
     };
 
     vm.loadData = function () {
@@ -112,12 +115,12 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, ma
     };
 }
 
-UnderweightChildrenReportController.$inject = ['$scope', '$routeParams', '$location', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
+UnderweightChildrenReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
 
 window.angular.module('icdsApp').directive('underweightChildrenReport', function() {
     return {
         restrict: 'E',
-        templateUrl: url('icds-ng-template', 'underweight-children-report.directive'),
+        templateUrl: url('icds-ng-template', 'map-chart'),
         bindToController: true,
         scope: {
             data: '=',

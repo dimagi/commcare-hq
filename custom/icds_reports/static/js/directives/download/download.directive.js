@@ -21,14 +21,13 @@ function DownloadController($location, locationHierarchy, locationsService, user
             id: year,
         });
     }
-
     vm.selectedMonth = new Date().getMonth() + 1;
     vm.selectedYear = new Date().getFullYear();
     vm.selectedIndicator = 1;
     vm.selectedFormat = 'xls';
     vm.selectedLocationId = userLocationId;
     vm.selectedLevel = 1;
-
+    vm.now = new Date().getMonth() + 1;
     vm.levels = [
         {id: 1, name: 'State'},
         {id: 2, name: 'District'},
@@ -46,7 +45,7 @@ function DownloadController($location, locationHierarchy, locationsService, user
         {id: 1, name: 'Child'},
         {id: 2, name: 'Pregnant Women'},
         {id: 3, name: 'Demographics'},
-        {id: 4, name: 'System Usage'},
+        // {id: 4, name: 'System Usage'}, For now disable this option
         {id: 5, name: 'AWC Infrastructure'},
     ];
 
@@ -121,6 +120,15 @@ function DownloadController($location, locationHierarchy, locationsService, user
                     vm.selectedLocations[levelOfSelectedLocation] = childSelected.parent_id;
                     levelOfSelectedLocation -= 1;
                 }
+
+                var levels = [];
+                window.angular.forEach(vm.levels, function (value) {
+                    if (value.id >= selectedLocationIndex() + 1) {
+                        levels.push(value);
+                    }
+                });
+                vm.levels = levels;
+                vm.selectedLevel = selectedLocationIndex() + 1;
             });
         } else {
             initHierarchy();
@@ -167,7 +175,13 @@ function DownloadController($location, locationHierarchy, locationsService, user
         if (vm.userLocationId === null) {
             return false;
         }
-        return selectedLocationIndex() !== -1 && selectedLocationIndex() >= level;
+        var i = -1;
+        window.angular.forEach(vm.selectedLocations, function (key, value) {
+            if (key === userLocationId) {
+                i = value;
+            }
+        });
+        return selectedLocationIndex() !== -1 && i >= level;
     };
 
     vm.onSelect = function($item, level) {

@@ -111,16 +111,18 @@ function IndieMapController($scope, $compile, $location, storageService) {
         if (vm.map.data) {
             _.extend(vm.mapPlugins, {
                 customLegend: function () {
-                    var html = ['<h3>' + vm.legendTitle + '</h3><table style="margin: 0 auto;">'];
+                    var html = ['<div style="height: 20px !important"><span style="float: left">' + vm.legendTitle + '</span></div>'];
+                    html.push('<div style="height: 20px !important">')
                     for (var fillKey in this.options.fills) {
                         if (fillKey === 'defaultFill') continue;
-                        html.push('<tr><td style="background-color: ' + this.options.fills[fillKey] + '; width: 45px; height: 45px;">',
-                            '<td/><td style="padding-left: 5px;">' + fillKey + '</td></tr>');
+                        html.push('<span style="color: '+ this.options.fills[fillKey] +';background-color: ' + this.options.fills[fillKey] + '; width: 20px; height: 20px;">__',
+                            '</span><span style="padding: 5px;">' + fillKey + '</span>');
                     }
-                    html.push('</table>');
+                    html.push('</div>');
+
                     d3.select(this.options.element).append('div')
                         .attr('class', 'datamaps-legend text-center')
-                        .attr('style', 'width: 150px; left 5%; bottom: 40%; border: 1px solid black;')
+                        .attr('style', 'width: 150px; left 5%; top: 5%;')
                         .html(html.join(''));
                 },
             });
@@ -138,13 +140,13 @@ function IndieMapController($scope, $compile, $location, storageService) {
                             '<tr/>',
                             '<tr>',
                             '<td style="border-right: 1px solid black; font-size: 2em;"><i class="fa fa-clock-o" aria-hidden="true"></td>',
-                            '<td style="padding-left: 10px;">Last updated: 1/5/2017 | Monthly</td>',
+                            '<td style="padding-left: 10px;">Last updated: ' + this.options.rightLegend['last_modify'] + ' | Monthly</td>',
                             '<tr/>',
                             '</table>',
                         ];
                         d3.select(this.options.element).append('div')
                             .attr('class', '')
-                            .attr('style', 'position: absolute; width: 150px; bottom: 40%; right: 10%;  z-index: -1;')
+                            .attr('style', 'position: absolute; width: 150px; bottom: 8%; left: 10%; z-index: -1;')
                             .html(html.join(''));
                     }
                 },

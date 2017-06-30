@@ -44,7 +44,13 @@ function LocationModalController($uibModalInstance, locationsService, selectedLo
         if (vm.userLocationId === null) {
             return false;
         }
-        return selectedLocationIndex() !== -1 && selectedLocationIndex() >= level;
+        var i = -1;
+        window.angular.forEach(vm.selectedLocations, function (key, value) {
+            if (key === userLocationId) {
+                i = value;
+            }
+        });
+        return selectedLocationIndex() !== -1 && i >= level;
     };
 
     vm.onSelect = function($item, level) {

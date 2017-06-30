@@ -1,64 +1,91 @@
 {% load i18n %}
 {% load static %}
 
-<div class="navigation-directive">
-    <div style="padding: 5px; margin: 0 auto; text-align: center;">
-        <img src="{% static "img/BBBP_Logo.png" %}" alt="Logo" style="width: 40%;">
-    </div>
+<div class="navigation-directive" style="position: relative; height: 100%;">
+    <div>
     <ul class="nav nav-list">
         <li ng-class="{'active': $location.path().indexOf('/program_summary') !== -1}">
-            <a href="#/"><i class="fa fa-home"
-                            aria-hidden="true"> {% trans "Program Summary" %}</i></a>
+            <div class="row pointer" ng-click="$location.path('/')">
+                <div class="col-sm-1"><i class="fa fa-home" aria-hidden="true"></i></div>
+                <div class="col-sm-9">{% trans "Program Summary" %}</div>
+            </div>
         </li>
         <li class="nav-header" >
-            <div class="pointer" ng-click="healthCollapsed = !healthCollapsed">
-                <i class="fa fa-child" aria-hidden="true"> {% trans "Maternal and Child Nutrition" %}</i>
-                <span class="pull-right"><i class="fa fa-angle-down" aria-hidden="true"></i></span>
+            <div class="row pointer" ng-click="healthCollapsed = !healthCollapsed">
+                <div class="col-sm-1"><i class="fa fa-child" aria-hidden="true"></i></div>
+                <div class="col-sm-9">{% trans "Maternal and Child Nutrition" %}</div>
+                <div class="col-sm-1"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
             </div>
             <ul class="nav nav-list collapse" uib-collapse="healthCollapsed">
                 <li ng-class="{'active': $location.path().indexOf('/underweight_children') !== -1}">
-                    <a href="#underweight_children" class="fa">{% trans "Prevalence of Undernutrition (weight-for-age)" %}
+                    <a href="#underweight_children" class="fa">{% trans "Prevalence of Undernutrition (Weight for Age)" %}
                     </a>
                 </li>
-                <li ng-class="{'active': $location.path() === '/breastfeeding'}"><a href="#breastfeeding" class="fa">{% trans "% Breastfeeding" %}</a></li>
-                <li ng-class="{'active': $location.path() === '/exclusive_bf'}"><a href="#exclusive_bf" class="fa">{% trans "% Exclusive BF" %}</a></li>
+                <li ng-class="{'active': $location.path().indexOf('/wasting') !== -1}">
+                    <a href="#wasting" class="fa">{% trans "Prevalence of Severe Wasting (Weight for Height)" %}</a>
+                </li>
+                <li ng-class="{'active': $location.path().indexOf('/stunning') !== -1}">
+                    <a href="#stunning" class="fa">{% trans "Prevalence of Stunting (Height for Age)" %}</a>
+                </li>
                 <li ng-class="{'active': $location.path() === '/comp_feeding'}"><a href="#comp_feeding" class="fa">{% trans "% Comp. Feeding" %}</a></li>
                 <li ng-class="{'active': $location.path() === '/health_tabular_report'}"><a href="#health_tabular_report" class="fa">{% trans "Tabular Report" %}</a></li>
             </ul>
         </li>
         <li class="nav-header" data-toggle="collapse" data-target="">
-            <div class="pointer">
-                <i class="fa fa-female" aria-hidden="true"> {% trans "ICDS-CAS Reach" %}</i>
-                <span class="pull-right"><i class="fa fa-angle-down" aria-hidden="true"></i></span>
+            <div class="row pointer">
+                <div class="col-sm-1"><i class="fa fa-bar-chart" aria-hidden="true"></i></div>
+                <div class="col-sm-9">{% trans "ICDS CAS Reach" %}</div>
+                <div class="col-sm-1"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
             </div>
         </li>
         <li class="nav-header" data-toggle="collapse" data-target="">
-            <div class="pointer">
-                <i class="fa fa-users" aria-hidden="true"> {% trans "Demographics" %}</i>
-                <span class="pull-right"><i class="fa fa-angle-down" aria-hidden="true"></i></span>
+            <div class="row pointer">
+                <div class="col-sm-1"><i class="fa fa-users" aria-hidden="true"></i></div>
+                <div class="col-sm-9">{% trans "Demographics" %}</div>
+                <div class="col-sm-1"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
             </div>
         </li>
         <li class="nav-header" data-toggle="collapse" data-target="">
-            <div class="pointer">
-                <i class="fa fa-building" aria-hidden="true"> {% trans "AWC Infrastructure" %}</i>
-                <span class="pull-right"><i class="fa fa-angle-down" aria-hidden="true"></i></span>
+            <div class="row pointer">
+                <div class="col-sm-1"><i class="fa fa-lightbulb-o" aria-hidden="true"></i></div>
+                <div class="col-sm-9">{% trans "AWC Infrastructure" %}</div>
+                <div class="col-sm-1"><i class="fa fa-angle-down" aria-hidden="true"></i></div>
             </div>
         </li>
         <hr>
         <li ng-class="{'active': $location.path().indexOf('/awc_reports') !== -1}">
-            <a href="#awc_reports" class="fa"> <i class="fa fa-file" aria-hidden="true"> {% trans "AWC Report" %}</i></a>
+            <div class="row pointer" ng-click="$location.path('/awc_reports'); healthCollapsed = true;">
+                <div class="col-sm-1"><i class="fa fa-tasks" aria-hidden="true"></i></div>
+                <div class="col-sm-9">{% trans "AWC Report" %}</div>
+            </div>
         </li>
-        <li  ng-class="{'active': $location.path().indexOf('/progress_report') !== -1}">
-            <a href="#progress_report" class="fa"> <i class="fa fa-file-text-o" aria-hidden="true"> {% trans "Progress Report" %}</i></a>
+        <li ng-class="{'active': $location.path().indexOf('/progress_report') !== -1}">
+            <div class="row pointer" ng-click="$location.path('/progress_report'); healthCollapsed = true;">
+                <div class="col-sm-1"><i class="fa fa-file-text-o" aria-hidden="true"></i></div>
+                <div class="col-sm-9">{% trans "Progress Report" %}</div>
+            </div>
         </li>
-        <li ng-class="">
-            <a href="#download" class="fa"> <i class="fa fa-download" aria-hidden="true"> {% trans "Excel Download" %}</i></a>
+        <li ng-class="{'active': $location.path().indexOf('/download') !== -1}">
+            <div class="row pointer" ng-click="$location.path('/download'); healthCollapsed = true;">
+                <div class="col-sm-1"><i class="fa fa-download" aria-hidden="true"></i></div>
+                <div class="col-sm-9">{% trans "Tabular Reports" %}</div>
+            </div>
         </li>
-        <li class="fa">
-            <a href="{% url 'saved_reports' domain %}"><img
-                    src="{% static 'hqstyle/images/commcare-flower.png' %}" alt=""
-                    style=" vertical-align: middle;width:16px;height:16px;"/> <span
-                    style="vertical-align: middle;">{% trans "ICDS-CAS Report" %}</span></a>
+        <li class="fa" ng-click="goto('{% url 'custom_project_report_dispatcher' domain 'mpr_report' %}')">
+            <div class="row pointer">
+                <div class="col-sm-1"><img src="{% static 'hqstyle/images/commcare-flower.png' %}" style=" vertical-align: middle;width:16px;height:16px;"/></div>
+                <div class="col-sm-9">{% trans "MPR Block Report" %}</div>
+            </div>
+        </li>
+        <li class="fa" ng-click="goto('{% url 'custom_project_report_dispatcher' domain 'asr_report' %}')">
+            <div class="row pointer">
+                <div class="col-sm-1"><img src="{% static 'hqstyle/images/commcare-flower.png' %}" style=" vertical-align: middle;width:16px;height:16px;"/></div>
+                <div class="col-sm-9">{% trans "ASR Block Report" %}</div>
+            </div>
         </li>
     </ul>
+    </div>
+    <div style="padding: 5px; margin: 0 auto; text-align: center; position: absolute; bottom: 10px;">
+        <img src="{% static "img/BBBP_Logo.png" %}" alt="Logo" style="width: 40%;">
+    </div>
 </div>
