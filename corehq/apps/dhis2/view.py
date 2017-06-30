@@ -2,7 +2,7 @@ import json
 from django.http import HttpResponseRedirect, Http404
 from django.urls import reverse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext_lazy, ugettext
+from django.utils.translation import ugettext_lazy, ugettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import ListView, DetailView
 from corehq import toggles
