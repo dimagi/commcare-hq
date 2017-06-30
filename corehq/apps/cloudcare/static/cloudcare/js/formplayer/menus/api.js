@@ -63,7 +63,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 "installReference": params.installReference,
                 "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
                 "isPersistent": params.isPersistent,
-                "useLiveQuery": user.useLiveQuery,
             });
             options.url = formplayerUrl + '/' + route;
 
