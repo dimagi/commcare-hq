@@ -31,7 +31,7 @@ class Command(BaseCommand):
                     " (" + ','.join(COLUMNS) + ") " +
                     "SELECT " +
                     ','.join(COLUMNS) + " " +
-                    "FROM " + old_table +
+                    "FROM " + old_table + " " +
                     "WHERE server_date BETWEEN %s AND %s",
                     [hour_ago, current]
                 )
