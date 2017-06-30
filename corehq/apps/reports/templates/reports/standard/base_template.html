@@ -34,36 +34,14 @@
     </script>
 {% block reports-js-inline %}
     <script>
-        var standardHQReport = new HQReport({
-            domain: '{{ domain }}',
-            urlRoot: '{{ report.url_root }}',
-            slug: {{ report.slug|JSON }},
-            subReportSlug: {{ report.sub_slug|JSON }},
-            type: {{ report.type|JSON }},
-            filterSet: {{ report.filter_set|JSON }},
-            needsFilters: {{ report.needs_filters|JSON }},
-            isExportable: {{ report.is_exportable|JSON }},
-            isExportAll: {{ report.is_export_all|JSON }},
-            isEmailable: {{ report.is_emailable|JSON }},
-            emailDefaultSubject: {{ report.title|JSON }},
-            emailSuccessMessage: "{% trans 'Report successfully emailed' %}",
-            emailErrorMessage: "{% trans 'An error occurred emailing your report. Please try again.' %}",
-
-            {% if request.datespan %}
-                datespan: {
-                    startdate: '{{ datespan.startdate|date:"Y-m-d" }}',
-                    enddate: '{{ datespan.enddate|date:"Y-m-d" }}'
-                },
-            {% endif %}
-        });
-        standardHQReport.init();
-
-        {% if report.slug and report.is_async %}
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
+            standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
+        if (initial_page_data('slug') && initial_page_data('async')) {
             var asyncHQReport = new HQAsyncReport({
                 standardReport: standardHQReport,
             });
             asyncHQReport.init();
-        {% endif %}
+        }
 
         $('.js-report-description-popover').popover({
             placement: 'right',
@@ -121,6 +99,23 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'async' report.is_async %}
+    {% initial_page_data 'domain' domain %}
+    {% initial_page_data 'url_root' report.url_root %}
+    {% initial_page_data 'slug' report.slug %}
+    {% initial_page_data 'sub_slug' report.sub_slug %}
+    {% initial_page_data 'type' report.type %}
+    {% initial_page_data 'filter_set' report.filter_set %}
+    {% initial_page_data 'needs_filters' report.needs_filters %}
+    {% initial_page_data 'is_exportable' report.is_exportable %}
+    {% initial_page_data 'is_export_all' report.is_export_all %}
+    {% initial_page_data 'is_emailable' report.is_emailable %}
+    {% initial_page_data 'title' report.title %}
+
+    {% if request.datespan %}
+        {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
+        {% initial_page_data 'enddate' datespan.enddate|date:"Y-m-d" %}
+    {% endif %}
     {% block filter_panel %}
         {% include "reports/standard/partials/filter_panel.html" %}
     {% endblock %}

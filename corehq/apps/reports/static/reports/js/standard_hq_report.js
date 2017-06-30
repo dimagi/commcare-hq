@@ -15,7 +15,31 @@ hqDefine("reports/js/standard_hq_report.js", function() {
         if (typeof COMMCAREHQ_MODULES[ucr] !== 'undefined') {
             return hqImport(ucr).getStandardHQReport();
         }
-        return undefined;
+        var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+        var reportOptions = {
+            domain: initial_page_data('domain'),
+            urlRoot: initial_page_data('url_root'),
+            slug: initial_page_data('slug'),
+            subReportSlug: initial_page_data('sub_slug'),
+            type: initial_page_data('type'),
+            filterSet: initial_page_data('filter_set'),
+            needsFilters: initial_page_data('needs_filters'),
+            isExportable: initial_page_data('is_exportable'),
+            isExportAll: initial_page_data('is_export_all'),
+            isEmailable: initial_page_data('is_emailable'),
+            emailDefaultSubject: initial_page_data('title'),
+            emailSuccessMessage: gettext('Report successfully emailed'),
+            emailErrorMessage: gettext('An error occurred emailing you report. Please try again.'),
+        };
+        if (initial_page_data('startdate')) {
+            reportOptions.datespan = {
+                startdate: initial_page_data('startdate'),
+                enddate: initial_page_data('enddate'),
+            };
+        }
+        var standardHQReport = new HQReport(reportOptions);
+        standardHQReport.init();
+        return standardHQReport;
     };
 
     return {
