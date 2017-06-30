@@ -208,14 +208,13 @@ def get_drug_resistance_case_properties(row):
 
 def get_drug_resistances_from_individual_drug_columns(row):
     case_properties = []
-    for drug_column_key, (drug_id, drug_name) in DRUG_MAP.iteritems():
+    for drug_column_key, drug_id in DRUG_MAP.iteritems():
         value = Mehsana2016ColumnMapping.get_value(drug_column_key, row)
         properties = {
             "name": drug_id,
             "owner_id": "-",
             "sensitivity": convert_sensitivity(value),
             "drug_id": drug_id,
-            "drug_name": drug_name,  # TODO: This property isn't in the case summary (but it is in the sheet sheel made)
         }
         case_properties.append(properties)
     return case_properties
@@ -371,14 +370,15 @@ mehsana_2016_mapping = {
 }
 
 DRUG_MAP = {
-    # column key -> (id, name)
-    "S": ("s", "S"),
-    "H (0.1)": ("h_inha", "H (inhA)"),
-    "H (0.4)": ("h_katg", "H (katG)"),
-    "R": ("r", "R"),
-    "Z": ("z", "Z"),
-    "Km": ("km", "KM"),
-    "Cm": ("cm", "CM"),
+    # column key -> drug id
+    "S": "s",
+    "H (0.1)": "h_inha",
+    "H (0.4)": "h_katg",
+    "R": "r",
+    "E": "e",
+    "Z": "z",
+    "Km": "km",
+    "Cm": "cm",
 }
 
 
