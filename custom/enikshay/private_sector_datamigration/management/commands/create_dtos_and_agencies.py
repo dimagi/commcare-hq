@@ -3,7 +3,7 @@ from django.core.management import BaseCommand
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.tasks import make_location_user
 from corehq.apps.users.models import CommCareUser, UserRole
-from custom.enikshay.private_sector_datamigration.models import Agency, UserDetail
+from custom.enikshay.private_sector_datamigration.models import Agency_Jun30, UserDetail_Jun30
 
 from dimagi.utils.decorators.memoized import memoized
 
@@ -53,7 +53,7 @@ class Command(BaseCommand):
 
     @staticmethod
     def get_agencies_by_state_district_org(state_code, district_code, org_id, sub_org_id):
-        agency_ids = UserDetail.objects.filter(
+        agency_ids = UserDetail_Jun30.objects.filter(
             isPrimary=True,
         ).filter(
             districtId=district_code,
@@ -61,7 +61,7 @@ class Command(BaseCommand):
             subOrganisationId=sub_org_id,
             stateId=state_code,
         ).values('agencyId').distinct()
-        return Agency.objects.filter(agencyId__in=agency_ids).order_by('agencyId')
+        return Agency_Jun30.objects.filter(agencyId__in=agency_ids).order_by('agencyId')
 
     def create_agency(self, domain, agency, dto, org_id, sub_org_id):
         organisation_id = sub_org_id or org_id
@@ -128,7 +128,7 @@ class Command(BaseCommand):
 
     @staticmethod
     def get_user_name_for_agency(agency):
-        return UserDetail.objects.get(
+        return UserDetail_Jun30.objects.get(
             isPrimary=True,
             agencyId=agency.agencyId,
         ).motechUserName
