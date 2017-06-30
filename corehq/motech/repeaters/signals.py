@@ -11,17 +11,17 @@ from corehq.form_processor.models import CommCareCaseSQL
 
 
 def create_form_repeat_records(sender, xform, **kwargs):
-    from corehq.apps.repeaters.models import FormRepeater
+    from corehq.motech.repeaters.models import FormRepeater
     create_repeat_records(FormRepeater, xform)
 
 
 def create_case_repeat_records(sender, case, **kwargs):
-    from corehq.apps.repeaters.models import CaseRepeater
+    from corehq.motech.repeaters.models import CaseRepeater
     create_repeat_records(CaseRepeater, case)
 
 
 def create_short_form_repeat_records(sender, xform, **kwargs):
-    from corehq.apps.repeaters.models import ShortFormRepeater
+    from corehq.motech.repeaters.models import ShortFormRepeater
     create_repeat_records(ShortFormRepeater, xform)
 
 
@@ -35,13 +35,13 @@ def create_repeat_records(repeater_cls, payload):
 
 @receiver(commcare_user_post_save, dispatch_uid="create_user_repeat_records")
 def create_user_repeat_records(sender, couch_user, **kwargs):
-    from corehq.apps.repeaters.models import UserRepeater
+    from corehq.motech.repeaters.models import UserRepeater
     create_repeat_records(UserRepeater, couch_user)
 
 
 @receiver(post_save, sender=SQLLocation, dispatch_uid="create_location_repeat_records")
 def create_location_repeat_records(sender, raw=False, **kwargs):
-    from corehq.apps.repeaters.models import LocationRepeater
+    from corehq.motech.repeaters.models import LocationRepeater
     if raw:
         return
     create_repeat_records(LocationRepeater, kwargs['instance'])

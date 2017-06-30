@@ -10,7 +10,7 @@ from couchdbkit.exceptions import ResourceNotFound
 
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.repeaters.repeater_generators import FormRepeaterXMLPayloadGenerator, \
+from corehq.motech.repeaters.repeater_generators import FormRepeaterXMLPayloadGenerator, \
     FormRepeaterJsonPayloadGenerator, CaseRepeaterXMLPayloadGenerator, CaseRepeaterJsonPayloadGenerator, \
     ShortFormRepeaterJsonPayloadGenerator, AppStructureGenerator, UserPayloadGenerator, LocationPayloadGenerator
 from corehq.apps.users.models import CommCareUser
@@ -104,11 +104,11 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         return get_cancelled_repeat_record_count(self.domain, self._id)
 
     def _format_or_default_format(self):
-        from corehq.apps.repeaters.repeater_generators import RegisterGenerator
+        from corehq.motech.repeaters.repeater_generators import RegisterGenerator
         return self.format or RegisterGenerator.default_format_by_repeater(self.__class__)
 
     def _get_payload_generator(self, payload_format):
-        from corehq.apps.repeaters.repeater_generators import RegisterGenerator
+        from corehq.motech.repeaters.repeater_generators import RegisterGenerator
         gen = RegisterGenerator.generator_class_by_repeater_format(self.__class__, payload_format)
         return gen(self)
 
@@ -646,4 +646,4 @@ class RepeatRecord(Document):
 
 # import signals
 # Do not remove this import, its required for the signals code to run even though not explicitly used in this file
-from corehq.apps.repeaters import signals
+from corehq.motech.repeaters import signals

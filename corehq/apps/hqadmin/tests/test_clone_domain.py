@@ -5,7 +5,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.tests.util import setup_locations_and_types
-from corehq.apps.repeaters.dbaccessors import delete_all_repeaters
+from corehq.motech.repeaters.dbaccessors import delete_all_repeaters
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser, WebUser
 
@@ -99,9 +99,9 @@ class TestCloneDomain(TestCase):
             )
 
     def test_clone_repeaters(self):
-        from corehq.apps.repeaters.models import Repeater
-        from corehq.apps.repeaters.models import CaseRepeater
-        from corehq.apps.repeaters.models import FormRepeater
+        from corehq.motech.repeaters.models import Repeater
+        from corehq.motech.repeaters.models import CaseRepeater
+        from corehq.motech.repeaters.models import FormRepeater
         from custom.enikshay.integrations.nikshay.repeaters import NikshayRegisterPatientRepeater
 
         self.assertEqual(0, len(Repeater.by_domain(self.new_domain)))
