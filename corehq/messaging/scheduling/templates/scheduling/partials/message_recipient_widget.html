@@ -1,0 +1,35 @@
+{% load hq_shared_tags %}
+{% load i18n %}
+<script>
+
+$(function() {
+
+$("#{{ id }}").select2({
+    placeholder: '{% trans "Select some recipients" %}',
+    allowClear: true,
+    multiple: true,
+    ajax: {
+        url: "{{ query_url }}",
+        dataType: 'json',
+        quietMillis: 500,
+        data: function (term, page) {
+            return {
+                name: term
+            };
+        },
+        results: function (data, page) {
+            return {results: data, more: false};
+        }
+    },
+    initSelection: function(element, callback) {
+        callback({{ initial_data|JSON }});
+        $(element).trigger('select-ready');
+    },
+    formatResult: function(e) { return e.name; },
+    formatSelection: function(e) { return e.name; }
+});
+
+});
+
+</script>
+<input type="hidden" id="{{ id }}" name="{{ name }}" value="{{ value }}" style="width: 30em;" />
