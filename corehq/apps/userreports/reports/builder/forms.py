@@ -1490,7 +1490,7 @@ class ConfigureMapReportForm(ConfigureListReportForm):
             report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
         )
         if self.source_type == "form":
-            self.fields['group_by'].widget = QuestionSelect(
+            self.fields['location'].widget = QuestionSelect(
                 attrs={'class': 'input-large'},
                 ko_value='groupBy'
             )
