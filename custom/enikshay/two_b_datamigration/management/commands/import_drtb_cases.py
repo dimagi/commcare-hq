@@ -144,7 +144,7 @@ def get_selection_criteria_properties(row):
     rft_drtb_diagnosis, rft_drtb_diagnosis_ext_dst = SELECTION_CRITERIA_MAP[selection_criteria_value]
 
     properties = {
-        "rft_general": "drtb_diagnosis",  # TODO: Should this only be included in some instances?
+        "rft_general": "drtb_diagnosis",
     }
     if rft_drtb_diagnosis:
         properties["rft_drtb_diagnosis"] = rft_drtb_diagnosis
@@ -275,7 +275,6 @@ NO_RESULT = "no_result"
 def clean_result(value):
     return {
         "": NO_RESULT,
-        # TODO: Confirm with Sheel that "Contaminated" should be "no result"
         "Conta": NO_RESULT,
         "CONTA": NO_RESULT,
         "NA": NO_RESULT,
