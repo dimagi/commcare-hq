@@ -48,8 +48,8 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_ca
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
-from corehq.apps.repeaters.models import BASIC_AUTH, DIGEST_AUTH
-from corehq.apps.repeaters.repeater_generators import RegisterGenerator
+from corehq.motech.repeaters.models import BASIC_AUTH, DIGEST_AUTH
+from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.const import USER_DATE_FORMAT
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
@@ -128,14 +128,14 @@ from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
-from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
-from corehq.apps.repeaters.models import Repeater, RepeatRecord
-from corehq.apps.repeaters.dbaccessors import (
+from corehq.motech.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
+from corehq.motech.repeaters.models import Repeater, RepeatRecord
+from corehq.motech.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
 )
-from corehq.apps.repeaters.utils import get_all_repeater_types
-from corehq.apps.repeaters.const import (
+from corehq.motech.repeaters.utils import get_all_repeater_types
+from corehq.motech.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
     RECORD_CANCELLED_STATE,

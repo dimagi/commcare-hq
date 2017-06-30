@@ -261,7 +261,7 @@ HQ_APPS = (
     'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
-    'corehq.apps.repeaters',
+    'corehq.motech.repeaters',
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.fixtures',
@@ -1755,12 +1755,12 @@ PILLOWTOPS = {
 }
 
 BASE_REPEATERS = (
-    'corehq.apps.repeaters.models.FormRepeater',
-    'corehq.apps.repeaters.models.CaseRepeater',
-    'corehq.apps.repeaters.models.ShortFormRepeater',
-    'corehq.apps.repeaters.models.AppStructureRepeater',
-    'corehq.apps.repeaters.models.UserRepeater',
-    'corehq.apps.repeaters.models.LocationRepeater',
+    'corehq.motech.repeaters.models.FormRepeater',
+    'corehq.motech.repeaters.models.CaseRepeater',
+    'corehq.motech.repeaters.models.ShortFormRepeater',
+    'corehq.motech.repeaters.models.AppStructureRepeater',
+    'corehq.motech.repeaters.models.UserRepeater',
+    'corehq.motech.repeaters.models.LocationRepeater',
 )
 
 ENIKSHAY_REPEATERS = (

@@ -65,7 +65,7 @@ from corehq.apps.domain.views import (
     test_repeater,
     toggle_diff,
 )
-from corehq.apps.repeaters.views import AddCaseRepeaterView, RepeatRecordView
+from corehq.motech.repeaters.views import AddCaseRepeaterView, RepeatRecordView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 
 
