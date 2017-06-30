@@ -744,7 +744,7 @@ class UserInvitationView(object):
 
     @property
     def success_msg(self):
-        return "You have been added to the %s domain" % self.domain
+        return _('You have been added to the "%s" project space.') % self.domain
 
     @property
     def redirect_to_on_success(self):

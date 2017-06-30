@@ -80,6 +80,7 @@ class FluffTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(FluffTest, cls).setUpClass()
         # hack - force disconnecting the signals because ctable doesn't play nice with mocks
         cls.previous_signal_receivers = indicator_document_updated.receivers
         indicator_document_updated.receivers = []
@@ -98,6 +99,7 @@ class FluffTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         indicator_document_updated.receivers = cls.previous_signal_receivers
+        super(FluffTest, cls).tearDownClass()
 
     def tearDown(self):
         with self.engine.begin() as connection:

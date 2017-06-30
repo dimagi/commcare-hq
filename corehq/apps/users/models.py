@@ -1516,10 +1516,12 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         super(CommCareUser, self).clear_quickcache_for_user()
 
     def save(self, **params):
+        is_new_user = self.new_document  # before saving, check if this is a new document
         super(CommCareUser, self).save(**params)
 
         from .signals import commcare_user_post_save
-        results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self)
+        results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
+                                                      is_new_user=is_new_user)
         log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     def delete(self):
@@ -1768,16 +1770,17 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             return SQLLocation.objects.none()
 
-    def add_to_assigned_locations(self, location):
+    def add_to_assigned_locations(self, location, commit=True):
         if self.location_id:
             if location.location_id in self.assigned_location_ids:
                 return
             self.assigned_location_ids.append(location.location_id)
             self.get_domain_membership(self.domain).assigned_location_ids.append(location.location_id)
             self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
-            self.save()
+            if commit:
+                self.save()
         else:
-            self.set_location(location)
+            self.set_location(location, commit=commit)
 
     @memoized
     def get_sql_location(self, domain):

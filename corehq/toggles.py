@@ -84,7 +84,7 @@ class StaticToggle(object):
 
         domain_enabled_after = self.enabled_for_new_domains_after
         if (domain_enabled_after is not None and NAMESPACE_DOMAIN in self.namespaces
-            and was_domain_created_after(item, domain_enabled_after)):
+                and was_domain_created_after(item, domain_enabled_after)):
             return True
 
         user_enabled_after = self.enabled_for_new_users_after
@@ -505,7 +505,8 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     'Enable extension syncing',
     TAG_EXPERIMENTAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Extension+Cases',
-    namespaces=[NAMESPACE_DOMAIN]
+    namespaces=[NAMESPACE_DOMAIN],
+    always_enabled={'enikshay'},
 )
 
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
@@ -513,6 +514,13 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'Enable synchronous mobile searching and case claiming',
     TAG_PRODUCT_PATH,
     help_link='https://confluence.dimagi.com/display/internal/Remote+Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+LIVEQUERY_SYNC = StaticToggle(
+    'livequery_sync',
+    'Enable livequery sync algorithm',
+    TAG_PRODUCT_PATH,
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -1233,4 +1241,11 @@ ENTERPRISE_OPTIMIZATIONS = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
     always_enabled={'icds-cas'}
+)
+
+DISPLAY_CONDITION_ON_TABS = StaticToggle(
+    'display_condition_on_nodeset',
+    'Show Display Condition on Case Detail Tabs',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
 )
