@@ -1,5 +1,5 @@
 from django.conf.urls import url
-from corehq.apps.dhis2.view import Dhis2ConnectionView, DataSetMapView, Dhis2LogListView, \
+from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView, Dhis2LogListView, \
     Dhis2LogDetailView, send_dhis2_data
 
 
