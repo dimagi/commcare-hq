@@ -19,7 +19,7 @@ from dimagi.utils.web import json_response
 class Dhis2ConnectionView(BaseAdminProjectSettingsView):
     urlname = 'dhis2_connection_view'
     page_title = ugettext_lazy("DHIS2 Connection Settings")
-    template_name = 'domain/admin/dhis2/connection_settings.html'
+    template_name = 'dhis2/connection_settings.html'
 
     @method_decorator(domain_admin_required)
     def post(self, request, *args, **kwargs):
@@ -54,7 +54,7 @@ class Dhis2ConnectionView(BaseAdminProjectSettingsView):
 class DataSetMapView(BaseAdminProjectSettingsView):
     urlname = 'dataset_map_view'
     page_title = ugettext_lazy("DHIS2 DataSet Maps")
-    template_name = 'domain/admin/dhis2/dataset_map.html'
+    template_name = 'dhis2/dataset_map.html'
 
     @method_decorator(domain_admin_required)
     def post(self, request, *args, **kwargs):
@@ -106,7 +106,7 @@ class DataSetMapView(BaseAdminProjectSettingsView):
 class Dhis2LogListView(BaseAdminProjectSettingsView, ListView):
     urlname = 'dhis2_log_list_view'
     page_title = ugettext_lazy("DHIS2 Logs")
-    template_name = 'domain/admin/dhis2/logs.html'
+    template_name = 'dhis2/logs.html'
     context_object_name = 'logs'
     paginate_by = 100
 
@@ -132,7 +132,7 @@ class Dhis2LogListView(BaseAdminProjectSettingsView, ListView):
 class Dhis2LogDetailView(BaseAdminProjectSettingsView, DetailView):
     urlname = 'dhis2_log_detail_view'
     page_title = ugettext_lazy("DHIS2 Logs")
-    template_name = 'domain/admin/dhis2/log_detail.html'
+    template_name = 'dhis2/log_detail.html'
     context_object_name = 'log'
 
     def get_queryset(self):

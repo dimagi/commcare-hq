@@ -5,13 +5,13 @@
 {% load i18n %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'domain/js/dhis2_map_settings.js' %}"></script>
+    <script src="{% static 'dhis2/js/dhis2_map_settings.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     <script>
     $(function () {
-        var Dhis2MapSettings = hqImport('domain/js/dhis2_map_settings.js').Dhis2MapSettings;
+        var Dhis2MapSettings = hqImport('dhis2/js/dhis2_map_settings.js').Dhis2MapSettings;
         var viewModel = new Dhis2MapSettings({{ dataset_maps|JSON }}, {{ send_data_url|JSON }});
         viewModel.init();
         $('#dataset-maps').koApplyBindings(viewModel);
@@ -20,7 +20,7 @@
 {% endblock %}
 
 {% block page_content %}
-{% include 'domain/admin/partials/dhis2_dataset_map_templates.html' %}
+{% include 'dhis2/partials/dhis2_dataset_map_templates.html' %}
 
 <form id="dataset-maps"
       class="form-horizontal"
