@@ -7,6 +7,11 @@ from django.db import connection
 
 from phonelog.models import OldDeviceReportEntry, DeviceReportEntry
 
+COLUMNS = (
+    "xform_id", "i", "msg", "type", "date", "server_date", "domain",
+    "device_id", "app_version", "username", "user_id"
+)
+
 
 class Command(BaseCommand):
     help = "Migrate device reports to partitioned table"
@@ -22,8 +27,11 @@ class Command(BaseCommand):
             hour_ago = current - timedelta(hours=1)
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "INSERT INTO " + partitioned_table + " " +
-                    "SELECT * FROM " + old_table + " " +
+                    "INSERT INTO " + partitioned_table +
+                    " (" + ','.join(COLUMNS) + ") " +
+                    "SELECT " +
+                    ','.join(COLUMNS) + " " +
+                    "FROM " + old_table +
                     "WHERE server_date BETWEEN %s AND %s",
                     [hour_ago, current]
                 )
