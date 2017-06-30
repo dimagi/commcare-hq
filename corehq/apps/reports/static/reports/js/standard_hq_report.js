@@ -31,6 +31,13 @@ hqDefine("reports/js/standard_hq_report.js", function() {
         return standardHQReport;
     };
 
+    $(function() {
+        $('.report-description-popover').popover({
+            placement: 'right',
+            trigger: 'hover',
+        });
+    });
+
     return {
         getStandardHQReport: get,
     };

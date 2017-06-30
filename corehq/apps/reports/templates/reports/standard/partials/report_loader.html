@@ -1,6 +1,4 @@
 {% load hq_shared_tags %}
-{% load hqstyle_tags %}
-{% load i18n %}
 <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
 <script>
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
@@ -12,9 +10,4 @@
         });
         asyncHQReport.init();
     }
-
-    $('.report-description-popover').popover({
-        placement: 'right',
-        trigger: 'hover',
-    });
 </script>
