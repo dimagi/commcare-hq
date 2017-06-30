@@ -1,6 +1,6 @@
 from functools import wraps
 
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
 
@@ -14,6 +14,7 @@ from corehq.messaging.scheduling.models import (
     ImmediateBroadcast,
     ScheduledBroadcast
 )
+from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
@@ -103,3 +104,19 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
             return self.get_immediate_ajax_response()
 
         return super(BroadcastListView, self).get(*args, **kwargs)
+
+
+def possible_sms_recipients(request, domain):
+    # TODO Add case groups
+    # TODO Add locations
+    # TODO Add mobile worker groups
+    # TODO will need to know doc type as well
+    # TODO proper authentication
+    query = request.GET.get('name', '').lower()
+    users = get_search_users_in_domain_es_query(domain, query, 10, 0)
+    users = users.mobile_users().source(('_id', 'base_username')).run().hits
+    ret = [
+        {'id': user['_id'], 'name': user['base_username']}
+        for user in users
+    ]
+    return JsonResponse(ret, safe=False)
