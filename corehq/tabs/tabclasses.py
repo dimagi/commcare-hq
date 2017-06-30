@@ -707,6 +707,16 @@ class ProjectDataTab(UITab):
                     'subpages': []
                 })
 
+        if toggles.DATA_FILE_DOWNLOAD.enabled(self.domain):
+            from corehq.apps.export.views import DataFileDownloadList
+
+            export_data_views.append({
+                'title': _(DataFileDownloadList.page_title),
+                'url': reverse(DataFileDownloadList.urlname, args=(self.domain,)),
+                'show_in_dropdown': True,
+                'subpages': []
+            })
+
         if export_data_views:
             items.append([_("Export Data"), export_data_views])
 
@@ -873,6 +883,7 @@ class MessagingTab(UITab):
     view = "sms_default"
 
     url_prefix_formats = (
+        '/a/{domain}/messaging/',
         '/a/{domain}/sms/',
         '/a/{domain}/reminders/',
         '/a/{domain}/data/edit/case_groups/',
@@ -984,33 +995,46 @@ class MessagingTab(UITab):
             ])
 
         if self.can_access_reminders:
-            from corehq.apps.reminders.views import (
-                BroadcastListView,
-                CreateBroadcastView,
-                EditBroadcastView,
-                CopyBroadcastView,
-            )
-            messages_urls.extend([
-                {
-                    'title': _("Broadcast Messages"),
-                    'url': reverse(BroadcastListView.urlname, args=[self.domain]),
-                    'subpages': [
-                        {
-                            'title': _("Edit Broadcast"),
-                            'urlname': EditBroadcastView.urlname,
-                        },
-                        {
-                            'title': _("New Broadcast"),
-                            'urlname': CreateBroadcastView.urlname,
-                        },
-                        {
-                            'title': _("Copy Broadcast"),
-                            'urlname': CopyBroadcastView.urlname,
-                        },
-                    ],
-                    'show_in_dropdown': True,
-                },
-            ])
+            if self.project.uses_new_reminders:
+                from corehq.messaging.scheduling.views import (
+                    BroadcastListView as NewBroadcastListView,
+                )
+                messages_urls.extend([
+                    {
+                        'title': _("Schedule a Message"),
+                        'url': reverse(NewBroadcastListView.urlname, args=[self.domain]),
+                        'subpages': [],
+                        'show_in_dropdown': True,
+                    },
+                ])
+            else:
+                from corehq.apps.reminders.views import (
+                    BroadcastListView as OldBroadcastListView,
+                    CreateBroadcastView,
+                    EditBroadcastView,
+                    CopyBroadcastView,
+                )
+                messages_urls.extend([
+                    {
+                        'title': _("Broadcast Messages"),
+                        'url': reverse(OldBroadcastListView.urlname, args=[self.domain]),
+                        'subpages': [
+                            {
+                                'title': _("Edit Broadcast"),
+                                'urlname': EditBroadcastView.urlname,
+                            },
+                            {
+                                'title': _("New Broadcast"),
+                                'urlname': CreateBroadcastView.urlname,
+                            },
+                            {
+                                'title': _("Copy Broadcast"),
+                                'urlname': CopyBroadcastView.urlname,
+                            },
+                        ],
+                        'show_in_dropdown': True,
+                    },
+                ])
 
         return messages_urls
 

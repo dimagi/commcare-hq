@@ -30,6 +30,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
                 ('aadhaar_number', '867386000000'),
                 ('age', '18'),
                 ('age_entered', '18'),
+                ('contact_phone_number', '915432109876'),
                 ('current_address', 'Cambridge MA'),
                 ('current_episode_type', 'confirmed_tb'),
                 ('current_patient_type_choice', 'treatment_after_lfu'),

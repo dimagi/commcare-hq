@@ -2,39 +2,13 @@
 {% load hq_shared_tags %}
 {% load compress %}
 {% load i18n %}
-{% block js-inline %}{{ block.super }}
-<script>
-    $(function() {
-        $('#report-content').on('click', '.reprocess-error', function() {
-            var $btn = $(this),
-                formId = $btn.data().formId;
-            $btn.disableButton();
 
-            $.post({
-                url: "{% url 'reprocess_xform_errors' domain %}",
-                data: { form_id: formId },
-                success: function(data) {
-                    $btn.removeSpinnerFromButton();
-                    if (data.success) {
-                        $btn.text(gettext('Success!'));
-                        $btn.addClass('btn-success');
-                    } else {
-                        $btn.text(gettext('Failed'));
-                        $btn.addClass('btn-danger');
-                        $('#processing-error-modal').modal('show');
-                        $('#processing-error-modal .error-message').text(data.failure_reason);
-                    }
-                },
-                error: function() {
-                    $btn.removeSpinnerFromButton();
-                    $btn.text(gettext('Failed to re-process'));
-                    $btn.addClass('btn-danger');
-                },
-            });
-        });
-    });
-</script>
-{% endblock js-inline %} {% block modals %}{{ block.super }}
+{% block js %}{{ block.super }}
+<script src="{% static 'reports/js/submission_error_report.js' %}"></script>
+{% endblock js %}
+
+{% block modals %}{{ block.super }}
+{% registerurl 'reprocess_xform_errors' domain %}
 <!-- Modal for re-processing errors -->
 <div class="modal fade" id="processing-error-modal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">

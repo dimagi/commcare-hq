@@ -286,7 +286,8 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             dataSourceIndicators,
             reportColumnOptions,
             dateRangeOptions,
-            isGroupByRequired
+            isGroupByRequired,
+            groupByInitialValue
     ) {
         var self = this;
         var constants = hqImport('userreports/js/constants.js');
@@ -296,7 +297,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         });
         self.dataSourceIndicators = dataSourceIndicators;
         self.reportColumnOptions = reportColumnOptions;
-        self.groupBy = ko.observable();
+        self.groupBy = ko.observable(groupByInitialValue);
         self.isGroupByRequired = ko.observable(isGroupByRequired);
         self.showGroupByValidationError = ko.observable(false);
 

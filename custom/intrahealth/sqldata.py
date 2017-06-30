@@ -268,7 +268,11 @@ class TauxDeRuptures(BaseSqlData):
         else:
             columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
 
-        columns.append(DatabaseColumn(_("Stock total"), CountColumn('total_stock_total')))
+        columns.append(DatabaseColumn(
+            _("Stock total"),
+            CountColumn('total_stock_total'),
+            format_fn=lambda x: 1 if x > 0 else 0
+        ))
         return columns
 
     def calculate_total_row(self, rows):

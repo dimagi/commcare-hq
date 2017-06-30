@@ -1,6 +1,7 @@
 {
   "domains": [
-    "icds-test"
+    "icds-test",
+    "icds-cas"
   ],
   "server_environment": [
     "icds"

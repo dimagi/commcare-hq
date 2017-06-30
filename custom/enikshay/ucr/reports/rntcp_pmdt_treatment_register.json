@@ -1,20 +1,7 @@
 {
     "domains": [
-        "enikshay-test",
-        "enikshay-test-test",
         "enikshay",
-        "enikshay-test-2",
-        "enikshay-test-3",
-        "enikshay-nikshay-migration-test",
-        "enikshay-domain-copy-test",
-        "enikshay-aks-audit",
-        "np-migration-3",
-        "enikshay-uatbc-migration-test-1",
-        "enikshay-uatbc-migration-test-2",
-        "enikshay-uatbc-migration-test-3",
-        "enikshay-uatbc-migration-test-4",
-        "enikshay-uatbc-migration-test-5",
-        "enikshay-uatbc-migration-test-6",
+        "enikshay-reports-qa",
         "sheel-enikshay"
     ],
     "server_environment": [
@@ -191,21 +178,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "rft_drtb_diagnosis",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Reason for Testing"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
                 "field": "site_of_disease",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Site of Disease (P/EP)"
+                "display": "Site of Disease"
             },
             {
                 "sortable": false,
@@ -217,6 +193,17 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Type (New, Recurrent, TALFU, Failure, Other)"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "rft_drtb_diagnosis",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Reason for Testing"
             },
             {
                 "sortable": false,

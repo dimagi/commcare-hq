@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,204 +1,95 @@
+@@ -1,204 +1,77 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -77,7 +77,7 @@
 +      </a>
 +  </div>
 +
-+  <div class="appmanager-edit-title">
++  <div class="appmanager-edit-title appmanager-edit-app-title">
 +    <inline-edit params="
 +        value: '{{ app.name|escapejs }}',
 +        containerClass: 'h3 app-title',
@@ -96,7 +96,6 @@
 +        url: '{% url "edit_app_attr" domain app.id 'comment' %}',
 +        placeholder: '{% trans "Enter app description here"|escapejs %}',
 +        saveValueName: 'comment',
-+        containerClass: 'app-comment',
 +        cols: 50,
 +    "></inline-edit>
 +  </div>
@@ -130,23 +129,7 @@
 -    {% registerurl "release_manager_ajax" domain app.get_id %}
 -    {% registerurl "toggle_diff" domain %}
 -    {% registerurl "update_linked_whitelist" domain app.id %}
-+  {# release page URLs #}
-+  {% registerurl "paginate_releases" domain app.id %}
-+  {% registerurl "delete_copy" domain app.id %}
-+  {% registerurl "download_jad" domain '---' %}
-+  {% registerurl "download_jar" domain '---' %}
-+  {% registerurl "odk_install" domain '---' %}
-+  {% registerurl "odk_media_install" domain '---' %}
-+  {% registerurl "download_index" domain '---' %}
-+  {% registerurl "release_build" domain app.id '---' %}
-+  {% registerurl "save_copy" domain app.id %}
-+  {% registerurl "revert_to_copy" domain app.id %}
-+  {% registerurl "current_app_version" domain app.id %}
-+  {% registerurl "hubspot_click_deploy" %}
-+  {% registerurl "download_ccz" app.domain '---' %}
-+  {% registerurl "download_multimedia_zip" app.domain '---' %}
-+  {% registerurl "project_report_dispatcher" app.domain 'application_error' %}
- 
+-
 -    {# release page URLs #}
 -    {% registerurl "paginate_releases" domain app.id %}
 -    {% registerurl "delete_copy" domain app.id %}

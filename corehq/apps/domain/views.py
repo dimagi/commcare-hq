@@ -646,7 +646,7 @@ def logo(request, domain):
 @require_POST
 @domain_admin_required
 def send_dhis2_data(request, domain):
-    send_datasets.delay(domain)
+    send_datasets.delay(domain, send_now=True)
     return json_response({'success': _('Data is being sent to DHIS2.')}, status_code=202)
 
 

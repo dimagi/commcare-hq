@@ -282,24 +282,44 @@
       Constants: hqImport("userreports/js/constants.js"),
     };
 
-    $(document).ready(function() {
-        var reportConfig = new reportBuilder.ReportConfig({
-            "columnOptions": {{ column_options|JSON }},
-            "initialColumns": {{ initial_columns|JSON }},
-            "app": {{ application|JSON }},
-            "sourceId": {{ source_id|JSON }},
-            "sourceType": "{{ source_type }}",
-            "reportPreviewUrl": "{{ report_preview_url }}",
-            "previewDatasourceId": "{{ preview_datasource_id }}",
-            "existingReport": {% if existing_report %}{{ existing_report.get_id|JSON }}{% else %}null{% endif %},
-            "existingReportType": {{ existing_report_type|JSON }},
-            "dataSourceProperties": {{ data_source_properties|JSON }},
-            "initialDefaultFilters": {{ initial_default_filters|JSON }},
-            "initialUserFilters": {{ initial_user_filters|JSON }},
-            "initialLocation": {{ initial_location|JSON }},
-            "initialChartType": {{ initial_chart_type|JSON }},
-            "mapboxAccessToken": {{ MAPBOX_ACCESS_TOKEN|JSON }},
-            "hasReportBuilderAccess": {{ has_report_builder_access|JSON }},
+    (function () {
+
+        var reportType = {{ report_type|JSON }};
+        var initialUserFilters = {{ initial_user_filters|JSON }};
+        var initialDefaultFilters = {{ initial_default_filters|JSON }};
+        var initialColumns = {{ initial_columns|JSON }};
+        var sourceType = {{ form.source_type|JSON }};
+        var dataSourceIndicators = {{ data_source_indicators|JSON }};
+        var reportColumnOptions = {{ report_column_options|JSON }};
+        var dateRangeOptions = {{ date_range_options|JSON }};
+        var isGroupByRequired = {{ is_group_by_required|JSON }};
+        var groupByInitialValue = {{ form.fields.group_by.widget.value|JSON }};
+
+        var ConfigForm = hqImport('userreports/js/builder_view_models.js').ConfigForm;
+        $("#report-config-form").koApplyBindings(
+            new ConfigForm(
+                reportType,
+                sourceType,
+                initialColumns,
+                initialUserFilters,
+                initialDefaultFilters,
+                dataSourceIndicators,
+                reportColumnOptions,
+                dateRangeOptions,
+                isGroupByRequired,
+                groupByInitialValue
+            )
+        );
+
+
+        $(function () {
+            {% for event in report_builder_events %}
+                {# Track a usage events that were produced on the server #}
+                window.analytics.usage.apply(this, {{event|JSON}});
+            {% endfor %}
+            window.analytics.trackUsageLink(
+                "#delete-report-button", "Report Builder", "Delete a Repot", reportType
+            );
         });
         $("#reportConfig").koApplyBindings(reportConfig)
         window._bindingsApplied = true;

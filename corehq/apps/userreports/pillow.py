@@ -8,7 +8,7 @@ from alembic.autogenerate.api import compare_metadata
 from kafka.util import kafka_bytestring
 import six
 
-from corehq.apps.change_feed.consumer.feed import PartitionedKafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.userreports.const import (
     KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
 )
@@ -284,7 +284,7 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
     retry_errors = False
 
     def __init__(self, processor, pillow_name, topics, num_processes, process_num):
-        change_feed = PartitionedKafkaChangeFeed(
+        change_feed = KafkaChangeFeed(
             topics, group_id=pillow_name, num_processes=num_processes, process_num=process_num
         )
         checkpoint = KafkaPillowCheckpoint(pillow_name, topics)

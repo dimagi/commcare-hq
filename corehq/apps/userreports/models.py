@@ -19,7 +19,13 @@ from dimagi.ext.couchdbkit import (
     SchemaProperty,
     StringListProperty,
 )
-from dimagi.ext.couchdbkit import StringProperty, DictProperty, ListProperty, IntegerProperty
+from dimagi.ext.couchdbkit import (
+    DecimalProperty,
+    DictProperty,
+    IntegerProperty,
+    ListProperty,
+    StringProperty,
+)
 from dimagi.ext.jsonobject import JsonObject
 from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
@@ -364,6 +370,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     columns = ListProperty()
     configured_charts = ListProperty()
     sort_expression = ListProperty()
+    soft_rollout = DecimalProperty(default=0)
     report_meta = SchemaProperty(ReportMeta)
 
     def __unicode__(self):

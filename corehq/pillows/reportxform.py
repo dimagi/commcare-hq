@@ -35,7 +35,8 @@ def transform_xform_for_report_forms_index(doc_dict):
     return doc_ret
 
 
-def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsearchPillow', **kwargs):
+def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsearchPillow', num_processes=1,
+                                             process_num=0, **kwargs):
     assert pillow_id == 'ReportXFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, REPORT_XFORM_INDEX_INFO, topics.FORM_TOPICS)
     form_processor = ElasticProcessor(
@@ -44,7 +45,10 @@ def get_report_xform_to_elasticsearch_pillow(pillow_id='ReportXFormToElasticsear
         doc_prep_fn=transform_xform_for_report_forms_index,
         doc_filter_fn=report_xform_filter
     )
-    kafka_change_feed = KafkaChangeFeed(topics=topics.FORM_TOPICS, group_id='report-forms-to-es')
+    kafka_change_feed = KafkaChangeFeed(
+        topics=topics.FORM_TOPICS, group_id='report-forms-to-es',
+        num_processes=num_processes, process_num=process_num
+    )
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,

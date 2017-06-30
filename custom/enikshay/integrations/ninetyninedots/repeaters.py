@@ -154,7 +154,11 @@ class NinetyNineDotsAdherenceRepeater(Base99DOTSRepeater):
         if not allowed_case_types_and_users:
             return False
 
-        episode_case = get_episode_case_from_adherence(adherence_case.domain, adherence_case.case_id)
+        try:
+            episode_case = get_episode_case_from_adherence(adherence_case.domain, adherence_case.case_id)
+        except ENikshayCaseNotFound:
+            return False
+
         episode_case_properties = episode_case.dynamic_case_properties()
         adherence_case_properties = adherence_case.dynamic_case_properties()
 

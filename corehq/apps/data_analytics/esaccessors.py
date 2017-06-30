@@ -13,6 +13,7 @@ from dimagi.utils.dates import add_months
 
 
 def get_app_submission_breakdown_es(domain_name, monthspan):
+    # takes > 1 m to load at 50k worker scale
     terms = [
         AggregationTerm('app_id', 'app_id'),
         AggregationTerm('device_id', 'form.meta.deviceID'),

@@ -4,7 +4,6 @@ import os
 import tempfile
 import zipfile
 from collections import defaultdict
-from StringIO import StringIO
 from wsgiref.util import FileWrapper
 
 from django.utils.text import slugify
@@ -20,9 +19,9 @@ from django.contrib import messages
 
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
 from corehq.apps.app_manager.exceptions import ConflictingCaseTypeError, \
-    IncompatibleFormTypeException, RearrangeError
+    IncompatibleFormTypeException, RearrangeError, AppEditingError
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
-    validate_langs, CASE_TYPE_CONFLICT_MSG
+    validate_langs, CASE_TYPE_CONFLICT_MSG, overwrite_app
 from corehq import toggles, privileges
 from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
@@ -33,7 +32,6 @@ from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.tour import tours
 from corehq.apps.translations.models import Translation
 from corehq.apps.app_manager.const import (
-    APP_V2,
     MAJOR_RELEASE_TO_VERSION,
     AUTO_SELECT_USERCASE,
     DEFAULT_FETCH_LIMIT,
@@ -44,15 +42,13 @@ from corehq.apps.app_manager.util import (
     get_app_manager_template,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.compression import decompress
 from corehq.apps.app_manager.xform import (
-    XFormException, XForm)
+    XFormException)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.util.view_utils import set_file_download
-from couchexport.export import FormattedRow
-from couchexport.models import Format
-from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.web import json_response, json_request
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.domain.decorators import (
@@ -179,7 +175,7 @@ def get_app_view_context(request, app):
         'values': get_settings_values(app),
         'warning': _("This is not an allowed value for this field"),
     }
-    if toggles.CUSTOM_PROPERTIES.enabled(request.domain) and 'custom_properties' in app.profile:
+    if toggles.CUSTOM_PROPERTIES.enabled(request.domain) and 'custom_properties' in getattr(app, 'profile', {}):
         custom_properties_array = map(lambda p: {'key': p[0], 'value': p[1]},
                                       app.profile.get('custom_properties').items())
         app_view_options.update({'customProperties': custom_properties_array})
@@ -833,38 +829,24 @@ def pull_master_app(request, domain, app_id):
     app = get_current_app_doc(domain, app_id)
     master_app = get_app(None, app['master'])
     latest_master_build = get_app(None, app['master'], latest=True)
-    params = {}
     if app['domain'] in master_app.linked_whitelist:
-        excluded_fields = set(Application._meta_fields).union(
-            ['date_created', 'build_profiles', 'copy_history', 'copy_of', 'name', 'comment', 'doc_type']
-        )
-        master_json = latest_master_build.to_json()
-        for key, value in master_json.iteritems():
-            if key not in excluded_fields:
-                app[key] = value
-        app['version'] = master_json['version']
-        wrapped_app = wrap_app(app)
-        mobile_ucrs = False
-        for module in wrapped_app.modules:
-            if isinstance(module, ReportModule):
-                mobile_ucrs = True
-                break
-        if mobile_ucrs:
-            messages.error(request, _('This linked application uses mobile UCRs '
+        report_map = get_static_report_mapping(master_app.domain, app['domain'], {})
+        try:
+            overwrite_app(app, latest_master_build, report_map)
+        except AppEditingError:
+            messages.error(request, _('This linked application uses dynamic mobile UCRs '
                                       'which are currently not supported. For this application '
                                       'to function correctly, you will need to remove those modules '
                                       'or revert to a previous version that did not include them.'))
         else:
             messages.success(request,
                              _('Your linked application was successfully updated to the latest version.'))
-        wrapped_app.copy_attachments(latest_master_build)
-        wrapped_app.save(increment_version=False)
     else:
         messages.error(request, _(
             'This project is not authorized to update from the master application. '
             'Please contact the maintainer of the master app if you believe this is a mistake. ')
         )
-    return HttpResponseRedirect(reverse_util('view_app', params=params, args=[domain, app_id]))
+    return HttpResponseRedirect(reverse_util('view_app', params={}, args=[domain, app_id]))
 
 
 @no_conflict_require_POST

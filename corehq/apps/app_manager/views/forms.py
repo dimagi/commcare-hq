@@ -681,7 +681,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
                 'actions': form.actions,
                 'isShadowForm': False,
             })
-        if module.has_schedule:
+        if getattr(module, 'has_schedule', False):
             schedule_options = get_schedule_context(form)
             schedule_options.update({
                 'phase': schedule_options['schedule_phase'],

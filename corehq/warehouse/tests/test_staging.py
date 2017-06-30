@@ -20,6 +20,7 @@ class BaseStagingTableTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(BaseStagingTableTest, cls).setUpClass()
         for record in cls.records:
             record.save()
 
@@ -30,6 +31,7 @@ class BaseStagingTableTest(TestCase):
     def tearDownClass(cls):
         for record in cls.records:
             record.delete()
+        super(BaseStagingTableTest, cls).tearDownClass()
 
 
 class StagingRecordsTestsMixin(object):
@@ -39,10 +41,10 @@ class StagingRecordsTestsMixin(object):
         end = datetime.utcnow() + timedelta(days=3)
 
         self.assertEqual(self.staging_table_cls.objects.count(), 0)
-        self.staging_table_cls.stage_records(start, end)
+        self.staging_table_cls.commit(start, end)
         self.assertEqual(self.staging_table_cls.objects.count(), len(self.records))
 
-        self.staging_table_cls.stage_records(start, end)
+        self.staging_table_cls.commit(start, end)
         self.assertEqual(self.staging_table_cls.objects.count(), len(self.records))
 
     def test_stage_records_no_data(self):
@@ -50,16 +52,16 @@ class StagingRecordsTestsMixin(object):
         end = datetime.utcnow() - timedelta(days=2)
 
         self.assertEqual(self.staging_table_cls.objects.count(), 0)
-        self.staging_table_cls.stage_records(start, end)
+        self.staging_table_cls.commit(start, end)
         self.assertEqual(self.staging_table_cls.objects.count(), 0)
 
 
 class TestGroupStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
 
     records = [
-        Group(name='one', case_sharing=True, reporting=True),
-        Group(name='two'),
-        Group(name='three'),
+        Group(domain='group-staging-test', name='one', case_sharing=True, reporting=True),
+        Group(domain='group-staging-test', name='two'),
+        Group(domain='group-staging-test', name='three'),
     ]
     staging_table_cls = GroupStagingTable
 
@@ -72,18 +74,16 @@ class TestGroupStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
         start = datetime.utcnow() - timedelta(days=3)
         end = datetime.utcnow() + timedelta(days=3)
 
-        # 2 Queries for the atomic.transaction
         # 1 Query for clearing records
         # 1 Query for inserting recorrds
-        with self.assertNumQueries(4):
-            GroupStagingTable.stage_records(start, end)
+        with self.assertNumQueries(2):
+            GroupStagingTable.commit(start, end)
 
-        # 2 Queries for the atomic.transaction
         # 1 Query for clearing records
         # 2 Queries for inserting recorrds
-        with self.assertNumQueries(5):
+        with self.assertNumQueries(3):
             with patch('corehq.warehouse.utils.DJANGO_MAX_BATCH_SIZE', 2):
-                GroupStagingTable.stage_records(start, end)
+                GroupStagingTable.commit(start, end)
         self.assertEqual(GroupStagingTable.objects.count(), 3)
 
 
@@ -105,17 +105,18 @@ class TestDomainStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
 class TestUserStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
 
     records = [
-        WebUser(
-            username='one',
-            date_joined=datetime.utcnow(),
-            first_name='A',
-            last_name='B',
-            email='b@a.com',
-            password='***',
-            is_active=True,
-            is_staff=False,
-            is_superuser=True,
-        ),
+        # TODO: Make domains compatible with staging table
+        # WebUser(
+        #     username='one',
+        #     date_joined=datetime.utcnow(),
+        #     first_name='A',
+        #     last_name='B',
+        #     email='b@a.com',
+        #     password='***',
+        #     is_active=True,
+        #     is_staff=False,
+        #     is_superuser=True,
+        # ),
         CommCareUser(
             domain='foo',
             username='two',

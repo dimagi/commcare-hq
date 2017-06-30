@@ -1,6 +1,7 @@
 {
   "domains": [
-    "icds-test"
+    "icds-test",
+    "icds-cas"
   ],
   "server_environment": [
     "icds"
@@ -1377,6 +1378,43 @@
               }
             },
             "property_value": 183
+          },
+          {
+            "type": "and",
+            "filters": [
+              {
+                "operator": "not_eq",
+                "type": "boolean_expression",
+                "expression": {
+                  "doc_id_expression": {
+                    "type": "icds_parent_id"
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareCase",
+                  "value_expression": {
+                    "type": "property_name",
+                    "property_name": "registered_status"
+                  }
+                },
+                "property_value": "not_registered"
+              },
+              {
+                "operator": "not_eq",
+                "type": "boolean_expression",
+                "expression": {
+                  "doc_id_expression": {
+                    "type": "icds_parent_id"
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareCase",
+                  "value_expression": {
+                    "type": "property_name",
+                    "property_name": "migrated_status"
+                  }
+                },
+                "property_value": "yes"
+              }
+            ]
           }
         ]
       },
@@ -2046,6 +2084,43 @@
                 "property_value": 0
               }
             ]
+          },
+          {
+            "type": "and",
+            "filters": [
+              {
+                "operator": "not_eq",
+                "type": "boolean_expression",
+                "expression": {
+                  "doc_id_expression": {
+                    "type": "icds_parent_id"
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareCase",
+                  "value_expression": {
+                    "type": "property_name",
+                    "property_name": "registered_status"
+                  }
+                },
+                "property_value": "not_registered"
+              },
+              {
+                "operator": "not_eq",
+                "type": "boolean_expression",
+                "expression": {
+                  "doc_id_expression": {
+                    "type": "icds_parent_id"
+                  },
+                  "type": "related_doc",
+                  "related_doc_type": "CommCareCase",
+                  "value_expression": {
+                    "type": "property_name",
+                    "property_name": "migrated_status"
+                  }
+                },
+                "property_value": "yes"
+              }
+            ]
           }
         ]
       },
@@ -2506,6 +2581,7 @@
         "type": "not"
       }
     },
+    "asynchronous": true,
     "engine_id": "icds-ucr",
     "backend_id": "LABORATORY",
     "es_index_settings": {

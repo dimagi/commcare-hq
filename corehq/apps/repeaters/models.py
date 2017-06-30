@@ -50,6 +50,14 @@ def log_repeater_timeout_in_datadog(domain):
     datadog_counter('commcare.repeaters.timeout', tags=[u'domain:{}'.format(domain)])
 
 
+def log_repeater_error_in_datadog(domain, status_code, repeater_type):
+    datadog_counter(REPEATER_ERROR_COUNT, tags=[
+        u'domain:{}'.format(domain),
+        u'status_code:{}'.format(status_code),
+        u'repeater_type:{}'.format(repeater_type),
+    ])
+
+
 DELETED = "-Deleted"
 BASIC_AUTH = "basic"
 DIGEST_AUTH = "digest"
@@ -136,6 +144,7 @@ class Repeater(QuickCachedDocumentMixin, Document, UnicodeMixIn):
         return True
 
     def clear_caches(self):
+        super(Repeater, self).clear_caches()
         if self.__class__ == Repeater:
             cls = self.get_class_from_doc_type(self.doc_type)
         else:
@@ -567,6 +576,8 @@ class RepeatRecord(Document):
             try:
                 attempt = self.repeater.fire_for_record(self)
             except Exception as e:
+                log_repeater_error_in_datadog(self.domain, status_code=None,
+                                              repeater_type=self.repeater_type)
                 attempt = self.handle_payload_exception(e)
                 raise
             finally:
@@ -605,11 +616,8 @@ class RepeatRecord(Document):
         return self._make_failure_attempt(unicode(exception), None)
 
     def _make_failure_attempt(self, reason, response):
-        datadog_counter(REPEATER_ERROR_COUNT, tags=[
-            u'domain:{}'.format(self.domain),
-            u'status_code:{}'.format(response.status_code if response else None),
-            u'repeater_type:{}'.format(self.repeater_type),
-        ])
+        log_repeater_error_in_datadog(self.domain, response.status_code if response else None,
+                                      self.repeater_type)
 
         if self.repeater.allow_retries(response) and self.overall_tries < self.max_possible_tries:
             return self.make_set_next_try_attempt(reason)

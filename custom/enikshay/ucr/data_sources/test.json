@@ -9,6 +9,7 @@
     ],
     "config": {
         "referenced_doc_type": "CommCareCase",
+        "asynchronous": true,
         "engine_id": "ucr",
         "description": "",
         "base_item_expression": {
@@ -42,6 +43,15 @@
                 "expression": {
                     "type": "property_name",
                     "property_name": "testing_facility_id"
+                }
+            },
+            {
+                "type": "expression",
+                "datatype": "string",
+                "column_id": "testing_facility_name",
+                "expression": {
+                    "type": "property_name",
+                    "property_name": "testing_facility_name"
                 }
             },
             {

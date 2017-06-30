@@ -6,13 +6,9 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.apps.userreports.dbaccessors import get_report_configs_for_domain, get_datasources_for_domain
+from corehq.apps.userreports.models import StaticDataSourceConfiguration
+from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.blobs.mixin import BlobMixin
-from corehq.apps.userreports.models import (
-    CUSTOM_REPORT_PREFIX,
-    STATIC_PREFIX,
-    StaticDataSourceConfiguration,
-    StaticReportConfiguration,
-)
 
 types = [
     "feature_flags",
@@ -43,7 +39,6 @@ help_text = """Clone a domain and it's data:
 
 
 class Command(BaseCommand):
-    args = "<existing_domain> <new_domain>"
     help = help_text
 
     def add_arguments(self, parser):
@@ -252,25 +247,7 @@ class Command(BaseCommand):
 
             old_id, new_id = self.save_couch_copy(report, self.new_domain)
             report_map[old_id] = new_id
-        for static_report in StaticReportConfiguration.by_domain(self.existing_domain):
-            if static_report.get_id.startswith(STATIC_PREFIX):
-                report_id = static_report.get_id.replace(
-                    STATIC_PREFIX + self.existing_domain + '-',
-                    ''
-                )
-                is_custom_report = False
-            else:
-                report_id = static_report.get_id.replace(
-                    CUSTOM_REPORT_PREFIX + self.existing_domain + '-',
-                    ''
-                )
-                is_custom_report = True
-            new_id = StaticReportConfiguration.get_doc_id(
-                self.new_domain, report_id, is_custom_report
-            )
-            # check that new report is in new domain's list of static reports
-            StaticReportConfiguration.by_id(new_id)
-            report_map[static_report.get_id] = new_id
+        report_map = get_static_report_mapping(self.existing_domain, self.new_domain, report_map)
         return report_map
 
     def copy_ucr_datasources(self):

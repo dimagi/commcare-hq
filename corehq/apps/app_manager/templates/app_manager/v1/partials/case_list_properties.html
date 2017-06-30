@@ -6,15 +6,15 @@
         <thead data-bind="visible: columns().length > 0">
             <tr tabindex="999" data-bind="paste: function (data) { pasteCallback(data, 0); }">
                 <th class="col-sm-1"></th>
-                <th class="col-sm-3" data-bind="text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.message.FIELD"></th>
+                <th class="col-sm-3">{% trans "Property" %}</th>
                 <!-- ko if: showCaseTileColumn() -->
-                <th class="col-sm-2" data-bind="text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.message.HEADER"></th>
-                <th class="col-sm-3" data-bind="text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.message.FORMAT"></th>
+                <th class="col-sm-2">{% trans "Display Text" %}</th>
+                <th class="col-sm-3">{% trans "Format" %}</th>
                 <th class="col-sm-2">{% trans "Case Tile Mapping" %}</th>
                 <!--/ko-->
                 <!-- ko ifnot: showCaseTileColumn() -->
-                <th class="col-sm-3" data-bind="text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.message.HEADER"></th>
-                <th class="col-sm-4" data-bind="text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.message.FORMAT"></th>
+                <th class="col-sm-3">{% trans "Display Text" %}</th>
+                <th class="col-sm-4">{% trans "Format" %}</th>
                 <!-- /ko -->
                 <th class="col-sm-1"></th>
             </tr>
@@ -64,14 +64,31 @@
                 <!--ko if: isTab -->
                     <!--ko if: $data.hasNodeset -->
                         <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
+                        {{ request|toggle_tag_info:"DISPLAY_CONDITION_ON_TABS" }}
+                        {% if request|toggle_enabled:'DISPLAY_CONDITION_ON_TABS' %}
+                        <td class="col-sm-3 form-group">
+                             <div data-bind="jqueryElement: relevant.ui"></div>
+                         </td>
+                        <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}">
+                        {% else %}
                         <td class="col-sm-5 form-group" colspan="2" data-bind="css: {'has-error': showWarning}">
+                        {% endif %}
                             <div data-bind="jqueryElement: nodeset.ui"></div>
                             <span class="help-block"
                                   data-bind="text: 'A nodeset must be specified.', visible: showWarning"></span>
                         </td>
                     <!--/ko-->
                     <!--ko ifnot: $data.hasNodeset -->
+                        {{ request|toggle_tag_info:"DISPLAY_CONDITION_ON_TABS" }}
+                        {% if request|toggle_enabled:'DISPLAY_CONDITION_ON_TABS' %}
+                        <td class="col-sm-3" data-bind="jqueryElement: header.ui"></td>
+                        <td class="col-sm-3 form-group">
+                             <div data-bind="jqueryElement: relevant.ui"></div>
+                        </td>
+                        <td class="col-sm-3 form-group" data-bind="css: {'has-error': showWarning}"></td>
+                        {% else %}
                         <td class="col-sm-8" colspan="3" data-bind="jqueryElement: header.ui"></td>
+                        {% endif %}
                     <!--/ko-->
                 <!--/ko-->
                 <!-- ko if: $parent.showCaseTileColumn() -->
@@ -88,11 +105,11 @@
                 <!-- /ko -->
                 <td class="col-sm-1 text-center">
                     <i style="cursor: pointer;"
+                       title="{% trans "Delete"|escapejs %}"
                        data-bind="
                         visible: ($parent.columns().length > 1 || $parent.allowsEmptyColumns),
                         click: function(){screen.columns.remove($data);},
                         css: COMMCAREHQ.icons.DELETE,
-                        attr: {title: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.message.DELETE_COLUMN}
                     "></i>
                 </td>
             {# there must be no whitespace between <tbody> and <tr> #}

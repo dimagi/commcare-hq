@@ -44,10 +44,10 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             });
         },
 
-        selectDetail: function(caseId, detailIndex) {
+        selectDetail: function(caseId, detailIndex, isPersistent) {
             var urlObject = Util.currentUrlToObject();
             urlObject.addStep(caseId);
-            var fetchingDetails = FormplayerFrontend.request("entity:get:details", urlObject);
+            var fetchingDetails = FormplayerFrontend.request("entity:get:details", urlObject, isPersistent);
             $.when(fetchingDetails).done(function (detailResponse) {
                 Menus.Controller.showDetail(detailResponse, detailIndex, caseId);
             }).fail(function() {
@@ -179,7 +179,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             $("#persistent-cell-layout-style").html(caseTileStyles[0]).data("css-polyfilled", false);
             // Style the grid (IE each tile has 6 rows, 12 columns)
             $("#persistent-cell-grid-style").html(caseTileStyles[1]).data("css-polyfilled", false);
-            return new Menus.Views.CaseTileView({
+            return new Menus.Views.PersistentCaseTileView({
                 model: detailModel,
                 styles: detailObject.styles,
                 tiles: detailObject.tiles,

@@ -13,14 +13,14 @@ from corehq.apps.app_manager.suite_xml.features.mobile_ucr import is_valid_mobil
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.util.xml_utils import serialize
 
-from corehq.apps.userreports.const import UCR_SUPPORT_BOTH_BACKENDS
+from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_SUPPORT_BOTH_BACKENDS
 from corehq.apps.userreports.exceptions import UserReportsError, ReportConfigurationNotFoundError
 from corehq.apps.userreports.models import get_report_config
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 
-MOBILE_UCR_RANDOM_THRESHOLD = 10000
+MOBILE_UCR_RANDOM_THRESHOLD = 1000
 
 
 def _should_sync(restore_state):
@@ -135,6 +135,9 @@ class ReportFixturesProvider(FixtureProvider):
     def _get_report_and_data_source(report_id, domain):
         report = get_report_config(report_id, domain)[0]
         data_source = ReportFactory.from_spec(report, include_prefilters=True)
+        if report.soft_rollout > 0 and data_source.config.backend_id == UCR_LABORATORY_BACKEND:
+            if random.random() < report.soft_rollout:
+                data_source.override_backend_id(UCR_ES_BACKEND)
         return report, data_source
 
     @staticmethod

@@ -84,6 +84,10 @@ SCHEDULE_ID_FIXTURE = 'id'
 HISTORICAL_CLOSURE_REASON = 'historical'
 PRESCRIPTION_TOTAL_DAYS_THRESHOLD = "prescription_total_days_threshold_{}"
 
+VALID_ADHERENCE_SOURCES = (
+    'field_officer', 'treatment_supervisor', 'patient', 'provider', 'other', '99DOTS', 'MERM',
+)
+
 # Voucher Case Properties
 DATE_FULFILLED = "date_fulfilled"
 VOUCHER_ID = "voucher_id"
@@ -94,8 +98,11 @@ INVESTIGATION_TYPE = "investigation_type"
 
 ENIKSHAY_TIMEZONE = 'Asia/Kolkata'
 
+DEFAULT_MOBILE_WORKER_ROLE = "Default Mobile Worker"
+
 AGENCY_USER_FIELDS = [
     # (slug, label, choices)
+    ('user_level', "User Level", ["dev", "test", "real"]),
     ('tb_corner', "TB Corner", ["Yes", "No"]),
     ('pcp_qualification', "MBBS Qualification", ["MBBS", "DTCD", "MD - Chest Physician",
                                                  "MD - Medicine", "MS", "DM"]),
@@ -111,7 +118,7 @@ AGENCY_USER_FIELDS = [
     ('plc_hf_if_nikshay', "HF-ID Nikshay", []),
     ('pcc_pharmacy_name', "Pharmacy Name", []),
     ('pcc_pharmacy_affiliation', "Pharmacy Affiliation", ["IPA", "AIOCD"]),
-    ('pcc_tb_drugs_in_stock ', "TB Drugs in Stock", ["Private drugs only", "Goverment drugs (FDCs)",
+    ('pcc_tb_drugs_in_stock', "TB Drugs in Stock", ["Private drugs only", "Goverment drugs (FDCs)",
                                                      "Private and government drugs"]),
     ('agency_status', "Status", ["Registered", "Mapped", "Mapped and Targeted", "engaged- state scheme",
                                  "dropped"]),
