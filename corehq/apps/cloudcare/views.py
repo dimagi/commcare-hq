@@ -64,6 +64,7 @@ from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import BaseSessionDataHelper, CaseSessionDataHelper
 from corehq.apps.cloudcare.const import WEB_APPS_ENVIRONMENT, PREVIEW_APP_ENVIRONMENT
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.formdetails import readable
@@ -882,10 +883,16 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         apps = get_cloudcare_apps(self.domain)
         access = ApplicationAccess.get_template_json(self.domain, apps)
         groups = Group.by_domain(self.domain)
+        user_fields = [
+            {'slug': field.slug,
+             'choices': field.choices}
+            for field in CustomDataFieldsDefinition.get_or_create(self.domain, 'UserFields').fields
+        ]
         return {
             'apps': apps,
             'groups': groups,
             'access': access,
+            'user_fields': user_fields,
         }
 
     def put(self, request, *args, **kwargs):
@@ -894,6 +901,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         new = ApplicationAccess.wrap(j)
         old.restrict = new.restrict
         old.app_groups = new.app_groups
+        old.app_userdata_permissions = new.app_userdata_permissions
         try:
             if old._rev != new._rev or old._id != new._id:
                 raise ResourceConflict()
