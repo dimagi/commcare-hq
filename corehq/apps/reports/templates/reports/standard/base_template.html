@@ -25,23 +25,10 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    <script>
-        $(function () {
-          $('[data-toggle="offcanvas"]').click(function () {
-            $('.row-offcanvas').toggleClass('active')
-          });
-        });
-    </script>
 {% block reports-js-inline %}
     <script>
         var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport(),
             asyncHQReport = hqImport("reports/js/standard_hq_report.js").getAsyncHQReport();
-    </script>
-
-    <script>
-        $('#apply-btn').on('click', function() {
-            $('.hq-generic-report').trigger('apply-click');
-        });
     </script>
 {% endblock %}
 {% endblock %}

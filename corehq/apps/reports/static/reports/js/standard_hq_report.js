@@ -1,9 +1,11 @@
-/* globals COMMCAREHQ_MODULES, standardHQReport */
+/* globals COMMCAREHQ_MODULES, HQReport, standardHQReport */
 /*
     Ugly half-measure, because reports and UCR traditionally depend on a global standardHQReport
     variable that's defined in several different places. The UCR version of standardHQReport now
     lives in userreports/js/configurable_report.js, while the non-UCR version lives in this file
     and several custom reports still define standardHQReport as a global var.
+
+    This file also controls some basic event handling for report pages, such as the "Apply" button.
 */
 hqDefine("reports/js/standard_hq_report.js", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
@@ -23,7 +25,7 @@ hqDefine("reports/js/standard_hq_report.js", function() {
             if (typeof COMMCAREHQ_MODULES[ucr] !== 'undefined') {
                 // UCRs
                 standardReport = hqImport(ucr).getStandardHQReport();
-            } else {
+            } else if (typeof HQReport !== 'undefined') {
                 // Standard reports
                 var reportOptions = _.extend({}, initial_page_data('js_options'), {
                     emailSuccessMessage: gettext('Report successfully emailed'),
@@ -54,6 +56,14 @@ hqDefine("reports/js/standard_hq_report.js", function() {
     };
 
     $(function() {
+        $('#apply-btn').on('click', function() {
+            $('.hq-generic-report').trigger('apply-click');
+        });
+
+        $('[data-toggle="offcanvas"]').click(function () {
+            $('.row-offcanvas').toggleClass('active')
+        });
+
         $('.report-description-popover').popover({
             placement: 'right',
             trigger: 'hover',
