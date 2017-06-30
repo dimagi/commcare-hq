@@ -1,4 +1,4 @@
-/* globals COMMCAREHQ_MODULES, HQReport, standardHQReport */
+/* globals COMMCAREHQ_MODULES, HQReport, HQAsyncReport, standardHQReport */
 /*
     Ugly half-measure, because reports and UCR traditionally depend on a global standardHQReport
     variable that's defined in several different places. The UCR version of standardHQReport now
@@ -46,13 +46,20 @@ hqDefine("reports/js/standard_hq_report.js", function() {
     };
 
     var getAsync = function() {
+        if (typeof asyncReport !== 'undefined') {
+            return asyncReport;
+        }
+
         var reportOptions = initial_page_data('js_options');
         if (reportOptions.slug && reportOptions.async) {
             var asyncHQReport = new HQAsyncReport({
                 standardReport: getStandard(),
             });
             asyncHQReport.init();
+            asyncReport = asyncHQReport;
         }
+
+        return asyncReport;
     };
 
     $(function() {
@@ -61,7 +68,7 @@ hqDefine("reports/js/standard_hq_report.js", function() {
         });
 
         $('[data-toggle="offcanvas"]').click(function () {
-            $('.row-offcanvas').toggleClass('active')
+            $('.row-offcanvas').toggleClass('active');
         });
 
         $('.report-description-popover').popover({
