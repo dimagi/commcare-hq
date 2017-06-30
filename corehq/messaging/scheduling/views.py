@@ -6,6 +6,7 @@ from django.utils.translation import ugettext_lazy
 
 from corehq import privileges
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.decorators import use_datatables
@@ -106,12 +107,14 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
         return super(BroadcastListView, self).get(*args, **kwargs)
 
 
+@login_and_domain_required
+@_requires_new_reminder_framework()
+@requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def possible_sms_recipients(request, domain):
     # TODO Add case groups
     # TODO Add locations
     # TODO Add mobile worker groups
     # TODO will need to know doc type as well
-    # TODO proper authentication
     query = request.GET.get('name', '').lower()
     users = get_search_users_in_domain_es_query(domain, query, 10, 0)
     users = users.mobile_users().source(('_id', 'base_username')).run().hits
