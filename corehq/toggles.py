@@ -850,7 +850,7 @@ USE_OLD_CLOUDCARE = StaticToggle(
 )
 
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
-    'use_live_query',
+    'formplayer_use_livequery',
     'Use LiveQuery on Web Apps',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
