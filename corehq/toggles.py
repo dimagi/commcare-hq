@@ -1104,6 +1104,7 @@ ENIKSHAY = StaticToggle(
     "Enable custom enikshay functionality: additional user and location validation",
     TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
+    always_enabled={'enikshay'},
 )
 
 DATA_DICTIONARY = StaticToggle(
