@@ -84,7 +84,7 @@ function IndieMapController($scope, $compile, $location, storageService) {
                 },
             },
             setProjection: function (element) {
-                var div = vm.scope === "ind" ? 3 : 2;
+                var div = vm.scope === "ind" ? 3 : 4;
                 var projection = d3.geo.equirectangular()
                     .center(Datamap.prototype[vm.type].objects[vm.scope].center)
                     .scale(Datamap.prototype[vm.type].objects[vm.scope].scale)
@@ -146,7 +146,7 @@ function IndieMapController($scope, $compile, $location, storageService) {
                         ];
                         d3.select(this.options.element).append('div')
                             .attr('class', '')
-                            .attr('style', 'position: absolute; width: 150px; bottom: 8%; left: 10%; z-index: -1;')
+                            .attr('style', 'position: absolute; width: 150px; bottom: 20%; left: 5%; z-index: -1;')
                             .html(html.join(''));
                     }
                 },

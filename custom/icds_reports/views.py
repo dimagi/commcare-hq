@@ -421,7 +421,7 @@ class AwcReportsView(View):
             )
         elif step == 'beneficiary':
             data = get_awc_report_beneficiary(
-                config['awc_site_code'],
+                location,
                 tuple(month.timetuple())[:3],
                 tuple(two_before.timetuple())[:3],
             )

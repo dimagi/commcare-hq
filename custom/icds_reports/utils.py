@@ -670,7 +670,7 @@ def get_demographics_data(yesterday, config):
                 {
                     'label': _('Registered Households'),
                     'help_text': _('Total number of households registered'),
-                    'percent': percent_increase('household', yesterday, two_days_ago_data),
+                    'percent': percent_increase('household', yesterday_data, two_days_ago_data),
                     'value': get_value(yesterday_data, 'household'),
                     'all': None,
                     'format': 'number',
@@ -679,7 +679,7 @@ def get_demographics_data(yesterday, config):
                 {
                     'label': _('Children (0-6 years)'),
                     'help_text': _('Total number of children registered between the age of 0 - 6 years'),
-                    'percent': percent_increase('child_health_all', yesterday, two_days_ago_data),
+                    'percent': percent_increase('child_health_all', yesterday_data, two_days_ago_data),
                     'value': get_value(yesterday_data, 'child_health_all'),
                     'all': None,
                     'format': 'number',
@@ -693,7 +693,7 @@ def get_demographics_data(yesterday, config):
                         "Total number of children registered between the age of 0 - 6 years "
                         "and enrolled for ICDS services"
                     )),
-                    'percent': percent_increase('child_health', yesterday, two_days_ago_data),
+                    'percent': percent_increase('child_health', yesterday_data, two_days_ago_data),
                     'value': get_value(yesterday_data, 'child_health'),
                     'all': None,
                     'format': 'number',
@@ -702,7 +702,7 @@ def get_demographics_data(yesterday, config):
                 {
                     'label': _('Pregnant Women'),
                     'help_text': _('Total number of pregnant women registered'),
-                    'percent': percent_increase('ccs_pregnant_all', yesterday, two_days_ago_data),
+                    'percent': percent_increase('ccs_pregnant_all', yesterday_data, two_days_ago_data),
                     'value': get_value(yesterday_data, 'ccs_pregnant_all'),
                     'all': None,
                     'format': 'number',
@@ -712,7 +712,7 @@ def get_demographics_data(yesterday, config):
                 {
                     'label': _('Pregnant Women enrolled for ICDS services'),
                     'help_text': _('Total number of pregnant women registered and enrolled for ICDS services'),
-                    'percent': percent_increase('ccs_pregnant', yesterday, two_days_ago_data),
+                    'percent': percent_increase('ccs_pregnant', yesterday_data, two_days_ago_data),
                     'value': get_value(yesterday_data, 'ccs_pregnant'),
                     'all': None,
                     'format': 'number',
@@ -721,8 +721,8 @@ def get_demographics_data(yesterday, config):
                 {
                     'label': _('Lactating Women'),
                     'help_text': _('Total number of lactating women registered'),
-                    'percent': percent_increase('cases_ccs_lactating_all', yesterday, two_days_ago_data),
-                    'value': get_value(yesterday_data, 'cases_ccs_lactating_all'),
+                    'percent': percent_increase('css_lactating_all', yesterday_data, two_days_ago_data),
+                    'value': get_value(yesterday_data, 'css_lactating_all'),
                     'all': None,
                     'format': 'number',
                     'frequency': 'day'
@@ -731,8 +731,8 @@ def get_demographics_data(yesterday, config):
                 {
                     'label': _('Lactating Women enrolled for ICDS services'),
                     'help_text': _('Total number of lactating women registered and enrolled for ICDS services'),
-                    'percent': percent_increase('cases_ccs_lactating', yesterday, two_days_ago_data),
-                    'value': get_value(yesterday_data, 'cases_ccs_lactating'),
+                    'percent': percent_increase('css_lactating', yesterday_data, two_days_ago_data),
+                    'value': get_value(yesterday_data, 'css_lactating'),
                     'all': None,
                     'format': 'number',
                     'frequency': 'day'
@@ -741,11 +741,11 @@ def get_demographics_data(yesterday, config):
                     'label': _('Adolescent Girls (11-18 years)'),
                     'help_text': _('Total number of adolescent girls (11 - 18 years) who are registered'),
                     'percent': percent_increase(
-                        'cases_person_adolescent_girls_11_18_all',
-                        yesterday,
+                        'person_adolescent_all',
+                        yesterday_data,
                         two_days_ago_data
                     ),
-                    'value': get_value(yesterday_data, 'cases_person_adolescent_girls_11_18_all'),
+                    'value': get_value(yesterday_data, 'person_adolescent_all'),
                     'all': None,
                     'format': 'number',
                     'frequency': 'day'
@@ -758,11 +758,11 @@ def get_demographics_data(yesterday, config):
                         "who are registered and enrolled for ICDS services"
                     )),
                     'percent': percent_increase(
-                        'cases_person_adolescent_girls_11_18',
-                        yesterday,
+                        'person_adolescent',
+                        yesterday_data,
                         two_days_ago_data
                     ),
-                    'value': get_value(yesterday_data, 'cases_person_adolescent_girls_11_18'),
+                    'value': get_value(yesterday_data, 'person_adolescent'),
                     'all': None,
                     'format': 'number',
                     'frequency': 'day'
@@ -1686,10 +1686,10 @@ def get_awc_report_demographics(config, month):
     }
 
 
-def get_awc_report_beneficiary(awc_site_code, month, two_before):
+def get_awc_report_beneficiary(awc_id, month, two_before):
     data = ChildHealthMonthlyView.objects.filter(
         month__range=(datetime(*two_before), datetime(*month)),
-        awc_id=awc_site_code,
+        awc_id=awc_id,
         open_in_month=1,
         valid_in_month=1,
         age_in_months__lte=72
