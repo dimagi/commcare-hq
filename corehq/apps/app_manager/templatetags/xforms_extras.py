@@ -29,7 +29,7 @@ def trans(name, langs=None, include_lang=True, use_delim=True, prefix=False, esc
     else:
         tag = lambda lang: ""
     for lang in langs:
-        if lang in name and name[lang]:
+        if lang in name and name[lang] is not None:
             n = unicode(name[lang])
             if escape:
                 n = html.escape(n)
