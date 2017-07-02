@@ -52,7 +52,7 @@ branches:
   # - app-manager-labs # Jenny 6/19
   # - mk-255102-nodeset-sorting # MK 25/June
   - je/partition-device-log # J$ 6/30
-  - lwyszomi-icds_dashboard_v2  # https://github.com/dimagi/commcare-hq/pull/16802
+  - lwyszomi-icds_dashboard_v2-2017-07-02  # https://github.com/dimagi/commcare-hq/pull/16802
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
