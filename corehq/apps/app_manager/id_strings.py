@@ -297,8 +297,8 @@ def module_audio_locale(module):
 
 
 @pattern('modules.m%d.%s')
-def module_custom_icon_locale(module, name):
-    return u"modules.m{module.id}.{icon_name}".format(module=module, icon_name=name)
+def module_custom_icon_locale(module, icon_form):
+    return u"modules.m{module.id}.{icon_form}".format(module=module, icon_form=icon_form)
 
 
 @pattern('forms.m%df%d.icon')
@@ -318,11 +318,11 @@ def form_audio_locale(form):
 
 
 @pattern('forms.m%df%d.%s')
-def form_custom_icon_locale(form, name):
-    return u"forms.m{module.id}f{form.id}.{icon_name}".format(
+def form_custom_icon_locale(form, icon_form):
+    return u"forms.m{module.id}f{form.id}.{icon_form}".format(
         module=form.get_module(),
         form=form,
-        icon_name=name,
+        icon_form=icon_form,
     )
 
 
