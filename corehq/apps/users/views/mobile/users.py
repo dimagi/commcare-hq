@@ -398,6 +398,8 @@ def toggle_demo_mode(request, domain, user_id):
         )
     else:
         turn_off_demo_mode(user)
+        from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
+        unset_practice_mode_configured_apps(domain, user.get_id)
         messages.success(request, _("Successfully turned off demo mode!"))
     return HttpResponseRedirect(edit_user_url)
 
