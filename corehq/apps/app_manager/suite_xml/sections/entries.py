@@ -137,8 +137,10 @@ class EntriesHelper(object):
                     image_locale_id=id_strings.form_icon_locale(form),
                     audio_locale_id=id_strings.form_audio_locale(form),
                     custom_icon_locale_id=(id_strings.form_custom_icon_locale(form, form_custom_icon.form)
-                                           if form_custom_icon else None),
+                                           if form_custom_icon and not form_custom_icon.xpath else None),
                     custom_icon_name=(form_custom_icon.form if form_custom_icon else None),
+                    custom_icon_xpath=(form_custom_icon.xpath
+                                       if form_custom_icon and form_custom_icon.xpath else None),
                 )
             else:
                 e.command = Command(

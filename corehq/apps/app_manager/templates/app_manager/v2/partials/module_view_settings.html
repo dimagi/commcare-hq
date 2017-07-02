@@ -161,7 +161,7 @@
                         {% trans "Form" %}
                       </span>
                       <input class="form-control" name="custom_icon_form" id="custom_icon_form"
-                             value="{{ module_icon.form }}">
+                             value="{% if module_icon.form %}{{ module_icon.form }}{% endif %}">
                     </label>
                     <label>
                       <span>
@@ -172,11 +172,11 @@
                     </label>
                     <label>
                       <span>
-                        {% trans "Is Xpath" %}
+                        {% trans "Xpath Function" %}
                       </span>
-                      <input type="checkbox" name="custom_icon_is_xpath" id="custom_icon_is_xpath"
-                             {% if module_icon.is_xpath %} checked="checked" {% endif %}>
-                    </label>
+                      <input class="form-control" name="custom_icon_xpath" id="custom_icon_xpath"
+                             value="{% if module_icon.xpath %}{{ module_icon.xpath }}{% endif %}">
+                      </label>
                   </div>
                 </div>
               </div>

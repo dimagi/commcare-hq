@@ -379,14 +379,22 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
     if should_edit("shadow_parent"):
         form.shadow_parent_form_id = request.POST['shadow_parent']
 
-    if should_edit("custom_icon_form") and should_edit("custom_icon_text_body"):
-        # a module should have just one module custom icon for now
+    if should_edit("custom_icon_form"):
+        text_body = request.POST.get("custom_icon_text_body")
+        xpath = request.POST.get("custom_icon_xpath")
+        # both present or both absent
+        if (text_body and xpath) or (not text_body and not xpath):
+            return json_response(
+                {'message': _("Please enter either text body or xpath for custom icon")},
+                status_code=400
+            )
+        # a form should have just one custom icon for now
         # so this just adds a new one with params or replaces the existing one with new params
         form_custom_icon = (form.custom_icon if form.custom_icon else CustomIcon())
-        form_custom_icon.text[lang] = request.POST.get("custom_icon_text_body")
-        # jquery serialize returns a "On" in case the checkbox is checked and nothing otherwise
-        form_custom_icon.is_xpath = bool(request.POST.get("custom_icon_is_xpath"))
         form_custom_icon.form = request.POST.get("custom_icon_form")
+        form_custom_icon.text[lang] = request.POST.get("custom_icon_text_body")
+        form_custom_icon.xpath = request.POST.get("custom_icon_xpath")
+
         form.custom_icons = [form_custom_icon]
 
     handle_media_edits(request, form, should_edit, resp, lang)

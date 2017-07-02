@@ -1380,7 +1380,7 @@ class JRResourceProperty(StringProperty):
 class CustomIcon(DocumentSchema):
     form = StringProperty()
     text = DictProperty(unicode)
-    is_xpath = BooleanProperty(default=False)
+    xpath = StringProperty()
 
 
 class NavMenuItemMediaMixin(DocumentSchema):
