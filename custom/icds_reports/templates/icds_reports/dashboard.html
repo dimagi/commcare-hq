@@ -45,6 +45,7 @@
         <script type="text/javascript" src="{% static 'hqwebapp/js/urllib.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/icds_app.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/filters/property-filter/property.filter.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/filters/india-numbers/india-numbers.filter.js' %}"></script>
 
         <script type="text/javascript" src="{% static 'js/angular-services/maternal-child.service.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/angular-services/system-usage.service.js' %}"></script>
@@ -62,6 +63,8 @@
         <script type="text/javascript" src="{% static 'js/directives/dot-link/dot-link.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/awc-opened-yesterday/awc-opened-yesterday.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/underweight-children-report/underweight-children-report.directive.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/directives/prevalence-of-severe-report/prevalence-of-severe-report.directive.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/directives/prevalence-of-stunning-report/prevalence-of-stunning-report.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/awc-reports/awc-reports.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/indie-map/indie-map.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/map-or-sector-view/map-or-sector-view.directive.js' %}"></script>
@@ -94,18 +97,18 @@
                             <div class="nav navbar-nav">
                                 <h2 class="dashboard-title">
                                     <img src="{% static "img/dashboard-logo.png" %}" alt="Logo" style="width: 40px; height: 40px;">
-                                    <strong>{% trans "ICT-RTM DASHBOARD OF ICDS" %}</strong>
+                                    <strong>{% trans "ICT-RTM of ICDS Dashboard" %}</strong>
                                 </h2>
                             </div>
                             <nav class="navbar-menus fullmenu" id="hq-full-menu" role="navigation">
                                 <div class="nav-settings-bar pull-right">
                                     <ul class="nav navbar-nav" role="menu">
                                         <li class="dropdown">
-                                            <a href="#" id="settingsmenu-projectSettings"
-                                               class="dropdown-toggle dropdown-toggle-with-icon"
+                                            <span id="settingsmenu-projectSettings"
+                                               class="dropdown-toggle dropdown-toggle-with-icon pointer"
                                                data-toggle="dropdown">
-                                                <i class="fa fa-cog nav-main-icon  fa-2x"></i>
-                                            </a>
+                                                <i class="fa fa-cog nav-main-icon  fa-2x" style="margin-top: 10px;"></i>
+                                            </span>
                                             <ul class="dropdown-menu dropdown-menu-right" role="menu">
                                                 <li class="dropdown-header nav-header">{% trans 'Logged in As' %}</li>
                                                 <li class="nav-login-header">
@@ -155,6 +158,8 @@
                     {% registerurl 'awc_opened' domain '---' %}
                     {% registerurl 'awc_reports' domain '---' %}
                     {% registerurl 'underweight_children' domain '---' %}
+                    {% registerurl 'prevalence_of_severe' domain '---' %}
+                    {% registerurl 'prevalence_of_stunning' domain '---' %}
                     {% registerurl 'icds_locations' domain %}
                     {% registerurl 'icds_locations_ancestors' domain %}
                     {% registerurl 'progress_report' domain %}
