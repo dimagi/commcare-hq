@@ -5,6 +5,7 @@
 {% load i18n %}
 
 {% block reportcontent %}
+{% initial_page_data 'six_months_reports' six_months_reports %}
 <div class="row">
     <div class="col-md-12">
         {% include "reports/project_health/partials/last_month_stats.html" %}
@@ -45,8 +46,7 @@
 
     <script>
         // "Performing / Active User Trends" Chart
-        function setupCharts() {
-            var data = {{ six_months_reports|JSON }};
+        function setupCharts(data) {
             var highPerformingSeries = {
                 'key': 'high performing',
                 values: _.map(data, function(item) {
@@ -102,9 +102,7 @@
             });
         }
 
-        function setupLineChart(){
-            var data = {{ six_months_reports|JSON }};
-
+        function setupLineChart(data){
             var proportionActiveSeries = [{
                 key: 'active users (%)',
                 values: _.map(data, function(item) {
@@ -193,9 +191,10 @@
         }
 
         $(function() {
-            setupCharts();
+            var six_months_reports = hqImport("hqwebapp/js/initial_page_data.js").get("six_months_reports");
+            setupCharts(six_months_reports);
             setupPopovers();
-            setupLineChart();
+            setupLineChart(six_months_reports);
             setupDataTables();
         });
     </script>
