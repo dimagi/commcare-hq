@@ -630,7 +630,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             for instance in form.custom_instances
         ],
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data'),
-        'form_icon': form.custom_icon if form.custom_icon else CustomIcon()
+        'form_icon': form.custom_icon if form.custom_icon else CustomIcon(),
     }
 
     if tours.NEW_APP.is_enabled(request.user) and not toggles.APP_MANAGER_V2.enabled(request.user.username):
