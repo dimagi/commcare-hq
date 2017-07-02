@@ -11,10 +11,11 @@
         </div>
         <div class="col-md-1">
             <print-report></print-report>
+            <a class="black" href="#download"><i style="padding: 3px;" class="fa fa-download fa-2x pointer"></i></a>
         </div>
     </div>
     <div class="report-content">
-        <div class="alert alert-info" ng-show="!$ctrl.data">
+        <div class="alert alert-info" ng-show="!$ctrl.data" style="margin-top: 30px;">
             <strong>Info!</strong> {% trans "You must choose AWC to see data!" %}
         </div>
         <div ng-show="$ctrl.data">

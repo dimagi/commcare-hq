@@ -1,5 +1,6 @@
 import json
 import os
+from collections import OrderedDict
 
 from datetime import datetime, timedelta
 
@@ -34,9 +35,11 @@ OPERATORS = {
 }
 
 RED = '#d60000'
+YELLOW = '#f2ed00'
 ORANGE = '#df7400'
 GREEN = '#009811'
 GREY = '#9D9D9D'
+
 
 class MPRData(object):
     resource_file = 'resources/block_mpr.json'
@@ -271,15 +274,6 @@ def get_system_usage_data(yesterday, config):
         'records': [
             [
                 {
-                    'label': _('Number of AWCs Open yesterday'),
-                    'help_text': _(("Total Number of Angwanwadi Centers that were open yesterday "
-                                    "by the AWW or the AWW helper")),
-                    'percent': percent_increase('daily_attendance', yesterday_data, two_days_ago_data),
-                    'value': get_value(yesterday_data, 'daily_attendance'),
-                    'all': get_value(yesterday_data, 'awcs'),
-                    'format': 'div'
-                },
-                {
                     'label': _('Average number of household registration forms submitted yesterday'),
                     'help_text': _('Average number of household registration forms submitted by AWWs yesterday.'),
                     'percent': percent_increase('num_forms', yesterday_data, two_days_ago_data),
@@ -327,7 +321,7 @@ def get_system_usage_data(yesterday, config):
 @quickcache(['config'], timeout=24 * 60 * 60)
 def get_maternal_child_data(config):
 
-    def get_data_for_child_health_monhlty(date, filters):
+    def get_data_for_child_health_monthly(date, filters):
         return AggChildHealthMonthly.objects.filter(
             month=date, **filters
         ).values(
@@ -336,7 +330,7 @@ def get_maternal_child_data(config):
             underweight=(
                 Sum('nutrition_status_moderately_underweight') + Sum('nutrition_status_severely_underweight')
             ),
-            valid=Sum('valid_in_month'),
+            valid=Sum('wer_eligible'),
             wasting=Sum('wasting_moderate') + Sum('wasting_severe'),
             stunting=Sum('stunting_moderate') + Sum('stunting_severe'),
             height_eli=Sum('height_eligible'),
@@ -364,8 +358,8 @@ def get_maternal_child_data(config):
     del config['month']
     del config['prev_month']
 
-    this_month_data = get_data_for_child_health_monhlty(current_month, config)
-    prev_month_data = get_data_for_child_health_monhlty(previous_month, config)
+    this_month_data = get_data_for_child_health_monthly(current_month, config)
+    prev_month_data = get_data_for_child_health_monthly(previous_month, config)
 
     deliveries_this_month = get_data_for_deliveries(current_month, config)
     deliveries_prev_month = get_data_for_deliveries(previous_month, config)
@@ -388,7 +382,9 @@ def get_maternal_child_data(config):
                     ),
                     'value': get_value(this_month_data, 'underweight'),
                     'all': get_value(this_month_data, 'valid'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month',
+                    'redirect': '#underweight_children'
                 },
                 {
                     'label': _('% Wasting'),
@@ -407,7 +403,9 @@ def get_maternal_child_data(config):
                     ),
                     'value': get_value(this_month_data, 'wasting'),
                     'all': get_value(this_month_data, 'height_eli'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month',
+                    'redirect': ''
                 }
             ],
             [
@@ -426,7 +424,9 @@ def get_maternal_child_data(config):
                     ),
                     'value': get_value(this_month_data, 'stunting'),
                     'all': get_value(this_month_data, 'height_eli'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month',
+                    'redirect': ''
                 },
                 {
                     'label': _('% Newborns with Low Birth Weight'),
@@ -443,7 +443,9 @@ def get_maternal_child_data(config):
                     ),
                     'value': get_value(this_month_data, 'low_birth_weight'),
                     'all': get_value(this_month_data, 'born'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month',
+                    'redirect': ''
                 }
             ],
             [
@@ -462,7 +464,9 @@ def get_maternal_child_data(config):
                     ),
                     'value': get_value(this_month_data, 'bf_birth'),
                     'all': get_value(this_month_data, 'born'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month',
+                    'redirect': ''
                 },
                 {
                     'label': _('% Exclusive breastfeeding'),
@@ -479,7 +483,9 @@ def get_maternal_child_data(config):
                     ),
                     'value': get_value(this_month_data, 'ebf'),
                     'all': get_value(this_month_data, 'ebf_eli'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month',
+                    'redirect': ''
                 }
             ],
             [
@@ -498,7 +504,9 @@ def get_maternal_child_data(config):
                     ),
                     'value': get_value(this_month_data, 'cf_initiation'),
                     'all': get_value(this_month_data, 'cf_initiation_eli'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month',
+                    'redirect': ''
                 },
                 {
                     'label': _('% Institutional deliveries'),
@@ -515,15 +523,20 @@ def get_maternal_child_data(config):
                     ),
                     'value': get_value(deliveries_this_month, 'institutional_delivery'),
                     'all': get_value(deliveries_this_month, 'delivered'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month',
+                    'redirect': ''
                 }
             ]
         ]
     }
 
 
-def get_cas_reach_data(config):
-    def get_data_for(month, filters):
+def get_cas_reach_data(yesterday, config):
+    yesterday_date = datetime(*yesterday)
+    two_days_ago = (yesterday_date - relativedelta(days=1)).date()
+
+    def get_data_for_awc_monthly(month, filters):
         return AggAwcMonthly.objects.filter(
             month=month, **filters
         ).values(
@@ -537,60 +550,88 @@ def get_cas_reach_data(config):
 
         )
 
+    def get_data_for_daily_usage(date, filters):
+        return AggDailyUsageView.objects.filter(
+            date=date, **filters
+        ).values(
+            'aggregation_level'
+        ).annotate(
+            awcs=Sum('awc_count'),
+            daily_attendance=Sum('daily_attendance_open')
+        )
+
     current_month = datetime(*config['month'])
     previous_month = datetime(*config['prev_month'])
     del config['month']
     del config['prev_month']
 
-    this_month_data = get_data_for(current_month, config)
-    prev_month_data = get_data_for(previous_month, config)
+    awc_this_month_data = get_data_for_awc_monthly(current_month, config)
+    awc_prev_month_data = get_data_for_awc_monthly(previous_month, config)
+
+    daily_yesterday = get_data_for_daily_usage(yesterday_date, config)
+    daily_two_days_ago = get_data_for_daily_usage(two_days_ago, config)
 
     return {
         'records': [
             [
                 {
+                    'label': _('Number of AWCs Open yesterday'),
+                    'help_text': _(("Total Number of Angwanwadi Centers that were open yesterday "
+                                    "by the AWW or the AWW helper")),
+                    'percent': percent_increase('daily_attendance', daily_yesterday, daily_two_days_ago),
+                    'value': get_value(daily_yesterday, 'daily_attendance'),
+                    'all': get_value(daily_yesterday, 'awcs'),
+                    'format': 'div',
+                    'frequency': 'day'
+                },
+                {
                     'label': _('States/UTs covered'),
                     'help_text': _('Total States that have launched ICDS CAS'),
                     'percent': None,
-                    'value': get_value(this_month_data, 'states'),
+                    'value': get_value(awc_this_month_data, 'states'),
                     'all': None,
-                    'format': 'number'
+                    'format': 'number',
+                    'frequency': 'month'
+                }
+            ],
+            [
+                {
+                    'label': _('Blocks covered'),
+                    'help_text': _('Total Blocks that have launched ICDS CAS'),
+                    'percent': None,
+                    'value': get_value(awc_this_month_data, 'blocks'),
+                    'all': None,
+                    'format': 'number',
+                    'frequency': 'month'
                 },
                 {
                     'label': _('Districts covered'),
                     'help_text': _('Total Districts that have launched ICDS CAS'),
                     'percent': None,
-                    'value': get_value(this_month_data, 'districts'),
+                    'value': get_value(awc_this_month_data, 'districts'),
                     'all': None,
-                    'format': 'number'
+                    'format': 'number',
+                    'frequency': 'month'
                 }
             ],
             [
-                {
-                    'label': _('Block covered'),
-                    'help_text': _('Total Blocks that have launched ICDS CAS'),
-                    'percent': None,
-                    'value': get_value(this_month_data, 'blocks'),
-                    'all': None,
-                    'format': 'number'
-                },
                 {
                     'label': _('Sectors covered'),
                     'help_text': _('Total Sectors that have launched ICDS CAS'),
                     'percent': None,
-                    'value': get_value(this_month_data, 'supervisors'),
+                    'value': get_value(awc_this_month_data, 'supervisors'),
                     'all': None,
-                    'format': 'number'
-                }
-            ],
-            [
+                    'format': 'number',
+                    'frequency': 'month'
+                },
                 {
                     'label': _('AWCs covered'),
                     'help_text': _('Total AWCs that have launched ICDS CAS'),
-                    'percent': percent_increase('awcs', this_month_data, prev_month_data),
-                    'value': get_value(this_month_data, 'awcs'),
+                    'percent': percent_increase('awcs', awc_this_month_data, awc_prev_month_data),
+                    'value': get_value(awc_this_month_data, 'awcs'),
                     'all': None,
-                    'format': 'number'
+                    'format': 'number',
+                    'frequency': 'month'
                 }
             ]
         ]
@@ -609,9 +650,13 @@ def get_demographics_data(yesterday, config):
         ).annotate(
             household=Sum('cases_household'),
             child_health=Sum('cases_child_health'),
+            child_health_all=Sum('cases_child_health_all'),
             ccs_pregnant=Sum('cases_ccs_pregnant'),
+            ccs_pregnant_all=Sum('cases_ccs_pregnant_all'),
             css_lactating=Sum('cases_ccs_lactating'),
+            css_lactating_all=Sum('cases_ccs_lactating_all'),
             person_adolescent=Sum('cases_person_adolescent_girls_11_18'),
+            person_adolescent_all=Sum('cases_person_adolescent_girls_11_18_all'),
             person_aadhaar=Sum('cases_person_has_aadhaar'),
             all_persons=Sum('cases_person')
         )
@@ -624,56 +669,104 @@ def get_demographics_data(yesterday, config):
             [
                 {
                     'label': _('Registered Households'),
-                    'help_text': _('Total number of households registered using ICDS CAS'),
-                    'percent': None,
+                    'help_text': _('Total number of households registered'),
+                    'percent': percent_increase('household', yesterday_data, two_days_ago_data),
                     'value': get_value(yesterday_data, 'household'),
                     'all': None,
-                    'format': 'number'
+                    'format': 'number',
+                    'frequency': 'day'
                 },
                 {
-                    'label': _('ICDS Beneficiary Households'),
-                    'help_text': _('Total number of households that have consented to avail ICDS services'),
-                    'percent': 0,
-                    'value': 0,
-                    'all': 0,
-                    'format': 'number'
+                    'label': _('Children (0-6 years)'),
+                    'help_text': _('Total number of children registered between the age of 0 - 6 years'),
+                    'percent': percent_increase('child_health_all', yesterday_data, two_days_ago_data),
+                    'value': get_value(yesterday_data, 'child_health_all'),
+                    'all': None,
+                    'format': 'number',
+                    'frequency': 'day'
                 }
             ],
             [
                 {
-                    'label': _('Children (0-6 years)'),
-                    'help_text': _('Total number of children registered between the age of 0 - 6 years'),
-                    'percent': None,
+                    'label': _('Children (0-6 years) enrolled for ICDS services'),
+                    'help_text': _((
+                        "Total number of children registered between the age of 0 - 6 years "
+                        "and enrolled for ICDS services"
+                    )),
+                    'percent': percent_increase('child_health', yesterday_data, two_days_ago_data),
                     'value': get_value(yesterday_data, 'child_health'),
                     'all': None,
-                    'format': 'number'
+                    'format': 'number',
+                    'frequency': 'day'
                 },
                 {
                     'label': _('Pregnant Women'),
                     'help_text': _('Total number of pregnant women registered'),
-                    'percent': None,
-                    'value': get_value(yesterday_data, 'ccs_pregnant'),
+                    'percent': percent_increase('ccs_pregnant_all', yesterday_data, two_days_ago_data),
+                    'value': get_value(yesterday_data, 'ccs_pregnant_all'),
                     'all': None,
-                    'format': 'number'
+                    'format': 'number',
+                    'frequency': 'day'
                 }
             ], [
                 {
-                    'label': _('Lactating Mothers'),
+                    'label': _('Pregnant Women enrolled for ICDS services'),
+                    'help_text': _('Total number of pregnant women registered and enrolled for ICDS services'),
+                    'percent': percent_increase('ccs_pregnant', yesterday_data, two_days_ago_data),
+                    'value': get_value(yesterday_data, 'ccs_pregnant'),
+                    'all': None,
+                    'format': 'number',
+                    'frequency': 'day'
+                },
+                {
+                    'label': _('Lactating Women'),
                     'help_text': _('Total number of lactating women registered'),
-                    'percent': None,
+                    'percent': percent_increase('css_lactating_all', yesterday_data, two_days_ago_data),
+                    'value': get_value(yesterday_data, 'css_lactating_all'),
+                    'all': None,
+                    'format': 'number',
+                    'frequency': 'day'
+                }
+            ], [
+                {
+                    'label': _('Lactating Women enrolled for ICDS services'),
+                    'help_text': _('Total number of lactating women registered and enrolled for ICDS services'),
+                    'percent': percent_increase('css_lactating', yesterday_data, two_days_ago_data),
                     'value': get_value(yesterday_data, 'css_lactating'),
                     'all': None,
-                    'format': 'number'
+                    'format': 'number',
+                    'frequency': 'day'
                 },
                 {
                     'label': _('Adolescent Girls (11-18 years)'),
-                    'help_text': _('Total number of adolescent girls who are registered'),
-                    'percent': None,
-                    'value': get_value(yesterday_data, 'person_adolescent'),
+                    'help_text': _('Total number of adolescent girls (11 - 18 years) who are registered'),
+                    'percent': percent_increase(
+                        'person_adolescent_all',
+                        yesterday_data,
+                        two_days_ago_data
+                    ),
+                    'value': get_value(yesterday_data, 'person_adolescent_all'),
                     'all': None,
-                    'format': 'number'
+                    'format': 'number',
+                    'frequency': 'day'
                 }
             ], [
+                {
+                    'label': _('Adolescent Girls (11-18 years) enrolled for ICDS services'),
+                    'help_text': _((
+                        "Total number of adolescent girls (11 - 18 years) "
+                        "who are registered and enrolled for ICDS services"
+                    )),
+                    'percent': percent_increase(
+                        'person_adolescent',
+                        yesterday_data,
+                        two_days_ago_data
+                    ),
+                    'value': get_value(yesterday_data, 'person_adolescent'),
+                    'all': None,
+                    'format': 'number',
+                    'frequency': 'day'
+                },
                 {
                     'label': _('% Adhaar seeded beneficaries'),
                     'help_text': _((
@@ -687,7 +780,8 @@ def get_demographics_data(yesterday, config):
                     ),
                     'value': get_value(yesterday_data, 'person_aadhaar'),
                     'all': get_value(yesterday_data, 'all_persons'),
-                    'format': 'number'
+                    'format': 'number',
+                    'frequency': 'day'
                 }
             ]
         ]
@@ -729,7 +823,8 @@ def get_awc_infrastructure_data(config):
                     ),
                     'value': get_value(this_month_data, 'clean_water'),
                     'all': get_value(this_month_data, 'awcs'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
                 },
                 {
                     'label': _((
@@ -745,7 +840,8 @@ def get_awc_infrastructure_data(config):
                     ),
                     'value': get_value(this_month_data, 'functional_toilet'),
                     'all': get_value(this_month_data, 'awcs'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
                 }
             ],
             [
@@ -755,7 +851,8 @@ def get_awc_infrastructure_data(config):
                     'percent': 0,
                     'value': 0,
                     'all': 0,
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
                 },
                 {
                     'label': _('Total number of AWCs with a Medicine Kit'),
@@ -768,7 +865,8 @@ def get_awc_infrastructure_data(config):
                     ),
                     'value': get_value(this_month_data, 'medicine_kits'),
                     'all': get_value(this_month_data, 'awcs'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
                 }
             ],
             [
@@ -778,7 +876,8 @@ def get_awc_infrastructure_data(config):
                     'percent': 0,
                     'value': 0,
                     'all': 0,
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
                 },
                 {
                     'label': _('Total number of AWCs with a stadiometer'),
@@ -786,7 +885,8 @@ def get_awc_infrastructure_data(config):
                     'percent': 0,
                     'value': 0,
                     'all': 0,
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
                 }
             ],
             [
@@ -796,7 +896,8 @@ def get_awc_infrastructure_data(config):
                     'percent': 0,
                     'value': 0,
                     'all': 0,
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
                 }
             ]
         ]
@@ -839,7 +940,7 @@ def get_awc_opened_data(filters):
                 "label": "Awc Opened yesterday",
                 "fills": {
                     '0%-50%': RED,
-                    '51%-75%': ORANGE,
+                    '51%-75%': YELLOW,
                     '75%-100%': GREEN,
                     'defaultFill': GREY,
                 },
@@ -865,7 +966,8 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
         ).annotate(
             moderately_underweight=Sum('nutrition_status_moderately_underweight'),
             severely_underweight=Sum('nutrition_status_severely_underweight'),
-            valid=Sum('valid_in_month'),
+            normal=Sum('nutrition_status_normal'),
+            valid=Sum('wer_eligible'),
         )
 
     map_data = {}
@@ -876,33 +978,45 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
 
         severely_underweight = row['severely_underweight']
         moderately_underweight = row['moderately_underweight']
+        normal = row['normal']
 
         value = ((moderately_underweight or 0) + (severely_underweight or 0)) * 100 / (valid or 1)
         average.append(value)
-
+        row_values = {
+            'severely_underweight': severely_underweight or 0,
+            'moderately_underweight': moderately_underweight or 0,
+            'total': valid or 0,
+            'normal': normal
+        }
         if value <= 20:
-            map_data.update({name: {'fillKey': '0%-20%'}})
+            row_values.update({'fillKey': '0%-20%'})
         elif 21 <= value <= 35:
-            map_data.update({name: {'fillKey': '21%-35%'}})
+            row_values.update({'fillKey': '21%-35%'})
         elif value > 35:
-            map_data.update({name: {'fillKey': '36%-100%'}})
+            row_values.update({'fillKey': '36%-100%'})
+
+        map_data.update({name: row_values})
+
+    fills = OrderedDict()
+    fills.update({'0%-20%': GREEN})
+    fills.update({'21%-35%': YELLOW})
+    fills.update({'36%-100%': RED})
+    fills.update({'defaultFill': GREY})
 
     return [
         {
             "slug": "moderately_underweight",
             "label": "",
-            "fills": {
-                '0%-20%': GREEN,
-                '21%-35%': ORANGE,
-                '36%-100%': RED,
-                'defaultFill': GREY,
-            },
+            "fills": fills,
             "rightLegend": {
                 "average": sum(average) / (len(average) or 1),
                 "info": _((
-                    "Percentage of children with weight-for-age less than -2 standard deviations of the WHO"
-                    " Child Growth Standards median. Children who are moderately or severely underweight "
-                    "have a higher risk of mortality."))
+                    "Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age "
+                    "less than -2 standard deviations of the WHO Child Growth Standards median. "
+                    "<br/><br/>"
+                    "Children who are moderately or severely underweight have a higher risk of mortality"
+                )),
+                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
             },
             "data": map_data,
         }
@@ -910,10 +1024,10 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
 
 
 def get_prevalence_of_undernutrition_data_chart(config, loc_level):
-    config['month__range'] = (
-        datetime(*config['month']) - relativedelta(months=3),
-        datetime(*config['month'])
-    )
+    month = datetime(*config['month'])
+    three_before = datetime(*config['month']) - relativedelta(months=3)
+
+    config['month__range'] = (three_before, month)
     del config['month']
 
     chart_data = AggChildHealthMonthly.objects.filter(
@@ -929,10 +1043,19 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
     locations_for_lvl = SQLLocation.objects.filter(location_type__code=loc_level).count()
 
     data = {
-        'green': {},
-        'orange': {},
-        'red': {}
+        'green': OrderedDict(),
+        'orange': OrderedDict(),
+        'red': OrderedDict()
     }
+
+    dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
+
+    for date in dates:
+        miliseconds = int(date.strftime("%s")) * 1000
+        data['green'][miliseconds] = 0
+        data['orange'][miliseconds] = 0
+        data['red'][miliseconds] = 0
+
     best_worst = {}
     for row in chart_data:
         date = row['month']
@@ -1012,7 +1135,7 @@ def get_prevalence_of_undernutrition_sector_data(config, loc_level):
     ).annotate(
         moderately_underweight=Sum('nutrition_status_moderately_underweight'),
         severely_underweight=Sum('nutrition_status_severely_underweight'),
-        valid=Sum('valid_in_month'),
+        valid=Sum('wer_eligible'),
     ).order_by('%s_name' % loc_level)
 
     loc_data = {
@@ -1034,9 +1157,9 @@ def get_prevalence_of_undernutrition_sector_data(config, loc_level):
         name = row['%s_name' % loc_level]
 
         if tmp_name and name != tmp_name:
-            chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location))])
-            chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location))])
-            chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location))])
+            chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
+            chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
+            chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
             rows_for_location = 0
             loc_data = {
                 'green': 0,
@@ -1058,9 +1181,9 @@ def get_prevalence_of_undernutrition_sector_data(config, loc_level):
         tmp_name = name
         rows_for_location += 1
 
-    chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location))])
-    chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location))])
-    chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location))])
+    chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
+    chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
+    chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
 
     return {
         "chart_data": [
@@ -1138,7 +1261,8 @@ def get_awc_reports_system_usage(config, month, prev_month, two_before, loc_leve
                     ),
                     'value': get_value(this_month_data, 'awc_open'),
                     'all': '',
-                    'format': 'number'
+                    'format': 'number',
+                    'frequency': 'month'
                 },
                 {
                     'label': _((
@@ -1154,7 +1278,8 @@ def get_awc_reports_system_usage(config, month, prev_month, two_before, loc_leve
                     ),
                     'value': get_value(this_month_data, 'weighed'),
                     'all': get_value(this_month_data, 'all'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
                 }
             ]
         ],
@@ -1287,7 +1412,8 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     ),
                     'value': get_value(this_month_data, 'underweight'),
                     'all': get_value(this_month_data, 'valid_in_month'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
                 },
                 {
                     'label': _('% Immunization coverage (at age 1 year)'),
@@ -1303,7 +1429,8 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     ),
                     'value': get_value(this_month_data, 'immunized'),
                     'all': get_value(this_month_data, 'eligible'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
                 },
             ],
             [
@@ -1323,7 +1450,8 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     ),
                     'value': get_value(this_month_data, 'wasting'),
                     'all': get_value(this_month_data, 'height'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
                 },
                 {
                     'label': _('% Stunting (height-for-age)'),
@@ -1341,7 +1469,8 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     ),
                     'value': get_value(this_month_data, 'stunting'),
                     'all': get_value(this_month_data, 'height'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
                 },
             ],
             [
@@ -1356,7 +1485,8 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     ),
                     'value': get_value(this_month_data, 'low_birth'),
                     'all': get_value(this_month_data, 'born'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
                 },
                 {
                     'label': _('% Early Initiation of Breastfeeding'),
@@ -1369,7 +1499,8 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     ),
                     'value': get_value(this_month_data, 'birth'),
                     'all': get_value(this_month_data, 'born'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
                 },
             ],
             [
@@ -1384,7 +1515,8 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     ),
                     'value': get_value(this_month_data, 'month_ebf'),
                     'all': get_value(this_month_data, 'ebf'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
                 },
                 {
                     'label': _('% Children initiated appropriate complementary feeding'),
@@ -1397,7 +1529,8 @@ def get_awc_reports_maternal_child(config, month, prev_month):
                     ),
                     'value': get_value(this_month_data, 'month_cf'),
                     'all': get_value(this_month_data, 'cf'),
-                    'format': 'percent_and_div'
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
                 },
             ]
         ]
@@ -1478,7 +1611,7 @@ def get_awc_report_demographics(config, month):
             [
                 {
                     'label': _('Registered Households'),
-                    'help_text': _("Total number of households registered using ICDS CAS"),
+                    'help_text': _("Total number of households registered"),
                     'percent': percent_increase(
                         'household',
                         this_month,
@@ -1486,7 +1619,8 @@ def get_awc_report_demographics(config, month):
                     ),
                     'value': get_value(this_month, 'household'),
                     'all': '',
-                    'format': 'number'
+                    'format': 'number',
+                    'frequency': 'month'
                 }
             ],
             [
@@ -1500,7 +1634,8 @@ def get_awc_report_demographics(config, month):
                     ),
                     'value': get_value(kpi_yesterday, 'ccs_pregnant'),
                     'all': '',
-                    'format': 'number'
+                    'format': 'number',
+                    'frequency': 'day'
                 },
                 {
                     'label': _('Lactating Mothers'),
@@ -1512,7 +1647,8 @@ def get_awc_report_demographics(config, month):
                     ),
                     'value': get_value(kpi_yesterday, 'ccs_lactating'),
                     'all': '',
-                    'format': 'number'
+                    'format': 'number',
+                    'frequency': 'day'
                 }
             ],
             [
@@ -1526,7 +1662,8 @@ def get_awc_report_demographics(config, month):
                     ),
                     'value': get_value(kpi_yesterday, 'adolescent'),
                     'all': '',
-                    'format': 'number'
+                    'format': 'number',
+                    'frequency': 'day'
                 },
                 {
                     'label': _('% Adhaar seeded beneficaries'),
@@ -1541,17 +1678,18 @@ def get_awc_report_demographics(config, month):
                     ),
                     'value': get_value(kpi_yesterday, 'has_aadhaar'),
                     'all': get_value(kpi_yesterday, 'all_cases'),
-                    'format': 'div'
+                    'format': 'div',
+                    'frequency': 'day'
                 }
             ]
         ]
     }
 
 
-def get_awc_report_beneficiary(awc_site_code, month, two_before):
+def get_awc_report_beneficiary(awc_id, month, two_before):
     data = ChildHealthMonthlyView.objects.filter(
         month__range=(datetime(*two_before), datetime(*month)),
-        awc_id=awc_site_code,
+        awc_id=awc_id,
         open_in_month=1,
         valid_in_month=1,
         age_in_months__lte=72
@@ -1615,3 +1753,521 @@ def get_beneficiary_details(case_id, month):
         beneficiary['weight'].append({'x': row.age_in_months, 'y': (row.recorded_weight or 0)})
         beneficiary['height'].append({'x': row.age_in_months, 'y': (row.recorded_height or 0)})
     return beneficiary
+
+
+def get_prevalence_of_severe_data_map(config, loc_level):
+
+    def get_data_for(filters):
+        filters['month'] = datetime(*filters['month'])
+        return AggChildHealthMonthly.objects.filter(
+            **filters
+        ).values(
+            '%s_name' % loc_level
+        ).annotate(
+            moderate=Sum('wasting_moderate'),
+            severe=Sum('wasting_severe'),
+            normal=Sum('wasting_normal'),
+            valid=Sum('height_eligible'),
+        )
+
+    map_data = {}
+    average = []
+    for row in get_data_for(config):
+        valid = row['valid']
+        name = row['%s_name' % loc_level]
+
+        severe = row['severe']
+        moderate = row['moderate']
+        normal = row['normal']
+
+        value = ((moderate or 0) + (severe or 0)) * 100 / (valid or 1)
+        average.append(value)
+        row_values = {
+            'severe': severe or 0,
+            'moderate': moderate or 0,
+            'total': valid or 0,
+            'normal': normal
+        }
+        if value < 5:
+            row_values.update({'fillKey': '0%-5%'})
+        elif 5 <= value < 7:
+            row_values.update({'fillKey': '5%-7%'})
+        elif value >= 7:
+            row_values.update({'fillKey': '7%-100%'})
+
+        map_data.update({name: row_values})
+
+    fills = OrderedDict()
+    fills.update({'0%-5%': GREEN})
+    fills.update({'5%-7%': YELLOW})
+    fills.update({'7%-100%': RED})
+    fills.update({'defaultFill': GREY})
+
+    return [
+        {
+            "slug": "severe",
+            "label": "",
+            "fills": fills,
+            "rightLegend": {
+                "average": sum(average) / (len(average) or 1),
+                "info": _((
+                    "Percentage of children between 6 - 60 months enrolled for ICDS services with "
+                    "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median."
+                    "<br/><br/>"
+                    "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
+                    "undernutrition usually as a consequence of insufficient food intake or a high "
+                    "incidence of infectious diseases."
+                )),
+                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+            },
+            "data": map_data,
+        }
+    ]
+
+
+def get_prevalence_of_severe_data_chart(config, loc_level):
+    month = datetime(*config['month'])
+    three_before = datetime(*config['month']) - relativedelta(months=3)
+
+    config['month__range'] = (three_before, month)
+    del config['month']
+
+    chart_data = AggChildHealthMonthly.objects.filter(
+        **config
+    ).values(
+        'month', '%s_name' % loc_level
+    ).annotate(
+        moderate=Sum('wasting_moderate'),
+        severe=Sum('wasting_severe'),
+        valid=Sum('height_eligible'),
+    ).order_by('month')
+
+    locations_for_lvl = SQLLocation.objects.filter(location_type__code=loc_level).count()
+
+    data = {
+        'green': OrderedDict(),
+        'orange': OrderedDict(),
+        'red': OrderedDict()
+    }
+
+    dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
+
+    for date in dates:
+        miliseconds = int(date.strftime("%s")) * 1000
+        data['green'][miliseconds] = 0
+        data['orange'][miliseconds] = 0
+        data['red'][miliseconds] = 0
+
+    best_worst = {}
+    for row in chart_data:
+        date = row['month']
+        valid = row['valid']
+        location = row['%s_name' % loc_level]
+        severe = row['severe']
+        moderate = row['moderate']
+
+        underweight = ((moderate or 0) + (severe or 0)) * 100 / (valid or 1)
+
+        if location in best_worst:
+            best_worst[location].append(underweight)
+        else:
+            best_worst[location] = [underweight]
+
+        date_in_miliseconds = int(date.strftime("%s")) * 1000
+
+        if date_in_miliseconds not in data['green']:
+            data['green'][date_in_miliseconds] = 0
+            data['orange'][date_in_miliseconds] = 0
+            data['red'][date_in_miliseconds] = 0
+
+        if underweight < 5:
+            data['green'][date_in_miliseconds] += 1
+        elif 5 <= underweight < 7:
+            data['orange'][date_in_miliseconds] += 1
+        elif underweight >= 7:
+            data['red'][date_in_miliseconds] += 1
+
+    top_locations = sorted(
+        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        key=lambda x: x['percent'],
+        reverse=True
+    )
+
+    return {
+        "chart_data": [
+            {
+                "values": [[key, value / float(locations_for_lvl)] for key, value in data['green'].iteritems()],
+                "key": "Between 0%-5%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": GREEN
+            },
+            {
+                "values": [[key, value / float(locations_for_lvl)] for key, value in data['orange'].iteritems()],
+                "key": "Between 5%-7%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": ORANGE
+            },
+            {
+                "values": [[key, value / float(locations_for_lvl)] for key, value in data['red'].iteritems()],
+                "key": "Between 7%-100%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": RED
+            }
+        ],
+        "top_three": top_locations[0:3],
+        "bottom_three": top_locations[-4:-1],
+        "location_type": loc_level.title()
+    }
+
+
+def get_prevalence_of_severe_sector_data(config, loc_level):
+    group_by = ['%s_name' % loc_level]
+    if loc_level == LocationTypes.SUPERVISOR:
+        config['aggregation_level'] += 1
+        group_by.append('%s_name' % LocationTypes.AWC)
+
+    config['month'] = datetime(*config['month'])
+    data = AggChildHealthMonthly.objects.filter(
+        **config
+    ).values(
+        *group_by
+    ).annotate(
+        moderate=Sum('wasting_moderate'),
+        severe=Sum('wasting_severe'),
+        valid=Sum('height_eligible'),
+    ).order_by('%s_name' % loc_level)
+
+    loc_data = {
+        'green': 0,
+        'orange': 0,
+        'red': 0
+    }
+    tmp_name = ''
+    rows_for_location = 0
+
+    chart_data = {
+        'green': [],
+        'orange': [],
+        'red': []
+    }
+
+    for row in data:
+        valid = row['valid']
+        name = row['%s_name' % loc_level]
+
+        if tmp_name and name != tmp_name:
+            chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
+            chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
+            chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+            rows_for_location = 0
+            loc_data = {
+                'green': 0,
+                'orange': 0,
+                'red': 0
+            }
+        severe = row['severe']
+        moderate = row['moderate']
+
+        value = ((moderate or 0) + (severe or 0)) * 100 / float(valid or 1)
+
+        if value < 5.0:
+            loc_data['green'] += 1
+        elif 5.0 <= value < 7.0:
+            loc_data['orange'] += 1
+        elif value >= 7.0:
+            loc_data['red'] += 1
+
+        tmp_name = name
+        rows_for_location += 1
+
+    chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
+    chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
+    chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+
+    return {
+        "chart_data": [
+            {
+                "values": chart_data['green'],
+                "key": "0%-5%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": GREEN
+            },
+            {
+                "values": chart_data['orange'],
+                "key": "5%-7%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": ORANGE
+            },
+            {
+                "values": chart_data['red'],
+                "key": "7%-100%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": RED
+            }
+        ]
+    }
+
+
+def get_prevalence_of_stunning_data_map(config, loc_level):
+
+    def get_data_for(filters):
+        filters['month'] = datetime(*filters['month'])
+        return AggChildHealthMonthly.objects.filter(
+            **filters
+        ).values(
+            '%s_name' % loc_level
+        ).annotate(
+            moderate=Sum('stunting_moderate'),
+            severe=Sum('stunting_severe'),
+            normal=Sum('stunting_normal'),
+            valid=Sum('height_eligible'),
+        )
+
+    map_data = {}
+    average = []
+    for row in get_data_for(config):
+        valid = row['valid']
+        name = row['%s_name' % loc_level]
+
+        severe = row['severe']
+        moderate = row['moderate']
+        normal = row['normal']
+
+        value = ((moderate or 0) + (severe or 0)) * 100 / (valid or 1)
+        average.append(value)
+        row_values = {
+            'severe': severe or 0,
+            'moderate': moderate or 0,
+            'total': valid or 0,
+            'normal': normal
+        }
+        if value < 5:
+            row_values.update({'fillKey': '0%-25%'})
+        elif 5 <= value < 7:
+            row_values.update({'fillKey': '25%-38%'})
+        elif value >= 7:
+            row_values.update({'fillKey': '38%-100%'})
+
+        map_data.update({name: row_values})
+
+    fills = OrderedDict()
+    fills.update({'0%-25%': GREEN})
+    fills.update({'25%-38%': YELLOW})
+    fills.update({'38%-100%': RED})
+    fills.update({'defaultFill': GREY})
+
+    return [
+        {
+            "slug": "severe",
+            "label": "",
+            "fills": fills,
+            "rightLegend": {
+                "average": sum(average) / (len(average) or 1),
+                "info": _((
+                    "Percentage of children between 6 - 60 months enrolled for ICDS services with "
+                    "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median."
+                    "<br/><br/>"
+                    "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
+                    "undernutrition usually as a consequence of insufficient food intake or a high "
+                    "incidence of infectious diseases."
+                )),
+                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+            },
+            "data": map_data,
+        }
+    ]
+
+
+def get_prevalence_of_stunning_data_chart(config, loc_level):
+    month = datetime(*config['month'])
+    three_before = datetime(*config['month']) - relativedelta(months=3)
+
+    config['month__range'] = (three_before, month)
+    del config['month']
+
+    chart_data = AggChildHealthMonthly.objects.filter(
+        **config
+    ).values(
+        'month', '%s_name' % loc_level
+    ).annotate(
+        moderate=Sum('stunting_moderate'),
+        severe=Sum('stunting_severe'),
+        valid=Sum('height_eligible'),
+    ).order_by('month')
+
+    locations_for_lvl = SQLLocation.objects.filter(location_type__code=loc_level).count()
+
+    data = {
+        'green': OrderedDict(),
+        'orange': OrderedDict(),
+        'red': OrderedDict()
+    }
+
+    dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
+
+    for date in dates:
+        miliseconds = int(date.strftime("%s")) * 1000
+        data['green'][miliseconds] = 0
+        data['orange'][miliseconds] = 0
+        data['red'][miliseconds] = 0
+
+    best_worst = {}
+    for row in chart_data:
+        date = row['month']
+        valid = row['valid']
+        location = row['%s_name' % loc_level]
+        severe = row['severe']
+        moderate = row['moderate']
+
+        underweight = ((moderate or 0) + (severe or 0)) * 100 / (valid or 1)
+
+        if location in best_worst:
+            best_worst[location].append(underweight)
+        else:
+            best_worst[location] = [underweight]
+
+        date_in_miliseconds = int(date.strftime("%s")) * 1000
+
+        if date_in_miliseconds not in data['green']:
+            data['green'][date_in_miliseconds] = 0
+            data['orange'][date_in_miliseconds] = 0
+            data['red'][date_in_miliseconds] = 0
+
+        if underweight < 25:
+            data['green'][date_in_miliseconds] += 1
+        elif 25 <= underweight < 38:
+            data['orange'][date_in_miliseconds] += 1
+        elif underweight >= 38:
+            data['red'][date_in_miliseconds] += 1
+
+    top_locations = sorted(
+        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        key=lambda x: x['percent'],
+        reverse=True
+    )
+
+    return {
+        "chart_data": [
+            {
+                "values": [[key, value / float(locations_for_lvl)] for key, value in data['green'].iteritems()],
+                "key": "Between 0%-25%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": GREEN
+            },
+            {
+                "values": [[key, value / float(locations_for_lvl)] for key, value in data['orange'].iteritems()],
+                "key": "Between 25%-38%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": ORANGE
+            },
+            {
+                "values": [[key, value / float(locations_for_lvl)] for key, value in data['red'].iteritems()],
+                "key": "Between 38%-100%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": RED
+            }
+        ],
+        "top_three": top_locations[0:3],
+        "bottom_three": top_locations[-4:-1],
+        "location_type": loc_level.title()
+    }
+
+
+def get_prevalence_of_stunning_sector_data(config, loc_level):
+    group_by = ['%s_name' % loc_level]
+    if loc_level == LocationTypes.SUPERVISOR:
+        config['aggregation_level'] += 1
+        group_by.append('%s_name' % LocationTypes.AWC)
+
+    config['month'] = datetime(*config['month'])
+    data = AggChildHealthMonthly.objects.filter(
+        **config
+    ).values(
+        *group_by
+    ).annotate(
+        moderate=Sum('stunting_moderate'),
+        severe=Sum('stunting_severe'),
+        valid=Sum('height_eligible'),
+    ).order_by('%s_name' % loc_level)
+
+    loc_data = {
+        'green': 0,
+        'orange': 0,
+        'red': 0
+    }
+    tmp_name = ''
+    rows_for_location = 0
+
+    chart_data = {
+        'green': [],
+        'orange': [],
+        'red': []
+    }
+
+    for row in data:
+        valid = row['valid']
+        name = row['%s_name' % loc_level]
+
+        if tmp_name and name != tmp_name:
+            chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
+            chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
+            chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+            rows_for_location = 0
+            loc_data = {
+                'green': 0,
+                'orange': 0,
+                'red': 0
+            }
+        severe = row['severe']
+        moderate = row['moderate']
+
+        value = ((moderate or 0) + (severe or 0)) * 100 / float(valid or 1)
+
+        if value < 25.0:
+            loc_data['green'] += 1
+        elif 25.0 <= value < 38.0:
+            loc_data['orange'] += 1
+        elif value >= 38.0:
+            loc_data['red'] += 1
+
+        tmp_name = name
+        rows_for_location += 1
+
+    chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
+    chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
+    chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+
+    return {
+        "chart_data": [
+            {
+                "values": chart_data['green'],
+                "key": "0%-25%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": GREEN
+            },
+            {
+                "values": chart_data['orange'],
+                "key": "25%-38%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": ORANGE
+            },
+            {
+                "values": chart_data['red'],
+                "key": "38%-100%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": RED
+            }
+        ]
+    }
