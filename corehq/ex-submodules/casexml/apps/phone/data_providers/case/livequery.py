@@ -38,6 +38,9 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 def do_livequery(timing_context, restore_state, async_task=None):
     """Get case sync restore response
+
+    This function makes no changes to external state other than updating
+    the `restore_state.current_sync_log` and progress of `async_task`.
     """
     def enliven(case_id):
         """Mark the given case, its extensions and their hosts as live
@@ -176,6 +179,7 @@ def do_livequery(timing_context, restore_state, async_task=None):
                     live_ids, restore_state, accessor)
         else:
             sync_ids = live_ids
+        restore_state.current_sync_log.case_ids_on_phone = live_ids | sync_ids
 
         with timing_context("compile_response"):
             iaccessor = PrefetchIndexCaseAccessor(accessor, indices)
