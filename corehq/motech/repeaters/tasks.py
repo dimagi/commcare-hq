@@ -10,9 +10,9 @@ from corehq.util.datadog.gauges import datadog_gauge_task
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 
-from corehq.apps.repeaters.dbaccessors import iterate_repeat_records, \
+from corehq.motech.repeaters.dbaccessors import iterate_repeat_records, \
     get_overdue_repeat_record_count
-from corehq.apps.repeaters.const import (
+from corehq.motech.repeaters.const import (
     CHECK_REPEATERS_INTERVAL,
     CHECK_REPEATERS_KEY,
     RECORD_PENDING_STATE,

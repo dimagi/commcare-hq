@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from django.test import TestCase
 
-from corehq.apps.repeaters.dbaccessors import (
+from corehq.motech.repeaters.dbaccessors import (
     get_failure_repeat_record_count,
     get_overdue_repeat_record_count,
     get_paged_repeat_records,
@@ -13,8 +13,8 @@ from corehq.apps.repeaters.dbaccessors import (
     iter_repeat_records_by_domain,
     get_domains_that_have_repeat_records,
 )
-from corehq.apps.repeaters.models import RepeatRecord, CaseRepeater
-from corehq.apps.repeaters.const import RECORD_PENDING_STATE, RECORD_CANCELLED_STATE
+from corehq.motech.repeaters.models import RepeatRecord, CaseRepeater
+from corehq.motech.repeaters.const import RECORD_PENDING_STATE, RECORD_CANCELLED_STATE
 
 
 class TestRepeatRecordDBAccessors(TestCase):

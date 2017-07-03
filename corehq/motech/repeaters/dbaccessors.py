@@ -32,7 +32,7 @@ def get_repeat_record_count(domain, repeater_id=None, state=None):
     )
     kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state))
 
-    result = RepeatRecord.get_db().view('receiverwrapper/repeat_records', **kwargs).one()
+    result = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).one()
 
     return result['value'] if result else 0
 
@@ -41,7 +41,7 @@ def get_overdue_repeat_record_count(overdue_threshold=datetime.timedelta(minutes
     from .models import RepeatRecord
     overdue_datetime = datetime.datetime.utcnow() - overdue_threshold
     results = RepeatRecord.view(
-        "receiverwrapper/repeat_records_by_next_check",
+        "repeaters/repeat_records_by_next_check",
         startkey=[None],
         endkey=[None, json_format_datetime(overdue_datetime)],
         reduce=True,
@@ -83,7 +83,7 @@ def get_paged_repeat_records(domain, skip, limit, repeater_id=None, state=None):
     }
     kwargs.update(_get_startkey_endkey_all_records(domain, repeater_id, state))
 
-    results = RepeatRecord.get_db().view('receiverwrapper/repeat_records', **kwargs).all()
+    results = RepeatRecord.get_db().view('repeaters/repeat_records', **kwargs).all()
 
     return [RepeatRecord.wrap(result['doc']) for result in results]
 
@@ -100,7 +100,7 @@ def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, since=No
 
     for doc in paginate_view(
             RepeatRecord.get_db(),
-            'receiverwrapper/repeat_records',
+            'repeaters/repeat_records',
             chunk_size,
             **kwargs):
         yield RepeatRecord.wrap(doc['doc'])
@@ -109,7 +109,7 @@ def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, since=No
 def get_repeaters_by_domain(domain):
     from .models import Repeater
 
-    results = Repeater.get_db().view('receiverwrapper/repeaters',
+    results = Repeater.get_db().view('repeaters/repeaters',
         startkey=[domain],
         endkey=[domain, {}],
         include_docs=True,
@@ -122,7 +122,7 @@ def get_repeaters_by_domain(domain):
 def _get_repeater_ids_by_domain(domain):
     from .models import Repeater
 
-    results = Repeater.get_db().view('receiverwrapper/repeaters',
+    results = Repeater.get_db().view('repeaters/repeaters',
         startkey=[domain],
         endkey=[domain, {}],
         include_docs=False,
@@ -144,7 +144,7 @@ def iterate_repeat_records(due_before, chunk_size=10000, database=None):
     }
     for doc in paginate_view(
             RepeatRecord.get_db(),
-            'receiverwrapper/repeat_records_by_next_check',
+            'repeaters/repeat_records_by_next_check',
             chunk_size,
             **view_kwargs):
         yield RepeatRecord.wrap(doc['doc'])
@@ -154,14 +154,14 @@ def get_domains_that_have_repeat_records():
     from .models import RepeatRecord
     return [
         row['key'][0]
-        for row in RepeatRecord.view('receiverwrapper/repeat_records', group_level=1).all()
+        for row in RepeatRecord.view('repeaters/repeat_records', group_level=1).all()
     ]
 
 
 @unit_testing_only
 def delete_all_repeat_records():
     from .models import RepeatRecord
-    results = RepeatRecord.get_db().view('receiverwrapper/repeat_records_by_next_check', reduce=False).all()
+    results = RepeatRecord.get_db().view('repeaters/repeat_records_by_next_check', reduce=False).all()
     for result in results:
         try:
             repeat_record = RepeatRecord.get(result['id'])
@@ -174,5 +174,5 @@ def delete_all_repeat_records():
 @unit_testing_only
 def delete_all_repeaters():
     from .models import Repeater
-    for repeater in Repeater.get_db().view('receiverwrapper/repeaters', reduce=False, include_docs=True).all():
+    for repeater in Repeater.get_db().view('repeaters/repeaters', reduce=False, include_docs=True).all():
         Repeater.wrap(repeater['doc']).delete()

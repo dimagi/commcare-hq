@@ -43,7 +43,7 @@ from corehq.apps.api.util import get_obj, object_does_not_exist
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater
+from corehq.motech.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from corehq.apps.fixtures.resources.v0_1 import InternalFixtureResource
 from corehq.apps.locations.resources.v0_1 import InternalLocationResource
 from custom.ilsgateway.resources.v0_1 import ILSLocationResource

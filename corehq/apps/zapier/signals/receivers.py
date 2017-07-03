@@ -3,7 +3,7 @@ from django.dispatch import receiver
 from tastypie.exceptions import ImmediateHttpResponse
 from tastypie.http import HttpBadRequest
 
-from corehq.apps.repeaters.models import FormRepeater, CaseRepeater
+from corehq.motech.repeaters.models import FormRepeater, CaseRepeater
 from corehq.apps.zapier.models import ZapierSubscription
 from corehq.apps.zapier.consts import EventTypes
 

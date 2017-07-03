@@ -3,9 +3,9 @@ from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from django.urls import reverse
 
-from corehq.apps.repeaters.dbaccessors import iter_repeat_records_by_domain
+from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
 from corehq.apps.domain.views import DomainForwardingRepeatRecords
-from corehq.apps.repeaters.dbaccessors import get_repeaters_by_domain
+from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.apps.reports.filters.select import RepeaterFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 
