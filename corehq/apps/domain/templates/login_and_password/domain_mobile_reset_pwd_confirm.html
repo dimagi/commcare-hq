@@ -1,0 +1,63 @@
+{% extends "style/base_mobile.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
+
+{% block title %}{% trans "Password Reset Confirmation" %}{% endblock title %}
+
+{% block header %}
+    <div class="page-header container-fluid">
+        <h1>{% blocktrans %}Welcome to {{ domain_name }}!{% endblocktrans %}</h1>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        {% if validlink %}
+            <form class="form-horizontal" name="form" method="post" action="">
+                {% csrf_token %}
+                {% for global_error in form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ global_error }}
+                    </div>
+                {% endfor %}
+                <fieldset>
+                    {% for field in form.visible_fields %}
+                        <div class="form-group{% if field.errors %} has-error{% endif %}">
+                            <label class="col-sm-4 control-label" for="{{ field.id }}">{{ field.label }}</label>
+                            <div class="col-sm-4">
+                                {{ field }}
+                                {% for error in field.errors %}
+                                    <p class="help-block">{{ error }}</p>
+                                {% endfor %}
+                                {% if field.help_text %}
+                                    <p class="help-block">
+                                        {{ field.help_text }}
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </fieldset>
+                <div class="form-actions">
+                    <div class="col-sm-4 col-sm-offset-4">
+                        <button type="submit" class="btn btn-primary">{% trans "Reset Password" %}</button>
+                    </div>
+                </div>
+            </form>
+        {% else %}
+            <div class="alert alert-danger">
+                {% blocktrans %}
+                    <strong>Password reset unsuccessful!</strong>
+                    The password reset link was invalid, possibly because it has already been used.  Please request a new password reset.
+                {% endblocktrans %}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block js %}{{ block.super }}
+    {% if not hide_password_feedback %}
+    <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
+    <script src="{% static 'registration/js/password.js' %}"></script>
+    {% endif %}
+{% endblock %}
