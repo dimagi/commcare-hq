@@ -5,7 +5,7 @@ COUCH_UUID_MAX_LEN = 50
 
 
 class OldDeviceReportEntry(models.Model):
-    xform_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, db_index=True)
+    xform_id = models.CharField(max_length=COUCH_UUID_MAX_LEN)
     i = models.IntegerField()
     msg = models.TextField()
     type = models.CharField(max_length=32)
@@ -34,7 +34,7 @@ class OldDeviceReportEntry(models.Model):
 
 @architect.install('partition', type='range', subtype='date', constraint='day', column='server_date')
 class DeviceReportEntry(models.Model):
-    xform_id = models.CharField(max_length=COUCH_UUID_MAX_LEN, db_index=True)
+    xform_id = models.CharField(max_length=COUCH_UUID_MAX_LEN)
     i = models.IntegerField()
     msg = models.TextField()
     type = models.CharField(max_length=32)
