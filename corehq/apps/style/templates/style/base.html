@@ -400,14 +400,14 @@
         {# JavaScript Display Logic Libaries #}
 
         {% if request.couch_user %}
-        <script src="{% static 'notifications/js/NotificationsService.ko.js' %}"></script>
+        <script src="{% static 'notifications/js/notification_service.js' %}"></script>
         {% addtoblock js-inline %}
         <script>
             $(function () {
-                var $notificationsMenu = $('#js-settingsmenu-notifications');
-                if ($notificationsMenu.length > 0) {
-                    $notificationsMenu.startNotificationsService('{% url 'notifications_service' %}');
-                }
+                var notifications = hqImport('notifications/js/notification_service.js');
+                var csrfToken = $("#csrfTokenContainer").val();
+                notifications.setRMI('{% url 'notifications_service' %}', csrfToken);
+                notifications.initService('#js-settingsmenu-notifications');
             });
         </script>
         {% endaddtoblock %}

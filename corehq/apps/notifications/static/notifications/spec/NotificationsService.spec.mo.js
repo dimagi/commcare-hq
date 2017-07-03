@@ -24,7 +24,11 @@ describe('NotificationsService Unit Tests', function() {
     sinon.stub(jQuery, 'ajax', fakePromise.mock);
 
     it('Initialization', function () {
-        viewModel = $('#js-settingsmenu-notifications').startNotificationsService(fakeRMIUrl);
+        var notifications = hqImport('notifications/js/notification_service.js');
+        var csrfToken = $("#csrfTokenContainer").val();
+        notifications.setRMI(fakeRMIUrl, csrfToken);
+        notifications.initService('#js-settingsmenu-notifications');
+        viewModel = notifications.serviceModel;
     });
 
     it("Model", function () {
