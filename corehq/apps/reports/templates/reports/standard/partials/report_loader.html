@@ -1,0 +1,43 @@
+
+{% load hq_shared_tags %}
+{% load hqstyle_tags %}
+{% load i18n %}
+<script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
+<script>
+    var standardHQReport = new HQReport({
+        domain: '{{ domain }}',
+        urlRoot: '{{ report.url_root }}',
+        slug: {{ report.slug|JSON }},
+        subReportSlug: {{ report.sub_slug|JSON }},
+        type: {{ report.type|JSON }},
+        filterSet: {{ report.filter_set|JSON }},
+        needsFilters: {{ report.needs_filters|JSON }},
+        isExportable: {{ report.is_exportable|JSON }},
+        isEmailable: {{ report.is_emailable|JSON }},
+        emailDefaultSubject: {{ report.title|JSON }},
+        emailSuccessMessage: "{% trans 'Report successfully emailed' %}",
+        emailErrorMessage: "{% trans 'An error occurred emailing your report. Please try again.' %}",
+
+        {% if request.datespan %}
+            datespan: {
+                startdate: '{{ datespan.startdate|date:"Y-m-d" }}',
+                enddate: '{{ datespan.enddate|date:"Y-m-d" }}'
+            },
+        {% endif %}
+    });
+    standardHQReport.init();
+
+    {% if report.slug and report.is_async %}
+        var asyncHQReport = new HQAsyncReport({
+            standardReport: standardHQReport
+        {% if custom_async_url %},customAsyncUrl: '{{ custom_async_url }}'{% endif %}
+        {% if additional_params %},additionalParams: '{{ additional_params }}'{% endif %}
+        });
+        asyncHQReport.init();
+    {% endif %}
+
+    $('.report-description-popover').popover({
+        placement: 'right',
+        trigger: 'hover',
+    });
+</script>

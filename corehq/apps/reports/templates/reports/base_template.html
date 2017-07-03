@@ -8,12 +8,8 @@
     {% endcompress %}
 {% endblock %}
 
-{% block js-inline %}
+{% block reports-js-inline %}{{ block.super }}
     <script>
-        {% block reports-js-inline %}
-        var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport(),
-            asyncHQReport = hqImport("reports/js/standard_hq_report.js").getAsyncHQReport();
-        {% endblock %}
         $(function() {
             var defaultConfig = {{ default_config|JSON }};
             {% if report.has_datespan %}

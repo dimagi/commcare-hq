@@ -477,7 +477,6 @@ class GenericReportView(object):
                 report_title=self.report_title or self.rendered_report_title,
                 report_subtitles=self.report_subtitles,
                 export_target=self.export_target,
-                js_options=self.js_options,
             ),
             current_config_id=current_config_id,
             default_config=default_config,
@@ -486,23 +485,6 @@ class GenericReportView(object):
             domain=self.domain,
             layout_flush_content=self.flush_layout
         )
-
-    @property
-    def js_options(self):
-        return {
-            'async': self.asynchronous,
-            'domain': self.domain,
-            'filterSet': self.filter_set,
-            'isEmailable': self.emailable,
-            'isExportAll': self.exportable_all,
-            'isExportable': self.exportable,
-            'needsFilters': self.needs_filters,
-            'slug': self.slug,
-            'subReportSlug': None,
-            'emailDefaultSubject': self.rendered_report_title,
-            'type': self.dispatcher.prefix,
-            'urlRoot': self.url_root,
-        }
 
     def update_filter_context(self):
         """
