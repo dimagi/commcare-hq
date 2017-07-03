@@ -1,3 +1,4 @@
+/* globals d3, django, moment, nv */
 hqDefine("reports/js/project_health_dashboard.js", function() {
     // "Performing / Active User Trends" Chart
     function setupCharts(data) {
@@ -9,7 +10,7 @@ hqDefine("reports/js/project_health_dashboard.js", function() {
                     y: item.performing,
                     z: item.delta_high_performers,
                 };
-            })
+            }),
         };
         var lowPerformingSeries = {
             'key': 'low performing',
@@ -19,7 +20,7 @@ hqDefine("reports/js/project_health_dashboard.js", function() {
                     y: item.active - item.performing,
                     z: item.delta_low_performers,
                 };
-            })
+            }),
         };
         function chevronIcon(value){
             var chevronUp = '<span class="fa fa-chevron-up" style="color: #006400;"></span> ';
@@ -29,7 +30,7 @@ hqDefine("reports/js/project_health_dashboard.js", function() {
             } else if (value < 0) {
                 return chevronDown;
             } else {
-                return ''
+                return '';
             }
         }
         nv.addGraph(function() {
@@ -40,13 +41,11 @@ hqDefine("reports/js/project_health_dashboard.js", function() {
 
             chart.yAxis.tickFormat(d3.format(',.0f'));
             chart.color(["#004ebc", "#e53e30"]);
-            chart.tooltipContent(function(key, x, y, e, graph){
+            chart.tooltipContent(function(key, x, y, e){
                 var d = e.series.values[e.pointIndex];
                 var chevron = chevronIcon(d.z);
-                return '<h3>' + key + '</h3>' +
-                       '<p>' +  y + ' in ' + x + '</p>' +
-                       '<p>' + chevron + d.z + ' from last month'
-                       '</p>'
+                return '<h3>' + key + '</h3>' + '<p>' +  y + ' in ' + x + '</p>' +
+                       '<p>' + chevron + d.z + ' from last month' + '</p>';
             })
             d3.select('#perform_chart svg')
                 .datum([highPerformingSeries, lowPerformingSeries])
@@ -67,7 +66,7 @@ hqDefine("reports/js/project_health_dashboard.js", function() {
                     u: item.total_users_by_month,
                     a: item.active,
                 };
-            })
+            }),
         }];
         nv.addGraph(function() {
             var chart = nv.models.lineChart()
@@ -91,14 +90,14 @@ hqDefine("reports/js/project_health_dashboard.js", function() {
                        '<p>' + 'number of inactive users: ' + d.z +
                        '</p>' +
                        '<p>' + 'number of total users: ' + d.u +
-                       '</p>'
+                       '</p>';
             })
             d3.select('#active_linechart svg')
                 .datum(proportionActiveSeries)
                 .call(chart);
 
             nv.utils.windowResize(function() {
-                chart.update()
+                chart.update();
             });
 
             return chart;
@@ -114,18 +113,18 @@ hqDefine("reports/js/project_health_dashboard.js", function() {
             "content": function() {
                 var div_id =  "tmp-id-" + $.now();
                 return details_in_popup($(this).data('url'), div_id);
-            }
+            },
         });
 
         function details_in_popup(link, div_id) {
             $.ajax({
                 url: link,
                 success: function(response) {
-                    $('#'+div_id).html(response);
+                    $('#' + div_id).html(response);
                 },
-                error: function(response) {
-                    $('#'+div_id).html(gettext("Sorry we couldn't load that."));
-                }
+                error: function() {
+                    $('#' + div_id).html(gettext("Sorry, we couldn't load that."));
+                },
             });
             return $('<div />').attr('id', div_id).text(gettext('Loading...'))[0].outerHTML;
         }
@@ -139,9 +138,9 @@ hqDefine("reports/js/project_health_dashboard.js", function() {
             "oLanguage": {
                 'sEmptyTable': django.gettext('No data available in table'),
                 'sInfo': django.gettext('Showing _START_ to _END_ of _TOTAL_ entries'),
-                'sInfoEmpty': django.gettext('Showing _START_ to _END_ of _TOTAL_ entries')
-            }
-        })
+                'sInfoEmpty': django.gettext('Showing _START_ to _END_ of _TOTAL_ entries'),
+            },
+        });
     }
 
     $(function() {
