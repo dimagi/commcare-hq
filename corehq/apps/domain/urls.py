@@ -106,7 +106,7 @@ urlpatterns = [
          'extra_context': {'current_page': {'page_name': _('Password Reset Confirmation')}}},
         name=PasswordResetView.urlname),
     url(r'^accounts/password_reset_confirm/done/$', password_reset_complete,
-        {'template_name': 'login_and_password/password_reset_complete.html',
+        {'template_name': 'login_and_password/domain_reset_pwd_complete.html',
          'extra_context': {'current_page': {'page_name': _('Password Reset Complete')}}},
         name='password_reset_complete')
 ]

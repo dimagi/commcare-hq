@@ -235,7 +235,7 @@ def domain_reset_pwd(request, domain, uidb64, token, template_name='login_and_pa
 
 
 def domain_reset_pwd_complete(request, domain,
-                              template_name='login_and_password/password_reset_complete.html',
+                              template_name='login_and_password/domain_reset_pwd_complete.html',
                               extra_context=None):
     extra_context = {'domain_name': domain} if extra_context is None else dict(extra_context, domain_name=domain)
     return password_reset_complete(request, template_name, extra_context)

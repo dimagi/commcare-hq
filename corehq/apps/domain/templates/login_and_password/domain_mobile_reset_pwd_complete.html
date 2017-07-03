@@ -1,0 +1,17 @@
+{% extends "style/base_mobile.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Password Reset Complete" %}{% endblock title %}
+
+{% block header %}
+    <div class="page-header container-fluid">
+        <h1>{% blocktrans %}Welcome to {{ domain_name }}!{% endblocktrans %}</h1>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <p>{% trans "Your password was successfully changed." %}</p>
+        <a href="{% url 'domain_mobile_login' domain=domain_name %}" class="btn btn-primary">{% trans "Sign In" %}</a>
+    </div>
+{% endblock %}

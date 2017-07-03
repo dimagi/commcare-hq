@@ -91,10 +91,14 @@ domain_specific = [
          'extra_context': {'current_page': {'page_name': _('Password Reset Confirmation')}}},
         name='domain_mobile_reset_pwd_confirm'),
 
-    url(r'^reset_pwd_confirm/done/$', domain_reset_pwd_complete,
-        {'template_name': 'login_and_password/password_reset_complete.html',
+    url(r'^reset_pwd_confirm/web/done/$', domain_reset_pwd_complete,
+        {'template_name': 'login_and_password/domain_reset_pwd_complete.html',
          'extra_context': {'current_page': {'page_name': _('Password Reset Complete')}}},
         name='domain_reset_pwd_complete'),
+    url(r'^reset_pwd_confirm/mobile/done/$', domain_reset_pwd_complete,
+        {'template_name': 'login_and_password/domain_mobile_reset_pwd_complete.html',
+         'extra_context': {'current_page': {'page_name': _('Password Reset Complete')}}},
+        name='domain_mobile_reset_pwd_complete'),
 
     url(r'^retreive_download/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
         retrieve_download, {'template': 'style/includes/file_download.html'},
