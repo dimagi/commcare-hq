@@ -46,7 +46,7 @@ hqDefine("reports/js/project_health_dashboard.js", function() {
                 var chevron = chevronIcon(d.z);
                 return '<h3>' + key + '</h3>' + '<p>' +  y + ' in ' + x + '</p>' +
                        '<p>' + chevron + d.z + ' from last month' + '</p>';
-            })
+            });
             d3.select('#perform_chart svg')
                 .datum([highPerformingSeries, lowPerformingSeries])
                 .call(chart);
@@ -91,7 +91,7 @@ hqDefine("reports/js/project_health_dashboard.js", function() {
                        '</p>' +
                        '<p>' + 'number of total users: ' + d.u +
                        '</p>';
-            })
+            });
             d3.select('#active_linechart svg')
                 .datum(proportionActiveSeries)
                 .call(chart);
