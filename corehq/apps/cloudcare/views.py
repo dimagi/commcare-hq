@@ -156,6 +156,9 @@ class CloudcareMain(View):
         # trim out empty apps
         apps = filter(lambda app: app, apps)
         apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
+        role = request.couch_user.get_role(domain)
+        if role:
+            apps = [app for app in apps if role.permissions.view_web_app(app)]
 
         def _default_lang():
             if apps:
@@ -277,6 +280,9 @@ class FormplayerMain(View):
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
         apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
+        role = request.couch_user.get_role(domain)
+        if role:
+            apps = [app for app in apps if role.permissions.view_web_app(app)]
         apps = sorted(apps, key=lambda app: app['name'])
 
         def _default_lang():
@@ -335,6 +341,10 @@ class FormplayerPreviewSingleApp(View):
         app = get_current_app(domain, app_id)
 
         if not app_access.user_can_access_app(request.couch_user, app):
+            raise Http404()
+
+        role = request.couch_user.role
+        if role and not role.permissions.view_web_app(app):
             raise Http404()
 
         def _default_lang():
