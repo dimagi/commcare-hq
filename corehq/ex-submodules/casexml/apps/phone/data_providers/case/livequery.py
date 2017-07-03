@@ -197,8 +197,10 @@ def discard_already_synced_cases(live_ids, restore_state, accessor):
     debug = logging.getLogger(__name__).debug
     log = restore_state.last_sync_log
     phone_ids = log.case_ids_on_phone
-    check_ids = list(live_ids & phone_ids)  # only check cases already on phone
-    sync_ids = live_ids ^ phone_ids  # sync live cases XOR cases on phone
+    check_ids = list(live_ids & phone_ids)  # only check live cases on phone
+    # may be syncing too many cases here?
+    # scenario: not live (due to ownership change), but on phone -> sync
+    sync_ids = live_ids ^ phone_ids  # live XOR phone
     debug("phone_ids: %r", phone_ids)
     debug("check_ids: %r", check_ids)
     if check_ids:
