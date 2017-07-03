@@ -114,7 +114,7 @@ class Permissions(DocumentSchema):
     def view_web_app(self, app):
         if self.view_web_apps:
             return True
-        return any(app_id in self.view_web_apps_list for app_id in [app.get_id, app.copy_of])
+        return any(app_id in self.view_web_apps_list for app_id in [app['_id'], app['copy_of']])
 
     def view_report(self, report, value=None):
         """Both a getter (when value=None) and setter (when value=True|False)"""
