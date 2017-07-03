@@ -82,7 +82,7 @@
     <div class="row" ng-hide="loading">
         <div class="col-sm-12">
             <div ng-repeat="caseType in caseTypes|filter:typeSearch:true">
-                <div class="panel panel-appmanager">
+                <div class="panel panel-appmanager" ng-show="(caseType.properties|filter:propertySearch).length">
                     <div class="panel-heading">
                         <h4 class="panel-title panel-title-nolink">
                             <i class="fcc fcc-fd-external-case"></i>
