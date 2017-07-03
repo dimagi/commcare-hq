@@ -24,7 +24,7 @@ describe('NotificationsService Unit Tests', function() {
     sinon.stub(jQuery, 'ajax', fakePromise.mock);
 
     it('Initialization', function () {
-        var notifications = hqImport('notifications/js/notification_service.js');
+        var notifications = hqImport('notifications/js/notifications_service.js');
         var csrfToken = $("#csrfTokenContainer").val();
         notifications.setRMI(fakeRMIUrl, csrfToken);
         notifications.initService('#js-settingsmenu-notifications');
