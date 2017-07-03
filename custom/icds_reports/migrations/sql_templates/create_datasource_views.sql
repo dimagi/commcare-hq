@@ -464,6 +464,7 @@ CREATE VIEW child_health_monthly_view AS
     SELECT
         "child_list".case_id,
         "child_list".awc_id,
+        "awc_location".awc_site_code,
         "child_list".name AS person_name,
         "child_list".mother_name,
         "child_list".opened_on,
@@ -493,4 +494,5 @@ CREATE VIEW child_health_monthly_view AS
         child_health_monthly.wasting_last_recorded,
         child_health_monthly.current_month_wasting
    FROM "config_report_icds-cas_static-child_health_cases_a46c129f" "child_list"
-     LEFT JOIN child_health_monthly child_health_monthly ON "child_list".case_id = child_health_monthly.case_id;
+     LEFT JOIN child_health_monthly child_health_monthly ON "child_list".case_id = child_health_monthly.case_id
+     LEFT JOIN awc_location awc_location ON "child_list".awc_id = awc_location.doc_id;
