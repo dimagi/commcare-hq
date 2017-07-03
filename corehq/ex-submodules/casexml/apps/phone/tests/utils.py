@@ -119,14 +119,14 @@ def has_cached_payload(sync_log, version, prefix=RESTORE_CACHE_KEY_PREFIX):
     )))
 
 
-def call_fixture_generator(gen, restore_user, project=None, last_sync=None, app=None):
+def call_fixture_generator(gen, restore_user, project=None, last_sync=None, app=None, device_id=''):
     """
     Convenience function for use in unit tests
     """
     from casexml.apps.phone.restore import RestoreState
     from casexml.apps.phone.restore import RestoreParams
     from corehq.apps.domain.models import Domain
-    params = RestoreParams(version=V2, app=app)
+    params = RestoreParams(version=V2, app=app, device_id=device_id)
     restore_state = RestoreState(
         project or Domain(name=restore_user.domain),
         restore_user,
