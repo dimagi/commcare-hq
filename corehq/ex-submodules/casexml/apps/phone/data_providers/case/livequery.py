@@ -153,16 +153,38 @@ def do_livequery(timing_context, restore_state, async_task=None):
 
             debug('live: %r', live_ids)
 
+        if restore_state.last_sync_log:
+            with timing_context("discard_already_synced_cases"):
+                sync_ids = discard_already_synced_cases(
+                    live_ids, owner_ids, restore_state, accessor)
+        else:
+            sync_ids = live_ids
+
         with timing_context("compile_response"):
             iaccessor = PrefetchIndexCaseAccessor(accessor, indices)
             response = compile_response(
                 timing_context,
                 restore_state,
-                batch_cases(iaccessor, live_ids),
-                init_progress(async_task, len(live_ids)),
+                batch_cases(iaccessor, sync_ids),
+                init_progress(async_task, len(sync_ids)),
             )
 
     return response
+
+
+def discard_already_synced_cases(live_ids, owner_ids, restore_state, accessor):
+    debug = logging.getLogger(__name__).debug
+    log = restore_state.last_sync_log
+    phone_ids = log.case_ids_on_phone
+    check_ids = list(live_ids & phone_ids)  # only check cases already on phone
+    sync_ids = live_ids ^ phone_ids  # sync live cases XOR cases on phone
+    debug("phone_ids: %r", phone_ids)
+    debug("check_ids: %r", check_ids)
+    if check_ids:
+        sync_ids.update(accessor.get_modified_case_ids(
+            check_ids, owner_ids, log.date, log._id))
+    debug('sync: %r', sync_ids)
+    return sync_ids
 
 
 class PrefetchIndexCaseAccessor(object):

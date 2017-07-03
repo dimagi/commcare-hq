@@ -8,7 +8,7 @@ from casexml.apps.case.mock import CaseIndex, CaseStructure
 from casexml.apps.case.tests.util import assert_user_doesnt_have_cases, \
     assert_user_has_cases, cached_restore
 from casexml.apps.phone.models import get_properly_wrapped_sync_log
-from casexml.apps.phone.restore import LIVEQUERY, CLEAN_OWNERS
+from casexml.apps.phone.restore import LIVEQUERY
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
 from corehq.form_processor.tests.utils import partitioned, use_sql_backend
 from corehq.util.test_utils import softer_assert
@@ -80,7 +80,6 @@ class IndexTreeTest(SyncBaseTest):
     }
     """
     __metaclass__ = TestSequenceMeta
-    restore_options = {'case_sync': CLEAN_OWNERS}
 
     @property
     def all_tests(self):

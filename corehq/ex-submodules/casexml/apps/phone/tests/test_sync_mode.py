@@ -28,7 +28,14 @@ from casexml.apps.case.tests.util import (
 from casexml.apps.phone.tests.utils import create_restore_user, has_cached_payload
 from casexml.apps.phone.models import SyncLog, get_properly_wrapped_sync_log, SimplifiedSyncLog, \
     AbstractSyncLog
-from casexml.apps.phone.restore import CachedResponse, RestoreConfig, RestoreParams, RestoreCacheSettings
+from casexml.apps.phone.restore import (
+    CachedResponse,
+    CLEAN_OWNERS,
+    LIVEQUERY,
+    RestoreConfig,
+    RestoreParams,
+    RestoreCacheSettings,
+)
 from casexml.apps.case.xml import V2, V1
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from datetime import datetime
@@ -44,6 +51,8 @@ class SyncBaseTest(TestCase):
     """
     Shared functionality among tests
     """
+    restore_options = {'case_sync': CLEAN_OWNERS}
+
     @classmethod
     def setUpClass(cls):
         super(SyncBaseTest, cls).setUpClass()
@@ -753,6 +762,15 @@ class SyncTokenUpdateTestSQL(SyncTokenUpdateTest):
     pass
 
 
+class LiveQuerySyncTokenUpdateTest(SyncTokenUpdateTest):
+    restore_options = {'case_sync': LIVEQUERY}
+
+
+@use_sql_backend
+class LiveQuerySyncTokenUpdateTestSQL(LiveQuerySyncTokenUpdateTest):
+    pass
+
+
 class SyncDeletedCasesTest(SyncBaseTest):
 
     def test_deleted_case_doesnt_sync(self):
@@ -784,6 +802,15 @@ class SyncDeletedCasesTest(SyncBaseTest):
 
 @use_sql_backend
 class SyncDeletedCasesTestSQL(SyncDeletedCasesTest):
+    pass
+
+
+class LiveQuerySyncDeletedCasesTest(SyncDeletedCasesTest):
+    restore_options = {'case_sync': LIVEQUERY}
+
+
+@use_sql_backend
+class LiveQuerySyncDeletedCasesTestSQL(LiveQuerySyncDeletedCasesTest):
     pass
 
 
@@ -1020,6 +1047,15 @@ class ExtensionCasesSyncTokenUpdates(SyncBaseTest):
         self.assertEqual(sync_log.case_ids_on_phone, all_ids)
 
 
+class LiveQueryExtensionCasesSyncTokenUpdates(ExtensionCasesSyncTokenUpdates):
+    restore_options = {'case_sync': LIVEQUERY}
+
+
+@use_sql_backend
+class LiveQueryExtensionCasesSyncTokenUpdatesSQL(LiveQueryExtensionCasesSyncTokenUpdates):
+    pass
+
+
 class ExtensionCasesFirstSync(SyncBaseTest):
 
     def setUp(self):
@@ -1049,6 +1085,15 @@ class ExtensionCasesFirstSync(SyncBaseTest):
 
 @use_sql_backend
 class ExtensionCasesFirstSyncSQL(ExtensionCasesFirstSync):
+    pass
+
+
+class LiveQueryExtensionCasesFirstSync(ExtensionCasesFirstSync):
+    restore_options = {'case_sync': LIVEQUERY}
+
+
+@use_sql_backend
+class LiveQueryExtensionCasesFirstSyncSQL(LiveQueryExtensionCasesFirstSync):
     pass
 
 
@@ -1124,6 +1169,15 @@ class ChangingOwnershipTest(SyncBaseTest):
 
 @use_sql_backend
 class ChangingOwnershipTestSQL(ChangingOwnershipTest):
+    pass
+
+
+class LiveQueryChangingOwnershipTest(ChangingOwnershipTest):
+    restore_options = {'case_sync': LIVEQUERY}
+
+
+@use_sql_backend
+class LiveQueryChangingOwnershipTestSQL(LiveQueryChangingOwnershipTest):
     pass
 
 
@@ -1271,6 +1325,15 @@ class SyncTokenCachingTest(SyncBaseTest):
 
 @use_sql_backend
 class SyncTokenCachingTestSQL(SyncTokenCachingTest):
+    pass
+
+
+class LiveQuerySyncTokenCachingTest(SyncTokenCachingTest):
+    restore_options = {'case_sync': LIVEQUERY}
+
+
+@use_sql_backend
+class LiveQuerySyncTokenCachingTestSQL(LiveQuerySyncTokenCachingTest):
     pass
 
 
@@ -1850,6 +1913,15 @@ class MultiUserSyncTestSQL(MultiUserSyncTest):
     pass
 
 
+class LiveQueryMultiUserSyncTest(MultiUserSyncTest):
+    restore_options = {'case_sync': LIVEQUERY}
+
+
+@use_sql_backend
+class LiveQueryMultiUserSyncTestSQL(LiveQueryMultiUserSyncTest):
+    pass
+
+
 class SteadyStateExtensionSyncTest(SyncBaseTest):
     """
     Test that doing multiple clean syncs with extensions does what we think it will
@@ -1970,6 +2042,15 @@ class SteadyStateExtensionSyncTestSQL(SteadyStateExtensionSyncTest):
     pass
 
 
+class LiveQuerySteadyStateExtensionSyncTest(SteadyStateExtensionSyncTest):
+    restore_options = {'case_sync': LIVEQUERY}
+
+
+@use_sql_backend
+class LiveQuerySteadyStateExtensionSyncTestSQL(LiveQuerySteadyStateExtensionSyncTest):
+    pass
+
+
 class SyncTokenReprocessingTest(SyncBaseTest):
     """
     Tests sync token logic for fixing itself when it gets into a bad state.
@@ -2068,6 +2149,15 @@ class SyncTokenReprocessingTestSQL(SyncTokenReprocessingTest):
     pass
 
 
+class LiveQuerySyncTokenReprocessingTest(SyncTokenReprocessingTest):
+    restore_options = {'case_sync': LIVEQUERY}
+
+
+@use_sql_backend
+class LiveQuerySyncTokenReprocessingTestSQL(LiveQuerySyncTokenReprocessingTest):
+    pass
+
+
 class LooseSyncTokenValidationTest(SyncBaseTest):
 
     def test_submission_with_bad_log_toggle_enabled(self):
@@ -2102,4 +2192,13 @@ class LooseSyncTokenValidationTest(SyncBaseTest):
 
 @use_sql_backend
 class LooseSyncTokenValidationTestSQL(LooseSyncTokenValidationTest):
+    pass
+
+
+class LiveQueryLooseSyncTokenValidationTest(LooseSyncTokenValidationTest):
+    restore_options = {'case_sync': LIVEQUERY}
+
+
+@use_sql_backend
+class LiveQueryLooseSyncTokenValidationTestSQL(LiveQueryLooseSyncTokenValidationTest):
     pass
