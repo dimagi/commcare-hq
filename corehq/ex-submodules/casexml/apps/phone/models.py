@@ -90,10 +90,6 @@ class OTARestoreUser(object):
         "User's primary SQLLocation"
         return self._couch_user.get_sql_location(self.domain)
 
-    @property
-    def user_data(self):
-        return self._couch_user.user_data
-
     def get_sql_locations(self, domain):
         return self._couch_user.get_sql_locations(domain)
 
