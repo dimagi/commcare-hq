@@ -65,7 +65,7 @@ domain_specific = [
          'extra_context': {'current_page': {'page_name': _('Password Reset')}}},
         name='domain_reset_pwd_email'),
     # This url is linked to from mobile login page
-    url(r'^reset_pwd_email/$', exception_safe_password_reset,
+    url(r'^reset_pwd_email/mobile/$', exception_safe_password_reset,
         {'template_name': 'login_and_password/mobile_password_reset_form.html',
          'email_template_name': 'login_and_password/domain_mobile_reset_pwd_email.html',
          'from_email': settings.DEFAULT_FROM_EMAIL,
