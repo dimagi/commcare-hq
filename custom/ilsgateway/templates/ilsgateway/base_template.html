@@ -25,7 +25,7 @@
     {% endif %}
 {% endblock %}
 
-{% block reports-js-inline %}
+{% block reports-js-inline %}{{ block.super }}
     <script type="text/javascript">
 
         function get_export_url(format) {
