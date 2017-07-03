@@ -375,6 +375,12 @@
         {# modals #}
         {% block modals %}{% endblock modals %}
 
+        {% block additional_initial_page_data %}
+            {#
+                fallback place to put initial page data for templates where it's
+                awkward or impossible to include it in another block
+            #}
+        {% endblock %}
         <div id="initial-page-data" class="hide">
         {% block initial_page_data %}
             {# do not override this block, use initial_page_data template tag to populate #}
