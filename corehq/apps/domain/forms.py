@@ -1279,7 +1279,7 @@ class HQSetPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
                                     widget=forms.PasswordInput(
                                         attrs={'data-bind': "value: password, valueUpdate: 'input'"}),
                                     help_text=mark_safe("""
-                                    <span data-bind="text: passwordHelp, css: color">
+                                    <span data-bind="text: passwordHelp, css: color"></span>
                                     """))
 
     def __init__(self, *args, **kwargs):
