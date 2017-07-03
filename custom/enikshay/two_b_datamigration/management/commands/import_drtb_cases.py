@@ -19,6 +19,10 @@ from custom.enikshay.case_utils import CASE_TYPE_PERSON, CASE_TYPE_OCCURRENCE, C
 logger = logging.getLogger('two_b_datamigration')
 
 
+DETECTED = "tb_detected"
+NOT_DETECTED = "tb_not_detected"
+NO_RESULT = "no_result"
+
 # Map format is: MDR selection criteria value -> (rft_drtb_diagnosis value, rft_drtb_diagnosis_ext_dst value)
 # TODO: Fill in these Nones
 SELECTION_CRITERIA_MAP = {
@@ -41,6 +45,169 @@ SELECTION_CRITERIA_MAP = {
     "HIV TB (Smear+ve)": (None, None),
     "HIV TB (Smear+ve at diagnosis)": (None, None),
 }
+
+
+# A map of column identifier to column index in the Mehsana 2016 excel sheet.
+MEHSANA_2017_MAP = {
+    "testing_facility": 1,
+    "person_name": 3,
+    "mdr_selection_criteria": 4,
+    "district_name": 5,
+    "report_sending_date": 6,
+    "nikshay_id": 7,
+    "H (0.1)": 8,
+    "H (0.4)": 9,
+    "R": 10,
+    "E": 11,
+    "Z": 12,
+    "Km": 13,
+    "Cm": 14,
+    "Am": 15,
+    "Lfx": 16,
+    "Mfx (0.5)": 17,
+    "Mfx (2.0)": 18,
+    "PAS": 19,
+    "Lzd": 20,
+    "Cfz": 21,
+    "Eto": 22,
+    "Clr": 23,
+    "Azi": 24,
+    "treatment_initiation_center": 30,
+    "treatment_status": 31,
+    "drtb_number": 31,  # TODO: Check all these indexes
+    "treatment_initiation_date": 33,
+    "reason_for_not_initiation_on_treatment": 35,
+    "type_of_treatment_initiated": 38,
+    "date_put_on_mdr_treatment": 39,
+    "month_3_follow_up_send_date": 41,
+    "month_3_follow_up_result_date": 42,
+    "month_3_follow_up_result": 44,
+    "month_4_follow_up_send_date": 45,
+    "month_4_follow_up_result_date": 46,
+    "month_4_follow_up_result": 48,
+    "month_5_follow_up_send_date": 49,
+    "month_5_follow_up_result_date": 50,
+    "month_5_follow_up_result": 52,
+    "month_6_follow_up_send_date": 53,
+    "month_6_follow_up_result_date": 54,
+    "month_6_follow_up_result": 56,
+    "month_9_follow_up_send_date": 57,
+    "month_9_follow_up_result_date": 58,
+    "month_9_follow_up_result": 60,
+    "month_12_follow_up_send_date": 61,
+    "month_12_follow_up_result_date": 62,
+    "month_12_follow_up_result": 64,
+    "month_end_follow_up_send_date": 65,
+    "month_end_follow_up_result_date": 66,
+    "month_end_follow_up_result": 68,
+    "treatment_outcome": 69,
+    "date_of_treatment_outcome": 70,
+}
+
+
+# A map of column identifier to column index in the Mehsana 2017 excel sheet.
+MEHSANA_2016_MAP = {
+    "person_name": 3,
+    "district_name": 5,
+    "report_sending_date": 7,
+    "treatment_initiation_date": 12,
+    "registration_date": 13,
+    "date_put_on_mdr_treatment": 19,
+    "type_of_treatment_initiated": 47,
+    "mdr_selection_criteria": 4,
+    "testing_facility": 1,
+    "dst_result": 6,
+    "month_3_follow_up_send_date": 50,
+    "month_3_follow_up_result_date": 51,
+    "month_3_follow_up_result": 52,
+    "month_4_follow_up_send_date": 53,
+    "month_4_follow_up_result_date": 54,
+    "month_4_follow_up_result": 55,
+    "month_6_follow_up_send_date": 56,
+    "month_6_follow_up_result_date": 57,
+    "month_6_follow_up_result": 58,
+    "S": 28,
+    "H (0.1)": 29,
+    "H (0.4)": 30,
+    "R": 31,
+    "E": 32,
+    "Z": 33,
+    "Km": 34,
+    "Cm": 35,
+    "Am": 36,
+    "Lfx": 37,
+    "Mfx (0.5)": 38,
+    "Mfx (2.0)": 39,
+    "PAS": 40,
+    "Lzd": 41,
+    "Cfz": 42,
+    "Eto": 43,
+    "Clr": 44,
+    "Azi": 45,
+}
+
+
+# A map of column identifier to the corresponding app drug id
+DRUG_MAP = {
+    "S": "s",
+    "H (0.1)": "h_inha",
+    "H (0.4)": "h_katg",
+    "R": "r",
+    "E": "e",
+    "Z": "z",
+    "Km": "km",
+    "Cm": "cm",
+    "Am": "am",
+    "Lfx": "lfx",
+    "Mfx (0.5)": "mfx_05",
+    "Mfx (2.0)": "mfx_20",
+    "PAS": "pas",
+    "Lzd": "lzd",
+    "Cfz": "cfz",
+    "Eto": "eto",
+    "Clr": "clr",
+    "Azi": "azi",
+}
+
+
+ALL_MAPPING_DICTS = (MEHSANA_2016_MAP, MEHSANA_2017_MAP)
+
+
+class ColumnMapping(object):
+    mapping_dict = None
+
+    @classmethod
+    def get_value(cls, normalized_column_name, row):
+        try:
+            column_index = cls.mapping_dict[normalized_column_name]
+            return row[column_index].value
+        except IndexError:
+            return cls.handle_mapping_miss(normalized_column_name)
+
+
+    @classmethod
+    def handle_mapping_miss(cls, normalized_column_name):
+        exists_in_some_mapping = False
+        for mapping in ALL_MAPPING_DICTS:
+            if normalized_column_name in mapping:
+                exists_in_some_mapping = True
+                break
+        if exists_in_some_mapping:
+            return ""
+        else:
+            raise Exception("Invalid normalized_column_name passed to ColumnMapping.get_value()")
+
+
+class Mehsana2017ColumnMapping(ColumnMapping):
+    mapping_dict = MEHSANA_2017_MAP
+
+
+class Mehsana2016ColumnMapping(ColumnMapping):
+    mapping_dict = MEHSANA_2016_MAP
+
+
+class MumbaiColumnMapping(ColumnMapping):
+    raise NotImplementedError
 
 
 def get_case_structures_from_row(domain, column_mapping, row):
@@ -339,11 +506,6 @@ def get_secondary_owner_case_properties(domain, column_mapping, row):
     }
 
 
-DETECTED = "tb_detected"
-NOT_DETECTED = "tb_not_detected"
-NO_RESULT = "no_result"
-
-
 def clean_result(value):
     return {
         "": NO_RESULT,
@@ -403,147 +565,6 @@ def match_facility(domain, xlsx_facility_name):
     # TODO: Consider filtering by location type
     return match_district(domain, xlsx_facility_name)
 
-
-class ColumnMapping(object):
-    pass
-
-mehsana_2017_mapping = {
-    "testing_facility": 1,
-    "person_name": 3,
-    "mdr_selection_criteria": 4,
-    "district_name": 5,
-    "report_sending_date": 6,
-    "nikshay_id": 7,  # TODO: Do something graceful when a mapping doesn't have a key
-    "H (0.1)": 8,
-    "H (0.4)": 9,
-    "R": 10,
-    "E": 11,
-    "Z": 12,
-    "Km": 13,
-    "Cm": 14,
-    "Am": 15,
-    "Lfx": 16,
-    "Mfx (0.5)": 17,
-    "Mfx (2.0)": 18,
-    "PAS": 19,
-    "Lzd": 20,
-    "Cfz": 21,
-    "Eto": 22,
-    "Clr": 23,
-    "Azi": 24,
-    "treatment_initiation_center": 30,
-    "treatment_status": 31,
-    "drtb_number": 31,  # TODO: Check all these indexes
-    "treatment_initiation_date": 33,  # TODO: Figure out how to handle this
-    "reason_for_not_initiation_on_treatment": 35,
-    "type_of_treatment_initiated": 38,
-    "date_put_on_mdr_treatment": 39,
-    "month_3_follow_up_send_date": 41,
-    "month_3_follow_up_result_date": 42,
-    "month_3_follow_up_result": 44,
-    "month_4_follow_up_send_date": 45,
-    "month_4_follow_up_result_date": 46,
-    "month_4_follow_up_result": 48,
-    "month_5_follow_up_send_date": 49,
-    "month_5_follow_up_result_date": 50,
-    "month_5_follow_up_result": 52,
-    "month_6_follow_up_send_date": 53,
-    "month_6_follow_up_result_date": 54,
-    "month_6_follow_up_result": 56,
-    "month_9_follow_up_send_date": 57,
-    "month_9_follow_up_result_date": 58,
-    "month_9_follow_up_result": 60,
-    "month_12_follow_up_send_date": 61,
-    "month_12_follow_up_result_date": 62,
-    "month_12_follow_up_result": 64,
-    "month_end_follow_up_send_date": 65,
-    "month_end_follow_up_result_date": 66,
-    "month_end_follow_up_result": 68,
-    "treatment_outcome": 69,
-    "date_of_treatment_outcome": 70,
-}
-
-
-mehsana_2016_mapping = {
-    "person_name": 3,
-    "district_name": 5,
-    "report_sending_date": 7,
-    "treatment_initiation_date": 12,
-    "registration_date": 13,
-    "date_put_on_mdr_treatment": 19,
-    "type_of_treatment_initiated": 47,
-    "mdr_selection_criteria": 4,
-    "testing_facility": 1,
-    "dst_result": 6,
-    "month_3_follow_up_send_date": 50,
-    "month_3_follow_up_result_date": 51,
-    "month_3_follow_up_result": 52,
-    "month_4_follow_up_send_date": 53,
-    "month_4_follow_up_result_date": 54,
-    "month_4_follow_up_result": 55,
-    "month_6_follow_up_send_date": 56,
-    "month_6_follow_up_result_date": 57,
-    "month_6_follow_up_result": 58,
-    "S": 28,
-    "H (0.1)": 29,
-    "H (0.4)": 30,
-    "R": 31,
-    "E": 32,
-    "Z": 33,
-    "Km": 34,
-    "Cm": 35,
-    "Am": 36,
-    "Lfx": 37,
-    "Mfx (0.5)": 38,
-    "Mfx (2.0)": 39,
-    "PAS": 40,
-    "Lzd": 41,
-    "Cfz": 42,
-    "Eto": 43,
-    "Clr": 44,
-    "Azi": 45,
-}
-
-DRUG_MAP = {
-    # column key -> drug id
-    "S": "s",
-    "H (0.1)": "h_inha",
-    "H (0.4)": "h_katg",
-    "R": "r",
-    "E": "e",
-    "Z": "z",
-    "Km": "km",
-    "Cm": "cm",
-    "Am": "am",
-    "Lfx": "lfx",
-    "Mfx (0.5)": "mfx_05",
-    "Mfx (2.0)": "mfx_20",
-    "PAS": "pas",
-    "Lzd": "lzd",
-    "Cfz": "cfz",
-    "Eto": "eto",
-    "Clr": "clr",
-    "Azi": "azi",
-}
-
-
-class Mehsana2017ColumnMapping(ColumnMapping):
-    @staticmethod
-    def get_value(normalized_column_name, row):
-        column_index = mehsana_2017_mapping[normalized_column_name]
-        return row[column_index].value
-
-class Mehsana2016ColumnMapping(ColumnMapping):
-
-    @staticmethod
-    def get_value(normalized_column_name, row):
-        # TODO: Confirm what this returns if cell is empty (we probably don't want None, do want "")
-        column_index = mehsana_2016_mapping[normalized_column_name]
-        return row[column_index].value
-
-
-class MumbaiColumnMapping(ColumnMapping):
-    raise NotImplementedError
 
 
 class Command(BaseCommand):
