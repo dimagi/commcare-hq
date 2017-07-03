@@ -24,6 +24,13 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
                                 widget=forms.TextInput(attrs={'class': 'form-control'}))
     password = forms.CharField(label=_("Password"), widget=forms.PasswordInput(attrs={'class': 'form-control'}))
 
+    def __init__(self, *args, **kwargs):
+        super(EmailAuthenticationForm, self).__init__(*args, **kwargs)
+        self.fields['username'].widget.attrs['tabindex'] = '1'
+        self.fields['username'].widget.attrs['class'] = 'form-control'
+        self.fields['password'].widget.attrs['tabindex'] = '2'
+        self.fields['password'].widget.attrs['class'] = 'form-control'
+
     def clean_username(self):
         username = self.cleaned_data.get('username', '').lower()
         return username

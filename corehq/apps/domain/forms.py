@@ -1282,6 +1282,13 @@ class HQSetPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
                                     <span data-bind="text: passwordHelp, css: color">
                                     """))
 
+    def __init__(self, *args, **kwargs):
+        super(HQSetPasswordForm, self).__init__(*args, **kwargs)
+        self.fields['new_password1'].widget.attrs['tabindex'] = '1'
+        self.fields['new_password1'].widget.attrs['class'] = 'form-control'
+        self.fields['new_password2'].widget.attrs['tabindex'] = '2'
+        self.fields['new_password2'].widget.attrs['class'] = 'form-control'
+
     def save(self, commit=True):
         user = super(HQSetPasswordForm, self).save(commit)
         couch_user = CouchUser.from_django_user(user)

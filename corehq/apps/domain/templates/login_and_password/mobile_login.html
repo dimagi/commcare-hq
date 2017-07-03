@@ -93,7 +93,7 @@
         {% endfor %}</p>
         {% endif %}
         {% if backup_tokens %}
-        <p>{% trans "Please contact your domain adminstrator if you need a backup token" %}</p>
+        <p>{% trans "Please contact the administrator of your project space if you need a backup token" %}</p>
         <div class="row-fluid">
             <div class="offset3 span6">
                 <button name="wizard_goto_step" type="submit" value="backup"
@@ -111,10 +111,7 @@
     </form>
     <script>
         $(function () {
-            $('#id_username').attr('tabindex', '1').focus();
-            $('#id_password').attr('tabindex', '2');
-            $('input[type="text"]').addClass('form-control');
-            $('input[type="password"]').addClass('form-control');
+            $('#id_username').focus();
         });
     </script>
 {% endblock %}
