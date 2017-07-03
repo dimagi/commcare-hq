@@ -1,3 +1,4 @@
+from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.openmrs_config import IdMatcher
 from corehq.motech.openmrs.repeater_helpers import CaseTriggerInfo, get_patient_by_id, \
     update_person_attribute, create_person_attribute, create_visit, set_person_properties
@@ -7,22 +8,22 @@ from dimagi.utils.parsing import string_to_utc_datetime
 def send_openmrs_data(requests, form_json, case_trigger_infos, openmrs_config):
     problem_log = []
     person_uuids = []
-    print case_trigger_infos
+    logger.debug(case_trigger_infos)
     for info in case_trigger_infos:
         assert isinstance(info, CaseTriggerInfo)
         # todo: create patient if it doesn't exist?
         person_uuid = sync_openmrs_patient(requests, info, openmrs_config, problem_log)
         person_uuids.append(person_uuid)
 
-    print person_uuids
+    logger.debug(person_uuids)
     # todo: find a better way to correlate to the correct or "main" patient
     if len(person_uuids) == 1 and all(person_uuid for person_uuid in person_uuids):
         person_uuid, = person_uuids
         info, = case_trigger_infos
         for form_config in openmrs_config.form_configs:
-            print 'send_openmrs_visit?', form_config, form_json
+            logger.debug('send_openmrs_visit?', form_config, form_json)
             if form_config.xmlns == form_json['form']['@xmlns']:
-                print 'yes'
+                logger.debug('yes')
                 send_openmrs_visit(requests, info, form_config, person_uuid,
                                    visit_datetime=string_to_utc_datetime(form_json['form']['meta']['timeEnd']))
 

@@ -2,7 +2,7 @@ from collections import namedtuple
 from requests import HTTPError
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-
+from corehq.motech.openmrs.logger import logger
 
 Should = namedtuple('Should', ['method', 'url', 'parser'])
 
@@ -19,12 +19,10 @@ class Requests(object):
         return '{}{}'.format(self.base_url, uri)
 
     def get(self, uri, *args, **kwargs):
-        # print 'GET', self._url(uri), args, kwargs
         return self.requests.get(self._url(uri), *args,
                                  auth=(self.username, self.password), **kwargs)
 
     def post(self, uri, *args, **kwargs):
-        # print 'POST', self._url(uri), args, kwargs
         return self.requests.post(self._url(uri), *args,
                                   auth=(self.username, self.password), **kwargs)
 
@@ -64,7 +62,7 @@ def set_person_properties(requests, person_uuid, properties):
     try:
         response.raise_for_status()
     except HTTPError:
-        print response.json()
+        logger.debug(response.json())
         raise
     return response.json()
 
@@ -96,11 +94,11 @@ def create_visit(requests, person_uuid, visit_datetime, values_for_concept, enco
         try:
             response.raise_for_status()
         except HTTPError:
-            print response.json()
+            logger.debug(response.json())
             raise
         observation_uuids.append(response.json()['uuid'])
 
-    print 'observations', observation_uuids
+    logger.debug('observations', observation_uuids)
     encounters = [
         {
             "encounterType": encounter_type,
@@ -116,11 +114,11 @@ def create_visit(requests, person_uuid, visit_datetime, values_for_concept, enco
         try:
             response.raise_for_status()
         except HTTPError:
-            print response.json()
+            logger.debug(response.json())
             raise
         encounter_uuids.append(response.json()['uuid'])
 
-    print 'encounters', encounter_uuids
+    logger.debug('encounters', encounter_uuids)
 
     visit = {
         "encounters": encounter_uuids,
@@ -132,9 +130,9 @@ def create_visit(requests, person_uuid, visit_datetime, values_for_concept, enco
     try:
         response.raise_for_status()
     except HTTPError:
-        print response.json()
+        logger.debug(response.json())
         raise
-    print response.json()['uuid']
+    logger.debug(response.json()['uuid'])
 
 
 def search_patients(requests, search_string):

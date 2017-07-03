@@ -32,7 +32,6 @@ def openmrs_edit_config(request, domain, repeater_id):
             repeater.openmrs_config.case_config = OpenmrsCaseConfig.wrap(data['case_config'])
             repeater.openmrs_config.form_configs = map(OpenmrsFormConfig.wrap, data['form_configs'])
             repeater.save()
-            print repeater
 
     form = OpenmrsConfigForm(
         data={
