@@ -4948,7 +4948,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         errors = []
         if hasattr(self, 'profile'):
             password_format = self.profile.get('properties', {}).get('password_format', 'n')
-            message = (
+            message = _(
                 'Your app requires {0} passwords but the admin password is not '
                 '{0}. To resolve, go to app settings, Advanced Settings, Java '
                 'Phone General Settings, and reset the Admin Password to '
