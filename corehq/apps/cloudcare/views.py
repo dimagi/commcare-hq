@@ -343,7 +343,7 @@ class FormplayerPreviewSingleApp(View):
         if not app_access.user_can_access_app(request.couch_user, app):
             raise Http404()
 
-        role = request.couch_user.role
+        role = request.couch_user.get_role(domain)
         if role and not role.permissions.view_web_app(app):
             raise Http404()
 
