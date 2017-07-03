@@ -4719,17 +4719,14 @@ class VersionedDoc(LazyBlobDoc):
         return self.doc_type.endswith(DELETED_SUFFIX)
 
     def unretire(self):
-        self.doc_type = self.get_doc_type(self.doc_type)
-        self.base_doc = self.get_doc_type(self.base_doc)
+        self.doc_type = self.get_doc_type()
         self.save()
 
-    def get_doc_type(self, doc_type=None):
-        if doc_type is None:
-            doc_type = self.doc_type
-        if doc_type.endswith(DELETED_SUFFIX):
-            return doc_type[:-len(DELETED_SUFFIX)]
+    def get_doc_type(self):
+        if self.doc_type.endswith(DELETED_SUFFIX):
+            return self.doc_type[:-len(DELETED_SUFFIX)]
         else:
-            return doc_type
+            return self.doc_type
 
 
 def absolute_url_property(method):
@@ -4771,8 +4768,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     See note at top of file for high-level overview.
     """
-
-    base_doc = 'ApplicationBase'
 
     recipients = StringProperty(default="")
 
@@ -5337,7 +5332,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def delete_app(self):
         domain_has_apps.clear(self.domain)
         self.doc_type += '-Deleted'
-        self.base_doc += '-Deleted'
         record = DeleteApplicationRecord(
             domain=self.domain,
             app_id=self.id,
