@@ -910,14 +910,12 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return list(fetchall_as_namedtuple(cursor))
 
     @staticmethod
-    def get_modified_case_ids(
-            domain, case_ids, owner_ids, last_sync_date, last_sync_id):
+    def get_modified_case_ids(domain, case_ids, last_sync_date, last_sync_id):
         assert isinstance(case_ids, list), case_ids
-        assert isinstance(owner_ids, list), owner_ids
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
-                'SELECT case_id FROM get_modified_case_ids(%s, %s, %s, %s, %s)',
-                [domain, case_ids, owner_ids, last_sync_date, last_sync_id]
+                'SELECT case_id FROM get_modified_case_ids(%s, %s, %s, %s)',
+                [domain, case_ids, last_sync_date, last_sync_id]
             )
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
