@@ -1,6 +1,6 @@
 /* globals hqDefine, ko, $, _, alert_user */
 
-hqDefine('domain/js/dhis2_map_settings.js', function () {
+hqDefine('dhis2/js/dhis2_map_settings.js', function () {
     'use strict';
 
     var module = {};
