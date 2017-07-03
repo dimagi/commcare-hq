@@ -3398,6 +3398,10 @@ class PasswordResetView(View):
         extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
         extra_context['implement_password_obfuscation'] = settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
         if domain:
+            if 'post_reset_redirect' in kwargs:
+                kwargs['post_reset_redirect'] = reverse(kwargs['post_reset_redirect'], kwargs={'domain': domain})
+            else:
+                kwargs['post_reset_redirect'] = reverse('domain_reset_pwd_complete', kwargs={'domain': domain})
             extra_context['domain_name'] = domain
         return password_reset_confirm(request, *args, **kwargs)
 
@@ -3405,7 +3409,10 @@ class PasswordResetView(View):
         extra_context = kwargs.setdefault('extra_context', {})
         extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
         if domain:
-            kwargs['post_reset_redirect'] = reverse('domain_reset_pwd_complete', kwargs={'domain': domain})
+            if 'post_reset_redirect' in kwargs:
+                kwargs['post_reset_redirect'] = reverse(kwargs['post_reset_redirect'], kwargs={'domain': domain})
+            else:
+                kwargs['post_reset_redirect'] = reverse('domain_reset_pwd_complete', kwargs={'domain': domain})
         response = password_reset_confirm(request, *args, **kwargs)
         uidb64 = kwargs.get('uidb64')
         uid = urlsafe_base64_decode(uidb64)

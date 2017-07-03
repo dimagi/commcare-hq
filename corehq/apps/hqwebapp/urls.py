@@ -88,7 +88,8 @@ domain_specific = [
         PasswordResetView.as_view(),
         {'template_name': 'login_and_password/domain_mobile_reset_pwd_confirm.html',
          'set_password_form': HQSetPasswordForm,
-         'extra_context': {'current_page': {'page_name': _('Password Reset Confirmation')}}},
+         'extra_context': {'current_page': {'page_name': _('Password Reset Confirmation')}},
+         'post_reset_redirect': 'domain_mobile_reset_pwd_complete'},
         name='domain_mobile_reset_pwd_confirm'),
 
     url(r'^reset_pwd_confirm/web/done/$', domain_reset_pwd_complete,
