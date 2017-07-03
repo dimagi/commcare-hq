@@ -9,7 +9,7 @@
      data-slug="form"
      data-moduleid="{{ module.id }}"
      data-show-survey="{% if module.is_surveys %}1{% endif %}"
-     data-show-followup="{% if not module.is_surveys and module.doc_type != "AdvancedModule" %}1{% endif %}"
+     data-show-case-forms="{% if not module.is_surveys and module.doc_type != "AdvancedModule" %}1{% endif %}"
      data-show-advanced="{% if module.doc_type == "AdvancedModule" %}1{% endif %}"
      data-show-shadow="{% if module.doc_type == "AdvancedModule" %}1{% endif %}"
   >

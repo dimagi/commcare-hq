@@ -16,10 +16,6 @@
    class="appnav-title
           track-usage-link
           {% if not form.no_vellum %}appnav-title-secondary {% endif %}
-          {% if form.get_action_type == 'open' %}appnav-title-no-delete  appnav-title-registration
-          {% elif form.get_action_type == 'close' or form.get_action_type == 'update' %} appnav-title-followup
-          {% else %}appnav-title-survey
-          {% endif %}
           appnav-responsive">
     {% if form.get_action_type != 'open' %}
         <i class="drag_handle appnav-drag-icon"></i>
