@@ -3,10 +3,25 @@
  * to fetch and update notifications for users on CommCare HQ.
  *
  */
-(function ($, _, RMI) {
-    'use strict';
 
-    var Notification = function (data, rmi) {
+/* globals RMI, $, _, ko */
+
+hqDefine('notifications/js/notifications_service.js', function () {
+    'use strict';
+    var module = {};
+    var _private = {};
+    _private.RMI = function () {
+        console.log("RMI Method has not been set");
+    };
+
+    module.setRMI = function (rmiUrl, csrfToken) {
+        var _rmi = RMI(rmiUrl, csrfToken);
+        _private.RMI = function (remoteMethod, data) {
+            return _rmi("", data, {headers: {"DjNg-Remote-Method": remoteMethod}});
+        };
+    };
+
+    var Notification = function (data) {
         var self = this;
         self.id = ko.observable(data.id);
         self.isRead = ko.observable(data.isRead);
@@ -23,13 +38,13 @@
             return self.type() === 'info';
         });
         self.markAsRead = function() {
-            rmi("mark_as_read", {id: self.id()});
+            _private.RMI("mark_as_read", {id: self.id()});
             self.isRead(true);
             return true;
         };
     };
 
-    var NotificationsServiceModel = function (rmi) {
+    var NotificationsServiceModel = function () {
         var self = this;
         self.notifications = ko.observableArray();
         self.hasError = ko.observable(false);
@@ -59,11 +74,11 @@
         });
 
         self.init = function () {
-            rmi("get_notifications", {'did_it_work': true})
+            _private.RMI("get_notifications", {'did_it_work': true})
                 .done(function (data) {
                     self.lastSeenNotificationDate(data.lastSeenNotificationDate);
                     _.each(data.notifications, function (data) {
-                        self.notifications.push(new Notification(data, rmi));
+                        self.notifications.push(new Notification(data));
                     });
                 })
                 .fail(function (jqXHR, textStatus, errorThrown) {
@@ -77,7 +92,7 @@
                 return;
             }
 
-            rmi("save_last_seen", {"notification_id": self.notifications()[0].id()})
+            _private.RMI("save_last_seen", {"notification_id": self.notifications()[0].id()})
                 .done(function(data) {
                     self.lastSeenNotificationDate(data.activated);
                 })
@@ -88,16 +103,17 @@
         };
     };
 
-    $.fn.startNotificationsService = function (rmiUrl) {
-        var csrfToken = $("#csrfTokenContainer").val();
-        var _rmi = RMI(rmiUrl, csrfToken);
-        function rmi(remoteMethod, data) {
-            return _rmi("", data, {headers: {"DjNg-Remote-Method": remoteMethod}});
+    module.serviceModel = {};
+    module.initService = function(notificationsKoSelector) {
+        if ($(notificationsKoSelector).length < 1) {
+            console.log("Cannot find notifications selector " + notificationsKoSelector);
+            return;
         }
-        var viewModel = new NotificationsServiceModel(rmi);
-        viewModel.init();
-        $(this).koApplyBindings(viewModel);
-        return viewModel;
+        module.serviceModel = new NotificationsServiceModel();
+        module.serviceModel.init();
+        $(notificationsKoSelector).koApplyBindings(module.serviceModel);
     };
 
-})($, _, RMI);
+    return module;
+
+});
