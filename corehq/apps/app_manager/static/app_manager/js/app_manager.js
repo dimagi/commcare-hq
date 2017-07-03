@@ -276,40 +276,6 @@ hqDefine('app_manager/js/app_manager.js', function () {
                 $(related).data(name, value);
             });
         }
-        function resetIndexes($sortable) {
-            if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
-                var parentVar = $sortable.data('parentvar');
-                var parentValue = $sortable.closest("[data-indexVar='" + parentVar + "']").data('index');
-                _.each($sortable.find('> .js-sorted-li'), function (elem, i) {
-                    $(elem).data('index', i);
-                    var indexVar = $(elem).data('indexvar');
-                    updateRelatedTags($(elem), indexVar, i);
-                    if (parentVar) {
-                        $(elem).data(parentVar, parentValue);
-                        updateRelatedTags($(elem), parentVar, parentValue);
-                    }
-                });
-                _.each($('[data-updateprop]'), function (tag) {
-                    var tagName = $(tag).data('updateprop'),
-                        tagVal = $(tag).data('updatevalue'),
-                        moduleId = $(tag).data('moduleid'),
-                        formId = $(tag).data('formid');
-                    var processedVal = tagVal
-                        .replace('replacewithmoduleid', moduleId)
-                        .replace('replacewithformid', formId);
-                    $(tag).prop(tagName, processedVal);
-                });
-            } else {
-                var $sortables = $sortable.children.get(),
-                    i;
-                for (i in $sortables) {
-                    if ($sortables.hasOwnProperty(i)) {
-                        $($sortables[i]).data('index', i);
-                    }
-                }
-            }
-        }
-        COMMCAREHQ.resetIndexes = resetIndexes;
 
         $('.sortable .sort-action').addClass('sort-disabled');
         $('.drag_handle').addClass(COMMCAREHQ.icons.GRIP);
@@ -396,29 +362,15 @@ hqDefine('app_manager/js/app_manager.js', function () {
                             }
 
                             if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
-                                resetIndexes($sortable);
-                                if (from_module_id !== to_module_id) {
-                                    var $parentSortable = $sortable.parents(".sortable"),
-                                        $fromSortable = $parentSortable.find("[data-index=" + from_module_id + "] .sortable");
-                                    resetIndexes($fromSortable);
-                                }
-                                $.post($form.attr('action'), $form.serialize(), function (data) {});
+                                // Show loading screen and disable rearranging
+                                $('#js-appmanager-body.appmanager-settings-content').addClass('hide');
+                                $sortable.find('.drag_handle').remove();
                             } else {
                                 // disable sortable
                                 $sortable.find('.drag_handle').css('color', 'transparent').removeClass('drag_handle');
                                 $sortable.sortable('option', 'disabled', true);
-                                if ($form.find('input[name="ajax"]').first().val() === "true") {
-                                    resetIndexes($sortable);
-                                    $.post($form.attr('action'), $form.serialize(), function (data) {
-                                        module.updateDOM(JSON.parse(data).update);
-                                        // re-enable sortable
-                                        $sortable.sortable('option', 'disabled', false);
-                                        $sortable.find('.drag_handle').show(1000);
-                                    });
-                                } else {
-                                    $form.submit();
-                                }
                             }
+                            $form.submit();
                         }
                     }
                 };
