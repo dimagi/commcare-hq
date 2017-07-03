@@ -46,10 +46,11 @@ SELECTION_CRITERIA_MAP = {
 def get_case_structures_from_row(domain, column_mapping, row):
     person_case_properties = get_person_case_properties(domain, column_mapping, row)
     occurrence_case_properties = get_occurrence_case_properties(row)
-    episode_case_properties = get_episode_case_properties(column_mapping, row)
+    episode_case_properties = get_episode_case_properties(domain, column_mapping, row)
     test_case_properties = get_test_case_properties(domain, column_mapping, row)
     drug_resistance_case_properties = get_drug_resistance_case_properties(column_mapping, row)
-    followup_test_cases_properties = get_follow_up_test_case_properties(column_mapping, row)
+    followup_test_cases_properties = get_follow_up_test_case_properties(
+        column_mapping, row, episode_case_properties['treatment_initiation_date'])
     secondary_owner_case_properties = get_secondary_owner_case_properties(domain, column_mapping, row)
 
     person_case_structure = get_case_structure(CASE_TYPE_PERSON, person_case_properties)
@@ -109,7 +110,8 @@ def get_person_case_properties(domain, column_mapping, row):
         "district_name": district_name,
         "district_id": district_id,
         "owner_id": "-",
-        "current_episode_type": "confirmed_drtb"
+        "current_episode_type": "confirmed_drtb",
+        "nikshay_id": column_mapping.get_value("nikshay_id", row),
     }
     return properties
 
@@ -121,7 +123,7 @@ def get_occurrence_case_properties(row):
     }
 
 
-def get_episode_case_properties(column_mapping, row):
+def get_episode_case_properties(domain, column_mapping, row):
 
     report_sending_date = column_mapping.get_value("report_sending_date", row)
     report_sending_date = clean_date(report_sending_date)
@@ -131,6 +133,8 @@ def get_episode_case_properties(column_mapping, row):
 
     treatment_card_completed_date = column_mapping.get_value("registration_date", row)
     treatment_card_completed_date = clean_date(treatment_card_completed_date)
+    if not treatment_card_completed_date:
+        treatment_card_completed_date = treatment_initiation_date
 
     properties = {
         "owner_id": "-",
@@ -141,13 +145,34 @@ def get_episode_case_properties(column_mapping, row):
         "diagnosis_test_result_date": report_sending_date,
         "treatment_initiation_date": treatment_initiation_date,
         "treatment_card_completed_date": treatment_card_completed_date,
-        "regimen_change_history": get_episode_regimen_change_history(column_mapping, row, treatment_initiation_date)
+        "regimen_change_history": get_episode_regimen_change_history(column_mapping, row, treatment_initiation_date),
+        "treatment_initiating_facility_id": match_facility(
+            domain, column_mapping.get_value("treatment_initiation_center", row)
+        )[1],
+        "pmdt_tb_number": column_mapping.get_value("drtb_number", row),
+        "treatment_status_other": column_mapping.get_value("reason_for_not_initiation_on_treatment", row),
+        "treatment_outcome": convert_treatment_outcome(column_mapping.get_value("treatment_outcome", row)),
+        "treatment_outcome_date": clean_date(column_mapping.get_value("date_of_treatment_outcome", row)),
     }
+
+    raw_treatment_status = column_mapping.get("treatment_status", row)
+    if raw_treatment_status:
+        treatment_status_id = convert_treatment_status(raw_treatment_status)
+        properties["treatment_status"] = treatment_status_id
+        if treatment_status_id not in ("other", "", None):
+            properties["treatment_initiated"] = "yes_phi"
+
     properties.update(get_selection_criteria_properties(column_mapping, row))
     if treatment_initiation_date:
         properties["treatment_initiated"] = "yes_phi"
 
     return properties
+
+
+def convert_treatment_outcome(xlsx_value):
+    return {
+        "DIED": "died"
+    }[xlsx_value]
 
 
 def get_selection_criteria_properties(column_mapping, row):
@@ -242,6 +267,20 @@ def convert_sensitivity(sensitivity_value):
     }[sensitivity_value]
 
 
+def convert_treatment_status(status_in_xlsx):
+    second_line = "initiated_on_second_line_treatment"
+    first_line = "initiated_first_line_treatment"
+    return {
+        "Mono H": first_line,
+        "CAT I/II": first_line,
+        "Cat IV": second_line,
+        "Cat-iv": second_line,
+        "CATIV": second_line,
+        "Cat V": second_line,
+        "Not initiated (reason remark)": "other",
+    }[status_in_xlsx]
+
+
 def get_drug_resistances_from_drug_resistance_list(column_mapping, row):
     drugs = get_resistance_properties(column_mapping, row).get("drug_resistance_list", "").split(" ")
     case_properties = []
@@ -256,9 +295,9 @@ def get_drug_resistances_from_drug_resistance_list(column_mapping, row):
     return case_properties
 
 
-def get_follow_up_test_case_properties(column_mapping, row):
+def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date):
     properties_list = []
-    for follow_up in (3, 4, 6):
+    for follow_up in (3, 4, 5, 6, 9, 12, "end"):
         # TODO: Should I check for existance of all the values?
         if column_mapping.get_value("month_{}_follow_up_send_date".format(follow_up), row):
             properties = {
@@ -272,12 +311,21 @@ def get_follow_up_test_case_properties(column_mapping, row):
                 "test_type_value": "culture",
                 "test_type_label": "culture",
                 "rft_general": "follow_up_drtb",
-                "rft_drtb_follow_up_treatment_month": str(follow_up)
             }
+            properties["rft_drtb_follow_up_treatment_month"] = get_follow_up_month(
+                follow_up, properties['date_tested'], treatment_initiation_date
+            )
             properties["result_summary_label"] = result_label(properties['result'])
 
             properties_list.append(properties)
     return properties_list
+
+
+def get_follow_up_month(follow_up_month_identifier, date_tested, treatment_initiation_date):
+    if isinstance(follow_up_month_identifier, int):
+        return str(follow_up_month_identifier)
+    else:
+        return str(int(round((date_tested - treatment_initiation_date).days / 30.4)))
 
 
 def get_secondary_owner_case_properties(domain, column_mapping, row):
@@ -335,6 +383,8 @@ def match_district(domain, xlsx_district_name):
     Given district name taken from the spreadsheet, return the name and id of the matching location in HQ.
     """
     # TODO: Consider filtering by location type
+    if not xlsx_district_name:
+        return None, None
     try:
         location = SQLLocation.active_objects.get(domain=domain, name__iexact=xlsx_district_name)
     except SQLLocation.DoesNotExist:
@@ -356,6 +406,62 @@ def match_facility(domain, xlsx_facility_name):
 
 class ColumnMapping(object):
     pass
+
+mehsana_2017_mapping = {
+    "testing_facility": 1,
+    "person_name": 3,
+    "mdr_selection_criteria": 4,
+    "district_name": 5,
+    "report_sending_date": 6,
+    "nikshay_id": 7,  # TODO: Do something graceful when a mapping doesn't have a key
+    "H (0.1)": 8,
+    "H (0.4)": 9,
+    "R": 10,
+    "E": 11,
+    "Z": 12,
+    "Km": 13,
+    "Cm": 14,
+    "Am": 15,
+    "Lfx": 16,
+    "Mfx (0.5)": 17,
+    "Mfx (2.0)": 18,
+    "PAS": 19,
+    "Lzd": 20,
+    "Cfz": 21,
+    "Eto": 22,
+    "Clr": 23,
+    "Azi": 24,
+    "treatment_initiation_center": 30,
+    "treatment_status": 31,
+    "drtb_number": 31,  # TODO: Check all these indexes
+    "treatment_initiation_date": 33,  # TODO: Figure out how to handle this
+    "reason_for_not_initiation_on_treatment": 35,
+    "type_of_treatment_initiated": 38,
+    "date_put_on_mdr_treatment": 39,
+    "month_3_follow_up_send_date": 41,
+    "month_3_follow_up_result_date": 42,
+    "month_3_follow_up_result": 44,
+    "month_4_follow_up_send_date": 45,
+    "month_4_follow_up_result_date": 46,
+    "month_4_follow_up_result": 48,
+    "month_5_follow_up_send_date": 49,
+    "month_5_follow_up_result_date": 50,
+    "month_5_follow_up_result": 52,
+    "month_6_follow_up_send_date": 53,
+    "month_6_follow_up_result_date": 54,
+    "month_6_follow_up_result": 56,
+    "month_9_follow_up_send_date": 57,
+    "month_9_follow_up_result_date": 58,
+    "month_9_follow_up_result": 60,
+    "month_12_follow_up_send_date": 61,
+    "month_12_follow_up_result_date": 62,
+    "month_12_follow_up_result": 64,
+    "month_end_follow_up_send_date": 65,
+    "month_end_follow_up_result_date": 66,
+    "month_end_follow_up_result": 68,
+    "treatment_outcome": 69,
+    "date_of_treatment_outcome": 70,
+}
 
 
 mehsana_2016_mapping = {
@@ -421,6 +527,12 @@ DRUG_MAP = {
 }
 
 
+class Mehsana2017ColumnMapping(ColumnMapping):
+    @staticmethod
+    def get_value(normalized_column_name, row):
+        column_index = mehsana_2017_mapping[normalized_column_name]
+        return row[column_index].value
+
 class Mehsana2016ColumnMapping(ColumnMapping):
 
     @staticmethod
@@ -429,18 +541,30 @@ class Mehsana2016ColumnMapping(ColumnMapping):
         column_index = mehsana_2016_mapping[normalized_column_name]
         return row[column_index].value
 
-# TODO: Add 2017 mapping
+
+class MumbaiColumnMapping(ColumnMapping):
+    raise NotImplementedError
+
 
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
-        parser.add_argument('domain')
-        parser.add_argument('excel_file_path')
+        parser.add_argument(
+            'domain',
+            help="the domain to create the new cases in"
+        )
+        parser.add_argument(
+            'excel_file_path',
+            help="a path to an excel file to be imported"
+        )
+        parser.add_argument(
+            'format',
+            help="the format of the given excel file. Options are mehsana2016, mehsana2017, or mumbai",
+        )
 
     def handle(self, domain, excel_file_path, **options):
 
-        # TODO: Add format option to management command
-        column_mapping = Mehsana2016ColumnMapping
+        column_mapping = self.get_column_mapping(options['format'])
 
         with open_any_workbook(excel_file_path) as workbook:
             for i, row in enumerate(workbook.worksheets[0].iter_rows()):
@@ -450,4 +574,16 @@ class Command(BaseCommand):
                     continue
                 import ipdb; ipdb.set_trace()
                 case_structures = get_case_structures_from_row(domain, column_mapping, row)
-                # TODO: submit forms with case structures
+                # TODO: submit forms with case structures (make sure it doesn't do that cascading thing)
+
+    @staticmethod
+    def get_column_mapping(format):
+        if format == "mehsana2016":
+            return Mehsana2016ColumnMapping
+        elif format == "mehsana2017":
+            return Mehsana2017ColumnMapping
+        elif format == "mumbai":
+            return MumbaiColumnMapping
+        else:
+            raise Exception("Invalid format. Format must be mehsana2016, mehsana2017, or mumbai")
+
