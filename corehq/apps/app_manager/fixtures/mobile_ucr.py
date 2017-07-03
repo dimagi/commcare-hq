@@ -57,11 +57,7 @@ class ReportFixturesProvider(FixtureProvider):
         app_aware_sync_app = restore_state.params.app
         if app_aware_sync_app:
             apps = [app_aware_sync_app]
-        elif (
-                toggles.USERDATA_WEBAPPS_PERMISSIONS.enabled(restore_user.domain)
-                and restore_state.params.device_id
-                and "WebAppsLogin" in restore_state.params.device_id
-        ):
+        elif restore_state.params.device_id and "WebAppsLogin" in restore_state.params.device_id:
             # Only sync reports for apps the user has access to if this is a restore from webapps
             access = ApplicationAccess.get_by_domain(restore_user.domain)
             apps = [

@@ -222,7 +222,6 @@
                     </ul>
                     <p>{% blocktrans %}...and all other mobile workers do not have access to any Web Apps applications.{% endblocktrans %}</p>
                 </div>
-                {% if enable_userdata_permissions %}
                 <table class="table table-bordered table-striped">
                     <thead>
                         <tr>
@@ -275,7 +274,6 @@
                         </tr>
                     </tbody>
                 </table>
-                {% endif %}
                 <div data-bind="if: !app_groups().length">
                     {% trans 'No Web Apps applications available' %}
                 </div>
