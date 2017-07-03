@@ -16,7 +16,7 @@ from corehq.util.workbook_reading import open_any_workbook
 from custom.enikshay.case_utils import CASE_TYPE_PERSON, CASE_TYPE_OCCURRENCE, CASE_TYPE_EPISODE, CASE_TYPE_TEST, \
     CASE_TYPE_DRUG_RESISTANCE, CASE_TYPE_SECONDARY_OWNER
 
-logger = logging.getLogger('tow_b_datamigration')
+logger = logging.getLogger('two_b_datamigration')
 
 
 # Map format is: MDR selection criteria value -> (rft_drtb_diagnosis value, rft_drtb_diagnosis_ext_dst value)
