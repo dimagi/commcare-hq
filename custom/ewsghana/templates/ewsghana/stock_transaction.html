@@ -7,7 +7,7 @@
 
 {# Added possibility to export without generating the whole report. I must copied some methods because we don't have access to override them #}
 {# Main change is in getReportParams, I get actual parameters from filter without generating the report. #}
-{% block js-inline %}{{ block.super }}
+{% block reports-js-inline %}
     <script>
         var standardHQReport = new HQReport({
             domain: '{{ domain }}',
