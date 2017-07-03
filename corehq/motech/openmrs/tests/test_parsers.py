@@ -1,6 +1,6 @@
 import json
 from django.test import SimpleTestCase
-from custom.infomovel_fgh.openmrs.repeater_helpers import PatientSearchParser
+from corehq.motech.openmrs.repeater_helpers import PatientSearchParser
 
 
 PATIENT_SEARCH_RESPONSE = json.loads("""{

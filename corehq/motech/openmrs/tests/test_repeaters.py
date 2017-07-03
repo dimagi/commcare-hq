@@ -4,7 +4,7 @@ import mock
 from casexml.apps.case.models import CommCareCase
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.test_utils import TestFileMixin
-from custom.infomovel_fgh.openmrs.repeater_helpers import \
+from corehq.motech.openmrs.repeater_helpers import \
     get_relevant_case_updates_from_form_json, CaseTriggerInfo
 
 

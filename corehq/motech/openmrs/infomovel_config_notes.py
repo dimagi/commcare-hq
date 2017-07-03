@@ -1,4 +1,4 @@
-from custom.infomovel_fgh.openmrs.openmrs_config import IdMatcher, CaseProperty, ConstantString
+from corehq.motech.openmrs.openmrs_config import IdMatcher, CaseProperty, ConstantString
 
 
 # http://fghomrsmpt.fgh.org.mz/openmrs/ws/rest/v1/patientidentifiertype/e2b966d0-1d5f-11e0-b929-000c29ad1d07

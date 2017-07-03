@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from custom.infomovel_fgh.openmrs.views import (
+from corehq.motech.openmrs.views import (
     openmrs_patient_identifier_types,
     openmrs_person_attribute_types,
     openmrs_raw_api,

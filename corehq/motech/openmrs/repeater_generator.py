@@ -1,5 +1,5 @@
 from corehq.motech.repeaters.repeater_generators import RegisterGenerator, BasePayloadGenerator
-from custom.infomovel_fgh.openmrs.repeaters import (
+from corehq.motech.openmrs.repeaters import (
     RegisterOpenmrsPatientRepeater,
 )
 

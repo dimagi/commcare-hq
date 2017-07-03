@@ -1,5 +1,5 @@
-from custom.infomovel_fgh.openmrs.openmrs_config import IdMatcher
-from custom.infomovel_fgh.openmrs.repeater_helpers import CaseTriggerInfo, get_patient_by_id, \
+from corehq.motech.openmrs.openmrs_config import IdMatcher
+from corehq.motech.openmrs.repeater_helpers import CaseTriggerInfo, get_patient_by_id, \
     update_person_attribute, create_person_attribute, create_visit, set_person_properties
 from dimagi.utils.parsing import string_to_utc_datetime
 

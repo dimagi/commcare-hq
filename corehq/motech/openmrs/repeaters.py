@@ -10,9 +10,9 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.toggles import OPENMRS_INTEGRATION
 from corehq.motech.repeaters.signals import create_repeat_records
 from couchforms.signals import successful_form_received
-from custom.infomovel_fgh.openmrs.openmrs_config import OpenmrsConfig
-from custom.infomovel_fgh.openmrs.handler import send_openmrs_data
-from custom.infomovel_fgh.openmrs.repeater_helpers import get_relevant_case_updates_from_form_json, \
+from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
+from corehq.motech.openmrs.handler import send_openmrs_data
+from corehq.motech.openmrs.repeater_helpers import get_relevant_case_updates_from_form_json, \
     Requests
 from dimagi.utils.decorators.memoized import memoized
 
@@ -39,7 +39,7 @@ class OpenmrsRepeater(CaseRepeater):
 
     @classmethod
     def get_custom_url(cls, domain):
-        from custom.infomovel_fgh.openmrs.views import OpenmrsRepeaterView
+        from corehq.motech.openmrs.views import OpenmrsRepeaterView
         return reverse(OpenmrsRepeaterView.urlname, args=[domain])
 
     def allowed_to_forward(self, case):
