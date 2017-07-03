@@ -20,7 +20,7 @@
         <input name="domain" type="hidden" value="{{ domain }}"/>
         <input name="token" type="hidden" value="{{ token }}"/>
 
-        <fieldset>
+        <fieldset class="check-password">
         {% for field in form.visible_fields %}
             <div class="form-group{% if field.errors %} error{% endif %}">
                 <label class="control-label col-xs-3" for="{{ field.id }}">{{ field.label }}</label>
