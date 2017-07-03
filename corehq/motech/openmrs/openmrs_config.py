@@ -1,4 +1,11 @@
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    DocumentSchema,
+    ListProperty,
+    SchemaDictProperty,
+    SchemaListProperty,
+    SchemaProperty,
+    StringProperty,
+)
 
 
 class IdMatcher(DocumentSchema):
