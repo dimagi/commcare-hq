@@ -49,6 +49,7 @@ from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
 from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
 from corehq.apps.hqwebapp.views import BaseSectionPageView
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_nvd3_v3
@@ -655,6 +656,11 @@ _SQL_DBS = OrderedDict((db.dbname, db) for db in [
         CommCareCaseSQL._meta.db_table,
         lambda id_: CommCareCaseSQLRawDocSerializer(CommCareCaseSQL.get_obj_by_id(id_)).data,
         CommCareCaseSQL.__name__
+    ),
+    _Db(
+        SQLLocation._meta.db_table,
+        lambda id_: SQLLocation.objects.get(location_id=id_).to_json(),
+        SQLLocation.__name__
     ),
 ])
 
