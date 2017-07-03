@@ -110,9 +110,29 @@ def do_livequery(timing_context, restore_state, async_task=None):
                 return sub_id
         return CIRCULAR_REF
 
+    def update_open_and_deleted_ids(related):
+        """Update open_ids and deleted_ids with related case_ids
+
+        TODO store referenced case (parent) deleted and closed status in
+        CommCareCaseIndexSQL to reduce number of related indices fetched
+        and avoid this extra query per related level.
+        """
+        case_ids = {case_id
+            for index in related
+            for case_id in [index.case_id, index.referenced_id]
+            if case_id not in all_ids}
+        rows = accessor.get_closed_and_deleted_ids(list(case_ids))
+        for case_id, closed, deleted in rows:
+            if deleted:
+                deleted_ids.add(case_id)
+            if closed or deleted:
+                case_ids.remove(case_id)
+        open_ids.update(case_ids)
+
     CIRCULAR_REF = object()
     debug = logging.getLogger(__name__).debug
     live_ids = set()
+    deleted_ids = set()
     extensions_by_host = defaultdict(set)  # host_id -> extension_ids
     hosts_by_extension = defaultdict(set)  # extension_id -> host_ids
     indices = defaultdict(list)
@@ -133,7 +153,11 @@ def do_livequery(timing_context, restore_state, async_task=None):
                 related = accessor.get_related_indices(list(next_ids), all_ids)
                 if not related:
                     break
-                next_ids = {classify(index, next_ids) for index in related}
+                update_open_and_deleted_ids(related)
+                next_ids = {classify(index, next_ids)
+                    for index in related
+                    if index.referenced_id not in deleted_ids
+                        and index.case_id not in deleted_ids}
                 next_ids.discard(CIRCULAR_REF)
                 debug('next: %r all: %r', next_ids, all_ids)
                 all_ids.update(next_ids)
@@ -143,13 +167,6 @@ def do_livequery(timing_context, restore_state, async_task=None):
             for case_id in open_ids:
                 if case_id not in hosts_by_extension:
                     enliven(case_id)
-
-            # open root nodes and their extensions -> live
-            # TODO store referenced_id open/closed status in case index to avoid this query
-            root_ids = [r for r in extensions_by_host if r not in hosts_by_extension]
-            debug('roots: %r', root_ids)
-            for case_id in accessor.filter_open_case_ids(root_ids):
-                enliven(case_id)
 
             debug('live: %r', live_ids)
 

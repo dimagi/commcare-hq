@@ -330,11 +330,11 @@ class CaseAccessors(object):
     def get_open_case_ids_in_domain_by_type(self, case_type, owner_ids=None):
         return self.db_accessor.get_open_case_ids_in_domain_by_type(self.domain, case_type, owner_ids)
 
-    def filter_open_case_ids(self, case_ids):
-        return self.db_accessor.filter_open_case_ids(self, case_ids)
-
     def get_related_indices(self, case_ids, exclude_ids):
         return self.db_accessor.get_related_indices(self.domain, case_ids, exclude_ids)
+
+    def get_closed_and_deleted_ids(self, case_ids):
+        return self.db_accessor.get_closed_and_deleted_ids(self.domain, case_ids)
 
     def get_modified_case_ids(
             self, case_ids, owner_ids, last_sync_date, last_sync_id):
