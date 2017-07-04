@@ -27,23 +27,26 @@ NO_RESULT = "no_result"
 # TODO: Fill in these Nones
 SELECTION_CRITERIA_MAP = {
     "MDR sus -Pre.Treat At diagnosis(Smear+ve/-ve)": ("mdr_at_diagnosis", None),
-    "EP Presumptive": (None, None),
+    "MDR sus -Pre.Treat At diagnosis(Smear+ve/-ve).": ("mdr_at_diagnosis", None),
+    "MDR sus-Private Referral": ("private_referral", None),
+    "MDR sus -NSP/NSN At diagnosis": (None, None),
     "MDR sus -Follow up Sm+ve": ("follow_up_sm_ve_ip", None),
     "MDR sus -Contact of MDR/RR TB": ("contact_of_mdr_rr", None),
     "MDR sus -New At diagnosis(Smear+ve/-ve)": ("mdr_at_diagnosis", None),
+    "MDR sus -Discordance Resolution": ("discordance_resolution", None),
+    "EP Presumptive": (None, None),
+    "PLHIV Presumptive": (None, None),
     "Pre XDR-MDR/RR TB at Diagnosis": ("extended_dst", "mdr_rr_diagnosis"),
-    "Other": (None, None),
     "Pre XDR >4 months culture positive": ("extended_dst", None),
     "Pre XDR -Failure of MDR/RR-TB regimen": ("extended_dst", "mdr_rr_failure"),
-    "MDR sus-Private Referral": ("private_referral", None),
-    "MDR sus -NSP/NSN At diagnosis": (None, None),
-    "PLHIV Presumptive": (None, None),
     "Pre XDR -Recurrent case of second line treatment": ("extended_dst", "recurrent_second_line_treatment"),
     "Pre XDR -Culture reversion": ("extended_dst", "culture_reversion"),
     "Paediatric Presumptive": (None, None),
     "HIV -EP TB": (None, None),
     "HIV TB (Smear+ve)": (None, None),
     "HIV TB (Smear+ve at diagnosis)": (None, None),
+    "Other": (None, None),
+
 }
 
 
@@ -438,6 +441,7 @@ def convert_sensitivity(sensitivity_value):
         "R": "resistant",
         "Conta": "unknown",
         "": "unknown",
+        "Neg": "unknown",  # TODO: Which should this be?
         None: "unknown",
     }[sensitivity_value]
 
@@ -450,6 +454,9 @@ def convert_treatment_status(status_in_xlsx):
         "CAT I/II": first_line,
         "Cat IV": second_line,
         "Cat-iv": second_line,
+        "Cat iv": second_line,
+        "CAT IV": second_line,
+        "CAT-IV": second_line,
         "CATIV": second_line,
         "Cat V": second_line,
         "Not initiated (reason remark)": "other",
@@ -516,12 +523,15 @@ def get_secondary_owner_case_properties(domain, column_mapping, row):
 
 def clean_result(value):
     return {
-        "": NO_RESULT,
+        None: NO_RESULT,
+        "conta": NO_RESULT,
         "Conta": NO_RESULT,
         "CONTA": NO_RESULT,
         "NA": NO_RESULT,
+        "Neg": NO_RESULT,
         "NEG": NOT_DETECTED,
         "Negative": NOT_DETECTED,
+        "negative": NOT_DETECTED,
         "pos": DETECTED,
         "Positive": DETECTED,
     }[value]
