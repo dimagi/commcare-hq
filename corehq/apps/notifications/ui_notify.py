@@ -16,3 +16,9 @@ class StaticUINotify(object):
                 request.user, self.slug
             )
         return False
+
+
+TEST_UI_NOTIFY = StaticUINotify(
+    'first_ui_notify',
+    'Test a UI Notification.'
+)
