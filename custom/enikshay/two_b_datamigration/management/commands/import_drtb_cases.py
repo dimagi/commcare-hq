@@ -46,7 +46,6 @@ SELECTION_CRITERIA_MAP = {
     "HIV TB (Smear+ve)": (None, None),
     "HIV TB (Smear+ve at diagnosis)": (None, None),
     "Other": (None, None),
-
 }
 
 
@@ -333,7 +332,7 @@ def get_episode_case_properties(domain, column_mapping, row):
         "treatment_outcome_date": clean_date(column_mapping.get_value("date_of_treatment_outcome", row)),
     }
 
-    raw_treatment_status = column_mapping.get("treatment_status", row)
+    raw_treatment_status = column_mapping.get_value("treatment_status", row)
     if raw_treatment_status:
         treatment_status_id = convert_treatment_status(raw_treatment_status)
         properties["treatment_status"] = treatment_status_id
@@ -349,12 +348,15 @@ def get_episode_case_properties(domain, column_mapping, row):
 
 def convert_treatment_outcome(xlsx_value):
     return {
-        "DIED": "died"
+        "DIED": "died",
+        None: None
     }[xlsx_value]
 
 
 def get_selection_criteria_properties(column_mapping, row):
     selection_criteria_value = column_mapping.get_value("mdr_selection_criteria", row)
+    if not selection_criteria_value:
+        return {}
     rft_drtb_diagnosis, rft_drtb_diagnosis_ext_dst = SELECTION_CRITERIA_MAP[selection_criteria_value]
 
     properties = {
