@@ -539,7 +539,10 @@ def get_form_data(domain, app, include_shadow_forms=True):
             except XFormException as e:
                 form_meta['error'] = {
                     'details': unicode(e),
-                    'edit_url': reverse('form_source', args=[domain, app._id, module.id, form.id])
+                    'edit_url': reverse(
+                        'form_source',
+                        args=[domain, app._id, module.unique_id, form.unique_id]
+                    ),
                 }
                 form_meta['module'] = copy(module_meta)
                 errors.append(form_meta)
