@@ -93,3 +93,21 @@ class LastSeenNotification(models.Model):
             return LastSeenNotification.objects.get(user=user).last_seen_date
         except LastSeenNotification.DoesNotExist:
             return None
+
+
+class DismissedUINotify(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    slug = models.CharField(max_length=140)
+    date_dismissed = models.DateTimeField()
+
+    @classmethod
+    def dismiss_notification(cls, user, slug):
+        return DismissedUINotify.objects.update_or_create(
+            user=user,
+            slug=slug,
+            date_dismised=datetime.datetime.now()
+        )
+
+    @classmethod
+    def is_notification_dismissed(cls, user, slug):
+        return DismissedUINotify.objects.filter(user=user, slug=slug).exists()
