@@ -53,7 +53,7 @@ app_urls = [
         name='view_module_legacy'),  # keep legacy around for docs
     url(r'^m-(?P<module_unique_id>[\w-]+)/$', view_module, name='view_module'),
     url(r'^modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/$',
-        view_form, name='view_form_legacy'),  # keep legacy around for docs
+        view_form_legacy, name='view_form_legacy'),  # keep legacy around for docs
     url(r'^m-(?P<module_unique_id>[\w-]+)/f-(?P<form_unique_id>[\w-]+)/$',
         view_form, name='view_form'),
     url(r'^get_form_datums/$', get_form_datums, name='get_form_datums'),
