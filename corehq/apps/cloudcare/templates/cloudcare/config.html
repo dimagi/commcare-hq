@@ -36,7 +36,6 @@
             var self = this;
             self.restrict = addJsonAccess(ko.observable());
             self.app_groups = ko.observableArray();
-            self.app_userdata_permissions = ko.observableArray();
             self._lock = ko.observable(false);
         };
         ApplicationAccess.wrap = function(o) {
@@ -44,11 +43,6 @@
             self.restrict(o.restrict);
             for (var i = 0; i < o.app_groups.length; i++) {
                 self.app_groups.push(AppGroup.wrap(o.app_groups[i]));
-            }
-            for (var i = 0; i < o.app_userdata_permissions.length; i++) {
-                self.app_userdata_permissions.push(
-                    AppUserDataPermission.wrap(o.app_userdata_permissions[i])
-                )
             }
             self._id = o._id;
             self._rev = o._rev;
@@ -67,38 +61,18 @@
             return self;
         };
 
-        var AppUserDataPermission = function () {
-            var self = this;
-            self.app_id = linkToDB(appDB, ko.observable());
-            self.user_data_permissions = ko.observableArray();
-            self.add = function(){
-                self.user_data_permissions.push(
-                    {'user_data_key': '', 'user_data_value': ''}
-                )
-            }
-            self.remove = function(item){
-                self.user_data_permissions.remove(item);
-            }
-        };
-        AppUserDataPermission.wrap = function (o) {
-            var self = new AppUserDataPermission();
-            self.app_id(o.app_id);
-            self.user_data_permissions(o.user_data_permissions)
-            return self;
-        };
-
         var linkToDB = function (db, o) {
             o.obj = function () {
                 return db[o()];
             };
             return o;
         };
+
         var $home = $('#cloudcare-app-settings');
         var Controller = function (options) {
             var self = this;
             self.groupDB = options.groupDB;
             self.appDB = options.appDB;
-            self.user_fields = {{ user_fields | JSON }};
             self.applicationAccess = ApplicationAccess.wrap(options.access);
             self.saveButton = COMMCAREHQ.SaveButton.init({
                 save: function () {
@@ -222,60 +196,6 @@
                     </ul>
                     <p>{% blocktrans %}...and all other mobile workers do not have access to any Web Apps applications.{% endblocktrans %}</p>
                 </div>
-                {% if enable_userdata_permissions %}
-                <table class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <th>{% trans 'Application' %}</th>
-                            <th>{% trans 'User Data Property' %}</th>
-                        </tr>
-                    </thead>
-                    <tbody data-bind="foreach: app_userdata_permissions">
-                        <tr>
-                            <td data-bind="text: app_id.obj().name"></td>
-                            <td>
-                                <table class="table table-striped" >
-                                    <thead>
-                                        <tr>
-                                            <th width="50%">{% trans "Property Name" %}</th>
-                                            <th>{% trans "Property Value" %}</th>
-                                            <th>{% trans "Delete" %}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody data-bind="foreach: {data: user_data_permissions, as: 'permission'}" >
-                                        <tr>
-                                            <td>
-                                                <select class="form-control" data-bind="
-                                                               options: $root.user_fields,
-                                                               optionsText: 'slug',
-                                                               optionsValue: 'slug',
-                                                               optionsCaption: 'None',
-                                                               value: permission.user_data_key
-                                                               "></select>
-                                            </td>
-                                            <td>
-                                                <input data-bind="value: permission.user_data_value" type="text"/>
-                                            </td>
-                                            <td>
-                                                <button type="button"
-                                                        class="btn btn-danger pull-right"
-                                                        data-bind="click: $parent.remove">
-                                                    <i class="fa fa-trash"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                                <button type="button"
-                                        class="btn btn-primary"
-                                        data-bind="click: add">
-                                    <i class="fa fa-plus"></i> {% trans "Add userdata property" %}
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                {% endif %}
                 <div data-bind="if: !app_groups().length">
                     {% trans 'No Web Apps applications available' %}
                 </div>

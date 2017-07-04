@@ -11,7 +11,7 @@ from dimagi.utils.web import json_response
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.apps.domain.views import AddRepeaterView
 from corehq.apps.style.decorators import use_select2
-from corehq.apps.repeaters.models import RepeatRecord
+from corehq.motech.repeaters.models import RepeatRecord
 from corehq.util.xml_utils import indent_xml
 from .forms import CaseRepeaterForm, SOAPCaseRepeaterForm
 

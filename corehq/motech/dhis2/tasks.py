@@ -7,9 +7,9 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 
 from corehq import toggles
-from corehq.apps.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
-from corehq.apps.dhis2.api import JsonApiRequest
-from corehq.apps.dhis2.models import JsonApiLog
+from corehq.motech.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
+from corehq.motech.dhis2.api import JsonApiRequest
+from corehq.motech.dhis2.models import JsonApiLog
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
 

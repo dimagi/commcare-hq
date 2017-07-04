@@ -1,7 +1,7 @@
 import json
 from django.test import SimpleTestCase
 from mock import patch, Mock
-from corehq.apps.dhis2.api import JsonApiRequest
+from corehq.motech.dhis2.api import JsonApiRequest
 
 
 TEST_API_URL = 'http://localhost:9080/api/'
@@ -12,7 +12,7 @@ TEST_API_PASSWORD = 'district'
 class JsonApiRequestTests(SimpleTestCase):
 
     def setUp(self):
-        patcher = patch('corehq.apps.dhis2.api.get_dhis2_connection')
+        patcher = patch('corehq.motech.dhis2.api.get_dhis2_connection')
         get_dhis2_connection_mock = patcher.start()
         get_dhis2_connection_mock.return_value = Mock(log_level=99)  # Don't log anything
         self.addCleanup(patcher.stop)
@@ -22,7 +22,7 @@ class JsonApiRequestTests(SimpleTestCase):
         self.data_element_id = '123'
 
     def test_authentication(self):
-        with patch('corehq.apps.dhis2.api.requests') as requests_mock:
+        with patch('corehq.motech.dhis2.api.requests') as requests_mock:
             content = {'code': TEST_API_USERNAME}
             content_json = json.dumps(content)
             response_mock = Mock()
@@ -41,7 +41,7 @@ class JsonApiRequestTests(SimpleTestCase):
             self.assertEqual(response.json()['code'], TEST_API_USERNAME)
 
     def test_send_data_value_set(self):
-        with patch('corehq.apps.dhis2.api.requests') as requests_mock:
+        with patch('corehq.motech.dhis2.api.requests') as requests_mock:
             payload = {'dataValues': [
                 {'dataElement': self.data_element_id, 'period': "201701",
                  'orgUnit': self.org_unit_id, 'value': "180"},

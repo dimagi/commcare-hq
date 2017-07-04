@@ -3,7 +3,7 @@ from corehq.util.quickcache import quickcache
 
 @quickcache(['domain_name'])
 def get_dhis2_connection(domain_name):
-    from corehq.apps.dhis2.models import Dhis2Connection
+    from corehq.motech.dhis2.models import Dhis2Connection
 
     result = Dhis2Connection.get_db().view(
         'by_domain_doc_type_date/view',
@@ -16,7 +16,7 @@ def get_dhis2_connection(domain_name):
 
 @quickcache(['domain_name'])
 def get_dataset_maps(domain_name):
-    from corehq.apps.dhis2.models import DataSetMap
+    from corehq.motech.dhis2.models import DataSetMap
 
     results = DataSetMap.get_db().view(
         'by_domain_doc_type_date/view',

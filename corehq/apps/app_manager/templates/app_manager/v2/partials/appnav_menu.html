@@ -28,7 +28,7 @@
                     </li>
                     {% with nav_form as selected_form %}
                         {% for form in module.get_forms %}
-                            <li class="edit-form-li js-sorted-li{% if form.get_action_type == 'open' %} sort-disabled appnav-form-create{% else %} appnav-form-followup{% endif %}"
+                            <li class="edit-form-li js-sorted-li"
                                 data-moduleid="{{ module.id }}"
                                 data-index="{{ form.id }}"
                                 data-indexvar="formid"

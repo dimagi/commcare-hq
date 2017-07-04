@@ -2,8 +2,8 @@ import json
 import logging
 import requests
 from django.core.serializers.json import DjangoJSONEncoder
-from corehq.apps.dhis2.dbaccessors import get_dhis2_connection
-from corehq.apps.dhis2.models import JsonApiLog
+from corehq.motech.dhis2.dbaccessors import get_dhis2_connection
+from corehq.motech.dhis2.models import JsonApiLog
 
 
 class JsonApiError(Exception):
