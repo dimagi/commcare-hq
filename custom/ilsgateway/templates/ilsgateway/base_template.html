@@ -25,7 +25,7 @@
     {% endif %}
 {% endblock %}
 
-{% block reports-js-inline %}{{ block.super }}
+{% block reports-js-inline %}
         function get_export_url(format) {
             var params = window.location.search.substr(1);
             if (params.length <= 1) {
