@@ -34,7 +34,6 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(ExportsFormsAnalyticsTest, cls).setUpClass()
         from casexml.apps.case.tests.util import delete_all_xforms
         from corehq.apps.app_manager.models import Application, Module, Form
         delete_all_xforms()
@@ -78,7 +77,6 @@ class ExportsFormsAnalyticsTest(TestCase, DocTestMixin):
         for app in cls.apps:
             app.delete()
         ensure_index_deleted(XFORM_INDEX_INFO.index)
-        super(ExportsFormsAnalyticsTest, cls).tearDownClass()
 
     def test_get_form_analytics_metadata__no_match(self):
         self.assertIsNone(
@@ -127,8 +125,6 @@ class CouchformsESAnalyticsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(CouchformsESAnalyticsTest, cls).setUpClass()
-
         @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
         @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)
         @patch('corehq.elastic.ES_META', TEST_ES_META)
@@ -160,7 +156,6 @@ class CouchformsESAnalyticsTest(TestCase):
     def tearDownClass(cls):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(cls.domain)
-        super(CouchformsESAnalyticsTest, cls).tearDownClass()
 
     @patch('couchforms.analytics.FormES.index', XFORM_INDEX_INFO.index)
     @patch('corehq.apps.es.es_query.ES_META', TEST_ES_META)

@@ -46,21 +46,14 @@ nav.appmanager-content {
 
 .appnav-primary-icon {
   font-size: 1.7rem;
-  color: lighten(@cc-text, 20);
-}
-
-.appnav-menu .appnav-primary-icon {
-  top: 6px;
-  position: absolute;
   margin-right: 5px;
-
+  top: 1px;
+  position: relative;
+  color: lighten(@cc-text, 20);
 }
 
 .appnav-primary-icon-lg {
   font-size: 2rem;
-}
-
-.appnav-menu .appnav-primary-icon-lg  {
   top: 2px;
 }
 
@@ -76,7 +69,6 @@ nav.appmanager-content {
     cursor: pointer;
     width: @appnav-trash-width;
     height: @appnav-item-height;
-    vertical-align: top;
     line-height: @appnav-item-height;
     .transition(margin .5s);
     position: relative;
@@ -90,14 +82,13 @@ nav.appmanager-content {
 
 .appnav-menu > li > .appnav-item a.appnav-title {
   width: @appnav-width - @appnav-trash-width;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   position: relative;
 
   > span {
     position: relative;
-    line-height: 14px;
-    display: inline-block;
-    margin-left: 22px;
-    padding: 8px 0;
   }
 
   > .appnav-drag-icon {
@@ -106,8 +97,7 @@ nav.appmanager-content {
     right: 10px;
     text-align: center;
     width: @appnav-trash-width;
-    min-height: @appnav-item-height;
-    height: 100%;
+    height: @appnav-item-height;
     line-height: @appnav-item-height;
     opacity: 0;
     .transition(all 1s);
@@ -122,6 +112,11 @@ nav.appmanager-content {
       opacity: 100;
     }
   }
+}
+
+.appnav-menu > li > .appnav-item a.appnav-title-no-delete {
+  padding-left: @appnav-trash-width;
+  width: @appnav-width;
 }
 
 .appnav-menu > li > .appnav-item a.appnav-title-secondary {
@@ -168,14 +163,12 @@ nav.appmanager-content {
   box-sizing: content-box;
   width: @appnav-width;
   .clearfix();
-  overflow: hidden;
 
   &:hover, &:focus {
-    background-color: rgba(255,255,255,0.6);
-
     a {
       text-decoration: none;
       outline: none;
+      background-color: rgba(255,255,255,0.6);
       &.appnav-delete {
         i {
           margin-left: 0;
@@ -197,7 +190,6 @@ nav.appmanager-content {
 .appnav-menu-nested {
   > li > .appnav-item > a.appnav-title {
     padding-left: 10px;
-    border-left: 1px solid lighten(@cc-text, 60);
   }
   > li > .appnav-item > a.appnav-title {
     position: relative;
@@ -206,18 +198,14 @@ nav.appmanager-content {
       font-family: "WorkflowFontRegular";
       content: '\f00a';
       position: absolute;
-      left: -15px;
+      left: -13px;
       top: -5px;
       font-size: 4.6rem;
       color: lighten(@cc-text, 60);
     }
   }
-  > li:last-child > .appnav-item > a.appnav-title {
-    border: none;
-  }
   > li:last-child > .appnav-item > a.appnav-title:before {
     content: '\f00b';
-      left: -14px;
   }
   > .appnav-primary-icon {
     margin-left: 2px;
@@ -308,10 +296,8 @@ nav.appmanager-content {
   color: lighten(@cc-text, 10);
   vertical-align: top;
   font-size: 9px;
-  margin-top: -1px;
-  margin-right: 1px;
+  margin-top: 15px;
   padding-bottom: 3px;
-  line-height: 10px;
 }
 
 .appnav-section-name {
@@ -325,19 +311,6 @@ nav.appmanager-content {
 
 .appnav-link-full {
   width: 100%;
-  position: relative;
-  span {
-    display: block;
-    line-height: 14px;
-    padding: 8px 0;
-    margin-left: 22px;
-  }
-  .appnav-primary-icon {
-    margin-top: 2px;
-  }
-  .appnav-primary-icon-lg {
-    margin-top: 4px;
-  }
 }
 
 .appnav-menu .nav-divider {
@@ -356,11 +329,8 @@ nav.appmanager-content {
 }
 
 .appnav-menu > li > .appnav-item.active {
-  background-color: @cc-brand-low;
-  .appnav-title {
-    border-color: darken(@cc-bg, 2);
-  }
   a {
+    background-color: @cc-brand-low;
     color: white;
 
     > .appnav-drag-icon {
@@ -381,16 +351,10 @@ nav.appmanager-content {
     color: @cc-att-neg-hi;
   }
   .appnav-secondary {
-    color: darken(@cc-att-pos-hi, 5);
-
     &:hover, &:focus {
-      text-shadow: 0 0 10px #000;
-    }
-    &.appnav-settings {
-      color: @cc-brand-hi;
-      &:hover, &:focus {
-        color: darken(@cc-brand-hi, 20);
-        text-shadow: 0 0 10px #0000;
+      color: darken(@cc-att-pos-hi, 5);
+      &.appnav-settings {
+        color: @cc-brand-hi;
       }
     }
   }

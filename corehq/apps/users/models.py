@@ -14,7 +14,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, override as override_language, ugettext_noop
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
-from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
+from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
 from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.apps.users.util import format_username
 from corehq.apps.users.const import ANONYMOUS_USERNAME
@@ -95,9 +95,6 @@ class Permissions(DocumentSchema):
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
 
-    view_web_apps = BooleanProperty(default=True)
-    view_web_apps_list = StringListProperty(default=[])
-
     @classmethod
     def wrap(cls, data):
         # this is why you don't store module paths in the database...
@@ -110,11 +107,6 @@ class Permissions(DocumentSchema):
                 reports[i] = MOVED_REPORT_MAPPING[report_name]
 
         return super(Permissions, cls).wrap(data)
-
-    def view_web_app(self, app):
-        if self.view_web_apps:
-            return True
-        return any(app_id in self.view_web_apps_list for app_id in [app['_id'], app['copy_of']])
 
     def view_report(self, report, value=None):
         """Both a getter (when value=None) and setter (when value=True|False)"""
@@ -224,7 +216,7 @@ class UserRole(QuickCachedDocumentMixin, Document):
     domain = StringProperty()
     name = StringProperty()
     default_landing_page = StringProperty(
-        choices=[page.id for page in ALL_LANDING_PAGES],
+        choices=[page.id for page in ALLOWED_LANDING_PAGES],
     )
     permissions = SchemaProperty(Permissions)
     is_non_admin_editable = BooleanProperty(default=False)
@@ -1524,12 +1516,10 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         super(CommCareUser, self).clear_quickcache_for_user()
 
     def save(self, **params):
-        is_new_user = self.new_document  # before saving, check if this is a new document
         super(CommCareUser, self).save(**params)
 
         from .signals import commcare_user_post_save
-        results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self,
-                                                      is_new_user=is_new_user)
+        results = commcare_user_post_save.send_robust(sender='couch_user', couch_user=self)
         log_signal_errors(results, "Error occurred while syncing user (%s)", {'username': self.username})
 
     def delete(self):
@@ -1778,17 +1768,16 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         else:
             return SQLLocation.objects.none()
 
-    def add_to_assigned_locations(self, location, commit=True):
+    def add_to_assigned_locations(self, location):
         if self.location_id:
             if location.location_id in self.assigned_location_ids:
                 return
             self.assigned_location_ids.append(location.location_id)
             self.get_domain_membership(self.domain).assigned_location_ids.append(location.location_id)
             self.user_data['commcare_location_ids'] = user_location_data(self.assigned_location_ids)
-            if commit:
-                self.save()
+            self.save()
         else:
-            self.set_location(location, commit=commit)
+            self.set_location(location)
 
     @memoized
     def get_sql_location(self, domain):

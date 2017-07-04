@@ -4,8 +4,8 @@ from django.test import TestCase, override_settings
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from casexml.apps.case.mock import CaseStructure
-from corehq.motech.repeaters.models import RepeatRecord
-from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
+from corehq.apps.repeaters.models import RepeatRecord
+from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
 from casexml.apps.case.tests.util import delete_all_cases
 
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin, ENikshayLocationStructureMixin

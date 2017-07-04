@@ -28,7 +28,6 @@ class TestResumableDocsByTypeIterator(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestResumableDocsByTypeIterator, cls).setUpClass()
         cls.db = get_db()
         cls.docs = []
         cls.domain1 = uuid.uuid4().hex
@@ -46,7 +45,6 @@ class TestResumableDocsByTypeIterator(TestCase):
                 cls.db.delete_doc(doc_id)
             except ResourceNotFound:
                 pass
-        super(TestResumableDocsByTypeIterator, cls).tearDownClass()
 
     def setUp(self):
         self.domain = "TEST"

@@ -110,9 +110,7 @@ class SuperuserManagementForm(forms.Form):
         choices=[
             ('is_superuser', 'Mark as superuser'),
         ],
-        widget=forms.CheckboxSelectMultiple(),
-        required=False,
-    )
+        widget=forms.CheckboxSelectMultiple())
 
     def clean(self):
         from email.utils import parseaddr

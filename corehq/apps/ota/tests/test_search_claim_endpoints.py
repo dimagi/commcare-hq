@@ -18,9 +18,10 @@ from corehq.apps.case_search.models import (
 )
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser
-from corehq.elastic import get_es_new, ES_DEFAULT_INSTANCE
+from corehq.elastic import get_es_new, SIZE_LIMIT, ES_DEFAULT_INSTANCE
+from corehq.apps.es.case_search import CaseSearchES
 from corehq.apps.es.tests.utils import ElasticTestMixin
-from corehq.apps.case_search.utils import CaseSearchCriteria
+from corehq.apps.ota.views import _add_blacklisted_owner_ids, _add_case_property_queries
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.pillows.case_search import get_case_search_reindexer
@@ -32,7 +33,7 @@ from corehq.pillows.mappings.case_search_mapping import (
 from corehq.util.elastic import ensure_index_deleted
 from pillowtop.es_utils import initialize_index_and_mapping
 
-DOMAIN = 'swashbucklers'
+DOMAIN = 'test-domain'
 USERNAME = 'testy_mctestface'
 PASSWORD = '123'
 CASE_NAME = 'Jamie Hand'
@@ -49,19 +50,15 @@ DATE_PATTERN = r'\d{4}-\d{2}-\d{2}'
 class CaseSearchTests(TestCase, ElasticTestMixin):
     def setUp(self):
         super(CaseSearchTests, self).setUp()
-        self.config, created = CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
+        self.search_es = CaseSearchES().domain('swashbucklers')
 
     def test_add_blacklisted_ids(self):
-        criteria = {
-            "commcare_blacklisted_owner_ids": "id1 id2 id3,id4"
-        }
+        blacklisted_owner_ids = "id1 id2 id3,id4"
         expected = {'query':
                     {'filtered':
                      {'filter':
                       {'and': [
                           {'term': {'domain.exact': 'swashbucklers'}},
-                          {"term": {"type.exact": "case_type"}},
-                          {"term": {"closed": False}},
                           {'not': {'term': {'owner_id': 'id1'}}},
                           {'not': {'term': {'owner_id': 'id2'}}},
                           {'not': {'term': {'owner_id': 'id3,id4'}}},
@@ -70,14 +67,14 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
                       "query": {
                           "match_all": {}
                       }}},
-                    'size': CASE_SEARCH_MAX_RESULTS}
-
+                    'size': SIZE_LIMIT}
         self.checkQuery(
-            CaseSearchCriteria(DOMAIN, 'case_type', criteria).search_es,
+            _add_blacklisted_owner_ids(self.search_es, blacklisted_owner_ids),
             expected
         )
 
     def test_add_ignore_pattern_queries(self):
+        config, created = CaseSearchConfig.objects.get_or_create(pk=DOMAIN, enabled=True)
         rc = IgnorePatterns(
             domain=DOMAIN,
             case_type='case_type',
@@ -85,7 +82,7 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
             regex=' word',
         )                       # remove ' word' from the name case property
         rc.save()
-        self.config.ignore_patterns.add(rc)
+        config.ignore_patterns.add(rc)
         rc = IgnorePatterns(
             domain=DOMAIN,
             case_type='case_type',
@@ -93,7 +90,7 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
             regex=' gone',
         )                       # remove ' gone' from the name case property
         rc.save()
-        self.config.ignore_patterns.add(rc)
+        config.ignore_patterns.add(rc)
         rc = IgnorePatterns(
             domain=DOMAIN,
             case_type='case_type',
@@ -101,23 +98,12 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
             regex='-',
         )                       # remove '-' from the special id case property
         rc.save()
-        self.config.ignore_patterns.add(rc)
-        self.config.save()
-        rc = IgnorePatterns(
-            domain=DOMAIN,
-            case_type='case_type',
-            case_property='phone_number',
-            regex='+',
-        )                       # remove '+' from the phone_number case property
-        rc.save()
-        self.config.ignore_patterns.add(rc)
-        self.config.save()
-
+        config.ignore_patterns.add(rc)
+        config.save()
         criteria = {
             'name': "this word should be gone",
             'other_name': "this word should not be gone",
             'special_id': 'abc-123-546',
-            'phone_number': '+91999',
         }
 
         expected = {"query": {
@@ -130,16 +116,6 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
                             }
                         },
                         {
-                            "term": {
-                                "type.exact": "case_type"
-                            }
-                        },
-                        {
-                            "term": {
-                                "closed": False
-                            }
-                        },
-                        {
                             "match_all": {}
                         }
                     ]
@@ -147,28 +123,6 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
                 "query": {
                     "bool": {
                         "must": [
-                            {
-                                "nested": {
-                                    "path": "case_properties",
-                                    "query": {
-                                        "filtered": {
-                                            "filter": {
-                                                "term": {
-                                                    "case_properties.key": "phone_number"
-                                                }
-                                            },
-                                            "query": {
-                                                "match": {
-                                                    "case_properties.value": {
-                                                        "query": "91999",
-                                                        "fuzziness": "0"
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            },
                             {
                                 "nested": {
                                     "path": "case_properties",
@@ -240,10 +194,11 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
                 }
             }
         },
-            "size": CASE_SEARCH_MAX_RESULTS,
+            "size": SIZE_LIMIT,
         }
+
         self.checkQuery(
-            CaseSearchCriteria(DOMAIN, 'case_type', criteria).search_es,
+            _add_case_property_queries(DOMAIN, 'case_type', self.search_es, criteria),
             expected,
         )
 

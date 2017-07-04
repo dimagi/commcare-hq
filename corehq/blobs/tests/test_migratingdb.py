@@ -1,16 +1,13 @@
 from __future__ import unicode_literals
 from StringIO import StringIO
 
+from django.conf import settings
 from testil import replattr
 
 import corehq.blobs.migratingdb as mod
 from corehq.blobs import DEFAULT_BUCKET
-from corehq.blobs.tests.util import (
-    get_id,
-    TemporaryFilesystemBlobDB,
-    TemporaryMigratingBlobDB,
-    TemporaryS3BlobDB,
-)
+from corehq.blobs.tests.util import get_id, TemporaryS3BlobDB, TemporaryFilesystemBlobDB
+from corehq.util.test_utils import trap_extra_setup
 
 
 def get_base_class():
@@ -23,11 +20,16 @@ class TestMigratingBlobDB(get_base_class()):
 
     @classmethod
     def setUpClass(cls):
-        super(TestMigratingBlobDB, cls).setUpClass()
-        assert isinstance(cls.db, TemporaryS3BlobDB), cls.db
-        cls.s3db = cls.db
+        with trap_extra_setup(AttributeError, msg="S3_BLOB_DB_SETTINGS not configured"):
+            config = settings.S3_BLOB_DB_SETTINGS
+        cls.s3db = TemporaryS3BlobDB(config)
         cls.fsdb = TemporaryFilesystemBlobDB()
-        cls.db = TemporaryMigratingBlobDB(cls.s3db, cls.fsdb)
+        cls.db = mod.MigratingBlobDB(cls.s3db, cls.fsdb)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.fsdb.close()
+        cls.s3db.close()
 
     def test_fall_back_to_fsdb(self):
         info = self.fsdb.put(StringIO(b"content"), get_id())

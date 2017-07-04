@@ -15,7 +15,7 @@
      {% include 'hqmedia/partials/multimedia_js.html' %}
      <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
      <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
-@@ -68,6 +68,38 @@
+@@ -68,6 +68,39 @@
      {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
          <script src="{% static 'app_manager/js/custom_instances.js' %}"></script>
      {% endif %}
@@ -42,6 +42,7 @@
 +      <inline-edit params="
 +          name: 'comment',
 +          id:'comment-id',
++          containerClass: 'app-comment',
 +          value: '{{ form.comment|escapejs }}',
 +          placeholder: '{% trans "Enter form description here"|escapejs %}',
 +          url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',
@@ -54,7 +55,7 @@
  {% endblock %}
  
  {% block form-view %}
-@@ -104,80 +136,21 @@
+@@ -104,81 +137,21 @@
      {% initial_page_data 'uses_form_workflow' uses_form_workflow %}
      {% registerurl "get_form_datums" domain app.id %}
  
@@ -74,6 +75,7 @@
 -    <inline-edit params="
 -        name: 'comment',
 -        id:'comment-id',
+-        readOnlyClass: 'app-comment',
 -        value: '{{ form.comment|escapejs }}',
 -        placeholder: '{% trans "Enter form description here"|escapejs %}',
 -        url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',
@@ -144,7 +146,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -185,35 +158,36 @@
+@@ -186,35 +159,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -198,7 +200,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -225,77 +199,72 @@
+@@ -226,77 +200,72 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -326,7 +328,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -304,14 +273,15 @@
+@@ -305,14 +274,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -344,7 +346,7 @@
              {% endif %}
          </div>
      </div>
-@@ -319,12 +289,13 @@
+@@ -320,12 +290,13 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}

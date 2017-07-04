@@ -84,27 +84,6 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             ),
         ]
 
-    def ensure_module_session_datum_xml(self, factory, detail_inline_attr, detail_persistent_attr):
-        suite = factory.app.create_suite()
-        self.assertXmlPartialEqual(
-            """
-            <partial>
-                <datum
-                    detail-confirm="m1_case_long"
-                    {detail_inline_attr}
-                    {detail_persistent_attr}
-                    detail-select="m1_case_short"
-                    id="case_id_load_person_0"
-                    nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
-                    value="./@case_id"
-                />
-            </partial>
-            """.format(detail_inline_attr=detail_inline_attr,
-                       detail_persistent_attr=detail_persistent_attr),
-            suite,
-            'entry/command[@id="m1-f0"]/../session/datum',
-        )
-
     def test_normal_suite(self):
         self._test_generic_suite('app', 'normal-suite')
 
@@ -436,38 +415,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self._test_generic_suite("app_case_detail_tabs", 'suite-case-detail-tabs')
 
     def test_case_detail_tabs_with_nodesets(self):
-        with flag_enabled('DISPLAY_CONDITION_ON_TABS'):
-            self._test_generic_suite("app_case_detail_tabs_with_nodesets", 'suite-case-detail-tabs-with-nodesets')
-
-    def test_case_detail_tabs_with_nodesets_for_sorting(self):
-        app = Application.wrap(self.get_json("app_case_detail_tabs_with_nodesets"))
-        app.modules[0].case_details.long.sort_nodeset_columns = True
-        xml_partial = """
-        <partial>
-          <field>
-            <header width="0">
-              <text/>
-            </header>
-            <template width="0">
-              <text>
-                <xpath function="gender"/>
-              </text>
-            </template>
-            <sort direction="ascending" order="1" type="string">
-              <text>
-                <xpath function="gender"/>
-              </text>
-            </sort>
-          </field>
-        </partial>"""
-        self.assertXmlPartialEqual(
-            xml_partial, app.create_suite(),
-            './detail[@id="m0_case_long"]/detail/field/template/text/xpath[@function="gender"]/../../..')
-
-    def test_case_detail_instance_adding(self):
-        # Tests that post-processing adds instances used in calculations
-        # by any of the details (short, long, inline, persistent)
-        self._test_generic_suite('app_case_detail_instances', 'suite-case-detail-instances')
+        self._test_generic_suite("app_case_detail_tabs_with_nodesets", 'suite-case-detail-tabs-with-nodesets')
 
     def test_case_tile_suite(self):
         self._test_generic_suite("app_case_tiles", "suite-case-tiles")
@@ -638,57 +586,26 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./entry/session"
         )
 
-    def test_inline_case_detail_from_another_module(self):
-        factory = AppFactory()
-        module0, form0 = factory.new_advanced_module("m0", "person")
-        factory.form_requires_case(form0, "person")
-        module0.case_details.short.use_case_tiles = True
-        self._add_columns_for_case_details(module0)
-
-        module1, form1 = factory.new_advanced_module("m1", "person")
-        factory.form_requires_case(form1, "person")
-
-        # not configured to use other module's persistent case tile so
-        # has no detail-inline and detail-persistent attr
-        self.ensure_module_session_datum_xml(factory, '', '')
-
-        # configured to use other module's persistent case tile
-        module1.case_details.short.persistent_case_tile_from_module = module0.unique_id
-        self.ensure_module_session_datum_xml(factory, '', 'detail-persistent="m0_case_short"')
-
-        # configured to use other module's persistent case tile that has custom xml
-        module0.case_details.short.use_case_tiles = False
-        module0.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
-        self.ensure_module_session_datum_xml(factory, '', 'detail-persistent="m0_case_short"')
-        module0.case_details.short.custom_xml = ''
-        module0.case_details.short.use_case_tiles = True
-
-        # configured to use pull down tile from the other module
-        module1.case_details.short.pull_down_tile = True
-        self.ensure_module_session_datum_xml(factory, 'detail-inline="m0_case_long"',
-                                             'detail-persistent="m0_case_short"')
-
-        # set to use persistent case tile of its own as well but it would still
-        # persists case tiles and detail inline from another module
-        module1.case_details.short.use_case_tiles = True
-        module1.case_details.short.persist_tile_on_forms = True
-        self._add_columns_for_case_details(module1)
-        self.ensure_module_session_datum_xml(factory, 'detail-inline="m0_case_long"',
-                                             'detail-persistent="m0_case_short"')
-
-        # set to use case tile from a module that does not support case tiles anymore
-        # and has own persistent case tile as well
-        # So now detail inline from its own details
-        module0.case_details.short.use_case_tiles = False
-        self.ensure_module_session_datum_xml(factory, 'detail-inline="m1_case_long"',
-                                             'detail-persistent="m1_case_short"')
-
-        # set to use case tile from a module that does not support case tiles anymore
-        # and does not have its own persistent case tile as well
-        module1.case_details.short.use_case_tiles = False
-        self.ensure_module_session_datum_xml(factory, '', '')
-
     def test_persistent_case_tiles_from_another_module(self):
+        def ensure_module_session_datum_xml(detail_persistent_attr):
+            suite = factory.app.create_suite()
+            self.assertXmlPartialEqual(
+                """
+                <partial>
+                    <datum
+                        detail-confirm="m1_case_long"
+                        {detail_persistent_attr}
+                        detail-select="m1_case_short"
+                        id="case_id_load_person_0"
+                        nodeset="instance('casedb')/casedb/case[@case_type='person'][@status='open']"
+                        value="./@case_id"
+                    />
+                </partial>
+                """.format(detail_persistent_attr=detail_persistent_attr),
+                suite,
+                'entry/command[@id="m1-f0"]/../session/datum',
+            )
+
         factory = AppFactory()
         module0, form0 = factory.new_advanced_module("m0", "person")
         factory.form_requires_case(form0, "person")
@@ -700,35 +617,28 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         # not configured to use other module's persistent case tile so
         # has no detail-persistent attr
-        self.ensure_module_session_datum_xml(factory, '', '')
+        ensure_module_session_datum_xml('')
 
         # configured to use other module's persistent case tile
         module1.case_details.short.persistent_case_tile_from_module = module0.unique_id
-        self.ensure_module_session_datum_xml(factory, '', 'detail-persistent="m0_case_short"')
-
-        # configured to use other module's persistent case tile that has custom xml
-        module0.case_details.short.use_case_tiles = False
-        module0.case_details.short.custom_xml = '<detail id="m0_case_short"></detail>'
-        self.ensure_module_session_datum_xml(factory, '', 'detail-persistent="m0_case_short"')
-        module0.case_details.short.custom_xml = ''
-        module0.case_details.short.use_case_tiles = True
+        ensure_module_session_datum_xml('detail-persistent="m0_case_short"')
 
         # set to use persistent case tile of its own as well but it would still
         # persists case tiles from another module
         module1.case_details.short.use_case_tiles = True
         module1.case_details.short.persist_tile_on_forms = True
         self._add_columns_for_case_details(module1)
-        self.ensure_module_session_datum_xml(factory, '', 'detail-persistent="m0_case_short"')
+        ensure_module_session_datum_xml('detail-persistent="m0_case_short"')
 
         # set to use case tile from a module that does not support case tiles anymore
         # and has own persistent case tile as well
         module0.case_details.short.use_case_tiles = False
-        self.ensure_module_session_datum_xml(factory, '', 'detail-persistent="m1_case_short"')
+        ensure_module_session_datum_xml('detail-persistent="m1_case_short"')
 
         # set to use case tile from a module that does not support case tiles anymore
         # and does not have its own persistent case tile as well
         module1.case_details.short.use_case_tiles = False
-        self.ensure_module_session_datum_xml(factory, '', '')
+        ensure_module_session_datum_xml('')
 
     def test_persistent_case_tiles_in_advanced_forms(self):
         """

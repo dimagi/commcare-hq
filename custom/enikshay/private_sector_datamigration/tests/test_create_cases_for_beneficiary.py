@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from datetime import date, datetime
+from datetime import datetime
 
 from django.core.management import call_command
 from django.test import TestCase, override_settings
@@ -9,17 +9,16 @@ from mock import Mock, patch
 from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
-from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.locations.tasks import make_location_user
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.private_sector_datamigration.models import (
-    Adherence_Jun30,
-    Agency_Jun30,
-    Beneficiary_Jun30,
-    EpisodePrescription_Jun30,
-    Episode_Jun30,
-    UserDetail_Jun30,
-    Voucher_Jun30,
+    Adherence,
+    Agency,
+    Beneficiary,
+    EpisodePrescription,
+    Episode,
+    UserDetail,
+    Voucher,
 )
 from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
 from custom.enikshay.user_setup import set_issuer_id
@@ -32,7 +31,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
     def setUpClass(cls):
         cls.domain = 'test_domain'
         super(TestCreateCasesByBeneficiary, cls).setUpClass()
-        cls.beneficiary = Beneficiary_Jun30.objects.create(
+        cls.beneficiary = Beneficiary.objects.create(
             addressLineOne='585 Mass Ave',
             addressLineTwo='Suite 4',
             age=25,
@@ -41,7 +40,6 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             caseStatus='patient',
             configureAlert='Yes',
             creationDate=datetime(2017, 1, 1),
-            creator='creator',
             dateOfRegn=datetime(2017, 4, 17),
             districtId='102',
             dob=datetime(1992, 1, 2),
@@ -65,7 +63,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         )
         cls.case_accessor = CaseAccessors(cls.domain)
 
-        cls.agency = Agency_Jun30.objects.create(
+        cls.agency = Agency.objects.create(
             agencyId=1,
             agencyTypeId='ATPR',
             agencySubTypeId='PRQP',
@@ -77,7 +75,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             parentAgencyId=3,
             subOrganisationId=4,
         )
-        UserDetail_Jun30.objects.create(
+        UserDetail.objects.create(
             id=0,
             agencyId=cls.agency.agencyId,
             isPrimary=True,
@@ -99,28 +97,14 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.pcp.save()
 
         self.virtual_location_user = make_location_user(self.pcp)
-        set_issuer_id(self.domain, self.virtual_location_user)
         self.virtual_location_user.save()
+        set_issuer_id(self.domain, self.virtual_location_user)
 
         self.pcp.user_id = self.virtual_location_user._id
         self.pcp.save()
 
-        self.default_location = SQLLocation.objects.create(
-            domain=self.domain,
-            location_type=self.pcp.location_type,
-            site_code='default',
-        )
-
-        self.default_location_user = make_location_user(self.default_location)
-        set_issuer_id(self.domain, self.default_location_user)
-        self.default_location_user.save()
-
-        self.default_location.user_id = self.default_location_user._id
-        self.default_location.save()
-
     def tearDown(self):
         self.virtual_location_user.delete()
-        self.default_location_user.delete()
         super(TestCreateCasesByBeneficiary, self).tearDown()
 
     @patch('custom.enikshay.private_sector_datamigration.factory.datetime')
@@ -129,40 +113,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         mock_counter.get_next_counter.return_value = 4
         mock_datetime.utcnow.return_value = datetime(2016, 9, 8, 1, 2, 3, 4123)
 
-        creating_loc = SQLLocation.active_objects.create(
-            domain=self.domain,
-            location_type=LocationType.objects.get(code='pcp'),
-            name='creating location',
-            site_code='2',
-            user_id='dummy_user_id',
-        )
 
-        creating_agency = Agency_Jun30.objects.create(
-            agencyId=2,
-            agencyTypeId='ATPR',
-            agencySubTypeId='PRQP',
-            creationDate=datetime(2017, 5, 1),
-            dateOfRegn=datetime(2017, 5, 1),
-            modificationDate=datetime(2017, 5, 1),
-            nikshayId='123457',
-            organisationId=2,
-            parentAgencyId=3,
-            subOrganisationId=4,
-        )
-        UserDetail_Jun30.objects.create(
-            id=1,
-            agencyId=creating_agency.agencyId,
-            isPrimary=True,
-            motechUserName='creator',
-            organisationId=2,
-            passwordResetFlag=False,
-            pincode=3,
-            subOrganisationId=4,
-            userId=5,
-            valid=True,
-        )
-
-        Episode_Jun30.objects.create(
+        Episode.objects.create(
             adherenceScore=0.5,
             alertFrequencyId=2,
             basisOfDiagnosis='Clinical - Other',
@@ -202,8 +154,6 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('age', '25'),
             ('age_entered', '25'),
             ('contact_phone_number', '915432109876'),
-            ('created_by_user_location_id', creating_loc.location_id),
-            ('created_by_user_type', 'pcp'),
             ('current_address', '585 Mass Ave, Suite 4'),
             ('current_address_postal_code', '822113'),
             ('current_address_village_town_city', 'Cambridge'),
@@ -253,12 +203,6 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(occurrence_case.owner_id, '-')
         self.assertEqual(occurrence_case.dynamic_case_properties(), OrderedDict([
             ('current_episode_type', 'confirmed_tb'),
-            ('legacy_blockOrHealthPostId', '101'),
-            ('legacy_districtId', '102'),
-            ('legacy_organisationId', '2'),
-            ('legacy_stateId', '103'),
-            ('legacy_subOrganizationId', '3'),
-            ('legacy_wardId', '104'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
             ('occurrence_episode_count', '1'),
@@ -290,9 +234,6 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('adherence_tracking_mechanism', ''),
             ('basis_of_diagnosis', 'clinical_other'),
             ('case_definition', 'clinical'),
-            ('created_by_user_id', 'dummy_user_id'),
-            ('created_by_user_location_id', creating_loc.location_id),
-            ('created_by_user_type', 'pcp'),
             ('date_of_diagnosis', '2017-04-18'),
             ('date_of_mo_signature', '2017-04-17'),
             ('diagnosing_facility_id', self.pcp.location_id),
@@ -304,12 +245,6 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('episode_id', '20160908010203004'),
             ('episode_pending_registration', 'no'),
             ('episode_type', 'confirmed_tb'),
-            ('legacy_blockOrHealthPostId', '101'),
-            ('legacy_districtId', '102'),
-            ('legacy_organisationId', '2'),
-            ('legacy_stateId', '103'),
-            ('legacy_subOrganizationId', '3'),
-            ('legacy_wardId', '104'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
             ('new_retreatment', 'new'),
@@ -341,7 +276,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(len(episode_case.xform_ids), 1)
 
     def test_beneficiary_cured(self):
-        Episode_Jun30.objects.create(
+        Episode.objects.create(
             adherenceScore=0.5,
             alertFrequencyId=2,
             basisOfDiagnosis='Clinical - Other',
@@ -389,7 +324,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(episode_case.dynamic_case_properties()['treatment_outcome'], 'cured')
 
     def test_beneficiary_died(self):
-        Episode_Jun30.objects.create(
+        Episode.objects.create(
             adherenceScore=0.5,
             alertFrequencyId=2,
             basisOfDiagnosis='Clinical - Other',
@@ -449,31 +384,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             1
         )
 
-    def test_default_location_owner(self):
-        self.agency.agencyTypeId = 'ATFO'
-        self.agency.save()
-
-        call_command('create_cases_by_beneficiary', self.domain, default_location_owner_id=self.default_location.location_id)
-
-        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
-        self.assertEqual(len(person_case_ids), 1)
-        person_case = self.case_accessor.get_case(person_case_ids[0])
-        self.assertEqual(person_case.owner_id, self.default_location.location_id)
-
-    def test_default_location_owner_not_used(self):
-
-        call_command('create_cases_by_beneficiary', self.domain, default_location_owner_id=self.default_location.location_id)
-
-        person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
-        self.assertEqual(len(person_case_ids), 1)
-        person_case = self.case_accessor.get_case(person_case_ids[0])
-        self.assertEqual(person_case.owner_id, self.pcp.location_id)
-
-    @patch('custom.enikshay.private_sector_datamigration.factory.date')
-    def test_closed_adherence(self, mock_today):
-        mock_today.today.return_value = date(2017, 6, 1)
-
-        episode = Episode_Jun30.objects.create(
+    def test_adherence(self):
+        episode = Episode.objects.create(
             adherenceScore=0.5,
             alertFrequencyId=2,
             basisOfDiagnosis='Clinical - Other',
@@ -496,14 +408,14 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             unknownAdherencePct=0.9,
             unresolvedMissedDosesPct=0.1,
         )
-        Adherence_Jun30.objects.create(
+        Adherence.objects.create(
             adherenceId=5,
             creationDate=datetime(2017, 4, 21),
             dosageStatusId=0,
             doseDate=datetime(2017, 4, 22),
             doseReasonId=3,
             episodeId=episode.episodeID,
-            reportingMechanismId=86,
+            reportingMechanismId=4,
         )
 
         call_command('create_cases_by_beneficiary', self.domain)
@@ -518,16 +430,13 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         adherence_case_ids = self.case_accessor.get_case_ids_in_domain(type='adherence')
         self.assertEqual(len(adherence_case_ids), 1)
         adherence_case = self.case_accessor.get_case(adherence_case_ids[0])
-        self.assertTrue(adherence_case.closed)
+        self.assertFalse(adherence_case.closed)  # TODO
         self.assertIsNone(adherence_case.external_id)
         self.assertEqual(adherence_case.name, '2017-04-22')
         self.assertEqual(adherence_case.opened_on, datetime(2017, 4, 21))
         self.assertEqual(adherence_case.owner_id, '-')
         self.assertEqual(adherence_case.dynamic_case_properties(), OrderedDict([
-            ('adherence_closure_reason', 'historical'),
             ('adherence_date', '2017-04-22'),
-            ('adherence_report_source', 'treatment_supervisor'),
-            ('adherence_source', 'enikshay'),
             ('adherence_value', 'directly_observed_dose'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '5'),
@@ -544,55 +453,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         )
         self.assertEqual(len(adherence_case.xform_ids), 1)
 
-    @patch('custom.enikshay.private_sector_datamigration.factory.date')
-    def test_open_adherence(self, mock_today):
-        mock_today.today.return_value = date(2017, 4, 23)
-
-        episode = Episode_Jun30.objects.create(
-            adherenceScore=0.5,
-            alertFrequencyId=2,
-            basisOfDiagnosis='Clinical - Other',
-            beneficiaryID=self.beneficiary.caseId,
-            creationDate=datetime(2017, 4, 20),
-            dateOfDiagnosis=datetime(2017, 4, 18),
-            dstStatus='Rifampicin sensitive',
-            episodeDisplayID=3,
-            episodeID=1,
-            extraPulmonary='Abdomen',
-            hiv='Negative',
-            lastMonthAdherencePct=0.6,
-            lastTwoWeeksAdherencePct=0.7,
-            missedDosesPct=0.8,
-            newOrRetreatment='New',
-            nikshayID='02139-02215',
-            patientWeight=50,
-            rxStartDate=datetime(2017, 4, 19),
-            site='Extrapulmonary',
-            unknownAdherencePct=0.9,
-            unresolvedMissedDosesPct=0.1,
-        )
-        Adherence_Jun30.objects.create(
-            adherenceId=5,
-            creationDate=datetime(2017, 4, 21),
-            dosageStatusId=0,
-            doseDate=datetime(2017, 4, 22),
-            doseReasonId=3,
-            episodeId=episode.episodeID,
-            reportingMechanismId=86,
-        )
-
-        call_command('create_cases_by_beneficiary', self.domain)
-
-        adherence_case_ids = self.case_accessor.get_case_ids_in_domain(type='adherence')
-        self.assertEqual(len(adherence_case_ids), 1)
-        adherence_case = self.case_accessor.get_case(adherence_case_ids[0])
-        self.assertFalse(adherence_case.closed)
-        self.assertEqual(adherence_case.opened_on, datetime(2017, 4, 21))
-        self.assertEqual(adherence_case.dynamic_case_properties()['adherence_date'], '2017-04-22')
-        self.assertNotIn('adherence_closure_reason', adherence_case.dynamic_case_properties())
-
     def test_multiple_adherences(self):
-        episode = Episode_Jun30.objects.create(
+        episode = Episode.objects.create(
             id=1,
             adherenceScore=0.5,
             alertFrequencyId=2,
@@ -615,23 +477,23 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             unknownAdherencePct=0.9,
             unresolvedMissedDosesPct=0.1,
         )
-        Adherence_Jun30.objects.create(
+        Adherence.objects.create(
             adherenceId=1,
             creationDate=datetime(2017, 4, 21),
             dosageStatusId=0,
             doseDate=datetime.utcnow(),
             doseReasonId=3,
             episodeId=episode.episodeID,
-            reportingMechanismId=85,
+            reportingMechanismId=4,
         )
-        Adherence_Jun30.objects.create(
+        Adherence.objects.create(
             adherenceId=2,
             creationDate=datetime(2017, 4, 21),
             dosageStatusId=1,
             doseDate=datetime.utcnow(),
             doseReasonId=3,
             episodeId=episode.episodeID,
-            reportingMechanismId=96,
+            reportingMechanismId=4,
         )
 
         call_command('create_cases_by_beneficiary', self.domain)
@@ -647,7 +509,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='adherence')), 2)
 
     def test_skip_adherence(self):
-        episode = Episode_Jun30.objects.create(
+        episode = Episode.objects.create(
             id=1,
             adherenceScore=0.5,
             alertFrequencyId=2,
@@ -671,23 +533,23 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             unknownAdherencePct=0.9,
             unresolvedMissedDosesPct=0.1,
         )
-        Adherence_Jun30.objects.create(
+        Adherence.objects.create(
             adherenceId=1,
             creationDate=datetime(2017, 4, 21),
             dosageStatusId=0,
             doseDate=datetime.utcnow(),
             doseReasonId=3,
             episodeId=episode.episodeID,
-            reportingMechanismId=85,
+            reportingMechanismId=4,
         )
-        Adherence_Jun30.objects.create(
+        Adherence.objects.create(
             adherenceId=2,
             creationDate=datetime(2017, 4, 21),
             dosageStatusId=1,
             doseDate=datetime.utcnow(),
             doseReasonId=3,
             episodeId=episode.episodeID,
-            reportingMechanismId=96,
+            reportingMechanismId=4,
         )
 
         call_command('create_cases_by_beneficiary', self.domain, skip_adherence=True)
@@ -703,7 +565,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='adherence')), 0)
 
     def test_dots_99_enabled_false(self):
-        episode = Episode_Jun30.objects.create(
+        episode = Episode.objects.create(
             id=1,
             adherenceScore=0.5,
             alertFrequencyId=2,
@@ -726,7 +588,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             unknownAdherencePct=0.9,
             unresolvedMissedDosesPct=0.1,
         )
-        Adherence_Jun30.objects.create(
+        Adherence.objects.create(
             adherenceId=1,
             creationDate=datetime(2017, 4, 21),
             dosageStatusId=0,
@@ -745,7 +607,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(episode_case.dynamic_case_properties()['dots_99_enabled'], 'false')
 
     def test_dots_99_enabled_true(self):
-        episode = Episode_Jun30.objects.create(
+        episode = Episode.objects.create(
             id=1,
             adherenceScore=0.5,
             alertFrequencyId=2,
@@ -768,7 +630,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             unknownAdherencePct=0.9,
             unresolvedMissedDosesPct=0.1,
         )
-        Adherence_Jun30.objects.create(
+        Adherence.objects.create(
             adherenceId=1,
             creationDate=datetime(2017, 4, 21),
             dosageStatusId=0,
@@ -777,7 +639,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             episodeId=episode.episodeID,
             reportingMechanismId=84,
         )
-        Adherence_Jun30.objects.create(
+        Adherence.objects.create(
             adherenceId=2,
             creationDate=datetime(2017, 4, 21),
             dosageStatusId=1,
@@ -796,7 +658,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(episode_case.dynamic_case_properties()['dots_99_enabled'], 'true')
 
     def test_prescription(self):
-        EpisodePrescription_Jun30.objects.create(
+        EpisodePrescription.objects.create(
             id=1,
             beneficiaryId=self.beneficiary.caseId,
             creationDate=datetime(2017, 5, 26),
@@ -844,7 +706,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(len(prescription_case.xform_ids), 1)
 
     def test_prescription_with_date_fulfilled(self):
-        EpisodePrescription_Jun30.objects.create(
+        EpisodePrescription.objects.create(
             id=1,
             beneficiaryId=self.beneficiary.caseId,
             creationDate=datetime(2017, 5, 26),
@@ -857,7 +719,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             refill_Index=5,
             voucherID=6,
         )
-        Voucher_Jun30.objects.create(
+        Voucher.objects.create(
             id=2,
             creationDate=datetime(2017, 5, 31),
             modificationDate=datetime(2017, 5, 31),
@@ -902,7 +764,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(len(prescription_case.xform_ids), 1)
 
     def test_multiple_prescriptions(self):
-        EpisodePrescription_Jun30.objects.create(
+        EpisodePrescription.objects.create(
             id=1,
             beneficiaryId=self.beneficiary.caseId,
             creationDate=datetime(2017, 5, 26),
@@ -913,7 +775,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             refill_Index=5,
             voucherID=6,
         )
-        EpisodePrescription_Jun30.objects.create(
+        EpisodePrescription.objects.create(
             id=2,
             beneficiaryId=self.beneficiary.caseId,
             creationDate=datetime(2017, 5, 26),
@@ -934,8 +796,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
 
 
     def test_set_location_owner(self):
-        Agency_Jun30.objects.all().delete()
-        UserDetail_Jun30.objects.all().delete()
+        Agency.objects.all().delete()
+        UserDetail.objects.all().delete()
 
         call_command('create_cases_by_beneficiary', self.domain, location_owner_id=self.pcp.location_id)
 

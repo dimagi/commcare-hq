@@ -32,7 +32,6 @@ class MaltGeneratorTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(MaltGeneratorTest, cls).setUpClass()
         cls.es = get_es_new()
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         initialize_index_and_mapping(cls.es, XFORM_INDEX_INFO)
@@ -47,7 +46,6 @@ class MaltGeneratorTest(TestCase):
         cls.domain.delete()
         MALTRow.objects.all().delete()
         ensure_index_deleted(XFORM_INDEX_INFO.index)
-        super(MaltGeneratorTest, cls).tearDownClass()
 
     @classmethod
     def _setup_domain_user(cls):

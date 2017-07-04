@@ -66,11 +66,9 @@ class TestDomainMemberships(TestCase):
         cls.project.delete()
         cls.domain_obj.delete()
         cls.nodomain_obj.delete()
-        super(TestDomainMemberships, cls).tearDownClass()
 
     @classmethod
     def setUpClass(cls):
-        super(TestDomainMemberships, cls).setUpClass()
         w_username = "joe"
         w_email = "joe@domain.com"
         w2_username = "ben"

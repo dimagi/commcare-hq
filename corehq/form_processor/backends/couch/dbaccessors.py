@@ -1,14 +1,9 @@
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 
-from casexml.apps.case.dbaccessors import (
-    get_extension_case_ids,
-    get_indexed_case_ids,
-    get_all_reverse_indices_info,
-    get_open_case_ids_in_domain,
-    get_reverse_indexed_cases,
-    get_related_indices,
-)
+from casexml.apps.case.dbaccessors import get_extension_case_ids, \
+    get_indexed_case_ids, get_all_reverse_indices_info, get_open_case_ids_in_domain, \
+    get_reverse_indexed_cases
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.stock.models import StockTransaction
@@ -122,28 +117,13 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return CommCareCase.get(case_id)
 
     @staticmethod
-    def get_cases(case_ids, ordered=False, prefetched_indices=None):
-        # prefetched_indices is ignored sinces cases already have them
+    def get_cases(case_ids, ordered=False):
         return [
             CommCareCase.wrap(doc) for doc in iter_docs(
                 CommCareCase.get_db(),
                 case_ids
             )
         ]
-
-    @staticmethod
-    def get_related_indices(domain, case_ids, exclude_ids):
-        return get_related_indices(domain, case_ids, exclude_ids)
-
-    @staticmethod
-    def filter_open_case_ids(accessor, case_ids):
-        """Filter given set of case ids, yielding only open case ids
-
-        WARNING this is inefficient (better version in SQL).
-        """
-        for case in accessor.iter_cases(case_ids):
-            if not case.closed:
-                yield case.case_id
 
     @staticmethod
     def case_exists(case_id):

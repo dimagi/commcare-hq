@@ -1,24 +1,24 @@
 from __future__ import absolute_import
 
-import hashlib
-import logging
-import os
-import shutil
-import tempfile
 from io import FileIO
 from cStringIO import StringIO
+import os
 from uuid import uuid4
+import shutil
+import tempfile
+import hashlib
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
 
-from couchdbkit import ResourceNotFound
+from couchdbkit import ResourceConflict, ResourceNotFound
+from casexml.apps.phone.cache_utils import copy_payload_and_synclog_and_get_new_file
 from casexml.apps.phone.data_providers import get_element_providers, get_full_response_providers
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException, DateOpenedBugException,
 )
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
-from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.decorators.memoized import memoized
@@ -26,10 +26,13 @@ from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.phone.models import (
     SyncLog,
     get_properly_wrapped_sync_log,
+    LOG_FORMAT_SIMPLIFIED,
+    get_sync_log_class_by_format,
     OTARestoreUser,
     SimplifiedSyncLog,
 )
-from dimagi.utils.couch.database import get_db
+import logging
+from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
 from casexml.apps.phone import xml as xml_util
 from datetime import datetime, timedelta
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
@@ -60,11 +63,6 @@ from xml.etree import ElementTree
 
 
 logger = logging.getLogger(__name__)
-
-# case sync algorithms
-CLEAN_OWNERS = 'clean_owners'
-LIVEQUERY = 'livequery'
-DEFAULT_CASE_SYNC = CLEAN_OWNERS
 
 
 def restore_cache_key(domain, prefix, user_id, version=None, sync_log_id=None, device_id=None):
@@ -451,8 +449,7 @@ class RestoreState(object):
     def restore_class(self):
         return get_restore_response_class(self.domain)
 
-    def __init__(self, project, restore_user, params, async=False,
-                 overwrite_cache=False, case_sync=None):
+    def __init__(self, project, restore_user, params, async=False, overwrite_cache=False):
         if not project or not project.name:
             raise Exception('you are not allowed to make a RestoreState without a domain!')
 
@@ -469,15 +466,6 @@ class RestoreState(object):
         self.async = async
         self.overwrite_cache = overwrite_cache
         self._last_sync_log = Ellipsis
-
-        if case_sync is None:
-            if LIVEQUERY_SYNC.enabled(self.domain):
-                case_sync = LIVEQUERY
-            else:
-                case_sync = DEFAULT_CASE_SYNC
-        if case_sync not in [LIVEQUERY, CLEAN_OWNERS]:
-            raise ValueError("unknown case sync algorithm: %s" % case_sync)
-        self.is_livequery = case_sync == LIVEQUERY
 
     def validate_state(self):
         check_version(self.params.version)
@@ -617,11 +605,9 @@ class RestoreConfig(object):
     :param params:          The RestoreParams associated with this (see above).
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
     :param async:           Whether to get the restore response using a celery task
-    :param case_sync:       Case sync algorithm (None -> default).
     """
 
-    def __init__(self, project=None, restore_user=None, params=None,
-                 cache_settings=None, async=False, case_sync=None):
+    def __init__(self, project=None, restore_user=None, params=None, cache_settings=None, async=False):
         assert isinstance(restore_user, OTARestoreUser)
         self.project = project
         self.domain = project.name if project else ''
@@ -635,8 +621,7 @@ class RestoreConfig(object):
             self.project,
             self.restore_user,
             self.params, async,
-            self.cache_settings.overwrite_cache,
-            case_sync=case_sync,
+            self.cache_settings.overwrite_cache
         )
 
         self.force_cache = self.cache_settings.force_cache or self.async

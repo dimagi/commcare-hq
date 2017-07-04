@@ -8,7 +8,7 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 from dimagi.utils.web import json_response
 
-from corehq.motech.repeaters.views import AddCaseRepeaterView
+from corehq.apps.repeaters.views import AddCaseRepeaterView
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
 from custom.enikshay.integrations.ninetyninedots.utils import (
     create_adherence_cases,

@@ -4,8 +4,8 @@ import phonenumbers
 import jsonobject
 from django.utils.dateparse import parse_date
 
-from corehq.motech.repeaters.repeater_generators import BasePayloadGenerator
-from corehq.motech.repeaters.exceptions import RequestConnectionError
+from corehq.apps.repeaters.repeater_generators import BasePayloadGenerator
+from corehq.apps.repeaters.exceptions import RequestConnectionError
 from custom.enikshay.case_utils import (
     get_occurrence_case_from_episode,
     get_person_case_from_occurrence,

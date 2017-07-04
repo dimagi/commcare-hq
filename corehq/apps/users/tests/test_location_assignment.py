@@ -15,7 +15,6 @@ class CCUserLocationAssignmentTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(CCUserLocationAssignmentTest, cls).setUpClass()
         cls.domain = 'my-domain'
         cls.domain_obj = create_domain(cls.domain)
 
@@ -27,7 +26,6 @@ class CCUserLocationAssignmentTest(TestCase):
     def tearDownClass(cls):
         cls.domain_obj.delete()
         delete_all_locations()
-        super(CCUserLocationAssignmentTest, cls).tearDownClass()
 
     def setUp(self):
         super(CCUserLocationAssignmentTest, self).setUp()
@@ -141,7 +139,6 @@ class WebUserLocationAssignmentTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(WebUserLocationAssignmentTest, cls).setUpClass()
         cls.domain = 'my-domain'
         cls.domain_obj = create_domain(cls.domain)
 
@@ -153,7 +150,6 @@ class WebUserLocationAssignmentTest(TestCase):
     def tearDownClass(cls):
         cls.domain_obj.delete()
         delete_all_locations()
-        super(WebUserLocationAssignmentTest, cls).tearDownClass()
 
     def setUp(self):
         super(WebUserLocationAssignmentTest, self).setUp()

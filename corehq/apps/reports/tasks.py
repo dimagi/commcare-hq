@@ -229,8 +229,7 @@ def export_all_rows_task(ReportClass, report_state):
     setattr(report.request, 'REQUEST', {})
 
     file = report.excel_response
-    report_class = report.__class__.__module__ + '.' + report.__class__.__name__
-    hash_id = _store_excel_in_redis(report_class, file)
+    hash_id = _store_excel_in_redis(file)
     _send_email(report.request.couch_user, report, hash_id)
 
 
@@ -252,11 +251,11 @@ def _send_email(user, report, hash_id):
     )
 
 
-def _store_excel_in_redis(report_class, file):
+def _store_excel_in_redis(file):
     hash_id = uuid.uuid4().hex
 
     r = get_redis_client()
-    r.set(hash_id, [report_class, file.getvalue()])
+    r.set(hash_id, file.getvalue())
     r.expire(hash_id, EXPIRE_TIME)
 
     return hash_id

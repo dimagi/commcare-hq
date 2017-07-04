@@ -61,10 +61,6 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def iter_forms_by_last_modified(start_datetime, end_datetime):
-        raise NotImplementedError
-
-    @abstractmethod
     def get_with_attachments(form_id):
         raise NotImplementedError
 
@@ -137,12 +133,6 @@ class FormAccessors(object):
     def get_forms_by_type(self, type_, limit, recent_first=False):
         return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
 
-    def iter_forms_by_last_modified(self, start_datetime, end_datetime):
-        return self.db_accessor.iter_forms_by_last_modified(
-            start_datetime,
-            end_datetime,
-        )
-
     def get_with_attachments(self, form_id):
         return self.db_accessor.get_with_attachments(form_id)
 
@@ -178,7 +168,7 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_cases(case_ids, ordered=False, prefetched_indices=None):
+    def get_cases(case_ids):
         raise NotImplementedError
 
     @abstractmethod
@@ -207,14 +197,6 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def get_open_case_ids_in_domain_by_type(domain, case_type, owner_ids=None):
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_open_case_ids(case_ids):
-        raise NotImplementedError
-
-    @abstractmethod
-    def get_related_indices(case_ids, exclude_ids):
         raise NotImplementedError
 
     @abstractmethod
@@ -295,9 +277,8 @@ class CaseAccessors(object):
     def get_case(self, case_id):
         return self.db_accessor.get_case(case_id)
 
-    def get_cases(self, case_ids, ordered=False, prefetched_indices=None):
-        return self.db_accessor.get_cases(
-            case_ids, ordered=ordered, prefetched_indices=prefetched_indices)
+    def get_cases(self, case_ids, ordered=False):
+        return self.db_accessor.get_cases(case_ids, ordered=ordered)
 
     def iter_cases(self, case_ids):
         for chunk in chunked(case_ids, 100):
@@ -329,12 +310,6 @@ class CaseAccessors(object):
 
     def get_open_case_ids_in_domain_by_type(self, case_type, owner_ids=None):
         return self.db_accessor.get_open_case_ids_in_domain_by_type(self.domain, case_type, owner_ids)
-
-    def filter_open_case_ids(self, case_ids):
-        return self.db_accessor.filter_open_case_ids(self, case_ids)
-
-    def get_related_indices(self, case_ids, exclude_ids):
-        return self.db_accessor.get_related_indices(self.domain, case_ids, exclude_ids)
 
     def get_case_ids_modified_with_owner_since(self, owner_id, reference_date):
         return self.db_accessor.get_case_ids_modified_with_owner_since(self.domain, owner_id, reference_date)
@@ -430,7 +405,7 @@ class AbstractLedgerAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def get_latest_transaction(case_id, section_id, entry_id):
-        raise NotImplementedError
+        raise NotImplementedError\
 
     @abstractmethod
     def get_current_ledger_state(case_ids, ensure_form_id=False):

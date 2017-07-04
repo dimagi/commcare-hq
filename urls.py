@@ -61,7 +61,6 @@ domain_specific = [
     url(r'^indicators/mvp/', include('mvp.urls')),
     url(r'^indicators/', include('corehq.apps.indicators.urls')),
     url(r'^reports/', include('corehq.apps.reports.urls')),
-    url(r'^messaging/', include('corehq.messaging.scheduling.urls')),
     url(r'^data/', include('corehq.apps.data_interfaces.urls')),
     url(r'^data_dictionary/', include('corehq.apps.data_dictionary.urls')),
     url(r'^', include(hqwebapp_domain_specific)),

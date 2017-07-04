@@ -381,30 +381,6 @@
                 "column_id": "external_id"
             },
             {
-                "display_name": "beneficiary_id",
-                "datatype": "string",
-                "type": "expression",
-                "is_primary_key": false,
-                "transform": {
-                },
-                "is_nullable": true,
-                "expression": {
-                    "value_expression": {
-                        "datatype": "string",
-                        "type": "property_name",
-                        "property_name": "person_id"
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                        "datatype": null,
-                        "type": "named",
-                        "name": "person_id"
-                    }
-                },
-                "column_id": "beneficiary_id"
-            },
-            {
                 "display_name": "person/sex",
                 "datatype": "string",
                 "type": "expression",
@@ -6805,6 +6781,19 @@
                 "is_nullable": true,
                 "type": "expression",
                 "is_primary_key": false,
+                "column_id": "date_of_registration",
+                "transform": {}
+            },
+            {
+                "display_name": "",
+                "datatype": "string",
+                "expression": {
+                    "type": "constant",
+                    "constant": ""
+                },
+                "is_nullable": true,
+                "type": "expression",
+                "is_primary_key": false,
                 "column_id": "registered_by_provider_name",
                 "transform": {}
             },
@@ -8183,30 +8172,6 @@
                         "type": "first_case_form_with_xmlns",
                         "reverse": true,
                         "xmlns": "http://openrosa.org/formdesigner/84058EA1-D98E-41AC-9883-6E4AC5CB77C2",
-                        "case_id_expression": {
-                            "type": "property_name",
-                            "property_name": "_id"
-                        }
-                    },
-                    "value_expression": {
-                        "type": "property_path",
-                        "property_path": ["form", "meta", "timeEnd"]
-                    }
-                }
-            },
-            {
-                "datatype": "date",
-                "is_nullable": true,
-                "type": "expression",
-                "is_primary_key": false,
-                "column_id": "date_of_registration",
-                "transform": {},
-                "expression":  {
-                    "type": "nested",
-                    "argument_expression": {
-                        "type": "first_case_form_with_xmlns",
-                        "reverse": true,
-                        "xmlns": "http://openrosa.org/formdesigner/5c6c6ade7697a80df85ed8a74e397744221f4d0f",
                         "case_id_expression": {
                             "type": "property_name",
                             "property_name": "_id"

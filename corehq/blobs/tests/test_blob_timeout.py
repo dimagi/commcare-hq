@@ -16,13 +16,11 @@ class BlobExpireTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(BlobExpireTest, cls).setUpClass()
         cls.db = TemporaryFilesystemBlobDB()
 
     @classmethod
     def tearDownClass(cls):
         cls.db.close()
-        super(BlobExpireTest, cls).tearDownClass()
 
     def tearDown(self):
         BlobExpiration.objects.all().delete()

@@ -26,7 +26,6 @@ class DBAccessorsTest(TestCase, DocTestMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(DBAccessorsTest, cls).setUpClass()
         cls.project = Domain(name=cls.domain)
         cls.project.save()
         cls.first_saved_version = 2
@@ -64,7 +63,6 @@ class DBAccessorsTest(TestCase, DocTestMixin):
             app.delete()
         # to circumvent domain.delete()'s recursive deletion that this test doesn't need
         Domain.get_db().delete_doc(cls.project)
-        super(DBAccessorsTest, cls).tearDownClass()
 
     @staticmethod
     def _make_app_brief(app):
@@ -199,7 +197,6 @@ class TestAppGetters(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestAppGetters, cls).setUpClass()
         cls.project = Domain(name=cls.domain)
         cls.project.save()
 
@@ -226,7 +223,6 @@ class TestAppGetters(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.project.delete()
-        super(TestAppGetters, cls).tearDownClass()
 
     def test_get_app_current(self):
         app = get_app(self.domain, self.app_id)

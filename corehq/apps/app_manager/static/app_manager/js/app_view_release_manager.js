@@ -1,7 +1,6 @@
 hqDefine("app_manager/js/app_view_release_manager.js", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
 
-
     // Main releases content
     var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
     var o = {
@@ -18,10 +17,10 @@ hqDefine("app_manager/js/app_view_release_manager.js", function() {
     }
 
     // View changes / app diff
-    var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body');
-    $('#recent-changes-btn').on('click', function () {
+    var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body')
+    $('#recent-changes-btn').on('click', function (e) {
         appDiff.renderDiff(initial_page_data('app_id'), initial_page_data('latest_build_id'));
-    });
+    })
 
     // Build profiles
     var $profilesTab = $('#profiles-tab');

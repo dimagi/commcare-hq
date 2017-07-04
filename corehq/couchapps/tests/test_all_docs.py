@@ -10,7 +10,6 @@ class AllDocsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(AllDocsTest, cls).setUpClass()
         cls.main_db = get_db(None)
         cls.users_db = get_db('users')
         cls.doc_types = ('Application', 'CommCareUser')
@@ -34,7 +33,6 @@ class AllDocsTest(TestCase):
     def tearDownClass(cls):
         delete_all_docs_by_doc_type(cls.main_db, cls.doc_types)
         delete_all_docs_by_doc_type(cls.users_db, cls.doc_types)
-        super(AllDocsTest, cls).tearDownClass()
 
     def test_get_all_doc_ids_for_domain_grouped_by_db(self):
         self.assertEqual(

@@ -1792,7 +1792,7 @@ class CaseReminder(SafeSaveDocument, LockableMixIn):
 
     @property
     def user(self):
-        if self.handler.recipient == RECIPIENT_USER and self.user_id:
+        if self.handler.recipient == RECIPIENT_USER:
             return CouchUser.get_by_user_id(self.user_id)
         else:
             return None

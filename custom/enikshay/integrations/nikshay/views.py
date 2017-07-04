@@ -1,4 +1,4 @@
-from corehq.motech.repeaters.views import AddCaseRepeaterView, AddCustomSOAPCaseRepeaterView
+from corehq.apps.repeaters.views import AddCaseRepeaterView, AddCustomSOAPCaseRepeaterView
 
 
 class RegisterNikshayPatientRepeaterView(AddCaseRepeaterView):

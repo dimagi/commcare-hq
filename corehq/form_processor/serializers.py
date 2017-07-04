@@ -154,6 +154,7 @@ class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
     date_modified = serializers.DateTimeField(source='modified_on')
     properties = serializers.JSONField(source='get_properties_in_api_format')
     server_date_modified = serializers.DateTimeField(source='server_modified_on')
+    server_date_opened = serializers.DateTimeField(source='opened_on')
     indices = serializers.JSONField(source='get_index_map')
     attachments = serializers.JSONField(source='get_attachment_map')
     reverse_indices = serializers.JSONField(source='get_reverse_index_map')
@@ -175,6 +176,7 @@ class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
             'date_closed',
             'date_modified',
             'server_date_modified',
+            'server_date_opened',
             'properties',
             'indices',
             'reverse_indices',

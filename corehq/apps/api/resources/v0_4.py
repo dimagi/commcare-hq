@@ -28,8 +28,8 @@ from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.groups.models import Group
-from corehq.motech.repeaters.models import Repeater
-from corehq.motech.repeaters.utils import get_all_repeater_types
+from corehq.apps.repeaters.models import Repeater
+from corehq.apps.repeaters.utils import get_all_repeater_types
 from corehq.apps.users.models import CouchUser, Permissions
 from corehq.apps.users.util import format_username
 from couchforms.models import doc_types
@@ -61,7 +61,6 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     uiversion = fields.CharField(attribute='uiversion', blank=True, null=True)
     metadata = fields.DictField(attribute='metadata', blank=True, null=True)
     received_on = fields.CharField(attribute="received_on")
-    edited_on = fields.CharField(attribute="edited_on", null=True)
 
     app_id = fields.CharField(attribute='app_id', null=True)
     build_id = fields.CharField(attribute='build_id', null=True)

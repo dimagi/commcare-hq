@@ -7,11 +7,9 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
-from corehq.messaging.scheduling import util
 from corehq.messaging.scheduling.exceptions import UnknownRecipientType
 from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
 from corehq.sql_db.models import PartitionedModel
-from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
 from datetime import tzinfo
 from dimagi.utils.decorators.memoized import memoized
@@ -38,10 +36,6 @@ class ScheduleInstance(PartitionedModel):
             ('active', 'next_event_due'),
             ('domain', 'active', 'next_event_due'),
         )
-
-    @property
-    def today_for_recipient(self):
-        return ServerTime(util.utcnow()).user_time(self.timezone).done().date()
 
     @property
     @memoized
@@ -213,20 +207,13 @@ class AbstractTimedScheduleInstance(ScheduleInstance):
         self.timed_schedule_id = value.schedule_id
 
     def recalculate_schedule(self, schedule=None, new_start_date=None):
-        """
-        Resets the start_date and recalulates the next_event_due timestamp for
-        this AbstractTimedScheduleInstance.
-
-        :param schedule: The TimedSchedule to use to avoid a lookup; if None,
-        self.memoized_schedule is used
-        :param new_start_date: The start date to use when recalculating the schedule;
-        If None, the current date is used
-        """
         schedule = schedule or self.memoized_schedule
         self.current_event_num = 0
         self.schedule_iteration_num = 1
         self.active = True
-        schedule.set_first_event_due_timestamp(self, start_date=new_start_date)
+        if new_start_date:
+            self.start_date = new_start_date
+        schedule.set_first_event_due_timestamp(self, self.start_date)
         schedule.move_to_next_event_not_in_the_past(self)
 
 
@@ -273,16 +260,10 @@ class CaseAlertScheduleInstance(CaseScheduleInstanceMixin, AbstractAlertSchedule
     # Points to the AutomaticUpdateRule that spawned this schedule instance
     rule_id = models.IntegerField()
 
-    # See corehq.apps.data_interfaces.models.CreateScheduleInstanceActionDefinition.reset_case_property_name
-    last_reset_case_property_value = models.TextField(null=True)
-
     class Meta(AbstractAlertScheduleInstance.Meta):
         db_table = 'scheduling_casealertscheduleinstance'
         index_together = AbstractAlertScheduleInstance.Meta.index_together + (
             ('case_id', 'alert_schedule_id'),
-        )
-        unique_together = (
-            ('case_id', 'alert_schedule_id', 'recipient_type', 'recipient_id'),
         )
 
 
@@ -293,14 +274,8 @@ class CaseTimedScheduleInstance(CaseScheduleInstanceMixin, AbstractTimedSchedule
     # Points to the AutomaticUpdateRule that spawned this schedule instance
     rule_id = models.IntegerField()
 
-    # See corehq.apps.data_interfaces.models.CreateScheduleInstanceActionDefinition.reset_case_property_name
-    last_reset_case_property_value = models.TextField(null=True)
-
     class Meta(AbstractTimedScheduleInstance.Meta):
         db_table = 'scheduling_casetimedscheduleinstance'
         index_together = AbstractTimedScheduleInstance.Meta.index_together + (
             ('case_id', 'timed_schedule_id'),
-        )
-        unique_together = (
-            ('case_id', 'timed_schedule_id', 'recipient_type', 'recipient_id'),
         )

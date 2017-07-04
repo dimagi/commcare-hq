@@ -10,8 +10,7 @@
             <a ng-click="filterList()"
                class="appnav-link-full">
               <i class="fa fa-search appnav-primary-icon"></i>
-              <span>{% trans "View All Forms" %}</span>
-            </a>
+              {% trans "View All Forms" %}</a>
         </div>
     </li>
     <li ng-repeat="module in modules" role="presentation">
@@ -21,7 +20,7 @@
                class="appnav-link-full">
               {% verbatim %}
               <i class="{{ getModuleIcon(module) }} appnav-primary-icon"></i>
-            <span>{{ getFormModuleLabel(module) }}</span>
+              {{ getFormModuleLabel(module) }}
             {% endverbatim %}
           </a>
         </div>
@@ -33,7 +32,7 @@
                      class="appnav-link-full">
                       {% verbatim %}
                       <i class="{{ getModuleFormIcon(form) }} appnav-primary-icon"></i>
-                      <span>{{ getFormModuleLabel(form) }}</span>
+                      {{ getFormModuleLabel(form) }}
                       {% endverbatim %}
                   </a>
                 </div>

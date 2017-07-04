@@ -1026,7 +1026,7 @@ class FormBase(DocumentSchema):
         }
 
         xml_valid = False
-        if self.source == '' and self.form_type != 'shadow_form':
+        if self.source == '':
             errors.append(dict(type="blank form", **meta))
         else:
             try:
@@ -1050,7 +1050,7 @@ class FormBase(DocumentSchema):
             errors.append(error)
 
         if not errors:
-            if len(questions) == 0 and self.form_type != 'shadow_form':
+            if len(questions) == 0:
                 errors.append(dict(type="blank form", **meta))
             else:
                 try:
@@ -1931,7 +1931,6 @@ class DetailTab(IndexedSchema):
     # iterates through sub-nodes of an entity rather than a single entity
     has_nodeset = BooleanProperty(default=False)
     nodeset = StringProperty()
-    relevant = StringProperty()
 
 
 class DetailColumn(IndexedSchema):
@@ -2031,10 +2030,6 @@ class DetailColumn(IndexedSchema):
                     item.value[lang] = interpolate_media_path(path)
         return to_ret
 
-    @property
-    def invisible(self):
-        return self.format == 'invisible'
-
 
 class SortElement(IndexedSchema):
     field = StringProperty()
@@ -2090,7 +2085,6 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     get_tabs = IndexedSchema.Getter('tabs')
 
     sort_elements = SchemaListProperty(SortElement)
-    sort_nodeset_columns = BooleanProperty()
     filter = StringProperty()
 
     # If True, a small tile will display the case name after selection.
@@ -2136,13 +2130,6 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     def rename_lang(self, old_lang, new_lang):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
-
-    def sort_nodeset_columns_for_detail(self):
-        return (
-            self.display == "long" and
-            self.sort_nodeset_columns and
-            any(tab for tab in self.get_tabs() if tab.has_nodeset)
-        )
 
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
@@ -5913,6 +5900,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         try:
             form = from_module.forms.pop(j)
             if app_manager_v2:
+                if not to_module.is_surveys and i == 0:
+                    # first form is the reg form
+                    i = 1
                 if from_module.is_surveys != to_module.is_surveys:
                     if from_module.is_surveys:
                         form.requires = "case"

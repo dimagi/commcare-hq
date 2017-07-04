@@ -153,7 +153,6 @@ class AutoFilterTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(AutoFilterTests, cls).setUpClass()
         cls.domain = Domain(name=DOMAIN)
         cls.domain.save()
 
@@ -268,7 +267,6 @@ class AutoFilterTests(TestCase):
         cls.state.delete()
         cls.country.delete()
         cls.domain.delete()
-        super(AutoFilterTests, cls).tearDownClass()
 
     def test_filter_by_case_sharing_group_id(self):
         result = _filter_by_case_sharing_group_id(self.sheel, None)

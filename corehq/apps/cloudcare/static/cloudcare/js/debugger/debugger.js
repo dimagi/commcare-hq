@@ -164,21 +164,6 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
     };
     CloudCareDebuggerMenu.prototype = Object.create(CloudCareDebugger.prototype);
     CloudCareDebuggerMenu.prototype.constructor = CloudCareDebugger;
-    CloudCareDebuggerMenu.prototype.onUpdate = function() {
-        API.menuDebuggerContent(
-            this.options.baseUrl,
-            {
-                session_id: this.options.menuSessionId,
-                username: this.options.username,
-                restoreAs: this.options.restoreAs,
-                domain: this.options.domain,
-            }
-        ).done(function(response) {
-            this.evalXPath.autocomplete(response.autoCompletableItems);
-            this.evalXPath.recentXPathQueries(response.recentXPathQueries || []);
-            this.updating(false);
-        }.bind(this));
-    };
 
     var EvaluateXPath = function(options) {
         var self = this;
@@ -234,21 +219,8 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 },
                 self.options.sessionType
             ).done(function(response) {
+                self.result(response.output);
                 self.success(response.status === "accepted");
-                self.recentXPathQueries.unshift({
-                    status: response.status,
-                    output: response.output,
-                    xpath: xpath,
-                });
-                // Ensure at the maximum we only show 6 queries
-                self.recentXPathQueries(
-                    self.recentXPathQueries.slice(0, 6)
-                );
-                if (self.success()) {
-                    self.result(response.output);
-                } else {
-                    self.result(response.output || gettext('Error evaluating expression.'));
-                }
             });
             window.analytics.workflow('[app-preview] User evaluated XPath');
         };
@@ -260,7 +232,6 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 readOnly: true,
             };
             self.codeMirrorResult = CodeMirror.fromTextArea($('#evaluate-result')[0], options);
-            self.codeMirrorResult.setSize(null, 200);
         };
 
         self.result.subscribe(function(newResult) {
@@ -329,32 +300,79 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
     };
 
     var getIconFromType = function(type) {
-        var icon = {
-            'Trigger': 'fcc fcc-fd-variable',
-            'Text': 'fcc fcc-fd-text',
-            'PhoneNumber': 'fa fa-signal',
-            'Secret': 'fa fa-key',
-            'Integer': 'fcc fcc-fd-numeric',
-            'Audio': 'fcc fcc-fd-audio-capture',
-            'Image': 'fa fa-camera',
-            'Video': 'fa fa-video-camera',
-            'Signature': 'fcc fcc-fd-signature',
-            'Geopoint': 'fa fa-map-marker',
-            'Barcode Scan': 'fa fa-barcode',
-            'Date': 'fa fa-calendar',
-            'Date and Time': 'fcc fcc-fd-datetime',
-            'Time': 'fcc fcc-fa-clock-o',
-            'Select': 'fcc fcc-fd-single-select',
-            'Double': 'fcc fcc-fd-decimal',
-            'Label': 'fa fa-tag',
-            'MSelect': 'fcc fcc-fd-multi-select',
-            'Multiple Choice': 'fcc fcc-fd-single-select',
-            'Group': 'fa fa-folder-open',
-            'Question List': 'fa fa-reorder',
-            'Repeat Group': 'fa fa-retweet',
-            'Function': 'fa fa-calculator',
-        }[type];
-        return icon || '';
+        var icon = '';
+        switch (type) {
+        case 'Trigger':
+            icon = 'fcc fcc-fd-variable';
+            break;
+        case 'Text':
+            icon = 'fcc fcc-fd-text';
+            break;
+        case 'PhoneNumber':
+            icon = 'fa fa-signal';
+            break;
+        case 'Secret':
+            icon = 'fa fa-key';
+            break;
+        case 'Integer':
+            icon = 'fcc fcc-fd-numeric';
+            break;
+        case 'Audio':
+            icon = 'fcc fcc-fd-audio-capture';
+            break;
+        case 'Image':
+            icon = 'fa fa-camera';
+            break;
+        case 'Video':
+            icon = 'fa fa-video-camera';
+            break;
+        case 'Signature':
+            icon = 'fcc fcc-fd-signature';
+            break;
+        case 'Geopoint':
+            icon = 'fa fa-map-marker';
+            break;
+        case 'Barcode Scan':
+            icon = 'fa fa-barcode';
+            break;
+        case 'Date':
+            icon = 'fa fa-calendar';
+            break;
+        case 'Date and Time':
+            icon = 'fcc fcc-fd-datetime';
+            break;
+        case 'Time':
+            icon = 'fcc fcc-fa-clock-o';
+            break;
+        case 'Select':
+            icon = 'fcc fcc-fd-single-select';
+            break;
+        case 'Double':
+            icon = 'fcc fcc-fd-decimal';
+            break;
+        case 'Label':
+            icon = 'fa fa-tag';
+            break;
+        case 'MSelect':
+            icon = 'fcc fcc-fd-multi-select';
+            break;
+        case 'Multiple Choice':
+            icon = 'fcc fcc-fd-single-select';
+            break;
+        case 'Group':
+            icon = 'fa fa-folder-open';
+            break;
+        case 'Question List':
+            icon = 'fa fa-reorder';
+            break;
+        case 'Repeat Group':
+            icon = 'fa fa-retweet';
+            break;
+        case 'Function':
+            icon = 'fa fa-calculator';
+            break;
+        }
+        return icon;
     };
 
     var API = {
@@ -364,9 +382,6 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
         },
         formattedQuestions: function(url, params) {
             return API.request(url, 'formatted_questions', params);
-        },
-        menuDebuggerContent: function(url, params) {
-            return API.request(url, 'menu_debugger_content', params);
         },
         request: function(url, action, params) {
             return $.ajax({

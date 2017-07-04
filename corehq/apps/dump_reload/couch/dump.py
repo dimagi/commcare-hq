@@ -14,6 +14,7 @@ from dimagi.utils.couch.bulk import get_docs
 from dimagi.utils.couch.database import iter_docs
 
 DOC_PROVIDERS = {
+    DocTypeIDProvider(['Location']),
     DocTypeIDProvider(['Application']),
     DocTypeIDProvider(['CommtrackConfig']),
     DocTypeIDProvider(['DefaultConsumption']),

@@ -2,17 +2,9 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 {% load djangular_tags %}
-{% load humanize %}
 
 <div ng-controller="ListExportsController"
      ng-cloak>
-    {% if request|toggle_enabled:"PAGINATED_EXPORTS" %}
-    <div class="alert alert-info">
-        {% blocktrans with max_rows=max_exportable_rows|intcomma %}
-        These exports are paginated. That means exports that have over {{ max_rows }} rows will be split into multiple files.
-        {% endblocktrans %}
-    </div>
-    {% endif %}
     {% if is_deid %}
     <p>
         {% blocktrans %}

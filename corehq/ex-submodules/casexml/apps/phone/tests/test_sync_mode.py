@@ -654,11 +654,11 @@ class SyncTokenUpdateTest(SyncBaseTest):
 
     def test_index_chain_with_closed_parents(self):
         grandparent = CaseStructure(
-            case_id='grandparent',
+            case_id=uuid.uuid4().hex,
             attrs={'close': True, 'create': True}
         )
         parent = CaseStructure(
-            case_id='parent',
+            case_id=uuid.uuid4().hex,
             attrs={'close': True, 'create': True},
             indices=[CaseIndex(
                 grandparent,
@@ -667,7 +667,7 @@ class SyncTokenUpdateTest(SyncBaseTest):
             )]
         )
         child = CaseStructure(
-            case_id='child',
+            case_id=uuid.uuid4().hex,
             indices=[CaseIndex(
                 parent,
                 relationship=CHILD_RELATIONSHIP,

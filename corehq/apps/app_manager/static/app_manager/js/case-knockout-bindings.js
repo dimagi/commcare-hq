@@ -8,10 +8,6 @@
         },
         getDisplay: function (question, MAXLEN) {
             return utils.getIcon(question) + utils.getLabel(question, MAXLEN)
-                    + " (" + (question.hashtagValue || question.value) + ")";
-        },
-        getTruncatedDisplay: function (question, MAXLEN) {
-            return utils.getIcon(question) + utils.getLabel(question, MAXLEN)
                     + " (" + utils.truncateValue(question.hashtagValue || question.value, MAXLEN) + ")";
         },
         getLabel: function (question, MAXLEN) {
@@ -69,10 +65,10 @@
                         })
                     },
                     formatSelection: function (o) {
-                        return utils.getTruncatedDisplay(o.question);
+                        return utils.getDisplay(o.question);
                     },
                     formatResult: function (o) {
-                        return utils.getTruncatedDisplay(o.question, 90);
+                        return utils.getDisplay(o.question, 90);
                     },
                     dropdownCssClass: 'bigdrop'
                 });
@@ -90,11 +86,7 @@ ko.bindingHandlers.casePropertyAutocomplete = {
     init: function (element, valueAccessor) {
         $(element).on('textchange', function() {
             var $el = $(this);
-            if ($el.val().match(/\s/)) {
-                var pos = $el.caret('pos');
-                $el.val($el.val().replace(/\s/g, '_'));
-                $el.caret('pos', pos);
-            }
+            $el.val($el.val().replace(/ /g, '_'));
         });
         ko.bindingHandlers.autocompleteAtwho.init(element, valueAccessor);
     },

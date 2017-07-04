@@ -17,7 +17,6 @@ class BaseReportTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(BaseReportTest, cls).setUpClass()
         load_data()
 
         create_domain(DOMAIN)
@@ -31,7 +30,6 @@ class BaseReportTest(unittest.TestCase):
     def tearDownClass(cls):
         cls.couch_user.delete()
         Session.remove()
-        super(BaseReportTest, cls).tearDownClass()
 
     def _get_report_data(self, report, startdate, enddate):
         req = self._get_request(startdate, enddate)

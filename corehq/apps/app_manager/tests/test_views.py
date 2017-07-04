@@ -31,7 +31,6 @@ class TestViews(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestViews, cls).setUpClass()
         cls.domain = Domain(name='app-manager-testviews-domain', is_active=True)
         cls.domain.save()
         cls.username = 'cornelius'
@@ -54,7 +53,6 @@ class TestViews(TestCase):
         if cls.app:
             cls.app.delete()
         cls.domain.delete()
-        super(TestViews, cls).tearDownClass()
 
     def test_download_file_bad_xform_404(self, mock):
         '''

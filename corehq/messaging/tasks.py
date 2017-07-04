@@ -9,15 +9,12 @@ from dimagi.utils.couch import CriticalSection
 from django.conf import settings
 
 
-def get_sync_key(case_id):
-    return 'sync-case-for-messaging-%s' % case_id
-
-
 @no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=12, bind=True)
 def sync_case_for_messaging(self, domain, case_id):
     try:
-        with CriticalSection([get_sync_key(case_id)], timeout=5 * 60):
+        key = 'sync-case-for-messaging-%s' % case_id
+        with CriticalSection([key], timeout=5 * 60):
             _sync_case_for_messaging(domain, case_id)
     except Exception as e:
         self.retry(exc=e)

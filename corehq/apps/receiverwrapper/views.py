@@ -125,8 +125,8 @@ def _record_metrics(base_tags, submission_type, response, result=None, timer=Non
         # normalize over number of items (form or case) saved
         normalized_time = timer.duration / (1 + len(result.cases))
         datadog_histogram('commcare.xform_submissions.normalized_timings', normalized_time, tags=base_tags)
-        datadog_histogram('commcare.xform_submissions.case_count', len(result.cases), tags=base_tags)
-        datadog_histogram('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=base_tags)
+        datadog_counter('commcare.xform_submissions.case_count', len(result.cases), tags=base_tags)
+        datadog_counter('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=base_tags)
 
 
 @csrf_exempt

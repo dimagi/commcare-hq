@@ -157,7 +157,6 @@ class TestFilesystemBlobDB(TestCase, _BlobDBTests):
 
     @classmethod
     def setUpClass(cls):
-        super(TestFilesystemBlobDB, cls).setUpClass()
         cls.rootdir = mkdtemp(prefix="blobdb")
         cls.db = mod.FilesystemBlobDB(cls.rootdir)
 
@@ -166,7 +165,6 @@ class TestFilesystemBlobDB(TestCase, _BlobDBTests):
         cls.db = None
         rmtree(cls.rootdir)
         cls.rootdir = None
-        super(TestFilesystemBlobDB, cls).tearDownClass()
 
     def test_put_with_colliding_blob_id(self):
         # unfortunately can't do this on S3 because there is no way to

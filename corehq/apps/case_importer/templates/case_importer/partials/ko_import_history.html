@@ -12,29 +12,29 @@
     <!--ko foreach: case_uploads-->
     <tr>
         <td class="col-md-1">
-            <!--ko if: task_status().state == $root.states.SUCCESS-->
-                <!--ko if: _.isEmpty(task_status().result.errors)-->
+            <!--ko if: task_status.state == $root.states.SUCCESS-->
+                <!--ko if: _.isEmpty(task_status.result.errors)-->
                 <span class="label label-success">{% trans "Success" %}</span>
                 <!--/ko-->
-                <!--ko if: !_.isEmpty(task_status().result.errors)-->
+                <!--ko if: !_.isEmpty(task_status.result.errors)-->
                 <span class="label label-warning">{% trans "Success with warnings" %}</span>
                 <!--/ko-->
             <!--/ko-->
-            <!--ko if: task_status().state == $root.states.FAILED-->
+            <!--ko if: task_status.state == $root.states.FAILED-->
             <span class="label label-danger">{% trans "Failed" %}</span>
             <!--/ko-->
-            <!--ko if: task_status().state == $root.states.NOT_STARTED-->
+            <!--ko if: task_status.state == $root.states.NOT_STARTED-->
             {% trans "Waiting to start" %}
             <!--/ko-->
-            <!--ko if: task_status().state == $root.states.MISSING-->
+            <!--ko if: task_status.state == $root.states.MISSING-->
             {% trans "Info no longer available" %}
             <!--/ko-->
-            <!--ko if: task_status().state == $root.states.STARTED-->
+            <!--ko if: task_status.state == $root.states.STARTED-->
             <div class="progress">
                 <div class="progress-bar progress-bar-info"
                      role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"
-                     data-bind="attr: {style: 'width: ' + task_status().progress.percent + '%;'}">
-                    <span><span data-bind="text: task_status().progress.percent"></span>%
+                     data-bind="attr: {style: 'width: ' + task_status.progress.percent + '%;'}">
+                    <span><span data-bind="text: task_status.progress.percent"></span>%
                         {% trans "Complete" %}</span>
                   </div>
             </div>
@@ -43,7 +43,7 @@
         <td class="col-md-1" data-bind="text: created"></td>
         <td class="col-md-1" data-bind="text: case_type">
         </td>
-        <td class="col-md-4" data-bind="with: task_status()">
+        <td class="col-md-4" data-bind="with: task_status">
             {% include 'case_importer/partials/ko_import_status.html' %}
         </td>
         <td class="col-md-3">

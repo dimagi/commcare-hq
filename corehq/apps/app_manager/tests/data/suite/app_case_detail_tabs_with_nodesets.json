@@ -636,8 +636,7 @@
                             "header":{  
                                 "en":"External Data"
                             },
-                            "starting_index":4,
-                            "relevant": "gender='male'"
+                            "starting_index":4
                         }
                     ],
                     "lookup_responses":[  
@@ -794,32 +793,6 @@
                             "calc_xpath":"column",
                             "model":"case",
                             "hasAutocomplete":false,
-                            "graph_configuration":null,
-                            "advanced":""
-                        },
-                        {
-                            "doc_type":"DetailColumn",
-                            "nodeset":"",
-                            "filter_xpath":"",
-                            "format":"invisible",
-                            "late_flag":30,
-                            "enum":[
-
-                            ],
-                            "time_ago_interval":365.25,
-                            "hasNodeset":false,
-                            "calc_xpath":".",
-                            "header":{
-                                "en":"Gender"
-                            },
-                            "connectors":{
-
-                            },
-                            "case_tile_field":"",
-                            "isTab":false,
-                            "field":"gender",
-                            "model":"case",
-                            "hasAutocomplete":true,
                             "graph_configuration":null,
                             "advanced":""
                         }

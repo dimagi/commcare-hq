@@ -9,7 +9,6 @@ from corehq.apps.hqadmin.views import DomainAdminRestoreView
 urlpatterns = [
     url(r'^restore/$', restore, name='ota_restore'),
     url(r'^admin_restore/$', DomainAdminRestoreView.as_view(), name=DomainAdminRestoreView.urlname),
-    url(r'^admin_restore/(?P<app_id>[\w-]+)/$', DomainAdminRestoreView.as_view()),
     url(r'^restore/(?P<app_id>[\w-]+)/$', restore, name='app_aware_restore'),
     url(r'^prime_restore/$', PrimeRestoreCacheView.as_view(), name=PrimeRestoreCacheView.urlname),
     url(r'^prime_restore/advanced/$', AdvancedPrimeRestoreCacheView.as_view(),

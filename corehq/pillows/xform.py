@@ -9,7 +9,7 @@ from casexml.apps.case.exceptions import PhoneDateValueError
 from casexml.apps.case.xform import extract_case_blocks
 from casexml.apps.case.xml.parser import CaseGenerationException, case_update_from_block
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import PartitionedKafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
@@ -139,7 +139,7 @@ def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', nu
         doc_prep_fn=transform_xform_for_elasticsearch,
         doc_filter_fn=xform_pillow_filter,
     )
-    kafka_change_feed = KafkaChangeFeed(
+    kafka_change_feed = PartitionedKafkaChangeFeed(
         topics=topics.FORM_TOPICS, group_id='forms-to-es', num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(

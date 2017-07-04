@@ -33,9 +33,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                     } else {
                         FormplayerFrontend.trigger('clearProgress');
                         defer.resolve(parsedMenus);
-                        if (response.menuSessionId) {
-                            FormplayerFrontend.trigger('configureDebugger', response.menuSessionId);
-                        }
                     }
                 },
                 error: function () {
@@ -62,7 +59,6 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 "previewCommand": params.previewCommand,
                 "installReference": params.installReference,
                 "oneQuestionPerScreen": displayOptions.oneQuestionPerScreen,
-                "isPersistent": params.isPersistent,
             });
             options.url = formplayerUrl + '/' + route;
 
@@ -80,8 +76,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
         return Menus.API.queryFormplayer(options, 'navigate_menu');
     });
 
-    FormplayerFrontend.reqres.setHandler("entity:get:details", function (options, isPersistent) {
-        options.isPersistent = isPersistent;
+    FormplayerFrontend.reqres.setHandler("entity:get:details", function (options) {
         return Menus.API.queryFormplayer(options, 'get_details');
     });
 });

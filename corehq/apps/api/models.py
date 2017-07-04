@@ -113,8 +113,10 @@ class ESXFormInstance(DictObject):
     @property
     def metadata(self):
         from corehq.form_processor.utils import clean_metadata
+        from couchforms.models import Metadata
         if const.TAG_META in self.form_data:
-            return clean_metadata(self.form_data[const.TAG_META])
+            return Metadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
+
         return None
 
     @property
@@ -221,7 +223,7 @@ class ESCase(DictObject, CaseToXMLMixin):
         from corehq.apps.api.util import case_to_es_case
         accessor = CaseAccessors(self.domain)
         return {
-            index.case_id: case_to_es_case(accessor.get_case(index.case_id))
+            index.identifier: case_to_es_case(accessor.get_case(index.case_id))
             for index in self._reverse_indices
         }
 

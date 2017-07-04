@@ -8,7 +8,6 @@ class DBAccessorTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(DBAccessorTest, cls).setUpClass()
         cls.domain = 'fixture-dbaccessors'
         cls.data_types = [
             FixtureDataType(domain=cls.domain, tag='a'),
@@ -23,7 +22,6 @@ class DBAccessorTest(TestCase):
     def tearDownClass(cls):
         FixtureDataType.get_db().bulk_delete(cls.data_types)
         get_fixture_data_types_in_domain.clear(cls.domain)
-        super(DBAccessorTest, cls).tearDownClass()
 
     def test_get_number_of_fixture_data_types_in_domain(self):
         self.assertEqual(

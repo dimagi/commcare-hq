@@ -8,7 +8,6 @@ class AnalyticsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(AnalyticsTest, cls).setUpClass()
         cls.domain = 'app-manager-analytics-test'
         cls.app = Application.new_app(cls.domain, "My App")
         cls.app.add_module(Module.new_module("My Module", 'en'))
@@ -21,7 +20,6 @@ class AnalyticsTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.app.delete()
-        super(AnalyticsTest, cls).tearDownClass()
 
     def test_get_exports_by_application(self):
         self.assertEqual(get_exports_by_application(self.domain), [{

@@ -1,9 +1,10 @@
 from django.test import TestCase
 
 from corehq.apps.commtrack.tests.util import make_loc, bootstrap_domain, bootstrap_location_types
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, Location
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
+from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.tests.utils import run_with_all_backends
 
@@ -41,6 +42,7 @@ class LocationsTest(TestCase):
     def tearDown(self):
         self.user.delete()
         SQLLocation.objects.all().delete()
+        delete_all_docs_by_doc_type(Location.get_db(), ['Location'])
         super(LocationsTest, self).tearDown()
 
     @run_with_all_backends

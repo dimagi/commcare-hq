@@ -37,8 +37,6 @@ from corehq.apps.export.views import (
     DashboardFeedPaywall,
     DailySavedExportPaywall,
     CopyExportView,
-    DataFileDownloadList,
-    DataFileDownloadDetail,
 )
 
 urlpatterns = [
@@ -64,12 +62,6 @@ urlpatterns = [
     url(r"^custom/dashboard_feed/$",
         DashboardFeedListView.as_view(),
         name=DashboardFeedListView.urlname),
-    url(r"^custom/download_data_files/$",
-        DataFileDownloadList.as_view(),
-        name=DataFileDownloadList.urlname),
-    url(r"^custom/download_data_files/(?P<pk>\d+)/(?P<filename>.*)$",
-        DataFileDownloadDetail.as_view(),
-        name=DataFileDownloadDetail.urlname),
 
     # New export configuration views
     url(r"^custom/form/create$",

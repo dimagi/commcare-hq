@@ -31,7 +31,6 @@ class BulkArchiveForms(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(BulkArchiveForms, cls).setUpClass()
         create_domain(DOMAIN_NAME)
         cls.password = "password"
         username = "ben"
@@ -60,7 +59,6 @@ class BulkArchiveForms(TestCase):
         cls.user.delete()
         Domain.get_by_name(DOMAIN_NAME, strict=True).delete()
         toggles.BULK_ARCHIVE_FORMS.set(cls.user.username, False)
-        super(BulkArchiveForms, cls).tearDownClass()
 
     def setUp(self):
         self.client = Client()

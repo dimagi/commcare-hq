@@ -166,17 +166,11 @@
                   </button>
               </div>
           <% } %>
-          <% if (showCaseForms) { %>
+          <% if (showFollowup) { %>
               <div class="pull-left">
                   <button type="button" class="popover-additem-option js-new-form appnav-responsive"
                           data-case-action="update" data-type="followup" data-form-type="form">
                     <i class="fcc fcc-app-updateform"></i> {% trans "Followup" %}
-                  </button>
-              </div>
-              <div class="pull-left">
-                  <button type="button" class="popover-additem-option js-new-form appnav-responsive"
-                          data-case-action="open" data-type="followup" data-form-type="form">
-                    <i class="fcc fcc-app-createform"></i> {% trans "Register" %}
                   </button>
               </div>
           <% } %>
@@ -200,6 +194,7 @@
               {% csrf_token %}
               <input type="hidden" name="case_action" />
               <input type="hidden" name="form_type" />
+              <input type="hidden" name="name" />
           </form>
       </div>
     </script>

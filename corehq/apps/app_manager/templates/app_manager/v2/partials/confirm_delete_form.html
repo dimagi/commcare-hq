@@ -14,9 +14,15 @@
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
         <h4 class="modal-title">
-          {% blocktrans %}
-            Are you sure you want to delete this form?
-          {% endblocktrans %}
+          {% if not app.advanced_app_builder and form.get_action_type == 'open' %}
+              {% blocktrans %}
+              This form cannot be deleted.
+              {% endblocktrans %}
+          {% else %}
+              {% blocktrans %}
+              Are you sure you want to delete this form?
+              {% endblocktrans %}
+          {% endif %}
         </h4>
       </div>
 
@@ -25,18 +31,37 @@
         {% csrf_token %}
         <div class="modal-body">
           <p class="lead">
-            {% blocktrans %}You are about to delete the form{% endblocktrans %}
-            <strong>{{ form.name|html_trans:langs }}</strong>!
+            {% if not app.advanced_app_builder and form.get_action_type == 'open' %}
+              {% blocktrans %}You can't delete the form{% endblocktrans %}
+              <strong>{{ form.name|html_trans:langs }}</strong>.
+            {% else %}
+              {% blocktrans %}You are about to delete the form{% endblocktrans %}
+              <strong>{{ form.name|html_trans:langs }}</strong>!
+            {% endif %}
           </p>
+          {% if not app.advanced_app_builder and form.get_action_type == 'open' %}
+          <p>
+              {% blocktrans %}
+              Case Lists need a registration form! You will need to remove the whole
+              case list in order to delete this form.
+              {% endblocktrans %}
+          </p>
+          {% endif %}
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">
-            {% trans "Cancel" %}
-          </button>
-          <button type="submit" class="disable-on-submit btn btn-danger">
-            <i class="fa fa-trash"></i>
-            {% trans "Delete Form" %}
-          </button>
+          {% if not app.advanced_app_builder and form.get_action_type == 'open' %}
+            <button type="button" class="btn btn-default" data-dismiss="modal">
+              {% trans "OK" %}
+            </button>
+          {% else %}
+            <button type="button" class="btn btn-default" data-dismiss="modal">
+              {% trans "Cancel" %}
+            </button>
+            <button type="submit" class="disable-on-submit btn btn-danger">
+                <i class="fa fa-trash"></i>
+                {% trans "Delete Form" %}
+            </button>
+          {% endif %}
         </div>
       </form>
     </div><!-- /.modal-content -->

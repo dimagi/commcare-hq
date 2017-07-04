@@ -1,20 +1,15 @@
 from raven.contrib.django import DjangoClient
 
-from corehq.util.cache_utils import is_rate_limited
+from corehq.util.cache_utils import ExponentialBackoff
 from corehq.util.datadog.gauges import datadog_counter
 
 RATE_LIMITED_EXCEPTIONS = {
     'botocore.vendored.requests.packages.urllib3.exceptions.ProtocolError': 'riak',
-    'botocore.vendored.requests.ReadTimeout': 'riak',
-    'botocore.exceptions.ClientError': 'riak',
     'OperationalError': 'postgres',  # could be psycopg2._psycopg or django.db.utils
     'socket.error': 'rabbitmq',
     'redis.exceptions.ConnectionError': 'redis',
     'restkit.errors.RequestError': 'couchdb',
     'restkit.errors.RequestFailed': 'couchdb',
-    'dimagi.utils.couch.bulk.BulkFetchException': 'couchdb',
-    'socketpool.pool.MaxTriesError': 'couchdb',
-    'corehq.elastic.ESError': 'elastic',
 }
 
 
@@ -25,6 +20,12 @@ def _get_rate_limit_key(exc_info):
         return RATE_LIMITED_EXCEPTIONS[exc_type.__name__]
     elif exc_name in RATE_LIMITED_EXCEPTIONS:
         return RATE_LIMITED_EXCEPTIONS[exc_name]
+
+
+def _is_rate_limited(rate_limit_key):
+    exponential_backoff_key = '{}_down'.format(rate_limit_key)
+    ExponentialBackoff.increment(exponential_backoff_key)
+    return ExponentialBackoff.should_backoff(exponential_backoff_key)
 
 
 class HQSentryClient(DjangoClient):
@@ -42,6 +43,5 @@ class HQSentryClient(DjangoClient):
             datadog_counter('commcare.sentry.errors.rate_limited', tags=[
                 'service:{}'.format(rate_limit_key)
             ])
-            exponential_backoff_key = '{}_down'.format(rate_limit_key)
-            return not is_rate_limited(exponential_backoff_key)
+            return not _is_rate_limited(rate_limit_key)
         return True

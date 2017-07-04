@@ -5,8 +5,8 @@
     "server_environment": [
         "softlayer"
     ],
-    "data_source_table": "episode_qa",
-    "report_id": "beneficiary_register_qa",
+    "data_source_table": "episode",
+    "report_id": "beneficiary_register",
     "config": {
         "description": "",
         "title": "Beneficiary Register",
@@ -49,7 +49,7 @@
         ],
         "columns": [
             {
-                "field": "beneficiary_id",
+                "field": "external_id",
                 "transform": {},
                 "sortable": false,
                 "description": null,
@@ -195,19 +195,15 @@
                 "aggregation": "simple"
             },
             {
+                "field": "treating_provider_name",
+                "transform": {},
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {
-                    "type": "custom",
-                    "custom_type": "owner_display"
-                },
-                "aggregation": "simple",
-                "field": "person_owner_id",
                 "calculate_total": false,
-                "column_id": "treating_provider_name",
                 "type": "field",
-                "display": "Treating Provider Name"
+                "display": "Treating Provider Name",
+                "aggregation": "simple"
             },
             {
                 "field": "person_owner_id",
@@ -363,7 +359,7 @@
                 "aggregation": "simple"
             },
             {
-                "field": "date_of_diagnosis",
+                "field": "date_of_diagnosis2",
                 "transform": {},
                 "sortable": false,
                 "description": null,
@@ -523,6 +519,18 @@
                 "type": "expression",
                 "display": "Total Adherence Score",
                 "column_id": "total_adherence_score"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "visible": false,
+                "transform": {},
+                "aggregation": "simple",
+                "field": "treatment_initiation_date",
+                "calculate_total": false,
+                "type": "field",
+                "display": "treatment_initiation_date"
             },
             {
                 "sortable": false,

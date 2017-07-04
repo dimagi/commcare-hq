@@ -1,6 +1,5 @@
 import uuid
 from tempfile import mkdtemp
-from datetime import datetime
 
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
@@ -65,32 +64,6 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(2, len(forms))
         self.assertEqual(form1.form_id, forms[0].form_id)
         self.assertEqual(form2.form_id, forms[1].form_id)
-
-    def test_get_forms_by_last_modified(self):
-        start = datetime(2016, 1, 1)
-        end = datetime(2018, 1, 1)
-
-        form1 = create_form_for_test(DOMAIN, received_on=datetime(2017, 1, 1))
-        create_form_for_test(DOMAIN, received_on=datetime(2015, 1, 1))
-        # Test that it gets all states
-        form2 = create_form_for_test(
-            DOMAIN,
-            state=XFormInstanceSQL.ARCHIVED,
-            received_on=datetime(2017, 1, 1)
-        )
-        # Test that other date fields are properly fetched
-        form3 = create_form_for_test(
-            DOMAIN,
-            received_on=datetime(2015, 1, 1),
-            edited_on=datetime(2017, 1, 1),
-        )
-
-        forms = list(FormAccessorSQL.iter_forms_by_last_modified(start, end))
-        self.assertEqual(3, len(forms))
-        self.assertEqual(
-            {form1.form_id, form2.form_id, form3.form_id},
-            {form.form_id for form in forms},
-        )
 
     def test_get_with_attachments(self):
         form = create_form_for_test(DOMAIN)

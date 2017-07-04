@@ -1,6 +1,7 @@
 {
     "domains": [
-        "enikshay"
+        "enikshay",
+        "enikshay-reports-qa"
     ],
     "server_environment": [
         "softlayer"
@@ -19,24 +20,24 @@
                 "compare_as_string": false,
                 "datatype": "datetime",
                 "required": false,
-                "slug": "date_fulfilled",
+                "display": "Voucher Validation Date",
                 "field": "date_fulfilled",
                 "type": "date",
-                "display": "Voucher Validation Date"
+                "slug": "date_fulfilled"
             },
             {
                 "compare_as_string": false,
                 "datatype": "string",
                 "type": "dynamic_choice_list",
-                "display": "Location",
+                "slug": "village",
                 "field": "person_owner_id",
                 "choice_provider": {
                     "include_descendants": true,
                     "type": "location",
-                    "order_by_hierarchy": true,
-                    "show_full_path": true
+                    "show_full_path": true,
+                    "order_by_hierarchy": true
                 },
-                "slug": "village"
+                "display": "Location"
             },
             {
                 "pre_value": "true",
@@ -45,14 +46,6 @@
                 "field": "enrolled_in_private",
                 "type": "pre",
                 "slug": "enrolled_in_private"
-            },
-            {
-                "pre_value": 1,
-                "datatype": "integer",
-                "display": null,
-                "field": "has_date_fulfilled",
-                "type": "pre",
-                "slug": "has_date_fulfilled_pre"
             }
         ],
         "columns": [
@@ -82,15 +75,9 @@
                 "sortable": false,
                 "description": null,
                 "format": "default",
-                "transform": {
-                    "type": "translation",
-                    "translations": {
-                        "plc": "Lab",
-                        "pcc-chemist": "Chemist"
-                    }
-                },
+                "transform": {},
                 "aggregation": "simple",
-                "field": "voucher_fulfilled_by_user_type",
+                "field": "voucher_fullfilled_by_user_type",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Provider Type"
@@ -101,10 +88,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "person_id",
+                "field": "external_id",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Beneficiary ID"
+                "display": "Benificiary ID"
             },
             {
                 "sortable": false,

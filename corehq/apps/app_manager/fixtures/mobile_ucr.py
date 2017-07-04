@@ -13,7 +13,7 @@ from corehq.apps.app_manager.suite_xml.features.mobile_ucr import is_valid_mobil
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
 from corehq.util.xml_utils import serialize
 
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_SUPPORT_BOTH_BACKENDS
+from corehq.apps.userreports.const import UCR_SUPPORT_BOTH_BACKENDS
 from corehq.apps.userreports.exceptions import UserReportsError, ReportConfigurationNotFoundError
 from corehq.apps.userreports.models import get_report_config
 from corehq.apps.userreports.reports.factory import ReportFactory
@@ -42,6 +42,7 @@ def _should_sync(restore_state):
     )
 
 
+
 class ReportFixturesProvider(FixtureProvider):
     id = 'commcare:reports'
 
@@ -53,28 +54,8 @@ class ReportFixturesProvider(FixtureProvider):
         if not toggles.MOBILE_UCR.enabled(restore_user.domain) or not _should_sync(restore_state):
             return []
 
-        app_aware_sync_app = restore_state.params.app
-        if app_aware_sync_app:
-            apps = [app_aware_sync_app]
-        elif (
-                toggles.ROLE_WEBAPPS_PERMISSIONS.enabled(restore_user.domain)
-                and restore_state.params.device_id
-                and "WebAppsLogin" in restore_state.params.device_id
-        ):
-            # Only sync reports for apps the user has access to if this is a restore from webapps
-            role = restore_user.get_role(restore_user.domain)
-            if role:
-                apps = [
-                    app for app
-                    in get_apps_in_domain(restore_user.domain, include_remote=False)
-                    if role.permissions.view_web_app(app)
-                ]
-        else:
-            apps = [
-                app for app
-                in get_apps_in_domain(restore_user.domain, include_remote=False)
-            ]
-
+        app = restore_state.params.app
+        apps = [app] if app else [a for a in get_apps_in_domain(restore_user.domain, include_remote=False)]
         report_configs = [
             report_config
             for app_ in apps
@@ -154,9 +135,6 @@ class ReportFixturesProvider(FixtureProvider):
     def _get_report_and_data_source(report_id, domain):
         report = get_report_config(report_id, domain)[0]
         data_source = ReportFactory.from_spec(report, include_prefilters=True)
-        if report.soft_rollout > 0 and data_source.config.backend_id == UCR_LABORATORY_BACKEND:
-            if random.random() < report.soft_rollout:
-                data_source.override_backend_id(UCR_ES_BACKEND)
         return report, data_source
 
     @staticmethod

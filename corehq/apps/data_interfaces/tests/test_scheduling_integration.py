@@ -103,7 +103,7 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
 
             # Make the rule match. On the first iteration, the instance is created. On the second,
             # no new instance is created since it already exists.
-            for minute in [1, 2]:
+            for minute in range(1, 3):
                 utcnow_patch.return_value = datetime(2017, 5, 1, 7, minute)
                 update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
 
@@ -184,83 +184,4 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             update_case(self.domain, case.case_id, case_properties={'start_sending': 'N'})
 
             instances = get_case_alert_schedule_instances_for_schedule(case.case_id, schedule)
-            self.assertEqual(instances.count(), 0)
-
-    @run_with_all_backends
-    @patch('corehq.messaging.scheduling.util.utcnow')
-    def test_timed_schedule_reset(self, utcnow_patch):
-        schedule = TimedSchedule.create_simple_daily_schedule(
-            self.domain,
-            time(9, 0),
-            SMSContent(message={'en': 'Hello'})
-        )
-
-        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
-
-        rule.add_criteria(
-            MatchPropertyDefinition,
-            property_name='start_sending',
-            property_value='Y',
-            match_type=MatchPropertyDefinition.MATCH_EQUAL,
-        )
-
-        rule.add_action(
-            CreateScheduleInstanceActionDefinition,
-            timed_schedule_id=schedule.schedule_id,
-            recipients=(('CommCareUser', self.user.get_id),),
-            reset_case_property_name='reset_property',
-        )
-
-        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
-
-        utcnow_patch.return_value = datetime(2017, 5, 1, 7, 0)
-        with create_case(self.domain, 'person') as case:
-            # Rule does not match, no instances created
-            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
-            self.assertEqual(instances.count(), 0)
-
-            # Make the rule match. On the first iteration, the instance is created. On the second,
-            # no new instance is created since it already exists.
-            for day in [1, 2]:
-                utcnow_patch.return_value = datetime(2017, 5, day, 20, 0)
-                update_case(self.domain, case.case_id,
-                    case_properties={'start_sending': 'Y', 'reset_property': '1'})
-
-                instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
-                self.assertEqual(instances.count(), 1)
-
-                self.assertEqual(instances[0].case_id, case.case_id)
-                self.assertEqual(instances[0].rule_id, rule.pk)
-                self.assertEqual(instances[0].timed_schedule_id, schedule.schedule_id)
-                self.assertEqual(instances[0].start_date, date(2017, 5, 2))
-                self.assertEqual(instances[0].domain, self.domain)
-                self.assertEqual(instances[0].recipient_type, 'CommCareUser')
-                self.assertEqual(instances[0].recipient_id, self.user.get_id)
-                self.assertEqual(instances[0].current_event_num, 0)
-                self.assertEqual(instances[0].schedule_iteration_num, 1)
-                self.assertEqual(instances[0].next_event_due, datetime(2017, 5, 2, 13, 0))
-                self.assertTrue(instances[0].active)
-
-            # Change the value of 'reset_property', and the start date should be reset
-            utcnow_patch.return_value = datetime(2017, 5, 2, 20, 0)
-            update_case(self.domain, case.case_id, case_properties={'reset_property': '2'})
-            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
-            self.assertEqual(instances.count(), 1)
-
-            self.assertEqual(instances[0].case_id, case.case_id)
-            self.assertEqual(instances[0].rule_id, rule.pk)
-            self.assertEqual(instances[0].timed_schedule_id, schedule.schedule_id)
-            self.assertEqual(instances[0].start_date, date(2017, 5, 3))
-            self.assertEqual(instances[0].domain, self.domain)
-            self.assertEqual(instances[0].recipient_type, 'CommCareUser')
-            self.assertEqual(instances[0].recipient_id, self.user.get_id)
-            self.assertEqual(instances[0].current_event_num, 0)
-            self.assertEqual(instances[0].schedule_iteration_num, 1)
-            self.assertEqual(instances[0].next_event_due, datetime(2017, 5, 3, 13, 0))
-            self.assertTrue(instances[0].active)
-
-            # Make the rule not match. Instance should no longer exist.
-            utcnow_patch.return_value = datetime(2017, 5, 2, 20, 0)
-            update_case(self.domain, case.case_id, case_properties={'start_sending': 'N'})
-            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)

@@ -35,8 +35,8 @@ from custom.enikshay.integrations.nikshay.repeater_generator import (
 from custom.enikshay.case_utils import update_case
 
 from casexml.apps.case.mock import CaseStructure
-from corehq.motech.repeaters.models import RepeatRecord
-from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
+from corehq.apps.repeaters.models import RepeatRecord
+from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
 from casexml.apps.case.tests.util import delete_all_cases
 
 DUMMY_NIKSHAY_ID = "DM-DMO-01-16-0137"

@@ -159,10 +159,6 @@ class AppFactory(object):
         else:
             AppFactory.advanced_form_autoloads(form, AUTO_SELECT_USERCASE, None)
 
-    @staticmethod
-    def form_workflow(form, mode):
-        form.post_form_workflow = mode
-
     @classmethod
     def case_list_form_app_factory(cls):
         factory = cls(build_version='2.9')

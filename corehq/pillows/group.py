@@ -11,7 +11,7 @@ from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from pillowtop.reindexer.reindexer import ElasticPillowReindexer
 
 
-def get_group_pillow(pillow_id='GroupPillow', num_processes=1, process_num=0, **kwargs):
+def get_group_pillow(pillow_id='GroupPillow', **kwargs):
     """
     This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
     """
@@ -21,9 +21,7 @@ def get_group_pillow(pillow_id='GroupPillow', num_processes=1, process_num=0, **
         elasticsearch=get_es_new(),
         index_info=GROUP_INDEX_INFO,
     )
-    change_feed = KafkaChangeFeed(
-        topics=[topics.GROUP], group_id='groups-to-es', num_processes=num_processes, process_num=process_num
-    )
+    change_feed = KafkaChangeFeed(topics=[topics.GROUP], group_id='groups-to-es')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,

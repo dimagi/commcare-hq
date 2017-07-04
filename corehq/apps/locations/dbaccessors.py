@@ -148,19 +148,6 @@ def generate_user_ids_from_primary_location_ids(domain, location_ids):
             yield user_id
 
 
-def generate_user_ids_from_primary_location_ids_from_couch(domain, location_ids):
-    """
-    Creates a generator for iterating through the user ids of the all the
-    mobile workers in the given domain whose primary location is given in
-    the list of location_ids.
-
-    Retrieves the information from couch instead of elasticsearch.
-    """
-    for location_id in location_ids:
-        for user_id in get_user_ids_by_location(domain, location_id):
-            yield user_id
-
-
 def get_location_ids_with_location_type(domain, location_type_code):
     """
     Returns a QuerySet with the location_ids of all the unarchived SQLLocations in the
