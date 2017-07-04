@@ -217,6 +217,29 @@ def toggle_enabled(request, toggle_or_toggle_name):
     import corehq.toggles
     return _toggle_enabled(corehq.toggles, request, toggle_or_toggle_name)
 
+
+def _ui_notify_enabled(module, request, ui_notify_instance_or_name):
+    ui_notify = _get_obj_from_name_or_instance(module, ui_notify_instance_or_name)
+    return ui_notify.enabled(request)
+
+
+@register.filter
+def ui_notify_enabled(request, ui_notify_instance_or_name):
+    import corehq.apps.notifications.ui_notify
+    return _ui_notify_enabled(
+        corehq.apps.notifications.ui_notify,
+        request,
+        ui_notify_instance_or_name
+    )
+
+
+@register.filter
+def ui_notify_slug(ui_notify_instance_or_name):
+    import corehq.apps.notifications.ui_notify
+    ui_notify = _get_obj_from_name_or_instance(corehq.apps.notifications.ui_notify, ui_notify_instance_or_name)
+    return ui_notify.slug
+
+
 @register.filter
 def toggle_tag_info(request, toggle_or_toggle_name):
     """Show Tag Information for feature flags / Toggles,
