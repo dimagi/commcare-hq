@@ -215,7 +215,7 @@ class MumbaiColumnMapping(ColumnMapping):
     mapping_dict = MUMBAI_MAP
 
 
-def get_case_structures_from_row(domain, column_mapping, row):
+def get_case_structures_from_row(domain, migration_id, column_mapping, row):
     person_case_properties = get_person_case_properties(domain, column_mapping, row)
     occurrence_case_properties = get_occurrence_case_properties(row)
     episode_case_properties = get_episode_case_properties(domain, column_mapping, row)
@@ -225,23 +225,23 @@ def get_case_structures_from_row(domain, column_mapping, row):
         column_mapping, row, episode_case_properties['treatment_initiation_date'])
     secondary_owner_case_properties = get_secondary_owner_case_properties(domain, column_mapping, row)
 
-    person_case_structure = get_case_structure(CASE_TYPE_PERSON, person_case_properties)
+    person_case_structure = get_case_structure(CASE_TYPE_PERSON, person_case_properties, migration_id)
     occurrence_case_structure = get_case_structure(
-        CASE_TYPE_OCCURRENCE, occurrence_case_properties, host=person_case_structure)
+        CASE_TYPE_OCCURRENCE, occurrence_case_properties, migration_id, host=person_case_structure)
     episode_case_structure = get_case_structure(
-        CASE_TYPE_EPISODE, episode_case_properties, host=occurrence_case_structure)
+        CASE_TYPE_EPISODE, episode_case_properties, migration_id, host=occurrence_case_structure)
     test_case_structure = get_case_structure(
-        CASE_TYPE_TEST, test_case_properties, host=occurrence_case_structure)
+        CASE_TYPE_TEST, test_case_properties, migration_id, host=occurrence_case_structure)
     drug_resistance_case_structures = [
-        get_case_structure(CASE_TYPE_DRUG_RESISTANCE, props, host=occurrence_case_structure)
+        get_case_structure(CASE_TYPE_DRUG_RESISTANCE, props, migration_id, host=occurrence_case_structure)
         for props in drug_resistance_case_properties
     ]
     followup_test_case_structures = [
-        get_case_structure(CASE_TYPE_TEST, props, host=occurrence_case_structure)
+        get_case_structure(CASE_TYPE_TEST, props, migration_id, host=occurrence_case_structure)
         for props in followup_test_cases_properties
     ]
     secondary_owner_case_structure = get_case_structure(
-        CASE_TYPE_SECONDARY_OWNER, secondary_owner_case_properties, host=occurrence_case_structure)
+        CASE_TYPE_SECONDARY_OWNER, secondary_owner_case_properties, migration_id, host=occurrence_case_structure)
 
     return [
         person_case_structure,
@@ -252,9 +252,10 @@ def get_case_structures_from_row(domain, column_mapping, row):
     ] + drug_resistance_case_structures + followup_test_case_structures
 
 
-def get_case_structure(case_type, properties, host=None):
+def get_case_structure(case_type, properties, migration_identifier, host=None):
     owner_id = properties.pop("owner_id")
     props = {k: v for k, v in properties.iteritems() if v is not None}
+    props['__created_by_migration'] = migration_identifier
     kwargs = {
         "case_id": uuid.uuid4().hex,
         "attrs": {
@@ -591,6 +592,7 @@ class Command(BaseCommand):
     def handle(self, domain, excel_file_path, **options):
 
         column_mapping = self.get_column_mapping(options['format'])
+        migration_id = str(datetime.datetime.now())
 
         with open_any_workbook(excel_file_path) as workbook:
             for i, row in enumerate(workbook.worksheets[0].iter_rows()):
@@ -599,7 +601,7 @@ class Command(BaseCommand):
                     # Skip the headers row
                     continue
                 import ipdb; ipdb.set_trace()
-                case_structures = get_case_structures_from_row(domain, column_mapping, row)
+                case_structures = get_case_structures_from_row(domain, migration_id, column_mapping, row)
                 # TODO: submit forms with case structures (make sure it doesn't do that cascading thing)
 
     @staticmethod
