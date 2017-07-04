@@ -106,6 +106,7 @@ class DismissedUINotify(models.Model):
             user=user,
             slug=slug,
             date_dismised=datetime.datetime.now()
+            date_dismissed=datetime.datetime.now()
         )
 
     @classmethod
