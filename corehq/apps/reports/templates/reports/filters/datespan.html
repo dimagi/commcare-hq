@@ -7,7 +7,11 @@
             <input type="text"
                    id="filter_range"
                    class="date-range-picker form-control"
-                   value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}" />
+                   value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}"
+                   data-separator="{% html_attr separator %}" 
+                   data-report-labels="{% html_attr report_labels %}"
+                   data-start-date="{{ datespan.startdate|date:"Y-m-d" }}"
+                   data-end-date="{{ datespan.enddate|date:"Y-m-d" }}" />
             <!-- Since a lot parts of commcarehq are using 'startdate' and 'enddate' parameters, we could keep them for backward compatibility -->
             <input type="hidden"
                    id="{{ css_id }}_startdate"
@@ -33,16 +37,17 @@
 {% ifequal slug 'datespan'  %}
     <script>
         $(function () {
-            var separator = '{{ separator }}';
-            var report_labels = JSON.parse('{{ report_labels|safe }}');
+            var $filterRange = $('#filter_range');
+            var separator = $filterRange.data('separator');
+            var report_labels = $filterRange.data('reportLabels');
             var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
 
-            $('#filter_range').createDateRangePicker(
+            $filterRange.createDateRangePicker(
                 report_labels, separator,
-                '{{ datespan.startdate|date:"Y-m-d" }}',
-                '{{ datespan.enddate|date:"Y-m-d" }}'
+                $filterRange.data('startDate'),
+                $filterRange.data('endDate'),
             );
-            $('#filter_range').on('change apply', function(ev, picker) {
+            $filterRange.on('change apply', function(ev, picker) {
                 var dates = $(this).val().split(separator);
                 $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.startdate', dates[0]);
                 $('#report_filter_datespan_startdate').val(dates[0]);

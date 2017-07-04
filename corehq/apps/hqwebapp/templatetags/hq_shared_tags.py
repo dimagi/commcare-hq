@@ -625,6 +625,15 @@ def registerurl(parser, token):
     return AddToBlockNode(nodelist, 'js-inline')
 
 
+@register.simple_tag
+def html_attr(value):
+    if isinstance(value, basestring):
+        value = json.dumps(value)[1:-1]
+    else:
+        value = JSON(value)
+    return "{}".format(escape(value))
+
+
 @register.tag
 def initial_page_data(parser, token):
     split_contents = token.split_contents()
