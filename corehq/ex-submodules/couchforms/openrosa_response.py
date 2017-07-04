@@ -13,6 +13,7 @@ class ResponseNature(object):
     # here, but nice for this all to be in one place
     SUBMIT_SUCCESS = 'submit_success'
     SUBMIT_ERROR = 'submit_error'
+    KNOWN_PROCESSING_ERROR = 'processing_failure'
 
     # users app
     SUBMIT_USER_REGISTERED = 'submit_user_registered'

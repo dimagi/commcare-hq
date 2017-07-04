@@ -160,6 +160,7 @@ class SubmissionPost(object):
             else:
                 case_db_cache = self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms)
 
+            known_submission_error = False
             with case_db_cache as case_db:
                 instance = xforms[0]
                 if instance.xmlns == DEVICE_LOG_XMLNS:
@@ -182,6 +183,8 @@ class SubmissionPost(object):
                         case_stock_result = self.process_xforms_for_cases(xforms, case_db)
                     except (IllegalCaseId, UsesReferrals, MissingProductId,
                             PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
+                        known_submission_error = '{}: {}'.format(
+                            type(e).__name__, unicode(e))
                         self._handle_known_error(e, instance, xforms)
                         submission_type = 'error'
                     except Exception as e:
@@ -203,6 +206,8 @@ class SubmissionPost(object):
             errors = self.process_signals(instance)
             if instance.is_normal and not errors:
                 response = self.get_success_response()
+            elif known_submission_error:
+                response = self.get_retry_response(known_submission_error, ResponseNature.KNOWN_PROCESSING_ERROR)
             else:
                 response = self.get_retry_response(instance.problem, ResponseNature.SUBMIT_ERROR)
 
