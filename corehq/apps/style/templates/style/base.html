@@ -408,6 +408,7 @@
                 var csrfToken = $("#csrfTokenContainer").val();
                 notifications.setRMI('{% url 'notifications_service' %}', csrfToken);
                 notifications.initService('#js-settingsmenu-notifications');
+                notifications.initUINotify('.alert-ui-notify');
             });
         </script>
         {% endaddtoblock %}

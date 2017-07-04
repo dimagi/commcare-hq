@@ -114,6 +114,18 @@ hqDefine('notifications/js/notifications_service.js', function () {
         $(notificationsKoSelector).koApplyBindings(module.serviceModel);
     };
 
+    module.initUINotify = function (uiNotifySelector) {
+        var uiNotifyAlerts = $(uiNotifySelector);
+        if (uiNotifyAlerts.length > 0) {
+            uiNotifyAlerts.on('closed.bs.alert', function () {
+                var notifySlug = $(this).data('slug');
+                _private.RMI("dismiss_ui_notify", {
+                    "slug": notifySlug,
+                });
+            });
+        }
+    };
+
     return module;
 
 });
