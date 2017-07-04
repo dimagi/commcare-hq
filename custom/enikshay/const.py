@@ -98,8 +98,6 @@ INVESTIGATION_TYPE = "investigation_type"
 
 ENIKSHAY_TIMEZONE = 'Asia/Kolkata'
 
-DEFAULT_MOBILE_WORKER_ROLE = "Default Mobile Worker"
-
 AGENCY_USER_FIELDS = [
     # (slug, label, choices)
     ('user_level', "User Level", ["dev", "test", "real"]),

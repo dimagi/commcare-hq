@@ -136,7 +136,7 @@ class _AuthTestsCouchOnly(object):
     def test_submit_mode(self):
         # test 'submit_mode=demo' request param
 
-        accepted_response = SubmissionPost.get_success_response().content
+        accepted_response = SubmissionPost.get_success_response(None, None).content
         ignored_response = SubmissionPost.submission_ignored_response().content
 
         client = django_digest.test.Client()

@@ -4,8 +4,8 @@ from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 from casexml.apps.case.signals import case_post_save
 from corehq.apps.locations.models import SQLLocation
-from corehq.motech.repeaters.models import CaseRepeater, LocationRepeater, UserRepeater
-from corehq.motech.repeaters.signals import create_repeat_records
+from corehq.apps.repeaters.models import CaseRepeater, LocationRepeater, UserRepeater
+from corehq.apps.repeaters.signals import create_repeat_records
 from corehq.apps.users.signals import commcare_user_post_save
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import BETS_INTEGRATION

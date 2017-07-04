@@ -1,0 +1,2 @@
+class RequestConnectionError(Exception):
+    pass

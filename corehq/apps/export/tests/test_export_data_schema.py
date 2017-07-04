@@ -524,7 +524,6 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(TestBuildingSchemaFromApplication, cls).setUpClass()
         cls.current_app = Application.wrap(cls.get_json('basic_application'))
 
         cls.first_build = Application.wrap(cls.get_json('basic_application'))
@@ -559,7 +558,6 @@ class TestBuildingSchemaFromApplication(TestCase, TestXmlMixin):
     def tearDownClass(cls):
         for app in cls.apps:
             app.delete()
-        super(TestBuildingSchemaFromApplication, cls).tearDownClass()
 
     def setUp(self):
         self.inferred_schema = CaseInferredSchema(
@@ -729,7 +727,6 @@ class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(TestExportDataSchemaVersionControl, cls).setUpClass()
         cls.current_app = Application.wrap(cls.get_json('basic_application'))
         with drop_connected_signals(app_post_save):
             cls.current_app.save()
@@ -737,7 +734,6 @@ class TestExportDataSchemaVersionControl(TestCase, TestXmlMixin):
     @classmethod
     def tearDownClass(cls):
         cls.current_app.delete()
-        super(TestExportDataSchemaVersionControl, cls).tearDownClass()
 
     def tearDown(self):
         delete_all_export_data_schemas()
@@ -780,7 +776,6 @@ class TestDelayedSchema(TestCase, TestXmlMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(TestDelayedSchema, cls).setUpClass()
         cls.current_app = Application.new_app(cls.domain, "Untitled Application")
         cls.current_app._id = '1234'
         cls.current_app.version = 10
@@ -809,7 +804,6 @@ class TestDelayedSchema(TestCase, TestXmlMixin):
     def tearDownClass(cls):
         for app in cls.apps:
             app.delete()
-        super(TestDelayedSchema, cls).tearDownClass()
 
     def tearDown(self):
         delete_all_export_data_schemas()
@@ -846,7 +840,6 @@ class TestCaseDelayedSchema(TestCase, TestXmlMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(TestCaseDelayedSchema, cls).setUpClass()
         factory = AppFactory(domain=cls.domain)
         module1, form1 = factory.new_basic_module('update_case', cls.case_type)
         factory.form_requires_case(form1, cls.case_type, update={
@@ -880,7 +873,6 @@ class TestCaseDelayedSchema(TestCase, TestXmlMixin):
     def tearDownClass(cls):
         for app in cls.apps:
             app.delete()
-        super(TestCaseDelayedSchema, cls).tearDownClass()
 
     def tearDown(self):
         delete_all_export_data_schemas()
@@ -917,7 +909,6 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(TestBuildingCaseSchemaFromApplication, cls).setUpClass()
         cls.current_app = Application.wrap(cls.get_json('basic_case_application'))
 
         cls.first_build = Application.wrap(cls.get_json('basic_case_application'))
@@ -938,7 +929,6 @@ class TestBuildingCaseSchemaFromApplication(TestCase, TestXmlMixin):
     def tearDownClass(cls):
         for app in cls.apps:
             app.delete()
-        super(TestBuildingCaseSchemaFromApplication, cls).tearDownClass()
 
     def tearDown(self):
         delete_all_export_data_schemas()
@@ -1030,7 +1020,6 @@ class TestBuildingCaseSchemaFromMultipleApplications(TestCase, TestXmlMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(TestBuildingCaseSchemaFromMultipleApplications, cls).setUpClass()
         cls.current_app = Application.wrap(cls.get_json('basic_case_application'))
         cls.other_current_app = Application.wrap(cls.get_json('basic_case_application'))
         cls.other_current_app._id = 'other-app-id'
@@ -1060,7 +1049,6 @@ class TestBuildingCaseSchemaFromMultipleApplications(TestCase, TestXmlMixin):
     def tearDownClass(cls):
         for app in cls.apps:
             app.delete()
-        super(TestBuildingCaseSchemaFromMultipleApplications, cls).tearDownClass()
 
     def tearDown(self):
         delete_all_export_data_schemas()
@@ -1092,7 +1080,6 @@ class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(TestBuildingParentCaseSchemaFromApplication, cls).setUpClass()
         cls.current_app = Application.wrap(cls.get_json('parent_child_case_application'))
         cls.current_app.copy_of = None
 
@@ -1107,7 +1094,6 @@ class TestBuildingParentCaseSchemaFromApplication(TestCase, TestXmlMixin):
     def tearDownClass(cls):
         for app in cls.apps:
             app.delete()
-        super(TestBuildingParentCaseSchemaFromApplication, cls).tearDownClass()
 
     def tearDown(self):
         delete_all_export_data_schemas()

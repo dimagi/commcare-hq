@@ -376,8 +376,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
 
-    uses_new_reminders = BooleanProperty(default=False)
-
     @classmethod
     def wrap(cls, data):
         # for domains that still use original_doc

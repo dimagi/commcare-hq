@@ -10,7 +10,7 @@ from corehq.apps.userreports.util import get_indicator_adapter
 from six.moves import range
 
 
-ReportDataTestRow = namedtuple('ReportDataTestRow', ['name', 'number', 'sort_key'])
+ReportDataTestRow = namedtuple('ReportDataTestRow', ['name', 'number'])
 
 
 class ReportDataTest(TestCase):
@@ -53,16 +53,6 @@ class ReportDataTest(TestCase):
                     },
                     "column_id": 'string-number',
                     "display_name": 'string-number',
-                    "datatype": "string"
-                },
-                {
-                    "type": "expression",
-                    "expression": {
-                        "type": "property_name",
-                        "property_name": 'just_for_sorting'
-                    },
-                    "column_id": 'just_for_sorting',
-                    "display_name": 'just_for_sorting',
                     "datatype": "string"
                 }
             ],
@@ -138,14 +128,13 @@ class ReportDataTest(TestCase):
                 }
             ],
             filters=[],
-            configured_charts=[],
-            sort_expression=[{'field': 'just_for_sorting', 'order': 'DESC'}]
+            configured_charts=[]
         )
         self.report_config.save()
         self.addCleanup(self.report_config.delete)
 
     def _add_some_rows(self, count):
-        rows = [ReportDataTestRow(uuid.uuid4().hex, i, i) for i in range(count)]
+        rows = [ReportDataTestRow(uuid.uuid4().hex, i) for i in range(count)]
         self._add_rows(rows)
         self.adapter.refresh_table()
         return rows
@@ -162,7 +151,6 @@ class ReportDataTest(TestCase):
                 'type': 'city',
                 'name': row.name,
                 'number': row.number,
-                'just_for_sorting': row.sort_key,
             }
         for row in rows:
             pillow.process_change(doc_to_change(_get_case(row)))

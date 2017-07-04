@@ -132,8 +132,3 @@ def pprint_stats(stats, outstream):
         )
         for user in sorted(list(users)):
             outstream.write("        {}\n".format(user))
-
-
-@periodic_task(run_every=crontab(minute=0, hour=0), queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery'))
-def clear_expired_sessions():
-    call_command('clearsessions')

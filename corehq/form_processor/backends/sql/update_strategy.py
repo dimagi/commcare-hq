@@ -139,7 +139,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             elif key == 'name':
                 # replicate legacy behaviour
                 self.case.name = value
-            elif key not in const.RESTRICTED_PROPERTIES:
+            elif key not in const.CASE_TAGS:
                 self.case.case_json[key] = value
 
             if key == 'hq_user_id':

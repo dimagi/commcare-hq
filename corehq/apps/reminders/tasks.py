@@ -143,3 +143,39 @@ def delete_reminders_for_cases(domain, case_ids):
             include_docs=True
         )
         soft_delete_docs([row['doc'] for row in results], CaseReminder)
+
+
+@periodic_task(run_every=crontab(minute=0), queue=settings.CELERY_PERIODIC_QUEUE)
+def run_periodic_rules():
+    for domain in settings.ICDS_SMS_INDICATOR_DOMAINS:
+        run_handlers_in_domain.delay(domain)
+
+
+def organize_handlers_by_case_type(handlers):
+    result = {}
+    for handler in handlers:
+        if handler.start_condition_type == CASE_CRITERIA and handler.case_type:
+            if handler.case_type not in result:
+                result[handler.case_type] = [handler]
+            else:
+                result[handler.case_type].append(handler)
+    return result
+
+
+@serial_task(
+    '{domain}',
+    timeout=4 * 60 * 60,
+    max_retries=0,
+    queue=settings.CELERY_MAIN_QUEUE,
+)
+def run_handlers_in_domain(domain):
+    handlers = CaseReminderHandler.get_handlers(domain, reminder_type_filter=REMINDER_TYPE_DEFAULT)
+    handlers_by_case_type = organize_handlers_by_case_type(handlers)
+
+    for case_type, handlers in handlers_by_case_type.items():
+        for case_ids in scroll_case_ids_by_domain_and_case_type(domain, case_type):
+            for case in CaseAccessors(domain).iter_cases(case_ids):
+                for handler in handlers:
+                    if handler.domain != case.domain:
+                        raise ValueError("Unexpected domain mismatch: %s, %s" % (handler.domain, case.domain))
+                    handler.case_changed(case)

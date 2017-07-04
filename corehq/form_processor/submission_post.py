@@ -183,7 +183,6 @@ class SubmissionPost(object):
                     except (IllegalCaseId, UsesReferrals, MissingProductId,
                             PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
                         self._handle_known_error(e, instance, xforms)
-                        submission_type = 'error'
                     except Exception as e:
                         # handle / log the error and reraise so the phone knows to resubmit
                         # note that in the case of edit submissions this won't flag the previous
@@ -295,8 +294,8 @@ class SubmissionPost(object):
         return errors
 
     def _get_open_rosa_response(self, instance, errors):
-        if instance.is_normal and not errors:
-            response = self.get_success_response()
+        if instance.is_normal:
+            response = self.get_success_response(instance, errors)
         else:
             response = self.get_failure_response(instance)
 
@@ -308,13 +307,22 @@ class SubmissionPost(object):
         return response
 
     @staticmethod
-    def get_success_response():
-        return OpenRosaResponse(
-            # would have done ✓ but our test Nokias' fonts don't have that character
-            message=u'   √   ',
-            nature=ResponseNature.SUBMIT_SUCCESS,
-            status=201,
-        ).response()
+    def get_success_response(doc, errors):
+
+        if errors:
+            response = OpenRosaResponse(
+                message=doc.problem,
+                nature=ResponseNature.SUBMIT_ERROR,
+                status=201,
+            ).response()
+        else:
+            response = OpenRosaResponse(
+                # would have done ✓ but our test Nokias' fonts don't have that character
+                message=u'   √   ',
+                nature=ResponseNature.SUBMIT_SUCCESS,
+                status=201,
+            ).response()
+        return response
 
     @staticmethod
     def submission_ignored_response():

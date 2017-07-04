@@ -7,10 +7,10 @@
 ├── XMLWriter#ab8760d6e0
 ├─┬ bootstrap#3.3.7 (latest is 4.0.0-alpha.6)
 │ └── jquery#3.2.1
-├── chai#4.0.2
+├── chai#3.5.0 (4.0.0-canary.2 available)
 ├── codemirror#5.19.0 (latest is 5.26.0)
 ├── equivalent-xml-js#7de21be295
-├── fuse.js#2.5.0 (latest is 3.0.5)
+├── fuse.js#2.5.0 (latest is 3.0.3)
 ├── jquery#3.2.1
 ├── jsdiff#3.2.0
 ├─┬ jstree#3.3.4

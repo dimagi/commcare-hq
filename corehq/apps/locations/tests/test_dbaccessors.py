@@ -5,8 +5,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from ..analytics import users_have_locations
 from ..dbaccessors import (get_users_by_location_id, get_user_ids_by_location,
                            get_one_user_at_location, get_user_docs_by_location,
-                           get_all_users_by_location, get_users_assigned_to_locations,
-                           generate_user_ids_from_primary_location_ids_from_couch)
+                           get_all_users_by_location, get_users_assigned_to_locations)
 from .util import make_loc
 
 
@@ -83,13 +82,3 @@ class TestUsersByLocation(TestCase):
             [self.varys._id, self.tyrion._id, self.daenerys._id, self.george._id]
         )
         other_user.delete()
-
-    def test_generate_user_ids_from_primary_location_ids_from_couch(self):
-        self.assertItemsEqual(
-            list(
-                generate_user_ids_from_primary_location_ids_from_couch(
-                    self.domain, [self.pentos.location_id, self.meereen.location_id]
-                )
-            ),
-            [self.varys._id, self.tyrion._id, self.daenerys._id]
-        )

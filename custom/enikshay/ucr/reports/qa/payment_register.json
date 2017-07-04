@@ -9,7 +9,7 @@
     "report_id": "payment_register_qa",
     "config": {
         "description": "",
-        "title": "Payment Register",
+        "title": "Payment Register (QA)",
         "sort_expression": [],
         "visible": true,
         "configured_charts": [],
@@ -76,7 +76,7 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "voucher_fulfilled_by_user_type",
+                "field": "voucher_fullfilled_by_user_type",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Provider Type"
@@ -87,10 +87,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "person_id",
+                "field": "external_id",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Beneficiary ID"
+                "display": "Benificiary ID"
             },
             {
                 "sortable": false,

@@ -1,6 +1,5 @@
 import os
 import uuid
-from contextlib import contextmanager
 from datetime import datetime
 from xml.etree import ElementTree
 from corehq.apps.domain.models import Domain
@@ -46,7 +45,7 @@ class RestoreCaseBlock(object):
 
 def bootstrap_case_from_xml(test_class, filename, case_id_override=None, domain=None):
     starttime = utcnow_sans_milliseconds()
-
+    
     file_path = os.path.join(os.path.dirname(__file__), "data", filename)
     with open(file_path, "rb") as f:
         xml_data = f.read()
@@ -82,7 +81,7 @@ def check_xml_line_by_line(test_case, expected, actual):
     parser = etree.XMLParser(remove_blank_text=True)
     parsed_expected = etree.tostring(etree.XML(expected, parser), pretty_print=True)
     parsed_actual = etree.tostring(etree.XML(actual, parser), pretty_print=True)
-
+    
     if parsed_expected == parsed_actual:
         return
 
@@ -134,38 +133,18 @@ def extract_caseblocks_from_xml(payload_string, version=V2):
     return [RestoreCaseBlock(b, version) for b in xml_blocks]
 
 
-@contextmanager
-def cached_restore(testcase, user, restore_id="", version=V2,
-                   purge_restore_cache=False):
-    assert not hasattr(testcase, 'restore_config'), testcase
-    assert not hasattr(testcase, 'payload_string'), testcase
-
-    if restore_id and purge_restore_cache:
-        SyncLog.get(restore_id).invalidate_cached_payloads()
-
-    testcase.restore_config = RestoreConfig(
-        project=user.project,
-        restore_user=user, params=RestoreParams(restore_id, version=version),
-        **getattr(testcase, 'restore_options', {})
-    )
-    testcase.payload_string = testcase.restore_config.get_payload().as_string()
-    try:
-        yield
-    finally:
-        del testcase.restore_config, testcase.payload_string
-
-
 def check_user_has_case(testcase, user, case_blocks, should_have=True,
                         line_by_line=True, restore_id="", version=V2,
                         purge_restore_cache=False, return_single=False):
 
-    try:
-        restore_config = testcase.restore_config
-        payload_string = testcase.payload_string
-    except AttributeError:
-        with cached_restore(testcase, user, restore_id, version, purge_restore_cache):
-            restore_config = testcase.restore_config
-            payload_string = testcase.payload_string
+    if restore_id and purge_restore_cache:
+        SyncLog.get(restore_id).invalidate_cached_payloads()
+
+    restore_config = RestoreConfig(
+        project=user.project,
+        restore_user=user, params=RestoreParams(restore_id, version=version)
+    )
+    payload_string = restore_config.get_payload().as_string()
 
     return check_payload_has_cases(
         testcase=testcase,

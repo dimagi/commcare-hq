@@ -1,7 +1,7 @@
 from __future__ import print_function
 import datetime
 from django.core.management.base import BaseCommand
-from corehq.motech.repeaters.models import RepeatRecord
+from corehq.apps.repeaters.models import RepeatRecord
 from dimagi.utils.post import simple_post
 
 

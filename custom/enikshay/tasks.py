@@ -34,8 +34,6 @@ from .const import (
 from .exceptions import EnikshayTaskException
 from .data_store import AdherenceDatastore
 
-from .model_migration_sets import EpisodeFacilityIDMigration
-
 logger = get_task_logger(__name__)
 
 
@@ -88,12 +86,10 @@ class EpisodeUpdater(object):
                 adherence_update = EpisodeAdherenceUpdate(episode, self)
                 voucher_update = EpisodeVoucherUpdate(self.domain, episode)
                 test_update = EpisodeTestUpdate(self.domain, episode)
-                episode_facility_id_migration = EpisodeFacilityIDMigration(self.domain, episode)
                 try:
                     update_json = adherence_update.update_json()
                     update_json.update(voucher_update.update_json())
                     update_json.update(test_update.update_json())
-                    update_json.update(episode_facility_id_migration.update_json())
                     if update_json:
                         updates.append((episode.case_id, update_json, False))
                         update_count += 1
@@ -588,18 +584,10 @@ class EpisodeTestUpdate(object):
     def update_json(self):
         if self.diagnostic_tests:
             return {
-                'diagnostic_tests': ", ".join([self._get_diagnostic_test_name(diagnostic_test)
+                'diagnostic_tests': ", ".join([diagnostic_test.get_case_property('investigation_id')
                                                for diagnostic_test in self.diagnostic_tests]),
                 'diagnostic_test_results': ", ".join([diagnostic_test.get_case_property('result_grade')
                                                       for diagnostic_test in self.diagnostic_tests])
             }
         else:
             return {}
-
-    def _get_diagnostic_test_name(self, diagnostic_test):
-        site_specimen_name = diagnostic_test.get_case_property('site_specimen_name')
-        if site_specimen_name:
-            return "{}: {}".format(
-                diagnostic_test.get_case_property('investigation_type_name'), site_specimen_name)
-        else:
-            return diagnostic_test.get_case_property('investigation_type_name')

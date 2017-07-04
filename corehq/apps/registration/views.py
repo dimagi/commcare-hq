@@ -68,24 +68,6 @@ class NewUserNumberAbTestMixin__Enabled(object):
         self._ab.update_response(response)
 
 
-class NewUserNumberAbTestMixin__NoAbEnabled(object):
-    @property
-    @memoized
-    def _ab(self):
-        return None
-
-    @property
-    def ab_show_number(self):
-        return True
-
-    @property
-    def ab_context(self):
-        return None
-
-    def ab_update_response(self, response):
-        pass
-
-
 class NewUserNumberAbTestMixin__Disabled(object):
     @property
     def ab_show_number(self):
@@ -99,7 +81,7 @@ class NewUserNumberAbTestMixin__Disabled(object):
         pass
 
 
-NewUserNumberAbTestMixin = NewUserNumberAbTestMixin__NoAbEnabled
+NewUserNumberAbTestMixin = NewUserNumberAbTestMixin__Disabled
 
 
 class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View):

@@ -97,7 +97,6 @@ class SyncLogModelTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(SyncLogModelTest, cls).setUpClass()
         cls.project = Domain(name=cls.domain)
         cls.project.save()
         cls.restore_user = create_restore_user(cls.domain, username=uuid.uuid4().hex)
@@ -105,7 +104,6 @@ class SyncLogModelTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.project.delete()
-        super(SyncLogModelTest, cls).tearDownClass()
 
     def test_basic_properties(self):
         # kick off a restore to generate the sync log

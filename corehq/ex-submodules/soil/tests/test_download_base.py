@@ -12,13 +12,11 @@ class TestBlobDownload(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestBlobDownload, cls).setUpClass()
         cls.db = TemporaryFilesystemBlobDB()
 
     @classmethod
     def tearDownClass(cls):
         cls.db.close()
-        super(TestBlobDownload, cls).tearDownClass()
 
     def test_expose_blob_download(self):
         content_disposition = 'text/xml'

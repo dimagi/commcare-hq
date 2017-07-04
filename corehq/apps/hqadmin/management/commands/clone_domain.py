@@ -287,9 +287,9 @@ class Command(BaseCommand):
                 self.save_sql_copy(action, self.new_domain)
 
     def copy_repeaters(self):
-        from corehq.motech.repeaters.models import Repeater
-        from corehq.motech.repeaters.utils import get_all_repeater_types
-        from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
+        from corehq.apps.repeaters.models import Repeater
+        from corehq.apps.repeaters.utils import get_all_repeater_types
+        from corehq.apps.repeaters.dbaccessors import get_repeaters_by_domain
         for repeater in get_repeaters_by_domain(self.existing_domain):
             self.save_couch_copy(repeater, self.new_domain)
 

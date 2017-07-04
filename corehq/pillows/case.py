@@ -4,7 +4,7 @@ import logging
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.change_feed.consumer.feed import PartitionedKafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
@@ -44,7 +44,7 @@ def get_case_to_elasticsearch_pillow(pillow_id='CaseToElasticsearchPillow', num_
         index_info=CASE_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
     )
-    kafka_change_feed = KafkaChangeFeed(
+    kafka_change_feed = PartitionedKafkaChangeFeed(
         topics=topics.CASE_TOPICS, group_id='cases-to-es', num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(

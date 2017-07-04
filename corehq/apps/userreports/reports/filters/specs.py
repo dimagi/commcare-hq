@@ -32,19 +32,17 @@ class ReportFilter(JsonObject):
     display = DefaultProperty()
     compare_as_string = BooleanProperty(default=False)
 
-    _class_map = {
-        'quarter': QuarterFilterValue,
-        'date': DateFilterValue,
-        'numeric': NumericFilterValue,
-        'pre': PreFilterValue,
-        'choice_list': ChoiceListFilterValue,
-        'dynamic_choice_list': ChoiceListFilterValue,
-        'multi_field_dynamic_choice_list': MultiFieldChoiceListFilterValue,
-        'location_drilldown': LocationDrilldownFilterValue,
-    }
-
     def create_filter_value(self, value):
-        return self._class_map[self.type](self, value)
+        return {
+            'quarter': QuarterFilterValue,
+            'date': DateFilterValue,
+            'numeric': NumericFilterValue,
+            'pre': PreFilterValue,
+            'choice_list': ChoiceListFilterValue,
+            'dynamic_choice_list': ChoiceListFilterValue,
+            'multi_field_dynamic_choice_list': MultiFieldChoiceListFilterValue,
+            'location_drilldown': LocationDrilldownFilterValue,
+        }[self.type](self, value)
 
 
 class FilterChoice(JsonObject):
@@ -62,11 +60,7 @@ class FilterSpec(JsonObject):
     """
     type = StringProperty(
         required=True,
-        choices=[
-            'date', 'quarter', 'numeric', 'pre', 'choice_list', 'dynamic_choice_list',
-            'multi_field_dynamic_choice_list', 'location_drilldown',
-            'enikshay_location_hierarchy'
-        ]
+        choices=['date', 'quarter', 'numeric', 'pre', 'choice_list', 'dynamic_choice_list', 'location_drilldown']
     )
     # this shows up as the ID in the filter HTML.
     slug = StringProperty(required=True)

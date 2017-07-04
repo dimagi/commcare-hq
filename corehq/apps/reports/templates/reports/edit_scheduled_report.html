@@ -5,16 +5,94 @@
 
 
 {% block js %}{{ block.super }}
-<script src="{% static 'reports/js/edit_scheduled_report.js' %}"></script>
+<script src="{% static 'reports/js/scheduled_report_form.js' %}"></script>
+{% endblock %}
+
+
+{% block js-inline %}{{ block.super }}
+<script>
+$(function(){
+    var isConfigurableMap = {{ is_configurable_map|JSON }};
+    var languagesMap = {{ languages_map|JSON }};
+    var languagesForSelect = {{ languages_for_select|JSON }};
+
+    var updateUcrElements = function(selectedConfigs){
+        var showUcrElements = _.any(
+            selectedConfigs, function(i){return isConfigurableMap[i] === true;}
+        );
+        var currentLanguageOptions = [];
+
+        if (showUcrElements){
+            $("#ucr-privacy-warning").show();
+
+            // Figure out which options to show in the select2
+            var languageLists = _.map(selectedConfigs, function(i){return languagesMap[i];});
+            var languageSet = _.reduce(languageLists, function(memo, list){
+                _.map(list, function(e){
+                    memo[e] = true;
+                });
+                return memo;
+            }, {});
+            var currentLanguageOptions = Object.keys(languageSet).sort();
+            var $id_language = $('#id_language');
+
+            if (currentLanguageOptions.length === 1 && currentLanguageOptions[0] === 'en') {
+                $id_language.val('en');
+                $('#div_id_language').hide();
+            } else {
+                // Update the options of the select2
+                var current = $id_language.val();
+                $id_language.empty();
+
+                // Populate the select2
+                _.map(currentLanguageOptions, function (l) {
+                    $id_language.append(
+                        $("<option></option>").attr("value", l).text(languagesForSelect[l][1])
+                    );
+                });
+                $id_language.val(current);
+                $("#div_id_language").show();
+            }
+        } else {
+            $("#div_id_language").hide();
+            $("#ucr-privacy-warning").hide();
+        }
+    };
+
+    $("#id_config_ids").change(function(){
+        updateUcrElements($(this).val());
+    });
+    var multiselect_utils = hqImport('style/js/multiselect_utils');
+    multiselect_utils.createFullMultiselectWidget(
+        'id_config_ids',
+        django.gettext("Available Reports"),
+        django.gettext("Included Reports"),
+        django.gettext("Search Reports...")
+    );
+    updateUcrElements($("#id_config_ids").val());
+});
+</script>
+<script>
+    var scheduled_report_form_helper = new ScheduledReportFormHelper({
+        weekly_options: {{ weekly_day_options|JSON }},
+        monthly_options: {{ monthly_day_options|JSON }},
+        day_value: {{ day_value }}
+    });
+    scheduled_report_form_helper.init();
+</script>
+<script>
+    $('#id-scheduledReportForm').submit(function() {
+        ga_track_event('Scheduled Reports', 'Create a scheduled report', '-', {
+            'hitCallback': function () {
+                document.getElementById('id-scheduledReportForm').submit();
+            }
+        });
+        return false;
+    });
+</script>
 {% endblock %}
 
 {% block page_content %}
-    {% initial_page_data 'is_configurable_map' is_configurable_map %}
-    {% initial_page_data 'languages_map' languages_map %}
-    {% initial_page_data 'languages_for_select' languages_for_select %}
-    {% initial_page_data 'weekly_day_options' weekly_day_options %}
-    {% initial_page_data 'monthly_day_options' monthly_day_options %}
-    {% initial_page_data 'day_value' day_value %}
     <div class="row">
         <div class="col-sm-12">
             {% if form %}

@@ -27,11 +27,6 @@ class Command(BaseCommand):
             "./kafka-topics.sh --alter --zookeeper <zk IP>:2181 --partitions={} --topic={}"
             .format(num_partitions, topic)
         )
-        print(
-            "The following command should be run as root on the kafka server. You will find"
-            "the script in the kafka install directory (likely /opt/kafka/bin)"
-            "If an error occurs about a port, you can prefix the command with JMX_PORT=9998"
-        )
         added_partition = raw_input("have you run {} ? [y/n]".format(kafka_command))
         if added_partition not in ['y', 'yes']:
             print("then run it on the kafka machine")

@@ -41,8 +41,7 @@ def download_odk_profile(request, domain, app_id):
 
     """
     if not request.app.copy_of:
-        username = request.GET.get('username', 'unknown user')
-        make_async_build.delay(request.app, username)
+        make_async_build.delay(request.app)
     return HttpResponse(
         request.app.create_profile(is_odk=True),
         content_type="commcare/profile"
@@ -52,8 +51,7 @@ def download_odk_profile(request, domain, app_id):
 @safe_download
 def download_odk_media_profile(request, domain, app_id):
     if not request.app.copy_of:
-        username = request.GET.get('username', 'unknown user')
-        make_async_build.delay(request.app, username)
+        make_async_build.delay(request.app)
     return HttpResponse(
         request.app.create_profile(is_odk=True, with_media=True),
         content_type="commcare/profile"
@@ -193,11 +191,7 @@ def download_raw_jar(request, domain, app_id):
 class DownloadCCZ(DownloadMultimediaZip):
     name = 'download_ccz'
     compress_zip = True
-
-    @property
-    def zip_name(self):
-        return 'commcare_v{}.ccz'.format(self.app.version)
-
+    zip_name = 'commcare.ccz'
     include_index_files = True
 
     def check_before_zipping(self):
@@ -325,8 +319,7 @@ def download_profile(request, domain, app_id):
 
     """
     if not request.app.copy_of:
-        username = request.GET.get('username', 'unknown user')
-        make_async_build.delay(request.app, username)
+        make_async_build.delay(request.app)
     return HttpResponse(
         request.app.create_profile()
     )
@@ -335,8 +328,7 @@ def download_profile(request, domain, app_id):
 @safe_download
 def download_media_profile(request, domain, app_id):
     if not request.app.copy_of:
-        username = request.GET.get('username', 'unknown user')
-        make_async_build.delay(request.app, username)
+        make_async_build.delay(request.app)
     return HttpResponse(
         request.app.create_profile(with_media=True)
     )

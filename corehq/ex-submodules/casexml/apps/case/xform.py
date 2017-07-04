@@ -14,7 +14,6 @@ from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.util.soft_assert import soft_assert
 from couchforms.models import XFormInstance
 from casexml.apps.case.exceptions import (
     NoDomainProvided,
@@ -25,7 +24,6 @@ from casexml.apps.case import const
 from casexml.apps.case.xml.parser import case_update_from_block
 from dimagi.utils.logging import notify_exception
 
-_soft_assert = soft_assert(to="{}@{}.com".format('skelly', 'dimagi'), notify_admins=True)
 
 # Lightweight class used to store the dirtyness of a case/owner pair.
 DirtinessFlag = namedtuple('DirtinessFlag', ['case_id', 'owner_id'])
@@ -266,20 +264,6 @@ def _validate_indices(case_db, cases):
                     invalid = True
                 if invalid:
                     # fail hard on invalid indices
-                    from distutils.version import LooseVersion
-                    if case_db.cached_xforms:
-                        xform = case_db.cached_xforms[0]
-                        if xform.metadata and xform.metadata.commcare_version:
-                            commcare_version = xform.metadata.commcare_version
-                            _soft_assert(
-                                commcare_version < LooseVersion("2.35"),
-                                "Invalid Case Index in CC version >= 2.35", {
-                                    'domain': case_db.domain,
-                                    'xform_id': xform.form_id,
-                                    'missing_case_id': index.referenced_id,
-                                    'version': str(commcare_version)
-                                }
-                            )
                     raise InvalidCaseIndex(
                         "Case '%s' references non-existent case '%s'" % (case.case_id, index.referenced_id)
                     )

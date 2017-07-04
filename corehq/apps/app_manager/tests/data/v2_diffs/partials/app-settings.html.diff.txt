@@ -125,7 +125,7 @@
          <input type="number" class="col-sm-3 form-control" data-bind="
              value: visibleValue,
              valueUpdate: 'textchange',
-@@ -133,158 +134,155 @@
+@@ -133,159 +134,155 @@
  </script>
  
  <script type="text/html" id="CommcareSettings.widgets.textarea">
@@ -183,6 +183,7 @@
 -    url: '{% url "edit_app_attr" domain app.id 'comment' %}',
 -    placeholder: '{% trans "Enter app description here"|escapejs %}',
 -    saveValueName: 'comment',
+-    readOnlyClass: 'app-comment',
 -    cols: 50,
 -"></inline-edit>
 -

@@ -21,6 +21,7 @@ class DocumentTypeTest(SimpleTestCase):
     ({'doc_type': 'CommCareUser'}, COMMCARE_USER),
     ({'doc_type': 'WebUser'}, WEB_USER),
     ({'doc_type': 'Group'}, GROUP),
+    ({'doc_type': 'Location'}, META),
     # subtype tests
     ({'doc_type': 'CommCareCase', 'type': 'person'}, CASE, 'person'),
     ({'doc_type': 'XFormInstance', 'xmlns': 'my-xmlns'}, FORM, 'my-xmlns'),
@@ -37,6 +38,7 @@ class DocumentTypeTest(SimpleTestCase):
     ({'doc_type': 'CommCareUser-Deleted'}, COMMCARE_USER, None, None, True),
     ({'doc_type': 'WebUser-Deleted'}, WEB_USER, None, None, True),
     ({'doc_type': 'Group-Deleted'}, GROUP, None, None, True),
+    ({'doc_type': 'Location-Deleted'}, META, None, None, True),
 ], DocumentTypeTest)
 def test_document_meta(self, raw_doc, expected_primary_type, expected_subtype=None,
                        expected_domain=None, expected_deletion=False):

@@ -2,8 +2,6 @@ from django.test import TestCase, override_settings, SimpleTestCase
 
 from corehq.apps.hqadmin.utils import check_for_rewind
 from corehq.util.test_utils import generate_cases
-from pillowtop import get_all_pillow_instances
-from testapps.test_pillowtop.utils import real_pillow_settings
 from ..models import HistoricalPillowCheckpoint
 from ..utils import EPSILON, parse_celery_workers, parse_celery_pings
 
@@ -101,20 +99,6 @@ class TestPillowCheckpointSeqStore(TestCase):
 
         store = HistoricalPillowCheckpoint.get_historical_max('CheckpointThatDoesNotExist')
         self.assertIsNone(store)
-
-
-class TestHistoricalPillowCheckpoint(TestCase):
-
-    @real_pillow_settings()
-    def test_all_pillows(self):
-        for pillow in get_all_pillow_instances():
-            checkpoint = pillow.checkpoint
-            current_seq = checkpoint.get_current_sequence_id()
-            HistoricalPillowCheckpoint.create_checkpoint_snapshot(checkpoint)
-            latest = HistoricalPillowCheckpoint.get_latest(checkpoint.checkpoint_id)
-            checkpoint.reset()
-            checkpoint.update_to(latest.seq)
-            self.assertEqual(checkpoint.get_current_sequence_id(), current_seq)
 
 
 class TestParseCeleryWorkerPings(SimpleTestCase):

@@ -11,7 +11,7 @@
             <a ng-click="filterCaseTypes()"
                class="appnav-link-full">
               <i class="fa fa-search appnav-primary-icon"></i>
-              <span>{% trans "View All Case Types" %}</span>
+              {% trans "View All Case Types" %}
             </a>
         </div>
         <hierarchy hierarchy="hierarchy" filter-case-types="filterCaseTypes(casetype)"  type-search="typeSearch"
@@ -25,7 +25,7 @@
     <div class="page-header" style="margin-top: 0;">
         <h3>
           <i class="fcc fcc-fd-external-case"></i>
-          <span>{% trans "Case Summary" %}</span>
+          {% trans "Case Summary" %}
         </h3>
 
         <div class="row">
@@ -185,8 +185,7 @@
       <div class="appnav-item" ng-class="{ 'active' : typeSearch.name === casetype }">
           <a ng-click="filterCaseTypes({casetype: casetype})"
              class="appnav-link-full">
-              <i class="fcc fcc-fd-external-case appnav-primary-icon"></i>
-              <span>{{ casetype }}</span>
+              <i class="fcc fcc-fd-external-case appnav-primary-icon"></i> {{ casetype }}
               <i class="fa fa-exclamation-triangle text-danger" ng-show="hasErrors({casetype: casetype})"></i>
           </a>
       </div>

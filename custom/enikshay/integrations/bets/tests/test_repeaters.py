@@ -6,8 +6,8 @@ from django.test import override_settings, TestCase
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
-from corehq.motech.repeaters.models import RepeatRecord
+from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
+from corehq.apps.repeaters.models import RepeatRecord
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 

@@ -6,11 +6,10 @@ from nose.tools import nottest
 import re
 from casexml.apps.case.mock import CaseIndex, CaseStructure
 from casexml.apps.case.tests.util import assert_user_doesnt_have_cases, \
-    assert_user_has_cases, cached_restore
+    assert_user_has_cases
 from casexml.apps.phone.models import get_properly_wrapped_sync_log
-from casexml.apps.phone.restore import LIVEQUERY, CLEAN_OWNERS
 from casexml.apps.phone.tests.test_sync_mode import SyncBaseTest
-from corehq.form_processor.tests.utils import partitioned, use_sql_backend
+from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.util.test_utils import softer_assert
 
 
@@ -42,9 +41,8 @@ def test_generator(test_name, skip=False):
         undesired_cases = [case for case in self.get_all_case_names(test) if case not in desired_cases]
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
         self.assertEqual(sync_log.case_ids_on_phone, set(desired_cases))
-        with cached_restore(self, self.user):
-            assert_user_has_cases(self, self.user, desired_cases)
-            assert_user_doesnt_have_cases(self, self.user, undesired_cases)
+        assert_user_has_cases(self, self.user, desired_cases)
+        assert_user_doesnt_have_cases(self, self.user, undesired_cases)
 
     test.__name__ = get_test_name(test_name)
     return test
@@ -80,7 +78,6 @@ class IndexTreeTest(SyncBaseTest):
     }
     """
     __metaclass__ = TestSequenceMeta
-    restore_options = {'case_sync': CLEAN_OWNERS}
 
     @property
     def all_tests(self):
@@ -154,14 +151,4 @@ class IndexTreeTest(SyncBaseTest):
 
 @use_sql_backend
 class IndexTreeTestSQL(IndexTreeTest):
-    pass
-
-
-class LiveQueryIndexTreeTest(IndexTreeTest):
-    restore_options = {'case_sync': LIVEQUERY}
-
-
-@partitioned
-@use_sql_backend
-class LiveQueryIndexTreeTestSQL(LiveQueryIndexTreeTest):
     pass

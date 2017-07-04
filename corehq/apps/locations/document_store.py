@@ -3,12 +3,11 @@ This file contains stuff for publishing and reading changes for UCR.
 """
 from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.dao.interface import ReadOnlyDocumentStore
+from .models import SQLLocation
 from pillowtop.feed.interface import ChangeMeta
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
-
-from .models import SQLLocation
 
 LOCATION_DOC_TYPE = "Location"
 

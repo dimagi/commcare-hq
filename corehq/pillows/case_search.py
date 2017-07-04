@@ -69,8 +69,7 @@ class CaseSearchPillowProcessor(ElasticProcessor):
             super(CaseSearchPillowProcessor, self).process_change(pillow_instance, change)
 
 
-def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearchPillow', num_processes=1,
-                                            process_num=0, **kwargs):
+def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearchPillow', **kwargs):
     assert pillow_id == 'CaseSearchToElasticsearchPillow', 'Pillow ID is not allowed to change'
     checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, CASE_SEARCH_INDEX_INFO, topics.CASE_TOPICS)
     case_processor = CaseSearchPillowProcessor(
@@ -78,9 +77,7 @@ def get_case_search_to_elasticsearch_pillow(pillow_id='CaseSearchToElasticsearch
         index_info=CASE_SEARCH_INDEX_INFO,
         doc_prep_fn=transform_case_for_elasticsearch
     )
-    change_feed = KafkaChangeFeed(
-        topics=topics.CASE_TOPICS, group_id='cases-to-es', num_processes=num_processes, process_num=process_num
-    )
+    change_feed = KafkaChangeFeed(topics=topics.CASE_TOPICS, group_id='cases-to-es')
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,

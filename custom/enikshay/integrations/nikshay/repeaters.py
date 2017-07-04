@@ -1,14 +1,14 @@
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 
-from corehq.motech.repeaters.models import CaseRepeater, SOAPRepeaterMixin
+from corehq.apps.repeaters.models import CaseRepeater, SOAPRepeaterMixin
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.toggles import NIKSHAY_INTEGRATION
 from casexml.apps.case.xml.parser import CaseUpdateAction
 from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.signals import case_post_save
-from corehq.motech.repeaters.signals import create_repeat_records
+from corehq.apps.repeaters.signals import create_repeat_records
 from custom.enikshay.case_utils import (
     get_person_case_from_episode,
     get_open_episode_case_from_person,

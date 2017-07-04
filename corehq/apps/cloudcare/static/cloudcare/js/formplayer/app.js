@@ -179,7 +179,6 @@ FormplayerFrontend.on("start", function (options) {
     user.formplayer_url = options.formplayer_url;
     user.debuggerEnabled = options.debuggerEnabled;
     user.environment = options.environment;
-    user.useLiveQuery = options.useLiveQuery;
     user.restoreAs = FormplayerFrontend.request('restoreAsUser', user.domain, user.username);
 
     savedDisplayOptions = _.pick(
@@ -232,31 +231,6 @@ FormplayerFrontend.on("start", function (options) {
             false
         );
     }
-});
-
-FormplayerFrontend.on('configureDebugger', function(menuSessionId) {
-    var CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger.js').CloudCareDebuggerMenu,
-        TabIDs = hqImport('cloudcare/js/debugger/debugger.js').TabIDs,
-        user = FormplayerFrontend.request('currentUser'),
-        cloudCareDebugger,
-        $debug = $('#cloudcare-debugger');
-
-    if (!$debug.length)
-        return;
-
-    $debug.html('');
-    cloudCareDebugger = new CloudCareDebugger({
-        baseUrl: user.formplayer_url,
-        menuSessionId: menuSessionId,
-        username: user.username,
-        restoreAs: user.restoreAs,
-        domain: user.domain,
-        tabs: [
-            TabIDs.EVAL_XPATH,
-        ],
-    });
-    ko.cleanNode($debug[0]);
-    $debug.koApplyBindings(cloudCareDebugger);
 });
 
 FormplayerFrontend.reqres.setHandler('getCurrentApp', function() {
@@ -343,7 +317,6 @@ FormplayerFrontend.on("sync", function () {
             "username": username,
             "domain": domain,
             "restoreAs": user.restoreAs,
-            "useLiveQuery": user.useLiveQuery,
         },
         options;
 

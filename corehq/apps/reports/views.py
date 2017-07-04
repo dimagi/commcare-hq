@@ -1814,12 +1814,7 @@ class EditFormInstance(View):
                         case_name=case.name,
                     ))
                 elif case.is_deleted:
-                    return _error(
-                        _(u'Case <a href="{case_url}">{case_name}</a> is deleted. Cannot edit this form.').format(
-                            case_url=reverse('case_details', args=[domain, case.case_id]),
-                            case_name=case.name,
-                        )
-                    )
+                    return _error(_(u'Case <a href="{}" is deleted. Cannot edit this form.').format(case.case_id))
 
         edit_session_data['is_editing'] = True
         edit_session_data['function_context'] = {
@@ -2029,11 +2024,7 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
         return start, end
 
 
-def _can_view_report(domain, user, report_class):
-    return (user.has_permission(domain, Permissions.view_reports)
-            or user.has_permission(domain, Permissions.view_report, data=report_class))
-
-
+@require_case_view_permission
 @login_and_domain_required
 @require_GET
 def export_report(request, domain, export_hash, format):
@@ -2041,16 +2032,8 @@ def export_report(request, domain, export_hash, format):
 
     content = cache.get(export_hash)
     if content is not None:
-
-        if isinstance(content, list):
-            report_class, report_file = content
-            if not _can_view_report(domain, request.couch_user, report_class):
-                raise PermissionDenied()
-        # TODO drop this after all existing reports have expired
-        else:
-            report_file = content
         if format in Format.VALID_FORMATS:
-            file = ContentFile(report_file)
+            file = ContentFile(content)
             response = HttpResponse(file, Format.FORMAT_DICT[format])
             response['Content-Length'] = file.size
             response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(

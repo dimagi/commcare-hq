@@ -91,6 +91,7 @@
       <inline-edit params="
           name: 'comment',
           id:'comment-id',
+          containerClass: 'app-comment',
           value: '{{ form.comment|escapejs }}',
           placeholder: '{% trans "Enter form description here"|escapejs %}',
           url: '{% url "edit_form_attr" domain app.id form.unique_id 'comment' %}',

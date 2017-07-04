@@ -13,7 +13,6 @@ class DBAccessorsTest(TestCase, DocTestMixin):
 
     @classmethod
     def setUpClass(cls):
-        super(DBAccessorsTest, cls).setUpClass()
         cls.user_id = 'lkasdhfadsloi'
         cls.sync_logs = [
             SyncLog(user_id=cls.user_id, date=datetime.datetime(2015, 7, 1, 0, 0)),
@@ -30,7 +29,6 @@ class DBAccessorsTest(TestCase, DocTestMixin):
     def tearDownClass(cls):
         for doc in cls.docs:
             doc.delete()
-        super(DBAccessorsTest, cls).tearDownClass()
 
     def test_get_sync_logs_for_user(self):
         self.assert_doc_sets_equal(get_sync_logs_for_user(self.user_id, 4), self.sync_logs)

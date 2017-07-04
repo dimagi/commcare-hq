@@ -3,10 +3,6 @@
   "version": "0.0.1",
   "dependencies": {
     "angular": "1.4.4",
-    "angular-bootstrap": "^2.5.0",
-    "angular-datamaps": "^0.1.2",
-    "angular-datatables": "0.5.6",
-    "angular-nvd3": "^0.1.1",
     "angular-route": "1.4.4",
     "angular-resource": "1.4.4",
     "angular-message-format": "1.4.4",
@@ -14,15 +10,18 @@
     "angular-cookies": "1.4.4",
     "angular-sanitize": "1.4.4",
     "ui-select": "angular-ui/ui-select#v0.13.2",
+
     "backbone": "0.9.1",
     "backbone-1.3.2": "backbone#1.3.2",
     "backbone.marionette": "2.4.5",
+
     "bootstrap": "3.3.7",
     "bootstrap-daterangepicker": "2.1.13",
     "bootstrap-switch": "3.3.2",
     "bootstrap-timepicker": "0.5.1",
     "bootstrap-tour": "0.10.2",
     "bootstrap3-typeahead": "~3.1.1",
+
     "jquery": "3.2.1",
     "jquery-2.2.4": "jquery#2.2.4",
     "jquery-color": "2.1.2",
@@ -37,8 +36,10 @@
     "datetimepicker": "2.5.4",
     "multiselect": "0.9.12",
     "quicksearch": "2.2.1",
+
     "knockout": "3.3.0",
     "knockout-validation": "2.0.3",
+
     "underscore": "1.8.3",
     "leaflet": "0.7.7",
     "select2-3.4.5-legacy": "select2#3.4.5",
@@ -66,9 +67,7 @@
     "clipboard": "1.5.15",
     "fast-levenshtein": "^2.0.5",
     "intl-tel-input": "9.0.7",
-    "jsdiff": "~3.2.0",
-    "datamaps": "^0.5.8",
-    "topojson": "^3.0.0"
+    "jsdiff": "~3.2.0"
   },
   "devDependencies": {
     "chai": "3.3.0",
@@ -82,10 +81,6 @@
     "jquery": "3.2.1",
     "bootstrap": "3.3.7",
     "select2": "4.0.0",
-    "backbone": "0.9.1",
-    "d3": "3.1",
-    "datamaps": "^0.5.8",
-    "topojson": "^3.0.0",
-    "nvd3": "1.1.10-beta"
+    "backbone": "0.9.1"
   }
 }

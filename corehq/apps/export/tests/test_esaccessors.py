@@ -17,7 +17,6 @@ class TestExportESAccessors(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestExportESAccessors, cls).setUpClass()
         ensure_index_deleted(LEDGER_INDEX_INFO.index)
         es = get_es_new()
         initialize_index_and_mapping(es, LEDGER_INDEX_INFO)
@@ -44,7 +43,6 @@ class TestExportESAccessors(TestCase):
     @classmethod
     def tearDownClass(cls):
         ensure_index_deleted(LEDGER_INDEX_INFO.index)
-        super(TestExportESAccessors, cls).tearDownClass()
 
     def test_get_ledger_section_entry_combinations(self):
         combos = get_ledger_section_entry_combinations(self.domain)
@@ -59,7 +57,6 @@ class TestGroupUserIds(SimpleTestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestGroupUserIds, cls).setUpClass()
         ensure_index_deleted(GROUP_INDEX_INFO.index)
         cls.es = get_es_new()
         initialize_index_and_mapping(cls.es, GROUP_INDEX_INFO)
@@ -68,7 +65,6 @@ class TestGroupUserIds(SimpleTestCase):
     @classmethod
     def tearDownClass(cls):
         ensure_index_deleted(GROUP_INDEX_INFO.index)
-        super(TestGroupUserIds, cls).tearDownClass()
 
     def _send_group_to_es(self, _id=None, users=None):
         group = Group(

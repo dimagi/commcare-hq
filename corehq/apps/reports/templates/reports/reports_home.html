@@ -5,15 +5,28 @@
 {% load report_tags %}
 {% load compress %}
 
+{% block js-inline %}{{ block.super }}
+<script>
+$(function() {
+    $("#saved-reports").reportConfigList({
+        items: {{ configs|JSON }},
+        saveUrl: '{% url "add_report_config" domain %}'
+    });
+    $("button.send-stopper").click(function () {
+        $(this).text("{% trans 'Saving' %}").prepend('<i class="fa fa-refresh fa-spin"></i> ').addClass('btn disabled').prop('disabled', true);
+        $(this).parents('form').submit();
+    });
+});
+</script>
+{% endblock %}
+
 {% block page_content %}
-{% initial_page_data 'configs' configs %}
-{% registerurl 'add_report_config' domain %}
 <ul class="nav nav-tabs" style="margin-bottom: 10px;">
-    <li class="active"><a href="#ko-report-config-list" data-toggle="tab">{% trans "My Saved Reports" %}</a></li>
+    <li class="active"><a href="#saved-reports" data-toggle="tab">{% trans "My Saved Reports" %}</a></li>
     <li><a href="#scheduled-reports" data-toggle="tab">{% trans "My Scheduled Reports" %}</a></li>
 </ul>
 <div class="tab-content">
-    <div class="tab-pane active" id="ko-report-config-list">
+    <div class="tab-pane active" id="saved-reports">
         <div class="row">
             <div class="col-sm-12">
                 <div style="display: none"
@@ -145,7 +158,7 @@
 
                             <div class="btn-group">
                                 <button class="btn btn-danger" data-toggle="modal" href="#delete_{{ report.get_id }}">
-                                    <i class="fa fa-trash"></i> {% trans "Delete" %}
+                                    <i class="fa fa-minus-circle"></i> {% trans "Delete" %}
                                 </button>
                             </div>
                         </div>
@@ -164,7 +177,7 @@
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</button>
-                                            <button type="submit" class="send-stopper btn btn-danger disable-on-submit">{% trans 'Stop Sending' %}</button>
+                                            <button type="submit" class="send-stopper btn btn-warning">{% trans 'Stop Sending' %}</button>
                                         </div>
                                     </form>
                                 </div>

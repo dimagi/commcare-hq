@@ -33,7 +33,6 @@ class InvitationTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(InvitationTest, cls).setUpClass()
         cls.invitations = []
         for kwargs in [
             {'domain': 'domain_1', 'email': 'email1@email.com'},
@@ -58,4 +57,3 @@ class InvitationTest(TestCase):
     def tearDownClass(cls):
         for inv in cls.invitations:
             inv.delete()
-        super(InvitationTest, cls).tearDownClass()

@@ -277,7 +277,6 @@ class ExceptionA(Exception):
 class PillowtopRetryAllPillowsTests(TestCase):
     @classmethod
     def setUpClass(cls):
-        super(PillowtopRetryAllPillowsTests, cls).setUpClass()
         cls._PILLOWTOPS = settings.PILLOWTOPS
         if not settings.PILLOWTOPS:
             # assumes HqTestSuiteRunner, which blanks this out and saves a copy here
@@ -286,7 +285,6 @@ class PillowtopRetryAllPillowsTests(TestCase):
     @classmethod
     def tearDownClass(cls):
         settings.PILLOWTOPS = cls._PILLOWTOPS
-        super(PillowtopRetryAllPillowsTests, cls).tearDownClass()
 
     def tearDown(self):
         PillowError.objects.all().delete()

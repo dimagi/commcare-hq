@@ -5,9 +5,7 @@ from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from custom.enikshay.case_utils import get_open_referral_case_from_person, get_latest_trail_case_from_person, \
-    get_open_episode_case_from_person
-from custom.enikshay.exceptions import ENikshayCaseNotFound
+from custom.enikshay.case_utils import get_open_referral_case_from_person, get_latest_trail_case_from_person
 from dimagi.ext.jsonobject import JsonObject
 from dimagi.utils.dates import force_to_datetime
 
@@ -293,34 +291,5 @@ def month_expression(spec, context):
     wrapped = MonthExpression.wrap(spec)
     wrapped.configure(
         ExpressionFactory.from_spec(wrapped.month_expression, context)
-    )
-    return wrapped
-
-
-class EpisodeFromPersonExpression(JsonObject):
-    type = TypeProperty('enikshay_episode_from_person')
-    person_id_expression = DefaultProperty(required=True)
-
-    def configure(self, person_id_expression):
-        self._person_id_expression = person_id_expression
-
-    def __call__(self, item, context=None):
-        person_id = self._person_id_expression(item, context)
-        domain = context.root_doc['domain']
-        if not person_id:
-            return None
-        try:
-            episode = get_open_episode_case_from_person(domain, person_id)
-        except ENikshayCaseNotFound:
-            return None
-        if episode:
-            return episode.to_json()
-        return None
-
-
-def episode_from_person_expression(spec, context):
-    wrapped = EpisodeFromPersonExpression.wrap(spec)
-    wrapped.configure(
-        ExpressionFactory.from_spec(wrapped.person_id_expression, context)
     )
     return wrapped

@@ -9,7 +9,6 @@ class TestUsernameToUserID(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(TestUsernameToUserID, cls).setUpClass()
         cls.user = CommCareUser.create('scale-domain', 'scale', 'dude')
         cache.clear()
 
@@ -17,7 +16,6 @@ class TestUsernameToUserID(TestCase):
     def tearDownClass(cls):
         cls.user.delete()
         cache.clear()
-        super(TestUsernameToUserID, cls).tearDownClass()
 
     def test_username_to_user_id(self):
         user_id = username_to_user_id(self.user.username)

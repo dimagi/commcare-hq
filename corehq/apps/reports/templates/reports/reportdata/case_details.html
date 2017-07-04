@@ -7,14 +7,56 @@
 
 {% block head %} {{ block.super }}
     {% include "imports/proptable.html" %}
+    <style type="text/css">
+        .dataTables_length select {
+            display: inline-block;
+        }
+    </style>
+{% endblock %}
+
+{% block js-inline %}{{ block.super }}
+    <script>
+    $(function() {
+        // this adds clickable links to our form and case elements
+        var form_lookup_dict = {{ form_lookups|JSON }};
+        var urlBase = "{% url "render_form_data" domain 'placeholder-formid' %}";
+        var link_template = '<a href="placeholder-url">placeholder-text</a>'
+        $(".xform_ref").each(function() {
+            var formid = $(this).data("formid");
+            if (formid) {
+                var text = form_lookup_dict[formid];
+                var url = urlBase.replace("placeholder-formid", formid);
+                var body = link_template.replace("placeholder-url", url).replace("placeholder-text", text);
+                $(this).html(body);
+            }
+        });
+        
+        var caseUrlBase = "{% url "case_details" domain 'placeholder-caseid' %}";
+        $(".case_ref").each(function() {
+            var caseid = $(this).data("caseid");
+            if (caseid) {
+                var url = caseUrlBase.replace("placeholder-caseid", caseid);
+                var body = link_template.replace("placeholder-url", url).replace("placeholder-text", $(this).text());
+                $(this).html(body);
+            }
+        });
+    });
+    </script>
+
+    <script>
+    $('#close_case').submit(function() {
+        ga_track_event('Edit Data', 'Close Case', '-', {
+            'hitCallback': function () {
+                document.getElementById('close_case').submit();
+            }
+        });
+        return false;
+    });
+    </script>
 
     {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
     {# import error: http://manage.dimagi.com/default.asp?223100 #}
     {% include 'cloudcare/includes/touchforms-inline.html' %}
-{% endblock %}
-
-{% block js %}{{ block.super }}
-    <script src="{% static "reports/js/case_details.js" %}"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -24,15 +66,15 @@
     <div id="case-actions" class="clearfix form-actions">
         <div class="col-sm-12">
         {% if show_case_rebuild %}
-            <form action="{% url 'resave_case' domain case_id %}" method="post" class="pull-left">{% csrf_token %}
+            <form action="{% url 'resave_case' domain case_id %}" method="post" >{% csrf_token %}
                  <button type="submit" class="btn btn-info disable-on-submit" >{% trans 'Resave Case' %}</button>
             </form>
-            <form action="{% url 'rebuild_case' domain case_id %}" method="post" class="pull-left">{% csrf_token %}
+            <form action="{% url 'rebuild_case' domain case_id %}" method="post" >{% csrf_token %}
                  <button type="submit" class="btn btn-primary disable-on-submit" >{% trans 'Rebuild Case' %}</button>
             </form>
         {% endif %}
         {% if not case.closed and not is_usercase %}
-            <form action="{% url 'close_case' domain case_id %}" method="post" id="close_case" class="pull-left">{% csrf_token %}
+            <form action="{% url 'close_case' domain case_id %}" method="post" id="close_case">{% csrf_token %}
                  <button type="submit" class="btn btn-danger disable-on-submit" >{% trans 'Close Case' %}</button>
             </form>
         {% endif %}

@@ -10,8 +10,8 @@ from corehq.apps.commtrack.const import USER_LOCATION_OWNER_MAP_TYPE
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.reports.filters.base import BaseSingleOptionFilter, BaseMultipleOptionFilter
-from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
-from corehq.motech.repeaters.const import (
+from corehq.apps.repeaters.dbaccessors import get_repeaters_by_domain
+from corehq.apps.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_SUCCESS_STATE,
     RECORD_CANCELLED_STATE,

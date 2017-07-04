@@ -10,7 +10,7 @@
     </label>
     <div id="form-filter" class="col-sm-4 row">
         <div data-bind="css: {'has-error': !allowed()}">
-            <textarea name="form_filter" class="form-control" data-bind="
+            <textarea name="form_filter" class="form-control vertical-resize" data-bind="
                     xpathValidator: {text: formFilter, allowCaseHashtags: true,
                                      errorHtml: $('#formFilterXpathErrorHtml').html()}
             "></textarea>

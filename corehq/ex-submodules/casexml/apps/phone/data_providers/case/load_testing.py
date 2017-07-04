@@ -1,7 +1,8 @@
 from copy import deepcopy
 from casexml.apps.phone.data_providers.case.utils import CaseSyncUpdate
-from casexml.apps.phone.xml import get_case_element, tostring
+from casexml.apps.phone.xml import get_case_element
 from corehq.apps.app_manager.const import USERCASE_TYPE
+from casexml.apps.phone.xml import tostring
 
 
 def transform_loadtest_update(update, factor):

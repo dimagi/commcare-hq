@@ -18,7 +18,7 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 from corehq.apps.locations.resources.v0_5 import LocationResource
 from corehq.apps.hqcase.utils import bulk_update_cases
-from corehq.motech.repeaters.views import AddCaseRepeaterView
+from corehq.apps.repeaters.views import AddCaseRepeaterView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 

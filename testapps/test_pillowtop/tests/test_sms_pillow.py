@@ -97,7 +97,6 @@ class SqlSMSPillowTest(TestCase):
             fri_message_bank_message_id='bank-id',
             fri_id='12345',
             fri_risk_profile='X',
-            custom_metadata={'a': 'b'},
         )
         self.sms = SMS.objects.create(
             **self.sms_dict

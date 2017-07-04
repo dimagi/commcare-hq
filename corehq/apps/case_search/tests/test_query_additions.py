@@ -1,6 +1,6 @@
 from corehq.apps.case_search.models import merge_queries, QueryMergeException
-from django.test import SimpleTestCase, TestCase
-from corehq.apps.case_search.models import CaseSearchConfig, IgnorePatterns
+from django.test import SimpleTestCase
+
 from corehq.util.test_utils import generate_cases
 
 from corehq.apps.case_search.models import SEARCH_QUERY_CUSTOM_VALUE, replace_custom_query_variables
@@ -41,17 +41,8 @@ def test_merge(self, base_query, addition, expected):
     self.assertDictEqual(new, expected)
 
 
-class TestCustomQueryValues(TestCase):
+class TestCustomQueryValues(SimpleTestCase):
     def test_custom_values(self):
-        config, created = CaseSearchConfig.objects.get_or_create(pk='domain', enabled=True)
-        rc = IgnorePatterns(
-            domain='domain',
-            case_type='case_type',
-            case_property='thing_1',
-            regex=' removed',
-        )
-        rc.save()
-        config.ignore_patterns.add(rc)
         initial_custom_query = {
             "nested": {
                 "path": "case_properties",
@@ -76,7 +67,7 @@ class TestCustomQueryValues(TestCase):
         }
 
         search_criteria = {
-            "{}__thing_1".format(SEARCH_QUERY_CUSTOM_VALUE): "boop removed",
+            "{}__thing_1".format(SEARCH_QUERY_CUSTOM_VALUE): "boop",
             "name": "Jon Snow",
         }
 
@@ -104,9 +95,5 @@ class TestCustomQueryValues(TestCase):
         }
         self.assertDictEqual(
             expected,
-            replace_custom_query_variables(
-                initial_custom_query,
-                search_criteria,
-                config.ignore_patterns.filter(domain='domain', case_type='case_type')
-            )
+            replace_custom_query_variables(initial_custom_query, search_criteria)
         )

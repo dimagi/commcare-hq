@@ -156,9 +156,6 @@ class CloudcareMain(View):
         # trim out empty apps
         apps = filter(lambda app: app, apps)
         apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
-        role = request.couch_user.get_role(domain)
-        if role:
-            apps = [app for app in apps if role.permissions.view_web_app(app)]
 
         def _default_lang():
             if apps:
@@ -238,7 +235,6 @@ class CloudcareMain(View):
             "username": request.user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
             'use_sqlite_backend': use_sqlite_backend(domain),
-            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
         }
         context.update(_url_context())
         if not toggles.USE_OLD_CLOUDCARE.enabled(domain):
@@ -280,9 +276,6 @@ class FormplayerMain(View):
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
         apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
-        role = request.couch_user.get_role(domain)
-        if role:
-            apps = [app for app in apps if role.permissions.view_web_app(app)]
         apps = sorted(apps, key=lambda app: app['name'])
 
         def _default_lang():
@@ -305,7 +298,6 @@ class FormplayerMain(View):
             "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
-            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -343,10 +335,6 @@ class FormplayerPreviewSingleApp(View):
         if not app_access.user_can_access_app(request.couch_user, app):
             raise Http404()
 
-        role = request.couch_user.get_role(domain)
-        if role and not role.permissions.view_web_app(app):
-            raise Http404()
-
         def _default_lang():
             try:
                 return app['langs'][0]
@@ -367,7 +355,6 @@ class FormplayerPreviewSingleApp(View):
             "single_app_mode": True,
             "home_url": reverse(self.urlname, args=[domain, app_id]),
             "environment": WEB_APPS_ENVIRONMENT,
-            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 

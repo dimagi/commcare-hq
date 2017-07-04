@@ -11,7 +11,6 @@ class OverrideDBTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
-        super(OverrideDBTest, cls).setUpClass()
         cls.other_db_1 = Database(settings.COUCH_DATABASE + '_foo-test', create=True)
         cls.other_db_2 = Database(settings.COUCH_DATABASE + '_foo-boo-test', create=True)
         cls.normal_db = CommCareCase.get_db()
@@ -24,7 +23,6 @@ class OverrideDBTest(TestCase):
     def tearDownClass(cls):
         cls.other_db_1.server.delete_db(cls.other_db_1.dbname)
         cls.other_db_2.server.delete_db(cls.other_db_2.dbname)
-        super(OverrideDBTest, cls).tearDownClass()
 
     def test_nested(self):
         self.assertEqual(CommCareCase.get_db(), self.normal_db)

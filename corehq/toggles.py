@@ -84,7 +84,7 @@ class StaticToggle(object):
 
         domain_enabled_after = self.enabled_for_new_domains_after
         if (domain_enabled_after is not None and NAMESPACE_DOMAIN in self.namespaces
-                and was_domain_created_after(item, domain_enabled_after)):
+            and was_domain_created_after(item, domain_enabled_after)):
             return True
 
         user_enabled_after = self.enabled_for_new_users_after
@@ -378,15 +378,6 @@ CASE_DETAIL_PRINT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-DATA_FILE_DOWNLOAD = StaticToggle(
-    'data_file_download',
-    'Offer hosting and sharing data files for downloading, e.g. cleaned and anonymised form exports',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN],
-    # TODO: Create Confluence docs and add help link
-)
-
-
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
@@ -505,31 +496,14 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     'Enable extension syncing',
     TAG_EXPERIMENTAL,
     help_link='https://confluence.dimagi.com/display/ccinternal/Extension+Cases',
-    namespaces=[NAMESPACE_DOMAIN],
-    always_enabled={'enikshay'},
+    namespaces=[NAMESPACE_DOMAIN]
 )
-
-
-ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
-    'role_webapps_permissions',
-    'Toggle which webapps to see based on role',
-    TAG_PRODUCT_PATH,
-    namespaces=[NAMESPACE_DOMAIN],
-)
-
 
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
     TAG_PRODUCT_PATH,
     help_link='https://confluence.dimagi.com/display/internal/Remote+Case+Search+and+Claim',
-    namespaces=[NAMESPACE_DOMAIN]
-)
-
-LIVEQUERY_SYNC = StaticToggle(
-    'livequery_sync',
-    'Enable livequery sync algorithm',
-    TAG_PRODUCT_PATH,
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -785,13 +759,6 @@ ICDS_REPORTS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-DASHBOARD_ICDS_REPORT = StaticToggle(
-    'dashboard_icds_reports',
-    'Enable access to the dashboard reports for ICDS',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
-)
-
 NINETYNINE_DOTS = StaticToggle(
     '99dots_integration',
     'Enable access to 99DOTS',
@@ -854,13 +821,6 @@ BASIC_CHILD_MODULE = StaticToggle(
 USE_OLD_CLOUDCARE = StaticToggle(
     'use_old_cloudcare',
     'Use Old CloudCare',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-)
-
-FORMPLAYER_USE_LIVEQUERY = StaticToggle(
-    'formplayer_use_livequery',
-    'Use LiveQuery on Web Apps',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
 )
@@ -1113,7 +1073,6 @@ ENIKSHAY = StaticToggle(
     "Enable custom enikshay functionality: additional user and location validation",
     TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
-    always_enabled={'enikshay'},
 )
 
 DATA_DICTIONARY = StaticToggle(
@@ -1251,11 +1210,4 @@ ENTERPRISE_OPTIMIZATIONS = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
     always_enabled={'icds-cas'}
-)
-
-DISPLAY_CONDITION_ON_TABS = StaticToggle(
-    'display_condition_on_nodeset',
-    'Show Display Condition on Case Detail Tabs',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
 )

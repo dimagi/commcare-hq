@@ -14,7 +14,6 @@ from fluff.signals import (
 class TestAlembicDiffs(TestCase):
     @classmethod
     def setUpClass(cls):
-        super(TestAlembicDiffs, cls).setUpClass()
         cls.engine = connection_manager.get_engine()
         cls.metadata = sqlalchemy.MetaData()
         cls.table_name = 'diff_table_' + uuid.uuid4().hex
@@ -31,7 +30,6 @@ class TestAlembicDiffs(TestCase):
     def tearDownClass(cls):
         cls.metadata.drop_all(cls.engine)
         connection_manager.dispose_engine()
-        super(TestAlembicDiffs, cls).tearDownClass()
 
     def setUp(self):
         self.transaction_context = self.engine.begin()

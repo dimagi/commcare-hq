@@ -86,13 +86,3 @@ class TableauReport(CustomProjectReport):
         workbook_name = domain_to_workbook_mapping.get(domain, domain_to_workbook_mapping['icds-cas'])
         worksheet_name = 'Dashboard'
         return reverse('icds_tableau', args=[domain, workbook_name, worksheet_name])
-
-
-@location_safe
-class DashboardReport(CustomProjectReport):
-    slug = 'dashboard_report'
-    name = 'Dashboard ICDS-CAS'
-
-    @classmethod
-    def get_url(cls, domain=None, **kwargs):
-        return reverse('icds_dashboard', args=[domain])

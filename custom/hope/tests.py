@@ -28,9 +28,6 @@ class TestHOPECaseResource(TestCase):
         self.user.set_role(self.domain.name, 'admin')
         self.user.save()
 
-    def tearDown(self):
-        self.user.delete()
-
     def hit_every_HOPE_property(self, hope_case):
         """
         Helper method that can be applied to a variety of HOPECase objects

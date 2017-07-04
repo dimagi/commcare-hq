@@ -12,7 +12,6 @@ from corehq.apps.users.models import CommCareUser, DomainMembership
 class TestRestoreDomainMembership(TestCase):
     @classmethod
     def setUpClass(cls):
-        super(TestRestoreDomainMembership, cls).setUpClass()
         cls.domain = uuid.uuid4().hex
         cls.domain_obj = create_domain(cls.domain)
 
@@ -29,7 +28,6 @@ class TestRestoreDomainMembership(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
-        super(TestRestoreDomainMembership, cls).tearDownClass()
 
     def _reset_domain_membership(self):
         self.commcare_user.domain_membership = DomainMembership(domain=self.domain)
