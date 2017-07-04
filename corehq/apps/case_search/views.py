@@ -6,6 +6,7 @@ from corehq.apps.domain.views import DomainViewMixin
 from django.http import Http404
 from dimagi.utils.web import json_response
 from django.views.generic import TemplateView
+from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
 from corehq.apps.case_search.models import case_search_enabled_for_domain, CaseSearchQueryAddition, merge_queries
 from corehq.util.view_utils import json_error, BadRequest
 
@@ -42,7 +43,7 @@ class CaseSearchView(DomainViewMixin, TemplateView):
         search_params = query.get('parameters', [])
         query_addition = query.get("customQueryAddition", None)
         search = CaseSearchES()
-        search = search.domain(self.domain).is_closed(False)
+        search = search.domain(self.domain).is_closed(False).size(CASE_SEARCH_MAX_RESULTS)
         if case_type:
             search = search.case_type(case_type)
         if owner_id:
