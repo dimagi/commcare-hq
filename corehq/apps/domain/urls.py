@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.conf.urls import url, include
 from django.contrib.auth.views import (
     password_change,
     password_change_done,
@@ -27,12 +27,8 @@ from corehq.apps.domain.views import (
     CreateNewExchangeSnapshotView,
     CreditsStripePaymentView,
     CreditsWireInvoiceView,
-    DataSetMapView,
     DeactivateTransferDomainView,
     DefaultProjectSettingsView,
-    Dhis2ConnectionView,
-    Dhis2LogListView,
-    Dhis2LogDetailView,
     DomainBillingStatementsView,
     DomainForwardingOptionsView,
     DomainSubscriptionView,
@@ -65,7 +61,6 @@ from corehq.apps.domain.views import (
     exception_safe_password_reset,
     requeue_repeat_record,
     select,
-    send_dhis2_data,
     set_published_snapshot,
     test_repeater,
     toggle_diff,
@@ -165,11 +160,6 @@ domain_settings = [
     url(r'^forwarding/new/(?P<repeater_type>\w+)/$', AddRepeaterView.as_view(), name=AddRepeaterView.urlname),
     url(r'^forwarding/test/$', test_repeater, name='test_repeater'),
     url(r'^forwarding/(?P<repeater_id>[\w-]+)/stop/$', drop_repeater, name='drop_repeater'),
-    url(r'^dhis2/conn/$', Dhis2ConnectionView.as_view(), name=Dhis2ConnectionView.urlname),
-    url(r'^dhis2/map/$', DataSetMapView.as_view(), name=DataSetMapView.urlname),
-    url(r'^dhis2/logs/$', Dhis2LogListView.as_view(), name=Dhis2LogListView.urlname),
-    url(r'^dhis2/logs/(?P<pk>\d+)/$', Dhis2LogDetailView.as_view(), name=Dhis2LogDetailView.urlname),
-    url(r'^dhis2/send/$', send_dhis2_data, name='send_dhis2_data'),
     url(r'^snapshots/set_published/(?P<snapshot_name>[\w-]+)/$', set_published_snapshot, name='domain_set_published'),
     url(r'^snapshots/set_published/$', set_published_snapshot, name='domain_clear_published'),
     url(r'^snapshots/$', ExchangeSnapshotsView.as_view(), name=ExchangeSnapshotsView.urlname),
@@ -187,5 +177,7 @@ domain_settings = [
     url(r'^flags/$', FeatureFlagsView.as_view(), name=FeatureFlagsView.urlname),
     url(r'^toggle_diff/$', toggle_diff, name='toggle_diff'),
     url(r'^sms_rates/$', SMSRatesView.as_view(), name=SMSRatesView.urlname),
+    url(r'^dhis2/', include('corehq.apps.dhis2.urls')),
+
     DomainReportDispatcher.url_pattern()
 ]

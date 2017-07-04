@@ -8,6 +8,7 @@ from lxml.builder import E
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq import toggles
+from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import is_valid_mobile_select_filter_type
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
@@ -42,7 +43,6 @@ def _should_sync(restore_state):
     )
 
 
-
 class ReportFixturesProvider(FixtureProvider):
     id = 'commcare:reports'
 
@@ -54,8 +54,27 @@ class ReportFixturesProvider(FixtureProvider):
         if not toggles.MOBILE_UCR.enabled(restore_user.domain) or not _should_sync(restore_state):
             return []
 
-        app = restore_state.params.app
-        apps = [app] if app else [a for a in get_apps_in_domain(restore_user.domain, include_remote=False)]
+        app_aware_sync_app = restore_state.params.app
+        if app_aware_sync_app:
+            apps = [app_aware_sync_app]
+        elif (
+                toggles.USERDATA_WEBAPPS_PERMISSIONS.enabled(restore_user.domain)
+                and restore_state.params.device_id
+                and "WebAppsLogin" in restore_state.params.device_id
+        ):
+            # Only sync reports for apps the user has access to if this is a restore from webapps
+            access = ApplicationAccess.get_by_domain(restore_user.domain)
+            apps = [
+                app for app
+                in get_apps_in_domain(restore_user.domain, include_remote=False)
+                if access.user_can_access_app(restore_user, app)
+            ]
+        else:
+            apps = [
+                app for app
+                in get_apps_in_domain(restore_user.domain, include_remote=False)
+            ]
+
         report_configs = [
             report_config
             for app_ in apps

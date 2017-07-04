@@ -64,6 +64,7 @@ from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import BaseSessionDataHelper, CaseSessionDataHelper
 from corehq.apps.cloudcare.const import WEB_APPS_ENVIRONMENT, PREVIEW_APP_ENVIRONMENT
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.formdetails import readable
@@ -235,6 +236,7 @@ class CloudcareMain(View):
             "username": request.user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
             'use_sqlite_backend': use_sqlite_backend(domain),
+            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
         }
         context.update(_url_context())
         if not toggles.USE_OLD_CLOUDCARE.enabled(domain):
@@ -298,6 +300,7 @@ class FormplayerMain(View):
             "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
+            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -355,6 +358,7 @@ class FormplayerPreviewSingleApp(View):
             "single_app_mode": True,
             "home_url": reverse(self.urlname, args=[domain, app_id]),
             "environment": WEB_APPS_ENVIRONMENT,
+            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -882,10 +886,17 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         apps = get_cloudcare_apps(self.domain)
         access = ApplicationAccess.get_template_json(self.domain, apps)
         groups = Group.by_domain(self.domain)
+        user_fields = [
+            {'slug': field.slug,
+             'choices': field.choices}
+            for field in CustomDataFieldsDefinition.get_or_create(self.domain, 'UserFields').fields
+        ]
         return {
             'apps': apps,
             'groups': groups,
             'access': access,
+            'user_fields': user_fields,
+            'enable_userdata_permissions': toggles.USERDATA_WEBAPPS_PERMISSIONS.enabled(self.domain),
         }
 
     def put(self, request, *args, **kwargs):
@@ -894,6 +905,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         new = ApplicationAccess.wrap(j)
         old.restrict = new.restrict
         old.app_groups = new.app_groups
+        old.app_userdata_permissions = new.app_userdata_permissions
         try:
             if old._rev != new._rev or old._id != new._id:
                 raise ResourceConflict()

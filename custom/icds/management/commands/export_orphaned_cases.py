@@ -9,7 +9,7 @@ from dimagi.utils.chunked import chunked
 
 from corehq.util.log import with_progress_bar
 
-CHILD_PROPERTIES = ['case_id', 'owner_id', 'opened_on', 'server_modified_on',
+CHILD_PROPERTIES = ['case_id', 'owner_id', 'opened_on', 'modified_on',
                     'name', 'aadhar_number', 'dob', 'died']
 
 SOURCE_FIELDS = CHILD_PROPERTIES + ['indices']
@@ -54,7 +54,7 @@ class Command(BaseCommand):
                         row.append(owner_name_mapping.get(child.get('owner_id', ''), '').encode('utf-8'))
                         hh_info = (hh_id, hh_map[hh_id][0], hh_map[hh_id][1])
                         row.extend(hh_info)
-                child_writer.writerow(hh['case_id'], hh.get('closed_on', ''))
+                        child_writer.writerow(row)
 
     def _get_closed_hh_cases(self, owners):
         query = (CaseES(es_instance_alias='export')

@@ -1,6 +1,8 @@
 from django.test import TestCase
 from mock import patch
 
+from corehq.util.test_utils import flag_enabled
+
 from casexml.apps.phone.tests.utils import create_restore_user, call_fixture_generator
 from corehq import toggles
 from corehq.apps.app_manager.fixtures.mobile_ucr import report_fixture_generator
@@ -11,6 +13,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.tests.utils import (
     get_sample_report_config, mock_datasource_config, mock_sql_backend
 )
+from corehq.apps.cloudcare.models import ApplicationAccess, AppUserDataPermission, UserDataPermission
 
 
 class AppAwareSyncTests(TestCase):
@@ -93,6 +96,41 @@ class AppAwareSyncTests(TestCase):
             with mock_sql_backend():
                 with mock_datasource_config():
                     fixtures = call_fixture_generator(report_fixture_generator, self.user, app=self.app1)
+        reports = fixtures[0].findall('.//report')
+        self.assertEqual(len(reports), 1)
+        self.assertEqual(reports[0].attrib.get('id'), '123456')
+
+    @flag_enabled('USERDATA_WEBAPPS_PERMISSIONS')
+    def test_report_fixtures_provider_with_cloudcare(self):
+        """
+        ReportFixturesProvider should iterate only allowed apps if sync is from cloudcare
+        """
+        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        access = ApplicationAccess(
+            domain=self.domain,
+            restrict=True,
+            app_userdata_permissions=[AppUserDataPermission(
+                app_id=self.app1._id,
+                user_data_permissions=[
+                    UserDataPermission(
+                        user_data_key='foo',
+                        user_data_value='bar')
+                ]
+
+            )]
+        )
+        access.save()
+        self.user.user_data.update({'foo': 'bar'})
+
+        with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
+            get_data_mock.return_value = self.rows
+            with mock_sql_backend():
+                with mock_datasource_config():
+                    fixtures = call_fixture_generator(
+                        report_fixture_generator,
+                        self.user,
+                        device_id="WebAppsLogin|user@project.commcarehq.org"
+                    )
         reports = fixtures[0].findall('.//report')
         self.assertEqual(len(reports), 1)
         self.assertEqual(reports[0].attrib.get('id'), '123456')

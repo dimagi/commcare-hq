@@ -33,6 +33,7 @@ from custom.icds.const import (
     THR_REPORT_ID,
     VHND_SURVEY_XMLNS,
 )
+from lxml import etree
 
 DEFAULT_LANGUAGE = 'hin'
 
@@ -56,15 +57,24 @@ def get_report_configs(domain):
 
 
 @quickcache(['domain', 'report_id', 'ota_user.user_id'], timeout=12 * 60 * 60)
-def get_report_fixture_for_user(domain, report_id, ota_user):
+def _get_report_fixture_for_user(domain, report_id, ota_user):
     """
     :param domain: the domain
     :param report_id: the index to the result from get_report_configs()
     :param ota_user: the OTARestoreCommCareUser for which to get the report fixture
     """
-    return ReportFixturesProvider.report_config_to_fixture(
+    xml = ReportFixturesProvider.report_config_to_fixture(
         get_report_configs(domain)[report_id], ota_user
     )
+    return etree.tostring(xml)
+
+
+def get_report_fixture_for_user(domain, report_id, ota_user):
+    """
+    The Element objects used by the lxml library don't cache properly.
+    So instead we cache the XML string and convert back here.
+    """
+    return etree.fromstring(_get_report_fixture_for_user(domain, report_id, ota_user))
 
 
 class IndicatorError(Exception):
