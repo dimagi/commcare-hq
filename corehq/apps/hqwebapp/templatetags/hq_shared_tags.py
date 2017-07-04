@@ -199,16 +199,16 @@ def pretty_doc_info(doc_info):
     })
 
 
-def _get_toggle(module, toggle_or_toggle_name):
-    if isinstance(toggle_or_toggle_name, basestring):
-        toggle = getattr(module, toggle_or_toggle_name)
+def _get_obj_from_name_or_instance(module, name_or_instance):
+    if isinstance(name_or_instance, basestring):
+        obj = getattr(module, name_or_instance)
     else:
-        toggle = toggle_or_toggle_name
-    return toggle
+        obj = name_or_instance
+    return obj
 
 
 def _toggle_enabled(module, request, toggle_or_toggle_name):
-    toggle = _get_toggle(module, toggle_or_toggle_name)
+    toggle = _get_obj_from_name_or_instance(module, toggle_or_toggle_name)
     return toggle.enabled_for_request(request)
 
 
@@ -226,7 +226,7 @@ def toggle_tag_info(request, toggle_or_toggle_name):
     flag. """
     if not toggles.SHOW_DEV_TOGGLE_INFO.enabled_for_request(request):
         return ""
-    flag = _get_toggle(toggles, toggle_or_toggle_name)
+    flag = _get_obj_from_name_or_instance(toggles, toggle_or_toggle_name)
     tag = flag.tag
     is_enabled = flag.enabled_for_request(request)
     return mark_safe("""<div class="label label-{css_class} label-flag{css_disabled}">{tag_name}: {description}{status}</div>""".format(
