@@ -6,7 +6,7 @@
     <script type="text/javascript">
         $(function () {
             var separator = '{{ separator }}';
-            var report_labels = JSON.parse('{{ report_labels|safe }}');
+            var report_labels = JSON.parse('{{ report_labels_json|safe }}');
             var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
 
             $('#filter_range').createDateRangePicker(

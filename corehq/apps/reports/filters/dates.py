@@ -33,23 +33,28 @@ class DatespanFilter(BaseReportFilter):
         return {
             'datespan': self.datespan,
             'report_labels': self.report_labels,
+            'report_labels_json': self.report_labels_json,
             'separator': _(' to '),
             'timezone': self.timezone.zone,
         }
 
     @property
     def report_labels(self):
-        return json.dumps({
+        return {
             'last_7_days': _('Last 7 Days'),
             'last_month': _('Last Month'),
             'last_30_days': _('Last 30 Days')
-        })
+        }
+
+    @property
+    def report_labels_json(self):
+        return json.dumps(self.report_labels)
 
 
 class HiddenLastMonthDateFilter(DatespanFilter):
     """
     A filter that returns last month as datespan
-    but is hidden since datespan should be fixed to last month
+    but is hid(den since datespan should be fixed to last month
     """
     template = "reports/filters/month_datespan.html"
     label = ugettext_lazy("Date Range")

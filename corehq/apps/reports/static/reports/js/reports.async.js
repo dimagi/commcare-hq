@@ -36,7 +36,7 @@ var HQAsyncReport = function (o) {
             return;
         }
         var separator = $filterRange.data('separator');
-        var report_labels = JSON.parse(JSON.parse('"' + $filterRange.data('reportLabels') + '"'));
+        var report_labels = $filterRange.data('reportLabels');
         var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
 
         $filterRange.createDateRangePicker(

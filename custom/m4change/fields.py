@@ -13,7 +13,7 @@ class DateRangeField(DatespanFilter):
 
     @property
     def report_labels(self):
-        return json.dumps({
+        return {
             'year_to_date': _('Year to Date'),
             'last_month': _('Last Month'),
             'last_quarter': _('Last Quarter'),
@@ -23,7 +23,7 @@ class DateRangeField(DatespanFilter):
             'last_two_years': _('Last Two Years'),
             'last_three_years': _('Last Three Years'),
             'last_four_years': _('Last Four Years')
-        })
+        }
 
 
 class CaseSearchField(ReportField):
