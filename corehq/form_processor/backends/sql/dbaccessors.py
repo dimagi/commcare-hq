@@ -900,22 +900,22 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             [domain, case_ids, list(exclude_ids)]))
 
     @staticmethod
-    def get_closed_and_deleted_ids(domain, case_ids):
+    def get_closed_and_deleted_ids(accessor, case_ids):
         assert isinstance(case_ids, list), case_ids
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
                 'SELECT case_id, closed, deleted FROM get_closed_and_deleted_ids(%s, %s)',
-                [domain, case_ids]
+                [accessor.domain, case_ids]
             )
             return list(fetchall_as_namedtuple(cursor))
 
     @staticmethod
-    def get_modified_case_ids(domain, case_ids, last_sync_date, last_sync_id):
+    def get_modified_case_ids(accessor, case_ids, sync_log):
         assert isinstance(case_ids, list), case_ids
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
                 'SELECT case_id FROM get_modified_case_ids(%s, %s, %s, %s)',
-                [domain, case_ids, last_sync_date, last_sync_id]
+                [accessor.domain, case_ids, sync_log.date, sync_log._id]
             )
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]

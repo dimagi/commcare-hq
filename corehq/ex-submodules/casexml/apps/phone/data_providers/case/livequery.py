@@ -195,8 +195,8 @@ def do_livequery(timing_context, restore_state, async_task=None):
 
 def discard_already_synced_cases(live_ids, restore_state, accessor):
     debug = logging.getLogger(__name__).debug
-    log = restore_state.last_sync_log
-    phone_ids = log.case_ids_on_phone
+    sync_log = restore_state.last_sync_log
+    phone_ids = sync_log.case_ids_on_phone
     check_ids = list(live_ids & phone_ids)  # only check live cases on phone
     # may be syncing too many cases here?
     # scenario: not live (due to ownership change), but on phone -> sync
@@ -204,8 +204,7 @@ def discard_already_synced_cases(live_ids, restore_state, accessor):
     debug("phone_ids: %r", phone_ids)
     debug("check_ids: %r", check_ids)
     if check_ids:
-        sync_ids.update(accessor.get_modified_case_ids(
-            check_ids, log.date, log._id))
+        sync_ids.update(accessor.get_modified_case_ids(check_ids, sync_log))
     debug('sync: %r', sync_ids)
     return sync_ids
 

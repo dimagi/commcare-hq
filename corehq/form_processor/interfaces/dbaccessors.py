@@ -334,11 +334,17 @@ class CaseAccessors(object):
         return self.db_accessor.get_related_indices(self.domain, case_ids, exclude_ids)
 
     def get_closed_and_deleted_ids(self, case_ids):
-        return self.db_accessor.get_closed_and_deleted_ids(self.domain, case_ids)
+        """Get the subset of given list of case ids that are closed or deleted
 
-    def get_modified_case_ids(self, case_ids, last_sync_date, last_sync_id):
-        return self.db_accessor.get_modified_case_ids(
-            self.domain, case_ids, last_sync_date, last_sync_id)
+        :returns: List of three-tuples: `(case_id, closed, deleted)`
+        """
+        return self.db_accessor.get_closed_and_deleted_ids(self, case_ids)
+
+    def get_modified_case_ids(self, case_ids, sync_log):
+        """Get the subset of given list of case ids that have been modified
+        since sync date/log id
+        """
+        return self.db_accessor.get_modified_case_ids(self, case_ids, sync_log)
 
     def get_case_ids_modified_with_owner_since(self, owner_id, reference_date):
         return self.db_accessor.get_case_ids_modified_with_owner_since(self.domain, owner_id, reference_date)
