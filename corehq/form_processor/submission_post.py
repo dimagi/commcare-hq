@@ -204,7 +204,7 @@ class SubmissionPost(object):
             if instance.is_normal and not errors:
                 response = self.get_success_response()
             else:
-                response = self.get_failure_response(instance)
+                response = self.get_retry_response(instance.problem, ResponseNature.SUBMIT_ERROR)
 
             self._set_response_headers(response, instance.form_id)
             return FormProcessingResult(response, instance, cases, ledgers, submission_type)
@@ -284,6 +284,7 @@ class SubmissionPost(object):
         return self.run().response
 
     def process_signals(self, instance):
+        # send and process 'successful_form_received' signal
         feedback = successful_form_received.send_robust(None, xform=instance)
         errors = []
         for func, resp in feedback:
@@ -295,7 +296,7 @@ class SubmissionPost(object):
                 ) % (func, instance.form_id, type(resp).__name__, error_message))
                 errors.append(error_message)
         if errors:
-            self.interface.xformerror_from_xform_instance(instance, ", ".join(errors))
+            self.interface.xformerror_from_xform_instance(instance, ", ".join(errors), with_new_id=True)
             self.formdb.update_form_problem_and_state(instance)
         return errors
 
@@ -326,11 +327,11 @@ class SubmissionPost(object):
         ).response()
 
     @staticmethod
-    def get_failure_response(doc):
+    def get_retry_response(message, nature):
         return OpenRosaResponse(
-            message=doc.problem,
-            nature=ResponseNature.SUBMIT_ERROR,
-            status=201,
+            message=message,
+            nature=nature,
+            status=422,
         ).response()
 
     @staticmethod
