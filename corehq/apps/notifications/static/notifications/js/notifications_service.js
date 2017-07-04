@@ -10,9 +10,7 @@ hqDefine('notifications/js/notifications_service.js', function () {
     'use strict';
     var module = {};
     var _private = {};
-    _private.RMI = function () {
-        console.log("RMI Method has not been set");
-    };
+    _private.RMI = function () {};
 
     module.setRMI = function (rmiUrl, csrfToken) {
         var _rmi = RMI(rmiUrl, csrfToken);
@@ -106,7 +104,6 @@ hqDefine('notifications/js/notifications_service.js', function () {
     module.serviceModel = {};
     module.initService = function(notificationsKoSelector) {
         if ($(notificationsKoSelector).length < 1) {
-            console.log("Cannot find notifications selector " + notificationsKoSelector);
             return;
         }
         module.serviceModel = new NotificationsServiceModel();
