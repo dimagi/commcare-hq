@@ -32,7 +32,7 @@ var HQAsyncReport = function (o) {
 
     var initFilters = function() {
         var $filterRange = $('.report-filter-datespan');
-        if (!$filterRange.data("init")) {
+        if (!$filterRange.length || !$filterRange.data("init")) {
             return;
         }
         var separator = $filterRange.data('separator');
