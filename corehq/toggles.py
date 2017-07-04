@@ -1273,3 +1273,10 @@ SKIP_REMOVE_INDICES = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
+
+SHOW_UI_NOTIFICATIONS = StaticToggle(
+    'show_ui_notify',
+    'Show Tests of UI Notifications before the real deal',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER]
+)
