@@ -201,7 +201,12 @@ class SubmissionPost(object):
                     submission_type = 'error'
 
             errors = self.process_signals(instance)
-            response = self._get_open_rosa_response(instance, errors)
+            if instance.is_normal and not errors:
+                response = self.get_success_response()
+            else:
+                response = self.get_failure_response(instance)
+
+            self._set_response_headers(response, instance.form_id)
             return FormProcessingResult(response, instance, cases, ledgers, submission_type)
 
     @property
@@ -294,17 +299,12 @@ class SubmissionPost(object):
             self.formdb.update_form_problem_and_state(instance)
         return errors
 
-    def _get_open_rosa_response(self, instance, errors):
-        if instance.is_normal and not errors:
-            response = self.get_success_response()
-        else:
-            response = self.get_failure_response(instance)
-
+    def _set_response_headers(self, response, form_id):
         # this hack is required for ODK
         response["Location"] = self.location
 
         # this is a magic thing that we add
-        response['X-CommCareHQ-FormID'] = instance.form_id
+        response['X-CommCareHQ-FormID'] = form_id
         return response
 
     @staticmethod
