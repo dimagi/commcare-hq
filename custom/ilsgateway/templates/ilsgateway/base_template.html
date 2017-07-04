@@ -25,8 +25,7 @@
     {% endif %}
 {% endblock %}
 
-{% block reports-js-inline %}
-    <script>
+{% block reports-js-inline %}{{ block.super }}
         function get_export_url(format) {
             var params = window.location.search.substr(1);
             if (params.length <= 1) {
@@ -110,5 +109,4 @@
             defaultItem: defaultConfig,
             saveUrl: '{% url "add_report_config" domain %}'
         });
-    </script>
 {% endblock %}
