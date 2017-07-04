@@ -8,6 +8,7 @@
                    id="filter_range"
                    class="date-range-picker form-control"
                    value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}"
+                   data-init="{% if slug == 'datespan' %}1{% endif %}"
                    data-separator="{% html_attr separator %}" 
                    data-report-labels="{% html_attr report_labels %}"
                    data-start-date="{{ datespan.startdate|date:"Y-m-d" }}"
@@ -34,10 +35,12 @@
     </div>
 {% endblock %}
 {% block filter_js %}
-{% ifequal slug 'datespan'  %}
     <script>
         $(function () {
             var $filterRange = $('#filter_range');
+            if (!$filterRange.data("init")) {
+                return;
+            }
             var separator = $filterRange.data('separator');
             var report_labels = $filterRange.data('reportLabels');
             var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
@@ -56,5 +59,4 @@
             });
         });
     </script>
-{% endifequal %}
 {% endblock %}
