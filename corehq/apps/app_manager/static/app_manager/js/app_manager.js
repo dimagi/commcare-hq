@@ -301,6 +301,29 @@ hqDefine('app_manager/js/app_manager', function () {
                 $(related).data(name, value);
             });
         }
+        function resetIndexes($sortable) {
+            var parentVar = $sortable.data('parentvar');
+            var parentValue = $sortable.closest("[data-indexVar='" + parentVar + "']").data('index');
+            _.each($sortable.find('> .js-sorted-li'), function (elem, i) {
+                $(elem).data('index', i);
+                var indexVar = $(elem).data('indexvar');
+                updateRelatedTags($(elem), indexVar, i);
+                if (parentVar) {
+                    $(elem).data(parentVar, parentValue);
+                    updateRelatedTags($(elem), parentVar, parentValue);
+                }
+            });
+            _.each($('[data-updateprop]'), function (tag) {
+                var tagName = $(tag).data('updateprop'),
+                    tagVal = $(tag).data('updatevalue'),
+                    moduleId = $(tag).data('moduleid'),
+                    formId = $(tag).data('formid');
+                var processedVal = tagVal
+                    .replace('replacewithmoduleid', moduleId)
+                    .replace('replacewithformid', formId);
+                $(tag).prop(tagName, processedVal);
+            });
+        }
 
         $('.sortable .sort-action').addClass('sort-disabled');
         $('.drag_handle').addClass(hqImport("hqwebapp/js/main").icons.GRIP);
@@ -367,19 +390,21 @@ hqDefine('app_manager/js/app_manager', function () {
                         $form = $(this).find('> .sort-action form');
                         $form.find('[name="from"], [name="to"]').remove();
                         $form.append('<input type="hidden" name="from" value="' + from.toString() + '" />');
-                        $form.append('<input type="hidden" name="to"   value="' + to.toString()   + '" />');
+                        $form.append('<input type="hidden" name="to"   value="' + to.toString() + '" />');
                         if (sorting_forms) {
                             $form.append('<input type="hidden" name="from_module_id" value="' + from_module_id.toString() + '" />');
-                            $form.append('<input type="hidden" name="to_module_id"   value="' + to_module_id.toString()   + '" />');
+                            $form.append('<input type="hidden" name="to_module_id"   value="' + to_module_id.toString() + '" />');
                         }
 
-                        // Show loading screen and disable rearranging
-                        $('#js-appmanager-body.appmanager-settings-content').addClass('hide');
-                        $sortable.find('.drag_handle').remove();
-                        $form.submit();
+                        resetIndexes($sortable);
+                        if (from_module_id !== to_module_id) {
+                            var $parentSortable = $sortable.parents(".sortable"),
+                                $fromSortable = $parentSortable.find("[data-index=" + from_module_id + "] .sortable");
+                            resetIndexes($fromSortable);
+                        }
+                        $.post($form.attr('action'), $form.serialize(), function (data) {});
+                        module.setPublishStatus(true);
                     }
-
-                    module.setPublishStatus(true);
                 }
             };
             if (sorting_forms) {
