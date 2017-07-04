@@ -12,6 +12,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.core import management, cache
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import (
     HttpResponseRedirect,
     HttpResponse,
@@ -642,7 +643,7 @@ class _Db(object):
     def get(self, record_id):
         try:
             return self._getter(record_id)
-        except (XFormNotFound, CaseNotFound):
+        except (XFormNotFound, CaseNotFound, ObjectDoesNotExist):
             raise ResourceNotFound("missing")
 
 
