@@ -51,7 +51,7 @@ class SubmissionErrorTest(TestCase):
         self.assertIn(u"   √   ".encode('utf-8'), res.content)
 
         file, res = self._submit('simple_form.xml')
-        self.assertEqual(201, res.status_code)
+        self.assertEqual(422, res.status_code)
         self.assertIn("Form is a duplicate", res.content)
 
         # make sure we logged it
@@ -72,7 +72,7 @@ class SubmissionErrorTest(TestCase):
 
         try:
             file, res = self._submit("simple_form.xml")
-            self.assertEqual(201, res.status_code)
+            self.assertEqual(422, res.status_code)
             self.assertIn(evil_laugh, res.content)
 
             # make sure we logged it
