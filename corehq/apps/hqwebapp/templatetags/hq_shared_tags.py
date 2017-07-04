@@ -631,7 +631,7 @@ def html_attr(value):
         value = json.dumps(value)[1:-1]
     else:
         value = JSON(value)
-    return "{}".format(escape(value))
+    return escape(value)
 
 
 @register.tag
