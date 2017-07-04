@@ -69,6 +69,9 @@ class ReportFixturesProvider(FixtureProvider):
                     in get_apps_in_domain(restore_user.domain, include_remote=False)
                     if role.permissions.view_web_app(app)
                 ]
+            else:
+                # If there is no role, allow access to all apps
+                apps = get_apps_in_domain(restore_user.domain, include_remote=False)
         else:
             apps = [
                 app for app
