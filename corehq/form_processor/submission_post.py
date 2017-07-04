@@ -328,6 +328,9 @@ class SubmissionPost(object):
 
     @staticmethod
     def get_retry_response(message, nature):
+        """
+        Returns a 422(Unprocessable Entity) response, mobile will retry this submission
+        """
         return OpenRosaResponse(
             message=message,
             nature=nature,
