@@ -375,7 +375,7 @@ def _transform_instance_to_error(interface, e, instance):
         u"Warning in case or stock processing "
         u"for form {}: {}."
     ).format(instance.form_id, error_message))
-    return interface.xformerror_from_xform_instance(instance, error_message)
+    return interface.xformerror_from_xform_instance(instance, error_message, with_new_id=True)
 
 
 def handle_unexpected_error(interface, instance, exception, message=None):
