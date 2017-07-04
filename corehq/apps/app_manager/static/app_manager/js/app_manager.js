@@ -2,28 +2,28 @@
 hqDefine('app_manager/js/app_manager.js', function () {
     'use strict';
     var module = eventize({});
-    var _p = {};
-    _p.appendedPageTitle = "";
-    _p.prependedPageTitle = "";
+    var _private = {};
+    _private.appendedPageTitle = "";
+    _private.prependedPageTitle = "";
 
     module.setCommcareVersion = function (version) {
         module.commcareVersion(version);
     };
 
     module.setAppendedPageTitle = function (appendedPageTitle) {
-        _p.appendedPageTitle = appendedPageTitle;
+        _private.appendedPageTitle = appendedPageTitle;
     };
     module.setPrependedPageTitle = function (prependedPageTitle) {
-        _p.prependedPageTitle = prependedPageTitle;
+        _private.prependedPageTitle = prependedPageTitle;
     };
 
     module.updatePageTitle = function (pageTitle) {
         var newTitle = pageTitle;
-        if (_p.appendedPageTitle) {
-            newTitle += " - " + _p.appendedPageTitle;
+        if (_private.appendedPageTitle) {
+            newTitle += " - " + _private.appendedPageTitle;
         }
-        if (_p.prependedPageTitle) {
-            newTitle = _p.prependedPageTitle + " - " + newTitle;
+        if (_private.prependedPageTitle) {
+            newTitle = _private.prependedPageTitle + " - " + newTitle;
         }
         document.title = newTitle + " - CommCare HQ";
     };
