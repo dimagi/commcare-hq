@@ -331,7 +331,8 @@ hqDefine('userreports/js/builder_view_models.js', function () {
             dataSourceIndicators,
             reportColumnOptions,
             dateRangeOptions,
-            isGroupByRequired
+            isGroupByRequired,
+            groupByInitialValue
     ) {
         var self = this;
         self.optionsContainQuestions = _.any(dataSourceIndicators, function (o) {
@@ -339,7 +340,7 @@ hqDefine('userreports/js/builder_view_models.js', function () {
         });
         self.dataSourceIndicators = dataSourceIndicators;
         self.reportColumnOptions = reportColumnOptions;
-        self.groupBy = ko.observable();
+        self.groupBy = ko.observable(groupByInitialValue);
         self.isGroupByRequired = ko.observable(isGroupByRequired);
         self.showGroupByValidationError = ko.observable(false);
 

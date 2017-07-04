@@ -5995,9 +5995,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         try:
             form = from_module.forms.pop(j)
             if app_manager_v2:
-                if not to_module.is_surveys and i == 0:
-                    # first form is the reg form
-                    i = 1
                 if from_module.is_surveys != to_module.is_surveys:
                     if from_module.is_surveys:
                         form.requires = "case"

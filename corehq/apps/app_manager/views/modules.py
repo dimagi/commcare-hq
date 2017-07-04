@@ -1014,7 +1014,7 @@ def new_module(request, domain, app_id):
                         condition=FormActionCondition(type='always'))
 
                 # one followup form
-                followup = app.new_form(module_id, "Followup", lang)
+                followup = app.new_form(module_id, _("Followup"), lang)
                 followup.requires = "case"
                 followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 
@@ -1025,7 +1025,7 @@ def new_module(request, domain, app_id):
                 else:
                     module.case_type = 'case'
             else:
-                app.new_form(module_id, "Survey", lang)
+                app.new_form(module_id, _("Survey"), lang)
             form_id = 0
         else:
             app.new_form(module_id, "Untitled Form", lang)

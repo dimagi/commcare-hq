@@ -397,8 +397,8 @@ def toggle_demo_mode(request, domain, user_id):
             )
         )
     else:
-        from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
-        from corehq.apps.app_manager.views.utils import get_practice_mode_configured_apps
+        from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps, \
+            get_practice_mode_configured_apps
         # if the user is being used as practice user on any apps, check/ask for confirmation
         apps = get_practice_mode_configured_apps(domain)
         confirm_turn_off = True if (request.POST.get('confirm_turn_off', 'no')) == 'yes' else False
@@ -406,7 +406,6 @@ def toggle_demo_mode(request, domain, user_id):
             return HttpResponseRedirect(reverse(ConfirmTurnOffDemoModeView.urlname, args=[domain, user_id]))
 
         turn_off_demo_mode(user)
-        from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
         unset_practice_mode_configured_apps(domain, user.get_id)
         messages.success(request, _("Successfully turned off demo mode!"))
     return HttpResponseRedirect(edit_user_url)

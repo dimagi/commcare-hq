@@ -509,6 +509,15 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     always_enabled={'enikshay'},
 )
 
+
+ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
+    'role_webapps_permissions',
+    'Toggle which webapps to see based on role',
+    TAG_PRODUCT_PATH,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
@@ -849,6 +858,13 @@ USE_OLD_CLOUDCARE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+FORMPLAYER_USE_LIVEQUERY = StaticToggle(
+    'formplayer_use_livequery',
+    'Use LiveQuery on Web Apps',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'Allow a configurable case list that is filtered based on a fixture type and fixture selection (Due List)',
@@ -1097,6 +1113,7 @@ ENIKSHAY = StaticToggle(
     "Enable custom enikshay functionality: additional user and location validation",
     TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
+    always_enabled={'enikshay'},
 )
 
 DATA_DICTIONARY = StaticToggle(
