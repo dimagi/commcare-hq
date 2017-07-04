@@ -694,8 +694,11 @@ def _lookup_id_in_database(doc_id, db_name=None):
     for db in dbs:
         try:
             doc = db.get(doc_id)
-        except ResourceNotFound as e:
-            db_results.append(db_result(db.dbname, e.msg, STATUSES[e.msg]))
+        except (ResourceNotFound, SQLLocation.DoesNotExist) as e:
+            if hasattr(e, 'msg'):
+                db_results.append(db_result(db.dbname, e.msg, STATUSES[e.msg]))
+            else:
+                db_results.append(db_result(db.dbname, 'missing', STATUSES['missing']))
         else:
             db_results.append(db_result(db.dbname, 'found', 'success'))
             response.update({
