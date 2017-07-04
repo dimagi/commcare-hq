@@ -103,8 +103,8 @@ class UserDeviceTest(SimpleTestCase):
         user = CommCareUser()
         now = datetime.utcnow()
         later = now + timedelta(hours=1)
-        way_later = now + timedelta(days=1)
+        day_later = now + timedelta(days=1)
         device = 'device'
         self.assertTrue(user.update_device_id_last_used(device, now))
-        self.assertTrue(user.update_device_id_last_used(device, later))
-        self.assertFalse(user.update_device_id_last_used(device, way_later))
+        self.assertFalse(user.update_device_id_last_used(device, later))
+        self.assertTrue(user.update_device_id_last_used(device, day_later))
