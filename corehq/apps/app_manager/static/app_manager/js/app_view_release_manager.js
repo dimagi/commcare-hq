@@ -18,8 +18,8 @@ hqDefine("app_manager/js/app_view_release_manager.js", function() {
     }
 
     // View changes / app diff
-    var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body')
-    $('#recent-changes-btn').on('click', function (e) {
+    var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body');
+    $('#recent-changes-btn').on('click', function () {
         appDiff.renderDiff(initial_page_data('app_id'), initial_page_data('latest_build_id'));
     });
 
@@ -38,7 +38,7 @@ hqDefine("app_manager/js/app_view_release_manager.js", function() {
     if (initial_page_data('intro_only')) {
         hqImport('app_manager/js/preview_app.js').forceShowPreview();
     }
-    
+
     $(function() {
         analytics.workflow('Visited the Release Manager');
     });
