@@ -8,8 +8,7 @@
    {% if form.no_vellum %}
    href="{% url "view_form" domain app.id module.unique_id form.unique_id %}"
    {% else %}
-   href="{% url "form_source" domain app.id module.id form.id %}"
-   data-updatevalue="{% url "form_source" domain app.id 'replacewithmoduleid' 'replacewithformid' %}"
+   href="{% url "form_source" domain app.id module.unique_id form.unique_id %}"
    {% endif %}
    data-moduleid="{{ module.id }}"
    data-formid="{{ form.id }}"
