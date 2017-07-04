@@ -146,6 +146,10 @@ MEHSANA_2016_MAP = {
     "Azi": 45,
 }
 
+MUMBAI_MAP = {
+    # TODO: Write me
+}
+
 
 # A map of column identifier to the corresponding app drug id
 DRUG_MAP = {
@@ -170,7 +174,7 @@ DRUG_MAP = {
 }
 
 
-ALL_MAPPING_DICTS = (MEHSANA_2016_MAP, MEHSANA_2017_MAP)
+ALL_MAPPING_DICTS = (MEHSANA_2016_MAP, MEHSANA_2017_MAP, MUMBAI_MAP)
 
 
 class ColumnMapping(object):
@@ -181,9 +185,10 @@ class ColumnMapping(object):
         try:
             column_index = cls.mapping_dict[normalized_column_name]
             return row[column_index].value
-        except IndexError:
+        except KeyError:
             return cls.handle_mapping_miss(normalized_column_name)
-
+        except IndexError:
+            return None
 
     @classmethod
     def handle_mapping_miss(cls, normalized_column_name):
@@ -193,9 +198,9 @@ class ColumnMapping(object):
                 exists_in_some_mapping = True
                 break
         if exists_in_some_mapping:
-            return ""
+            return None
         else:
-            raise Exception("Invalid normalized_column_name passed to ColumnMapping.get_value()")
+            raise KeyError("Invalid normalized_column_name passed to ColumnMapping.get_value()")
 
 
 class Mehsana2017ColumnMapping(ColumnMapping):
@@ -207,7 +212,7 @@ class Mehsana2016ColumnMapping(ColumnMapping):
 
 
 class MumbaiColumnMapping(ColumnMapping):
-    raise NotImplementedError
+    mapping_dict = MUMBAI_MAP
 
 
 def get_case_structures_from_row(domain, column_mapping, row):
@@ -249,13 +254,14 @@ def get_case_structures_from_row(domain, column_mapping, row):
 
 def get_case_structure(case_type, properties, host=None):
     owner_id = properties.pop("owner_id")
+    props = {k: v for k, v in properties.iteritems() if v is not None}
     kwargs = {
         "case_id": uuid.uuid4().hex,
         "attrs": {
             "case_type": case_type,
             "create": True,
             "owner_id": owner_id,
-            "update": properties,
+            "update": props,
         },
     }
     if host:
@@ -564,7 +570,6 @@ def match_facility(domain, xlsx_facility_name):
     """
     # TODO: Consider filtering by location type
     return match_district(domain, xlsx_facility_name)
-
 
 
 class Command(BaseCommand):
