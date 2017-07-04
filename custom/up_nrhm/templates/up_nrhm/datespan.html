@@ -1,6 +1,7 @@
 {% extends 'reports/filters/datespan.html' %}
 {% load staticfiles %}
 {% load i18n %}
+{% block init_filter %}{% endblock %}
 {% block filter_js %}
 {% ifequal slug 'datespan'  %}
     <script type="text/javascript">

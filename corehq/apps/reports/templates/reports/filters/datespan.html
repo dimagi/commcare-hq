@@ -6,9 +6,9 @@
         <div class="col-xs-6">
             <input type="text"
                    id="filter_range"
-                   class="date-range-picker form-control"
+                   class="date-range-picker form-control report-filter-datespan"
                    value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}"
-                   data-init="{% if slug == 'datespan' %}1{% endif %}"
+                   data-init="{% block init_filter %}{% if slug == 'datespan' %}1{% endif %}{% endblock %}"
                    data-separator="{% html_attr separator %}" 
                    data-report-labels="{% html_attr report_labels %}"
                    data-start-date="{{ datespan.startdate|date:"Y-m-d" }}"

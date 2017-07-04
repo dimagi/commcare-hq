@@ -31,7 +31,7 @@ var HQAsyncReport = function (o) {
     };
 
     var initFilters = function() {
-        var $filterRange = $('#filter_range');
+        var $filterRange = $('.report-filter-datespan');
         if (!$filterRange.data("init")) {
             return;
         }
