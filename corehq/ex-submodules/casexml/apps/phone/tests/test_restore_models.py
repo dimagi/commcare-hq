@@ -11,6 +11,7 @@ class OtaRestoreUserTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(OtaRestoreUserTest, cls).setUpClass()
         cls.domain = Domain.get_or_create_with_name(DOMAIN, is_active=True)
         cls.domain.commtrack_enabled = True
         cls.domain.save()
@@ -23,6 +24,7 @@ class OtaRestoreUserTest(TestCase):
     def tearDownClass(cls):
         delete_all_users()
         cls.domain.delete()
+        super(OtaRestoreUserTest, cls).tearDownClass()
 
     def test_get_commtrack_location_id(self):
         self.assertEqual(self.restore_user.get_commtrack_location_id(), '1')

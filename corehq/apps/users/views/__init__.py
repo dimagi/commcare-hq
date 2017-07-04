@@ -22,7 +22,7 @@ from django_otp.plugins.otp_static.models import StaticToken
 from djangular.views.mixins import allow_remote_invocation
 
 from couchdbkit.exceptions import ResourceNotFound
-from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
+from corehq.apps.users.landing_pages import get_allowed_landing_pages
 from corehq.util.view_utils import json_error
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
@@ -38,6 +38,7 @@ from corehq.apps.analytics.tasks import (
     track_existing_user_accepted_invite_on_hubspot,
 )
 from corehq.apps.analytics.utils import get_meta
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import BaseDomainView
@@ -490,7 +491,7 @@ class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
             {'id': None, 'name': _('Use Default')}
         ] + [
             {'id': page.id, 'name': _(page.name)}
-            for page in ALLOWED_LANDING_PAGES
+            for page in get_allowed_landing_pages(self.domain)
         ]
 
     @property
@@ -510,6 +511,7 @@ class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
             'can_edit_roles': self.can_edit_roles,
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
+            'web_apps_list': get_cloudcare_apps(self.domain),
             'invitations': self.invitations,
             'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
             'admins': WebUser.get_admins_by_domain(self.domain),
@@ -744,7 +746,7 @@ class UserInvitationView(object):
 
     @property
     def success_msg(self):
-        return "You have been added to the %s domain" % self.domain
+        return _('You have been added to the "%s" project space.') % self.domain
 
     @property
     def redirect_to_on_success(self):

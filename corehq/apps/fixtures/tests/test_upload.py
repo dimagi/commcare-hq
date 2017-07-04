@@ -96,6 +96,12 @@ validation_test_cases = [
     ('wrong_index_syntax', [
         u"'field 1' is not correctly formatted in 'types' sheet. Whether a field is indexed should be specified "
         "as 'field 1: is_indexed?'. Its value should be 'yes' or 'no'.",
+    ]),
+    ('field_type_error', [
+        u"Fields with attributes should be numbered as 'field: name integer'"
+    ]),
+    ('property_type_error', [
+        u"Attribute should be written as 'name: lang integer'"
     ])
 ]
 
@@ -157,12 +163,14 @@ class TestFixtureUpload(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestFixtureUpload, cls).setUpClass()
         cls.domain = 'fixture-upload-test'
         cls.project = create_domain(cls.domain)
 
     @classmethod
     def tearDownClass(cls):
         cls.project.delete()
+        super(TestFixtureUpload, cls).tearDownClass()
 
     def _get_workbook(self, filename):
         return get_workbook(_make_path('test_upload', '{}.xlsx'.format(filename)))

@@ -247,7 +247,7 @@ hqDefine('cloudcare/js/debugger/debugger.js', function () {
                 if (self.success()) {
                     self.result(response.output);
                 } else {
-                    self.result(response.output || 'Error evaluating expression.');
+                    self.result(response.output || gettext('Error evaluating expression.'));
                 }
             });
             window.analytics.workflow('[app-preview] User evaluated XPath');

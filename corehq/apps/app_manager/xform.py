@@ -1030,7 +1030,7 @@ class XForm(WrappedNode):
                 # Include meta information about the stock entry
                 if data_node.tag_name == 'entry':
                     parent = next(data_node.xml.iterancestors())
-                    if parent:
+                    if len(parent):
                         is_stock_element = any(map(
                             lambda namespace: namespace == COMMTRACK_REPORT_XMLNS,
                             parent.nsmap.values()

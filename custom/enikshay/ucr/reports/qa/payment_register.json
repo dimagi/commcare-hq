@@ -87,10 +87,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "external_id",
+                "field": "person_id",
                 "calculate_total": false,
                 "type": "field",
-                "display": "Benificiary ID"
+                "display": "Beneficiary ID"
             },
             {
                 "sortable": false,

@@ -8,11 +8,11 @@ from casexml.apps.case.mock import CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from custom.enikshay.private_sector_datamigration.models import (
-    Adherence,
-    Episode,
-    EpisodePrescription,
+    Adherence_Jun30,
+    Episode_Jun30,
+    EpisodePrescription_Jun30,
     MigratedBeneficiaryCounter,
-    Voucher,
+    Voucher_Jun30,
 )
 from custom.enikshay.user_setup import compress_nikshay_id
 
@@ -175,6 +175,13 @@ class BeneficiaryCaseFactory(object):
                     'occurrence_episode_count': 1,
                     'occurrence_id': get_human_friendly_id(),
 
+                    'legacy_blockOrHealthPostId': self.beneficiary.blockOrHealthPostId,
+                    'legacy_districtId': self.beneficiary.districtId,
+                    'legacy_organisationId': self.beneficiary.organisationId,
+                    'legacy_subOrganizationId': self.beneficiary.subOrganizationId,
+                    'legacy_stateId': self.beneficiary.stateId,
+                    'legacy_wardId': self.beneficiary.wardId,
+
                     'migration_created_case': 'true',
                     'migration_created_from_record': self.beneficiary.caseId,
                 }
@@ -207,6 +214,13 @@ class BeneficiaryCaseFactory(object):
                     'name': self.beneficiary.episode_name,
                     'transfer_in': '',
                     'treatment_options': '',
+
+                    'legacy_blockOrHealthPostId': self.beneficiary.blockOrHealthPostId,
+                    'legacy_districtId': self.beneficiary.districtId,
+                    'legacy_organisationId': self.beneficiary.organisationId,
+                    'legacy_subOrganizationId': self.beneficiary.subOrganizationId,
+                    'legacy_stateId': self.beneficiary.stateId,
+                    'legacy_wardId': self.beneficiary.wardId,
 
                     'migration_created_case': 'true',
                     'migration_created_from_record': self.beneficiary.caseId,
@@ -342,10 +356,10 @@ class BeneficiaryCaseFactory(object):
         }
 
         try:
-            voucher = Voucher.objects.get(voucherNumber=prescription.voucherID)
+            voucher = Voucher_Jun30.objects.get(voucherNumber=prescription.voucherID)
             if voucher.voucherStatusId == '3':
                 kwargs['attrs']['update']['date_fulfilled'] = voucher.voucherUsedDate.date()
-        except Voucher.DoesNotExist:
+        except Voucher_Jun30.DoesNotExist:
             pass
 
         return CaseStructure(**kwargs)
@@ -353,7 +367,7 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _episode(self):
-        episodes = Episode.objects.filter(beneficiaryID=self.beneficiary.caseId).order_by('-episodeDisplayID')
+        episodes = Episode_Jun30.objects.filter(beneficiaryID=self.beneficiary.caseId).order_by('-episodeDisplayID')
         if episodes:
             return episodes[0]
         else:
@@ -363,13 +377,13 @@ class BeneficiaryCaseFactory(object):
     @memoized
     def _adherences(self):
         return list(
-            Adherence.objects.filter(episodeId=self._episode.episodeID).order_by('-doseDate')
+            Adherence_Jun30.objects.filter(episodeId=self._episode.episodeID).order_by('-doseDate')
         ) if self._episode else []
 
     @property
     @memoized
     def _prescriptions(self):
-        return list(EpisodePrescription.objects.filter(beneficiaryId=self.beneficiary.caseId))
+        return list(EpisodePrescription_Jun30.objects.filter(beneficiaryId=self.beneficiary.caseId))
 
     @property
     @memoized
@@ -443,7 +457,10 @@ class BeneficiaryCaseFactory(object):
 
     @memoized
     def _location_by_agency(self, agency):
-        return SQLLocation.active_objects.get(
-            domain=self.domain,
-            site_code=str(agency.agencyId),
-        )
+        try:
+            return SQLLocation.active_objects.get(
+                domain=self.domain,
+                site_code=str(agency.agencyId),
+            )
+        except SQLLocation.DoesNotExist:
+            return None

@@ -63,31 +63,34 @@ $(function () {
         $('#case_type_error').css('display', 'none');
     };
     $('#case_type').on('textchange', function () {
-        var value = $(this).val();
-        var valueNoSpaces = value.replace(/ /g, '_');
+        var $el = $(this),
+            value = $el.val(),
+            valueNoSpaces = value.replace(/ /g, '_');
         if (value !== valueNoSpaces) {
-            $(this).val(valueNoSpaces);
+            var pos = $el.caret('pos');
+            $el.val(valueNoSpaces);
+            $el.caret('pos', pos);
         }
         if (v2 && !valueNoSpaces) {
-            $(this).closest('.form-group').addClass('has-error');
+            $el.closest('.form-group').addClass('has-error');
             showCaseTypeError(
                 gettext("Case type is required.")
             );
             return;
         }
         if (!valueNoSpaces.match(/^[\w-]*$/g)) {
-            $(this).closest('.form-group').addClass('has-error');
+            $el.closest('.form-group').addClass('has-error');
             showCaseTypeError(
                 gettext("Case types can only include the characters a-z, 0-9, '-' and '_'")
             );
         } else if (valueNoSpaces === 'commcare-user' && moduleType !== 'advanced') {
-            $(this).closest('.form-group').addClass('has-error');
+            $el.closest('.form-group').addClass('has-error');
             showCaseTypeError(
                 gettext("'commcare-user' is a reserved case type. Please change the case type")
             );
 
         } else {
-            $(this).closest('.form-group').removeClass('has-error');
+            $el.closest('.form-group').removeClass('has-error');
             hideCaseTypeError();
         }
     });

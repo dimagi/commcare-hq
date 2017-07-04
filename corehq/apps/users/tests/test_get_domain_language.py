@@ -16,6 +16,7 @@ class TestDomainLanguages(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestDomainLanguages, cls).setUpClass()
         cls.domain = 'test-languages'
 
         with trap_extra_setup(ConnectionError):
@@ -38,6 +39,7 @@ class TestDomainLanguages(TestCase):
         cls.app1.delete()
         cls.app2.delete()
         delete_es_index(APP_INDEX_INFO.index)
+        super(TestDomainLanguages, cls).tearDownClass()
 
     def test_get_domain_languages(self):
         self.assertEqual(

@@ -34,6 +34,8 @@ from .const import (
 from .exceptions import EnikshayTaskException
 from .data_store import AdherenceDatastore
 
+from .model_migration_sets import EpisodeFacilityIDMigration
+
 logger = get_task_logger(__name__)
 
 
@@ -86,10 +88,12 @@ class EpisodeUpdater(object):
                 adherence_update = EpisodeAdherenceUpdate(episode, self)
                 voucher_update = EpisodeVoucherUpdate(self.domain, episode)
                 test_update = EpisodeTestUpdate(self.domain, episode)
+                episode_facility_id_migration = EpisodeFacilityIDMigration(self.domain, episode)
                 try:
                     update_json = adherence_update.update_json()
                     update_json.update(voucher_update.update_json())
                     update_json.update(test_update.update_json())
+                    update_json.update(episode_facility_id_migration.update_json())
                     if update_json:
                         updates.append((episode.case_id, update_json, False))
                         update_count += 1

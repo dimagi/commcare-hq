@@ -114,7 +114,7 @@ def _deactivate_subscription(subscription):
         next_subscription.save()
     else:
         next_subscription = assign_explicit_community_subscription(
-            subscription.subscriber.domain, subscription.date_end
+            subscription.subscriber.domain, subscription.date_end, account=subscription.account
         )
         new_plan_version = next_subscription.plan_version
     _, downgraded_privs, upgraded_privs = get_change_status(subscription.plan_version, new_plan_version)
@@ -587,7 +587,7 @@ def ensure_explicit_community_subscription(domain_name, from_date):
         assign_explicit_community_subscription(domain_name, from_date)
 
 
-def assign_explicit_community_subscription(domain_name, start_date):
+def assign_explicit_community_subscription(domain_name, start_date, account=None):
     future_subscriptions = Subscription.objects.filter(
         CONSISTENT_DATES_CHECK
     ).filter(
@@ -599,12 +599,15 @@ def assign_explicit_community_subscription(domain_name, start_date):
     else:
         end_date = None
 
-    return Subscription.new_domain_subscription(
-        account=BillingAccount.get_or_create_account_by_domain(
+    if account is None:
+        account = BillingAccount.get_or_create_account_by_domain(
             domain_name,
             created_by='assign_explicit_community_subscriptions',
             entry_point=EntryPoint.SELF_STARTED,
-        )[0],
+        )[0]
+
+    return Subscription.new_domain_subscription(
+        account=account,
         domain=domain_name,
         plan_version=DefaultProductPlan.get_default_plan_version(),
         date_start=start_date,

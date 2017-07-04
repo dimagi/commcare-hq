@@ -13,7 +13,7 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.domain.models import Domain
-from corehq.apps.repeaters.models import FormRepeater, CaseRepeater
+from corehq.motech.repeaters.models import FormRepeater, CaseRepeater
 from corehq.apps.users.models import WebUser
 from corehq.apps.zapier.consts import EventTypes
 from corehq.apps.zapier.views import SubscribeView, UnsubscribeView, ZapierCreateCase, ZapierUpdateCase

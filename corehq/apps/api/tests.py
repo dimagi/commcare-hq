@@ -43,7 +43,7 @@ from corehq.apps.api.util import get_obj, object_does_not_exist
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater
+from corehq.motech.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from corehq.apps.fixtures.resources.v0_1 import InternalFixtureResource
 from corehq.apps.locations.resources.v0_1 import InternalLocationResource
 from custom.ilsgateway.resources.v0_1 import ILSLocationResource
@@ -96,14 +96,6 @@ class FakeXFormES(object):
         return doc
 
 
-def set_up_subscription(cls):
-    cls.account = BillingAccount.get_or_create_account_by_domain(cls.domain.name, created_by="automated-test")[0]
-    plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
-    cls.subscription = Subscription.new_domain_subscription(cls.account, cls.domain.name, plan)
-    cls.subscription.is_active = True
-    cls.subscription.save()
-
-
 class APIResourceTest(TestCase):
     """
     Base class for shared API tests. Sets up a domain and user and provides
@@ -125,8 +117,13 @@ class APIResourceTest(TestCase):
         cls.user = WebUser.create(cls.domain.name, cls.username, cls.password)
         cls.user.set_role(cls.domain.name, 'admin')
         cls.user.save()
-        set_up_subscription(cls)
-        cls.domain = Domain.get(cls.domain._id)
+
+        cls.account = BillingAccount.get_or_create_account_by_domain(cls.domain.name, created_by="automated-test")[0]
+        plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
+        cls.subscription = Subscription.new_domain_subscription(cls.account, cls.domain.name, plan)
+        cls.subscription.is_active = True
+        cls.subscription.save()
+
         cls.api_key, _ = ApiKey.objects.get_or_create(user=WebUser.get_django_user(cls.user))
 
     @classmethod
@@ -138,6 +135,7 @@ class APIResourceTest(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.api_key.delete()
         cls.user.delete()
 
         SubscriptionAdjustment.objects.all().delete()
@@ -1498,37 +1496,15 @@ class TestBulkUserAPI(APIResourceTest):
 
     @classmethod
     def setUpClass(cls):
-        Role.get_cache().clear()
-        cls.domain = Domain.get_or_create_with_name('qwerty', is_active=True)
-        cls.username = 'rudolph@qwerty.commcarehq.org'
-        cls.password = '***'
-        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password)
-        cls.user.set_role(cls.domain.name, 'admin')
-        cls.user.save()
-
+        super(TestBulkUserAPI, cls).setUpClass()
         cls.fake_user_es = FakeUserES()
         v0_5.MOCK_BULK_USER_ES = cls.mock_es_wrapper
         cls.make_users()
-        set_up_subscription(cls)
-        cls.domain = Domain.get(cls.domain._id)
-
-        django_user = WebUser.get_django_user(cls.user)
-        cls.api_key, _ = ApiKey.objects.get_or_create(user=django_user)
 
     @classmethod
     def tearDownClass(cls):
-        cls.user.delete()
-        SubscriptionAdjustment.objects.all().delete()
-
-        if cls.subscription:
-            cls.subscription.delete()
-
-        if cls.account:
-            cls.account.delete()
-
-        for domain in Domain.get_all():
-            domain.delete()
         v0_5.MOCK_BULK_USER_ES = None
+        super(TestBulkUserAPI, cls).tearDownClass()
 
     @classmethod
     def make_users(cls):
@@ -1601,17 +1577,6 @@ class TestApiKey(APIResourceTest):
     """
     resource = v0_5.WebUserResource
     api_name = 'v0.5'
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestApiKey, cls).setUpClass()
-        django_user = WebUser.get_django_user(cls.user)
-        cls.api_key, _ = ApiKey.objects.get_or_create(user=django_user)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.api_key.delete()
-        super(TestApiKey, cls).tearDownClass()
 
     def test_get_user(self):
         endpoint = "%s?%s" % (self.single_endpoint(self.user._id),

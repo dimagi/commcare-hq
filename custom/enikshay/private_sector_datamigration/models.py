@@ -2,6 +2,17 @@ from django.db import models
 
 from dimagi.utils.decorators.memoized import memoized
 
+# DO NOT DELETE - needed for makemigrations
+from custom.enikshay.private_sector_datamigration.archived_models.jun14 import (
+    Adherence_Jun14,
+    Agency_Jun14,
+    Beneficiary_Jun14,
+    Episode_Jun14,
+    EpisodePrescription_Jun14,
+    UserDetail_Jun14,
+    Voucher_Jun14,
+)
+
 
 REPORTING_MECHANISM_MISSED_CALL = 83
 REPORTING_MECHANISM_99_DOTS = 84
@@ -20,16 +31,16 @@ SELF_ADMINISTERED_DOSE = 3
 
 def get_agency_by_motech_user_name(motech_user_name):
     try:
-        return Agency.objects.get(
-            agencyId=UserDetail.objects.get(
+        return Agency_Jun30.objects.get(
+            agencyId=UserDetail_Jun30.objects.get(
                 motechUserName=motech_user_name
             ).agencyId
         )
-    except (Agency.DoesNotExist, UserDetail.DoesNotExist):
+    except (Agency_Jun30.DoesNotExist, UserDetail_Jun30.DoesNotExist):
         return None
 
 
-class Beneficiary(models.Model):
+class Beneficiary_Jun30(models.Model):
     id = models.IntegerField(null=True)
     additionalDetails = models.CharField(max_length=500, null=True)
     addressLineOne = models.CharField(max_length=256, null=True)
@@ -189,7 +200,7 @@ class Beneficiary(models.Model):
         }[self.identificationTypeId]
 
 
-class Episode(models.Model):
+class Episode_Jun30(models.Model):
     id = models.IntegerField(null=True)
     accountName = models.CharField(max_length=255, null=True)
     accountType = models.CharField(max_length=255, null=True)
@@ -257,7 +268,7 @@ class Episode(models.Model):
 
     @property
     def adherence_total_doses_taken(self):
-        return Adherence.objects.filter(
+        return Adherence_Jun30.objects.filter(
             episodeId=self.episodeID,
             dosageStatusId__in=[DIRECTLY_OBSERVED_DOSE, SELF_ADMINISTERED_DOSE],
         ).count()
@@ -265,7 +276,7 @@ class Episode(models.Model):
     @property
     @memoized
     def adherence_tracking_mechanism(self):
-        reporting_mechanism_values = Adherence.objects.filter(
+        reporting_mechanism_values = Adherence_Jun30.objects.filter(
             episodeId=self.episodeID,
         ).exclude(
             reportingMechanismId=REPORTING_MECHANISM_NONE,
@@ -466,10 +477,10 @@ class Episode(models.Model):
         ]
 
 
-class Adherence(models.Model):
+class Adherence_Jun30(models.Model):
     id = models.IntegerField(null=True)
     adherenceId = models.CharField(max_length=18, primary_key=True)
-    beneficiaryId = models.ForeignKey(Beneficiary, null=True, on_delete=models.CASCADE)
+    beneficiaryId = models.ForeignKey(Beneficiary_Jun30, null=True, on_delete=models.CASCADE)
     commentId = models.CharField(max_length=8, null=True)
     creationDate = models.DateTimeField()
     creator = models.CharField(max_length=255, null=True)
@@ -520,7 +531,7 @@ class Adherence(models.Model):
         }[self.dosageStatusId]
 
 
-class EpisodePrescription(models.Model):
+class EpisodePrescription_Jun30(models.Model):
     id = models.BigIntegerField(primary_key=True)
     adultOrPaediatric = models.CharField(max_length=255, null=True)
     beneficiaryId = models.CharField(max_length=18, null=True, db_index=True)
@@ -551,7 +562,7 @@ class EpisodePrescription(models.Model):
     physicalVoucherNumber = models.CharField(max_length=255, null=True)
 
 
-class Voucher(models.Model):
+class Voucher_Jun30(models.Model):
     id = models.BigIntegerField()
     caseId = models.CharField(max_length=18, null=True)
     comments = models.CharField(max_length=512, null=True)
@@ -584,7 +595,7 @@ class Voucher(models.Model):
     voucherAmountSystem = models.CharField(max_length=255, null=True)
 
 
-class Agency(models.Model):
+class Agency_Jun30(models.Model):
     id = models.IntegerField(null=True, unique=True)
     agencyId = models.IntegerField(primary_key=True)
     agencyName = models.CharField(max_length=256, null=True)
@@ -619,7 +630,7 @@ class Agency(models.Model):
 
     @classmethod
     def get_agencies_by_ward(cls, state_id, district_id, block_id, ward_id):
-        agency_ids = UserDetail.objects.filter(
+        agency_ids = UserDetail_Jun30.objects.filter(
             isPrimary=True,
         ).filter(
             stateId=state_id,
@@ -627,7 +638,7 @@ class Agency(models.Model):
             blockOrHealthPostId=block_id,
             wardId=ward_id,
         ).values('agencyId').distinct()
-        return Agency.objects.filter(agencyId__in=agency_ids)
+        return Agency_Jun30.objects.filter(agencyId__in=agency_ids)
 
     @property
     def location_type(self):
@@ -670,12 +681,12 @@ class Agency(models.Model):
     @property
     @memoized
     def _primary_user_detail(self):
-        return UserDetail.objects.filter(
+        return UserDetail_Jun30.objects.filter(
             isPrimary=True,
         ).get(agencyId=self.agencyId)
 
 
-class UserDetail(models.Model):
+class UserDetail_Jun30(models.Model):
     id = models.IntegerField(primary_key=True)
     accountTypeId = models.CharField(max_length=256, null=True)
     addressLineOne = models.CharField(max_length=256, null=True)
