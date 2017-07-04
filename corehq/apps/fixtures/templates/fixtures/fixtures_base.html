@@ -2,9 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block js %}{{ block.super }}
-    {% block reports-js %}
     <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
-    {% endblock %}
 {% endblock %}
 
 {% block title %}{% trans report.title|default:"Project Reports"|safe %}{% endblock %}\
