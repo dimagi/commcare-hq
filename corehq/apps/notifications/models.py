@@ -105,7 +105,6 @@ class DismissedUINotify(models.Model):
         return DismissedUINotify.objects.update_or_create(
             user=user,
             slug=slug,
-            date_dismised=datetime.datetime.now()
             date_dismissed=datetime.datetime.now()
         )
 
