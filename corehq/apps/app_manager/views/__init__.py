@@ -126,6 +126,7 @@ from corehq.apps.app_manager.views.translations import (
     upload_bulk_ui_translations,
 )
 from corehq.apps.app_manager.views.formdesigner import (
-    form_designer,
+    form_source,
+    form_source_legacy,
     get_form_data_schema,
 )
