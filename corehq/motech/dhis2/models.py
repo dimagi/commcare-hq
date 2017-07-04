@@ -6,14 +6,14 @@ import jsonfield
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 
-from corehq.apps.dhis2.utils import (
+from corehq.motech.dhis2.utils import (
     get_date_filter,
     get_last_month,
     get_report_config,
     get_ucr_data,
     get_last_quarter,
 )
-from corehq.apps.dhis2.const import SEND_FREQUENCY_MONTHLY, SEND_FREQUENCY_QUARTERLY, SEND_FREQUENCIES
+from corehq.motech.dhis2.const import SEND_FREQUENCY_MONTHLY, SEND_FREQUENCY_QUARTERLY, SEND_FREQUENCIES
 from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     Document,

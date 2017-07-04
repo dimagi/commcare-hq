@@ -29,6 +29,14 @@
         "datatype": "string",
         "slug": "location_hierarchy",
         "field": "does_not_matter"
+      },
+      {
+        "compare_as_string": true,
+        "datatype": "string",
+        "display": "Date of Referral",
+        "field": "date_of_referral",
+        "type": "date",
+        "slug": "date_of_referral_filter"
       }
     ],
     "columns": [

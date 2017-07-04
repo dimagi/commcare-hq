@@ -8,7 +8,6 @@ from lxml.builder import E
 
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq import toggles
-from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import is_valid_mobile_select_filter_type
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
@@ -58,17 +57,18 @@ class ReportFixturesProvider(FixtureProvider):
         if app_aware_sync_app:
             apps = [app_aware_sync_app]
         elif (
-                toggles.USERDATA_WEBAPPS_PERMISSIONS.enabled(restore_user.domain)
+                toggles.ROLE_WEBAPPS_PERMISSIONS.enabled(restore_user.domain)
                 and restore_state.params.device_id
                 and "WebAppsLogin" in restore_state.params.device_id
         ):
             # Only sync reports for apps the user has access to if this is a restore from webapps
-            access = ApplicationAccess.get_by_domain(restore_user.domain)
-            apps = [
-                app for app
-                in get_apps_in_domain(restore_user.domain, include_remote=False)
-                if access.user_can_access_app(restore_user, app)
-            ]
+            role = restore_user.get_role(restore_user.domain)
+            if role:
+                apps = [
+                    app for app
+                    in get_apps_in_domain(restore_user.domain, include_remote=False)
+                    if role.permissions.view_web_app(app)
+                ]
         else:
             apps = [
                 app for app
