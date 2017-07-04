@@ -54,7 +54,7 @@ class DatespanFilter(BaseReportFilter):
 class HiddenLastMonthDateFilter(DatespanFilter):
     """
     A filter that returns last month as datespan
-    but is hid(den since datespan should be fixed to last month
+    but is hidden since datespan should be fixed to last month
     """
     template = "reports/filters/month_datespan.html"
     label = ugettext_lazy("Date Range")
