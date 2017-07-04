@@ -10,7 +10,7 @@ from django.core.management import (
 from django.db import models
 
 from casexml.apps.case.const import CASE_INDEX_EXTENSION
-from casexml.apps.case.mock import CaseStructure, CaseIndex
+from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
 from corehq.apps.locations.models import SQLLocation
 from corehq.util.workbook_reading import open_any_workbook
 from custom.enikshay.case_utils import CASE_TYPE_PERSON, CASE_TYPE_OCCURRENCE, CASE_TYPE_EPISODE, CASE_TYPE_TEST, \
@@ -261,6 +261,7 @@ def get_case_structure(case_type, properties, migration_identifier, host=None):
     props['__created_by_migration'] = migration_identifier
     kwargs = {
         "case_id": uuid.uuid4().hex,
+        "walk_related": False,
         "attrs": {
             "case_type": case_type,
             "create": True,
@@ -601,11 +602,17 @@ class Command(BaseCommand):
             'format',
             help="the format of the given excel file. Options are mehsana2016, mehsana2017, or mumbai",
         )
+        parser.add_argument(
+            '--commit',
+            action='store_true',
+            help="actually create the cases. Without this flag, it's a dry run."
+        )
 
-    def handle(self, domain, excel_file_path, **options):
+    def handle(self, domain, excel_file_path, format, **options):
 
-        column_mapping = self.get_column_mapping(options['format'])
+        column_mapping = self.get_column_mapping(format)
         migration_id = str(datetime.datetime.now())
+        case_factory = CaseFactory(domain)
 
         with open_any_workbook(excel_file_path) as workbook:
             for i, row in enumerate(workbook.worksheets[0].iter_rows()):
@@ -615,7 +622,8 @@ class Command(BaseCommand):
                     continue
                 import ipdb; ipdb.set_trace()
                 case_structures = get_case_structures_from_row(domain, migration_id, column_mapping, row)
-                # TODO: submit forms with case structures (make sure it doesn't do that cascading thing)
+                if options['commit']:
+                    case_factory.create_or_update_cases(case_structures)
 
     @staticmethod
     def get_column_mapping(format):
