@@ -140,10 +140,11 @@ def do_livequery(timing_context, restore_state, async_task=None):
     hosts_by_extension = defaultdict(set)  # extension_id -> host_ids
     indices = defaultdict(list)
     accessor = CaseAccessors(restore_state.domain)
+    owner_ids = list(restore_state.owner_ids)
 
+    debug("sync %s for %r", restore_state.current_sync_log._id, owner_ids)
     with timing_context("livequery"):
         with timing_context("get_case_ids_by_owners"):
-            owner_ids = list(restore_state.owner_ids)
             open_ids = accessor.get_case_ids_by_owners(owner_ids, closed=False)
             debug("open: %r", open_ids)
 
@@ -175,6 +176,7 @@ def do_livequery(timing_context, restore_state, async_task=None):
 
         if restore_state.last_sync_log:
             with timing_context("discard_already_synced_cases"):
+                debug('last sync: %s', restore_state.last_sync_log._id)
                 sync_ids = discard_already_synced_cases(
                     live_ids, restore_state, accessor)
         else:
@@ -197,15 +199,14 @@ def discard_already_synced_cases(live_ids, restore_state, accessor):
     debug = logging.getLogger(__name__).debug
     sync_log = restore_state.last_sync_log
     phone_ids = sync_log.case_ids_on_phone
-    check_ids = list(live_ids & phone_ids)  # only check live cases on phone
-    # may be syncing too many cases here?
-    # scenario: not live (due to ownership change), but on phone -> sync
-    sync_ids = live_ids ^ phone_ids  # live XOR phone
     debug("phone_ids: %r", phone_ids)
-    debug("check_ids: %r", check_ids)
-    if check_ids:
-        sync_ids.update(accessor.get_modified_case_ids(check_ids, sync_log))
-    debug('sync: %r', sync_ids)
+    if phone_ids:
+        sync_ids = live_ids - phone_ids  # sync all live cases not on phone
+        # also sync cases on phone that have been modified since last sync
+        sync_ids.update(accessor.get_modified_case_ids(list(phone_ids), sync_log))
+    else:
+        sync_ids = live_ids
+    debug('sync_ids: %r', sync_ids)
     return sync_ids
 
 

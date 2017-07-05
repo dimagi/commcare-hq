@@ -141,15 +141,9 @@ class CaseAccessorCouch(AbstractCaseAccessor):
 
         WARNING this is inefficient (better version in SQL).
         """
-        result = []
-        open_or_closed = set()
-        for case in accessor.iter_cases(case_ids):
-            open_or_closed.add(case.case_id)
-            if case.closed:
-                result.append((case.case_id, case.closed, False))
-        deleted_ids = set(case_ids) - open_or_closed
-        result.extend((case_id, False, True) for case_id in deleted_ids)
-        return result
+        return [(case.case_id, case.closed, case.is_deleted)
+            for case in accessor.iter_cases(case_ids)
+            if case.closed or case.is_deleted]
 
     @staticmethod
     def get_modified_case_ids(accessor, case_ids, sync_log):
@@ -160,7 +154,7 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         """
         return [case.case_id
             for case in accessor.iter_cases(case_ids)
-            if case.modified_since_sync(sync_log)]
+            if not case.is_deleted and case.modified_since_sync(sync_log)]
 
     @staticmethod
     def case_exists(case_id):
