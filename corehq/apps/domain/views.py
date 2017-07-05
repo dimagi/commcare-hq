@@ -5,7 +5,6 @@ import logging
 import json
 import cStringIO
 import sys
-from smtplib import SMTPException
 
 import pytz
 from couchdbkit import ResourceNotFound
