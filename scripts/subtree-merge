@@ -25,4 +25,4 @@ echo "  git rm --cached submodules/django-soil-src"
 echo "  rm -rf submodules/django-soil-src"
 echo "  vim .gitmodules  # remove 'submodules/django-soil-src' section"
 echo "- ensure its tests run along with the rest of commcarehq's tests, e.g."
-echo "  vim settings.py  # remove from APPS_TO_EXCLUDE_FROM_TESTS
+echo "  vim settings.py  # remove from APPS_TO_EXCLUDE_FROM_TESTS"
