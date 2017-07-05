@@ -394,9 +394,16 @@ class SQLLocation(MPTTModel):
     def delete(self, *args, **kwargs):
         from corehq.apps.commtrack.models import sync_supply_point
         from .document_store import publish_location_saved
+        to_delete = self.get_descendants(include_self=True)
+
+        for loc in to_delete:
+            loc._remove_users()
+            sync_supply_point(loc, is_deletion=True)
+
         super(SQLLocation, self).delete(*args, **kwargs)
-        sync_supply_point(self, is_deletion=True)
         publish_location_saved(self.domain, self.location_id, is_deletion=True)
+
+    full_delete = delete
 
     def to_json(self):
         return {
@@ -484,26 +491,6 @@ class SQLLocation(MPTTModel):
                 user = CommCareUser.get(loc.user_id)
                 user.active = True
                 user.save()
-
-    def full_delete(self):
-        """
-        Delete a location and its dependants.
-        This also unassigns users assigned to the location.
-        """
-        with transaction.atomic():
-            self.sql_full_delete()
-
-    def sql_full_delete(self):
-        """
-        SQL ONLY FULL DELETE
-        Delete this location and it's descendants.
-        """
-        to_delete = self.get_descendants(include_self=True)
-
-        for loc in to_delete:
-            loc._remove_users()
-
-        to_delete.delete()
 
     class Meta:
         app_label = 'locations'
