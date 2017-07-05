@@ -75,6 +75,7 @@ from corehq.util.supervisord.api import (
 )
 from corehq.util.timer import TimingContext
 from couchforms.models import XFormInstance
+from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.csv import UnicodeWriter
 from dimagi.utils.dates import add_months
@@ -505,6 +506,9 @@ class AdminRestoreView(TemplateView):
             xml_payload = etree.fromstring(string_payload)
             restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
             num_cases = len(xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case'))
+            num_locations = len(
+                xml_payload.findall("{{{0}}}fixture[@id='locations']/{{{0}}}locations/{{{0}}}location"
+                                    .format(RESPONSE_XMLNS)))
         else:
             if response.status_code in (401, 404):
                 # corehq.apps.ota.views.get_restore_response couldn't find user or user didn't have perms
@@ -526,6 +530,7 @@ class AdminRestoreView(TemplateView):
             'status_code': response.status_code,
             'timing_data': timing_context.to_list(),
             'num_cases': num_cases,
+            'num_locations': num_locations,
         })
         return context
 
