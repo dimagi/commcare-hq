@@ -42,7 +42,7 @@ var HQAsyncReport = function (o) {
         $filterRange.createDateRangePicker(
             report_labels, separator,
             $filterRange.data('startDate'),
-            $filterRange.data('endDate'),
+            $filterRange.data('endDate')
         );
         $filterRange.on('change apply', function(ev, picker) {
             var dates = $(this).val().split(separator);
