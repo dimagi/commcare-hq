@@ -987,6 +987,7 @@ class FormBase(DocumentSchema):
     def validate_form(self):
         vc = self.validation_cache
         if vc is None:
+            # todo: now that we don't use formtranslate, does this still apply?
             # formtranslate requires all attributes to be valid xpaths, but
             # vellum namespaced attributes aren't
             form = self.wrapped_xform()

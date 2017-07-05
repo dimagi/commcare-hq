@@ -1130,13 +1130,6 @@ LINKED_APPS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-FORMTRANSLATE_FORM_VALIDATION = StaticToggle(
-    'formtranslate_form_validation',
-    'Use formtranslate to validate XForms',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
 LOCATION_USERS = StaticToggle(
     'location_users',
     'Autogenerate users for each location',
