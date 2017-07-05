@@ -93,6 +93,7 @@ class FixtureGenerator(object):
         fixtures = self._get_fixtures(restore_user, fixture_id)
         for fixture in fixtures:
             if isinstance(fixture, basestring):
+                # could be a string if it's coming from cache
                 cached_fixtures = ElementTree.fromstring(
                     "<cached-fixture>{}</cached-fixture>".format(fixture)
                 )
