@@ -3256,25 +3256,3 @@ class PasswordResetView(View):
         couch_user = CouchUser.from_django_user(user)
         clear_login_attempts(couch_user)
         return response
-
-
-def exception_safe_password_reset(request, *args, **kwargs):
-    """
-    Django's password reset function raises SMTP errors if there's any
-    problem with the mailserver. Catch that more elegantly with a simple wrapper.
-    """
-    # Django docs on password reset are weak. See these links instead:
-    #
-    # http://streamhacker.com/2009/09/19/django-ia-auth-password-reset/
-    # http://www.rkblog.rk.edu.pl/w/p/password-reset-django-10/
-    # http://blog.montylounge.com/2009/jul/12/django-forgot-password/
-    try:
-        return password_reset(request, *args, **kwargs)
-    except SMTPException:
-        context = {
-            'current_page': {'page_name': _('Oops!')},
-            'error_msg': 'There was a problem with your request',
-            'error_details': sys.exc_info(),
-            'show_homepage_link': True,
-        }
-        return render_to_response('error.html', context)
