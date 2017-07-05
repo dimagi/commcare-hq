@@ -369,22 +369,29 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def new_form(request, domain, app_id, module_id):
-    "Adds a form to an app (under a module)"
+def new_form(request, domain, app_id, module_unique_id):
+    """
+    Adds a form to an app (under a module)
+    """
     app = get_app(domain, app_id)
+
+    try:
+        module = app.get_module_by_unique_id(module_unique_id)
+    except ModuleNotFoundException:
+        raise HttpResponseBadRequest
+
     lang = request.COOKIES.get('lang', app.langs[0])
     form_type = request.POST.get('form_type', 'form')
     case_action = request.POST.get('case_action', 'none')
     name = _("Register") if case_action == 'open' else (_("Followup") if case_action == 'update' else "Survey")
+
     if form_type == "shadow":
-        app = get_app(domain, app_id)
-        module = app.get_module(module_id)
         if module.module_type == "advanced":
             form = module.new_shadow_form(name, lang)
         else:
             raise Exception("Shadow forms may only be created under shadow modules")
     else:
-        form = app.new_form(module_id, name, lang)
+        form = module.new_form(name, lang)
 
     if form_type != "shadow":
         if case_action == 'update':
@@ -392,15 +399,18 @@ def new_form(request, domain, app_id, module_id):
             form.actions.update_case = UpdateCaseAction(
                 condition=FormActionCondition(type='always'))
         elif case_action == 'open':
-            form.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
-            form.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
+            form.actions.open_case = OpenCaseAction(
+                condition=FormActionCondition(type='always'))
+            form.actions.update_case = UpdateCaseAction(
+                condition=FormActionCondition(type='always'))
 
     app.save()
-    # add form_id to locals()
-    form_id = form.id
-    response = back_to_main(request, domain, app_id=app_id, module_id=module_id,
-                            form_id=form_id)
-    return response
+    return back_to_main(
+        request, domain,
+        app_id=app.id,
+        module_unique_id=module.unique_id,
+        form_unique_id=form.unique_id
+    )
 
 
 @no_conflict_require_POST
