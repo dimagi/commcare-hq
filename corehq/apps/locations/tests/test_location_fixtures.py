@@ -30,7 +30,7 @@ from .util import (
 from ..fixtures import _location_to_fixture, LocationSet, should_sync_locations, location_fixture_generator, \
     flat_location_fixture_generator, should_sync_flat_fixture, should_sync_hierarchical_fixture, \
     _get_location_data_fields
-from ..models import SQLLocation, LocationType, Location, LocationFixtureConfiguration
+from ..models import SQLLocation, LocationType, make_location, LocationFixtureConfiguration
 
 
 class FixtureHasLocationsMixin(TestXmlMixin):
@@ -237,7 +237,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
 
     def test_include_without_expanding_same_level(self):
         # I want a list of all the counties, but only the cities in my county
-        self.user._couch_user.set_location(self.locations['Boston'].couch_location)
+        self.user._couch_user.set_location(self.locations['Boston'])
         location_type = self.locations['Boston'].location_type
 
         # Get all the counties
@@ -252,7 +252,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
 
     def test_include_without_expanding_lower_level(self):
         # I want all all the cities, but am at the state level
-        self.user._couch_user.set_location(self.locations['Massachusetts'].couch_location)
+        self.user._couch_user.set_location(self.locations['Massachusetts'])
         location_type = self.locations['Massachusetts'].location_type
 
         # Get all the cities
@@ -348,7 +348,7 @@ class ForkedHierarchiesTest(TestCase, FixtureHasLocationsMixin):
         delete_all_users()
 
     def test_include_without_expanding_includes_all_ancestors(self):
-        self.user._couch_user.set_location(self.locations['DTO'].couch_location)
+        self.user._couch_user.set_location(self.locations['DTO'])
         location_type = self.locations['DTO'].location_type
 
         location_type.include_without_expanding = self.locations['DTO'].location_type
@@ -618,39 +618,37 @@ class ShouldSyncLocationFixturesTest(TestCase):
 
         SQLLocation.objects.filter(pk=location.pk).update(last_modified=day_before_yesterday)
         location = SQLLocation.objects.last()
-        location_db = LocationSet([location])
+        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
 
         self.assertFalse(
-            should_sync_locations(SyncLog(date=yesterday), location_db, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=yesterday), locations_queryset, self.user.to_ota_restore_user())
         )
 
         self.location_type.shares_cases = True
         self.location_type.save()
 
         location = SQLLocation.objects.last()
-        location_db = LocationSet([location])
+        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
 
         self.assertTrue(
-            should_sync_locations(SyncLog(date=yesterday), location_db, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=yesterday), locations_queryset, self.user.to_ota_restore_user())
         )
 
     def test_archiving_location_should_resync(self):
         """
         When locations are archived, we should resync them
         """
-        couch_location = Location(
+        location = make_location(
             domain=self.domain,
             name='winterfell',
             location_type=self.location_type.name,
         )
-        couch_location.save()
+        location.save()
         after_save = datetime.utcnow()
-        location = SQLLocation.objects.last()
-        self.assertEqual(couch_location.location_id, location.location_id)
         self.assertEqual('winterfell', location.name)
-        location_db = LocationSet([location])
+        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
         self.assertFalse(
-            should_sync_locations(SyncLog(date=after_save), location_db, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
         )
 
         # archive the location
@@ -658,12 +656,12 @@ class ShouldSyncLocationFixturesTest(TestCase):
         after_archive = datetime.utcnow()
 
         location = SQLLocation.objects.last()
-        location_db = LocationSet([location])
+        locations_queryset = SQLLocation.objects.filter(pk=location.pk)
         self.assertTrue(
-            should_sync_locations(SyncLog(date=after_save), location_db, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=after_save), locations_queryset, self.user.to_ota_restore_user())
         )
         self.assertFalse(
-            should_sync_locations(SyncLog(date=after_archive), location_db, self.user.to_ota_restore_user())
+            should_sync_locations(SyncLog(date=after_archive), locations_queryset, self.user.to_ota_restore_user())
         )
 
 

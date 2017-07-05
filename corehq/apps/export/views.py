@@ -4,15 +4,17 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import SuspiciousOperation
+from django.db.models import Sum
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
+from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, StreamingHttpResponse
 from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
+from corehq.blobs.exceptions import NotFound
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
-from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification
+from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile
 from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
@@ -75,6 +77,8 @@ from corehq.apps.export.const import (
     FORM_EXPORT,
     CASE_EXPORT,
     MAX_EXPORTABLE_ROWS,
+    MAX_DATA_FILE_SIZE,
+    MAX_DATA_FILE_SIZE_TOTAL,
 )
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
@@ -114,7 +118,7 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_date
-from dimagi.utils.web import json_response
+from dimagi.utils.web import json_response, get_url_base
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from soil import DownloadBase
@@ -536,8 +540,9 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
 
     @property
     @memoized
-    def default_datespan(self):
-        return datespan_from_beginning(self.domain_object, self.timezone)
+    def has_submisions(self):
+        from couchforms.analytics import get_first_form_submission_received
+        return get_first_form_submission_received(self.domain) is not None
 
     @property
     def page_context(self):
@@ -551,22 +556,11 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
             'check_for_multimedia': self.check_for_multimedia,
             'is_sms_export': self.sms_export,
         }
-        if (
-            self.default_datespan.startdate is not None
-            and self.default_datespan.enddate is not None
-        ):
+        context.update({
+            'default_date_range': _('Export All Data'),
+        })
+        if not self.has_submisions:
             context.update({
-                'default_date_range': '{startdate}{separator}{enddate}'.format(
-                    startdate=self.default_datespan.startdate.strftime('%Y-%m-%d'),
-                    enddate=self.default_datespan.enddate.strftime('%Y-%m-%d'),
-                    separator=DateRangePickerWidget.separator,
-                ),
-            })
-        else:
-            context.update({
-                'default_date_range': _(
-                    "You have no submissions in this project."
-                ),
                 'show_no_submissions_warning': True,
             })
 
@@ -1520,6 +1514,76 @@ class DashboardFeedListView(DailySavedExportListView):
             combined_exports.extend(_get_case_exports_by_domain(self.domain, self.has_deid_view_permissions))
         combined_exports = sorted(combined_exports, key=lambda x: x.name)
         return filter(lambda x: x.is_daily_saved_export and x.export_format == "html", combined_exports)
+
+
+@location_safe
+class DataFileDownloadList(BaseProjectDataView):
+    urlname = 'download_data_files'
+    template_name = 'export/download_data_files.html'
+    page_title = ugettext_lazy("Download Data Files")
+
+    def get_context_data(self, **kwargs):
+        context = super(DataFileDownloadList, self).get_context_data(**kwargs)
+        context.update({
+            'data_files': DataFile.objects.filter(domain=self.domain).order_by('filename').all(),
+            'is_admin': self.request.couch_user.is_domain_admin(self.domain),
+            'url_base': get_url_base(),
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if request.FILES['file'].size > MAX_DATA_FILE_SIZE:
+            messages.warning(
+                request,
+                _('The data file exceeds the maximum size of {} MB.').format(MAX_DATA_FILE_SIZE / (1024 * 1024))
+            )
+            return self.get(request, *args, **kwargs)
+
+        aggregate = DataFile.objects.filter(domain=self.domain).aggregate(total_size=Sum('content_length'))
+        if (
+            aggregate['total_size'] and
+            aggregate['total_size'] + request.FILES['file'].size > MAX_DATA_FILE_SIZE_TOTAL
+        ):
+            messages.warning(
+                request,
+                _('Uploading this data file would exceed the total allowance of {} GB for this project space. '
+                  'Please remove some files in order to upload new files.').format(
+                    MAX_DATA_FILE_SIZE_TOTAL / (1024 * 1024 * 1024))
+            )
+            return self.get(request, *args, **kwargs)
+
+        data_file = DataFile()
+        data_file.domain = self.domain
+        data_file.filename = request.FILES['file'].name
+        data_file.description = request.POST['description']
+        data_file.content_type = request.FILES['file'].content_type
+        data_file.content_length = request.FILES['file'].size
+        data_file.save_blob(request.FILES['file'])
+        messages.success(request, _(u'Data file "{}" uploaded'.format(data_file.description)))
+        return HttpResponseRedirect(reverse(self.urlname, kwargs={'domain': self.domain}))
+
+
+class DataFileDownloadDetail(BaseProjectDataView):
+    urlname = 'download_data_file'
+
+    def get(self, request, *args, **kwargs):
+        try:
+            data_file = DataFile.objects.filter(domain=self.domain).get(pk=kwargs['pk'])
+            blob = data_file.get_blob()
+            response = StreamingHttpResponse(blob, content_type=data_file.content_type)
+        except (DataFile.DoesNotExist, NotFound):
+            raise Http404
+        response['Content-Disposition'] = 'attachment; filename="' + data_file.filename + '"'
+        response['Content-Length'] = data_file.content_length
+        return response
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            data_file = DataFile.objects.filter(domain=self.domain).get(pk=kwargs['pk'])
+        except DataFile.DoesNotExist:
+            raise Http404
+        data_file.delete()
+        return HttpResponse(status=204)
 
 
 class DailySavedExportPaywall(BaseProjectDataView):

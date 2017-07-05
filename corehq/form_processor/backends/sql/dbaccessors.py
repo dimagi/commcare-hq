@@ -641,11 +641,17 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             raise CaseNotFound
 
     @staticmethod
-    def get_cases(case_ids, ordered=False):
+    def get_cases(case_ids, ordered=False, prefetched_indices=None):
         assert isinstance(case_ids, list)
         cases = RawQuerySetWrapper(CommCareCaseSQL.objects.raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
+
         if ordered:
             cases = _order_list(case_ids, cases, 'case_id')
+
+        if prefetched_indices:
+            cases_by_id = {case.case_id: case for case in cases}
+            _attach_prefetch_models(
+                cases_by_id, prefetched_indices, 'case_id', 'cached_indices')
 
         return cases
 
@@ -885,6 +891,24 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             )
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
+
+    @staticmethod
+    def filter_open_case_ids(accessor, case_ids):
+        assert isinstance(case_ids, list), case_ids
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT case_id FROM filter_open_case_ids(%s, %s)',
+                [accessor.domain, case_ids]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
+
+    @staticmethod
+    def get_related_indices(domain, case_ids, exclude_ids):
+        assert isinstance(case_ids, list), case_ids
+        return RawQuerySetWrapper(CommCareCaseIndexSQL.objects.raw(
+            'SELECT * FROM get_related_indices(%s, %s, %s)',
+            [domain, case_ids, list(exclude_ids)]))
 
     @staticmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):

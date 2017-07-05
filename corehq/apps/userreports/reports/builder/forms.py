@@ -86,16 +86,15 @@ class Select2(Widget):
         self.choices = list(choices)
 
     def render(self, name, value, attrs=None, choices=()):
-        value = '' if value is None else value
+        self.value = '' if value is None else value
         final_attrs = self.build_attrs(attrs, name=name)
 
         return format_html(
-            '<input{0} type="text" data-bind="select2: {1}, {2}">',
-            flatatt(final_attrs),
-            json.dumps(self._choices_for_binding(choices)),
-            'value: {}'.format(
-                self.ko_value
-            ) if self.ko_value else ""
+            '<input{final_attrs} type="text" value="{value}" data-bind="select2: {choices}, {ko_binding}">',
+            final_attrs=flatatt(final_attrs),
+            value=self.value,
+            choices=json.dumps(self._choices_for_binding(choices)),
+            ko_binding="value: {}".format(self.ko_value) if self.ko_value else "",
         )
 
     def _choices_for_binding(self, choices):
@@ -108,25 +107,27 @@ class QuestionSelect(Widget):
     Requires knockout to be included on the page.
     """
 
-    def __init__(self, attrs=None, choices=()):
+    def __init__(self, attrs=None, choices=(), ko_value=None):
+        self.ko_value = ko_value
         super(QuestionSelect, self).__init__(attrs)
         self.choices = list(choices)
 
     def render(self, name, value, attrs=None, choices=()):
-        value = '' if value is None else value
+        self.value = '' if value is None else value
         final_attrs = self.build_attrs(attrs, name=name)
 
         return format_html(
             """
-            <input{0} data-bind='
-               questionsSelect: {1},
-               value: "{2}",
-               optionsCaption: " "
+            <input{final_attrs} value="{value}" data-bind='
+               questionsSelect: {choices},
+               optionsCaption: " ",
+               {ko_binding}
             '/>
             """,
-            flatatt(final_attrs),
-            mark_safe(self.render_options(choices)),
-            value
+            final_attrs=flatatt(final_attrs),
+            value=self.value,
+            choices=mark_safe(self.render_options(choices)),
+            ko_binding='value: {}'.format(self.ko_value),
         )
 
     def render_options(self, choices):
@@ -189,7 +190,8 @@ class DataSourceBuilder(object):
             self.source_xform = XForm(self.source_form.source)
         if self.source_type == 'case':
             prop_map = get_case_properties(
-                self.app, [self.source_id], defaults=DEFAULT_CASE_PROPERTY_DATATYPES.keys()
+                self.app, [self.source_id], defaults=DEFAULT_CASE_PROPERTY_DATATYPES.keys(),
+                include_parent_properties=False
             )
             self.case_properties = sorted(set(prop_map[self.source_id]) | {'closed'})
 
@@ -1076,7 +1078,10 @@ class ConfigureBarChartReportForm(ConfigureNewReportBase):
             report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
         )
         if self.source_type == "form":
-            self.fields['group_by'].widget = QuestionSelect(attrs={'class': 'input-large'})
+            self.fields['group_by'].widget = QuestionSelect(
+                attrs={'class': 'input-large'},
+                ko_value='groupBy'
+            )
         else:
             self.fields['group_by'].widget = Select2(
                 attrs={'class': 'input-large'},
@@ -1487,7 +1492,10 @@ class ConfigureMapReportForm(ConfigureListReportForm):
             report_name, app_id, source_type, report_source_id, existing_report, *args, **kwargs
         )
         if self.source_type == "form":
-            self.fields['location'].widget = QuestionSelect(attrs={'class': 'input-large'})
+            self.fields['location'].widget = QuestionSelect(
+                attrs={'class': 'input-large'},
+                ko_value='groupBy'
+            )
         else:
             self.fields['location'].widget = Select2(
                 attrs={'class': 'input-large'},

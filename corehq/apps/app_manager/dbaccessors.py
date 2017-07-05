@@ -183,6 +183,15 @@ def get_app_ids_in_domain(domain):
     )]
 
 
+def get_apps_by_id(domain, app_ids):
+    from .models import Application
+    from corehq.apps.app_manager.util import get_correct_app_class
+    if isinstance(app_ids, basestring):
+        app_ids = [app_ids]
+    docs = iter_docs(Application.get_db(), app_ids)
+    return [get_correct_app_class(doc).wrap(doc) for doc in docs]
+
+
 def get_built_app_ids(domain):
     """
     Returns the app ids of all apps in the domain that have at least one build.
@@ -360,7 +369,7 @@ def get_case_types_from_apps(domain):
          .is_build(False)
          .size(0)
          .terms_aggregation('modules.case_type.exact', 'case_types'))
-    return set(q.run().aggregations.case_types.keys)
+    return set(q.run().aggregations.case_types.keys) - {''}
 
 
 def get_case_sharing_apps_in_domain(domain, exclude_app_id=None):

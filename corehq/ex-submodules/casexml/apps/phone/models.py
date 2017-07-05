@@ -90,6 +90,9 @@ class OTARestoreUser(object):
         "User's primary SQLLocation"
         return self._couch_user.get_sql_location(self.domain)
 
+    def get_role(self, domain):
+        return self._couch_user.get_role(domain)
+
     def get_sql_locations(self, domain):
         return self._couch_user.get_sql_locations(domain)
 
@@ -122,8 +125,8 @@ class OTARestoreUser(object):
 
     @memoized
     def get_locations_to_sync(self):
-        from corehq.apps.locations.fixtures import get_all_locations_to_sync
-        return get_all_locations_to_sync(self)
+        from corehq.apps.locations.fixtures import get_location_fixture_queryset
+        return get_location_fixture_queryset(self)
 
 
 class OTARestoreWebUser(OTARestoreUser):
@@ -638,27 +641,21 @@ class IndexTree(DocumentSchema):
         Traverse each incoming index, return each touched case.
         Traverse each outgoing index in the extension tree, return each touched case
         """
-        def _recursive_call(case_id, all_cases):
-            all_cases.add(case_id)
-            incoming_extension_indices = extension_index_tree.get_cases_that_directly_depend_on_case(case_id)
-            all_incoming_indices = itertools.chain(
-                child_index_tree.get_cases_that_directly_depend_on_case(case_id),
-                incoming_extension_indices,
-            )
-
-            for dependent_case in all_incoming_indices:
-                # incoming indices
-                if dependent_case not in all_cases:
-                    all_cases.add(dependent_case)
-                    _recursive_call(dependent_case, all_cases)
-            for indexed_case in extension_index_tree.indices.get(case_id, {}).values():
-                # outgoing extension indices
-                if indexed_case not in all_cases:
-                    all_cases.add(indexed_case)
-                    _recursive_call(indexed_case, all_cases)
-
         all_cases = set()
-        _recursive_call(case_id, all_cases)
+        cases_to_check = set([case_id])
+        while cases_to_check:
+            case_to_check = cases_to_check.pop()
+            all_cases.add(case_to_check)
+            incoming_extension_indices = extension_index_tree.get_cases_that_directly_depend_on_case(
+                case_to_check
+            )
+            incoming_child_indices = child_index_tree.get_cases_that_directly_depend_on_case(case_to_check)
+            all_incoming_indices = incoming_extension_indices | incoming_child_indices
+            new_outgoing_cases_to_check = set(extension_index_tree.indices.get(case_to_check, {}).values())
+            new_cases_to_check = (new_outgoing_cases_to_check | all_incoming_indices) - all_cases
+
+            cases_to_check |= new_cases_to_check
+
         return all_cases
 
     @staticmethod
@@ -693,8 +690,9 @@ class IndexTree(DocumentSchema):
                 all_cases.add(incoming_case)
         return all_cases
 
+    @memoized
     def get_cases_that_directly_depend_on_case(self, case_id):
-        return self.reverse_indices.get(case_id, [])
+        return self.reverse_indices.get(case_id, set([]))
 
     def delete_index(self, from_case_id, index_name):
         prior_ids = self.indices.pop(from_case_id, {})
