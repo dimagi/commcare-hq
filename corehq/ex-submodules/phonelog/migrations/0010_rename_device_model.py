@@ -12,12 +12,12 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AlterModelTable(
+            name='devicereportentry',
+            table='phonelog_devicereportentry',
+        ),
         migrations.RenameModel(
             old_name='DeviceReportEntry',
             new_name='OldDeviceReportEntry',
-        ),
-        migrations.AlterModelTable(
-            name='olddevicereportentry',
-            table='phonelog_devicereportentry',
         ),
     ]
