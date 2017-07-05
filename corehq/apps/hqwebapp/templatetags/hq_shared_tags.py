@@ -627,9 +627,7 @@ def registerurl(parser, token):
 
 @register.simple_tag
 def html_attr(value):
-    if isinstance(value, basestring):
-        value = json.dumps(value)[1:-1]
-    else:
+    if not isinstance(value, basestring):
         value = JSON(value)
     return escape(value)
 
@@ -645,12 +643,8 @@ def initial_page_data(parser, token):
 
         def render(self, context):
             resolved = value.resolve(context)
-            if isinstance(resolved, basestring):
-                resolved = json.dumps(resolved)[1:-1]
-            else:
-                resolved = JSON(resolved)
             return ("<div data-name=\"{}\" data-value=\"{}\"></div>"
-                    .format(name, escape(resolved)))
+                    .format(name, html_attr(resolved)))
 
     nodelist = NodeList([FakeNode()])
 
