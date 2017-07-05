@@ -24,6 +24,13 @@ class ENikshayLocationHierarchyFilterValue(FilterValue):
         """
         relevant_location_types = ["sto", "cto", "dto", "tu", "phi"]
         location = SQLLocation.objects.get(location_id=location_id)
+
+        if location.location_type.name not in relevant_location_types:
+            # This report could be filtered by a user who is not assigned to one of the pertinent location types.
+            # In that case, the report should show nothing, so return a filter that is guaranteed not to match
+            # any records.
+            return [_LocationFilter("phi", "{}_phi".format(self.filter.slug), location_id)]
+
         filters = []
         for ancestor in location.get_ancestors(include_self=True):
             if ancestor.location_type.name in relevant_location_types:

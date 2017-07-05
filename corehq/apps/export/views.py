@@ -1559,7 +1559,7 @@ class DataFileDownloadList(BaseProjectDataView):
         data_file.content_type = request.FILES['file'].content_type
         data_file.content_length = request.FILES['file'].size
         data_file.save_blob(request.FILES['file'])
-        messages.success(request, _('Data file "{}" uploaded'.format(data_file.description)))
+        messages.success(request, _(u'Data file "{}" uploaded'.format(data_file.description)))
         return HttpResponseRedirect(reverse(self.urlname, kwargs={'domain': self.domain}))
 
 

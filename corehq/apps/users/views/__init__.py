@@ -38,6 +38,7 @@ from corehq.apps.analytics.tasks import (
     track_existing_user_accepted_invite_on_hubspot,
 )
 from corehq.apps.analytics.utils import get_meta
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import BaseDomainView
@@ -510,6 +511,7 @@ class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
             'can_edit_roles': self.can_edit_roles,
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
+            'web_apps_list': get_cloudcare_apps(self.domain),
             'invitations': self.invitations,
             'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
             'admins': WebUser.get_admins_by_domain(self.domain),
