@@ -6,6 +6,10 @@
 {% block head %}{{ block.super }}
     {% include 'analytics/fullstory.html' %}
 {% endblock %}
+
+
+{% block title %}{{ module.name|clean_trans:langs }} - {% trans 'Module Settings' %}{% endblock %}
+
 {% block stylesheets %}{{ block.super }}
     <style>
         /* Prevent help icons from disturbing horizontal alignment of table headers */
