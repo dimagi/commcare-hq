@@ -197,13 +197,8 @@ def _run_fixture_upload(domain, workbook, replace=False, task=None):
 
 
 def clear_fixture_blob(domain, data_types):
-    """Clear global fixture cache for the domain f any of the data_types uploaded
-    are global
-
-    """
-    if any([data_type.is_global for data_type in data_types]):
-        db = get_blob_db()
-        db.delete(domain, FIXTURE_BUCKET)
+    db = get_blob_db()
+    db.delete(domain, FIXTURE_BUCKET)
 
 
 def clear_fixture_quickcache(data_types):
