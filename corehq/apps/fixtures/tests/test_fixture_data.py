@@ -115,9 +115,8 @@ class FixtureDataTest(TestCase):
         self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, wrap=False))
         self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
 
-        fixtures = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
+        fixture, = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
 
-        self.assertEqual(1, len(fixtures))
         check_xml_line_by_line(self, """
         <fixture id="item-list:district" user_id="%s">
             <district_list>
@@ -129,7 +128,7 @@ class FixtureDataTest(TestCase):
                 </district>
             </district_list>
         </fixture>
-        """ % self.user.user_id, fixtures[0])
+        """ % self.user.user_id, ElementTree.tostring(fixture))
 
         self.data_item.remove_user(self.user)
         self.assertItemsEqual([], self.data_item.get_all_users())
@@ -154,7 +153,7 @@ class FixtureDataTest(TestCase):
                 <district_list />
             </fixture>
             """.format(self.user.user_id),
-            fixtures[0]
+            ElementTree.tostring(fixtures[0])
         )
 
         self.fixture_ownership = self.data_item.add_user(self.user)
@@ -204,7 +203,7 @@ class FixtureDataTest(TestCase):
                 {}
                 {}
             </fixtures>
-            """.format(*fixtures)
+            """.format(*[ElementTree.tostring(fixture) for fixture in fixtures])
         )
 
     def test_empty_data_types(self):
@@ -245,5 +244,5 @@ class FixtureDataTest(TestCase):
             </fixture>
             </f>
             """.format(self.user.user_id),
-            '<f>{}\n{}\n</f>'.format(*fixtures)
+            '<f>{}\n{}\n</f>'.format(*[ElementTree.tostring(fixture) for fixture in fixtures])
         )
