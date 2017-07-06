@@ -115,6 +115,35 @@ class Beneficiary_Jun30(models.Model):
     physicalCaseId = models.CharField(max_length=18, null=True)
 
     @property
+    @memoized
+    def _episode(self):
+        episodes = Episode_Jun30.objects.filter(beneficiaryID=self.caseId).order_by('-episodeDisplayID')
+        if episodes:
+            return episodes[0]
+        else:
+            return None
+
+    @property
+    @memoized
+    def _agency(self):
+        return (
+            self._episode.treating_provider or self.referred_provider
+            if self._episode else self.referred_provider
+        )
+
+    @property
+    def _prescription_count(self):
+        return EpisodePrescription_Jun30.objects.filter(beneficiaryId=self.caseId).count()
+
+    @property
+    def _adherence_count(self):
+        return (
+            Adherence_Jun30.objects.filter(episodeId=self._episode.episodeID).count()
+            if self._episode
+            else 0
+        )
+
+    @property
     def age_entered(self):
         return self.age
 
