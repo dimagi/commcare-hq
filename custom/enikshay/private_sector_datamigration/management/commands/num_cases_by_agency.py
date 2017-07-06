@@ -40,6 +40,8 @@ class Command(BaseCommand):
         agency_to_episode_count = {}
         agency_to_prescription_count = {}
         agency_to_adherence_count = {}
+        agency_to_adherence_open_count = {}
+        agency_to_adherence_closed_count = {}
 
         for i, beneficiary in enumerate(get_beneficiaries(
             0, None, None, owner_state_id, owner_district_id,
@@ -53,6 +55,10 @@ class Command(BaseCommand):
                 agency_to_episode_count[agency_id] = agency_to_episode_count.get(agency_id, 0) + 1
                 agency_to_prescription_count[agency_id] = agency_to_prescription_count.get(agency_id, 0) + beneficiary._prescription_count
                 agency_to_adherence_count[agency_id] = agency_to_adherence_count.get(agency_id, 0) + beneficiary._adherence_count
+                agency_to_adherence_open_count[agency_id] = agency_to_adherence_open_count.get(agency_id, 0) + beneficiary._adherence_count_open
+                agency_to_adherence_closed_count[agency_id] = agency_to_adherence_closed_count.get(agency_id, 0) + beneficiary._adherence_count_closed
+
+                assert beneficiary._adherence_count == (beneficiary._adherence_count_open + beneficiary._adherence_count_closed)
 
             print 'done %d' % i
 
@@ -66,16 +72,25 @@ class Command(BaseCommand):
                 'episode case count',
                 'prescription case count',
                 'adherence case count',
+                'open adherence count',
+                'closed adherence count',
                 'total case count',
             ])
 
             for agency_id in agency_to_beneficiary_count:
+
+                assert agency_to_adherence_count[agency_id] == (
+                    agency_to_adherence_open_count[agency_id] + agency_to_adherence_closed_count[agency_id]
+                )
+
                 case_counts = [
                     agency_to_beneficiary_count[agency_id],
                     agency_to_occurrence_count[agency_id],
                     agency_to_episode_count[agency_id],
                     agency_to_prescription_count[agency_id],
                     agency_to_adherence_count[agency_id],
+                    agency_to_adherence_open_count[agency_id],
+                    agency_to_adherence_closed_count[agency_id],
                 ]
                 csvwriter.writerow(map(
                     str,

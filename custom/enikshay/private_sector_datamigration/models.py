@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.db import models
 
 from dimagi.utils.decorators.memoized import memoized
@@ -136,9 +138,32 @@ class Beneficiary_Jun30(models.Model):
         return EpisodePrescription_Jun30.objects.filter(beneficiaryId=self.caseId).count()
 
     @property
+    @memoized
     def _adherence_count(self):
         return (
             Adherence_Jun30.objects.filter(episodeId=self._episode.episodeID).count()
+            if self._episode
+            else 0
+        )
+
+    @property
+    @memoized
+    def _adherence_count_open(self):
+        return (
+            Adherence_Jun30.objects.filter(episodeId=self._episode.episodeID).filter(
+                doseDate__lte=date.today(),
+            ).count()
+            if self._episode
+            else 0
+        )
+
+    @property
+    @memoized
+    def _adherence_count_closed(self):
+        return (
+            Adherence_Jun30.objects.filter(episodeId=self._episode.episodeID).filter(
+                doseDate__gt=date.today(),
+            ).count()
             if self._episode
             else 0
         )
