@@ -17,5 +17,4 @@ class Migration(migrations.Migration):
 
     operations = [
          migrator.get_migration('get_related_indices.sql'),
-         migrator.get_migration('filter_open_case_ids.sql'),
     ]

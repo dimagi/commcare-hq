@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
-from corehq.sql_db.operations import RawSQLMigration
+from corehq.sql_db.operations import HqRunSQL, RawSQLMigration
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {})
 
@@ -18,5 +18,8 @@ class Migration(migrations.Migration):
     operations = [
         migrator.get_migration('get_modified_case_ids.sql'),
         migrator.get_migration('get_closed_and_deleted_ids.sql'),
-        migrator.get_migration('filter_open_case_ids.sql'),
+        HqRunSQL(
+            'DROP FUNCTION IF EXISTS filter_open_case_ids(TEXT, TEXT[])',
+            'SELECT 1'
+        ),
     ]
