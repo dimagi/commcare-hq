@@ -107,29 +107,28 @@ $(function () {
 
     // Registration in case list
     if ($('#case-list-form').length) {
-        var CaseListForm = function (data, formOptions, allowed) {
+        var CaseListForm = function (originalFormId, formOptions) {
             var self = this;
-            self.allowed = allowed;
-            self.caseListForm = ko.observable(data.form_id ? data.form_id : null);
-            self.caseListForm.subscribe(function(form_id) {
-                if (self.formMissing() || !form_id) {
-                    $('#case_list_form-label').hide();
-                    $('#case_list_media').hide();
-                } else {
-                    $('#case_list_form-label').show();
-                    $('#case_list_media').show();
-                }
-            });
+
+            self.caseListForm = ko.observable(originalFormId);
             self.formMissing = ko.computed(function() {
                 return self.caseListForm() && !formOptions[self.caseListForm()];
             });
+
+            // Show or hide associated multimedia. Not done in knockout because
+            // the multimedia section has its own separate set of knockout bindings
+            self.caseListForm.subscribe(function(form_id) {
+                if (form_id) {
+                    $("#case_list_media").show();
+                } else {
+                    $("#case_list_media").hide();
+                }
+            });
         };
-        var case_list_form_options = initial_page_data('case_list_form_options'),
-            case_list_form_not_allowed_reason = initial_page_data('case_list_form_not_allowed_reason'),
+        var case_list_form_options = initial_page_data('case_list_form_options');
             caseListForm = new CaseListForm(
-                case_list_form_options ? case_list_form_options.form : {},
-                case_list_form_options ? case_list_form_options.options : [],
-                case_list_form_not_allowed_reason ? case_list_form_not_allowed_reason.allow : "",
+                case_list_form_options ? case_list_form_options.form.form_id : null,
+                case_list_form_options ? case_list_form_options.options : []
             );
         $('#case-list-form').koApplyBindings(caseListForm);
 
