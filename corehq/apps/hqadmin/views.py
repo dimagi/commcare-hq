@@ -523,6 +523,7 @@ class AdminRestoreView(TemplateView):
                 xml_payload = E.error(message)
             restore_id_element = None
             num_cases = 0
+            num_locations = 0
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         context.update({
             'payload': formatted_payload,
