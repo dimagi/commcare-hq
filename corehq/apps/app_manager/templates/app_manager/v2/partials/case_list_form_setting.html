@@ -13,11 +13,15 @@
                     data-content="{% blocktrans %}Minimize duplicate registrations by including a registration form in the application's list of cases. Read more on the <a href='https://help.commcarehq.org/display/commcarepublic/Minimize+Duplicates'>Help Site</a>.{% endblocktrans %}"
               ></span>
           </label>
-          <div class="col-sm-4" data-bind="visible: caseListForm() || allowed, css: { 'alert alert-danger': formMissing() || !allowed}">
-              <select class="form-control" data-bind="
-                  optstr: caseListFormOptstr,
-                  value: caseListFormProxy
-                  "></select>
+          <div class="col-sm-4" data-bind="visible: caseListForm() || allowed, css: { 'has-error': formMissing() || !allowed}">
+              <select class="form-control" data-bind="value: caseListForm">
+                {% if case_list_form_options.form.form_id not in case_list_form_options.options.keys %}
+                    <option value="{{ case_list_form_options.form.form_id }}" selected>{% trans "Unknown Form (missing)" %}</option>
+                {% endif %}
+                {% for id, name in case_list_form_options.options.items %}
+                    <option value="{{ id }}">{{ name }}</option>
+                {% endfor %}
+              </select>
               <input type="hidden" name="case_list_form_id" data-bind="value: caseListForm" />
               <div data-bind="visible: formMissing()" class="help-block">
                   {% trans "Error! The selected form does not exist." %}

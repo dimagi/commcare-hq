@@ -110,24 +110,13 @@ $(function () {
         var CaseListForm = function (data, formOptions, allowed) {
             var self = this,
                 initialOption = data.form_id ? data.form_id : 'disabled',
-                formSet = !!data.form_id,
-                formMissing = formSet && !formOptions[data.form_id];
-
-            self.buildOptstr = function(extra) {
-                self.caseListFormOptstr = _.map(formOptions, function (label, value) {
-                    return {value: value, label: label};
-                });
-                if (extra) {
-                    self.caseListFormOptstr.push({value: extra, label: gettext("Unknown Form (missing)")});
-                }
-            };
+                formSet = !!data.form_id;
 
             self.allowed = allowed;
-            self.formMissing = ko.observable(formMissing);
             self.caseListForm = ko.observable(data.form_id ? data.form_id : null);
-            self.caseListFormDisplay = formOptions[initialOption];
-
-            self.buildOptstr(formMissing ? data.form_id : false);
+            self.formMissing = ko.computed(function() {
+                return !formOptions[self.caseListForm()];
+            });
         };
         var case_list_form_options = initial_page_data('case_list_form_options'),
             case_list_form_not_allowed_reason = initial_page_data('case_list_form_not_allowed_reason'),
