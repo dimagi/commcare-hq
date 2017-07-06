@@ -30,14 +30,15 @@ class Command(BaseCommand):
         with open(log_file, "w") as fh:
             fh.write('--------Successful Form Ids----------')
             for cases in chunked(with_progress_bar(self._get_cases_to_process(domain), total_cases), 100):
-                related_cases = [(case.case_id, {}, True)  for case in case_accessor.get_all_reverse_indices_info(cases)
-                                 if case.relationship == CommCareCaseIndexSQL.CHILD]
+                related_cases = {case.case_id for case in case_accessor.get_all_reverse_indices_info(cases)
+                                 if case.relationship == CommCareCaseIndexSQL.CHILD}
+                case_tupes = [(case_id, {}, True) for case_id in related_cases]
                 try:
-                    xform, cases = bulk_update_cases(domain, related_cases)
+                    xform, cases = bulk_update_cases(domain, case_tupes)
                     fh.write(xform.form_id)
                 except LocalSubmissionError as e:
                     print(unicode(e))
-                    failed_updates.extend(case[0] for case in related_cases)
+                    failed_updates.extend(related_cases)
             fh.write('--------Failed Cases--------------')
             for case_id in failed_updates:
                 fh.write(case_id)
