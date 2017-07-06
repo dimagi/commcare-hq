@@ -60,6 +60,7 @@ class Command(BaseCommand):
             return 'unknown'
 
         self.location_id_to_state_code[location.location_id] = state.site_code
+        self.state_code_to_name[state.site_code] = state.name
         return state.site_code
 
     def get_indicator_slug(self, sms):
@@ -72,6 +73,7 @@ class Command(BaseCommand):
         self.recipient_id_to_location_id = {}
         self.location_id_to_location = {}
         self.location_id_to_state_code = {}
+        self.state_code_to_name = {'unknown': 'Unknown'}
 
         data = {}
 
@@ -96,7 +98,7 @@ class Command(BaseCommand):
 
         with open('icds-sms-usage.csv', 'wb') as f:
             writer = csv.writer(f)
-            writer.writerow(['State Code', 'Indicator', 'SMS Count'])
+            writer.writerow(['State Code', 'State Name', 'Indicator', 'SMS Count'])
             for state_code, state_data in data.items():
                 for indicator_slug, count in state_data.items():
-                    writer.writerow([state_code, indicator_slug, count])
+                    writer.writerow([state_code, self.state_code_to_name[state_code], indicator_slug, count])
