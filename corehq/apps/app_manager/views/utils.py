@@ -53,24 +53,21 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
         module = None
         if module_id is not None:
             module = app.get_module(module_id)
-            args.append(module.unique_id)
         elif module_unique_id is not None:
             module = app.get_module_by_unique_id(module_unique_id)
-            args.append(module_unique_id)
 
         form = None
         if form_id is not None and module is not None:
-            view_name = form_view
             form = module.get_form(form_id)
-            args.append(form.unique_id)
         elif form_unique_id is not None:
-            args.append(form_unique_id)
             form = app.get_form(form_unique_id)
 
         if form is not None:
             view_name = 'view_form' if form.no_vellum else form_view
+            args.append(form.unique_id)
         elif module is not None:
             view_name = 'view_module'
+            args.append(module.unique_id)
 
     if page:
         view_name = page
