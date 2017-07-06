@@ -1,11 +1,13 @@
 from __future__ import print_function
-import argparse
 from collections import namedtuple
 
 from django.core.management.base import BaseCommand
 from django.db import connections
 
-from corehq.apps.userreports.models import AsyncIndicator, get_datasource_config
+from corehq.apps.es import CaseES
+from corehq.apps.userreports.models import get_datasource_config
+from corehq.form_processor.models import CommCareCaseSQL
+from corehq.util.log import with_progress_bar
 
 
 COMMON_PERSON_COLUMNS = ()
@@ -41,33 +43,35 @@ DB_CONFIGS = {
     'person': PERSON_DBS,
 }
 
+DOMAIN = 'icds-cas'
+
 
 class Command(BaseCommand):
     help = "One off for icds"
 
     def add_arguments(self, parser):
-        parser.add_argument('domain')
         parser.add_argument('case_type')
 
-    def handle(self, domain, case_type, **options):
+    def handle(self, case_type, **options):
+        # get the configurations for the case type
         db_config = DB_CONFIGS[case_type]
-        old_config, _ = get_datasource_config(db_config.old_config_id, 'icds-cas')
-        new_config, _ = get_datasource_config(db_config.new_config_id, 'icds-cas')
+        old_config, _ = get_datasource_config(db_config.old_config_id, DOMAIN)
+        new_config, _ = get_datasource_config(db_config.new_config_id, DOMAIN)
         old_columns = [c.id for c in old_config.get_columns()]
         new_columns = [c.id for c in new_config.get_columns()]
-        assert set(old_columns).issubset(set(new_columns))
 
-        async_indicator = (
-            AsyncIndicator.objects
-            .filter(domain=domain, indicator_config_ids__contains=db_config.old_config_id)
-        )
+        # verify that the old columns are subset of the new columns
+        # new columns are allowed to be null
+        assert set(old_columns).issubset(set(new_columns))
 
         old_table = db_config.old_table
         new_table = db_config.new_table
 
+        # create a column string
         column_string = ','.join(old_columns)
+        total_cases = self.total_cases(case_type)
 
-        for ind in async_indicator:
+        for case_id in with_progress_bar(self._get_case_ids_to_process(case_type), total_cases):
             with connections['icds-ucr'].cursor() as cursor:
                 cursor.execute(
                     "INSERT INTO " + new_table + " " +
@@ -78,7 +82,22 @@ class Command(BaseCommand):
                     "    NOT EXISTS ( " +
                     "        SELECT doc_id FROM " + new_table + "WHERE doc_id = %s " +
                     "    ) ",
-                    [ind.doc_id, ind.doc_id]
+                    [case_id, case_id]
                 )
-            ind.indicator_config_ids = ind.indicator_config_ids.remove(db_config.old_config_id)
-            ind.save()
+
+    def total_cases(self, case_type):
+        return CaseES().domain(DOMAIN).case_type(case_type).count()
+
+    def _get_case_ids_to_process(self, case_type):
+        # generator to return case ids for a certain type
+        from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+        dbs = get_db_aliases_for_partitioned_query()
+        for db in dbs:
+            case_ids = (
+                CommCareCaseSQL.objects
+                .using(db)
+                .filter(domain=DOMAIN, type=case_type)
+                .values_list('case_id', flat=True)
+            )
+            for case_id in case_ids:
+                yield case_id
