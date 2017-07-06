@@ -107,7 +107,7 @@ $(function () {
 
     // Registration in case list
     if ($('#case-list-form').length) {
-        var CaseListForm = function (data, formOptions, allowed, now_allowed_reason) {
+        var CaseListForm = function (data, formOptions, allowed) {
             var self = this,
                 initialOption = data.form_id ? data.form_id : 'disabled',
                 formSet = !!data.form_id,
@@ -129,7 +129,6 @@ $(function () {
             };
 
             self.allowed = allowed;
-            self.now_allowed_reason = now_allowed_reason;
             self.formMissing = ko.observable(formMissing);
             self.caseListForm = ko.observable(data.form_id ? data.form_id : null);
             self.caseListFormProxy = ko.observable(initialOption);
@@ -161,7 +160,6 @@ $(function () {
                 case_list_form_options ? case_list_form_options.form : {},
                 case_list_form_options ? case_list_form_options.options : [],
                 case_list_form_not_allowed_reason ? case_list_form_not_allowed_reason.allow : "",
-                case_list_form_not_allowed_reason ? case_list_form_not_allowed_reason.message : ""
             );
         $('#case-list-form').koApplyBindings(caseListForm);
         // Reset save button after bindings

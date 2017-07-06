@@ -41,14 +41,6 @@
           </label>
           <div class="col-sm-4">
               {% input_trans module.case_list_form.label langs input_name='case_list_form_label' %}
-              <div data-bind="visible: !allowed" class="help-block">
-                  {%  trans "Error! Registration form will be ignored since this module is not allowed to have one for the following reason:" %}<br/>
-                  <ul><li data-bind="text: now_allowed_reason"></li></ul>
-                  {% blocktrans %}
-                      To learn more, see our
-                      <a href="https://help.commcarehq.org/display/commcarepublic/Minimize+Duplicates#MinimizeDuplicates-Limitations" target="_blank">Help Site</a>
-                  {% endblocktrans %}
-              </div>
           </div>
       </div>
   </div>
