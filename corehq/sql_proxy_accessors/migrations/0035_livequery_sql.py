@@ -21,5 +21,5 @@ class Migration(migrations.Migration):
     operations = [
         migrator.get_migration('get_modified_case_ids.sql'),
         migrator.get_migration('get_closed_and_deleted_ids.sql'),
-        migrator.get_migration('drop_filter_open_case_ids.sql'),
+        migrator.get_migration('filter_open_case_ids.sql'),
     ]
