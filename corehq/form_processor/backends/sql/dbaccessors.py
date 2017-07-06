@@ -893,22 +893,32 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.case_id for result in results]
 
     @staticmethod
-    def filter_open_case_ids(accessor, case_ids):
-        assert isinstance(case_ids, list), case_ids
-        with get_cursor(CommCareCaseSQL) as cursor:
-            cursor.execute(
-                'SELECT case_id FROM filter_open_case_ids(%s, %s)',
-                [accessor.domain, case_ids]
-            )
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
-
-    @staticmethod
     def get_related_indices(domain, case_ids, exclude_ids):
         assert isinstance(case_ids, list), case_ids
         return RawQuerySetWrapper(CommCareCaseIndexSQL.objects.raw(
             'SELECT * FROM get_related_indices(%s, %s, %s)',
             [domain, case_ids, list(exclude_ids)]))
+
+    @staticmethod
+    def get_closed_and_deleted_ids(accessor, case_ids):
+        assert isinstance(case_ids, list), case_ids
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT case_id, closed, deleted FROM get_closed_and_deleted_ids(%s, %s)',
+                [accessor.domain, case_ids]
+            )
+            return list(fetchall_as_namedtuple(cursor))
+
+    @staticmethod
+    def get_modified_case_ids(accessor, case_ids, sync_log):
+        assert isinstance(case_ids, list), case_ids
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT case_id FROM get_modified_case_ids(%s, %s, %s, %s)',
+                [accessor.domain, case_ids, sync_log.date, sync_log._id]
+            )
+            results = fetchall_as_namedtuple(cursor)
+            return [result.case_id for result in results]
 
     @staticmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
