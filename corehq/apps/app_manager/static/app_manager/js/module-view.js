@@ -113,12 +113,6 @@ $(function () {
                 formSet = !!data.form_id,
                 formMissing = formSet && !formOptions[data.form_id];
 
-            self.toggleState = function(active) {
-                active = active && allowed;
-                $('#case_list_form-label').toggle(active);
-                $('#case_list_media').toggle(active);
-            };
-
             self.buildOptstr = function(extra) {
                 self.caseListFormOptstr = _.map(formOptions, function (label, value) {
                     return {value: value, label: label};
@@ -131,27 +125,8 @@ $(function () {
             self.allowed = allowed;
             self.formMissing = ko.observable(formMissing);
             self.caseListForm = ko.observable(data.form_id ? data.form_id : null);
-            self.caseListFormProxy = ko.observable(initialOption);
             self.caseListFormDisplay = formOptions[initialOption];
 
-            self.caseListFormProxy.subscribe(function (form_id) {
-                var disabled = form_id === 'disabled' || !formOptions[form_id];
-                self.caseListForm(disabled ? null : form_id);
-                self.toggleState(!disabled);
-            });
-
-            if (formMissing) {
-                var removeOld = self.caseListFormProxy.subscribe(function (oldValue) {
-                    if (formMissing && oldValue === initialOption) {
-                        // remove the missing form from the options once the user select a real form
-                        self.buildOptstr();
-                        removeOld.dispose();
-                        self.formMissing(false);
-                    }
-                }, null, "beforeChange");
-            }
-
-            self.toggleState(formSet && !formMissing);
             self.buildOptstr(formMissing ? data.form_id : false);
         };
         var case_list_form_options = initial_page_data('case_list_form_options'),
