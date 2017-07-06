@@ -107,7 +107,7 @@ def get_language_code(user_id, telugu_user_ids, marathi_user_ids):
 
 
 @periodic_task(
-    run_every=crontab(hour=9, minute=0, day_of_week='tue'),
+    run_every=crontab(hour=9, minute=0, day_of_week='mon'),
     queue=settings.CELERY_PERIODIC_QUEUE,
     ignore_result=True
 )
