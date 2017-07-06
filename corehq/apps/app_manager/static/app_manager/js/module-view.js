@@ -119,10 +119,6 @@ $(function () {
                 $('#case_list_media').toggle(active);
             };
 
-            self.toggleMessage = function() {
-                self.messageVisible(!self.messageVisible());
-            };
-
             self.buildOptstr = function(extra) {
                 self.caseListFormOptstr = _.map(formOptions, function (label, value) {
                     return {value: value, label: label};
@@ -135,7 +131,6 @@ $(function () {
             self.allowed = allowed;
             self.now_allowed_reason = now_allowed_reason;
             self.formMissing = ko.observable(formMissing);
-            self.messageVisible = ko.observable(false);
             self.caseListForm = ko.observable(data.form_id ? data.form_id : null);
             self.caseListFormProxy = ko.observable(initialOption);
             self.caseListFormDisplay = formOptions[initialOption];

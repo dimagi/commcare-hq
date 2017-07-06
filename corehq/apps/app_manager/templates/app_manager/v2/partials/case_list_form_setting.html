@@ -10,50 +10,29 @@
               {% trans "Registration Form Accessible from Case List" %}
               <span class="hq-help-template"
                     data-title="{% trans "Registration Form Accessible from Case List" %}"
-                    data-content="{% blocktrans %}Include a registration form in the application's menu of forms.{% endblocktrans %}"
+                    data-content="{% blocktrans %}Minimize duplicate registrations by including a registration form in the application's list of cases. Read more on the <a href='https://help.commcarehq.org/display/commcarepublic/Minimize+Duplicates'>Help Site</a>.{% endblocktrans %}"
               ></span>
           </label>
-          <div class="col-sm-4">
-              <div data-bind="visible: caseListForm() || allowed, css: { 'alert alert-danger': formMissing() || !allowed}">
-                  <select class="form-control" data-bind="
-                      optstr: caseListFormOptstr,
-                      value: caseListFormProxy
-                      "></select>
-                  <input type="hidden" name="case_list_form_id" data-bind="value: caseListForm" />
-                  <div data-bind="visible: formMissing()" class="help-block">
-                      {% trans "Error! The selected form does not exist." %}
-                  </div>
+          <div class="col-sm-4" data-bind="visible: caseListForm() || allowed, css: { 'alert alert-danger': formMissing() || !allowed}">
+              <select class="form-control" data-bind="
+                  optstr: caseListFormOptstr,
+                  value: caseListFormProxy
+                  "></select>
+              <input type="hidden" name="case_list_form_id" data-bind="value: caseListForm" />
+              <div data-bind="visible: formMissing()" class="help-block">
+                  {% trans "Error! The selected form does not exist." %}
               </div>
-              <div class="btn-group" data-bind="visible: !allowed && !caseListForm()">
-                  <button class="btn btn-default disabled" disabled="disabled">
-                      <span>{% trans "Not available" %}</span>
-                  </button>
-                  <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                      <span class="caret"></span>
-                  </button>
-                  <ul class="dropdown-menu">
-                      <li>
-                          <a href="#" data-bind="click: toggleMessage">
-                              {% trans "Why can't I select a registration form?" %}
-                          </a>
-                      </li>
-                  </ul>
-              </div>
-              <div class="help-block" data-bind="visible: messageVisible">
-                  <div>
-                      {% blocktrans %}
-                      Registration forms are only available from the case list when<br/>
-                      (1) The registration form is in a different module<br/>
-                      (2) Every form in the module updates or closes the case<br/>
-                      (3) The case list does not have parent case selection configured.<br/>
-                      (4) The module's "Menu Mode" is configured as "Display module and then forms".<br/>
-                      To learn more, see our <a href="https://help.commcarehq.org/display/commcarepublic/Minimize+Duplicates" target="_blank">Help Site</a>
-                      {% endblocktrans %}
-                  </div>
-                  <a href="#" class="btn btn-default btn-xs" data-bind="click: toggleMessage">
-                      {% trans "OK, close this" %}
-                  </a>
-              </div>
+          </div>
+          <div class="col-sm-8 alert alert-info" data-bind="visible: !allowed && !caseListForm()">
+              {% blocktrans %}
+                  Registration forms are only available from the case list when all of the following are true:
+                  <ol>
+                    <li>The registration form is in a different menu</li>
+                    <li>Every form in the menu updates or closes the case</li>
+                    <li>The case list does not have parent case selection configured.</li>
+                    <li>The module's "Menu Mode" is configured as "Display module and then forms".</li>
+                  </ol>
+              {% endblocktrans %}
           </div>
       </div>
       <div class="form-group" id="case_list_form-label">
