@@ -147,7 +147,7 @@
                                            data-category="App Builder"
                                            data-action="View Form"
                                            data-label="Sidebar"
-                                           href="{% url "view_form" domain app.id module.unique_id form.unique_id %}">
+                                           href="{% url "view_form" domain app.id form.unique_id %}">
                                             <i class="drag_handle"></i>
                                             {% if request|toggle_enabled:"SUPPORT" %}
                                             <i

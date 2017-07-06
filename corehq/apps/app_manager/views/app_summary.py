@@ -126,6 +126,7 @@ def _get_name_map(app, request):
             keywords = {'domain': app.domain, 'app_id': app.id,
                         'module_unique_id': module.id}
             module_url = reverse('view_module_unique', kwargs=keywords)
+            del keywords['module_unique_id']
             keywords['form_unique_id'] = form.unique_id
             form_url = reverse('view_form', kwargs=keywords)
 
