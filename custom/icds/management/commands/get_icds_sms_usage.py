@@ -1,10 +1,10 @@
-import csv
 from corehq.apps.sms.models import SMS
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.smsbackends.icds_nic.models import SQLICDSBackend
 from corehq.util.argparse_types import utc_timestamp
+from couchexport.export import export_raw
 from django.core.management.base import BaseCommand
 
 
@@ -96,9 +96,16 @@ class Command(BaseCommand):
 
             data[state_code][indicator_slug] += 1
 
-        with open('icds-sms-usage.csv', 'wb') as f:
-            writer = csv.writer(f)
-            writer.writerow(['State Code', 'State Name', 'Indicator', 'SMS Count'])
+        with open('icds-sms-usage.xlsx', 'wb') as f:
+            headers = ('State Code', 'State Name', 'Indicator', 'SMS Count')
+            excel_data = []
+
             for state_code, state_data in data.items():
                 for indicator_slug, count in state_data.items():
-                    writer.writerow([state_code, self.state_code_to_name[state_code], indicator_slug, count])
+                    excel_data.append((state_code, self.state_code_to_name[state_code], indicator_slug, count))
+
+            export_raw(
+                (('icds-sms-usage', headers), ),
+                (('icds-sms-usage', excel_data), ),
+                f
+            )
