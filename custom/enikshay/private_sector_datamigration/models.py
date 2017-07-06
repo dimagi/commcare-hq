@@ -151,7 +151,7 @@ class Beneficiary_Jun30(models.Model):
     def _adherence_count_open(self):
         return (
             Adherence_Jun30.objects.filter(episodeId=self._episode.episodeID).filter(
-                doseDate__lte=date.today(),
+                doseDate__gte=date(2017, 6, 6),
             ).count()
             if self._episode
             else 0
@@ -162,7 +162,7 @@ class Beneficiary_Jun30(models.Model):
     def _adherence_count_closed(self):
         return (
             Adherence_Jun30.objects.filter(episodeId=self._episode.episodeID).filter(
-                doseDate__gt=date.today(),
+                doseDate__lt=date(2017, 6, 6),
             ).count()
             if self._episode
             else 0
