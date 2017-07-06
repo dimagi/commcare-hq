@@ -1,12 +1,13 @@
 from xml.etree import ElementTree
 from django.test import TestCase
-from casexml.apps.case.xml import V2, V1
+from corehq.blobs import get_blob_db
 from casexml.apps.phone.fixtures import generator
 from casexml.apps.phone.tests.utils import create_restore_user
 from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import (
     FixtureDataType, FixtureTypeField,
-    FixtureDataItem, FieldList, FixtureItemField
+    FixtureDataItem, FieldList, FixtureItemField,
+    FIXTURE_BUCKET
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
@@ -30,6 +31,7 @@ class OtaWebUserFixtureTest(TestCase):
     @classmethod
     def tearDownClass(cls):
         cls.domain.delete()
+        get_blob_db().delete(DOMAIN, FIXTURE_BUCKET)
         delete_all_users()
         super(OtaWebUserFixtureTest, cls).tearDownClass()
 
@@ -73,6 +75,7 @@ class OtaFixtureTest(TestCase):
             item_list[0].delete()
             item_list[1].delete()
 
+        get_blob_db().delete(DOMAIN, FIXTURE_BUCKET)
         cls.domain.delete()
         super(OtaFixtureTest, cls).tearDownClass()
 
