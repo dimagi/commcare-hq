@@ -37,6 +37,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument('migration_comment')
         parser.add_argument(
             '--start',
             dest='start',
@@ -95,7 +96,7 @@ class Command(BaseCommand):
         )
 
     @mock_ownership_cleanliness_checks()
-    def handle(self, domain, **options):
+    def handle(self, domain, migration_comment, **options):
         case_ids = options['caseIds']
         chunk_size = options['chunk_size']
         limit = options['limit']
@@ -137,7 +138,8 @@ class Command(BaseCommand):
         )
 
         migrate_to_enikshay(
-            domain, beneficiaries, skip_adherence, chunk_size, location_owner, default_location_owner
+            domain, migration_comment, beneficiaries, skip_adherence, chunk_size,
+            location_owner, default_location_owner
         )
 
 
@@ -193,7 +195,8 @@ def get_beneficiaries(start, limit, case_ids, owner_state_id, owner_district_id,
         return beneficiaries_query[start:]
 
 
-def migrate_to_enikshay(domain, beneficiaries, skip_adherence, chunk_size, location_owner, default_location_owner):
+def migrate_to_enikshay(domain, migration_comment, beneficiaries, skip_adherence, chunk_size,
+                        location_owner, default_location_owner):
     total = beneficiaries.count()
     counter = 0
     num_succeeded = 0
@@ -205,7 +208,9 @@ def migrate_to_enikshay(domain, beneficiaries, skip_adherence, chunk_size, locat
     for beneficiary in beneficiaries:
         counter += 1
         try:
-            case_factory = BeneficiaryCaseFactory(domain, beneficiary, location_owner, default_location_owner)
+            case_factory = BeneficiaryCaseFactory(
+                domain, migration_comment, beneficiary, location_owner, default_location_owner
+            )
             case_structures.extend(case_factory.get_case_structures_to_create(skip_adherence))
         except Exception:
             num_failed += 1

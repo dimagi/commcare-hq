@@ -188,7 +188,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             unknownAdherencePct=0.9,
             unresolvedMissedDosesPct=0.1,
         )
-        call_command('create_cases_by_beneficiary', self.domain)
+        call_command('create_cases_by_beneficiary', self.domain, 'tests')
 
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
         self.assertEqual(len(person_case_ids), 1)
@@ -230,6 +230,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('legacy_stateId', '103'),
             ('legacy_subOrganizationId', '3'),
             ('legacy_wardId', '104'),
+            ('migration_comment', 'tests'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
             ('person_id', 'AAA-KAA-AF'),
@@ -259,6 +260,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('legacy_stateId', '103'),
             ('legacy_subOrganizationId', '3'),
             ('legacy_wardId', '104'),
+            ('migration_comment', 'tests'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
             ('occurrence_episode_count', '1'),
@@ -310,6 +312,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('legacy_stateId', '103'),
             ('legacy_subOrganizationId', '3'),
             ('legacy_wardId', '104'),
+            ('migration_comment', 'tests'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
             ('new_retreatment', 'new'),
@@ -365,7 +368,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             unknownAdherencePct=0.9,
             unresolvedMissedDosesPct=0.1,
         )
-        call_command('create_cases_by_beneficiary', self.domain)
+        call_command('create_cases_by_beneficiary', self.domain, 'tests')
 
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
         self.assertEqual(len(person_case_ids), 1)
@@ -413,7 +416,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             unknownAdherencePct=0.9,
             unresolvedMissedDosesPct=0.1,
         )
-        call_command('create_cases_by_beneficiary', self.domain)
+        call_command('create_cases_by_beneficiary', self.domain, 'tests')
 
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
         self.assertEqual(len(person_case_ids), 1)
@@ -437,8 +440,8 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(episode_case.dynamic_case_properties()['treatment_outcome'], 'died')
 
     def test_id_original_beneficiary_count(self):
-        call_command('create_cases_by_beneficiary', self.domain)
-        call_command('create_cases_by_beneficiary', self.domain)
+        call_command('create_cases_by_beneficiary', self.domain, 'tests')
+        call_command('create_cases_by_beneficiary', self.domain, 'tests')
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
         self.assertEqual(len(person_case_ids), 2)
         self.assertEqual(
@@ -453,7 +456,10 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.agency.agencyTypeId = 'ATFO'
         self.agency.save()
 
-        call_command('create_cases_by_beneficiary', self.domain, default_location_owner_id=self.default_location.location_id)
+        call_command(
+            'create_cases_by_beneficiary', self.domain, 'tests',
+            default_location_owner_id=self.default_location.location_id,
+        )
 
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
         self.assertEqual(len(person_case_ids), 1)
@@ -462,7 +468,10 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
 
     def test_default_location_owner_not_used(self):
 
-        call_command('create_cases_by_beneficiary', self.domain, default_location_owner_id=self.default_location.location_id)
+        call_command(
+            'create_cases_by_beneficiary', self.domain, 'tests',
+            default_location_owner_id=self.default_location.location_id,
+        )
 
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
         self.assertEqual(len(person_case_ids), 1)
@@ -506,7 +515,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             reportingMechanismId=86,
         )
 
-        call_command('create_cases_by_beneficiary', self.domain)
+        call_command('create_cases_by_beneficiary', self.domain, 'tests')
 
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
@@ -529,6 +538,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             ('adherence_report_source', 'treatment_supervisor'),
             ('adherence_source', 'enikshay'),
             ('adherence_value', 'directly_observed_dose'),
+            ('migration_comment', 'tests'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '5'),
         ]))
@@ -581,7 +591,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             reportingMechanismId=86,
         )
 
-        call_command('create_cases_by_beneficiary', self.domain)
+        call_command('create_cases_by_beneficiary', self.domain, 'tests')
 
         adherence_case_ids = self.case_accessor.get_case_ids_in_domain(type='adherence')
         self.assertEqual(len(adherence_case_ids), 1)
@@ -634,7 +644,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             reportingMechanismId=96,
         )
 
-        call_command('create_cases_by_beneficiary', self.domain)
+        call_command('create_cases_by_beneficiary', self.domain, 'tests')
 
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
@@ -690,7 +700,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             reportingMechanismId=96,
         )
 
-        call_command('create_cases_by_beneficiary', self.domain, skip_adherence=True)
+        call_command('create_cases_by_beneficiary', self.domain, 'tests', skip_adherence=True)
 
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
@@ -736,7 +746,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             reportingMechanismId=85,
         )
 
-        call_command('create_cases_by_beneficiary', self.domain)
+        call_command('create_cases_by_beneficiary', self.domain, 'tests')
 
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
         self.assertEqual(len(episode_case_ids), 1)
@@ -787,7 +797,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             reportingMechanismId=0,
         )
 
-        call_command('create_cases_by_beneficiary', self.domain)
+        call_command('create_cases_by_beneficiary', self.domain, 'tests')
 
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
         self.assertEqual(len(episode_case_ids), 1)
@@ -810,7 +820,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             voucherID=6,
         )
 
-        call_command('create_cases_by_beneficiary', self.domain)
+        call_command('create_cases_by_beneficiary', self.domain, 'tests')
 
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
@@ -827,6 +837,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(prescription_case.owner_id, '-')
         self.assertEqual(prescription_case.dynamic_case_properties(), OrderedDict([
             ('date_ordered', '2017-05-26'),
+            ('migration_comment', 'tests'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
             ('number_of_days_prescribed', '2'),
@@ -867,7 +878,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             voucherUsedDate=datetime(2017, 6, 1),
         )
 
-        call_command('create_cases_by_beneficiary', self.domain)
+        call_command('create_cases_by_beneficiary', self.domain, 'tests')
 
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
@@ -885,6 +896,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         self.assertEqual(prescription_case.dynamic_case_properties(), OrderedDict([
             ('date_fulfilled', '2017-06-01'),
             ('date_ordered', '2017-05-26'),
+            ('migration_comment', 'tests'),
             ('migration_created_case', 'true'),
             ('migration_created_from_record', '3'),
             ('number_of_days_prescribed', '2'),
@@ -925,7 +937,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
             voucherID=6,
         )
 
-        call_command('create_cases_by_beneficiary', self.domain)
+        call_command('create_cases_by_beneficiary', self.domain, 'tests')
 
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='person')), 1)
         self.assertEqual(len(self.case_accessor.get_case_ids_in_domain(type='occurrence')), 1)
@@ -937,7 +949,7 @@ class TestCreateCasesByBeneficiary(ENikshayLocationStructureMixin, TestCase):
         Agency_Jun30.objects.all().delete()
         UserDetail_Jun30.objects.all().delete()
 
-        call_command('create_cases_by_beneficiary', self.domain, location_owner_id=self.pcp.location_id)
+        call_command('create_cases_by_beneficiary', self.domain, 'tests', location_owner_id=self.pcp.location_id)
 
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
         self.assertEqual(len(person_case_ids), 1)
