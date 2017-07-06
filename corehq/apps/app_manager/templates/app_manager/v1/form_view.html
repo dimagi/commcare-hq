@@ -137,7 +137,7 @@
         {% if not form.form_type == "shadow_form" %}
             {% if not form.no_vellum %}
             <a id="edit_label" class="btn btn-primary track-usage-link"
-               href="{% url "form_source" domain app.id module.unique_id form.unique_id %}"
+               href="{% url "form_source" domain app.id form.unique_id %}"
                data-category='App Builder' data-action='Open Form' data-label='Edit Label'
             >
                 <i class="fa fa-pencil"></i>
