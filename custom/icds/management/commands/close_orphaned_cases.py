@@ -11,6 +11,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL
 from corehq.util.log import with_progress_bar
 
+
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
