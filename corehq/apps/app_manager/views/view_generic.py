@@ -78,7 +78,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                 raise Http404()
             module_id = module.id
 
-        if form_id:
+        if form_id and module is not None:
             try:
                 form = module.get_form(form_id)
             except IndexError:
@@ -90,7 +90,12 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                 raise Http404()
             form_id = form.id
 
-    except ModuleNotFoundException:
+        if form is not None and module is None:
+            # this is the case where only the form_unique_id is given
+            module = form.get_module()
+            module_id = module.id
+
+    except (ModuleNotFoundException, FormNotFoundException):
         return bail(request, domain, app_id)
 
     # Application states that should no longer exist
