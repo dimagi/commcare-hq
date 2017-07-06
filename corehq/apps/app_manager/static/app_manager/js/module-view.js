@@ -108,14 +108,20 @@ $(function () {
     // Registration in case list
     if ($('#case-list-form').length) {
         var CaseListForm = function (data, formOptions, allowed) {
-            var self = this,
-                initialOption = data.form_id ? data.form_id : 'disabled',
-                formSet = !!data.form_id;
-
+            var self = this;
             self.allowed = allowed;
             self.caseListForm = ko.observable(data.form_id ? data.form_id : null);
+            self.caseListForm.subscribe(function(form_id) {
+                if (self.formMissing() || !form_id) {
+                    $('#case_list_form-label').hide();
+                    $('#case_list_media').hide();
+                } else {
+                    $('#case_list_form-label').show();
+                    $('#case_list_media').show();
+                }
+            });
             self.formMissing = ko.computed(function() {
-                return !formOptions[self.caseListForm()];
+                return self.caseListForm() && !formOptions[self.caseListForm()];
             });
         };
         var case_list_form_options = initial_page_data('case_list_form_options'),
@@ -126,6 +132,7 @@ $(function () {
                 case_list_form_not_allowed_reason ? case_list_form_not_allowed_reason.allow : "",
             );
         $('#case-list-form').koApplyBindings(caseListForm);
+
         // Reset save button after bindings
         // see http://manage.dimagi.com/default.asp?145851
         var $form = $('#case-list-form').closest('form'),

@@ -366,7 +366,6 @@ def _case_list_form_options(app, module, case_type_, lang=None):
         for mod in app.get_modules() if module.unique_id != mod.unique_id
         for form in mod.get_forms() if form.is_registration_form(case_type_)
     ]
-    options['disabled'] = gettext_lazy("Don't Show")
     langs = None if lang is None else [lang]
     options.update({f.unique_id: trans(f.name, langs) for f in forms})
 

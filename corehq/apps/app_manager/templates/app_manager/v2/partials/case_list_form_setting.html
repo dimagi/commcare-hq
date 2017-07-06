@@ -15,9 +15,10 @@
           </label>
           <div class="col-sm-4" data-bind="visible: caseListForm() || allowed, css: { 'has-error': formMissing() || !allowed}">
               <select class="form-control" data-bind="value: caseListForm">
-                {% if case_list_form_options.form.form_id not in case_list_form_options.options.keys %}
+                {% if case_list_form_options.form.form_id and case_list_form_options.form.form_id not in case_list_form_options.options.keys %}
                     <option value="{{ case_list_form_options.form.form_id }}" selected>{% trans "Unknown Form (missing)" %}</option>
                 {% endif %}
+                <option value="">{% trans "Don't Show" %}</option>
                 {% for id, name in case_list_form_options.options.items %}
                     <option value="{{ id }}">{{ name }}</option>
                 {% endfor %}
