@@ -549,7 +549,7 @@ def get_form_data(domain, app, include_shadow_forms=True):
                     'details': unicode(e),
                     'edit_url': reverse(
                         'form_source',
-                        args=[domain, app._id, module.unique_id, form.unique_id]
+                        args=[domain, app._id, form.unique_id]
                     ),
                 }
                 form_meta['module'] = copy(module_meta)
