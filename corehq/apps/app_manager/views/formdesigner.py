@@ -112,7 +112,7 @@ def _get_form_designer_view(request, domain, app, module, form):
     context.update(locals())
 
     vellum_options = _get_base_vellum_options(request, domain, app, context['lang'])
-    vellum_options['core'] = _get_vellum_core_context(request, domain, app, form)
+    vellum_options['core'] = _get_vellum_core_context(request, domain, app, module, form)
     vellum_options['plugins'] = _get_vellum_plugins(domain, form, module)
     vellum_options['features'] = _get_vellum_features(request, domain, app)
     context['vellum_options'] = vellum_options
@@ -228,7 +228,7 @@ def _get_base_vellum_options(request, domain, app, displayLang):
     }
 
 
-def _get_vellum_core_context(request, domain, app, form):
+def _get_vellum_core_context(request, domain, app, module, form):
     """
     Returns the core context that will be passed into vellum when it is
     initialized.
@@ -263,7 +263,7 @@ def _get_vellum_core_context(request, domain, app, form):
                                          "meta/timeStart",
                                          "meta/timeEnd",
                                          "meta/location",
-                                     ] + _get_core_context_scheduler_data_nodes(form),
+                                     ] + _get_core_context_scheduler_data_nodes(module, form),
         'activityUrl': reverse('ping'),
         'sessionid': request.COOKIES.get('sessionid'),
         'externalLinks': {
@@ -346,7 +346,7 @@ def _get_core_context_help_text_context(form):
     }
 
 
-def _get_core_context_scheduler_data_nodes(form):
+def _get_core_context_scheduler_data_nodes(module, form):
     """
     Part of the vellum core context.
 
