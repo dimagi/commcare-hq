@@ -62,6 +62,9 @@ hqDefine("reports/js/standard_hq_report.js", function() {
         return asyncReport;
     };
 
+    standardReport = getStandard(),
+    asyncReport = getAsync();
+
     $(function() {
         $('#apply-btn').on('click', function() {
             $('.hq-generic-report').trigger('apply-click');
