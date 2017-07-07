@@ -86,8 +86,22 @@ class Command(BaseCommand):
         if options['dry_run']:
             print(sql_command)
         else:
+            print("count of old table %s: " % self.old_table)
+            print(self.get_count(self.old_table))
+            print("count of new table %s: " % self.new_table)
+            print(self.get_count(self.new_table))
             with connections['icds-ucr'].cursor() as cursor:
                 cursor.execute(sql_command)
+            print("count of old table %s: " % self.new_table)
+            print(self.get_count(self.new_table))
+
+    def get_count(self, table_name):
+        with connections['icds-ucr'].cursor() as cursor:
+            table = '"%s"' % table_name
+            cursor.execute(
+                'SELECT count(*) from ' + table
+            )
+            return cursor.fetchone()
 
     def _sql_command(self, has_repeat_iteration):
         if has_repeat_iteration:
@@ -95,11 +109,14 @@ class Command(BaseCommand):
         else:
             join = 'A.doc_id = B.doc_id'
 
+        old_table = '"%s"' % self.old_table
+        new_table = '"%s"' % self.new_table
+
         return (
-           " INSERT INTO " + self.new_table + " ( " + self.column_string + " ) " +
+           " INSERT INTO " + new_table + " ( " + self.column_string + " ) " +
            " SELECT ( " + self.select_column_string + " ) " +
-           " FROM " + self.old_table + " A " +
-           " LEFT JOIN " + self.new_table + " B " +
+           " FROM " + old_table + " A " +
+           " LEFT JOIN " + new_table + " B " +
            " ON " + join + " " +
            " WHERE B.doc_id IS NULL "
        )
