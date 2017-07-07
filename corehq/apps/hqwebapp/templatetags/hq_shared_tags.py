@@ -643,7 +643,7 @@ def initial_page_data(parser, token):
 
         def render(self, context):
             resolved = value.resolve(context)
-            return ("<div data-name=\"{}\" data-value=\"{}\"></div>"
+            return (u"<div data-name=\"{}\" data-value=\"{}\"></div>"
                     .format(name, html_attr(resolved)))
 
     nodelist = NodeList([FakeNode()])
