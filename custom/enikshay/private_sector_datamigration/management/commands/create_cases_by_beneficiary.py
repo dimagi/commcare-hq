@@ -216,6 +216,7 @@ def migrate_to_enikshay(domain, migration_comment, beneficiaries, skip_adherence
     counter = 0
     num_succeeded = 0
     num_failed = 0
+    num_failed_chunks = 0
     logger.info('Starting migration of %d patients in domain %s.' % (total, domain))
     factory = CaseFactory(domain=domain)
     case_structures = []
@@ -245,6 +246,7 @@ def migrate_to_enikshay(domain, migration_comment, beneficiaries, skip_adherence
                 try:
                     factory.create_or_update_cases(case_structures)
                 except Exception:
+                    num_failed_chunks += 1
                     logger.error(
                         'Failure writing case structures',
                         exc_info=True,
@@ -266,6 +268,7 @@ def migrate_to_enikshay(domain, migration_comment, beneficiaries, skip_adherence
     logger.info('Number of attempts: %d.' % counter)
     logger.info('Number of successes: %d.' % num_succeeded)
     logger.info('Number of failures: %d.' % num_failed)
+    logger.info('Number of chunks to fail writing: %d' % num_failed_chunks)
 
     # since we circumvented cleanliness checks just call this at the end
     logger.info('Setting cleanliness flags')
