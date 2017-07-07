@@ -9,8 +9,6 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     } else {
         storageService.set($location.search());
     }
-
-
     vm.filtersData = $location.search();
     vm.label = "Prevalence of Undernutrition (weight-for-age)";
     vm.step = $routeParams.step;
@@ -95,6 +93,16 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
             $location.search('location_id', loc.location_id);
             $location.search('selectedLocationLevel', index);
             $location.search('location_name', loc.name);
+        }
+    };
+
+    vm.showMessage = function() {
+        if ($location.search()['selectedLocationLevel'] === "4" && vm.selectedLocations && vm.selectedLocations.length > 0) {
+            var parent = vm.selectedLocations[3];
+            $location.search('location_id', parent.location_id);
+            $location.search('selectedLocationLevel', 3);
+            $location.search('location_name', parent.name);
+            return true;
         }
     };
 
