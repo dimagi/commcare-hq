@@ -649,6 +649,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             cases = _order_list(case_ids, cases, 'case_id')
 
         if prefetched_indices:
+            # HACK work around bug in RawQuerySetWrapper that causes
+            # next(iter(cases)) is not next(iter(cases))
+            cases = list(cases)
+
             cases_by_id = {case.case_id: case for case in cases}
             _attach_prefetch_models(
                 cases_by_id, prefetched_indices, 'case_id', 'cached_indices')
@@ -893,11 +897,11 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.case_id for result in results]
 
     @staticmethod
-    def get_related_indices(domain, case_ids, exclude_ids):
+    def get_related_indices(domain, case_ids, exclude_indices):
         assert isinstance(case_ids, list), case_ids
         return RawQuerySetWrapper(CommCareCaseIndexSQL.objects.raw(
             'SELECT * FROM get_related_indices(%s, %s, %s)',
-            [domain, case_ids, list(exclude_ids)]))
+            [domain, case_ids, list(exclude_indices)]))
 
     @staticmethod
     def get_closed_and_deleted_ids(accessor, case_ids):

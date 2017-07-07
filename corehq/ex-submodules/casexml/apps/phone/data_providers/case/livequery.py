@@ -42,6 +42,9 @@ def do_livequery(timing_context, restore_state, async_task=None):
     This function makes no changes to external state other than updating
     the `restore_state.current_sync_log` and progress of `async_task`.
     """
+    def index_key(index):
+        return '{} {}'.format(index.case_id, index.identifier)
+
     def enliven(case_id):
         """Mark the given case, its extensions and their hosts as live
 
@@ -58,10 +61,13 @@ def do_livequery(timing_context, restore_state, async_task=None):
         if ext_ids:
             host_ids = set(chain.from_iterable(
                 hosts_by_extension.pop(x, []) for x in ext_ids))
-            # ext_ids: case is the extension of a live case
-            # host_ids: case has live extension
-            for next_id in chain(ext_ids, host_ids):
-                enliven(next_id)
+            for ext_id in ext_ids:
+                if ext_id in open_ids:
+                    # case is open and is the extension of a live case
+                    enliven(ext_id)
+            for host_id in host_ids:
+                # case has live extension
+                enliven(host_id)
 
     def classify(index, prev_ids):
         """Classify index as either live or extension with live status pending
@@ -72,6 +78,7 @@ def do_livequery(timing_context, restore_state, async_task=None):
         :returns: Case id for next related index fetch or CIRCULAR_REF
         if the related case has already been seen.
         """
+        seen_ix.add(index_key(index))
         indices[index.case_id].append(index)
         sub_id = index.case_id
         ref_id = index.referenced_id  # aka parent/host/super
@@ -79,14 +86,14 @@ def do_livequery(timing_context, restore_state, async_task=None):
         debug("%s --%s--> %s", sub_id, relationship, ref_id)
         if sub_id in prev_ids:
             # traverse to parent/host
-            if (sub_id in live_ids
-                    or (relationship == EXTENSION and ref_id in live_ids)
-                    or (relationship != EXTENSION and sub_id in open_ids)):
+            if sub_id in live_ids or (sub_id in open_ids
+                    and (relationship != EXTENSION
+                        or (relationship == EXTENSION and ref_id in live_ids))):
                 # one of the following is true
                 # - ref has a live child
                 # - ref has a live extension
-                # - sub is the extension of a live case
                 # - sub is open and is not an extension case
+                # - sub is open and is the extension of a live case
                 enliven(sub_id)
                 enliven(ref_id)
             else:
@@ -101,8 +108,8 @@ def do_livequery(timing_context, restore_state, async_task=None):
             assert ref_id in prev_ids, (index, prev_ids)
             assert relationship == EXTENSION, index
 
-            if ref_id in live_ids:
-                # sub is the extension of a live case
+            if ref_id in live_ids and sub_id in open_ids:
+                # sub is open and is the extension of a live case
                 enliven(sub_id)
             else:
                 # need to know if parent is live before -> live
@@ -139,6 +146,7 @@ def do_livequery(timing_context, restore_state, async_task=None):
     extensions_by_host = defaultdict(set)  # host_id -> extension_ids
     hosts_by_extension = defaultdict(set)  # extension_id -> host_ids
     indices = defaultdict(list)
+    seen_ix = set()  # set of '<index.case_id> <index.identifier>'
     accessor = CaseAccessors(restore_state.domain)
     owner_ids = list(restore_state.owner_ids)
 
@@ -154,19 +162,21 @@ def do_livequery(timing_context, restore_state, async_task=None):
         while next_ids:
             level += 1
             with timing_context("get_related_indices(level %s)" % level):
-                related = accessor.get_related_indices(list(next_ids), all_ids)
+                related = accessor.get_related_indices(list(next_ids), seen_ix)
                 if not related:
                     break
                 update_open_and_deleted_ids(related)
                 next_ids = {classify(index, next_ids)
                     for index in related
-                    if index.referenced_id not in deleted_ids
+                    if index_key(index) not in seen_ix
+                        and index.referenced_id not in deleted_ids
                         and index.case_id not in deleted_ids}
                 next_ids.discard(CIRCULAR_REF)
-                debug('next: %r all: %r', next_ids, all_ids)
                 all_ids.update(next_ids)
+                debug('next: %r', next_ids)
 
         with timing_context("enliven open root cases"):
+            debug('open: %r', open_ids)
             # owned, open, not an extension -> live
             for case_id in open_ids:
                 if case_id not in hosts_by_extension:

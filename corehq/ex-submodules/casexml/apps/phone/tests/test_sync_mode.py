@@ -2232,3 +2232,55 @@ class LiveQueryLooseSyncTokenValidationTest(LooseSyncTokenValidationTest):
 @use_sql_backend
 class LiveQueryLooseSyncTokenValidationTestSQL(LiveQueryLooseSyncTokenValidationTest):
     pass
+
+
+class IndexSyncTest(SyncBaseTest):
+
+    def test_sync_index_between_open_owned_cases(self):
+        child_id = "leaf"
+        parent_id = "branch"
+        other_parent_id = "sky"
+        branch_index = 'stem_index'
+        wave_index = 'wave_index'
+        self.factory.create_or_update_case(CaseStructure(
+            case_id=child_id,
+            attrs={'create': True},
+            indices=[CaseIndex(
+                CaseStructure(case_id=parent_id, attrs={'create': True}),
+                relationship=CHILD_RELATIONSHIP,
+                related_type=PARENT_TYPE,
+                identifier=branch_index,
+            ), CaseIndex(
+                CaseStructure(
+                    case_id=other_parent_id,
+                    attrs={'create': True, 'owner_id': 'someone-else'},
+                ),
+                relationship=CHILD_RELATIONSHIP,
+                related_type=PARENT_TYPE,
+                identifier=wave_index,
+            )],
+        ))
+        payload = generate_restore_payload(
+            self.project, self.user, version=V2, **self.restore_options)
+        check_payload_has_case_ids(
+            self,
+            payload_string=payload,
+            username=self.user.username,
+            case_ids=[child_id, parent_id, other_parent_id]
+        )
+        self.assertIn(branch_index, payload)  # HACK
+        self.assertIn(wave_index, payload)  # HACK
+
+
+@use_sql_backend
+class IndexSyncTestSQL(IndexSyncTest):
+    pass
+
+
+class LiveQueryIndexSyncTest(IndexSyncTest):
+    restore_options = {'case_sync': LIVEQUERY}
+
+
+@use_sql_backend
+class LiveQueryIndexSyncTestSQL(LiveQueryIndexSyncTest):
+    pass

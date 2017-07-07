@@ -132,8 +132,8 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         ]
 
     @staticmethod
-    def get_related_indices(domain, case_ids, exclude_ids):
-        return get_related_indices(domain, case_ids, exclude_ids)
+    def get_related_indices(domain, case_ids, exclude_indices):
+        return get_related_indices(domain, case_ids, exclude_indices)
 
     @staticmethod
     def get_closed_and_deleted_ids(accessor, case_ids):

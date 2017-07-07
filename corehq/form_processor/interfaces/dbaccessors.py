@@ -214,7 +214,7 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_related_indices(case_ids, exclude_ids):
+    def get_related_indices(case_ids, exclude_indices):
         raise NotImplementedError
 
     @abstractmethod
@@ -330,8 +330,15 @@ class CaseAccessors(object):
     def get_open_case_ids_in_domain_by_type(self, case_type, owner_ids=None):
         return self.db_accessor.get_open_case_ids_in_domain_by_type(self.domain, case_type, owner_ids)
 
-    def get_related_indices(self, case_ids, exclude_ids):
-        return self.db_accessor.get_related_indices(self.domain, case_ids, exclude_ids)
+    def get_related_indices(self, case_ids, exclude_indices):
+        """Get indices (forward and reverse) for the given set of case ids
+
+        :param case_ids: A list of case ids.
+        :param exclude_indices: A set or dict of index id strings with
+        the format ``'<index.case_id> <index.identifier>'``.
+        :returns: A list of CommCareCaseIndex-like objects.
+        """
+        return self.db_accessor.get_related_indices(self.domain, case_ids, exclude_indices)
 
     def get_closed_and_deleted_ids(self, case_ids):
         """Get the subset of given list of case ids that are closed or deleted
