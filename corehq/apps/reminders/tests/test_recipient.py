@@ -72,6 +72,7 @@ class ReminderRecipientTest(TestCase):
                 self.assertIsNone(reminder.recipient)
 
             # Remove child location
+            self.user = CommCareUser.get(self.user._id)
             self.user.unset_location()
             child_location.delete()
             with patch('corehq.apps.reminders.models.CaseReminder.handler', new=handler):
