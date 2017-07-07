@@ -639,7 +639,6 @@ def bug_report(req):
                          "Please fix this ASAP (as if you wouldn't anyway)...")
         traceback_info = cache.cache.get(report['500traceback'])
         cache.cache.delete(report['500traceback'])
-        traceback_info = "Traceback of this 500: \n%s" % traceback_info
         message = "%s \n\n %s \n\n %s" % (message, extra_message, traceback_info)
 
     email = EmailMessage(
