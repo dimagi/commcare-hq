@@ -113,7 +113,7 @@ class Command(BaseCommand):
             'caseIds',
             'chunk_size',
             'limit',
-            'owner_district_id'
+            'owner_district_id',
             'owner_organisation_ids',
             'owner_suborganisation_ids',
             'owner_state_id',
