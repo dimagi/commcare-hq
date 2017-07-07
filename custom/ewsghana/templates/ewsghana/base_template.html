@@ -13,6 +13,7 @@
 
 {% block js-inline %}
     {{ block.super }}
+    <script>
         var show_hide_line_chart_data = function() {
             var data = JSON.parse(JSON.stringify(line_chart_data));
             var productCodes = [];
@@ -67,6 +68,7 @@
 
         // Filters should be always visible
         $('#reportFilters').collapse('show');
+    </script>
 {% endblock %}
 
 {% block reports-css %}
