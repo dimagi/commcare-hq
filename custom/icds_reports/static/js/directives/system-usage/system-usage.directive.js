@@ -6,7 +6,11 @@ function SystemUsageController($http, $log, $routeParams, $location, storageServ
     vm.label = "Program Summary";
     vm.filters = ['gender', 'age'];
     vm.step = $routeParams.step;
-    $location.search(storageService.get());
+    if (Object.keys($location.search()).length === 0) {
+        $location.search(storageService.get());
+    } else {
+        storageService.set($location.search());
+    }
     vm.filtersData = $location.search();
 
     vm.getDataForStep = function(step) {
@@ -30,6 +34,19 @@ function SystemUsageController($http, $log, $routeParams, $location, storageServ
         "icds_cas_reach": {"route": "/program_summary/icds_cas_reach", "label": "ICDS CAS Reach", "data": null},
         "demographics": {"route": "/program_summary/demographics", "label": "Demographics", "data": null},
         "awc_infrastructure": {"route": "/program_summary/awc_infrastructure", "label": "AWC Infrastructure", "data": null},
+    };
+
+    vm.moveToLocation = function(loc, index) {
+        if (loc === 'national') {
+            $location.search('location_id', '');
+            $location.search('selectedLocationLevel', -1);
+            $location.search('location_name', '');
+            $location.search('location', '');
+        } else {
+            $location.search('location_id', loc.location_id);
+            $location.search('selectedLocationLevel', index);
+            $location.search('location_name', loc.name);
+        }
     };
 
     vm.getDataForStep(vm.step);

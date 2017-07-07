@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import operator
 
 from dateutil.relativedelta import relativedelta
+from django.urls.base import reverse
 
 from corehq.util.quickcache import quickcache
 from django.db.models.aggregates import Sum, Avg
@@ -384,7 +385,7 @@ def get_maternal_child_data(config):
                     'all': get_value(this_month_data, 'valid'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': '#underweight_children'
+                    'redirect': 'underweight_children'
                 },
                 {
                     'label': _('% Wasting'),
@@ -405,7 +406,7 @@ def get_maternal_child_data(config):
                     'all': get_value(this_month_data, 'height_eli'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': ''
+                    'redirect': 'wasting'
                 }
             ],
             [
@@ -426,7 +427,7 @@ def get_maternal_child_data(config):
                     'all': get_value(this_month_data, 'height_eli'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': ''
+                    'redirect': 'stunning'
                 },
                 {
                     'label': _('% Newborns with Low Birth Weight'),
@@ -828,8 +829,7 @@ def get_awc_infrastructure_data(config):
                 },
                 {
                     'label': _((
-                        "Total number of AWCs with a functional toilet (is a question in infrastructure "
-                        "details form in AWC management module)")
+                        "% AWCs with Functional Toilet")
                     ),
                     'help_text': _('Percentage of AWCs with a functional toilet'),
                     'percent': percent_diff(
@@ -1117,7 +1117,7 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
         ],
         "top_three": top_locations[0:3],
         "bottom_three": top_locations[-4:-1],
-        "location_type": loc_level.title()
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 
 
@@ -1302,11 +1302,11 @@ def get_awc_reports_system_usage(config, month, prev_month, two_before, loc_leve
     }
 
 
-def get_awc_reports_pse(config, month, two_before):
+def get_awc_reports_pse(config, month, two_before, domain):
 
     map_image_data = DailyAttendanceView.objects.filter(
         pse_date__range=(datetime(*two_before), datetime(*month)), **config
-    ).values('awc_name', 'form_location_lat', 'form_location_long', 'image_name')
+    ).values('awc_name', 'form_location_lat', 'form_location_long', 'image_name', 'doc_id')
 
     map_data = []
     image_data = []
@@ -1317,6 +1317,8 @@ def get_awc_reports_pse(config, month, two_before):
         lat = map_row['form_location_lat']
         long = map_row['form_location_long']
         awc_name = map_row['awc_name']
+        image_name = map_row['image_name']
+        doc_id = map_row['doc_id']
         if lat and long:
             map_data.append({
                 'name': awc_name,
@@ -1326,13 +1328,15 @@ def get_awc_reports_pse(config, month, two_before):
                 'latitude': lat,
                 'longitude': long
             })
-        tmp_image.append({'id': count, 'image': 'http://unsplash.it/' + str(300 + count) + '/300'})
-        img_count += 1
-        count += 1
-        if img_count == 4:
-            img_count = 0
-            image_data.append(tmp_image)
-            tmp_image = []
+        url = reverse('download_attachment', kwargs={'domain': domain, 'instance_id': doc_id})
+        if image_name:
+            tmp_image.append({'id': count, 'image': url + '?attachment=' + image_name})
+            img_count += 1
+            count += 1
+            if img_count == 4:
+                img_count = 0
+                image_data.append(tmp_image)
+                tmp_image = []
     if tmp_image:
         image_data.append(tmp_image)
 
@@ -1565,18 +1569,19 @@ def get_awc_report_demographics(config, month):
         '3-6 years': 0
     }
     for chart_row in chart:
-        age = int(chart_row['age_tranche'])
-        valid = chart_row['valid']
-        if 0 <= age < 1:
-            chart_data['0-1 month'] += valid
-        elif 1 <= age < 6:
-            chart_data['1-6 months'] += valid
-        elif 6 <= age < 12:
-            chart_data['6-12 months'] += valid
-        elif 12 <= age < 36:
-            chart_data['1-3 years'] += valid
-        elif 36 <= age <= 72:
-            chart_data['3-6 years'] += valid
+        if chart_row['age_tranche']:
+            age = int(chart_row['age_tranche'])
+            valid = chart_row['valid']
+            if 0 <= age < 1:
+                chart_data['0-1 month'] += valid
+            elif 1 <= age < 6:
+                chart_data['1-6 months'] += valid
+            elif 6 <= age < 12:
+                chart_data['6-12 months'] += valid
+            elif 12 <= age < 36:
+                chart_data['1-3 years'] += valid
+            elif 36 <= age <= 72:
+                chart_data['3-6 years'] += valid
 
     def get_data_for_kpi(filters, date):
         return AggAwcDailyView.objects.filter(
@@ -1689,7 +1694,7 @@ def get_awc_report_demographics(config, month):
 def get_awc_report_beneficiary(awc_id, month, two_before):
     data = ChildHealthMonthlyView.objects.filter(
         month__range=(datetime(*two_before), datetime(*month)),
-        awc_id=awc_id,
+        awc_id="d5d0fce5e73ff2b04417f40bd2bc5f7c",
         open_in_month=1,
         valid_in_month=1,
         age_in_months__lte=72
@@ -1919,7 +1924,7 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
         ],
         "top_three": top_locations[0:3],
         "bottom_three": top_locations[-4:-1],
-        "location_type": loc_level.title()
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 
 
@@ -2178,7 +2183,7 @@ def get_prevalence_of_stunning_data_chart(config, loc_level):
         ],
         "top_three": top_locations[0:3],
         "bottom_three": top_locations[-4:-1],
-        "location_type": loc_level.title()
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 
 

@@ -466,7 +466,7 @@ class AggCCSRecordMonthlyDataSource(SqlData):
         return [
             DatabaseColumn('month', SimpleColumn('month')),
             AggregateColumn(
-                'Percent Anemic',
+                'Percent of pregnant women who are anemic in given month',
                 lambda x, y, z: ((x or 0) + (y or 0)) * 100 / float(z or 1),
                 [
                     SumColumn('anemic_moderate'),
@@ -758,7 +758,7 @@ class AggAWCMonthlyDataSource(SqlData):
 
 
 class ChildrenExport(ExportableMixin, SqlData):
-    title = 'AWC Infrastructure'
+    title = 'Children'
     table_name = 'agg_child_health_monthly'
 
     @property

@@ -856,7 +856,11 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.showTable = true;
     vm.showBeneficiary = false;
     vm.beneficiary = null;
-    $location.search(storageService.get());
+    if (Object.keys($location.search()).length === 0) {
+        $location.search(storageService.get());
+    } else {
+        storageService.set($location.search());
+    }
     vm.filtersData = $location.search();
     vm.xTicks = [];
     vm.selectedLocationLevel = storageService.getKey('selectedLocationLevel') || 0;
@@ -929,7 +933,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             },
         };
         $scope.$apply();
-    }, 500);
+    }, 1000);
 
     vm.beneficiaryChartOptions = {
         chart: {
@@ -1070,11 +1074,24 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     };
 
     vm.steps ={
-        system_usage: { route: "/awc_reports/system_usage", label: "System Usage"},
+        // system_usage: { route: "/awc_reports/system_usage", label: "System Usage"},
         pse: { route: "/awc_reports/pse", label: "Primary School Education (PSE)"},
         maternal_child: { route: "/awc_reports/maternal_child", label: "Maternal & Child Health"},
         demographics: { route: "/awc_reports/demographics", label: "Demographics"},
         beneficiary: { route: "/awc_reports/beneficiary", label: "Beneficiary List"},
+    };
+
+    vm.moveToLocation = function(loc, index) {
+        if (loc === 'national') {
+            $location.search('location_id', '');
+            $location.search('selectedLocationLevel', -1);
+            $location.search('location_name', '');
+            $location.search('location', '');
+        } else {
+            $location.search('location_id', loc.location_id);
+            $location.search('selectedLocationLevel', index);
+            $location.search('location_name', loc.name);
+        }
     };
 
 }

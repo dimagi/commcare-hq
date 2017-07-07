@@ -24,7 +24,7 @@ var DISTRICT_TOPOJSON = {
             "Chhattisgarh": {
                   "scale": 8000,
                   "type": "GeometryCollection",
-                  "center": [76, 13],
+                  "center": [75, 12.5],
                   "geometries": [{
                         "id": "Bastar",
                         "type": "Polygon",
@@ -310,9 +310,9 @@ var DISTRICT_TOPOJSON = {
                   "height": 650
             },
             "Bihar": {
-                  "scale": 8000,
+                  "scale": 10000,
                   "type": "GeometryCollection",
-                  "center": [78, 15],
+                  "center": [77, 15],
                   "geometries": [{
                         "id": "Araria",
                         "type": "Polygon",
@@ -692,9 +692,9 @@ var DISTRICT_TOPOJSON = {
                   "height": 300
             },
             "Jharkhand": {
-                  "scale": 8000,
+                  "scale": 10000,
                   "type": "GeometryCollection",
-                  "center": [78, 14],
+                  "center": [77, 14],
                   "geometries": [{
                         "id": "Bokaro",
                         "type": "Polygon",
@@ -931,7 +931,7 @@ var DISTRICT_TOPOJSON = {
             "Madhya Pradesh": {
                   "scale": 8000,
                   "type": "GeometryCollection",
-                  "center": [73, 14],
+                  "center": [72, 14],
                   "geometries": [{
                         "id": "Tikamgarh",
                         "type": "Polygon",
@@ -1431,9 +1431,9 @@ var DISTRICT_TOPOJSON = {
                   "height": 650
             },
             "Rajasthan": {
-                  "scale": 8000,
+                  "scale": 7000,
                   "type": "GeometryCollection",
-                  "center": [71, 16],
+                  "center": [70, 16],
                   "geometries": [{
                         "id": "Karauli",
                         "type": "Polygon",
@@ -1795,9 +1795,9 @@ var DISTRICT_TOPOJSON = {
                   "height": 650
             },
             "Andhra Pradesh": {
-                  "scale": 6000,
+                  "scale": 7000,
                   "type": "GeometryCollection",
-                  "center": [75, 10],
+                  "center": [74, 10],
                   "geometries": [{
                         "id": "Anantapur",
                         "type": "Polygon",
@@ -2676,7 +2676,7 @@ var DISTRICT_TOPOJSON = {
             "Uttar Pradesh": {
                   "scale": 7000,
                   "type": "GeometryCollection",
-                  "center": [75, 16],
+                  "center": [74, 16],
                   "geometries": [{
                         "id": "Agra",
                         "type": "Polygon",

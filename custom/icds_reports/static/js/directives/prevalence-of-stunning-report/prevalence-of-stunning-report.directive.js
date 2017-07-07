@@ -5,7 +5,11 @@ var url = hqImport('hqwebapp/js/urllib.js').reverse;
 function PrevalenceOfStunningReportController($scope, $routeParams, $location, $filter, maternalChildService,
                                              locationsService, userLocationId, storageService) {
     var vm = this;
-    $location.search(storageService.get());
+    if (Object.keys($location.search()).length === 0) {
+        $location.search(storageService.get());
+    } else {
+        storageService.set($location.search());
+    }
     vm.filtersData = $location.search();
     vm.label = "Prevalence of Stunning (Height for age)";
     vm.step = $routeParams.step;
@@ -56,7 +60,7 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
     };
 
     var init = function() {
-        var locationId = vm.filtersData.location || userLocationId;
+        var locationId = vm.filtersData.location_id || userLocationId;
         if (!locationId || locationId === 'all') {
             vm.loadData();
             vm.loaded = true;
@@ -113,6 +117,19 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
                 axisLabelDistance: 20,
             },
         },
+    };
+
+    vm.moveToLocation = function(loc, index) {
+        if (loc === 'national') {
+            $location.search('location_id', '');
+            $location.search('selectedLocationLevel', -1);
+            $location.search('location_name', '');
+            $location.search('location', '');
+        } else {
+            $location.search('location_id', loc.location_id);
+            $location.search('selectedLocationLevel', index);
+            $location.search('location_name', loc.name);
+        }
     };
 }
 

@@ -213,7 +213,7 @@ class ProgramSummaryView(View):
                 'aggregation_level': 1
             }
 
-        location = request.GET.get('location', '')
+        location = request.GET.get('location_id', '')
         get_location_filter(location, self.kwargs['domain'], config)
 
         data = {}
@@ -282,7 +282,7 @@ class PrevalenceOfUndernutritionView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1l,
         }
-        location = request.GET.get('location', '')
+        location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
         data = []
@@ -377,7 +377,7 @@ class AwcReportsView(View):
         month = datetime(year_param, month_param, 1)
         prev_month = month - relativedelta(months=1)
         two_before = month - relativedelta(months=2)
-        location = request.GET.get('location', None)
+        location = request.GET.get('location_id', None)
         aggregation_level = 5
 
         config = {
@@ -406,7 +406,8 @@ class AwcReportsView(View):
             data = get_awc_reports_pse(
                 config,
                 tuple(month.timetuple())[:3],
-                tuple(two_before.timetuple())[:3]
+                tuple(two_before.timetuple())[:3],
+                self.kwargs.get('domain')
             )
         elif step == 'maternal_child':
             data = get_awc_reports_maternal_child(
@@ -452,7 +453,7 @@ class ExportIndicatorView(View):
                 'month': date(year, month, 1),
             })
 
-        location = request.POST.get('location', '')
+        location = request.POST.get('location_id', '')
 
         if location:
             try:
@@ -486,7 +487,7 @@ class ProgressReportView(View):
         now = datetime.utcnow()
         month = int(request.GET.get('month', now.month))
         year = int(request.GET.get('year', now.year))
-        location = request.GET.get('location', None)
+        location = request.GET.get('location_id', None)
         aggregation_level = 1
 
         this_month = datetime(year, month, 1).date()
@@ -518,7 +519,7 @@ class PrevalenceOfSevereView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1l,
         }
-        location = request.GET.get('location', '')
+        location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
         data = []
@@ -549,7 +550,7 @@ class PrevalenceOfStunningView(View):
             'month': tuple(test_date.timetuple())[:3],
             'aggregation_level': 1l,
         }
-        location = request.GET.get('location', '')
+        location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
 
         data = []

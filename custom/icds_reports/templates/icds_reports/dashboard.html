@@ -83,20 +83,9 @@
                 <div class="row fixed-title">
                     <nav class="navbar navbar-default">
                         <div class="container-fluid">
-                            <div class="navbar-header hq-header navbar-hq-main-menu">
-                                <a href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}"
-                                   class="navbar-brand">
-                                    {% if CUSTOM_LOGO_URL %}
-                                        <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo"/>
-                                    {% else %}
-                                        <!-- navbar.less supplies the default logo -->
-                                        <div class="logo"></div>
-                                    {% endif %}
-                                </a>
-                            </div>
                             <div class="nav navbar-nav">
                                 <h2 class="dashboard-title">
-                                    <img src="{% static "img/dashboard-logo.png" %}" alt="Logo" style="width: 40px; height: 40px;">
+
                                     <strong>{% trans "ICT-RTM of ICDS Dashboard" %}</strong>
                                 </h2>
                             </div>
@@ -107,7 +96,9 @@
                                             <span id="settingsmenu-projectSettings"
                                                class="dropdown-toggle dropdown-toggle-with-icon pointer"
                                                data-toggle="dropdown">
-                                                <i class="fa fa-cog nav-main-icon  fa-2x" style="margin-top: 10px;"></i>
+                                                <i class="fa fa-cog nav-main-icon fa-2x" uib-popover-html="'Settings'"
+                     popover-placement="left"
+                     popover-trigger="'mouseenter'" style="margin-top: 10px;"></i>
                                             </span>
                                             <ul class="dropdown-menu dropdown-menu-right" role="menu">
                                                 <li class="dropdown-header nav-header">{% trans 'Logged in As' %}</li>

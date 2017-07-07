@@ -4,7 +4,13 @@ var url = hqImport('hqwebapp/js/urllib.js').reverse;
 function UnderweightChildrenReportController($scope, $routeParams, $location, $filter, maternalChildService,
                                              locationsService, userLocationId, storageService) {
     var vm = this;
-    $location.search(storageService.get());
+    if (Object.keys($location.search()).length === 0) {
+        $location.search(storageService.get());
+    } else {
+        storageService.set($location.search());
+    }
+
+
     vm.filtersData = $location.search();
     vm.label = "Prevalence of Undernutrition (weight-for-age)";
     vm.step = $routeParams.step;
@@ -37,9 +43,12 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
+            vm.steps['map'].label = 'Sector';
         } else {
             vm.mode = 'map';
+            vm.steps['map'].label = 'Map';
         }
+
 
         maternalChildService.getUnderweightChildrenData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
@@ -55,8 +64,8 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     };
 
     var init = function() {
-        var locationId = vm.filtersData.location || userLocationId;
-        if (!locationId || locationId === 'all') {
+        var locationId = vm.filtersData.location_id || userLocationId;
+        if (!locationId || locationId === 'all' || locationId === 'null') {
             vm.loadData();
             vm.loaded = true;
             return;
@@ -75,6 +84,19 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         vm.loadData();
     });
 
+
+    vm.moveToLocation = function(loc, index) {
+        if (loc === 'national') {
+            $location.search('location_id', '');
+            $location.search('selectedLocationLevel', -1);
+            $location.search('location_name', '');
+            $location.search('location', '');
+        } else {
+            $location.search('location_id', loc.location_id);
+            $location.search('selectedLocationLevel', index);
+            $location.search('location_name', loc.name);
+        }
+    };
 
     vm.chartOptions = {
         chart: {

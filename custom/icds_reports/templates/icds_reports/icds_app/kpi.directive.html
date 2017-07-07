@@ -10,10 +10,7 @@
                 </div>
                 <div class="col-md-11 center kpi-content">
                     <div class="row crop">
-                        <span class="title pointer"
-                              uib-popover-html="cell.label"
-                              popover-placement="top"
-                              popover-trigger="'mouseenter'" ng-bind="cell.label"></span>
+                        <span class="title" ng-bind="cell.label"></span>
                     </div>
                     <div class="row kpi-numbers">
                         <span class="number" ng-if="cell.format == 'div'"><span ng-bind="cell.value | indiaNumbers"></span>/<span ng-bind="cell.all | indiaNumbers"></span></span>
@@ -27,9 +24,9 @@
                         <p>
                             <span ng-show="cell.percent !== null">
                                 <i class="fa" ng-class="{'fa-arrow-down': cell.percent < 0, 'fa-arrow-up': cell.percent > 0}"></i>
-                                <span ng-bind="cell.percent | number:2"></span>% from the {$ cell.frequency $} before last
+                                <span ng-bind="cell.percent | number:2"></span>% from the previous {$ cell.frequency $}
                             </span>
-                            <span class="see-more" aria-hidden="true"><a href="{$ cell.redirect $}" class="fa">See more</a></span>
+                            <span class="see-more" aria-hidden="true"><a href="{$ $ctrl.goToStep(cell.redirect) $}" class="fa">See more</a></span>
                         </p>
                     </div>
                 </div>

@@ -35,12 +35,18 @@ function IndieMapController($scope, $compile, $location, storageService) {
             }
             vm.map.rightLegend = newValue;
         }, true);
-        $location.search(storageService.get());
-        var location_level = $location.search()['selectedLocationLevel'];
+
+        if (Object.keys($location.search()).length === 0) {
+            $location.search(storageService.get());
+        } else {
+            storageService.set($location.search());
+        }
+
+        var location_level = parseInt($location.search()['selectedLocationLevel']);
         var location = $location.search()['location_name'];
         vm.type = '';
 
-        if (location_level === void(0) || location_level === -1 || location_level === 4) {
+        if (location_level === void(0) || isNaN(location_level) || location_level === -1 || location_level === 4) {
             vm.scope = "ind";
             vm.type = vm.scope + "Topo";
             Datamap.prototype[vm.type] = STATES_TOPOJSON;
@@ -122,7 +128,7 @@ function IndieMapController($scope, $compile, $location, storageService) {
 
                     d3.select(this.options.element).append('div')
                         .attr('class', 'datamaps-legend text-center')
-                        .attr('style', 'width: 150px; left 5%; top: 5%;')
+                        .attr('style', 'width: 150px; left 0; top: 5%;')
                         .html(html.join(''));
                 },
             });
@@ -140,13 +146,13 @@ function IndieMapController($scope, $compile, $location, storageService) {
                             '<tr/>',
                             '<tr>',
                             '<td style="border-right: 1px solid black; font-size: 2em;"><i class="fa fa-clock-o" aria-hidden="true"></td>',
-                            '<td style="padding-left: 10px;">Last updated: ' + this.options.rightLegend['last_modify'] + ' | Monthly</td>',
+                            '<td style="padding-left: 10px;">Last updated: ' + this.options.rightLegend['last_modify'] + '<br/> Time Period: Monthly</td>',
                             '<tr/>',
                             '</table>',
                         ];
                         d3.select(this.options.element).append('div')
                             .attr('class', '')
-                            .attr('style', 'position: absolute; width: 150px; bottom: 20%; left: 5%; z-index: -1;')
+                            .attr('style', 'position: absolute; width: 150px; bottom: 20%; left: 0; z-index: -1;')
                             .html(html.join(''));
                     }
                 },

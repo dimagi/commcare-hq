@@ -4,7 +4,11 @@ var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
 function ProgressReportController($scope, $location, progressReportService, storageService) {
     var vm = this;
-    $location.search(storageService.get());
+    if (Object.keys($location.search()).length === 0) {
+        $location.search(storageService.get());
+    } else {
+        storageService.set($location.search());
+    }
     vm.filtersData = $location.search();
     vm.filters = ['gender', 'age'];
     vm.label = "Progress Report";
@@ -38,6 +42,19 @@ function ProgressReportController($scope, $location, progressReportService, stor
             return  index > 0 && data[index]['html'] > data[index - 1]['html'];
         } else {
             return false;
+        }
+    };
+
+    vm.moveToLocation = function(loc, index) {
+        if (loc === 'national') {
+            $location.search('location_id', '');
+            $location.search('selectedLocationLevel', -1);
+            $location.search('location_name', '');
+            $location.search('location', '');
+        } else {
+            $location.search('location_id', loc.location_id);
+            $location.search('selectedLocationLevel', index);
+            $location.search('location_name', loc.name);
         }
     };
 

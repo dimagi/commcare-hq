@@ -2,7 +2,7 @@
 
 function MapOrSectorController() {
     var vm = this;
-    vm.height = 750;
+    vm.height = 650;
 
     vm.chartOptions = {
         chart: {

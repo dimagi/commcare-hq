@@ -1,17 +1,33 @@
 {% load i18n %}
 <div>
     <div class="row no-margin fixes-filters">
-        <div class="col-md-4">
-            <span class="breadcrump-element" ng-bind="$ctrl.label"></span>
-            <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element"> <i class="fa fa-chevron-right" aria-hidden="true"></i> </span>
-            <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element" ng-bind="$ctrl.steps[$ctrl.step].label"></span>
+        <div class="col-md-5">
+            <div class="row">
+                <span class="breadcrump-element" ng-bind="$ctrl.label"></span>
+                <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element"> <i class="fa fa-chevron-right" aria-hidden="true"></i> </span>
+                <span ng-show="$ctrl.step !== void(0)" class="breadcrump-element" ng-bind="$ctrl.steps[$ctrl.step].label"></span>
+            </div>
+            <div class="row">
+                <span class="location-breadcump" ng-click="$ctrl.moveToLocation('national', -1)">National </span>
+                <span class="location-breadcump" ng-click="$ctrl.moveToLocation(loc, $index)" ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i> {$ loc.name $}
+                </span>
+            </div>
         </div>
-        <div class="col-md-7">
-            <filters filters="$ctrl.filters" data="$ctrl.filtersData"></filters>
+        <div class="col-md-6">
+            <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
         </div>
         <div class="col-md-1">
-            <print-report></print-report>
-            <a class="black" href="#download"><i style="padding: 3px;" class="fa fa-download fa-2x pointer"></i></a>
+            <div class="row">
+                <div class="col-md-4">
+                    <print-report></print-report>
+                </div>
+                <div class="col-md-4">
+                    <a class="black" href="#download"><i uib-popover-html="'Go to tabular report'"
+                     popover-placement="left"
+                     popover-trigger="'mouseenter'" style="padding: 3px;" class="fa fa-download fa-2x pointer"></i></a>
+                </div>
+            </div>
         </div>
     </div>
     <div class="report-content">
@@ -36,7 +52,13 @@
                     <div uib-carousel active="active" interval="0" style="height: 300px;" >
                         <div uib-slide ng-repeat="images in $ctrl.data.images track by $index" index="$index">
                             <div>
-                                <img class="slider-image" ng-src="{$ img.image $}" ng-repeat="img in images track by img.id">
+                                <span ng-repeat="img in images track by img.id">
+                                    <img class="slider-image" ng-src="{$ img.image $}" >
+                                    <div class="carousel-caption">
+                                        <h4>Slide {$ img.date_submisstion $}</h4>
+                                        <p>{$ img.time_submission $}</p>
+                                    </div>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -79,17 +101,17 @@
                             <td>{$ row[$ctrl.data.last_month].age $}</td>
                             <td>{$ row[$ctrl.data.last_month].fully_immunized_date $}</td>
                             <td ng-repeat-start="month in $ctrl.data.months">
-                                <span class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'weight')" popover-placement="right"  popover-trigger="'mouseenter'">
+                                <span ng-class="{'red': row[month].nutrition_status === 'severely underweight', 'green': row[month].nutrition_status === 'normal', 'yellow': row[month].nutrition_status === 'moderately underweight'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'weight')" popover-placement="right"  popover-trigger="'mouseenter'">
                                     {$ row[month].nutrition_status $}
                                 </span>
                             </td>
                             <td>
-                                <span class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'height')" popover-placement="right" popover-trigger="'mouseenter'">
+                                <span ng-class="{'red': row[month].stunning === 'unmeasured', 'green': row[month].stunning === 'normal', 'orange': row[month].stunning === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'height')" popover-placement="right" popover-trigger="'mouseenter'">
                                     {$ row[month].stunning $}
                                 </span>
                             </td>
                             <td>
-                                <span class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'both')" popover-placement="right" popover-trigger="'mouseenter'">
+                                <span ng-class="{'red': row[month].wasting === 'unmeasured', 'green': row[month].wasting === 'normal', 'orange': row[month].wasting === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'both')" popover-placement="right" popover-trigger="'mouseenter'">
                                     {$ row[month].wasting $}
                                 </span>
                             </td>
