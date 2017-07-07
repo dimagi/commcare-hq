@@ -5002,7 +5002,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     @absolute_url_property
     def heartbeat_url(self):
-        return reverse('key_server_url', args=[self.domain])
+        return reverse('phone_heartbeat', args=[self.domain, self.get_id])
 
     @absolute_url_property
     def ota_restore_url(self):
@@ -5709,7 +5709,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             app_profile['custom_properties'].update(self__profile['custom_properties'])
 
         if toggles.PHONE_HEARTBEAT.enabled(self.domain):
-            apk_heartbeat_url = reverse('phone_heartbeat', args=[self.domain, self.get_id])
+            apk_heartbeat_url = self.heartbeat_url
         else:
             apk_heartbeat_url = None
         locale = self.get_build_langs(build_profile_id)[0]

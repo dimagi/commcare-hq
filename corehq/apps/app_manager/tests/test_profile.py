@@ -1,7 +1,6 @@
 # coding: utf-8
 import mock
 from django.test import SimpleTestCase
-from django.core.urlresolvers import reverse
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_lookup, get_custom_commcare_settings
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -112,8 +111,7 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
     @mock.patch('corehq.toggles.PHONE_HEARTBEAT.enabled', return_value=True)
     def test_heartbeat_url_toggle_on(self, _mock):
         profile = self.app.create_profile()
-        url = reverse('phone_heartbeat', args=['potter', self.app.get_id])
-        self._test_custom_property(ET.fromstring(profile), 'heartbeat-url', url)
+        self._test_custom_property(ET.fromstring(profile), 'heartbeat-url', self.app.heartbeat_url)
 
     def test_version(self):
         profile_xml = ET.fromstring(self.app.create_profile())
