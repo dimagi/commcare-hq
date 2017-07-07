@@ -78,8 +78,8 @@ class Command(BaseCommand):
         self.new_table = db_config.new_table
 
         # create a column string
-        self.column_string = ','.join(old_columns)
-        self.select_column_string = ','.join(['A.' + col for col in old_columns])
+        self.column_string = ', '.join(old_columns)
+        self.select_column_string = ', '.join(['A.' + col for col in old_columns])
 
         sql_command = self._sql_command(db_config.has_repeat_iteration)
 
@@ -114,7 +114,7 @@ class Command(BaseCommand):
 
         return (
            " INSERT INTO " + new_table + " ( " + self.column_string + " ) " +
-           " SELECT ( " + self.select_column_string + " ) " +
+           " SELECT " + self.select_column_string + " " +
            " FROM " + old_table + " A " +
            " LEFT JOIN " + new_table + " B " +
            " ON " + join + " " +
