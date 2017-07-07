@@ -31,7 +31,7 @@ NUTRITION_STATUS_SEVERE = "red"
 @override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 @mock.patch('custom.icds_reports.ucr.expressions.mget_query', mget_query_fake)
 class TestChildHealthDataSource(BaseICDSDatasourceTest):
-    datasource_filename = 'child_health_cases_monthly_tableau'
+    datasource_filename = 'child_health_cases_monthly_tableau2'
 
     def _create_case(
             self, case_id, dob,
