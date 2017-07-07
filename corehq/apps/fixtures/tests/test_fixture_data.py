@@ -248,3 +248,66 @@ class FixtureDataTest(TestCase):
             """.format(self.user.user_id),
             '<f>{}\n{}\n</f>'.format(*[ElementTree.tostring(fixture) for fixture in fixtures])
         )
+
+    def test_user_data_type_with_item(self):
+        cookie = self.make_data_type("cookie", is_global=False)
+        latte = self.make_data_type("latte", is_global=True)
+        self.make_data_item(cookie, "2.50")
+        self.make_data_item(latte, "5.75")
+
+        fixtures = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
+        # make sure each fixture is there, and only once
+        self.assertEqual(
+            [item.attrib['id'] for item in fixtures],
+            [
+                'item-list:latte-index',
+                'item-list:cookie-index',
+                'item-list:district',
+            ],
+        )
+
+    def test_empty_user_data_types(self):
+        self.make_data_type("cookie", is_global=False)
+
+        fixtures = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
+        # make sure each fixture is there, and only once
+        self.assertEqual(
+            [item.attrib['id'] for item in fixtures],
+            [
+                'item-list:cookie-index',
+                'item-list:district',
+            ],
+        )
+
+    def make_data_type(self, name, is_global):
+        data_type = FixtureDataType(
+            domain=self.domain,
+            tag="{}-index".format(name),
+            is_global=is_global,
+            name=name.title(),
+            fields=[
+                FixtureTypeField(field_name="cost", properties=[]),
+            ],
+            item_attributes=[],
+        )
+        data_type.save()
+        self.addCleanup(data_type.delete)
+        return data_type
+
+    def make_data_item(self, data_type, cost):
+        data_item = FixtureDataItem(
+            domain=self.domain,
+            data_type_id=data_type._id,
+            fields={
+                "cost": FieldList(
+                    field_list=[FixtureItemField(
+                        field_value=cost,
+                        properties={},
+                    )]
+                ),
+            },
+            item_attributes={},
+        )
+        data_item.save()
+        self.addCleanup(data_item.delete)
+        return data_item
