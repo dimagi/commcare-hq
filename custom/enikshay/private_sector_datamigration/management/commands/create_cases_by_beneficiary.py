@@ -22,7 +22,7 @@ from custom.enikshay.private_sector_datamigration.models import (
 
 logger = logging.getLogger('private_sector_datamigration')
 
-DEFAULT_NUMBER_OF_PATIENTS_PER_FORM = 50
+DEFAULT_NUMBER_OF_PATIENTS_PER_FORM = 1
 
 
 def mock_ownership_cleanliness_checks():
