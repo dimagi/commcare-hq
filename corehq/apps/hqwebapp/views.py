@@ -80,6 +80,22 @@ def is_deploy_in_progress():
     return cache.get(DEPLOY_IN_PROGRESS_FLAG) is not None
 
 
+def format_traceback_the_way_python_does(type, exc, tb):
+    """
+    Returns a traceback that looks like the one python gives you in the shell, e.g.
+
+    Traceback (most recent call last):
+      File "<stdin>", line 2, in <module>
+    NameError: name 'name' is not defined
+    """
+
+    return u'Traceback (most recent call last):\n{}{}: {}'.format(
+        ''.join(traceback.format_tb(tb)),
+        type.__name__,
+        unicode(exc)
+    )
+
+
 def server_error(request, template_name='500.html'):
     """
     500 error handler.
@@ -91,7 +107,7 @@ def server_error(request, template_name='500.html'):
     t = loader.get_template(template_name)
     type, exc, tb = sys.exc_info()
 
-    traceback_text = ''.join(traceback.format_tb(tb))
+    traceback_text = format_traceback_the_way_python_does(type, exc, tb)
     traceback_key = uuid.uuid4().hex
     cache.cache.set(traceback_key, traceback_text, 60*60)
 
