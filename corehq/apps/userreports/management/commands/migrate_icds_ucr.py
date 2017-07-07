@@ -78,8 +78,14 @@ class Command(BaseCommand):
         self.new_table = db_config.new_table
 
         # create a column string
-        self.column_string = ', '.join(old_columns)
-        self.select_column_string = ', '.join(['A.' + col for col in old_columns])
+        quoted_columns = []
+        for col in old_columns:
+            if col.islower():
+                quoted_columns.append('%s' % col)
+            else:
+                quoted_columns.append('"%s"' % col)
+        self.column_string = ', '.join(quoted_columns)
+        self.select_column_string = ', '.join(['A.' + col for col in quoted_columns])
 
         sql_command = self._sql_command(db_config.has_repeat_iteration)
 
