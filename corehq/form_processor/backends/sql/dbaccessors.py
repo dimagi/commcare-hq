@@ -285,7 +285,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         assert isinstance(form_ids, list)
         forms = list(XFormInstanceSQL.objects.raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
         if ordered:
-            forms = _order_list(form_ids, forms, 'form_id')
+            _sort_with_id_list(forms, form_ids, 'form_id')
 
         return forms
 
@@ -364,7 +364,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         _attach_prefetch_models(forms_by_id, attachments, 'form_id', 'cached_attachments')
 
         if ordered:
-            forms = _order_list(form_ids, forms, 'form_id')
+            _sort_with_id_list(forms, form_ids, 'form_id')
 
         return forms
 
@@ -426,13 +426,14 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_attachments_for_forms(form_ids, ordered=False):
+        assert isinstance(form_ids, list)
         attachments = list(XFormAttachmentSQL.objects.raw(
             'SELECT * from get_multiple_forms_attachments(%s)',
             [form_ids]
         ))
 
         if ordered:
-            attachments = _order_list(form_ids, attachments, 'form_id')
+            _sort_with_id_list(attachments, form_ids, 'form_id')
 
         return attachments
 
@@ -646,7 +647,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         cases = list(CommCareCaseSQL.objects.raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
 
         if ordered:
-            cases = _order_list(case_ids, cases, 'case_id')
+            _sort_with_id_list(cases, case_ids, 'case_id')
 
         if prefetched_indices:
             cases_by_id = {case.case_id: case for case in cases}
@@ -1187,14 +1188,19 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             raise LedgerSaveError(e)
 
 
-def _order_list(id_list, object_list, id_property):
-    # SQL won't return the rows in any particular order so we need to order them ourselves
-    index_map = {id_: index for index, id_ in enumerate(id_list)}
-    ordered_list = [None] * len(id_list)
-    for obj in object_list:
-        ordered_list[index_map[getattr(obj, id_property)]] = obj
+def _sort_with_id_list(object_list, id_list, id_property):
+    """Sort object list in the same order as given list of ids
 
-    return ordered_list
+    SQL does not necessarily return the rows in any particular order so
+    we need to order them ourselves.
+    
+    NOTE: this does not return the sorted list. It sorts `object_list`
+    in place using Python's built-in `list.sort`.
+    """
+    index_map = {id_: index for index, id_ in enumerate(id_list)}
+    def key(obj):
+        return index_map[getattr(obj, id_property)]
+    object_list.sort(key=key)
 
 
 def _attach_prefetch_models(objects_by_id, prefetched_models, link_field_name, cached_attrib_name):
