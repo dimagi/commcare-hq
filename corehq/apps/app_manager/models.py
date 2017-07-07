@@ -5001,6 +5001,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return reverse('key_server_url', args=[self.domain])
 
     @absolute_url_property
+    def heartbeat_url(self):
+        return reverse('key_server_url', args=[self.domain])
+
+    @absolute_url_property
     def ota_restore_url(self):
         return reverse('app_aware_restore', args=[self.domain, self._id])
 
@@ -5704,6 +5708,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
 
+        if toggles.PHONE_HEARTBEAT.enabled(self.domain):
+            apk_heartbeat_url = reverse('phone_heartbeat', args=[self.domain, self.get_id])
+        else:
+            apk_heartbeat_url = None
         locale = self.get_build_langs(build_profile_id)[0]
         return render_to_string(template, {
             'is_odk': is_odk,
@@ -5716,7 +5724,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'name': self.name,
             'descriptor': u"Profile File",
             'build_profile_id': build_profile_id,
-            'locale': locale
+            'locale': locale,
+            'apk_heartbeat_url': apk_heartbeat_url,
         }).encode('utf-8')
 
     @property

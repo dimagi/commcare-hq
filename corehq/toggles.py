@@ -1259,3 +1259,10 @@ DISPLAY_CONDITION_ON_TABS = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
+
+PHONE_HEARTBEAT = StaticToggle(
+    'phone_apk_heartbeat',
+    'Expose phone apk heartbeat URL and add it profile.xml',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
