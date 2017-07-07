@@ -18,7 +18,7 @@ XMLNS_EBF_FORM = 'http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF
 @override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 @mock.patch('custom.icds_reports.ucr.expressions.mget_query', mget_query_fake)
 class TestCCSRecordDataSource(BaseICDSDatasourceTest):
-    datasource_filename = 'ccs_record_cases_monthly_tableau'
+    datasource_filename = 'ccs_record_cases_monthly_tableau2'
 
     def _create_ccs_case(
             self, case_id, dob, edd, add=None,
