@@ -115,15 +115,18 @@ $(function () {
                 return self.caseListForm() && !formOptions[self.caseListForm()];
             });
 
-            // Show or hide associated multimedia. Not done in knockout because
-            // the multimedia section has its own separate set of knockout bindings
-            self.caseListForm.subscribe(function(form_id) {
-                if (form_id) {
+            var showMedia = function(formId) {
+                if (formId) {
                     $("#case_list_media").show();
                 } else {
                     $("#case_list_media").hide();
                 }
-            });
+            };
+
+            // Show or hide associated multimedia. Not done in knockout because
+            // the multimedia section has its own separate set of knockout bindings
+            showMedia(originalFormId);
+            self.caseListForm.subscribe(showMedia);
         };
         var case_list_form_options = initial_page_data('case_list_form_options');
             caseListForm = new CaseListForm(
