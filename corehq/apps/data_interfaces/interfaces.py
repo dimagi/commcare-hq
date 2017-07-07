@@ -188,6 +188,7 @@ class BulkFormManagementInterface(SubmitHistoryMixin, DataInterface, ProjectRepo
     name = ugettext_noop("Manage Forms")
     slug = "bulk_archive_forms"
     report_template_path = 'data_interfaces/interfaces/archive_forms.html'
+    asynchronous = False
 
     def __init__(self, request, **kwargs):
         super(BulkFormManagementInterface, self).__init__(request, **kwargs)
