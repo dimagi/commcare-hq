@@ -107,6 +107,21 @@ class Command(BaseCommand):
         skip_adherence = options['skip_adherence']
         start = options['start']
 
+        logger.info('domain=%s' % domain)
+        logger.info('migration_comment=%s' % migration_comment)
+        for arg in [
+            'caseIds',
+            'chunk_size',
+            'limit',
+            'owner_district_id'
+            'owner_organisation_ids',
+            'owner_suborganisation_ids',
+            'owner_state_id',
+            'skip_adherence',
+            'start',
+        ]:
+            logger.info('%s=%s' % (arg, str(options[arg])))
+
         default_location_owner_id = options['default_location_owner_id']
         if default_location_owner_id:
             default_location_owner = SQLLocation.objects.get(
