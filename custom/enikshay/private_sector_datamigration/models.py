@@ -196,6 +196,7 @@ class Beneficiary_Jun30(models.Model):
             '18': 'drivers_license',
             '19': 'ration_card',
             '20': 'voter_card',
+            '21': 'none',
             None: 'none',
         }[self.identificationTypeId]
 
