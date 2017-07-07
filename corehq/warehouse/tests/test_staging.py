@@ -1,3 +1,4 @@
+from django.conf import settings
 from mock import patch
 from datetime import datetime, timedelta
 from django.test import TestCase
@@ -6,6 +7,7 @@ from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
+from corehq.form_processor.tests.utils import partitioned
 
 from corehq.warehouse.tests.utils import DEFAULT_BATCH_ID, get_default_batch, create_batch
 from corehq.warehouse.models import (
@@ -26,6 +28,7 @@ def teardown_module():
     Batch.objects.all().delete()
 
 
+@partitioned
 class BaseStagingTableTest(TestCase):
     records = []
     staging_table_cls = None
@@ -79,6 +82,7 @@ class TestGroupStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
 
     @classmethod
     def setUpClass(cls):
+        cls.using = 'warehouse' if settings.USE_PARTITIONED_DATABASE else 'default'
         delete_all_docs_by_doc_type(Group.get_db(), ['Group', 'Group-Deleted'])
         super(TestGroupStagingTable, cls).setUpClass()
 
@@ -87,12 +91,12 @@ class TestGroupStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
 
         # 1 Query for clearing records
         # 1 Query for inserting recorrds
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(2, using=self.using):
             GroupStagingTable.commit(batch)
 
         # 1 Query for clearing records
         # 2 Queries for inserting recorrds
-        with self.assertNumQueries(3):
+        with self.assertNumQueries(3, using=self.using):
             with patch('corehq.warehouse.utils.DJANGO_MAX_BATCH_SIZE', 2):
                 GroupStagingTable.commit(batch)
         self.assertEqual(GroupStagingTable.objects.count(), 3)

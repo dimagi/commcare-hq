@@ -90,12 +90,12 @@ class FormFactIntegrationTest(TestCase):
 
         FormProcessorTestUtils.delete_all_sql_forms(cls.domain)
 
+        FormStagingTable.clear_records()
+        FormFact.clear_records()
         DomainStagingTable.clear_records()
         DomainDim.clear_records()
         UserStagingTable.clear_records()
         UserDim.clear_records()
-        FormStagingTable.clear_records()
-        FormFact.clear_records()
         super(FormFactIntegrationTest, cls).tearDownClass()
 
     def test_loading_form_fact(self):

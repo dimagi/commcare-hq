@@ -52,6 +52,17 @@ if USE_PARTITIONED_DATABASE:
                 'SERIALIZE': False,
             },
         },
+        'warehouse': {
+             'ENGINE': 'django.db.backends.postgresql_psycopg2',
+             'NAME': 'commcarehq_warehouse',
+             'USER': 'commcarehq',
+             'PASSWORD': 'commcarehq',
+             'HOST': 'postgres',
+             'PORT': '5432',
+             'TEST': {
+                 'SERIALIZE': False,
+             },
+         },
     })
 
     PARTITION_DATABASE_CONFIG = {

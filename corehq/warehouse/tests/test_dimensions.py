@@ -3,6 +3,7 @@ from django.test import TestCase
 
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
+from corehq.form_processor.tests.utils import partitioned
 from corehq.pillows.utils import (
     SYSTEM_USER_TYPE,
     DEMO_USER_TYPE,
@@ -42,6 +43,7 @@ def teardown_module():
     Batch.objects.all().delete()
 
 
+@partitioned
 class TestUserDim(TestCase):
 
     domain = 'user-dim-test'
@@ -113,6 +115,7 @@ class TestUserDim(TestCase):
         )
 
 
+@partitioned
 class TestUserGroupDim(TestCase):
 
     domain = 'user-group-dim-test'
@@ -168,6 +171,7 @@ class TestUserGroupDim(TestCase):
         )
 
 
+@partitioned
 class TestLocationDim(TestCase):
 
     domain = 'location-dim-test'
@@ -177,12 +181,11 @@ class TestLocationDim(TestCase):
         super(TestLocationDim, cls).setUpClass()
         cls.batch = get_default_batch()
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         LocationStagingTable.clear_records()
         LocationTypeStagingTable.clear_records()
         LocationDim.clear_records()
-        super(TestLocationDim, cls).tearDownClass()
+        super(TestLocationDim, self).tearDown()
 
     def test_location_dim(self):
         tree = {
