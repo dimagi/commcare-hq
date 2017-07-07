@@ -92,7 +92,7 @@ class Command(BaseCommand):
             print(self.get_count(self.new_table))
             with connections['icds-ucr'].cursor() as cursor:
                 cursor.execute(sql_command)
-            print("count of old table %s: " % self.new_table)
+            print("count of new table %s: " % self.new_table)
             print(self.get_count(self.new_table))
 
     def get_count(self, table_name):
