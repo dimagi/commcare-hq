@@ -218,7 +218,7 @@ def _get_careplan_module_view_context(app, module, case_property_builder):
 def _get_advanced_module_view_context(app, module):
     case_type = module.case_type
     return {
-        'case_list_form_allowed': _case_list_form_allowed(module),
+        'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': True,
         'schedule_phases': [
             {
@@ -233,13 +233,9 @@ def _get_advanced_module_view_context(app, module):
 
 
 def _get_basic_module_view_context(app, module, case_property_builder):
-    case_type = module.case_type
-    # http://manage.dimagi.com/default.asp?178635
-    allow_with_parent_select = app.build_version >= '2.23' or not module.parent_select.active
-    allow_case_list_form = allow_with_parent_select and _case_list_form_allowed(module)
     return {
-        'parent_modules': _get_parent_modules(app, module, case_property_builder, case_type),
-        'case_list_form_allowed': allow_case_list_form,
+        'parent_modules': _get_parent_modules(app, module, case_property_builder, module.case_type),
+        'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': (
             toggles.BASIC_CHILD_MODULE.enabled(app.domain)
         ),
@@ -412,8 +408,18 @@ def _get_module_details_context(app, module, case_property_builder, case_type_):
     return details
 
 
-def _case_list_form_allowed(module):
-    return module.all_forms_require_a_case() and not module.put_in_root
+def _case_list_form_not_allowed_reasons(module):
+    reasons = []
+    if module.put_in_root:
+        reasons.append(_("'Menu Mode' is not configured as 'Display menu and then forms'"))
+    if not module.all_forms_require_a_case():
+        reasons.append(_("all forms in this case list must update a case, "
+                         "which means that registration forms must go in a different case list"))
+    if isinstance(module, Module):
+        app = module.get_app()
+        if app.build_version < '2.23' and module.parent_select.active:
+            reasons.append(_("'Parent Selection' is configured"))
+    return reasons
 
 
 @no_conflict_require_POST
