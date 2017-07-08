@@ -103,7 +103,7 @@ urlpatterns = [
     url(r'^delete_form/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         delete_form, name="delete_form"),
 
-    url(r'^overwrite_module_case_list/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',
+    url(r'^overwrite_module_case_list/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         overwrite_module_case_list, name='overwrite_module_case_list'),
     url(r'^copy_form/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$', copy_form, name='copy_form'),
 
