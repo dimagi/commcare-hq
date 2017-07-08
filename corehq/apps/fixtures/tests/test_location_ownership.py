@@ -120,24 +120,24 @@ class TestLocationOwnership(LocationHierarchyTestCase):
         latte_type.save()
 
         latte_item = FixtureDataItem(
-                domain=self.domain,
-                data_type_id=latte_type.get_id,
-                fields={
-                    "cost": FieldList(
-                        field_list=[FixtureItemField(
-                            field_value='5.75',
-                            properties={},
-                        )]
-                    ),
-                    "location_name": FieldList(
-                        field_list=[FixtureItemField(
-                            field_value="Boston",
-                            properties={},
-                        )]
-                    ),
-                },
-                item_attributes={},
-            )
+            domain=self.domain,
+            data_type_id=latte_type.get_id,
+            fields={
+                "cost": FieldList(
+                    field_list=[FixtureItemField(
+                        field_value='5.75',
+                        properties={},
+                    )]
+                ),
+                "location_name": FieldList(
+                    field_list=[FixtureItemField(
+                        field_value="Boston",
+                        properties={},
+                    )]
+                ),
+            },
+            item_attributes={},
+        )
         latte_item.save()
 
         fixture_xml = list(generator.get_fixtures(self.boston_user.to_ota_restore_user()))
