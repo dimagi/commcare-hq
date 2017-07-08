@@ -16,10 +16,10 @@ from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_schedule_phases(request, domain, app_id, module_id):
+def edit_schedule_phases(request, domain, app_id, module_unique_id):
     NEW_PHASE_ID = -1
     app = get_app(domain, app_id)
-    module = app.get_module(module_id)
+    module = app.get_module_by_unique_id(module_unique_id)
     phases = json.loads(request.POST.get('phases'))
     changed_anchors = [(phase['id'], phase['anchor'])
                        for phase in phases if phase['id'] != NEW_PHASE_ID]
