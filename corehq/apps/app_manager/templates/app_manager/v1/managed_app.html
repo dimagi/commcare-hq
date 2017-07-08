@@ -183,7 +183,7 @@
                                 {% endfor %}
                             {% endwith %}
                             <li class="sort-disabled">
-                                <form id="form-to-create-new-form-for-module-{{ module.id }}" action="{% url "new_form" domain app.id module.id %}"
+                                <form id="form-to-create-new-form-for-module-{{ module.unique_id }}" action="{% url "new_form" domain app.id module.unique_id %}"
                                       method="post" class="hide">{% csrf_token %}
                                     <input type="hidden" name="form_type">
                                 </form>
