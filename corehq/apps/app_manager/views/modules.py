@@ -617,13 +617,13 @@ def undo_delete_module(request, domain, record_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def overwrite_module_case_list(request, domain, app_id, module_id):
+def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     app = get_app(domain, app_id)
-    source_module_id = int(request.POST['source_module_id'])
+    source_module_unique_id = int(request.POST['source_module_unique_id'])
     detail_type = request.POST['detail_type']
     assert detail_type in ['short', 'long']
-    source_module = app.get_module(source_module_id)
-    dest_module = app.get_module(module_id)
+    source_module = app.get_module_by_unique_id(source_module_unique_id)
+    dest_module = app.get_module_by_unique_id(module_unique_id)
     if not hasattr(source_module, 'case_details'):
         messages.error(
             request,
