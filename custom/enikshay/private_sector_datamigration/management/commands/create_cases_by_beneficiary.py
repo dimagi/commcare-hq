@@ -22,7 +22,7 @@ from custom.enikshay.private_sector_datamigration.models import (
 
 logger = logging.getLogger('private_sector_datamigration')
 
-DEFAULT_NUMBER_OF_PATIENTS_PER_FORM = 50
+DEFAULT_NUMBER_OF_PATIENTS_PER_FORM = 1
 
 
 def mock_ownership_cleanliness_checks():
@@ -106,6 +106,21 @@ class Command(BaseCommand):
         owner_state_id = options['owner_state_id']
         skip_adherence = options['skip_adherence']
         start = options['start']
+
+        logger.info('domain=%s' % domain)
+        logger.info('migration_comment=%s' % migration_comment)
+        for arg in [
+            'caseIds',
+            'chunk_size',
+            'limit',
+            'owner_district_id',
+            'owner_organisation_ids',
+            'owner_suborganisation_ids',
+            'owner_state_id',
+            'skip_adherence',
+            'start',
+        ]:
+            logger.info('%s=%s' % (arg, str(options[arg])))
 
         default_location_owner_id = options['default_location_owner_id']
         if default_location_owner_id:
@@ -201,6 +216,7 @@ def migrate_to_enikshay(domain, migration_comment, beneficiaries, skip_adherence
     counter = 0
     num_succeeded = 0
     num_failed = 0
+    num_failed_chunks = 0
     logger.info('Starting migration of %d patients in domain %s.' % (total, domain))
     factory = CaseFactory(domain=domain)
     case_structures = []
@@ -225,11 +241,12 @@ def migrate_to_enikshay(domain, migration_comment, beneficiaries, skip_adherence
             if num_succeeded % chunk_size == 0:
                 logger.info('%d cases to save.' % len(case_structures))
                 logger.info('committing beneficiaries {}-{}...'.format(
-                    num_succeeded - chunk_size, num_succeeded
+                    num_succeeded - chunk_size + 1, num_succeeded
                 ))
                 try:
                     factory.create_or_update_cases(case_structures)
                 except Exception:
+                    num_failed_chunks += 1
                     logger.error(
                         'Failure writing case structures',
                         exc_info=True,
@@ -251,6 +268,7 @@ def migrate_to_enikshay(domain, migration_comment, beneficiaries, skip_adherence
     logger.info('Number of attempts: %d.' % counter)
     logger.info('Number of successes: %d.' % num_succeeded)
     logger.info('Number of failures: %d.' % num_failed)
+    logger.info('Number of chunks to fail writing: %d' % num_failed_chunks)
 
     # since we circumvented cleanliness checks just call this at the end
     logger.info('Setting cleanliness flags')
