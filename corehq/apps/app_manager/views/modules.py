@@ -683,7 +683,7 @@ def _update_search_properties(module, search_properties, lang='en'):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_module_detail_screens(request, domain, app_id, module_id):
+def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     """
     Overwrite module case details. Only overwrites components that have been
     provided in the request. Components are short, long, filter, parent_select,
@@ -715,7 +715,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     }
 
     app = get_app(domain, app_id)
-    module = app.get_module(module_id)
+    module = app.get_module_by_unique_id(module_unique_id)
 
     if detail_type == 'case':
         detail = module.case_details
