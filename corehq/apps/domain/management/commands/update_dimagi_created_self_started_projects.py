@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 
 from corehq.apps.users.models import CouchUser
@@ -33,4 +33,3 @@ class Command(BaseCommand):
                 for domain_name in couch_user.get_domains():
                     print("domain: " + domain_name)
                     self.update_domain_if_self_started(domain_name, username)
-
