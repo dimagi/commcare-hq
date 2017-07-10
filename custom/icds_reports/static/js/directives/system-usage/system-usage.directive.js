@@ -4,7 +4,6 @@ function SystemUsageController($http, $log, $routeParams, $location, storageServ
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
-    vm.tooltipPlacement = "right";
     vm.filters = ['gender', 'age'];
     vm.step = $routeParams.step;
     $location.search(storageService.get());
@@ -27,9 +26,8 @@ function SystemUsageController($http, $log, $routeParams, $location, storageServ
     };
 
     vm.steps = {
-        "system_usage": {"route": "/program_summary/system_usage", "label": "System Usage", "data": null},
-        "maternal_child": {"route": "/program_summary/maternal_child", "label": "Maternal & Child Health", "data": null},
-        "icds_cas_reach": {"route": "/program_summary/icds_cas_reach", "label": "ICDS-CAS Reach", "data": null},
+        "maternal_child": {"route": "/program_summary/maternal_child", "label": "Maternal & Child Nutrition", "data": null},
+        "icds_cas_reach": {"route": "/program_summary/icds_cas_reach", "label": "ICDS CAS Reach", "data": null},
         "demographics": {"route": "/program_summary/demographics", "label": "Demographics", "data": null},
         "awc_infrastructure": {"route": "/program_summary/awc_infrastructure", "label": "AWC Infrastructure", "data": null},
     };
