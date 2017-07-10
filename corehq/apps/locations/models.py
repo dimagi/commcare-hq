@@ -331,7 +331,6 @@ class LocationManager(LocationQueriesMixin, TreeManager):
         """
         Accepts partial matches, matches against name and site_code.
         """
-        # HERE
         return (self.filter(domain=domain)
                     .filter(models.Q(name__icontains=user_input) |
                             models.Q(site_code__icontains=user_input)))
