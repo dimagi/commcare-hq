@@ -570,20 +570,32 @@ def clean_date(messy_date_string):
 
 
 def match_district(domain, xlsx_district_name):
-    """
-    Given district name taken from the spreadsheet, return the name and id of the matching location in HQ.
-    """
     # TODO: Consider filtering by location type
-    if not xlsx_district_name:
+    return match_location(domain, xlsx_district_name)
+
+
+def match_location(domain, xlsx_name, location_type=None):
+    """
+    Given location name taken from the spreadsheet, return the name and id of the matching location in HQ.
+    """
+    if not xlsx_name:
         return None, None
     try:
-        location = SQLLocation.active_objects.get(domain=domain, name__iexact=xlsx_district_name)
+        kwargs = {"domain": domain, "name__iexact":xlsx_name}
+        if location_type:
+            kwargs["location_type__code"] = location_type
+        location = SQLLocation.active_objects.get(**kwargs)
     except SQLLocation.DoesNotExist:
-        possible_matches = SQLLocation.active_objects.filter(domain=domain).filter(models.Q(name__icontains=xlsx_district_name))
+        kwargs = {"domain": domain}
+        if location_type:
+            kwargs["location_type__code"] = location_type
+        possible_matches = SQLLocation.active_objects.filter(**kwargs).filter(models.Q(name__icontains=xlsx_name))
         if len(possible_matches) == 1:
             location = possible_matches[0]
+        elif len(possible_matches) > 1:
+            raise Exception("Multiple location matches for {}".format(xlsx_name))
         else:
-            return None, None
+            raise Exception("No location matches for {}".format(xlsx_name))
     return location.name, location.location_id
 
 
@@ -592,7 +604,18 @@ def match_facility(domain, xlsx_facility_name):
     Given facility name taken from the spreadsheet, return the name and id of the matching location in HQ.
     """
     # TODO: Consider filtering by location type
-    return match_district(domain, xlsx_facility_name)
+    return match_location(domain, xlsx_facility_name)
+
+
+def match_phi(domain, xlsx_phi_name):
+    return match_location(domain, xlsx_phi_name, "phi")
+
+
+def get_tu(domain, phi_id):
+    if not phi_id:
+        return None, None
+    phi = SQLLocation.get(domain=domain, location_id=phi_id)
+    return phi.parent.name, phi.parent.location_id
 
 
 class Command(BaseCommand):
