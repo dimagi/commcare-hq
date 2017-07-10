@@ -289,39 +289,11 @@ def save_document(doc_ids):
         with timer:
             for doc in doc_store.iter_documents(doc_ids):
                 indicator = indicator_by_doc_id[doc['_id']]
-
-                eval_context = EvaluationContext(doc)
-                working_config_ids = []
-                failed_config_ids = []
-                for config_id in indicator.indicator_config_ids:
-                    adapter = None
-                    try:
-                        config = _get_config(config_id)
-                        adapter = get_indicator_adapter(config, can_handle_laboratory=True)
-                        adapter.save(doc, eval_context)
-                        eval_context.reset_iteration()
-                        working_config_ids.append(config_id)
-                    except (DatabaseError, ESError, InternalError, RequestError,
-                            ConnectionTimeout, ProtocolError, ReadTimeout):
-                        # a database had an issue so don't log it and go on to the next doc
-                        failed_config_ids.append(config_id)
-                        failed_indicators.append(indicator.pk)
-                        break
-                    except Exception as e:
-                        # getting the config could fail before the adapter is set
-                        if adapter:
-                            adapter.handle_exception(doc, e)
-                        failed_config_ids.append(config_id)
-                        failed_indicators.append(indicator.pk)
-                        break
-                    else:
-                        processed_indicators.append(indicator.pk)
-
-                # only want to change if there were some that worked and failed
-                if failed_config_ids and working_config_ids:
-                    AsyncIndicator.objects.filter(pk=indicator.pk).update(
-                        indicator_config_ids=failed_config_ids
-                    )
+                successfully_processed = _save_document_helper(indicator, doc)
+                if successfully_processed:
+                    processed_indicators.append(indicator.pk)
+                else:
+                    failed_indicators.append(indicator.pk)
 
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
         AsyncIndicator.objects.filter(pk__in=failed_indicators).update(
@@ -334,6 +306,39 @@ def save_document(doc_ids):
             u'config_ids:{}'.format(indicator_config_ids)
         ]
     )
+
+
+def _save_document_helper(indicator, doc):
+    eval_context = EvaluationContext(doc)
+    working_config_ids = []
+    failed_config_ids = []
+    for config_id in indicator.indicator_config_ids:
+        adapter = None
+        try:
+            config = _get_config(config_id)
+            adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+            adapter.save(doc, eval_context)
+            eval_context.reset_iteration()
+            working_config_ids.append(config_id)
+        except (DatabaseError, ESError, InternalError, RequestError,
+                ConnectionTimeout, ProtocolError, ReadTimeout):
+            # a database had an issue so don't log it and go on to the next doc
+            failed_config_ids.append(config_id)
+            break
+        except Exception as e:
+            # getting the config could fail before the adapter is set
+            if adapter:
+                adapter.handle_exception(doc, e)
+            failed_config_ids.append(config_id)
+            break
+
+    # only want to change if there were some that worked and failed
+    if failed_config_ids and working_config_ids:
+        AsyncIndicator.objects.filter(pk=indicator.pk).update(
+            indicator_config_ids=failed_config_ids
+        )
+
+    return len(failed_config_ids) == 0
 
 
 @periodic_task(
