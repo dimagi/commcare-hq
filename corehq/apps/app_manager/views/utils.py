@@ -3,7 +3,7 @@ import uuid
 from urllib import urlencode
 from django.contrib import messages
 from django.urls import reverse
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
