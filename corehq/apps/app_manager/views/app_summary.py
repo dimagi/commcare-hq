@@ -105,7 +105,7 @@ class AppDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
                     'errors': errors,
                 },
                 'case_data': self.app.get_case_metadata().to_json(),
-                'form_name_map': _get_name_map(self.app, request),
+                'form_name_map': _get_name_map(self.app),
             },
             'success': True,
         })
