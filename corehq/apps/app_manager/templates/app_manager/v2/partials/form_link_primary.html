@@ -4,7 +4,7 @@
 
 {# For APP BUILDER PROTOTYPE use only #}
 
-<a id="view_form_{{ module.id }}_{{ form.id }}_sidebar"
+<a id="view_form_{{ module.unique_id }}_{{ form.unique_id }}_sidebar"
    {% if form.no_vellum %}
    href="{% url "view_form" domain app.id form.unique_id %}"
    {% else %}

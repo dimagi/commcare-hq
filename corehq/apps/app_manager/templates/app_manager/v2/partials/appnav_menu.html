@@ -13,13 +13,13 @@
         {% for module in app.get_modules %}
             <li class="edit-module-li js-sorted-li" data-index="{{ module.id }}" data-indexvar="moduleid">
 
-                <div class="appnav-item {% ifequal module.id selected_module.id %}{% if not form %}active{% endif %}{% endifequal %}">
+                <div class="appnav-item {% ifequal module.unique_id selected_module.unique_id %}{% if not form %}active{% endif %}{% endifequal %}">
                   {% include 'app_manager/v2/partials/confirm_delete_module.html' %}
                   {% include 'app_manager/v2/partials/module_link_primary.html' %}
                   {% include 'app_manager/v2/partials/module_link_secondary.html' %}
                 </div>
 
-                <ul class="appnav-menu appnav-menu-nested see {% ifequal module.id selected_module.id %}selected{% endifequal %} sortable sortable-forms {% if module.is_surveys %}appnav-surveys{% else %}appnav-caselist{% endif %}" data-parentvar="moduleid">
+                <ul class="appnav-menu appnav-menu-nested see {% ifequal module.unique_id selected_module.unique_id %}selected{% endifequal %} sortable sortable-forms {% if module.is_surveys %}appnav-surveys{% else %}appnav-caselist{% endif %}" data-parentvar="moduleid">
                     <li class="sort-action">
                         <form method="post"
                               action="{% url "rearrange" domain app.id 'forms' %}">
