@@ -360,10 +360,10 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
 
 @login_or_digest_or_basic_or_apikey()
 @require_GET
-def heartbeat(request, domain, id):
+def heartbeat(request, domain, app_id):
     # mobile needs this. This needs to be revisited to actually work dynamically (Sravan June 7, 17)
     return JsonResponse({
-        "app_id": "value_copied_from_app_id_url_param",
+        "app_id": app_id,
         "latest_apk_version": {"value": ""},
         "latest_ccz_version": {"value": ""}
     })
