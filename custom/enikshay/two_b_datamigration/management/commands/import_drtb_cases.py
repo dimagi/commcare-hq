@@ -242,6 +242,7 @@ class MumbaiConstants(object):
     drtb_center_name = None
     drtb_center_id = None
 
+
 class MehsanaConstants(object):
     """A collection of Mehsana specific constants"""
     drtb_center_name = "Patan - DRTB-HIV"
@@ -345,7 +346,8 @@ def get_occurrence_case_properties(column_mapping, row):
     return {
         "owner_id": "-",
         "current_episode_type": "confirmed_drtb",
-        "initial_home_visit_status": "completed" if column_mapping.get_value("initial_home_visit_date", row) else None,
+        "initial_home_visit_status":
+            "completed" if column_mapping.get_value("initial_home_visit_date", row) else None,
     }
 
 
@@ -371,7 +373,8 @@ def get_episode_case_properties(domain, column_mapping, row):
         "diagnosis_test_result_date": report_sending_date,
         "treatment_initiation_date": treatment_initiation_date,
         "treatment_card_completed_date": treatment_card_completed_date,
-        "regimen_change_history": get_episode_regimen_change_history(column_mapping, row, treatment_initiation_date),
+        "regimen_change_history": get_episode_regimen_change_history(
+            column_mapping, row, treatment_initiation_date),
         "treatment_initiating_facility_id": match_facility(
             domain, column_mapping.get_value("treatment_initiation_center", row)
         )[1],
@@ -597,6 +600,7 @@ def clean_hiv_status(value):
         "Positive": REACTIVE,  #? TODO
     }[value]
 
+
 def clean_result(value):
     return {
         None: NO_RESULT,
@@ -646,7 +650,7 @@ def match_location(domain, xlsx_name, location_type=None):
     if not xlsx_name:
         return None, None
     try:
-        kwargs = {"domain": domain, "name__iexact":xlsx_name}
+        kwargs = {"domain": domain, "name__iexact": xlsx_name}
         if location_type:
             kwargs["location_type__code"] = location_type
         location = SQLLocation.active_objects.get(**kwargs)
@@ -718,7 +722,9 @@ class Command(BaseCommand):
                     # Skip the headers row
                     continue
                 try:
-                    case_structures = get_case_structures_from_row(domain, migration_id, column_mapping, city_constants, row)
+                    case_structures = get_case_structures_from_row(
+                        domain, migration_id, column_mapping, city_constants, row
+                    )
                     logger.info("Creating cases for row {}. Case ids are: {}".format(
                         i, ", ".join([x.case_id for x in case_structures])
                     ))

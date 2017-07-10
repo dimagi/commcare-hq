@@ -27,7 +27,7 @@ class TestMappings(SimpleTestCase):
         # raises an exception.
         row = self.get_row([])
         with self.assertRaises(KeyError):
-            value = MockColumnMapping.get_value("pesron_name", row)  # Note the typo in the column id
+            MockColumnMapping.get_value("pesron_name", row)  # Note the typo in the column id
 
     def test_existing_key(self):
         # Confirm that fetching a column that does exist returns the right value
