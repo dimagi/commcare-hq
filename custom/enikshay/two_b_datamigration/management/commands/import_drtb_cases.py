@@ -218,7 +218,19 @@ class MumbaiColumnMapping(ColumnMapping):
     mapping_dict = MUMBAI_MAP
 
 
-def get_case_structures_from_row(domain, migration_id, column_mapping, row):
+class MumbaiConstants(object):
+    """A collection of Mumbai specific constants"""
+    # TODO: (WAITING) find out these values
+    drtb_center_name = None
+    drtb_center_id = None
+
+class MehsanaConstants(object):
+    """A collection of Mehsana specific constants"""
+    drtb_center_name = "Patan - DRTB-HIV"
+    drtb_center_id = "becf3acefc51b425b553a66f3dbf387c"
+
+
+def get_case_structures_from_row(domain, migration_id, column_mapping, city_constants, row):
     person_case_properties = get_person_case_properties(domain, column_mapping, row)
     occurrence_case_properties = get_occurrence_case_properties(row)
     episode_case_properties = get_episode_case_properties(domain, column_mapping, row)
@@ -226,7 +238,7 @@ def get_case_structures_from_row(domain, migration_id, column_mapping, row):
     drug_resistance_case_properties = get_drug_resistance_case_properties(column_mapping, row)
     followup_test_cases_properties = get_follow_up_test_case_properties(
         column_mapping, row, episode_case_properties['treatment_initiation_date'])
-    secondary_owner_case_properties = get_secondary_owner_case_properties(domain, column_mapping, row)
+    secondary_owner_case_properties = get_secondary_owner_case_properties(city_constants)
 
     person_case_structure = get_case_structure(CASE_TYPE_PERSON, person_case_properties, migration_id)
     occurrence_case_structure = get_case_structure(
@@ -483,7 +495,6 @@ def get_drug_resistances_from_drug_resistance_list(column_mapping, row):
 def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date):
     properties_list = []
     for follow_up in (3, 4, 5, 6, 9, 12, "end"):
-        # TODO: Should I check for existance of all the values?
         if column_mapping.get_value("month_{}_follow_up_send_date".format(follow_up), row):
             properties = {
                 "owner_id": "-",
@@ -513,14 +524,11 @@ def get_follow_up_month(follow_up_month_identifier, date_tested, treatment_initi
         return str(int(round((date_tested - treatment_initiation_date).days / 30.4)))
 
 
-def get_secondary_owner_case_properties(domain, column_mapping, row):
-    # TODO: Is the district the same thing as the DRTB center?
-    xlsx_district_name = column_mapping.get_value("district_name", row)
-    district_name, district_id = match_district(domain, xlsx_district_name)
+def get_secondary_owner_case_properties(city_constants):
     return {
-        "secondary_owner_name": district_name,
+        "secondary_owner_name": city_constants.drtb_center_name,
         "secondary_owner_type": "DRTB",
-        "owner_id": district_id,
+        "owner_id": city_constants.drtb_center_id,
     }
 
 
@@ -610,18 +618,17 @@ class Command(BaseCommand):
 
     def handle(self, domain, excel_file_path, format, **options):
 
-        column_mapping = self.get_column_mapping(format)
         migration_id = str(datetime.datetime.now())
+        column_mapping = self.get_column_mapping(format)
+        city_constants = self.get_city_constants(format)
         case_factory = CaseFactory(domain)
 
         with open_any_workbook(excel_file_path) as workbook:
             for i, row in enumerate(workbook.worksheets[0].iter_rows()):
                 if i == 0:
-                    import ipdb; ipdb.set_trace()
                     # Skip the headers row
                     continue
-                import ipdb; ipdb.set_trace()
-                case_structures = get_case_structures_from_row(domain, migration_id, column_mapping, row)
+                case_structures = get_case_structures_from_row(domain, migration_id, column_mapping, city_constants, row)
                 if options['commit']:
                     case_factory.create_or_update_cases(case_structures)
 
@@ -631,6 +638,16 @@ class Command(BaseCommand):
             return Mehsana2016ColumnMapping
         elif format == "mehsana2017":
             return Mehsana2017ColumnMapping
+        elif format == "mumbai":
+            return MumbaiColumnMapping
+        else:
+            raise Exception("Invalid format. Format must be mehsana2016, mehsana2017, or mumbai")
+
+    @staticmethod
+    def get_city_constants(format):
+        # TODO: Use constants for formats
+        if format in ("mehsana2016", "mehsana2017"):
+            return MehsanaConstants
         elif format == "mumbai":
             return MumbaiColumnMapping
         else:
