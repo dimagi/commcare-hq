@@ -80,6 +80,8 @@ if USE_PARTITIONED_DATABASE:
         }
     }
 
+    WAREHOUSE_DATABASE_ALIAS = 'warehouse'
+
 ####### Couch Config ######
 COUCH_DATABASES = {
     'default': {
