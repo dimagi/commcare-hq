@@ -143,7 +143,7 @@ urlpatterns = [
         edit_module_attr, name='edit_module_attr'),
     url(r'^edit_report_module/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         edit_report_module, name='edit_report_module'),
-    url(r'^validate_module_for_build/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',
+    url(r'^validate_module_for_build/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         validate_module_for_build, name='validate_module_for_build'),
 
     url(r'^commcare_profile/(?P<app_id>[\w-]+)/$', commcare_profile, name='commcare_profile'),

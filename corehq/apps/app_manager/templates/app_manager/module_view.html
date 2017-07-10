@@ -68,7 +68,7 @@
   {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
   {% registerurl "edit_module_detail_screens" domain app.id module.unique_id %}
   {% registerurl "hqmedia_remove_detail_print_template" domain app.id %}
-  {% registerurl "validate_module_for_build" domain app.id module.id %}
+  {% registerurl "validate_module_for_build" domain app.id module.unique_id %}
   <div class="tabbable appmanager-tabs-container">
 
     {% if not module.is_surveys %}
