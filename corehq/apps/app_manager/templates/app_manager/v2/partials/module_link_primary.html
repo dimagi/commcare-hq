@@ -18,7 +18,7 @@
     {% else %}
       <i class="fa fa-folder-open appnav-primary-icon"></i>
     {% endif %}
-    <span {% if module.id == selected_module.id %}class="variable-module_name"{% endif %}>
+    <span {% if module.unique_id == selected_module.unique_id %}class="variable-module_name"{% endif %}>
         {{ module.name|html_trans_prefix:langs }}
     </span>
 </a>
