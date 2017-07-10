@@ -2,8 +2,10 @@ from django.test import SimpleTestCase
 from openpyxl import Workbook
 
 from corehq.util.workbook_reading.adapters.xlsx import _XLSXWorkbookAdaptor
-from custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases import ColumnMapping, \
-    clean_contact_phone_number
+from custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases import(
+    ColumnMapping,
+    clean_phone_number,
+)
 
 
 class MockColumnMapping(ColumnMapping):
@@ -58,7 +60,7 @@ class TestMappings(SimpleTestCase):
 
 class TestCleaningFucntions(SimpleTestCase):
 
-    def test_clean_contact_phone_number(self):
+    def test_clean_phone_number(self):
         good_number = "911234567890"
         good_number_with_punc = "+91 123-456-7890"
         good_short_number = "123-456-7890"
@@ -67,7 +69,8 @@ class TestCleaningFucntions(SimpleTestCase):
         bad_number = "01 123-456-7890"
 
         for number in (good_number, good_number_with_punc, good_short_number):
-            self.assertEqual(clean_contact_phone_number(number), "911234567890")
+            self.assertEqual(clean_phone_number(number, 12), "911234567890")
+            self.assertEqual(clean_phone_number(number, 10), "1234567890")
 
         for number in (too_short_number, bad_number):
             with self.assertRaises(Exception):

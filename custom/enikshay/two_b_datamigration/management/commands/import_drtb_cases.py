@@ -329,7 +329,6 @@ def get_person_case_properties(domain, column_mapping, row):
         "sex": column_mapping.get_value("sex", row),
         "age_entered": column_mapping.get_value("age_entered", row),
         "current_address": column_mapping.get_value("address", row),
-        "phone_number": column_mapping.get_value("phone_number", row),
         "aadhaar_number": column_mapping.get_value("aadhaar_number", row),
         "phi_name": phi_name,
         "tu_name": tu_name,
@@ -338,8 +337,10 @@ def get_person_case_properties(domain, column_mapping, row):
 
     properties.update(get_disease_site_properties_for_person(column_mapping, row))
 
-    if properties['phone_number']:
-        properties['contact_phone_number'] = clean_contact_phone_number(properties['phone_number'])
+    phone_number = column_mapping.get_value("phone_number", row),
+    if phone_number:
+        properties['contact_phone_number'] = clean_phone_number(phone_number, 12)
+        properties['phone_number'] = clean_phone_number(phone_number, 10)
         properties['language_code'] = "guj"  # TODO: (WAITING) Confirm preferred language code
 
     social_scheme = column_mapping.get_value("social_scheme", row)
@@ -603,19 +604,25 @@ def clean_weight_band(value):
     # TODO: Finish me
 
 
-def clean_contact_phone_number(value):
+def clean_phone_number(value, digits):
     """
     Phone numbers should be "91" followed by 10 digits. No symbols allowed.
     """
+    if not value:
+        return None
+    assert digits in (10, 12)
     exception = Exception("Unexpected phone number format: {}".format(value))
     cleaned = re.sub('[^0-9]', '', value)
-    if len(cleaned) == 12:
-        if cleaned[:2] == "91":
+    if len(cleaned) == 12 and cleaned[:2] == "91":
+        if digits == 12:
             return cleaned
         else:
-            raise exception
-    if len(cleaned) == 10:
-        return "91" + cleaned
+            return cleaned[2:]
+    elif len(cleaned) == 10:
+        if digits == 10:
+            return cleaned
+        else:
+            return "91" + cleaned
     else:
         raise exception
 
