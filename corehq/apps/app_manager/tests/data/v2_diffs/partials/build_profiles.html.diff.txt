@@ -44,7 +44,7 @@
 +                <th>{% trans "Languages" %}</th>
 +                <th>{% trans "Default Language" %}</th>
 +                <th>{% trans "Practice Mobile Worker" %}
-+                    <div class="text-warning">
++                    <div class="text-warning"  data-bind="visible: !$data.enable_practice_users">
 +                    <i class="fa fa-arrow-down"></i>
 +                    {% trans "Upgrade to CommCare 2.30!" %}
 +                    </div>
@@ -106,7 +106,7 @@
 -            <th>{% trans "Languages" %}</th>
 -            <th>{% trans "Default Language" %}</th>
 -            <th>{% trans "Practice Mobile Worker" %}
--                <div class="text-warning">
+-                <div class="text-warning" data-bind="visible: !$data.enable_practice_users">
 -                <i class="fa fa-arrow-down"></i>
 -                {% trans "Upgrade to CommCare 2.30!" %}
 -                </div>
