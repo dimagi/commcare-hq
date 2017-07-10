@@ -44,6 +44,7 @@ class ReminderRecipientTest(TestCase):
             site_code='parent',
             location_type=self.parent_location_type
         )
+        self.addCleanup(parent_location.delete)
 
         child_location = SQLLocation.objects.create(
             domain=self.domain,
@@ -52,6 +53,7 @@ class ReminderRecipientTest(TestCase):
             location_type=self.child_location_type,
             parent=parent_location
         )
+        self.addCleanup(child_location.delete)
 
         self.user.set_location(child_location)
 
@@ -67,13 +69,11 @@ class ReminderRecipientTest(TestCase):
             # Remove parent location
             child_location.parent = None
             child_location.save()
-            parent_location.delete()
             with patch('corehq.apps.reminders.models.CaseReminder.handler', new=handler):
                 self.assertIsNone(reminder.recipient)
 
             # Remove child location
             self.user.unset_location()
-            child_location.delete()
             with patch('corehq.apps.reminders.models.CaseReminder.handler', new=handler):
                 self.assertIsNone(reminder.recipient)
 
