@@ -200,7 +200,7 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, s
 
 
 @periodic_task(
-    run_every=crontab(minute="*/5", hour="0-6,18-23"),
+    run_every=crontab(minute="*/5", hour="0-8,18-23"),
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def queue_async_indicators():
