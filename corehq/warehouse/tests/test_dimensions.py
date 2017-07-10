@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from django.test import TestCase
 
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
@@ -18,7 +17,7 @@ from corehq.warehouse.tests.utils import (
     DEFAULT_BATCH_ID,
     get_default_batch,
     create_batch,
-)
+    BaseWarehouseTestCase)
 from corehq.warehouse.models import (
     Batch,
     UserStagingTable,
@@ -42,7 +41,7 @@ def teardown_module():
     Batch.objects.all().delete()
 
 
-class TestUserDim(TestCase):
+class TestUserDim(BaseWarehouseTestCase):
 
     domain = 'user-dim-test'
 
@@ -113,7 +112,7 @@ class TestUserDim(TestCase):
         )
 
 
-class TestUserGroupDim(TestCase):
+class TestUserGroupDim(BaseWarehouseTestCase):
 
     domain = 'user-group-dim-test'
 
@@ -168,7 +167,7 @@ class TestUserGroupDim(TestCase):
         )
 
 
-class TestLocationDim(TestCase):
+class TestLocationDim(BaseWarehouseTestCase):
 
     domain = 'location-dim-test'
 
@@ -177,12 +176,11 @@ class TestLocationDim(TestCase):
         super(TestLocationDim, cls).setUpClass()
         cls.batch = get_default_batch()
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         LocationStagingTable.clear_records()
         LocationTypeStagingTable.clear_records()
         LocationDim.clear_records()
-        super(TestLocationDim, cls).tearDownClass()
+        super(TestLocationDim, self).tearDown()
 
     def test_location_dim(self):
         tree = {

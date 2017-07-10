@@ -1,8 +1,12 @@
 import uuid
 import random
 from datetime import datetime
-from django.core.management import call_command
 
+from django.conf import settings
+from django.core.management import call_command
+from django.test import TestCase
+
+from corehq.form_processor.tests.utils import partitioned
 from corehq.warehouse.models import (
     UserStagingTable,
     GroupStagingTable,
@@ -174,3 +178,12 @@ def _create_locations_from_tree(domain, tree, parent_id, location_types, next_id
         )
         next_id['id'] += 1
         _create_locations_from_tree(domain, next_tree, next_id['id'] - 1, location_types, next_id)
+
+
+@partitioned
+class BaseWarehouseTestCase(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(BaseWarehouseTestCase, cls).setUpClass()
+        cls.using = settings.WAREHOUSE_DATABASE_ALIAS if settings.USE_PARTITIONED_DATABASE else 'default'

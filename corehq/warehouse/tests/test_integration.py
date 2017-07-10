@@ -1,13 +1,11 @@
 from datetime import datetime, timedelta
 
-from django.test import TestCase
-
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.domain.models import Domain
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 from corehq.form_processor.tests.utils import create_form_for_test, FormProcessorTestUtils
 
-from corehq.warehouse.tests.utils import DEFAULT_BATCH_ID, create_batch, get_default_batch
+from corehq.warehouse.tests.utils import DEFAULT_BATCH_ID, create_batch, get_default_batch, BaseWarehouseTestCase
 from corehq.warehouse.models import (
     UserStagingTable,
     DomainStagingTable,
@@ -29,7 +27,7 @@ def teardown_module():
     Batch.objects.all().delete()
 
 
-class FormFactIntegrationTest(TestCase):
+class FormFactIntegrationTest(BaseWarehouseTestCase):
     '''
     Tests a full integration of loading the FormFact table from
     staging and dimension tables.
@@ -90,12 +88,12 @@ class FormFactIntegrationTest(TestCase):
 
         FormProcessorTestUtils.delete_all_sql_forms(cls.domain)
 
+        FormStagingTable.clear_records()
+        FormFact.clear_records()
         DomainStagingTable.clear_records()
         DomainDim.clear_records()
         UserStagingTable.clear_records()
         UserDim.clear_records()
-        FormStagingTable.clear_records()
-        FormFact.clear_records()
         super(FormFactIntegrationTest, cls).tearDownClass()
 
     def test_loading_form_fact(self):
