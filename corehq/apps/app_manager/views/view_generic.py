@@ -123,7 +123,9 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                 'domain': domain,
                 'app_id': app_id,
                 'module_id': module_id,
+                'module_unique_id': module_unique_id,
                 'form_id': form_id,
+                'form_unique_id': form_unique_id,
             })
 
     context = get_apps_base_context(request, domain, app)
