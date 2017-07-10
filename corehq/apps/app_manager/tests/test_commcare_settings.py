@@ -124,11 +124,11 @@ class CommCareSettingsTest(SimpleTestCase):
                                 self.assertIn(
                                     v,
                                     static_strings,
-                                    'You need to add {} to static_strings.py'.format(v)
+                                    'You need to add "{}" to static_strings.py'.format(v)
                                 )
                         else:
                             self.assertIn(
                                 value,
                                 static_strings,
-                                'You need to add {} to static_strings.py'.format(value)
+                                'You need to add "{}" to static_strings.py'.format(value)
                             )

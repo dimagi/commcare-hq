@@ -1,3 +1,4 @@
+from casexml.apps.phone.fixtures import generator
 from corehq.apps.fixtures.dbaccessors import get_fixture_data_types_in_domain
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
     FixtureDataItem, FieldList, FixtureItemField, FixtureOwnership
@@ -29,6 +30,7 @@ class TestLocationOwnership(LocationHierarchyTestCase):
         data_type = FixtureDataType(
             domain=cls.domain,
             tag=cls.tag,
+            is_global=False,
             name="Big Mac Index",
             fields=[
                 FixtureTypeField(field_name="cost", properties=[]),
@@ -102,3 +104,51 @@ class TestLocationOwnership(LocationHierarchyTestCase):
     def test_has_no_assigned_fixture(self):
         fixture_items = FixtureDataItem.by_user(self.middlesex_user)
         self.assertEqual(len(fixture_items), 0)
+
+    def test_fixture_generation(self):
+        latte_type = FixtureDataType(
+            domain=self.domain,
+            tag="latte-index",
+            is_global=True,
+            name="Tall Latte index",
+            fields=[
+                FixtureTypeField(field_name="cost", properties=[]),
+                FixtureTypeField(field_name="region", properties=[]),
+            ],
+            item_attributes=[],
+        )
+        latte_type.save()
+
+        latte_item = FixtureDataItem(
+            domain=self.domain,
+            data_type_id=latte_type.get_id,
+            fields={
+                "cost": FieldList(
+                    field_list=[FixtureItemField(
+                        field_value='5.75',
+                        properties={},
+                    )]
+                ),
+                "location_name": FieldList(
+                    field_list=[FixtureItemField(
+                        field_value="Boston",
+                        properties={},
+                    )]
+                ),
+            },
+            item_attributes={},
+        )
+        latte_item.save()
+
+        fixture_xml = list(generator.get_fixtures(self.boston_user.to_ota_restore_user()))
+        # make sure each fixture is there, and only once
+        self.assertListEqual(
+            [item.attrib['id'] for item in fixture_xml],
+            [
+                'user-groups',
+                'item-list:latte-index',
+                'item-list:big-mac-index',
+                'commtrack:products',
+                'commtrack:programs'
+            ]
+        )

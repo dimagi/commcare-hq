@@ -5,6 +5,7 @@ from django.contrib.auth.views import (
     password_change_done,
     password_reset_complete,
     password_reset_done,
+    password_reset,
 )
 from django.utils.translation import ugettext as _
 from django.views.generic import RedirectView
@@ -58,7 +59,6 @@ from corehq.apps.domain.views import (
     calculated_properties,
     cancel_repeat_record,
     drop_repeater,
-    exception_safe_password_reset,
     requeue_repeat_record,
     select,
     set_published_snapshot,
@@ -85,7 +85,7 @@ urlpatterns = [
          'extra_context': {'current_page': {'page_name': _('Password Change Complete')}}},
         name='password_change_done'),
 
-    url(r'^accounts/password_reset_email/$', exception_safe_password_reset,
+    url(r'^accounts/password_reset_email/$', password_reset,
         {'template_name': 'login_and_password/password_reset_form.html',
          'from_email': settings.DEFAULT_FROM_EMAIL,
          'extra_context': {'current_page': {'page_name': _('Password Reset')}}},

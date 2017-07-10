@@ -402,6 +402,7 @@ class CaseClaimEndpointTests(TestCase):
             '<last_modified>2016-04-17T10:13:06.588694Z</last_modified>'
             '<external_id>Jamie Hand</external_id>'
             '<date_opened>2016-04-17</date_opened>'
+            '<commcare_search_score>xxx</commcare_search_score>'
             '<location_id>None</location_id>'
             '<referrals>None</referrals>'
             '</case>'
@@ -416,8 +417,13 @@ class CaseClaimEndpointTests(TestCase):
         client.login(username=USERNAME, password=PASSWORD)
         url = reverse('remote_search', kwargs={'domain': DOMAIN})
         response = client.get(url, {'name': 'Jamie Hand', 'case_type': CASE_TYPE})
+        score_regex = re.compile(r'(<commcare_search_score>)(\d+.\d+)(<\/commcare_search_score>)')
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(re.sub(DATE_PATTERN, FIXED_DATESTAMP, re.sub(PATTERN, TIMESTAMP, response.content)), known_result)
+        self.assertEqual(
+            score_regex.sub(r'\1xxx\3',
+                            re.sub(DATE_PATTERN, FIXED_DATESTAMP,
+                                   re.sub(PATTERN, TIMESTAMP, response.content))),
+            known_result)
 
     @patch('corehq.apps.es.es_query.run_query')
     def test_search_query_addition(self, run_query_mock):

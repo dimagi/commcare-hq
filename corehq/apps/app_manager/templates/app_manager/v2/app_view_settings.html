@@ -22,6 +22,12 @@
     <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
 {% endblock js %}
 
+{% block js-inline %}{{ block.super }}
+  <script>
+      hqImport('app_manager/js/app_manager.js').setPrependedPageTitle("{% trans 'Settings' %}");
+  </script>
+{% endblock js-inline %}
+
 {% block app_view_tabs %}
   {% initial_page_data 'app_view_options' app_view_options %}
   {% initial_page_data 'domain_names' domain_names %}

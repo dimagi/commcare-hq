@@ -1,8 +1,7 @@
 import logging
 
 
-def format_angular_error(error_msg, additional_data=None,
-                         log_error=False, exception=None):
+def format_angular_error(error_msg, log_error):
     """Gets the standard angular async error response.
     :param error_msg: A string that is the error message you'd like to return
     :param additional_data: a dictionary of additional data you'd like to pass
@@ -11,17 +10,11 @@ def format_angular_error(error_msg, additional_data=None,
         <...additional_data...>,
     }
     """
-    resp = {
-        'error': error_msg,
-    }
-    if log_error:
-        if exception:
-            logging.exception(exception)
-        else:
-            logging.error(error_msg)
+    resp = {'error': error_msg}
 
-    if isinstance(additional_data, dict):
-        resp.update(additional_data)
+    if log_error:
+        logging.exception(error_msg)
+
     return resp
 
 

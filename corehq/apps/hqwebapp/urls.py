@@ -1,9 +1,10 @@
 from django.conf import settings
 from django.conf.urls import include, url
+from django.contrib.auth.views import password_reset
 from django.utils.translation import ugettext as _
 
 from corehq.apps.domain.forms import HQSetPasswordForm
-from corehq.apps.domain.views import PublicSMSRatesView, exception_safe_password_reset, PasswordResetView
+from corehq.apps.domain.views import PublicSMSRatesView, PasswordResetView
 from corehq.apps.settings.views import (
     TwoFactorProfileView, TwoFactorSetupView, TwoFactorSetupCompleteView,
     TwoFactorBackupTokensView, TwoFactorDisableView, TwoFactorPhoneSetupView,
@@ -58,14 +59,14 @@ domain_specific = [
         kwargs={'template_name': 'login_and_password/mobile_login.html'}),
 
     # This url is linked to from web login page
-    url(r'^reset_pwd_email/$', exception_safe_password_reset,
+    url(r'^reset_pwd_email/$', password_reset,
         {'template_name': 'login_and_password/password_reset_form.html',
          'email_template_name': 'login_and_password/domain_reset_pwd_email.html',
          'from_email': settings.DEFAULT_FROM_EMAIL,
          'extra_context': {'current_page': {'page_name': _('Password Reset')}}},
         name='domain_reset_pwd_email'),
     # This url is linked to from mobile login page
-    url(r'^reset_pwd_email/mobile/$', exception_safe_password_reset,
+    url(r'^reset_pwd_email/mobile/$', password_reset,
         {'template_name': 'login_and_password/mobile_password_reset_form.html',
          'email_template_name': 'login_and_password/domain_mobile_reset_pwd_email.html',
          'from_email': settings.DEFAULT_FROM_EMAIL,
