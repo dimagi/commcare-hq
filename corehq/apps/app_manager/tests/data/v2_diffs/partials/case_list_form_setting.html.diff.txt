@@ -78,7 +78,7 @@
 -    {% include "app_manager/v1/partials/nav_menu_media.html" with item=multimedia.case_list_form qualifier='case_list_form_' ICON_LABEL="Registration Form Icon" AUDIO_LABEL="Registration Form Audio" %}
 -</div>
 +
-+{% if app.advanced_app_builder or module.case_list_form.form_id %}
++{% if add_ons.register_from_case_list %}
 +
 +  <div id="case-list-form">
 +      <div class="form-group">

@@ -343,6 +343,15 @@ def download_media_profile(request, domain, app_id):
 
 
 @safe_download
+def download_practice_user_restore(request, domain, app_id):
+    if not request.app.copy_of:
+        make_async_build.delay(request.app)
+    return HttpResponse(
+        request.app.create_practice_user_restore()
+    )
+
+
+@safe_download
 def download_index(request, domain, app_id):
     """
     A landing page, mostly for debugging, that has links the jad and jar as well as
