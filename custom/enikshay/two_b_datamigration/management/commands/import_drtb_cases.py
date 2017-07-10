@@ -149,8 +149,26 @@ MEHSANA_2016_MAP = {
     "Azi": 45,
 }
 
+# A map of column identifier to column index in the Mumbai excel sheet.
 MUMBAI_MAP = {
-    # TODO: Write me
+    "drtb_number": 3,
+    "registration_date": 7,
+    "person_name": 8,
+    "sex": 9,
+    "age_entered": 10,
+    "address": 11,
+    "phone_number": 12,
+    "initial_home_visit_date": 14,
+    "aadhaar_number": 15,
+    "social_scheme": 16,
+    "district_name": 18,
+    "phi_name": 21,
+    "site_of_disease": 24,  # TODO: Map this value to case properties
+    "type_of_patient": 25,  # TODO: Map this value to case properties
+    "weight": 26,
+    "weight_band": 27,
+    "height": 28,
+    # TODO: Finish me
 }
 
 
@@ -232,7 +250,7 @@ class MehsanaConstants(object):
 
 def get_case_structures_from_row(domain, migration_id, column_mapping, city_constants, row):
     person_case_properties = get_person_case_properties(domain, column_mapping, row)
-    occurrence_case_properties = get_occurrence_case_properties(row)
+    occurrence_case_properties = get_occurrence_case_properties(column_mapping, row)
     episode_case_properties = get_episode_case_properties(domain, column_mapping, row)
     test_case_properties = get_test_case_properties(domain, column_mapping, row)
     drug_resistance_case_properties = get_drug_resistance_case_properties(column_mapping, row)
@@ -295,21 +313,39 @@ def get_person_case_properties(domain, column_mapping, row):
     person_name = column_mapping.get_value("person_name", row)
     xlsx_district_name = column_mapping.get_value("district_name", row)
     district_name, district_id = match_district(domain, xlsx_district_name)
+    phi_name, phi_id = match_phi(domain, column_mapping.get_value("phi_name", row))
+    tu_name, tu_id = get_tu(domain, phi_id)
+
     properties = {
         "name": person_name,
         "district_name": district_name,
         "district_id": district_id,
-        "owner_id": "-",
+        "owner_id": phi_id or "-",
         "current_episode_type": "confirmed_drtb",
         "nikshay_id": column_mapping.get_value("nikshay_id", row),
+        "sex": column_mapping.get_value("sex", row),
+        "age_entered": column_mapping.get_value("age_entered", row),
+        "current_address": column_mapping.get_value("address", row),
+        "phone_number": column_mapping.get_value("phone_number", row),  # TODO: Review Gio's email about SMS
+        "aadhaar_number": column_mapping.get_value("aadhaar_number", row),
+        "phi_name": phi_name,
+        "tu_name": tu_name,
+        "tu_id": tu_id,
+        # site_of_disease TODO
     }
+
+    social_scheme = column_mapping.get_value("social_scheme", row)
+    if social_scheme:
+        raise Exception("has social scheme: {}".format(social_scheme))
+
     return properties
 
 
-def get_occurrence_case_properties(row):
+def get_occurrence_case_properties(column_mapping, row):
     return {
         "owner_id": "-",
-        "current_episode_type": "confirmed_drtb"
+        "current_episode_type": "confirmed_drtb",
+        "initial_home_visit_status": "completed" if column_mapping.get_value("initial_home_visit_date", row) else None,
     }
 
 
@@ -343,6 +379,9 @@ def get_episode_case_properties(domain, column_mapping, row):
         "treatment_status_other": column_mapping.get_value("reason_for_not_initiation_on_treatment", row),
         "treatment_outcome": convert_treatment_outcome(column_mapping.get_value("treatment_outcome", row)),
         "treatment_outcome_date": clean_date(column_mapping.get_value("date_of_treatment_outcome", row)),
+        "weight": column_mapping.get_value("weight", row),
+        "weight_band": clean_weight_band(column_mapping.get_value("weight_band", row)),
+        "height": column_mapping.get_value("height", row),  # TODO: Do I need to clean this?
     }
 
     raw_treatment_status = column_mapping.get_value("treatment_status", row)
@@ -357,6 +396,14 @@ def get_episode_case_properties(domain, column_mapping, row):
         properties["treatment_initiated"] = "yes_phi"
 
     return properties
+
+
+def convert_disease_site(xlsx_value):
+    if xlsx_value.split()[0] in ("EP", "Extrapulmonary"):
+        return "extra_pulmonary"
+    # TODO: Finish me
+    # TODO: Ask sheel about what other stuff means
+    # What to do about "P EP" "P EP R Effusion"
 
 
 def convert_treatment_outcome(xlsx_value):
@@ -531,6 +578,24 @@ def get_secondary_owner_case_properties(city_constants):
         "owner_id": city_constants.drtb_center_id,
     }
 
+def clean_weight_band(value):
+    pass
+    # TODO: Finish me
+
+
+def clean_hiv_status(value):
+    NON_REACTIVE = "non_reactive"
+    REACTIVE = "reactive"
+    if not value:
+        return None
+    if value.startswith("Non Reactive") or value.startswith("NR") or value.startswith("Nr"):
+        return NON_REACTIVE
+    if value.startswith("R ") or value.startswith("Reactive") or value.startswith("Ractive"):
+        return REACTIVE
+    return {
+        "Pos": REACTIVE,  #? TODO
+        "Positive": REACTIVE,  #? TODO
+    }[value]
 
 def clean_result(value):
     return {
