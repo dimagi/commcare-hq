@@ -158,13 +158,12 @@ class Command(BaseCommand):
         )
 
 
-def get_beneficiaries(start, limit, case_ids, owner_state_id, owner_district_id,
-                      owner_organisation_ids, owner_suborganisation_ids):
+def get_beneficiaries_in_date_range():
     new_episode_beneficiary_ids = Episode_Jul7.objects.filter(
         creationDate__gte=date(2016, 1, 1),
     ).values('beneficiaryID')
 
-    beneficiaries_query = Beneficiary_Jul7.objects.filter(
+    return Beneficiary_Jul7.objects.filter(
         (
             Q(caseStatus='suspect')
             & Q(dateOfRegn__gte=date(2017, 1, 1))
@@ -177,6 +176,11 @@ def get_beneficiaries(start, limit, case_ids, owner_state_id, owner_district_id,
             )
         )
     ).order_by('caseId')
+
+
+def get_beneficiaries(start, limit, case_ids, owner_state_id, owner_district_id,
+                      owner_organisation_ids, owner_suborganisation_ids):
+    beneficiaries_query = get_beneficiaries_in_date_range()
 
     if case_ids:
         beneficiaries_query = beneficiaries_query.filter(caseId__in=case_ids)
