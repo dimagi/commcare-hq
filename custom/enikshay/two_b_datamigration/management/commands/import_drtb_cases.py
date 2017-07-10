@@ -164,7 +164,7 @@ MUMBAI_MAP = {
     "social_scheme": 16,
     "district_name": 18,
     "phi_name": 21,
-    "site_of_disease": 24,  # TODO: Map this value to case properties
+    "site_of_disease": 24,
     "type_of_patient": 25,  # TODO: Map this value to case properties
     "weight": 26,
     "weight_band": 27,
@@ -334,8 +334,9 @@ def get_person_case_properties(domain, column_mapping, row):
         "phi_name": phi_name,
         "tu_name": tu_name,
         "tu_id": tu_id,
-        # site_of_disease TODO
     }
+
+    properties.update(get_disease_site_properties_for_person(column_mapping, row))
 
     if properties['phone_number']:
         properties['contact_phone_number'] = clean_contact_phone_number(properties['phone_number'])
@@ -349,12 +350,14 @@ def get_person_case_properties(domain, column_mapping, row):
 
 
 def get_occurrence_case_properties(column_mapping, row):
-    return {
+    properties = {
         "owner_id": "-",
         "current_episode_type": "confirmed_drtb",
         "initial_home_visit_status":
             "completed" if column_mapping.get_value("initial_home_visit_date", row) else None,
     }
+    properties.update(get_disease_site_properties(column_mapping, row))
+    return properties
 
 
 def get_episode_case_properties(domain, column_mapping, row):
@@ -407,12 +410,19 @@ def get_episode_case_properties(domain, column_mapping, row):
     return properties
 
 
-def convert_disease_site(xlsx_value):
+def get_disease_site_properties(column_mapping, row):
+    xlsx_value = column_mapping.get_value("site_of_disease", row)
+    if not xlsx_value:
+        return {}
     if xlsx_value.split()[0] in ("EP", "Extrapulmonary"):
-        return "extra_pulmonary"
-    # TODO: Finish me
-    # TODO: Ask sheel about what other stuff means
-    # What to do about "P EP" "P EP R Effusion"
+        return {"disease_classification": "extra_pulmonary"}
+    # TODO: (WAITING) Best guess at mapping is here:
+    # https://docs.google.com/spreadsheets/d/1Pz-cYNvo5BkF-Sta1ol4ZzfBYIQ4kGlZ3FdJgBLe5WE/edit#gid=1748484835
+
+
+def get_disease_site_properties_for_person(column_mapping, row):
+    props = get_disease_site_properties(column_mapping, row)
+    return {"current_{}".format(k): v for k, v in props.iteritems()}
 
 
 def convert_treatment_outcome(xlsx_value):
