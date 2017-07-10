@@ -241,6 +241,7 @@ class MockLocationStub(LocationStub):
             # This will happen if the LocationStub is not new and an old_collection is not given
             self.db_object = MagicMock()
 
+
 def get_validator(location_types, locations, old_collection=None):
     validator = LocationTreeValidator(
         [LocationTypeStub(*loc_type) for loc_type in location_types],
