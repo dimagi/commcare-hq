@@ -169,6 +169,13 @@ MUMBAI_MAP = {
     "weight": 26,
     "weight_band": 27,
     "height": 28,
+    "hiv_status": 29,
+    "hiv_test_date": 30,
+    "hiv_program_id": 31,
+    "cpt_initiation_date": 32,
+    "art_initiation_date": 33,
+    "diabetes": 34,
+
     # TODO: Finish me
 }
 
@@ -333,9 +340,20 @@ def get_person_case_properties(domain, column_mapping, row):
         "phi_name": phi_name,
         "tu_name": tu_name,
         "tu_id": tu_id,
+        "hiv_status": clean_hiv_status(column_mapping.get_value("hiv_status", row)),
+        "hiv_test_date": clean_date(column_mapping.get_value("hiv_test_date", row)),
+        "hiv_program_id": column_mapping.get_value("hiv_program_id", row),
+        "cpt_initiation_date": clean_date(column_mapping.get_value("cpt_initiation_date", row)),
+        "art_initiation_date": clean_date(column_mapping.get_value("art_initiation_date", row)),
+        "diabetes_status": clean_diabetes_status(column_mapping.get_value("diabetes", row))
     }
 
     properties.update(get_disease_site_properties_for_person(column_mapping, row))
+
+    if properties["cpt_initiation_date"]:
+        properties["cpt_initiated"] = "yes"
+    if properties["art_initiation_date"]:
+        properties["art_initiated"] = "yes"
 
     phone_number = column_mapping.get_value("phone_number", row),
     if phone_number:
@@ -597,6 +615,14 @@ def get_secondary_owner_case_properties(city_constants):
         "secondary_owner_type": "DRTB",
         "owner_id": city_constants.drtb_center_id,
     }
+
+
+def clean_diabetes_status(xlsx_value):
+    return {
+        "No": "non_diabetic",
+        "Yes": "diabetic",
+        None: "unknown",
+    }[xlsx_value]
 
 
 def clean_weight_band(value):
