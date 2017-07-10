@@ -103,7 +103,9 @@
     {# CloudCare #}
     {% initial_page_data 'app_id' app.id %}
     {% initial_page_data 'module_id' module.id %}
+    {% initial_page_data 'module_unique_id' module.unique_id %}
     {% initial_page_data 'form_id' nav_form.id %}
+    {% initial_page_data 'form_unique_id' nav_form.unique_id %}
     {% initial_page_data 'allow_cloudcare' allow_cloudcare %}
     {% initial_page_data 'can_preview_form' can_preview_form %}
     {% initial_page_data 'user_age_in_days' request.couch_user.days_since_created %}
