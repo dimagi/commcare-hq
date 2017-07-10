@@ -90,7 +90,7 @@ def get_module_template(user, module):
 def get_module_view_context(app, module, lang=None):
     # shared context
     context = {
-        'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'name']),
+        'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.unique_id, 'name']),
     }
     module_brief = {
         'id': module.id,
@@ -376,7 +376,7 @@ def _case_list_form_not_allowed_reasons(module):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_module_attr(request, domain, app_id, module_id, attr):
+def edit_module_attr(request, domain, app_id, module_unique_id, attr):
     """
     Called to edit any (supported) module attribute, given by attr
     """
@@ -424,7 +424,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
                 return request.POST.get(attribute) is not None
 
     app = get_app(domain, app_id)
-    module = app.get_module(module_id)
+    module = app.get_module_by_unique_id(module_unique_id)
     lang = request.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}, 'corrections': {}}
     if should_edit("case_type"):
@@ -445,14 +445,13 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
                     all_advanced_modules.append(mod)
 
                 modules_with_old_case_type_exist |= mod.case_type == old_case_type
-
             for mod in all_advanced_modules:
                 for form in mod.forms:
                     for action in form.actions.get_load_update_actions():
-                        if action.case_type == old_case_type and action.details_module == module_id:
+                        if action.case_type == old_case_type and action.details_module == module_unique_id:
                             action.case_type = case_type
 
-                    if mod.unique_id == module_id or not modules_with_old_case_type_exist:
+                    if mod.unique_id == module_unique_id or not modules_with_old_case_type_exist:
                         for action in form.actions.get_open_actions():
                             if action.case_type == old_case_type:
                                 action.case_type = case_type
@@ -533,11 +532,7 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         if not request.POST.get("root_module_id"):
             module["root_module_id"] = None
         else:
-            try:
-                app.get_module(module_id)
-                module["root_module_id"] = request.POST.get("root_module_id")
-            except ModuleNotFoundException:
-                messages.error(_("Unknown Menu"))
+            module["root_module_id"] = request.POST.get("root_module_id")
 
     if should_edit('excl_form_ids') and isinstance(module, ShadowModule):
         excl = request.POST.getlist('excl_form_ids')
