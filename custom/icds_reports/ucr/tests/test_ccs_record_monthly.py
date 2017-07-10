@@ -1053,7 +1053,7 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
             case_id=case_id,
             dob=date(1990, 1, 1),
             edd=date(2016, 2, 5),
-            add=date(2016, 2, 25),
+            add=date(2016, 3, 2),
             date_opened=datetime(2015, 12, 10),
             date_modified=datetime(2016, 3, 12),
             bp1_date=date(2015, 12, 13),
@@ -1075,9 +1075,9 @@ class TestCCSRecordDataSource(BaseICDSDatasourceTest):
                  ('bp2_complete', 1),
                  ('bp3_complete', 1),
                  ('pnc_complete', 0)]),
-            (3, [('bp1_complete', 1),
-                 ('bp2_complete', 1),
-                 ('bp3_complete', 1),
+            (3, [('bp1_complete', 0),
+                 ('bp2_complete', 0),
+                 ('bp3_complete', 0),
                  ('pnc_complete', 1)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
