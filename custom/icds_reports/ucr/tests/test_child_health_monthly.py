@@ -657,12 +657,12 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         case_id = uuid.uuid4().hex
         self._create_case(
             case_id=case_id,
-            dob=date(2013, 2, 12),
-            date_opened=datetime(2013, 2, 14),
+            dob=date(2011, 2, 12),
+            date_opened=datetime(2011, 2, 14),
             date_modified=datetime(2016, 3, 12),
         )
 
-        # Not eligible after 36 months old
+        # Not eligible after 5 years old
         cases = [
             (1, [('wer_eligible', 1)]),
             (2, [('wer_eligible', 1)]),
@@ -1079,7 +1079,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 3, 12),
         )
 
-        # Dec: No data, Jan: EBF, Mar: Not EBF
+        # Dec: No data, Jan: EBF, Feb: No data, Mar: Not EBF
         self._submit_ebf_form(
             form_date=datetime(2016, 1, 10),
             case_id=case_id,
@@ -1106,6 +1106,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
 
         cases = [
             (0, [('ebf_eligible', 1),
+                 ('ebf_no_info_recorded', 1),
                  ('ebf_in_month', 0),
                  ('ebf_not_breastfeeding_reason', None),
                  ('ebf_drinking_liquid', 0),
@@ -1130,7 +1131,8 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
                  ('counsel_ebf', 0), ]
              ),
             (2, [('ebf_eligible', 1),
-                 ('ebf_in_month', 1),
+                 ('ebf_in_month', 0),
+                 ('ebf_no_info_recorded', 1),
                  ('ebf_not_breastfeeding_reason', None),
                  ('ebf_drinking_liquid', 0),
                  ('ebf_eating', 0),
@@ -1143,6 +1145,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
              ),
             (3, [('ebf_eligible', 1),
                  ('ebf_in_month', 0),
+                 ('ebf_no_info_recorded', 0),
                  ('ebf_not_breastfeeding_reason', 'not_enough_milk'),
                  ('ebf_drinking_liquid', 1),
                  ('ebf_eating', 1),
@@ -1155,10 +1158,11 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
              ),
             (4, [('ebf_eligible', 1),
                  ('ebf_in_month', 0),
-                 ('ebf_not_breastfeeding_reason', 'not_enough_milk'),
-                 ('ebf_drinking_liquid', 1),
-                 ('ebf_eating', 1),
-                 ('ebf_no_bf_no_milk', 1),
+                 ('ebf_no_info_recorded', 1),
+                 ('ebf_not_breastfeeding_reason', None),
+                 ('ebf_drinking_liquid', 0),
+                 ('ebf_eating', 0),
+                 ('ebf_no_bf_no_milk', 0),
                  ('ebf_no_bf_pregnant_again', 0),
                  ('ebf_no_bf_child_too_old', 0),
                  ('ebf_no_bf_mother_sick', 0),
@@ -1184,7 +1188,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 3, 12),
         )
 
-        # Dec: not EBF, Jan: EBF
+        # Dec: not EBF, Jan: EBF, Feb: No info
         self._submit_pnc_form(
             form_date=datetime(2015, 12, 14),
             case_id=case_id,
@@ -1210,6 +1214,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             (0, [('ebf_eligible', 1),
                  ('pnc_eligible', 1),
                  ('ebf_in_month', 0),
+                 ('ebf_no_info_recorded', 0),
                  ('ebf_not_breastfeeding_reason', None),
                  ('ebf_drinking_liquid', 1),
                  ('ebf_eating', 0),
@@ -1224,6 +1229,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             (1, [('ebf_eligible', 1),
                  ('pnc_eligible', 1),
                  ('ebf_in_month', 1),
+                 ('ebf_no_info_recorded', 0),
                  ('ebf_not_breastfeeding_reason', None),
                  ('ebf_drinking_liquid', 0),
                  ('ebf_eating', 0),
@@ -1237,7 +1243,8 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
              ),
             (2, [('ebf_eligible', 1),
                  ('pnc_eligible', 0),
-                 ('ebf_in_month', 1),
+                 ('ebf_in_month', 0),
+                 ('ebf_no_info_recorded', 1),
                  ('ebf_not_breastfeeding_reason', None),
                  ('ebf_drinking_liquid', 0),
                  ('ebf_eating', 0),
