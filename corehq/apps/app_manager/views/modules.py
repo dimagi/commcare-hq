@@ -825,7 +825,7 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
 
 @no_conflict_require_POST
 @require_can_edit_apps
-def edit_report_module(request, domain, app_id, module_id):
+def edit_report_module(request, domain, app_id, module_unique_id):
     """
     Overwrite module case details. Only overwrites components that have been
     provided in the request. Components are short, long, filter, parent_select,
@@ -833,7 +833,7 @@ def edit_report_module(request, domain, app_id, module_id):
     """
     params = json_request(request.POST)
     app = get_app(domain, app_id)
-    module = app.get_module(module_id)
+    module = app.get_module_by_unique_id(module_unique_id)
     assert isinstance(module, ReportModule)
     module.name = params['name']
 
