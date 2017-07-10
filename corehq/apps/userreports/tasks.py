@@ -322,15 +322,13 @@ def _save_document_helper(indicator, doc):
             working_config_ids.append(config_id)
         except (DatabaseError, ESError, InternalError, RequestError,
                 ConnectionTimeout, ProtocolError, ReadTimeout):
-            # a database had an issue so don't log it and go on to the next doc
+            # a database had an issue so don't log it and go on to the next config
             failed_config_ids.append(config_id)
-            break
         except Exception as e:
             # getting the config could fail before the adapter is set
             if adapter:
                 adapter.handle_exception(doc, e)
             failed_config_ids.append(config_id)
-            break
 
     # only want to change if there were some that worked and failed
     if failed_config_ids and working_config_ids:
