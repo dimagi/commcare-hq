@@ -142,7 +142,7 @@ urlpatterns = [
     url(r'^(?P<app_id>[\w-]+)/multimedia/', include(hqmedia_urls)),
     url(r'^edit_module_detail_screens/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/$',
         edit_module_detail_screens, name='edit_module_detail_screens'),
-    url(r'^edit_module_attr/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<attr>[\w-]+)/$',
+    url(r'^edit_module_attr/(?P<app_id>[\w-]+)/(?P<module_unique_id>[\w-]+)/(?P<attr>[\w-]+)/$',
         edit_module_attr, name='edit_module_attr'),
     url(r'^edit_report_module/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',
         edit_report_module, name='edit_report_module'),
