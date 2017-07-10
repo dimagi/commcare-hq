@@ -16,7 +16,8 @@ INSERT INTO {{ domain_dim }} (
     domain_last_modified,
     domain_created_on,
     dim_last_modified,
-    dim_created_on
+    dim_created_on,
+    batch_id
 )
 SELECT
     domain_id,
@@ -44,6 +45,7 @@ SELECT
     domain_last_modified,
     domain_created_on,
     now(),
-    now()
+    now(),
+    '{{ batch_id }}'
 FROM
     {{ domain_staging }}

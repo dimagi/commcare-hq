@@ -1,15 +1,45 @@
 import uuid
 import random
 from datetime import datetime
+
+from django.conf import settings
+from django.core.management import call_command
+from django.test import TestCase
+
+from corehq.form_processor.tests.utils import partitioned
 from corehq.warehouse.models import (
     UserStagingTable,
     GroupStagingTable,
     LocationStagingTable,
     LocationTypeStagingTable,
+    Batch,
 )
 
+DEFAULT_BATCH_ID = '222617b9-8cf0-40a2-8462-7f872e1f1344'
 
-def create_user_staging_record(domain, user_id=None, username=None, doc_type=None, base_doc=None):
+
+def get_default_batch():
+    return Batch.objects.get(batch_id=DEFAULT_BATCH_ID)
+
+
+def create_batch(start, end, batch_id=None):
+    batch_id = batch_id or str(uuid.uuid4())
+    call_command(
+        'create_batch',
+        batch_id,
+        '-s={}'.format(start.isoformat()),
+        '-e={}'.format(end.isoformat()),
+    )
+    return Batch.objects.get(batch_id=batch_id)
+
+
+def create_user_staging_record(
+        domain,
+        user_id=None,
+        username=None,
+        doc_type=None,
+        base_doc=None,
+        batch_id=None):
     record = UserStagingTable(
         user_id=user_id or uuid.uuid4().hex,
         username=username or 'user-staging',
@@ -20,6 +50,7 @@ def create_user_staging_record(domain, user_id=None, username=None, doc_type=Non
         is_staff=False,
         is_superuser=False,
         date_joined=datetime.utcnow(),
+        batch_id=batch_id or DEFAULT_BATCH_ID
     )
     record.save()
     return record
@@ -31,6 +62,7 @@ def create_group_staging_record(
         name=None,
         doc_type=None,
         user_ids=None,
+        batch_id=None,
         removed_user_ids=None):
     record = GroupStagingTable(
         domain=domain,
@@ -40,6 +72,7 @@ def create_group_staging_record(
         user_ids=user_ids or [],
         removed_user_ids=removed_user_ids or [],
         group_last_modified=datetime.utcnow(),
+        batch_id=batch_id or DEFAULT_BATCH_ID
     )
     record.save()
     return record
@@ -48,6 +81,7 @@ def create_group_staging_record(
 def create_location_staging_record(
         domain,
         name,
+        batch_id=None,
         location_id=None,
         location_type_id=None,
         sql_location_id=None,
@@ -61,18 +95,20 @@ def create_location_staging_record(
         sql_location_id=sql_location_id if sql_location_id is not None else random.randint(0, 100),
         sql_parent_location_id=sql_parent_location_id,
         location_last_modified=datetime.utcnow(),
+        batch_id=batch_id or DEFAULT_BATCH_ID
     )
     record.save()
     return record
 
 
-def create_location_type_staging_record(domain, name, location_type_id, code=None):
+def create_location_type_staging_record(domain, name, location_type_id, code=None, batch_id=None):
     record = LocationTypeStagingTable(
         domain=domain,
         name=name,
         location_type_id=location_type_id,
         code=code,
         location_type_last_modified=datetime.utcnow(),
+        batch_id=batch_id or DEFAULT_BATCH_ID
     )
     record.save()
     return record
@@ -142,3 +178,12 @@ def _create_locations_from_tree(domain, tree, parent_id, location_types, next_id
         )
         next_id['id'] += 1
         _create_locations_from_tree(domain, next_tree, next_id['id'] - 1, location_types, next_id)
+
+
+@partitioned
+class BaseWarehouseTestCase(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(BaseWarehouseTestCase, cls).setUpClass()
+        cls.using = settings.WAREHOUSE_DATABASE_ALIAS if settings.USE_PARTITIONED_DATABASE else 'default'
