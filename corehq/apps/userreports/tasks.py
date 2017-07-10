@@ -33,8 +33,9 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
-from corehq.util.datadog.gauges import datadog_gauge
+from corehq.util.datadog.gauges import datadog_gauge, datadog_histogram
 from corehq.util.quickcache import quickcache
+from corehq.util.timer import TimingContext
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
@@ -266,6 +267,8 @@ def save_document(doc_ids):
     for doc_id in doc_ids:
         lock_keys.append(get_async_indicator_modify_lock_key(doc_id))
 
+    indicator_config_ids = None
+    timer = TimingContext()
     with CriticalSection(lock_keys):
         indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids)
         if not indicators:
@@ -281,46 +284,56 @@ def save_document(doc_ids):
 
         indicator_by_doc_id = {i.doc_id: i for i in indicators}
         doc_store = get_document_store(first_indicator.domain, first_indicator.doc_type)
-        for doc in doc_store.iter_documents(doc_ids):
-            indicator = indicator_by_doc_id[doc['_id']]
+        indicator_config_ids = first_indicator.indicator_config_ids
 
-            eval_context = EvaluationContext(doc)
-            working_config_ids = []
-            failed_config_ids = []
-            for config_id in indicator.indicator_config_ids:
-                adapter = None
-                try:
-                    config = _get_config(config_id)
-                    adapter = get_indicator_adapter(config, can_handle_laboratory=True)
-                    adapter.save(doc, eval_context)
-                    eval_context.reset_iteration()
-                    working_config_ids.append(config_id)
-                except (DatabaseError, ESError, InternalError, RequestError,
-                        ConnectionTimeout, ProtocolError, ReadTimeout):
-                    # a database had an issue so don't log it and go on to the next doc
-                    failed_config_ids.append(config_id)
-                    failed_indicators.append(indicator.pk)
-                    break
-                except Exception as e:
-                    # getting the config could fail before the adapter is set
-                    if adapter:
-                        adapter.handle_exception(doc, e)
-                    failed_config_ids.append(config_id)
-                    failed_indicators.append(indicator.pk)
-                    break
-                else:
-                    processed_indicators.append(indicator.pk)
+        with timer:
+            for doc in doc_store.iter_documents(doc_ids):
+                indicator = indicator_by_doc_id[doc['_id']]
 
-            # only want to change if there were some that worked and failed
-            if failed_config_ids and working_config_ids:
-                AsyncIndicator.objects.filter(pk=indicator.pk).update(
-                    indicator_config_ids=failed_config_ids
-                )
+                eval_context = EvaluationContext(doc)
+                working_config_ids = []
+                failed_config_ids = []
+                for config_id in indicator.indicator_config_ids:
+                    adapter = None
+                    try:
+                        config = _get_config(config_id)
+                        adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+                        adapter.save(doc, eval_context)
+                        eval_context.reset_iteration()
+                        working_config_ids.append(config_id)
+                    except (DatabaseError, ESError, InternalError, RequestError,
+                            ConnectionTimeout, ProtocolError, ReadTimeout):
+                        # a database had an issue so don't log it and go on to the next doc
+                        failed_config_ids.append(config_id)
+                        failed_indicators.append(indicator.pk)
+                        break
+                    except Exception as e:
+                        # getting the config could fail before the adapter is set
+                        if adapter:
+                            adapter.handle_exception(doc, e)
+                        failed_config_ids.append(config_id)
+                        failed_indicators.append(indicator.pk)
+                        break
+                    else:
+                        processed_indicators.append(indicator.pk)
+
+                # only want to change if there were some that worked and failed
+                if failed_config_ids and working_config_ids:
+                    AsyncIndicator.objects.filter(pk=indicator.pk).update(
+                        indicator_config_ids=failed_config_ids
+                    )
 
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
         AsyncIndicator.objects.filter(pk__in=failed_indicators).update(
             date_queued=None, unsuccessful_attempts=F('unsuccessful_attempts') + 1
         )
+
+    datadog_histogram(
+        'commcare.async_indicator.processing_time', timer.duration,
+        tags=[
+            u'config_ids:{}'.format(indicator_config_ids)
+        ]
+    )
 
 
 @periodic_task(
