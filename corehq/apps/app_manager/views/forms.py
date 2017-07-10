@@ -448,13 +448,12 @@ def get_xform_source(request, domain, app_id, form_unique_id):
 @require_GET
 @require_can_edit_apps
 def get_form_questions(request, domain, app_id):
-    module_id = request.GET.get('module_id')
-    form_id = request.GET.get('form_id')
+    form_unique_id = request.GET.get('form_unique_id')
     try:
         app = get_app(domain, app_id)
-        form = app.get_module(module_id).get_form(form_id)
+        form = app.get_form(form_unique_id)
         lang, langs = get_langs(request, app)
-    except (ModuleNotFoundException, IndexError):
+    except FormNotFoundException:
         raise Http404()
     xform_questions = form.get_questions(langs, include_triggers=True)
     return json_response(xform_questions)
