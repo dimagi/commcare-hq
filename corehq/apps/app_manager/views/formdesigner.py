@@ -129,7 +129,7 @@ def _get_form_designer_view(request, domain, app, module, form):
             request.couch_user.username,
         ),
         'can_preview_form': request.couch_user.has_permission(
-            domain,'edit_data'
+            domain, 'edit_data'
         ),
     })
     context.update(_get_requirejs_context())
@@ -256,14 +256,14 @@ def _get_vellum_core_context(request, domain, app, module, form):
         'patchUrl': reverse('patch_xform',
                             args=[domain, app.id, form.get_unique_id()]),
         'allowedDataNodeReferences': [
-                                         "meta/deviceID",
-                                         "meta/instanceID",
-                                         "meta/username",
-                                         "meta/userID",
-                                         "meta/timeStart",
-                                         "meta/timeEnd",
-                                         "meta/location",
-                                     ] + _get_core_context_scheduler_data_nodes(module, form),
+             "meta/deviceID",
+             "meta/instanceID",
+             "meta/username",
+             "meta/userID",
+             "meta/timeStart",
+             "meta/timeEnd",
+             "meta/location",
+         ] + _get_core_context_scheduler_data_nodes(module, form),
         'activityUrl': reverse('ping'),
         'sessionid': request.COOKIES.get('sessionid'),
         'externalLinks': {

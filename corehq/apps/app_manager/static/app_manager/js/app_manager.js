@@ -455,7 +455,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
                                 $form.append('<input type="hidden" name="from_module_id" value="' + from_module_id.toString() + '" />');
                                 $form.append('<input type="hidden" name="to_module_id"   value="' + to_module_id.toString()   + '" />');
                             }
-
+                            
                             if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
                                 // disable sortable
                                 $sortable.find('.drag_handle').css('color', 'transparent').removeClass('drag_handle');
@@ -478,7 +478,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
                                         $fromSortable = $parentSortable.find("[data-index=" + from_module_id + "] .sortable");
                                     resetIndexes($fromSortable);
                                 }
-                                $.post($form.attr('action'), $form.serialize(), function (data) {});
+                                $.post($form.attr('action'), $form.serialize(), function () {});
                             }
                         }
 
