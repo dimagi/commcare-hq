@@ -593,4 +593,9 @@ def get_and_assert_practice_user_in_domain(practice_user_id, domain):
         raise PracticeUserException(_(
             "User {username} is not a practice user, "
             "please turn on practice mode for this user".format(username=user.username)))
+    if user.is_deleted():
+        raise PracticeUserException(_(
+            "User {username} has been deleted, you can't use that user as "
+            "practice user".format(username=user.username)
+        ))
     return user
