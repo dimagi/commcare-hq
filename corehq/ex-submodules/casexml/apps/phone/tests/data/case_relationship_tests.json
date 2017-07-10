@@ -791,5 +791,22 @@
         "outcome": [
             "a", "b", "c"
         ]
+    },
+    {
+        "name": "host_of_closed_extension",
+        "owned": [
+            "a", "d"
+        ],
+        "closed": [
+            "b"
+        ],
+        "extensions": [
+            ["b", "a"],
+            ["b", "c"],
+            ["d", "b"]
+        ],
+        "outcome": [
+            "a"
+        ]
     }
 ]

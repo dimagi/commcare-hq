@@ -57,14 +57,14 @@ def do_livequery(timing_context, restore_state, async_task=None):
             return
         debug('enliven(%s)', case_id)
         live_ids.add(case_id)
-        ext_ids = extensions_by_host.pop(case_id, None)
+        ext_ids = extensions_by_host.get(case_id)
         if ext_ids:
-            host_ids = set(chain.from_iterable(
-                hosts_by_extension.pop(x, []) for x in ext_ids))
             for ext_id in ext_ids:
                 if ext_id in open_ids:
                     # case is open and is the extension of a live case
                     enliven(ext_id)
+        host_ids = hosts_by_extension.pop(case_id, None)
+        if host_ids:
             for host_id in host_ids:
                 # case has live extension
                 enliven(host_id)
@@ -141,23 +141,23 @@ def do_livequery(timing_context, restore_state, async_task=None):
 
     CIRCULAR_REF = object()
     debug = logging.getLogger(__name__).debug
+    accessor = CaseAccessors(restore_state.domain)
     live_ids = set()
     deleted_ids = set()
     extensions_by_host = defaultdict(set)  # host_id -> extension_ids
     hosts_by_extension = defaultdict(set)  # extension_id -> host_ids
     indices = defaultdict(list)
     seen_ix = set()  # set of '<index.case_id> <index.identifier>'
-    accessor = CaseAccessors(restore_state.domain)
     owner_ids = list(restore_state.owner_ids)
 
     debug("sync %s for %r", restore_state.current_sync_log._id, owner_ids)
     with timing_context("livequery"):
         with timing_context("get_case_ids_by_owners"):
-            open_ids = accessor.get_case_ids_by_owners(owner_ids, closed=False)
-            debug("open: %r", open_ids)
+            owned_ids = accessor.get_case_ids_by_owners(owner_ids, closed=False)
+            debug("owned/open: %r", owned_ids)
 
-        next_ids = all_ids = set(open_ids)
-        open_ids = set(open_ids)
+        next_ids = all_ids = set(owned_ids)
+        open_ids = set(owned_ids)
         level = 0
         while next_ids:
             level += 1
@@ -178,8 +178,14 @@ def do_livequery(timing_context, restore_state, async_task=None):
         with timing_context("enliven open root cases"):
             debug('open: %r', open_ids)
             # owned, open, not an extension -> live
-            for case_id in open_ids:
+            for case_id in owned_ids:
                 if case_id not in hosts_by_extension:
+                    enliven(case_id)
+
+            # open root node with open extension -> live
+            for case_id in open_ids:
+                if case_id not in hosts_by_extension \
+                        and any(x in open_ids for x in extensions_by_host[case_id]):
                     enliven(case_id)
 
             debug('live: %r', live_ids)
