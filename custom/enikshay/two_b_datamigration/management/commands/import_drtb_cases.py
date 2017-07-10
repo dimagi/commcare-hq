@@ -707,6 +707,7 @@ class Command(BaseCommand):
     def handle(self, domain, excel_file_path, format, **options):
 
         migration_id = str(datetime.datetime.now())
+        self.log_meta_info(migration_id, options['commit'])
         column_mapping = self.get_column_mapping(format)
         city_constants = self.get_city_constants(format)
         case_factory = CaseFactory(domain)
@@ -716,9 +717,24 @@ class Command(BaseCommand):
                 if i == 0:
                     # Skip the headers row
                     continue
-                case_structures = get_case_structures_from_row(domain, migration_id, column_mapping, city_constants, row)
-                if options['commit']:
-                    case_factory.create_or_update_cases(case_structures)
+                try:
+                    case_structures = get_case_structures_from_row(domain, migration_id, column_mapping, city_constants, row)
+                    logger.info("Creating cases for row {}. Case ids are: {}".format(
+                        i, ", ".join([x.case_id for x in case_structures])
+                    ))
+                    if options['commit']:
+                        case_factory.create_or_update_cases(case_structures)
+                except Exception as e:
+                    logger.info("Creating case structures for row {} failed".format(i))
+                    raise e
+
+    @staticmethod
+    def log_meta_info(migration_id, commit):
+        logger.info("Starting DRTB import with id {}".format(migration_id))
+        if commit:
+            logger.info("This is a REAL RUN")
+        else:
+            logger.info("This is a dry run")
 
     @staticmethod
     def get_column_mapping(format):
