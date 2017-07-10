@@ -9,7 +9,7 @@ from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
 from django.conf import settings
 from django.db import InternalError, DatabaseError
-from django.db.models import F
+from django.db.models import Count, F
 from django.utils.translation import ugettext as _
 from elasticsearch.exceptions import ConnectionTimeout
 from restkit import RequestError
@@ -317,3 +317,20 @@ def save_document(doc_ids):
         AsyncIndicator.objects.filter(pk__in=failed_indicators).update(
             date_queued=None, unsuccessful_attempts=F('unsuccessful_attempts') + 1
         )
+
+
+@periodic_task(
+    run_every=crontab(minute="*/5"),
+    queue=settings.CELERY_PERIODIC_QUEUE,
+)
+def async_indicators_metrics():
+    indicators_by_count = (
+        AsyncIndicator.objects
+        .values('indicator_config_ids')
+        .annotate(Count('indicator_config_ids'))
+        .order_by("-indicator_config_ids__count")
+    )
+    for ind in indicators_by_count:
+        config_ids = ind['indicator_config_ids']
+        count = ind['indicator_config_ids__count']
+        datadog_gauge('commcare.async_indicator.indicator_count', count, tags=config_ids)
