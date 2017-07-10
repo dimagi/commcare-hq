@@ -45,6 +45,23 @@ def do_livequery(timing_context, restore_state, async_task=None):
     def index_key(index):
         return '{} {}'.format(index.case_id, index.identifier)
 
+    def has_live_extension(case_id, cache={}):
+        """Recursively check if case_id has a live extension case
+
+        The result is cached to reduce recursion in subsequent calls
+        and to prevent infinite recursion.
+        """
+        try:
+            return cache[case_id]
+        except KeyError:
+            cache[case_id] = False
+        cache[case_id] = result = any(
+            ext_id in live_ids
+            or ext_id in owned_ids
+            or ext_id in open_ids and has_live_extension(ext_id)
+            for ext_id in extensions_by_host[case_id])
+        return result
+
     def enliven(case_id):
         """Mark the given case, its extensions and their hosts as live
 
@@ -146,7 +163,7 @@ def do_livequery(timing_context, restore_state, async_task=None):
     deleted_ids = set()
     extensions_by_host = defaultdict(set)  # host_id -> extension_ids
     hosts_by_extension = defaultdict(set)  # extension_id -> host_ids
-    indices = defaultdict(list)
+    indices = defaultdict(list)  # case_id -> list of CommCareCaseIndex-like
     seen_ix = set()  # set of '<index.case_id> <index.identifier>'
     owner_ids = list(restore_state.owner_ids)
 
@@ -154,9 +171,10 @@ def do_livequery(timing_context, restore_state, async_task=None):
     with timing_context("livequery"):
         with timing_context("get_case_ids_by_owners"):
             owned_ids = accessor.get_case_ids_by_owners(owner_ids, closed=False)
-            debug("owned/open: %r", owned_ids)
+            debug("owned: %r", owned_ids)
 
         next_ids = all_ids = set(owned_ids)
+        owned_ids = set(owned_ids)  # owned, open case ids (may be extensions)
         open_ids = set(owned_ids)
         level = 0
         while next_ids:
@@ -182,10 +200,10 @@ def do_livequery(timing_context, restore_state, async_task=None):
                 if case_id not in hosts_by_extension:
                     enliven(case_id)
 
-            # open root node with open extension -> live
+            # open root case with live extension -> live
             for case_id in open_ids:
-                if case_id not in hosts_by_extension \
-                        and any(x in open_ids for x in extensions_by_host[case_id]):
+                if (case_id not in hosts_by_extension and case_id not in live_ids
+                        and has_live_extension(case_id)):
                     enliven(case_id)
 
             debug('live: %r', live_ids)
