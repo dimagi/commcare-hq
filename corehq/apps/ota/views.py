@@ -362,8 +362,9 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
 @require_GET
 def heartbeat(request, domain, app_id):
     # mobile needs this. This needs to be revisited to actually work dynamically (Sravan June 7, 17)
+    for_app_id = request.GET.get('app_id', '')
     return JsonResponse({
-        "app_id": app_id,
+        "app_id": for_app_id,
         "latest_apk_version": {"value": ""},
         "latest_ccz_version": {"value": ""}
     })
