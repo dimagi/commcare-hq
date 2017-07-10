@@ -109,7 +109,8 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     edited_by_user_id = fields.CharField(readonly=True, null=True)
 
     def dehydrate_edited_by_user_id(self, bundle):
-        return (getattr(bundle.obj, 'auth_context') or {}).get('user_id', None)
+        if bundle.obj.edited_on:
+            return (getattr(bundle.obj, 'auth_context') or {}).get('user_id', None)
 
     def obj_get(self, bundle, **kwargs):
         instance_id = kwargs['pk']

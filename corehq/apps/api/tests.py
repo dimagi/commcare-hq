@@ -267,6 +267,7 @@ class TestXFormInstanceResource(APIResourceTest):
             xmlns='fake-xmlns',
             domain=self.domain.name,
             received_on=datetime.utcnow(),
+            edited_on=datetime.utcnow(),
             form={
                 '#type': 'fake-type',
                 '@xmlns': 'fake-xmlns',
