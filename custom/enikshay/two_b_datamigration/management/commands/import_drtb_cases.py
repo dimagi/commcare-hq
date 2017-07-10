@@ -581,6 +581,7 @@ def get_secondary_owner_case_properties(city_constants):
         "owner_id": city_constants.drtb_center_id,
     }
 
+
 def clean_weight_band(value):
     pass
     # TODO: Finish me
@@ -762,4 +763,3 @@ class Command(BaseCommand):
             return MumbaiColumnMapping
         else:
             raise Exception("Invalid format. Format must be mehsana2016, mehsana2017, or mumbai")
-
