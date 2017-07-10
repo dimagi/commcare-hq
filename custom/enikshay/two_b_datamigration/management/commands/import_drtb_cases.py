@@ -246,8 +246,8 @@ class MumbaiConstants(object):
 
 class MehsanaConstants(object):
     """A collection of Mehsana specific constants"""
-    drtb_center_name = "Patan - DRTB-HIV"
-    drtb_center_id = "becf3acefc51b425b553a66f3dbf387c"
+    drtb_center_name = None
+    drtb_center_id = None
 
 
 def get_case_structures_from_row(domain, migration_id, column_mapping, city_constants, row):
