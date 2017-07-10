@@ -25,7 +25,7 @@ NOT_DETECTED = "tb_not_detected"
 NO_RESULT = "no_result"
 
 # Map format is: MDR selection criteria value -> (rft_drtb_diagnosis value, rft_drtb_diagnosis_ext_dst value)
-# TODO: Fill in these Nones
+# TODO: (WAITING) Fill in these Nones
 SELECTION_CRITERIA_MAP = {
     "MDR sus -Pre.Treat At diagnosis(Smear+ve/-ve)": ("mdr_at_diagnosis", None),
     "MDR sus -Pre.Treat At diagnosis(Smear+ve/-ve).": ("mdr_at_diagnosis", None),
@@ -246,6 +246,7 @@ class MumbaiConstants(object):
 
 class MehsanaConstants(object):
     """A collection of Mehsana specific constants"""
+    # TODO: (WAITING) Fill in these values
     drtb_center_name = None
     drtb_center_id = None
 
@@ -712,6 +713,11 @@ def get_tu(domain, phi_id):
 
 class Command(BaseCommand):
 
+    MEHSANA_2017 = "mehsana2017"
+    MEHSANA_2016 = "mehsana2016"
+    MUMBAI = "mumbai"
+    FORMATS = [MEHSANA_2016, MEHSANA_2017, MUMBAI]
+
     def add_arguments(self, parser):
         parser.add_argument(
             'domain',
@@ -723,7 +729,7 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             'format',
-            help="the format of the given excel file. Options are mehsana2016, mehsana2017, or mumbai",
+            help="the format of the given excel file. Options are: {}.".format(", ".join(self.FORMATS)),
         )
         parser.add_argument(
             '--commit',
@@ -765,23 +771,22 @@ class Command(BaseCommand):
         else:
             logger.info("This is a dry run")
 
-    @staticmethod
-    def get_column_mapping(format):
-        if format == "mehsana2016":
+    @classmethod
+    def get_column_mapping(cls, format):
+        if format == cls.MEHSANA_2016:
             return Mehsana2016ColumnMapping
-        elif format == "mehsana2017":
+        elif format == cls.MEHSANA_2017:
             return Mehsana2017ColumnMapping
-        elif format == "mumbai":
+        elif format == cls.MUMBAI:
             return MumbaiColumnMapping
         else:
-            raise Exception("Invalid format. Format must be mehsana2016, mehsana2017, or mumbai")
+            raise Exception("Invalid format. Options are: {}.".format(", ".join(cls.FORMATS)))
 
-    @staticmethod
-    def get_city_constants(format):
-        # TODO: Use constants for formats
-        if format in ("mehsana2016", "mehsana2017"):
+    @classmethod
+    def get_city_constants(cls, format):
+        if format in (cls.MEHSANA_2016, cls.MEHSANA_2017):
             return MehsanaConstants
-        elif format == "mumbai":
+        elif format == cls.MUMBAI:
             return MumbaiColumnMapping
         else:
-            raise Exception("Invalid format. Format must be mehsana2016, mehsana2017, or mumbai")
+            raise Exception("Invalid format. Options are: {}.".format(", ".join(cls.FORMATS)))
