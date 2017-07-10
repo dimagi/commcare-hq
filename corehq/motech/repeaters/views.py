@@ -78,7 +78,7 @@ class RepeatRecordView(LoginAndDomainMixin, View):
         elif content_type == 'application/json':
             payload = json.dumps(json.loads(payload), indent=4)
         elif content_type == 'application/soap+xml':
-            payload = json.dump(payload, indent=4)
+            payload = json.dumps(payload, indent=4)
 
         return json_response({
             'payload': payload,
