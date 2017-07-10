@@ -1,15 +1,12 @@
-from django.conf import settings
 from mock import patch
 from datetime import datetime, timedelta
-from django.test import TestCase
 
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
-from corehq.form_processor.tests.utils import partitioned
 
-from corehq.warehouse.tests.utils import DEFAULT_BATCH_ID, get_default_batch, create_batch
+from corehq.warehouse.tests.utils import DEFAULT_BATCH_ID, get_default_batch, create_batch, BaseWarehouseTestCase
 from corehq.warehouse.models import (
     GroupStagingTable,
     DomainStagingTable,
@@ -28,8 +25,7 @@ def teardown_module():
     Batch.objects.all().delete()
 
 
-@partitioned
-class BaseStagingTableTest(TestCase):
+class BaseStagingTableTest(BaseWarehouseTestCase):
     records = []
     staging_table_cls = None
 
@@ -82,7 +78,6 @@ class TestGroupStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
 
     @classmethod
     def setUpClass(cls):
-        cls.using = 'warehouse' if settings.USE_PARTITIONED_DATABASE else 'default'
         delete_all_docs_by_doc_type(Group.get_db(), ['Group', 'Group-Deleted'])
         super(TestGroupStagingTable, cls).setUpClass()
 

@@ -1,9 +1,7 @@
 from datetime import datetime, timedelta
-from django.test import TestCase
 
 from corehq.apps.users.util import SYSTEM_USER_ID, DEMO_USER_ID
 from corehq.apps.commtrack.const import COMMTRACK_USERNAME
-from corehq.form_processor.tests.utils import partitioned
 from corehq.pillows.utils import (
     SYSTEM_USER_TYPE,
     DEMO_USER_TYPE,
@@ -19,7 +17,7 @@ from corehq.warehouse.tests.utils import (
     DEFAULT_BATCH_ID,
     get_default_batch,
     create_batch,
-)
+    BaseWarehouseTestCase)
 from corehq.warehouse.models import (
     Batch,
     UserStagingTable,
@@ -43,8 +41,7 @@ def teardown_module():
     Batch.objects.all().delete()
 
 
-@partitioned
-class TestUserDim(TestCase):
+class TestUserDim(BaseWarehouseTestCase):
 
     domain = 'user-dim-test'
 
@@ -115,8 +112,7 @@ class TestUserDim(TestCase):
         )
 
 
-@partitioned
-class TestUserGroupDim(TestCase):
+class TestUserGroupDim(BaseWarehouseTestCase):
 
     domain = 'user-group-dim-test'
 
@@ -171,8 +167,7 @@ class TestUserGroupDim(TestCase):
         )
 
 
-@partitioned
-class TestLocationDim(TestCase):
+class TestLocationDim(BaseWarehouseTestCase):
 
     domain = 'location-dim-test'
 
