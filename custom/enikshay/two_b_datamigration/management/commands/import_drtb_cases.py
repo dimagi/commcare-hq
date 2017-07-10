@@ -3,6 +3,7 @@ import logging
 import datetime
 import uuid
 
+import re
 from dateutil.parser import parse
 from django.core.management import (
     BaseCommand,
@@ -327,13 +328,17 @@ def get_person_case_properties(domain, column_mapping, row):
         "sex": column_mapping.get_value("sex", row),
         "age_entered": column_mapping.get_value("age_entered", row),
         "current_address": column_mapping.get_value("address", row),
-        "phone_number": column_mapping.get_value("phone_number", row),  # TODO: Review Gio's email about SMS
+        "phone_number": column_mapping.get_value("phone_number", row),
         "aadhaar_number": column_mapping.get_value("aadhaar_number", row),
         "phi_name": phi_name,
         "tu_name": tu_name,
         "tu_id": tu_id,
         # site_of_disease TODO
     }
+
+    if properties['phone_number']:
+        properties['contact_phone_number'] = clean_contact_phone_number(properties['phone_number'])
+        properties['language_code'] = "guj"  # TODO: (WAITING) Confirm preferred language code
 
     social_scheme = column_mapping.get_value("social_scheme", row)
     if social_scheme:
@@ -585,6 +590,23 @@ def get_secondary_owner_case_properties(city_constants):
 def clean_weight_band(value):
     pass
     # TODO: Finish me
+
+
+def clean_contact_phone_number(value):
+    """
+    Phone numbers should be "91" followed by 10 digits. No symbols allowed.
+    """
+    exception = Exception("Unexpected phone number format: {}".format(value))
+    cleaned = re.sub('[^0-9]', '', value)
+    if len(cleaned) == 12:
+        if cleaned[:2] == "91":
+            return cleaned
+        else:
+            raise exception
+    if len(cleaned) == 10:
+        return "91" + cleaned
+    else:
+        raise exception
 
 
 def clean_hiv_status(value):
