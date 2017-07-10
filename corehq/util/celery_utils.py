@@ -1,9 +1,13 @@
 from __future__ import print_function
+import multiprocessing
+import os
+
 import kombu.five
 from celery import Celery
 from celery import current_app
 from celery.backends.base import DisabledBackend
 from celery.task import task
+from celery.worker.autoscale import Autoscaler
 from django.conf import settings
 from datetime import datetime
 from time import sleep, time
@@ -186,3 +190,21 @@ def get_running_workers(timeout=10):
         worker_names.extend(worker_info.keys())
 
     return worker_names
+
+
+class LoadBasedAutoscaler(Autoscaler):
+    def _maybe_scale(self, req=None):
+        procs = self.processes
+        cur = min(self.qty, self.max_concurrency)
+
+        available_cpus = multiprocessing.cpu_count()
+        load_avgs = os.getloadavg()
+        max_avg = max(load_avgs[0], load_avgs[1])
+        normalized_load = max_avg / available_cpus
+
+        if cur > procs and normalized_load < 0.95:
+            self.scale_up(cur - procs)
+            return True
+        elif cur < procs or normalized_load > 1.5:
+            self.scale_down((procs - cur) - self.min_concurrency)
+            return True
