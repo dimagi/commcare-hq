@@ -41,10 +41,6 @@ from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 
 
-def _async_indicator_metric(name, value, tags=None):
-    datadog_gauge(name, value, enforce_prefix='commcare.async_indicator', tags=tags)
-
-
 def _get_config_by_id(indicator_config_id):
     if id_is_static(indicator_config_id):
         return StaticDataSourceConfiguration.by_id(indicator_config_id)
@@ -216,14 +212,14 @@ def queue_async_indicators():
     oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
     if oldest_indicator and oldest_indicator.date_queued:
         lag = (datetime.utcnow() - oldest_indicator.date_queued).total_seconds()
-        _async_indicator_metric('commcare.async_indicator.oldest_queued_indicator', lag)
+        datadog_gauge('commcare.async_indicator.oldest_queued_indicator', lag)
 
     with CriticalSection(['queue-async-indicators'], timeout=time_for_crit_section):
         day_ago = datetime.utcnow() - timedelta(days=1)
         indicators = AsyncIndicator.objects.all()[:settings.ASYNC_INDICATORS_TO_QUEUE]
         if indicators:
             lag = (datetime.utcnow() - indicators[0].date_created).total_seconds()
-            _async_indicator_metric('commcare.async_indicator.oldest_created_indicator', lag)
+            datadog_gauge('commcare.async_indicator.oldest_created_indicator', lag)
         indicators_by_domain_doc_type = defaultdict(list)
         for indicator in indicators:
             # don't requeue anything htat's be queued in the past day
@@ -353,4 +349,4 @@ def async_indicators_metrics():
     for ind in indicators_by_count:
         config_ids = ind['indicator_config_ids']
         count = ind['indicator_config_ids__count']
-        _async_indicator_metric('commcare.async_indicator.indicator_count', count, tags=config_ids)
+        datadog_gauge('commcare.async_indicator.indicator_count', count, tags=config_ids)
