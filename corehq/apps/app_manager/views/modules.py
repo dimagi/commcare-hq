@@ -865,10 +865,10 @@ def edit_report_module(request, domain, app_id, module_unique_id):
     return json_response('success')
 
 
-def validate_module_for_build(request, domain, app_id, module_id, ajax=True):
+def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=True):
     app = get_app(domain, app_id)
     try:
-        module = app.get_module(module_id)
+        module = app.get_module_by_unique_id(module_unique_id)
     except ModuleNotFoundException:
         raise Http404()
     errors = module.validate_for_build()
