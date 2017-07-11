@@ -357,6 +357,7 @@ def _indicators_by_count(date_created=None):
         AsyncIndicator.objects
         .values('indicator_config_ids')
         .annotate(Count('indicator_config_ids'))
+        .order_by()  # needed to get rid of implict ordering by date_created
     )
     if date_created:
         indicators_by_count = indicators_by_count.filter(date_created__lt=date_created)
