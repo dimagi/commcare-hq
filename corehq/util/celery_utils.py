@@ -202,10 +202,10 @@ class LoadBasedAutoscaler(Autoscaler):
         max_avg = max(load_avgs[0], load_avgs[1])
         normalized_load = max_avg / available_cpus
 
-        if cur > procs and normalized_load < 0.95:
+        if cur > procs and normalized_load < 0.90:
             self.scale_up(cur - procs)
             return True
-        elif cur < procs or normalized_load > 1.5:
+        elif cur < procs or normalized_load > 0.90:
             self.scale_down((procs - cur) - self.min_concurrency)
             return True
 
