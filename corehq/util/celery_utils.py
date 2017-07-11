@@ -232,7 +232,7 @@ class OffPeakLoadBasedAutoscaler(LoadBasedAutoscaler):
                 if time_begin < now < time_end:
                     return True
             else:  # off peak is overnight
-                if time_begin > now or time_end < now:
+                if time_begin < now or now < time_end:
                     return True
 
         # if this setting isn't set consider us always during peak time
