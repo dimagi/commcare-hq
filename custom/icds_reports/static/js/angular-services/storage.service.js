@@ -17,6 +17,6 @@ window.angular.module('icdsApp').factory('storageService', ['userLocationId', fu
         },
         setKey: function(key, value) {
             storage[key] = value;
-        }
+        },
     };
 }]);

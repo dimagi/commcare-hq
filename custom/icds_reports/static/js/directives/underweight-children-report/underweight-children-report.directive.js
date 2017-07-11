@@ -158,12 +158,13 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                     var findValue = function (values, date) {
                         var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
                         return day['all'];
-                    }
+                    };
+
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
                     tooltip_content += "<p>100 - 35% children underweight: <strong>" + findValue(vm.chartData[2].values, d.value) + "</strong></p>";
                     tooltip_content += "<p>20 - 35% children underweight: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
                     tooltip_content += "<p>< 20% children underweigh: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p><br/>";
-                    tooltip_content += "<span '>Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.</span>"
+                    tooltip_content += "<span '>Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.</span>";
 
                     return tooltip_content;
                 });

@@ -857,6 +857,11 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.showBeneficiary = false;
     vm.beneficiary = null;
     vm.markers = {};
+    vm.center = {
+        lat: 22.10,
+        lng: 78.22,
+        zoom: 5,
+    };
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
     } else {
@@ -880,6 +885,13 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     vm.message = false;
                     if (vm.data.map) {
                         vm.markers = vm.data.map.markers;
+                        if (Object.keys(vm.markers).length > 0) {
+                            vm.center = {
+                                lat: vm.markers[Object.keys(vm.markers)[0]].lat,
+                                lng: vm.markers[Object.keys(vm.markers)[0]].lng,
+                                zoom: 15,
+                            };
+                        }
                     }
                 },
                 function (error) {
@@ -1099,11 +1111,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     };
 
 
-    vm.center = {
-        lat: 22.10,
-        lng: 78.22,
-        zoom: 5
-    };
+
     vm.layers = {
         baselayers: {
             mapbox_light: {
@@ -1112,14 +1120,14 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 type: 'xyz',
                 layerOptions: {
                     apikey: 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA',
-                }
+                },
             },
             osm: {
                 name: 'OpenStreetMap',
                 url: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                type: 'xyz'
-            }
-        }
+                type: 'xyz',
+            },
+        },
     };
 
     vm.getDataForStep(vm.step);

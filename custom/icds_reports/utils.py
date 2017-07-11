@@ -1322,7 +1322,9 @@ def get_awc_reports_pse(config, month, two_before, domain):
 
     map_image_data = DailyAttendanceView.objects.filter(
         pse_date__range=(datetime(*two_before), datetime(*month)), **config
-    ).values('awc_name', 'form_location_lat', 'form_location_long', 'image_name', 'doc_id', 'pse_date', 'awc_site_code')
+    ).values(
+        'awc_name', 'form_location_lat', 'form_location_long', 'image_name', 'doc_id', 'pse_date'
+    )
 
     map_data = {}
     image_data = []
@@ -1336,7 +1338,6 @@ def get_awc_reports_pse(config, month, two_before, domain):
         image_name = map_row['image_name']
         doc_id = map_row['doc_id']
         pse_date = map_row['pse_date']
-        awc_site_code = map_row['awc_site_code']
         if lat and long:
             key = doc_id.replace('-', '')
             map_data.update({
