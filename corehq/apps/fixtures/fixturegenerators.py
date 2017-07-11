@@ -61,8 +61,7 @@ class ItemListsProvider(FixtureProvider):
             global_items = [db.get(domain, FIXTURE_BUCKET).read()]
         except NotFound:
             global_items = self.get_global_items(restore_user, global_types)
-            cached_element = [ElementTree.tostring(element, encoding='utf-8') for element in global_items]
-            db.put(StringIO("".join(cached_element)), domain, FIXTURE_BUCKET)
+            db.put(StringIO(" ".join(global_items)), domain, FIXTURE_BUCKET)
 
         user_items = self.get_user_items(restore_user, all_types, global_types)
         return global_items + user_items
@@ -126,7 +125,7 @@ class ItemListsProvider(FixtureProvider):
             # So we have to add a dummy empty_element child to prevent
             # this element from being empty.
             ElementTree.SubElement(fixture_element, 'empty_element')
-        return fixture_element
+        return ElementTree.tostring(fixture_element, encoding="utf-8")
 
     def _get_schema_element(self, data_type):
         schema_element = ElementTree.Element(
@@ -138,7 +137,7 @@ class ItemListsProvider(FixtureProvider):
             if field.is_indexed:
                 index_element = ElementTree.SubElement(indices_element, 'index')
                 index_element.text = field.field_name
-        return schema_element
+        return ElementTree.tostring(schema_element, encoding="utf-8")
 
 
 item_lists = ItemListsProvider()
