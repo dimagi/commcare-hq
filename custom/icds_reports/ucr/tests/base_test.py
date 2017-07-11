@@ -9,7 +9,7 @@ from corehq.util.test_utils import TestFileMixin
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
-from corehq.apps.userreports.tasks import iteratively_build_table
+from corehq.apps.userreports.tasks import _iteratively_build_table
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 
@@ -82,7 +82,7 @@ class BaseICDSDatasourceTest(TestCase, TestFileMixin):
         return self.adapter.get_query_object()
 
     def _run_iterative_monthly_test(self, case_id, cases, start_date=date(2015, 12, 1)):
-        iteratively_build_table(self.datasource)
+        _iteratively_build_table(self.datasource)
         # TODO(Sheel/J$) filter_by does not work on ES
         query = self._get_query_object().filter_by(doc_id=case_id)
         self.assertEqual(query.count(), 7)
