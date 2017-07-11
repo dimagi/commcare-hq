@@ -119,14 +119,7 @@ class ItemListsProvider(FixtureProvider):
         fixture_element.append(item_list_element)
         for item in items:
             item_list_element.append(item.to_xml())
-        if len(fixture_element) == 0:
-            # There is a bug on mobile versions prior to 2.27 where
-            # a parsing error will cause mobile to ignore the element
-            # after this one if this element is empty.
-            # So we have to add a dummy empty_element child to prevent
-            # this element from being empty.
-            ElementTree.SubElement(fixture_element, 'empty_element')
-        return fixture_element
+        return ElementTree.tostring(fixture_element, encoding="utf-8")
 
     def _get_schema_element(self, data_type):
         schema_element = ElementTree.Element(
