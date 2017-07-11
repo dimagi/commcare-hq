@@ -230,12 +230,18 @@ class OffPeakLoadBasedAutoscaler(LoadBasedAutoscaler):
 
         return False
 
+    def _during_peak_time(self):
+        return not self._is_off_peak()
+
     def _maybe_scale(self, req=None):
         procs = self.processes
 
-        if not self._is_off_peak() and procs > self.min_concurrency:
-            self.scale_down(1)
-            return True
+        if self._during_peak_time():
+            if procs > self.min_concurrency:
+                self.scale_down(1)
+                return True
+            elif procs == self.min_concurrency:
+                return False
 
         super(OffPeakLoadBasedAutoscaler, self)._maybe_scale(req)
 
