@@ -466,7 +466,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             return_value = sum([result.affected_count for result in results])
 
         for form_ids_chunk in chunked(form_ids, 500):
-            forms = FormAccessorSQL.get_forms(form_ids_chunk)
+            forms = FormAccessorSQL.get_forms(list(form_ids_chunk))
             for form in forms:
                 publish_form_saved(form)
 
@@ -993,7 +993,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return_value = sum([result.affected_count for result in results])
 
         for case_ids_chunk in chunked(case_ids, 500):
-            cases = CaseAccessorSQL.get_cases(case_ids_chunk)
+            cases = CaseAccessorSQL.get_cases(list(case_ids_chunk))
             for case in cases:
                 publish_case_saved(case)
 
