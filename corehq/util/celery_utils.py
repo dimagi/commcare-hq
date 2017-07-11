@@ -9,6 +9,7 @@ from celery.backends.base import DisabledBackend
 from celery.task import task
 from celery.worker.autoscale import Autoscaler
 from django.conf import settings
+from djcelery.loaders import DjangoLoader
 from datetime import datetime
 from time import sleep, time
 
@@ -232,3 +233,17 @@ class OffPeakLoadBasedAutoscaler(LoadBasedAutoscaler):
             return True
 
         super(OffPeakLoadBasedAutoscaler, self)._maybe_scale(req)
+
+
+class LoadBasedLoader(DjangoLoader):
+    def read_configuration(self):
+        ret = super(LoadBasedLoader, self).read_configuration()
+        ret['CELERYD_AUTOSCALER'] = 'corehq.util.celery_utils:LoadBasedAutoscaler'
+        return ret
+
+
+class OffPeakLoadBasedLoader(DjangoLoader):
+    def read_configuration(self):
+        ret = super(LoadBasedLoader, self).read_configuration()
+        ret['CELERYD_AUTOSCALER'] = 'corehq.util.celery_utils:OffPeakLoadBasedAutoscaler'
+        return ret
