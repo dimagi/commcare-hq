@@ -1358,8 +1358,6 @@ class ProjectSettingsTab(UITab):
 
     @property
     def sidebar_items(self):
-        from corehq.apps.domain.views import FeatureFlagsView
-
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
         user_is_billing_admin = self.couch_user.can_edit_billing()
@@ -1466,8 +1464,13 @@ class ProjectSettingsTab(UITab):
             items.append((_('Project Tools'), project_tools))
 
         if self.couch_user.is_superuser:
-            from corehq.apps.domain.views import EditInternalDomainInfoView, \
-                EditInternalCalculationsView
+            from corehq.apps.domain.views import (
+                EditInternalDomainInfoView,
+                EditInternalCalculationsView,
+                FeatureFlagsView,
+                PrivilegesView
+            )
+
             internal_admin = [
                 {
                     'title': _(EditInternalDomainInfoView.page_title),
@@ -1482,6 +1485,10 @@ class ProjectSettingsTab(UITab):
                 {
                     'title': _(FeatureFlagsView.page_title),
                     'url': reverse(FeatureFlagsView.urlname, args=[self.domain])
+                },
+                {
+                    'title': _(PrivilegesView.page_title),
+                    'url': reverse(PrivilegesView.urlname, args=[self.domain])
                 },
             ]
             items.append((_('Internal Data (Dimagi Only)'), internal_admin))

@@ -74,7 +74,7 @@ from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import (
     get_change_status, get_privileges, fmt_dollar_amount,
     quantize_accounting_decimal, get_customer_cards,
-    log_accounting_error,
+    log_accounting_error, domain_has_privilege,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
@@ -2965,6 +2965,26 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
             'flags': self.enabled_flags(),
             'use_sql_backend': self.domain_object.use_sql_backend
         }
+
+
+class PrivilegesView(BaseAdminProjectSettingsView):
+    urlname = 'domain_privileges'
+    page_title = ugettext_lazy("Privileges")
+    template_name = 'domain/admin/privileges.html'
+
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(PrivilegesView, self).dispatch(request, *args, **kwargs)
+
+    def _get_privileges(self):
+        return sorted([
+            (privilege, domain_has_privilege(self.domain, privilege))
+            for privilege in privileges.MAX_PRIVILEGES
+        ], key=lambda (name, has): (has, name), reverse=True)
+
+    @property
+    def page_context(self):
+        return {'privileges': self._get_privileges()}
 
 
 class TransferDomainView(BaseAdminProjectSettingsView):
