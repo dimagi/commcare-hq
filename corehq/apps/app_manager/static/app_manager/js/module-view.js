@@ -107,68 +107,34 @@ $(function () {
 
     // Registration in case list
     if ($('#case-list-form').length) {
-        var CaseListForm = function (data, formOptions, allowed, now_allowed_reason) {
-            var self = this,
-                initialOption = data.form_id ? data.form_id : 'disabled',
-                formSet = !!data.form_id,
-                formMissing = formSet && !formOptions[data.form_id];
+        var CaseListForm = function (originalFormId, formOptions) {
+            var self = this;
 
-            self.toggleState = function(active) {
-                active = active && allowed;
-                $('#case_list_form-label').toggle(active);
-                $('#case_list_media').toggle(active);
-            };
+            self.caseListForm = ko.observable(originalFormId);
+            self.formMissing = ko.computed(function() {
+                return self.caseListForm() && !formOptions[self.caseListForm()];
+            });
 
-            self.toggleMessage = function() {
-                self.messageVisible(!self.messageVisible());
-            };
-
-            self.buildOptstr = function(extra) {
-                self.caseListFormOptstr = _.map(formOptions, function (label, value) {
-                    return {value: value, label: label};
-                });
-                if (extra) {
-                    self.caseListFormOptstr.push({value: extra, label: gettext("Unknown Form (missing)")});
+            var showMedia = function(formId) {
+                if (formId) {
+                    $("#case_list_media").show();
+                } else {
+                    $("#case_list_media").hide();
                 }
             };
 
-            self.allowed = allowed;
-            self.now_allowed_reason = now_allowed_reason;
-            self.formMissing = ko.observable(formMissing);
-            self.messageVisible = ko.observable(false);
-            self.caseListForm = ko.observable(data.form_id ? data.form_id : null);
-            self.caseListFormProxy = ko.observable(initialOption);
-            self.caseListFormDisplay = formOptions[initialOption];
-
-            self.caseListFormProxy.subscribe(function (form_id) {
-                var disabled = form_id === 'disabled' || !formOptions[form_id];
-                self.caseListForm(disabled ? null : form_id);
-                self.toggleState(!disabled);
-            });
-
-            if (formMissing) {
-                var removeOld = self.caseListFormProxy.subscribe(function (oldValue) {
-                    if (formMissing && oldValue === initialOption) {
-                        // remove the missing form from the options once the user select a real form
-                        self.buildOptstr();
-                        removeOld.dispose();
-                        self.formMissing(false);
-                    }
-                }, null, "beforeChange");
-            }
-
-            self.toggleState(formSet && !formMissing);
-            self.buildOptstr(formMissing ? data.form_id : false);
+            // Show or hide associated multimedia. Not done in knockout because
+            // the multimedia section has its own separate set of knockout bindings
+            showMedia(originalFormId);
+            self.caseListForm.subscribe(showMedia);
         };
-        var case_list_form_options = initial_page_data('case_list_form_options'),
-            case_list_form_not_allowed_reason = initial_page_data('case_list_form_not_allowed_reason'),
+        var case_list_form_options = initial_page_data('case_list_form_options');
             caseListForm = new CaseListForm(
-                case_list_form_options ? case_list_form_options.form : {},
-                case_list_form_options ? case_list_form_options.options : [],
-                case_list_form_not_allowed_reason ? case_list_form_not_allowed_reason.allow : "",
-                case_list_form_not_allowed_reason ? case_list_form_not_allowed_reason.message : ""
+                case_list_form_options ? case_list_form_options.form.form_id : null,
+                case_list_form_options ? case_list_form_options.options : []
             );
         $('#case-list-form').koApplyBindings(caseListForm);
+
         // Reset save button after bindings
         // see http://manage.dimagi.com/default.asp?145851
         var $form = $('#case-list-form').closest('form'),

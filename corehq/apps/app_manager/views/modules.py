@@ -218,7 +218,7 @@ def _get_careplan_module_view_context(app, module, case_property_builder):
 def _get_advanced_module_view_context(app, module):
     case_type = module.case_type
     return {
-        'case_list_form_not_allowed_reason': _case_list_form_not_allowed_reason(module),
+        'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': True,
         'schedule_phases': [
             {
@@ -233,16 +233,9 @@ def _get_advanced_module_view_context(app, module):
 
 
 def _get_basic_module_view_context(app, module, case_property_builder):
-    case_type = module.case_type
-    # http://manage.dimagi.com/default.asp?178635
-    allow_with_parent_select = app.build_version >= '2.23' or not module.parent_select.active
-    allow_case_list_form = _case_list_form_not_allowed_reason(
-        module,
-        AllowWithReason(allow_with_parent_select, AllowWithReason.PARENT_SELECT_ACTIVE)
-    )
     return {
-        'parent_modules': _get_parent_modules(app, module, case_property_builder, case_type),
-        'case_list_form_not_allowed_reason': allow_case_list_form,
+        'parent_modules': _get_parent_modules(app, module, case_property_builder, module.case_type),
+        'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': (
             toggles.BASIC_CHILD_MODULE.enabled(app.domain)
         ),
@@ -366,7 +359,6 @@ def _case_list_form_options(app, module, case_type_, lang=None):
         for mod in app.get_modules() if module.unique_id != mod.unique_id
         for form in mod.get_forms() if form.is_registration_form(case_type_)
     ]
-    options['disabled'] = gettext_lazy("Don't Show")
     langs = None if lang is None else [lang]
     options.update({f.unique_id: trans(f.name, langs) for f in forms})
 
@@ -416,37 +408,18 @@ def _get_module_details_context(app, module, case_property_builder, case_type_):
     return details
 
 
-def _case_list_form_not_allowed_reason(module, allow=None):
-    reason = None
-    if allow and not allow.allow:
-        reason = allow
-    elif not module.all_forms_require_a_case():
-        reason = AllowWithReason(False, AllowWithReason.ALL_FORMS_REQUIRE_CASE)
-    elif module.put_in_root:
-        reason = AllowWithReason(False, AllowWithReason.MODULE_IN_ROOT)
-    else:
-        reason = AllowWithReason(True, '')
-    if reason:
-        return {
-            'allow': reason.allow,
-            'message': reason.message,
-        }
-    return None
-
-
-class AllowWithReason(namedtuple('AllowWithReason', 'allow reason')):
-    ALL_FORMS_REQUIRE_CASE = 1
-    MODULE_IN_ROOT = 2
-    PARENT_SELECT_ACTIVE = 3
-
-    @property
-    def message(self):
-        if self.reason == self.ALL_FORMS_REQUIRE_CASE:
-            return gettext_lazy('Not all forms in the case list update a case.')
-        elif self.reason == self.MODULE_IN_ROOT:
-            return gettext_lazy("'Menu Mode' is not configured as 'Display menu and then forms'")
-        elif self.reason == self.PARENT_SELECT_ACTIVE:
-            return gettext_lazy("'Parent Selection' is configured.")
+def _case_list_form_not_allowed_reasons(module):
+    reasons = []
+    if module.put_in_root:
+        reasons.append(_("'Menu Mode' is not configured as 'Display menu and then forms'"))
+    if not module.all_forms_require_a_case():
+        reasons.append(_("all forms in this case list must update a case, "
+                         "which means that registration forms must go in a different case list"))
+    if isinstance(module, Module):
+        app = module.get_app()
+        if app.build_version < '2.23' and module.parent_select.active:
+            reasons.append(_("'Parent Selection' is configured"))
+    return reasons
 
 
 @no_conflict_require_POST
