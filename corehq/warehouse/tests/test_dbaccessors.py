@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta
 from django.test import TestCase
 
+from corehq.apps.app_manager.models import Application, LinkedApplication
+from corehq.apps.app_manager.tests.util import delete_all_apps
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser
@@ -14,6 +16,7 @@ from corehq.warehouse.dbaccessors import (
     get_group_ids_by_last_modified,
     get_user_ids_by_last_modified,
     get_synclog_ids_by_date,
+    get_application_ids_by_last_modified
 )
 
 
@@ -28,9 +31,10 @@ class TestDbAccessors(TestCase):
         for synclog_id in get_synclog_ids_by_date(datetime(1970, 1, 1), datetime.max):
             db.delete_doc(synclog_id)
 
-        # Needed because other tests do not always clean up their users.
+        # Needed because other tests do not always clean up their users or applications.
         delete_all_users()
         hard_delete_deleted_users()
+        delete_all_apps()
 
         cls.g1 = Group(domain=cls.domain, name='group')
         cls.g1.save()
@@ -54,12 +58,21 @@ class TestDbAccessors(TestCase):
             date=datetime.utcnow(),
         )
         cls.synclog.save()
+        cls.test_app = Application(domain=cls.domain, name='test-app')
+        cls.test_app.save()
+        cls.deleted_app = Application(domain=cls.domain, name='deleted-app', doc_type='Application-Deleted')
+        cls.deleted_app.save()
+        cls.linked_app = LinkedApplication(domain=cls.domain, name='linked-app', doc_type='Application-Deleted')
+        cls.linked_app.save()
 
     @classmethod
     def tearDownClass(cls):
         cls.g1.delete()
         cls.g2.delete()
         cls.web_user.delete()
+        cls.test_app.delete()
+        cls.deleted_app.delete()
+        cls.linked_app.delete()
         cls.domain_obj.delete()
         cls.synclog.delete()
         super(TestDbAccessors, cls).tearDownClass()
@@ -70,7 +83,7 @@ class TestDbAccessors(TestCase):
 
         self.assertEqual(
             set(get_group_ids_by_last_modified(start, end)),
-            set([self.g1._id, self.g2._id]),
+            {self.g1._id, self.g2._id},
         )
 
         self.assertEqual(
@@ -84,7 +97,7 @@ class TestDbAccessors(TestCase):
 
         self.assertEqual(
             set(get_group_ids_by_last_modified(start, end)),
-            set([self.g2._id]),
+            {self.g2._id},
         )
 
     def test_get_synclog_ids_by_date(self):
@@ -99,7 +112,7 @@ class TestDbAccessors(TestCase):
         end = datetime.utcnow() + timedelta(days=3)
         self.assertEqual(
             set(get_synclog_ids_by_date(start, end)),
-            set([self.synclog._id]),
+            {self.synclog._id},
         )
 
     def test_get_user_ids_by_last_modified(self):
@@ -108,10 +121,24 @@ class TestDbAccessors(TestCase):
 
         self.assertEqual(
             set(get_user_ids_by_last_modified(start, end)),
-            set([self.web_user._id, self.commcare_user._id]),
+            {self.web_user._id, self.commcare_user._id},
         )
 
         self.assertEqual(
             set(get_user_ids_by_last_modified(start, end - timedelta(days=4))),
+            set(),
+        )
+
+    def test_get_app_ids_by_last_modified(self):
+        start = datetime.utcnow() - timedelta(days=3)
+        end = datetime.utcnow() + timedelta(days=3)
+
+        self.assertEqual(
+            set(get_application_ids_by_last_modified(start, end)),
+            {self.test_app._id, self.deleted_app._id, self.linked_app._id},
+        )
+
+        self.assertEqual(
+            set(get_application_ids_by_last_modified(start, end - timedelta(days=4))),
             set(),
         )
