@@ -4,7 +4,6 @@ from decimal import Decimal
 import logging
 import json
 import cStringIO
-from functools import partial
 import pytz
 import sys
 
