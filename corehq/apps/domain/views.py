@@ -2980,7 +2980,7 @@ class PrivilegesView(BaseAdminProjectSettingsView):
         return sorted([
             (privilege, domain_has_privilege(self.domain, privilege))
             for privilege in privileges.MAX_PRIVILEGES
-        ], key=lambda (name, has): (has, name), reverse=True)
+        ], key=lambda (name, has): (not has, name))
 
     @property
     def page_context(self):
