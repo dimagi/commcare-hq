@@ -3587,10 +3587,19 @@
           },
           {
             "type": "boolean_expression",
-            "operator": "gte",
-            "property_value": 365,
+            "operator": "gt",
+            "property_value": 12,
             "expression": {
-              "type": "icds_child_age_in_days"
+              "type": "icds_child_age_in_months_month_end"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "named",
+              "name": "valid_in_month"
             }
           }
         ]
