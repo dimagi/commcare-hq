@@ -1,3 +1,4 @@
+/* globals COMMCAREHQ */
 var HQAsyncReport = function (o) {
     'use strict';
     var self = this;
