@@ -340,24 +340,28 @@ def _save_document_helper(indicator, doc):
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def async_indicators_metrics():
-    for ind in _indicators_by_count():
-        config_ids = ind['indicator_config_ids']
-        count = ind['indicator_config_ids__count']
-        datadog_gauge('commcare.async_indicator.indicator_count', count, tags=config_ids)
+    for config_id, count in _indicators_by_count():
+        datadog_gauge('commcare.async_indicator.indicator_count', count, tags=config_id)
 
 
-def _indicators_by_count():
+def _indicators_by_count(date_created=None):
     """
-    Number of docs in the queue that have a specific set of indicator config ids
+    Number of docs in the queue that have a specific indicator config ids
 
-    query returns
-    [
-      {"indicator_config_ids": [data_source_id_1, data_source_id_1], indicator_config_ids__count: "12"}
-    ]
+    returns {
+        "config_id": "number of indicators with that config"
+    }
     """
-    return (
+    ret = defaultdict(lambda: 0)
+    indicators_by_count = (
         AsyncIndicator.objects
         .values('indicator_config_ids')
         .annotate(Count('indicator_config_ids'))
-        .order_by("-indicator_config_ids__count")
     )
+    if date_created:
+        indicators_by_count = indicators_by_count.filter(date_created__lt=date_created)
+    for ind in indicators_by_count:
+        for config_id in ind['indicator_config_ids']:
+            ret[config_id] += ind['indicator_config_ids__count']
+
+    return ret
