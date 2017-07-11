@@ -37,6 +37,7 @@ class CleanOwnerSyncPayload(object):
         self.all_dependencies_syncing = set()
         self.closed_cases = set()
         self.potential_updates_to_sync = {}
+        self.potential_ids_to_sync = set()
 
         self.timing_context = timing_context
 
@@ -64,6 +65,7 @@ class CleanOwnerSyncPayload(object):
 
     def _get_next_case_batch(self):
         ids = pop_ids(self.case_ids_to_sync, chunk_size)
+        self.potential_ids_to_sync.update(ids)
         return [
             case for case in self.case_accessor.get_cases(ids)
             if not case.is_deleted and case_needs_to_sync(case, last_sync_log=self.restore_state.last_sync_log)
@@ -138,7 +140,7 @@ class CleanOwnerSyncPayload(object):
         self.restore_state.current_sync_log.extension_index_tree = extension_index_tree
 
     def update_case_ids_on_phone(self):
-        case_ids_on_phone = set(self.checked_cases)
+        case_ids_on_phone = self.checked_cases
         primary_cases_syncing = self.checked_cases - self.all_dependencies_syncing
         if not self.restore_state.is_initial:
             case_ids_on_phone |= self.restore_state.last_sync_log.case_ids_on_phone
@@ -163,7 +165,7 @@ class CleanOwnerSyncPayload(object):
         return irrelevant_cases
 
     def compile_response(self, irrelevant_cases):
-        syncable_ids = self.checked_cases - irrelevant_cases
+        syncable_ids = set(self.potential_updates_to_sync.keys()) - irrelevant_cases
         relevant_sync_updates = [
             self.potential_updates_to_sync[syncable_id]
             for syncable_id in syncable_ids
