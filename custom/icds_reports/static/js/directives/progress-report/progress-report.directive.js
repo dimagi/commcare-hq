@@ -5,9 +5,9 @@ var url = hqImport('hqwebapp/js/urllib.js').reverse;
 function ProgressReportController($scope, $location, progressReportService, storageService) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.get());
+        $location.search(storageService.getKey('search'));
     } else {
-        storageService.set($location.search());
+        storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
     vm.filters = ['gender', 'age'];
@@ -15,10 +15,10 @@ function ProgressReportController($scope, $location, progressReportService, stor
     vm.data = {};
     vm.dates = [];
     vm.now = new Date().getMonth() + 1;
-    vm.showWarning = storageService.getKey('month') === void(0) || vm.now === storageService.getKey('month');
+    vm.showWarning = storageService.getKey('search') === void(0) && (storageService.getKey('search')['month'] === void(0) || vm.now === storageService.getKey('search')['month']);
 
     $scope.$on('filtersChange', function() {
-        vm.showWarning =  vm.now === storageService.getKey('month');
+        vm.showWarning =  vm.now === storageService.getKey('search')['month'];
         vm.loadData();
     });
 

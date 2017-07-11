@@ -6,9 +6,9 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
                                              locationsService, userLocationId, storageService) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.get());
+        $location.search(storageService.getKey('search'));
     } else {
-        storageService.set($location.search());
+        storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
     vm.label = "Prevalence of Stunning (Height for age)";
@@ -30,6 +30,27 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
     vm.rightLegend = {
         info: 'Percentage of children between 6 - 60 months enrolled for ICDS services with weight-for-height below -3 standard deviations of the WHO Child Growth Standards median.',
     };
+
+    vm.message = storageService.getKey('message') || false;
+
+    $scope.$watch(function() {
+        return vm.selectedLocations;
+    }, function (newValue, oldValue) {
+        if (newValue === oldValue || !newValue || newValue.length === 0) {
+            return;
+        }
+        if (newValue.length === 6) {
+            var parent = newValue[3];
+            $location.search('location_id', parent.location_id);
+            $location.search('selectedLocationLevel', 3);
+            $location.search('location_name', parent.name);
+            storageService.setKey('message', true);
+            setTimeout(function() {
+                storageService.setKey('message', false);
+            }, 3000);
+        }
+        return newValue;
+    }, true);
 
     vm.templatePopup = function(loc, row) {
         var total = $filter('indiaNumbers')(row ? row.total : 0);
@@ -54,7 +75,7 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
                 vm.top_three = response.data.report_data.top_three;
                 vm.bottom_three = response.data.report_data.bottom_three;
                 vm.location_type = response.data.report_data.location_type;
-                vm.chartTicks = vm.chartData[0].values.map(function(d) { return d[0]; });
+                vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
             }
         });
     };
@@ -91,8 +112,8 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
                 bottom: 60,
                 left: 80,
             },
-            x: function(d){ return d[0]; },
-            y: function(d){ return d[1]; },
+            x: function(d){ return d.x; },
+            y: function(d){ return d.y; },
 
             color: d3.scale.category10().range(),
             useInteractiveGuideline: true,
@@ -115,6 +136,25 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
                     return d3.format(".0%")(d);
                 },
                 axisLabelDistance: 20,
+            },
+            callback: function(chart) {
+                var tooltip = chart.interactiveLayer.tooltip;
+                tooltip.contentGenerator(function (d) {
+
+                    var findValue = function (values, date) {
+                        var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
+                        return day['all'];
+                    };
+
+                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
+                    tooltip_content += "<p>38-100% children with stunted growth: <strong>" + findValue(vm.chartData[2].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>25-38% children with stunted growth: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>0-25% children with stunted growth: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p><br/>";
+                    tooltip_content += "<span>Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median.</span>";
+
+                    return tooltip_content;
+                });
+                return chart;
             },
         },
     };

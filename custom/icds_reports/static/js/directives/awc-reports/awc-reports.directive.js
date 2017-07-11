@@ -852,22 +852,24 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.step = $routeParams.step;
     vm.data = null;
     vm.filters = [];
-    vm.dtOptions = DTOptionsBuilder.newOptions().withBootstrap().withOption('scrollX', '100%');
+    vm.dtOptions = DTOptionsBuilder.newOptions().withOption('scrollX', '100%');
     vm.showTable = true;
     vm.showBeneficiary = false;
     vm.beneficiary = null;
+    vm.markers = {};
     if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.get());
+        $location.search(storageService.getKey('search'));
     } else {
-        storageService.set($location.search());
+        storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
     vm.xTicks = [];
-    vm.selectedLocationLevel = storageService.getKey('selectedLocationLevel') || 0;
+    vm.message = true;
+    vm.selectedLocationLevel = storageService.getKey('search')['selectedLocationLevel'] || 0;
 
     vm.getDataForStep = function(step) {
         var get_url = url('awc_reports', step);
-        if (vm.selectedLocationLevel === 4) {
+        if (parseInt(vm.selectedLocationLevel) === 4) {
             $http({
                 method: "GET",
                 url: get_url,
@@ -875,6 +877,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             }).then(
                 function (response) {
                     vm.data = response.data;
+                    vm.message = false;
+                    if (vm.data.map) {
+                        vm.markers = vm.data.map.markers;
+                    }
                 },
                 function (error) {
                     $log.error(error);
@@ -893,8 +899,6 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         }
         return html;
     };
-
-    vm.getDataForStep(vm.step);
 
     setTimeout(function() {
         vm.chartOptions = {
@@ -1094,6 +1098,31 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         }
     };
 
+
+    vm.center = {
+        lat: 22.10,
+        lng: 78.22,
+        zoom: 5
+    };
+    vm.layers = {
+        baselayers: {
+            mapbox_light: {
+                name: 'Mapbox Light',
+                url: 'https://api.mapbox.com/styles/v1/dimagi/cj2rl1t0w001f2rnr0y8hfhho/tiles/{z}/{x}/{y}?access_token={apikey}',
+                type: 'xyz',
+                layerOptions: {
+                    apikey: 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA',
+                }
+            },
+            osm: {
+                name: 'OpenStreetMap',
+                url: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                type: 'xyz'
+            }
+        }
+    };
+
+    vm.getDataForStep(vm.step);
 }
 
 AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'storageService'];

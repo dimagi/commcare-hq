@@ -37,9 +37,9 @@ function IndieMapController($scope, $compile, $location, storageService) {
         }, true);
 
         if (Object.keys($location.search()).length === 0) {
-            $location.search(storageService.get());
+            $location.search(storageService.getKey('search'));
         } else {
-            storageService.set($location.search());
+            storageService.setKey('search', $location.search());
         }
 
         var location_level = parseInt($location.search()['selectedLocationLevel']);

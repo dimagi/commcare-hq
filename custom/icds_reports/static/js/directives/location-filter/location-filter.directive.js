@@ -80,9 +80,9 @@ function LocationModalController($uibModalInstance, locationsService, selectedLo
 function LocationFilterController($scope, $location, $uibModal, locationHierarchy, locationsService, storageService) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.get());
+        $location.search(storageService.getKey('search'));
     } else {
-        storageService.set($location.search());
+        storageService.setKey('search', $location.search());
     }
     vm.animationsEnabled = true;
     vm.selectedLocationId = $location.search()['location_id'] || vm.selectedLocationId;

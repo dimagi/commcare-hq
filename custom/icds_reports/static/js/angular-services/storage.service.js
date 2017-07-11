@@ -1,6 +1,8 @@
 window.angular.module('icdsApp').factory('storageService', ['userLocationId', function(userLocationId) {
     var storage = {
-        'location': userLocationId,
+        'search': {
+            'location': userLocationId,
+        },
     };
 
     return {
@@ -13,5 +15,8 @@ window.angular.module('icdsApp').factory('storageService', ['userLocationId', fu
         getKey: function(key) {
             return storage[key];
         },
+        setKey: function(key, value) {
+            storage[key] = value;
+        }
     };
 }]);

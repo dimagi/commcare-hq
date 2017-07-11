@@ -7,9 +7,9 @@ function SystemUsageController($http, $log, $routeParams, $location, storageServ
     vm.filters = ['gender', 'age'];
     vm.step = $routeParams.step;
     if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.get());
+        $location.search(storageService.getKey('search'));
     } else {
-        storageService.set($location.search());
+        storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
 

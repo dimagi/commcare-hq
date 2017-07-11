@@ -5,9 +5,9 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                                              locationsService, userLocationId, storageService) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.get());
+        $location.search(storageService.getKey('search'));
     } else {
-        storageService.set($location.search());
+        storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
     vm.label = "Prevalence of Undernutrition (weight-for-age)";
@@ -25,10 +25,29 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     vm.location_type = null;
     vm.loaded = false;
     vm.filters = [];
-
     vm.rightLegend = {
         info: 'Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.',
     };
+    vm.message = storageService.getKey('message') || false;
+
+    $scope.$watch(function() {
+        return vm.selectedLocations;
+    }, function (newValue, oldValue) {
+        if (newValue === oldValue || !newValue || newValue.length === 0) {
+            return;
+        }
+        if (newValue.length === 6) {
+            var parent = newValue[3];
+            $location.search('location_id', parent.location_id);
+            $location.search('selectedLocationLevel', 3);
+            $location.search('location_name', parent.name);
+            storageService.setKey('message', true);
+            setTimeout(function() {
+                storageService.setKey('message', false);
+            }, 3000);
+        }
+        return newValue;
+    }, true);
 
     vm.templatePopup = function(loc, row) {
         var total = $filter('indiaNumbers')(row ? row.total : 0);
@@ -56,7 +75,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                 vm.top_three = response.data.report_data.top_three;
                 vm.bottom_three = response.data.report_data.bottom_three;
                 vm.location_type = response.data.report_data.location_type;
-                vm.chartTicks = vm.chartData[0].values.map(function(d) { return d[0]; });
+                vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
             }
         });
     };
@@ -96,16 +115,6 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         }
     };
 
-    vm.showMessage = function() {
-        if ($location.search()['selectedLocationLevel'] === "4" && vm.selectedLocations && vm.selectedLocations.length > 0) {
-            var parent = vm.selectedLocations[3];
-            $location.search('location_id', parent.location_id);
-            $location.search('selectedLocationLevel', 3);
-            $location.search('location_name', parent.name);
-            return true;
-        }
-    };
-
     vm.chartOptions = {
         chart: {
             type: 'lineChart',
@@ -116,12 +125,13 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                 bottom: 60,
                 left: 80,
             },
-            x: function(d){ return d[0]; },
-            y: function(d){ return d[1]; },
+            x: function(d){ return d.x; },
+            y: function(d){ return d.y; },
 
             color: d3.scale.category10().range(),
             useInteractiveGuideline: true,
             clipVoronoi: false,
+            tooltips: true,
             xAxis: {
                 axisLabel: '',
                 showMaxMin: true,
@@ -140,6 +150,24 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                     return d3.format(".0%")(d);
                 },
                 axisLabelDistance: 20,
+            },
+            callback: function(chart) {
+                var tooltip = chart.interactiveLayer.tooltip;
+                tooltip.contentGenerator(function (d) {
+
+                    var findValue = function (values, date) {
+                        var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
+                        return day['all'];
+                    }
+                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
+                    tooltip_content += "<p>100 - 35% children underweight: <strong>" + findValue(vm.chartData[2].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>20 - 35% children underweight: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>< 20% children underweigh: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p><br/>";
+                    tooltip_content += "<span '>Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.</span>"
+
+                    return tooltip_content;
+                });
+                return chart;
             },
         },
     };

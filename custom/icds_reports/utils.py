@@ -1052,9 +1052,9 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['green'][miliseconds] = 0
-        data['orange'][miliseconds] = 0
-        data['red'][miliseconds] = 0
+        data['green'][miliseconds] = {'y': 0, 'all': 0}
+        data['orange'][miliseconds] = {'y': 0, 'all': 0}
+        data['red'][miliseconds] = {'y': 0, 'all': 0}
 
     best_worst = {}
     for row in chart_data:
@@ -1073,17 +1073,15 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        if date_in_miliseconds not in data['green']:
-            data['green'][date_in_miliseconds] = 0
-            data['orange'][date_in_miliseconds] = 0
-            data['red'][date_in_miliseconds] = 0
-
         if underweight <= 20:
-            data['green'][date_in_miliseconds] += 1
+            data['green'][date_in_miliseconds]['y'] += 1
+            data['green'][date_in_miliseconds]['all'] += underweight
         elif 21 <= underweight <= 35:
-            data['orange'][date_in_miliseconds] += 1
+            data['orange'][date_in_miliseconds]['y'] += 1
+            data['green'][date_in_miliseconds]['all'] += underweight
         elif underweight > 35:
-            data['red'][date_in_miliseconds] += 1
+            data['red'][date_in_miliseconds]['y'] += 1
+            data['green'][date_in_miliseconds]['all'] += underweight
 
     top_locations = sorted(
         [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
@@ -1094,21 +1092,39 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
     return {
         "chart_data": [
             {
-                "values": [[key, value / float(locations_for_lvl)] for key, value in data['green'].iteritems()],
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(locations_for_lvl),
+                        'all': value['all']
+                    } for key, value in data['green'].iteritems()
+                ],
                 "key": "Between 0%-20%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": GREEN
             },
             {
-                "values": [[key, value / float(locations_for_lvl)] for key, value in data['orange'].iteritems()],
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(locations_for_lvl),
+                        'all': value['all']
+                    } for key, value in data['orange'].iteritems()
+                ],
                 "key": "Between 11%-35%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
-                "values": [[key, value / float(locations_for_lvl)] for key, value in data['red'].iteritems()],
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(locations_for_lvl),
+                        'all': value['all']
+                    } for key, value in data['red'].iteritems()
+                ],
                 "key": "Between 36%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
@@ -1306,9 +1322,9 @@ def get_awc_reports_pse(config, month, two_before, domain):
 
     map_image_data = DailyAttendanceView.objects.filter(
         pse_date__range=(datetime(*two_before), datetime(*month)), **config
-    ).values('awc_name', 'form_location_lat', 'form_location_long', 'image_name', 'doc_id')
+    ).values('awc_name', 'form_location_lat', 'form_location_long', 'image_name', 'doc_id', 'pse_date', 'awc_site_code')
 
-    map_data = []
+    map_data = {}
     image_data = []
     tmp_image = []
     img_count = 0
@@ -1319,18 +1335,25 @@ def get_awc_reports_pse(config, month, two_before, domain):
         awc_name = map_row['awc_name']
         image_name = map_row['image_name']
         doc_id = map_row['doc_id']
+        pse_date = map_row['pse_date']
+        awc_site_code = map_row['awc_site_code']
         if lat and long:
-            map_data.append({
-                'name': awc_name,
-                'radius': 3,
-                'country': 'IND',
-                'fillKey': 'green',
-                'latitude': lat,
-                'longitude': long
+            key = doc_id.replace('-', '')
+            map_data.update({
+                key: {
+                    'lat': float(lat),
+                    'lng': float(long),
+                    'focus': 'true',
+                    'message': awc_name,
+                }
             })
         url = reverse('download_attachment', kwargs={'domain': domain, 'instance_id': doc_id})
         if image_name:
-            tmp_image.append({'id': count, 'image': url + '?attachment=' + image_name})
+            tmp_image.append({
+                'id': count,
+                'image': url + '?attachment=' + image_name,
+                'date': pse_date.strftime("%d/%m/%Y")
+            })
             img_count += 1
             count += 1
             if img_count == 4:
@@ -1342,21 +1365,7 @@ def get_awc_reports_pse(config, month, two_before, domain):
 
     return {
         'map': {
-            'bubbles': map_data,
-            'title': 'PSE Form Submissions',
-            'data': [
-                {
-                    "slug": "pse_forms",
-                    "label": "",
-                    "fills": {
-                        'green': GREEN,
-                        'defaultFill': GREY,
-                    },
-                    "rightLegend": {
-                    },
-                    "data": None,
-                }
-            ]
+            'markers': map_data,
         },
         'images': image_data
     }
@@ -1691,10 +1700,10 @@ def get_awc_report_demographics(config, month):
     }
 
 
-def get_awc_report_beneficiary(awc_id, month, two_before):
+def get_awc_report_beneficiary(awc_site_code, month, two_before):
     data = ChildHealthMonthlyView.objects.filter(
         month__range=(datetime(*two_before), datetime(*month)),
-        awc_id="d5d0fce5e73ff2b04417f40bd2bc5f7c",
+        awc_site_code="awc_site_code",
         open_in_month=1,
         valid_in_month=1,
         age_in_months__lte=72
@@ -1859,9 +1868,9 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['green'][miliseconds] = 0
-        data['orange'][miliseconds] = 0
-        data['red'][miliseconds] = 0
+        data['green'][miliseconds] = {'y': 0, 'all': 0}
+        data['orange'][miliseconds] = {'y': 0, 'all': 0}
+        data['red'][miliseconds] = {'y': 0, 'all': 0}
 
     best_worst = {}
     for row in chart_data:
@@ -1880,17 +1889,15 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        if date_in_miliseconds not in data['green']:
-            data['green'][date_in_miliseconds] = 0
-            data['orange'][date_in_miliseconds] = 0
-            data['red'][date_in_miliseconds] = 0
-
         if underweight < 5:
-            data['green'][date_in_miliseconds] += 1
+            data['green'][date_in_miliseconds]['y'] += 1
+            data['green'][date_in_miliseconds]['all'] += underweight
         elif 5 <= underweight < 7:
-            data['orange'][date_in_miliseconds] += 1
+            data['orange'][date_in_miliseconds]['y'] += 1
+            data['green'][date_in_miliseconds]['all'] += underweight
         elif underweight >= 7:
-            data['red'][date_in_miliseconds] += 1
+            data['red'][date_in_miliseconds]['y'] += 1
+            data['green'][date_in_miliseconds]['all'] += underweight
 
     top_locations = sorted(
         [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
@@ -1901,21 +1908,39 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
     return {
         "chart_data": [
             {
-                "values": [[key, value / float(locations_for_lvl)] for key, value in data['green'].iteritems()],
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(locations_for_lvl),
+                        'all': value['all']
+                    } for key, value in data['green'].iteritems()
+                ],
                 "key": "Between 0%-5%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": GREEN
             },
             {
-                "values": [[key, value / float(locations_for_lvl)] for key, value in data['orange'].iteritems()],
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(locations_for_lvl),
+                        'all': value['all']
+                    } for key, value in data['orange'].iteritems()
+                ],
                 "key": "Between 5%-7%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
-                "values": [[key, value / float(locations_for_lvl)] for key, value in data['red'].iteritems()],
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(locations_for_lvl),
+                        'all': value['all']
+                    } for key, value in data['red'].iteritems()
+                ],
                 "key": "Between 7%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",
@@ -2118,9 +2143,9 @@ def get_prevalence_of_stunning_data_chart(config, loc_level):
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['green'][miliseconds] = 0
-        data['orange'][miliseconds] = 0
-        data['red'][miliseconds] = 0
+        data['green'][miliseconds] = {'y': 0, 'all': 0}
+        data['orange'][miliseconds] = {'y': 0, 'all': 0}
+        data['red'][miliseconds] = {'y': 0, 'all': 0}
 
     best_worst = {}
     for row in chart_data:
@@ -2139,17 +2164,15 @@ def get_prevalence_of_stunning_data_chart(config, loc_level):
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        if date_in_miliseconds not in data['green']:
-            data['green'][date_in_miliseconds] = 0
-            data['orange'][date_in_miliseconds] = 0
-            data['red'][date_in_miliseconds] = 0
-
         if underweight < 25:
-            data['green'][date_in_miliseconds] += 1
+            data['green'][date_in_miliseconds]['y'] += 1
+            data['green'][date_in_miliseconds]['all'] += underweight
         elif 25 <= underweight < 38:
-            data['orange'][date_in_miliseconds] += 1
+            data['orange'][date_in_miliseconds]['y'] += 1
+            data['green'][date_in_miliseconds]['all'] += underweight
         elif underweight >= 38:
-            data['red'][date_in_miliseconds] += 1
+            data['red'][date_in_miliseconds]['y'] += 1
+            data['green'][date_in_miliseconds]['all'] += underweight
 
     top_locations = sorted(
         [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
@@ -2160,21 +2183,39 @@ def get_prevalence_of_stunning_data_chart(config, loc_level):
     return {
         "chart_data": [
             {
-                "values": [[key, value / float(locations_for_lvl)] for key, value in data['green'].iteritems()],
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(locations_for_lvl),
+                        'all': value['all']
+                    } for key, value in data['green'].iteritems()
+                ],
                 "key": "Between 0%-25%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": GREEN
             },
             {
-                "values": [[key, value / float(locations_for_lvl)] for key, value in data['orange'].iteritems()],
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(locations_for_lvl),
+                        'all': value['all']
+                    } for key, value in data['orange'].iteritems()
+                ],
                 "key": "Between 25%-38%",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
             },
             {
-                "values": [[key, value / float(locations_for_lvl)] for key, value in data['red'].iteritems()],
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(locations_for_lvl),
+                        'all': value['all']
+                    } for key, value in data['red'].iteritems()
+                ],
                 "key": "Between 38%-100%",
                 "strokeWidth": 2,
                 "classed": "dashed",

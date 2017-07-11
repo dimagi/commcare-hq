@@ -14,7 +14,7 @@
 .fixes-filters {
     position: fixed;
     z-index: 1;
-    top: 55px;
+    top: 42px;
     background-color: white;
     width: 83%;
     padding: 10px 0;
@@ -149,6 +149,10 @@
     color: #f29500;
 }
 
+.dark_grey {
+    background-color: #a9a4a4 !important;
+}
+
 .left-menu {
     height: 100%;
     position: fixed;
@@ -161,7 +165,7 @@
 
 .navbar-default {
     margin-bottom: 0;
-    height: 60px;
+    height: 50px;
 }
 
 .black:hover {
@@ -183,7 +187,7 @@
 
 .report-content {
     color: #ffffff !important;
-    margin-top: 100px;
+    margin-top: 110px;
     padding: 20px 20px 80px;
 }
 
@@ -450,6 +454,10 @@ h4 {
     opacity: 1;
 }
 
+.nvtooltip {
+    max-width: 300px !important;
+}
+
 .carousel-control.left {
     left: 15px;
 }
@@ -472,4 +480,13 @@ circle {
 
 .hideLegend .nv-legend {
     display: none !important;
+}
+
+.uib-carousel {
+    position: relative;
+    bottom: 30%;
+    margin: 0 auto;
+    color: white;
+    font-size: 20px;
+    font-weight: bolder;
 }

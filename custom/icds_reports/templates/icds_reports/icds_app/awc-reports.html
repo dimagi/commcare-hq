@@ -31,7 +31,7 @@
         </div>
     </div>
     <div class="report-content">
-        <div class="alert alert-info" ng-show="!$ctrl.data" style="margin-top: 30px;">
+        <div class="alert alert-info" ng-show="$ctrl.message" style="margin-top: 30px;">
             <strong>Info!</strong> {% trans "You must choose AWC to see data!" %}
         </div>
         <div ng-show="$ctrl.data">
@@ -45,16 +45,16 @@
                 </div>
                 <div class="row no-margin">
                     <h2 class="center">{$ $ctrl.data.map.title $}</h2>
-                    <indie-map legend-title="Percentage Children" data="$ctrl.data.map.data" bubbles="$ctrl.data.map.bubbles"></indie-map>
+                    <leaflet lf-center="$ctrl.center" layers="$ctrl.layers" markers="$ctrl.markers" height="600px" width="100%"></leaflet>
+{#                    <indie-map legend-title="Percentage Children" data="$ctrl.data.map.data" bubbles="$ctrl.data.map.bubbles"></indie-map>#}
                 </div>
                 <div class="row no-margin">
                     <h2 class="center">PSE Photo Submissions</h2>
                     <div uib-carousel active="active" interval="0" style="height: 300px;" >
                         <div uib-slide ng-repeat="images in $ctrl.data.images track by $index" index="$index">
-                            <div>
-                                <span ng-repeat="img in images track by img.id">
-                                    <img class="slider-image" ng-src="{$ img.image $}" >
-                                </span>
+                            <div style="display: inline-block" ng-repeat="img in images track by img.id">
+                                <img class="slider-image" ng-src="{$ img.image $}">
+                                <div class="uib-carousel">{$ img.date $}</div>
                             </div>
                         </div>
                     </div>
@@ -72,7 +72,7 @@
             </div>
             <div class="row black" ng-show="$ctrl.step === 'beneficiary'">
             <div ng-show="$ctrl.showTable" ng-if="$ctrl.data.months" class="col-md-12">
-                <table datatable="" dt-options="$ctrl.dtOptions" class="table table-striped table-bordered">
+                <table datatable="ng" dt-options="$ctrl.dtOptions" class="table table-striped table-bordered">
                     <thead>
                         <tr>
                             <th rowspan="2">Name</th>
@@ -91,7 +91,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr ng-repeat="row in $ctrl.data.rows">
+                        <tr ng-class="{'dark_grey': row[$ctrl.data.last_month].stunning === 'severe'}" ng-repeat="row in $ctrl.data.rows">
                             <td><span class="pointer" ng-click="$ctrl.showBeneficiaryDetails(row[$ctrl.data.last_month].case_id)">{$ row[$ctrl.data.last_month].person_name $}</span></td>
                             <td>{$ row[$ctrl.data.last_month].dob $}</td>
                             <td>{$ row[$ctrl.data.last_month].age $}</td>
@@ -102,12 +102,12 @@
                                 </span>
                             </td>
                             <td>
-                                <span ng-class="{'red': row[month].stunning === 'unmeasured', 'green': row[month].stunning === 'normal', 'orange': row[month].stunning === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'height')" popover-placement="right" popover-trigger="'mouseenter'">
+                                <span ng-class="{'red': row[month].stunning === 'severe', 'green': row[month].stunning === 'normal', 'yellow': row[month].stunning === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'height')" popover-placement="right" popover-trigger="'mouseenter'">
                                     {$ row[month].stunning $}
                                 </span>
                             </td>
                             <td>
-                                <span ng-class="{'red': row[month].wasting === 'unmeasured', 'green': row[month].wasting === 'normal', 'orange': row[month].wasting === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'both')" popover-placement="right" popover-trigger="'mouseenter'">
+                                <span ng-class="{'red': row[month].wasting === 'severe', 'green': row[month].wasting === 'normal', 'yellow': row[month].wasting === 'moderate'}" class="pointer" uib-popover-html="$ctrl.getPopoverContent(row[$ctrl.data.last_month], 'both')" popover-placement="right" popover-trigger="'mouseenter'">
                                     {$ row[month].wasting $}
                                 </span>
                             </td>

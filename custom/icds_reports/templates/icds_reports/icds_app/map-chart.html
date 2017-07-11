@@ -30,6 +30,9 @@
         </div>
     </div>
     <div class="report-content">
+        <div ng-if="$ctrl.message" class="alert alert-info">
+            <strong>Info!</strong> Data for this report is shown at the sector level. For AWC-level information, please use the AWC Report.
+        </div>
         <div class="row black" ng-if="$ctrl.step === 'map'">
             <div class="col-md-12" ng-if="$ctrl.loaded && $ctrl.mode">
                 <map-or-sector-view template-popup="$ctrl.templatePopup(loc, row)" mode="{$ $ctrl.mode $}" data="$ctrl.data"></map-or-sector-view>

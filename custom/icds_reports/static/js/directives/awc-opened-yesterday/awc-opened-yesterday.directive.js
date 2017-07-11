@@ -8,9 +8,9 @@ function AwcOpenedYesterdayController($routeParams, $location, storageService, s
     vm.filters = [];
 
     if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.get());
+        $location.search(storageService.getKey('search'));
     } else {
-        storageService.set($location.search());
+        storageService.setKey('search', $location.search());
     }
     vm.filtersData = $location.search();
 
