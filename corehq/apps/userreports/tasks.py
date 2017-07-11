@@ -375,7 +375,5 @@ def _indicators_by_count(date_created=None):
 def icds_async_indicators_metrics():
     indicator_count_until_28 = _indicators_by_count(datetime(2017, 6, 28))
 
-    for ind in indicator_count_until_28:
-        config_ids = ind['indicator_config_ids']
-        count = ind['indicator_config_ids__count']
-        datadog_gauge('commcare.async_indicator.icds_rebuild', count, tags=config_ids)
+    for config_id, count in indicator_count_until_28:
+        datadog_gauge('commcare.async_indicator.icds_rebuild', count, tags=config_id)
