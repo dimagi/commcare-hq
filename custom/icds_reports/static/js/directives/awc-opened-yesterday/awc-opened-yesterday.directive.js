@@ -7,7 +7,11 @@ function AwcOpenedYesterdayController($routeParams, $location, storageService, s
     vm.step = $routeParams.step;
     vm.filters = [];
 
-    $location.search(storageService.get());
+    if (Object.keys($location.search()).length === 0) {
+        $location.search(storageService.getKey('search'));
+    } else {
+        storageService.setKey('search', $location.search());
+    }
     vm.filtersData = $location.search();
 
     vm.label = "AWCs Opened Yesterday";
