@@ -13,9 +13,13 @@ SELECT
     domain,
     name,
     application_last_modified,
-    CASE base_doc
-        WHEN 'ApplicationBase' then false
-        WHEN 'ApplicationBase-Deleted' then true
+    CASE doc_type
+        WHEN 'Application' then false
+        WHEN 'LinkedApplication' then false
+        WHEN 'RemoteApp' then false
+        WHEN 'Application-Deleted' then true
+        WHEN 'LinkedApplication-Deleted' then true
+        WHEN 'RemoteApp-Deleted' then true
     END,
     now(),
     now(),

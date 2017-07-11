@@ -388,7 +388,7 @@ class ApplicationStagingTable(StagingTable, CouchToDjangoETLMixin):
     name = models.CharField(max_length=255)
     domain = models.CharField(max_length=100)
     application_last_modified = models.DateTimeField(null=True)
-    base_doc = models.CharField(max_length=100)
+    doc_type = models.CharField(max_length=100)
 
     @classmethod
     def field_mapping(cls):
@@ -397,7 +397,7 @@ class ApplicationStagingTable(StagingTable, CouchToDjangoETLMixin):
             ('domain', 'domain'),
             ('name', 'name'),
             ('last_modified', 'application_last_modified'),
-            ('base_doc', 'base_doc')
+            ('doc_type', 'doc_type')
         ]
 
     @classmethod
