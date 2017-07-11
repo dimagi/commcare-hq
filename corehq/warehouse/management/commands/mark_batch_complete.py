@@ -1,0 +1,25 @@
+from datetime import datetime
+
+from django.core.management import BaseCommand
+from django.core.management import CommandError
+
+from corehq.warehouse.models import Batch
+
+
+class Command(BaseCommand):
+    """
+    Example: ./manage.py create_batch 222617b9-8cf0-40a2-8462-7f872e1f1344 -s 2017-05-01 -e 2017-06-01
+    """
+    help = "Usage: ./manage.py mark_batch_complete <batch_id>"
+
+    def add_arguments(self, parser):
+        parser.add_argument('batch_id')
+
+    def handle(self, batch_id, **options):
+        try:
+            batch = Batch.objects.get(batch_id=batch_id)
+        except Batch.DoesNotExist:
+            raise CommandError('Invalid batch ID: {}'.format(batch_id))
+
+        batch.completed_on = datetime.utcnow()
+        batch.save()

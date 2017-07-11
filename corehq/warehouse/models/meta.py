@@ -8,6 +8,7 @@ class Batch(models.Model):
     end_datetime = models.DateTimeField()
 
     created_on = models.DateTimeField(auto_now_add=True)
+    completed_on = models.DateTimeField(null=True)
 
 
 class CommitRecord(models.Model):
