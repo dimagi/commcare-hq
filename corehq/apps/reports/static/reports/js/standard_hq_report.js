@@ -50,7 +50,7 @@ hqDefine("reports/js/standard_hq_report.js", function() {
             return asyncReport;
         }
 
-        var reportOptions = initial_page_data('js_options');
+        var reportOptions = initial_page_data('js_options') || {};
         if (reportOptions.slug && reportOptions.async) {
             var asyncHQReport = new HQAsyncReport({
                 standardReport: getStandard(),
@@ -61,6 +61,9 @@ hqDefine("reports/js/standard_hq_report.js", function() {
 
         return asyncReport;
     };
+
+    standardReport = getStandard(),
+    asyncReport = getAsync();
 
     $(function() {
         $('#apply-btn').on('click', function() {

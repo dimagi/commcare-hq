@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from botocore.vendored.requests.exceptions import ReadTimeout
 from botocore.vendored.requests.packages.urllib3.exceptions import ProtocolError
+from celery.schedules import crontab
 from celery.task import task, periodic_task
 from couchdbkit import ResourceConflict
 from django.conf import settings
@@ -199,7 +200,7 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, s
 
 
 @periodic_task(
-    run_every=ASYNC_INDICATOR_QUEUE_TIME,
+    run_every=crontab(minute="*/5", hour="0-6,18-23"),
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def queue_async_indicators():

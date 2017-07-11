@@ -13,7 +13,6 @@
         {% block reports-js-inline %}
         var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport(),
             asyncHQReport = hqImport("reports/js/standard_hq_report.js").getAsyncHQReport();
-        {% endblock %}
         $(function() {
             var defaultConfig = {{ default_config|JSON }};
             {% if report.has_datespan %}
@@ -41,6 +40,7 @@
                 title: '{% trans "You can email a saved version<br />of this report." %}'
             });
         });
+        {% endblock %}
     </script>
 {% endblock %}
 

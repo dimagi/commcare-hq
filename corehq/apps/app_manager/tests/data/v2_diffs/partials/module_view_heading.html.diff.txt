@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,13 +1,26 @@
+@@ -1,13 +1,28 @@
  {% load i18n %}
  {% load xforms_extras %}
 +{% load hq_shared_tags %}
@@ -13,11 +13,13 @@
 +  {% endif %}
 +</div>
 +<div class="appmanager-edit-title">
++  {% with postSave="function(data) { var appManager = hqImport('app_manager/js/app_manager.js'); appManager.updatePageTitle(data.update['.variable-module_name']); return appManager.updateDOM(data.update);}" %}
 +  {% if module.is_surveys %}
-+      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-folder-open' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
++      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-folder-open' postSave=postSave %}
 +  {% else %}
-+      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-bars' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
++      {% inline_edit_trans module.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-bars' postSave=postSave %}
 +  {% endif %}
++  {% endwith %}
 +</div>
 +
 +<div class="appmanager-edit-description">
@@ -30,7 +32,7 @@
      url: '{% url "edit_module_attr" domain app.id module.id 'comment' %}',
      saveValueName: 'comment',
      cols: 50,
-@@ -15,14 +28,3 @@
+@@ -15,14 +30,3 @@
  <br />
  
  <div id="build_errors"></div>

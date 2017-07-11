@@ -64,7 +64,6 @@ from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import BaseSessionDataHelper, CaseSessionDataHelper
 from corehq.apps.cloudcare.const import WEB_APPS_ENVIRONMENT, PREVIEW_APP_ENVIRONMENT
-from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.formdetails import readable
@@ -157,6 +156,9 @@ class CloudcareMain(View):
         # trim out empty apps
         apps = filter(lambda app: app, apps)
         apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
+        role = request.couch_user.get_role(domain)
+        if role:
+            apps = [app for app in apps if role.permissions.view_web_app(app)]
 
         def _default_lang():
             if apps:
@@ -278,6 +280,9 @@ class FormplayerMain(View):
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
         apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
+        role = request.couch_user.get_role(domain)
+        if role:
+            apps = [app for app in apps if role.permissions.view_web_app(app)]
         apps = sorted(apps, key=lambda app: app['name'])
 
         def _default_lang():
@@ -336,6 +341,10 @@ class FormplayerPreviewSingleApp(View):
         app = get_current_app(domain, app_id)
 
         if not app_access.user_can_access_app(request.couch_user, app):
+            raise Http404()
+
+        role = request.couch_user.get_role(domain)
+        if role and not role.permissions.view_web_app(app):
             raise Http404()
 
         def _default_lang():
@@ -886,17 +895,10 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         apps = get_cloudcare_apps(self.domain)
         access = ApplicationAccess.get_template_json(self.domain, apps)
         groups = Group.by_domain(self.domain)
-        user_fields = [
-            {'slug': field.slug,
-             'choices': field.choices}
-            for field in CustomDataFieldsDefinition.get_or_create(self.domain, 'UserFields').fields
-        ]
         return {
             'apps': apps,
             'groups': groups,
             'access': access,
-            'user_fields': user_fields,
-            'enable_userdata_permissions': toggles.USERDATA_WEBAPPS_PERMISSIONS.enabled(self.domain),
         }
 
     def put(self, request, *args, **kwargs):
@@ -905,7 +907,6 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
         new = ApplicationAccess.wrap(j)
         old.restrict = new.restrict
         old.app_groups = new.app_groups
-        old.app_userdata_permissions = new.app_userdata_permissions
         try:
             if old._rev != new._rev or old._id != new._id:
                 raise ResourceConflict()

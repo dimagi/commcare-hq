@@ -510,9 +510,9 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
 )
 
 
-USERDATA_WEBAPPS_PERMISSIONS = StaticToggle(
-    'userdata_webapps_permissions',
-    'Toggle which webapps to see based on userdata',
+ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
+    'role_webapps_permissions',
+    'Toggle which webapps to see based on role',
     TAG_PRODUCT_PATH,
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -1137,13 +1137,6 @@ LINKED_APPS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-FORMTRANSLATE_FORM_VALIDATION = StaticToggle(
-    'formtranslate_form_validation',
-    'Use formtranslate to validate XForms',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
 LOCATION_USERS = StaticToggle(
     'location_users',
     'Autogenerate users for each location',
@@ -1263,6 +1256,13 @@ ENTERPRISE_OPTIMIZATIONS = StaticToggle(
 DISPLAY_CONDITION_ON_TABS = StaticToggle(
     'display_condition_on_nodeset',
     'Show Display Condition on Case Detail Tabs',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+PHONE_HEARTBEAT = StaticToggle(
+    'phone_apk_heartbeat',
+    'Expose phone apk heartbeat URL and add it profile.xml',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )

@@ -6,7 +6,18 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load i18n %}
-@@ -24,7 +24,7 @@
+@@ -6,6 +6,10 @@
+ {% block head %}{{ block.super }}
+     {% include 'analytics/fullstory.html' %}
+ {% endblock %}
++
++
++{% block title %}{{ module.name|clean_trans:langs }} - {% trans 'Module Settings' %}{% endblock %}
++
+ {% block stylesheets %}{{ block.super }}
+     <style>
+         /* Prevent help icons from disturbing horizontal alignment of table headers */
+@@ -24,7 +28,7 @@
      {% endif %}
      <script src="{% static 'app_manager/js/module-view.js' %}"></script>
      <script src="{% static 'app_manager/js/case_list_setting.js' %}"></script>
@@ -15,7 +26,7 @@
  {% endblock %}
  {% block js-inline %}{{ block.super }}
      {% include 'hqmedia/partials/multimedia_js.html' %}
-@@ -36,90 +36,92 @@
+@@ -36,90 +40,92 @@
      <script src="{% static 'app_manager/js/shadow-module-settings.js' %}"></script>
  
      {% include 'style/partials/key_value_mapping.html' %}
@@ -186,7 +197,7 @@
  <script type="text/html" id="module-forms-template">
      <div class="checkbox">
          <label>
-@@ -133,7 +135,7 @@
+@@ -133,7 +139,7 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
@@ -195,7 +206,7 @@
  {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
      {% with print_uploader as uploader %}
          {% include 'hqmedia/partials/multimedia_uploader.html' %}
-@@ -143,5 +145,5 @@
+@@ -143,5 +149,5 @@
  
  {% block breadcrumbs %}
      {{ block.super }}
