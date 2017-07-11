@@ -9,6 +9,8 @@ from corehq.pillows.utils import (
     WEB_USER_TYPE,
     MOBILE_USER_TYPE,
 )
+from corehq.warehouse.models import ApplicationDim
+from corehq.warehouse.models import ApplicationStagingTable
 from corehq.warehouse.tests.utils import (
     create_user_staging_record,
     create_location_records_from_tree,
@@ -17,7 +19,7 @@ from corehq.warehouse.tests.utils import (
     DEFAULT_BATCH_ID,
     get_default_batch,
     create_batch,
-    BaseWarehouseTestCase)
+    BaseWarehouseTestCase, create_application_staging_record)
 from corehq.warehouse.models import (
     Batch,
     UserStagingTable,
@@ -247,3 +249,29 @@ class TestLocationDim(BaseWarehouseTestCase):
 
         LocationDim.commit(self.batch)
         self.assertEqual(LocationDim.objects.count(), 5)
+
+
+class TestAppDim(BaseWarehouseTestCase):
+
+    domain = 'app-dim-test'
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestAppDim, cls).setUpClass()
+        cls.batch = get_default_batch()
+
+    @classmethod
+    def tearDownClass(cls):
+        ApplicationDim.clear_records()
+        ApplicationStagingTable.clear_records()
+        super(TestAppDim, cls).tearDownClass()
+
+    def test_app_dim(self):
+        create_application_staging_record(self.domain, 'test-app')
+        create_application_staging_record(self.domain, 'test-deleted', doc_type='Application-Deleted')
+        ApplicationDim.commit(self.batch)
+        self.assertEqual(ApplicationDim.objects.count(), 2)
+        test_app = ApplicationDim.objects.get(name='test-app')
+        self.assertEqual(test_app.deleted, False)
+        deleted_app = ApplicationDim.objects.get(name='test-deleted')
+        self.assertEqual(deleted_app.deleted, True)

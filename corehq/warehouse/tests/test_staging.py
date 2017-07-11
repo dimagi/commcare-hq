@@ -1,10 +1,12 @@
 from mock import patch
 from datetime import datetime, timedelta
 
+from corehq.apps.app_manager.models import Application
 from corehq.apps.users.models import WebUser, CommCareUser
 from corehq.apps.groups.models import Group
 from corehq.apps.domain.models import Domain
 from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
+from corehq.warehouse.models import ApplicationStagingTable
 
 from corehq.warehouse.tests.utils import DEFAULT_BATCH_ID, get_default_batch, create_batch, BaseWarehouseTestCase
 from corehq.warehouse.models import (
@@ -144,3 +146,24 @@ class TestUserStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
     def setUpClass(cls):
         delete_all_docs_by_doc_type(WebUser.get_db(), ['CommCareUser', 'WebUser'])
         super(TestUserStagingTable, cls).setUpClass()
+
+
+class TestAppStagingTable(BaseStagingTableTest, StagingRecordsTestsMixin):
+
+    records = [
+        Application(
+            domain='test',
+            name='test-app',
+        ),
+        Application(
+            domain='test',
+            name='deleted-app',
+            doc_type='Application-Deleted'
+        )
+    ]
+    staging_table_cls = ApplicationStagingTable
+
+    @classmethod
+    def setUpClass(cls):
+        delete_all_docs_by_doc_type(Application.get_db(), ['Application', 'Application-Deleted'])
+        super(TestAppStagingTable, cls).setUpClass()
