@@ -29,18 +29,18 @@ class Command(BaseCommand):
         case_accessor = CaseAccessors(domain)
         failed_updates = []
         with open(log_file, "w") as fh:
-            fh.write('--------Successful Form Ids----------')
+            fh.write('--------Successful Form Ids----------\n')
             for cases in chunked(with_progress_bar(self._get_cases_to_process(domain), total_cases), 100):
                 related_cases = {case.case_id for case in case_accessor.get_all_reverse_indices_info(list(cases))
                                  if case.relationship == CommCareCaseIndexSQL.CHILD}
                 case_tupes = [(case_id, {}, True) for case_id in related_cases]
                 try:
                     xform, cases = bulk_update_cases(domain, case_tupes)
-                    fh.write(xform.form_id)
+                    fh.write(xform.form_id + '\n')
                 except LocalSubmissionError as e:
                     print(unicode(e))
                     failed_updates.extend(related_cases)
-            fh.write('--------Failed Cases--------------')
+            fh.write('--------Failed Cases--------------\n')
             for case_id in failed_updates:
                 fh.write(case_id)
 
