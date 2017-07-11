@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from django.test import TestCase
 
 from corehq.apps.app_manager.models import Application, LinkedApplication
+from corehq.apps.app_manager.tests.util import delete_all_apps
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, WebUser
@@ -30,9 +31,10 @@ class TestDbAccessors(TestCase):
         for synclog_id in get_synclog_ids_by_date(datetime(1970, 1, 1), datetime.max):
             db.delete_doc(synclog_id)
 
-        # Needed because other tests do not always clean up their users.
+        # Needed because other tests do not always clean up their users or applications.
         delete_all_users()
         hard_delete_deleted_users()
+        delete_all_apps()
 
         cls.g1 = Group(domain=cls.domain, name='group')
         cls.g1.save()
