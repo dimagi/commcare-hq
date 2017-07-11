@@ -597,6 +597,9 @@ CELERY_REPEAT_RECORD_QUEUE = CELERY_MAIN_QUEUE
 # time limit is exceeded.
 CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
 
+# tuple of (time_start, time_end) of off peak times for async processing queues to use
+OFF_PEAK_TIME = None
+
 # websockets config
 WEBSOCKET_URL = '/ws/'
 WS4REDIS_PREFIX = 'ws'
