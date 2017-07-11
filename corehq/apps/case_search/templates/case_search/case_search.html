@@ -119,23 +119,24 @@
                             <th>{% trans "Closed" %}</th>
                             <th>{% trans "Properties" %}</th>
                             <th>{% trans "Indices" %}</th>
+                            <th>{% trans "Score" %}</th>
                         </tr>
                     </thead>
-                    <tbody data-bind="foreach: results">
+                    <tbody data-bind="foreach: {data: results, as: 'result' }">
                         <tr>
                             <td>
-                                <a data-bind="attr: {href: $parent.case_data_url.replace('___', $data._id)}, text: name"></a>
+                                <a data-bind="attr: {href: $parent.case_data_url.replace('___', $data._id)}, text: result['_source']['name']"></a>
                             </td>
-                            <td data-bind="text: type"></td>
-                            <td data-bind="text: closed"></td>
+                            <td data-bind="text: result['_source']['type']"></td>
+                            <td data-bind="text: result['_source']['closed']"></td>
                             <td>
-                                <div data-bind="foreach: case_properties">
+                                <div data-bind="foreach: result['_source']['case_properties']">
                                     <small data-bind="text:$data['key']"></small>:
                                     <strong data-bind="text:$data['value']"></strong><br />
                                 </div>
                             </td>
                             <td>
-                                <ul data-bind="foreach: indices">
+                                <ul data-bind="foreach: result['_source']['indices']">
                                     <li>
                                         <span class="label label-default"
                                               data-bind="text: relationship"></span>
@@ -144,6 +145,7 @@
                                     </li>
                                 </ul>
                             </td>
+                            <td data-bind="text: result['_score']"></td>
                         </tr>
                     </tbody>
                 </table>

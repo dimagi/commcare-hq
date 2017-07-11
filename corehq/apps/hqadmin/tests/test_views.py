@@ -30,4 +30,5 @@ class AdminRestoreViewTests(SimpleTestCase):
                 'status_code': 500,
                 'timing_data': [],
                 'num_cases': 0,
+                'num_locations': 0,
             })

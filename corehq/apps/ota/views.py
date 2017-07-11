@@ -1,4 +1,3 @@
-import re
 from distutils.version import LooseVersion
 
 from django.http import JsonResponse
@@ -57,7 +56,8 @@ def restore(request, domain, app_id=None):
     We override restore because we have to supply our own
     user model (and have the domain in the url)
     """
-    response, timing_context = get_restore_response(domain, request.couch_user, app_id, **get_restore_params(request))
+    response, timing_context = get_restore_response(
+        domain, request.couch_user, app_id, **get_restore_params(request))
     tags = [
         u'status_code:{}'.format(response.status_code),
     ]
@@ -94,12 +94,12 @@ def search(request, domain):
     except QueryMergeException as e:
         return _handle_query_merge_exception(request, e)
     try:
-        results = search_es.values()
+        hits = search_es.run().raw_hits
     except Exception as e:
         return _handle_es_exception(request, e, case_search_criteria.query_addition_debug_details)
 
-    # Even if it's a SQL domain, we just need to render the results as cases, so CommCareCase.wrap will be fine
-    cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
+    # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
+    cases = [CommCareCase.wrap(flatten_result(result)) for result in hits]
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
@@ -181,7 +181,7 @@ def get_restore_params(request):
         'openrosa_version': openrosa_version,
         'device_id': request.GET.get('device_id'),
         'user_id': request.GET.get('user_id'),
-        'do_livequery': request.GET.get('livequery') == 'true',
+        'case_sync': request.GET.get('case_sync'),
     }
 
 
@@ -192,7 +192,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          as_user=None, device_id=None, user_id=None,
                          has_data_cleanup_privelege=False,
                          openrosa_version=OPENROSA_DEFAULT_VERSION,
-                         do_livequery=False):
+                         case_sync=None):
 
     if user_id and user_id != couch_user.user_id:
         # sync with a user that has been deleted but a new
@@ -254,7 +254,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             overwrite_cache=overwrite_cache
         ),
         async=async_restore_enabled,
-        do_livequery=do_livequery,
+        case_sync=case_sync,
     )
     return restore_config.get_response(), restore_config.timing_context
 
@@ -360,5 +360,11 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
 
 @login_or_digest_or_basic_or_apikey()
 @require_GET
-def heartbeat(request, domain, id):
-    return JsonResponse({})
+def heartbeat(request, domain, app_id):
+    # mobile needs this. This needs to be revisited to actually work dynamically (Sravan June 7, 17)
+    for_app_id = request.GET.get('app_id', '')
+    return JsonResponse({
+        "app_id": for_app_id,
+        "latest_apk_version": {"value": ""},
+        "latest_ccz_version": {"value": ""}
+    })

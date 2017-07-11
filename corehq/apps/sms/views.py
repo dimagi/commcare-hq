@@ -38,7 +38,7 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser, Permissions, CommCareUser
 from corehq.apps.users import models as user_models
 from corehq.apps.users.views.mobile.users import EditCommCareUserView
-from corehq.apps.reminders.util import get_two_way_number_for_recipient
+from corehq.apps.reminders.util import get_two_way_number_for_recipient, requires_old_reminder_framework
 from corehq.apps.sms.models import (
     SMS, INCOMING, OUTGOING, ForwardingRule,
     MessagingEvent, SelfRegistrationInvitation,
@@ -147,6 +147,7 @@ class ComposeMessageView(BaseMessagingSectionView):
         page_context.update(get_sms_autocomplete_context(self.request, self.domain))
         return page_context
 
+    @method_decorator(requires_old_reminder_framework())
     @method_decorator(require_permission(Permissions.edit_data))
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_typeahead

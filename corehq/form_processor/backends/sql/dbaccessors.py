@@ -268,7 +268,7 @@ class FormReindexAccessor(ReindexAccessor):
             using=from_db
         )
         # note: in memory sorting and limit not necessary since we're only queyring a single DB
-        return RawQuerySetWrapper(results)
+        return list(results)
 
 
 class FormAccessorSQL(AbstractFormAccessor):
@@ -283,9 +283,9 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def get_forms(form_ids, ordered=False):
         assert isinstance(form_ids, list)
-        forms = RawQuerySetWrapper(XFormInstanceSQL.objects.raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
+        forms = list(XFormInstanceSQL.objects.raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
         if ordered:
-            forms = _order_list(form_ids, forms, 'form_id')
+            _sort_with_id_list(forms, form_ids, 'form_id')
 
         return forms
 
@@ -364,7 +364,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         _attach_prefetch_models(forms_by_id, attachments, 'form_id', 'cached_attachments')
 
         if ordered:
-            forms = _order_list(form_ids, forms, 'form_id')
+            _sort_with_id_list(forms, form_ids, 'form_id')
 
         return forms
 
@@ -426,13 +426,14 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     def get_attachments_for_forms(form_ids, ordered=False):
-        attachments = RawQuerySetWrapper(XFormAttachmentSQL.objects.raw(
+        assert isinstance(form_ids, list)
+        attachments = list(XFormAttachmentSQL.objects.raw(
             'SELECT * from get_multiple_forms_attachments(%s)',
             [form_ids]
         ))
 
         if ordered:
-            attachments = _order_list(form_ids, attachments, 'form_id')
+            _sort_with_id_list(attachments, form_ids, 'form_id')
 
         return attachments
 
@@ -628,7 +629,7 @@ class CaseReindexAccessor(ReindexAccessor):
             using=from_db
         )
         # note: in memory sorting and limit not necessary since we're only queyring a single DB
-        return RawQuerySetWrapper(results)
+        return list(results)
 
 
 class CaseAccessorSQL(AbstractCaseAccessor):
@@ -643,10 +644,10 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_cases(case_ids, ordered=False, prefetched_indices=None):
         assert isinstance(case_ids, list)
-        cases = RawQuerySetWrapper(CommCareCaseSQL.objects.raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
+        cases = list(CommCareCaseSQL.objects.raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
 
         if ordered:
-            cases = _order_list(case_ids, cases, 'case_id')
+            _sort_with_id_list(cases, case_ids, 'case_id')
 
         if prefetched_indices:
             cases_by_id = {case.case_id: case for case in cases}
@@ -893,22 +894,32 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.case_id for result in results]
 
     @staticmethod
-    def filter_open_case_ids(accessor, case_ids):
+    def get_related_indices(domain, case_ids, exclude_indices):
+        assert isinstance(case_ids, list), case_ids
+        return list(CommCareCaseIndexSQL.objects.raw(
+            'SELECT * FROM get_related_indices(%s, %s, %s)',
+            [domain, case_ids, list(exclude_indices)]))
+
+    @staticmethod
+    def get_closed_and_deleted_ids(accessor, case_ids):
         assert isinstance(case_ids, list), case_ids
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
-                'SELECT case_id FROM filter_open_case_ids(%s, %s)',
+                'SELECT case_id, closed, deleted FROM get_closed_and_deleted_ids(%s, %s)',
                 [accessor.domain, case_ids]
+            )
+            return list(fetchall_as_namedtuple(cursor))
+
+    @staticmethod
+    def get_modified_case_ids(accessor, case_ids, sync_log):
+        assert isinstance(case_ids, list), case_ids
+        with get_cursor(CommCareCaseSQL) as cursor:
+            cursor.execute(
+                'SELECT case_id FROM get_modified_case_ids(%s, %s, %s, %s)',
+                [accessor.domain, case_ids, sync_log.date, sync_log._id]
             )
             results = fetchall_as_namedtuple(cursor)
             return [result.case_id for result in results]
-
-    @staticmethod
-    def get_related_indices(domain, case_ids, exclude_ids):
-        assert isinstance(case_ids, list), case_ids
-        return RawQuerySetWrapper(CommCareCaseIndexSQL.objects.raw(
-            'SELECT * FROM get_related_indices(%s, %s, %s)',
-            [domain, case_ids, list(exclude_ids)]))
 
     @staticmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
@@ -1031,7 +1042,7 @@ class LedgerReindexAccessor(ReindexAccessor):
             using=from_db
         )
         # note: in memory sorting and limit not necessary since we're only queyring a single DB
-        return RawQuerySetWrapper(results)
+        return list(results)
 
     def doc_to_json(self, doc):
         json_doc = doc.to_json()
@@ -1044,7 +1055,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
     @staticmethod
     def get_ledger_values_for_cases(case_ids, section_id=None, entry_id=None, date_start=None, date_end=None):
         assert isinstance(case_ids, list)
-        return RawQuerySetWrapper(LedgerValue.objects.raw(
+        return list(LedgerValue.objects.raw(
             'SELECT * FROM get_ledger_values_for_cases(%s, %s, %s, %s, %s)',
             [case_ids, section_id, entry_id, date_start, date_end]
         ))
@@ -1092,14 +1103,14 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
 
     @staticmethod
     def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):
-        return RawQuerySetWrapper(LedgerTransaction.objects.raw(
+        return list(LedgerTransaction.objects.raw(
             "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s)",
             [case_id, section_id, entry_id]
         ))
 
     @staticmethod
     def get_ledger_transactions_in_window(case_id, section_id, entry_id, window_start, window_end):
-        return RawQuerySetWrapper(LedgerTransaction.objects.raw(
+        return list(LedgerTransaction.objects.raw(
             "SELECT * FROM get_ledger_transactions_for_case(%s, %s, %s, %s, %s)",
             [case_id, section_id, entry_id, window_start, window_end]
         ))
@@ -1177,14 +1188,20 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             raise LedgerSaveError(e)
 
 
-def _order_list(id_list, object_list, id_property):
-    # SQL won't return the rows in any particular order so we need to order them ourselves
-    index_map = {id_: index for index, id_ in enumerate(id_list)}
-    ordered_list = [None] * len(id_list)
-    for obj in object_list:
-        ordered_list[index_map[getattr(obj, id_property)]] = obj
+def _sort_with_id_list(object_list, id_list, id_property):
+    """Sort object list in the same order as given list of ids
 
-    return ordered_list
+    SQL does not necessarily return the rows in any particular order so
+    we need to order them ourselves.
+
+    NOTE: this does not return the sorted list. It sorts `object_list`
+    in place using Python's built-in `list.sort`.
+    """
+    def key(obj):
+        return index_map[getattr(obj, id_property)]
+
+    index_map = {id_: index for index, id_ in enumerate(id_list)}
+    object_list.sort(key=key)
 
 
 def _attach_prefetch_models(objects_by_id, prefetched_models, link_field_name, cached_attrib_name):
@@ -1192,37 +1209,3 @@ def _attach_prefetch_models(objects_by_id, prefetched_models, link_field_name, c
     for obj_id, group in prefetched_groups:
         obj = objects_by_id[obj_id]
         setattr(obj, cached_attrib_name, list(group))
-
-
-class RawQuerySetWrapper(object):
-    """
-    Wrapper for RawQuerySet objects to make them behave more like
-    normal QuerySet objects
-    """
-
-    def __init__(self, queryset):
-        self.queryset = queryset
-        self._result_cache = None
-
-    def _fetch_all(self):
-        if self._result_cache is None:
-            self._result_cache = list(self.queryset)
-        return self._result_cache
-
-    def __getattr__(self, item):
-        return getattr(self.queryset, item)
-
-    def __getitem__(self, k):
-        self._fetch_all()
-        return list(self._result_cache)[k]
-
-    def __iter__(self):
-        return self.queryset.__iter__()
-
-    def __len__(self):
-        self._fetch_all()
-        return len(self._result_cache)
-
-    def __nonzero__(self):
-        self._fetch_all()
-        return bool(self._result_cache)

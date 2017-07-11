@@ -1,10 +1,12 @@
-/*globals $, COMMCAREHQ, _, ko */
+/*globals $, COMMCAREHQ, _, ko, django */
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
         v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2'),
         moduleBrief = initial_page_data('module_brief'),
         moduleType = moduleBrief.module_type,
         options = initial_page_data('js_options') || {};
+
+    hqImport('app_manager/js/app_manager.js').setAppendedPageTitle(django.gettext("Module Settings"));
 
     // Set up details
     if (!v2 || moduleBrief.case_type) {

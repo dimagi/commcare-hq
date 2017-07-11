@@ -48,19 +48,16 @@ branches:
   - vellum-staging # J$ 11/13
 #  - nh/240812/mw_pwd_reset  # Norman 3/23
   - nh/new_rb  # Norman 11/22
-  - lwyszomi/icds_dashboard_v2  # j$ 6/5
   - sr-practice-mode+app-manager-labs+mk-255102-nodeset-sorting # SR 26/June
   # - app-manager-labs # Jenny 6/19
   # - mk-255102-nodeset-sorting # MK 25/June
-  - mk-tab-temp # MK 25/June
+  - je/partition-device-log # J$ 6/30
+  - lwyszomi-icds_dashboard_v2-2017-07-02  # https://github.com/dimagi/commcare-hq/pull/16802
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
-  submodules/formtranslate-src:
-    branches:
-      - commcare_2.33 # WSP 2/8
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:

@@ -167,7 +167,8 @@ class ExpectedCallbackReport(ProjectReport, ProjectReportParametersMixin, Generi
     slug = 'expected_callbacks'
     fields = ['corehq.apps.reports.filters.dates.DatespanFilter']
     exportable = True
-    
+    inclusive = False
+
     @property
     def headers(self):
         header_list = [

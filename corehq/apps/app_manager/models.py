@@ -987,6 +987,7 @@ class FormBase(DocumentSchema):
     def validate_form(self):
         vc = self.validation_cache
         if vc is None:
+            # todo: now that we don't use formtranslate, does this still apply?
             # formtranslate requires all attributes to be valid xpaths, but
             # vellum namespaced attributes aren't
             form = self.wrapped_xform()
@@ -4948,8 +4949,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         errors = []
         if hasattr(self, 'profile'):
             password_format = self.profile.get('properties', {}).get('password_format', 'n')
-            message = ('Your app requires {0} passwords '
-                       'but the admin password is not {0}')
+            message = _(
+                'Your app requires {0} passwords but the admin password is not '
+                '{0}. To resolve, go to app settings, Advanced Settings, Java '
+                'Phone General Settings, and reset the Admin Password to '
+                'something that is {0}'
+            )
 
             if password_format == 'n' and self.admin_password_charset in 'ax':
                 errors.append({'type': 'password_format',
@@ -4999,6 +5004,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     @absolute_url_property
     def key_server_url(self):
         return reverse('key_server_url', args=[self.domain])
+
+    @absolute_url_property
+    def heartbeat_url(self):
+        return reverse('phone_heartbeat', args=[self.domain, self.get_id])
 
     @absolute_url_property
     def ota_restore_url(self):
@@ -5704,6 +5713,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
 
+        if toggles.PHONE_HEARTBEAT.enabled(self.domain):
+            apk_heartbeat_url = self.heartbeat_url
+        else:
+            apk_heartbeat_url = None
         locale = self.get_build_langs(build_profile_id)[0]
         return render_to_string(template, {
             'is_odk': is_odk,
@@ -5716,7 +5729,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'name': self.name,
             'descriptor': u"Profile File",
             'build_profile_id': build_profile_id,
-            'locale': locale
+            'locale': locale,
+            'apk_heartbeat_url': apk_heartbeat_url,
         }).encode('utf-8')
 
     @property
@@ -5913,9 +5927,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         try:
             form = from_module.forms.pop(j)
             if app_manager_v2:
-                if not to_module.is_surveys and i == 0:
-                    # first form is the reg form
-                    i = 1
                 if from_module.is_surveys != to_module.is_surveys:
                     if from_module.is_surveys:
                         form.requires = "case"

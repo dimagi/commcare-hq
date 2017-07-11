@@ -204,23 +204,39 @@ def _handle_schedule_instance(instance, save_function):
 
 @no_result_task(queue='reminder_queue')
 def handle_alert_schedule_instance(schedule_instance_id):
-    instance = get_alert_schedule_instance(schedule_instance_id)
+    try:
+        instance = get_alert_schedule_instance(schedule_instance_id)
+    except AlertScheduleInstance.DoesNotExist:
+        return
+
     _handle_schedule_instance(instance, save_alert_schedule_instance)
 
 
 @no_result_task(queue='reminder_queue')
 def handle_timed_schedule_instance(schedule_instance_id):
-    instance = get_timed_schedule_instance(schedule_instance_id)
+    try:
+        instance = get_timed_schedule_instance(schedule_instance_id)
+    except TimedScheduleInstance.DoesNotExist:
+        return
+
     _handle_schedule_instance(instance, save_timed_schedule_instance)
 
 
 @no_result_task(queue='reminder_queue')
 def handle_case_alert_schedule_instance(case_id, schedule_instance_id):
-    instance = get_case_schedule_instance(CaseAlertScheduleInstance, case_id, schedule_instance_id)
+    try:
+        instance = get_case_schedule_instance(CaseAlertScheduleInstance, case_id, schedule_instance_id)
+    except CaseAlertScheduleInstance.DoesNotExist:
+        return
+
     _handle_schedule_instance(instance, save_case_schedule_instance)
 
 
 @no_result_task(queue='reminder_queue')
 def handle_case_timed_schedule_instance(case_id, schedule_instance_id):
-    instance = get_case_schedule_instance(CaseTimedScheduleInstance, case_id, schedule_instance_id)
+    try:
+        instance = get_case_schedule_instance(CaseTimedScheduleInstance, case_id, schedule_instance_id)
+    except CaseTimedScheduleInstance.DoesNotExist:
+        return
+
     _handle_schedule_instance(instance, save_case_schedule_instance)

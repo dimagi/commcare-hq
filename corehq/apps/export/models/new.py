@@ -1355,6 +1355,8 @@ class ExportDataSchema(Document):
         app_build_ids.extend(cls._get_current_app_ids_for_domain(domain, app_id))
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
+            if app_doc.get('doc_type', '') != 'Application':
+                continue
             if (not app_doc.get('has_submissions', False) and
                     app_doc.get('copy_of')):
                 continue
