@@ -252,7 +252,6 @@ HQ_APPS = (
     'couchforms',
     'couchexport',
     'dimagi.utils',
-    'formtranslate',
     'langcodes',
     'corehq.apps.data_dictionary',
     'corehq.apps.analytics',
@@ -261,7 +260,7 @@ HQ_APPS = (
     'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
-    'corehq.apps.repeaters',
+    'corehq.motech.repeaters',
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.fixtures',
@@ -330,7 +329,7 @@ HQ_APPS = (
     'corehq.apps.styleguide',
     'corehq.messaging.smsbackends.grapevine',
     'corehq.apps.dashboard',
-    'corehq.apps.dhis2',
+    'corehq.motech.dhis2',
     'corehq.util',
     'dimagi.ext',
     'corehq.doctypemigrations',
@@ -1755,12 +1754,12 @@ PILLOWTOPS = {
 }
 
 BASE_REPEATERS = (
-    'corehq.apps.repeaters.models.FormRepeater',
-    'corehq.apps.repeaters.models.CaseRepeater',
-    'corehq.apps.repeaters.models.ShortFormRepeater',
-    'corehq.apps.repeaters.models.AppStructureRepeater',
-    'corehq.apps.repeaters.models.UserRepeater',
-    'corehq.apps.repeaters.models.LocationRepeater',
+    'corehq.motech.repeaters.models.FormRepeater',
+    'corehq.motech.repeaters.models.CaseRepeater',
+    'corehq.motech.repeaters.models.ShortFormRepeater',
+    'corehq.motech.repeaters.models.AppStructureRepeater',
+    'corehq.motech.repeaters.models.UserRepeater',
+    'corehq.motech.repeaters.models.LocationRepeater',
 )
 
 ENIKSHAY_REPEATERS = (
@@ -1880,6 +1879,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_register_for_culture.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'rntcp_pmdt_treatment_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'referral_report.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'drug_voucher.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'payment_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'beneficiary_register.json'),

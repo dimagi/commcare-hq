@@ -16,6 +16,7 @@ from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
 
 
 PATH = "case_properties"
+RELEVANCE_SCORE = "commcare_search_score"
 
 
 class CaseSearchES(CaseES):
@@ -90,13 +91,15 @@ def blacklist_owner_id(owner_id):
     return filters.NOT(owner(owner_id))
 
 
-def flatten_result(result):
+def flatten_result(hit):
     """Flattens a result from CaseSearchES into the format that Case serializers
     expect
 
     i.e. instead of {'name': 'blah', 'case_properties':{'key':'foo', 'value':'bar'}} we return
     {'name': 'blah', 'foo':'bar'}
     """
+    result = hit['_source']
+    result[RELEVANCE_SCORE] = hit['_score']
     case_properties = result.pop('case_properties', [])
     for case_property in case_properties:
         key = case_property.get('key')

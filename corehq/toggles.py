@@ -510,9 +510,9 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
 )
 
 
-USERDATA_WEBAPPS_PERMISSIONS = StaticToggle(
-    'userdata_webapps_permissions',
-    'Toggle which webapps to see based on userdata',
+ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
+    'role_webapps_permissions',
+    'Toggle which webapps to see based on role',
     TAG_PRODUCT_PATH,
     namespaces=[NAMESPACE_DOMAIN],
 )
@@ -1126,13 +1126,6 @@ DATA_DICTIONARY = StaticToggle(
 LINKED_APPS = StaticToggle(
     'linked_apps',
     'Allows master and linked apps',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-FORMTRANSLATE_FORM_VALIDATION = StaticToggle(
-    'formtranslate_form_validation',
-    'Use formtranslate to validate XForms',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )

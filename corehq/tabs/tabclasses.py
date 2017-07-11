@@ -11,7 +11,7 @@ from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import Invoice, Subscription
 from corehq.apps.accounting.utils import domain_has_privilege, is_accounting_admin
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
-from corehq.apps.dhis2.view import Dhis2ConnectionView, DataSetMapView, Dhis2LogListView
+from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView, Dhis2LogListView
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
@@ -927,7 +927,7 @@ class MessagingTab(UITab):
     def reminders_urls(self):
         reminders_urls = []
 
-        if self.can_access_reminders:
+        if self.can_access_reminders and not self.project.uses_new_reminders:
             from corehq.apps.reminders.views import (
                 EditScheduledReminderView,
                 CreateScheduledReminderView,
@@ -997,7 +997,7 @@ class MessagingTab(UITab):
     def messages_urls(self):
         messages_urls = []
 
-        if self.can_use_outbound_sms:
+        if self.can_use_outbound_sms and not self.project.uses_new_reminders:
             messages_urls.extend([
                 {
                     'title': _('Compose SMS Message'),

@@ -987,6 +987,7 @@ class FormBase(DocumentSchema):
     def validate_form(self):
         vc = self.validation_cache
         if vc is None:
+            # todo: now that we don't use formtranslate, does this still apply?
             # formtranslate requires all attributes to be valid xpaths, but
             # vellum namespaced attributes aren't
             form = self.wrapped_xform()
@@ -4948,8 +4949,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         errors = []
         if hasattr(self, 'profile'):
             password_format = self.profile.get('properties', {}).get('password_format', 'n')
-            message = ('Your app requires {0} passwords '
-                       'but the admin password is not {0}')
+            message = _(
+                'Your app requires {0} passwords but the admin password is not '
+                '{0}. To resolve, go to app settings, Advanced Settings, Java '
+                'Phone General Settings, and reset the Admin Password to '
+                'something that is {0}'
+            )
 
             if password_format == 'n' and self.admin_password_charset in 'ax':
                 errors.append({'type': 'password_format',
@@ -5913,9 +5918,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         try:
             form = from_module.forms.pop(j)
             if app_manager_v2:
-                if not to_module.is_surveys and i == 0:
-                    # first form is the reg form
-                    i = 1
                 if from_module.is_surveys != to_module.is_surveys:
                     if from_module.is_surveys:
                         form.requires = "case"

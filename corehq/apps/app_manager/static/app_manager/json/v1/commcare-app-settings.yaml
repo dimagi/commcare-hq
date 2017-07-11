@@ -124,6 +124,7 @@
 
 - id: admin_password
   name: "Admin Password"
+  description: Must correspond to the password format specified below.
   widget: password
   hide_if_not_enabled: true
 

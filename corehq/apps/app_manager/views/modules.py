@@ -1005,13 +1005,13 @@ def new_module(request, domain, app_id):
         if toggles.APP_MANAGER_V2.enabled(request.user.username):
             if module_type == 'case':
                 # registration form
-                register = app.new_form(module_id, "Register", lang)
+                register = app.new_form(module_id, _("Register"), lang)
                 register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
                 register.actions.update_case = UpdateCaseAction(
                     condition=FormActionCondition(type='always'))
 
                 # one followup form
-                followup = app.new_form(module_id, "Followup", lang)
+                followup = app.new_form(module_id, _("Followup"), lang)
                 followup.requires = "case"
                 followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 
@@ -1022,7 +1022,7 @@ def new_module(request, domain, app_id):
                 else:
                     module.case_type = 'case'
             else:
-                app.new_form(module_id, "Survey", lang)
+                app.new_form(module_id, _("Survey"), lang)
             form_id = 0
         else:
             app.new_form(module_id, "Untitled Form", lang)

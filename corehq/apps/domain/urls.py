@@ -4,6 +4,7 @@ from django.contrib.auth.views import (
     password_change_done,
     password_reset_complete,
     password_reset_done,
+    password_reset,
 )
 from django.utils.translation import ugettext as _
 from django.conf import settings
@@ -58,14 +59,13 @@ from corehq.apps.domain.views import (
     calculated_properties,
     cancel_repeat_record,
     drop_repeater,
-    exception_safe_password_reset,
     requeue_repeat_record,
     select,
     set_published_snapshot,
     test_repeater,
     toggle_diff,
 )
-from corehq.apps.repeaters.views import AddCaseRepeaterView, RepeatRecordView
+from corehq.motech.repeaters.views import AddCaseRepeaterView, RepeatRecordView
 from corehq.apps.reports.dispatcher import DomainReportDispatcher
 
 
@@ -85,7 +85,7 @@ urlpatterns = [
          'extra_context': {'current_page': {'page_name': _('Password Change Complete')}}},
         name='password_change_done'),
 
-    url(r'^accounts/password_reset_email/$', exception_safe_password_reset,
+    url(r'^accounts/password_reset_email/$', password_reset,
         {'template_name': 'login_and_password/password_reset_form.html',
          'password_reset_form': ConfidentialPasswordResetForm, 'from_email': settings.DEFAULT_FROM_EMAIL,
          'extra_context': {'current_page': {'page_name': _('Password Reset')}}},
@@ -177,7 +177,7 @@ domain_settings = [
     url(r'^flags/$', FeatureFlagsView.as_view(), name=FeatureFlagsView.urlname),
     url(r'^toggle_diff/$', toggle_diff, name='toggle_diff'),
     url(r'^sms_rates/$', SMSRatesView.as_view(), name=SMSRatesView.urlname),
-    url(r'^dhis2/', include('corehq.apps.dhis2.urls')),
+    url(r'^dhis2/', include('corehq.motech.dhis2.urls')),
 
     DomainReportDispatcher.url_pattern()
 ]

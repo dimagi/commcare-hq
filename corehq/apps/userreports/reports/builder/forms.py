@@ -90,10 +90,11 @@ class Select2(Widget):
         final_attrs = self.build_attrs(attrs, name=name)
 
         return format_html(
-            '<input{0} type="text" data-bind="select2: {1}, {2}">',
-            flatatt(final_attrs),
-            json.dumps(self._choices_for_binding(choices)),
-            'value: {}'.format(self.ko_value or self.value)
+            '<input{final_attrs} type="text" value="{value}" data-bind="select2: {choices}, {ko_binding}">',
+            final_attrs=flatatt(final_attrs),
+            value=self.value,
+            choices=json.dumps(self._choices_for_binding(choices)),
+            ko_binding="value: {}".format(self.ko_value) if self.ko_value else "",
         )
 
     def _choices_for_binding(self, choices):
@@ -117,15 +118,16 @@ class QuestionSelect(Widget):
 
         return format_html(
             """
-            <input{0} data-bind='
-               questionsSelect: {1},
+            <input{final_attrs} value="{value}" data-bind='
+               questionsSelect: {choices},
                optionsCaption: " ",
-               {2}
+               {ko_binding}
             '/>
             """,
-            flatatt(final_attrs),
-            mark_safe(self.render_options(choices)),
-            "value: {}".format(self.ko_value or self.value)
+            final_attrs=flatatt(final_attrs),
+            value=self.value,
+            choices=mark_safe(self.render_options(choices)),
+            ko_binding='value: {}'.format(self.ko_value),
         )
 
     def render_options(self, choices):

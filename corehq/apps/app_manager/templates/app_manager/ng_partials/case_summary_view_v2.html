@@ -81,93 +81,93 @@
     <loading></loading>
     <div class="row" ng-hide="loading">
         <div class="col-sm-12">
-          <div ng-repeat="caseType in caseTypes|filter:typeSearch:true">
-              <div class="panel panel-appmanager">
-                  <div class="panel-heading">
-                      <h4 class="panel-title panel-title-nolink">
-                          <i class="fcc fcc-fd-external-case"></i>
-                          {{ caseType.name }}
-                      </h4>
-                  </div>
-                  <div class="panel-body">
-                     <div class="well">
-                          <div class="row">
-                              <div class="col-md-4">
-                                  <strong>{% trans "Relationships:" %}</strong>
-                                  <ul>
+            <div ng-repeat="caseType in caseTypes|filter:typeSearch:true">
+                <div class="panel panel-appmanager" ng-show="(caseType.properties|filter:propertySearch).length">
+                    <div class="panel-heading">
+                        <h4 class="panel-title panel-title-nolink">
+                            <i class="fcc fcc-fd-external-case"></i>
+                            {{ caseType.name }}
+                        </h4>
+                    </div>
+                    <div class="panel-body">
+                        <div class="well">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong>{% trans "Relationships:" %}</strong>
+                                    <ul>
                                         <li ng-repeat="(relationship, case_type) in caseType.relationships">
                                             <span class="label label-primary">{{ relationship }}</span> {{ case_type }}
                                         </li>
-                                  </ul>
-                              </div>
-                              <div class="col-md-4">
-                                  <strong>{% trans "Opened by:" %}</strong>
-                                  <opener-closer forms="caseType.opened_by" lang="lang"></opener-closer>
-                              </div>
-                              <div class="col-md-4">
-                                  <strong>{% trans "Closed by:" %}</strong>
-                                  <opener-closer forms="caseType.closed_by" lang="lang"></opener-closer>
-                              </div>
-                          </div>
-                          <div class="row" ng-show="caseType.has_errors">
-                              <div class="col-md-6">
-                                  {% trans "Problems:" %}
-                                  <ul>
-                                      <li ng-show="caseType.error">
-                                          {{ caseType.error }}
-                                      </li>
-                                      <li ng-repeat="property in caseType.properties|filter:{'has_errors': true}">
-                                          <a href="" ng-click="gotoAnchor(caseType.name, property.name)">{{ property.name }}</a>
-                                      </li>
-                                  </ul>
-                              </div>
-                          </div>
-                      </div>
-                      <table class="case-properties table" ng-repeat-end>
-                          <thead>
-                              <tr>
-                                  <th>{% trans "Case Property" %}</th>
-                                  <th>{% trans "Description" %}</th>
-                                  <th>{% trans "Form" %}</th>
-                                  <th>{% trans "Load questions" %}</th>
-                                  <th>{% trans "Save questions" %}</th>
-                              </tr>
-                          </thead>
-                          <tbody ng-repeat="property in caseType.properties|filter:propertySearch">
-                              <tr ng-repeat="form in property.forms" id="{{ caseType.name }}:{{ property.name }}"
-                                  ng-class="{'danger': property.has_errors}">
-                                  <td rowspan="{{ property.forms.length }}" ng-if="$first">{{ property.name }}</td>
-                                  <td rowspan="{{ property.forms.length }}" ng-if="$first">{{ property.description }}</td>
-                                  <td>
-                                      {% verbatim %}
-                                          <a ng-href="{{ getModuleUrl(form.form_id, lang) }}">
-                                              {{ getModuleName(form.form_id, lang) }}</a> ->
-                                          <a ng-href="{{ getFormUrl(form.form_id, lang) }}">
-                                              {{ getFormName(form.form_id, lang) }}</a>
-                                      {% endverbatim %}
-                                      <i class="fa fa-exclamation-triangle text-danger" ng-repeat="error in form.errors"
-                                              popover="{{ error }}" popover-trigger="mouseenter"
-                                              popover-placement="bottom"></i>
-                                  </td>
-                                  <td><form-questions
-                                          questions="form.load_questions"
-                                          show-conditions="showConditions"
-                                          show-calculations="showCalculations"
-                                          show-labels="showLabels"
-                                          lang="lang"></form-questions></td>
-                                  <td><form-questions
-                                          questions="form.save_questions"
-                                          show-conditions="showConditions"
-                                          show-calculations="showCalculations"
-                                          show-labels="showLabels"
-                                          lang="lang"></form-questions></td>
-                              </tr>
-                          </tbody>
-                      </table>
-                  </div>
-              </div>
-          </div>
-      </div>
+                                   </ul>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>{% trans "Opened by:" %}</strong>
+                                    <opener-closer forms="caseType.opened_by" lang="lang"></opener-closer>
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>{% trans "Closed by:" %}</strong>
+                                    <opener-closer forms="caseType.closed_by" lang="lang"></opener-closer>
+                                </div>
+                            </div>
+                            <div class="row" ng-show="caseType.has_errors">
+                                <div class="col-md-6">
+                                    {% trans "Problems:" %}
+                                    <ul>
+                                        <li ng-show="caseType.error">
+                                            {{ caseType.error }}
+                                        </li>
+                                        <li ng-repeat="property in caseType.properties|filter:{'has_errors': true}">
+                                            <a href="" ng-click="gotoAnchor(caseType.name, property.name)">{{ property.name }}</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <table class="case-properties table" ng-repeat-end>
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Case Property" %}</th>
+                                    <th>{% trans "Description" %}</th>
+                                    <th>{% trans "Form" %}</th>
+                                    <th>{% trans "Load questions" %}</th>
+                                    <th>{% trans "Save questions" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody ng-repeat="property in caseType.properties|filter:propertySearch">
+                                <tr ng-repeat="form in property.forms" id="{{ caseType.name }}:{{ property.name }}"
+                                    ng-class="{'danger': property.has_errors}">
+                                    <td rowspan="{{ property.forms.length }}" ng-if="$first">{{ property.name }}</td>
+                                    <td rowspan="{{ property.forms.length }}" ng-if="$first">{{ property.description }}</td>
+                                    <td>
+                                        {% verbatim %}
+                                            <a ng-href="{{ getModuleUrl(form.form_id, lang) }}">
+                                                {{ getModuleName(form.form_id, lang) }}</a> ->
+                                            <a ng-href="{{ getFormUrl(form.form_id, lang) }}">
+                                                {{ getFormName(form.form_id, lang) }}</a>
+                                        {% endverbatim %}
+                                        <i class="fa fa-exclamation-triangle text-danger" ng-repeat="error in form.errors"
+                                           popover="{{ error }}" popover-trigger="mouseenter"
+                                           popover-placement="bottom"></i>
+                                    </td>
+                                    <td><form-questions
+                                            questions="form.load_questions"
+                                            show-conditions="showConditions"
+                                            show-calculations="showCalculations"
+                                            show-labels="showLabels"
+                                            lang="lang"></form-questions></td>
+                                    <td><form-questions
+                                            questions="form.save_questions"
+                                            show-conditions="showConditions"
+                                            show-calculations="showCalculations"
+                                            show-labels="showLabels"
+                                            lang="lang"></form-questions></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
 <!-- template for rendering case type hierarchy in navigation -->

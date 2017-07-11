@@ -1,11 +1,15 @@
 from datetime import datetime, time
+from functools import wraps
+
+from couchdbkit.resource import ResourceNotFound
+from django.http import Http404
+from django.utils.translation import ugettext as _
+
 from corehq import privileges
 from corehq.apps.app_manager.dbaccessors import get_app, get_app_ids_in_domain
 from corehq.apps.app_manager.models import Form
-from couchdbkit.resource import ResourceNotFound
-from django.utils.translation import ugettext as _
-from corehq.apps.casegroups.dbaccessors import get_case_groups_in_domain
 from corehq.apps.casegroups.models import CommCareCaseGroup
+from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.mixin import apply_leniency, CommCareMobileContactMixin, InvalidFormatException
@@ -236,3 +240,16 @@ def get_reminder_domain(reminder_id):
     """
     from corehq.apps.reminders.models import CaseReminder
     return CaseReminder.get(reminder_id).domain
+
+
+def requires_old_reminder_framework():
+    def decorate(fn):
+        @wraps(fn)
+        def wrapped(request, *args, **kwargs):
+            if not hasattr(request, 'project'):
+                request.project = Domain.get_by_name(request.domain)
+            if not request.project.uses_new_reminders:
+                return fn(request, *args, **kwargs)
+            raise Http404()
+        return wrapped
+    return decorate

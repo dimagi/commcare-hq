@@ -756,13 +756,6 @@ class RestoreConfig(object):
             for provider in element_providers:
                 with self.timing_context(provider.__class__.__name__):
                     for element in provider.get_elements(self.restore_state):
-                        if element.tag == 'fixture' and len(element) == 0:
-                            # There is a bug on mobile versions prior to 2.27 where
-                            # a parsing error will cause mobile to ignore the element
-                            # after this one if this element is empty.
-                            # So we have to add a dummy empty_element child to prevent
-                            # this element from being empty.
-                            ElementTree.SubElement(element, 'empty_element')
                         response.append(element)
 
             full_response_providers = get_full_response_providers(self.timing_context, async_task)
