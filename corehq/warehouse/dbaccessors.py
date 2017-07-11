@@ -96,6 +96,7 @@ def get_forms_by_last_modified(start_datetime, end_datetime):
 
     # TODO Couch forms
 
+
 def get_application_ids_by_last_modified(start_datetime, end_datetime):
     '''
     Returns all application ids that have been modified within a time range. The start date is
