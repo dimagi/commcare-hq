@@ -2,6 +2,7 @@ from datetime import datetime
 from xml.etree import ElementTree
 from couchdbkit.exceptions import ResourceNotFound, ResourceConflict
 from django.db import models
+from corehq.blobs import get_blob_db
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from corehq.apps.fixtures.dbaccessors import (
     get_owner_ids_by_type,
@@ -24,13 +25,20 @@ from corehq.apps.locations.models import SQLLocation
 FIXTURE_BUCKET = 'domain-fixtures'
 
 
+class FixtureBlobInvalidationMixin(object):
+    def save(self):
+        super(FixtureBlobInvalidationMixin, self).save()
+        db = get_blob_db()
+        db.delete(self.domain, FIXTURE_BUCKET)
+
+
 class FixtureTypeField(DocumentSchema):
     field_name = StringProperty()
     properties = StringListProperty()
     is_indexed = BooleanProperty(default=False)
 
 
-class FixtureDataType(QuickCachedDocumentMixin, Document):
+class FixtureDataType(QuickCachedDocumentMixin, FixtureBlobInvalidationMixin, Document):
     domain = StringProperty()
     is_global = BooleanProperty(default=False)
     tag = StringProperty()
@@ -127,7 +135,7 @@ class FieldList(DocumentSchema):
         return value
 
 
-class FixtureDataItem(Document):
+class FixtureDataItem(FixtureBlobInvalidationMixin, Document):
     """
     Example old Item:
         domain = "hq-domain"
@@ -470,7 +478,7 @@ def _id_from_doc(doc_or_doc_id):
     return doc_id
 
 
-class FixtureOwnership(Document):
+class FixtureOwnership(FixtureBlobInvalidationMixin, Document):
     domain = StringProperty()
     data_item_id = StringProperty()
     owner_id = StringProperty()
