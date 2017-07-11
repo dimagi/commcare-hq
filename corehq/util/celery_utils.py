@@ -226,9 +226,16 @@ class OffPeakLoadBasedAutoscaler(LoadBasedAutoscaler):
     def _is_off_peak(self):
         now = datetime.utcnow().time()
         if settings.OFF_PEAK_TIME:
-            if settings.OFF_PEAK_TIME[0] < now < settings.OFF_PEAK_TIME[1]:
-                return True
+            time_begin = settings.OFF_PEAK_TIME[0]
+            time_end = settings.OFF_PEAK_TIME[1]
+            if time_begin < time_end:  # off peak is middle of day
+                if time_begin < now < time_end:
+                    return True
+            else:  # off peak is overnight
+                if time_begin > now or time_end < now:
+                    return True
 
+        # if this setting isn't set consider us always during peak time
         return False
 
     def _during_peak_time(self):
