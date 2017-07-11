@@ -31,7 +31,7 @@ class Command(BaseCommand):
         with open(log_file, "w") as fh:
             fh.write('--------Successful Form Ids----------')
             for cases in chunked(with_progress_bar(self._get_cases_to_process(domain), total_cases), 100):
-                related_cases = {case.case_id for case in case_accessor.get_all_reverse_indices_info(cases)
+                related_cases = {case.case_id for case in case_accessor.get_all_reverse_indices_info(list(cases))
                                  if case.relationship == CommCareCaseIndexSQL.CHILD}
                 case_tupes = [(case_id, {}, True) for case_id in related_cases]
                 try:
