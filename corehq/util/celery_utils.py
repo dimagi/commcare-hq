@@ -211,14 +211,15 @@ class LoadBasedAutoscaler(Autoscaler):
         if cur > procs and normalized_load < 0.90:
             self.scale_up(cur - procs)
             return True
-        elif cur < procs:
-            self.scale_down((procs - cur) - self.min_concurrency)
-            return True
-        elif normalized_load > 0.90 and procs > self.min_concurrency:
-            # if load is too high trying scaling down 1 worker at a time.
-            # if we're already at minimum concurrency let's just ride it out
-            self.scale_down(1)
-            return True
+        elif procs > self.min_concurrency:
+            if cur < procs:
+                self.scale_down(min(procs - cur, procs - self.min_concurrency))
+                return True
+            elif normalized_load > 0.90:
+                # if load is too high trying scaling down 1 worker at a time.
+                # if we're already at minimum concurrency let's just ride it out
+                self.scale_down(1)
+                return True
 
 
 class OffPeakLoadBasedAutoscaler(LoadBasedAutoscaler):
