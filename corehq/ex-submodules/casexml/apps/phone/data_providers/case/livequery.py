@@ -307,7 +307,7 @@ def compile_response(timing_context, restore_state, batches, update_progress):
 
         with timing_context("get_xml_for_response (%s updates)" % len(updates)):
             response.extend(item
-                for update in updates.itervalues()
+                for update in updates
                 for item in get_xml_for_response(update, restore_state))
 
         done += len(cases)

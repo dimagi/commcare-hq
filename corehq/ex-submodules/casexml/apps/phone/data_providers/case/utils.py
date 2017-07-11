@@ -35,8 +35,8 @@ class CaseSyncUpdate(object):
 def get_case_sync_updates(domain, cases, last_sync_log):
     """
     Given a domain, list of cases, and sync log representing the last
-    sync, return a dict of CaseSyncUpdate objects (keyed by case_id)
-    that should be applied to the next sync.
+    sync, return a list of CaseSyncUpdate objects that should be applied
+    to the next sync.
     """
     case_updates_to_sync = []
 
