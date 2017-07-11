@@ -17,6 +17,7 @@ import couchforms
 from casexml.apps.case.exceptions import PhoneDateValueError, IllegalCaseId, UsesReferrals, InvalidCaseIndex, \
     CaseValueError
 from casexml.apps.case.xml import V2
+from corehq.apps.middleware import OPENROSA_VERSION_3, OPENROSA_VERSION_HEADER
 from corehq.toggles import ASYNC_RESTORE
 from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
@@ -130,6 +131,9 @@ class SubmissionPost(object):
         found_old = scrub_meta(xform)
         legacy_notification_assert(not found_old, 'Form with old metadata submitted', xform.form_id)
 
+    def is_openrosa_version3(self):
+        return self.openrosa_headers.get(OPENROSA_VERSION_HEADER, '') == OPENROSA_VERSION_3
+
     def run(self):
         failure_response = self._handle_basic_failure_modes()
         if failure_response:
@@ -206,7 +210,7 @@ class SubmissionPost(object):
             errors = self.process_signals(instance)
             if instance.is_normal and not errors:
                 response = self.get_success_response()
-            elif known_submission_error:
+            elif known_submission_error and self.is_openrosa_version3():
                 response = self.get_retry_response(known_submission_error, ResponseNature.KNOWN_PROCESSING_ERROR)
             else:
                 response = self.get_retry_response(instance.problem, ResponseNature.SUBMIT_ERROR)
