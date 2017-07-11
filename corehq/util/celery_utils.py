@@ -199,9 +199,14 @@ class LoadBasedAutoscaler(Autoscaler):
         cur = min(self.qty, self.max_concurrency)
 
         available_cpus = multiprocessing.cpu_count()
-        load_avgs = os.getloadavg()
-        max_avg = max(load_avgs[0], load_avgs[1])
-        normalized_load = max_avg / available_cpus
+        try:
+            load_avgs = os.getloadavg()
+            max_avg = max(load_avgs[0], load_avgs[1])
+            normalized_load = max_avg / available_cpus
+        except OSError:
+            # if we can't get the load average, let's just use normal autoscaling
+            load_avgs = None
+            normalized_load = 0
 
         if cur > procs and normalized_load < 0.90:
             self.scale_up(cur - procs)
@@ -210,7 +215,7 @@ class LoadBasedAutoscaler(Autoscaler):
             self.scale_down((procs - cur) - self.min_concurrency)
             return True
         elif normalized_load > 0.90 and procs > self.min_concurrency:
-            # if load is to0 high trying scaling down 1 worker at a time.
+            # if load is too high trying scaling down 1 worker at a time.
             # if we're already at minimum concurrency let's just ride it out
             self.scale_down(1)
             return True
