@@ -82,11 +82,9 @@ class ItemListsProvider(FixtureProvider):
         return self._generate_fixture_from_type(restore_user, items_by_type, types_sorted_by_tag)
 
     def get_user_items(self, restore_user, all_types, global_types):
-        user_type_ids = set(all_types) - set(global_types)
-        if user_type_ids:
+        if set(all_types) - set(global_types):
             # only query ownership models if there are non-global types
-            user_types = {user_type_id: all_types[user_type_id] for user_type_id in user_type_ids}
-            types_sorted_by_tag = sorted(user_types.iteritems(), key=lambda (id_, type_): type_.tag)
+            types_sorted_by_tag = sorted(all_types.iteritems(), key=lambda (id_, type_): type_.tag)
 
             items_by_type = defaultdict(list)
             for item in restore_user.get_fixture_data_items():
