@@ -208,3 +208,23 @@ class LoadBasedAutoscaler(Autoscaler):
         elif cur < procs or normalized_load > 1.5:
             self.scale_down((procs - cur) - self.min_concurrency)
             return True
+
+
+class OffPeakLoadBasedAutoscaler(LoadBasedAutoscaler):
+    def _is_off_peak(self):
+        now = datetime.utcnow().time()
+        if settings.OFF_PEAK_TIME:
+            if settings.OFF_PEAK_TIME[0] < now < settings.OFF_PEAK_TIME[1]:
+                return True
+
+        return False
+
+    def _maybe_scale(self, req=None):
+        procs = self.processes
+        cur = min(self.qty, self.max_concurrency)
+
+        if not self._is_off_peak():
+            self.scale_down((procs - cur) - self.min_concurrency)
+            return True
+
+        super(OffPeakLoadBasedAutoscaler, self)._maybe_scale(req)
