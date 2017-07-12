@@ -36,7 +36,7 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
         if len(location_ids) == 0 \
                 and not self.request.couch_user.has_permission(self.request.domain, 'access_all_locations'):
             # Display the user's location in the filter if none is selected
-            location_ids = self.request.couch_user.get_location_ids(self.request.domain)
+            location_ids = list(self.request.couch_user.get_location_ids(self.request.domain))
 
         choice_provider = LocationChoiceProvider(StubReport(domain=self.domain), None)
         # We don't include descendants here because they will show up in select box
@@ -62,7 +62,7 @@ class EnikshayLocationFilter(BaseMultipleOptionFilter):
         if len(selected_locations) == 0 and not request.couch_user.has_permission(domain, 'access_all_locations'):
             # Force the user to select their assigned locations, otherwise selecting no locations will result in
             # all results being returned.
-            return request.couch_user.get_location_ids(domain)
+            return list(request.couch_user.get_location_ids(domain))
         return selected_locations
 
 

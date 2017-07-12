@@ -1,5 +1,6 @@
 from corehq.apps.es import UserES
 from corehq.apps.es.users import mobile_users
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import get_submission_counts_by_user
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -13,6 +14,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from dimagi.utils.decorators.memoized import memoized
 
 
+@location_safe
 class EnikshayWorkerActivityReport(WorkerActivityReport, CustomProjectReport):
     name = ugettext_lazy('Worker Form Activity')
     slug = 'enikshay_worker_activity_report'
@@ -23,6 +25,10 @@ class EnikshayWorkerActivityReport(WorkerActivityReport, CustomProjectReport):
     @property
     def fields(self):
         return DatespanFilter, EnikshayLocationFilter
+
+    @property
+    def view_by_groups(self):
+        return False
 
     @property
     def headers(self):
