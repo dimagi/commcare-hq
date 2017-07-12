@@ -8,7 +8,7 @@ from corehq.warehouse.models import Batch
 
 class Command(BaseCommand):
     """
-    Example: ./manage.py create_batch 222617b9-8cf0-40a2-8462-7f872e1f1344 -s 2017-05-01 -e 2017-06-01
+    Example: ./manage.py mark_batch_complete 222617b9-8cf0-40a2-8462-7f872e1f1344
     """
     help = "Usage: ./manage.py mark_batch_complete <batch_id>"
 
@@ -21,5 +21,8 @@ class Command(BaseCommand):
         except Batch.DoesNotExist:
             raise CommandError('Invalid batch ID: {}'.format(batch_id))
 
-        batch.completed_on = datetime.utcnow()
-        batch.save()
+        if batch.completed_on is None:
+            batch.completed_on = datetime.utcnow()
+            batch.save()
+        else:
+            raise CommandError('Batch {} is already marked as complete'.format(batch_id))
