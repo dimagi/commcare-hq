@@ -207,7 +207,7 @@ def do_livequery(timing_context, restore_state, async_task=None):
             debug('open: %r', open_ids)
             # owned, open, not an extension -> live
             for case_id in owned_ids:
-                if case_id not in hosts_by_extension:
+                if not is_extension(case_id):
                     enliven(case_id)
 
             # available case with live extension -> live
