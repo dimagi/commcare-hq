@@ -1063,60 +1063,46 @@ LOGGING = {
         },
         'file': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'corehq.util.log.DefaultLogHandler',
             'formatter': 'verbose',
             'filename': DJANGO_LOG_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
         },
         'couch-request-handler': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'corehq.util.log.DefaultLogHandler',
             'formatter': 'couch-request-formatter',
             'filters': ['hqcontext'],
             'filename': COUCH_LOG_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
         },
         'accountinglog': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'corehq.util.log.DefaultLogHandler',
             'formatter': 'verbose',
             'filename': ACCOUNTING_LOG_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
         },
         'analyticslog': {
             'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'corehq.util.log.DefaultLogHandler',
             'formatter': 'verbose',
             'filename': ANALYTICS_LOG_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
         },
         'ucr_diff': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'corehq.util.log.DefaultLogHandler',
             'formatter': 'ucr_diff',
             'filename': UCR_DIFF_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
         },
         'ucr_exception': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'corehq.util.log.DefaultLogHandler',
             'formatter': 'ucr_exception',
             'filename': UCR_EXCEPTION_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
         },
         'ucr_timing': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'corehq.util.log.DefaultLogHandler',
             'formatter': 'ucr_timing',
             'filename': UCR_TIMING_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
         },
         'mail_admins': {
             'level': 'ERROR',
@@ -1131,19 +1117,15 @@ LOGGING = {
         },
         'nikshay_datamigration': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'corehq.util.log.DefaultLogHandler',
             'formatter': 'verbose',
             'filename': NIKSHAY_DATAMIGRATION,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
         },
         'private_sector_datamigration': {
             'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'corehq.util.log.DefaultLogHandler',
             'formatter': 'verbose',
             'filename': PRIVATE_SECTOR_DATAMIGRATION,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
         },
         'sentry': {
             'level': 'ERROR',
@@ -1151,10 +1133,9 @@ LOGGING = {
         },
         'soft_asserts': {
             "level": "DEBUG",
-            'class': 'logging.handlers.RotatingFileHandler',
+            'class': 'corehq.util.log.DefaultLogHandler',
             'formatter': 'verbose',
             'filename': SOFT_ASSERTS_LOG_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 200  # Backup 2000 MB of logs
         }
     },

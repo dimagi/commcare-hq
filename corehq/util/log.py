@@ -1,4 +1,5 @@
 from __future__ import print_function
+from logging.handlers import RotatingFileHandler, WatchedFileHandler
 import sys
 from collections import defaultdict
 from itertools import islice
@@ -55,6 +56,13 @@ def get_sanitized_request_repr(request):
         return repr(filter.get_post_parameters(request))
 
     return request
+
+
+class DefaultLogHandler(WatchedFileHandler):
+    def __init__(self, filename, mode='a', encoding=None, delay=0):
+        super(DefaultLogHandler, self).__init__(
+            filename, mode=mode, encoding=encoding,
+            delay=delay)
 
 
 class HqAdminEmailHandler(AdminEmailHandler):
