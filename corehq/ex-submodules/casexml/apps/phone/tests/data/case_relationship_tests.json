@@ -636,40 +636,6 @@
         "outcome": []
     },
     {
-        "name": "owned_closed_open_extension",
-        "owned": [
-            "a"
-        ],
-        "extensions": [
-            [
-                "a",
-                "b"
-            ]
-        ],
-        "closed": [
-            "b"
-        ],
-        "outcome": []
-    },
-    {
-        "name": "closed_extension",
-        "owned": [
-            "a"
-        ],
-        "extensions": [
-            [
-                "e",
-                "a"
-            ]
-        ],
-        "closed": [
-            "e"
-        ],
-        "outcome": [
-            "a"
-        ]
-    },
-    {
         "name": "Broken_Extension_Chain",
         "owned": [
             "a"

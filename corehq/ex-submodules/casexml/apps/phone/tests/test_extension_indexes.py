@@ -1,9 +1,10 @@
 import json
 import os.path
+import re
 import uuid
+from itertools import count
 from nose.tools import nottest
 
-import re
 from casexml.apps.case.mock import CaseIndex, CaseStructure
 from casexml.apps.case.tests.util import assert_user_doesnt_have_cases, \
     assert_user_has_cases, cached_restore
@@ -50,10 +51,48 @@ def test_generator(test_name, skip=False):
     return test
 
 
+@nottest
+def assert_each_test_is_unique(tests_to_run):
+    def make_signature(test):
+        def rename(names, map={}, number=count()):
+            for name in names:
+                if name not in map:
+                    map[name] = next(number)
+                yield str(map[name])
+
+        parts = []
+        for key in SINGLES:
+            if test.get(key):
+                names = list(rename(test[key]))
+                parts.append(key + ":" + ",".join(names))
+        for key in PAIRS:
+            if test.get(key):
+                names = sorted("-".join(rename(pair)) for pair in test[key])
+                parts.append(key + ":" + ",".join(names))
+        return " ".join(parts)
+
+    SINGLES = ["owned", "cases", "closed", "outcome"]
+    PAIRS = ["subcases", "extensions"]
+    ALL_FIELDS = set(SINGLES + PAIRS + ["name", "skip", "note"])
+    seen = {}
+    test_names = set()
+    for test in tests_to_run:
+        unknown = list(set(test) - ALL_FIELDS)
+        assert not unknown, "bad fields {} in test: {}".format(unknown, test)
+        sig = make_signature(test)
+        assert sig not in seen, \
+            "duplicate tests: %s, %s (%s)" % (test["name"], seen[sig], sig)
+        seen[sig] = test["name"]
+        assert test["name"] not in test_names, \
+            "duplicate test name: {name}".format(**test)
+        test_names.add(test["name"])
+
+
 class TestSequenceMeta(type):
 
     def __new__(mcs, name, bases, dict):
         tests_to_run = get_test_file_json('case_relationship_tests')
+        assert_each_test_is_unique(tests_to_run)
         run_single_tests = filter(lambda t: t.get('only', False), tests_to_run)
         if run_single_tests:
             tests_to_run = run_single_tests
