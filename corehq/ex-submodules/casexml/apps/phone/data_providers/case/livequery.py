@@ -45,6 +45,13 @@ def do_livequery(timing_context, restore_state, async_task=None):
     def index_key(index):
         return '{} {}'.format(index.case_id, index.identifier)
 
+    def is_extension(case_id):
+        """Determine if case_id is an extension case
+
+        A case that is both a child and an extension is not an extension.
+        """
+        return case_id in hosts_by_extension and case_id not in parents_by_child
+
     def has_live_extension(case_id, cache={}):
         """Check if available case_id has a live extension case
 
@@ -76,8 +83,7 @@ def do_livequery(timing_context, restore_state, async_task=None):
     def enliven(case_id):
         """Mark the given case, its extensions and their hosts as live
 
-        This closure mutates case graph data structures from the
-        enclosing function.
+        This closure mutates `live_ids` from the enclosing function.
         """
         if case_id in live_ids:
             # already live
@@ -87,7 +93,7 @@ def do_livequery(timing_context, restore_state, async_task=None):
         # case is open and is the extension of a live case
         ext_ids = extensions_by_host.get(case_id, [])
         # case has live extension
-        host_ids = hosts_by_extension.pop(case_id, [])
+        host_ids = hosts_by_extension.get(case_id, [])
         # case has live child
         parent_ids = parents_by_child.get(case_id, [])
         for cid in chain(ext_ids, host_ids, parent_ids):
@@ -207,7 +213,7 @@ def do_livequery(timing_context, restore_state, async_task=None):
             # available case with live extension -> live
             for case_id in open_ids:
                 if (case_id not in live_ids
-                        and case_id not in hosts_by_extension
+                        and not is_extension(case_id)
                         and has_live_extension(case_id)):
                     enliven(case_id)
 
