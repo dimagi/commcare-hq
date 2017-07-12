@@ -89,8 +89,8 @@ def do_livequery(timing_context, restore_state, async_task=None):
         This closure mutates case graph data structures from the
         enclosing function.
 
-        :returns: Case id for next related index fetch or CIRCULAR_REF
-        if the related case has already been seen.
+        :returns: Case id for next related index fetch or IGNORE
+        if the related case should be ignored.
         """
         seen_ix.add(index_key(index))
         indices[index.case_id].append(index)
@@ -112,7 +112,8 @@ def do_livequery(timing_context, restore_state, async_task=None):
                     # if sub becomes live -> ref has a live extension
                     extensions_by_host[ref_id].add(sub_id)
                     hosts_by_extension[sub_id].add(ref_id)
-            # else: ignore closed extension
+            else:
+                return IGNORE  # closed extension
         elif sub_id in owned_ids:
             # sub is owned and available (open and not an extension case)
             enliven(sub_id)
@@ -125,13 +126,10 @@ def do_livequery(timing_context, restore_state, async_task=None):
             children_by_parent[ref_id].add(sub_id)
             parents_by_child[sub_id].add(ref_id)
 
-        if sub_id in prev_ids:
-            if ref_id not in all_ids:
-                return ref_id
-        else:
-            if sub_id not in all_ids:
-                return sub_id
-        return CIRCULAR_REF
+        next_id = ref_id if sub_id in prev_ids else sub_id
+        if next_id not in all_ids:
+            return next_id
+        return IGNORE  # circular reference
 
     def update_open_and_deleted_ids(related):
         """Update open_ids and deleted_ids with related case_ids
@@ -152,7 +150,7 @@ def do_livequery(timing_context, restore_state, async_task=None):
                 case_ids.remove(case_id)
         open_ids.update(case_ids)
 
-    CIRCULAR_REF = object()
+    IGNORE = object()
     debug = logging.getLogger(__name__).debug
     accessor = CaseAccessors(restore_state.domain)
 
@@ -189,7 +187,7 @@ def do_livequery(timing_context, restore_state, async_task=None):
                     if index_key(index) not in seen_ix
                         and index.referenced_id not in deleted_ids
                         and index.case_id not in deleted_ids}
-                next_ids.discard(CIRCULAR_REF)
+                next_ids.discard(IGNORE)
                 all_ids.update(next_ids)
                 debug('next: %r', next_ids)
 
