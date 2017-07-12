@@ -53,7 +53,7 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
             DataTablesColumn(_('Person Case')),
             DataTablesColumn(_('URL')),
             DataTablesColumn(_('Last sent date')),
-            DataTablesColumn(_('Failure Reason')),
+            DataTablesColumn(_('Attempts')),
             DataTablesColumn(_('Payload')),
         ]
 
@@ -64,13 +64,18 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
             payload = record.get_payload()
         except ENikshayException as error:
             payload = u"Error: {}".format(error)
+        attempt_messages = [
+            escape("{date}: {message}".format(
+                date=attempt.datetime,
+                message=attempt.success_response if attempt.succeeded else attempt.failure_reason))
+            for attempt in record.attempts]
         row = [
             record._id,
             self._get_state(record)[1],
             self._get_person_id_link(record),
             record.url if record.url else _(u'Unable to generate url for record'),
             self._format_date(record.last_checked) if record.last_checked else '---',
-            escape(record.failure_reason) if not record.succeeded else None,
+            ",\n".join(attempt_messages),
             payload,
         ]
         return row
