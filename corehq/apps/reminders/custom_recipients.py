@@ -1,12 +1,22 @@
 from corehq.apps.locations.models import SQLLocation
+from corehq.form_processor.exceptions import CaseNotFound
+from couchdbkit.exceptions import ResourceNotFound
 
 
 def host_case_owner_location(handler, reminder):
-    case = reminder.case
+    try:
+        case = reminder.case
+    except (CaseNotFound, ResourceNotFound):
+        return None
+
     if not case:
         return None
 
-    host = case.host
+    try:
+        host = case.host
+    except (CaseNotFound, ResourceNotFound):
+        return None
+
     if not host:
         return None
 
@@ -22,8 +32,12 @@ def host_case_owner_location(handler, reminder):
 
 
 def host_case_owner_location_parent(handler, reminder):
-    location = host_case_owner_location(handler, reminder)
-    if not location:
+    result = host_case_owner_location(handler, reminder)
+    if not result:
         return None
 
-    return [location[0].parent]
+    parent_location = result[0].parent
+    if not parent_location:
+        return None
+
+    return [parent_location]
