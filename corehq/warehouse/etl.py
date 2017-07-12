@@ -34,7 +34,7 @@ class CustomSQLETLMixin(BaseETLMixin):
         return {}
 
     @classmethod
-    def load(cls, start_datetime, end_datetime):
+    def load(cls, batch):
         from corehq.warehouse.models.shared import WarehouseTable
         '''
         Bulk loads records for a dim or fact table from
@@ -44,10 +44,10 @@ class CustomSQLETLMixin(BaseETLMixin):
         assert issubclass(cls, WarehouseTable)
         database = db_for_read_write(cls)
         with connections[database].cursor() as cursor:
-            cursor.execute(cls._sql_query_template(cls.slug, start_datetime, end_datetime))
+            cursor.execute(cls._sql_query_template(cls.slug, batch))
 
     @classmethod
-    def _table_context(cls, start_datetime, end_datetime):
+    def _table_context(cls, batch):
         '''
         Get a dict of slugs to table name mapping
         :returns: Dict of slug to table_name
@@ -62,13 +62,14 @@ class CustomSQLETLMixin(BaseETLMixin):
         for dep in cls.dependencies():
             dep_cls = get_cls_by_slug(dep)
             context[dep] = dep_cls._meta.db_table
-        context['start_datetime'] = start_datetime.isoformat()
-        context['end_datetime'] = end_datetime.isoformat()
+        context['start_datetime'] = batch.start_datetime.isoformat()
+        context['end_datetime'] = batch.end_datetime.isoformat()
+        context['batch_id'] = batch.batch_id
         context.update(cls.additional_sql_context())
         return context
 
     @classmethod
-    def _sql_query_template(cls, template_name, start_datetime, end_datetime):
+    def _sql_query_template(cls, template_name, batch):
         path = os.path.join(
             settings.BASE_DIR,
             'corehq',
@@ -82,7 +83,7 @@ class CustomSQLETLMixin(BaseETLMixin):
                 'You must define {} in order to load data'.format(path)
             )
 
-        return _render_template(path, cls._table_context(start_datetime, end_datetime))
+        return _render_template(path, cls._table_context(batch))
 
 
 class CouchToDjangoETLMixin(BaseETLMixin):
@@ -101,13 +102,13 @@ class CouchToDjangoETLMixin(BaseETLMixin):
         raise NotImplementedError
 
     @classmethod
-    def load(cls, start_datetime, end_datetime):
+    def load(cls, batch):
         from corehq.warehouse.models.shared import WarehouseTable
 
         assert issubclass(cls, WarehouseTable)
-        record_iter = cls.record_iter(start_datetime, end_datetime)
+        record_iter = cls.record_iter(batch.start_datetime, batch.end_datetime)
 
-        django_batch_records(cls, record_iter, cls.field_mapping())
+        django_batch_records(cls, record_iter, cls.field_mapping(), batch.batch_id)
 
 
 def _render_template(path, context):

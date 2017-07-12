@@ -10,7 +10,7 @@
     "icds"
   ],
   "report_id": "static-asr_2_3_person_cases",
-  "data_source_table": "static-person_cases",
+  "data_source_table": "static-person_cases_v2",
   "config": {
     "title": "ASR - 2,3 - Person Cases (Static)",
     "description": "",

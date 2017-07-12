@@ -1,61 +1,26 @@
 from django.db import models
 
-from django_fsm import FSMField, transition
 
-from ..states import (
-    FACT_TABLE_NEEDS_UPDATING,
-    FACT_TABLE_BATCH_DUMPED,
-    FACT_TABLE_READY,
-    FACT_TABLE_FAILED,
-    FACT_TABLE_DECOMMISSIONED,
-)
+class Batch(models.Model):
+    batch_id = models.UUIDField(unique=True, db_index=True, primary_key=True)
+
+    start_datetime = models.DateTimeField()
+    end_datetime = models.DateTimeField()
+
+    created_on = models.DateTimeField(auto_now_add=True)
 
 
-class TableState(models.Model):
-    slug = models.CharField(max_length=255)
-    state = FSMField(default=FACT_TABLE_NEEDS_UPDATING, db_index=True)
-    last_modified = models.DateTimeField(auto_now=True)
-    last_batch_id = models.CharField(max_length=255)
+class CommitRecord(models.Model):
+    '''
+    A CommitRecord records meta data about a certain warehouse table's
+    batch.
+    '''
+    batch = models.ForeignKey('Batch', on_delete=models.PROTECT)
 
-    @transition(
-        field=state,
-        source=[FACT_TABLE_NEEDS_UPDATING, FACT_TABLE_FAILED],
-        target=FACT_TABLE_BATCH_DUMPED,
-        on_error=FACT_TABLE_FAILED,
-    )
-    def dump_to_intermediate_table(self):
-        return
+    slug = models.CharField(max_length=100)
+    error = models.TextField()
+    success = models.NullBooleanField()
+    verified = models.NullBooleanField()
 
-    @transition(
-        field=state,
-        source=FACT_TABLE_BATCH_DUMPED,
-        target=FACT_TABLE_READY,
-        on_error=FACT_TABLE_FAILED,
-    )
-    def process_intermediate_table(self):
-        return
-
-    @transition(
-        field=state,
-        source=FACT_TABLE_READY,
-        target=FACT_TABLE_NEEDS_UPDATING,
-        on_error=FACT_TABLE_FAILED
-    )
-    def queue(self):
-        return
-
-    @transition(
-        field=state,
-        source='*',
-        target=FACT_TABLE_FAILED,
-    )
-    def fail(self):
-        return
-
-    @transition(
-        field=state,
-        source='*',
-        target=FACT_TABLE_DECOMMISSIONED,
-    )
-    def decommission(self):
-        return
+    created_on = models.DateTimeField(auto_now_add=True)
+    completed_on = models.DateTimeField(null=True)

@@ -132,18 +132,29 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         ]
 
     @staticmethod
-    def get_related_indices(domain, case_ids, exclude_ids):
-        return get_related_indices(domain, case_ids, exclude_ids)
+    def get_related_indices(domain, case_ids, exclude_indices):
+        return get_related_indices(domain, case_ids, exclude_indices)
 
     @staticmethod
-    def filter_open_case_ids(accessor, case_ids):
-        """Filter given set of case ids, yielding only open case ids
+    def get_closed_and_deleted_ids(accessor, case_ids):
+        """Get the subset of given list of case ids that are closed or deleted
 
         WARNING this is inefficient (better version in SQL).
         """
-        for case in accessor.iter_cases(case_ids):
-            if not case.closed:
-                yield case.case_id
+        return [(case.case_id, case.closed, case.is_deleted)
+            for case in accessor.iter_cases(case_ids)
+            if case.closed or case.is_deleted]
+
+    @staticmethod
+    def get_modified_case_ids(accessor, case_ids, sync_log):
+        """Get the subset of given list of case ids that have been modified
+        since sync date/log id
+
+        WARNING this is inefficient (better version in SQL).
+        """
+        return [case.case_id
+            for case in accessor.iter_cases(case_ids)
+            if not case.is_deleted and case.modified_since_sync(sync_log)]
 
     @staticmethod
     def case_exists(case_id):

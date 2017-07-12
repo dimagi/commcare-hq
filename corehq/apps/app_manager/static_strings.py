@@ -124,6 +124,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('Multimedia Validation'),
     ugettext_noop('Multiple Questions per Screen displays a running list of questions on the screen at the same time. One Question per Screen displays each question independently. Note: OQPS does not support some features'),
     ugettext_noop('Multiple Questions per Screen'),
+    ugettext_noop('Must correspond to the password format specified below.'),
     ugettext_noop('Native (International)'),
     ugettext_noop('Never'),
     ugettext_noop('No (NOT RECOMMENDED)'),

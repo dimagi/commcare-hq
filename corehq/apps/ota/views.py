@@ -94,12 +94,12 @@ def search(request, domain):
     except QueryMergeException as e:
         return _handle_query_merge_exception(request, e)
     try:
-        results = search_es.values()
+        hits = search_es.run().raw_hits
     except Exception as e:
         return _handle_es_exception(request, e, case_search_criteria.query_addition_debug_details)
 
-    # Even if it's a SQL domain, we just need to render the results as cases, so CommCareCase.wrap will be fine
-    cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
+    # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
+    cases = [CommCareCase.wrap(flatten_result(result)) for result in hits]
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
@@ -361,4 +361,10 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
 @login_or_digest_or_basic_or_apikey()
 @require_GET
 def heartbeat(request, domain, id):
-    return JsonResponse({})
+    # mobile needs this. This needs to be revisited to actually work dynamically (Sravan June 7, 17)
+    for_app_id = request.GET.get('app_id', '')
+    return JsonResponse({
+        "app_id": for_app_id,
+        "latest_apk_version": {"value": ""},
+        "latest_ccz_version": {"value": ""}
+    })

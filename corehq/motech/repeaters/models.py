@@ -600,7 +600,7 @@ class RepeatRecord(Document):
             cancelled=False,
             datetime=now,
             failure_reason=None,
-            success_response=self._format_response(response),
+            success_response=self._format_response(response) if response else None,
             next_check=None,
             succeeded=True,
         )

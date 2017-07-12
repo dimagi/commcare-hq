@@ -12,6 +12,7 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.models import User
 from django.core import management, cache
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import (
     HttpResponseRedirect,
     HttpResponse,
@@ -74,6 +75,7 @@ from corehq.util.supervisord.api import (
 )
 from corehq.util.timer import TimingContext
 from couchforms.models import XFormInstance
+from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.couch.database import get_db, is_bigcouch
 from dimagi.utils.csv import UnicodeWriter
 from dimagi.utils.dates import add_months
@@ -504,6 +506,9 @@ class AdminRestoreView(TemplateView):
             xml_payload = etree.fromstring(string_payload)
             restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
             num_cases = len(xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case'))
+            num_locations = len(
+                xml_payload.findall("{{{0}}}fixture[@id='locations']/{{{0}}}locations/{{{0}}}location"
+                                    .format(RESPONSE_XMLNS)))
         else:
             if response.status_code in (401, 404):
                 # corehq.apps.ota.views.get_restore_response couldn't find user or user didn't have perms
@@ -518,6 +523,7 @@ class AdminRestoreView(TemplateView):
                 xml_payload = E.error(message)
             restore_id_element = None
             num_cases = 0
+            num_locations = 0
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         context.update({
             'payload': formatted_payload,
@@ -525,6 +531,7 @@ class AdminRestoreView(TemplateView):
             'status_code': response.status_code,
             'timing_data': timing_context.to_list(),
             'num_cases': num_cases,
+            'num_locations': num_locations,
         })
         return context
 
@@ -642,7 +649,7 @@ class _Db(object):
     def get(self, record_id):
         try:
             return self._getter(record_id)
-        except (XFormNotFound, CaseNotFound):
+        except (XFormNotFound, CaseNotFound, ObjectDoesNotExist):
             raise ResourceNotFound("missing")
 
 

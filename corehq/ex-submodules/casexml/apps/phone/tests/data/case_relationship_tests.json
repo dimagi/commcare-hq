@@ -791,5 +791,40 @@
         "outcome": [
             "a", "b", "c"
         ]
+    },
+    {
+        "name": "host_of_closed_extension",
+        "owned": [
+            "a", "c"
+        ],
+        "closed": [
+            "b"
+        ],
+        "extensions": [
+            ["b", "a"],
+            ["b", "d"],
+            ["c", "b"]
+        ],
+        "outcome": [
+            "a"
+        ]
+    },
+    {
+        "name": "host_of_open_extension_with_closed_extension",
+        "owned": [
+            "a", "c"
+        ],
+        "closed": [
+            "b"
+        ],
+        "extensions": [
+            ["b", "a"],
+            ["b", "d"],
+            ["c", "b"],
+            ["d", "e"]
+        ],
+        "outcome": [
+            "a"
+        ]
     }
 ]
