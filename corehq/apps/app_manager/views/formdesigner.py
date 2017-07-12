@@ -105,8 +105,7 @@ def _get_form_designer_view(request, domain, app, module, form):
     def _form_too_large(_app, _form):
         # form less than 0.1MB, anything larger starts to have
         # performance issues with fullstory
-        return _app.blobs['{}.xml'.format(_form.unique_id)][
-                   'content_length'] > 102400
+        return _app.blobs['{}.xml'.format(_form.unique_id)]['content_length'] > 102400
 
     context = get_apps_base_context(request, domain, app)
     context.update(locals())
