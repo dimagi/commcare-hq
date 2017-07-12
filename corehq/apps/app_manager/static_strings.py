@@ -159,6 +159,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('Required'),
     ugettext_noop('Roman'),
     ugettext_noop('Saved Forms'),
+    ugettext_noop('Select the mobile worker to use as a practice user for this application'),
     ugettext_noop('Send Data Over HTTP'),
     ugettext_noop('Send Data'),
     ugettext_noop('Send Forms Mode'),
