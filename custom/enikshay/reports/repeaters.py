@@ -38,6 +38,8 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
     exportable = True
     exportable_all = True
 
+    emailable = True
+
     @property
     def get_all_rows(self):
         repeater_id = self.request.GET.get('repeater', None)
