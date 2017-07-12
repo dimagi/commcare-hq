@@ -3,7 +3,7 @@ import uuid
 from urllib import urlencode
 from django.contrib import messages
 from django.urls import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from django.template.loader import render_to_string
 
 from corehq import toggles
@@ -51,16 +51,25 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
         app = get_app(domain, app_id)
 
         module = None
-        if module_id is not None:
-            module = app.get_module(module_id)
-        elif module_unique_id is not None:
-            module = app.get_module_by_unique_id(module_unique_id)
+        try:
+            if module_id is not None:
+                module = app.get_module(module_id)
+            elif module_unique_id is not None:
+                module = app.get_module_by_unique_id(module_unique_id)
+        except ModuleNotFoundException:
+            raise Http404()
 
         form = None
         if form_id is not None and module is not None:
-            form = module.get_form(form_id)
+            try:
+                form = module.get_form(form_id)
+            except IndexError:
+                raise Http404()
         elif form_unique_id is not None:
-            form = app.get_form(form_unique_id)
+            try:
+                form = app.get_form(form_unique_id)
+            except FormNotFoundException:
+                raise Http404()
 
         if form is not None:
             view_name = 'view_form' if form.no_vellum else form_view
