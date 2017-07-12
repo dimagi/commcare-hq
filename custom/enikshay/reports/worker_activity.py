@@ -1,3 +1,4 @@
+from django.core.exceptions import PermissionDenied
 from corehq.apps.es import UserES
 from corehq.apps.es.users import mobile_users
 from corehq.apps.locations.permissions import location_safe
@@ -49,6 +50,10 @@ class EnikshayWorkerActivityReport(WorkerActivityReport, CustomProjectReport):
         locations_id = self.locations_id
         if locations_id:
             user_query = user_query.location(locations_id)
+        elif not self.request.couch_user.has_permission(self.domain, 'access_all_locations'):
+            # EnikshayLocationFilter.get_value should always return a
+            # location_id for restricted users
+            raise PermissionDenied()
         return user_query
 
     @property
