@@ -1679,6 +1679,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         tag_system_forms_as_deleted.delay(self.domain, deleted_forms, deleted_cases, deletion_id, deletion_date)
 
+        from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
+        unset_practice_mode_configured_apps(self.domain, self.get_id)
+
         try:
             django_user = self.get_django_user()
         except User.DoesNotExist:
