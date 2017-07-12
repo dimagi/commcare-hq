@@ -32,13 +32,12 @@ def get_test_name(test_name):
 
 
 @nottest
-def test_generator(test_name, skip=False):
+def test_generator(skip=False, **test):
     @softer_assert()
-    def test(self):
+    def test_func(self):
         if skip:
             self.skipTest(skip)
-        self.build_case_structures(test_name)
-        test = self._get_test(test_name)
+        self.build_case_structures(test)
         desired_cases = test.get('outcome', [])
         undesired_cases = [case for case in self.get_all_case_names(test) if case not in desired_cases]
         sync_log = get_properly_wrapped_sync_log(self.sync_log._id)
@@ -47,8 +46,8 @@ def test_generator(test_name, skip=False):
             assert_user_has_cases(self, self.user, desired_cases)
             assert_user_doesnt_have_cases(self, self.user, undesired_cases)
 
-    test.__name__ = get_test_name(test_name)
-    return test
+    test_func.__name__ = get_test_name(test["name"])
+    return test_func
 
 
 @nottest
@@ -75,7 +74,6 @@ def assert_each_test_is_unique(tests_to_run):
     PAIRS = ["subcases", "extensions"]
     ALL_FIELDS = set(SINGLES + PAIRS + ["name", "skip", "note"])
     seen = {}
-    test_names = set()
     for test in tests_to_run:
         unknown = list(set(test) - ALL_FIELDS)
         assert not unknown, "bad fields {} in test: {}".format(unknown, test)
@@ -83,9 +81,6 @@ def assert_each_test_is_unique(tests_to_run):
         assert sig not in seen, \
             "duplicate tests: %s, %s (%s)" % (test["name"], seen[sig], sig)
         seen[sig] = test["name"]
-        assert test["name"] not in test_names, \
-            "duplicate test name: {name}".format(**test)
-        test_names.add(test["name"])
 
 
 class TestSequenceMeta(type):
@@ -97,9 +92,11 @@ class TestSequenceMeta(type):
         if run_single_tests:
             tests_to_run = run_single_tests
 
-        for test in [(test['name'], test.get('skip', False)) for test in tests_to_run]:
+        for test in tests_to_run:
             # Create a new testcase that the test runner is able to find
-            dict[get_test_name(test[0])] = test_generator(test[0], test[1])
+            test_name = get_test_name(test['name'])
+            assert test_name not in dict, "duplicate test name: %s" % test_name
+            dict[test_name] = test_generator(**test)
 
         return type.__new__(mcs, name, bases, dict)
 
@@ -120,18 +117,6 @@ class IndexTreeTest(SyncBaseTest):
     """
     __metaclass__ = TestSequenceMeta
 
-    @property
-    def all_tests(self):
-        """All the test cases in a dict"""
-        all_tests = {}
-        tests = get_test_file_json('case_relationship_tests')
-        for test in tests:
-            all_tests[test['name']] = test
-        return all_tests
-
-    def _get_test(self, test_name):
-        return self.all_tests[test_name]
-
     def get_all_case_names(self, test):
         case_names = set([])
 
@@ -142,8 +127,7 @@ class IndexTreeTest(SyncBaseTest):
         case_names |= set(test.get('outcome', []))
         return case_names
 
-    def build_case_structures(self, test_name):
-        test = self._get_test(test_name)
+    def build_case_structures(self, test):
         case_structures = []
         indices = {case: [] for case in self.get_all_case_names(test)}
 
