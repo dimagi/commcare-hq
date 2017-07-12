@@ -46,15 +46,13 @@ class StaticUINotify(object):
             if (self.visible_to_users_before is not None
                 and was_user_created_after(
                     request.user.username,
-                    self.visible_to_users_before
-                )):
+                    self.visible_to_users_before)):
                 return False
 
             if (self.visible_to_users_after is not None
                 and not was_user_created_after(
                     request.user.username,
-                    self.visible_to_users_after
-                )):
+                    self.visible_to_users_after)):
                 return False
 
             return not DismissedUINotify.is_notification_dismissed(
