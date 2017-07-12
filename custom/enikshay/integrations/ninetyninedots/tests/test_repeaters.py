@@ -162,6 +162,25 @@ class TestUpdatePatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeater
         self._update_case(self.person_id, {PRIMARY_PHONE_NUMBER: '999999999', })
         self.assertEqual(1, len(self.repeat_records().all()))
 
+        # update a pertinent case with something that shouldn't trigger,
+        # and a non-pertinent case with a property that is in the list of triggers
+        self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=self.person_id,
+                attrs={
+                    "update": {'name': 'Elrond', },
+                }
+            ),
+            CaseStructure(
+                case_id=self.occurrence_id,
+                attrs={
+                    "update": {PRIMARY_PHONE_NUMBER: '999999999', },
+                }
+            ),
+
+        ])
+        self.assertEqual(1, len(self.repeat_records().all()))
+
         self._update_case(self.episode_id, {TREATMENT_SUPPORTER_PHONE: '999999999', })
         self.assertEqual(2, len(self.repeat_records().all()))
 
