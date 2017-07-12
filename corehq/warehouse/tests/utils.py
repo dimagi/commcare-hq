@@ -7,6 +7,7 @@ from django.core.management import call_command
 from django.test import TestCase
 
 from corehq.form_processor.tests.utils import partitioned
+from corehq.warehouse.models import ApplicationStagingTable
 from corehq.warehouse.models import (
     UserStagingTable,
     GroupStagingTable,
@@ -109,6 +110,18 @@ def create_location_type_staging_record(domain, name, location_type_id, code=Non
         code=code,
         location_type_last_modified=datetime.utcnow(),
         batch_id=batch_id or DEFAULT_BATCH_ID
+    )
+    record.save()
+    return record
+
+
+def create_application_staging_record(domain, name, app_id=None, doc_type=None, batch_id=None):
+    record = ApplicationStagingTable(
+        domain=domain,
+        application_id=app_id or uuid.uuid4().hex,
+        name=name,
+        doc_type=doc_type or 'Application',
+        batch_id=batch_id or DEFAULT_BATCH_ID,
     )
     record.save()
     return record
