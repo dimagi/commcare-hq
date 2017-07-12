@@ -341,7 +341,7 @@ def _save_document_helper(indicator, doc):
 )
 def async_indicators_metrics():
     for config_id, count in _indicators_by_count().iteritems():
-        datadog_gauge('commcare.async_indicator.indicator_count', count, tags=config_id)
+        datadog_gauge('commcare.async_indicator.indicator_count', count, tags=["config_id:{}".format(config_id)])
 
 
 def _indicators_by_count(date_created=None):
@@ -376,4 +376,4 @@ def icds_async_indicators_metrics():
     indicator_count_until_28 = _indicators_by_count(datetime(2017, 6, 28))
 
     for config_id, count in indicator_count_until_28.iteritems():
-        datadog_gauge('commcare.async_indicator.icds_rebuild', count, tags=config_id)
+        datadog_gauge('commcare.async_indicator.icds_rebuild', count, tags=["config_id:{}".format(config_id)])
