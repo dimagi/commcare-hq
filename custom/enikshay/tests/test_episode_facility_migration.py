@@ -96,7 +96,7 @@ class TestEpisodeFacilityIDMigration(ENikshayCaseStructureMixin, TestCase):
         self.assertTrue(self.updater.should_update)
 
         self._update_episode({'treatment_initiating_facility_id': "abc"})
-        self._update_episode({'diagnosing_facility_id': "-"})
+        self._update_episode({'diagnosing_facility_id': ""})
         self.assertTrue(self.updater.should_update)
 
         self._update_episode({'treatment_initiating_facility_id': "abc"})
