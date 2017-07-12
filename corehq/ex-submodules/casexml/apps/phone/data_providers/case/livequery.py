@@ -45,8 +45,18 @@ def do_livequery(timing_context, restore_state, async_task=None):
     def index_key(index):
         return '{} {}'.format(index.case_id, index.identifier)
 
-    def has_live_child_or_extension(case_id, cache={}):
-        """Check if available case_id has a live child or extension case
+    def has_live_extension(case_id, cache={}):
+        """Check if available case_id has a live extension case
+
+        Do not check for live children because an available parent
+        cannot cause it's children to become live. This is unlike an
+        available host, which can cause its available extension to
+        become live through the recursive rules:
+
+        - A case is available if
+            - it is open and not an extension case (applies to host).
+            - it is open and is the extension of an available case.
+        - A case is live if it is owned and available.
 
         The result is cached to reduce recursion in subsequent calls
         and to prevent infinite recursion.
@@ -55,12 +65,12 @@ def do_livequery(timing_context, restore_state, async_task=None):
             return cache[case_id]
         except KeyError:
             cache[case_id] = False
-        subs = chain(extensions_by_host[case_id], children_by_parent[case_id])
         cache[case_id] = result = any(
-            sub_id in live_ids      # has live child or extension
-            or sub_id in owned_ids  # sub is owned, available, will be live
-            or has_live_child_or_extension(sub_id)
-            for sub_id in subs)
+            ext_id in live_ids      # has live extension
+            or ext_id in owned_ids  # ext is owned and available, will be live
+            or has_live_extension(ext_id)
+            for ext_id in extensions_by_host[case_id]
+        )
         return result
 
     def enliven(case_id):
@@ -120,10 +130,7 @@ def do_livequery(timing_context, restore_state, async_task=None):
             # ref has a live child
             enliven(ref_id)
         else:
-            # live status pending:
-            # if ref becomes live -> sub is open child of live case
-            # if sub becomes live -> ref has a live child
-            children_by_parent[ref_id].add(sub_id)
+            # live status pending: if sub becomes live -> ref has a live child
             parents_by_child[sub_id].add(ref_id)
 
         next_id = ref_id if sub_id in prev_ids else sub_id
@@ -159,7 +166,6 @@ def do_livequery(timing_context, restore_state, async_task=None):
     deleted_ids = set()
     extensions_by_host = defaultdict(set)  # host_id -> (open) extension_ids
     hosts_by_extension = defaultdict(set)  # (open) extension_id -> host_ids
-    children_by_parent = defaultdict(set)  # parent_id -> child_ids
     parents_by_child = defaultdict(set)    # child_id -> parent_ids
     indices = defaultdict(list)  # case_id -> list of CommCareCaseIndex-like
     seen_ix = set()  # set of '<index.case_id> <index.identifier>'
@@ -198,11 +204,11 @@ def do_livequery(timing_context, restore_state, async_task=None):
                 if case_id not in hosts_by_extension:
                     enliven(case_id)
 
-            # available case with live extension or child -> live
+            # available case with live extension -> live
             for case_id in open_ids:
                 if (case_id not in live_ids
                         and case_id not in hosts_by_extension
-                        and has_live_child_or_extension(case_id)):
+                        and has_live_extension(case_id)):
                     enliven(case_id)
 
             debug('live: %r', live_ids)
