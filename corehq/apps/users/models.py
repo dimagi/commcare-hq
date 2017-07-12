@@ -2088,19 +2088,25 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def update_device_id_last_used(self, device_id, when=None):
         """
         Sets the last_used date for the device to be the current time
-
         Does NOT save the user object.
+
+        :returns: True if user was updated and needs to be saved
         """
         when = when or datetime.utcnow()
+
         for user_device_id_last_used in self.devices:
             if user_device_id_last_used.device_id == device_id:
-                user_device_id_last_used.last_used = when
-                break
+                if when.date() > user_device_id_last_used.last_used.date():
+                    user_device_id_last_used.last_used = when
+                    return True
+                else:
+                    return False
         else:
             self.devices.append(DeviceIdLastUsed(
                 device_id=device_id,
                 last_used=when
             ))
+            return True
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):

@@ -216,12 +216,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         return HttpResponse(message, status=401), None
 
     is_demo_restore = couch_user.is_commcare_user() and couch_user.is_demo_user
-    is_enikshay = toggles.ENIKSHAY.enabled(domain)
-    if is_enikshay:
-        couch_restore_user = couch_user
-        if not is_demo_restore and as_user is not None:
-            couch_restore_user = CouchUser.get_by_username(as_user)
-        update_device_id(couch_restore_user, device_id)
+    couch_restore_user = couch_user
+    if not is_demo_restore and as_user is not None:
+        couch_restore_user = CouchUser.get_by_username(as_user)
+    update_device_id(couch_restore_user, device_id)
 
     if is_demo_restore:
         # if user is in demo-mode, return demo restore
