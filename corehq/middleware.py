@@ -3,7 +3,12 @@ import logging
 import mimetypes
 import os
 import datetime
+
+import re
 from django.conf import settings
+from django.contrib.auth.middleware import AuthenticationMiddleware
+from django.contrib.messages.middleware import MessageMiddleware
+from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.exceptions import MiddlewareNotUsed
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -11,6 +16,7 @@ from django.contrib.auth.views import logout as django_logout
 from django.utils.deprecation import MiddlewareMixin
 
 from corehq.apps.domain.models import Domain
+from corehq.apps.domain.utils import legacy_domain_re
 from corehq.const import OPENROSA_DEFAULT_VERSION
 
 from dimagi.utils.parsing import json_format_datetime, string_to_utc_datetime
@@ -112,6 +118,9 @@ class TimeoutMiddleware(MiddlewareMixin):
         if not request.user.is_authenticated:
             return
 
+        if not hasattr(request, 'session'):
+            return
+
         secure_session = request.session.get('secure_session')
         domain = getattr(request, "domain", None)
         now = datetime.datetime.utcnow()
@@ -195,3 +204,43 @@ class SentryContextMiddleware(MiddlewareMixin):
             client.tags_context({
                 'domain': request.domain
             })
+
+
+class SessionBypassMiddleware(SessionMiddleware):
+    def __init__(self, get_response=None):
+        super(SessionBypassMiddleware, self).__init__(get_response)
+        regexes = getattr(settings, 'SESSION_BYPASS_URLS', [])
+        self.bypass_re = [
+            re.compile(regex.format(domain=legacy_domain_re)) for regex in regexes
+        ]
+
+    def process_request(self, request):
+        if self._bypass_sessions(request):
+            return
+
+        super(SessionBypassMiddleware, self).process_request(request)
+
+    def process_response(self, request, response):
+        if self._bypass_sessions(request):
+            return response
+
+        return super(SessionBypassMiddleware, self).process_response(request, response)
+
+    def _bypass_sessions(self, request):
+        return any(rx.match(request.path_info) for rx in self.bypass_re)
+
+
+class SessionlessAuthMiddleware(AuthenticationMiddleware):
+    def process_request(self, request):
+        from django.contrib.auth.models import AnonymousUser
+        if not hasattr(request, 'session'):
+            request.user = AnonymousUser()
+        else:
+            super(SessionlessAuthMiddleware, self).process_request(request)
+
+
+class SessionlessMessageMiddleware(MessageMiddleware):
+    def process_request(self, request):
+        if not hasattr(request, 'session'):
+            return
+        super(SessionlessMessageMiddleware, self).process_request(request)
