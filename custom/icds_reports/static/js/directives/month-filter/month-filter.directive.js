@@ -66,7 +66,7 @@ function MonthFilterController($scope, $location, $uibModal, storageService) {
             $location.search('month', data['month']);
             $location.search('year', data['year']);
             $location.search('day', data['day']);
-            storageService.set($location.search());
+            storageService.setKey('search', $location.search());
             $scope.$emit('filtersChange');
         });
     };

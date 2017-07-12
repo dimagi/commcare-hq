@@ -6,7 +6,7 @@
         <div style="margin: 20px 50px;" ng-repeat="locationTypes in $ctrl.hierarchy track by $index" ng-show="$ctrl.isVisible($index)">
             <ui-select ng-disabled="$ctrl.disabled($index)" ng-model="$ctrl.selectedLocations[$index]" theme="bootstrap" on-select="$ctrl.onSelect($item, $index)">
                 <ui-select-match placeholder="{$ $ctrl.getPlaceholder(locationTypes) $}"><span ng-bind="$select.selected.name"></span></ui-select-match>
-                  <ui-select-choices repeat="location.location_id as location in $ctrl.getLocationsForLevel($index) | propsFilter: {name: $select.search}">
+                  <ui-select-choices repeat="location in $ctrl.getLocationsForLevel($index) | propsFilter: {name: $select.search}">
                     <div ng-bind-html="location.name | highlight: $select.search"></div>
                   </ui-select-choices>
             </ui-select>
@@ -18,6 +18,6 @@
 </script>
 
 <div class="row text-center">
-    <button style="width: 90%;" type="button" class="btn btn-default" ng-click="$ctrl.open()"><i class="fa fa-search"></i> Search by Location</button>
+    <button style="width: 95%;" type="button" class="btn btn-default less-padding" ng-click="$ctrl.open()"><i class="fa fa-search"></i> Search by Location</button>
 </div>
 
