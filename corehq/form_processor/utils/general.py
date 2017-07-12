@@ -2,7 +2,7 @@ import threading
 
 from django.conf import settings
 
-from corehq.toggles import OLD_EXPORTS, TF_DOES_NOT_USE_SQLITE_BACKEND
+from corehq.toggles import OLD_EXPORTS, TF_DOES_NOT_USE_SQLITE_BACKEND, ENTERPRISE_OPTIMIZATIONS
 
 _thread_local = threading.local()
 
@@ -32,7 +32,7 @@ def _short_circuit_sql_check(domain_object_or_name):
     if isinstance(domain_object_or_name, Domain):
         domain_name = domain_object_or_name.name
 
-    return domain_name == 'icds-cas'
+    return ENTERPRISE_OPTIMIZATIONS.enabled(domain_name)
 
 
 def should_use_sql_backend(domain_object_or_name):
