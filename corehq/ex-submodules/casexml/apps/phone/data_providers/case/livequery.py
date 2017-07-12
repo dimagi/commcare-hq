@@ -117,6 +117,9 @@ def do_livequery(timing_context, restore_state, async_task=None):
         if sub_id in live_ids:
             # ref has a live child or extension
             enliven(ref_id)
+            # It does not matter that sub_id -> ref_id never makes it into
+            # hosts_by_extension since both are live and therefore this index
+            # will not need to be traversed in other liveness calculations.
         elif relationship == EXTENSION:
             if sub_id in open_ids:
                 if ref_id in live_ids:
