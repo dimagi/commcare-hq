@@ -120,7 +120,8 @@ from corehq.apps.app_manager.util import (
     xpath_references_case,
     xpath_references_user_case,
     module_case_hierarchy_has_circular_reference,
-    get_correct_app_class
+    get_correct_app_class,
+    get_and_assert_practice_user_in_domain,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
@@ -143,7 +144,9 @@ from .exceptions import (
     ScheduleError,
     CaseXPathValidationError,
     UserCaseXPathValidationError,
-    XFormValidationFailed)
+    XFormValidationFailed,
+    PracticeUserException,
+)
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
 from jsonpath_rw import jsonpath, parse
 
@@ -4748,9 +4751,10 @@ def absolute_url_property(method):
 class BuildProfile(DocumentSchema):
     name = StringProperty()
     langs = StringListProperty()
+    practice_mobile_worker_id = StringProperty()
 
     def __eq__(self, other):
-        return self.langs == other.langs
+        return self.langs == other.langs and self.practice_mobile_worker_id == other.practice_mobile_worker_id
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -4849,6 +4853,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         assert self.application_version == APP_V2
 
     build_profiles = SchemaDictProperty(BuildProfile)
+    practice_mobile_worker_id = StringProperty()
 
     # each language is a key and the value is a list of multimedia referenced in that language
     media_language_map = SchemaDictProperty(MediaList)
@@ -5118,11 +5123,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 ) % ((name,) + setting_version + my_version))
 
     @property
-    def advanced_app_builder(self):
-        properties = (self.profile or {}).get('properties', {})
-        return properties.get('advanced_app_builder', 'true') == 'true'
-
-    @property
     def jad_settings(self):
         settings = {
             'JavaRosa-Admin-Password': self.admin_password,
@@ -5191,6 +5191,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             self.validate_fixtures()
             self.validate_intents()
+            self.validate_practice_users()
             self.create_all_files()
         except CaseXPathValidationError as cve:
             errors.append({
@@ -5203,6 +5204,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 'type': 'invalid user property xpath reference',
                 'module': ucve.module,
                 'form': ucve.form,
+            })
+        except PracticeUserException as pue:
+            errors.append({
+                'type': 'practice user config error',
+                'message': unicode(pue),
+                'build_profile_id': pue.build_profile_id,
             })
         except (AppEditingError, XFormValidationError, XFormException,
                 PermissionDenied, SuiteValidationError) as e:
@@ -5483,6 +5490,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                                      choices=['none', 'all', 'some'])
     mobile_ucr_sync_interval = IntegerProperty()
 
+    add_ons = DictProperty()
+
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
 
@@ -5750,6 +5759,73 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def create_media_suite(self, build_profile_id=None):
         return MediaSuiteGenerator(self, build_profile_id).generate_suite()
 
+    @memoized
+    def get_practice_user_id(self, build_profile_id=None):
+        # returns app or build profile specific practice_mobile_worker_id
+        if build_profile_id:
+            build_spec = self.build_profiles[build_profile_id]
+            return build_spec.practice_mobile_worker_id
+        else:
+            return self.practice_mobile_worker_id
+
+    @property
+    @memoized
+    def enable_practice_users(self):
+        return (
+            self.supports_practice_users and
+            domain_has_privilege(self.domain, privileges.PRACTICE_MOBILE_WORKERS)
+        )
+
+    @memoized
+    def get_practice_user(self, build_profile_id=None):
+        """
+        kwargs:
+            build_profile_id: id of a particular build profile to get the practice user for
+                If it's None, practice user of the default app is returned
+
+        Returns:
+            App or build profile specific practice user and validates that the user is
+                a practice mode user and that user belongs to app.domain
+
+        This is memoized to avoid refetching user when validating app, creating build files and
+            generating suite file.
+        """
+        practice_user_id = self.get_practice_user_id(build_profile_id=build_profile_id)
+        if practice_user_id:
+            return get_and_assert_practice_user_in_domain(practice_user_id, self.domain)
+        else:
+            return None
+
+    def create_practice_user_restore(self, build_profile_id=None):
+        """
+        Returns:
+            Returns restore xml as a string for the practice user of app or
+                app profile specfied by build_profile_id
+            Raises a PracticeUserException if the user is not practice user
+        """
+        from corehq.apps.ota.models import DemoUserRestore
+        if not self.enable_practice_users:
+            return None
+        user = self.get_practice_user(build_profile_id)
+        if user:
+            user_restore = DemoUserRestore.objects.get(id=user.demo_restore_id)
+            return user_restore.get_restore_as_string()
+        else:
+            return None
+
+    def validate_practice_users(self):
+        # validate practice_mobile_worker of app and all app profiles
+        # raises PracticeUserException in case of misconfiguration
+        if not self.enable_practice_users:
+            return
+        self.get_practice_user()
+        try:
+            for build_profile_id in self.build_profiles:
+                self.get_practice_user(build_profile_id)
+        except PracticeUserException as e:
+            e.build_profile_id = build_profile_id
+            raise e
+
     @classmethod
     def get_form_filename(cls, type=None, form=None, module=None):
         return 'modules-%s/forms-%s.xml' % (module.id, form.id)
@@ -5766,6 +5842,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             '{}suite.xml'.format(prefix): self.create_suite(build_profile_id),
             '{}media_suite.xml'.format(prefix): self.create_media_suite(build_profile_id),
         }
+
+        practice_user_restore = self.create_practice_user_restore(build_profile_id)
+        if practice_user_restore:
+            files.update({
+                '{}practice_user_restore.xml'.format(prefix): practice_user_restore
+            })
 
         langs_for_build = self.get_build_langs(build_profile_id)
         for lang in ['default'] + langs_for_build:
