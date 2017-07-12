@@ -309,7 +309,7 @@ def save_document(doc_ids):
 
 def _save_document_helper(indicator, doc):
     eval_context = EvaluationContext(doc)
-    failed_config_ids = []
+    something_failed = False
     for config_id in indicator.indicator_config_ids:
         adapter = None
         try:
@@ -324,14 +324,14 @@ def _save_document_helper(indicator, doc):
         except (DatabaseError, ESError, InternalError, RequestError,
                 ConnectionTimeout, ProtocolError, ReadTimeout):
             # a database had an issue so don't log it and go on to the next config
-            failed_config_ids.append(config_id)
+            something_failed = True
         except Exception as e:
             # getting the config could fail before the adapter is set
             if adapter:
                 adapter.handle_exception(doc, e)
-            failed_config_ids.append(config_id)
+            something_failed = True
 
-    return len(failed_config_ids) == 0
+    return not something_failed
 
 
 @periodic_task(
