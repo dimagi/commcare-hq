@@ -585,17 +585,18 @@ def get_and_assert_practice_user_in_domain(practice_user_id, domain):
         if not user.domain == domain:
             raise ResourceNotFound
     except ResourceNotFound:
-        raise PracticeUserException(_(
-            "Practice User with id {id} not found, please make sure you have not deleted this user").format(
-            id=practice_user_id
-        ))
+        raise PracticeUserException(
+            _("Practice User with id {id} not found, please make sure you have not deleted this user").format(
+                id=practice_user_id)
+        )
     if not user.is_demo_user:
-        raise PracticeUserException(_(
-            "User {username} is not a practice user, "
-            "please turn on practice mode for this user".format(username=user.username)))
+        raise PracticeUserException(
+            _("User {username} is not a practice user, please turn on practice mode for this user").format(
+                username=user.username)
+        )
     if user.is_deleted():
-        raise PracticeUserException(_(
-            "User {username} has been deleted, you can't use that user as "
-            "practice user".format(username=user.username)
-        ))
+        raise PracticeUserException(
+            _("User {username} has been deleted, you can't use that user as practice user").format(
+                username=user.username)
+        )
     return user

@@ -225,7 +225,7 @@ def get_app_view_context(request, app):
         build_spec_setting['default_app_version'] = app.application_version
 
     practice_user_setting = _get_setting('hq', 'practice_mobile_worker_id')
-    if has_privilege(request, privileges.PRACTICE_MOBILE_WORKERS) and practice_user_setting:
+    if practice_user_setting and has_privilege(request, privileges.PRACTICE_MOBILE_WORKERS):
         practice_users = get_practice_mode_mobile_workers(request.domain)
         practice_user_setting['values'] = [''] + [u['_id'] for u in practice_users]
         practice_user_setting['value_names'] = [_('Not set')] + [u['username'] for u in practice_users]
@@ -740,7 +740,7 @@ def edit_app_attr(request, domain, app_id, attr):
 
     if should_edit("practice_mobile_worker_id"):
         user_id = hq_settings['practice_mobile_worker_id']
-        if not has_privilege(request, privileges.PRACTICE_MOBILE_WORKERS):
+        if not app.enable_practice_users:
             app.practice_mobile_worker_id = None
         elif user_id:
             get_and_assert_practice_user_in_domain(user_id, request.domain)

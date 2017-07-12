@@ -125,11 +125,11 @@ class TestPracticeUserRestore(TestCase, TestXmlMixin):
             "./user-restore"
         )
 
-        version_beofre = self.user.demo_restore_id
+        version_before = self.user.demo_restore_id
         turn_off_demo_mode(self.user)
         turn_on_demo_mode(self.user, self.domain)
         version_after = self.user.demo_restore_id
-        self.assertNotEqual(version_beofre, version_after)
+        self.assertNotEqual(version_before, version_after)
 
         # refetch so that memoized app.get_practice_user gets busted`
         app = Application.get(app._id)

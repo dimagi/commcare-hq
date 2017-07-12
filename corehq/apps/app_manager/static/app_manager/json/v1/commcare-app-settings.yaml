@@ -43,6 +43,7 @@
   widget: select
   since: '2.30'
   privilege: 'practice_mobile_workers'
+  description: "Select the mobile worker to use as a practice user for this application
 
 # RemoteApp Only
 - id: profile_url
