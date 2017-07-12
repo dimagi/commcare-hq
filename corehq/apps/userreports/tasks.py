@@ -1,12 +1,13 @@
 from __future__ import absolute_import
 from collections import defaultdict
 from datetime import datetime, timedelta
+import logging
 
 from botocore.vendored.requests.exceptions import ReadTimeout
 from botocore.vendored.requests.packages.urllib3.exceptions import ProtocolError
 from celery.schedules import crontab
 from celery.task import task, periodic_task
-from couchdbkit import ResourceConflict
+from couchdbkit import ResourceConflict, ResourceNotFound
 from django.conf import settings
 from django.db import InternalError, DatabaseError
 from django.db.models import Count, F
@@ -39,6 +40,8 @@ from corehq.util.timer import TimingContext
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
+
+celery_task_logger = logging.getLogger('celery.task')
 
 
 def _get_config_by_id(indicator_config_id):
@@ -312,6 +315,10 @@ def _save_document_helper(indicator, doc):
         adapter = None
         try:
             config = _get_config(config_id)
+        except ResourceNotFound:
+            celery_task_logger.info("{} no longer exists, skipping".format(config_id))
+            continue
+        try:
             adapter = get_indicator_adapter(config, can_handle_laboratory=True)
             adapter.save(doc, eval_context)
             eval_context.reset_iteration()
