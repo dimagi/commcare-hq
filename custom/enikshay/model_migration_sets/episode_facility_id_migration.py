@@ -26,26 +26,35 @@ class EpisodeFacilityIDMigration(object):
         return self.episode.actions
 
     def update_json(self):
-        if self.should_update:
-            return {
-                'diagnosing_facility_id': self.diagnosing_facility_id,
-                'treatment_initiating_facility_id': self.treatment_initiating_facility_id,
-                'facility_id_migration_complete': 'true',
-            }
-        elif self.episode.get_case_property('facility_id_migration_complete') != 'true':
-            return {
-                'facility_id_migration_complete': 'true',
-            }
-        else:
+        if not self.should_update:
             return {}
+
+        update = {
+            'facility_id_migration_v2_complete': 'true',
+        }
+
+        diagnosing_facility_id = self.episode.get_case_property('diagnosing_facility_id')
+        if ((diagnosing_facility_id is None or diagnosing_facility_id == '-') and self.diagnosing_facility_id):
+            update['diagnosing_facility_id'] = self.diagnosing_facility_id
+
+        treatment_initiating_facility_id = self.episode.get_case_property('treatment_initiating_facility_id')
+        if ((treatment_initiating_facility_id is None or treatment_initiating_facility_id == '-')
+           and self.treatment_initiating_facility_id):
+            update['treatment_initiating_facility_id'] = self.treatment_initiating_facility_id
+
+        return update
 
     @property
     def should_update(self):
-        if(self.episode.get_case_property('treatment_initiating_facility_id')
-           or self.episode.get_case_property('diagnosing_facility_id')):
+        if self.episode.get_case_property('facility_id_migration_v2_complete') == 'true':
             return False
 
-        if self.episode.get_case_property('facility_id_migration_complete') == 'true':
+        diagnosing_facility_id = self.episode.get_case_property('diagnosing_facility_id')
+        treatment_initiating_facility_id = self.episode.get_case_property('treatment_initiating_facility_id')
+        if (diagnosing_facility_id is not None
+           and diagnosing_facility_id != '-'
+           and treatment_initiating_facility_id is not None
+           and treatment_initiating_facility_id != '-'):
             return False
 
         if self.episode.get_case_property('enrolled_in_private') == 'true':
@@ -54,6 +63,7 @@ class EpisodeFacilityIDMigration(object):
         return self.episode.get_case_property('episode_type') == 'confirmed_tb'
 
     @property
+    @memoized
     def diagnosing_facility_id(self):
         """the owner_id of the person case at the time that the episode case with
         episode_type = 'confirmed_tb' was created (i.e., ignoring any changes of
@@ -67,6 +77,7 @@ class EpisodeFacilityIDMigration(object):
         return self.get_owner_id_at_date(date_of_change)
 
     @property
+    @memoized
     def treatment_initiating_facility_id(self):
         """the owner_id of the person case at the time that the Treatment Card is
         filled (i.e. when 'episode.episode_pending_registration' gets set to 'no')
@@ -92,6 +103,7 @@ class EpisodeFacilityIDMigration(object):
 
         return date_of_change
 
+    @memoized
     def get_owner_id_at_date(self, date):
         """Returns the owner_id of the person case at the specified date
         """

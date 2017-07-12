@@ -68,10 +68,7 @@ class TestEpisodeFacilityIDMigration(ENikshayCaseStructureMixin, TestCase):
     def test_get_json(self):
         self._create_cases(episode_type='presumptive_tb')
         self.assertDictEqual(
-            self.updater.update_json(),
-            {
-                'facility_id_migration_complete': 'true',
-            }
+            self.updater.update_json(), {}
         )
 
         self._update_person({'owner_id': "new_owner"})
@@ -86,7 +83,7 @@ class TestEpisodeFacilityIDMigration(ENikshayCaseStructureMixin, TestCase):
             {
                 'diagnosing_facility_id': 'newer_owner',
                 'treatment_initiating_facility_id': 'new_owner',
-                'facility_id_migration_complete': 'true',
+                'facility_id_migration_v2_complete': 'true',
             }
         )
 
@@ -99,8 +96,14 @@ class TestEpisodeFacilityIDMigration(ENikshayCaseStructureMixin, TestCase):
         self.assertTrue(self.updater.should_update)
 
         self._update_episode({'treatment_initiating_facility_id': "abc"})
+        self._update_episode({'diagnosing_facility_id': "-"})
+        self.assertTrue(self.updater.should_update)
+
+        self._update_episode({'treatment_initiating_facility_id': "abc"})
+        self._update_episode({'diagnosing_facility_id': "abc"})
         self.assertFalse(self.updater.should_update)
 
         self._update_episode({'treatment_initiating_facility_id': ""})
-        self._update_episode({'facility_id_migration_complete': "true"})
+        self._update_episode({'diagnosing_facility_id': ""})
+        self._update_episode({'facility_id_migration_v2_complete': "true"})
         self.assertFalse(self.updater.should_update)

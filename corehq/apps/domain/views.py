@@ -74,7 +74,7 @@ from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import (
     get_change_status, get_privileges, fmt_dollar_amount,
     quantize_accounting_decimal, get_customer_cards,
-    log_accounting_error,
+    log_accounting_error, domain_has_privilege,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
@@ -2967,6 +2967,26 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
         }
 
 
+class PrivilegesView(BaseAdminProjectSettingsView):
+    urlname = 'domain_privileges'
+    page_title = ugettext_lazy("Privileges")
+    template_name = 'domain/admin/privileges.html'
+
+    @method_decorator(require_superuser)
+    def dispatch(self, request, *args, **kwargs):
+        return super(PrivilegesView, self).dispatch(request, *args, **kwargs)
+
+    def _get_privileges(self):
+        return sorted([
+            (privilege, domain_has_privilege(self.domain, privilege))
+            for privilege in privileges.MAX_PRIVILEGES
+        ], key=lambda (name, has): (not has, name))
+
+    @property
+    def page_context(self):
+        return {'privileges': self._get_privileges()}
+
+
 class TransferDomainView(BaseAdminProjectSettingsView):
     urlname = 'transfer_domain_view'
     page_title = ugettext_lazy("Transfer Project")
@@ -3255,25 +3275,3 @@ class PasswordResetView(View):
         couch_user = CouchUser.from_django_user(user)
         clear_login_attempts(couch_user)
         return response
-
-
-def exception_safe_password_reset(request, *args, **kwargs):
-    """
-    Django's password reset function raises SMTP errors if there's any
-    problem with the mailserver. Catch that more elegantly with a simple wrapper.
-    """
-    # Django docs on password reset are weak. See these links instead:
-    #
-    # http://streamhacker.com/2009/09/19/django-ia-auth-password-reset/
-    # http://www.rkblog.rk.edu.pl/w/p/password-reset-django-10/
-    # http://blog.montylounge.com/2009/jul/12/django-forgot-password/
-    try:
-        return password_reset(request, *args, **kwargs)
-    except None:
-        vals = {
-            'current_page': {'page_name': _('Oops!')},
-            'error_msg': 'There was a problem with your request',
-            'error_details': sys.exc_info(),
-            'show_homepage_link': 1,
-        }
-        return render_to_response('error.html', vals, context_instance=RequestContext(request))

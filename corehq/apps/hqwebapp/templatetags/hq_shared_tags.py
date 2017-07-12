@@ -625,6 +625,13 @@ def registerurl(parser, token):
     return AddToBlockNode(nodelist, 'js-inline')
 
 
+@register.simple_tag
+def html_attr(value):
+    if not isinstance(value, basestring):
+        value = JSON(value)
+    return escape(value)
+
+
 @register.tag
 def initial_page_data(parser, token):
     split_contents = token.split_contents()
@@ -636,12 +643,8 @@ def initial_page_data(parser, token):
 
         def render(self, context):
             resolved = value.resolve(context)
-            if isinstance(resolved, basestring):
-                resolved = json.dumps(resolved)[1:-1]
-            else:
-                resolved = JSON(resolved)
-            return ("<div data-name=\"{}\" data-value=\"{}\"></div>"
-                    .format(name, escape(resolved)))
+            return (u"<div data-name=\"{}\" data-value=\"{}\"></div>"
+                    .format(name, html_attr(resolved)))
 
     nodelist = NodeList([FakeNode()])
 

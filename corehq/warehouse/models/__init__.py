@@ -5,10 +5,12 @@ from corehq.warehouse.models.dimensions import (
     DomainDim,
     UserLocationDim,
     UserGroupDim,
+    ApplicationDim
 )
 
 from corehq.warehouse.models.meta import (
-    TableState,
+    Batch,
+    CommitRecord,
 )
 
 from corehq.warehouse.models.facts import (
@@ -24,6 +26,7 @@ from corehq.warehouse.models.staging import (
     SyncLogStagingTable,
     LocationStagingTable,
     LocationTypeStagingTable,
+    ApplicationStagingTable
 )
 
 
@@ -36,6 +39,7 @@ def get_cls_by_slug(slug):
         SyncLogStagingTable.slug: SyncLogStagingTable,
         LocationStagingTable.slug: LocationStagingTable,
         LocationTypeStagingTable.slug: LocationTypeStagingTable,
+        ApplicationStagingTable.slug: ApplicationStagingTable,
 
         UserDim.slug: UserDim,
         GroupDim.slug: GroupDim,
@@ -43,6 +47,7 @@ def get_cls_by_slug(slug):
         DomainDim.slug: DomainDim,
         UserLocationDim.slug: UserLocationDim,
         UserGroupDim.slug: UserGroupDim,
+        ApplicationDim.slug: ApplicationDim,
 
         ApplicationStatusFact.slug: ApplicationStatusFact,
         FormFact.slug: FormFact,

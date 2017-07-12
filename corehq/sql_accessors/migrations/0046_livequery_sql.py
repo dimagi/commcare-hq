@@ -4,9 +4,7 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
-from corehq.sql_db.operations import RawSQLMigration
-
-migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {})
+from corehq.sql_db.operations import noop_migration
 
 
 class Migration(migrations.Migration):
@@ -16,6 +14,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-         migrator.get_migration('get_related_indices.sql'),
-         migrator.get_migration('filter_open_case_ids.sql'),
+        noop_migration()
     ]

@@ -18,10 +18,10 @@ A case is **available** if
 
 A case is **live** if any of the following are true:
 
-- it is *owned* and *available*
-- it has a *live child*
-- it has a *live extension*
-- it is the *exension* of a *live* case
+- it is **owned** and **available**
+- it has a **live child**
+- it has a **live extension**
+- it is **open** and is the **exension** of a **live** case
 
 Dealing with shards
 -------------------

@@ -83,7 +83,7 @@
 +        containerClass: 'h3 app-title',
 +        url: '{% url "edit_app_attr" domain app.id 'name' %}',
 +        placeholder: '{% trans "Untitled App"|escapejs %}',
-+        postSave: function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); },
++        postSave: function(data) { var appManager = hqImport('app_manager/js/app_manager.js'); appManager.updatePageTitle(data.update['.variable-app_name']); return appManager.updateDOM(data.update); },
 +        rows: 1,
 +        saveValueName: 'name',
 +        nodeName: 'input',

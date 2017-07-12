@@ -28,7 +28,14 @@
      <script src="{% static 'app_manager/js/form_designer.js' %}"></script>
  {% endblock %}
  
-@@ -32,12 +42,114 @@
+@@ -26,18 +36,120 @@
+     {% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
+ {% endblock %}
+ 
+-{% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
++{% block title %}{{ form.name|clean_trans:langs }} - {% trans 'Edit Form' %}{% endblock %}
+ 
+ {% block form-view %}
      {% initial_page_data 'CKEDITOR_BASEPATH' CKEDITOR_BASEPATH|static %}
      {% initial_page_data 'days_since_created' request.couch_user.days_since_created %}
      {% initial_page_data 'guided_tour' request.guided_tour %}
