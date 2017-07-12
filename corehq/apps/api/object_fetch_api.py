@@ -7,10 +7,11 @@ from django.http import HttpResponse, Http404, StreamingHttpResponse, HttpRespon
 from django.utils.decorators import method_decorator
 from django.views.generic import View
 
+from corehq.apps.locations.permissions import location_safe
 from dimagi.utils.django.cached_object import IMAGE_SIZE_ORDERING, OBJECT_ORIGINAL
 
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
-from corehq.apps.reports.views import can_view_attachments
+from corehq.apps.reports.views import can_view_attachments, _get_location_safe_form, require_form_view_permission
 from corehq.form_processor.exceptions import CaseNotFound, AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, get_cached_case_attachment, FormAccessors
 
@@ -119,17 +120,24 @@ class CaseAttachmentAPI(View):
 class FormAttachmentAPI(View):
 
     @method_decorator(login_or_digest_or_basic_or_apikey())
+    @method_decorator(require_form_view_permission)
+    @location_safe
     def get(self, request, domain, form_id=None, attachment_id=None):
-        if not form_id or not attachment_id or not FormAccessors(domain).form_exists(form_id):
+        if not form_id or not attachment_id:
             raise Http404
+
+        # this raises a PermissionDenied error if necessary
+        _get_location_safe_form(domain, request.couch_user, form_id)
 
         try:
             content = FormAccessors(domain).get_attachment_content(form_id, attachment_id)
-        except AttachmentNotFound as e:
+        except AttachmentNotFound:
             raise Http404
         
-        return StreamingHttpResponse(streaming_content=FileWrapper(content.content_stream),
-                                     content_type=content.content_type)
+        return StreamingHttpResponse(
+            streaming_content=FileWrapper(content.content_stream),
+            content_type=content.content_type
+        )
 
 
 def fetch_case_image(domain, case_id, attachment_id, filesize_limit=0, width_limit=0, height_limit=0, fixed_size=None):
