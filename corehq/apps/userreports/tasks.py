@@ -1,12 +1,13 @@
 from __future__ import absolute_import
 from collections import defaultdict
 from datetime import datetime, timedelta
+import logging
 
 from botocore.vendored.requests.exceptions import ReadTimeout
 from botocore.vendored.requests.packages.urllib3.exceptions import ProtocolError
 from celery.schedules import crontab
 from celery.task import task, periodic_task
-from couchdbkit import ResourceConflict
+from couchdbkit import ResourceConflict, ResourceNotFound
 from django.conf import settings
 from django.db import InternalError, DatabaseError
 from django.db.models import Count, F
@@ -39,6 +40,8 @@ from corehq.util.timer import TimingContext
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
+
+celery_task_logger = logging.getLogger('celery.task')
 
 
 def _get_config_by_id(indicator_config_id):
@@ -306,33 +309,29 @@ def save_document(doc_ids):
 
 def _save_document_helper(indicator, doc):
     eval_context = EvaluationContext(doc)
-    working_config_ids = []
-    failed_config_ids = []
+    something_failed = False
     for config_id in indicator.indicator_config_ids:
         adapter = None
         try:
             config = _get_config(config_id)
+        except ResourceNotFound:
+            celery_task_logger.info("{} no longer exists, skipping".format(config_id))
+            continue
+        try:
             adapter = get_indicator_adapter(config, can_handle_laboratory=True)
             adapter.save(doc, eval_context)
             eval_context.reset_iteration()
-            working_config_ids.append(config_id)
         except (DatabaseError, ESError, InternalError, RequestError,
                 ConnectionTimeout, ProtocolError, ReadTimeout):
             # a database had an issue so don't log it and go on to the next config
-            failed_config_ids.append(config_id)
+            something_failed = True
         except Exception as e:
             # getting the config could fail before the adapter is set
             if adapter:
                 adapter.handle_exception(doc, e)
-            failed_config_ids.append(config_id)
+            something_failed = True
 
-    # only want to change if there were some that worked and failed
-    if failed_config_ids and working_config_ids:
-        AsyncIndicator.objects.filter(pk=indicator.pk).update(
-            indicator_config_ids=failed_config_ids
-        )
-
-    return len(failed_config_ids) == 0
+    return not something_failed
 
 
 @periodic_task(
