@@ -1699,7 +1699,7 @@ If the format string is not valid or the input is not a number then the original
 ```json
 {
     "type": "number_format",
-    "custom_type": "{0:.0f}"
+    "format_string": "{0:.0f}"
 }
 ```
 
@@ -1708,7 +1708,7 @@ If the format string is not valid or the input is not a number then the original
 ```json
 {
     "type": "number_format",
-    "custom_type": "{0:.3f}"
+    "format_string": "{0:.3f}"
 }
 ```
 
