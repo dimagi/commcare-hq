@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -6,7 +6,27 @@
+@@ -6,7 +6,28 @@
  {% load i18n %}
  
  
@@ -26,10 +26,11 @@
 +{% else %}
 +
 +{% if not intro_only and build_profile_access %}
++
  <div class="tabbable">
      <ul class="nav nav-tabs">
          <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
-@@ -33,181 +53,152 @@
+@@ -33,181 +54,152 @@
                          {% endblocktrans %}
                      </small></p>
                  </div>
@@ -347,7 +348,7 @@
      <script type="text/html" id="delete-build-modal-template">
          <div class="modal-dialog">
              <div class="modal-content">
-@@ -255,18 +246,19 @@
+@@ -255,18 +247,19 @@
          </div>
      </script>
      <script type="text/html" id="deploy-build-modal-template">
