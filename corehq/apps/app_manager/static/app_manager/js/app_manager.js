@@ -312,7 +312,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
                     form.submit();
                 }
             });
-            $('.new-form').on('click', function (e) {
+            $('.new-form').on('click', function () {
                 var dataType = $(this).data("type");
                 var moduleId = $(this).data("module");
                 var form = $("#form-to-create-new-form-for-module-" + moduleId);
