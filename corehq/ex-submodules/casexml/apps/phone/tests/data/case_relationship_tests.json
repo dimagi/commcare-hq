@@ -826,5 +826,25 @@
         "outcome": [
             "a"
         ]
+    },
+    {
+        "name": "unowned_child_with_closed_extension_chain",
+        "owned": [
+            "a", "e"
+        ],
+        "closed": [
+            "d"
+        ],
+        "subcases": [
+            ["a", "b"],
+            ["c", "b"]
+        ],
+        "extensions": [
+            ["d", "c"],
+            ["e", "d"]
+        ],
+        "outcome": [
+            "a", "b"
+        ]
     }
 ]
