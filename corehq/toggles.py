@@ -1245,14 +1245,6 @@ MOTECH = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ENTERPRISE_OPTIMIZATIONS = StaticToggle(
-    'enterprise_optimizations',
-    'Used to enable specific optimizations for environments that only support a single domain e.g. ICDS',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    always_enabled={'icds-cas'}
-)
-
 DISPLAY_CONDITION_ON_TABS = StaticToggle(
     'display_condition_on_nodeset',
     'Show Display Condition on Case Detail Tabs',
