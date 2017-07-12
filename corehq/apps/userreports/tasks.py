@@ -21,6 +21,7 @@ from corehq.apps.userreports.const import (
     ASYNC_INDICATOR_QUEUE_TIME, ASYNC_INDICATOR_CHUNK_SIZE
 )
 from corehq.apps.userreports.document_stores import get_document_store
+from corehq.apps.userreports.exceptions import StaticDataSourceConfigurationNotFoundError
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.models import (
@@ -314,7 +315,7 @@ def _save_document_helper(indicator, doc):
         adapter = None
         try:
             config = _get_config(config_id)
-        except ResourceNotFound:
+        except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
             celery_task_logger.info("{} no longer exists, skipping".format(config_id))
             continue
         try:
