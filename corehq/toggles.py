@@ -1266,3 +1266,10 @@ PHONE_HEARTBEAT = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
+
+SKIP_REMOVE_INDICES = StaticToggle(
+    'skip_remove_indices',
+    'Make _remove_indices_from_deleted_cases_task into a no-op.',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
