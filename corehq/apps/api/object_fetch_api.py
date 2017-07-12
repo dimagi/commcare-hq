@@ -117,11 +117,11 @@ class CaseAttachmentAPI(View):
                                      content_type=mime_type)
 
 
+@location_safe
 class FormAttachmentAPI(View):
 
     @method_decorator(login_or_digest_or_basic_or_apikey())
     @method_decorator(require_form_view_permission)
-    @location_safe
     def get(self, request, domain, form_id=None, attachment_id=None):
         if not form_id or not attachment_id:
             raise Http404
