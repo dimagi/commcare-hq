@@ -26,7 +26,18 @@ def clear_local_domain_sql_backend_override(domain):
     _thread_local.use_sql_backend = use_sql_backend_dict
 
 
+def _short_circuit_sql_check(domain_object_or_name):
+    from corehq.apps.domain.models import Domain
+    domain_name = domain_object_or_name
+    if isinstance(domain_object_or_name, Domain):
+        domain_name = domain_object_or_name.name
+
+    return domain_name == 'icds-cas'
+
+
 def should_use_sql_backend(domain_object_or_name):
+    if _short_circuit_sql_check(domain_object_or_name):
+        return True
     domain_name, domain_object = _get_domain_name_and_object(domain_object_or_name)
     local_override = get_local_domain_sql_backend_override(domain_name)
     if local_override is not None:
