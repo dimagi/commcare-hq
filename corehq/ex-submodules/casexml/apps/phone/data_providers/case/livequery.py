@@ -112,7 +112,8 @@ def do_livequery(timing_context, restore_state, async_task=None):
         ref_id = index.referenced_id  # aka parent/host/super
         relationship = index.relationship
         ix_key = index_key(index)
-        assert ix_key not in seen_ix[sub_id], ix_key
+        if ix_key in seen_ix[sub_id]:
+            return IGNORE  # unexpected, don't process duplicate index twice
         seen_ix[sub_id].add(ix_key)
         seen_ix[ref_id].add(ix_key)
         indices[sub_id].append(index)
