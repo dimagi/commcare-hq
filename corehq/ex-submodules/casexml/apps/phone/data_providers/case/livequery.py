@@ -152,7 +152,7 @@ def do_livequery(timing_context, restore_state, async_task=None):
 
         TODO store referenced case (parent) deleted and closed status in
         CommCareCaseIndexSQL to reduce number of related indices fetched
-        and avoid this extra query per related level.
+        and avoid this extra query per related query.
         """
         case_ids = {case_id
             for index in related
@@ -189,10 +189,9 @@ def do_livequery(timing_context, restore_state, async_task=None):
         next_ids = all_ids = set(owned_ids)
         owned_ids = set(owned_ids)  # owned, open case ids (may be extensions)
         open_ids = set(owned_ids)
-        level = 0
         while next_ids:
-            level += 1
-            with timing_context("get_related_indices(level %s)" % level):
+            with timing_context("get_related_indices({} cases, {} seen)".format(
+                    len(next_ids), len(seen_ix)):
                 related = accessor.get_related_indices(list(next_ids), seen_ix)
                 if not related:
                     break
@@ -206,7 +205,7 @@ def do_livequery(timing_context, restore_state, async_task=None):
                 all_ids.update(next_ids)
                 debug('next: %r', next_ids)
 
-        with timing_context("enliven open root cases"):
+        with timing_context("enliven open roots (%s cases)" % len(open_ids)):
             debug('open: %r', open_ids)
             # owned, open, not an extension -> live
             for case_id in owned_ids:
@@ -231,7 +230,7 @@ def do_livequery(timing_context, restore_state, async_task=None):
             sync_ids = live_ids
         restore_state.current_sync_log.case_ids_on_phone = live_ids | sync_ids
 
-        with timing_context("compile_response"):
+        with timing_context("compile_response(%s cases)" % len(sync_ids)):
             iaccessor = PrefetchIndexCaseAccessor(accessor, indices)
             response = compile_response(
                 timing_context,
