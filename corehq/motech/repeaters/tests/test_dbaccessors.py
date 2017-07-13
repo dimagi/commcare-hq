@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timedelta
 from django.test import TestCase
 
@@ -12,6 +13,7 @@ from corehq.motech.repeaters.dbaccessors import (
     iterate_repeat_records,
     iter_repeat_records_by_domain,
     get_domains_that_have_repeat_records,
+    get_repeat_records_by_payload_id,
 )
 from corehq.motech.repeaters.models import RepeatRecord, CaseRepeater
 from corehq.motech.repeaters.const import RECORD_PENDING_STATE, RECORD_CANCELLED_STATE
@@ -26,18 +28,21 @@ class TestRepeatRecordDBAccessors(TestCase):
     def setUpClass(cls):
         super(TestRepeatRecordDBAccessors, cls).setUpClass()
         before = datetime.utcnow() - timedelta(minutes=5)
-
+        cls.payload_id_1 = uuid.uuid4().hex
+        cls.payload_id_2 = uuid.uuid4().hex
         failed = RepeatRecord(
             domain=cls.domain,
             failure_reason='Some python error',
             repeater_id=cls.repeater_id,
             next_check=before,
+            payload_id=cls.payload_id_1,
         )
         failed_hq_error = RepeatRecord(
             domain=cls.domain,
             failure_reason='Some python error',
             repeater_id=cls.repeater_id,
             next_check=before,
+            payload_id=cls.payload_id_1,
         )
         failed_hq_error.doc_type += '-Failed'
         success = RepeatRecord(
@@ -45,24 +50,28 @@ class TestRepeatRecordDBAccessors(TestCase):
             succeeded=True,
             repeater_id=cls.repeater_id,
             next_check=before,
+            payload_id=cls.payload_id_2,
         )
         pending = RepeatRecord(
             domain=cls.domain,
             succeeded=False,
             repeater_id=cls.repeater_id,
             next_check=before,
+            payload_id=cls.payload_id_2,
         )
         overdue = RepeatRecord(
             domain=cls.domain,
             succeeded=False,
             repeater_id=cls.repeater_id,
             next_check=before - timedelta(minutes=10),
+            payload_id=cls.payload_id_2,
         )
         other_id = RepeatRecord(
             domain=cls.domain,
             succeeded=False,
             repeater_id=cls.other_id,
             next_check=before,
+            payload_id=cls.payload_id_2,
         )
 
         cls.records = [
@@ -179,6 +188,15 @@ class TestRepeatRecordDBAccessors(TestCase):
     def test_get_all_repeat_records_by_domain(self):
         records = list(iter_repeat_records_by_domain(self.domain))
         self.assertEqual(len(records), len(self.records))
+
+    def test_get_repeat_records_by_payload_id(self):
+        id_1_records = list(get_repeat_records_by_payload_id(self.domain, self.payload_id_1))
+        self.assertEqual(len(id_1_records), 2)
+        self.assertItemsEqual([r._id for r in id_1_records], [r._id for r in self.records[0:2]])
+
+        id_2_records = list(get_repeat_records_by_payload_id(self.domain, self.payload_id_2))
+        self.assertEqual(len(id_2_records), 4)
+        self.assertItemsEqual([r._id for r in id_2_records], [r._id for r in self.records[2:6]])
 
 
 class TestRepeatersDBAccessors(TestCase):
