@@ -1,5 +1,4 @@
 from datetime import timedelta, datetime, time
-from functools import wraps
 import json
 
 from couchdbkit import ResourceNotFound
@@ -48,6 +47,7 @@ from corehq.apps.reminders.util import (
     get_form_list,
     get_form_name,
     get_recipient_name,
+    requires_old_reminder_framework,
 )
 from corehq.apps.sms.models import Keyword, KeywordAction
 from corehq.apps.sms.views import BaseMessagingSectionView
@@ -87,24 +87,12 @@ def get_project_time_info(domain):
     return (timezone, now, timezone_now)
 
 
-def _requires_old_reminder_framework():
-    def decorate(fn):
-        @wraps(fn)
-        def wrapped(request, *args, **kwargs):
-            if not hasattr(request, 'project'):
-                request.project = Domain.get_by_name(request.domain)
-            if not request.project.uses_new_reminders:
-                return fn(request, *args, **kwargs)
-            raise Http404()
-        return wrapped
-    return decorate
-
-
 class ScheduledRemindersCalendarView(BaseMessagingSectionView):
     urlname = 'scheduled_reminders'
     page_title = ugettext_noop("Reminder Calendar")
     template_name = 'reminders/partial/scheduled_reminders.html'
 
+    @method_decorator(requires_old_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @method_decorator(reminders_framework_permission)
     def dispatch(self, *args, **kwargs):
@@ -171,6 +159,7 @@ class CreateScheduledReminderView(BaseMessagingSectionView):
     template_name = 'reminders/manage_scheduled_reminder.html'
     ui_type = UI_SIMPLE_FIXED
 
+    @method_decorator(requires_old_reminder_framework())
     @method_decorator(reminders_framework_permission)
     @use_jquery_ui
     @use_timepicker
@@ -719,7 +708,7 @@ class CreateBroadcastView(BaseMessagingSectionView):
     template_name = 'reminders/broadcast.html'
     force_create_new_broadcast = False
 
-    @method_decorator(_requires_old_reminder_framework())
+    @method_decorator(requires_old_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_jquery_ui
     @use_timepicker
@@ -888,7 +877,7 @@ class RemindersListView(BaseMessagingSectionView):
     urlname = "list_reminders_new"
     page_title = ugettext_noop("Reminder Definitions")
 
-    @method_decorator(_requires_old_reminder_framework())
+    @method_decorator(requires_old_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_datatables
     def dispatch(self, *args, **kwargs):
@@ -983,7 +972,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     LIST_PAST = 'list_past'
     DELETE_BROADCAST = 'delete_broadcast'
 
-    @method_decorator(_requires_old_reminder_framework())
+    @method_decorator(requires_old_reminder_framework())
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_datatables
     def dispatch(self, *args, **kwargs):

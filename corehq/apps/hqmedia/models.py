@@ -714,6 +714,8 @@ class HQMediaMixin(Document):
             If not, then that item is removed from the multimedia map.
         """
         map_changed = False
+        if self.check_media_state()['has_form_errors']:
+            return
         paths = self.multimedia_map.keys() if self.multimedia_map else []
         permitted_paths = self.all_media_paths | self.logo_paths
         for path in paths:

@@ -43,7 +43,7 @@ from corehq.apps.api.util import get_obj, object_does_not_exist
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.utils import submit_case_blocks
-from corehq.apps.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater
+from corehq.motech.repeaters.models import FormRepeater, CaseRepeater, ShortFormRepeater
 from corehq.apps.fixtures.resources.v0_1 import InternalFixtureResource
 from corehq.apps.locations.resources.v0_1 import InternalLocationResource
 from custom.ilsgateway.resources.v0_1 import ILSLocationResource
@@ -263,13 +263,22 @@ class TestXFormInstanceResource(APIResourceTest):
         fake_xform_es = FakeXFormES()
         v0_4.MOCK_XFORM_ES = fake_xform_es
 
-        backend_form = XFormInstance(xmlns='fake-xmlns',
-                                     domain=self.domain.name,
-                                     received_on=datetime.utcnow(),
-                                     form={
-                                         '#type': 'fake-type',
-                                         '@xmlns': 'fake-xmlns'
-                                     })
+        backend_form = XFormInstance(
+            xmlns='fake-xmlns',
+            domain=self.domain.name,
+            received_on=datetime.utcnow(),
+            edited_on=datetime.utcnow(),
+            form={
+                '#type': 'fake-type',
+                '@xmlns': 'fake-xmlns',
+                'meta': {'userID': 'metadata-user-id'},
+            },
+            auth_context={
+                'user_id': 'auth-user-id',
+                'domain': self.domain.name,
+                'authenticated': True,
+            },
+        )
         backend_form.save()
         self.addCleanup(backend_form.delete)
         translated_doc = transform_xform_for_elasticsearch(backend_form.to_json())
@@ -284,6 +293,8 @@ class TestXFormInstanceResource(APIResourceTest):
         api_form = api_forms[0]
         self.assertEqual(api_form['form']['@xmlns'], backend_form.xmlns)
         self.assertEqual(api_form['received_on'], json_format_datetime(backend_form.received_on))
+        self.assertEqual(api_form['metadata']['userID'], 'metadata-user-id')
+        self.assertEqual(api_form['edited_by_user_id'], 'auth-user-id')
 
     def test_get_list_xmlns(self):
         """

@@ -38,8 +38,6 @@ from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
-LONG_UCR_SOFT_ASSERT_THRESHOLD = 5
-_slow_ucr_assert = soft_assert('{}@{}'.format('jemord', 'dimagi.com'))
 
 
 class PillowConfigError(Exception):
@@ -59,11 +57,6 @@ def time_ucr_process_change(method):
                 table.config._id, doc['_id'], seconds
             )
             pillow_logging.warning(log_message)
-            if seconds > LONG_UCR_SOFT_ASSERT_THRESHOLD:
-                email_message = u"UCR data source {} is taking too long to process".format(
-                    table.config._id
-                )
-                _slow_ucr_assert(False, email_message)
         return result
     return timed
 

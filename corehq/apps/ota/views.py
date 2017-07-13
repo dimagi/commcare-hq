@@ -94,12 +94,12 @@ def search(request, domain):
     except QueryMergeException as e:
         return _handle_query_merge_exception(request, e)
     try:
-        results = search_es.values()
+        hits = search_es.run().raw_hits
     except Exception as e:
         return _handle_es_exception(request, e, case_search_criteria.query_addition_debug_details)
 
-    # Even if it's a SQL domain, we just need to render the results as cases, so CommCareCase.wrap will be fine
-    cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
+    # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
+    cases = [CommCareCase.wrap(flatten_result(result)) for result in hits]
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
@@ -216,12 +216,10 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         return HttpResponse(message, status=401), None
 
     is_demo_restore = couch_user.is_commcare_user() and couch_user.is_demo_user
-    is_enikshay = toggles.ENIKSHAY.enabled(domain)
-    if is_enikshay:
-        couch_restore_user = couch_user
-        if not is_demo_restore and as_user is not None:
-            couch_restore_user = CouchUser.get_by_username(as_user)
-        update_device_id(couch_restore_user, device_id)
+    couch_restore_user = couch_user
+    if not is_demo_restore and as_user is not None:
+        couch_restore_user = CouchUser.get_by_username(as_user)
+    update_device_id(couch_restore_user, device_id)
 
     if is_demo_restore:
         # if user is in demo-mode, return demo restore
@@ -361,4 +359,10 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
 @login_or_digest_or_basic_or_apikey()
 @require_GET
 def heartbeat(request, domain, id):
-    return JsonResponse({})
+    # mobile needs this. This needs to be revisited to actually work dynamically (Sravan June 7, 17)
+    for_app_id = request.GET.get('app_id', '')
+    return JsonResponse({
+        "app_id": for_app_id,
+        "latest_apk_version": {"value": ""},
+        "latest_ccz_version": {"value": ""}
+    })

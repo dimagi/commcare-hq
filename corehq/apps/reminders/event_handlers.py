@@ -93,6 +93,7 @@ def _get_web_user_template_info(user):
         'name': user.username,
         'first_name': user.first_name,
         'last_name': user.last_name,
+        'phone_number': user.default_phone_number or '',
     }
 
 
@@ -101,6 +102,7 @@ def _get_mobile_user_template_info(user):
         'name': user.raw_username,
         'first_name': user.first_name,
         'last_name': user.last_name,
+        'phone_number': user.default_phone_number or '',
     }
 
 

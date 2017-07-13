@@ -14,7 +14,8 @@ INSERT INTO {{ user_group_dim }} (
     group_dim_id,
     dim_last_modified,
     dim_created_on,
-    deleted
+    deleted,
+    batch_id
 )
 
 SELECT
@@ -23,7 +24,8 @@ SELECT
     gd.id,
     now(),
     now(),
-    false
+    false,
+    '{{ batch_id }}'
 FROM
 (
     SELECT

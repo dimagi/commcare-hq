@@ -11,6 +11,7 @@ from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import Invoice, Subscription
 from corehq.apps.accounting.utils import domain_has_privilege, is_accounting_admin
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
+from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView, Dhis2LogListView
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
@@ -916,7 +917,7 @@ class MessagingTab(UITab):
     def reminders_urls(self):
         reminders_urls = []
 
-        if self.can_access_reminders:
+        if self.can_access_reminders and not self.project.uses_new_reminders:
             from corehq.apps.reminders.views import (
                 EditScheduledReminderView,
                 CreateScheduledReminderView,
@@ -986,7 +987,7 @@ class MessagingTab(UITab):
     def messages_urls(self):
         messages_urls = []
 
-        if self.can_use_outbound_sms:
+        if self.can_use_outbound_sms and not self.project.uses_new_reminders:
             messages_urls.extend([
                 {
                     'title': _('Compose SMS Message'),
@@ -1347,8 +1348,6 @@ class ProjectSettingsTab(UITab):
 
     @property
     def sidebar_items(self):
-        from corehq.apps.domain.views import FeatureFlagsView
-
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
         user_is_billing_admin = self.couch_user.can_edit_billing()
@@ -1455,8 +1454,13 @@ class ProjectSettingsTab(UITab):
             items.append((_('Project Tools'), project_tools))
 
         if self.couch_user.is_superuser:
-            from corehq.apps.domain.views import EditInternalDomainInfoView, \
-                EditInternalCalculationsView
+            from corehq.apps.domain.views import (
+                EditInternalDomainInfoView,
+                EditInternalCalculationsView,
+                FeatureFlagsView,
+                PrivilegesView
+            )
+
             internal_admin = [
                 {
                     'title': _(EditInternalDomainInfoView.page_title),
@@ -1472,6 +1476,10 @@ class ProjectSettingsTab(UITab):
                     'title': _(FeatureFlagsView.page_title),
                     'url': reverse(FeatureFlagsView.urlname, args=[self.domain])
                 },
+                {
+                    'title': _(PrivilegesView.page_title),
+                    'url': reverse(PrivilegesView.urlname, args=[self.domain])
+                },
             ]
             items.append((_('Internal Data (Dimagi Only)'), internal_admin))
 
@@ -1482,9 +1490,6 @@ def _get_administration_section(domain):
     from corehq.apps.domain.views import (
         FeaturePreviewsView,
         TransferDomainView,
-        Dhis2ConnectionView,
-        DataSetMapView,
-        Dhis2LogListView,
     )
 
     administration = []

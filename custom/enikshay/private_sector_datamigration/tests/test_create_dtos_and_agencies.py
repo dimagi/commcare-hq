@@ -5,7 +5,7 @@ from django.test import TestCase
 
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.models import CommCareUser, UserRole
-from custom.enikshay.private_sector_datamigration.models import Agency, UserDetail
+from custom.enikshay.private_sector_datamigration.models import Agency_Jul7, UserDetail_Jul7
 from custom.enikshay.tests.utils import ENikshayLocationStructureMixin
 
 
@@ -85,7 +85,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
 
         agency_id = 100789
 
-        UserDetail.objects.create(
+        UserDetail_Jul7.objects.create(
             id=1,
             agencyId=agency_id,
             districtId='189',
@@ -99,7 +99,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
             userId=5,
             valid=True,
         )
-        Agency.objects.create(
+        Agency_Jul7.objects.create(
             id=1,
             agencyId=agency_id,
             agencyName='Nicks Agency',
@@ -180,7 +180,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
 
         agency_id = 100789
 
-        UserDetail.objects.create(
+        UserDetail_Jul7.objects.create(
             id=1,
             agencyId=agency_id,
             districtId='189',
@@ -194,7 +194,7 @@ class TestCreateDTOsAndAgencies(ENikshayLocationStructureMixin, TestCase):
             userId=5,
             valid=True,
         )
-        Agency.objects.create(
+        Agency_Jul7.objects.create(
             id=1,
             agencyId=agency_id,
             agencyName='Nicks Agency',

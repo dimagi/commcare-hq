@@ -5,7 +5,6 @@ import logging
 import itertools
 from django.utils.translation import ugettext_lazy as _
 
-import formtranslate.api
 from casexml.apps.case.xml import V2_NAMESPACE
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps import nimbus_api
@@ -16,7 +15,6 @@ from corehq.apps.app_manager.const import (
 from lxml import etree as ET
 
 from corehq.apps.nimbus_api.exceptions import NimbusAPIException
-from corehq.toggles import FORMTRANSLATE_FORM_VALIDATION
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath, QualifiedScheduleFormXPath
@@ -564,13 +562,10 @@ def validate_xform(domain, source):
         source = source.encode("utf-8")
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))
-    if FORMTRANSLATE_FORM_VALIDATION.enabled(domain):
-        validation_results = formtranslate.api.validate(source)
-    else:
-        try:
-            validation_results = nimbus_api.validate_form(source)
-        except NimbusAPIException:
-            raise XFormValidationFailed("Unable to validate form")
+    try:
+        validation_results = nimbus_api.validate_form(source)
+    except NimbusAPIException:
+        raise XFormValidationFailed("Unable to validate form")
 
     if not validation_results.success:
         raise XFormValidationError(

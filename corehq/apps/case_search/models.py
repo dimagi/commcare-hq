@@ -143,6 +143,15 @@ def replace_custom_query_variables(query_addition, criteria, ignore_patterns):
         re.sub(SEARCH_QUERY_CUSTOM_VALUE, '', k): v
         for k, v in criteria.iteritems() if k.startswith(SEARCH_QUERY_CUSTOM_VALUE)
     }
+
+    # Only include this custom query if the replaceable parts are present
+    # TODO: do this only for specific parts of the custom query
+    conditional_include = query_addition.get('include_if')
+    if conditional_include and not replaceable_criteria.get(conditional_include):
+        return {}
+    elif conditional_include:
+        del query_addition['include_if']
+
     query_addition = json.dumps(query_addition)
     for key, value in replaceable_criteria.iteritems():
         if ignore_patterns:

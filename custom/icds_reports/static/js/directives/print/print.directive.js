@@ -14,7 +14,7 @@ function PrintReportController() {
 window.angular.module('icdsApp').directive('printReport', function() {
     return {
         restrict: 'E',
-        template: '<i class="fa fa-2x fa-print pointer" aria-hidden="true" ng-click="$ctrl.print()"></i>',
+        template: '<i uib-popover-html="\'Print page\'" popover-placement="left" popover-trigger="\'mouseenter\'" class="fa fa-2x fa-print pointer" style="padding: 3px;" aria-hidden="true" ng-click="$ctrl.print()"></i>',
         scope: {
         },
         bindToController: true,

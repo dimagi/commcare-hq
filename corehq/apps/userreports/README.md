@@ -373,6 +373,7 @@ This expression returns `(doc["foo bar"]).split(' ')[0]`:
 }
 ```
 The delimiter is optional and is defaulted to a space.  It will return nothing if the string_expression is not a string, or if the index isn't a number or the indexed item doesn't exist.
+The index_expression is also optional. Without it, the expression will return the list of elements.
 
 ##### Iterator Expression
 

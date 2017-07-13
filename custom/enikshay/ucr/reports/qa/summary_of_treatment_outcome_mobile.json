@@ -1,0 +1,342 @@
+{
+    "domains": [
+        "enikshay-reports-qa",
+        "sheel-enikshay"
+    ],
+    "server_environment": [
+        "softlayer"
+    ],
+    "data_source_table": "episode_qa",
+    "report_id": "summary_of_treatment_outcome_qa",
+    "config": {
+        "description": "",
+        "title": "Summary of Treatment Outcome - Mobile (QA)",
+        "sort_expression": [],
+        "visible": false,
+        "configured_charts": [],
+        "aggregation_columns": [],
+        "filters": [
+            {
+                "compare_as_string": false,
+                "datatype": "datetime",
+                "required": false,
+                "display": "Date of Treatment Initiation",
+                "field": "treatment_initiation_date",
+                "type": "date",
+                "show_all": true,
+                "slug": "treatment_initiation_date"
+            },
+            {
+                "compare_as_string": false,
+                "datatype": "string",
+                "type": "dynamic_choice_list",
+                "slug": "village",
+                "field": "person_owner_id",
+                "choice_provider": {
+                    "include_descendants": true,
+                    "type": "location",
+                    "show_full_path": true,
+                    "order_by_hierarchy": true
+                },
+                "display": "Location"
+            },
+            {
+                "type": "pre",
+                "field": "episode_type_patient",
+                "slug": "episode_type_patient",
+                "datatype": "integer",
+                "pre_value": 1
+            }
+        ],
+        "columns": [
+            {
+                "display": "Total New Cases with Treatment Outcome - Cured",
+                "type": "field",
+                "field": "new_cured",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total New Cases with Treatment Outcome - Treatment Completed",
+                "type": "field",
+                "field": "new_treatment_complete",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total New Cases with Treatment Outcome - Died",
+                "type": "field",
+                "field": "new_died",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total New Cases with Treatment Outcome - Treatment Failure",
+                "type": "field",
+                "field": "new_failure",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total New Cases with Treatment Outcome - Loss to Follow-up",
+                "type": "field",
+                "field": "new_loss_to_follow_up",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total New Cases with Treatment Outcome - Regimen changed",
+                "type": "field",
+                "field": "new_regimen_changed",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total New Cases with Treatment Outcome - Not evaluated",
+                "type": "field",
+                "field": "new_not_evaluated",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total New Cases",
+                "type": "field",
+                "field": "new_treatment_outcome_updated",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total Previously Treated Cases with Treatment Outcome - Cured",
+                "type": "field",
+                "field": "retreatment_cured",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total Previously Treated Cases with Treatment Outcome - Treatment Completed",
+                "type": "field",
+                "field": "retreatment_treatment_complete",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total Previously Treated Cases with Treatment Outcome - Died",
+                "type": "field",
+                "field": "retreatment_died",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total Previously Treated Cases with Treatment Outcome - Treatment Failure",
+                "type": "field",
+                "field": "retreatment_failure",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total Previously Treated Cases with Treatment Outcome - Loss to Follow-up",
+                "type": "field",
+                "field": "retreatment_loss_to_follow_up",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total Previously Treated Cases with Treatment Outcome - Regimen changed",
+                "type": "field",
+                "field": "retreatment_regimen_changed",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total Previously Treated Cases with Treatment Outcome - Not evaluated",
+                "type": "field",
+                "field": "retreatment_not_evaluated",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total Previously Treated Cases",
+                "type": "field",
+                "field": "retreatment_treatment_outcome_updated",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+                        {
+                "display": "Total Cases with Treatment Outcome - Cured",
+                "type": "field",
+                "field": "cured",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total Cases with Treatment Outcome - Treatment Completed",
+                "type": "field",
+                "field": "treatment_complete",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total Cases with Treatment Outcome - Died",
+                "type": "field",
+                "field": "died",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total Cases with Treatment Outcome - Treatment Failure",
+                "type": "field",
+                "field": "failure",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total Cases with Treatment Outcome - Loss to Follow-up",
+                "type": "field",
+                "field": "loss_to_follow_up",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total Cases with Treatment Outcome - Regimen changed",
+                "type": "field",
+                "field": "regimen_changed",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total Cases with Treatment Outcome - Not evaluated",
+                "type": "field",
+                "field": "not_evaluated",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            },
+            {
+                "display": "Total Cases",
+                "type": "field",
+                "field": "treatment_outcome_updated",
+                "aggregation": "sum",
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {
+                },
+                "calculate_total": false
+            }
+        ]
+    }
+}

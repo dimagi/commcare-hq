@@ -4,7 +4,7 @@
 {% load compress %}
 {% load i18n %}
 
-{% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
+{% block title %}{{ form.name|clean_trans:langs }} - {% trans 'Form Settings' %}{% endblock %}
 
 {% block stylesheets %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'syntaxhighlighter/styles/shCoreDefault.css' %}"/>
@@ -71,20 +71,23 @@
 {% endblock %}
 
 {% block pre_form_content %}
-    {% if can_preview_form %}
     <div class="appmanager-page-actions">
+        {% if can_preview_form %}
         {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
+        {% endif %}
+        {% include 'app_manager/v2/partials/app_summary_button.html' %}
     </div>
-    {% endif %}
 
     <div class="appmanager-edit-title">
+      {% with postSave="function(data) { var appManager = hqImport('app_manager/js/app_manager.js'); appManager.updatePageTitle(data.update['.variable-form_name']); return appManager.updateDOM(data.update);}" %}
       {% if form.get_action_type == 'open' %}
-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-createform' postSave=postSave %}
       {% elif form.requires_case %}
-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fcc fcc-app-updateform' postSave=postSave %}
       {% else %}
-        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-file-o' postSave="function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); }" %}
+        {% inline_edit_trans form.name langs edit_name_url saveValueName='name' containerClass='h3' iconClass='fa fa-file-o' postSave=postSave %}
       {% endif %}
+      {% endwith %}
     </div>
 
     <div class="appmanager-edit-description">

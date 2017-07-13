@@ -3,7 +3,14 @@
 class WarehouseTable(object):
 
     @classmethod
-    def commit(cls, start_datetime, end_datetime):
+    def commit(cls, batch):
+        '''
+        Commits records based on a time frame.
+
+        :param batch: The Batch of the batch being committed
+
+        :returns: True if commit passed validations, False otherwise
+        '''
         raise NotImplementedError
 
     @classmethod

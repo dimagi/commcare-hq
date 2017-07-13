@@ -38,6 +38,13 @@
   since: {qwerty: '2.6', 'custom-keys': '1.3'}
   requires: "{hq.platform}='nokia/s40'||{hq.platform}='nokia/s60'"
 
+- id: practice_mobile_worker_id
+  name: 'Practice Mobile Worker'
+  widget: select
+  since: '2.30'
+  privilege: 'practice_mobile_workers'
+  description: "Select the mobile worker to use as a practice user for this application"
+
 # RemoteApp Only
 - id: profile_url
   name: "Profile URL"
@@ -124,6 +131,7 @@
 
 - id: admin_password
   name: "Admin Password"
+  description: Must correspond to the password format specified below.
   widget: password
   hide_if_not_enabled: true
 

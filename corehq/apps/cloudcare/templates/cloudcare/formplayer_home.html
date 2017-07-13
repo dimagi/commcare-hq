@@ -102,6 +102,7 @@
             {% endif %}
             singleAppMode: {{ single_app_mode|JSON }},
             environment: {{ environment|JSON }},
+            useLiveQuery: {{ use_live_query|JSON }}
         };
         FormplayerFrontend.start(options);
         $(function () {

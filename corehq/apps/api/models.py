@@ -113,10 +113,8 @@ class ESXFormInstance(DictObject):
     @property
     def metadata(self):
         from corehq.form_processor.utils import clean_metadata
-        from couchforms.models import Metadata
         if const.TAG_META in self.form_data:
-            return Metadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
-
+            return clean_metadata(self.form_data[const.TAG_META])
         return None
 
     @property

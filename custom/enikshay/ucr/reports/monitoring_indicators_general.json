@@ -244,6 +244,17 @@
                     "aggregation": "sum",
                     "field": "contacts_screened"
                 }
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "sum",
+                "field": "patients_with_key_populations",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Number of TB cases (all forms) notified among key affected populations/high risk groups (HIV, prisoners/migrants/ refugees. I DPs)"
             }
         ]
     }

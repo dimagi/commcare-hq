@@ -1,8 +1,8 @@
 --- 
 +++ 
-@@ -5,7 +5,27 @@
- {% load timezone_tags %}
+@@ -6,7 +6,27 @@
  {% load i18n %}
+ 
  
 -{% if build_profile_access %}
 +{% if intro_only %}
@@ -29,7 +29,7 @@
  <div class="tabbable">
      <ul class="nav nav-tabs">
          <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
-@@ -32,181 +52,152 @@
+@@ -33,181 +53,152 @@
                          {% endblocktrans %}
                      </small></p>
                  </div>
@@ -347,7 +347,7 @@
      <script type="text/html" id="delete-build-modal-template">
          <div class="modal-dialog">
              <div class="modal-content">
-@@ -254,18 +245,19 @@
+@@ -255,18 +246,19 @@
          </div>
      </script>
      <script type="text/html" id="deploy-build-modal-template">

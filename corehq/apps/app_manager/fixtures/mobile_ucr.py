@@ -18,7 +18,8 @@ from corehq.apps.userreports.exceptions import UserReportsError, ReportConfigura
 from corehq.apps.userreports.models import get_report_config
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.tasks import compare_ucr_dbs
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_brief_apps_in_domain, get_apps_by_id
+
 
 MOBILE_UCR_RANDOM_THRESHOLD = 1000
 
@@ -42,7 +43,6 @@ def _should_sync(restore_state):
     )
 
 
-
 class ReportFixturesProvider(FixtureProvider):
     id = 'commcare:reports'
 
@@ -54,8 +54,26 @@ class ReportFixturesProvider(FixtureProvider):
         if not toggles.MOBILE_UCR.enabled(restore_user.domain) or not _should_sync(restore_state):
             return []
 
-        app = restore_state.params.app
-        apps = [app] if app else [a for a in get_apps_in_domain(restore_user.domain, include_remote=False)]
+        app_aware_sync_app = restore_state.params.app
+        if app_aware_sync_app:
+            apps = [app_aware_sync_app]
+        elif (
+                toggles.ROLE_WEBAPPS_PERMISSIONS.enabled(restore_user.domain)
+                and restore_state.params.device_id
+                and "WebAppsLogin" in restore_state.params.device_id
+        ):
+            # Only sync reports for apps the user has access to if this is a restore from webapps
+            role = restore_user.get_role(restore_user.domain)
+            if role:
+                allowed_app_ids = [app['_id'] for app in get_brief_apps_in_domain(restore_user.domain)
+                                   if role.permissions.view_web_app(app)]
+                apps = get_apps_by_id(restore_user.domain, allowed_app_ids)
+            else:
+                # If there is no role, allow access to all apps
+                apps = get_apps_in_domain(restore_user.domain, include_remote=False)
+        else:
+            apps = get_apps_in_domain(restore_user.domain, include_remote=False)
+
         report_configs = [
             report_config
             for app_ in apps
