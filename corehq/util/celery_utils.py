@@ -251,7 +251,7 @@ class OffPeakLoadBasedAutoscaler(LoadBasedAutoscaler):
             elif procs == self.min_concurrency:
                 return False
 
-        super(OffPeakLoadBasedAutoscaler, self)._maybe_scale(req)
+        return super(OffPeakLoadBasedAutoscaler, self)._maybe_scale(req)
 
 
 class LoadBasedLoader(DjangoLoader):
