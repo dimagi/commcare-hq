@@ -210,7 +210,9 @@ class SubmissionPost(object):
             errors = self.process_signals(instance)
             if instance.is_normal and not errors:
                 response = self.get_success_response()
-            elif known_submission_error and self.is_openrosa_version3():
+            elif not self.is_openrosa_version3():
+                response = self.get_failure_response(instance.problem)
+            elif known_submission_error:
                 response = self.get_retry_response(known_submission_error, ResponseNature.KNOWN_PROCESSING_ERROR)
             else:
                 response = self.get_retry_response(instance.problem, ResponseNature.SUBMIT_ERROR)
@@ -323,6 +325,14 @@ class SubmissionPost(object):
             # would have done ✓ but our test Nokias' fonts don't have that character
             message=u'   √   ',
             nature=ResponseNature.SUBMIT_SUCCESS,
+            status=201,
+        ).response()
+
+    @staticmethod
+    def get_failure_response(message):
+        return OpenRosaResponse(
+            message=message,
+            nature=ResponseNature.SUBMIT_ERROR,
             status=201,
         ).response()
 
