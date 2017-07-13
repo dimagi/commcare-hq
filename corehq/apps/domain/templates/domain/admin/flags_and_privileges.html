@@ -12,17 +12,9 @@
     <div class="row">
         <div class="col-sm-10">
             <p>
-                {% url 'toggle_list' as toggle_url %}
                 {% blocktrans %}
-                    Feature Flags turn on features for individual users or projects. They are editable only by
-                    super users, in the <a href="{{ toggle_url }}">Feature Flag edit UI</a>.
-                    In addition, some feature flags are randomly enabled by domain.
-                {% endblocktrans %}
-            </p>
-            <p>
-                {% blocktrans %}
-                    Following are all flags enabled for this domain and/or for you.
-                    This does not include any flags set for other users in this domain.
+                    Features can be enabled or disabled based on feature flags or privileges. This page
+                    is intended to provide a list of what features a domain has access to.
                 {% endblocktrans %}
             </p>
             {% if use_sql_backend %}
@@ -40,6 +32,17 @@
     </div>
 
     <div class="row">
+        <div class="col-sm-10">
+            <h1>Privileges</h1>
+            <p>
+                {% url "domain_subscription_view" domain as software_plan_url %}
+                {% blocktrans %}
+                    Access to some features is dependent on a the software plan to which the domain
+                    is subscribed.
+                    <a href="{{ software_plan_url }}">Current Subscription</a>
+                {% endblocktrans %}
+            </p>
+        </div>
         <div class="col-sm-10">
             <table class="table table-striped">
                 <thead>
@@ -65,6 +68,23 @@
     </div>
 
     <div class="row">
+        <div class="col-sm-10">
+            <h1>Feature Flags</h1>
+            <p>
+                {% url 'toggle_list' as toggle_url %}
+                {% blocktrans %}
+                    Feature Flags turn on features for individual users or projects. They are editable only by
+                    super users, in the <a href="{{ toggle_url }}">Feature Flag edit UI</a>.
+                    In addition, some feature flags are randomly enabled by domain.
+                {% endblocktrans %}
+            </p>
+            <p>
+                {% blocktrans %}
+                    Following are all flags enabled for this domain and/or for you.
+                    This does not include any flags set for other users in this domain.
+                {% endblocktrans %}
+            </p>
+        </div>
         <div class="col-sm-10">
             <table class="table table-striped">
                 <thead>

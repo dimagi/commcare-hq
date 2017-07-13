@@ -2961,7 +2961,8 @@ class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
 
     def _get_privileges(self):
         return sorted([
-            (privilege, domain_has_privilege(self.domain, privilege))
+            (privileges.Titles.get_name_from_privilege(privilege),
+             domain_has_privilege(self.domain, privilege))
             for privilege in privileges.MAX_PRIVILEGES
         ], key=lambda (name, has): (not has, name))
 
