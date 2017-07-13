@@ -2121,10 +2121,7 @@ class MultiMediaExportColumn(ExportColumn):
         if not value or value == MISSING_VALUE:
             return value
 
-        download_url = u'{url}?attachment={attachment}'.format(
-            url=absolute_reverse('download_attachment', args=(domain, doc_id)),
-            attachment=value,
-        )
+        download_url = absolute_reverse('api_form_attachment', args=(domain, doc_id, value))
         if transform_dates:
             download_url = u'=HYPERLINK("{}")'.format(download_url)
 

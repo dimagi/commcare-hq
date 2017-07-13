@@ -1865,26 +1865,6 @@ def restore_edit(request, domain, instance_id):
         return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
 
 
-@login_or_digest
-@require_form_view_permission
-@require_GET
-@location_safe
-def download_attachment(request, domain, instance_id):
-    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
-    attachment = request.GET.get('attachment', False)
-    if not attachment:
-        return HttpResponseBadRequest("Invalid attachment.")
-    assert(domain == instance.domain)
-
-    try:
-        attach = FormAccessors(domain).get_attachment_content(instance_id, attachment)
-    except AttachmentNotFound:
-        raise Http404()
-
-    return StreamingHttpResponse(streaming_content=FileWrapper(attach.content_stream),
-                                 content_type=attach.content_type)
-
-
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
