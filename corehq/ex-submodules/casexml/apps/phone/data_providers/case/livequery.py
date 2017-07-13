@@ -108,11 +108,14 @@ def do_livequery(timing_context, restore_state, async_task=None):
         :returns: Case id for next related index fetch or IGNORE
         if the related case should be ignored.
         """
-        seen_ix.add(index_key(index))
-        indices[index.case_id].append(index)
         sub_id = index.case_id
         ref_id = index.referenced_id  # aka parent/host/super
         relationship = index.relationship
+        ix_key = index_key(index)
+        assert ix_key not in seen_ix[sub_id], ix_key
+        seen_ix[sub_id].add(ix_key)
+        seen_ix[ref_id].add(ix_key)
+        indices[sub_id].append(index)
         debug("%s --%s--> %s", sub_id, relationship, ref_id)
         if sub_id in live_ids:
             # ref has a live child or extension
@@ -177,7 +180,7 @@ def do_livequery(timing_context, restore_state, async_task=None):
     hosts_by_extension = defaultdict(set)  # (open) extension_id -> host_ids
     parents_by_child = defaultdict(set)    # child_id -> parent_ids
     indices = defaultdict(list)  # case_id -> list of CommCareCaseIndex-like
-    seen_ix = set()  # set of '<index.case_id> <index.identifier>'
+    seen_ix = defaultdict(set)   # case_id -> set of '<index.case_id> <index.identifier>'
     owner_ids = list(restore_state.owner_ids)
 
     debug("sync %s for %r", restore_state.current_sync_log._id, owner_ids)
@@ -190,16 +193,16 @@ def do_livequery(timing_context, restore_state, async_task=None):
         owned_ids = set(owned_ids)  # owned, open case ids (may be extensions)
         open_ids = set(owned_ids)
         while next_ids:
+            exclude = set(chain.from_iterable(seen_ix[id] for id in next_ids))
             with timing_context("get_related_indices({} cases, {} seen)".format(
-                    len(next_ids), len(seen_ix)):
-                related = accessor.get_related_indices(list(next_ids), seen_ix)
+                    len(next_ids), len(exclude))):
+                related = accessor.get_related_indices(list(next_ids), exclude)
                 if not related:
                     break
                 update_open_and_deleted_ids(related)
                 next_ids = {classify(index, next_ids)
                     for index in related
-                    if index_key(index) not in seen_ix
-                        and index.referenced_id not in deleted_ids
+                    if index.referenced_id not in deleted_ids
                         and index.case_id not in deleted_ids}
                 next_ids.discard(IGNORE)
                 all_ids.update(next_ids)
