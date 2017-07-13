@@ -35,8 +35,8 @@ def get_previous_month(send_date):
 def get_previous_quarter(send_date):
     current_quarter_start = (((send_date.month - 1) // 3) * 3) + 1
     startdate = date(year=send_date.year, month=current_quarter_start, day=1) - relativedelta(months=3)
-    enddate = date(year=send_date.year, month=current_quarter_start, day=1) + relativedelta(months=4) - timedelta(days=1) \
-        - relativedelta(months=3)
+    enddate = date(year=send_date.year, month=current_quarter_start, day=1) + relativedelta(months=4) - \
+              timedelta(days=1) - relativedelta(months=3)
     return DateSpan(startdate, enddate)
 
 

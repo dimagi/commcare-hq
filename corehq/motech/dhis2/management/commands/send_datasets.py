@@ -1,7 +1,6 @@
 from __future__ import print_function
 from django.core.management import BaseCommand
 
-from corehq.apps.app_manager.models import Application
 from corehq.motech.dhis2.tasks import send_datasets
 
 
