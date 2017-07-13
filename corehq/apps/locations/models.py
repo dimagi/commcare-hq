@@ -16,8 +16,6 @@ from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 from mptt.models import MPTTModel, TreeForeignKey, TreeManager
 
-LOCATION_REPORTING_PREFIX = 'locationreportinggroup-'
-
 
 class LocationTypeManager(models.Manager):
 
@@ -389,9 +387,23 @@ class SQLLocation(MPTTModel):
         if not self.location_id:
             self.location_id = uuid.uuid4().hex
         set_site_code_if_needed(self)
-        self.supply_point_id = sync_supply_point(self)
+        sync_supply_point(self)
         super(SQLLocation, self).save(*args, **kwargs)
         publish_location_saved(self.domain, self.location_id)
+
+    def delete(self, *args, **kwargs):
+        from corehq.apps.commtrack.models import sync_supply_point
+        from .document_store import publish_location_saved
+        to_delete = self.get_descendants(include_self=True)
+
+        for loc in to_delete:
+            loc._remove_users()
+            sync_supply_point(loc, is_deletion=True)
+
+        super(SQLLocation, self).delete(*args, **kwargs)
+        publish_location_saved(self.domain, self.location_id, is_deletion=True)
+
+    full_delete = delete
 
     def to_json(self):
         return {
@@ -441,20 +453,12 @@ class SQLLocation(MPTTModel):
 
         self._products = value
 
-    def _close_case_and_remove_users(self):
+    def _remove_users(self):
         """
-        Closes linked supply point cases for a location and unassigns the users
-        assigned to that location.
+        Unassigns the users assigned to that location.
 
         Used by both archive and delete methods
         """
-        sp = self.linked_supply_point()
-        # sanity check that the supply point exists and is still open.
-        # this is important because if you archive a child, then try
-        # to archive the parent, we don't want to try to close again
-        if sp and not sp.closed:
-            close_case(sp.case_id, self.domain, COMMTRACK_USERNAME)
-
         if self.user_id:
             from corehq.apps.users.models import CommCareUser
             user = CommCareUser.get(self.user_id)
@@ -463,55 +467,15 @@ class SQLLocation(MPTTModel):
 
         _unassign_users_from_location(self.domain, self.location_id)
 
-    def _archive_single_location(self):
-        """
-        Archive a single location, caller is expected to handle
-        archiving children as well.
-
-        This is just used to prevent having to do recursive
-        couch queries in `archive()`.
-        """
-        self.is_archived = True
-        self.save()
-
-        self._close_case_and_remove_users()
-
     def archive(self):
         """
-        Mark a location and its descendants as archived.
-        This will cause it (and its data) to not show up in default Couch and
-        SQL views.  This also unassigns users assigned to the location.
+        Mark a location and its descendants as archived and unassigns users
+        assigned to the location.
         """
         for loc in self.get_descendants(include_self=True):
-            loc._archive_single_location()
-
-    def _unarchive_single_location(self):
-        """
-        Unarchive a single location, caller is expected to handle
-        unarchiving children as well.
-
-        This is just used to prevent having to do recursive
-        couch queries in `unarchive()`.
-        """
-        self.is_archived = False
-        self.save()
-
-        # reopen supply point case if needed
-        sp = self.linked_supply_point()
-        # sanity check that the supply point exists and is not open.
-        # this is important because if you unarchive a child, then try
-        # to unarchive the parent, we don't want to try to open again
-        if sp and sp.closed:
-            for action in sp.actions:
-                if action.action_type == 'close':
-                    action.xform.archive(user_id=COMMTRACK_USERNAME)
-                    break
-
-        if self.user_id:
-            from corehq.apps.users.models import CommCareUser
-            user = CommCareUser.get(self.user_id)
-            user.active = True
-            user.save()
+            loc.is_archived = True
+            loc.save()
+            loc._remove_users()
 
     def unarchive(self):
         """
@@ -519,27 +483,14 @@ class SQLLocation(MPTTModel):
         exists.
         """
         for loc in self.get_descendants(include_self=True):
-            loc._unarchive_single_location()
+            loc.is_archived = False
+            loc.save()
 
-    def full_delete(self):
-        """
-        Delete a location and its dependants.
-        This also unassigns users assigned to the location.
-        """
-        with transaction.atomic():
-            self.sql_full_delete()
-
-    def sql_full_delete(self):
-        """
-        SQL ONLY FULL DELETE
-        Delete this location and it's descendants.
-        """
-        to_delete = self.get_descendants(include_self=True)
-
-        for loc in to_delete:
-            loc._close_case_and_remove_users()
-
-        to_delete.delete()
+            if loc.user_id:
+                from corehq.apps.users.models import CommCareUser
+                user = CommCareUser.get(loc.user_id)
+                user.active = True
+                user.save()
 
     class Meta:
         app_label = 'locations'
@@ -584,35 +535,6 @@ class SQLLocation(MPTTModel):
         return '/'.join(self.get_ancestors(include_self=True)
                             .values_list('name', flat=True))
 
-    def _make_group_object(self, user_id, case_sharing):
-        from corehq.apps.groups.models import UnsavableGroup
-
-        g = UnsavableGroup()
-        g.domain = self.domain
-        g.users = [user_id] if user_id else []
-        g.last_modified = datetime.utcnow()
-
-        if case_sharing:
-            g.name = self.get_path_display() + '-Cases'
-            g._id = self.location_id
-            g.case_sharing = True
-            g.reporting = False
-        else:
-            # reporting groups
-            g.name = self.get_path_display()
-            g._id = LOCATION_REPORTING_PREFIX + self.location_id
-            g.case_sharing = False
-            g.reporting = True
-
-        g.metadata = {
-            'commcare_location_type': self.location_type.name,
-            'commcare_location_name': self.name,
-        }
-        for key, val in self.metadata.items():
-            g.metadata['commcare_location_' + key] = val
-
-        return g
-
     def get_case_sharing_groups(self, for_user_id=None):
         if self.location_type.shares_cases:
             yield self.case_sharing_group_object(for_user_id)
@@ -624,15 +546,29 @@ class SQLLocation(MPTTModel):
         """
         Returns a fake group object that cannot be saved.
 
-        This is used for giving users access via case
-        sharing groups, without having a real group
-        for every location that we have to manage/hide.
+        This is used for giving users access via case sharing groups, without
+        having a real group for every location that we have to manage/hide.
         """
+        from corehq.apps.groups.models import UnsavableGroup
 
-        return self._make_group_object(
-            user_id,
+        group = UnsavableGroup(
+            domain=self.domain,
+            users=[user_id] if user_id else [],
+            last_modified=datetime.utcnow(),
+            name=self.get_path_display() + '-Cases',
+            _id=self.location_id,
             case_sharing=True,
+            reporting=False,
+            metadata={
+                'commcare_location_type': self.location_type.name,
+                'commcare_location_name': self.name,
+            },
         )
+
+        for key, val in self.metadata.items():
+            group.metadata['commcare_location_' + key] = val
+
+        return group
 
     def is_direct_ancestor_of(self, location):
         return (location.get_ancestors(include_self=True)

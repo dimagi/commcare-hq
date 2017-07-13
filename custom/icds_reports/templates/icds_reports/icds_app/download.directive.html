@@ -1,10 +1,13 @@
 <div class="download-directive">
     <div class="row fixes-filters">
         <div class="col-md-11">
-            <span class="breadcrump-element">Export Indicator: </span>
+            <span class="breadcrump-element">Export Program Area Indicators: </span>
         </div>
     </div>
     <div class="report-content">
+        <div class="alert alert-info" ng-show="$ctrl.now === $ctrl.selectedMonth">
+            <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
+        </div>
         <div class="form-horizontal black">
             <div class="form-group" style="margin-bottom: 0px !important;">
                 <label class="control-label col-sm-2" for="location">Location: </label>
@@ -53,10 +56,10 @@
                 </div>
             </div>
             <div class="form-group">
-                <label class="control-label col-sm-2" for="indicator">Indicator: </label>
+                <label class="control-label col-sm-2" for="indicator">Program Area: </label>
                 <div class="col-sm-6">
                     <ui-select ng-model="$ctrl.selectedIndicator" theme="bootstrap">
-                        <ui-select-match placeholder="Indicator"><span ng-bind="$select.selected.name"></span></ui-select-match>
+                        <ui-select-match placeholder="Program Area"><span ng-bind="$select.selected.name"></span></ui-select-match>
                         <ui-select-choices repeat="indicator.id as indicator in $ctrl.indicators | propsFilter: {name: $select.search}">
                             <div ng-bind-html="indicator.name"></div>
                         </ui-select-choices>

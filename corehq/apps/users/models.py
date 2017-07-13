@@ -95,6 +95,9 @@ class Permissions(DocumentSchema):
     edit_billing = BooleanProperty(default=False)
     report_an_issue = BooleanProperty(default=True)
 
+    view_web_apps = BooleanProperty(default=True)
+    view_web_apps_list = StringListProperty(default=[])
+
     @classmethod
     def wrap(cls, data):
         # this is why you don't store module paths in the database...
@@ -107,6 +110,11 @@ class Permissions(DocumentSchema):
                 reports[i] = MOVED_REPORT_MAPPING[report_name]
 
         return super(Permissions, cls).wrap(data)
+
+    def view_web_app(self, app):
+        if self.view_web_apps:
+            return True
+        return any(app_id in self.view_web_apps_list for app_id in [app['_id'], app['copy_of']])
 
     def view_report(self, report, value=None):
         """Both a getter (when value=None) and setter (when value=True|False)"""
@@ -1671,6 +1679,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         tag_system_forms_as_deleted.delay(self.domain, deleted_forms, deleted_cases, deletion_id, deletion_date)
 
+        from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
+        unset_practice_mode_configured_apps(self.domain, self.get_id)
+
         try:
             django_user = self.get_django_user()
         except User.DoesNotExist:
@@ -2080,19 +2091,25 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def update_device_id_last_used(self, device_id, when=None):
         """
         Sets the last_used date for the device to be the current time
-
         Does NOT save the user object.
+
+        :returns: True if user was updated and needs to be saved
         """
         when = when or datetime.utcnow()
+
         for user_device_id_last_used in self.devices:
             if user_device_id_last_used.device_id == device_id:
-                user_device_id_last_used.last_used = when
-                break
+                if when.date() > user_device_id_last_used.last_used.date():
+                    user_device_id_last_used.last_used = when
+                    return True
+                else:
+                    return False
         else:
             self.devices.append(DeviceIdLastUsed(
                 device_id=device_id,
                 last_used=when
             ))
+            return True
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):

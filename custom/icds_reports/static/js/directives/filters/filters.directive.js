@@ -11,6 +11,7 @@ window.angular.module('icdsApp').directive("filters", function() {
         scope: {
             data: '=',
             filters: '=',
+            selectedLocations: '=',
         },
         bindToController: true,
         templateUrl: url('icds-ng-template', 'filters'),

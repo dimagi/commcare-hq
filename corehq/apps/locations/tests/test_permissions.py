@@ -116,6 +116,7 @@ class FormEditRestrictionsMixin(object):
         msg = "This user CAN edit this form!"
         self.assertFalse(can_edit_form_location(self.domain, user, form), msg=msg)
 
+
 class TestDeprecatedFormEditRestrictions(FormEditRestrictionsMixin, LocationHierarchyTestCase):
     """This class mostly just tests the RESTRICT_FORM_EDIT_BY_LOCATION feature flag"""
     domain = 'TestDeprecatedFormEditRestrictions-domain'

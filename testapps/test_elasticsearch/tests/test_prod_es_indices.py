@@ -36,6 +36,7 @@ EXPECTED_PROD_INDICES = [
         "type": "case",
         "meta": {
             "settings": {
+                "number_of_replicas": 0,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -130,6 +131,7 @@ EXPECTED_PROD_INDICES = [
         "type": "group",
         "meta": {
             "settings": {
+                "number_of_replicas": 0,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -153,10 +155,12 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "hqusers",
-        "index": "test_hqusers_2017-05-22",
+        "index": "test_hqusers_2017-05-30",
         "type": "user",
         "meta": {
             "settings": {
+                "number_of_shards": 2,
+                "number_of_replicas": 1,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -175,6 +179,7 @@ EXPECTED_PROD_INDICES = [
         "type": "ledger",
         "meta": {
             "settings": {
+                "number_of_replicas": 0,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -202,6 +207,7 @@ EXPECTED_PROD_INDICES = [
         "type": "report_case",
         "meta": {
             "settings": {
+                "number_of_replicas": 0,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -229,6 +235,7 @@ EXPECTED_PROD_INDICES = [
         "type": "report_xform",
         "meta": {
             "settings": {
+                "number_of_replicas": 0,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -256,6 +263,7 @@ EXPECTED_PROD_INDICES = [
         "type": "sms",
         "meta": {
             "settings": {
+                "number_of_replicas": 0,
                 "analysis": {
                     "analyzer": {
                         "default": {

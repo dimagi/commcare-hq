@@ -84,7 +84,7 @@ class StaticToggle(object):
 
         domain_enabled_after = self.enabled_for_new_domains_after
         if (domain_enabled_after is not None and NAMESPACE_DOMAIN in self.namespaces
-            and was_domain_created_after(item, domain_enabled_after)):
+                and was_domain_created_after(item, domain_enabled_after)):
             return True
 
         user_enabled_after = self.enabled_for_new_users_after
@@ -509,11 +509,27 @@ EXTENSION_CASES_SYNC_ENABLED = StaticToggle(
     always_enabled={'enikshay'},
 )
 
+
+ROLE_WEBAPPS_PERMISSIONS = StaticToggle(
+    'role_webapps_permissions',
+    'Toggle which webapps to see based on role',
+    TAG_PRODUCT_PATH,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
+
 SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     'search_claim',
     'Enable synchronous mobile searching and case claiming',
     TAG_PRODUCT_PATH,
     help_link='https://confluence.dimagi.com/display/internal/Remote+Case+Search+and+Claim',
+    namespaces=[NAMESPACE_DOMAIN]
+)
+
+LIVEQUERY_SYNC = StaticToggle(
+    'livequery_sync',
+    'Enable livequery sync algorithm',
+    TAG_PRODUCT_PATH,
     namespaces=[NAMESPACE_DOMAIN]
 )
 
@@ -806,6 +822,13 @@ BETS_INTEGRATION = StaticToggle(
     always_enabled={"enikshay"},
 )
 
+OPENMRS_INTEGRATION = StaticToggle(
+    'openmrs_integration',
+    'Enable OpenMRS integration',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+)
+
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     'multiple_choice_custom_field',
     'Allow project to use multiple choice field in custom fields',
@@ -838,6 +861,13 @@ BASIC_CHILD_MODULE = StaticToggle(
 USE_OLD_CLOUDCARE = StaticToggle(
     'use_old_cloudcare',
     'Use Old CloudCare',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN],
+)
+
+FORMPLAYER_USE_LIVEQUERY = StaticToggle(
+    'formplayer_use_livequery',
+    'Use LiveQuery on Web Apps',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN],
 )
@@ -1090,6 +1120,7 @@ ENIKSHAY = StaticToggle(
     "Enable custom enikshay functionality: additional user and location validation",
     TAG_ONE_OFF,
     namespaces=[NAMESPACE_DOMAIN],
+    always_enabled={'enikshay'},
 )
 
 DATA_DICTIONARY = StaticToggle(
@@ -1102,13 +1133,6 @@ DATA_DICTIONARY = StaticToggle(
 LINKED_APPS = StaticToggle(
     'linked_apps',
     'Allows master and linked apps',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
-FORMTRANSLATE_FORM_VALIDATION = StaticToggle(
-    'formtranslate_form_validation',
-    'Use formtranslate to validate XForms',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
 )
@@ -1232,6 +1256,20 @@ ENTERPRISE_OPTIMIZATIONS = StaticToggle(
 DISPLAY_CONDITION_ON_TABS = StaticToggle(
     'display_condition_on_nodeset',
     'Show Display Condition on Case Detail Tabs',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+PHONE_HEARTBEAT = StaticToggle(
+    'phone_apk_heartbeat',
+    'Expose phone apk heartbeat URL and add it profile.xml',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+SKIP_REMOVE_INDICES = StaticToggle(
+    'skip_remove_indices',
+    'Make _remove_indices_from_deleted_cases_task into a no-op.',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )

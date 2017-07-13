@@ -1,5 +1,6 @@
 from collections import namedtuple, OrderedDict
 from copy import deepcopy, copy
+from couchdbkit import ResourceNotFound
 import json
 import os
 import uuid
@@ -10,12 +11,13 @@ import yaml
 from django.urls import reverse
 from couchdbkit.exceptions import DocTypeError
 from django.core.cache import cache
+from django.utils.translation import ugettext as _
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain
 )
-from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError
+from corehq.apps.app_manager.exceptions import SuiteError, SuiteValidationError, PracticeUserException
 from corehq.apps.app_manager.xpath import DOT_INTERPOLATE_PATTERN, UserCaseXPath
 from corehq.apps.builds.models import CommCareBuildConfig
 from corehq.apps.app_manager.tasks import create_user_cases
@@ -33,6 +35,7 @@ from corehq.apps.app_manager.const import (
     USERCASE_ID,
     USERCASE_PREFIX)
 from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
+from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.make_uuid import random_hex
 
@@ -220,6 +223,8 @@ def get_settings_values(app):
     hq_settings['build_spec'] = app.build_spec.to_string()
     # the admin_password hash shouldn't be sent to the client
     hq_settings.pop('admin_password', None)
+    # convert int to string
+    hq_settings['mobile_ucr_sync_interval'] = str(hq_settings.get('mobile_ucr_sync_interval', 'none'))
 
     domain = Domain.get_by_name(app.domain)
     return {
@@ -572,3 +577,33 @@ def get_form_data(domain, app):
         module_meta['forms'] = forms
         modules.append(module_meta)
     return modules, errors
+
+
+def get_and_assert_practice_user_in_domain(practice_user_id, domain):
+    # raises PracticeUserException if CommCareUser with practice_user_id is not a practice mode user
+    #   or if user doesn't belong to domain
+    try:
+        user = CommCareUser.get(practice_user_id)
+        if not user.domain == domain:
+            raise ResourceNotFound
+    except ResourceNotFound:
+        raise PracticeUserException(
+            _("Practice User with id {id} not found, please make sure you have not deleted this user").format(
+                id=practice_user_id)
+        )
+    if not user.is_demo_user:
+        raise PracticeUserException(
+            _("User {username} is not a practice user, please turn on practice mode for this user").format(
+                username=user.username)
+        )
+    if user.is_deleted():
+        raise PracticeUserException(
+            _("User {username} has been deleted, you can't use that user as practice user").format(
+                username=user.username)
+        )
+    if not user.is_active:
+        raise PracticeUserException(
+            _("User {username} has been deactivated, you can't use that user as practice user").format(
+                username=user.username)
+        )
+    return user

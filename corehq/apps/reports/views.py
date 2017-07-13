@@ -1865,26 +1865,6 @@ def restore_edit(request, domain, instance_id):
         return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
 
 
-@login_or_digest
-@require_form_view_permission
-@require_GET
-@location_safe
-def download_attachment(request, domain, instance_id):
-    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
-    attachment = request.GET.get('attachment', False)
-    if not attachment:
-        return HttpResponseBadRequest("Invalid attachment.")
-    assert(domain == instance.domain)
-
-    try:
-        attach = FormAccessors(domain).get_attachment_content(instance_id, attachment)
-    except AttachmentNotFound:
-        raise Http404()
-
-    return StreamingHttpResponse(streaming_content=FileWrapper(attach.content_stream),
-                                 content_type=attach.content_type)
-
-
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
@@ -2029,7 +2009,11 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
         return start, end
 
 
-@require_case_view_permission
+def _can_view_report(domain, user, report_class):
+    return (user.has_permission(domain, Permissions.view_reports)
+            or user.has_permission(domain, Permissions.view_report, data=report_class))
+
+
 @login_and_domain_required
 @require_GET
 def export_report(request, domain, export_hash, format):
@@ -2037,8 +2021,16 @@ def export_report(request, domain, export_hash, format):
 
     content = cache.get(export_hash)
     if content is not None:
+
+        if isinstance(content, list):
+            report_class, report_file = content
+            if not _can_view_report(domain, request.couch_user, report_class):
+                raise PermissionDenied()
+        # TODO drop this after all existing reports have expired
+        else:
+            report_file = content
         if format in Format.VALID_FORMATS:
-            file = ContentFile(content)
+            file = ContentFile(report_file)
             response = HttpResponse(file, Format.FORMAT_DICT[format])
             response['Content-Length'] = file.size
             response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(

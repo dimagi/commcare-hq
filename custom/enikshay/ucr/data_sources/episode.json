@@ -6169,6 +6169,36 @@
                 }
             },
             {
+                "column_id": "patients_with_key_populations",
+                "type": "boolean",
+                "filter": {
+                    "type": "and",
+                    "filters": [
+                        {
+                            "type": "boolean_expression",
+                            "operator": "eq",
+                            "expression": {
+                                "type": "property_name",
+                                "property_name": "episode_type"
+                            },
+                            "property_value": "confirmed_tb"
+                        },
+                        {
+                            "type": "not",
+                            "filter": {
+                                "operator": "in",
+                                "type": "boolean_expression",
+                                "expression": {
+                                    "type": "named",
+                                    "name": "key_populations"
+                                },
+                                "property_value": [null, ""]
+                            }
+                        }
+                    ]
+                }
+            },
+            {
                 "display_name": "pediatric_patient",
                 "column_id": "pediatric_patient",
                 "type": "boolean",
