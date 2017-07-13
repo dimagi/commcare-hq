@@ -1,6 +1,3 @@
-
-
-
 .helpbubble {
   @bubble-radius: 10px;
   position: relative;
@@ -43,6 +40,27 @@
   left: 20px;
 }
 
+.helpbubble-bottom-left:after {
+  border-width: 15px 15px 0;
+  bottom: -15px;
+  left: 20px;
+}
+
+.helpbubble .close {
+  position: absolute;
+  right: 8px;
+  top: 3px;
+  display: block;
+  padding: 5px 10px;
+  line-height: 20px;
+  color: white;
+  opacity: .5;
+  transition: opacity 1s;
+  &:hover {
+    opacity: 1.0;
+  }
+}
+
 .helpbubble-primary {
   background: @cc-brand-mid;
 
@@ -51,7 +69,8 @@
     border-color: transparent @cc-brand-mid;
   }
 
-  &.helpbubble-top-left:after{
+  &.helpbubble-top-left:after,
+  &.helpbubble-bottom-left:after {
     border-color: @cc-brand-mid transparent ;
   }
 }
@@ -63,7 +82,8 @@
   &.helpbubble-right:after {
     border-color: transparent @cc-light-cool-accent-mid;
   }
-  &.helpbubble-top-left:after{
+  &.helpbubble-top-left:after,
+  &.helpbubble-bottom-left:after {
     border-color: @cc-light-cool-accent-mid transparent ;
   }
 }
@@ -75,7 +95,8 @@
   &.helpbubble-right:after {
     border-color: transparent @cc-dark-cool-accent-mid;
   }
-  &.helpbubble-top-left:after{
+  &.helpbubble-top-left:after,
+  &.helpbubble-bottom-left:after {
     border-color: @cc-dark-cool-accent-mid transparent ;
   }
 }
