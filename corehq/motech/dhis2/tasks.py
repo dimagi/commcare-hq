@@ -14,7 +14,7 @@ from toggle.shortcuts import find_domains_with_toggle_enabled
 
 
 @task(queue='background_queue')
-def send_datasets(domain_name, send_now=False):
+def send_datasets(domain_name, send_now=False, send_date=datetime.today()):
     """
     Sends a data set of data values in the following format:
 
@@ -46,9 +46,9 @@ def send_datasets(domain_name, send_now=False):
     )
     endpoint = 'dataValueSets'
     for dataset_map in dataset_maps:
-        if send_now or dataset_map.should_send_on_date(datetime.today()):
+        if send_now or dataset_map.should_send_on_date(send_date):
             try:
-                dataset = dataset_map.get_dataset()
+                dataset = dataset_map.get_dataset(send_date)
             except Exception as err:
                 domain_log_level = getattr(dhis2_conn, 'log_level', logging.INFO)
                 log_level = logging.ERROR
