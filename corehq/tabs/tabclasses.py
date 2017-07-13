@@ -1467,8 +1467,7 @@ class ProjectSettingsTab(UITab):
             from corehq.apps.domain.views import (
                 EditInternalDomainInfoView,
                 EditInternalCalculationsView,
-                FeatureFlagsView,
-                PrivilegesView
+                FlagsAndPrivilegesView,
             )
 
             internal_admin = [
@@ -1483,12 +1482,8 @@ class ProjectSettingsTab(UITab):
                                    args=[self.domain])
                 },
                 {
-                    'title': _(FeatureFlagsView.page_title),
-                    'url': reverse(FeatureFlagsView.urlname, args=[self.domain])
-                },
-                {
-                    'title': _(PrivilegesView.page_title),
-                    'url': reverse(PrivilegesView.urlname, args=[self.domain])
+                    'title': _(FlagsAndPrivilegesView.page_title),
+                    'url': reverse(FlagsAndPrivilegesView.urlname, args=[self.domain])
                 },
             ]
             items.append((_('Internal Data (Dimagi Only)'), internal_admin))
