@@ -65,6 +65,14 @@
                 "slug": "episode_type",
                 "datatype": "string",
                 "pre_value": "confirmed_tb"
+            },
+            {
+                "pre_value": 0,
+                "datatype": "integer",
+                "display": null,
+                "field": "is_enrolled_in_private",
+                "type": "pre",
+                "slug": "is_enrolled_in_private"
             }
         ],
         "columns": [
