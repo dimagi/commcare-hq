@@ -4,7 +4,6 @@ from corehq.apps.hqcase.utils import update_case
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.reminders.models import CaseReminder, CaseReminderHandler
 from corehq.apps.users.models import CommCareUser
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.util.test_utils import create_test_case, set_parent_case
 from mock import patch
