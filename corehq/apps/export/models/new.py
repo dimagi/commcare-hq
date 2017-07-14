@@ -1356,7 +1356,7 @@ class ExportDataSchema(Document):
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
             doc_type = app_doc.get('doc_type', '')
-            if not (doc_type == 'Application' or doc_type == 'LinkedApplication'):
+            if doc_type not in ('Application', 'LinkedApplication'):
                 continue
             if (not app_doc.get('has_submissions', False) and
                     app_doc.get('copy_of')):
