@@ -85,11 +85,12 @@ class EpisodeUpdater(object):
             batch_size = 100
             updates = []
             for episode in self._get_open_episode_cases():
-                adherence_update = EpisodeAdherenceUpdate(episode, self)
-                voucher_update = EpisodeVoucherUpdate(self.domain, episode)
-                test_update = EpisodeTestUpdate(self.domain, episode)
-                episode_facility_id_migration = EpisodeFacilityIDMigration(self.domain, episode)
                 try:
+                    adherence_update = EpisodeAdherenceUpdate(episode, self)
+                    voucher_update = EpisodeVoucherUpdate(self.domain, episode)
+                    test_update = EpisodeTestUpdate(self.domain, episode)
+                    episode_facility_id_migration = EpisodeFacilityIDMigration(self.domain, episode)
+
                     update_json = adherence_update.update_json()
                     update_json.update(voucher_update.update_json())
                     update_json.update(test_update.update_json())
