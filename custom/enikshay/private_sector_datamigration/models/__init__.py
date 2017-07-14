@@ -45,5 +45,3 @@ Episode = Episode_Jul13
 EpisodePrescription = EpisodePrescription_Jul13
 UserDetail = UserDetail_Jul13
 Voucher = Voucher_Jul13
-
-
