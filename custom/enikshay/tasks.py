@@ -48,8 +48,11 @@ def enikshay_task():
     # `toggles.UATBC_ADHERENCE_TASK` enabled
     domains = toggles.UATBC_ADHERENCE_TASK.get_enabled_domains()
     for domain in domains:
-        updater = EpisodeUpdater(domain)
-        updater.run()
+        try:
+            updater = EpisodeUpdater(domain)
+            updater.run()
+        except Exception as e:
+            logger.error("error calculating reconcilliation task for domain {}: {}".format(domain, e))
 
 
 class Timer:
