@@ -14,7 +14,7 @@ from toggle.shortcuts import find_domains_with_toggle_enabled
 
 
 @task(queue='background_queue')
-def send_datasets(domain_name, send_now=False, send_date=datetime.today()):
+def send_datasets(domain_name, send_now=False, send_date=None):
     """
     Sends a data set of data values in the following format:
 
@@ -34,6 +34,8 @@ def send_datasets(domain_name, send_now=False, send_date=datetime.today()):
     See DHIS2 API docs for more details: https://docs.dhis2.org/master/en/developer/html/webapi_data_values.html
 
     """
+    if not send_date:
+        send_date = datetime.today()
     dhis2_conn = get_dhis2_connection(domain_name)
     dataset_maps = get_dataset_maps(domain_name)
     if not dhis2_conn or not dataset_maps:
