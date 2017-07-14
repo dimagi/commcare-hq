@@ -258,10 +258,12 @@ class LoadBasedLoader(DjangoLoader):
     def read_configuration(self):
         ret = super(LoadBasedLoader, self).read_configuration()
         ret['CELERYD_AUTOSCALER'] = 'corehq.util.celery_utils:LoadBasedAutoscaler'
+        ret['CELERYD_PREFETCH_MULTIPLIER'] = 1
+        ret['AUTOSCALE_KEEPALIVE'] = 120
         return ret
 
 
-class OffPeakLoadBasedLoader(DjangoLoader):
+class OffPeakLoadBasedLoader(LoadBasedLoader):
     def read_configuration(self):
         ret = super(OffPeakLoadBasedLoader, self).read_configuration()
         ret['CELERYD_AUTOSCALER'] = 'corehq.util.celery_utils:OffPeakLoadBasedAutoscaler'
