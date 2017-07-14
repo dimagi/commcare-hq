@@ -97,14 +97,16 @@
 }
 
 .appmanager-loading {
+  @dim: 4rem;
   display: block;
   position: absolute;
-  font-size: 4rem;
-  width: 100px;
-  height: 100px;
-  left: 50%;
+  font-size: @dim;
+  width: @dim;
+  height: @dim;
+  left: calc(~"50% - " @dim / 2);
+  left: -moz-calc(~"50% - " @dim / 2);
+  left: -webkit-calc(~"50% - " @dim / 2);
   color: fadeOut(@cc-text, 40);
-  margin-left: -50px;
 }
 
 .appmanager-loading-nav {
