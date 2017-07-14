@@ -19,12 +19,12 @@ SELF_ADMINISTERED_DOSE = 3
 
 def get_agency_by_motech_user_name(motech_user_name):
     try:
-        return Agency_Jul7.objects.get(
-            agencyId=UserDetail_Jul7.objects.get(
+        return Agency_Jul13.objects.get(
+            agencyId=UserDetail_Jul13.objects.get(
                 motechUserName=motech_user_name
             ).agencyId
         )
-    except (Agency_Jul7.DoesNotExist, UserDetail_Jul7.DoesNotExist):
+    except (Agency_Jul13.DoesNotExist, UserDetail_Jul13.DoesNotExist):
         return None
 
 
@@ -257,7 +257,7 @@ class Episode_Jul13(models.Model):
 
     @property
     def adherence_total_doses_taken(self):
-        return Adherence_Jul7.objects.filter(
+        return Adherence_Jul13.objects.filter(
             episodeId=self.episodeID,
             dosageStatusId__in=[DIRECTLY_OBSERVED_DOSE, SELF_ADMINISTERED_DOSE],
         ).count()
@@ -265,7 +265,7 @@ class Episode_Jul13(models.Model):
     @property
     @memoized
     def adherence_tracking_mechanism(self):
-        reporting_mechanism_values = Adherence_Jul7.objects.filter(
+        reporting_mechanism_values = Adherence_Jul13.objects.filter(
             episodeId=self.episodeID,
         ).exclude(
             reportingMechanismId=REPORTING_MECHANISM_NONE,
@@ -619,7 +619,7 @@ class Agency_Jul13(models.Model):
 
     @classmethod
     def get_agencies_by_ward(cls, state_id, district_id, block_id, ward_id):
-        agency_ids = UserDetail_Jul7.objects.filter(
+        agency_ids = UserDetail_Jul13.objects.filter(
             isPrimary=True,
         ).filter(
             stateId=state_id,
@@ -627,7 +627,7 @@ class Agency_Jul13(models.Model):
             blockOrHealthPostId=block_id,
             wardId=ward_id,
         ).values('agencyId').distinct()
-        return Agency_Jul7.objects.filter(agencyId__in=agency_ids)
+        return Agency_Jul13.objects.filter(agencyId__in=agency_ids)
 
     @property
     def location_type(self):
