@@ -28,13 +28,22 @@ from custom.enikshay.private_sector_datamigration.models.jul7 import (
     UserDetail_Jul7,
     Voucher_Jul7,
 )
+from custom.enikshay.private_sector_datamigration.models.jul13 import (
+    Adherence_Jul13,
+    Agency_Jul13,
+    Beneficiary_Jul13,
+    Episode_Jul13,
+    EpisodePrescription_Jul13,
+    UserDetail_Jul13,
+    Voucher_Jul13,
+)
 
-Adherence = Adherence_Jul7
-Agency = Agency_Jul7
-Beneficiary = Beneficiary_Jul7
-Episode = Episode_Jul7
-EpisodePrescription = EpisodePrescription_Jul7
-UserDetail = UserDetail_Jul7
-Voucher = Voucher_Jul7
+Adherence = Adherence_Jul13
+Agency = Agency_Jul13
+Beneficiary = Beneficiary_Jul13
+Episode = Episode_Jul13
+EpisodePrescription = EpisodePrescription_Jul13
+UserDetail = UserDetail_Jul13
+Voucher = Voucher_Jul13
 
 
