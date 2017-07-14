@@ -3,6 +3,7 @@ from datetime import datetime
 import logging
 import random
 
+from couchdbkit.exceptions import NoResultFound
 from django.conf import settings
 from lxml.builder import E
 
@@ -18,8 +19,9 @@ from corehq.apps.userreports.exceptions import UserReportsError, ReportConfigura
 from corehq.apps.userreports.models import get_report_config
 from corehq.apps.userreports.reports.factory import ReportFactory
 from corehq.apps.userreports.tasks import compare_ucr_dbs
-from corehq.apps.app_manager.dbaccessors import get_apps_in_domain, get_brief_apps_in_domain, get_apps_by_id
-
+from corehq.apps.app_manager.dbaccessors import (
+    get_apps_in_domain, get_brief_apps_in_domain, get_apps_by_id, get_brief_app
+)
 
 MOBILE_UCR_RANDOM_THRESHOLD = 1000
 
@@ -31,7 +33,15 @@ def _should_sync(restore_state):
 
     sync_interval = restore_state.restore_user.get_mobile_ucr_sync_interval()
     if sync_interval is None and restore_state.params.app:
-        sync_interval = restore_state.params.app.mobile_ucr_sync_interval
+        app = restore_state.params.app
+        if restore_state.params.app.copy_of:
+            # get sync interval from latest app version so that we don't have to deploy a new version
+            # to make changes to the sync interval
+            try:
+                app = get_brief_app(restore_state.domain, restore_state.params.app.copy_of)
+            except NoResultFound:
+                pass
+        sync_interval = app.mobile_ucr_sync_interval
     if sync_interval is None:
         sync_interval = restore_state.project.default_mobile_ucr_sync_interval
 

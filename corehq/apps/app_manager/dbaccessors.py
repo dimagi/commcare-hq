@@ -174,6 +174,17 @@ def get_brief_apps_in_domain(domain, include_remote=True):
     return apps
 
 
+def get_brief_app(domain, app_id):
+    from .models import Application
+    from corehq.apps.app_manager.util import get_correct_app_class
+    result = Application.get_db().view(
+        'app_manager/applications_brief',
+        key=[domain, app_id],
+    ).one(except_all=True)
+    doc = result['value']
+    return get_correct_app_class(doc).wrap(doc)
+
+
 def get_app_ids_in_domain(domain):
     from .models import Application
     return [row['id'] for row in Application.get_db().view(
