@@ -201,8 +201,8 @@ class LoadBasedAutoscaler(Autoscaler):
         available_cpus = multiprocessing.cpu_count()
         try:
             load_avgs = os.getloadavg()
-            max_avg = max(load_avgs[0], load_avgs[1])
-            normalized_load = max_avg / available_cpus
+            one_min_avg = load_avgs[0]
+            normalized_load = one_min_avg / available_cpus
         except OSError:
             # if we can't get the load average, let's just use normal autoscaling
             load_avgs = None
@@ -258,10 +258,12 @@ class LoadBasedLoader(DjangoLoader):
     def read_configuration(self):
         ret = super(LoadBasedLoader, self).read_configuration()
         ret['CELERYD_AUTOSCALER'] = 'corehq.util.celery_utils:LoadBasedAutoscaler'
+        ret['CELERYD_PREFETCH_MULTIPLIER'] = 1
+        ret['AUTOSCALE_KEEPALIVE'] = 120
         return ret
 
 
-class OffPeakLoadBasedLoader(DjangoLoader):
+class OffPeakLoadBasedLoader(LoadBasedLoader):
     def read_configuration(self):
         ret = super(OffPeakLoadBasedLoader, self).read_configuration()
         ret['CELERYD_AUTOSCALER'] = 'corehq.util.celery_utils:OffPeakLoadBasedAutoscaler'
