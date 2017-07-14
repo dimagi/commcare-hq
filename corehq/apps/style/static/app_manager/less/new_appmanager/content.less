@@ -226,6 +226,21 @@
   width: 10px;
 }
 
+.app-preview-toggle-container {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.btn-preview {
+  @btn-preview-width: 30px;
+  width: @btn-preview-width;
+  height: @btn-preview-width;
+  padding: 4px 10px;
+  .border-top-radius(@btn-preview-width/2);
+  .border-bottom-radius(@btn-preview-width/2);
+}
+
 .appmanager-content-single-page {
   background: white;
   padding: 20px 20px;

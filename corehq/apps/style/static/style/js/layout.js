@@ -9,6 +9,7 @@ hqLayout.selector = {
     sidebar: '#hq-sidebar',
     breadcrumbs: '#hq-breadcrumbs',
     messages: '#hq-messages-container',
+    publishStatus: '#js-publish-status',
 };
 
 hqLayout.values = {

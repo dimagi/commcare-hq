@@ -28,6 +28,15 @@ hqDefine('app_manager/js/releases.js', function () {
         self.app_code = ko.observable(null);
         self.failed_url_generation = ko.observable(false);
         self.build_profile = ko.observable('');
+
+        self.allow_editing_comment = ko.observable(false);
+        self.is_comment_visible = ko.computed(function () {
+            return self.build_comment() || self.allow_editing_comment();
+        });
+        self.showComment = function () {
+            self.allow_editing_comment(true);
+        };
+
         self.base_url = function() {
             return '/a/' + self.domain() + '/apps/odk/' + self.id() + '/';
         };
@@ -334,7 +343,8 @@ hqDefine('app_manager/js/releases.js', function () {
             });
         };
 
-        self.toggleRelease = function (savedApp) {
+        self.toggleRelease = function (savedApp, event) {
+            $(event.currentTarget).parent().prev('.js-release-waiting').removeClass('hide');
             var is_released = savedApp.is_released();
             var saved_app_id = savedApp.id();
             if (savedApp.is_released() !== 'pending') {
@@ -352,9 +362,11 @@ hqDefine('app_manager/js/releases.js', function () {
                     },
                     success: function (data) {
                         savedApp.is_released(data.is_released);
+                        $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
                     },
                     error: function () {
                         savedApp.is_released('error');
+                        $(event.currentTarget).parent().prev('.js-release-waiting').addClass('hide');
                     }
                 });
             }
@@ -423,6 +435,7 @@ hqDefine('app_manager/js/releases.js', function () {
                         self.addSavedApp(app, true);
                     }
                     self.buildState('');
+                    hqImport('app_manager/js/app_manager.js').setPublishStatus(false);
                 },
                 error: function() {
                     self.buildState('error');
