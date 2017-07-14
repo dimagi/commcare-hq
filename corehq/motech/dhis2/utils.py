@@ -26,19 +26,17 @@ def get_date_filter(report_config):
     return date_filter
 
 
-def get_last_month():
-    today = date.today()
-    enddate = date(year=today.year, month=today.month, day=1) - timedelta(days=1)
+def get_previous_month(send_date):
+    enddate = date(year=send_date.year, month=send_date.month, day=1) - timedelta(days=1)
     startdate = date(year=enddate.year, month=enddate.month, day=1)
     return DateSpan(startdate, enddate)
 
 
-def get_last_quarter():
-    today = date.today()
-    current_quarter_start = (((today.month - 1) // 3) * 3) + 1
-    startdate = date(year=today.year, month=current_quarter_start, day=1) - relativedelta(months=3)
-    enddate = date(year=today.year, month=current_quarter_start, day=1) + relativedelta(months=4) - timedelta(days=1) \
-        - relativedelta(months=3)
+def get_previous_quarter(send_date):
+    current_quarter_start = (((send_date.month - 1) // 3) * 3) + 1
+    startdate = date(year=send_date.year, month=current_quarter_start, day=1) - relativedelta(months=3)
+    enddate = date(year=send_date.year, month=current_quarter_start, day=1) + relativedelta(months=4) - \
+        timedelta(days=1) - relativedelta(months=3)
     return DateSpan(startdate, enddate)
 
 
