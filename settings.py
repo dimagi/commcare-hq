@@ -2142,6 +2142,12 @@ DOMAIN_MODULE_MAP = {
 
 CASEXML_FORCE_DOMAIN_CHECK = True
 
+RESTORE_TIMING_DOMAINS = {
+    # ("env", "domain"),
+    ("production", "rec"),
+    ("softlayer", "enikshay"),
+}
+
 #### Django Compressor Stuff after localsettings overrides ####
 
 # This makes sure that Django Compressor does not run at all

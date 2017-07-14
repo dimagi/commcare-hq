@@ -1,5 +1,6 @@
 from distutils.version import LooseVersion
 
+from django.conf import settings
 from django.http import JsonResponse
 from django.urls import reverse
 from django.shortcuts import redirect
@@ -27,7 +28,6 @@ from corehq.apps.domain.decorators import (
     check_domain_migration,
     login_or_digest_or_basic_or_apikey_or_token,
 )
-from corehq.util.datadog.gauges import datadog_counter, datadog_histogram
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.es.case_search import flatten_result
@@ -37,6 +37,7 @@ from corehq.apps.ota.tasks import queue_prime_restore
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.util.datadog.gauges import datadog_counter, datadog_histogram
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from django.http import HttpResponse
@@ -45,6 +46,12 @@ from soil import MultipleTaskDownload
 from .utils import (
     demo_user_restore_response, get_restore_user, is_permitted_to_restore,
     handle_401_response, update_device_id)
+
+
+TIMED_RESTORE_SEGMENTS = {
+    "FixtureElementProvider": "fixtures",
+    "CasePayloadProvider": "cases",
+}
 
 
 @location_safe
@@ -61,15 +68,23 @@ def restore(request, domain, app_id=None):
     tags = [
         u'status_code:{}'.format(response.status_code),
     ]
+    env = settings.SERVER_ENVIRONMENT
+    if (env, domain) in settings.RESTORE_TIMING_DOMAINS:
+        tags.append(u'domain:{}'.format(domain))
     datadog_counter('commcare.restores.count', tags=tags)
     if timing_context is not None:
+        datadog_histogram(
+            'commcare.restores.total_time',
+            timing_context.duration,
+            tags=tags,
+        )
         for timer in timing_context.to_list(exclude_root=True):
-            # Only record leaf nodes so we can sum to get the total
-            if timer.is_leaf_node:
+            if timer.name in TIMED_RESTORE_SEGMENTS:
+                segment = TIMED_RESTORE_SEGMENTS[timer.name]
                 datadog_histogram(
                     'commcare.restores.timings',
                     timer.duration,
-                    tags=tags + [u'segment:{}'.format(timer.name)],
+                    tags=tags + [u'segment:{}'.format(segment)],
                 )
 
     return response
