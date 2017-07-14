@@ -134,4 +134,4 @@ class CommCareFeatureSupportMixin(object):
         """
         Ability to configure practice mobile workers for apps
         """
-        return self._require_minimum_version('2.27')
+        return self._require_minimum_version('2.26')

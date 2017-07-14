@@ -41,7 +41,7 @@
 - id: practice_mobile_worker_id
   name: 'Practice Mobile Worker'
   widget: select
-  since: '2.27'
+  since: '2.26'
   privilege: 'practice_mobile_workers'
   description: "Select the mobile worker to use as a practice user for this application"
 
