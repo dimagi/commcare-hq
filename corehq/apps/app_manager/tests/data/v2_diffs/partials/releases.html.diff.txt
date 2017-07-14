@@ -24,9 +24,7 @@
 +  {% endblocktrans %}
 +  </div>
 +{% else %}
-+
-+{% if not intro_only and build_profile_access %}
-+
++  
 +{% if request|ui_notify_enabled:"APP_BUILDER_PUBLISH" %}
 +<div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-primary helpbubble-bottom-left fade in"
 +     data-slug="{{ "APP_BUILDER_PUBLISH"|ui_notify_slug }}"
@@ -46,6 +44,8 @@
 +  </p>
 + </div>
 + {% endif %}
++
++{% if not intro_only and build_profile_access %}
 +
  <div class="tabbable">
      <ul class="nav nav-tabs">
