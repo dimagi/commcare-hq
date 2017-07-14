@@ -201,8 +201,8 @@ class LoadBasedAutoscaler(Autoscaler):
         available_cpus = multiprocessing.cpu_count()
         try:
             load_avgs = os.getloadavg()
-            max_avg = max(load_avgs[0], load_avgs[1])
-            normalized_load = max_avg / available_cpus
+            one_min_avg = load_avgs[0]
+            normalized_load = one_min_avg / available_cpus
         except OSError:
             # if we can't get the load average, let's just use normal autoscaling
             load_avgs = None
