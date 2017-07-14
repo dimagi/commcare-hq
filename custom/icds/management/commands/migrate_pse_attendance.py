@@ -22,7 +22,7 @@ INSERT INTO {new_table} (pse_daily_attendance, pse_daily_attendance_female)
 SELECT pse_days_attended, pse_days_attended
 FROM {old_table} A
 LEFT JOIN {new_table} B
-ON A.doc_id = B.doc_id and A.month_start = B.month_start
+ON A.doc_id = B.doc_id and A.month = B.month_start
 WHERE B.sex = 'M'
 """.format(new_table=new_table, old_table=old_table)
 
