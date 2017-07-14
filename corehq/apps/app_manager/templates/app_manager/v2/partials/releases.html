@@ -28,6 +28,26 @@
 
 {% if not intro_only and build_profile_access %}
 
+{% if request|ui_notify_enabled:"APP_BUILDER_PUBLISH" %}
+<div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-primary helpbubble-bottom-left fade in"
+     data-slug="{{ "APP_BUILDER_PUBLISH"|ui_notify_slug }}"
+     role="alert">
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+  <p class="lead">{% trans 'Updates to Publishing Apps' %}</p>
+  <p class="alert alert-info">
+    <i class="fa fa-info-circle"></i>
+    {% blocktrans %}
+      Instead of starring versions of your app, you can now mark them
+      as "Released" or "In Test." "Released" has the same effect as
+      starring a version.  Any version you do not mark as "Released"
+      will default to "In Test."
+    {% endblocktrans %}
+  </p>
+ </div>
+ {% endif %}
+
 <div class="tabbable">
     <ul class="nav nav-tabs">
         <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
