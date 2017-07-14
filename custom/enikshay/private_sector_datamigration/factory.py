@@ -8,11 +8,11 @@ from casexml.apps.case.mock import CaseStructure, CaseIndex
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from custom.enikshay.private_sector_datamigration.models import (
-    Adherence_Jul7,
-    Episode_Jul7,
-    EpisodePrescription_Jul7,
+    Adherence,
+    Episode,
+    EpisodePrescription,
     MigratedBeneficiaryCounter,
-    Voucher_Jul7,
+    Voucher,
 )
 from custom.enikshay.user_setup import compress_nikshay_id
 
@@ -358,10 +358,10 @@ class BeneficiaryCaseFactory(object):
         }
 
         try:
-            voucher = Voucher_Jul7.objects.get(voucherNumber=prescription.voucherID)
+            voucher = Voucher.objects.get(voucherNumber=prescription.voucherID)
             if voucher.voucherStatusId == '3':
                 kwargs['attrs']['update']['date_fulfilled'] = voucher.voucherUsedDate.date()
-        except Voucher_Jul7.DoesNotExist:
+        except Voucher.DoesNotExist:
             pass
 
         return CaseStructure(**kwargs)
@@ -369,7 +369,7 @@ class BeneficiaryCaseFactory(object):
     @property
     @memoized
     def _episode(self):
-        episodes = Episode_Jul7.objects.filter(beneficiaryID=self.beneficiary.caseId).order_by('-episodeDisplayID')
+        episodes = Episode.objects.filter(beneficiaryID=self.beneficiary.caseId).order_by('-episodeDisplayID')
         if episodes:
             return episodes[0]
         else:
@@ -379,13 +379,13 @@ class BeneficiaryCaseFactory(object):
     @memoized
     def _adherences(self):
         return list(
-            Adherence_Jul7.objects.filter(episodeId=self._episode.episodeID).order_by('-doseDate')
+            Adherence.objects.filter(episodeId=self._episode.episodeID).order_by('-doseDate')
         ) if self._episode else []
 
     @property
     @memoized
     def _prescriptions(self):
-        return list(EpisodePrescription_Jul7.objects.filter(beneficiaryId=self.beneficiary.caseId))
+        return list(EpisodePrescription.objects.filter(beneficiaryId=self.beneficiary.caseId))
 
     @property
     @memoized

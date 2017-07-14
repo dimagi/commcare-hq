@@ -14,10 +14,10 @@ from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_domain
 from corehq.apps.locations.models import SQLLocation
 from custom.enikshay.private_sector_datamigration.factory import BeneficiaryCaseFactory
 from custom.enikshay.private_sector_datamigration.models import (
-    Agency_Jul7,
-    Beneficiary_Jul7,
-    Episode_Jul7,
-    UserDetail_Jul7,
+    Agency,
+    Beneficiary,
+    Episode,
+    UserDetail,
 )
 
 logger = logging.getLogger('private_sector_datamigration')
@@ -159,11 +159,11 @@ class Command(BaseCommand):
 
 
 def get_beneficiaries_in_date_range():
-    new_episode_beneficiary_ids = Episode_Jul7.objects.filter(
+    new_episode_beneficiary_ids = Episode.objects.filter(
         creationDate__gte=date(2016, 1, 1),
     ).values('beneficiaryID')
 
-    return Beneficiary_Jul7.objects.filter(
+    return Beneficiary.objects.filter(
         (
             Q(caseStatus='suspect')
             & Q(dateOfRegn__gte=date(2017, 1, 1))
@@ -186,7 +186,7 @@ def get_beneficiaries(start, limit, case_ids, owner_state_id, owner_district_id,
         beneficiaries_query = beneficiaries_query.filter(caseId__in=case_ids)
 
     if owner_state_id or owner_district_id or owner_organisation_ids or owner_suborganisation_ids:
-        user_details = UserDetail_Jul7.objects.filter(isPrimary=True)
+        user_details = UserDetail.objects.filter(isPrimary=True)
 
         if owner_state_id:
             user_details = user_details.filter(stateId=owner_state_id)
@@ -201,12 +201,12 @@ def get_beneficiaries(start, limit, case_ids, owner_state_id, owner_district_id,
             user_details = user_details.filter(subOrganisationId__in=owner_suborganisation_ids)
 
         # Check that there is an actual agency object for the motech username
-        agency_ids = Agency_Jul7.objects.filter(agencyId__in=user_details.values('agencyId')).values('agencyId')
-        motech_usernames = UserDetail_Jul7.objects.filter(agencyId__in=agency_ids).values('motechUserName')
+        agency_ids = Agency.objects.filter(agencyId__in=user_details.values('agencyId')).values('agencyId')
+        motech_usernames = UserDetail.objects.filter(agencyId__in=agency_ids).values('motechUserName')
 
-        bene_ids_treating = Episode_Jul7.objects.filter(treatingQP__in=motech_usernames).values('beneficiaryID')
-        bene_ids_treating_away = Episode_Jul7.objects.exclude(treatingQP__in=motech_usernames).values('beneficiaryID')
-        bene_ids_from_referred = Beneficiary_Jul7.objects.filter(referredQP__in=motech_usernames).values('caseId')
+        bene_ids_treating = Episode.objects.filter(treatingQP__in=motech_usernames).values('beneficiaryID')
+        bene_ids_treating_away = Episode.objects.exclude(treatingQP__in=motech_usernames).values('beneficiaryID')
+        bene_ids_from_referred = Beneficiary.objects.filter(referredQP__in=motech_usernames).values('caseId')
 
         beneficiaries_query = beneficiaries_query.filter(
             Q(caseId__in=bene_ids_treating)
@@ -293,4 +293,4 @@ def _assert_always_null(beneficiaries_query):
     assert not beneficiaries_query.filter(nikshayId__isnull=False).exists()
     assert not beneficiaries_query.filter(symptoms__isnull=False).exists()
     assert not beneficiaries_query.filter(tsType__isnull=False).exists()
-    assert not Episode_Jul7.objects.filter(phoneNumber__isnull=False).exists()
+    assert not Episode.objects.filter(phoneNumber__isnull=False).exists()
