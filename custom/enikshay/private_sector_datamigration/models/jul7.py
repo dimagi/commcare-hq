@@ -2,26 +2,6 @@ from django.db import models
 
 from dimagi.utils.decorators.memoized import memoized
 
-# DO NOT DELETE - needed for makemigrations
-from custom.enikshay.private_sector_datamigration.archived_models.jun14 import (
-    Adherence_Jun14,
-    Agency_Jun14,
-    Beneficiary_Jun14,
-    Episode_Jun14,
-    EpisodePrescription_Jun14,
-    UserDetail_Jun14,
-    Voucher_Jun14,
-)
-from custom.enikshay.private_sector_datamigration.archived_models.jun30 import (
-    Adherence_Jun30,
-    Agency_Jun30,
-    Beneficiary_Jun30,
-    Episode_Jun30,
-    EpisodePrescription_Jun30,
-    UserDetail_Jun30,
-    Voucher_Jun30,
-)
-
 REPORTING_MECHANISM_MISSED_CALL = 83
 REPORTING_MECHANISM_99_DOTS = 84
 REPORTING_MECHANISM_FIELD_OFFICER = 85
@@ -744,12 +724,3 @@ class UserDetail_Jul7(models.Model):
     valid = models.BooleanField()
     villageTownCity = models.CharField(max_length=256, null=True)
     wardId = models.CharField(max_length=256, null=True)
-
-
-class MigratedBeneficiaryCounter(models.Model):
-    id = models.AutoField(primary_key=True)
-
-    @classmethod
-    def get_next_counter(cls):
-        counter = MigratedBeneficiaryCounter.objects.create()
-        return counter.id
