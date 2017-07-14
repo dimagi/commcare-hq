@@ -1,3 +1,4 @@
+from custom.enikshay.reports.adherence import AdherenceReport
 from custom.enikshay.reports.case_finding import CaseFindingReport
 from custom.enikshay.reports.historical_adherence import HistoricalAdherenceReport
 from custom.enikshay.reports.treatment_outcome import TreatmentOutcomeReport
@@ -10,8 +11,9 @@ CUSTOM_REPORTS = (
         WebDashboardReport,
         CaseFindingReport,
         TreatmentOutcomeReport,
+        AdherenceReport,
         HistoricalAdherenceReport,
         ENikshayForwarderReport,
-        EnikshayWorkerActivityReport
+        EnikshayWorkerActivityReport,
     )),
 )
