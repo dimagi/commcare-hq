@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,206 +1,74 @@
+@@ -1,206 +1,71 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -68,9 +68,6 @@
 +
 +{% block pre_form_content %}
 +  <div class="appmanager-page-actions">
-+      {% if can_preview_form %}
-+        {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
-+      {% endif %}
 +      {% include 'app_manager/v2/partials/app_summary_button.html' %}
 +  </div>
 +
