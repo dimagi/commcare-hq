@@ -318,19 +318,26 @@ def _save_document_helper(indicator, doc):
         except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
             celery_task_logger.info("{} no longer exists, skipping".format(config_id))
             continue
+        except ESError:
+            celery_task_logger.info("ES errored when trying to retrieve config")
+            something_failed = True
+            return
         try:
             adapter = get_indicator_adapter(config, can_handle_laboratory=True)
             adapter.save(doc, eval_context)
             eval_context.reset_iteration()
         except (DatabaseError, ESError, InternalError, RequestError,
                 ConnectionTimeout, ProtocolError, ReadTimeout):
-            # a database had an issue so don't log it and go on to the next config
+            # a database had an issue so log it and go on to the next document
+            celery_task_logger.info("DB error when saving config: {}".format(config_id))
             something_failed = True
+            return
         except Exception as e:
             # getting the config could fail before the adapter is set
             if adapter:
                 adapter.handle_exception(doc, e)
             something_failed = True
+            return
 
     return not something_failed
 
