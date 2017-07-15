@@ -64,6 +64,9 @@ class ReportFixturesProvider(FixtureProvider):
         if not toggles.MOBILE_UCR.enabled(restore_user.domain) or not _should_sync(restore_state):
             return []
 
+        if toggles.PREVENT_MOBILE_UCR_SYNC.enabled(restore_user.domain):
+            return []
+
         app_aware_sync_app = restore_state.params.app
         if app_aware_sync_app:
             apps = [app_aware_sync_app]
