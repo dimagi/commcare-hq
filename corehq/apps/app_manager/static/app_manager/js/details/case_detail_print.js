@@ -1,5 +1,5 @@
 /* globals BaseMediaReference, HQMediaFileUploadController */
-hqDefine("app_manager/js/case_detail_print.js", function() {
+hqDefine("app_manager/js/details/case_detail_print.js", function() {
     var print_ref, printTemplateUploader;
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get,
         print_uploader = initial_page_data("print_uploader_js");

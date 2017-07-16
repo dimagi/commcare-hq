@@ -1384,7 +1384,7 @@ hqDefine('app_manager/js/detail-screen-config.js', function () {
                     );
                 }
                 if (spec.state.long !== undefined) {
-                    var printModule = hqImport("app_manager/js/case_detail_print.js"),
+                    var printModule = hqImport("app_manager/js/details/case_detail_print.js"),
                         printRef = printModule.getPrintRef(),
                         printTemplateUploader = printModule.getPrintTemplateUploader();
                     this.longScreen = addScreen(spec.state, "long");
