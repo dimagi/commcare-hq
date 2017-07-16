@@ -1,5 +1,5 @@
 /* globals analytics, COMMCAREHQ, SyntaxHighlighter, Util, django */
-hqDefine("app_manager/js/form_view.js", function() {
+hqDefine("app_manager/js/forms/form_view.js", function() {
     var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
     hqImport('app_manager/js/app_manager.js').setAppendedPageTitle(django.gettext("Form Settings"));
 
