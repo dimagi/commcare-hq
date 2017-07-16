@@ -144,7 +144,7 @@ $(function () {
 
     if (moduleType === 'shadow') {
         // Shadow module checkboxes for including/excluding forms
-        var ShadowModule = hqImport('app_manager/js/shadow-module-settings.js').ShadowModule,
+        var ShadowModule = hqImport('app_manager/js/modules/shadow_module_settings.js').ShadowModule,
             shadowOptions = initial_page_data('shadow_module_options');
         $('#sourceModuleForms').koApplyBindings(new ShadowModule(
             shadowOptions.modules,

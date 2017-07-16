@@ -27,7 +27,7 @@
  {% block js-inline %}{{ block.super }}
      {% include 'hqmedia/partials/multimedia_js.html' %}
 @@ -36,90 +40,92 @@
-     <script src="{% static 'app_manager/js/shadow-module-settings.js' %}"></script>
+     <script src="{% static 'app_manager/js/modules/shadow_module_settings.js' %}"></script>
  
      {% include 'style/partials/key_value_mapping.html' %}
 -    {% include 'app_manager/v1/partials/graph_configuration_modal.html' %}
