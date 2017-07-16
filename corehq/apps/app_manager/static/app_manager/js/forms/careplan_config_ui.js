@@ -1,4 +1,4 @@
-hqDefine('app_manager/js/careplan-config-ui.js', function () {
+hqDefine('app_manager/js/forms/careplan_config_ui.js', function () {
     'use strict';
     var caseConfigUtils = hqImport('app_manager/js/case-config-utils.js');
     var PropertyBase = {
