@@ -6,21 +6,6 @@
            id="filter_date_selector"
            name="date"
            value="{{ date|date:'Y-m-d' }}"
+           data-init="{% if slug == 'date' %}1{% endif %}"
            class="form-control" />
-{% endblock %}
-{% block filter_js %}
-{% ifequal slug 'date'  %}
-    <script>
-        $(function () {
-            $('#filter_date_selector').daterangepicker(
-                {
-                    locale: {
-                        format: 'YYYY-MM-DD'
-                    },
-                    singleDatePicker: true
-                }
-            );
-        });
-    </script>
-{% endifequal %}
 {% endblock %}

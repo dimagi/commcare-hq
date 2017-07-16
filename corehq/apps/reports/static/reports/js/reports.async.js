@@ -53,6 +53,19 @@ var HQAsyncReport = function (o) {
             });
         }
 
+        // Date selector
+        var $dateSelector = $("#filter_date_selector");
+        if ($dateSelector.length && $dateSelector.data("init")) {
+            $('#filter_date_selector').daterangepicker(
+                {
+                    locale: {
+                        format: 'YYYY-MM-DD'
+                    },
+                    singleDatePicker: true
+                }
+            );
+        }
+
         // Initialize any help bubbles
         $('.hq-help-template').each(function () {
             COMMCAREHQ.transformHelpTemplate($(this), true);
