@@ -18,6 +18,7 @@ FROM {old_table} A
 WHERE A.doc_id = B.doc_id and A.month_start = B.month_start
 """.format(new_table=new_table, old_table=old_table)
 
+
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
