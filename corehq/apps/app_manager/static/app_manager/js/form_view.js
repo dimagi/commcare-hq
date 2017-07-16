@@ -121,7 +121,7 @@ hqDefine("app_manager/js/form_view.js", function() {
         }
 
         if (initial_page_data('allow_form_workflow')) {
-            var FormWorkflow = hqImport('app_manager/js/form_workflow.js').FormWorkflow;
+            var FormWorkflow = hqImport('app_manager/js/forms/form_workflow.js').FormWorkflow;
             var labels = {};
             labels[FormWorkflow.Values.DEFAULT] = gettext("Home Screen");
             labels[FormWorkflow.Values.ROOT] = gettext("Module Menu");

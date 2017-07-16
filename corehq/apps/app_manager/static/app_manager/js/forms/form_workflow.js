@@ -1,6 +1,6 @@
 /* global ko, _, $ */
 
-hqDefine('app_manager/js/form_workflow.js', function() {
+hqDefine('app_manager/js/forms/form_workflow.js', function() {
     'use strict';
 
     var FormWorkflow = function (options) {
