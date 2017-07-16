@@ -35,10 +35,10 @@ var HQAsyncReport = function (o) {
         self.filterRequest = null;
         try {
             $('#hq-report-filters').html(data.filters);
+            hqImport("reports/js/filters.js").init();
         } catch (e) {
             console.log(e);
         }
-        hqImport("reports/js/filters.js").init();
         $('#reportFiltersAccordion').removeClass('hide');
         self.standardReport.resetFilterState();
     };
