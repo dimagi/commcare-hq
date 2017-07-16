@@ -24,3 +24,5 @@ class Command(BaseCommand):
         with connections['icds-ucr'].cursor() as cursor:
             print('Migrating pse data')
             cursor.execute(migration_query)
+            print('Vacuuming table')
+            cursor.execute("VACUUM ANALYZE {}".format(new_table))
