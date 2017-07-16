@@ -3029,7 +3029,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 class ShadowForm(AdvancedForm):
     form_type = 'shadow_form'
     # The unqiue id of the form we are shadowing
-    shadow_parent_form_id = StringProperty(required=False, default=None)
+    shadow_parent_form_id = FormIdProperty("modules[*].forms[*].shadow_parent_form_id")
 
     # form actions to be merged with the parent actions
     extra_actions = SchemaProperty(AdvancedFormActions)
