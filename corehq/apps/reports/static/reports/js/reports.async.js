@@ -1,3 +1,4 @@
+// This file depends on reports/js/filters.js
 var HQAsyncReport = function (o) {
     'use strict';
     var self = this;
@@ -30,7 +31,6 @@ var HQAsyncReport = function (o) {
         504: gettext("Gateway Timeout. Please contact CommCare HQ Support."),
     };
 
-
     var loadFilters = function (data) {
         self.filterRequest = null;
         try {
@@ -38,6 +38,7 @@ var HQAsyncReport = function (o) {
         } catch (e) {
             console.log(e);
         }
+        hqImport("reports/js/filters.js").init();
         $('#reportFiltersAccordion').removeClass('hide');
         self.standardReport.resetFilterState();
     };
