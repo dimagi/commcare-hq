@@ -164,7 +164,7 @@ hqDefine("app_manager/js/forms/form_view.js", function() {
         }
 
         if (COMMCAREHQ.toggleEnabled('CUSTOM_INSTANCES')) {
-            var customInstances = hqImport('app_manager/js/custom_intances.js').wrap({
+            var customInstances = hqImport('app_manager/js/forms/custom_instances.js').wrap({
                 customInstances: initial_page_data('custom_instances'),
             });
             $('#custom-instances').koApplyBindings(customInstances);

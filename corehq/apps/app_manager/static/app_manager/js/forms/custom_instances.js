@@ -1,5 +1,5 @@
 /* globals ko */
-hqDefine('app_manager/js/custom_intances.js', function() {
+hqDefine('app_manager/js/forms/custom_instances.js', function() {
     'use strict';
 
     var CustomInstance = function(instanceId, instancePath){
