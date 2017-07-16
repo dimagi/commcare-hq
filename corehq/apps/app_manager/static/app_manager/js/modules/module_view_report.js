@@ -2,9 +2,9 @@ hqDefine("app_manager/js/modules/module_view_report.js", function() {
     $(function () {
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
         var initNavMenuMedia = hqImport('app_manager/js/app_manager_media.js').initNavMenuMedia;
-        var select2Separator = hqImport('app_manager/js/report-module.js').select2Separator;
-        var ReportModule = hqImport('app_manager/js/report-module.js').ReportModule;
-        var StaticFilterData = hqImport('app_manager/js/report-module.js').StaticFilterData;
+        var select2Separator = hqImport('app_manager/js/modules/report_module.js').select2Separator;
+        var ReportModule = hqImport('app_manager/js/modules/report_module.js').ReportModule;
+        var StaticFilterData = hqImport('app_manager/js/modules/report_module.js').StaticFilterData;
         // Hacky: report modules only deal with one kind of multimedia (the menu image/audio),
         // so assume nav_menu_media_specifics has one element.
         var navMenuMediaItem = initial_page_data("nav_menu_media_specifics")[0];
