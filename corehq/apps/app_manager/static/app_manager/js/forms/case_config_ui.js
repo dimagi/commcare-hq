@@ -1,6 +1,6 @@
 /*globals $, COMMCAREHQ, ko, _*/
 
-hqDefine('app_manager/js/case-config-ui.js', function () {
+hqDefine('app_manager/js/forms/case_config_ui.js', function () {
     "use strict";
     var caseConfigUtils = hqImport('app_manager/js/case-config-utils.js');
     var action_names = ["open_case", "update_case", "close_case", "case_preload",
