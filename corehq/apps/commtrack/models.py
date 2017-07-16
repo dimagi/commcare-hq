@@ -459,11 +459,10 @@ class StockExportColumn(ComplexExportColumn):
         return values
 
 
-def _make_location_admininstrative(location):
+def close_supply_point_case(location):
     supply_point_id = location.supply_point_id
     if supply_point_id:
         close_case(supply_point_id, location.domain, const.COMMTRACK_USERNAME)
-    location.supply_point_id = None  # this will be saved soon anyways
 
 
 def _reopen_or_create_supply_point(location):
@@ -484,18 +483,20 @@ def _reopen_or_create_supply_point(location):
         return SupplyInterface.create_from_location(location.domain, location)
 
 
-def sync_supply_point(location):
-    # Called on location.save()
-    domain = Domain.get_by_name(location.domain)
-    if not domain.commtrack_enabled:
+def sync_supply_point(location, is_deletion=False):
+    """Called on location save() or delete().  Updates the supply_point_id if appropriate"""
+    domain_obj = Domain.get_by_name(location.domain)
+    if not domain_obj.commtrack_enabled:
         return None
 
-    if location.location_type.administrative:
-        _make_location_admininstrative(location)
-        return None
+    if location.location_type.administrative or is_deletion:
+        close_supply_point_case(location)
+        location.supply_point_id = None
+    elif location.is_archived:
+        close_supply_point_case(location)
     else:
         updated_supply_point = _reopen_or_create_supply_point(location)
-        return updated_supply_point.case_id
+        location.supply_point_id = updated_supply_point.case_id
 
 
 @receiver(post_save, sender=StockState)

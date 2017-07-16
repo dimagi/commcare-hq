@@ -1,5 +1,6 @@
 import os
 from unittest import SkipTest
+import mock
 
 import requests
 from django.test import SimpleTestCase
@@ -32,9 +33,10 @@ class TestRealBuild(SimpleTestCase):
             ))
 
         response.raise_for_status()
-        app = Application.wrap(response.json())
-        app.create_all_files()
+        with mock.patch.object(Application, 'enable_practice_users', return_value=False):
+            app = Application.wrap(response.json())
+            app.create_all_files()
 
-    @flag_enabled('FORMTRANSLATE_FORM_VALIDATION')
+    @mock.patch('corehq.apps.app_manager.models.validate_xform', lambda domain, source: None)
     def test_real_build(self):
         self.fetch_and_build_app('commcare-tests', 'ae3c6e073262360f89d2630cfd220bd3')

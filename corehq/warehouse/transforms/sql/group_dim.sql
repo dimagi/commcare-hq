@@ -7,7 +7,8 @@ INSERT INTO {{ group_dim }} (
     group_last_modified,
     deleted,
     dim_last_modified,
-    dim_created_on
+    dim_created_on,
+    batch_id
 )
 SELECT
     group_id,
@@ -21,6 +22,7 @@ SELECT
         WHEN doc_type LIKE 'Group-Deleted%' THEN true
     END,
     now(),
-    now()
+    now(),
+    '{{ batch_id }}'
 FROM
     {{ group_staging }}

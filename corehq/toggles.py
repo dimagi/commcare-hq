@@ -822,6 +822,13 @@ BETS_INTEGRATION = StaticToggle(
     always_enabled={"enikshay"},
 )
 
+OPENMRS_INTEGRATION = StaticToggle(
+    'openmrs_integration',
+    'Enable OpenMRS integration',
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+)
+
 MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     'multiple_choice_custom_field',
     'Allow project to use multiple choice field in custom fields',
@@ -1130,13 +1137,6 @@ LINKED_APPS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-FORMTRANSLATE_FORM_VALIDATION = StaticToggle(
-    'formtranslate_form_validation',
-    'Use formtranslate to validate XForms',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN]
-)
-
 LOCATION_USERS = StaticToggle(
     'location_users',
     'Autogenerate users for each location',
@@ -1256,6 +1256,20 @@ ENTERPRISE_OPTIMIZATIONS = StaticToggle(
 DISPLAY_CONDITION_ON_TABS = StaticToggle(
     'display_condition_on_nodeset',
     'Show Display Condition on Case Detail Tabs',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+PHONE_HEARTBEAT = StaticToggle(
+    'phone_apk_heartbeat',
+    'Expose phone apk heartbeat URL and add it profile.xml',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+SKIP_REMOVE_INDICES = StaticToggle(
+    'skip_remove_indices',
+    'Make _remove_indices_from_deleted_cases_task into a no-op.',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )

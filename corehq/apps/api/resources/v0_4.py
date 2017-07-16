@@ -32,6 +32,7 @@ from corehq.motech.repeaters.models import Repeater
 from corehq.motech.repeaters.utils import get_all_repeater_types
 from corehq.apps.users.models import CouchUser, Permissions
 from corehq.apps.users.util import format_username
+from corehq.util.view_utils import absolute_reverse
 from couchforms.models import doc_types
 from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 from no_exceptions.exceptions import Http400
@@ -88,14 +89,18 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         if not attachments_dict:
             return {}
 
-        def _normalize_meta(meta):
+        domain = bundle.obj.domain
+        form_id = bundle.obj._id
+
+        def _normalize_meta(name, meta):
             return {
                 'content_type': meta.content_type,
                 'length': meta.content_length,
+                'url': absolute_reverse('api_form_attachment', args=(domain, form_id, name))
             }
 
         return {
-            name: _normalize_meta(meta) for name, meta in attachments_dict.items()
+            name: _normalize_meta(name, meta) for name, meta in attachments_dict.items()
         }
 
     is_phone_submission = fields.BooleanField(readonly=True)
@@ -105,6 +110,12 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
             getattr(bundle.obj, 'openrosa_headers', None)
             and bundle.obj.openrosa_headers.get('HTTP_X_OPENROSA_VERSION')
         )
+
+    edited_by_user_id = fields.CharField(readonly=True, null=True)
+
+    def dehydrate_edited_by_user_id(self, bundle):
+        if bundle.obj.edited_on:
+            return (getattr(bundle.obj, 'auth_context') or {}).get('user_id', None)
 
     def obj_get(self, bundle, **kwargs):
         instance_id = kwargs['pk']

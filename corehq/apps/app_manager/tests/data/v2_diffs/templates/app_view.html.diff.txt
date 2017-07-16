@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,204 +1,77 @@
+@@ -1,206 +1,71 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -68,13 +68,7 @@
 +
 +{% block pre_form_content %}
 +  <div class="appmanager-page-actions">
-+      {% if can_preview_form %}
-+        {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
-+      {% endif %}
-+      <a href="{% url "app_summary" domain app.id %}" class="btn btn-default">
-+          <i class="fa fa-list-alt"></i>
-+          {% trans "App Summary" %}
-+      </a>
++      {% include 'app_manager/v2/partials/app_summary_button.html' %}
 +  </div>
 +
 +  <div class="appmanager-edit-title appmanager-edit-app-title">
@@ -108,6 +102,8 @@
 -    {% initial_page_data 'app_version' app.version %}
 -    {% initial_page_data 'domain_names' domain_names %}
 -    {% initial_page_data 'fetch_limit' fetchLimit %}
+-    {% initial_page_data 'practice_users' practice_users %}
+-    {% initial_page_data 'enable_practice_users' app.enable_practice_users %}
 -    {% initial_page_data 'is_remote_app' app.is_remote_app %}
 -    {% initial_page_data 'is_superuser' request.user.is_superuser %}
 -    {% initial_page_data 'lang' lang %}

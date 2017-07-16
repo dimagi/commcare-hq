@@ -669,6 +669,7 @@ class ViewMultimediaFile(View):
 
 def iter_index_files(app, build_profile_id=None):
     from corehq.apps.app_manager.views.download import download_index_files
+    from dimagi.utils.logging import notify_exception
     skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
     text_extensions = ('.xml', '.ccpr', '.txt')
     files = []
@@ -692,6 +693,7 @@ def iter_index_files(app, build_profile_id=None):
     try:
         files = download_index_files(app, build_profile_id)
     except Exception as e:
+        notify_exception(None, e.message)
         errors = [unicode(e)]
 
     return _files(files), errors

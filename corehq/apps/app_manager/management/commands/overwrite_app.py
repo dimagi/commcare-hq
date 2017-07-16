@@ -12,6 +12,8 @@ class Command(BaseCommand):
 
     args = "<from_domain> <from_app_id> <to_domain> <to_app_id>"
 
+    _report_map = None
+
     def add_arguments(self, parser):
         parser.add_argument('from_domain')
         parser.add_argument('from_app_id')

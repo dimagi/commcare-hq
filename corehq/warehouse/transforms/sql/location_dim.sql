@@ -25,7 +25,8 @@ INSERT INTO {{ location_dim }} (
     dim_last_modified,
     dim_created_on,
     -- TODO: Figure out how to handle deletes when we actually hard deleted the model
-    deleted
+    deleted,
+    batch_id
 )
 
 SELECT
@@ -53,7 +54,8 @@ SELECT
 
     now(),
     now(),
-    false
+    false,
+    '{{ batch_id }}'
 FROM
     {{ location_staging }} as l_table
 INNER JOIN

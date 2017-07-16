@@ -252,7 +252,6 @@ HQ_APPS = (
     'couchforms',
     'couchexport',
     'dimagi.utils',
-    'formtranslate',
     'langcodes',
     'corehq.apps.data_dictionary',
     'corehq.apps.analytics',
@@ -375,6 +374,7 @@ HQ_APPS = (
     'custom.pnlppgi',
     'custom.nic_compliance',
     'custom.hki',
+    'corehq.motech.openmrs',
 )
 
 ENIKSHAY_APPS = (
@@ -384,6 +384,7 @@ ENIKSHAY_APPS = (
     'custom.enikshay.integrations.nikshay',
     'custom.enikshay.integrations.bets',
     'custom.enikshay.private_sector_datamigration',
+    'custom.enikshay.two_b_datamigration',
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
@@ -596,6 +597,9 @@ CELERY_REPEAT_RECORD_QUEUE = CELERY_MAIN_QUEUE
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
 CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
+
+# tuple of (time_start, time_end) of off peak times for async processing queues to use
+OFF_PEAK_TIME = None
 
 # websockets config
 WEBSOCKET_URL = '/ws/'
@@ -1560,6 +1564,12 @@ MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 
 # Used by the old reminders framework
 AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
+    'HOST_CASE_OWNER_LOCATION':
+        ['corehq.apps.reminders.custom_recipients.host_case_owner_location',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location)"],
+    'HOST_CASE_OWNER_LOCATION_PARENT':
+        ['corehq.apps.reminders.custom_recipients.host_case_owner_location_parent',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
     'CASE_OWNER_LOCATION_PARENT':
         ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent',
          "Abt: The case owner's location's parent location"],
@@ -1761,6 +1771,7 @@ BASE_REPEATERS = (
     'corehq.motech.repeaters.models.AppStructureRepeater',
     'corehq.motech.repeaters.models.UserRepeater',
     'corehq.motech.repeaters.models.LocationRepeater',
+    'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
 )
 
 ENIKSHAY_REPEATERS = (
@@ -1859,6 +1870,8 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_timely_home_visits.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ccs_record_cases.json'),
 
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'adherence.json'),
+
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'sputum_conversion.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_hiv.json'),
@@ -1880,7 +1893,24 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'lab_register_for_culture.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'rntcp_pmdt_treatment_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'referral_report.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'drug_voucher.json'),
 
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'tb_notification_register.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'sputum_conversion.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'tb_hiv.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'lab_monthly_summary.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'tb_lab_register.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'new_patient_summary_dmc.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'summary_of_patients.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'mdr_suspects.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'patient_overview_mobile.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'patients_due_to_follow_up.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'summary_of_treatment_outcome_mobile.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'case_finding_mobile.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'monitoring_indicators_treatment_outcome.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'monitoring_indicators_general.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'monitoring_indicators_tb_hiv.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'cc_outbound_call_list.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'payment_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'beneficiary_register.json'),
 ]
@@ -1903,13 +1933,11 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_v2.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_tableau.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ccs_record_cases_monthly_tableau2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_cases_monthly_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'child_health_cases_monthly_tableau2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'daily_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'gm_forms.json'),
@@ -1918,7 +1946,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'household_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'infrastructure_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'ls_home_visit_forms_filled.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
@@ -1934,6 +1961,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'person_for_referral_report.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'episode.json'),
+    os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'episode_for_adherence_report.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'test.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'voucher.json'),
 
@@ -2100,6 +2128,7 @@ DOMAIN_MODULE_MAP = {
     'enikshay-uatbc-migration-test-18': 'custom.enikshay',
     'enikshay-uatbc-migration-test-19': 'custom.enikshay',
     'sheel-enikshay': 'custom.enikshay',
+    'enikshay-reports-qa': 'custom.enikshay',
 
     'crs-remind': 'custom.apps.crs_reports',
 
@@ -2116,6 +2145,12 @@ DOMAIN_MODULE_MAP = {
 }
 
 CASEXML_FORCE_DOMAIN_CHECK = True
+
+RESTORE_TIMING_DOMAINS = {
+    # ("env", "domain"),
+    ("production", "rec"),
+    ("softlayer", "enikshay"),
+}
 
 #### Django Compressor Stuff after localsettings overrides ####
 

@@ -425,7 +425,7 @@ hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
                         fixture_tag: '',
                         fixture_variable: '',
                         case_property: '',
-                        auto_select: (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) ? '' : false,
+                        auto_select: false,
                         arbitrary_datum_id: '',
                         arbitrary_datum_function: '',
                     };

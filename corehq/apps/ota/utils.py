@@ -218,5 +218,6 @@ def handle_401_response(f):
 def update_device_id(user, device_id):
     if device_id and isinstance(user, CommCareUser):
         if not user.is_demo_user:
-            user.update_device_id_last_used(device_id)
-            user.save()
+            updated = user.update_device_id_last_used(device_id)
+            if updated:
+                user.save()

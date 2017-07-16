@@ -540,9 +540,8 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
 
     @property
     @memoized
-    def has_submisions(self):
-        from couchforms.analytics import get_first_form_submission_received
-        return get_first_form_submission_received(self.domain) is not None
+    def default_datespan(self):
+        return datespan_from_beginning(self.domain_object, self.timezone)
 
     @property
     def page_context(self):
@@ -556,11 +555,22 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
             'check_for_multimedia': self.check_for_multimedia,
             'is_sms_export': self.sms_export,
         }
-        context.update({
-            'default_date_range': _('Export All Data'),
-        })
-        if not self.has_submisions:
+        if (
+            self.default_datespan.startdate is not None
+            and self.default_datespan.enddate is not None
+        ):
             context.update({
+                'default_date_range': '{startdate}{separator}{enddate}'.format(
+                    startdate=self.default_datespan.startdate.strftime('%Y-%m-%d'),
+                    enddate=self.default_datespan.enddate.strftime('%Y-%m-%d'),
+                    separator=DateRangePickerWidget.separator,
+                ),
+            })
+        else:
+            context.update({
+                'default_date_range': _(
+                    "You have no submissions in this project."
+                ),
                 'show_no_submissions_warning': True,
             })
 
@@ -673,13 +683,14 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
         try:
             download_id = in_data['download_id']
         except KeyError:
-            return format_angular_error(_("Requires a download id"))
+            return format_angular_error(_("Requires a download id"), log_error=False)
         try:
             context = get_download_context(download_id)
         except TaskFailedError:
             return format_angular_error(
                 _("Download Task Failed to Start. It seems that the server "
-                  "might be under maintenance.")
+                  "might be under maintenance."),
+                log_error=False,
             )
         if context.get('is_ready', False):
             context.update({
@@ -775,14 +786,10 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
         """
         try:
             download = self._get_download_task(in_data)
-        except ExportAsyncException as e:
-            return format_angular_error(e.message)
-        except Exception as e:
-            return format_angular_error(
-                e.message,
-                log_error=True,
-                exception=e,
-            )
+        except ExportAsyncException:
+            return format_angular_error(_("There was an error."), log_error=True)
+        except Exception:
+            return format_angular_error(_("There was an error."), log_error=True)
         return format_angular_success({
             'download_id': download.download_id,
         })
@@ -853,8 +860,8 @@ class DownloadFormExportView(BaseDownloadExportView):
                     export_object.app_id,
                     getattr(export_object, 'xmlns', '')
                 )
-        except Exception as e:
-            return format_angular_error(e.message)
+        except Exception:
+            return format_angular_error(_("There was an error"), log_error=True)
         return format_angular_success({
             'hasMultimedia': has_multimedia,
         })
@@ -880,8 +887,8 @@ class DownloadFormExportView(BaseDownloadExportView):
                                                           download.download_id)
             from corehq.apps.reports.tasks import build_form_multimedia_zip
             download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
-        except Exception as e:
-            return format_angular_error(str(e))
+        except Exception:
+            return format_angular_error(_("There was an error"), log_error=True)
         return format_angular_success({
             'download_id': download.download_id,
         })
@@ -1191,7 +1198,6 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
             return format_angular_error(
                 _("Issue fetching list of exports: {}").format(e),
                 log_error=True,
-                exception=e,
             )
         return format_angular_success({
             'exports': saved_exports,
@@ -1254,17 +1260,20 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
             form_data = in_data['formData']
         except KeyError:
             return format_angular_error(
-                _("The form's data was not correctly formatted.")
+                _("The form's data was not correctly formatted."),
+                log_error=False,
             )
         try:
             create_url = self.get_create_export_url(form_data)
         except ExportFormValidationException:
             return format_angular_error(
-                _("The form did not validate.")
+                _("The form did not validate."),
+                log_error=False,
             )
         except Exception as e:
             return format_angular_error(
                 _("Problem getting link to custom export form: {}").format(e),
+                log_error=False,
             )
         return format_angular_success({
             'url': create_url,
@@ -1384,18 +1393,10 @@ class DailySavedExportListView(BaseExportListView):
         try:
             rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
             response = rmi_helper.get_dual_model_rmi_response()
-        except Exception as e:
-            message = "Problem getting Create Daily Saved Export Form: {} {}"
-            notify_exception(
-                self.request,
-                message=message.format(
-                    e.__class__, e
-                )
-            )
+        except Exception:
             return format_angular_error(
-                _(message).format(
-                    e.__class__, e
-                ),
+                _("Problem getting Create Daily Saved Export Form"),
+                log_error=True,
             )
         return format_angular_success(response)
 
@@ -1457,11 +1458,12 @@ class DailySavedExportListView(BaseExportListView):
                     rebuild_export_task.delay(export_id)
                 return format_angular_success()
             else:
-                return format_angular_error("Problem saving dashboard feed filters: Invalid form")
-        except Exception as e:
-            msg = "Problem saving dashboard feed filters: {} {}"
-            notify_exception(self.request, message=msg.format(e.__class__, e))
-            return format_angular_error(_(msg).format(e.__class__, e))
+                return format_angular_error(
+                    _("Problem saving dashboard feed filters: Invalid form"),
+                    log_error=True)
+        except Exception:
+            return format_angular_error(_("Problem saving dashboard feed filters"),
+                                        log_error=True)
 
 
 @location_safe
@@ -1684,13 +1686,10 @@ class FormExportListView(BaseExportListView):
         try:
             rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
             response = rmi_helper.get_form_rmi_response()
-        except Exception as e:
+        except Exception:
             return format_angular_error(
-                _("Problem getting Create Export Form: {} {}").format(
-                    e.__class__, e
-                ),
+                _("Problem getting Create Export Form"),
                 log_error=True,
-                exception=e,
             )
         return format_angular_success(response)
 
@@ -1831,11 +1830,10 @@ class CaseExportListView(BaseExportListView):
         try:
             rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
             response = rmi_helper.get_case_rmi_response()
-        except Exception as e:
+        except Exception:
             return format_angular_error(
-                _("Problem getting Create Export Form: {}").format(e.message),
+                _("Problem getting Create Export Form"),
                 log_error=True,
-                exception=e,
             )
         return format_angular_success(response)
 

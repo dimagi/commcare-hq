@@ -146,11 +146,8 @@ hqDefine("app_manager/js/form_designer.js", function() {
                     $('#js-fd-manage-case').html(),
                     0,
                     function () {
-                        previewApp.appendToggleTo('.fd-form-actions', $('#js-fd-app-preview-btn-template').html());
                     }
                 );
-            } else {
-                previewApp.appendToggleTo('.fd-form-actions', $('#js-fd-app-preview-btn-template').html());
             }
 
             var reverse = hqImport("hqwebapp/js/urllib.js").reverse,

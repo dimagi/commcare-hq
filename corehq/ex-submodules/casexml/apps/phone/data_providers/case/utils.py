@@ -13,12 +13,6 @@ class CaseSyncUpdate(object):
 
     def __init__(self, case, sync_token, required_updates=None):
         self.case = case
-        self.case_id = case.case_id
-        self.case_indices = case.indices
-        self.is_extension = any([index for index in self.case_indices
-                                 if index.relationship == const.CASE_INDEX_EXTENSION])
-        self.is_child = any([index for index in self.case_indices
-                             if index.relationship == const.CASE_INDEX_CHILD])
         self.sync_token = sync_token
         # cache this property since computing it can be expensive
         self.required_updates = required_updates if required_updates is not None else self._get_required_updates()
@@ -41,10 +35,10 @@ class CaseSyncUpdate(object):
 def get_case_sync_updates(domain, cases, last_sync_log):
     """
     Given a domain, list of cases, and sync log representing the last
-    sync, return a dict of CaseSyncUpdate objects (keyed by case_id)
-    that should be applied to the next sync.
+    sync, return a list of CaseSyncUpdate objects that should be applied
+    to the next sync.
     """
-    case_updates_to_sync = {}
+    case_updates_to_sync = []
 
     def _approximate_domain_match(case):
         # if both objects have a domain then make sure they're the same, but if
@@ -54,6 +48,6 @@ def get_case_sync_updates(domain, cases, last_sync_log):
     for case in cases:
         sync_update = CaseSyncUpdate(case, last_sync_log)
         if sync_update.required_updates and _approximate_domain_match(case):
-            case_updates_to_sync[case.case_id] = sync_update
+            case_updates_to_sync.append(sync_update)
 
     return case_updates_to_sync
