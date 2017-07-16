@@ -17,7 +17,7 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
-    <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/graph_config.js' %}"></script>
     {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
         <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
         <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>

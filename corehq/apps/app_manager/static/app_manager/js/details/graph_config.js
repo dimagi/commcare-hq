@@ -1,5 +1,5 @@
 /* global Clipboard */
-hqDefine('app_manager/js/graph-config.js', function () {
+hqDefine('app_manager/js/details/graph_config.js', function () {
     /**
      * Create a view model that is bound to an "Edit graph" button. The ui property
      * of this view model allows us to integrate the knockout elements with the

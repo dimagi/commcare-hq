@@ -12,7 +12,7 @@ hqDefine('app_manager/js/modules/report_module.js', function () {
         graph_configs = graph_configs || {};
 
         self.graphUiElements = {};
-        var GraphConfigurationUiElement = hqImport('app_manager/js/graph-config.js').GraphConfigurationUiElement;
+        var GraphConfigurationUiElement = hqImport('app_manager/js/details/graph_config.js').GraphConfigurationUiElement;
         for (var i = 0; i < availableReportIds.length; i++) {
             var currentReportId = availableReportIds[i];
             self.graphUiElements[currentReportId] = {};
