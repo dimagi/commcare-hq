@@ -59,9 +59,9 @@ var HQAsyncReport = function (o) {
             $('#filter_date_selector').daterangepicker(
                 {
                     locale: {
-                        format: 'YYYY-MM-DD'
+                        format: 'YYYY-MM-DD',
                     },
-                    singleDatePicker: true
+                    singleDatePicker: true,
                 }
             );
         }
