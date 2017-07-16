@@ -1,5 +1,9 @@
 {% load hq_shared_tags %}
 
+
+{% initial_page_data 'context' context %}
+{% initial_page_data 'icon_path' 'leaflet/dist/images'|static %}
+
 <div class="panel panel-default">
     <div class="panel-heading">
         <h2 class="panel-title">
@@ -11,12 +15,13 @@
             {% block js-script %}
             <script>
 
-            CONTEXT = {{ context|JSON }};
-            ICON_PATH = '{% static 'leaflet/dist/images' %}';
+            var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+            CONTEXT = initial_page_data('context');
+            ICON_PATH = initial_page_data('icon_path');
             MIN_HEIGHT = 300; //px
 
             $(function() {
-                if (CONTEXT !== '') {
+                if (CONTEXT) {
                     load(CONTEXT, ICON_PATH);
                 }
             });
