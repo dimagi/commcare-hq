@@ -151,7 +151,7 @@ hqDefine("app_manager/js/form_designer.js", function() {
             }
 
             var reverse = hqImport("hqwebapp/js/urllib.js").reverse,
-                editDetails = hqImport('app_manager/js/edit_form_details.js');
+                editDetails = hqImport('app_manager/js/forms/edit_form_details.js');
             editDetails.initName(
                 initial_page_data("form_name"),
                 reverse("edit_form_attr", "name")

@@ -1,7 +1,7 @@
 /* globals $ */
 /* globals window */
 
-hqDefine('app_manager/js/edit_form_details.js', function () {
+hqDefine('app_manager/js/forms/edit_form_details.js', function () {
     'use strict';
     var module = {};
 
