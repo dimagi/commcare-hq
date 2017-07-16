@@ -69,8 +69,9 @@
 {% block js-script %}
 <script>
 
-CONTEXT = {{ context|JSON }};
-ICON_PATH = '{% static 'reports/css/leaflet/images' %}';
+var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
+CONTEXT = initial_page_data('context');
+ICON_PATH = initial_page_data('icon_path');
 MIN_HEIGHT = 300; //px
 
 $(function() {
