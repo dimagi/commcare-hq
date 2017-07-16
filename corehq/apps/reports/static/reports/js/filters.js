@@ -1,3 +1,4 @@
+/* globals COMMCAREHQ */
 hqDefine("reports/js/filters.js", function() {
     var init = function() {
         // Datespans
@@ -12,7 +13,7 @@ hqDefine("reports/js/filters.js", function() {
                 $filterRange.data('startDate'),
                 $filterRange.data('endDate')
             );
-            $filterRange.on('change apply', function(ev, picker) {
+            $filterRange.on('change apply', function(ev) {
                 var dates = $(this).val().split(separator);
                 $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.startdate', dates[0]);
                 $('#report_filter_datespan_startdate').val(dates[0]);
