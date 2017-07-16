@@ -10,8 +10,8 @@ $(function () {
 
     // Set up details
     if (!v2 || moduleBrief.case_type) {
-        var state = hqImport('app_manager/js/detail-screen-config.js').state;
-        var DetailScreenConfig = hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig;
+        var state = hqImport('app_manager/js/details/screen_config.js').state;
+        var DetailScreenConfig = hqImport('app_manager/js/details/screen_config.js').DetailScreenConfig;
         state.requires_case_details(moduleBrief.requires_case_details);
 
         var details = initial_page_data('details');
@@ -170,7 +170,7 @@ $(function () {
     } else if (moduleType === 'careplan') {
         var $container = $('#detail-screen-parent');
         if ($container.length) {
-            var ParentSelect = hqImport('app_manager/js/detail-screen-config.js').ParentSelect;
+            var ParentSelect = hqImport('app_manager/js/details/screen_config.js').ParentSelect;
             var parent_select_model = moduleBrief.parent_select;
             var parentSelect = new ParentSelect({
                 active: parent_select_model.active,

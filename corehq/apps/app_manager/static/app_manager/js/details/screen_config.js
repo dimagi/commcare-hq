@@ -1,6 +1,6 @@
 /*globals $, _, uiElement, eventize, COMMCAREHQ, DOMPurify */
 
-hqDefine('app_manager/js/detail-screen-config.js', function () {
+hqDefine('app_manager/js/details/screen_config.js', function () {
     var module = {};
 
     module.CC_DETAIL_SCREEN = {
