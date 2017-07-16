@@ -8,33 +8,19 @@ from django.db import connections
 new_table = 'config_report_icds-cas_static-child_cases_monthly_v2_198ccc06'
 old_table = 'config_report_icds-cas_static-child_cases_monthly_tabl_551fd064'
 
-male_sql_query = """
-UPDATE {new_table}
+migration_query = """
+UPDATE {new_table} B
 SET
-pse_daily_attendance = A.pse_days_attended
-pse_daily_attendance_male = A.pse_days_attended
+B.pse_daily_attendance = A.pse_days_attended,
+B.pse_daily_attendance_male = CASE WHEN B.sex = 'M' THEN A.pse_days_attended ELSE NULL END,
+B.pse_daily_attendance_female = CASE WHEN B.sex = 'F' THEN A.pse_days_attended ELSE NULL END
 FROM {old_table} A
-LEFT JOIN {new_table} B
-ON A.doc_id = B.doc_id and A.month_start = B.month_start
-WHERE B.sex = 'M'
-""".format(new_table=new_table, old_table=old_table)
-
-female_sql_query = """
-UPDATE {new_table}
-SET
-pse_daily_attendance = A.pse_days_attended
-pse_daily_attendance_female = A.pse_days_attended
-FROM {old_table} A
-LEFT JOIN {new_table} B
-ON A.doc_id = B.doc_id and A.month_start = B.month_start
-WHERE B.sex = 'F'
+WHERE A.doc_id = B.doc_id and A.month_start = B.month_start
 """.format(new_table=new_table, old_table=old_table)
 
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
         with connections['icds-ucr'].cursor() as cursor:
-            print('Migrating male data')
-            cursor.execute(male_sql_query)
-            print('Migrating female data')
-            cursor.execute(female_sql_query)
+            print('Migrating pse data')
+            cursor.execute(migration_query)
