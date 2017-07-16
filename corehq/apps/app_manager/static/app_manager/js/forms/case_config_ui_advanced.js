@@ -1,5 +1,5 @@
 /*globals $, COMMCAREHQ, _, ko */
-hqDefine('app_manager/js/case-config-ui-advanced.js', function () {
+hqDefine('app_manager/js/forms/case_config_ui_advanced.js', function () {
     'use strict';
     var caseConfigUtils = hqImport('app_manager/js/case-config-utils.js');
     var DEFAULT_CONDITION = function (type) {
