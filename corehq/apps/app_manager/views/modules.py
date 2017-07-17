@@ -614,7 +614,7 @@ def undo_delete_module(request, domain, record_id):
 @require_can_edit_apps
 def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     app = get_app(domain, app_id)
-    source_module_unique_id = int(request.POST['source_module_unique_id'])
+    source_module_unique_id = request.POST['source_module_unique_id']
     detail_type = request.POST['detail_type']
     assert detail_type in ['short', 'long']
     source_module = app.get_module_by_unique_id(source_module_unique_id)
@@ -634,7 +634,7 @@ def overwrite_module_case_list(request, domain, app_id, module_unique_id):
         setattr(dest_module.case_details, detail_type, getattr(source_module.case_details, detail_type))
         app.save()
         messages.success(request, _('Case list updated form module {}.').format(source_module.default_name()))
-    return back_to_main(request, domain, app_id=app_id, module_id=module_id)
+    return back_to_main(request, domain, app_id=app_id, module_unique_id=module_unique_id)
 
 
 def _update_search_properties(module, search_properties, lang='en'):
