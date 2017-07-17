@@ -28,7 +28,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager.js", function() {
     // Build profiles
     var $profilesTab = $('#profiles-tab');
     if ($profilesTab.length) {
-        var profiles = hqImport('app_manager/js/language-profiles.js');
+        var profiles = hqImport('app_manager/js/releases/language_profiles.js');
         profiles.setProfileUrl(initial_page_data('application_profile_url'));
         var ProfileManager = profiles.ProfileManager;
         var app_langs = initial_page_data("langs");

@@ -123,7 +123,7 @@ hqDefine("app_manager/js/app_view.js", function() {
                             var app_profiles = initial_page_data('build_profiles');
                             var enable_practice_users = initial_page_data('enable_practice_users');
                             var practice_users = initial_page_data('practice_users');
-                            var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
+                            var ProfileManager = hqImport('app_manager/js/releases/language_profiles.js').ProfileManager;
                             $profileManager.koApplyBindings(new ProfileManager(app_profiles, app_langs, enable_practice_users, practice_users));
                         }
 
