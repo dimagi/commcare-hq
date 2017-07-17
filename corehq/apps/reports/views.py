@@ -2021,14 +2021,9 @@ def export_report(request, domain, export_hash, format):
 
     content = cache.get(export_hash)
     if content is not None:
-
-        if isinstance(content, list):
-            report_class, report_file = content
-            if not _can_view_report(domain, request.couch_user, report_class):
-                raise PermissionDenied()
-        # TODO drop this after all existing reports have expired
-        else:
-            report_file = content
+        report_class, report_file = content
+        if not _can_view_report(domain, request.couch_user, report_class):
+            raise PermissionDenied()
         if format in Format.VALID_FORMATS:
             file = ContentFile(report_file)
             response = HttpResponse(file, Format.FORMAT_DICT[format])
