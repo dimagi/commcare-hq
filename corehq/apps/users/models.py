@@ -1519,8 +1519,21 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         return super(CommCareUser, cls).wrap(data)
 
+    def _is_demo_user_cached_value_is_stale(self):
+        from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
+        cached_demo_users = get_practice_mode_mobile_workers.get_cached_value(self.domain)
+        if cached_demo_users is not Ellipsis:
+            cached_is_demo_user = any(user['_id'] == self._id for user in cached_demo_users)
+            if cached_is_demo_user != self.is_demo_user:
+                return True
+        return False
+
     def clear_quickcache_for_user(self):
+        from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
         self.get_usercase_id.clear(self)
+
+        if self._is_demo_user_cached_value_is_stale():
+            get_practice_mode_mobile_workers.clear(self.domain)
         super(CommCareUser, self).clear_quickcache_for_user()
 
     def save(self, **params):
