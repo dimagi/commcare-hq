@@ -188,6 +188,11 @@ MUMBAI_MAP = {
     "sl_lpa_sample_date": 45,
     "sl_lpa_result": 46,
     "sl_lpa_result_date": 47,
+    "culture_lab": 48,
+    "culture_sample_date": 49,
+    "culture_type": 50,
+    "culture_result": 51,
+    "culture_result_date": 52,
     # TODO: Finish me
 }
 
@@ -571,15 +576,18 @@ def get_episode_regimen_change_history(column_mapping, row, episode_treatment_in
 
 def get_test_case_properties(domain, column_mapping, row, treatment_initiation_date):
     test_cases = []
+
     if column_mapping.get_value("cbnaat_lab", row) or column_mapping.get_value("cbnaat_result", row):
         test_cases.append(get_cbnaat_test_case_properties(domain, column_mapping, row))
     elif column_mapping.get_value("testing_facility", row):
         test_cases.append(get_mehsana_test_case_properties(domain, column_mapping, row))
-    if column_mapping.get_value("lpa_rif_result") or column_mapping.get_value("lpa_inh_result"):
-        test_cases.extend(get_lpa_test_case_properties(domain, column_mapping, row))
-    if column_mapping.get_value("sl_lpa_result", row):
-        test_cases.extend(get_sl_lpa_test_case_properties(domain, column_mapping, row))
 
+    if column_mapping.get_value("lpa_rif_result") or column_mapping.get_value("lpa_inh_result"):
+        test_cases.append(get_lpa_test_case_properties(domain, column_mapping, row))
+    if column_mapping.get_value("sl_lpa_result", row):
+        test_cases.append(get_sl_lpa_test_case_properties(domain, column_mapping, row))
+    if column_mapping.get_value("culture_result", row):
+        test_cases.append(get_culture_test_case_properties(domain, column_mapping, row))
 
     test_cases.extend(get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date))
     return test_cases
@@ -646,6 +654,22 @@ def get_sl_lpa_test_case_properties(domain, column_mapping, row):
     properties.update(get_sl_lpa_test_resistance_properties(column_mapping, row))
     return properties
 
+
+def get_culture_test_case_properties(domain, column_mapping, row):
+    lab_name, lab_id = match_location(domain, column_mapping.get_value("culture_lab", row))
+    raise NotImplementedError("No example data was in the original data dump, so didn't know how to handle it.")
+    properties = {
+        "owner_id": "-",
+        "testing_facility_saved_name": lab_name,
+        "testing_facility_id": lab_id,
+        "test_type_label": "Culture",
+        "test_type_value": "culture",
+        "date_tested": clean_date(column_mapping.get_value("culture_sample_date", row)),
+        "date_reported": column_mapping.get_value("culture_result_date", row),
+        # NEEDED: Culture type
+        # NEEDED: Result
+    }
+    return properties
 
 def get_drug_resistance_case_properties(column_mapping, row):
     resistant_drugs = {
