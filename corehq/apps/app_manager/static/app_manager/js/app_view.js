@@ -7,7 +7,7 @@ hqDefine("app_manager/js/app_view.js", function() {
         // Settings
         var $settingsContainer = $('#commcare-settings');
         if ($settingsContainer.length) {
-            var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
+            var CommcareSettings = hqImport('app_manager/js/settings/commcare_settings.js').CommcareSettings;
             $settingsContainer.koApplyBindings(new CommcareSettings(initial_page_data("app_view_options")));
         }
 

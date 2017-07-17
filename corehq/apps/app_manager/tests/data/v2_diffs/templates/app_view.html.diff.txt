@@ -15,7 +15,7 @@
 -    <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
 -    <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
 -    <script src="{% static 'app_manager/js/settings/app_logos.js' %}"></script>
--    <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
+-    <script src="{% static 'app_manager/js/settings/commcare_settings.js' %}"></script>
 -    <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
 -    <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
 -    <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
