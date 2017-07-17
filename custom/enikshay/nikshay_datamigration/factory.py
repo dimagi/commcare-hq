@@ -12,6 +12,7 @@ from custom.enikshay.case_utils import (
     get_open_drtb_hiv_case_from_episode,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound, ENikshayLocationNotFound
+from custom.enikshay.nikshay_datamigration.exceptions import MatchingNikshayIdCaseNotMigrated
 from custom.enikshay.nikshay_datamigration.models import (
     Followup,
     Outcome,
@@ -73,7 +74,8 @@ class EnikshayCaseFactory(object):
         if matching_external_ids:
             assert len(matching_external_ids) == 1
             existing_episode = matching_external_ids[0]
-            assert existing_episode.dynamic_case_properties().get('migration_created_case') == 'true'
+            if existing_episode.dynamic_case_properties().get('migration_created_case') != 'true':
+                raise MatchingNikshayIdCaseNotMigrated
             return matching_external_ids[0]
         return None
 

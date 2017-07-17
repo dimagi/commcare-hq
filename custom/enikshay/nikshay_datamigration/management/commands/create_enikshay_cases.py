@@ -7,6 +7,7 @@ import mock
 from casexml.apps.case.mock import CaseFactory
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_domain
 
+from custom.enikshay.nikshay_datamigration.exceptions import MatchingNikshayIdCaseNotMigrated
 from custom.enikshay.nikshay_datamigration.factory import EnikshayCaseFactory, get_nikshay_codes_to_location
 from custom.enikshay.nikshay_datamigration.models import PatientDetail
 
@@ -105,6 +106,7 @@ class Command(BaseCommand):
         counter = 0
         num_succeeded = 0
         num_failed = 0
+        num_matching_case_not_migrated = 0
         logger.info('Starting migration of %d patient cases on domain %s.' % (total, domain))
         nikshay_codes_to_location = get_nikshay_codes_to_location(domain)
         factory = CaseFactory(domain=domain)
@@ -117,6 +119,12 @@ class Command(BaseCommand):
                     domain, patient_detail, nikshay_codes_to_location, test_phi
                 )
                 case_structures.extend(case_factory.get_case_structures_to_create())
+            except MatchingNikshayIdCaseNotMigrated:
+                num_matching_case_not_migrated += 1
+                logger.error(
+                    'Matching case not migrated for %d of %d.  Nikshay ID=%s' % (
+                        counter, total, patient_detail.PregId
+                ))
             except Exception:
                 num_failed += 1
                 logger.error(
@@ -147,6 +155,7 @@ class Command(BaseCommand):
         logger.info('Number of attempts: %d.' % counter)
         logger.info('Number of successes: %d.' % num_succeeded)
         logger.info('Number of failures: %d.' % num_failed)
+        logger.info('Number of cases matched but not migrated: %d.' % num_matching_case_not_migrated)
 
         # since we circumvented cleanliness checks just call this at the end
         logger.info('Setting cleanliness flags')
