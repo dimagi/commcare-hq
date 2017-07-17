@@ -11,6 +11,7 @@
 
     $('#dataTables-filter-box').val($('#report_filter_search_query').val());
 
+    var asyncHQReport = hqImport("reports/js/standard_hq_report.js").getAsyncHQReport();
     $('.accordion-heading').on('keypress', '#dataTables-filter-box', function(e) {
         if(e.which === 13) {
             $query = $('#dataTables-filter-box').val();
