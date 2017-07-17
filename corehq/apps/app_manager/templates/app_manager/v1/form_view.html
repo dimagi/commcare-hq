@@ -31,7 +31,7 @@
 
 {% block js-inline %}{{ block.super }}
     {% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
-    <script src="{% static 'app_manager/js/case-knockout-bindings.js' %}"></script>
+    <script src="{% static 'app_manager/js/forms/case_knockout_bindings.js' %}"></script>
     <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
     {% if module.doc_type == 'AdvancedModule' %}
         <script src="{% static 'app_manager/js/forms/case_config_ui_advanced.js' %}"></script>
