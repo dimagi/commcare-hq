@@ -286,16 +286,6 @@ hqDefine('app_manager/js/app_manager', function () {
                     updateRelatedTags($(elem), parentVar, parentValue);
                 }
             });
-            _.each($('[data-updateprop]'), function (tag) {
-                var tagName = $(tag).data('updateprop'),
-                    tagVal = $(tag).data('updatevalue'),
-                    moduleId = $(tag).data('moduleid'),
-                    formId = $(tag).data('formid');
-                var processedVal = tagVal
-                    .replace('replacewithmoduleid', moduleId)
-                    .replace('replacewithformid', formId);
-                $(tag).prop(tagName, processedVal);
-            });
         }
 
         $('.sortable .sort-action').addClass('sort-disabled');
