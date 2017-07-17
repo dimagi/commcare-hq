@@ -328,14 +328,15 @@ class Outcome(models.Model):
         if self.OutcomeDate is None or self.OutcomeDate == 'NULL':
             return None
         else:
-            if '-' in self.OutcomeDate:
-                return datetime.strptime(self.OutcomeDate, '%d-%m-%Y').date()
+            outcome_date_string = self.OutcomeDate.strip()
+            if '-' in outcome_date_string:
+                return datetime.strptime(outcome_date_string, '%d-%m-%Y').date()
             else:
                 format = '%d/%m/%Y'
                 try:
-                    return datetime.strptime(self.OutcomeDate, format).date()
+                    return datetime.strptime(outcome_date_string, format).date()
                 except ValueError:
-                    date_string = self.OutcomeDate[:-2] + '20' + self.OutcomeDate[-2:]
+                    date_string = outcome_date_string[:-2] + '20' + outcome_date_string[-2:]
                     return datetime.strptime(date_string, format).date()
 
 
