@@ -272,7 +272,7 @@
 +                                <div data-bind="jqueryElement: textField.ui"></div>
 +                                <div data-bind="visible: showWarning">
 +                                    <span class="help-block" data-bind="
-+                                        text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.field_format_warning_message
++                                        text: hqImport('app_manager/js/details/screen_config.js').DetailScreenConfig.field_format_warning_message
 +                                    "></span>
 +                                </div>
 +                            </td>
@@ -455,7 +455,7 @@
 -                        <div data-bind="jqueryElement: textField.ui"></div>
 -                        <div data-bind="visible: showWarning">
 -                            <span class="help-block" data-bind="
--                                text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.field_format_warning_message
+-                                text: hqImport('app_manager/js/details/screen_config.js').DetailScreenConfig.field_format_warning_message
 -                            "></span>
 -                        </div>
 -                    </td>

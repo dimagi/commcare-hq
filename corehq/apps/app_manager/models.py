@@ -5435,7 +5435,7 @@ def validate_property(property):
 
 def validate_detail_screen_field(field):
     # If you change here, also change here:
-    # corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js
+    # corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
     field_re = r'^([a-zA-Z][\w_-]*:)*([a-zA-Z][\w_-]*/)*#?[a-zA-Z][\w_-]*$'
     if not re.match(field_re, field):
         raise ValueError("Invalid Sort Field")
