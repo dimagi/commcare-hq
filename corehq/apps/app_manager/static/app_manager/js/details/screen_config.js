@@ -1006,14 +1006,14 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                         that.shortScreen.saveButton.fire("change");
                     });
                     var $case_list_lookup_el = $("#" + spec.state.type + "-list-callout-configuration");
-                    this.caseListLookup = new hqImport("app_manager/js/details/case_list_callout.js").caseListLookupViewModel(
+                    this.caseListLookup = hqImport("app_manager/js/details/case_list_callout.js").caseListLookupViewModel(
                         $case_list_lookup_el,
                         spec.state.short,
                         spec.lang,
                         this.shortScreen.saveButton
                     );
                     // Set up case search
-                    this.search = new hqImport("app_manager/js/details/case_claim.js").searchViewModel(
+                    this.search = hqImport("app_manager/js/details/case_claim.js").searchViewModel(
                         spec.searchProperties || [],
                         spec.includeClosed,
                         spec.defaultProperties,

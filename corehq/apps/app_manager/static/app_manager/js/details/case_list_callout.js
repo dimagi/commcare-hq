@@ -213,7 +213,11 @@ hqDefine("app_manager/js/details/case_list_callout.js", function() {
         self.initSaveButtonListeners(self.$el);
     };
 
+    var createCaseListLookupViewModel = function($el, state, lang, saveButton) {
+        return new caseListLookupViewModel($el, state, lang, saveButton);
+    };
+
     return {
-        caseListLookupViewModel: caseListLookupViewModel,
+        caseListLookupViewModel: createCaseListLookupViewModel,
     };
 });

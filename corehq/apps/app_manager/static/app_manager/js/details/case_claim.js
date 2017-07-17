@@ -145,7 +145,14 @@ hqDefine("app_manager/js/details/case_claim.js", function() {
         });
     };
 
+    var createSearchViewModel = function (searchProperties, includeClosed, defaultProperties, lang,
+                                          searchButtonDisplayCondition, blacklistedOwnerIdsExpression,
+                                          saveButton) {
+        return new searchViewModel(searchProperties, includeClosed, defaultProperties, lang,
+                                   searchButtonDisplayCondition, blacklistedOwnerIdsExpression, saveButton);
+    };
+
     return {
-        searchViewModel: searchViewModel,
+        searchViewModel: createSearchViewModel,
     };
 });
