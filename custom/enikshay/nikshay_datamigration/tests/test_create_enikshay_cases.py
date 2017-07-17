@@ -212,7 +212,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
     def test_matching_case_not_migrated(self):
         call_command('create_enikshay_cases', self.domain)
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
-        CaseFactory(self.domain).update_case(episode_case_ids[0], migration_created_case='')
+        CaseFactory(self.domain).update_case(episode_case_ids[0], update={'migration_created_case': ''})
         with self.assertRaises(MatchingNikshayIdCaseNotMigrated):
             call_command('create_enikshay_cases', self.domain)
 
