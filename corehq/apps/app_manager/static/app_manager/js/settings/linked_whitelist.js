@@ -1,5 +1,5 @@
 /* globals hqDefine, ko, COMMCAREHQ */
-hqDefine('app_manager/js/linked_whitelist.js', function () {
+hqDefine('app_manager/js/settings/linked_whitelist.js', function () {
     function LinkedWhitelist(domains, saveUrl) {
         var self = this;
         this.linkedDomains = ko.observableArray(domains);

@@ -29,7 +29,7 @@
 -    {% endif %}
 -
 -    {% if linked_apps_enabled %}
--        <script src="{% static 'app_manager/js/linked_whitelist.js' %}"></script>
+-        <script src="{% static 'app_manager/js/settings/linked_whitelist.js' %}"></script>
 -    {% endif %}
 -
 -    {# these scripts are for releases.html, but including them there causes hard-to-reproduce problems #}
