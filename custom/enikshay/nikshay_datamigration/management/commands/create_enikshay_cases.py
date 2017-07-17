@@ -124,7 +124,8 @@ class Command(BaseCommand):
                 logger.error(
                     'Matching case not migrated for %d of %d.  Nikshay ID=%s' % (
                         counter, total, patient_detail.PregId
-                ))
+                    )
+                )
             except Exception:
                 num_failed += 1
                 logger.error(
