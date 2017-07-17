@@ -161,6 +161,6 @@ class Command(BaseCommand):
         logger.info('Number of cases matched but not migrated: %d.' % num_matching_case_not_migrated)
 
         # since we circumvented cleanliness checks just call this at the end
-        logger.info('Setting cleanliness flags')
-        set_cleanliness_flags_for_domain(domain, force_full=True, raise_soft_assertions=False)
+        # logger.info('Setting cleanliness flags')
+        # set_cleanliness_flags_for_domain(domain, force_full=True, raise_soft_assertions=False)
         logger.info('Done!')
