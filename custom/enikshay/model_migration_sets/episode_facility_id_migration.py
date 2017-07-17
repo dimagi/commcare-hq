@@ -122,9 +122,10 @@ class EpisodeFacilityIDMigration(object):
             for update in get_case_updates(action.form)
         ]
         for (modified_on, action) in update_actions:
-            property_changed = action.dynamic_properties.get(case_property)
-            if property_changed:
-                return PropertyChangedInfo(property_changed, modified_on)
+            if action:
+                property_changed = action.dynamic_properties.get(case_property)
+                if property_changed:
+                    return PropertyChangedInfo(property_changed, modified_on)
         return False
 
     def _get_owner_id_from_transaction(self, transaction, case_id):
