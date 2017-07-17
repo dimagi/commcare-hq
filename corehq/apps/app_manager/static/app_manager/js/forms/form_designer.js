@@ -1,5 +1,5 @@
 /* globals COMMCAREHQ, define, require, analytics, form_tour_start, WS4Redis, django */
-hqDefine("app_manager/js/form_designer.js", function() {
+hqDefine("app_manager/js/forms/form_designer.js", function() {
     $(function() {
         var v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2'),
             initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;

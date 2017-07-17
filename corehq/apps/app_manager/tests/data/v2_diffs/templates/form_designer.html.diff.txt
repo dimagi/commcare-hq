@@ -25,7 +25,7 @@
      <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
      <script src="{% static 'js/ws4redis.js' %}"></script>
 +    <script src="{% static 'app_manager/js/edit_form_details.js' %}"></script>
-     <script src="{% static 'app_manager/js/form_designer.js' %}"></script>
+     <script src="{% static 'app_manager/js/forms/form_designer.js' %}"></script>
  {% endblock %}
  
 @@ -26,18 +36,114 @@
