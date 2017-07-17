@@ -456,7 +456,7 @@ hqDefine('app_manager/js/commcaresettings.js', function () {
     };
 
     CommcareSettings.widgets.image_uploader = function (self) {
-        self.manager = hqImport("app_manager/js/app_logos.js").LogoManager;
+        self.manager = hqImport("app_manager/js/settings/app_logos.js").LogoManager;
         self.slug = "hq_" + self.id;
         self.href = "#" + self.slug;
         self.path = self.manager.getPathFromSlug(self.slug);

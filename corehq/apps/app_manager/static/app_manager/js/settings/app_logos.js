@@ -1,4 +1,4 @@
-hqDefine("app_manager/js/app_logos.js", function() {
+hqDefine("app_manager/js/settings/app_logos.js", function() {
     var self = {};
     var HQMediaUploaders = hqImport("hqmedia/js/hqmediauploaders.js").get(),
         initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
