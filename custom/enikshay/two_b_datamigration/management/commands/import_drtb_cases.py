@@ -260,6 +260,14 @@ class Mehsana2016ColumnMapping(ColumnMapping):
 class MumbaiColumnMapping(ColumnMapping):
     mapping_dict = MUMBAI_MAP
 
+    @classmethod
+    def get_value(cls, normalized_column_name, row):
+        value = super(MumbaiColumnMapping, cls).get_value(normalized_column_name, row)
+        # Make cbnaat_result required
+        if value is None and normalized_column_name == "cbnaat_result":
+            raise Exception("All mumbai rows must contain cbnaat result")
+        return value
+
 
 class MumbaiConstants(object):
     """A collection of Mumbai specific constants"""
