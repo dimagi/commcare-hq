@@ -179,6 +179,11 @@ MUMBAI_MAP = {
     "cbnaat_sample_date": 36,
     "cbnaat_result": 37,
     "cbnaat_result_date": 38,
+    "lpa_lab": 39,
+    "lpa_sample_date": 40,
+    "lpa_rif_result": 41,
+    "lpa_inh_result": 42,
+    "lpa_result_date": 43,
     # TODO: Finish me
 }
 
@@ -558,6 +563,9 @@ def get_test_case_properties(domain, column_mapping, row, treatment_initiation_d
         test_cases.append(get_cbnaat_test_case_properties(domain, column_mapping, row))
     elif column_mapping.get_value("testing_facility", row):
         test_cases.append(get_mehsana_test_case_properties(domain, column_mapping, row))
+    if column_mapping.get_value("lpa_rif_result") or column_mapping.get_value("lpa_inh_result"):
+        test_cases.extend(get_lpa_test_case_properties(domain, column_mapping, row))
+
 
     test_cases.extend(get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date))
     return test_cases
@@ -593,12 +601,29 @@ def get_cbnaat_test_case_properties(domain, column_mapping, row):
     return properties
 
 
+def get_lpa_test_case_properties(domain, column_mapping, row):
+    lpa_lab_name, lpa_lab_id = match_location(domain, column_mapping.get_value("lpa_lab", row))
+    properties = {
+        "owner_id": "-",
+        "testing_facility_saved_name": lpa_lab_name,
+        "testing_facility_id": lpa_lab_id,
+        "test_type_label": "FL LPA",
+        "test_type_value": "fl_line_probe_assay",
+        "date_tested": clean_date(column_mapping.get_value("lpa_sample_date", row)),
+        "date_reported": column_mapping.get_value("lpa_result_date", row),
+    }
+
+    properties.update(get_lpa_test_resistance_properties(column_mapping, row))
+    return properties
+
+
 def get_drug_resistance_case_properties(column_mapping, row):
     resistant_drugs = {
         d['drug_id']: d
         for d in
         get_drug_resistances_from_mehsana_drug_resistance_list(column_mapping, row) +
-        get_drug_resistances_from_mumbai_cbnaat(column_mapping, row)
+        get_drug_resistances_from_mumbai_cbnaat(column_mapping, row) +
+        get_drug_resistances_from_lpa(column_mapping, row),
     }
     additional_drug_case_properties = get_drug_resistances_from_individual_drug_columns(column_mapping, row)
     for drug in additional_drug_case_properties:
@@ -682,6 +707,26 @@ def get_drug_resistances_from_mumbai_cbnaat(column_mapping, row):
     else:
         return []
 
+
+def get_drug_resistances_from_lpa(column_mapping, row):
+    drugs = [
+        ("r", clean_mumbai_test_resistance_value(column_mapping.get_value("lpa_rif_result", row))),
+        ("h_inha", clean_mumbai_test_resistance_value(column_mapping.get_value("lpa_inh_result", row))),
+    ]
+    case_props = []
+    for drug, resistant in drugs:
+        if resistant is not None:
+            case_props.append({
+                "name": drug,
+                "owner_id": "-",
+                "drug_id": drug,
+                "specimen_date": clean_date(column_mapping.get_value("lpa_sample_date", row)),
+                "result_date": column_mapping.get_value("lpa_result_date", row),
+                "test_type": "fl_line_probe_assay",
+                "test_type_label": "FL LPA",
+                "sensitivity": "resistant" if resistant else "sensitive",
+            })
+    return case_props
 
 def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date):
     properties_list = []
