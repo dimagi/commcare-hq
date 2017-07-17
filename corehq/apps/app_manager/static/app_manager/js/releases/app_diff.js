@@ -43,7 +43,7 @@
  * Notice how the browser autocorrects the end tag differently. This works out well for us
  * and is taken advantage of in this code.
  * */
-hqDefine('app_manager/js/app_diff.js', function () {
+hqDefine('app_manager/js/releases/app_diff.js', function () {
     var reverse = hqImport('hqwebapp/js/urllib.js').reverse;
     var sanitize = DOMPurify.sanitize;
 

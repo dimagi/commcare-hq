@@ -36,7 +36,7 @@
 -    <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
 -    <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
 -    <script src="{% static 'app_manager/js/releases/releases.js' %}"></script>
--    <script src="{% static 'app_manager/js/app_diff.js' %}"></script>
+-    <script src="{% static 'app_manager/js/releases/app_diff.js' %}"></script>
 -    <script src="{% static 'app_manager/js/language-profiles.js' %}"></script>
 +  {% include 'analytics/fullstory.html' %}
  {% endblock %}
@@ -53,7 +53,7 @@
 +  <script src="{% static 'app_manager/js/releases/releases.js' %}"></script>
 +  <script src="{% static 'app_manager/js/language-profiles.js' %}"></script>
 +  <script src="{% static "jsdiff/diff.js" %}"></script>
-+  <script src="{% static 'app_manager/js/app_diff.js' %}"></script>
++  <script src="{% static 'app_manager/js/releases/app_diff.js' %}"></script>
 +  <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
 +  <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
 +  <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>

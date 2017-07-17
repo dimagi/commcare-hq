@@ -20,7 +20,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager.js", function() {
     }
 
     // View changes / app diff
-    var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body');
+    var appDiff = hqImport('app_manager/js/releases/app_diff.js').init('#app-diff-modal .modal-body');
     $('#recent-changes-btn').on('click', function () {
         appDiff.renderDiff(initial_page_data('app_id'), initial_page_data('latest_build_id'));
     });
