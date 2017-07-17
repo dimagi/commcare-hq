@@ -1499,6 +1499,9 @@
     "backend_id": "LABORATORY",
     "es_index_settings": {
       "number_of_shards": 5
-    }
+    },
+    "sql_column_indexes": [
+      {"column_ids": ["awc_id", "date_death"]}
+    ]
   }
 }
