@@ -1,5 +1,5 @@
 /* globals alert_user */
-hqDefine('app_manager/js/case-config-utils.js', function () {
+hqDefine('app_manager/js/case_config_utils.js', function () {
     return {
         getQuestions: function (questions, filter, excludeHidden, includeRepeat, excludeTrigger) {
             // filter can be "all", or any of "select1", "select", or "input" separated by spaces

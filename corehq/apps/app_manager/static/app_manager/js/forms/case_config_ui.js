@@ -2,7 +2,7 @@
 
 hqDefine('app_manager/js/forms/case_config_ui.js', function () {
     "use strict";
-    var caseConfigUtils = hqImport('app_manager/js/case-config-utils.js');
+    var caseConfigUtils = hqImport('app_manager/js/case_config_utils.js');
     var action_names = ["open_case", "update_case", "close_case", "case_preload",
         // Usercase actions are managed in the User Properties tab.
         "usercase_update", "usercase_preload"];

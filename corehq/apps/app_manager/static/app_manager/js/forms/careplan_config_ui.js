@@ -1,6 +1,6 @@
 hqDefine('app_manager/js/forms/careplan_config_ui.js', function () {
     'use strict';
-    var caseConfigUtils = hqImport('app_manager/js/case-config-utils.js');
+    var caseConfigUtils = hqImport('app_manager/js/case_config_utils.js');
     var PropertyBase = {
         mapping: {
             include: ['key', 'path']

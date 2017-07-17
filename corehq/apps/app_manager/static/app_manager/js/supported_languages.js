@@ -1,4 +1,4 @@
-hqDefine('app_manager/js/supported-languages.js', function () {
+hqDefine('app_manager/js/supported_languages.js', function () {
     function Language(langcode, languages) {
         var self = this;
         this.langcode = ko.observable(langcode);

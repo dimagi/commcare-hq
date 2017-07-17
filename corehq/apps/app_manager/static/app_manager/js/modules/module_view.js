@@ -153,7 +153,7 @@ $(function () {
         ));
     } else if (moduleType === 'advanced') {
         if (moduleBrief.has_schedule || COMMCAREHQ.toggleEnabled('VISIT_SCHEDULER')) {
-            var VisitScheduler = hqImport('app_manager/js/visit-scheduler.js');
+            var VisitScheduler = hqImport('app_manager/js/visit_scheduler.js');
             var visitScheduler = new VisitScheduler.ModuleScheduler({
                 home: $('#module-scheduler'),
                 saveUrl: hqImport('hqwebapp/js/urllib.js').reverse('edit_schedule_phases'),

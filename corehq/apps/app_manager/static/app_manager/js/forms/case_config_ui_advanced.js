@@ -1,7 +1,7 @@
 /*globals $, COMMCAREHQ, _, ko */
 hqDefine('app_manager/js/forms/case_config_ui_advanced.js', function () {
     'use strict';
-    var caseConfigUtils = hqImport('app_manager/js/case-config-utils.js');
+    var caseConfigUtils = hqImport('app_manager/js/case_config_utils.js');
     var DEFAULT_CONDITION = function (type) {
         return {
             type: type,
@@ -1265,7 +1265,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced.js', function () {
             caseConfig.init();
 
             if (initial_page_data("schedule_options")) {
-                var VisitScheduler = hqImport('app_manager/js/visit-scheduler.js');
+                var VisitScheduler = hqImport('app_manager/js/visit_scheduler.js');
                 var visitScheduler = new VisitScheduler.Scheduler(_.extend({}, initial_page_data("schedule_options"), {
                     home: $('#visit-scheduler'),
                 }));

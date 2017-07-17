@@ -1,8 +1,8 @@
 /*globals $, COMMCAREHQ, _, ko, console*/
-hqDefine('app_manager/js/visit-scheduler.js', function () {
+hqDefine('app_manager/js/visit_scheduler.js', function () {
     'use strict';
     var app_manager = hqImport('app_manager/js/app_manager.js');
-    var caseConfigUtils = hqImport('app_manager/js/case-config-utils.js');
+    var caseConfigUtils = hqImport('app_manager/js/case_config_utils.js');
     var ModuleScheduler = function(params){
         // Edits the schedule phases on the module setting page
         var self = this;

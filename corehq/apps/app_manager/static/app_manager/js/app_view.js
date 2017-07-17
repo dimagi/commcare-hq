@@ -14,7 +14,7 @@ hqDefine("app_manager/js/app_view.js", function() {
         // Languages
         var $languagesContainer = $("#supported-languages");
         if ($languagesContainer.length) {
-            var SupportedLanguages = hqImport('app_manager/js/supported-languages.js').SupportedLanguages;
+            var SupportedLanguages = hqImport('app_manager/js/supported_languages.js').SupportedLanguages;
             $("#supported-languages").koApplyBindings(new SupportedLanguages({
                 langs: initial_page_data("langs"),
                 saveURL: reverse("edit_app_langs"),
