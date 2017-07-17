@@ -1,8 +1,7 @@
+/* globals ICON_PATH, leafletImage */
+ICON_PATH = hqImport("hqwebapp/js/initial_page_data.js").get('icon_path');
 hqDefine("ewsghana/js/map.js", function() {
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
-    CONTEXT = initial_page_data('context');
-    ICON_PATH = initial_page_data('icon_path');
-    MIN_HEIGHT = 300; //px
+    var context = hqImport("hqwebapp/js/initial_page_data.js").get('context');
 
     function load(context, iconPath) {
         L.Icon.Default.imagePath = iconPath;
@@ -20,8 +19,8 @@ hqDefine("ewsghana/js/map.js", function() {
     }
 
     $(function() {
-        if (CONTEXT !== '') {
-            var map = load(CONTEXT, ICON_PATH);
+        if (context !== '') {
+            var map = load(context, ICON_PATH);
             $('#export-jpg').click(function() {
                 var $button = $(this);
                 var text = $button.text();

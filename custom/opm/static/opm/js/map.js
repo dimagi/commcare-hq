@@ -1,15 +1,14 @@
+/* globals ICON_PATH, load */
+ICON_PATH = hqImport("hqwebapp/js/initial_page_data.js").get('icon_path');
 hqDefine("opm/js/map.js", function() {
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
-    CONTEXT = initial_page_data('context');
-    ICON_PATH = initial_page_data('icon_path');
-    MIN_HEIGHT = 300; //px
+    var context = hqImport("hqwebapp/js/initial_page_data.js").get('context');
 
     $(function() {
-        if (CONTEXT !== '') {
-            load(CONTEXT, ICON_PATH);
+        if (context !== '') {
+            load(context, ICON_PATH);
             var div = '<div id="extra-legend" class="control-pane leaflet-control"><h4>AWC Name</h4><div>' +
                     '<table class="enumlegend"><tbody>';
-            for(var awc_name in CONTEXT.config.metrics[0].children[3].color.categories) {
+            for(var awc_name in context.config.metrics[0].children[3].color.categories) {
                 div += "<tr><td>" + awc_name + "</td></tr>"
             }
             div += '</tbody></table></div></div>';
