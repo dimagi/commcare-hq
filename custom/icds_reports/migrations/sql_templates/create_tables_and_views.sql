@@ -55,6 +55,9 @@ CREATE OR REPLACE VIEW awc_location_months AS
 	months.month_name AS month_display
   FROM awc_location awc_location
   CROSS JOIN "icds_months" months;
+CREATE INDEX "awc_location_months_indx1" ON "awc_location_months" (aggregation_level, month);
+CREATE INDEX "awc_location_months_indx2" ON "awc_location_months" (aggregation_level, state_site_code, month);
+CREATE INDEX "awc_location_months_indx3" ON "awc_location_months" (aggregation_level, state_id, district_id, block_id, supervisor_id, awc_id, month);
 
 -- Table: Geographic boundaries for states, districts and blocks
 DROP TABLE IF EXISTS india_geo_data CASCADE;
@@ -194,6 +197,7 @@ CREATE TABLE agg_awc
   infra_medicine_kits integer,
   infra_adequate_space_pse integer
 );
+CREATE INDEX "agg_awc_indx1" ON "agg_awc" (aggregation_level, state_id, district_id, block_id, supervisor_id, awc_id, month);
 
 -- Table: ccs_record_monthly
 DROP TABLE IF EXISTS ccs_record_monthly CASCADE;
