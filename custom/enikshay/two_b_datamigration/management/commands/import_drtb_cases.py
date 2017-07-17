@@ -279,7 +279,8 @@ def get_case_structures_from_row(domain, migration_id, column_mapping, city_cons
     person_case_properties = get_person_case_properties(domain, column_mapping, row)
     occurrence_case_properties = get_occurrence_case_properties(column_mapping, row)
     episode_case_properties = get_episode_case_properties(domain, column_mapping, row)
-    test_case_properties = get_test_case_properties(domain, column_mapping, row, episode_case_properties['treatment_initiation_date'])
+    test_case_properties = get_test_case_properties(
+        domain, column_mapping, row, episode_case_properties['treatment_initiation_date'])
     drug_resistance_case_properties = get_drug_resistance_case_properties(column_mapping, row)
     secondary_owner_case_properties = get_secondary_owner_case_properties(city_constants)
 
@@ -525,7 +526,8 @@ def get_sl_lpa_test_resistance_properties(column_mapping, row):
     if result is None:
         return {}
     else:
-        raise NotImplementedError("No example data was in the original data dump, so didn't know how to handle it.")
+        raise NotImplementedError(
+            "No example data was in the original data dump, so didn't know how to handle it.")
 
 
 def get_cbnaat_resistance(column_mapping, row):

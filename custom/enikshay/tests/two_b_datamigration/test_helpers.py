@@ -2,7 +2,7 @@ from django.test import SimpleTestCase
 from openpyxl import Workbook
 
 from corehq.util.workbook_reading.adapters.xlsx import _XLSXWorkbookAdaptor
-from custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases import(
+from custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases import (
     ColumnMapping,
     clean_phone_number,
 )
