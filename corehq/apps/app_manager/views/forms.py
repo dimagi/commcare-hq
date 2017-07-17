@@ -449,9 +449,15 @@ def get_xform_source(request, domain, app_id, form_unique_id):
 @require_can_edit_apps
 def get_form_questions(request, domain, app_id):
     form_unique_id = request.GET.get('form_unique_id')
+    module_id_temp = request.GET.get('module_id')
+    form_id_temp = request.GET.get('form_id')
     try:
         app = get_app(domain, app_id)
-        form = app.get_form(form_unique_id)
+        if module_id_temp is not None and form_id_temp is not None:
+            # temporary fallback
+            form = app.get_module(module_id_temp).get_form(form_id_temp)
+        else:
+            form = app.get_form(form_unique_id)
         lang, langs = get_langs(request, app)
     except FormNotFoundException:
         raise Http404()
