@@ -15,14 +15,17 @@ migrator = RawSQLMigration(('corehq', 'sql_proxy_accessors', 'sql_templates'), {
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sql_proxy_accessors', '0034_livequery_sql'),
+        ('sql_proxy_accessors', '0035_livequery_sql'),
     ]
 
     operations = [
-        migrator.get_migration('get_modified_case_ids.sql'),
-        migrator.get_migration('get_closed_and_deleted_ids.sql'),
-        HqRunSQL(
-            'DROP FUNCTION IF EXISTS filter_open_case_ids(TEXT, TEXT[])',
-            'SELECT 1'
-        ),
+        HqRunSQL("""DROP FUNCTION IF EXISTS save_case_and_related_models(
+                TEXT,
+                form_processor_commcarecasesql,
+                form_processor_casetransaction[],
+                form_processor_commcarecaseindexsql[],
+                form_processor_caseattachmentsql[],
+                INTEGER[],
+                INTEGER[])"""
+                 )
     ]

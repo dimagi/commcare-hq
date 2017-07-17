@@ -12,9 +12,17 @@ migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {})
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sql_accessors', '0047_livequery_sql'),
+        ('sql_accessors', '0048_livequery_sql'),
     ]
 
     operations = [
-        migrator.get_migration('get_related_indices.sql'),
+        HqRunSQL("""DROP FUNCTION IF EXISTS save_case_and_related_models(
+                TEXT,
+                form_processor_commcarecasesql,
+                form_processor_casetransaction[],
+                form_processor_commcarecaseindexsql[],
+                form_processor_caseattachmentsql[],
+                INTEGER[],
+                INTEGER[])"""
+                 )
     ]
