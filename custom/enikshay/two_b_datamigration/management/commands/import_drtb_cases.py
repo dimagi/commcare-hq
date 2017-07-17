@@ -265,10 +265,8 @@ def get_case_structures_from_row(domain, migration_id, column_mapping, city_cons
     person_case_properties = get_person_case_properties(domain, column_mapping, row)
     occurrence_case_properties = get_occurrence_case_properties(column_mapping, row)
     episode_case_properties = get_episode_case_properties(domain, column_mapping, row)
-    test_case_properties = get_main_test_case_properties(domain, column_mapping, row)
+    test_case_properties = get_test_case_properties(domain, column_mapping, row, episode_case_properties['treatment_initiation_date'])
     drug_resistance_case_properties = get_drug_resistance_case_properties(column_mapping, row)
-    followup_test_cases_properties = get_follow_up_test_case_properties(
-        column_mapping, row, episode_case_properties['treatment_initiation_date'])
     secondary_owner_case_properties = get_secondary_owner_case_properties(city_constants)
 
     person_case_structure = get_case_structure(CASE_TYPE_PERSON, person_case_properties, migration_id)
@@ -276,15 +274,13 @@ def get_case_structures_from_row(domain, migration_id, column_mapping, city_cons
         CASE_TYPE_OCCURRENCE, occurrence_case_properties, migration_id, host=person_case_structure)
     episode_case_structure = get_case_structure(
         CASE_TYPE_EPISODE, episode_case_properties, migration_id, host=occurrence_case_structure)
-    test_case_structure = get_case_structure(
-        CASE_TYPE_TEST, test_case_properties, migration_id, host=occurrence_case_structure)
     drug_resistance_case_structures = [
         get_case_structure(CASE_TYPE_DRUG_RESISTANCE, props, migration_id, host=occurrence_case_structure)
         for props in drug_resistance_case_properties
     ]
-    followup_test_case_structures = [
+    test_case_structures = [
         get_case_structure(CASE_TYPE_TEST, props, migration_id, host=occurrence_case_structure)
-        for props in followup_test_cases_properties
+        for props in test_case_properties
     ]
     secondary_owner_case_structure = get_case_structure(
         CASE_TYPE_SECONDARY_OWNER, secondary_owner_case_properties, migration_id, host=occurrence_case_structure)
@@ -293,9 +289,8 @@ def get_case_structures_from_row(domain, migration_id, column_mapping, city_cons
         person_case_structure,
         occurrence_case_structure,
         episode_case_structure,
-        test_case_structure,
         secondary_owner_case_structure
-    ] + drug_resistance_case_structures + followup_test_case_structures
+    ] + drug_resistance_case_structures + test_case_structures
 
 
 def get_case_structure(case_type, properties, migration_identifier, host=None):
@@ -557,11 +552,15 @@ def get_episode_regimen_change_history(column_mapping, row, episode_treatment_in
     return value
 
 
-def get_main_test_case_properties(domain, column_mapping, row):
+def get_test_case_properties(domain, column_mapping, row, treatment_initiation_date):
+    test_cases = []
     if column_mapping.get_value("cbnaat_lab", row) or column_mapping.get_value("cbnaat_result", row):
-        return get_cbnaat_test_case_properties(domain, column_mapping, row)
+        test_cases.append(get_cbnaat_test_case_properties(domain, column_mapping, row))
     elif column_mapping.get_value("testing_facility", row):
-        return get_mehsana_test_case_properties(domain, column_mapping, row)
+        test_cases.append(get_mehsana_test_case_properties(domain, column_mapping, row))
+
+    test_cases.extend(get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date))
+    return test_cases
 
 
 def get_mehsana_test_case_properties(domain, column_mapping, row):
