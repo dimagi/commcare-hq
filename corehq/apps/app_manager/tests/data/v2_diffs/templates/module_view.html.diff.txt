@@ -19,14 +19,14 @@
          /* Prevent help icons from disturbing horizontal alignment of table headers */
 @@ -24,7 +28,7 @@
      {% endif %}
-     <script src="{% static 'app_manager/js/module-view.js' %}"></script>
-     <script src="{% static 'app_manager/js/case_list_setting.js' %}"></script>
+     <script src="{% static 'app_manager/js/modules/module_view.js' %}"></script>
+     <script src="{% static 'app_manager/js/modules/case_list_setting.js' %}"></script>
 -    {% include "app_manager/v1/partials/xpathValidator.html" %}
 +    {% include "app_manager/v2/partials/xpathValidator.html" %}
  {% endblock %}
  {% block js-inline %}{{ block.super }}
      {% include 'hqmedia/partials/multimedia_js.html' %}
-@@ -36,90 +40,92 @@
+@@ -38,90 +42,92 @@
      <script src="{% static 'app_manager/js/modules/shadow_module_settings.js' %}"></script>
  
      {% include 'style/partials/key_value_mapping.html' %}
@@ -197,7 +197,7 @@
  <script type="text/html" id="module-forms-template">
      <div class="checkbox">
          <label>
-@@ -133,7 +139,7 @@
+@@ -135,7 +141,7 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}
@@ -206,7 +206,7 @@
  {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
      {% with print_uploader as uploader %}
          {% include 'hqmedia/partials/multimedia_uploader.html' %}
-@@ -143,5 +149,5 @@
+@@ -145,5 +151,5 @@
  
  {% block breadcrumbs %}
      {{ block.super }}
