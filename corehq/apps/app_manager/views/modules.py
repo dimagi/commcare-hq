@@ -424,7 +424,13 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
                 return request.POST.get(attribute) is not None
 
     app = get_app(domain, app_id)
-    module = app.get_module_by_unique_id(module_unique_id)
+
+    try:
+        module = app.get_module_by_unique_id(module_unique_id)
+    except ModuleNotFoundException:
+        # temporary fallback
+        module = app.get_module(module_unique_id)
+
     lang = request.COOKIES.get('lang', app.langs[0])
     resp = {'update': {}, 'corrections': {}}
     if should_edit("case_type"):
@@ -616,10 +622,18 @@ def undo_delete_module(request, domain, record_id):
 def overwrite_module_case_list(request, domain, app_id, module_unique_id):
     app = get_app(domain, app_id)
     source_module_unique_id = request.POST['source_module_unique_id']
+
+    # temporary fallback to handle currently working app states
+    source_module_id = request.POST['source_module_unique_id']
+    if source_module_id is not None:
+        source_module = app.get_module(int(source_module_unique_id))
+        dest_module = app.get_module(module_unique_id)
+    else:
+        source_module = app.get_module_by_unique_id(source_module_unique_id)
+        dest_module = app.get_module_by_unique_id(module_unique_id)
+
     detail_type = request.POST['detail_type']
     assert detail_type in ['short', 'long']
-    source_module = app.get_module_by_unique_id(source_module_unique_id)
-    dest_module = app.get_module_by_unique_id(module_unique_id)
     if not hasattr(source_module, 'case_details'):
         messages.error(
             request,
@@ -710,7 +724,12 @@ def edit_module_detail_screens(request, domain, app_id, module_unique_id):
     }
 
     app = get_app(domain, app_id)
-    module = app.get_module_by_unique_id(module_unique_id)
+
+    try:
+        module = app.get_module_by_unique_id(module_unique_id)
+    except ModuleNotFoundException:
+        # temporary fallback
+        module = app.get_module(module_unique_id)
 
     if detail_type == 'case':
         detail = module.case_details
@@ -833,7 +852,13 @@ def edit_report_module(request, domain, app_id, module_unique_id):
     """
     params = json_request(request.POST)
     app = get_app(domain, app_id)
-    module = app.get_module_by_unique_id(module_unique_id)
+
+    try:
+        module = app.get_module_by_unique_id(module_unique_id)
+    except ModuleNotFoundException:
+        # temporary fallback
+        module = app.get_module(module_unique_id)
+
     assert isinstance(module, ReportModule)
     module.name = params['name']
 
@@ -870,7 +895,12 @@ def validate_module_for_build(request, domain, app_id, module_unique_id, ajax=Tr
     try:
         module = app.get_module_by_unique_id(module_unique_id)
     except ModuleNotFoundException:
-        raise Http404()
+        try:
+            # temporary fallback
+            module = app.get_module(module_unique_id)
+        except ModuleNotFoundException:
+            raise Http404()
+
     errors = module.validate_for_build()
     lang, langs = get_langs(request, app)
 
