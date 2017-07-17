@@ -53,7 +53,7 @@ class StaticToggle(object):
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None, always_enabled=None,
                  always_disabled=None, enabled_for_new_domains_after=None,
-                 enabled_for_new_users_after=None):
+                 enabled_for_new_users_after=None, force_enable=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -63,6 +63,7 @@ class StaticToggle(object):
         # updated.  This is only applicable to domain toggles.  It must accept
         # two parameters, `domain_name` and `toggle_is_enabled`
         self.save_fn = save_fn
+        self.force_enable = force_enable
         self.always_enabled = always_enabled or set()
         self.always_disabled = always_disabled or set()
         self.enabled_for_new_domains_after = enabled_for_new_domains_after
@@ -73,6 +74,8 @@ class StaticToggle(object):
             self.namespaces = [None]
 
     def enabled(self, item, namespace=Ellipsis):
+        if self.force_enable:
+            return True
         if item in self.always_enabled:
             return True
         elif item in self.always_disabled:
@@ -1086,7 +1089,7 @@ APP_MANAGER_V2 = StaticToggle(
     'Prototype for case management onboarding (App Manager V2)',
     TAG_PRODUCT_PATH,
     [NAMESPACE_USER],
-    always_enabled=True
+    force_enable=True
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
