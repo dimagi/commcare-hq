@@ -184,6 +184,10 @@ MUMBAI_MAP = {
     "lpa_rif_result": 41,
     "lpa_inh_result": 42,
     "lpa_result_date": 43,
+    "sl_lpa_lab": 44,
+    "sl_lpa_sample_date": 45,
+    "sl_lpa_result": 46,
+    "sl_lpa_result_date": 47,
     # TODO: Finish me
 }
 
@@ -511,6 +515,14 @@ def get_lpa_test_resistance_properties(column_mapping, row):
     }
 
 
+def get_sl_lpa_test_resistance_properties(column_mapping, row):
+    result = column_mapping.get_value("sl_lpa_result", row)
+    if result is None:
+        return {}
+    else:
+        raise NotImplementedError("No example data was in the original data dump, so didn't know how to handle it.")
+
+
 def get_cbnaat_resistance(column_mapping, row):
     result = column_mapping.get_value("cbnaat_result", row)
     return clean_mumbai_test_resistance_value(result)
@@ -565,6 +577,8 @@ def get_test_case_properties(domain, column_mapping, row, treatment_initiation_d
         test_cases.append(get_mehsana_test_case_properties(domain, column_mapping, row))
     if column_mapping.get_value("lpa_rif_result") or column_mapping.get_value("lpa_inh_result"):
         test_cases.extend(get_lpa_test_case_properties(domain, column_mapping, row))
+    if column_mapping.get_value("sl_lpa_result", row):
+        test_cases.extend(get_sl_lpa_test_case_properties(domain, column_mapping, row))
 
 
     test_cases.extend(get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date))
@@ -617,13 +631,30 @@ def get_lpa_test_case_properties(domain, column_mapping, row):
     return properties
 
 
+def get_sl_lpa_test_case_properties(domain, column_mapping, row):
+    sl_lpa_lab_name, sl_lpa_lab_id = match_location(domain, column_mapping.get_value("sl_lpa_lab", row))
+    properties = {
+        "owner_id": "-",
+        "testing_facility_saved_name": sl_lpa_lab_name,
+        "testing_facility_id": sl_lpa_lab_id,
+        "test_type_label": "SL LPA",
+        "test_type_value": "sl_line_probe_assay",
+        "date_tested": clean_date(column_mapping.get_value("lpa_sample_date", row)),
+        "date_reported": column_mapping.get_value("lpa_result_date", row),
+    }
+
+    properties.update(get_sl_lpa_test_resistance_properties(column_mapping, row))
+    return properties
+
+
 def get_drug_resistance_case_properties(column_mapping, row):
     resistant_drugs = {
         d['drug_id']: d
         for d in
         get_drug_resistances_from_mehsana_drug_resistance_list(column_mapping, row) +
         get_drug_resistances_from_mumbai_cbnaat(column_mapping, row) +
-        get_drug_resistances_from_lpa(column_mapping, row),
+        get_drug_resistances_from_lpa(column_mapping, row) +
+        get_drug_resistances_from_sl_lpa(column_mapping, row)
     }
     additional_drug_case_properties = get_drug_resistances_from_individual_drug_columns(column_mapping, row)
     for drug in additional_drug_case_properties:
@@ -727,6 +758,14 @@ def get_drug_resistances_from_lpa(column_mapping, row):
                 "sensitivity": "resistant" if resistant else "sensitive",
             })
     return case_props
+
+
+def get_drug_resistances_from_sl_lpa(column_mapping, row):
+    result = column_mapping.get_value("sl_lpa_result", row)
+    if result is None:
+        return []
+    raise NotImplementedError("No example data was in the original data dump, so didn't know how to handle it.")
+
 
 def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date):
     properties_list = []
