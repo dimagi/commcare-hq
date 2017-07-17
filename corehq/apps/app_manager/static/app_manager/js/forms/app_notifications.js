@@ -1,5 +1,5 @@
 /* globals hqDefine moment alert_user */
-hqDefine('app_manager/js/app-notifications.js', function () {
+hqDefine('app_manager/js/forms/app_notifications.js', function () {
     function NotifyFunction(userId) {
         return function(msg) {
             var msgObj = JSON.parse(msg);

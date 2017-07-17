@@ -109,7 +109,7 @@ hqDefine("app_manager/js/form_designer.js", function() {
 
                 var notification_options = initial_page_data("notification_options");
                 if (notification_options) {
-                    var notifications = hqImport('app_manager/js/app-notifications.js');
+                    var notifications = hqImport('app_manager/js/forms/app_notifications.js');
                     // initialize redis
                     WS4Redis({
                         uri: notification_options.WEBSOCKET_URI + notification_options.notify_facility + '?subscribe-broadcast',
