@@ -990,6 +990,11 @@ def view_module(request, domain, app_id, module_unique_id):
 @require_GET
 @require_deploy_apps
 def view_module_legacy(request, domain, app_id, module_id):
+    """
+    This view has been kept around to not break any documentation on example apps
+    and partner-distributed documentation on existing apps.
+    PLEASE DO NOT DELETE.
+    """
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id, module_id)
 
