@@ -111,7 +111,7 @@ hqDefine("app_manager/js/app_view.js", function() {
                             fetchLimit: initial_page_data("fetch_limit"),
                         };
                         var el = $('#releases-table');
-                        var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
+                        var ReleasesMain = hqImport('app_manager/js/releases/releases.js').ReleasesMain;
                         var releasesMain = new ReleasesMain(o);
                         _.defer(function(){ releasesMain.getMoreSavedApps(false); });
                         el.koApplyBindings(releasesMain);

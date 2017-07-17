@@ -5,7 +5,7 @@ hqDefine("app_manager/js/app_view_release_manager.js", function() {
     hqImport('app_manager/js/app_manager.js').setPrependedPageTitle(django.gettext("Publish"));
 
     // Main releases content
-    var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
+    var ReleasesMain = hqImport('app_manager/js/releases/releases.js').ReleasesMain;
     var o = {
         currentAppVersion: initial_page_data('app_version') || -1,
         recipient_contacts: initial_page_data('sms_contacts'),

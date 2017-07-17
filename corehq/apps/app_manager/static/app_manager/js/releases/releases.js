@@ -1,5 +1,5 @@
 /* globals: ga_track_event */
-hqDefine('app_manager/js/releases.js', function () {
+hqDefine('app_manager/js/releases/releases.js', function () {
     function SavedApp(app_data, releasesMain) {
         var self = ko.mapping.fromJS(app_data);
         $.each(['comment_user_name', '_deleteState'], function (i, attr) {

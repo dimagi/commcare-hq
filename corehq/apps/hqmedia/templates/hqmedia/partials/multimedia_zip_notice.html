@@ -15,7 +15,7 @@
             }
             {% else %}
                 {# This happens when the template gets included in app_manager/v1/partials/releases.html #}
-                {# See app_manager/js/releases.js #}
+                {# See app_manager/js/releases/releases.js #}
                 data-bind="click: function () {
                     download_application_zip(true, build_profile());
                 }"

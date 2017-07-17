@@ -35,7 +35,7 @@
 -    {# these scripts are for releases.html, but including them there causes hard-to-reproduce problems #}
 -    <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
 -    <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
--    <script src="{% static 'app_manager/js/releases.js' %}"></script>
+-    <script src="{% static 'app_manager/js/releases/releases.js' %}"></script>
 -    <script src="{% static 'app_manager/js/app_diff.js' %}"></script>
 -    <script src="{% static 'app_manager/js/language-profiles.js' %}"></script>
 +  {% include 'analytics/fullstory.html' %}
@@ -50,7 +50,7 @@
 +{% block js %}{{  block.super }}
 +  <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
 +  <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
-+  <script src="{% static 'app_manager/js/releases.js' %}"></script>
++  <script src="{% static 'app_manager/js/releases/releases.js' %}"></script>
 +  <script src="{% static 'app_manager/js/language-profiles.js' %}"></script>
 +  <script src="{% static "jsdiff/diff.js" %}"></script>
 +  <script src="{% static 'app_manager/js/app_diff.js' %}"></script>
