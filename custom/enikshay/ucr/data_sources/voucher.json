@@ -525,9 +525,17 @@
                 "display_name": "fo",
                 "datatype": "string",
                 "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "fo"
+                    "value_expression": {
+                        "datatype": "string",
+                        "type": "property_name",
+                        "property_name": "fo"
+                    },
+                    "type": "related_doc",
+                    "related_doc_type": "CommCareCase",
+                    "doc_id_expression": {
+                        "type": "named",
+                        "name": "person_id"
+                    }
                 },
                 "is_primary_key": false,
                 "transform": {},
@@ -827,7 +835,7 @@
                             "value_expression": {
                                 "datatype": "string",
                                 "type": "property_name",
-                                "property_name": "drugs_ordered_readable"
+                                "property_name": "unit_prices_joined"
                             },
                             "type": "related_doc",
                             "related_doc_type": "CommCareCase",
@@ -840,7 +848,7 @@
                             "value_expression": {
                                 "datatype": "string",
                                 "type": "property_name",
-                                "property_name": "drugs_ordered_readable"
+                                "property_name": "unit_prices_joined"
                             },
                             "type": "related_doc",
                             "related_doc_type": "CommCareCase",
@@ -881,72 +889,28 @@
                         },
                         "fulfilled": {
                             "value_expression": {
-                                "datatype": null,
-                                "type": "property_path",
-                                "property_path": [
-                                    "list",
-                                    "data",
-                                    "price_per_unit_max"
-                                ]
+                                "datatype": "string",
+                                "type": "property_name",
+                                "property_name": "number_of_units_prescribed"
                             },
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "array_index",
-                                "array_expression": {
-                                    "value_expression": {
-                                        "datatype": null,
-                                        "type": "property_path",
-                                        "property_path": [
-                                            "form",
-                                            "new_drugs_order",
-                                            "voucher_items"
-                                        ]
-                                    },
-                                    "type": "nested",
-                                    "argument_expression": {
-                                        "type": "named",
-                                        "name": "order_form"
-                                    }
-                                },
-                                "index_expression": {
-                                    "type": "constant",
-                                    "constant": 0
-                                }
+                            "type": "related_doc",
+                            "related_doc_type": "CommCareCase",
+                            "doc_id_expression": {
+                                "type": "named",
+                                "name": "prescription_id"
                             }
                         },
                         "approved": {
                             "value_expression": {
-                                "datatype": null,
-                                "type": "property_path",
-                                "property_path": [
-                                    "list",
-                                    "data",
-                                    "price_per_unit_max"
-                                ]
+                                "datatype": "string",
+                                "type": "property_name",
+                                "property_name": "number_of_units_prescribed"
                             },
-                            "type": "nested",
-                            "argument_expression": {
-                                "type": "array_index",
-                                "array_expression": {
-                                    "value_expression": {
-                                        "datatype": null,
-                                        "type": "property_path",
-                                        "property_path": [
-                                            "form",
-                                            "new_drugs_order",
-                                            "voucher_items"
-                                        ]
-                                    },
-                                    "type": "nested",
-                                    "argument_expression": {
-                                        "type": "named",
-                                        "name": "order_form"
-                                    }
-                                },
-                                "index_expression": {
-                                    "type": "constant",
-                                    "constant": 0
-                                }
+                            "type": "related_doc",
+                            "related_doc_type": "CommCareCase",
+                            "doc_id_expression": {
+                                "type": "named",
+                                "name": "prescription_id"
                             }
                         }
                     },
