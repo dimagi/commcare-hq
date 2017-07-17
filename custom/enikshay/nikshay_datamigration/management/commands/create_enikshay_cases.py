@@ -68,8 +68,8 @@ class Command(BaseCommand):
 
     @mock_ownership_cleanliness_checks()
     def handle(self, domain, migration_comment, **options):
-        if not settings.UNIT_TESTING:
-            raise CommandError('must migrate case data from phone_number to contact_phone_number before running')
+        # if not settings.UNIT_TESTING:
+        #     raise CommandError('must migrate case data from phone_number to contact_phone_number before running')
 
         base_query = PatientDetail.objects.order_by('scode', 'Dtocode', 'Tbunitcode', 'PHI')
 
