@@ -1,5 +1,5 @@
 /* globals COMMCAREHQ, hqLayout */
-hqDefine("app_manager/js/summary.js", function() {
+hqDefine("app_manager/js/summary/summary.js", function() {
     $(function() {
         'use strict';
 
