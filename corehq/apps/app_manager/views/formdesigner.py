@@ -72,6 +72,11 @@ def form_source(request, domain, app_id, form_unique_id):
 
 @require_can_edit_apps
 def form_source_legacy(request, domain, app_id, module_id=None, form_id=None):
+    """
+    This view has been kept around to not break any documentation on example apps
+    and partner-distributed documentation on existing apps.
+    PLEASE DO NOT DELETE.
+    """
     app = get_app(domain, app_id)
 
     try:
