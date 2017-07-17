@@ -283,32 +283,34 @@
 {% endif %}
 
 {% if detail.parent_select %}
-<div class="panel panel-appmanager" data-bind="with: parentSelect, DetailScreenConfig_notifyShortScreenOnChange: $root">
-    <div class="panel-heading">
-        <h4 class="panel-title panel-title-nolink">
-            {% trans "Parent Child Selection" %}
-        </h4>
-    </div>
-    <div data-bind="visible: moduleOptions().length" class="form-horizontal panel-body">
-        <div class="form-group">
-            <label class="control-label col-sm-2">
-                {% trans "Select Parent First" %}
-            </label>
-            <div class="col-sm-4 checkbox">
-                <label>
-                    <input type="checkbox" data-bind="checked: active"/>
+<div data-bind="with: parentSelect, DetailScreenConfig_notifyShortScreenOnChange: $root">
+    <div class="panel panel-appmanager" data-bind="visible: moduleOptions().length">
+        <div class="panel-heading">
+            <h4 class="panel-title panel-title-nolink">
+                {% trans "Parent Child Selection" %}
+            </h4>
+        </div>
+        <div class="form-horizontal panel-body">
+            <div class="form-group">
+                <label class="control-label col-sm-2">
+                    {% trans "Select Parent First" %}
                 </label>
+                <div class="col-sm-4 checkbox">
+                    <label>
+                        <input type="checkbox" data-bind="checked: active"/>
+                    </label>
+                </div>
             </div>
-        </div>
-        <div class="form-group" data-bind="visible: active">
-            <label class="control-label col-sm-2">
-                {% trans "Use Case List from" %}
-            </label>
-            <div class="col-sm-4">
-                <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
+            <div class="form-group" data-bind="visible: active">
+                <label class="control-label col-sm-2">
+                    {% trans "Use Case List from" %}
+                </label>
+                <div class="col-sm-4">
+                    <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
+                </div>
             </div>
+            <div class="spacer"></div>
         </div>
-        <div class="spacer"></div>
     </div>
 </div>
 {% endif %}
