@@ -12,10 +12,10 @@ migration_query = """
 UPDATE {new_table} B
 SET
 B.pse_daily_attendance = A.pse_days_attended,
-B.pse_daily_attendance_male = CASE WHEN B.sex = 'M' THEN A.pse_days_attended ELSE NULL END,
-B.pse_daily_attendance_female = CASE WHEN B.sex = 'F' THEN A.pse_days_attended ELSE NULL END
+B.pse_daily_attendance_male = CASE WHEN sex = 'M' THEN A.pse_days_attended ELSE NULL END,
+B.pse_daily_attendance_female = CASE WHEN sex = 'F' THEN A.pse_days_attended ELSE NULL END
 FROM {old_table} A
-WHERE A.doc_id = B.doc_id and A.month_start = B.month_start
+WHERE A.doc_id = B.doc_id and A.month = immutable_date_cast(B.month_start)
 """.format(new_table=new_table, old_table=old_table)
 
 
