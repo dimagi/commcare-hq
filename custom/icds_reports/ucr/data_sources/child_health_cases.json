@@ -161,8 +161,7 @@
         "transform": {},
         "is_nullable": false,
         "type": "expression",
-        "column_id": "awc_id",
-        "create_index": true
+        "column_id": "awc_id"
       },
       {
         "display_name": null,
