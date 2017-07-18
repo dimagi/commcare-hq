@@ -510,9 +510,12 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     @transaction.atomic
     def save_new_form(form):
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
         """
         Save a previously unsaved form
         """
+
+        db_name = get_db_alias_for_partitioned_doc(form.form_id)
         assert not form.is_saved(), 'form already saved'
         logging.debug('Saving new form: %s', form)
         unsaved_attachments = getattr(form, 'unsaved_attachments', [])
@@ -524,13 +527,15 @@ class FormAccessorSQL(AbstractFormAccessor):
         for operation in operations:
             operation.form = form
 
-        with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute(
-                'SELECT form_pk FROM save_new_form_and_related_models(%s, %s, %s, %s)',
-                [form.form_id, form, unsaved_attachments, operations]
-            )
-            result = fetchone_as_namedtuple(cursor)
-            form.id = result.form_pk
+        with transaction.atomic(using=db_name):
+            form.save(using=db_name)
+            for attachment in unsaved_attachments:
+                assert not attachment.id, 'Form attachment already saved'
+                attachment.save(using=db_name)
+
+            for operation in operations:
+                assert not operation.id, 'Form operation already saved'
+                operation.save(using=db_name)
 
         try:
             del form.unsaved_attachments
