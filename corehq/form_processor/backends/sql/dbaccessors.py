@@ -17,6 +17,7 @@ from django.db.models.functions import Greatest
 from corehq.blobs import get_blob_db
 from corehq.form_processor.exceptions import (
     XFormNotFound,
+    XFormSaveError,
     CaseNotFound,
     AttachmentNotFound,
     CaseSaveError,
@@ -527,15 +528,24 @@ class FormAccessorSQL(AbstractFormAccessor):
         for operation in operations:
             operation.form = form
 
-        with transaction.atomic(using=db_name):
-            form.save(using=db_name)
-            for attachment in unsaved_attachments:
-                assert not attachment.is_saved(), 'Form attachment already saved'
-                attachment.save(using=db_name)
+        try:
+            with transaction.atomic(using=db_name):
+                form.save(using=db_name)
+                for attachment in unsaved_attachments:
+                    if attachment.is_saved():
+                        raise XFormSaveError(
+                            'XFormAttachmentSQL {} has already been saved'.format(attachment.id)
+                        )
+                    attachment.save(using=db_name)
 
-            for operation in operations:
-                assert not operation.is_saved(), 'Form operation already saved'
-                operation.save(using=db_name)
+                for operation in operations:
+                    if operation.is_saved():
+                        raise XFormSaveError(
+                            'XFormOperationSQL {} has already been saved'.format(operation.id)
+                        )
+                    operation.save(using=db_name)
+        except InternalError as e:
+            raise XFormSaveError(e)
 
         try:
             del form.unsaved_attachments
