@@ -256,6 +256,11 @@ class EnikshayCaseFactory(object):
         This gets the episode case structure with a nested occurrence and person case structures
         inside of it.
         """
+        treatment_initiation_date = (
+            self.patient_detail.treatment_initiation_date
+            if self.patient_detail.treatment_initiation_date
+            else self.patient_detail.pregdate1
+        )
         kwargs = {
             'attrs': {
                 'case_type': EPISODE_CASE_TYPE,
@@ -263,11 +268,7 @@ class EnikshayCaseFactory(object):
                 'external_id': self.nikshay_id,
                 'owner_id': '-',
                 'update': {
-                    'adherence_schedule_date_start': (
-                        self.patient_detail.treatment_initiation_date
-                        if self.patient_detail.treatment_initiation_date
-                        else self.patient_detail.pregdate1
-                    ),
+                    'adherence_schedule_date_start': treatment_initiation_date,
                     'adherence_schedule_id': 'schedule_mwf',
                     'date_of_diagnosis': self.patient_detail.pregdate1,
                     'date_of_mo_signature': (
@@ -287,11 +288,7 @@ class EnikshayCaseFactory(object):
                     'transfer_in': 'yes' if self.patient_detail.patient_type_choice == 'transfer_in' else '',
                     'treatment_card_completed_date': self.patient_detail.pregdate1,
                     'treatment_initiated': 'yes_phi',
-                    'treatment_initiation_date': (
-                        self.patient_detail.treatment_initiation_date
-                        if self.patient_detail.treatment_initiation_date
-                        else self.patient_detail.pregdate1
-                    ),
+                    'treatment_initiation_date': treatment_initiation_date,
                     'treatment_supporter_designation': self.patient_detail.treatment_supporter_designation,
                     'treatment_supporter_first_name': self.patient_detail.treatment_supporter_first_name,
                     'treatment_supporter_last_name': self.patient_detail.treatment_supporter_last_name,
