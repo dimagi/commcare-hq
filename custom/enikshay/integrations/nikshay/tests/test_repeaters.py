@@ -1013,6 +1013,7 @@ class TestNikshayRegisterPrivatePatientRepeater(ENikshayLocationStructureMixin, 
 class TestNikshayRegisterPrivatePatientPayloadGenerator(ENikshayLocationStructureMixin, NikshayRepeaterTestBase):
     def setUp(self):
         super(TestNikshayRegisterPrivatePatientPayloadGenerator, self).setUp()
+        self.person.attrs['update']['current_address_district_choice'] = self.dto.location_id
         self.cases = self.create_case_structure()
         self.assign_person_to_location(self.pcp.location_id)
         update_case(self.domain, self.person_id, {ENROLLED_IN_PRIVATE: "true"})
