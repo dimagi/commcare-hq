@@ -284,6 +284,8 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def get_forms(form_ids, ordered=False):
         assert isinstance(form_ids, list)
+        if not form_ids:
+            return []
         forms = list(XFormInstanceSQL.objects.raw('SELECT * from get_forms_by_id(%s)', [form_ids]))
         if ordered:
             _sort_with_id_list(forms, form_ids, 'form_id')
@@ -353,6 +355,8 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def get_forms_with_attachments_meta(form_ids, ordered=False):
         assert isinstance(form_ids, list)
+        if not form_ids:
+            return []
         forms = list(FormAccessorSQL.get_forms(form_ids))
 
         # attachments are already sorted by form_id in SQL
@@ -428,6 +432,8 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     def get_attachments_for_forms(form_ids, ordered=False):
         assert isinstance(form_ids, list)
+        if not form_ids:
+            return []
         attachments = list(XFormAttachmentSQL.objects.raw(
             'SELECT * from get_multiple_forms_attachments(%s)',
             [form_ids]
@@ -654,6 +660,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_cases(case_ids, ordered=False, prefetched_indices=None):
         assert isinstance(case_ids, list)
+        if not case_ids:
+            return []
         cases = list(CommCareCaseSQL.objects.raw('SELECT * from get_cases_by_id(%s)', [case_ids]))
 
         if ordered:
@@ -704,6 +712,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_all_reverse_indices_info(domain, case_ids):
         assert isinstance(case_ids, list)
+        if not case_ids:
+            return []
+
         indexes = CommCareCaseIndexSQL.objects.raw(
             'SELECT * FROM get_all_reverse_indices(%s, %s)',
             [domain, case_ids]
@@ -723,6 +734,9 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         """
         Given a base list of case ids, gets all ids of cases they reference (parent and host cases)
         """
+        if not case_ids:
+            return []
+
         with get_cursor(CommCareCaseIndexSQL) as cursor:
             cursor.execute(
                 'SELECT referenced_id FROM get_multiple_cases_indices(%s, %s)',
@@ -734,6 +748,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_reverse_indexed_cases(domain, case_ids):
         assert isinstance(case_ids, list)
+        if not case_ids:
+            return []
 
         cases = list(CommCareCaseSQL.objects.raw(
             'SELECT * FROM get_reverse_indexed_cases(%s, %s)',
@@ -902,6 +918,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_related_indices(domain, case_ids, exclude_indices):
         assert isinstance(case_ids, list), case_ids
+        if not case_ids:
+            return []
         return list(CommCareCaseIndexSQL.objects.raw(
             'SELECT * FROM get_related_indices(%s, %s, %s)',
             [domain, case_ids, list(exclude_indices)]))
@@ -909,6 +927,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_closed_and_deleted_ids(accessor, case_ids):
         assert isinstance(case_ids, list), case_ids
+        if not case_ids:
+            return []
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
                 'SELECT case_id, closed, deleted FROM get_closed_and_deleted_ids(%s, %s)',
@@ -919,6 +939,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
     @staticmethod
     def get_modified_case_ids(accessor, case_ids, sync_log):
         assert isinstance(case_ids, list), case_ids
+        if not case_ids:
+            return []
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
                 'SELECT case_id FROM get_modified_case_ids(%s, %s, %s, %s)',
@@ -942,6 +964,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         """
         Given a base list of case ids, get all ids of all extension cases that reference them
         """
+        if not case_ids:
+            return []
         with get_cursor(CommCareCaseIndexSQL) as cursor:
             cursor.execute('SELECT case_id FROM get_extension_case_ids(%s, %s)', [domain, list(case_ids)])
             results = fetchall_as_namedtuple(cursor)
@@ -953,6 +977,8 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         Given a list of case IDs, return a dict where the ids are keys and the
         values are the last server modified date of that case.
         """
+        if not case_ids:
+            return []
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
                 'SELECT case_id, server_modified_on FROM get_case_last_modified_dates(%s, %s)',
@@ -1070,6 +1096,9 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
     @staticmethod
     def get_ledger_values_for_cases(case_ids, section_id=None, entry_id=None, date_start=None, date_end=None):
         assert isinstance(case_ids, list)
+        if not case_ids:
+            return []
+
         return list(LedgerValue.objects.raw(
             'SELECT * FROM get_ledger_values_for_cases(%s, %s, %s, %s, %s)',
             [case_ids, section_id, entry_id, date_start, date_end]
