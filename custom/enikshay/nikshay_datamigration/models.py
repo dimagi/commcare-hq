@@ -360,6 +360,7 @@ class Followup(models.Model):
             99: 'Neg',
             1: 'SC-1',
             2: 'SC-2',
+            3: 'SC-3',
             4: 'SC-4',
             5: 'SC-5',
             6: 'SC-6',
