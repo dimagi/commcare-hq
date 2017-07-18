@@ -29,6 +29,7 @@ class Command(BaseCommand):
             default=False,
             help="Print query and output from EXPLAIN"
         )
+
     def handle(self, check, **options):
         with connections['icds-ucr'].cursor() as cursor:
             if check:
