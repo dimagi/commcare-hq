@@ -123,11 +123,12 @@ def copy_form(request, domain, app_id, form_unique_id):
     form = app.get_form(form_unique_id)
     module = form.get_module()
     to_module_id = int(request.POST['to_module_id'])
+    to_module = app.get_module(to_module_id)
     new_form = None
     try:
-        new_form = app.copy_form(module.id, form.id, to_module_id)
-    except ConflictingCaseTypeError:
-        messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
+        new_form = app.copy_form(module.id, form.id, to_module.id)
+        if module['case_type'] != to_module['case_type']:
+            messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
         app.save()
     except BlankXFormError:
         # don't save!
