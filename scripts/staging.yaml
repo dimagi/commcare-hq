@@ -49,7 +49,6 @@ branches:
 #  - nh/240812/mw_pwd_reset  # Norman 3/23
   - nh/new_rb  # Norman 11/22
   - app-manager-labs # Jenny 6/19
-  - je/partition-device-log # J$ 6/30
   - lwyszomi-icds_dashboard_v2  # https://github.com/dimagi/commcare-hq/pull/16802
   - ce/mobile-user-loc-id 7/18
 submodules:
