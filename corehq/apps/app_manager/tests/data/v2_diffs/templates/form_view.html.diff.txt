@@ -24,7 +24,7 @@
      <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
 @@ -68,6 +68,41 @@
      {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
-         <script src="{% static 'app_manager/js/custom_instances.js' %}"></script>
+         <script src="{% static 'app_manager/js/forms/custom_instances.js' %}"></script>
      {% endif %}
 +{% endblock %}
 +

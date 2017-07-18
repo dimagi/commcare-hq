@@ -22,6 +22,19 @@ hqDefine("reports/js/filters.js", function() {
             });
         }
 
+        // Date selector
+        var $dateSelector = $("#filter_date_selector");
+        if ($dateSelector.length && $dateSelector.data("init")) {
+            $('#filter_date_selector').daterangepicker(
+                {
+                    locale: {
+                        format: 'YYYY-MM-DD',
+                    },
+                    singleDatePicker: true,
+                }
+            );
+        }
+
         // Date ranges (used in accounting)
         $('.date-range').datepicker({
             changeMonth: true,

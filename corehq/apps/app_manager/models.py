@@ -3029,7 +3029,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 class ShadowForm(AdvancedForm):
     form_type = 'shadow_form'
     # The unqiue id of the form we are shadowing
-    shadow_parent_form_id = StringProperty(required=False, default=None)
+    shadow_parent_form_id = FormIdProperty("modules[*].forms[*].shadow_parent_form_id")
 
     # form actions to be merged with the parent actions
     extra_actions = SchemaProperty(AdvancedFormActions)
@@ -5435,7 +5435,7 @@ def validate_property(property):
 
 def validate_detail_screen_field(field):
     # If you change here, also change here:
-    # corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js
+    # corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
     field_re = r'^([a-zA-Z][\w_-]*:)*([a-zA-Z][\w_-]*/)*#?[a-zA-Z][\w_-]*$'
     if not re.match(field_re, field):
         raise ValueError("Invalid Sort Field")

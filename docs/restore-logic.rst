@@ -11,8 +11,8 @@ Important terms from that document that are also used in this document:
 
 A case is **available** if
 
-- it is *open* and not an *extension* case
-- it is *open* and is the *extension* of an *available* case.
+- it is **open** and not an **extension** case
+- it is **open** and is the **extension** of an **available** case.
 
 .. _live:
 

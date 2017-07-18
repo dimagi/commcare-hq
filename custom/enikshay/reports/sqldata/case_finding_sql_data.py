@@ -98,6 +98,7 @@ class CaseFindingSqlData(EnikshaySqlData):
     def filters(self):
         filters = super(CaseFindingSqlData, self).filters
         filters.append(RawFilter("episode_type = 'confirmed_tb'"))
+        filters.append(RawFilter("is_enrolled_in_private = 0"))
         return filters
 
     @property

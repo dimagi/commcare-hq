@@ -464,7 +464,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
                         }
                         if (data.hasOwnProperty('case_list-show') &&
                                 module.hasOwnProperty('module_view')) {
-                            var requires_case_details = hqImport('app_manager/js/detail-screen-config.js').state.requires_case_details;
+                            var requires_case_details = hqImport('app_manager/js/details/screen_config.js').state.requires_case_details;
                             requires_case_details(data['case_list-show']);
                         }
                     },
