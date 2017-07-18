@@ -255,7 +255,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
                 $location.search('location', '');
                 vm.location = 'all';
             }
-            storageService.set($location.search());
+            storageService.setKey('search', $location.search());
             if (selectedLocationIndex() === 4) {
                 $location.path('awc_reports');
             }

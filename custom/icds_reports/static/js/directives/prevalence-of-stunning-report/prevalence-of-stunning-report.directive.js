@@ -106,6 +106,7 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
         chart: {
             type: 'lineChart',
             height: 450,
+            width: 1100,
             margin : {
                 top: 20,
                 right: 60,

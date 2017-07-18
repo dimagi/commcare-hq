@@ -917,6 +917,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             chart: {
                 type: 'multiBarChart',
                 height: 450,
+                width: 1100,
                 margin: {
                     top: 20,
                     right: 20,

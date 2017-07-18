@@ -8,6 +8,7 @@ function MapOrSectorController() {
         chart: {
             type: 'multiBarHorizontalChart',
             height: vm.height,
+            width: 1100,
             margin: {
                 bottom: 120,
                 left: 200,
