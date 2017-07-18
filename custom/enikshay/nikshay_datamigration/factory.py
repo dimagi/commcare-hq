@@ -270,7 +270,7 @@ class EnikshayCaseFactory(object):
                 'update': {
                     'adherence_schedule_date_start': treatment_initiation_date,
                     'adherence_schedule_id': 'schedule_mwf',
-                    'date_of_diagnosis': self.patient_detail.pregdate1,
+                    'date_of_diagnosis': treatment_initiation_date,
                     'date_of_mo_signature': (
                         self.patient_detail.date_of_mo_signature
                         if self.patient_detail.date_of_mo_signature
