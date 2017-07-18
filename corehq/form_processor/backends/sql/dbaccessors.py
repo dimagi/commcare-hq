@@ -530,11 +530,11 @@ class FormAccessorSQL(AbstractFormAccessor):
         with transaction.atomic(using=db_name):
             form.save(using=db_name)
             for attachment in unsaved_attachments:
-                assert not attachment.id, 'Form attachment already saved'
+                assert not attachment.is_saved(), 'Form attachment already saved'
                 attachment.save(using=db_name)
 
             for operation in operations:
-                assert not operation.id, 'Form operation already saved'
+                assert not operation.is_saved(), 'Form operation already saved'
                 operation.save(using=db_name)
 
         try:
