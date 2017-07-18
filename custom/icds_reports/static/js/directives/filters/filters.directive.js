@@ -1,5 +1,5 @@
 function FiltersController(userLocationId) {
-    this.data.location = userLocationId;
+    this.data.location_id = userLocationId;
 }
 
 FiltersController.$inject = ['userLocationId'];

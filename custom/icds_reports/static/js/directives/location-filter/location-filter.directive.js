@@ -252,10 +252,9 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
                 $location.search('location_name', '');
                 $location.search('location_id', '');
                 $location.search('selectedLocationLevel', '');
-                $location.search('location', '');
                 vm.location = 'all';
             }
-            storageService.set($location.search());
+            storageService.setKey('search', $location.search());
             if (selectedLocationIndex() === 4) {
                 $location.path('awc_reports');
             }
@@ -292,7 +291,7 @@ window.angular.module('icdsApp').directive("locationFilter", function() {
         restrict:'E',
         scope: {
             location_id: '=',
-            selectedLocationId: '=ngModel',
+            selectedLocationId: '=',
             selectedLocations: '=',
         },
         bindToController: true,
