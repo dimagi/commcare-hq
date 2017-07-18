@@ -155,7 +155,7 @@ class TestAdherenceUpdater(TestCase):
             for i, case in enumerate(case_dicts)
         ])
 
-    def assert_update(self, input, output):
+    def assert_update(self, purge_date, adherence_schedule_input, output, date_today_in_india=None):
         #   Sample test case
         #   [
         #       (
@@ -170,7 +170,8 @@ class TestAdherenceUpdater(TestCase):
         #               'aggregated_score_date_calculated': value
         #               'expected_doses_taken': value
         #               'aggregated_score_count_taken': value
-        #           }
+        #           },
+        #           start_date_in_india
         #       ),
         #       ...
         #   ]
@@ -186,30 +187,34 @@ class TestAdherenceUpdater(TestCase):
             for adherence_case in input[2]
         ]
         episode = self.create_episode_case(
-            purge_date, adherence_schedule_date_start, adherence_schedule_id, adherence_cases
+            adherence_schedule_date_start, adherence_schedule_id, adherence_cases
         )
 
-        episode = self._get_updated_episode()
-        return self._assert_properties_equal(episode, output)
+        updater = EpisodeAdherenceUpdate(self.domain, episode)
+        updater.purge_date = purge_date
+        if date_today_in_india is not None:
+            updater.date_today_in_india = date_today_in_india
 
-    def _assert_properties_equal(self, episode, output):
+        return self._assert_properties_equal(updater.update_json(), output)
+
+    def _assert_properties_equal(self, update_json, output):
+
         self.assertDictEqual(
-            {key: episode.dynamic_case_properties()[key] for key in output},
+            {key: str(update_json[key]) for key in output},
             {key: str(val) for key, val in output.iteritems()}  # convert values to strings
         )
 
     def _get_updated_episode(self):
+
         self.case_updater.run()
         return CaseAccessors(self.domain).get_case(self.episode_id)
 
     def create_episode_case(
             self,
-            purge_date,
             adherence_schedule_date_start,
             adherence_schedule_id,
             adherence_cases
     ):
-        self.case_updater.purge_date = purge_date
         episode = self._create_episode_case(adherence_schedule_date_start, adherence_schedule_id)
         adherence_cases = self._create_adherence_cases(adherence_cases)
         self._rebuild_indicators()
@@ -553,13 +558,13 @@ class TestAdherenceUpdater(TestCase):
             }
         ]
         episode = self.create_episode_case(
-            purge_date=datetime.date(2017, 8, 10),
             adherence_schedule_date_start=datetime.date(2017, 8, 12),
             adherence_schedule_id='schedule1',
             adherence_cases=adherence_cases,
         )
 
-        updater = EpisodeAdherenceUpdate(episode, self.case_updater)
+        updater = EpisodeAdherenceUpdate(self.domain, episode)
+        updater.purge_date = datetime.date(2017, 8, 10),
         doses_taken_by_day = updater.calculate_doses_taken_by_day(updater.get_valid_adherence_cases())
         self.assertDictEqual(
             {
@@ -584,12 +589,12 @@ class TestAdherenceUpdater(TestCase):
 
     def test_count_taken_by_day(self):
         episode = self.create_episode_case(
-            purge_date=datetime.date(2016, 1, 20),
             adherence_schedule_date_start=datetime.date(2016, 1, 10),
             adherence_schedule_id='schedule1',
             adherence_cases=[]
         )
-        episode_update = EpisodeAdherenceUpdate(episode, self.case_updater)
+        episode_update = EpisodeAdherenceUpdate(self.domain, episode)
+        episode_update.purge_date = datetime.date(2016, 1, 20)
 
         def dose_taken_by_day(cases):
             # cases a list of tuples
@@ -747,7 +752,6 @@ class TestAdherenceUpdater(TestCase):
         }
 
         episode = self.create_episode_case(
-            datetime.date(2016, 1, 15),
             datetime.date(2016, 1, 17),
             'schedule1',
             []
@@ -762,7 +766,6 @@ class TestAdherenceUpdater(TestCase):
 
     def test_adherence_score_start_date_month(self):
         # If the start date is more than a month ago, calculate the last month's scores
-        self.case_updater.date_today_in_india = datetime.date(2016, 1, 31)
         self.assert_update(
             (
                 datetime.date(2016, 1, 30),
@@ -784,12 +787,12 @@ class TestAdherenceUpdater(TestCase):
                 'one_week_adherence_score': 14.29,
                 'two_week_adherence_score': 21.43,
                 'month_adherence_score': 13.33,
-            }
+            },
+            date_today_in_india=datetime.date(2016, 1, 31)
         )
 
     def test_adherence_score_start_date_week(self):
         # If the start date is only a week ago, don't send 2 week or month scores
-        self.case_updater.date_today_in_india = datetime.date(2016, 1, 31)
         self.assert_update(
             (
                 datetime.date(2016, 1, 30),
@@ -811,11 +814,11 @@ class TestAdherenceUpdater(TestCase):
                 'one_week_adherence_score': 14.29,
                 'two_week_adherence_score': 0.0,
                 'month_adherence_score': 0.0,
-            }
+            },
+            date_today_in_india=datetime.date(2016, 1, 31),
         )
 
     def test_adherence_score_by_source(self):
-        self.case_updater.date_today_in_india = datetime.date(2016, 1, 31)
         adherence_cases = [
             {
                 "name": '1',
@@ -849,13 +852,13 @@ class TestAdherenceUpdater(TestCase):
                 "adherence_date": datetime.date(2016, 1, 30),
             },
         ]
-        self.create_episode_case(
-            purge_date=datetime.date(2017, 3, 30),
+        episode = self.create_episode_case(
             adherence_schedule_date_start=datetime.date(2015, 12, 1),
             adherence_schedule_id='schedule1',
             adherence_cases=adherence_cases,
         )
-        episode = self._get_updated_episode()
+        updater = EpisodeAdherenceUpdate(self.domain, episode)
+        updater.date_today_in_india = datetime.date(2016, 1, 31)
         expected = {
             'three_day_score_count_taken_99DOTS': 0,
             'one_week_score_count_taken_99DOTS': 0,
@@ -894,4 +897,4 @@ class TestAdherenceUpdater(TestCase):
             'month_adherence_score_treatment_supervisor': 0.0,
         }
 
-        self._assert_properties_equal(episode, expected)
+        self._assert_properties_equal(updater.update_json(), expected)
