@@ -42,10 +42,17 @@ class LedgerProcessorSQL(LedgerProcessorInterface):
 
         for ledger_reference, ledger_value in updated_ledgers.items():
             if ledger_reference in ledgers_needing_rebuild:
+                ledgers_needing_rebuild.remove(ledger_reference)
                 rebuilt_ledger_value = self._rebuild_ledger(form_id, ledger_value)
                 result.to_save.append(rebuilt_ledger_value)
             else:
                 result.to_save.append(ledger_value)
+
+        # rebuild any ledgers that are no longer updated by this form
+        for reference in ledgers_needing_rebuild:
+            ledger_value = ledger_db.get_ledger(reference)
+            rebuilt_ledger_value = self._rebuild_ledger(form_id, ledger_value)
+            result.to_save.append(rebuilt_ledger_value)
 
         return result
 

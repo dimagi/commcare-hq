@@ -1,4 +1,3 @@
-from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
 from corehq.sql_db.config import partition_config
 from django.conf import settings
 from django import db
@@ -101,6 +100,7 @@ def run_query_across_partitioned_databases(model_class, q_expression, values=Non
 
 def get_db_alias_for_partitioned_doc(partition_value):
     if settings.USE_PARTITIONED_DATABASE:
+        from corehq.form_processor.backends.sql.dbaccessors import ShardAccessor
         db_name = ShardAccessor.get_database_for_doc(partition_value)
     else:
         db_name = 'default'
