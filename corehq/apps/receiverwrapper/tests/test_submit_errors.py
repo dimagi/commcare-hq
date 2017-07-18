@@ -2,6 +2,7 @@
 from django.test import TestCase
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.middleware import OPENROSA_VERSION_3, OPENROSA_VERSION_HEADER
 from django.test.client import Client
 from django.urls import reverse
 import os
@@ -30,12 +31,15 @@ class SubmissionErrorTest(TestCase):
         self.domain.delete()
         FormProcessorTestUtils.delete_all_xforms(self.domain.name)
 
-    def _submit(self, formname):
+    def _submit(self, formname, open_rosa_header=None):
+        open_rosa_header = open_rosa_header or '2.0'
         file_path = os.path.join(os.path.dirname(__file__), "data", formname)
         with open(file_path, "rb") as f:
-            res = self.client.post(self.url, {
-                "xml_submission_file": f
-            })
+            res = self.client.post(
+                self.url,
+                {"xml_submission_file": f},
+                **{OPENROSA_VERSION_HEADER: open_rosa_header}
+            )
             return file_path, res
 
     def testSubmitBadAttachmentType(self):
@@ -51,7 +55,10 @@ class SubmissionErrorTest(TestCase):
         self.assertIn(u"   √   ".encode('utf-8'), res.content)
 
         file, res = self._submit('simple_form.xml')
-        self.assertEqual(422, res.status_code)
+        self.assertEqual(201, res.status_code)
+
+        _, res_openrosa3 = self._submit('simple_form.xml', open_rosa_header=OPENROSA_VERSION_3)
+        self.assertEqual(422, res_openrosa3.status_code)
         self.assertIn("Form is a duplicate", res.content)
 
         # make sure we logged it
@@ -72,7 +79,9 @@ class SubmissionErrorTest(TestCase):
 
         try:
             file, res = self._submit("simple_form.xml")
-            self.assertEqual(422, res.status_code)
+            self.assertEqual(201, res.status_code)
+            _, res_openrosa3 = self._submit("simple_form.xml", open_rosa_header=OPENROSA_VERSION_3)
+            self.assertEqual(422, res_openrosa3.status_code)
             self.assertIn(evil_laugh, res.content)
 
             # make sure we logged it

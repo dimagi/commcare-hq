@@ -377,6 +377,10 @@ class XFormError(XFormInstance):
     def is_error(self):
         return True
 
+    @property
+    def blob_identifier(self):
+        return self.orig_id if self.orig_id else self._id
+
 
 class XFormDuplicate(XFormError):
     """

@@ -51,10 +51,14 @@ class BlobMixin(Document):
     _atomic_blobs = None
 
     def _blobdb_bucket(self):
-        if self._id is None:
+        if self.blob_identifier is None:
             raise ResourceNotFound(
                 "cannot manipulate attachment on unidentified document")
-        return join(_get_couchdb_name(type(self)), safe_id(self._id))
+        return join(_get_couchdb_name(type(self)), safe_id(self.blob_identifier))
+
+    @property
+    def blob_identifier(self):
+        return self._id
 
     @property
     def blobs(self):
@@ -138,7 +142,7 @@ class BlobMixin(Document):
                 u"{model} {model_id} attachment: {name!r}".format(
                     model=type(self).__name__,
                     name=name,
-                    model_id=self._id,
+                    model_id=self.blob_identifier,
                 ))
         if stream:
             return blob
@@ -399,7 +403,7 @@ class DeferredBlobMixin(BlobMixin):
                 raise ResourceNotFound(
                     u"{model} {model_id} attachment: {name!r}".format(
                         model=type(self).__name__,
-                        model_id=self._id,
+                        model_id=self.blob_identifier,
                         name=name,
                     ))
             body = self._deferred_blobs[name]["content"]
