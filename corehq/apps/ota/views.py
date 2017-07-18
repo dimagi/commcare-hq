@@ -37,7 +37,7 @@ from corehq.apps.ota.tasks import queue_prime_restore
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.util.datadog.gauges import datadog_counter, datadog_histogram
+from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from django.http import HttpResponse
@@ -48,10 +48,31 @@ from .utils import (
     handle_401_response, update_device_id)
 
 
-TIMED_RESTORE_SEGMENTS = {
+RESTORE_SEGMENTS = {
     "FixtureElementProvider": "fixtures",
     "CasePayloadProvider": "cases",
 }
+
+
+def _get_time_bucket(duration):
+    """Get time bucket for the given duration
+
+    Bucket restore times because datadog's histogram is too limited
+
+    Basically restore frequency is not high enough to have a meaningful
+    time distribution with datadog's 10s aggregation window, especially
+    with tags. More details:
+    https://help.datadoghq.com/hc/en-us/articles/211545826
+    """
+    if duration < 5:
+        return "lt_005s"
+    if duration < 20:
+        return "lt_020s"
+    if duration < 60:
+        return "lt_060s"
+    if duration < 120:
+        return "lt_120s"
+    return "over_120s"
 
 
 @location_safe
@@ -71,22 +92,17 @@ def restore(request, domain, app_id=None):
     env = settings.SERVER_ENVIRONMENT
     if (env, domain) in settings.RESTORE_TIMING_DOMAINS:
         tags.append(u'domain:{}'.format(domain))
-    datadog_counter('commcare.restores.count', tags=tags)
     if timing_context is not None:
-        datadog_histogram(
-            'commcare.restores.total_time',
-            timing_context.duration,
-            tags=tags,
-        )
         for timer in timing_context.to_list(exclude_root=True):
-            if timer.name in TIMED_RESTORE_SEGMENTS:
-                segment = TIMED_RESTORE_SEGMENTS[timer.name]
-                datadog_histogram(
-                    'commcare.restores.timings',
-                    timer.duration,
-                    tags=tags + [u'segment:{}'.format(segment)],
+            if timer.name in RESTORE_SEGMENTS:
+                segment = RESTORE_SEGMENTS[timer.name]
+                bucket = _get_time_bucket(timer.duration)
+                datadog_counter(
+                    'commcare.restores.{}.{}'.format(segment, bucket),
+                    tags=tags,
                 )
-
+        tags.append('duration:%s' % _get_time_bucket(timing_context.duration))
+    datadog_counter('commcare.restores.count', tags=tags)
     return response
 
 
