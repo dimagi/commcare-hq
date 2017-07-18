@@ -1,4 +1,5 @@
 import HTMLParser
+from collections import defaultdict
 import json
 from xml.etree import ElementTree
 
@@ -21,6 +22,7 @@ from couchdbkit import ResourceConflict
 from casexml.apps.case.models import CASE_STATUS_OPEN
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.fixtures import generator
+from corehq.apps.groups.dbaccessors import get_groups_by_user
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import use_sqlite_backend
 from dimagi.utils.logging import notify_exception
@@ -421,6 +423,23 @@ class SingleAppLandingPageView(TemplateView):
         })
 
 
+def get_apps_by_user(domain, user_ids):
+    groups_by_user = get_groups_by_user(domain, user_ids)
+
+    app_access = ApplicationAccess.get_by_domain(domain)
+
+    apps_by_group = defaultdict(set)
+    for app_group in app_access.app_groups:
+        apps_by_group[app_group.group_id].add(app_group.app_id)
+
+    apps_by_user = defaultdict(set)
+    for user_id, group_ids in groups_by_user.items():
+        for group_id in group_ids:
+            apps_by_user[user_id].update(apps_by_group[group_id])
+
+    return apps_by_user
+
+
 @location_safe
 class LoginAsUsers(View):
 
@@ -453,9 +472,15 @@ class LoginAsUsers(View):
         total_records = users_query.count()
         users_data = users_query.run()
 
+        user_list = map(self._format_user, users_data.hits)
+
+        apps_by_user = get_apps_by_user(self.domain, [user['user_id'] for user in user_list])
+        for user in user_list:
+            user['apps'] = list(apps_by_user[user['user_id']])
+
         return json_response({
             'response': {
-                'itemList': map(self._format_user, users_data.hits),
+                'itemList': user_list,
                 'total': users_data.total,
                 'page': page,
                 'query': query,
