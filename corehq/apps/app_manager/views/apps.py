@@ -23,6 +23,8 @@ from corehq.apps.app_manager.exceptions import ConflictingCaseTypeError, \
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
     validate_langs, CASE_TYPE_CONFLICT_MSG, overwrite_app
 from corehq import toggles, privileges
+from corehq.elastic import ESError
+from dimagi.utils.logging import notify_exception
 from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
 from corehq.apps.app_manager import id_strings
@@ -226,7 +228,11 @@ def get_app_view_context(request, app):
 
     practice_user_setting = _get_setting('hq', 'practice_mobile_worker_id')
     if practice_user_setting and has_privilege(request, privileges.PRACTICE_MOBILE_WORKERS):
-        practice_users = get_practice_mode_mobile_workers(request.domain)
+        try:
+            practice_users = get_practice_mode_mobile_workers(request.domain)
+        except ESError:
+            notify_exception(request, 'Error getting practice mode mobile workers')
+            practice_users = []
         practice_user_setting['values'] = [''] + [u['_id'] for u in practice_users]
         practice_user_setting['value_names'] = [_('Not set')] + [u['username'] for u in practice_users]
 
