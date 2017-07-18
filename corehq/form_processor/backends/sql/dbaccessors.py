@@ -522,27 +522,27 @@ class FormAccessorSQL(AbstractFormAccessor):
         unsaved_attachments = getattr(form, 'unsaved_attachments', [])
         if unsaved_attachments:
             for unsaved_attachment in unsaved_attachments:
+                if unsaved_attachment.is_saved():
+                    raise XFormSaveError(
+                        'XFormAttachmentSQL {} has already been saved'.format(unsaved_attachment.id)
+                    )
                 unsaved_attachment.form = form
 
         operations = form.get_tracked_models_to_create(XFormOperationSQL)
         for operation in operations:
+            if operation.is_saved():
+                raise XFormSaveError(
+                    'XFormOperationSQL {} has already been saved'.format(operation.id)
+                )
             operation.form = form
 
         try:
             with transaction.atomic(using=db_name):
                 form.save(using=db_name)
                 for attachment in unsaved_attachments:
-                    if attachment.is_saved():
-                        raise XFormSaveError(
-                            'XFormAttachmentSQL {} has already been saved'.format(attachment.id)
-                        )
                     attachment.save(using=db_name)
 
                 for operation in operations:
-                    if operation.is_saved():
-                        raise XFormSaveError(
-                            'XFormOperationSQL {} has already been saved'.format(operation.id)
-                        )
                     operation.save(using=db_name)
         except InternalError as e:
             raise XFormSaveError(e)
