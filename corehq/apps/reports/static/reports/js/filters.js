@@ -1,26 +1,58 @@
 /* globals COMMCAREHQ */
 hqDefine("reports/js/filters.js", function() {
+    var linkButtonGroup = function (groupIdOrEl, can_be_empty) {
+        // this is used to initialize the buttongroup filters
+        // see the user filter for sample usage.
+        var $el = typeof groupIdOrEl === "string" ? $("#" + groupIdOrEl) : $(groupIdOrEl);
+        $el.find("button").click(function(e) {
+            e.preventDefault();
+            var $activeCheckbox = $('#'+$(this).data("checkfilter"));
+
+            if($(this).hasClass('active')) {
+                $(this).addClass('btn-success');
+                $activeCheckbox.prop("checked", true);
+            } else {
+                $(this).removeClass('btn-success');
+                $activeCheckbox.prop("checked", false);
+            }
+            $activeCheckbox.trigger('change');
+
+            if((!$el.children().hasClass('btn-success')) && !can_be_empty) {
+                var $firstChild = $el.children().first();
+                $firstChild.addClass('btn-success');
+                $('#'+$firstChild.data("checkfilter")).prop("checked", true);
+                if ($(this).data("checkfilter") != $firstChild.data("checkfilter")) {
+                    $firstChild.removeClass('active');
+                } else {
+                    return false;
+                }
+            }
+        });
+    };
+
     var init = function() {
         // Datespans
-        var $filterRange = $('.report-filter-datespan');
-        if ($filterRange.length && $filterRange.data("init")) {
-            var separator = $filterRange.data('separator');
-            var report_labels = $filterRange.data('reportLabels');
-            var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
+        $('.report-filter-datespan').each(function() {
+            var $filterRange = $(this);
+            if ($filterRange.data("init")) {
+                var separator = $filterRange.data('separator');
+                var report_labels = $filterRange.data('reportLabels');
+                var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
 
-            $filterRange.createDateRangePicker(
-                report_labels, separator,
-                $filterRange.data('startDate'),
-                $filterRange.data('endDate')
-            );
-            $filterRange.on('change apply', function(ev) {
-                var dates = $(this).val().split(separator);
-                $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.startdate', dates[0]);
-                $('#report_filter_datespan_startdate').val(dates[0]);
-                $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.enddate', dates[1]);
-                $('#report_filter_datespan_enddate').val(dates[1]);
-            });
-        }
+                $filterRange.createDateRangePicker(
+                    report_labels, separator,
+                    $filterRange.data('startDate'),
+                    $filterRange.data('endDate')
+                );
+                $filterRange.on('change apply', function(ev) {
+                    var dates = $(this).val().split(separator);
+                    $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.startdate', dates[0]);
+                    $('#report_filter_datespan_startdate').val(dates[0]);
+                    $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.enddate', dates[1]);
+                    $('#report_filter_datespan_enddate').val(dates[1]);
+                });
+            }
+        });
 
         // Date selector
         var $dateSelector = $("#filter_date_selector");
@@ -40,6 +72,11 @@ hqDefine("reports/js/filters.js", function() {
             changeMonth: true,
             changeYear: true,
             dateFormat: 'yy-mm-dd',
+        });
+
+        // Submission type (Raw Forms, Errors, & Duplicates)
+        $('.report-filter-button-group').each(function() {
+            linkButtonGroup(this);
         });
 
         // Initialize any help bubbles
