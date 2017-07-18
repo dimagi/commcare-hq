@@ -25,7 +25,7 @@ from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
 from corehq import toggles, privileges
 from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
-from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager import id_strings, add_ons
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
@@ -125,6 +125,7 @@ def default_new_app(request, domain):
         identify.delay(request.couch_user.username, {'First Template App Chosen': 'blank'})
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
+    add_ons.init_app(request, app)
 
     if not toggles.APP_MANAGER_V2.enabled(request.user.username):
         # APP MANAGER V2 is completely blank on new app
@@ -258,6 +259,7 @@ def get_app_view_context(request, app):
             context_key="bulk_app_translation_upload"
         )
     })
+    # Not used in APP_MANAGER_V2
     context['is_app_view'] = True
     try:
         context['fetchLimit'] = int(request.GET.get('limit', DEFAULT_FETCH_LIMIT))
@@ -780,6 +782,16 @@ def edit_app_attr(request, domain, app_id, attr):
         app.set_custom_suite(hq_settings['custom_suite'])
 
     return HttpResponse(json.dumps(resp))
+
+
+@no_conflict_require_POST
+@require_can_edit_apps
+def edit_add_ons(request, domain, app_id):
+    app = get_app(domain, app_id)
+    for slug, value in request.POST.iteritems():
+        app.add_ons[slug] = value == 'on'
+    app.save()
+    return HttpResponse(json.dumps({'success': True}))
 
 
 @no_conflict_require_POST
