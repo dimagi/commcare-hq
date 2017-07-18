@@ -12,7 +12,7 @@ from django.template.loader import render_to_string
 from lxml import etree
 from diff_match_patch import diff_match_patch
 from django.utils.translation import ugettext as _
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
@@ -143,8 +143,7 @@ def copy_form(request, domain, app_id, form_unique_id):
 
     if new_form:
         return back_to_main(request, domain, app_id=app_id, form_unique_id=new_form.unique_id)
-    return back_to_main(request, domain, app_id=app_id, module_id=module.id,
-                        form_id=form.id)
+    return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, module.id, form.id]))
 
 
 @no_conflict_require_POST
