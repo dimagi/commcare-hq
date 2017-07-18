@@ -870,6 +870,14 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
         attachments_to_save = case.get_tracked_models_to_create(CaseAttachmentSQL)
         attachment_ids_to_delete = [att.id for att in case.get_tracked_models_to_delete(CaseAttachmentSQL)]
+        for attachment in attachments_to_save:
+            if attachment.is_saved():
+                raise CaseSaveError(
+                    """Updating attachments is not supported.
+                    case id={}, attachment id={}""".format(
+                        case.case_id, attachment.attachment_id
+                    )
+                )
 
         try:
             with transaction.atomic(using=db_name):
@@ -888,13 +896,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 CommCareCaseIndexSQL.objects.using(db_name).filter(id__in=index_ids_to_delete).delete()
 
                 for attachment in attachments_to_save:
-                    if attachment.is_saved():
-                        raise CaseSaveError(
-                            """Updating attachments is not supported.
-                            case id={}, attachment id={}""".format(
-                                case.case_id, attachment.attachment_id
-                            )
-                        )
                     attachment.save(using=db_name)
 
                 CaseAttachmentSQL.objects.using(db_name).filter(id__in=attachment_ids_to_delete).delete()
