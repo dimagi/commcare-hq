@@ -63,8 +63,10 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
+            vm.steps['map'].label = 'Sector';
         } else {
             vm.mode = 'map';
+            vm.steps['map'].label = 'Map';
         }
 
         maternalChildService.getPrevalenceOfStunningData(vm.step, vm.filtersData).then(function(response) {
