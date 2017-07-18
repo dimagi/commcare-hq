@@ -493,7 +493,7 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
         ]
 
 
-class XFormOperationSQL(PartitionedModel, models.Model):
+class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
     objects = RestrictedManager()
 
     ARCHIVE = 'archive'
