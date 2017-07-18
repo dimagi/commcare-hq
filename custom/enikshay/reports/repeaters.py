@@ -69,7 +69,7 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
         attempt_messages = [
             escape("{date}: {message}".format(
                 date=self._format_date(attempt.datetime),
-                message=attempt.success_response if attempt.succeeded else attempt.failure_reason))
+                message=attempt.message))
             for attempt in record.attempts]
         row = [
             record._id,

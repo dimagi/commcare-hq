@@ -185,8 +185,6 @@ def apply_index_changes(engine, raw_diffs, table_names):
     with engine.begin() as conn:
         for index in add_indexes:
             index.create(conn)
-        for index in remove_indexes:
-            index.drop(conn)
 
 
 def rebuild_table(engine, pillow, indicator_doc):

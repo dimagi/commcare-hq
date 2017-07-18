@@ -1370,24 +1370,40 @@
                         "expression_if_true": {
                             "type": "conditional",
                             "test": {
-                                "operator": "eq",
+                                "operator": "in",
                                 "expression": {
                                     "type": "property_name",
-                                    "property_name": "diagnosing_facility_id"
+                                    "property_name": "treatment_initiating_facility_id"
                                 },
                                 "type": "boolean_expression",
-                                "property_value": {
-                                    "type": "property_name",
-                                    "property_name": "treatment_initiating_facility_id"
-                                }
+                                "property_value": [null, ""]
                             },
                             "expression_if_true": {
                                 "type": "constant",
-                                "constant": "Initiated on first line treatment in the same health facility"
+                                "constant": "NA"
                             },
                             "expression_if_false": {
-                                "type": "constant",
-                                "constant": "Initiated on treatment outside health facility"
+                                "type": "conditional",
+                                "test": {
+                                    "operator": "eq",
+                                    "expression": {
+                                        "type": "property_name",
+                                        "property_name": "diagnosing_facility_id"
+                                    },
+                                    "type": "boolean_expression",
+                                    "property_value": {
+                                        "type": "property_name",
+                                        "property_name": "treatment_initiating_facility_id"
+                                    }
+                                },
+                                "expression_if_true": {
+                                    "type": "constant",
+                                    "constant": "Initiated on first line treatment in the same health facility"
+                                },
+                                "expression_if_false": {
+                                    "type": "constant",
+                                    "constant": "Initiated on treatment outside health facility"
+                                }
                             }
                         },
                         "expression_if_false": {
@@ -4725,6 +4741,22 @@
                     },
                     "aggregation_fn": "count"
                 }
+            },
+            {
+                "comment": null,
+                "create_index": false,
+                "display_name": null,
+                "datatype": "string",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "diagnostic_tests"
+                },
+                "transform": {},
+                "is_primary_key": false,
+                "is_nullable": true,
+                "type": "expression",
+                "column_id": "diagnostic_tests_from_case"
             },
             {
                 "type": "expression",
@@ -8402,6 +8434,23 @@
                     }
                 },
                 "column_id": "registered_by_id"
+            },
+            {
+                "filter": {
+                    "operator": "eq",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "enrolled_in_private"
+                    },
+                    "type": "boolean_expression",
+                    "comment": null,
+                    "property_value": "true"
+                },
+                "type": "boolean",
+                "display_name": "is_enrolled_in_private",
+                "comment": null,
+                "column_id": "is_enrolled_in_private"
             }
         ],
         "named_filters": {
@@ -11014,61 +11063,10 @@
                 }
             },
             "key_populations": {
-                "value_expression": {
-                    "datatype": "string",
-                    "type": "property_path",
-                    "property_path": [
-                        "form",
-                        "ql_patient_details",
-                        "key_populations"
-                    ]
-                },
-                "type": "related_doc",
-                "related_doc_type": "CommCareCase",
-                "doc_id_expression": {
-                    "value_expression": {
-                        "type": "nested",
-                        "value_expression": {
-                            "datatype": null,
-                            "type": "property_name",
-                            "property_name": "referenced_id"
-                        },
-                        "argument_expression": {
-                            "type": "array_index",
-                            "array_expression": {
-                                "datatype": null,
-                                "type": "property_name",
-                                "property_name": "indices"
-                            },
-                            "index_expression": {
-                                "type": "constant",
-                                "constant": 0
-                            }
-                        }
-                    },
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                        "value_expression": {
-                            "datatype": null,
-                            "type": "property_name",
-                            "property_name": "referenced_id"
-                        },
-                        "type": "nested",
-                        "argument_expression": {
-                            "type": "array_index",
-                            "array_expression": {
-                                "datatype": null,
-                                "type": "property_name",
-                                "property_name": "indices"
-                            },
-                            "index_expression": {
-                                "type": "constant",
-                                "constant": 0
-                            }
-                        }
-                    }
-                }
+                "datatype": "string",
+                "type": "property_name",
+                "property_name": "key_populations"
+
             },
             "treatment_outcome": {
                 "datatype": "string",

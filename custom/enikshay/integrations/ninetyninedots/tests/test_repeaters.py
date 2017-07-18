@@ -18,6 +18,7 @@ from custom.enikshay.integrations.ninetyninedots.repeater_generators import (
 from custom.enikshay.case_utils import get_person_locations
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
+    OTHER_NUMBER,
     MERM_ID,
     ENIKSHAY_ID,
     PERSON_FIRST_NAME,
@@ -308,9 +309,10 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
                 u"he_code": person_locations.pcp,
             })
 
-        expected_numbers = u"+91{}, +91{}".format(
+        expected_numbers = u"+91{}, +91{}, +91{}".format(
             self.primary_phone_number.replace("0", ""),
-            self.secondary_phone_number.replace("0", "")
+            self.secondary_phone_number.replace("0", ""),
+            self.other_number.replace("0", "")
         ) if expected_numbers is False else expected_numbers
         expected_payload = {
             u"beneficiary_id": self.person_id,
@@ -354,12 +356,14 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
     def test_get_payload_no_numbers(self):
         self.primary_phone_number = None
         self.secondary_phone_number = None
+        self.other_number = None
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
         self._assert_payload_equal(cases, None)
 
     def test_get_payload_secondary_number_only(self):
         self.primary_phone_number = None
+        self.other_number = None
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
         self._assert_payload_equal(cases, u"+91{}".format(self.secondary_phone_number.replace("0", "")))
@@ -413,9 +417,10 @@ class TestUpdatePatientPayloadGenerator(TestPayloadGeneratorBase):
     def test_get_payload(self):
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
-        expected_numbers = u"+91{}, +91{}".format(
+        expected_numbers = u"+91{}, +91{}, +91{}".format(
             self.primary_phone_number.replace("0", ""),
-            self.secondary_phone_number.replace("0", "")
+            self.secondary_phone_number.replace("0", ""),
+            self.other_number.replace("0", "")
         )
         self._assert_payload_equal(cases, expected_numbers)
 

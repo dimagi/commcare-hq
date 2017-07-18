@@ -48,7 +48,7 @@ class MultiReport(CustomProjectReport, GenericReportView):
         return context
 
 
-class EnikshayMultiReport(MultiReport):
+class EnikshayMultiReport(MultiReport, DatespanMixin):
     fields = (DatespanFilter, EnikshayLocationFilter, EnikshayMigrationFilter)
 
     def _get_filter_values(self):

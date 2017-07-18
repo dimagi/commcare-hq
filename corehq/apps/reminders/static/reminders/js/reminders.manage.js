@@ -152,6 +152,9 @@ hqDefine("reminders/js/reminders.manage.js", function() {
         });
     
         self.use_custom_content_handler = ko.observable(initial.use_custom_content_handler);
+        self.use_custom_user_data_filter = ko.observable(initial.use_custom_user_data_filter);
+        self.custom_user_data_filter_field = ko.observable(initial.custom_user_data_filter_field);
+        self.custom_user_data_filter_value = ko.observable(initial.custom_user_data_filter_value);
     
         self.is_trial_project = initial.is_trial_project;
         self.displayed_email_trial_message = false;

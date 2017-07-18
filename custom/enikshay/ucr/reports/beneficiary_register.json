@@ -364,7 +364,7 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "diagnostic_tests",
+                "field": "diagnostic_tests_from_case",
                 "calculate_total": false,
                 "type": "field",
                 "display": "Diagnostic Tests"
@@ -563,6 +563,18 @@
                 "type": "expression",
                 "display": "Total Adherence Score",
                 "column_id": "total_adherence_score"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "visible": true,
+                "transform": {},
+                "aggregation": "simple",
+                "field": "treatment_outcome_date",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Date of Treatment Outcome"
             },
             {
                 "sortable": false,

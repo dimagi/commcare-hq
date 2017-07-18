@@ -147,7 +147,12 @@ def mark_cases_changed(case_action_intents, case_db):
         if len(intents) > 1:
             primary_intent, deprecation_intent = sorted(case_action_intents, key=lambda i: i.is_deprecation)
         else:
-            [primary_intent] = intents
+            [intent] = intents
+            if intent.is_deprecation:
+                primary_intent = None
+                deprecation_intent = intent
+            else:
+                primary_intent = intent
         case_db.apply_action_intents(case, primary_intent, deprecation_intent)
         case_db.mark_changed(case)
 

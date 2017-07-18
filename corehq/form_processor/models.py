@@ -1375,6 +1375,13 @@ class LedgerValue(PartitionedModel, models.Model, TrackRelatedChanges):
         serializer = LedgerValueSerializer(self, include_location_id=include_location_id)
         return dict(serializer.data)
 
+    def __repr__(self):
+        return "LedgerValue(" \
+               "case_id={s.case_id}, " \
+               "section_id={s.section_id}, " \
+               "entry_id={s.entry_id}," \
+               "balance={s.balance}".format(s=self)
+
     class Meta:
         app_label = "form_processor"
         db_table = LedgerValue_DB_TABLE

@@ -24,16 +24,16 @@
      <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
 @@ -68,6 +68,41 @@
      {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
-         <script src="{% static 'app_manager/js/custom_instances.js' %}"></script>
+         <script src="{% static 'app_manager/js/forms/custom_instances.js' %}"></script>
      {% endif %}
 +{% endblock %}
 +
 +{% block pre_form_content %}
 +    <div class="appmanager-page-actions">
-+        {% if can_preview_form %}
-+        {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
-+        {% endif %}
 +        {% include 'app_manager/v2/partials/app_summary_button.html' %}
++        <a class="btn btn-primary" href="{% url "form_source" domain app.id module.id form.id %}">
++            <i class="fa fa-pencil"></i> {% trans "Edit Form" %}
++        </a>
 +    </div>
 +
 +    <div class="appmanager-edit-title">

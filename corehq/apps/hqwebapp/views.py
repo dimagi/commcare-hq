@@ -1136,7 +1136,7 @@ class MaintenanceAlertsView(BasePageView):
             'active': alert.active,
             'html': alert.html,
             'id': alert.id,
-            } for alert in MaintenanceAlert.objects.order_by('-created')[:5]]
+            } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:5]]
         }
 
     @property

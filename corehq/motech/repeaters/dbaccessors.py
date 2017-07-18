@@ -106,6 +106,19 @@ def iter_repeat_records_by_domain(domain, repeater_id=None, state=None, since=No
         yield RepeatRecord.wrap(doc['doc'])
 
 
+def get_repeat_records_by_payload_id(domain, payload_id, chunk_size=1000):
+    from .models import RepeatRecord
+    results = RepeatRecord.get_db().view(
+        'repeaters/repeat_records_by_payload_id',
+        startkey=[domain, payload_id],
+        endkey=[domain, payload_id],
+        include_docs=True,
+        reduce=False,
+        descending=True
+    ).all()
+    return [RepeatRecord.wrap(result['doc']) for result in results]
+
+
 def get_repeaters_by_domain(domain):
     from .models import Repeater
 
