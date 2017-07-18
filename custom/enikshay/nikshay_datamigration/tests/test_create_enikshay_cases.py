@@ -11,6 +11,7 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
 from custom.enikshay.nikshay_datamigration.exceptions import MatchingNikshayIdCaseNotMigrated
+from custom.enikshay.nikshay_datamigration.factory import EnikshayCaseFactory
 from custom.enikshay.nikshay_datamigration.models import Followup
 from custom.enikshay.nikshay_datamigration.tests.utils import NikshayMigrationMixin, ORIGINAL_PERSON_NAME
 
@@ -214,7 +215,9 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
         CaseFactory(self.domain).update_case(episode_case_ids[0], update={'migration_created_case': ''})
         with self.assertRaises(MatchingNikshayIdCaseNotMigrated):
-            call_command('create_enikshay_cases', self.domain)
+            EnikshayCaseFactory(
+                self.domain, self.patient_detail, {}, 'test_phi'
+            ).get_case_structures_to_create()
 
     def test_location_not_found(self):
         self.phi.delete()
