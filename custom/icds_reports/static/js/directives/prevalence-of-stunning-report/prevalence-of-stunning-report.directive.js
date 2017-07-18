@@ -164,7 +164,6 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
             $location.search('location_id', '');
             $location.search('selectedLocationLevel', -1);
             $location.search('location_name', '');
-            $location.search('location', '');
         } else {
             $location.search('location_id', loc.location_id);
             $location.search('selectedLocationLevel', index);
