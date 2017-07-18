@@ -55,7 +55,7 @@
  {% endblock %}
  
  {% block js %}{{ block.super }}
-@@ -65,38 +46,37 @@
+@@ -65,38 +46,44 @@
      <script src="{% static 'style/js/ui-element.js' %}"></script>
      <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
      <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
@@ -111,12 +111,19 @@
 +                interface is now no longer available.
 +            {% endblocktrans %}
 +        </p>
++        <p>
++          <a class="btn btn-primary-dark"
++             target="_blank"
++             href="https://www.dimagi.com/blog/commcare-feature-update-new-app-manager/">
++            {% trans "Learn More" %}
++          </a>
++        </p>
 +      </div>
 +    {% endif %}
      {% if app %}
          {% if error %}
          <div id="error">
-@@ -120,7 +100,7 @@
+@@ -120,7 +107,7 @@
                  {% endblocktrans %}
              </p>
              <br>
@@ -125,7 +132,7 @@
          </div>
      {% endif %}
  </div>
-@@ -154,3 +134,5 @@
+@@ -154,3 +141,5 @@
      </div>
      {% endif %}
  {% endblock modals %}
