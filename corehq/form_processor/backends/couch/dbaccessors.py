@@ -1,9 +1,14 @@
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 
-from casexml.apps.case.dbaccessors import get_extension_case_ids, \
-    get_indexed_case_ids, get_all_reverse_indices_info, get_open_case_ids_in_domain, \
-    get_reverse_indexed_cases
+from casexml.apps.case.dbaccessors import (
+    get_extension_case_ids,
+    get_indexed_case_ids,
+    get_all_reverse_indices_info,
+    get_open_case_ids_in_domain,
+    get_reverse_indexed_cases,
+    get_related_indices,
+)
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.stock.models import StockTransaction
@@ -117,13 +122,39 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return CommCareCase.get(case_id)
 
     @staticmethod
-    def get_cases(case_ids, ordered=False):
+    def get_cases(case_ids, ordered=False, prefetched_indices=None):
+        # prefetched_indices is ignored sinces cases already have them
         return [
             CommCareCase.wrap(doc) for doc in iter_docs(
                 CommCareCase.get_db(),
                 case_ids
             )
         ]
+
+    @staticmethod
+    def get_related_indices(domain, case_ids, exclude_indices):
+        return get_related_indices(domain, case_ids, exclude_indices)
+
+    @staticmethod
+    def get_closed_and_deleted_ids(accessor, case_ids):
+        """Get the subset of given list of case ids that are closed or deleted
+
+        WARNING this is inefficient (better version in SQL).
+        """
+        return [(case.case_id, case.closed, case.is_deleted)
+            for case in accessor.iter_cases(case_ids)
+            if case.closed or case.is_deleted]
+
+    @staticmethod
+    def get_modified_case_ids(accessor, case_ids, sync_log):
+        """Get the subset of given list of case ids that have been modified
+        since sync date/log id
+
+        WARNING this is inefficient (better version in SQL).
+        """
+        return [case.case_id
+            for case in accessor.iter_cases(case_ids)
+            if not case.is_deleted and case.modified_since_sync(sync_log)]
 
     @staticmethod
     def case_exists(case_id):

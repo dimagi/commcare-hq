@@ -15,6 +15,7 @@
     <script src="{% static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
     <script src="{% static 'app_manager/js/managed_app.js' %}"></script>
     <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
+    <script src="{% static 'app_manager/js/section_changer.js' %}"></script>
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -45,9 +46,14 @@
           <h2 class="appnav-name">
             <a href="{% url "view_app" domain app.id %}"
                class="appnav-responsive">
-                <span class="variable-app_name">{{ app.name }}</span>
+                <span class="variable-app_name appname-text">{{ app.name }}</span>
             </a>
           </h2>
+          <div id="js-publish-status"
+               class="appnav-name-publish"
+               style="display: none;">
+            {% trans "Updates Available to Publish" %}
+          </div>
       </div>
 
       {% if app.get_doc_type == 'Application' %}
@@ -66,25 +72,21 @@
           </div>
         {% endif %}
 
-      <div class="appnav-toggle-label">
-          <div class="btn-group pull-right">
-            <button type="button" class="btn btn-xs btn-default active">{% trans "On" %}</button>
-            <button type="button"
-                    class="btn btn-xs btn-default"
-                    data-toggle="modal"
-                    data-target="#rollout-revert-modal"
-                    data-redirect="{% url "view_app" domain app.id %}"
-            >{% trans "Off" %}</button>
-          </div>
-          {% trans "New App Builder" %}
-          <span class="hq-help-template"
-                data-title="New App Builder"
-                data-content="{% trans "Turn off new app builder for now." %}"></span>
-      </div>
-
-        {% if app.advanced_app_builder %}
-          <div class="appnav-advanced-label">
-            {% trans "Advanced App Builder" %}
+        {% if allow_v2_opt_out %}
+          <div class="appnav-toggle-label">
+              <div class="btn-group pull-right">
+                <button type="button" class="btn btn-xs btn-default active">{% trans "On" %}</button>
+                <button type="button"
+                        class="btn btn-xs btn-default"
+                        data-toggle="modal"
+                        data-target="#rollout-revert-modal"
+                        data-redirect="{% url "view_app" domain app.id %}"
+                >{% trans "Off" %}</button>
+              </div>
+              {% trans "New App Builder" %}
+              <span class="hq-help-template"
+                    data-title="New App Builder"
+                    data-content="{% trans "Turn off new app builder for now." %}"></span>
           </div>
         {% endif %}
 
@@ -101,6 +103,8 @@
     {% initial_page_data 'latest_commcare_version' latest_commcare_version %}
     {% initial_page_data 'app_subset' app_subset %}
     {% initial_page_data 'formdesigner' formdesigner %}
+    {% initial_page_data 'current_app_version_url' current_app_version_url %}
+    {% registerurl "new_form" domain app.id "---" %}
     {% registerurl "toggle_app_manager_v2" %}
     {% block pre_form_content %}{% endblock %}
     {% block form-view %}{% endblock %}
@@ -108,7 +112,7 @@
       <div class="popover popover-additem" role="tooltip"><div class="arrow"></div><h3 class="popover-title"></h3><div class="popover-content"></div></div>
     </script>
 
-    <script type="text/html" id="js-popover-template-add-item-content">
+    <script type="text/html" class="js-popover-template-add-item-content" data-slug="module">
       <div>
         <div class="pull-left">
           <button type="button" class="popover-additem-option new-module" data-type="survey">
@@ -155,6 +159,54 @@
             </button>
           </div>
         {% endif %}
+      </div>
+    </script>
+
+    <script type="text/html" class="js-popover-template-add-item-content" data-slug="form">
+      <div data-module-id="<%= moduleid %>">
+          <% if (showSurvey) { %>
+              <div class="pull-left">
+                  <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+                          data-case-action="none" data-type="survey" data-form-type="form">
+                      <i class="fa fa-file-o"></i> {% trans "Survey" %}
+                  </button>
+              </div>
+          <% } %>
+          <% if (showCaseForms) { %>
+              <div class="pull-left">
+                  <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+                          data-case-action="update" data-type="followup" data-form-type="form">
+                    <i class="fcc fcc-app-updateform"></i> {% trans "Followup" %}
+                  </button>
+              </div>
+              <div class="pull-left">
+                  <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+                          data-case-action="open" data-type="followup" data-form-type="form">
+                    <i class="fcc fcc-app-createform"></i> {% trans "Register" %}
+                  </button>
+              </div>
+          <% } %>
+          <% if (showAdvanced) { %>
+              <div class="pull-left">
+                  <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+                          data-type="advanced" data-form-type="form">
+                    <i class="fa fa-file-o"></i> {% trans "Form" %}
+                  </button>
+              </div>
+          <% } %>
+          <% if (showShadow) { %>
+              <div class="pull-left">
+                <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+                        data-case-action="update" data-type="shadow" data-form-type="shadow">
+                  <i class="fa fa-moon-o"></i> {% trans "Shadow Form" %}
+                </button>
+              </div>
+          <% } %>
+          <form method="post" class="hide">
+              {% csrf_token %}
+              <input type="hidden" name="case_action" />
+              <input type="hidden" name="form_type" />
+          </form>
       </div>
     </script>
 {% endblock %}

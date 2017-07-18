@@ -8,6 +8,8 @@ from django.core.management.base import BaseCommand
 from corehq.apps.hqadmin.models import HqDeploy
 from datetime import datetime, timedelta
 from django.conf import settings
+
+from dimagi.utils.parsing import json_format_datetime
 from pillow_retry.models import PillowError
 
 STYLE_MARKDOWN = 'markdown'
@@ -143,7 +145,7 @@ def create_update_sentry_release():
     payload = {
         'version': release,
         'refs': [{
-            'repository': 'commcare-hq',
+            'repository': 'dimagi/commcare-hq',
             'commit': fetch_git_sha(settings.BASE_DIR)
         }],
         'projects': ['commcarehq']
@@ -165,8 +167,8 @@ def notify_sentry_deploy(duration_mins):
     if duration_mins:
         utcnow = datetime.utcnow()
         payload.update({
-            'dateStarted': utcnow - timedelta(minutes=duration_mins),
-            'dateFinished': utcnow,
+            'dateStarted': json_format_datetime(utcnow - timedelta(minutes=duration_mins)),
+            'dateFinished': json_format_datetime(utcnow),
         })
     version = get_release_name(settings.BASE_DIR, settings.SERVER_ENVIRONMENT)
     releases_url = 'https://sentry.io/api/0/organizations/dimagi/releases/{}/deploys/'.format(version)

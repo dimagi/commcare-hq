@@ -87,6 +87,14 @@ class Metadata(DocumentSchema):
     appVersion = StringProperty()
     location = GeoPointProperty()
 
+    @property
+    def commcare_version(self):
+        from corehq.apps.receiverwrapper.util import get_commcare_version_from_appversion_text
+        from distutils.version import LooseVersion
+        version_text = get_commcare_version_from_appversion_text(self.appVersion)
+        if version_text:
+            return LooseVersion(version_text)
+
 
 class XFormOperation(DocumentSchema):
     """
@@ -160,7 +168,7 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
 
     @property
     def form_data(self):
-        return self.form
+        return DictProperty().unwrap(self.form)[1]
 
     @property
     def user_id(self):

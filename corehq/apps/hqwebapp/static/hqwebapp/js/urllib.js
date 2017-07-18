@@ -24,6 +24,9 @@ hqDefine('hqwebapp/js/urllib.js', function () {
     var reverse = function (name) {
         var args = arguments;
         var index = 1;
+        if (!COMMCAREHQ_URLS[name]) {
+            throw new Error("URL '" + name + "' not found in registry");
+        }
         return COMMCAREHQ_URLS[name].replace(/---/g, function () {
             return args[index++];
         });

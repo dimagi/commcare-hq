@@ -48,19 +48,14 @@ branches:
   - vellum-staging # J$ 11/13
 #  - nh/240812/mw_pwd_reset  # Norman 3/23
   - nh/new_rb  # Norman 11/22
-  - revert-16005-revert-15522-mk-nikshay-audit-cookie-safe # Manish 4/May
-  - mk-add-password-encoder # Manish 3/3
-  - gc/case-close-refactor # Giovanni 4/7
-  - es/location-user  # Ethan 4/27
-  - np/preview-list # Nick P Cinco de Mayo
+  - app-manager-labs # Jenny 6/19
+  - lwyszomi-icds_dashboard_v2  # https://github.com/dimagi/commcare-hq/pull/16802
+  - ce/mobile-user-loc-id # 7/18
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
     branches: []
-  submodules/formtranslate-src:
-    branches:
-      - commcare_2.33 # WSP 2/8
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:

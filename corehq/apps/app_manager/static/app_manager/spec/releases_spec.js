@@ -34,7 +34,12 @@ describe('App Releases', function() {
             ajax_stub;
 
         beforeEach(function() {
-            var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
+            var ReleasesMain = hqImport('app_manager/js/releases/releases.js').ReleasesMain,
+                registerUrl = hqImport("hqwebapp/js/urllib.js").registerUrl;
+            registerUrl("odk_install", "/a/test-domain/apps/odk/---/install/");
+            registerUrl("odk_media_install", "/a/test-domain/apps/odk/---/media_install/");
+            registerUrl("download_ccz", "/a/text-domain/apps/download/---/CommCare.ccz")
+            registerUrl("download_multimedia_zip", "/a/test-domain/apps/download/---/multimedia/commcare.zip")
             ajax_stub = sinon.stub($, 'ajax');
             releases = new ReleasesMain(options);
             releases.addSavedApps(get_saved_apps(releases.fetchLimit));
@@ -54,14 +59,14 @@ describe('App Releases', function() {
             var app = releases.savedApps()[0];
             app.download_application_zip();
             assert.equal($.ajax.callCount, 1);
-            assert.equal(ajax_stub.firstCall.args[0].url, releases.url('download_zip', app.id()));
+            assert.equal(ajax_stub.firstCall.args[0].url, releases.reverse('download_ccz', app.id()));
         });
 
         it('should use the correct URL for downloading multimedia', function() {
             var app = releases.savedApps()[0];
             app.download_application_zip(true);
             assert.equal($.ajax.callCount, 1);
-            assert.equal(ajax_stub.firstCall.args[0].url, releases.url('download_multimedia', app.id()));
+            assert.equal(ajax_stub.firstCall.args[0].url, releases.reverse('download_multimedia_zip', app.id()));
         });
 
         it('should use the correct URL for different saved apps', function() {
@@ -75,15 +80,15 @@ describe('App Releases', function() {
 
                 app.download_application_zip();
                 assert.equal($.ajax.callCount, 2);
-                assert.equal(ajax_stub.firstCall.args[0].url, releases.url('download_zip', app.id()));
+                assert.equal(ajax_stub.firstCall.args[0].url, releases.reverse('download_ccz', app.id()));
             });
         });
 
     });
 
     describe('app_code', function() {
-        var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
-        var SavedApp = hqImport('app_manager/js/releases.js').SavedApp;
+        var ReleasesMain = hqImport('app_manager/js/releases/releases.js').ReleasesMain;
+        var SavedApp = hqImport('app_manager/js/releases/releases.js').SavedApp;
         var savedApp,
             releases;
         beforeEach(function() {

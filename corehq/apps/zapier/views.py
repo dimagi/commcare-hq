@@ -48,7 +48,7 @@ class SubscribeView(View):
 
         if data['event'] == EventTypes.NEW_FORM:
             application = Application.get(data['application'])
-            if not application or not application.get_form_by_xmlns(data['form']):
+            if not application or not application.get_forms_by_xmlns(data['form']):
                 return HttpResponse(status=400)
             ZapierSubscription.objects.create(
                 domain=domain,

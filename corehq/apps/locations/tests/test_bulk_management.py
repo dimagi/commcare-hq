@@ -126,6 +126,45 @@ SAME_NAME_SAME_PARENT = [
     ('Cambridge', 'cambridge2', 'city', 'middlesex', '3458', False) + extra_stub_args,
 ]
 
+BIG_LOCATION_TREE = [
+    # (name, site_code, location_type, parent_code, location_id,
+    # do_delete, external_id, latitude, longitude, index)
+    ('0', '0', 'city', 'county11', '', False) + extra_stub_args,
+    ('1', '1', 'city', 'county11', '', False) + extra_stub_args,
+    ('2', '2', 'city', 'county11', '', False) + extra_stub_args,
+    ('3', '3', 'city', 'county11', '', False) + extra_stub_args,
+    ('4', '4', 'city', 'county11', '', False) + extra_stub_args,
+    ('5', '5', 'city', 'county11', '', False) + extra_stub_args,
+    ('6', '6', 'city', 'county11', '', False) + extra_stub_args,
+    ('7', '7', 'city', 'county11', '', False) + extra_stub_args,
+    ('8', '8', 'city', 'county11', '', False) + extra_stub_args,
+    ('9', '9', 'city', 'county11', '', False) + extra_stub_args,
+    ('10', '10', 'city', 'county11', '', False) + extra_stub_args,
+    ('11', '11', 'city', 'county11', '', False) + extra_stub_args,
+    ('12', '12', 'city', 'county11', '', False) + extra_stub_args,
+    ('13', '13', 'city', 'county11', '', False) + extra_stub_args,
+    ('14', '14', 'city', 'county11', '', False) + extra_stub_args,
+    ('15', '15', 'city', 'county11', '', False) + extra_stub_args,
+    ('16', '16', 'city', 'county11', '', False) + extra_stub_args,
+    ('17', '17', 'city', 'county11', '', False) + extra_stub_args,
+    ('18', '18', 'city', 'county11', '', False) + extra_stub_args,
+    ('19', '19', 'city', 'county11', '', False) + extra_stub_args,
+    ('20', '20', 'city', 'county11', '', False) + extra_stub_args,
+    ('21', '21', 'city', 'county11', '', False) + extra_stub_args,
+    ('22', '22', 'city', 'county11', '', False) + extra_stub_args,
+    ('23', '23', 'city', 'county11', '', False) + extra_stub_args,
+    ('24', '24', 'city', 'county11', '', False) + extra_stub_args,
+    ('25', '25', 'city', 'county11', '', False) + extra_stub_args,
+    ('26', '26', 'city', 'county11', '', False) + extra_stub_args,
+    ('27', '27', 'city', 'county11', '', False) + extra_stub_args,
+    ('28', '28', 'city', 'county11', '', False) + extra_stub_args,
+    ('29', '29', 'city', 'county11', '', False) + extra_stub_args,
+    ('30', '30', 'city', 'county11', '', False) + extra_stub_args,
+    ('31', '31', 'city', 'county11', '', False) + extra_stub_args,
+    ('32', '32', 'city', 'county11', '', False) + extra_stub_args,
+    ('33', '33', 'city', 'county11', '', False) + extra_stub_args,
+]
+
 
 class TestTreeUtils(SimpleTestCase):
     def test_no_issues(self):
@@ -201,6 +240,7 @@ class MockLocationStub(LocationStub):
         except AttributeError:
             # This will happen if the LocationStub is not new and an old_collection is not given
             self.db_object = MagicMock()
+
 
 def get_validator(location_types, locations, old_collection=None):
     validator = LocationTreeValidator(
@@ -441,6 +481,7 @@ class TestBulkManagement(TestCase):
             self.domain.name,
             [LocationTypeStub(*loc_type) for loc_type in types],
             [LocationStub(*loc) for loc in locations],
+            chunk_size=10
         )
         result = importer.run()
         return result
@@ -516,22 +557,6 @@ class TestBulkManagement(TestCase):
             actual = [i.site_code for i in loc.get_descendants()] if loc else []
             self.assertEqual(set(actual), set(desc))
 
-    def assertCouchSync(self):
-        def assertLocationsEqual(loc1, loc2):
-            fields = ["domain", "name", "location_id", "location_type_name",
-                      "site_code", "external_id", "metadata", "is_archived"]
-            for field in fields:
-                msg = "The locations have different values for '{}'".format(field)
-                self.assertEqual(getattr(loc1, field), getattr(loc2, field), msg)
-
-            def get_parent(loc):
-                return loc.parent.location_id if loc.parent else None
-            self.assertEqual(get_parent(loc1), get_parent(loc2))
-
-        collection = LocationCollection(self.domain)
-        for loc in collection.locations:
-            assertLocationsEqual(loc, loc.couch_location)
-
     def test_location_creation(self):
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -540,7 +565,6 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
-        self.assertCouchSync()
 
     def test_int_datatype(self):
         data = [
@@ -555,7 +579,6 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(set([('1', None), ('2', None)]))
-        self.assertCouchSync()
 
     def test_data_format(self):
         data = [
@@ -598,7 +621,6 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(move_county21_to_state1))
-        self.assertCouchSync()
 
     def test_delete_county11(self):
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
@@ -623,7 +645,6 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(delete_county11))
-        self.assertCouchSync()
 
     def test_invalid_tree(self):
         # Invalid location upload should not pass or affect existing location structure
@@ -651,7 +672,6 @@ class TestBulkManagement(TestCase):
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         # Since there were errors, the location tree should be as it was
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
-        self.assertCouchSync()
 
     def test_edit_by_location_id(self):
         # Locations can be referred by location_id and empty site_code
@@ -680,7 +700,6 @@ class TestBulkManagement(TestCase):
             ('s1', None), ('s2', None), ('county11', 's1'), ('county21', 's1'),
             ('city111', 'county11'), ('city112', 'county11'), ('city211', 'county21')
         ]))
-        self.assertCouchSync()
 
     def test_edit_by_sitecode(self):
         # Locations can be referred by site_code and empty location_id
@@ -706,7 +725,6 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(move_county21_to_state1))
-        self.assertCouchSync()
 
     def test_delete_city_type_valid(self):
         # delete a location type and locations of that type
@@ -737,7 +755,6 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(delete_city_types)
         self.assertLocationsMatch(self.as_pairs(delete_cities_locations))
-        self.assertCouchSync()
 
     def test_delete_everything(self):
         # delete everything
@@ -767,7 +784,6 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(delete_city_types)
         self.assertLocationsMatch(self.as_pairs(delete_cities_locations))
-        self.assertCouchSync()
 
     def test_delete_city_type_invalid(self):
         # delete a location type but don't delete locations of that type.
@@ -789,14 +805,12 @@ class TestBulkManagement(TestCase):
         self.assertNotEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
-        self.assertCouchSync()
 
     def test_edit_names(self):
         # metadata attributes like 'name' can be updated
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
         locations_by_code = self.create_locations(self.basic_tree, lt_by_code)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
-        self.assertCouchSync()
         _loc_id = lambda x: locations_by_code[x].location_id
         change_names = [
             # (name, site_code, location_type, parent_code, location_id,
@@ -823,7 +837,6 @@ class TestBulkManagement(TestCase):
             ('State 1', None), ('State 2', None), ('County 11', 's1'), ('County 21', 's2'),
             ('City 111', 'county11'), ('City 112', 'county11'), ('City 211', 'county21')
         ]), check_attr='name')
-        self.assertCouchSync()
 
     def test_partial_type_edit(self):
         # edit a subset of types
@@ -846,7 +859,6 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(edit_types)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
-        self.assertCouchSync()
 
     def test_edit_expansions(self):
         # 'expand_from', 'expand_to' can be updated
@@ -868,7 +880,6 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(edit_expansions)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
-        self.assertCouchSync()
 
     def test_rearrange_locations(self):
         # a total rearrangement like reversing the tree can be done
@@ -902,7 +913,6 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(reverse_order)
         self.assertLocationsMatch(self.as_pairs(edit_types_of_locations))
-        self.assertCouchSync()
 
     def test_swap_parents(self):
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
@@ -929,7 +939,6 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(swap_parents))
-        self.assertCouchSync()
 
     def test_custom_data(self):
         tree = [
@@ -947,7 +956,6 @@ class TestBulkManagement(TestCase):
         locations = SQLLocation.objects.all()
         self.assertEqual(locations[0].metadata, {u'a': u'1'})  # test that ints are coerced to strings
         self.assertEqual(locations[1].metadata, {u'b': u'test'})
-        self.assertCouchSync()
 
     def test_case_sensitivity(self):
         # site-codes are automatically converted to lower-case
@@ -973,7 +981,6 @@ class TestBulkManagement(TestCase):
         self.assertEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(lower_case))
-        self.assertCouchSync()
 
     def test_partial_addition(self):
         # new locations can be added without having to specify all of old ones
@@ -996,7 +1003,6 @@ class TestBulkManagement(TestCase):
         self.assertLocationsMatch(self.as_pairs(self.basic_tree).union({
             ('s3', None), ('county3', 's3')
         }))
-        self.assertCouchSync()
 
     def test_partial_attribute_edits_by_location_id(self):
         # a subset of locations can be edited and can be referenced by location_id
@@ -1020,7 +1026,6 @@ class TestBulkManagement(TestCase):
             ('County21', 's2'), ('City111', 'county11'), ('City112', 'county11'),
             ('City211', 'county21'),
         }, check_attr='name')
-        self.assertCouchSync()
 
     def test_partial_attribute_edits_by_site_code(self):
         # a subset of locations can be edited and can be referenced by site_code
@@ -1043,7 +1048,6 @@ class TestBulkManagement(TestCase):
             ('County21', 's2'), ('City111', 'county11'), ('City112', 'county11'),
             ('City211', 'county21'),
         }, check_attr='name')
-        self.assertCouchSync()
 
     def test_partial_parent_edits(self):
         self.bulk_update_locations(
@@ -1065,7 +1069,6 @@ class TestBulkManagement(TestCase):
             ('county21', 's1'), ('city111', 'county11'), ('city112', 'county11'),
             ('city211', 'county21'),
         })
-        self.assertCouchSync()
 
     def test_partial_parent_edits_invalid(self):
         # can't set invalid type location for a parent location
@@ -1085,7 +1088,6 @@ class TestBulkManagement(TestCase):
         self.assertNotEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
-        self.assertCouchSync()
 
     def test_partial_delete_children(self):
         self.bulk_update_locations(
@@ -1107,7 +1109,6 @@ class TestBulkManagement(TestCase):
         self.assertLocationsMatch(self.as_pairs(self.basic_tree) - {
             ('city211', 'county21'), ('county21', 's2')
         })
-        self.assertCouchSync()
 
         # deleting location if it doesn't have children should work
         delete = [
@@ -1123,7 +1124,6 @@ class TestBulkManagement(TestCase):
         self.assertLocationsMatch(self.as_pairs(self.basic_tree) - {
             ('city211', 'county21'), ('county21', 's2'), ('city111', 'county11')
         })
-        self.assertCouchSync()
 
     def test_partial_delete_children_invalid(self):
         self.bulk_update_locations(
@@ -1143,4 +1143,41 @@ class TestBulkManagement(TestCase):
         self.assertNotEqual(result.errors, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
-        self.assertCouchSync()
+
+    def test_large_upload(self):
+        self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            self.basic_tree
+        )
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            BIG_LOCATION_TREE
+        )
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree + BIG_LOCATION_TREE))
+
+    def test_new_root(self):
+        # new locations can be added without having to specify all of old ones
+        self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            self.basic_tree
+        )
+
+        upload = [
+            ('S1', 's1', 'city', 'county11', '', False) + extra_stub_args,
+            ('S2', 's2', 'city', 'county11', '', False) + extra_stub_args,
+            ('County11', 'county11', 'county', 'city111', '', False) + extra_stub_args,
+            ('County21', 'county21', 'county', 'city111', '', False) + extra_stub_args,
+            ('City111', 'city111', 'state', '', '', False) + extra_stub_args,
+            ('City112', 'city112', 'state', '', '', False) + extra_stub_args,
+            ('City211', 'city211', 'state', '', '', False) + extra_stub_args,
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            upload
+        )
+        self.assertEqual(result.errors, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(upload))

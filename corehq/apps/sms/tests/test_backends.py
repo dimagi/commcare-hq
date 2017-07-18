@@ -28,6 +28,7 @@ from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.smsbackends.tropo.models import SQLTropoBackend
 from corehq.messaging.smsbackends.twilio.models import SQLTwilioBackend
 from corehq.messaging.smsbackends.unicel.models import SQLUnicelBackend, InboundParams
+from corehq.messaging.smsbackends.vertex.models import VertexBackend
 from corehq.messaging.smsbackends.yo.models import SQLYoBackend
 from corehq.util.test_utils import create_test_case
 from datetime import datetime
@@ -157,6 +158,13 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         )
         cls.icds_backend.save()
 
+        cls.vertext_backend = VertexBackend(
+            name="VERTEX",
+            is_global=True,
+            hq_api_id=VertexBackend.get_api_id()
+        )
+        cls.vertext_backend.save()
+
     @classmethod
     def tearDownClass(cls):
         cls.teardown_subscription()
@@ -176,6 +184,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         cls.yo_backend.delete()
         cls.push_backend.delete()
         cls.icds_backend.delete()
+        cls.vertext_backend.delete()
         super(AllBackendTest, cls).tearDownClass()
 
     def tearDown(self):
@@ -264,8 +273,10 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
     @patch('corehq.messaging.smsbackends.yo.models.SQLYoBackend.send')
     @patch('corehq.messaging.smsbackends.push.models.PushBackend.send')
     @patch('corehq.messaging.smsbackends.icds_nic.models.SQLICDSBackend.send')
+    @patch('corehq.messaging.smsbackends.vertex.models.VertexBackend.send')
     def test_outbound_sms(
             self,
+            vertex_send,
             icds_send,
             push_send,
             yo_send,
@@ -296,6 +307,7 @@ class AllBackendTest(DomainSubscriptionMixin, TestCase):
         self._test_outbound_backend(self.yo_backend, 'yo test', yo_send)
         self._test_outbound_backend(self.push_backend, 'push test', push_send)
         self._test_outbound_backend(self.icds_backend, 'icds test', icds_send)
+        self._test_outbound_backend(self.vertext_backend, 'vertex_test', vertex_send)
 
     @run_with_all_backends
     def test_unicel_inbound_sms(self):
@@ -1184,56 +1196,52 @@ class LoadBalancingAndRateLimitingTestCase(BaseSMSTest):
         self.domain_obj.delete()
         super(LoadBalancingAndRateLimitingTestCase, self).tearDown()
 
-    def create_outgoing_sms(self, backend):
+    def create_outgoing_sms(self, backend, phone_number):
         sms = QueuedSMS(
             domain=self.domain,
             date=datetime.utcnow(),
             direction='O',
-            phone_number='9991234567',
+            phone_number=phone_number,
             text='message',
             backend_id=backend.couch_id
         )
         sms.save()
         return sms
 
-    def delete_load_balancing_keys(self, backend):
-        # This should only be necessary when running tests locally, but doesn't
-        # hurt to run all the time.
-        client = get_redis_client().client.get_client()
-        client.delete(backend.get_load_balance_redis_key())
-
-    def assertRequeue(self, backend):
-        requeue_flag = handle_outgoing(self.create_outgoing_sms(backend))
+    def assertRequeue(self, backend, phone_number):
+        requeue_flag = handle_outgoing(self.create_outgoing_sms(backend, phone_number))
         self.assertTrue(requeue_flag)
 
-    def assertNotRequeue(self, backend):
-        requeue_flag = handle_outgoing(self.create_outgoing_sms(backend))
+    def assertNotRequeue(self, backend, phone_number):
+        requeue_flag = handle_outgoing(self.create_outgoing_sms(backend, phone_number))
         self.assertFalse(requeue_flag)
 
     def test_load_balance(self):
         backend = LoadBalanceBackend.objects.create(
             name='BACKEND',
             is_global=True,
-            load_balancing_numbers=['9990001', '9990002', '9990003'],
+            load_balancing_numbers=['+9990001', '+9990002', '+9990003'],
             hq_api_id=LoadBalanceBackend.get_api_id()
         )
-        self.delete_load_balancing_keys(backend)
+        self.addCleanup(backend.delete)
 
-        for i in range(5):
+        for i in range(2):
             with patch('corehq.apps.sms.tests.test_backends.LoadBalanceBackend.send') as mock_send:
-                self.assertNotRequeue(backend)
+                self.assertNotRequeue(backend, '+9991111111')
                 self.assertTrue(mock_send.called)
-                self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '9990001')
+                self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '+9990002')
 
-                self.assertNotRequeue(backend)
+        for i in range(2):
+            with patch('corehq.apps.sms.tests.test_backends.LoadBalanceBackend.send') as mock_send:
+                self.assertNotRequeue(backend, '+9992222222')
                 self.assertTrue(mock_send.called)
-                self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '9990002')
+                self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '+9990001')
 
-                self.assertNotRequeue(backend)
+        for i in range(2):
+            with patch('corehq.apps.sms.tests.test_backends.LoadBalanceBackend.send') as mock_send:
+                self.assertNotRequeue(backend, '+9993333333')
                 self.assertTrue(mock_send.called)
-                self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '9990003')
-
-        backend.delete()
+                self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '+9990003')
 
     def test_rate_limit(self):
         backend = RateLimitBackend.objects.create(
@@ -1241,54 +1249,55 @@ class LoadBalancingAndRateLimitingTestCase(BaseSMSTest):
             is_global=True,
             hq_api_id=RateLimitBackend.get_api_id()
         )
+        self.addCleanup(backend.delete)
 
         # Requeue flag should be False until we hit the limit
         for i in range(backend.get_sms_rate_limit()):
             with patch('corehq.apps.sms.tests.test_backends.RateLimitBackend.send') as mock_send:
-                self.assertNotRequeue(backend)
+                self.assertNotRequeue(backend, '+9991111111')
                 self.assertTrue(mock_send.called)
 
         # Requeue flag should be True after hitting the limit
         with patch('corehq.apps.sms.tests.test_backends.RateLimitBackend.send') as mock_send:
-            self.assertRequeue(backend)
+            self.assertRequeue(backend, '+9991111111')
             self.assertFalse(mock_send.called)
-
-        backend.delete()
 
     def test_load_balance_and_rate_limit(self):
         backend = LoadBalanceAndRateLimitBackend.objects.create(
             name='BACKEND',
             is_global=True,
-            load_balancing_numbers=['9990001', '9990002', '9990003'],
+            load_balancing_numbers=['+9990001', '+9990002', '+9990003'],
             hq_api_id=LoadBalanceAndRateLimitBackend.get_api_id()
         )
-        self.delete_load_balancing_keys(backend)
+        self.addCleanup(backend.delete)
 
         for i in range(backend.get_sms_rate_limit()):
             with patch('corehq.apps.sms.tests.test_backends.LoadBalanceAndRateLimitBackend.send') as mock_send:
-                self.assertNotRequeue(backend)
+                self.assertNotRequeue(backend, '+9991111111')
                 self.assertTrue(mock_send.called)
-                self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '9990001')
+                self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '+9990002')
 
-                self.assertNotRequeue(backend)
+            with patch('corehq.apps.sms.tests.test_backends.LoadBalanceAndRateLimitBackend.send') as mock_send:
+                self.assertNotRequeue(backend, '+9992222222')
                 self.assertTrue(mock_send.called)
-                self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '9990002')
+                self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '+9990001')
 
-                self.assertNotRequeue(backend)
+            with patch('corehq.apps.sms.tests.test_backends.LoadBalanceAndRateLimitBackend.send') as mock_send:
+                self.assertNotRequeue(backend, '+9993333333')
                 self.assertTrue(mock_send.called)
-                self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '9990003')
+                self.assertEqual(mock_send.call_args[1]['orig_phone_number'], '+9990003')
 
         with patch('corehq.apps.sms.tests.test_backends.LoadBalanceAndRateLimitBackend.send') as mock_send:
-            self.assertRequeue(backend)
+            self.assertRequeue(backend, '+9991111111')
             self.assertFalse(mock_send.called)
 
-            self.assertRequeue(backend)
+        with patch('corehq.apps.sms.tests.test_backends.LoadBalanceAndRateLimitBackend.send') as mock_send:
+            self.assertRequeue(backend, '+9992222222')
             self.assertFalse(mock_send.called)
 
-            self.assertRequeue(backend)
+        with patch('corehq.apps.sms.tests.test_backends.LoadBalanceAndRateLimitBackend.send') as mock_send:
+            self.assertRequeue(backend, '+9993333333')
             self.assertFalse(mock_send.called)
-
-        backend.delete()
 
 
 class SQLMobileBackendMappingTestCase(TestCase):

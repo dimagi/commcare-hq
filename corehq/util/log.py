@@ -19,7 +19,7 @@ from django.views.debug import SafeExceptionReporterFilter, get_exception_report
 from django.template.loader import render_to_string
 from corehq.apps.analytics.utils import analytics_enabled_for_email
 from corehq.util.view_utils import get_request
-from corehq.util.datadog.utils import log_counter, get_url_group, sanitize_url
+from corehq.util.datadog.utils import get_url_group, sanitize_url
 from corehq.util.datadog.metrics import ERROR_COUNT
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 
@@ -69,6 +69,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
     """
 
     def get_context(self, record):
+        from corehq.util.datadog.gauges import datadog_counter
         try:
             request = record.request
         except Exception:
@@ -108,11 +109,11 @@ class HqAdminEmailHandler(AdminEmailHandler):
         })
         if request:
             sanitized_url = sanitize_url(request.build_absolute_uri())
-            log_counter(ERROR_COUNT, {
-                'url': sanitized_url,
-                'group': get_url_group(sanitized_url),
-                'domain': getattr(request, 'domain', DATADOG_UNKNOWN),
-            })
+            datadog_counter(ERROR_COUNT, tags=[
+                'url:{}'.format(sanitized_url),
+                'group:{}'.format(get_url_group(sanitized_url)),
+                'domain:{}'.format(getattr(request, 'domain', DATADOG_UNKNOWN)),
+            ])
 
             context.update({
                 'get': request.GET.items(),

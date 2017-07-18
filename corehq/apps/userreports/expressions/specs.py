@@ -1,4 +1,8 @@
 from __future__ import absolute_import
+import hashlib
+import json
+
+from django.core.serializers.json import DjangoJSONEncoder
 from jsonobject.base_properties import DefaultProperty
 from simpleeval import InvalidExpression
 import six
@@ -79,11 +83,12 @@ class NamedExpressionSpec(JsonObject):
             raise BadSpecError(u'Name {} not found in list of named expressions!'.format(self.name))
         self._context = context
 
-    def _context_cache_key(self):
-        return 'named_expression-{}'.format(self.name)
+    def _context_cache_key(self, item):
+        item_hash = hashlib.md5(json.dumps(item, cls=DjangoJSONEncoder, sort_keys=True)).hexdigest()
+        return 'named_expression-{}-{}'.format(self.name, item_hash)
 
     def __call__(self, item, context=None):
-        key = self._context_cache_key()
+        key = self._context_cache_key(item)
         if context and context.exists_in_cache(key):
             return context.get_cache_value(key)
 
@@ -416,7 +421,7 @@ class ReportingGroupsExpressionSpec(_GroupsExpressionSpec):
 class SplitStringExpressionSpec(JsonObject):
     type = TypeProperty('split_string')
     string_expression = DictProperty(required=True)
-    index_expression = DefaultProperty(required=True)
+    index_expression = DefaultProperty(required=False)
     delimiter = StringProperty(required=False)
 
     def configure(self, string_expression, index_expression):
@@ -428,12 +433,15 @@ class SplitStringExpressionSpec(JsonObject):
         if not isinstance(string_value, six.string_types):
             return None
 
-        index_value = self._index_expression(item, context)
-        if not isinstance(index_value, int):
-            return None
+        index_value = None
+        if self.index_expression is not None:
+            index_value = self._index_expression(item, context)
+            if not isinstance(index_value, int):
+                return None
 
         try:
-            return string_value.split(self.delimiter)[index_value]
+            split = string_value.split(self.delimiter)
+            return split[index_value] if index_value is not None else split
         except IndexError:
             return None
 

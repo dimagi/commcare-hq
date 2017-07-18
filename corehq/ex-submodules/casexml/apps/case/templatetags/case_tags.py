@@ -14,6 +14,7 @@ from django.utils.safestring import mark_safe
 from django.utils.html import escape
 
 from corehq.apps.products.models import SQLProduct
+from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
 from couchdbkit import ResourceNotFound
 from corehq.apps.users.util import cached_owner_id_to_display
 
@@ -266,6 +267,8 @@ def render_case(case, options):
         )
         ledger_map[section] = product_tuples
 
+    repeat_records = get_repeat_records_by_payload_id(case.domain, case.case_id)
+
     return render_to_string("case/partials/single_case.html", {
         "default_properties": default_properties,
         "default_properties_options": {
@@ -288,6 +291,7 @@ def render_case(case, options):
         "timezone_offset": tz_offset_ms,
         "show_transaction_export": show_transaction_export,
         "xform_api_url": reverse('single_case_forms', args=[case.domain, case.case_id]),
+        "repeat_records": repeat_records,
     })
 
 

@@ -64,9 +64,11 @@ def current_language():
 
 
 @pattern('m%d.%s.title')
-def detail_title_locale(module, detail_type):
-    return u"m{module.id}.{detail_type}.title".format(module=module,
-                                                      detail_type=detail_type)
+def detail_title_locale(detail_type):
+    if detail_type.startswith('case'):
+        return "cchq.case"
+    elif detail_type.startswith('referral'):
+        return "cchq.referral"
 
 
 @pattern('m%d.%s.tab.%d.title')

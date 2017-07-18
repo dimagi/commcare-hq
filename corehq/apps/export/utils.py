@@ -23,6 +23,7 @@ from corehq.apps.app_manager.const import STOCK_QUESTION_TAG_NAMES
 from corehq.apps.app_manager.dbaccessors import (
     get_app,
     get_brief_apps_in_domain,
+    get_apps_in_domain,
 )
 from .dbaccessors import (
     get_form_export_instances,
@@ -79,13 +80,23 @@ def convert_saved_export_to_export_instance(
         getattr(saved_export, 'app_id', None),
         export_type,
     )
+
     # Build a new schema and instance
     if export_type == FORM_EXPORT:
+        xmlns = _extract_xmlns_from_index(saved_export.index)
+        if not hasattr(saved_export, 'app_id'):
+            # attempt to find app id from xmlns
+            app_id = _app_id_from_xmlns(domain, xmlns)
+        else:
+            app_id = saved_export.app_id
+
+        assert app_id, 'Form exports require an app id'
+
         instance_cls = FormExportInstance
         schema = FormExportDataSchema.generate_schema_from_builds(
             domain,
-            saved_export.app_id,
-            _extract_xmlns_from_index(saved_export.index),
+            app_id,
+            xmlns,
         )
     elif export_type == CASE_EXPORT:
         instance_cls = CaseExportInstance
@@ -341,6 +352,14 @@ def _create_user_defined_column(old_column, column_path, transform):
         is_editable=False,
     )
     return column
+
+
+def _app_id_from_xmlns(domain, xmlns):
+    apps = get_apps_in_domain(domain)
+    for app in apps:
+        if xmlns in app.get_xmlns_map():
+            return app._id
+    return None
 
 
 def _strip_repeat_index(index):

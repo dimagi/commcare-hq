@@ -1,7 +1,8 @@
-from django.conf import settings
 from django.utils.translation import ugettext as _
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
+from couchdbkit import ResourceConflict
+
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.util import format_username
 from corehq.apps.users.models import CommCareUser
@@ -62,9 +63,16 @@ def reset_demo_user_restore(commcare_user, domain):
     ).get_payload().as_file()
     demo_restore = DemoUserRestore.create(commcare_user._id, restore)
 
-    # set reference to new restore
-    commcare_user.demo_restore_id = demo_restore.id
-    commcare_user.save()
+    # Set reference to new restore
+    try:
+        commcare_user.demo_restore_id = demo_restore.id
+        commcare_user.save()
+    except ResourceConflict:
+        # If CommCareUser.report_metadata gets updated by sync log pillow, after a restore is
+        #   generated or for any other reason, there will be a DocumentUpdate conflict
+        commcare_user = CommCareUser.get(commcare_user.get_id)
+        commcare_user.demo_restore_id = demo_restore.id
+        commcare_user.save()
 
 
 def delete_demo_restore_for_user(commcare_user):
@@ -210,5 +218,6 @@ def handle_401_response(f):
 def update_device_id(user, device_id):
     if device_id and isinstance(user, CommCareUser):
         if not user.is_demo_user:
-            user.update_device_id_last_used(device_id)
-            user.save()
+            updated = user.update_device_id_last_used(device_id)
+            if updated:
+                user.save()

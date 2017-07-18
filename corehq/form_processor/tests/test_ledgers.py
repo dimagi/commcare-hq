@@ -210,7 +210,40 @@ class LedgerTests(TestCase):
 
 @use_sql_backend
 class LedgerTestsSQL(LedgerTests):
-    pass
+    def test_edit_form_that_removes_ledgers(self):
+        from corehq.apps.commtrack.tests.util import get_single_balance_block
+        form_id = uuid.uuid4().hex
+        submit_case_blocks([
+            get_single_balance_block(self.case.case_id, self.product_a._id, 100)],
+            DOMAIN,
+            form_id=form_id
+        )
+
+        self._assert_ledger_state(100)
+
+        transactions = CaseAccessorSQL.get_transactions(self.case.case_id)
+        self.assertEqual(2, len(transactions))
+        self.assertTrue(transactions[0].is_form_transaction)
+        self.assertTrue(transactions[1].is_form_transaction)
+        self.assertTrue(transactions[1].is_ledger_transaction)
+
+        submit_case_blocks([
+            CaseBlock(case_id=self.case.case_id).as_string()],
+            DOMAIN,
+            form_id=form_id
+        )
+
+        self._assert_ledger_state(0)
+
+        transactions = CaseAccessorSQL.get_transactions(self.case.case_id)
+        self.assertEqual(3, len(transactions))
+        self.assertTrue(transactions[0].is_form_transaction)
+        # ordering not guaranteed since they have the same date
+        self.assertTrue(transactions[1].is_form_transaction)
+        self.assertFalse(transactions[1].is_ledger_transaction)  # no longer a ledger transaction
+        self.assertTrue(transactions[2].is_case_rebuild)
+
+        self._assert_transactions([])
 
 
 class TestLedgerDocumentStore(TestCase):

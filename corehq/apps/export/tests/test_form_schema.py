@@ -32,7 +32,7 @@ class FormQuestionSchemaTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(schema.question_schema['form.repeat_1.multi_level_1_repeat'].repeat_context, 'form.repeat_1')
 
         updated_form_xml = self.get_xml('question_schema_update_form')
-        app.get_form_by_xmlns(xmlns).source = updated_form_xml
+        app.get_forms_by_xmlns(xmlns)[0].source = updated_form_xml
         app.version = 2
 
         schema.update_for_app(app)
@@ -59,7 +59,7 @@ class FormQuestionSchemaTest(SimpleTestCase, TestXmlMixin):
 
         # Change the question to a different type
         updated_form_xml = self.get_xml('question_schema_no_multi')
-        app.get_form_by_xmlns(xmlns).source = updated_form_xml
+        app.get_forms_by_xmlns(xmlns)[0].source = updated_form_xml
         app.version = 2
 
         schema.update_for_app(app)

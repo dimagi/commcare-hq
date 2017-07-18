@@ -34,3 +34,8 @@ class ExponentialBackoff(object):
     def should_backoff(cls, key):
         cache_key = cls._get_cache_key(key)
         return not cls._number_is_power_of_two(cache.get(cache_key) or 1)
+
+
+def is_rate_limited(rate_limit_key):
+    ExponentialBackoff.increment(rate_limit_key)
+    return ExponentialBackoff.should_backoff(rate_limit_key)

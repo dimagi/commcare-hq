@@ -145,17 +145,27 @@ class CheckpointCreationTest(TestCase):
     ('report-xform', 'ReportXFormToElasticsearchPillow'),
 ], CheckpointCreationTest)
 def test_checkpoint_creation(self, reindex_id, pillow_name):
+    # checks that checkpoipnts are set to the latest checkpoints after reindexing
     with real_pillow_settings():
         pillow = get_pillow_by_name(pillow_name)
-        random_seq = uuid.uuid4().hex
-        pillow.checkpoint.update_to(random_seq)
-        self.assertEqual(random_seq, pillow.checkpoint.get_current_sequence_id())
+
+        # set the offets to something obviously wrong
+        current_offsets = pillow.checkpoint.get_current_sequence_as_dict()
+        bad_offsets = {tp: (offset + 38014) for tp, offset in current_offsets.items()}
+        pillow.checkpoint.update_to(bad_offsets)
+        self.assertNotEqual(current_offsets, pillow.checkpoint.get_current_sequence_as_dict())
+        self.assertEqual(bad_offsets, pillow.checkpoint.get_current_sequence_as_dict())
+
         call_command('ptop_reindexer_v2', reindex_id, cleanup=True, noinput=True)
         pillow = get_pillow_by_name(pillow_name)
-        self.assertNotEqual(random_seq, pillow.checkpoint.get_current_sequence_id())
+        self.assertNotEqual(bad_offsets, pillow.checkpoint.get_current_sequence_as_dict())
         self.assertEqual(
             pillow.get_change_feed().get_latest_offsets_as_checkpoint_value(),
             pillow.checkpoint.get_or_create_wrapped().wrapped_sequence,
+        )
+        self.assertEqual(
+            pillow.get_change_feed().get_latest_offsets_as_checkpoint_value(),
+            pillow.checkpoint.get_current_sequence_as_dict(),
         )
 
 
@@ -170,15 +180,34 @@ def test_no_checkpoint_creation(self, reindex_id, pillow_name):
     # reindexers
     with real_pillow_settings():
         pillow = get_pillow_by_name(pillow_name)
-        random_seq = uuid.uuid4().hex
-        pillow.checkpoint.update_to(random_seq)
-        self.assertEqual(random_seq, pillow.checkpoint.get_current_sequence_id())
+
+        # set these to something obviously wrong
+        current_offsets = pillow.checkpoint.get_current_sequence_as_dict()
+        bad_offsets = {tp: (offset + 38014) for tp, offset in current_offsets.items()}
+        pillow.checkpoint.update_to(bad_offsets)
+        self.assertNotEqual(current_offsets, pillow.checkpoint.get_current_sequence_as_dict())
+        self.assertEqual(bad_offsets, pillow.checkpoint.get_current_sequence_as_dict())
         call_command('ptop_reindexer_v2', reindex_id, cleanup=True, noinput=True)
+
+        # make sure they are still bad
         pillow = get_pillow_by_name(pillow_name)
-        self.assertEqual(
-            random_seq,
-            pillow.checkpoint.get_current_sequence_id(),
+        self.assertNotEqual(
+            current_offsets,
+            pillow.checkpoint.get_current_sequence_as_dict(),
         )
+        self.assertEqual(
+            bad_offsets,
+            pillow.checkpoint.get_current_sequence_as_dict(),
+        )
+        self.assertNotEqual(
+            pillow.get_change_feed().get_latest_offsets_as_checkpoint_value(),
+            pillow.checkpoint.get_or_create_wrapped().wrapped_sequence,
+        )
+        self.assertNotEqual(
+            pillow.get_change_feed().get_latest_offsets_as_checkpoint_value(),
+            pillow.checkpoint.get_current_sequence_as_dict(),
+        )
+
 
 class UserReindexerTest(TestCase):
 

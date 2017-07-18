@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 from django.db import migrations
 
 from corehq.sql_db.operations import HqRunSQL
-from corehq.util.django_migrations import add_if_not_exists
+from corehq.util.django_migrations import add_if_not_exists_raw
 
 
 class Migration(migrations.Migration):
@@ -16,11 +16,11 @@ class Migration(migrations.Migration):
 
     operations = [
         HqRunSQL(
-            add_if_not_exists(
+            add_if_not_exists_raw(
                 """
                 CREATE UNIQUE INDEX accounting_subscription_active_subscriber
                 ON accounting_subscription(subscriber_id) WHERE (is_active = TRUE and is_hidden_to_ops = FALSE)
-                """
+                """, name='accounting_subscription_active_subscriber'
             ),
             reverse_sql=
             """

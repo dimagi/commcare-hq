@@ -305,8 +305,6 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
         if const.TAG_META in self.form_data:
             return XFormPhoneMetadata.wrap(clean_metadata(self.form_data[const.TAG_META]))
 
-        return None
-
     def soft_delete(self):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
         FormAccessorSQL.soft_delete_forms(self.domain, [self.form_id])
@@ -551,6 +549,14 @@ class XFormPhoneMetadata(jsonobject.JsonObject):
     appVersion = jsonobject.StringProperty()
     location = GeoPointProperty()
 
+    @property
+    def commcare_version(self):
+        from corehq.apps.receiverwrapper.util import get_commcare_version_from_appversion_text
+        from distutils.version import LooseVersion
+        version_text = get_commcare_version_from_appversion_text(self.appVersion)
+        if version_text:
+            return LooseVersion(version_text)
+
 
 class SupplyPointCaseMixin(object):
     CASE_TYPE = 'supply-point'
@@ -588,6 +594,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     opened_by = models.CharField(max_length=255, null=True)
 
     modified_on = models.DateTimeField(null=False)
+    # represents the max date from all case transactions
     server_modified_on = models.DateTimeField(null=False, db_index=True)
     modified_by = models.CharField(max_length=255)
 
@@ -862,6 +869,11 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             identifier=DEFAULT_PARENT_IDENTIFIER,
             relationship=CommCareCaseIndexSQL.CHILD
         )
+        return result[0] if result else None
+
+    @property
+    def host(self):
+        result = self.get_parent(relationship=CommCareCaseIndexSQL.EXTENSION)
         return result[0] if result else None
 
     def __unicode__(self):
@@ -1362,6 +1374,13 @@ class LedgerValue(PartitionedModel, models.Model, TrackRelatedChanges):
         from .serializers import LedgerValueSerializer
         serializer = LedgerValueSerializer(self, include_location_id=include_location_id)
         return dict(serializer.data)
+
+    def __repr__(self):
+        return "LedgerValue(" \
+               "case_id={s.case_id}, " \
+               "section_id={s.section_id}, " \
+               "entry_id={s.entry_id}," \
+               "balance={s.balance}".format(s=self)
 
     class Meta:
         app_label = "form_processor"

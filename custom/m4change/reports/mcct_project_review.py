@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import get_location
 from corehq.apps.locations.permissions import location_safe
 from corehq.const import SERVER_DATETIME_FORMAT_NO_SEC
 from corehq.apps.reports.standard import CustomProjectReport
@@ -86,7 +86,7 @@ def calculate_form_data(self, form):
     location_id = form["form"].get("location_id", None)
 
     if location_id is not None:
-        location = Location.get(location_id)
+        location = get_location(location_id)
         location_name = location.name
         location_parent = location.parent
         if location_parent is not None and location_parent.location_type_name != 'state':

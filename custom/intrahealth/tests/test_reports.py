@@ -3,7 +3,6 @@ import os
 
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from custom.intrahealth.models import TauxDeSatisfactionFluff
 from custom.intrahealth.sqldata import DispDesProducts
 from custom.intrahealth.tests.test_fluffs import DATAPATH
 from custom.intrahealth.tests.test_utils import IntraHealthTestCase, TEST_DOMAIN

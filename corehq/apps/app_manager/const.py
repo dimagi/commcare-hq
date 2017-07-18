@@ -62,3 +62,9 @@ STOCK_QUESTION_TAG_NAMES = [
 ]
 
 DEFAULT_FETCH_LIMIT = 5
+
+APP_TRANSLATION_UPLOAD_FAIL_MESSAGE = (
+    "Translation Upload Failed! "
+    "Please make sure you are using a valid Excel 2007 or later (.xlsx) file. "
+    "Error details: {}."
+)

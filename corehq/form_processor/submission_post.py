@@ -183,6 +183,7 @@ class SubmissionPost(object):
                     except (IllegalCaseId, UsesReferrals, MissingProductId,
                             PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
                         self._handle_known_error(e, instance, xforms)
+                        submission_type = 'error'
                     except Exception as e:
                         # handle / log the error and reraise so the phone knows to resubmit
                         # note that in the case of edit submissions this won't flag the previous
@@ -262,7 +263,10 @@ class SubmissionPost(object):
         case_result = process_cases_with_casedb(xforms, case_db)
         stock_result = process_stock(xforms, case_db)
 
-        cases = case_db.get_cases_for_saving(instance.received_on)
+        modified_on_date = instance.received_on
+        if getattr(instance, 'edited_on', None) and instance.edited_on > instance.received_on:
+            modified_on_date = instance.edited_on
+        cases = case_db.get_cases_for_saving(modified_on_date)
         stock_result.populate_models()
 
         return CaseStockProcessingResult(
@@ -291,8 +295,8 @@ class SubmissionPost(object):
         return errors
 
     def _get_open_rosa_response(self, instance, errors):
-        if instance.is_normal:
-            response = self.get_success_response(instance, errors)
+        if instance.is_normal and not errors:
+            response = self.get_success_response()
         else:
             response = self.get_failure_response(instance)
 
@@ -304,22 +308,13 @@ class SubmissionPost(object):
         return response
 
     @staticmethod
-    def get_success_response(doc, errors):
-
-        if errors:
-            response = OpenRosaResponse(
-                message=doc.problem,
-                nature=ResponseNature.SUBMIT_ERROR,
-                status=201,
-            ).response()
-        else:
-            response = OpenRosaResponse(
-                # would have done ✓ but our test Nokias' fonts don't have that character
-                message=u'   √   ',
-                nature=ResponseNature.SUBMIT_SUCCESS,
-                status=201,
-            ).response()
-        return response
+    def get_success_response():
+        return OpenRosaResponse(
+            # would have done ✓ but our test Nokias' fonts don't have that character
+            message=u'   √   ',
+            nature=ResponseNature.SUBMIT_SUCCESS,
+            status=201,
+        ).response()
 
     @staticmethod
     def submission_ignored_response():

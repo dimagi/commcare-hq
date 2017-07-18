@@ -2,8 +2,10 @@ import os
 
 from django.db import models
 from django.contrib.auth.models import User
+from dropbox import Dropbox
+from dropbox.exceptions import AuthError
 
-from .exceptions import DropboxUploadAlreadyInProgress
+from .exceptions import DropboxUploadAlreadyInProgress, DropboxInvalidToken
 from .tasks import upload
 
 
@@ -30,6 +32,8 @@ class DropboxUploadHelper(models.Model):
     def create(cls, token, **kwargs):
         download_id = kwargs.get('download_id')
 
+        cls._ensure_valid_token(token)
+
         existing_uploader = DropboxUploadHelper.objects.filter(download_id=download_id).first()
         if existing_uploader and existing_uploader.failure_reason is None:
             raise DropboxUploadAlreadyInProgress(
@@ -44,6 +48,14 @@ class DropboxUploadHelper(models.Model):
         )
         helper.token = token
         return helper
+
+    @staticmethod
+    def _ensure_valid_token(token):
+        try:
+            # Ensure that we've been given a valid token
+            Dropbox(token).users_get_current_account()
+        except AuthError:
+            raise DropboxInvalidToken
 
     def upload(self, max_size=None, max_retries=3):
         if self.initiated:

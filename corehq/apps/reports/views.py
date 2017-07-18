@@ -96,7 +96,7 @@ from soil.tasks import prepare_download
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_json_response
 from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
-from corehq.apps.app_manager.models import Application
+from corehq.apps.app_manager.models import Application, ShadowForm
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.domain.decorators import (
@@ -107,6 +107,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import BadExportConfiguration
+from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.hqcase.export import export_cases
@@ -116,6 +117,7 @@ from corehq.apps.locations.permissions import can_edit_form_location, location_s
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.util import default_language as ucr_default_language
+from corehq.apps.reports.util import validate_xform_for_edit
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.export import export_users
 from corehq.apps.users.models import (
@@ -1727,10 +1729,11 @@ class EditFormInstance(View):
         except ResourceNotFound:
             raise Http404(_('Application not found.'))
 
-        form = build.get_form_by_xmlns(instance.xmlns)
-        if not form:
+        forms = build.get_forms_by_xmlns(instance.xmlns)
+        if not forms:
             raise Http404(_('Missing module or form information!'))
-        return form
+        non_shadow_forms = [form for form in forms if form.form_type != ShadowForm.form_type]
+        return non_shadow_forms[0]
 
     @staticmethod
     def _form_instance_to_context_url(domain, instance):
@@ -1756,7 +1759,14 @@ class EditFormInstance(View):
         instance = _get_location_safe_form(domain, request.couch_user, instance_id)
         context = _get_form_context(request, domain, instance)
         if not instance.app_id or not instance.build_id:
-            return _error(_('Could not detect the application/form for this submission.'))
+            deviceID = instance.metadata.deviceID
+            if deviceID and deviceID == 'Formplayer':
+                return _error(_(
+                    "Could not detect the application or form for this submission. "
+                    "A common cause is that the form was submitted via App or Form preview"
+                ))
+            else:
+                return _error(_('Could not detect the application or form for this submission.'))
 
         user = CouchUser.get_by_user_id(instance.metadata.userID, domain)
         if not user:
@@ -1766,6 +1776,12 @@ class EditFormInstance(View):
 
         # add usercase to session
         form = self._get_form_from_instance(instance)
+
+        try:
+            validate_xform_for_edit(form.wrapped_xform())
+        except EditFormValidationError as e:
+            return _error(e)
+
         if form.uses_usercase():
             usercase_id = user.get_usercase_id()
             if not usercase_id:
@@ -1798,7 +1814,12 @@ class EditFormInstance(View):
                         case_name=case.name,
                     ))
                 elif case.is_deleted:
-                    return _error(_(u'Case <a href="{}" is deleted. Cannot edit this form.').format(case.case_id))
+                    return _error(
+                        _(u'Case <a href="{case_url}">{case_name}</a> is deleted. Cannot edit this form.').format(
+                            case_url=reverse('case_details', args=[domain, case.case_id]),
+                            case_name=case.name,
+                        )
+                    )
 
         edit_session_data['is_editing'] = True
         edit_session_data['function_context'] = {
@@ -1834,33 +1855,13 @@ def restore_edit(request, domain, instance_id):
         raise Http404()
 
     instance = _get_location_safe_form(domain, request.couch_user, instance_id)
-    if isinstance(instance, XFormDeprecated):
+    if instance.is_deprecated:
         submit_form_locally(instance.get_xml(), domain, app_id=instance.app_id, build_id=instance.build_id)
         messages.success(request, _(u'Form was restored from a previous version.'))
         return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance.orig_id]))
     else:
         messages.warning(request, _(u'Sorry, that form cannot be edited.'))
         return HttpResponseRedirect(reverse('render_form_data', args=[domain, instance_id]))
-
-
-@login_or_digest
-@require_form_view_permission
-@require_GET
-@location_safe
-def download_attachment(request, domain, instance_id):
-    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
-    attachment = request.GET.get('attachment', False)
-    if not attachment:
-        return HttpResponseBadRequest("Invalid attachment.")
-    assert(domain == instance.domain)
-
-    try:
-        attach = FormAccessors(domain).get_attachment_content(instance_id, attachment)
-    except AttachmentNotFound:
-        raise Http404()
-
-    return StreamingHttpResponse(streaming_content=FileWrapper(attach.content_stream),
-                                 content_type=attach.content_type)
 
 
 @require_form_view_permission
@@ -2007,7 +2008,11 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
         return start, end
 
 
-@require_case_view_permission
+def _can_view_report(domain, user, report_class):
+    return (user.has_permission(domain, Permissions.view_reports)
+            or user.has_permission(domain, Permissions.view_report, data=report_class))
+
+
 @login_and_domain_required
 @require_GET
 def export_report(request, domain, export_hash, format):
@@ -2015,8 +2020,11 @@ def export_report(request, domain, export_hash, format):
 
     content = cache.get(export_hash)
     if content is not None:
+        report_class, report_file = content
+        if not _can_view_report(domain, request.couch_user, report_class):
+            raise PermissionDenied()
         if format in Format.VALID_FORMATS:
-            file = ContentFile(content)
+            file = ContentFile(report_file)
             response = HttpResponse(file, Format.FORMAT_DICT[format])
             response['Content-Length'] = file.size
             response['Content-Disposition'] = 'attachment; filename="{filename}.{extension}"'.format(

@@ -9,7 +9,7 @@
         <legend>
         <a class="collapsed" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-multimedia">
             <i class="fa fa-angle-double-down"></i>
-            <span data-bind="text: title">Media</span>
+            <span data-bind="text: title">{%  trans "Media" %}</span>
         </a>
         </legend>
         <div class="collapse" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-multimedia" style="overflow: hidden;">
@@ -23,7 +23,7 @@
         <legend>
         <a class="collapsed" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-logic">
             <i class="fa fa-angle-double-down"></i>
-            <span data-bind="text: title">Logic</span>
+            <span data-bind="text: title">{% trans "Logic" %}</span>
         </a>
         </legend>
         <div class="collapse" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-logic" style="overflow: hidden;">
@@ -32,7 +32,7 @@
                 css: {error: hasError()}">
 
                 {% if allow_form_filtering %}
-                    {% include "app_manager/v1/partials/form_filter/form_filter.html" %}
+                    {% include "app_manager/v1/partials/form_filter.html" %}
                 {% else  %}
                     <div class="container-fluid">
                         <div class="alert alert-info">{% trans 'Form filtering is disabled for this form' %}</div>
@@ -52,7 +52,7 @@
         <legend>
         <a class="collapsed" data-toggle="collapse" data-bind="attr: {href: '#' + id}, css: {collapsed: reallyCollapse}" href="#form-settings-advanced">
             <i class="fa fa-angle-double-down"></i>
-            <span data-bind="text: title">Advanced</span>
+            <span data-bind="text: title">{% trans "Advanced" %}</span>
         </a>
         </legend>
         <div class="collapse" data-bind="attr: {id: id}, css: {'in': !reallyCollapse()}" id="form-settings-advanced" style="overflow: hidden;">

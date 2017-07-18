@@ -13,7 +13,7 @@ from django.utils import html
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, SoftwarePlanEdition, Subscription
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.models import SQLLocation, LocationType, Location
+from corehq.apps.locations.models import SQLLocation, LocationType, make_location
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.sms.api import send_sms_to_verified_number, send_sms as core_send_sms
 from corehq.apps.sms.models import PhoneNumber
@@ -95,7 +95,7 @@ def get_products_ids_assigned_to_rel_sp(domain, active_location=None):
 def make_loc(code, name, domain, type, parent=None):
     name = name or code
     sql_type, _ = LocationType.objects.get_or_create(domain=domain, name=type)
-    loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
+    loc = make_location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
     loc.save()
 
     sql_location = loc.sql_location

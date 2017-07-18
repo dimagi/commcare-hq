@@ -6,13 +6,18 @@ from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.scheduling import util
 from corehq.messaging.scheduling.exceptions import UnknownRecipientType
 from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
 from corehq.sql_db.models import PartitionedModel
+from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
 from datetime import tzinfo
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.modules import to_function
 from django.db import models
+from django.conf import settings
 from django.core.exceptions import ValidationError
 
 
@@ -20,7 +25,7 @@ class ScheduleInstance(PartitionedModel):
     schedule_instance_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     domain = models.CharField(max_length=126)
     recipient_type = models.CharField(max_length=126)
-    recipient_id = models.CharField(max_length=126)
+    recipient_id = models.CharField(max_length=126, null=True)
     current_event_num = models.IntegerField()
     schedule_iteration_num = models.IntegerField()
     next_event_due = models.DateTimeField()
@@ -33,6 +38,10 @@ class ScheduleInstance(PartitionedModel):
             ('active', 'next_event_due'),
             ('domain', 'active', 'next_event_due'),
         )
+
+    @property
+    def today_for_recipient(self):
+        return ServerTime(util.utcnow()).user_time(self.timezone).done().date()
 
     @property
     @memoized
@@ -54,10 +63,18 @@ class ScheduleInstance(PartitionedModel):
 
     @property
     @memoized
+    def recipient_is_an_individual_contact(self):
+        return (
+            isinstance(self.recipient, (CommCareUser, WebUser)) or
+            is_commcarecase(self.recipient)
+        )
+
+    @property
+    @memoized
     def timezone(self):
         timezone = None
 
-        if self.recipient_type in ('CommCareCase', 'CommCareUser', 'WebUser'):
+        if self.recipient_is_an_individual_contact:
             try:
                 timezone = self.recipient.get_time_zone()
             except ValidationError:
@@ -79,7 +96,7 @@ class ScheduleInstance(PartitionedModel):
 
     @classmethod
     def create_for_recipient(cls, schedule, recipient_type, recipient_id, start_date=None,
-            move_to_next_event_not_in_the_past=True):
+            move_to_next_event_not_in_the_past=True, **additional_fields):
 
         obj = cls(
             domain=schedule.domain,
@@ -87,7 +104,8 @@ class ScheduleInstance(PartitionedModel):
             recipient_id=recipient_id,
             current_event_num=0,
             schedule_iteration_num=1,
-            active=True
+            active=True,
+            **additional_fields
         )
 
         obj.schedule = schedule
@@ -103,17 +121,19 @@ class ScheduleInstance(PartitionedModel):
         Can be used as a generator to iterate over all individual contacts who
         are the recipients of this ScheduleInstance.
         """
-        if self.recipient_type in ('CommCareCase', 'CommCareUser', 'WebUser'):
+        if self.recipient is None:
+            return
+        elif self.recipient_is_an_individual_contact:
             yield self.recipient
-        elif self.recipient_type == 'CommCareCaseGroup':
+        elif isinstance(self.recipient, CommCareCaseGroup):
             case_group = self.recipient
             for case in case_group.get_cases():
                 yield case
-        elif self.recipient_type == 'Group':
+        elif isinstance(self.recipient, Group):
             group = self.recipient
             for user in group.get_users(is_active=True, only_commcare=False):
                 yield user
-        elif self.recipient_type == 'Location':
+        elif isinstance(self.recipient, SQLLocation):
             location = self.recipient
             if self.memoized_schedule.include_descendant_locations:
                 location_ids = location.get_descendants(include_self=True).filter(is_archived=False).location_ids()
@@ -127,12 +147,12 @@ class ScheduleInstance(PartitionedModel):
                         user_ids.add(user.get_id)
                         yield user
         else:
-            raise UnknownRecipientType(self.recipient_type)
+            raise UnknownRecipientType(self.recipient.__class__.__name__)
 
     def handle_current_event(self):
         content = self.memoized_schedule.get_current_event_content(self)
         for recipient in self.expand_recipients():
-            content.send(recipient)
+            content.send(recipient, self)
         # As a precaution, always explicitly move to the next event after processing the current
         # event to prevent ever getting stuck on the current event.
         self.memoized_schedule.move_to_next_event(self)
@@ -156,11 +176,11 @@ class ScheduleInstance(PartitionedModel):
         return self.schedule
 
 
-class AlertScheduleInstance(ScheduleInstance):
+class AbstractAlertScheduleInstance(ScheduleInstance):
     alert_schedule_id = models.UUIDField()
 
     class Meta(ScheduleInstance.Meta):
-        db_table = 'scheduling_alertscheduleinstance'
+        abstract = True
 
     @property
     def schedule(self):
@@ -174,12 +194,12 @@ class AlertScheduleInstance(ScheduleInstance):
         self.alert_schedule_id = value.schedule_id
 
 
-class TimedScheduleInstance(ScheduleInstance):
+class AbstractTimedScheduleInstance(ScheduleInstance):
     timed_schedule_id = models.UUIDField()
     start_date = models.DateField()
 
     class Meta(ScheduleInstance.Meta):
-        db_table = 'scheduling_timedscheduleinstance'
+        abstract = True
 
     @property
     def schedule(self):
@@ -193,11 +213,94 @@ class TimedScheduleInstance(ScheduleInstance):
         self.timed_schedule_id = value.schedule_id
 
     def recalculate_schedule(self, schedule=None, new_start_date=None):
+        """
+        Resets the start_date and recalulates the next_event_due timestamp for
+        this AbstractTimedScheduleInstance.
+
+        :param schedule: The TimedSchedule to use to avoid a lookup; if None,
+        self.memoized_schedule is used
+        :param new_start_date: The start date to use when recalculating the schedule;
+        If None, the current date is used
+        """
         schedule = schedule or self.memoized_schedule
         self.current_event_num = 0
         self.schedule_iteration_num = 1
         self.active = True
-        if new_start_date:
-            self.start_date = new_start_date
-        schedule.set_first_event_due_timestamp(self, self.start_date)
+        schedule.set_first_event_due_timestamp(self, start_date=new_start_date)
         schedule.move_to_next_event_not_in_the_past(self)
+
+
+class AlertScheduleInstance(AbstractAlertScheduleInstance):
+
+    class Meta(AbstractAlertScheduleInstance.Meta):
+        db_table = 'scheduling_alertscheduleinstance'
+
+
+class TimedScheduleInstance(AbstractTimedScheduleInstance):
+
+    class Meta(AbstractTimedScheduleInstance.Meta):
+        db_table = 'scheduling_timedscheduleinstance'
+
+
+class CaseScheduleInstanceMixin(object):
+
+    @property
+    @memoized
+    def recipient(self):
+        if self.recipient_type == 'Self':
+            return CaseAccessors(self.domain).get_case(self.case_id)
+        elif self.recipient_type == 'Owner':
+            return None
+        if self.recipient_type == 'LastSubmittingUser':
+            return None
+        elif self.recipient_type == 'ParentCase':
+            return None
+        elif self.recipient_type == 'SubCase':
+            return None
+        elif self.recipient_type == 'CustomRecipient':
+            custom_function = to_function(
+                settings.AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS[self.recipient_id][0]
+            )
+            return custom_function(self)
+        else:
+            return super(CaseScheduleInstanceMixin, self).recipient
+
+
+class CaseAlertScheduleInstance(CaseScheduleInstanceMixin, AbstractAlertScheduleInstance):
+    # Points to the CommCareCase/SQL that spawned this schedule instance
+    case_id = models.CharField(max_length=255)
+
+    # Points to the AutomaticUpdateRule that spawned this schedule instance
+    rule_id = models.IntegerField()
+
+    # See corehq.apps.data_interfaces.models.CreateScheduleInstanceActionDefinition.reset_case_property_name
+    last_reset_case_property_value = models.TextField(null=True)
+
+    class Meta(AbstractAlertScheduleInstance.Meta):
+        db_table = 'scheduling_casealertscheduleinstance'
+        index_together = AbstractAlertScheduleInstance.Meta.index_together + (
+            ('case_id', 'alert_schedule_id'),
+        )
+        unique_together = (
+            ('case_id', 'alert_schedule_id', 'recipient_type', 'recipient_id'),
+        )
+
+
+class CaseTimedScheduleInstance(CaseScheduleInstanceMixin, AbstractTimedScheduleInstance):
+    # Points to the CommCareCase/SQL that spawned this schedule instance
+    case_id = models.CharField(max_length=255)
+
+    # Points to the AutomaticUpdateRule that spawned this schedule instance
+    rule_id = models.IntegerField()
+
+    # See corehq.apps.data_interfaces.models.CreateScheduleInstanceActionDefinition.reset_case_property_name
+    last_reset_case_property_value = models.TextField(null=True)
+
+    class Meta(AbstractTimedScheduleInstance.Meta):
+        db_table = 'scheduling_casetimedscheduleinstance'
+        index_together = AbstractTimedScheduleInstance.Meta.index_together + (
+            ('case_id', 'timed_schedule_id'),
+        )
+        unique_together = (
+            ('case_id', 'timed_schedule_id', 'recipient_type', 'recipient_id'),
+        )

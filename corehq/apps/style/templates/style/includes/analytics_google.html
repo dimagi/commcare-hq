@@ -52,7 +52,8 @@
         function trackLinkHelper(element, trackFunction){
             var eventHandler = function (event) {
                 var $this = $(this);
-                if (event.metaKey || event.ctrlKey || event.which === 2) {  // which === 2 for middle click
+                if (event.metaKey || event.ctrlKey || event.which === 2  // which === 2 for middle click
+                    || event.currentTarget.target && event.currentTarget !== "_self") {
                     // The current page isn't being redirected so just track the click
                     // and don't prevent the default click action.
                     trackFunction();

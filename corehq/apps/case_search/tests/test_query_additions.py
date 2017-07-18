@@ -1,7 +1,9 @@
 from corehq.apps.case_search.models import merge_queries, QueryMergeException
-from django.test import SimpleTestCase
-
+from django.test import SimpleTestCase, TestCase
+from corehq.apps.case_search.models import CaseSearchConfig, IgnorePatterns
 from corehq.util.test_utils import generate_cases
+
+from corehq.apps.case_search.models import SEARCH_QUERY_CUSTOM_VALUE, replace_custom_query_variables
 
 
 class TestQueryMerge(SimpleTestCase):
@@ -37,3 +39,148 @@ class TestQueryMerge(SimpleTestCase):
 def test_merge(self, base_query, addition, expected):
     new = merge_queries(base_query, addition)
     self.assertDictEqual(new, expected)
+
+
+class TestCustomQueryValues(TestCase):
+    def test_custom_values(self):
+        config, created = CaseSearchConfig.objects.get_or_create(pk='domain', enabled=True)
+        rc = IgnorePatterns(
+            domain='domain',
+            case_type='case_type',
+            case_property='thing_1',
+            regex=' removed',
+        )
+        rc.save()
+        config.ignore_patterns.add(rc)
+        initial_custom_query = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "term": {
+                                "case_properties.key": "thing_1"
+                            }
+                        },
+                        "query": {
+                            "match": {
+                                "case_properties.value": {
+                                    "fuzziness": "0",
+                                    "query": "__thing_1"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        search_criteria = {
+            "{}__thing_1".format(SEARCH_QUERY_CUSTOM_VALUE): "boop removed",
+            "name": "Jon Snow",
+        }
+
+        expected = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "term": {
+                                "case_properties.key": "thing_1"
+                            }
+                        },
+                        "query": {
+                            "match": {
+                                "case_properties.value": {
+                                    "fuzziness": "0",
+                                    "query": "boop"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self.assertDictEqual(
+            expected,
+            replace_custom_query_variables(
+                initial_custom_query,
+                search_criteria,
+                config.ignore_patterns.filter(domain='domain', case_type='case_type')
+            )
+        )
+
+    def test_remove_unneeded_custom_values(self):
+        config, created = CaseSearchConfig.objects.get_or_create(pk='domain', enabled=True)
+        initial_custom_query = {
+            "include_if": "__thing_1",
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "term": {
+                                "case_properties.key": "thing_1"
+                            }
+                        },
+                        "query": {
+                            "match": {
+                                "case_properties.value": {
+                                    "fuzziness": "0",
+                                    "query": "__thing_1"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        search_criteria = {
+            "{}__thing_2".format(SEARCH_QUERY_CUSTOM_VALUE): "boop",
+            "name": "Jon Snow",
+        }
+        expected = {}
+        self.assertDictEqual(
+            expected,
+            replace_custom_query_variables(
+                initial_custom_query,
+                search_criteria,
+                config.ignore_patterns.filter(domain='domain', case_type='case_type')
+            )
+        )
+
+        search_criteria = {
+            "{}__thing_1".format(SEARCH_QUERY_CUSTOM_VALUE): "boop",
+            "name": "Jon Snow",
+        }
+        expected = {
+            "nested": {
+                "path": "case_properties",
+                "query": {
+                    "filtered": {
+                        "filter": {
+                            "term": {
+                                "case_properties.key": "thing_1"
+                            }
+                        },
+                        "query": {
+                            "match": {
+                                "case_properties.value": {
+                                    "fuzziness": "0",
+                                    "query": "boop"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        self.assertDictEqual(
+            expected,
+            replace_custom_query_variables(
+                initial_custom_query,
+                search_criteria,
+                config.ignore_patterns.filter(domain='domain', case_type='case_type')
+            )
+        )

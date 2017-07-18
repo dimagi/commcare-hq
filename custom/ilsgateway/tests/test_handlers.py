@@ -5,7 +5,7 @@ from django.utils.translation import ugettext as _
 
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import StockState
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.api import incoming
 from corehq.apps.users.models import CommCareUser
@@ -251,7 +251,7 @@ class TestHandlers(ILSTestScript):
             submitting_group
         )))
 
-        for location in Location.by_domain(TEST_DOMAIN):
+        for location in SQLLocation.objects.filter(domain=TEST_DOMAIN):
             if location.metadata.get('group') != submitting_group:
                 location.metadata['group'] = submitting_group
                 location.save()

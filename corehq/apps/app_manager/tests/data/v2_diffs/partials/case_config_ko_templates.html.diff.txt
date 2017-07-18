@@ -6,11 +6,14 @@
      <span data-bind="text: $parent.actionType"></span>
 +
      <div data-bind="visible: type() === 'always'">
-         <a href="#" data-bind="click: function () {type('if')}"><i class="fa fa-plus"></i> {% trans "Only if the answer to..." %}</a>
-     </div>
+-        <a href="#" data-bind="click: function () {type('if')}"><i class="fa fa-plus"></i> {% trans "Only if the answer to..." %}</a>
+-    </div>
++        <a href="#" class="btn btn-default" data-bind="click: function () {type('if')}"><i class="fa fa-plus"></i> {% trans "Only if the answer to..." %}</a>
++    </div>
 +
      <div class="form-inline" data-bind="visible: type() === 'if'">
-         <a href="#" data-bind="click: function () {type('always')}">
+-        <a href="#" data-bind="click: function () {type('always')}">
++        <a href="#" class="btn btn-default" data-bind="click: function () {type('always')}">
              <i class="fa fa-remove"></i>
          </a>
          {% trans "Only if the answer to" %}
@@ -32,33 +35,94 @@
          <input type="text" class="form-control" data-bind="
              valueDefault: property.key,
              default: property.defaultKey,
--            casePropertySelect2: suggestedProperties,
-+            casePropertySelect2: suggestedProperties
+-            casePropertyAutocomplete: suggestedProperties,
++            casePropertyAutocomplete: suggestedProperties
          "/>
      </span>
      <span data-bind="visible: property.required()">
-@@ -73,12 +75,16 @@
+@@ -73,48 +75,52 @@
  </script>
  
  <script type="text/html" id="case-config:case-transaction:case-preload">
 -    <div class="panel-heading panel-title">{% trans "Load the following case properties into the form" %}</div>
+-    <table class="table table-condensed" data-bind="visible: case_preload().length">
+-        <thead>
+-            <tr>
+-                <th></th>
+-                <th>{% trans "Case Property" %}</th>
+-                <th></th>
+-                <th>{% trans "Question" %}</th>
+-            </tr>
+-        </thead>
+-
+-        <tbody data-bind="foreach: case_preload">
+-            <tr class="form-group" data-bind="css: {'has-error': validateProperty || validateQuestion}">
+-                <td class="col-sm-1">
+-                    <a href="#" data-bind="
+-                        click: $parent.removePreload,
+-                        visible: !(isBlank() && $index() === $parent.case_preload().length - 1)">
+-                        <i class="fa fa-remove"></i>
+-                    </a>
+-                </td>
+-                <td class="col-sm-5">
+-                    <div data-bind="template: {
+-                        name: 'case-config:case-properties:property',
+-                        data: {'property': $data, 'suggestedProperties': case_transaction.suggestedPreloadProperties}
+-                    }"></div>
+-                    <p class="help-block" data-bind="html: validateProperty, visible: validateProperty"></p>
+-                </td>
+-                <td class="col-sm-1 text-center">
+-                    <i class="fa fa-arrow-right"></i>
+-                </td>
+-                <td class="col-sm-5">
+-                    <div data-bind="template: 'case-config:case-properties:question'"></div>
+-                    <p class="help-block" data-bind="html: validateQuestion, visible: validateQuestion"></p>
+-                </td>
+-            </tr>
+-        </tbody>
+-    </table>
 +    <div class="panel-heading">
 +      <h4 class="panel-title panel-title-nolink">
-+        {% trans "Load the following properties into the form" %}
++        <i class="fa fa-arrow-right"></i><i class="fa fa-file-o"></i> {% trans "Load the following properties into the form questions" %}
 +      </h4>
 +    </div>
-     <table class="table table-condensed" data-bind="visible: case_preload().length">
-         <thead>
-             <tr>
-                 <th></th>
--                <th>{% trans "Case Property" %}</th>
-+                <th>{% trans "Property" %}</th>
-                 <th></th>
-                 <th>{% trans "Question" %}</th>
-             </tr>
-@@ -112,9 +118,9 @@
-     </table>
      <div class="panel-body">
++        <table class="table table-savecaseprops" data-bind="visible: case_preload().length">
++            <thead>
++                <tr>
++                    <th></th>
++                    <th>{% trans "Property" %}</th>
++                    <th></th>
++                    <th>{% trans "Question" %}</th>
++                </tr>
++            </thead>
++
++            <tbody data-bind="foreach: case_preload">
++                <tr class="form-group" data-bind="css: {'has-error': validateProperty || validateQuestion}">
++                    <td class="col-sm-1 text-center">
++                        <a href="#" class="btn btn-danger" data-bind="
++                            click: $parent.removePreload,
++                            visible: !(isBlank() && $index() === $parent.case_preload().length - 1)">
++                            <i class="fa fa-remove"></i>
++                        </a>
++                    </td>
++                    <td class="col-sm-5">
++                        <div class="full-width-select2" data-bind="template: {
++                            name: 'case-config:case-properties:property',
++                            data: {'property': $data, 'suggestedProperties': case_transaction.suggestedPreloadProperties}
++                        }"></div>
++                        <p class="help-block" data-bind="html: validateProperty, visible: validateProperty"></p>
++                    </td>
++                    <td class="col-sm-1 text-center">
++                        <i class="fa fa-arrow-right"></i><i class="fa fa-file-o"></i>
++                    </td>
++                    <td class="col-sm-5">
++                        <div class="full-width-select2" data-bind="template: 'case-config:case-properties:question'"></div>
++                        <p class="help-block" data-bind="html: validateQuestion, visible: validateQuestion"></p>
++                    </td>
++                </tr>
++            </tbody>
++        </table>
          <div class="alert alert-block alert-info" data-bind="visible: !case_preload().length">
 -            {% trans "No case properties will be loaded" %}
 +            {% trans "No properties will be loaded" %}
@@ -128,7 +192,7 @@
 -    </table>
 +    <div class="panel-heading">
 +      <h4 class="panel-title panel-title-nolink">
-+        <i class="fa fa-save"></i> {% trans "Save Questions to Case Properties" %}
++        <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i> {% trans "Save Questions to Case Properties" %}
 +      </h4>
 +    </div>
      <div class="panel-body">
@@ -153,13 +217,13 @@
 +                        </a>
 +                    </td>
 +                    <td class="col-sm-5">
-+                        <div data-bind="template: 'case-config:case-properties:question'"></div>
++                        <div class="full-width-select2" data-bind="template: 'case-config:case-properties:question'"></div>
 +                    </td>
 +                    <td class="text-center col-sm-1">
-+                        <i class="fa fa-arrow-right"></i>
++                        <i class="fa fa-arrow-right"></i><i class="fa fa-save"></i>
 +                    </td>
 +                    <td class="col-sm-5">
-+                        <div data-bind="template: {
++                        <div class="full-width-select2" data-bind="template: {
 +                            name: 'case-config:case-properties:property',
 +                            data: {property: $data, suggestedProperties: case_transaction.suggestedSaveProperties},
 +                            afterRender: $root.makePopover
@@ -203,7 +267,7 @@
 -                    refreshQuestions('{% url 'get_form_questions' domain app.id %}', '{{module.id}}', '{{form.id}}', event);
 -                    analytics.usage('Refresh case management', 'Button Clicked');
 -                    }">
-+  <p>
++  <p class="pull-right">
 +    <button class="btn btn-info refresh-form-questions"
 +            type="button"
 +             data-bind="click: function(data, event){

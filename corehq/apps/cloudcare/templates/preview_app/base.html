@@ -23,7 +23,9 @@
 {% endblock %}
 
 {% block body %}
-
+{% block csrf_token_block %}
+    <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
+{% endblock %}
 <section id="case-crumbs" style="width: 800px"></section>
 <section id="cases"></section>
 <div id="menu-container">

@@ -22,8 +22,8 @@ from corehq.apps.app_manager.views import (
     edit_report_module, validate_module_for_build, commcare_profile, edit_commcare_profile, edit_commcare_settings,
     edit_app_langs, edit_app_attr, edit_app_ui_translations, get_app_ui_translations, rearrange, odk_qr_code,
     odk_media_qr_code, odk_install, short_url, short_odk_url, save_copy, revert_to_copy, delete_copy, list_apps,
-    direct_ccz, download_index, download_file, formdefs, get_form_questions, pull_master_app,
-    update_linked_whitelist, overwrite_module_case_list, app_settings
+    direct_ccz, download_index, download_file, get_form_questions, pull_master_app,
+    update_linked_whitelist, overwrite_module_case_list, app_settings,
 )
 from corehq.apps.hqmedia.urls import application_urls as hqmedia_urls
 from corehq.apps.hqmedia.urls import download_urls as media_download_urls
@@ -34,7 +34,10 @@ app_urls = [
     url(r'^languages/translations/upload/$', upload_bulk_ui_translations, name='upload_bulk_ui_translations'),
     url(r'^languages/bulk_app_translations/download/$', download_bulk_app_translations, name='download_bulk_app_translations'),
     url(r'^languages/bulk_app_translations/upload/$', upload_bulk_app_translations, name='upload_bulk_app_translations'),
+    url(r'^multimedia/$', view_app, name='app_multimedia'),  # can delete once APP_MANAGER_V2 is rolled out
     url(r'^multimedia_ajax/$', multimedia_ajax, name='app_multimedia_ajax'),
+    url(r'^copy/$', view_app, name='app_copy'),  # can delete once APP_MANAGER_V2 is rolled out
+    url(r'^delete/$', view_app, name='app_delete'),  # can delete once APP_MANAGER_V2 is rolled out
     url(r'^$', view_app, name='view_app'),
     url(r'^releases/$', view_app, name='release_manager'),
     url(r'^settings/$', app_settings, name='app_settings'),
@@ -67,7 +70,7 @@ app_urls = [
 urlpatterns = [
     url(r'^$', view_app, name='default_app'),
     url(r'^xform/(?P<form_unique_id>[\w-]+)/$', xform_display, name='xform_display'),
-    url(r'^browse/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/forms-(?P<form_id>[\w-]+)/source/$',
+    url(r'^browse/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/source/$',
         get_xform_source, name='get_xform_source'),
     url(r'^casexml/(?P<form_unique_id>[\w-]+)/$', form_casexml, name='form_casexml'),
     url(r'^source/(?P<app_id>[\w-]+)/$', app_source, name='app_source'),
@@ -93,8 +96,7 @@ urlpatterns = [
 
     url(r'^overwrite_module_case_list/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$',
         overwrite_module_case_list, name='overwrite_module_case_list'),
-    url(r'^copy_form/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
-        copy_form, name='copy_form'),
+    url(r'^copy_form/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$', copy_form, name='copy_form'),
 
     url(r'^undo_delete_app/(?P<record_id>[\w-]+)/$', undo_delete_app,
         name='undo_delete_app'),
@@ -103,34 +105,25 @@ urlpatterns = [
     url(r'^undo_delete_form/(?P<record_id>[\w-]+)/$', undo_delete_form,
         name='undo_delete_form'),
 
-    url(r'^edit_form_attr/(?P<app_id>[\w-]+)/(?P<unique_form_id>[\w-]+)/(?P<attr>[\w-]+)/$',
+    url(r'^edit_form_attr/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/(?P<attr>[\w-]+)/$',
         edit_form_attr, name='edit_form_attr'),
-    url(r'^edit_form_attr_api/(?P<app_id>[\w-]+)/(?P<unique_form_id>[\w-]+)/(?P<attr>[\w-]+)/$',
+    url(r'^edit_form_attr_api/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/(?P<attr>[\w-]+)/$',
         edit_form_attr_api, name='edit_form_attr_api'),
-    url(r'^patch_xform/(?P<app_id>[\w-]+)/(?P<unique_form_id>[\w-]+)/$',
+    url(r'^patch_xform/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         patch_xform, name='patch_xform'),
-    url(r'^validate_form_for_build/(?P<app_id>[\w-]+)/(?P<unique_form_id>[\w-]+)/$',
+    url(r'^validate_form_for_build/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         validate_form_for_build, name='validate_form_for_build'),
     url(r'^rename_language/(?P<form_unique_id>[\w-]+)/$', rename_language, name='rename_language'),
     url(r'^validate_langcode/(?P<app_id>[\w-]+)/$', validate_language, name='validate_language'),
-    url(r'^edit_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
+    url(r'^edit_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         edit_form_actions, name='edit_form_actions'),
-    url(r'^edit_careplan_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
+    url(r'^edit_careplan_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         edit_careplan_form_actions, name='edit_careplan_form_actions'),
-    url(r'^edit_advanced_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
+    url(r'^edit_advanced_form_actions/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         edit_advanced_form_actions, name='edit_advanced_form_actions'),
 
     # Scheduler Modules
-    url(r'^edit_visit_schedule/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
-        edit_visit_schedule, name='edit_visit_schedule'),
-    url(r'^edit_schedule_phases/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$', edit_schedule_phases, name='edit_schedule_phases'),
-    url(r'^edit_careplan_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
-        edit_careplan_form_actions, name='edit_careplan_form_actions'),
-    url(r'^edit_advanced_form_actions/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
-        edit_advanced_form_actions, name='edit_advanced_form_actions'),
-
-    # Scheduler Modules
-    url(r'^edit_visit_schedule/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/(?P<form_id>[\w-]+)/$',
+    url(r'^edit_visit_schedule/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/$',
         edit_visit_schedule, name='edit_visit_schedule'),
     url(r'^edit_schedule_phases/(?P<app_id>[\w-]+)/(?P<module_id>[\w-]+)/$', edit_schedule_phases,
         name='edit_schedule_phases'),
@@ -186,7 +179,6 @@ urlpatterns = [
         name='app_download_file'),
     url(r'^download/(?P<app_id>[\w-]+)/',
         include('corehq.apps.app_manager.download_urls')),
-    url(r'^formdefs/(?P<app_id>[\w-]+)/', formdefs, name='formdefs'),
     url(r'^ng_template/(?P<template>[\w-]+)', DynamicTemplateView.as_view(), name='ng_template'),
 
     url(r'^diff/(?P<first_app_id>[\w-]+)/(?P<second_app_id>[\w-]+)/$', AppDiffView.as_view(), name=AppDiffView.urlname),

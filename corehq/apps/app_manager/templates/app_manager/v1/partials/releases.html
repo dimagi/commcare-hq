@@ -5,68 +5,6 @@
 {% load timezone_tags %}
 {% load i18n %}
 
-<script>
-    $(function () {
-       $('.hq-help-template').each(function () {
-            COMMCAREHQ.transformHelpTemplate($(this), true);
-       });
-    });
-    $(function () {
-        hqImport('hqwebapp/js/urllib.js').registerUrl(
-            'app_data',
-            '/a/' + '{{ domain }}' + '/apps/view/---/app_data/'
-        )
-        var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
-        var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
-        var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body')
-        $('#recent-changes-btn').on('click', function (e) {
-            appDiff.renderDiff({{ app.id|JSON }}, {{ latest_build_id|JSON }});
-        })
-        // init releases
-        {# The '___' in these urls will later be replaced by an app's _id ReleasesMain's url function #}
-        var urls = {
-            fetch: '{% url "paginate_releases" domain app.id %}',
-            delete: '{% url "delete_copy" domain app.id %}',
-            cloudcare: '{% url "cloudcare_get_app" domain '___' %}',
-            jad: '{% url "download_jad" domain '___' %}',
-            jar: '{% url "download_jar" domain '___' %}',
-            ccz: '{% url "download_ccz" domain '___' %}',
-            odk: '{% url "odk_install" domain '___' %}',
-            odk_media: '{% url "odk_media_install" domain '___' %}',
-            source: '{% url "download_index" domain '___' %}',
-            release: '{% url "release_build" domain app.id '___' %}',
-            newBuild: '{% url "save_copy" domain app.id %}',
-            revertBuild: '{% url "revert_to_copy" domain app.id %}',
-            currentVersion: '{% url "current_app_version" domain app.id %}',
-            hubspot_click_deploy: '{% url "hubspot_click_deploy" %}',
-            download_zip: '{% url "download_ccz" app.domain '___' %}',
-            download_multimedia: '{% url "download_multimedia_zip" app.domain '___' %}',
-            application_errors: ('{% url "project_report_dispatcher" app.domain 'application_error' %}'
-                                 + '?app={{ app.id }}&version_number=___'),
-        };
-        var o = {
-            urls: urls,
-            currentAppVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
-            recipient_contacts: {{ sms_contacts|JSON }},
-            download_modal_id: '#download-zip-modal',
-            fetchLimit: {{ fetchLimit }},
-        };
-        var el = $('#releases-table');
-        var releasesMain = new ReleasesMain(o);
-        _.defer(function(){ releasesMain.getMoreSavedApps(false); });
-        el.koApplyBindings(releasesMain);
-
-        var app_langs = {{ app.langs|JSON }};
-        var app_profiles = {{ app.build_profiles|JSON }}
-
-        {% if build_profile_access %}
-        var profileManager = new ProfileManager(app_profiles, app_langs);
-        $('#profiles-tab').koApplyBindings(profileManager);
-        {% endif %}
-    });
-
-    analytics.workflow('Visited the Release Manager');
-</script>
 
 {% if build_profile_access %}
 <div class="tabbable">
@@ -113,11 +51,14 @@
     <div id="build-errors-wrapper"></div>
     <table class="table">
         <tr>
-            <th colspan="2">{% trans "Version" %}</th>
+            <th{% if request.user.is_superuser %} colspan="2"{% endif %}>{% trans "Version" %}</th>
             <th colspan="2">{% trans "Date &amp; Time" %}</th>
             <th>{% trans "CommCare Version" %}</th>
             <th></th>
             <th></th>
+            {% if request|toggle_enabled:"VIEW_APP_CHANGES" %}
+                <th></th>
+            {% endif %}
             <th>{% trans "Comments" %}</th>
             {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
                 <th>Errors</th>
@@ -159,23 +100,25 @@
                 'build-latest-release': id() === $root.latestReleaseId(),
                 'error': build_broken
             }">
-                <td>
-                    <a href="#" class="hide" data-bind="
-                        openModal: 'delete-build-modal-template',
-                        visible: !_deleteState(),
-                        css: {hide: false}
-                    ">
-                        <i class="fa fa-remove"></i>
-                    </a>
-                    <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
-                        <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
-                    </div>
-
-                    <i class="fa fa-exclamation-circle" class="hide" data-bind="
-                        visible: _deleteState() == 'error',
-                        css: {hide: false}
-                    "></i>
-                </td>
+                {% if request.user.is_superuser %}
+                    <td>
+                        <a href="#" class="hide" data-bind="
+                            openModal: 'delete-build-modal-template',
+                            visible: !_deleteState(),
+                            css: {hide: false}
+                        ">
+                            <i class="fa fa-remove"></i>
+                        </a>
+                        <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
+                            <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
+                        </div>
+ 
+                        <i class="fa fa-exclamation-circle" class="hide" data-bind="
+                            visible: _deleteState() == 'error',
+                            css: {hide: false}
+                        "></i>
+                    </td>
+                {% endif %}
                 <td class="text-nowrap" data-bind="text: version"></td>
                 <td class="text-nowrap" data-bind="text: built_on_date"></td>
                 <td class="text-nowrap" data-bind="text: built_on_time"></td>
@@ -230,7 +173,7 @@
                 {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
                 <td>
                     <a data-bind="text: num_errors,
-                                  attr: {href: $root.url('application_errors', version())}" />
+                                  attr: {href: $root.app_error_url('{{ app.id }}', version())}" />
                 </td>
                 {% elif request|toggle_enabled:"SHOW_DEV_TOGGLE_INFO" %}
                 <td>{{ request|toggle_tag_info:"APPLICATION_ERROR_REPORT" }}</td>

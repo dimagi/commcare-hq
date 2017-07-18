@@ -13,8 +13,6 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {% include "reports/standard/partials/report_loader.html" %}
-
     <script>
         var visualizations = {
             {% for indicator, data in indicator_data.items %}

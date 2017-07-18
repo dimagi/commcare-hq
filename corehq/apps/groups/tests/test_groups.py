@@ -12,6 +12,7 @@ class GroupTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(GroupTest, cls).setUpClass()
         cls.active_user = CommCareUser.create(domain=DOMAIN, username='activeguy', password='secret')
         cls.inactive_user = CommCareUser.create(domain=DOMAIN, username='inactivegal', password='secret')
         cls.inactive_user.is_active = False
@@ -19,12 +20,15 @@ class GroupTest(TestCase):
         cls.deleted_user = CommCareUser.create(domain=DOMAIN, username='goner', password='secret')
         cls.deleted_user.retire()
 
-    @classmethod
-    def tearDownClass(cls):
+    def tearDown(self):
         for group in Group.by_domain(DOMAIN):
             group.delete()
+
+    @classmethod
+    def tearDownClass(cls):
         for user in CommCareUser.all():
             user.delete()
+        super(GroupTest, cls).tearDownClass()
 
     def testGetUsers(self):
         group = Group(domain=DOMAIN, name='group',
@@ -60,8 +64,8 @@ class GroupTest(TestCase):
                        users=[self.active_user._id, self.inactive_user._id, self.deleted_user._id])
         group2.save()
 
-        group1.remove_user(self.active_user._id, save=False)
-        group2.remove_user(self.deleted_user._id, save=False)
+        group1.remove_user(self.active_user._id)
+        group2.remove_user(self.deleted_user._id)
 
         g1_old_modified = group1.last_modified
         g2_old_modified = group2.last_modified
@@ -72,6 +76,26 @@ class GroupTest(TestCase):
         group2_updated = Group.get(group2.get_id)
         self.assertNotEqual(g1_old_modified, group1_updated.last_modified)
         self.assertNotEqual(g2_old_modified, group2_updated.last_modified)
+
+    def test_remove_user(self):
+        group1 = Group(
+            domain=DOMAIN,
+            name='group1',
+            users=[self.active_user._id, self.inactive_user._id, self.deleted_user._id]
+        )
+        group1.save()
+
+        self.assertTrue(group1.remove_user(self.active_user._id))
+        group1.save()
+
+        group1 = Group.get(group1._id)
+        self.assertIn(self.active_user._id, group1.removed_users)
+        self.assertNotIn(self.active_user._id, group1.users)
+
+        group1.add_user(self.active_user._id)
+        group1 = Group.get(group1._id)
+        self.assertNotIn(self.active_user._id, group1.removed_users)
+        self.assertIn(self.active_user._id, group1.users)
 
 
 class TestDeleteAllGroups(TestCase):

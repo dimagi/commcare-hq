@@ -70,7 +70,7 @@ def bulk_form_management_async(archive_or_restore, domain, couch_user, form_ids)
 def run_case_update_rules(now=None):
     domains = (AutomaticUpdateRule
                .objects
-               .filter(active=True, deleted=False)
+               .filter(active=True, deleted=False, workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
                .values_list('domain', flat=True)
                .distinct()
                .order_by('domain'))
@@ -116,7 +116,7 @@ def run_case_update_rules_for_domain(domain, now=None):
     cases_checked = 0
     case_update_result = CaseRuleActionResult()
 
-    all_rules = AutomaticUpdateRule.by_domain(domain)
+    all_rules = AutomaticUpdateRule.by_domain(domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
     rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(all_rules)
 
     for case_type, rules in rules_by_case_type.iteritems():
@@ -153,6 +153,7 @@ def run_case_update_rules_on_save(case):
             last_form = FormAccessors(case.domain).get_form(case.xform_ids[-1])
             update_case = last_form.xmlns != AUTO_UPDATE_XMLNS
         if update_case:
-            rules = AutomaticUpdateRule.by_domain(case.domain).filter(case_type=case.type)
+            rules = AutomaticUpdateRule.by_domain(case.domain,
+                AutomaticUpdateRule.WORKFLOW_CASE_UPDATE).filter(case_type=case.type)
             now = datetime.utcnow()
             run_rules_for_case(case, rules, now)

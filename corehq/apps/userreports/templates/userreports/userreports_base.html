@@ -30,7 +30,12 @@
         {% with report as selected_report %}
         {% for report in reports %}
         <li {% if report.get_id == selected_report.get_id %} class="active"{% endif %}>
-            <a href="{% url 'edit_configurable_report' domain report.get_id %}">{{ report.title }}</a>
+            <a href="{% url 'edit_configurable_report' domain report.get_id %}">
+                {{ report.title }}
+                {% if report.is_static %}
+                    <span class="label label-default">static</span>
+                {% endif %}
+            </a>
         </li>
         {% endfor %}
         {% endwith %}
@@ -51,7 +56,12 @@
         {% with data_source as selected_data_source %}
         {% for data_source in data_sources %}
         <li{% if data_source.get_id == selected_data_source.get_id %} class="active"{% endif %}>
-            <a href="{% url 'edit_configurable_data_source' domain data_source.get_id %}">{{ data_source.display_name }}</a>
+            <a href="{% url 'edit_configurable_data_source' domain data_source.get_id %}">
+                {{ data_source.display_name }}
+                {% if data_source.is_static %}
+                    <span class="label label-default">static</span>
+                {% endif %}
+            </a>
         </li>
         {% endfor %}
         {% endwith %}
@@ -71,6 +81,12 @@
             <a href="{% url 'expression_debugger' domain %}">
                 <i class="fa fa-search"></i>
                 <span class="muted">{% trans "Expression Debugger" %}</span>
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'data_source_debugger' domain %}">
+                <i class="fa fa-search"></i>
+                <span class="muted">{% trans "Data Source Debugger" %}</span>
             </a>
         </li>
     </ul>

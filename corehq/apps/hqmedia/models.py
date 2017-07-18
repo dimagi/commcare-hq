@@ -8,6 +8,7 @@ import magic
 from couchdbkit.exceptions import ResourceConflict
 from django.template.defaultfilters import filesizeformat
 
+from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs
 from dimagi.utils.couch.resource_conflict import retry_resource
@@ -500,6 +501,17 @@ class ApplicationMediaReference(object):
         return self._get_name(self.form_name, lang=lang)
 
 
+def _log_media_deletion(domain, map_item, path):
+    if domain in {'icds-cas', 'icds-test'}:
+        soft_assert(to='{}@{}'.format('skelly', 'dimagi.com'))(
+            False, "path deleted from multimedia map", {
+                'domain': domain,
+                'path': path,
+                'map_item': map_item.to_json()
+            }
+        )
+
+
 class HQMediaMixin(Document):
     """
         Mix this guy in with Application to support multimedia.
@@ -702,11 +714,15 @@ class HQMediaMixin(Document):
             If not, then that item is removed from the multimedia map.
         """
         map_changed = False
+        if self.check_media_state()['has_form_errors']:
+            return
         paths = self.multimedia_map.keys() if self.multimedia_map else []
         permitted_paths = self.all_media_paths | self.logo_paths
         for path in paths:
             if path not in permitted_paths:
                 map_changed = True
+                map_item = self.multimedia_map[path]
+                _log_media_deletion(self.domain, map_item, path)
                 del self.multimedia_map[path]
         if map_changed:
             self.save()
@@ -754,6 +770,7 @@ class HQMediaMixin(Document):
                     yield path, media_cls.wrap(media_item)
                 else:
                     # delete media reference from multimedia map so this doesn't pop up again!
+                    _log_media_deletion(self.domain, map_item, path)
                     del self.multimedia_map[path]
                     found_missing_mm = True
         if found_missing_mm:

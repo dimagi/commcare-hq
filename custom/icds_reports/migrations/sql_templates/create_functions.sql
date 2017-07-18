@@ -67,6 +67,51 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 
+-- Create new aggregate month tables
+CREATE OR REPLACE FUNCTION create_new_aggregate_table_for_month(text, date) RETURNS VOID AS
+$BODY$
+DECLARE
+	_tablename text;
+	_tablename1 text;
+	_tablename2 text;
+	_tablename3 text;
+	_tablename4 text;
+	_tablename5 text;
+BEGIN
+	-- This is for cleaning up old style non-aggregation level partioned tables
+	_tablename := $1 || '_' || (date_trunc('MONTH', $2)::DATE);
+	EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(_tablename);
+
+	_tablename1 := $1 || '_' || (date_trunc('MONTH', $2)::DATE) || '_1';
+	_tablename2 := $1 || '_' || (date_trunc('MONTH', $2)::DATE) || '_2';
+	_tablename3 := $1 || '_' || (date_trunc('MONTH', $2)::DATE) || '_3';
+	_tablename4 := $1 || '_' || (date_trunc('MONTH', $2)::DATE) || '_4';
+	_tablename5 := $1 || '_' || (date_trunc('MONTH', $2)::DATE) || '_5';
+	EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(_tablename1);
+	EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(_tablename2);
+	EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(_tablename3);
+	EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(_tablename4);
+	EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(_tablename5);
+
+	EXECUTE 'CREATE TABLE ' || quote_ident(_tablename1) || '(' ||
+        'CHECK ( month = DATE ' || quote_literal(date_trunc('MONTH', $2)::DATE) || ' AND aggregation_level = 1)' ||
+	    ') INHERITS ('  || quote_ident($1) || ')';
+    EXECUTE 'CREATE TABLE ' || quote_ident(_tablename2) || '(' ||
+        'CHECK ( month = DATE ' || quote_literal(date_trunc('MONTH', $2)::DATE) || ' AND aggregation_level = 2)' ||
+	    ') INHERITS ('  || quote_ident($1) || ')';
+    EXECUTE 'CREATE TABLE ' || quote_ident(_tablename3) || '(' ||
+        'CHECK ( month = DATE ' || quote_literal(date_trunc('MONTH', $2)::DATE) || ' AND aggregation_level = 3)' ||
+	    ') INHERITS ('  || quote_ident($1) || ')';
+    EXECUTE 'CREATE TABLE ' || quote_ident(_tablename4) || '(' ||
+        'CHECK ( month = DATE ' || quote_literal(date_trunc('MONTH', $2)::DATE) || ' AND aggregation_level = 4)' ||
+	    ') INHERITS ('  || quote_ident($1) || ')';
+    EXECUTE 'CREATE TABLE ' || quote_ident(_tablename5) || '(' ||
+        'CHECK ( month = DATE ' || quote_literal(date_trunc('MONTH', $2)::DATE) || ' AND aggregation_level = 5)' ||
+	    ') INHERITS ('  || quote_ident($1) || ')';
+END;
+$BODY$
+LANGUAGE plpgsql;
+
 -- Copy into child_health_monthly
 CREATE OR REPLACE FUNCTION insert_into_child_health_monthly(date) RETURNS VOID AS
 $BODY$
@@ -80,7 +125,8 @@ BEGIN
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_health_monthly') INTO _ucr_child_monthly_table;
 
 	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
+	'(SELECT ' ||
 		'awc_id, ' ||
 		'case_id, ' ||
 		'month, ' ||
@@ -127,7 +173,18 @@ BEGIN
 		'height_recorded_in_month, ' ||
 		'has_aadhar_id, ' ||
 		'thr_eligible, ' ||
-		'pnc_eligible FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
+		'pnc_eligible, ' ||
+		'cf_initiated, ' ||
+		'cf_initiation_eligible, ' ||
+		'height_measured_in_month, ' ||
+		'current_month_stunting, ' ||
+		'stunting_last_recorded, ' ||
+		'wasting_last_recorded, ' ||
+		'current_month_wasting, ' ||
+		'valid_in_month, ' ||
+		'valid_all_registered_in_month, ' ||
+		'ebf_no_info_recorded ' ||
+		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
 
@@ -192,7 +249,12 @@ BEGIN
 		'pnc_complete, ' ||
 		'postnatal, ' ||
 		'has_aadhar_id, ' ||
-		'counsel_fp_methods FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
+		'counsel_fp_methods, ' ||
+		'pregnant, ' ||
+		'pregnant_all, ' ||
+		'lactating, ' ||
+		'lactating_all, ' ||
+		'institutional_delivery_in_month FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
 		EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
         -- There may be better indexes to put here. Should investigate what tableau queries
@@ -239,7 +301,11 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION aggregate_child_health(date) RETURNS VOID AS
 $BODY$
 DECLARE
-	_tablename text;
+	_tablename1 text;
+	_tablename2 text;
+	_tablename3 text;
+	_tablename4 text;
+	_tablename5 text;
 	_ucr_child_monthly_table text;
 	_start_date date;
 	_end_date date;
@@ -248,17 +314,21 @@ DECLARE
 	_blank_value text;
 	_no_text text;
 	_rollup_text text;
+	_rollup_text2 text;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
-	_tablename := 'agg_child_health' || '_' || _start_date;
+	_tablename1 := 'agg_child_health' || '_' || _start_date || '_1';
+	_tablename2 := 'agg_child_health' || '_' || _start_date || '_2';
+	_tablename3 := 'agg_child_health' || '_' || _start_date || '_3';
+	_tablename4 := 'agg_child_health' || '_' || _start_date || '_4';
+	_tablename5 := 'agg_child_health' || '_' || _start_date || '_5';
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_health_monthly') INTO _ucr_child_monthly_table;
 	_all_text = 'All';
 	_null_value = NULL;
 	_blank_value = '';
 	_no_text = 'no';
 
-	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename5) || '(SELECT ' ||
 		'state_id, ' ||
 		'district_id, ' ||
 		'block_id, ' ||
@@ -303,27 +373,27 @@ BEGIN
 		'sum(fully_immunized_on_time), ' ||
 		'sum(fully_immunized_late), ' ||
 		'sum(has_aadhar_id), ' ||
-		'5 ' ||
+		'5, ' ||
+		'sum(pnc_eligible), ' ||
+		'sum(height_eligible), ' ||
+		'sum(wasting_moderate), ' ||
+		'sum(wasting_severe), ' ||
+		'sum(stunting_moderate), ' ||
+		'sum(stunting_severe), ' ||
+		'sum(cf_initiated), ' ||
+		'sum(cf_initiation_eligible), ' ||
+		'sum(height_measured_in_month), ' ||
+		'sum(wasting_normal), ' ||
+		'sum(stunting_normal), ' ||
+		'sum(valid_all_registered_in_month), ' ||
+		'sum(ebf_no_info_recorded) ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, disabled, minority, resident)';
 
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx2') || ' ON ' || quote_ident(_tablename) || '(gender)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx3') || ' ON ' || quote_ident(_tablename) || '(age_tranche)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx4') || ' ON ' || quote_ident(_tablename) || '(month)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx5') || ' ON ' || quote_ident(_tablename) || '(caste)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx6') || ' ON ' || quote_ident(_tablename) || '(disabled)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx7') || ' ON ' || quote_ident(_tablename) || '(minority)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx8') || ' ON ' || quote_ident(_tablename) || '(resident)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx9') || ' ON ' || quote_ident(_tablename) || '(awc_id)'; -- for second query
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx10') || ' ON ' || quote_ident(_tablename) || '(supervisor_id)'; -- for third query
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx11') || ' ON ' || quote_ident(_tablename) || '(block_id)'; -- for fourth query
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx12') || ' ON ' || quote_ident(_tablename) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx13') || ' ON ' || quote_ident(_tablename) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx14') || ' ON ' || quote_ident(_tablename) || '(aggregation_level)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx1') || ' ON ' || quote_ident(_tablename5) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(gender)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx3') || ' ON ' || quote_ident(_tablename5) || '(age_tranche)';
 
-
-    -- may want a double index on month and caste for aggregate location query
 
 	--Roll up by location
 	_rollup_text = 'sum(valid_in_month), ' ||
@@ -357,9 +427,23 @@ BEGIN
 		'sum(fully_immunized_eligible), ' ||
 		'sum(fully_immunized_on_time), ' ||
 		'sum(fully_immunized_late), ' ||
-		'sum(has_aadhar_id) ';
+		'sum(has_aadhar_id), ';
 
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+	_rollup_text2 = 'sum(pnc_eligible), ' ||
+		'sum(height_eligible), ' ||
+	    'sum(wasting_moderate), ' ||
+	    'sum(wasting_severe), ' ||
+	    'sum(stunting_moderate), ' ||
+	    'sum(stunting_severe), ' ||
+	    'sum(cf_initiation_in_month), ' ||
+	    'sum(cf_initiation_eligible), ' ||
+	    'sum(height_measured_in_month), ' ||
+	    'sum(wasting_normal), ' ||
+	    'sum(stunting_normal), ' ||
+	    'sum(valid_all_registered_in_month), ' ||
+	    'sum(ebf_no_info_recorded) ';
+
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
 		'state_id, ' ||
 		'district_id, ' ||
 		'block_id, ' ||
@@ -368,16 +452,20 @@ BEGIN
 		'month, ' ||
 		'gender, ' ||
 		'age_tranche, ' ||
-		'caste, ' ||
-		'disabled, ' ||
-		'minority, ' ||
-		'resident, ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
 		_rollup_text ||
-		', 4 ' ||
-		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, month, gender, age_tranche, caste, disabled, minority, resident)';
+		'4, ' ||
+		_rollup_text2 ||
+		'FROM ' || quote_ident(_tablename5) || ' ' ||
+		'GROUP BY state_id, district_id, block_id, supervisor_id, month, gender, age_tranche)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx1') || ' ON ' || quote_ident(_tablename4) || '(state_id, district_id, block_id, supervisor_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx2') || ' ON ' || quote_ident(_tablename4) || '(gender)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx3') || ' ON ' || quote_ident(_tablename4) || '(age_tranche)';
 
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename3) || '(SELECT ' ||
 		'state_id, ' ||
 		'district_id, ' ||
 		'block_id, ' ||
@@ -386,17 +474,20 @@ BEGIN
 		'month, ' ||
 		'gender, ' ||
 		'age_tranche, ' ||
-		'caste, ' ||
-		'disabled, ' ||
-		'minority, ' ||
-		'resident, ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
 		_rollup_text ||
-		', 3 ' ||
-		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'WHERE awc_id = ' || quote_literal(_all_text) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, month, gender, age_tranche, caste, disabled, minority, resident)';
+		'3, ' ||
+		_rollup_text2 ||
+		'FROM ' || quote_ident(_tablename4) || ' ' ||
+		'GROUP BY state_id, district_id, block_id, month, gender, age_tranche)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx1') || ' ON ' || quote_ident(_tablename3) || '(state_id, district_id, block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx2') || ' ON ' || quote_ident(_tablename3) || '(gender)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx3') || ' ON ' || quote_ident(_tablename3) || '(age_tranche)';
 
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename2) || '(SELECT ' ||
 		'state_id, ' ||
 		'district_id, ' ||
 		quote_literal(_all_text) || ', ' ||
@@ -405,17 +496,20 @@ BEGIN
 		'month, ' ||
 		'gender, ' ||
 		'age_tranche, ' ||
-		'caste, ' ||
-		'disabled, ' ||
-		'minority, ' ||
-		'resident, ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
 		_rollup_text ||
-		', 2 ' ||
-		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'WHERE supervisor_id = ' || quote_literal(_all_text) || ' ' ||
-		'GROUP BY state_id, district_id, month, gender, age_tranche, caste, disabled, minority, resident)';
+		'2, ' ||
+		_rollup_text2 ||
+		'FROM ' || quote_ident(_tablename3) || ' ' ||
+		'GROUP BY state_id, district_id, month, gender, age_tranche)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx1') || ' ON ' || quote_ident(_tablename2) || '(state_id, district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx2') || ' ON ' || quote_ident(_tablename2) || '(gender)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx3') || ' ON ' || quote_ident(_tablename2) || '(age_tranche)';
 
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename1) || '(SELECT ' ||
 		'state_id, ' ||
 		quote_literal(_all_text) || ', ' ||
 		quote_literal(_all_text) || ', ' ||
@@ -424,15 +518,18 @@ BEGIN
 		'month, ' ||
 		'gender, ' ||
 		'age_tranche, ' ||
-		'caste, ' ||
-		'disabled, ' ||
-		'minority, ' ||
-		'resident, ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
 		_rollup_text ||
-		', 1 ' ||
-		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'WHERE block_id = ' || quote_literal(_all_text) || ' ' ||
-		'GROUP BY state_id, month, gender, age_tranche, caste, disabled, minority, resident)';
+		'1, ' ||
+		_rollup_text2 ||
+		'FROM ' || quote_ident(_tablename2) || ' ' ||
+		'GROUP BY state_id, month, gender, age_tranche)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename1 || '_indx1') || ' ON ' || quote_ident(_tablename1) || '(state_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename1 || '_indx2') || ' ON ' || quote_ident(_tablename1) || '(gender)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename1 || '_indx3') || ' ON ' || quote_ident(_tablename1) || '(age_tranche)';
 END;
 $BODY$
 LANGUAGE plpgsql;
@@ -440,7 +537,11 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION aggregate_ccs_record(date) RETURNS VOID AS
 $BODY$
 DECLARE
-	_tablename text;
+	_tablename1 text;
+	_tablename2 text;
+	_tablename3 text;
+	_tablename4 text;
+	_tablename5 text;
 	_ucr_ccs_record_table text;
 	_start_date date;
 	_end_date date;
@@ -449,17 +550,21 @@ DECLARE
 	_blank_value text;
 	_no_text text;
 	_rollup_text text;
+	_rollup_text2 text;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
-	_tablename := 'agg_ccs_record' || '_' || _start_date;
+	_tablename1 := 'agg_ccs_record' || '_' || _start_date || '_1';
+	_tablename2 := 'agg_ccs_record' || '_' || _start_date || '_2';
+	_tablename3 := 'agg_ccs_record' || '_' || _start_date || '_3';
+	_tablename4 := 'agg_ccs_record' || '_' || _start_date || '_4';
+	_tablename5 := 'agg_ccs_record' || '_' || _start_date || '_5';
 	_all_text = 'All';
 	_null_value = NULL;
 	_blank_value = '';
 	_no_text = 'no';
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('ccs_record_monthly') INTO _ucr_ccs_record_table;
 
-	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename5) || '(SELECT ' ||
 		'state_id, ' ||
 		'district_id, ' ||
 		'block_id, ' ||
@@ -505,24 +610,17 @@ BEGIN
 		'sum(counsel_fp_vid), ' ||
 		'sum(counsel_immediate_conception), ' ||
 		'sum(counsel_accessible_postpartum_fp), ' ||
-		'sum(has_aadhar_id) ' ||
+		'sum(has_aadhar_id), ' ||
+		'5, '
+		'sum(valid_all_registered_in_month), ' ||
+		'sum(institutional_delivery_in_month), ' ||
+		'sum(lactating_all), ' ||
+		'sum(pregnant_all) ' ||
 		'FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
 
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx2') || ' ON ' || quote_ident(_tablename) || '(ccs_status)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx3') || ' ON ' || quote_ident(_tablename) || '(trimester)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx4') || ' ON ' || quote_ident(_tablename) || '(month)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx5') || ' ON ' || quote_ident(_tablename) || '(caste)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx6') || ' ON ' || quote_ident(_tablename) || '(disabled)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx7') || ' ON ' || quote_ident(_tablename) || '(minority)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx8') || ' ON ' || quote_ident(_tablename) || '(resident)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx9') || ' ON ' || quote_ident(_tablename) || '(awc_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx10') || ' ON ' || quote_ident(_tablename) || '(supervisor_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx11') || ' ON ' || quote_ident(_tablename) || '(block_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx12') || ' ON ' || quote_ident(_tablename) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx13') || ' ON ' || quote_ident(_tablename) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx14') || ' ON ' || quote_ident(_tablename) || '(aggregation_level)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx1') || ' ON ' || quote_ident(_tablename5) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(ccs_status)';
 
     -- may want a double index on month and caste for aggregate  location query
 
@@ -560,9 +658,14 @@ BEGIN
 		'sum(counsel_fp_vid), ' ||
 		'sum(counsel_immediate_conception), ' ||
 		'sum(counsel_accessible_postpartum_fp), ' ||
-		'sum(has_aadhar_id) ';
+		'sum(has_aadhar_id), ';
 
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+	_rollup_text2 = 'sum(valid_all_registered_in_month), ' ||
+		'sum(institutional_delivery_in_month), ' ||
+		'sum(lactating_all), ' ||
+		'sum(pregnant_all) ';
+
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
 		'state_id, ' ||
 		'district_id, ' ||
 		'block_id, ' ||
@@ -570,17 +673,20 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
 		'ccs_status, ' ||
-		'trimester, ' ||
-		'caste, ' ||
-		'disabled, ' ||
-		'minority, ' ||
-		'resident, ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
 		_rollup_text ||
-		', 4 ' ||
-		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
+		'4, ' ||
+		_rollup_text2 ||
+		'FROM ' || quote_ident(_tablename5) || ' ' ||
+		'GROUP BY state_id, district_id, block_id, supervisor_id, month, ccs_status)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx1') || ' ON ' || quote_ident(_tablename4) || '(state_id, district_id, block_id, supervisor_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx2') || ' ON ' || quote_ident(_tablename4) || '(ccs_status)';
 
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename3) || '(SELECT ' ||
 		'state_id, ' ||
 		'district_id, ' ||
 		'block_id, ' ||
@@ -588,18 +694,20 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
 		'ccs_status, ' ||
-		'trimester, ' ||
-		'caste, ' ||
-		'disabled, ' ||
-		'minority, ' ||
-		'resident, ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
 		_rollup_text ||
-		', 3 ' ||
-		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'WHERE awc_id = ' || quote_literal(_all_text) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
+		'3, ' ||
+		_rollup_text2 ||
+		'FROM ' || quote_ident(_tablename4) || ' ' ||
+		'GROUP BY state_id, district_id, block_id, month, ccs_status)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx1') || ' ON ' || quote_ident(_tablename3) || '(state_id, district_id, block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx2') || ' ON ' || quote_ident(_tablename3) || '(ccs_status)';
 
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename2) || '(SELECT ' ||
 		'state_id, ' ||
 		'district_id, ' ||
 		quote_literal(_all_text) || ', ' ||
@@ -607,18 +715,20 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
 		'ccs_status, ' ||
-		'trimester, ' ||
-		'caste, ' ||
-		'disabled, ' ||
-		'minority, ' ||
-		'resident, ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
 		_rollup_text ||
-		', 2 ' ||
-		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'WHERE supervisor_id = ' || quote_literal(_all_text) || ' ' ||
-		'GROUP BY state_id, district_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
+		'2, ' ||
+		_rollup_text2 ||
+		'FROM ' || quote_ident(_tablename3) || ' ' ||
+		'GROUP BY state_id, district_id, month, ccs_status)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx1') || ' ON ' || quote_ident(_tablename2) || '(state_id, district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx2') || ' ON ' || quote_ident(_tablename2) || '(ccs_status)';
 
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename1) || '(SELECT ' ||
 		'state_id, ' ||
 		quote_literal(_all_text) || ', ' ||
 		quote_literal(_all_text) || ', ' ||
@@ -626,16 +736,18 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
 		'ccs_status, ' ||
-		'trimester, ' ||
-		'caste, ' ||
-		'disabled, ' ||
-		'minority, ' ||
-		'resident, ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
 		_rollup_text ||
-		', 1 ' ||
-		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'WHERE block_id = ' || quote_literal(_all_text) || ' ' ||
-		'GROUP BY state_id, month, ccs_status, trimester, caste, disabled, minority, resident)';
+		'1, ' ||
+		_rollup_text2 ||
+		'FROM ' || quote_ident(_tablename2) || ' ' ||
+		'GROUP BY state_id, month, ccs_status)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename1 || '_indx1') || ' ON ' || quote_ident(_tablename1) || '(state_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename1 || '_indx2') || ' ON ' || quote_ident(_tablename1) || '(ccs_status)';
 END;
 $BODY$
 LANGUAGE plpgsql;
@@ -643,7 +755,11 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION aggregate_thr_data(date) RETURNS VOID AS
 $BODY$
 DECLARE
-	_tablename text;
+	_tablename1 text;
+	_tablename2 text;
+	_tablename3 text;
+	_tablename4 text;
+	_tablename5 text;
 	_child_health_tablename text;
 	_ccs_record_tablename text;
 	_start_date date;
@@ -651,14 +767,17 @@ DECLARE
 	_null_value text;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
-	_tablename := 'agg_thr_data' || '_' || _start_date;
-	_child_health_tablename := 'agg_child_health' || '_' || _start_date;
-	_ccs_record_tablename := 'agg_ccs_record' || '_' || _start_date;
+	_tablename1 := 'agg_thr_data' || '_' || _start_date || '_1';
+	_tablename2 := 'agg_thr_data' || '_' || _start_date || '_2';
+	_tablename3 := 'agg_thr_data' || '_' || _start_date || '_3';
+	_tablename4 := 'agg_thr_data' || '_' || _start_date || '_4';
+	_tablename5 := 'agg_thr_data' || '_' || _start_date || '_5';
+	_child_health_tablename := 'agg_child_health';
+	_ccs_record_tablename := 'agg_ccs_record';
 	_all_text = 'All';
 	_null_value = NULL;
 
-	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename5) || '(SELECT ' ||
 		'state_id, ' ||
 		'district_id, ' ||
 		'block_id, ' ||
@@ -674,9 +793,10 @@ BEGIN
 		'sum(rations_21_plus_distributed), ' ||
 		'aggregation_level ' ||
 		'FROM ' || quote_ident(_child_health_tablename) || ' ' ||
+		'WHERE (aggregation_level = 5 AND month = ' || quote_literal(_start_date) || ') '
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, caste, disabled, minority, resident, aggregation_level)';
 
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename5) || '(SELECT ' ||
 		'state_id, ' ||
 		'district_id, ' ||
 		'block_id, ' ||
@@ -692,23 +812,90 @@ BEGIN
 		'sum(rations_21_plus_distributed), ' ||
 		'aggregation_level ' ||
 		'FROM ' || quote_ident(_ccs_record_tablename) || ' ' ||
+		'WHERE (aggregation_level = 5 AND month = ' || quote_literal(_start_date) || ') '
 		'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, ccs_status, caste, disabled, minority, resident, aggregation_level)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx1') || ' ON ' || quote_ident(_tablename5) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(beneficiary_type)';
 
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx2') || ' ON ' || quote_ident(_tablename) || '(beneficiary_type)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx3') || ' ON ' || quote_ident(_tablename) || '(month)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx4') || ' ON ' || quote_ident(_tablename) || '(caste)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx5') || ' ON ' || quote_ident(_tablename) || '(disabled)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx6') || ' ON ' || quote_ident(_tablename) || '(minority)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx7') || ' ON ' || quote_ident(_tablename) || '(resident)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx8') || ' ON ' || quote_ident(_tablename) || '(awc_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx9') || ' ON ' || quote_ident(_tablename) || '(supervisor_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx10') || ' ON ' || quote_ident(_tablename) || '(block_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx11') || ' ON ' || quote_ident(_tablename) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx12') || ' ON ' || quote_ident(_tablename) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx13') || ' ON ' || quote_ident(_tablename) || '(aggregation_level)';
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
+		'state_id, ' ||
+		'district_id, ' ||
+		'block_id, ' ||
+		'supervisor_id, ' ||
+		quote_literal(_all_text) || ', ' ||
+		'month, ' ||
+		'beneficiary_type, ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		'sum(thr_eligible),' ||
+		'sum(rations_21_plus_distributed), ' ||
+		'4 ' ||
+		'FROM ' || quote_ident(_tablename5) || ' ' ||
+		'GROUP BY state_id, district_id, block_id, supervisor_id, month, beneficiary_type)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx1') || ' ON ' || quote_ident(_tablename4) || '(state_id, district_id, block_id, supervisor_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx2') || ' ON ' || quote_ident(_tablename4) || '(beneficiary_type)';
 
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename3) || '(SELECT ' ||
+		'state_id, ' ||
+		'district_id, ' ||
+		'block_id, ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		'month, ' ||
+		'beneficiary_type, ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		'sum(thr_eligible),' ||
+		'sum(rations_21_plus_distributed), ' ||
+		'3 ' ||
+		'FROM ' || quote_ident(_tablename4) || ' ' ||
+		'GROUP BY state_id, district_id, block_id, month, beneficiary_type)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx1') || ' ON ' || quote_ident(_tablename3) || '(state_id, district_id, block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx2') || ' ON ' || quote_ident(_tablename3) || '(beneficiary_type)';
 
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename2) || '(SELECT ' ||
+		'state_id, ' ||
+		'district_id, ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		'month, ' ||
+		'beneficiary_type, ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		'sum(thr_eligible),' ||
+		'sum(rations_21_plus_distributed), ' ||
+		'2 ' ||
+		'FROM ' || quote_ident(_tablename3) || ' ' ||
+		'GROUP BY state_id, district_id, month, beneficiary_type)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx1') || ' ON ' || quote_ident(_tablename2) || '(state_id, district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx2') || ' ON ' || quote_ident(_tablename2) || '(beneficiary_type)';
+
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename1) || '(SELECT ' ||
+		'state_id, ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		'month, ' ||
+		'beneficiary_type, ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		'sum(thr_eligible),' ||
+		'sum(rations_21_plus_distributed), ' ||
+		'1 ' ||
+		'FROM ' || quote_ident(_tablename2) || ' ' ||
+		'GROUP BY state_id, district_id, month, beneficiary_type)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename1 || '_indx1') || ' ON ' || quote_ident(_tablename1) || '(state_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename1 || '_indx2') || ' ON ' || quote_ident(_tablename1) || '(beneficiary_type)';
 
 END;
 $BODY$
@@ -722,7 +909,11 @@ DECLARE
 	_start_date date;
 	_end_date date;
 	_previous_month_date date;
-	_tablename text;
+	_tablename1 text;
+	_tablename2 text;
+	_tablename3 text;
+	_tablename4 text;
+	_tablename5 text;
 	_child_health_tablename text;
 	_ccs_record_tablename text;
 	_daily_attendance_tablename text;
@@ -732,22 +923,37 @@ DECLARE
 	_vhnd_tablename text;
 	_ls_tablename text;
 	_infra_tablename text;
+	_household_tablename text;
+	_person_tablename text;
 	_all_text text;
 	_null_value text;
 	_rollup_text text;
+	_rollup_text2 text;
 	_yes_text text;
 	_no_text text;
+	_month_end_11yr date;
+	_month_start_15yr date;
+	_month_end_15yr date;
+	_month_start_18yr date;
 BEGIN
 	_start_date = date_trunc('MONTH', $1)::DATE;
 	_end_date = (date_trunc('MONTH', $1) + INTERVAL '1 MONTH - 1 day')::DATE;
 	_previous_month_date = (date_trunc('MONTH', _start_date) + INTERVAL '- 1 MONTH')::DATE;
+	_month_end_11yr = (_end_date + INTERVAL ' - 11 YEAR')::DATE;
+	_month_start_15yr = (_start_date + INTERVAL ' - 15 YEAR')::DATE;
+	_month_end_15yr = (_end_date + INTERVAL ' - 15 YEAR')::DATE;
+	_month_start_18yr = (_start_date + INTERVAL ' - 18 YEAR')::DATE;
 	_all_text = 'All';
 	_null_value = NULL;
 	_yes_text = 'yes';
 	_no_text = 'no';
-	_tablename := 'agg_awc' || '_' || _start_date;
-	_child_health_tablename := 'agg_child_health' || '_' || _start_date;
-	_ccs_record_tablename := 'agg_ccs_record' || '_' || _start_date;
+	_tablename1 := 'agg_awc' || '_' || _start_date || '_1';
+	_tablename2 := 'agg_awc' || '_' || _start_date || '_2';
+	_tablename3 := 'agg_awc' || '_' || _start_date || '_3';
+	_tablename4 := 'agg_awc' || '_' || _start_date || '_4';
+	_tablename5 := 'agg_awc' || '_' || _start_date || '_5';
+	_child_health_tablename := 'agg_child_health';
+	_ccs_record_tablename := 'agg_ccs_record';
 	_thr_tablename := 'agg_thr_data' || '_' || _start_date;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('daily_feeding') INTO _daily_attendance_tablename;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('awc_location') INTO _awc_location_tablename;
@@ -755,10 +961,11 @@ BEGIN
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('vhnd') INTO _vhnd_tablename;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('awc_mgmt') INTO _ls_tablename;
 	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('infrastructure') INTO _infra_tablename;
+	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('household') INTO _household_tablename;
+	EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('person') INTO _person_tablename;
 
 	-- Setup base locations and month
-	EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename5) ||
 		' (state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs, thr_score, thr_eligible_ccs, ' ||
 		'thr_eligible_child, thr_rations_21_plus_distributed_ccs, thr_rations_21_plus_distributed_child, wer_score, pse_score, awc_not_open_no_data, is_launched, training_phase, aggregation_level) ' ||
 		'(SELECT ' ||
@@ -782,20 +989,11 @@ BEGIN
 			'5 ' ||
 		'FROM ' || quote_ident(_awc_location_tablename) ||')';
 
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx2') || ' ON ' || quote_ident(_tablename) || '(month)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx3') || ' ON ' || quote_ident(_tablename) || '(awc_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx4') || ' ON ' || quote_ident(_tablename) || '(supervisor_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx5') || ' ON ' || quote_ident(_tablename) || '(block_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx6') || ' ON ' || quote_ident(_tablename) || '(district_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx7') || ' ON ' || quote_ident(_tablename) || '(state_id)';
-	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx8') || ' ON ' || quote_ident(_tablename) || '(aggregation_level)';
-
-    -- maybe have a double index on month and awc_id ? for next query
-    -- maybe add a multi column index on month, is_launched and awc_id for query line ~930
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx1') || ' ON ' || quote_ident(_tablename5) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename5 || '_indx2') || ' ON ' || quote_ident(_tablename5) || '(awc_id)';
 
 	-- Aggregate daily attendance table.  Not using monthly table as it doesn't have all indicators
-	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
 		'awc_days_open = ut.awc_days_open, ' ||
 		'total_eligible_children = ut.total_eligible_children, ' ||
 		'total_attended_children = ut.total_attended_children, ' ||
@@ -844,8 +1042,9 @@ BEGIN
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
 
 	-- Aggregate monthly child health table
-	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
 		'cases_child_health = ut.cases_child_health, ' ||
+		'cases_child_health_all = ut.cases_child_health_all, ' ||
 		'wer_weighed = ut.wer_weighed, ' ||
 		'wer_eligible = ut.wer_eligible, ' ||
 		'wer_score = ut.wer_score, ' ||
@@ -855,6 +1054,7 @@ BEGIN
 		'awc_id, ' ||
 		'month, ' ||
 		'sum(valid_in_month) AS cases_child_health, ' ||
+		'sum(valid_all_registered_in_month) AS cases_child_health_all, ' ||
 		'sum(nutrition_status_weighed) AS wer_weighed, ' ||
 		'sum(wer_eligible) AS wer_eligible, ' ||
 		'CASE WHEN sum(wer_eligible) = 0 THEN 1 ' ||
@@ -864,13 +1064,15 @@ BEGIN
 		'sum(thr_eligible) AS thr_eligible_child, ' ||
 		'sum(rations_21_plus_distributed) AS thr_rations_21_plus_distributed_child '
 		'FROM ' || quote_ident(_child_health_tablename) || ' ' ||
-		'WHERE month = ' || quote_literal(_start_date) || ' AND caste != ' || quote_literal(_all_text) || ' GROUP BY awc_id, month) ut ' ||
+		'WHERE month = ' || quote_literal(_start_date) || ' AND aggregation_level = 5 GROUP BY awc_id, month) ut ' ||
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
 
 	-- Aggregate monthly ccs record table
-	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
 		'cases_ccs_pregnant = ut.cases_ccs_pregnant, ' ||
 		'cases_ccs_lactating = ut.cases_ccs_lactating, ' ||
+		'cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all, ' ||
+		'cases_ccs_lactating_all = ut.cases_ccs_lactating_all, ' ||
 		'thr_eligible_ccs = ut.thr_eligible_ccs, ' ||
 		'thr_rations_21_plus_distributed_ccs = ut.thr_rations_21_plus_distributed_ccs ' ||
 	'FROM (SELECT ' ||
@@ -878,14 +1080,79 @@ BEGIN
 		'month, ' ||
 		'sum(pregnant) AS cases_ccs_pregnant, ' ||
 		'sum(lactating) AS cases_ccs_lactating, ' ||
+		'sum(pregnant_all) AS cases_ccs_pregnant_all, ' ||
+		'sum(lactating_all) AS cases_ccs_lactating_all, ' ||
 		'sum(thr_eligible) AS thr_eligible_ccs, ' ||
 		'sum(rations_21_plus_distributed) AS thr_rations_21_plus_distributed_ccs '
 		'FROM ' || quote_ident(_ccs_record_tablename) || ' ' ||
-		'WHERE month = ' || quote_literal(_start_date) || ' AND caste != ' || quote_literal(_all_text) || ' GROUP BY awc_id, month) ut ' ||
+		'WHERE month = ' || quote_literal(_start_date) || ' AND aggregation_level = 5 GROUP BY awc_id, month) ut ' ||
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
 
+	-- Aggregate household table
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
+		'cases_household = ut.cases_household ' ||
+	'FROM (SELECT ' ||
+		'owner_id, ' ||
+		'sum(open_count) AS cases_household ' ||
+		'FROM ' || quote_ident(_household_tablename) || ' ' ||
+		'GROUP BY owner_id) ut ' ||
+	'WHERE ut.owner_id = agg_awc.awc_id';
+
+	-- Aggregate person table (pass 1)
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
+		'cases_person = ut.cases_person, ' ||
+		'cases_person_all = ut.cases_person_all ' ||
+	'FROM (SELECT ' ||
+		'awc_id, ' ||
+		'sum(seeking_services) AS cases_person, ' ||
+		'sum(count) AS cases_person_all ' ||
+		'FROM ' || quote_ident(_person_tablename) || ' ' ||
+		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
+		'GROUP BY awc_id) ut ' ||
+	'WHERE ut.awc_id = agg_awc.awc_id';
+
+	-- Aggregate person table (pass 2)
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
+		'cases_person_has_aadhaar = ut.cases_person_has_aadhaar ' ||
+	'FROM (SELECT ' ||
+		'awc_id, ' ||
+		'sum(seeking_services) AS cases_person_has_aadhaar ' ||
+		'FROM ' || quote_ident(_person_tablename) || ' ' ||
+		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
+		    'AND aadhar_date <= '  || quote_literal(_end_date) || ' ' ||
+		'GROUP BY awc_id) ut ' ||
+	'WHERE ut.awc_id = agg_awc.awc_id';
+
+	-- Aggregate person table (pass 3)
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
+		'cases_person_adolescent_girls_11_14 = ut.cases_person_adolescent_girls_11_14, ' ||
+		'cases_person_adolescent_girls_11_14_all = ut.cases_person_adolescent_girls_11_14_all ' ||
+	'FROM (SELECT ' ||
+		'awc_id, ' ||
+		'sum(seeking_services) AS cases_person_adolescent_girls_11_14, ' ||
+		'sum(count) AS cases_person_adolescent_girls_11_14_all ' ||
+		'FROM ' || quote_ident(_person_tablename) || ' ' ||
+		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
+		    'AND ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob ' ||
+		'GROUP BY awc_id) ut ' ||
+	'WHERE ut.awc_id = agg_awc.awc_id';
+
+    -- Aggregate person table (pass 4)
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
+		'cases_person_adolescent_girls_15_18 = ut.cases_person_adolescent_girls_15_18, ' ||
+		'cases_person_adolescent_girls_15_18_all = ut.cases_person_adolescent_girls_15_18_all ' ||
+	'FROM (SELECT ' ||
+		'awc_id, ' ||
+		'sum(seeking_services) AS cases_person_adolescent_girls_15_18, ' ||
+		'sum(count) AS cases_person_adolescent_girls_15_18_all ' ||
+		'FROM ' || quote_ident(_person_tablename) || ' ' ||
+		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
+		    'AND ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob ' ||
+		'GROUP BY awc_id) ut ' ||
+	'WHERE ut.awc_id = agg_awc.awc_id';
+
 	-- Pass to combine THR information from ccs record and child health table
-	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' SET thr_score = ' ||
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' SET thr_score = ' ||
 	'CASE WHEN ((thr_rations_21_plus_distributed_ccs + thr_rations_21_plus_distributed_child)::numeric / ' ||
 		'(CASE WHEN (thr_eligible_child + thr_eligible_ccs) = 0 THEN 1 ELSE (thr_eligible_child + thr_eligible_ccs) END)) >= 0.7 THEN 20 ' ||
 		'WHEN ((thr_rations_21_plus_distributed_ccs + thr_rations_21_plus_distributed_child)::numeric / ' ||
@@ -893,12 +1160,13 @@ BEGIN
 		'ELSE 1 END';
 
 	-- Aggregate data from usage table
-	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
 		'usage_num_pse = ut.usage_num_pse, ' ||
 		'usage_num_gmp = ut.usage_num_gmp, ' ||
 		'usage_num_thr = ut.usage_num_thr, ' ||
 		'usage_num_hh_reg = ut.usage_num_hh_reg, ' ||
 		'is_launched = ut.is_launched, ' ||
+		'num_launched_awcs = ut.num_launched_awcs, ' ||
 		'training_phase = ut.training_phase, ' ||
 		'usage_num_add_person = ut.usage_num_add_person, ' ||
 		'usage_num_add_pregnancy = ut.usage_num_add_pregnancy, ' ||
@@ -929,6 +1197,7 @@ BEGIN
 		'sum(thr) AS usage_num_thr, ' ||
 		'sum(add_household) AS usage_num_hh_reg, ' ||
 		'CASE WHEN sum(add_household) > 0 THEN ' || quote_literal(_yes_text) || ' ELSE ' || quote_literal(_no_text) || ' END as is_launched, '
+		'CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs, '
 		'CASE WHEN sum(thr) > 0 THEN 4 WHEN (sum(due_list_ccs) + sum(due_list_child)) > 0 THEN 3 WHEN sum(add_pregnancy) > 0 THEN 2 WHEN sum(add_household) > 0 THEN 1 ELSE 0 END AS training_phase, '
 		'sum(add_person) AS usage_num_add_person, ' ||
 		'sum(add_pregnancy) AS usage_num_add_pregnancy, ' ||
@@ -956,15 +1225,16 @@ BEGIN
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
 
 	-- Update num launched AWCs based on previous month as well
-	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
-	   'is_launched = ut.is_launched ' ||
-    'FROM (SELECT is_launched, awc_id ' ||
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
+	   'is_launched = ut.is_launched, ' ||
+	   'num_launched_awcs = ut.num_launched_awcs ' ||
+    'FROM (SELECT is_launched, num_launched_awcs, awc_id ' ||
        'FROM agg_awc ' ||
 	'WHERE month = ' || quote_literal(_previous_month_date) || ' AND is_launched = ' || quote_literal(_yes_text) || ' AND awc_id <> ' || quote_literal(_all_text) || ') ut ' ||
 	'WHERE ut.awc_id = agg_awc.awc_id';
 
 	-- Update training status based on the previous month as well
-	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
 	   'training_phase = ut.training_phase ' ||
     'FROM (SELECT awc_id, training_phase ' ||
        'FROM agg_awc ' ||
@@ -972,7 +1242,7 @@ BEGIN
 	'WHERE ut.awc_id = agg_awc.awc_id AND agg_awc.training_phase < ut.training_phase';
 
 	-- Pass to calculate awc score and ranks and training status
-	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' SET (' ||
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' SET (' ||
 		'awc_score, ' ||
 		'num_awc_rank_functional, ' ||
 		'num_awc_rank_semi, ' ||
@@ -993,7 +1263,7 @@ BEGIN
 	')';
 
 	-- Aggregate data from VHND table
-	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
 		'vhnd_immunization = ut.vhnd_immunization, ' ||
 		'vhnd_anc = ut.vhnd_anc, ' ||
 		'vhnd_gmp = ut.vhnd_gmp, ' ||
@@ -1018,7 +1288,7 @@ BEGIN
 	'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
 
 	-- Aggregate data from LS supervision table
-	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
 		'ls_supervision_visit = ut.ls_supervision_visit, ' ||
 		'ls_num_supervised = ut.ls_num_supervised, ' ||
 		'ls_awc_location_lat = ut.ls_awc_location_lat, ' ||
@@ -1050,7 +1320,7 @@ BEGIN
 
 
 	-- Get latest infrastructure data
-	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
+	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
 		'infra_last_update_date = ut.infra_last_update_date, ' ||
 		'infra_type_of_building = ut.infra_type_of_building, ' ||
 		'infra_type_of_building_pucca = ut.infra_type_of_building_pucca, ' ||
@@ -1062,6 +1332,7 @@ BEGIN
 		'infra_baby_weighing_scale = ut.infra_baby_weighing_scale, ' ||
 		'infra_flat_weighing_scale = ut.infra_flat_weighing_scale, ' ||
 		'infra_adult_weighing_scale = ut.infra_adult_weighing_scale, ' ||
+		'infra_infant_weighing_scale = ut.infra_infant_weighing_scale, ' ||
 		'infra_cooking_utensils = ut.infra_cooking_utensils, ' ||
 		'infra_medicine_kits = ut.infra_medicine_kits, ' ||
 		'infra_adequate_space_pse = ut.infra_adequate_space_pse ' ||
@@ -1079,6 +1350,7 @@ BEGIN
 		'baby_scale_usable AS infra_baby_weighing_scale, ' ||
 		'flat_scale_usable AS infra_flat_weighing_scale, ' ||
 		'adult_scale_available AS infra_adult_weighing_scale, ' ||
+		'GREATEST(baby_scale_usable, flat_scale_usable) AS infra_infant_weighing_scale, ' ||
 		'cooking_utensils_usable AS infra_cooking_utensils, ' ||
 		'medicine_kits_usable AS infra_medicine_kits, ' ||
 		'has_adequate_space_pse AS infra_adequate_space_pse ' ||
@@ -1182,15 +1454,27 @@ BEGIN
 		'sum(usage_num_hh_reg), ' ||
 		'sum(usage_num_add_person), ' ||
 		'sum(usage_num_add_pregnancy), ' ||
-		'is_launched, ' ||
+		quote_literal(_yes_text) || ', ' ||
 		quote_nullable(_null_value) || ', ' ||
 		'sum(trained_phase_1), ' ||
 		'sum(trained_phase_2), ' ||
 		'sum(trained_phase_3), ' ||
-		'sum(trained_phase_4) ';
+		'sum(trained_phase_4), ';
 
+    _rollup_text2 = 'sum(cases_household), ' ||
+        'sum(cases_person), ' ||
+        'sum(cases_person_all), ' ||
+        'sum(cases_person_has_aadhaar), ' ||
+        'sum(cases_ccs_pregnant_all), ' ||
+        'sum(cases_ccs_lactating_all), ' ||
+        'sum(cases_child_health_all), ' ||
+        'sum(cases_person_adolescent_girls_11_14), ' ||
+        'sum(cases_person_adolescent_girls_15_18), ' ||
+        'sum(cases_person_adolescent_girls_11_14_all), ' ||
+        'sum(cases_person_adolescent_girls_15_18_all), ' ||
+        'sum(infra_infant_weighing_scale) ';
 
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
 		'state_id, ' ||
 		'district_id, ' ||
 		'block_id, ' ||
@@ -1198,11 +1482,18 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
 		_rollup_text ||
-		', 4 ' ||
-		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, supervisor_id, month, is_launched)';
+		'4, ' ||
+		quote_nullable(_null_value) || ', ' ||
+		quote_nullable(_null_value) || ', ' ||
+		quote_nullable(_null_value) || ', ' ||
+		'1, ' ||
+		'sum(num_launched_awcs), ' ||
+		_rollup_text2 ||
+		'FROM ' || quote_ident(_tablename5) || ' ' ||
+		'GROUP BY state_id, district_id, block_id, supervisor_id, month)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx1') || ' ON ' || quote_ident(_tablename4) || '(state_id, district_id, block_id, supervisor_id)';
 
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename3) || '(SELECT ' ||
 		'state_id, ' ||
 		'district_id, ' ||
 		'block_id, ' ||
@@ -1210,12 +1501,18 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
 		_rollup_text ||
-		', 3 ' ||
-		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'WHERE awc_id = ' || quote_literal(_all_text) || ' ' ||
-		'GROUP BY state_id, district_id, block_id, month, is_launched)';
+		'3, ' ||
+		quote_nullable(_null_value) || ', ' ||
+		quote_nullable(_null_value) || ', ' ||
+		'1, ' ||
+		'sum(num_launched_supervisors), ' ||
+		'sum(num_launched_awcs), ' ||
+		_rollup_text2 ||
+		'FROM ' || quote_ident(_tablename4) || ' ' ||
+		'GROUP BY state_id, district_id, block_id, month)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx1') || ' ON ' || quote_ident(_tablename3) || '(state_id, district_id, block_id)';
 
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename2) || '(SELECT ' ||
 		'state_id, ' ||
 		'district_id, ' ||
 		quote_literal(_all_text) || ', ' ||
@@ -1223,12 +1520,18 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
 		_rollup_text ||
-		', 2 ' ||
-		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'WHERE supervisor_id = ' || quote_literal(_all_text) || ' ' ||
-		'GROUP BY state_id, district_id, month, is_launched)';
+		'2, ' ||
+		quote_nullable(_null_value) || ', ' ||
+		'1, ' ||
+		'sum(num_launched_blocks), ' ||
+		'sum(num_launched_supervisors), ' ||
+		'sum(num_launched_awcs), ' ||
+		_rollup_text2 ||
+		'FROM ' || quote_ident(_tablename3) || ' ' ||
+		'GROUP BY state_id, district_id, month)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx1') || ' ON ' || quote_ident(_tablename2) || '(state_id, district_id)';
 
-	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename1) || '(SELECT ' ||
 		'state_id, ' ||
 		quote_literal(_all_text) || ', ' ||
 		quote_literal(_all_text) || ', ' ||
@@ -1236,10 +1539,16 @@ BEGIN
 		quote_literal(_all_text) || ', ' ||
 		'month, ' ||
 		_rollup_text ||
-		', 1 ' ||
-		'FROM ' || quote_ident(_tablename) || ' ' ||
-		'WHERE block_id = ' || quote_literal(_all_text) || ' ' ||
-		'GROUP BY state_id, month, is_launched)';
+		'1, ' ||
+		'1, ' ||
+		'sum(num_launched_districts), ' ||
+		'sum(num_launched_blocks), ' ||
+		'sum(num_launched_supervisors), ' ||
+		'sum(num_launched_awcs), ' ||
+		_rollup_text2 ||
+		'FROM ' || quote_ident(_tablename2) || ' ' ||
+		'GROUP BY state_id, month)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename1 || '_indx1') || ' ON ' || quote_ident(_tablename1) || '(state_id)';
 
 END;
 $BODY$
@@ -1341,6 +1650,220 @@ BEGIN
 		'1 FROM awc_location GROUP BY ' ||
 		'state_id, state_name, state_site_code' ||
 		')';
+END;
+$BODY$
+LANGUAGE plpgsql;
+
+-- Aggregate a single daily  for the AWC
+-- Depends on generation of the agg_awc table
+CREATE OR REPLACE FUNCTION aggregate_awc_daily(date) RETURNS VOID AS
+$BODY$
+DECLARE
+	_table_date date;
+	_current_month date;
+	_tablename text;
+	_table_columns text;
+    _daily_attendance_tablename text;
+    _all_text text;
+    _null_value text;
+    _rollup_text text;
+BEGIN
+	_table_date = ($1)::DATE;
+	_current_month = date_trunc('MONTH', $1)::DATE;
+	_tablename = 'agg_awc_daily' || '_' || _table_date;
+	_all_text = 'All';
+	_null_value = NULL;
+
+	-- Explicitly define the table columns for use in updates and aggregation
+	_table_columns = '' ||
+	    'state_id, ' ||
+	    'district_id, ' ||
+	    'block_id, ' ||
+	    'supervisor_id, ' ||
+	    'awc_id, ' ||
+	    'aggregation_level, ' ||
+	    'date, ' ||
+	    'cases_household, ' ||
+	    'cases_person, ' ||
+	    'cases_person_all, ' ||
+	    'cases_person_has_aadhaar, ' ||
+	    'cases_child_health, ' ||
+	    'cases_child_health_all, ' ||
+	    'cases_ccs_pregnant, ' ||
+	    'cases_ccs_pregnant_all, ' ||
+	    'cases_ccs_lactating, ' ||
+	    'cases_ccs_lactating_all, ' ||
+	    'cases_person_adolescent_girls_11_14, ' ||
+	    'cases_person_adolescent_girls_15_18, ' ||
+	    'cases_person_adolescent_girls_11_14_all, ' ||
+	    'cases_person_adolescent_girls_15_18_all, ' ||
+	    'daily_attendance_open, ' ||
+	    'num_awcs, ' ||
+	    'num_launched_states, ' ||
+	    'num_launched_districts, ' ||
+	    'num_launched_blocks, ' ||
+	    'num_launched_supervisors, ' ||
+	    'num_launched_awcs ';
+
+	-- DROP and create daily table
+	EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(_tablename);
+	EXECUTE 'CREATE TABLE ' || quote_ident(_tablename) || '(' ||
+        'CHECK ( date = DATE ' || quote_literal(_table_date) || ' )' ||
+	    ') INHERITS (agg_awc_daily)';
+
+	-- Copy from the current month agg_awc table (skipping daily_attendance_open which will be a separate query)
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
+	    '( '|| _table_columns || ') '
+	     '(SELECT ' ||
+	        'state_id, ' ||
+            'district_id, ' ||
+            'block_id, ' ||
+            'supervisor_id, ' ||
+            'awc_id, ' ||
+            'aggregation_level, ' ||
+            quote_literal(_table_date) || ', ' ||
+            'cases_household, ' ||
+            'cases_person, ' ||
+            'cases_person_all, ' ||
+            'cases_person_has_aadhaar, ' ||
+            'cases_child_health, ' ||
+            'cases_child_health_all, ' ||
+            'cases_ccs_pregnant, ' ||
+            'cases_ccs_pregnant_all, ' ||
+            'cases_ccs_lactating, ' ||
+            'cases_ccs_lactating_all, ' ||
+            'cases_person_adolescent_girls_11_14, ' ||
+            'cases_person_adolescent_girls_15_18, ' ||
+            'cases_person_adolescent_girls_11_14_all, ' ||
+            'cases_person_adolescent_girls_15_18_all, ' ||
+            '0, ' ||
+            'num_awcs, ' ||
+            'num_launched_states, ' ||
+            'num_launched_districts, ' ||
+            'num_launched_blocks, ' ||
+            'num_launched_supervisors, ' ||
+            'num_launched_awcs ' ||
+         'FROM agg_awc WHERE aggregation_level = 5 AND month = ' || quote_literal(_current_month) ||
+         ')';
+
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(state_id, district_id, block_id, supervisor_id, awc_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx2') || ' ON ' || quote_ident(_tablename) || '(date)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx3') || ' ON ' || quote_ident(_tablename) || '(awc_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx4') || ' ON ' || quote_ident(_tablename) || '(supervisor_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx5') || ' ON ' || quote_ident(_tablename) || '(block_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx6') || ' ON ' || quote_ident(_tablename) || '(district_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx7') || ' ON ' || quote_ident(_tablename) || '(state_id)';
+	EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx8') || ' ON ' || quote_ident(_tablename) || '(aggregation_level)';
+
+	-- Aggregate daily attendance table.
+	EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' agg_awc SET ' ||
+		'daily_attendance_open = ut.daily_attendance_open ' ||
+	'FROM (SELECT ' ||
+		'awc_id, ' ||
+		'pse_date, ' ||
+		'sum(awc_open_count) AS daily_attendance_open ' ||
+		'FROM daily_attendance WHERE pse_date = ' || quote_literal(_table_date) || ' ' ||
+		'GROUP BY awc_id, pse_date) ut ' ||
+	'WHERE ut.pse_date = agg_awc.date AND ut.awc_id = agg_awc.awc_id';
+
+	-- Roll Up by Location
+	_rollup_text = 	'sum(cases_household), ' ||
+		'sum(cases_person), ' ||
+		'sum(cases_person_all), ' ||
+		'sum(cases_person_has_aadhaar), ' ||
+		'avg(cases_child_health), ' ||
+		'sum(cases_child_health_all), ' ||
+		'sum(cases_ccs_pregnant), ' ||
+		'sum(cases_ccs_pregnant_all), ' ||
+		'avg(cases_ccs_lactating), ' ||
+		'sum(cases_ccs_lactating_all), ' ||
+		'avg(cases_person_adolescent_girls_11_14), ' ||
+		'sum(cases_person_adolescent_girls_15_18), ' ||
+		'sum(cases_person_adolescent_girls_11_14_all), ' ||
+		'sum(cases_person_adolescent_girls_15_18_all), ' ||
+		'sum(daily_attendance_open), ' ||
+		'sum(num_awcs), ';
+
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
+	    '( '|| _table_columns || ') '
+	    '(SELECT ' ||
+		'state_id, ' ||
+		'district_id, ' ||
+		'block_id, ' ||
+		'supervisor_id, ' ||
+		quote_literal(_all_text) || ', ' ||
+		'4, ' ||
+		'date, ' ||
+		_rollup_text ||
+		quote_nullable(_null_value) || ', ' ||
+		quote_nullable(_null_value) || ', ' ||
+		quote_nullable(_null_value) || ', ' ||
+		'1, ' ||
+		'sum(num_launched_awcs) ' ||
+		'FROM ' || quote_ident(_tablename) || ' ' ||
+		'WHERE aggregation_level = 5 ' ||
+		'GROUP BY state_id, district_id, block_id, supervisor_id, date)';
+
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
+	    '( '|| _table_columns || ') '
+	    '(SELECT ' ||
+		'state_id, ' ||
+		'district_id, ' ||
+		'block_id, ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		'3, ' ||
+		'date, ' ||
+		_rollup_text ||
+		quote_nullable(_null_value) || ', ' ||
+		quote_nullable(_null_value) || ', ' ||
+		'1, ' ||
+		'sum(num_launched_supervisors), ' ||
+		'sum(num_launched_awcs) ' ||
+		'FROM ' || quote_ident(_tablename) || ' ' ||
+		'WHERE aggregation_level = 4 ' ||
+		'GROUP BY state_id, district_id, block_id, date)';
+
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
+	    '( '|| _table_columns || ') '
+	    '(SELECT ' ||
+		'state_id, ' ||
+		'district_id, ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		'2, ' ||
+		'date, ' ||
+		_rollup_text ||
+		quote_nullable(_null_value) || ', ' ||
+		'1, ' ||
+		'sum(num_launched_blocks), ' ||
+		'sum(num_launched_supervisors), ' ||
+		'sum(num_launched_awcs) ' ||
+		'FROM ' || quote_ident(_tablename) || ' ' ||
+		'WHERE aggregation_level = 3 ' ||
+		'GROUP BY state_id, district_id, date)';
+
+	EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
+	    '( '|| _table_columns || ') '
+	    '(SELECT ' ||
+		'state_id, ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		quote_literal(_all_text) || ', ' ||
+		'1, ' ||
+		'date, ' ||
+		_rollup_text ||
+		'1, ' ||
+		'sum(num_launched_districts), ' ||
+		'sum(num_launched_blocks), ' ||
+		'sum(num_launched_supervisors), ' ||
+		'sum(num_launched_awcs) ' ||
+		'FROM ' || quote_ident(_tablename) || ' ' ||
+		'WHERE aggregation_level = 2 ' ||
+		'GROUP BY state_id, date)';
+
 END;
 $BODY$
 LANGUAGE plpgsql;

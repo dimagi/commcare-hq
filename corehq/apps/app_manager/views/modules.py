@@ -101,7 +101,6 @@ def get_module_view_context(app, module, lang=None):
     # shared context
     context = {
         'edit_name_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'name']),
-        'edit_case_label_url': reverse('edit_module_attr', args=[app.domain, app.id, module.id, 'case_label']),
     }
     module_brief = {
         'id': module.id,
@@ -110,6 +109,7 @@ def get_module_view_context(app, module, lang=None):
         'langs': app.langs,
         'module_type': module.module_type,
         'requires_case_details': module.requires_case_details(),
+        'unique_id': module.unique_id,
     }
     case_property_builder = _setup_case_property_builder(app)
     if isinstance(module, CareplanModule):
@@ -150,23 +150,27 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
             'default_properties': module.search_config.default_properties if module_offers_search(module) else [],
             'search_button_display_condition':
                 module.search_config.search_button_display_condition if module_offers_search(module) else "",
+            'blacklisted_owner_ids_expression': (
+                module.search_config.blacklisted_owner_ids_expression if module_offers_search(module) else ""),
         }
     }
     if toggles.CASE_DETAIL_PRINT.enabled(app.domain):
         slug = 'module_%s_detail_print' % module.unique_id
         print_template = module.case_details.long.print_template
+        print_uploader = MultimediaHTMLUploadController(
+            slug,
+            reverse(
+                ProcessDetailPrintTemplateUploadView.name,
+                args=[app.domain, app.id, module.unique_id],
+            )
+        )
         if not print_template:
             print_template = {
                 'path': 'jr://file/commcare/text/%s.html' % slug,
             }
         context.update({
-            'print_uploader': MultimediaHTMLUploadController(
-                slug,
-                reverse(
-                    ProcessDetailPrintTemplateUploadView.name,
-                    args=[app.domain, app.id, module.unique_id],
-                )
-            ),
+            'print_uploader': print_uploader,
+            'print_uploader_js': print_uploader.js_options,
             'print_ref': ApplicationMediaReference(
                 print_template.get('path'),
                 media_class=CommCareMultimedia,
@@ -214,7 +218,7 @@ def _get_careplan_module_view_context(app, module, case_property_builder):
 def _get_advanced_module_view_context(app, module):
     case_type = module.case_type
     return {
-        'case_list_form_not_allowed_reason': _case_list_form_not_allowed_reason(module),
+        'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': True,
         'schedule_phases': [
             {
@@ -229,16 +233,9 @@ def _get_advanced_module_view_context(app, module):
 
 
 def _get_basic_module_view_context(app, module, case_property_builder):
-    case_type = module.case_type
-    # http://manage.dimagi.com/default.asp?178635
-    allow_with_parent_select = app.build_version >= '2.23' or not module.parent_select.active
-    allow_case_list_form = _case_list_form_not_allowed_reason(
-        module,
-        AllowWithReason(allow_with_parent_select, AllowWithReason.PARENT_SELECT_ACTIVE)
-    )
     return {
-        'parent_modules': _get_parent_modules(app, module, case_property_builder, case_type),
-        'case_list_form_not_allowed_reason': allow_case_list_form,
+        'parent_modules': _get_parent_modules(app, module, case_property_builder, module.case_type),
+        'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': (
             toggles.BASIC_CHILD_MODULE.enabled(app.domain)
         ),
@@ -293,25 +290,28 @@ def _get_report_module_context(app, module):
 
     ]
     from corehq.apps.app_manager.suite_xml.features.mobile_ucr import COLUMN_XPATH_CLIENT_TEMPLATE, get_data_path
-    context = {
-        'all_reports': [_report_to_config(r) for r in all_reports],
-        'filter_choices': filter_choices,
-        'auto_filter_choices': auto_filter_choices,
-        'daterange_choices': [choice._asdict() for choice in get_simple_dateranges()],
-        'column_xpath_template': COLUMN_XPATH_CLIENT_TEMPLATE,
-    }
-    current_reports = []
     data_path_placeholders = {}
     for r in module.report_configs:
-        r.migrate_graph_configs(app.domain)
-        current_reports.append(r.to_json())
         data_path_placeholders[r.report_id] = {}
         for chart_id in r.complete_graph_configs.keys():
             data_path_placeholders[r.report_id][chart_id] = get_data_path(r, app.domain)
-    context.update({
-        'current_reports': current_reports,
-        'data_path_placeholders': data_path_placeholders,
-    })
+
+    context = {
+        'report_module_options': {
+            'moduleName': module.name,
+            'moduleFilter': module.module_filter,
+            'availableReports': [_report_to_config(r) for r in all_reports],  # structure for all reports
+            'currentReports': [r.to_json() for r in module.report_configs],  # config data for app reports
+            'columnXpathTemplate': COLUMN_XPATH_CLIENT_TEMPLATE,
+            'dataPathPlaceholders': data_path_placeholders,
+            'languages': app.langs,
+        },
+        'static_data_options': {
+            'filterChoices': filter_choices,
+            'autoFilterChoices': auto_filter_choices,
+            'dateRangeOptions': [choice._asdict() for choice in get_simple_dateranges()],
+        },
+    }
     return context
 
 
@@ -359,7 +359,6 @@ def _case_list_form_options(app, module, case_type_, lang=None):
         for mod in app.get_modules() if module.unique_id != mod.unique_id
         for form in mod.get_forms() if form.is_registration_form(case_type_)
     ]
-    options['disabled'] = gettext_lazy("Don't Show")
     langs = None if lang is None else [lang]
     options.update({f.unique_id: trans(f.name, langs) for f in forms})
 
@@ -409,37 +408,18 @@ def _get_module_details_context(app, module, case_property_builder, case_type_):
     return details
 
 
-def _case_list_form_not_allowed_reason(module, allow=None):
-    reason = None
-    if allow and not allow.allow:
-        reason = allow
-    elif not module.all_forms_require_a_case():
-        reason = AllowWithReason(False, AllowWithReason.ALL_FORMS_REQUIRE_CASE)
-    elif module.put_in_root:
-        reason = AllowWithReason(False, AllowWithReason.MODULE_IN_ROOT)
-    else:
-        reason = AllowWithReason(True, '')
-    if reason:
-        return {
-            'allow': reason.allow,
-            'message': reason.message,
-        }
-    return None
-
-
-class AllowWithReason(namedtuple('AllowWithReason', 'allow reason')):
-    ALL_FORMS_REQUIRE_CASE = 1
-    MODULE_IN_ROOT = 2
-    PARENT_SELECT_ACTIVE = 3
-
-    @property
-    def message(self):
-        if self.reason == self.ALL_FORMS_REQUIRE_CASE:
-            return gettext_lazy('Not all forms in the case list update a case.')
-        elif self.reason == self.MODULE_IN_ROOT:
-            return gettext_lazy("'Menu Mode' is not configured as 'Display menu and then forms'")
-        elif self.reason == self.PARENT_SELECT_ACTIVE:
-            return gettext_lazy("'Parent Selection' is configured.")
+def _case_list_form_not_allowed_reasons(module):
+    reasons = []
+    if module.put_in_root:
+        reasons.append(_("'Menu Mode' is not configured as 'Display menu and then forms'"))
+    if not module.all_forms_require_a_case():
+        reasons.append(_("all forms in this case list must update a case, "
+                         "which means that registration forms must go in a different case list"))
+    if isinstance(module, Module):
+        app = module.get_app()
+        if app.build_version < '2.23' and module.parent_select.active:
+            reasons.append(_("'Parent Selection' is configured"))
+    return reasons
 
 
 @no_conflict_require_POST
@@ -451,7 +431,6 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
     attributes = {
         "all": None,
         "auto_select_case": None,
-        "case_label": None,
         "case_list": ('case_list-show', 'case_list-label'),
         "case_list-menu_item_media_audio": None,
         "case_list-menu_item_media_image": None,
@@ -469,7 +448,6 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         "name": None,
         "parent_module": None,
         "put_in_root": None,
-        "referral_label": None,
         "root_module_id": None,
         "source_module_id": None,
         "task_list": ('task_list-show', 'task_list-label'),
@@ -589,12 +567,10 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
         )
         module.case_list.set_audio(lang, val)
 
-    for attribute in ("name", "case_label", "referral_label"):
-        if should_edit(attribute):
-            name = request.POST.get(attribute, None)
-            module[attribute][lang] = name
-            if should_edit("name"):
-                resp['update'] = {'.variable-module_name': trans(module.name, [lang], use_delim=False)}
+    if should_edit("name"):
+        name = request.POST.get("name", None)
+        module["name"][lang] = name
+        resp['update'] = {'.variable-module_name': trans(module.name, [lang], use_delim=False)}
     if should_edit('comment'):
         module.comment = request.POST.get('comment')
     for SLUG in ('case_list', 'task_list'):
@@ -674,8 +650,9 @@ def delete_module(request, domain, app_id, module_unique_id):
     if record is not None:
         messages.success(
             request,
-            'You have deleted a module. <a href="%s" class="post-link">Undo</a>' % reverse(
-                'undo_delete_module', args=[domain, record.get_id]
+            'You have deleted "%s". <a href="%s" class="post-link">Undo</a>' % (
+                record.module.default_name(app=app),
+                reverse('undo_delete_module', args=[domain, record.get_id])
             ),
             extra_tags='html'
         )
@@ -779,7 +756,9 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     persistent_case_context_xml = params.get('persistentCaseContextXML', None)
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
+    persistent_case_tile_from_module = params.get("persistentCaseTileFromModule", None)
     pull_down_tile = params.get("enableTilePullDown", None)
+    sort_nodeset_columns = params.get("sortNodesetColumns", None)
     print_template = params.get('printTemplate', None)
     case_list_lookup = params.get("case_list_lookup", None)
     search_properties = params.get("search_properties")
@@ -813,6 +792,8 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             detail.short.use_case_tiles = use_case_tiles
         if persist_tile_on_forms is not None:
             detail.short.persist_tile_on_forms = persist_tile_on_forms
+        if persistent_case_tile_from_module is not None:
+            detail.short.persistent_case_tile_from_module = persistent_case_tile_from_module
         if pull_down_tile is not None:
             detail.short.pull_down_tile = pull_down_tile
         if case_list_lookup is not None:
@@ -848,6 +829,9 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
                 "There was an issue with your custom variables: {}".format(error.message)
             )
         detail.long.custom_variables = custom_variables['long']
+
+    if sort_nodeset_columns is not None:
+        detail.long.sort_nodeset_columns = sort_nodeset_columns
 
     if sort_elements is not None:
         detail.short.sort_elements = []
@@ -889,6 +873,7 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
                 ),
                 include_closed=bool(search_properties.get('include_closed')),
                 search_button_display_condition=search_properties.get('search_button_display_condition', ""),
+                blacklisted_owner_ids_expression=search_properties.get('blacklisted_owner_ids_expression', ""),
                 default_properties=[
                     DefaultCaseSearchProperty.wrap(p)
                     for p in search_properties.get('default_properties')
@@ -993,13 +978,13 @@ def new_module(request, domain, app_id):
         if toggles.APP_MANAGER_V2.enabled(request.user.username):
             if module_type == 'case':
                 # registration form
-                register = app.new_form(module_id, "Register", lang)
+                register = app.new_form(module_id, _("Register"), lang)
                 register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
                 register.actions.update_case = UpdateCaseAction(
                     condition=FormActionCondition(type='always'))
 
                 # one followup form
-                followup = app.new_form(module_id, "Followup", lang)
+                followup = app.new_form(module_id, _("Followup"), lang)
                 followup.requires = "case"
                 followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 
@@ -1010,7 +995,7 @@ def new_module(request, domain, app_id):
                 else:
                     module.case_type = 'case'
             else:
-                app.new_form(module_id, "Survey", lang)
+                app.new_form(module_id, _("Survey"), lang)
             form_id = 0
         else:
             app.new_form(module_id, "Untitled Form", lang)

@@ -7,14 +7,14 @@
             <button type="button" class="close" data-dismiss="modal">
                 <span aria-hidden="true">&times;</span>
             </button>
-            <h4 class="modal-title">{% trans "Deploying version" %} <span data-bind="text: version"></span></h4>
+            <h4 class="modal-title">{% trans "Version" %} <span data-bind="text: version"></span></h4>
         </div>
         <div class="modal-body">
         {% if not has_mobile_workers %}
             <div class="alert alert-danger">
                 {% blocktrans %}
                     Your project does not have any mobile workers!  Only mobile workers can log into a CommCare application.
-                    Before you can deploy your application,
+                    Before you can publish your application,
                 {% endblocktrans %}
                 <a href="{% url "mobile_workers" domain %}">{% trans "create your first mobile worker" %}</a>.
             </div>
@@ -135,7 +135,7 @@
                                                         <a href="#" data-bind="click: function () {
                                                             download_application_zip(false, build_profile());
                                                         }">
-                                                            CommCare.ccz
+                                                            CommCare_v<span data-bind="text: version"></span>.ccz
                                                         </a>
                                                     </li>
                                                     <li>
@@ -195,8 +195,8 @@
                             <ol data-bind="if: reveal_java_download()">
                                 <li>
                                     {% trans "Download <strong>both</strong> of the following files:" %}
-                                    <p><a data-bind="attr: {href: $root.url('jad', id)}">{% trans "Download" %} CommCare.jad</a></p>
-                                    <p><a data-bind="attr: {href: $root.url('jar', id)}">{% trans "Download" %} CommCare.jar</a></p>
+                                    <p><a data-bind="attr: {href: $root.reverse('download_jad', id)}">{% trans "Download" %} CommCare.jad</a></p>
+                                    <p><a data-bind="attr: {href: $root.reverse('download_jar', id)}">{% trans "Download" %} CommCare.jar</a></p>
                                 </li>
                                 <li>
                                     {% trans "For help on how to install, see" %}
@@ -322,7 +322,7 @@
                                    data-category="App Manager"
                                    data-action="Deploy Type"
                                    data-label="View Source Files"
-                                   data-bind="attr: {href: $root.url('source', id)}">
+                                   data-bind="attr: {href: $root.reverse('download_index', id)}">
                                     {% trans 'View Source Files' %}
                                 </a>
                             </h4>

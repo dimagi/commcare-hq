@@ -31,6 +31,3 @@ class StaticGuidedTour(object):
 NEW_APP = StaticGuidedTour(
     'new_app', 'tour/config/new_app.html'
 )
-VELLUM_CASE_MANAGEMENT = StaticGuidedTour(
-    'vellum_case_management', 'tour/config/vellum_case_management.html'
-)

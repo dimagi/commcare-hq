@@ -544,14 +544,18 @@ class EntriesHelper(object):
                              error=_("Could not find target module used by form '{}'").format(form.default_name()))
                     if target.case_type != case_type:
                         raise ParentModuleReferenceError(
-                            _("Form '%s' in module '%s' references a module with an incorrect case type: "
-                              "module '%s' expected '%s', found '%s'") % (
-                                form.default_name(),
-                                module.default_name(),
-                                target.default_name(),
-                                case_type,
-                                target.case_type,
-                            )
+                            _(
+                                "Form '%(form_name)s' in module '%(module_name)s' "
+                                "references a module with an incorrect case type: "
+                                "module '%(target_name)s' expected '%(expected_case_type)s', "
+                                "found '%(target_case_type)s'"
+                            ) % {
+                                'form_name': form.default_name(),
+                                'module_name': module.default_name(),
+                                'target_name': target.default_name(),
+                                'expected_case_type': case_type,
+                                'target_case_type': target.case_type,
+                            }
                         )
                     if with_product_details and not hasattr(target, 'product_details'):
                         raise ParentModuleReferenceError(
@@ -579,6 +583,7 @@ class EntriesHelper(object):
             target_module_ = get_target_module(action_.case_type, action_.details_module)
             referenced_by = form.actions.actions_meta_by_parent_tag.get(action_.case_tag)
             filter_xpath = EntriesHelper.get_filter_xpath(target_module_)
+            detail_inline = self.get_detail_inline_attr(target_module_, target_module_, "case_short")
 
             return SessionDatum(
                 id=action_.case_session_var,
@@ -588,10 +593,10 @@ class EntriesHelper(object):
                 detail_select=self.details_helper.get_detail_id_safe(target_module_, 'case_short'),
                 detail_confirm=(
                     self.details_helper.get_detail_id_safe(target_module_, 'case_long')
-                    if not referenced_by or referenced_by['type'] != 'load' else None
+                    if not referenced_by or referenced_by['type'] != 'load' and not detail_inline else None
                 ),
                 detail_persistent=self.get_detail_persistent_attr(target_module_, target_module_, "case_short"),
-                detail_inline=self.get_detail_inline_attr(target_module_, target_module_, "case_short"),
+                detail_inline=detail_inline,
                 autoselect=target_module_.auto_select_case,
             )
 
@@ -867,9 +872,26 @@ class EntriesHelper(object):
                 e.datums.append(session_datum('case_id_goal', CAREPLAN_GOAL, 'parent', 'case_id'))
                 e.datums.append(session_datum('case_id_task', CAREPLAN_TASK, 'goal', 'case_id_goal'))
 
+    @staticmethod
+    def _get_module_for_persistent_context(detail_module, module_unique_id):
+        module_for_persistent_context = detail_module.get_app().get_module_by_unique_id(module_unique_id)
+        if (module_for_persistent_context and
+                (module_for_persistent_context.case_details.short.use_case_tiles or
+                 module_for_persistent_context.case_details.short.custom_xml
+                 )):
+            return module_for_persistent_context
+
     def get_detail_persistent_attr(self, module, detail_module, detail_type="case_short"):
         detail, detail_enabled = self._get_detail_from_module(module, detail_type)
         if detail_enabled:
+            # if configured to use persisted case tile context from another module which has case tiles
+            # configured then get id_string for that module
+            if detail.persistent_case_tile_from_module:
+                module_for_persistent_context = self._get_module_for_persistent_context(
+                    module, detail.persistent_case_tile_from_module
+                )
+                if module_for_persistent_context:
+                    return id_strings.detail(module_for_persistent_context, detail_type)
             if self._has_persistent_tile(detail):
                 return id_strings.detail(detail_module, detail_type)
             if detail.persist_case_context and detail_type == "case_short":
@@ -877,12 +899,23 @@ class EntriesHelper(object):
                 return id_strings.persistent_case_context_detail(detail_module)
         return None
 
+    def _get_detail_inline_attr_from_module(self, module, module_unique_id):
+        module_for_persistent_context = self._get_module_for_persistent_context(module, module_unique_id)
+        if module_for_persistent_context:
+            return self.details_helper.get_detail_id_safe(module_for_persistent_context, "case_long")
+
     def get_detail_inline_attr(self, module, detail_module, detail_type="case_short"):
         assert detail_type in ["case_short", "product_short"]
         detail, detail_enabled = self._get_detail_from_module(module, detail_type)
-        if detail_enabled and self._has_persistent_tile(detail) and detail.pull_down_tile:
-            list_type = "case_long" if detail_type == "case_short" else "product_long"
-            return self.details_helper.get_detail_id_safe(detail_module, list_type)
+        if detail_enabled and detail.pull_down_tile:
+            if detail_type == "case_short" and detail.persistent_case_tile_from_module:
+                inline_attr = self._get_detail_inline_attr_from_module(
+                    module, detail.persistent_case_tile_from_module)
+                if inline_attr:
+                    return inline_attr
+            if self._has_persistent_tile(detail):
+                list_type = "case_long" if detail_type == "case_short" else "product_long"
+                return self.details_helper.get_detail_id_safe(detail_module, list_type)
         return None
 
     def _get_detail_from_module(self, module, detail_type):

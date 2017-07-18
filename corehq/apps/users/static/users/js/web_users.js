@@ -5,6 +5,7 @@ hqDefine("users/js/web_users.js", function() {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        $httpProvider.defaults.headers.common["X-CSRFToken"] = $("#csrfTokenContainer").val();
     }]);
     usersApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure(hqImport("hqwebapp/js/initial_page_data.js").get("djng_current_rmi"));
@@ -81,6 +82,7 @@ hqDefine("users/js/web_users.js", function() {
             saveUrl: url("post_user_role"),
             deleteUrl: url("delete_user_role"),
             reportOptions: initial_page_data("report_list"),
+            webAppsList: initial_page_data("web_apps_list"),
             allowEdit: initial_page_data("can_edit_roles"),
             canRestrictAccessByLocation: initial_page_data("can_restrict_access_by_location"),
             landingPageChoices: initial_page_data("landing_page_choices"),

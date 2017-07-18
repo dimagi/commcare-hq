@@ -5,8 +5,9 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal
 from types import NoneType
 
-from simpleeval import SimpleEval, DEFAULT_OPERATORS, InvalidExpression, DEFAULT_FUNCTIONS
+from simpleeval import SimpleEval, DEFAULT_OPERATORS, InvalidExpression, DEFAULT_FUNCTIONS, FeatureNotAvailable
 import six
+import operator
 from six.moves import range
 
 
@@ -23,12 +24,26 @@ def safe_range(start, *args):
 
 SAFE_OPERATORS = copy.copy(DEFAULT_OPERATORS)
 SAFE_OPERATORS[ast.Pow] = safe_pow_fn  # don't allow power operations
+SAFE_OPERATORS[ast.Not] = operator.not_
 
 FUNCTIONS = DEFAULT_FUNCTIONS
 FUNCTIONS.update({
     'timedelta_to_seconds': lambda x: x.total_seconds() if isinstance(x, timedelta) else None,
-    'range': safe_range
+    'range': safe_range,
+    'today': date.today(),
+    'days': lambda t: t.days,
+    'round': round
 })
+
+
+class EvalNoMethods(SimpleEval):
+    """Disallow method calls. No real reason for this except that it gives
+    users less options to do crazy things that might get them / us into
+    hard to back out of situations."""
+    def _eval_call(self, node):
+        if isinstance(node.func, ast.Attribute):
+            raise FeatureNotAvailable("Method calls not allowed.")
+        return super(EvalNoMethods, self)._eval_call(node)
 
 
 def eval_statements(statement, variable_context):
@@ -41,9 +56,9 @@ def eval_statements(statement, variable_context):
     # variable values should be numbers
     var_types = set(type(value) for value in variable_context.values())
     if not var_types.issubset({float, Decimal, date, datetime, NoneType, bool}.union(set(six.integer_types))):
-        raise InvalidExpression
+        raise InvalidExpression('Context contains disallowed types')
 
-    evaluator = SimpleEval(operators=SAFE_OPERATORS, names=variable_context, functions=FUNCTIONS)
+    evaluator = EvalNoMethods(operators=SAFE_OPERATORS, names=variable_context, functions=FUNCTIONS)
     return evaluator.eval(statement)
 
 

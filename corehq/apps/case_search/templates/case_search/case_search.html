@@ -18,7 +18,7 @@
     <div id="case-search">
         <h3>{% trans "Search Parameters" %}</h3>
         <div class="row">
-            <div class="col-sm-8">
+            <div class="col-sm-12">
                 <div class="controls">
                     <form class="form-inline" data-bind="submit: submit" id="case-search-form">
                         {% csrf_token %}
@@ -42,47 +42,46 @@
                                 <strong>{% trans "Case Properties" %}</strong>
                             </div>
                             <div class="panel-body">
-                                <!-- ko foreach: parameters -->
-                                <div class="panel panel-default">
-                                    <div class="panel-body">
-                                        <div class="form-inline">
-                                            <div class="form-group">
-                                                <label>
-                                                    {% trans "Property name" %}
-                                                    <input name="key" type="text" placeholder="e.g. name" data-bind="value: key"/>
-                                                </label>
-                                            </div>
-                                            <div class="form-group">
-                                                <label>
-                                                    {% trans "Property value" %}
-                                                    <input name="value" type="text"  placeholder="e.g. redbeard" data-bind="value: value"/>
-                                                </label>
-                                            </div>
-                                            <div class="form-group">
-                                                <label>
-                                                    {% trans "Clause" %}
-                                                    <select name="clause" data-bind="value: clause">
-                                                        <option value="must">must</option>
-                                                        <option value="should">should</option>
-                                                        <option value="must_not">must_not</option>
-                                                    </select>
-                                                </label>
-                                            </div>
-                                            <div class="form-group">
-                                                <label class="checkbox-inline">
-                                                    <input name="fuzzy" type="checkbox" data-bind="checked: fuzzy">
-                                                    <strong>{% trans "Fuzzy" %}</strong>
-                                                </label>
-                                            </div>
-                                            <div class="form-group pull-right">
+                                <table class="table table-striped" >
+                                    <thead>
+                                        <th>{% trans "Property name" %}</th>
+                                        <th>{% trans "Property value" %}</th>
+                                        <th>{% trans "Clause" %}</th>
+                                        <th>{% trans "Fuzzy" %}</th>
+                                        <th>{% trans "Remove Characters" %}</th>
+                                        <th></th>
+                                    </thead>
+                                    <tbody data-bind="foreach: parameters" >
+                                        <tr>
+                                            <td>
+                                                <input name="key" type="text" placeholder="e.g. name" data-bind="value: key"/>
+                                            </td>
+                                            <td>
+                                                <input name="value" type="text"  placeholder="e.g. redbeard" data-bind="value: value"/>
+                                            </td>
+                                            <td>
+                                                <select name="clause" data-bind="value: clause">
+                                                    <option value="must">must</option>
+                                                    <option value="should">should</option>
+                                                    <option value="must_not">must_not</option>
+                                                </select>
+                                            </td>
+                                            <td>
+                                                <input name="fuzzy" type="checkbox" data-bind="checked: fuzzy">
+                                            </td>
+                                            <td>
+                                                <input name="value" type="text" spellcheck='false' data-bind="value: regex" placeholder="Regular Expression"/>
+                                            </td>
+                                            <td>
                                                 <span class='btn btn-danger' data-bind="click: $parent.removeParameter">
                                                     <i class="fa fa-trash"></i> {% trans "Delete" %}
                                                 </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- /ko -->
+                                            </td>
+
+                                        </tr>
+
+                                    </tbody>
+                                </table>
                                 <span class="btn btn-primary" id="add-input" data-bind="click: addParameter"><i class="fa fa-plus"></i> Add input</span>
                             </div>
                         </div>
@@ -120,23 +119,24 @@
                             <th>{% trans "Closed" %}</th>
                             <th>{% trans "Properties" %}</th>
                             <th>{% trans "Indices" %}</th>
+                            <th>{% trans "Score" %}</th>
                         </tr>
                     </thead>
-                    <tbody data-bind="foreach: results">
+                    <tbody data-bind="foreach: {data: results, as: 'result' }">
                         <tr>
                             <td>
-                                <a data-bind="attr: {href: $parent.case_data_url.replace('___', $data._id)}, text: name"></a>
+                                <a data-bind="attr: {href: $parent.case_data_url.replace('___', $data._id)}, text: result['_source']['name']"></a>
                             </td>
-                            <td data-bind="text: type"></td>
-                            <td data-bind="text: closed"></td>
+                            <td data-bind="text: result['_source']['type']"></td>
+                            <td data-bind="text: result['_source']['closed']"></td>
                             <td>
-                                <div data-bind="foreach: case_properties">
+                                <div data-bind="foreach: result['_source']['case_properties']">
                                     <small data-bind="text:$data['key']"></small>:
                                     <strong data-bind="text:$data['value']"></strong><br />
                                 </div>
                             </td>
                             <td>
-                                <ul data-bind="foreach: indices">
+                                <ul data-bind="foreach: result['_source']['indices']">
                                     <li>
                                         <span class="label label-default"
                                               data-bind="text: relationship"></span>
@@ -145,6 +145,7 @@
                                     </li>
                                 </ul>
                             </td>
+                            <td data-bind="text: result['_score']"></td>
                         </tr>
                     </tbody>
                 </table>

@@ -1,6 +1,7 @@
 import logging
 
-from django.core.management import BaseCommand
+from django.conf import settings
+from django.core.management import BaseCommand, CommandError
 from django.db.models import Q
 import mock
 from casexml.apps.case.mock import CaseFactory
@@ -65,6 +66,9 @@ class Command(BaseCommand):
 
     @mock_ownership_cleanliness_checks()
     def handle(self, domain, **options):
+        if not settings.UNIT_TESTING:
+            raise CommandError('must migrate case data from phone_number to contact_phone_number before running')
+
         base_query = PatientDetail.objects.order_by('scode', 'Dtocode', 'Tbunitcode', 'PHI')
 
         if options['location_codes']:

@@ -2,7 +2,7 @@ from django.test import TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
 from corehq.apps.products.models import SQLProduct
 
-from ..models import Location, LocationType
+from ..models import make_location, LocationType
 
 
 class ProductsAtLocationTest(TestCase):
@@ -24,16 +24,14 @@ class ProductsAtLocationTest(TestCase):
         self.project.delete()
 
     def test_add_products(self):
-        couch_location = Location(
+        location = make_location(
             name="Camelot",
             domain=self.domain,
             location_type="type",
         )
-        couch_location.save()
-        self.addCleanup(couch_location.delete)
+        location.save()
 
-        location = couch_location.sql_location
         location.products = self.products
         location.save()
-        self.assertEqualProducts(couch_location.sql_location.products.all(),
+        self.assertEqualProducts(location.products.all(),
                                  self.products)

@@ -1,25 +1,24 @@
 from __future__ import absolute_import
 
-from io import FileIO
-from cStringIO import StringIO
+import hashlib
+import logging
 import os
-from uuid import uuid4
 import shutil
 import tempfile
-import hashlib
+from io import FileIO
+from cStringIO import StringIO
+from uuid import uuid4
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
 
-from couchdbkit import ResourceConflict, ResourceNotFound
-from casexml.apps.phone.cache_utils import copy_payload_and_synclog_and_get_new_file
+from couchdbkit import ResourceNotFound
 from casexml.apps.phone.data_providers import get_element_providers, get_full_response_providers
 from casexml.apps.phone.exceptions import (
     MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException, DateOpenedBugException,
 )
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
-from corehq.util.soft_assert import soft_assert
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.decorators.memoized import memoized
@@ -27,13 +26,10 @@ from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.phone.models import (
     SyncLog,
     get_properly_wrapped_sync_log,
-    LOG_FORMAT_SIMPLIFIED,
-    get_sync_log_class_by_format,
     OTARestoreUser,
     SimplifiedSyncLog,
 )
-import logging
-from dimagi.utils.couch.database import get_db, get_safe_write_kwargs
+from dimagi.utils.couch.database import get_db
 from casexml.apps.phone import xml as xml_util
 from datetime import datetime, timedelta
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
@@ -64,6 +60,11 @@ from xml.etree import ElementTree
 
 
 logger = logging.getLogger(__name__)
+
+# case sync algorithms
+CLEAN_OWNERS = 'clean_owners'
+LIVEQUERY = 'livequery'
+DEFAULT_CASE_SYNC = CLEAN_OWNERS
 
 
 def restore_cache_key(domain, prefix, user_id, version=None, sync_log_id=None, device_id=None):
@@ -254,7 +255,6 @@ class BlobRestoreResponse(RestoreResponse):
         self.identifier = 'restore-response-{}'.format(uuid4().hex)
 
         self.response_body = tempfile.TemporaryFile('w+')
-        self.blobdb = get_blob_db()
 
     def get_filename(self, suffix=None):
         return "{identifier}{suffix}.{ext}".format(
@@ -296,13 +296,13 @@ class BlobRestoreResponse(RestoreResponse):
 
             response.write(self.closing_tag)
             response.seek(0)
-            self.blobdb.put(response, self.get_filename(), timeout=60)
+            get_blob_db().put(response, self.get_filename(), timeout=60)
 
         self.finalized = True
         self.close()
 
     def as_file(self):
-        return self.blobdb.get(self.get_filename())
+        return get_blob_db().get(self.get_filename())
 
     @classmethod
     def get_payload(cls, identifier):
@@ -317,14 +317,14 @@ class BlobRestoreResponse(RestoreResponse):
 
     def as_string(self):
         try:
-            blob = self.blobdb.get(self.get_filename())
+            blob = get_blob_db().get(self.get_filename())
             return blob.read()
         finally:
             blob.close()
 
     def get_http_response(self):
-        headers = {'Content-Length': self.blobdb.size(self.get_filename())}
-        return stream_response(self.blobdb.get(self.get_filename()), headers)
+        headers = {'Content-Length': get_blob_db().size(self.get_filename())}
+        return stream_response(get_blob_db().get(self.get_filename()), headers)
 
 
 class AsyncRestoreResponse(object):
@@ -451,7 +451,8 @@ class RestoreState(object):
     def restore_class(self):
         return get_restore_response_class(self.domain)
 
-    def __init__(self, project, restore_user, params, async=False, overwrite_cache=False):
+    def __init__(self, project, restore_user, params, async=False,
+                 overwrite_cache=False, case_sync=None):
         if not project or not project.name:
             raise Exception('you are not allowed to make a RestoreState without a domain!')
 
@@ -468,6 +469,15 @@ class RestoreState(object):
         self.async = async
         self.overwrite_cache = overwrite_cache
         self._last_sync_log = Ellipsis
+
+        if case_sync is None:
+            if LIVEQUERY_SYNC.enabled(self.domain):
+                case_sync = LIVEQUERY
+            else:
+                case_sync = DEFAULT_CASE_SYNC
+        if case_sync not in [LIVEQUERY, CLEAN_OWNERS]:
+            raise ValueError("unknown case sync algorithm: %s" % case_sync)
+        self.is_livequery = case_sync == LIVEQUERY
 
     def validate_state(self):
         check_version(self.params.version)
@@ -508,9 +518,9 @@ class RestoreState(object):
                     ))
 
                 # convert to the right type if necessary
-                if not isinstance(sync_log, self.sync_log_class):
+                if not isinstance(sync_log, SimplifiedSyncLog):
                     # this call can fail with an IncompatibleSyncLogType error
-                    sync_log = self.sync_log_class.from_other_format(sync_log)
+                    sync_log = SimplifiedSyncLog.from_other_format(sync_log)
                 self._last_sync_log = sync_log
             else:
                 self._last_sync_log = None
@@ -578,34 +588,24 @@ class RestoreState(object):
         previous_log_id = None if self.is_initial else self.last_sync_log._id
         previous_log_rev = None if self.is_initial else self.last_sync_log._rev
         last_seq = str(get_db().info()["update_seq"])
-        new_synclog = SyncLog(
+        new_synclog = SimplifiedSyncLog(
             _id=SyncLog.get_db().server.next_uuid(),
             domain=self.restore_user.domain,
             build_id=self.params.app_id,
             user_id=self.restore_user.user_id,
             last_seq=last_seq,
-            owner_ids_on_phone=list(self.owner_ids),
+            owner_ids_on_phone=set(self.owner_ids),
             date=datetime.utcnow(),
             previous_log_id=previous_log_id,
             previous_log_rev=previous_log_rev,
+            extensions_checked=True,
         )
         return new_synclog
-
-    @property
-    def sync_log_class(self):
-        return get_sync_log_class_by_format(LOG_FORMAT_SIMPLIFIED)
 
     @property
     @memoized
     def loadtest_factor(self):
         return self.restore_user.loadtest_factor
-
-    def mark_as_new_format(self):
-        self.current_sync_log = SimplifiedSyncLog.wrap(
-            self.current_sync_log.to_json()
-        )
-        self.current_sync_log.log_format = LOG_FORMAT_SIMPLIFIED
-        self.current_sync_log.extensions_checked = True
 
 
 class RestoreConfig(object):
@@ -617,9 +617,11 @@ class RestoreConfig(object):
     :param params:          The RestoreParams associated with this (see above).
     :param cache_settings:  The RestoreCacheSettings associated with this (see above).
     :param async:           Whether to get the restore response using a celery task
+    :param case_sync:       Case sync algorithm (None -> default).
     """
 
-    def __init__(self, project=None, restore_user=None, params=None, cache_settings=None, async=False):
+    def __init__(self, project=None, restore_user=None, params=None,
+                 cache_settings=None, async=False, case_sync=None):
         assert isinstance(restore_user, OTARestoreUser)
         self.project = project
         self.domain = project.name if project else ''
@@ -633,7 +635,8 @@ class RestoreConfig(object):
             self.project,
             self.restore_user,
             self.params, async,
-            self.cache_settings.overwrite_cache
+            self.cache_settings.overwrite_cache,
+            case_sync=case_sync,
         )
 
         self.force_cache = self.cache_settings.force_cache or self.async
@@ -676,12 +679,8 @@ class RestoreConfig(object):
         try:
             self.restore_state.validate_state()
         except InvalidSyncLogException as e:
-            if LOOSE_SYNC_TOKEN_VALIDATION.enabled(self.domain):
-                # This exception will get caught by the view and a 412 will be returned to the phone for resync
-                raise RestoreException(e)
-            else:
-                # This exception will fail hard and we'll get a 500 error message
-                raise
+            # This exception will get caught by the view and a 412 will be returned to the phone for resync
+            raise RestoreException(e)
 
     def get_payload(self):
         self.validate()

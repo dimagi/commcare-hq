@@ -253,7 +253,6 @@ class CleanOwnerCaseSyncOperation(object):
         )
 
     def get_payload(self):
-        self.restore_state.mark_as_new_format()
         with self.timing_context('get_case_ids_to_sync'):
             case_ids_to_sync = self.get_case_ids_to_sync()
         sync_payload = self.payload_class(self.timing_context, case_ids_to_sync, self.restore_state)
@@ -349,20 +348,27 @@ def filter_cases_modified_since(case_accessor, case_ids, reference_date):
 
 
 def case_needs_to_sync(case, last_sync_log):
+    # initial sync or new owner IDs always sync down everything
+    if not last_sync_log:
+        return True
+
+    # if this is a new owner_id and the case wasn't previously on the phone
+    # if it's an extension, and it was already on the phone, don't sync it
     owner_id = case.owner_id or case.user_id  # need to fallback to user_id for v1 cases
-    extension_cases = [index for index in case.indices
-                       if index.relationship == CASE_INDEX_EXTENSION]
-    if (not last_sync_log or
-        (owner_id not in last_sync_log.owner_ids_on_phone and
-         not (extension_cases and case.case_id in last_sync_log.case_ids_on_phone))):
-        # initial sync or new owner IDs always sync down everything
-        # extension cases don't get synced again if they haven't changed
+    if (owner_id not in last_sync_log.owner_ids_on_phone and (
+            case.case_id not in last_sync_log.case_ids_on_phone or not _is_extension(case))):
         return True
     elif case.server_modified_on >= last_sync_log.date:
         return case.modified_since_sync(last_sync_log)
     # if the case wasn't touched since last sync, and the phone was aware of this owner_id last time
     # don't worry about it
     return False
+
+
+@memoized
+def _is_extension(case):
+    return len([index for index in case.indices
+                if index.relationship == CASE_INDEX_EXTENSION]) > 0
 
 
 def pop_ids(set_, how_many):

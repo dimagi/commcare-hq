@@ -55,8 +55,19 @@ class Command(BaseCommand):
             migrator = MIGRATIONS[slug]
         except KeyError:
             raise CommandError(USAGE)
+
+        def do_migration():
+            total, skips = migrator.migrate(
+                log_file,
+                reset=reset,
+                chunk_size=chunk_size,
+            )
+            if skips:
+                sys.exit(skips)
+
         if log_dir is None:
-            file = None
+            log_file = None
+            do_migration()
         else:
             now = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
             summary_file = os.path.join(log_dir,
@@ -65,11 +76,5 @@ class Command(BaseCommand):
                 "{}-blob-migration-{}.txt".format(slug, now))
             assert not os.path.exists(summary_file), summary_file
             assert not os.path.exists(log_file), log_file
-        with open(summary_file, "w") as fh, tee_output(fh):
-            total, skips = migrator.migrate(
-                log_file,
-                reset=reset,
-                chunk_size=chunk_size,
-            )
-            if skips:
-                sys.exit(skips)
+            with open(summary_file, "w", 1) as fh, tee_output(fh):
+                do_migration()

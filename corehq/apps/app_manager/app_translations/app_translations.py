@@ -7,6 +7,7 @@ import copy
 import re
 from lxml.etree import XMLSyntaxError, Element
 
+from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     ModuleNotFoundException,
@@ -63,11 +64,7 @@ def process_bulk_app_translation_upload(app, f):
     # todo: HeaderValueError does not belong here
     except (HeaderValueError, InvalidExcelFileException) as e:
         msgs.append(
-            (messages.error, _(
-                "App Translation Failed! "
-                "Please make sure you are using a valid Excel 2007 or later (.xlsx) file. "
-                "Error details: {}."
-            ).format(e))
+            (messages.error, _(APP_TRANSLATION_UPLOAD_FAIL_MESSAGE).format(e))
         )
         return msgs
     except JSONReaderError as e:
@@ -179,7 +176,7 @@ def process_bulk_app_translation_upload(app, f):
     return msgs
 
 
-def _make_modules_and_forms_row(row_type, sheet_name, languages, case_labels,
+def _make_modules_and_forms_row(row_type, sheet_name, languages,
                                 media_image, media_audio, unique_id):
     """
     assemble the various pieces of data that make up a row in the
@@ -192,13 +189,12 @@ def _make_modules_and_forms_row(row_type, sheet_name, languages, case_labels,
     assert row_type is not None
     assert sheet_name is not None
     assert isinstance(languages, list)
-    assert isinstance(case_labels, list)
     assert isinstance(media_image, list)
     assert isinstance(media_audio, list)
     assert isinstance(unique_id, basestring)
 
     return [item if item is not None else ""
-            for item in ([row_type, sheet_name] + languages + case_labels
+            for item in ([row_type, sheet_name] + languages
                          + media_image + media_audio + [unique_id])]
 
 
@@ -230,7 +226,6 @@ def expected_bulk_app_sheet_headers(app):
             row_type='Type',
             sheet_name='sheet_name',
             languages=languages_list,
-            case_labels=['label_for_cases_%s' % l for l in app.langs],
             media_image=['icon_filepath_%s' % l for l in app.langs],
             media_audio=['audio_filepath_%s' % l for l in app.langs],
             unique_id='unique_id',
@@ -270,7 +265,6 @@ def expected_bulk_app_sheet_rows(app):
             row_type="Module",
             sheet_name=module_string,
             languages=[module.name.get(lang) for lang in app.langs],
-            case_labels=[module.case_label.get(lang) for lang in app.langs],
             media_image=[module.icon_by_language(lang) for lang in app.langs],
             media_audio=[module.audio_by_language(lang) for lang in app.langs],
             unique_id=module.unique_id,
@@ -356,7 +350,6 @@ def expected_bulk_app_sheet_rows(app):
                     sheet_name=form_string,
                     languages=[form.name.get(lang) for lang in app.langs],
                     # leave all
-                    case_labels=[None] * len(app.langs),
                     media_image=[form.icon_by_language(lang) for lang in app.langs],
                     media_audio=[form.audio_by_language(lang) for lang in app.langs],
                     unique_id=form.unique_id
@@ -457,10 +450,6 @@ def _process_modules_and_forms_sheet(rows, app):
                 continue
 
         _update_translation_dict('default_', document.name, row, app.langs)
-
-        if (_has_at_least_one_translation(row, 'label_for_cases', app.langs) and
-                hasattr(document, 'case_label')):
-            _update_translation_dict('label_for_cases_', document.case_label, row, app.langs)
 
         for lang in app.langs:
             document.set_icon(lang, row.get('icon_filepath_%s' % lang, ''))

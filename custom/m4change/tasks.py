@@ -7,7 +7,7 @@ from django.conf import settings
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import SQLLocation
 from custom.m4change.constants import NUMBER_OF_MONTHS_FOR_FIXTURES, M4CHANGE_DOMAINS, REDIS_FIXTURE_KEYS, \
     REDIS_FIXTURE_LOCK_KEYS
 from custom.m4change.fixtures.report_fixtures import get_last_n_months
@@ -28,7 +28,7 @@ def generate_production_fixtures():
 
 def generate_fixtures_for_domain(domain, db, data_source):
 
-    location_ids = [location.get_id for location in Location.by_domain(domain)]
+    location_ids = SQLLocation.active_objects.filter(domain=domain).location_ids()
     dates = get_last_n_months(NUMBER_OF_MONTHS_FOR_FIXTURES)
 
     for date in dates:

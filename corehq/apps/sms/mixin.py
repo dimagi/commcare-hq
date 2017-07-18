@@ -202,6 +202,8 @@ class MessagingCaseContactMixin(CommCareMobileContactMixin):
 
         qualifies_as_two_way = (
             requires_entry and
+            # Avoid setting two-way numbers when only the country code was entered
+            len(contact_phone_number) > 3 and
             # For legacy reasons, any truthy value here suffices
             contact_phone_number_is_verified
         )

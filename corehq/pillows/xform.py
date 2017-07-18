@@ -14,7 +14,7 @@ from corehq.apps.receiverwrapper.util import get_app_version_info
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
-from corehq.pillows.utils import get_user_type
+from corehq.pillows.utils import get_user_type, format_form_meta_for_es
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from couchforms.const import RESERVED_WORDS, DEVICE_LOG_XMLNS
@@ -76,7 +76,7 @@ def transform_xform_for_elasticsearch(doc_dict):
 
         # Some docs have their @xmlns and #text here
         if isinstance(doc_ret['form']['meta'].get('appVersion'), dict):
-            doc_ret['form']['meta']['appVersion'] = doc_ret['form']['meta']['appVersion'].get('#text')
+            doc_ret['form']['meta'] = format_form_meta_for_es(doc_ret['form']['meta'])
 
         app_version_info = get_app_version_info(
             doc_ret['domain'],
@@ -129,16 +129,19 @@ def transform_xform_for_elasticsearch(doc_dict):
     return doc_ret
 
 
-def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', **kwargs):
+def get_xform_to_elasticsearch_pillow(pillow_id='XFormToElasticsearchPillow', num_processes=1,
+                                      process_num=0, **kwargs):
     assert pillow_id == 'XFormToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, XFORM_INDEX_INFO)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, XFORM_INDEX_INFO, topics.FORM_TOPICS)
     form_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=XFORM_INDEX_INFO,
         doc_prep_fn=transform_xform_for_elasticsearch,
         doc_filter_fn=xform_pillow_filter,
     )
-    kafka_change_feed = KafkaChangeFeed(topics=topics.FORM_TOPICS, group_id='forms-to-es')
+    kafka_change_feed = KafkaChangeFeed(
+        topics=topics.FORM_TOPICS, group_id='forms-to-es', num_processes=num_processes, process_num=process_num
+    )
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,

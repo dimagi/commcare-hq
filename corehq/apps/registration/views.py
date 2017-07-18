@@ -68,6 +68,24 @@ class NewUserNumberAbTestMixin__Enabled(object):
         self._ab.update_response(response)
 
 
+class NewUserNumberAbTestMixin__NoAbEnabled(object):
+    @property
+    @memoized
+    def _ab(self):
+        return None
+
+    @property
+    def ab_show_number(self):
+        return True
+
+    @property
+    def ab_context(self):
+        return None
+
+    def ab_update_response(self, response):
+        pass
+
+
 class NewUserNumberAbTestMixin__Disabled(object):
     @property
     def ab_show_number(self):
@@ -81,7 +99,7 @@ class NewUserNumberAbTestMixin__Disabled(object):
         pass
 
 
-NewUserNumberAbTestMixin = NewUserNumberAbTestMixin__Disabled
+NewUserNumberAbTestMixin = NewUserNumberAbTestMixin__NoAbEnabled
 
 
 class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View):
@@ -174,7 +192,7 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
 
     @property
     def prefilled_email(self):
-        return self.request.POST.get('e', '')
+        return self.request.GET.get('e', '') or self.request.POST.get('e', '')
 
     @property
     def atypical_user(self):
@@ -193,6 +211,7 @@ class UserRegistrationView(NewUserNumberAbTestMixin, BasePageView):
             ),
             'reg_form_defaults': prefills,
             'hide_password_feedback': settings.ENABLE_DRACONIAN_SECURITY_FEATURES,
+            'implement_password_obfuscation': settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE,
             'show_number': self.ab_show_number,
             'ab_test': self.ab_context,
         }

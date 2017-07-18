@@ -60,21 +60,10 @@ def _create_custom_app_strings(app, lang, for_default=False):
 
     for module in app.get_modules():
         for detail_type, detail, _ in module.get_details():
-            if detail_type.startswith('case'):
-                label = trans(module.case_label)
-            elif detail_type.startswith('referral'):
-                label = trans(module.referral_label)
-            elif detail_type in ('product_short', 'product_long'):
-                label = ''
-            else:
-                label = None
-            if label is not None:
-                yield id_strings.detail_title_locale(module, detail_type), label
-
             for column in detail.get_columns():
                 yield id_strings.detail_column_header_locale(module, detail_type, column), trans(column.header)
 
-                if column.format in ('enum', 'enum-image'):
+                if column.format in ('enum', 'enum-image', 'conditional-enum'):
                     for item in column.enum:
                         yield id_strings.detail_column_enum_variable(
                             module, detail_type, column, item.key_as_variable

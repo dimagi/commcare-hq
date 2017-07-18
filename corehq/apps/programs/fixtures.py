@@ -18,16 +18,7 @@ def program_fixture_generator_json(domain):
         'uri': uri,
         'path': '/programs/program',
         'name': 'Programs',
-        'structure': {
-            f: {
-                'name': f,
-                'no_option': True
-            } for f in fields},
-
-        # DEPRECATED PROPERTIES
-        'sourceUri': uri,
-        'defaultId': 'programs',
-        'initialQuery': "instance('programs')/programs/program",
+        'structure': {f: {'name': f, 'no_option': True} for f in fields},
     }
 
 

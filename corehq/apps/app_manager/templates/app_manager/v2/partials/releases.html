@@ -5,76 +5,6 @@
 {% load timezone_tags %}
 {% load i18n %}
 
-<script>
-    $(function () {
-       $('.hq-help-template').each(function () {
-            COMMCAREHQ.transformHelpTemplate($(this), true);
-       });
-    });
-    $(function () {
-        hqImport('hqwebapp/js/urllib.js').registerUrl(
-            'app_data',
-            '/a/' + '{{ domain }}' + '/apps/view/---/app_data/'
-        )
-        var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
-        var ProfileManager = hqImport('app_manager/js/language-profiles.js').ProfileManager;
-        // init releases
-        var appDiff = hqImport('app_manager/js/app_diff.js').init('#app-diff-modal .modal-body')
-        $('#recent-changes-btn').on('click', function (e) {
-            appDiff.renderDiff({{ app.id|JSON }}, {{ latest_build_id|JSON }});
-        })
-        {# The '___' in these urls will later be replaced by an app's _id ReleasesMain's url function #}
-        var urls = {
-            fetch: '{% url "paginate_releases" domain app.id %}',
-            delete: '{% url "delete_copy" domain app.id %}',
-            cloudcare: '{% url "cloudcare_get_app" domain '___' %}',
-            jad: '{% url "download_jad" domain '___' %}',
-            jar: '{% url "download_jar" domain '___' %}',
-            ccz: '{% url "download_ccz" domain '___' %}',
-            odk: '{% url "odk_install" domain '___' %}',
-            odk_media: '{% url "odk_media_install" domain '___' %}',
-            source: '{% url "download_index" domain '___' %}',
-            release: '{% url "release_build" domain app.id '___' %}',
-            newBuild: '{% url "save_copy" domain app.id %}',
-            revertBuild: '{% url "revert_to_copy" domain app.id %}',
-            currentVersion: '{% url "current_app_version" domain app.id %}',
-            hubspot_click_deploy: '{% url "hubspot_click_deploy" %}',
-            download_zip: '{% url "download_ccz" app.domain '___' %}',
-            download_multimedia: '{% url "download_multimedia_zip" app.domain '___' %}',
-            application_errors: ('{% url "project_report_dispatcher" app.domain 'application_error' %}'
-                                 + '?app={{ app.id }}&version_number=___'),
-        };
-        var o = {
-            urls: urls,
-            currentAppVersion: {% if app.version %}{{ app.version }}{% else %}-1{% endif %},
-            recipient_contacts: {{ sms_contacts|JSON }},
-            download_modal_id: '#download-zip-modal',
-            fetchLimit: {{ fetchLimit }},
-        };
-        var el = $('#releases-table');
-        if (el.length) {
-            var releasesMain = new ReleasesMain(o);
-            _.defer(function(){ releasesMain.getMoreSavedApps(false); });
-            el.koApplyBindings(releasesMain);
-        }
-
-        var app_langs = {{ app.langs|JSON }};
-        var app_profiles = {{ app.build_profiles|JSON }}
-
-        {% if not intro_only and build_profile_access %}
-        var profileManager = new ProfileManager(app_profiles, app_langs);
-        $('#profiles-tab').koApplyBindings(profileManager);
-        {% endif %}
-    });
-    {% if intro_only %}
-    $(function () {
-        var previewApp = hqImport('app_manager/js/preview_app.js');
-        previewApp.forceShowPreview();
-    });
-    {% endif %}
-
-    //analytics.workflow('Visited the Release Manager');
-</script>
 
 {% if intro_only %}
   <div class="helpbubble helpbubble-primary helpbubble-left pull-left" style="max-width: 300px;">
@@ -83,7 +13,7 @@
       Please click <i class="fa fa-plus"></i> <strong>Add...</strong> to start building your App!
     </p>
     <p class="alert alert-info">
-      <i class="fa fa-info-circle"></i> Use AppBuilder to <strong>create</strong> and <strong>customize</strong> your CommCare Application for Mobile and Web.
+      <i class="fa fa-info-circle"></i> Use App Builder to <strong>create</strong> and <strong>customize</strong> your CommCare Application for Mobile and Web.
     </p>
   {% endblocktrans %}
   </div>
@@ -95,8 +25,29 @@
   {% endblocktrans %}
   </div>
 {% else %}
+  
+{% if request|ui_notify_enabled:"APP_BUILDER_PUBLISH" %}
+<div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-primary helpbubble-bottom-left fade in"
+     data-slug="{{ "APP_BUILDER_PUBLISH"|ui_notify_slug }}"
+     role="alert">
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+  <p class="lead">{% trans 'Updates to Publishing Apps' %}</p>
+  <p class="alert alert-info">
+    <i class="fa fa-info-circle"></i>
+    {% blocktrans %}
+      Instead of starring versions of your app, you can now mark them
+      as "Released" or "In Test." "Released" has the same effect as
+      starring a version.  Any version you do not mark as "Released"
+      will default to "In Test."
+    {% endblocktrans %}
+  </p>
+ </div>
+ {% endif %}
 
 {% if not intro_only and build_profile_access %}
+
 <div class="tabbable">
     <ul class="nav nav-tabs">
         <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
@@ -124,12 +75,11 @@
                     </small></p>
                 </div>
                 <p class="pull-right auto-release-notes">
-                  <span data-bind="starred: true"></span> {% trans "Auto-Update On" %} |
-                  <span data-bind="starred: false"></span> {% trans "Auto-Update Off" %}
+                  {% trans 'What are Released Versions?' %}
                   <span class="hq-help-template"
-                    data-title="Auto-Update"
+                    data-title="Released Versions"
                     data-container="body"
-                    data-content="Use this for automatically updating CommCare applications. If the &quot;Auto-update&quot; setting is set to Daily or Weekly, any application versions that are marked as released will update to the latest released version when checking for updates."
+                    data-content="Mark versions as Released for automatically updating CommCare applications. If the Auto-Update app setting is set to Daily or Weekly, any application versions that are marked as Released will update to the latest Released version automatically. When the user clicks 'Update App' from mobile, the latest Released version will be downloaded."
                     data-placement="left"
                   ></span>
                 </p>
@@ -172,11 +122,6 @@
         {% trans "Whoops, we couldn't get those versions for you. Could you try that again?" %}
     </div>
 
-    <div class="alert alert-info hide"
-         data-bind="visible: doneFetching() && !savedApps().length && buildButtonEnabled(), css: {hide: false}">
-        {% trans 'Use the <strong>Make New Version</strong> button to create and deploy the latest version of your application' %}
-    </div>
-
     <div class="releases-container"
          data-bind="css: {hide: false},
                     template: {
@@ -193,25 +138,51 @@
                 'error': build_broken
             }">
           <div class="panel-heading">
-              <div class="release-trash-container">
-                <a href="#"
-                   class="hide release-remove"
-                   data-bind="openModal: 'delete-build-modal-template',
-                              visible: !_deleteState(),
-                              css: {hide: false}">
-                    <i class="fa fa-trash"></i>
-                </a>
-                <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
-                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
-                </div>
-                <i class="fa fa-exclamation-circle hide"
-                   data-bind="visible: _deleteState() == 'error',
-                              css: {hide: false}"></i>
+              {% if request.user.is_superuser %}
+                  <div class="release-trash-container">
+                    <a href="#"
+                       class="hide release-remove"
+                       data-bind="openModal: 'delete-build-modal-template',
+                                  visible: !_deleteState(),
+                                  css: {hide: false}">
+                        <i class="fa fa-trash"></i>
+                    </a>
+                    <div class="pending hide" data-bind="visible: _deleteState() == 'pending', css: {hide: false}">
+                        <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
+                    </div>
+                    <i class="fa fa-exclamation-circle hide"
+                       data-bind="visible: _deleteState() == 'error',
+                                  css: {hide: false}"></i>
+                  </div>
+              {% endif %}
+              <div class="build-is-released">
+                  <span class="label label-info"
+                        data-bind="visible: id() === $root.latestReleaseId()">{% trans "Latest" %}</span>
+                  <i class="fa fa-spin fa-refresh hide js-release-waiting"></i>
+                  <div class="btn-group">
+                      <button type="button"
+                              class="btn btn-xs"
+                              data-bind="click: $root.toggleRelease,
+                                         css: {
+                                            'active': is_released(),
+                                            'btn-success': is_released(),
+                                            'btn-default': !is_released()
+                                         }">
+                          {% trans "Released" %}
+                      </button>
+                      <button type="button"
+                              class="btn btn-xs btn-default"
+                              data-bind="click: $root.toggleRelease,
+                                         css: {
+                                            'active': !is_released(),
+                                            'btn-primary': !is_released(),
+                                            'btn-default': is_released()
+                                         }">
+                          {% trans "In Test" %}
+                      </button>
+                  </div>
               </div>
               <h4 class="panel-release-title">
-                <span class="build-is-released">
-                    <span data-bind="starred: is_released, click: $root.toggleRelease"></span>
-                </span>
                 <strong>{% trans "Version" %} <span data-bind="text: version"></span></strong> |
                 <span data-bind="text: built_on_date"></span> <span data-bind="text: built_on_time"></span> {% trans 'by' %}
                 <span data-bind="text: comment_user_name"></span>
@@ -222,23 +193,30 @@
                 <span data-bind="if: !built_with.signed()">{% trans "Unsigned Jar" %}</span>
                 {% if request|toggle_enabled:"APPLICATION_ERROR_REPORT" %}
                 | <a class="release-error-report-link" data-bind="text: numErrorsText,
-                              attr: {href: $root.url('application_errors', version())}"></a>
+                              attr: {href: $root.app_error_url('{{ app.id }}', version())}"></a>
                 {% endif %}
               </h4>
           </div>
           <div class="panel-body">
-            <inline-edit-v2 params="
-                value: build_comment,
-                iconClass: 'fa fa-comment',
-                rows: 1,
-                placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
-                url: '{% url "update_build_comment" domain app.id %}',
-                saveParams: {'build_id': id},
-                saveValueName: 'comment',
-                errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
-            "></inline-edit-v2>
+            <div class="comment-container"
+                 data-bind="visible: is_comment_visible">
+              <inline-edit params="
+                  value: build_comment,
+                  iconClass: 'fa fa-comment',
+                  rows: 1,
+                  placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
+                  url: '{% url "update_build_comment" domain app.id %}',
+                  saveParams: {'build_id': id},
+                  saveValueName: 'comment',
+                  errorMessage:'{% trans "Error updating comment.  Please try again."|escapejs %}',
+              "></inline-edit>
+            </div>
           </div><!-- .panel-body -->
           <div class="panel-footer">
+            <button class="btn btn-default"
+                    data-bind="visible: !is_comment_visible(), click: showComment">
+              <i class="fa fa-comment"></i> {% trans "Add Comment" %}
+            </button>
             <button class="btn btn-default hide"
                     data-bind="
                         openModal: 'revert-build-modal-template',
@@ -260,7 +238,7 @@
                 <span class="fa fa-exclamation-circle hide"
                       data-bind="visible: build_broken, css: {hide: false}">
                 </span>
-                {% trans "Deploy Version" %}
+                {% trans "Publish" %}
             </a>
           </div><!-- .panel-footer -->
         </div><!-- .panel-release -->

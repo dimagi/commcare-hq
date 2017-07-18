@@ -7,6 +7,7 @@ from corehq.apps.cloudcare.views import (
     FormplayerMainPreview,
     FormplayerPreviewSingleApp,
     PreviewAppView,
+    LoginAsUsers,
     SingleAppLandingPageView,
     form_context, get_cases, filter_cases, get_apps_api, get_app_api,
     get_fixtures, get_sessions, get_session_context, get_ledgers, render_form,
@@ -32,6 +33,7 @@ app_urls = [
 ]
 
 api_urls = [
+    url(r'^login_as/users/$', LoginAsUsers.as_view(), name=LoginAsUsers.urlname),
     url(r'^cases/$', get_cases, name='cloudcare_get_cases'),
     url(r'^cases/module/(?P<app_id>[\w-]+)/modules-(?P<module_id>[\w-]+)/$', 
         filter_cases, name='cloudcare_filter_cases'),

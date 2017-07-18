@@ -1,5 +1,6 @@
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
+from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
 from corehq.apps.app_manager.suite_xml.sections.details import DetailsHelper, get_instances_for_module
 from corehq.apps.app_manager.suite_xml.xml_models import (
     Command,
@@ -125,6 +126,13 @@ class RemoteRequestFactory(object):
             QueryData(key=u"{}".format(c.property), ref=u"{}".format(c.defaultValue))
             for c in self.module.search_config.default_properties
         ]
+        if self.module.search_config.blacklisted_owner_ids_expression:
+            extra_query_datums.append(
+                QueryData(
+                    key=CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
+                    ref=u"{}".format(self.module.search_config.blacklisted_owner_ids_expression)
+                )
+            )
         return default_query_datums + extra_query_datums
 
     def _build_query_prompts(self):

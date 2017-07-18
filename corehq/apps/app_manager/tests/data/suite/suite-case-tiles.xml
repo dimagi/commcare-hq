@@ -27,7 +27,7 @@
   <detail id="m0_case_short">
     <title>
       <text>
-        <locale id="m0.case_short.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <action>
@@ -71,12 +71,17 @@
       </header>
       <template>
         <text>
-          &lt;b&gt; &lt;/b&gt; <xpath function="if(today() - date(dob) &gt; 30, concat(name, ' (', int((today() - date(dob)) div 30.25), ' Mois)'), concat(name, ' (',int(today() - date(dob)), ' Jours)'))"/>
+          &lt;b&gt; &lt;/b&gt;
+          <xpath function="if(today() - date(dob) &gt; 30, concat(name, ' (', int((today() - date(dob)) div 30.25), ' Mois)'), concat(name, ' (',int(today() - date(dob)), ' Jours)'))">
+
+          </xpath>
         </text>
       </template>
       <sort type="string" order="-2" direction="ascending">
         <text>
-          <xpath function="if(today() - date(dob) &gt; 30, concat(name, ' (', int((today() - date(dob)) div 30.25), ' Mois)'), concat(name, ' (',int(today() - date(dob)), ' Jours)'))"/>
+          <xpath function="if(today() - date(dob) &gt; 30, concat(name, ' (', int((today() - date(dob)) div 30.25), ' Mois)'), concat(name, ' (',int(today() - date(dob)), ' Jours)'))">
+
+          </xpath>
         </text>
       </sort>
     </field>
@@ -90,11 +95,18 @@
         </text>
       </header>
       <template>
-        <text>&lt;b&gt;Town: &lt;/b&gt; <xpath function="town"/></text>
+        <text>
+          &lt;b&gt;Town: &lt;/b&gt;
+          <xpath function="town">
+
+          </xpath>
+        </text>
       </template>
       <sort type="string" order="-2" direction="ascending">
         <text>
-          <xpath function="town"/>
+          <xpath function="town">
+
+          </xpath>
         </text>
       </sort>
     </field>
@@ -108,14 +120,17 @@
         </text>
       </header>
       <template>
-        <text>&lt;b&gt; &lt;/b&gt;<xpath function="if(sex = 'male', $kmale, if(sex = 'female', $kfemale, ''))">
-            <variable name="kfemale">
-              <locale id="m0.case_short.case_sex_4.enum.kfemale"/>
-            </variable>
+        <text>
+          &lt;b&gt; &lt;/b&gt;
+          <xpath function="if(sex = 'male', $kmale, if(sex = 'female', $kfemale, ''))">
             <variable name="kmale">
               <locale id="m0.case_short.case_sex_4.enum.kmale"/>
             </variable>
-          </xpath></text>
+            <variable name="kfemale">
+              <locale id="m0.case_short.case_sex_4.enum.kfemale"/>
+            </variable>
+          </xpath>
+        </text>
       </template>
     </field>
     <field>
@@ -128,11 +143,18 @@
         </text>
       </header>
       <template>
-        <text>&lt;b&gt;Mother's name: &lt;/b&gt; <xpath function="mother_name"/></text>
+        <text>
+          &lt;b&gt;Mother's name: &lt;/b&gt;
+          <xpath function="mother_name">
+
+          </xpath>
+        </text>
       </template>
       <sort type="string" order="-2" direction="ascending">
         <text>
-          <xpath function="mother_name"/>
+          <xpath function="mother_name">
+
+          </xpath>
         </text>
       </sort>
     </field>
@@ -153,7 +175,7 @@
   <detail id="m0_case_long">
     <title>
       <text>
-        <locale id="m0.case_long.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <field>
@@ -172,7 +194,7 @@
   <detail id="m1_case_short">
     <title>
       <text>
-        <locale id="m1.case_short.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <field>
@@ -273,7 +295,7 @@
   <detail id="m1_case_long">
     <title>
       <text>
-        <locale id="m1.case_long.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <field>

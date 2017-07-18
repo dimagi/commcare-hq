@@ -36,7 +36,8 @@ from dimagi.utils.logging import notify_exception
 from .utils import analytics_enabled_for_email
 
 _hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
-                                               '{}@{}'.format('aphilippot', 'dimagi.com')],
+                                               '{}@{}'.format('aphilippot', 'dimagi.com'),
+                                               '{}@{}'.format('colaughlin', 'dimagi.com')],
                                            send_to_ops=False)
 
 logger = logging.getLogger('analytics')
@@ -397,7 +398,7 @@ def track_periodic_data():
     # Start by getting a list of web users mapped to their domains
     six_months_ago = date.today() - timedelta(days=180)
     users_to_domains = (UserES().web_users()
-                        .last_logged_in(gte=six_months_ago).fields(['domains', 'email', 'date_joined'])
+                        .last_logged_in(gte=six_months_ago).source(['domains', 'email', 'date_joined'])
                         .analytics_enabled()
                         .run().hits)
     # users_to_domains is a list of dicts

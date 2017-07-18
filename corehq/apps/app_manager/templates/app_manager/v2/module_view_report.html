@@ -6,15 +6,28 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
-    <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
-    <script src="{% static 'app_manager/js/report-module.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/graph_config.js' %}"></script>
+    <script src="{% static 'app_manager/js/modules/report_module.js' %}"></script>
     <script src="{% static 'reports_core/js/choice-list-api.js' %}"></script>
     {% include "app_manager/v2/partials/xpathValidator.html" %}
 {% endblock %}
 {% block js-inline %}{{ block.super }}
-    {% include "app_manager/v2/partials/report_configs_js.html" %}
+    {% include 'hqmedia/partials/multimedia_js.html' %}
+    <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
+    <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
+    <script src="{% static 'app_manager/js/modules/module_view_report.js' %}"></script>
 {% endblock %}
 {% block form-view %}
+    {% initial_page_data 'lang' lang %}
+    {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
+    {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
+    {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
+    {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
+    {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
+    {% initial_page_data 'report_module_options' report_module_options %}
+    {% initial_page_data 'static_data_options' static_data_options %}
+    {% registerurl 'choice_list_api' domain 'report_id' 'filter_id' %}
+    {% registerurl "edit_report_module" domain app.id module.id %}
     {% registerurl "validate_module_for_build" domain app.id module.id %}
     {% include 'app_manager/v2/partials/module_view_heading.html' %}
     {% include 'app_manager/v2/partials/mobile_report_configs.html' %}

@@ -58,6 +58,7 @@ from corehq.apps.cloudcare.api import (
     look_up_app_json,
 )
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_app_id_from_hash
+from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
@@ -72,6 +73,7 @@ from corehq.apps.style.decorators import (
     use_jquery_ui,
 )
 from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
@@ -128,6 +130,9 @@ class FormplayerMain(View):
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
         apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
+        role = request.couch_user.get_role(domain)
+        if role:
+            apps = [app for app in apps if role.permissions.view_web_app(app)]
         apps = sorted(apps, key=lambda app: app['name'])
 
         def _default_lang():
@@ -150,6 +155,7 @@ class FormplayerMain(View):
             "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
+            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -187,6 +193,10 @@ class FormplayerPreviewSingleApp(View):
         if not app_access.user_can_access_app(request.couch_user, app):
             raise Http404()
 
+        role = request.couch_user.get_role(domain)
+        if role and not role.permissions.view_web_app(app):
+            raise Http404()
+
         def _default_lang():
             try:
                 return app['langs'][0]
@@ -207,6 +217,7 @@ class FormplayerPreviewSingleApp(View):
             "single_app_mode": True,
             "home_url": reverse(self.urlname, args=[domain, app_id]),
             "environment": WEB_APPS_ENVIRONMENT,
+            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -258,6 +269,78 @@ class SingleAppLandingPageView(TemplateView):
             "maps_api_key": settings.GMAPS_API_KEY,
             "environment": WEB_APPS_ENVIRONMENT,
         })
+
+
+@location_safe
+class LoginAsUsers(View):
+
+    http_method_names = ['get']
+    urlname = 'login_as_users'
+
+    @method_decorator(login_and_domain_required)
+    @method_decorator(require_can_edit_commcare_users)
+    @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
+    def dispatch(self, *args, **kwargs):
+        return super(LoginAsUsers, self).dispatch(*args, **kwargs)
+
+    def get(self, request, domain, **kwargs):
+        self.domain = domain
+        self.couch_user = request.couch_user
+
+        try:
+            limit = int(request.GET.get('limit', 10))
+        except ValueError:
+            limit = 10
+
+        # front end pages start at one
+        try:
+            page = int(request.GET.get('page', 1))
+        except ValueError:
+            page = 1
+        query = request.GET.get('query')
+
+        users_query = self._user_query(query, page - 1, limit)
+        total_records = users_query.count()
+        users_data = users_query.run()
+
+        return json_response({
+            'response': {
+                'itemList': map(self._format_user, users_data.hits),
+                'total': users_data.total,
+                'page': page,
+                'query': query,
+                'total_records': total_records
+            },
+        })
+
+    def _user_query(self, search_string, page, limit):
+        user_data_fields = []
+        if toggles.ENIKSHAY.enabled(self.domain):
+            user_data_fields = [
+                'id_issuer_number',
+                'id_issuer_body',
+                'agency_id_legacy',
+            ]
+        return login_as_user_query(
+            self.domain,
+            self.couch_user,
+            search_string,
+            limit,
+            page * limit,
+            user_data_fields=user_data_fields
+        )
+
+    def _format_user(self, user_json):
+        user = CouchUser.wrap_correctly(user_json)
+        return {
+            'username': user.raw_username,
+            'customFields': user.user_data,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'phoneNumbers': user.phone_numbers,
+            'user_id': user.user_id,
+            'location': user.sql_location.to_json() if user.sql_location else None,
+        }
 
 
 @login_and_domain_required

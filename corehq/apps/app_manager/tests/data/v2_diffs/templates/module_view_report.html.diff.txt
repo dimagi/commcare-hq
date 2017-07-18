@@ -6,18 +6,18 @@
  {% load xforms_extras %}
  {% load hq_shared_tags %}
  {% load reports_core_tags %}
-@@ -9,24 +9,24 @@
-     <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
-     <script src="{% static 'app_manager/js/report-module.js' %}"></script>
+@@ -9,7 +9,7 @@
+     <script src="{% static 'app_manager/js/details/graph_config.js' %}"></script>
+     <script src="{% static 'app_manager/js/modules/report_module.js' %}"></script>
      <script src="{% static 'reports_core/js/choice-list-api.js' %}"></script>
 -    {% include "app_manager/v1/partials/xpathValidator.html" %}
 +    {% include "app_manager/v2/partials/xpathValidator.html" %}
  {% endblock %}
  {% block js-inline %}{{ block.super }}
--    {% include "app_manager/v1/partials/report_configs_js.html" %}
-+    {% include "app_manager/v2/partials/report_configs_js.html" %}
- {% endblock %}
- {% block form-view %}
+     {% include 'hqmedia/partials/multimedia_js.html' %}
+@@ -29,17 +29,17 @@
+     {% registerurl 'choice_list_api' domain 'report_id' 'filter_id' %}
+     {% registerurl "edit_report_module" domain app.id module.id %}
      {% registerurl "validate_module_for_build" domain app.id module.id %}
 -    {% include 'app_manager/v1/partials/module_view_heading.html' %}
 -    {% include 'app_manager/v1/partials/mobile_report_configs.html' %}

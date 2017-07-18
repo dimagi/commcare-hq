@@ -1,7 +1,7 @@
 # coding=utf-8
 import calendar
 from corehq.apps.products.models import SQLProduct
-from corehq.apps.locations.models import Location
+from corehq.apps.locations.models import get_location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup, DataTablesColumn
 from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
 from corehq.util.translation import localize
@@ -23,7 +23,7 @@ class IntraHealthLocationMixin(object):
     @memoized
     def location(self):
         if self.request.GET.get('location_id'):
-            return Location.get(self.request.GET.get('location_id'))
+            return get_location(self.request.GET.get('location_id'))
 
 
 class IntraHealthReportConfigMixin(object):

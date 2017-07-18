@@ -240,7 +240,7 @@
                 self.is_loading(true);
                 self.showSave(false);
                 var arr = self.selected_providers();
-                var csrftoken = $.cookie('csrftoken');
+                var csrftoken = $("#csrfTokenContainer").val();
 
                 var provider_ids = $.map(arr, function (item) {
                     return item.id();

@@ -1,0 +1,109 @@
+{% extends "style/base_section.html" %}
+{% load i18n %}
+{% block head %}{{ block.super }}
+<style type="text/css">
+    th.checkmark-column, td.checkmark-column {
+        white-space: nowrap;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+{% block page_content %}
+    <div class="row">
+        <div class="col-sm-10">
+            <p>
+                {% blocktrans %}
+                    Features can be enabled or disabled based on feature flags or privileges. This page
+                    is intended to provide a list of what features a domain has access to.
+                {% endblocktrans %}
+            </p>
+            {% if use_sql_backend %}
+            <div class="alert alert-warning" role="alert">
+                {% blocktrans %}
+                    NOTE: This domain is using the SCALE backend which implies the following feature flags:
+                    <ul>
+                        <li>Use new backend export infrastructure</li>  <!-- not OLD_EXPORTS -->
+                        <li>Use a SQLite backend for Touchforms</li>  <!-- TF_USES_SQLITE_BACKEND -->
+                    </ul>
+                {% endblocktrans %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-10">
+            <h1>Privileges</h1>
+            <p>
+                {% url "domain_subscription_view" domain as software_plan_url %}
+                {% blocktrans %}
+                    Access to some features is dependent on a the software plan to which the domain
+                    is subscribed.
+                    <a href="{{ software_plan_url }}">Current Subscription</a>
+                {% endblocktrans %}
+            </p>
+        </div>
+        <div class="col-sm-10">
+            <table class="table table-striped">
+                <thead>
+                    <th>{% trans "Privilege" %}</th>
+                    <th class="checkmark-column">{% trans "Enabled for domain?" %}</th>
+                </thead>
+                <tbody>
+                    {% for privilege_name, enabled_for_domain in privileges %}
+                    <tr class="{% if enabled_for_domain %}success{% else %}warning{% endif %}">
+                        <td>{{ privilege_name }}</td>
+                        <td class="checkmark-column">
+                            {% if enabled_for_domain %}
+                                <i class="fa fa-check"></i>
+                            {% else %}
+                                <i class="fa fa-ban"></i>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-10">
+            <h1>Feature Flags</h1>
+            <p>
+                {% url 'toggle_list' as toggle_url %}
+                {% blocktrans %}
+                    Feature Flags turn on features for individual users or projects. They are editable only by
+                    super users, in the <a href="{{ toggle_url }}">Feature Flag edit UI</a>.
+                    In addition, some feature flags are randomly enabled by domain.
+                {% endblocktrans %}
+            </p>
+            <p>
+                {% blocktrans %}
+                    Following are all flags enabled for this domain and/or for you.
+                    This does not include any flags set for other users in this domain.
+                {% endblocktrans %}
+            </p>
+        </div>
+        <div class="col-sm-10">
+            <table class="table table-striped">
+                <thead>
+                    <th>{% trans "Feature" %}</th>
+                    <th class="checkmark-column">{% trans "Enabled for domain?" %}</th>
+                    <th class="checkmark-column">{% trans "Enabled for me?" %}</th>
+                    <th>{% trans "Edit" %}</th>
+                </thead>
+                <tbody>
+                    {% for feature, enabled_for_domain, enabled_for_user in flags %}
+                    <tr class="{% if enabled_for_domain %}success{% elif enabled_for_user %}info{% endif %}">
+                        <td>{{ feature.label }}</td>
+                        <td class="checkmark-column">{% if enabled_for_domain %}<i class="fa fa-check"></i>{% endif %}</td>
+                        <td class="checkmark-column">{% if enabled_for_user %}<i class="fa fa-check"></i>{% endif %}</td>
+                        <td><a href="{% url 'edit_toggle' feature.slug %}">{% trans "change" %}</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

@@ -63,6 +63,7 @@ function WebFormSession(params) {
     self.domain = params.domain;
     self.username = params.username;
     self.debuggerEnabled = params.debuggerEnabled;
+    self.formplayerEnabled = params.formplayerEnabled;
     self.post_url = params.post_url;
     self.displayOptions = params.displayOptions;
     self.restoreAs = params.restoreAs;
@@ -191,9 +192,6 @@ WebFormSession.prototype.handleSuccess = function(resp, action, callback) {
 
         try {
             callback(resp);
-            if (self.shouldUpdateDebugger(action)) {
-                $.publish('debugger.update');
-            }
         } catch (err) {
             console.error(err);
             self.onerror({message: Formplayer.Utils.touchformsError(err)});
@@ -362,7 +360,7 @@ WebFormSession.prototype.evaluateXPath = function(xpath, callback) {
             'xpath': xpath
         },
         function(resp) {
-            callback(resp.output, resp.status);
+            callback(resp);
         });
 };
 
@@ -453,15 +451,6 @@ WebFormSession.prototype.submitForm = function(form) {
         true);
 };
 
-WebFormSession.prototype.shouldUpdateDebugger = function(action) {
-    return _.contains([
-        Formplayer.Const.NEW_FORM,
-        Formplayer.Const.ANSWER,
-        Formplayer.Const.NEW_REPEAT,
-        Formplayer.Const.DELETE_REPEAT,
-    ], action) && this.debuggerEnabled;
-};
-
 WebFormSession.prototype.serverError = function(q, resp) {
     if (resp.type === "required") {
         q.serverError("An answer is required");
@@ -482,7 +471,4 @@ WebFormSession.prototype.renderFormXml = function (resp, $form) {
     var self = this;
     self.session_id = self.session_id || resp.session_id;
     self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
-    if (self.debuggerEnabled) {
-        $.publish('debugger.update');
-    }
 };

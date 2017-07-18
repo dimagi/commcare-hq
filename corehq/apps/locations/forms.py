@@ -26,13 +26,12 @@ from corehq.apps.locations.permissions import LOCATION_ACCESS_DENIED
 from corehq.apps.locations.tasks import make_location_user
 from corehq.apps.users.forms import NewMobileWorkerForm, generate_strong_password
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.users.signals import clean_commcare_user
 from corehq.apps.users.util import user_display_string
 from corehq.apps.style import crispy as hqcrispy
 
 from .models import SQLLocation, LocationType, LocationFixtureConfiguration
 from .permissions import user_can_access_location_id
-from .signals import location_edited, clean_location
+from .signals import location_edited
 
 
 class ParentLocWidget(forms.Widget):
@@ -338,13 +337,17 @@ class LocationForm(forms.Form):
 
 class LocationFormSet(object):
     """Ties together the forms for location, location data, user, and user data."""
+    _location_form_class = LocationForm
+    _location_data_editor = CustomDataEditor
+    _user_form_class = NewMobileWorkerForm
+    _user_data_editor = CustomDataEditor
 
     def __init__(self, location, request_user, is_new, bound_data=None, *args, **kwargs):
         self.location = location
         self.domain = location.domain
         self.is_new = is_new
         self.request_user = request_user
-        self.location_form = LocationForm(location, bound_data, is_new=is_new)
+        self.location_form = self._location_form_class(location, bound_data, is_new=is_new)
         self.custom_location_data = self._get_custom_location_data(bound_data, is_new)
 
         if self.include_user_forms:
@@ -374,32 +377,7 @@ class LocationFormSet(object):
 
     @memoized
     def is_valid(self):
-        # Trigger the clean methods of each form
-        for form in self.forms:
-            form.errors
-        self._send_clean_signals()
         return all(form.is_valid() for form in self.forms)
-
-    def _send_clean_signals(self):
-        clean_location.send(
-            self.__class__.__name__,
-            domain=self.domain,
-            request_user=self.request_user,
-            location=self.location,
-            forms={self.location_form.__class__.__name__: self.location_form,
-                   self.custom_location_data.__class__.__name__: self.custom_location_data},
-        )
-        if self.include_user_forms:
-            clean_commcare_user.send(
-                'LocationFormSet',
-                domain=self.domain,
-                request_user=self.request_user,
-                user=self.user,
-                forms={
-                    self.user_form.__class__.__name__: self.user_form,
-                    self.custom_user_data.__class__.__name__: self.custom_user_data,
-                }
-            )
 
     def save(self):
         if not self.is_valid():
@@ -446,7 +424,7 @@ class LocationFormSet(object):
         if is_new and bound_data is None:
             existing = None
 
-        custom_data = CustomDataEditor(
+        custom_data = self._location_data_editor(
             field_view=LocationFieldsView,
             domain=self.domain,
             # For new locations, only display required fields
@@ -460,10 +438,10 @@ class LocationFormSet(object):
 
     def _get_user_form(self, bound_data):
         domain_obj = Domain.get_by_name(self.domain)
-        form = NewMobileWorkerForm(
+        form = self._user_form_class(
             project=domain_obj,
             data=bound_data,
-            user=self.request_user,
+            request_user=self.request_user,
             prefix='location_user',
         )
 
@@ -471,7 +449,6 @@ class LocationFormSet(object):
             initial_password = generate_strong_password()
             pw_field = crispy.Field(
                 'password',
-                data_bind="initializeValue: password, value: password, valueUpdate: 'input'",
                 value=initial_password,
             )
         else:
@@ -493,7 +470,7 @@ class LocationFormSet(object):
 
     def _get_custom_user_data(self, bound_data):
         from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
-        user_data = CustomDataEditor(
+        user_data = self._user_data_editor(
             field_view=UserFieldsView,
             domain=self.domain,
             post_dict=bound_data,

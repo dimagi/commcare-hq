@@ -72,7 +72,7 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
         item=ExportItem(path=[
             PathNode(name='form'), PathNode(name='meta'), PathNode(name='username')
         ]),
-        help_text=_('The user who submitted this form'),
+        help_text=_('The username of the user who submitted this form'),
         selected=True,
     ),
     ExportColumn(
@@ -82,14 +82,14 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
             PathNode(name='form'), PathNode(name='meta'), PathNode(name='userID')
         ]),
         is_advanced=True,
-        help_text=_("The id of the user who submitted this form")
+        help_text=_("The ID of the user who submitted this form")
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='@xmlns',
         item=ExportItem(path=[PathNode(name='xmlns')]),
         is_advanced=True,
-        help_text=_('The xmlns of this form')
+        help_text=_('The XMLNS of this form')
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
@@ -105,7 +105,7 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
             PathNode(name='form'), PathNode(name='meta'), PathNode(name='appVersion')
         ]),
         is_advanced=True,
-        help_text=_('The version of CommCare that was used to submit this form')),
+        help_text=_('The version of CommCare and the app that was used to submit this form')),
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='deviceID',
@@ -113,7 +113,7 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
             PathNode(name='form'), PathNode(name='meta'), PathNode(name='deviceID')
         ]),
         is_advanced=True,
-        help_text=_("The id of the device that submitted this form")
+        help_text=_("The ID of the device that submitted this form")
     ),
     SplitGPSExportColumn(
         tags=[PROPERTY_TAG_INFO],
@@ -129,14 +129,14 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
         label='app_id',
         item=ExportItem(path=[PathNode(name='app_id')]),
         is_advanced=True,
-        help_text=_("The id of the app that this form is part of")
+        help_text=_("The ID of the app that this form is part of")
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_APP],
         label='build_id',
         item=ExportItem(path=[PathNode(name='build_id')]),
         is_advanced=True,
-        help_text=_("The id of the app version that this form is part of")
+        help_text=_("The ID of the published app that this form is part of")
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_APP],
@@ -145,7 +145,7 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
             PathNode(name='form'), PathNode(name='@version')
         ]),
         is_advanced=True,
-        help_text=_("The app version number that this form is part of")
+        help_text=_("The version of the app in which this form was last updated prior to being published")
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_SERVER],
@@ -158,7 +158,7 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
         label="last_sync_token",
         item=ExportItem(path=[PathNode(name="last_sync_token")]),
         is_advanced=True,
-        help_text=_("last_sync_token")
+        help_text=_("The ID of the last sync on the phone that occurred prior to submitting this form.")
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_SERVER],
@@ -176,6 +176,13 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_SERVER],
+        label="edited_on",
+        item=ExportItem(path=[PathNode(name="edited_on")]),
+        is_advanced=True,
+        help_text=_("The time at which this form was last edited."),
+    ),
+    ExportColumn(
+        tags=[PROPERTY_TAG_SERVER],
         label="submit_ip",
         item=ExportItem(path=[PathNode(name="submit_ip")]),
         is_advanced=True,
@@ -190,7 +197,7 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
             PathNode(name='form'), PathNode(name='case'), PathNode(name='@case_id')
         ]),
         selected=True,
-        help_text=_('The id of the case that this form operated on')
+        help_text=_('The ID of the case that this form operated on')
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_CASE],
@@ -226,7 +233,7 @@ BOTTOM_MAIN_FORM_TABLE_PROPERTIES = [
             PathNode(name='form'), PathNode(name='case'), PathNode(name='create'), PathNode(name='owner_id')]
         ),
         is_advanced=True,
-        help_text=_('The owner id of the case that this form opened')
+        help_text=_('The owner ID of the case that this form opened')
     ),
 ]
 MAIN_FORM_TABLE_PROPERTIES = TOP_MAIN_FORM_TABLE_PROPERTIES + BOTTOM_MAIN_FORM_TABLE_PROPERTIES
@@ -256,7 +263,7 @@ TOP_MAIN_CASE_TABLE_PROPERTIES = [
         tags=[PROPERTY_TAG_INFO],
         label='caseid',
         item=ExportItem(path=[PathNode(name='_id')]),
-        help_text=_("The id of the case"),
+        help_text=_("The ID of the case"),
         selected=True
     ),
     ExportColumn(
@@ -287,7 +294,7 @@ BOTTOM_MAIN_CASE_TABLE_PROPERTIES = [
         tags=[PROPERTY_TAG_INFO],
         label='closed_by_user_id',
         item=ExportItem(path=[PathNode(name='closed_by')]),
-        help_text=_("The id of the user who closed the case"),
+        help_text=_("The ID of the user who closed the case"),
         is_advanced=True,
     ),
     ExportColumn(
@@ -308,14 +315,14 @@ BOTTOM_MAIN_CASE_TABLE_PROPERTIES = [
         tags=[PROPERTY_TAG_INFO],
         label='external_id',
         item=ExportItem(path=[PathNode(name='external_id')]),
-        help_text=_("The external id for this case"),
+        help_text=_("The external ID for this case"),
         is_advanced=True,
     ),
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='last_modified_by_user_id',
         item=ExportItem(path=[PathNode(name='user_id')]),
-        help_text=_("The id of the user who last modified this case"),
+        help_text=_("The ID of the user who last modified this case"),
         is_advanced=True,
     ),
     ExportColumn(
@@ -336,7 +343,7 @@ BOTTOM_MAIN_CASE_TABLE_PROPERTIES = [
         tags=[PROPERTY_TAG_INFO],
         label='opened_by_user_id',
         item=ExportItem(path=[PathNode(name='opened_by')]),
-        help_text=_("The id of the user who opened the case"),
+        help_text=_("The ID of the user who opened the case"),
         is_advanced=True,
     ),
     ExportColumn(
@@ -357,7 +364,7 @@ BOTTOM_MAIN_CASE_TABLE_PROPERTIES = [
         tags=[PROPERTY_TAG_INFO],
         label='owner_id',
         item=ExportItem(path=[PathNode(name='owner_id')]),
-        help_text=_("The id of the user who owns the case"),
+        help_text=_("The ID of the user who owns the case"),
         is_advanced=True,
     ),
     ExportColumn(

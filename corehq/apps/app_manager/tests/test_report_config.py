@@ -8,7 +8,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 from corehq.apps.app_manager.models import ReportAppConfig, Application, ReportModule, \
-    ReportGraphConfig, MobileSelectFilter, _get_auto_filter_function, _filter_by_user_id
+    GraphConfiguration, GraphSeries, MobileSelectFilter, _get_auto_filter_function, _filter_by_user_id
 from corehq.apps.app_manager.tests.mocks.mobile_ucr import mock_report_configurations, \
     mock_report_configuration_get, mock_report_data
 from corehq.apps.app_manager.tests.util import TestXmlMixin
@@ -105,6 +105,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
 
     @classmethod
     def setUpClass(cls):
+        super(ReportFiltersSuiteTest, cls).setUpClass()
         delete_all_users()
         cls.report_id = '7b97e8b53d00d43ca126b10093215a9d'
         cls.report_config_uuid = 'a98c812873986df34fd1b4ceb45e6164ae9cc664'
@@ -126,9 +127,16 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
                 report_id=cls.report_id,
                 header={},
                 description="",
-                graph_configs={
-                    '7451243209119342931': ReportGraphConfig(
-                        series_configs={'count': {}}
+                complete_graph_configs={
+                    '7451243209119342931': GraphConfiguration(
+                        graph_type="bar",
+                        series=[GraphSeries(
+                            config={},
+                            locale_specific_config={},
+                            data_path="",
+                            x_function="",
+                            y_function="",
+                        )],
                     )
                 },
                 filters={
@@ -157,6 +165,7 @@ class ReportFiltersSuiteTest(TestCase, TestXmlMixin):
     @classmethod
     def tearDownClass(cls):
         clear_toggle_cache(MOBILE_UCR.slug, cls.domain, NAMESPACE_DOMAIN)
+        super(ReportFiltersSuiteTest, cls).tearDownClass()
 
     def test_filter_entry(self):
         self.assertXmlPartialEqual("""

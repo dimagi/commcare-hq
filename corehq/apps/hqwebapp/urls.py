@@ -43,7 +43,7 @@ urlpatterns = [
     url(r'^account/two_factor/backup/tokens/$', TwoFactorBackupTokensView.as_view(), name=TwoFactorBackupTokensView.urlname),
     url(r'^account/two_factor/disable/$', TwoFactorDisableView.as_view(), name=TwoFactorDisableView.urlname),
     url(r'^account/two_factor/backup/phone/register/$', TwoFactorPhoneSetupView.as_view(), name=TwoFactorPhoneSetupView.urlname),
-    url(r'', include(tf_urls + tf_twilio_urls, 'two_factor')),
+    url(r'', include((tf_urls + tf_twilio_urls, 'two_factor'), namespace='two_factor')),
     url(r'^account/two_factor/new_phone/$', NewPhoneView.as_view(), name=NewPhoneView.urlname)
 ]
 

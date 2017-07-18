@@ -1,6 +1,9 @@
+import hashlib
+
 from django.utils.translation import ugettext as _
 import sqlalchemy
 from sqlalchemy.exc import IntegrityError, ProgrammingError
+from sqlalchemy.schema import Index
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.userreports.exceptions import (
     ColumnNotFoundError, TableRebuildError, TableNotFoundWarning,
@@ -123,6 +126,11 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             delete = table.delete(table.c.doc_id == doc['_id'])
             connection.execute(delete)
 
+    def doc_exists(self, doc):
+        with self.session_helper.session_context() as session:
+            query = session.query(self.get_table()).filter_by(doc_id=doc['_id'])
+            return session.query(query.exists()).scalar()
+
 
 class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
 
@@ -140,14 +148,28 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
 def get_indicator_table(indicator_config, custom_metadata=None):
     sql_columns = [column_to_sql(col) for col in indicator_config.get_columns()]
     table_name = get_table_name(indicator_config.domain, indicator_config.table_id)
+    extra_indices = [
+        Index(
+            _custom_index_name(table_name, index.column_ids),
+            *index.column_ids
+        )
+        for index in indicator_config.sql_column_indexes
+    ]
+    columns_and_indices = sql_columns + extra_indices
     # todo: needed to add extend_existing=True to support multiple calls to this function for the same table.
     # is that valid?
     return sqlalchemy.Table(
         table_name,
         custom_metadata or metadata,
         extend_existing=True,
-        *sql_columns
+        *columns_and_indices
     )
+
+
+def _custom_index_name(table_name, column_ids):
+    base_name = "ix_{}_{}".format(table_name, ','.join(column_ids))
+    base_hash = hashlib.md5(base_name).hexdigest()
+    return "{}_{}".format(base_name[:50], base_hash[:5])
 
 
 def rebuild_table(engine, table):

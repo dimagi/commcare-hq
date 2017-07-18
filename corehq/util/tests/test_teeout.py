@@ -20,8 +20,7 @@ def test_tee_output():
         "fail.\n"
         "Traceback (most recent call last):\n"
         "  ...\n"
-        "Error: stop\n"
-    )
+        "Error: stop\n")
 
 
 def test_tee_output_with_KeyboardInterrupt():
@@ -33,8 +32,7 @@ def test_tee_output_with_KeyboardInterrupt():
     eq(sanitize_tb(fileobj.getvalue()),
         "Traceback (most recent call last):\n"
         "  ...\n"
-        "KeyboardInterrupt: errrt\n"
-    )
+        "KeyboardInterrupt: errrt\n")
 
 
 def test_tee_output_with_SystemExit():
@@ -64,4 +62,5 @@ def sanitize_tb(value):
     )
 
 
-class Error(Exception): pass
+class Error(Exception):
+    pass

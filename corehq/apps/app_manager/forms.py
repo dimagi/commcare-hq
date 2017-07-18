@@ -2,7 +2,7 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset, Hidden, Layout
 from crispy_forms.bootstrap import StrictButton, PrependedText
 from django import forms
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.domain.models import Domain
 from corehq.apps.style import crispy as hqcrispy
@@ -11,11 +11,11 @@ from corehq.toggles import LINKED_APPS
 
 class CopyApplicationForm(forms.Form):
     domain = forms.CharField(
-        label=_("Copy this app to project"),
+        label=ugettext_lazy("Copy this app to project"),
         widget=forms.TextInput(attrs={
             "data-bind": "autocompleteSelect2: domain_names",
         }))
-    name = forms.CharField(required=True, label=_('Name'))
+    name = forms.CharField(required=True, label=ugettext_lazy('Name'))
     linked = forms.BooleanField(
         required=False,
         label=_('Copy as Linked Application'),

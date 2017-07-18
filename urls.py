@@ -61,6 +61,7 @@ domain_specific = [
     url(r'^indicators/mvp/', include('mvp.urls')),
     url(r'^indicators/', include('corehq.apps.indicators.urls')),
     url(r'^reports/', include('corehq.apps.reports.urls')),
+    url(r'^messaging/', include('corehq.messaging.scheduling.urls')),
     url(r'^data/', include('corehq.apps.data_interfaces.urls')),
     url(r'^data_dictionary/', include('corehq.apps.data_dictionary.urls')),
     url(r'^', include(hqwebapp_domain_specific)),
@@ -69,7 +70,6 @@ domain_specific = [
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
-    url(r'^motech/', include('corehq.apps.motech.urls')),
     url(r'^fri/', include('custom.fri.urls')),
     url(r'^ilsgateway/', include('custom.ilsgateway.urls')),
     url(r'^ewsghana/', include('custom.ewsghana.urls')),
@@ -82,6 +82,7 @@ domain_specific = [
     url(r'^', include('custom.icds.urls')),
     url(r'^', include('custom.icds_reports.urls')),
     url(r'^', include('custom.enikshay.urls')),
+    url(r'^openmrs/', include('corehq.motech.openmrs.urls')),
     url(r'^_base_template/$', login_and_domain_required(
         lambda request, domain: render(request, 'style/base.html', {'domain': domain})
     )),

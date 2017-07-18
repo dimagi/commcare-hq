@@ -1,5 +1,6 @@
 from django.conf import settings
 import django.core.exceptions
+from django.utils.deprecation import MiddlewareMixin
 from corehq.apps.users.models import CouchUser, InvalidUser, AnonymousCouchUser
 from corehq.apps.users.util import username_to_user_id
 from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE, PUBLISH_CUSTOM_REPORTS
@@ -16,9 +17,10 @@ def is_public_reports(view_kwargs, request):
     )
 
 
-class UsersMiddleware(object):
+class UsersMiddleware(MiddlewareMixin):
 
-    def __init__(self):
+    def __init__(self, get_response=None):
+        super(UsersMiddleware, self).__init__(get_response)
         # Normally we'd expect this class to be pulled out of the middleware list, too,
         # but in case someone forgets, this will stop this class from being used.
         found_domain_app = False

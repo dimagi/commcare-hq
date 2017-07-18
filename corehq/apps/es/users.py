@@ -46,6 +46,7 @@ class UserES(HQESQuery):
             location,
             last_logged_in,
             analytics_enabled,
+            is_practice_user,
         ] + super(UserES, self).builtin_filters
 
     def show_inactive(self):
@@ -140,3 +141,7 @@ def location(location_id):
             filters.term('domain_memberships.assigned_location_ids', location_id)
         ),
     )
+
+
+def is_practice_user(practice_mode=True):
+    return filters.term('is_demo_user', practice_mode)

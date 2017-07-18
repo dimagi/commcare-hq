@@ -4,6 +4,7 @@ from django.test import TestCase
 
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
     FixtureDataItem, FieldList, FixtureItemField
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 
 from casexml.apps.case.mock import CaseFactory
@@ -19,7 +20,8 @@ from custom.enikshay.const import (
     HISTORICAL_CLOSURE_REASON,
 )
 from custom.enikshay.data_store import AdherenceDatastore
-from custom.enikshay.tasks import EpisodeAdherenceUpdater, EpisodeUpdate
+from custom.enikshay.tasks import EpisodeUpdater, EpisodeAdherenceUpdate
+from custom.enikshay.integrations.ninetyninedots.utils import update_episode_adherence_properties
 from custom.enikshay.tests.utils import (
     get_person_case_structure,
     get_adherence_case_structure,
@@ -52,7 +54,7 @@ class TestAdherenceUpdater(TestCase):
         self.person_id = u"person"
         self.occurrence_id = u"occurrence"
         self.episode_id = u"episode"
-        self.case_updater = EpisodeAdherenceUpdater(self.domain)
+        self.case_updater = EpisodeUpdater(self.domain)
 
     @classmethod
     def setupFixtureData(cls):
@@ -118,7 +120,7 @@ class TestAdherenceUpdater(TestCase):
         self.data_store.adapter.clear_table()
         FormProcessorTestUtils.delete_all_cases()
 
-    def _create_episode_case(self, adherence_schedule_date_start, adherence_schedule_id):
+    def _create_episode_case(self, adherence_schedule_date_start=None, adherence_schedule_id=None):
         person = get_person_case_structure(
             self.person_id,
             self.user.user_id,
@@ -138,43 +140,22 @@ class TestAdherenceUpdater(TestCase):
             }
         )
         cases = {case.case_id: case for case in self.factory.create_or_update_cases([episode_structure])}
-        return cases[self.episode_id]
+        episode_case = cases[self.episode_id]
+        self.case_updater._get_open_episode_cases = mock.MagicMock(return_value=[episode_case])
+        return episode_case
 
-    def _create_adherence_cases(self, adherence_cases):
-        self.factory.create_or_update_cases([
+    def _create_adherence_cases(self, case_dicts):
+        return self.factory.create_or_update_cases([
             get_adherence_case_structure(
                 "adherence{}".format(i),
                 self.episode_id,
-                adherence_date,
-                extra_update={
-                    "name": adherence_date,
-                    "adherence_value": adherence_value,
-                }
+                case['name'],
+                extra_update=case
             )
-            for (i, (adherence_date, adherence_value)) in enumerate(adherence_cases)
+            for i, case in enumerate(case_dicts)
         ])
 
     def assert_update(self, input, output):
-        update = self.calculate_adherence_update(input)
-        self.assertDictEqual(
-            update.update_json()['update'],
-            output
-        )
-
-    def calculate_adherence_update(self, input):
-        self.case_updater.purge_date = input[0]
-        # setup episode and adherence cases
-        adherence_schedule_date_start, adherence_schedule_id = input[1]
-        adherence_cases = input[2]
-        episode = self._create_episode_case(adherence_schedule_date_start, adherence_schedule_id)
-        self._create_adherence_cases(adherence_cases)
-
-        rebuild_indicators(self.data_store.datasource._id)
-        self.data_store.adapter.refresh_table()
-
-        return EpisodeUpdate(episode, self.case_updater)
-
-    def test_adherence_schedule_date_start_late(self):
         #   Sample test case
         #   [
         #       (
@@ -193,7 +174,53 @@ class TestAdherenceUpdater(TestCase):
         #       ),
         #       ...
         #   ]
+        purge_date = input[0]
+        adherence_schedule_date_start, adherence_schedule_id = input[1]
+        adherence_cases = [
+            {
+                "name": adherence_case[0],
+                "adherence_value": adherence_case[1],
+                "adherence_source": "enikshay",
+                "adherence_report_source": "treatment_supervisor"
+            }
+            for adherence_case in input[2]
+        ]
+        episode = self.create_episode_case(
+            purge_date, adherence_schedule_date_start, adherence_schedule_id, adherence_cases
+        )
 
+        episode = self._get_updated_episode()
+        return self._assert_properties_equal(episode, output)
+
+    def _assert_properties_equal(self, episode, output):
+        self.assertDictEqual(
+            {key: episode.dynamic_case_properties()[key] for key in output},
+            {key: str(val) for key, val in output.iteritems()}  # convert values to strings
+        )
+
+    def _get_updated_episode(self):
+        self.case_updater.run()
+        return CaseAccessors(self.domain).get_case(self.episode_id)
+
+    def create_episode_case(
+            self,
+            purge_date,
+            adherence_schedule_date_start,
+            adherence_schedule_id,
+            adherence_cases
+    ):
+        self.case_updater.purge_date = purge_date
+        episode = self._create_episode_case(adherence_schedule_date_start, adherence_schedule_id)
+        adherence_cases = self._create_adherence_cases(adherence_cases)
+        self._rebuild_indicators()
+        return episode
+
+    def _rebuild_indicators(self):
+        # rebuild so that adherence UCR data gets updated
+        rebuild_indicators(self.data_store.datasource._id)
+        self.data_store.adapter.refresh_table()
+
+    def test_adherence_schedule_date_start_late(self):
         self.assert_update(
             (
                 datetime.date(2016, 1, 15),
@@ -484,12 +511,85 @@ class TestAdherenceUpdater(TestCase):
             }
         )
 
+    def test_count_doses_taken_by_source(self):
+        adherence_cases = [
+            {
+                "name": 'Bad source shouldnt show up',
+                "adherence_source": "enikshay",
+                "adherence_report_source": "Bad source",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2017, 8, 14),
+            },
+            {
+                "name": '1',
+                "adherence_source": "99DOTS",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2017, 8, 15),
+            },
+            {
+                "name": '2',
+                "adherence_source": "99DOTS",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2017, 8, 16),
+            },
+            {
+                "name": '3',
+                "adherence_source": "99DOTS",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2017, 8, 17),
+            },
+            {
+                "name": '4',
+                "adherence_source": "MERM",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2017, 8, 18),
+            },
+            {
+                "name": 'overwrites 99DOTS case',
+                "adherence_source": "enikshay",
+                "adherence_value": 'unobserved_dose',
+                "adherence_report_source": "treatment_supervisor",
+                "adherence_date": datetime.date(2017, 8, 16),  # overwrites the 99DOTS case of this date
+            }
+        ]
+        episode = self.create_episode_case(
+            purge_date=datetime.date(2017, 8, 10),
+            adherence_schedule_date_start=datetime.date(2017, 8, 12),
+            adherence_schedule_id='schedule1',
+            adherence_cases=adherence_cases,
+        )
+
+        updater = EpisodeAdherenceUpdate(episode, self.case_updater)
+        doses_taken_by_day = updater.calculate_doses_taken_by_day(updater.get_valid_adherence_cases())
+        self.assertDictEqual(
+            {
+                '99DOTS': 2,
+                'MERM': 1,
+                'treatment_supervisor': 1,
+            },
+            EpisodeAdherenceUpdate.count_doses_taken_by_source(doses_taken_by_day)
+        )
+
+        self.assertDictEqual(
+            {
+                '99DOTS': 1,
+                'MERM': 1,
+            },
+            EpisodeAdherenceUpdate.count_doses_taken_by_source(
+                doses_taken_by_day,
+                start_date=datetime.date(2017, 8, 17),
+                end_date=datetime.date(2017, 8, 18)
+            )
+        )
+
     def test_count_taken_by_day(self):
-        episode_update = self.calculate_adherence_update((
-            datetime.date(2016, 1, 20),
-            (datetime.date(2016, 1, 10), 'schedule1'),
-            []
-        ))
+        episode = self.create_episode_case(
+            purge_date=datetime.date(2016, 1, 20),
+            adherence_schedule_date_start=datetime.date(2016, 1, 10),
+            adherence_schedule_id='schedule1',
+            adherence_cases=[]
+        )
+        episode_update = EpisodeAdherenceUpdate(episode, self.case_updater)
 
         def dose_taken_by_day(cases):
             # cases a list of tuples
@@ -527,7 +627,7 @@ class TestAdherenceUpdater(TestCase):
                 ('some_id', datetime.date(2016, 1, 22), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, 'enikshay', False, None),
             ]),
-            {datetime.date(2016, 1, 22): True}
+            {datetime.date(2016, 1, 22): 'enikshay'}
         )
 
         ## test enikshay only source, closed/closure_reason cases
@@ -549,7 +649,7 @@ class TestAdherenceUpdater(TestCase):
                 ('some_id', datetime.date(2016, 1, 24), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', False, None),
             ]),
-            {datetime.date(2016, 1, 24): True}
+            {datetime.date(2016, 1, 24): 'enikshay'}
         )
         # not taken - as 1st case is relevent case with latest_modified_on and says dose not taken
         self.assertDictEqual(
@@ -569,7 +669,7 @@ class TestAdherenceUpdater(TestCase):
                 ('some_id', datetime.date(2016, 1, 26), datetime.date(2016, 2, 21),
                  DOSE_UNKNOWN, 'enikshay', False, None),
             ]),
-            {datetime.date(2016, 1, 26): True}
+            {datetime.date(2016, 1, 26): 'enikshay'}
         )
 
         ## test non-enikshay source only cases
@@ -587,11 +687,11 @@ class TestAdherenceUpdater(TestCase):
         self.assertDictEqual(
             dose_taken_by_day([
                 ('some_id', datetime.date(2016, 1, 28), datetime.date(2016, 2, 22),
-                 DTIndicators[0], '99', True, 'a'),
+                 DTIndicators[0], '99DOTS', True, 'a'),
                 ('some_id', datetime.date(2016, 1, 28), datetime.date(2016, 2, 21),
-                 DOSE_UNKNOWN, '99', False, None),
+                 DOSE_UNKNOWN, '99DOTS', False, None),
             ]),
-            {datetime.date(2016, 1, 28): True}
+            {datetime.date(2016, 1, 28): '99DOTS'}
         )
 
         ## test mix of enikshay, non-enikshay sources
@@ -603,7 +703,7 @@ class TestAdherenceUpdater(TestCase):
                 ('some_id', datetime.date(2016, 1, 29), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', False, None),
             ]),
-            {datetime.date(2016, 1, 29): True}
+            {datetime.date(2016, 1, 29): 'enikshay'}
         )
         # not taken - as enikshay source case says not taken
         self.assertDictEqual(
@@ -633,5 +733,165 @@ class TestAdherenceUpdater(TestCase):
                 ('some_id', datetime.date(2016, 1, 3), datetime.date(2016, 2, 21),
                  DTIndicators[0], 'enikshay', True, HISTORICAL_CLOSURE_REASON),
             ]),
-            {datetime.date(2016, 1, 3): True}
+            {datetime.date(2016, 1, 3): 'enikshay'}
         )
+
+    def test_update_by_person(self):
+        expected_update = {
+            'aggregated_score_date_calculated': datetime.date(2016, 1, 16),
+            'expected_doses_taken': 0,
+            'aggregated_score_count_taken': 0,
+            # 1 day before should be adherence_schedule_date_start,
+            'adherence_latest_date_recorded': datetime.date(2016, 1, 16),
+            'adherence_total_doses_taken': 0
+        }
+
+        episode = self.create_episode_case(
+            datetime.date(2016, 1, 15),
+            datetime.date(2016, 1, 17),
+            'schedule1',
+            []
+        )
+        update_episode_adherence_properties(self.domain, self.person_id)
+
+        episode = CaseAccessors(self.domain).get_case(episode.case_id)
+        self.assertDictEqual(
+            {key: episode.dynamic_case_properties()[key] for key in expected_update},
+            {key: str(val) for key, val in expected_update.iteritems()}  # convert values to strings
+        )
+
+    def test_adherence_score_start_date_month(self):
+        # If the start date is more than a month ago, calculate the last month's scores
+        self.case_updater.date_today_in_india = datetime.date(2016, 1, 31)
+        self.assert_update(
+            (
+                datetime.date(2016, 1, 30),
+                (datetime.date(2015, 12, 31), 'schedule1'),  # adherence_schedule_date_start
+                [
+                    (datetime.date(2015, 12, 31), DTIndicators[0]),
+                    (datetime.date(2016, 1, 15), DTIndicators[0]),
+                    (datetime.date(2016, 1, 17), DTIndicators[0]),
+                    (datetime.date(2016, 1, 20), DTIndicators[0]),
+                    (datetime.date(2016, 1, 30), DTIndicators[0]),
+                ]
+            ),
+            {
+                'three_day_score_count_taken': 1,
+                'one_week_score_count_taken': 1,
+                'two_week_score_count_taken': 3,
+                'month_score_count_taken': 4,
+                'three_day_adherence_score': 33.33,
+                'one_week_adherence_score': 14.29,
+                'two_week_adherence_score': 21.43,
+                'month_adherence_score': 13.33,
+            }
+        )
+
+    def test_adherence_score_start_date_week(self):
+        # If the start date is only a week ago, don't send 2 week or month scores
+        self.case_updater.date_today_in_india = datetime.date(2016, 1, 31)
+        self.assert_update(
+            (
+                datetime.date(2016, 1, 30),
+                (datetime.date(2016, 1, 24), 'schedule1'),  # adherence_schedule_date_start
+                [
+                    (datetime.date(2015, 12, 31), DTIndicators[0]),
+                    (datetime.date(2016, 1, 15), DTIndicators[0]),
+                    (datetime.date(2016, 1, 17), DTIndicators[0]),
+                    (datetime.date(2016, 1, 20), DTIndicators[0]),
+                    (datetime.date(2016, 1, 30), DTIndicators[0]),
+                ]
+            ),
+            {
+                'three_day_score_count_taken': 1,
+                'one_week_score_count_taken': 1,
+                'two_week_score_count_taken': 0,
+                'month_score_count_taken': 0,
+                'three_day_adherence_score': 33.33,
+                'one_week_adherence_score': 14.29,
+                'two_week_adherence_score': 0.0,
+                'month_adherence_score': 0.0,
+            }
+        )
+
+    def test_adherence_score_by_source(self):
+        self.case_updater.date_today_in_india = datetime.date(2016, 1, 31)
+        adherence_cases = [
+            {
+                "name": '1',
+                "adherence_source": "99DOTS",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2015, 12, 31),
+            },
+            {
+                "name": '2',
+                "adherence_source": "99DOTS",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2016, 1, 15),
+            },
+            {
+                "name": '5',
+                "adherence_source": "enikshay",
+                "adherence_report_source": "other",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2016, 1, 17),
+            },
+            {
+                "name": '3',
+                "adherence_source": "99DOTS",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2016, 1, 20),
+            },
+            {
+                "name": '4',
+                "adherence_source": "MERM",
+                "adherence_value": 'unobserved_dose',
+                "adherence_date": datetime.date(2016, 1, 30),
+            },
+        ]
+        self.create_episode_case(
+            purge_date=datetime.date(2017, 3, 30),
+            adherence_schedule_date_start=datetime.date(2015, 12, 1),
+            adherence_schedule_id='schedule1',
+            adherence_cases=adherence_cases,
+        )
+        episode = self._get_updated_episode()
+        expected = {
+            'three_day_score_count_taken_99DOTS': 0,
+            'one_week_score_count_taken_99DOTS': 0,
+            'two_week_score_count_taken_99DOTS': 1,
+            'month_score_count_taken_99DOTS': 2,
+            'three_day_adherence_score_99DOTS': 0.0,
+            'one_week_adherence_score_99DOTS': 0.0,
+            'two_week_adherence_score_99DOTS': 7.14,
+            'month_adherence_score_99DOTS': 6.67,
+
+            'three_day_score_count_taken_MERM': 1,
+            'one_week_score_count_taken_MERM': 1,
+            'two_week_score_count_taken_MERM': 1,
+            'month_score_count_taken_MERM': 1,
+            'three_day_adherence_score_MERM': 33.33,
+            'one_week_adherence_score_MERM': 14.29,
+            'two_week_adherence_score_MERM': 7.14,
+            'month_adherence_score_MERM': 3.33,
+
+            'three_day_score_count_taken_other': 0,
+            'one_week_score_count_taken_other': 0,
+            'two_week_score_count_taken_other': 1,
+            'month_score_count_taken_other': 1,
+            'three_day_adherence_score_other': 0.0,
+            'one_week_adherence_score_other': 0.0,
+            'two_week_adherence_score_other': 7.14,
+            'month_adherence_score_other': 3.33,
+
+            'three_day_score_count_taken_treatment_supervisor': 0,
+            'one_week_score_count_taken_treatment_supervisor': 0,
+            'two_week_score_count_taken_treatment_supervisor': 0,
+            'month_score_count_taken_treatment_supervisor': 0,
+            'three_day_adherence_score_treatment_supervisor': 0.0,
+            'one_week_adherence_score_treatment_supervisor': 0.0,
+            'two_week_adherence_score_treatment_supervisor': 0.0,
+            'month_adherence_score_treatment_supervisor': 0.0,
+        }
+
+        self._assert_properties_equal(episode, expected)

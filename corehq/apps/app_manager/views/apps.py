@@ -4,7 +4,6 @@ import os
 import tempfile
 import zipfile
 from collections import defaultdict
-from StringIO import StringIO
 from wsgiref.util import FileWrapper
 
 from django.utils.text import slugify
@@ -20,9 +19,9 @@ from django.contrib import messages
 
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_layout
 from corehq.apps.app_manager.exceptions import ConflictingCaseTypeError, \
-    IncompatibleFormTypeException, RearrangeError
+    IncompatibleFormTypeException, RearrangeError, AppEditingError
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
-    validate_langs, CASE_TYPE_CONFLICT_MSG
+    validate_langs, CASE_TYPE_CONFLICT_MSG, overwrite_app
 from corehq import toggles, privileges
 from toggle.shortcuts import set_toggle
 from corehq.apps.app_manager.forms import CopyApplicationForm
@@ -30,10 +29,10 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
+from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
 from corehq.apps.tour import tours
 from corehq.apps.translations.models import Translation
 from corehq.apps.app_manager.const import (
-    APP_V2,
     MAJOR_RELEASE_TO_VERSION,
     AUTO_SELECT_USERCASE,
     DEFAULT_FETCH_LIMIT,
@@ -42,17 +41,16 @@ from corehq.apps.app_manager.util import (
     get_settings_values,
     app_doc_types,
     get_app_manager_template,
+    get_and_assert_practice_user_in_domain,
 )
 from corehq.apps.domain.models import Domain
+from corehq.apps.userreports.util import get_static_report_mapping
 from corehq.tabs.tabclasses import ApplicationsTab
 from corehq.util.compression import decompress
 from corehq.apps.app_manager.xform import (
-    XFormException, XForm)
+    XFormException)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
 from corehq.util.view_utils import set_file_download
-from couchexport.export import FormattedRow
-from couchexport.models import Format
-from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.web import json_response, json_request
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.apps.domain.decorators import (
@@ -132,7 +130,7 @@ def default_new_app(request, domain):
         # APP MANAGER V2 is completely blank on new app
         module = Module.new_module(_("Untitled Module"), lang)
         app.add_module(module)
-        form = app.new_form(0, "Untitled Form", lang)
+        app.new_form(0, _("Untitled Form"), lang)
 
     if request.project.secure_submissions:
         app.secure_submissions = True
@@ -144,7 +142,12 @@ def default_new_app(request, domain):
 
 
 def get_app_view_context(request, app):
+    """
+    This provides the context to render commcare settings on Edit Application Settings page
 
+    This is where additional app or domain specific context can be added to any individual
+    commcare-setting defined in commcare-app-settings.yaml or commcare-profile-settings.yaml
+    """
     context = {}
 
     settings_layout = copy.deepcopy(
@@ -179,7 +182,7 @@ def get_app_view_context(request, app):
         'values': get_settings_values(app),
         'warning': _("This is not an allowed value for this field"),
     }
-    if toggles.CUSTOM_PROPERTIES.enabled(request.domain) and 'custom_properties' in app.profile:
+    if toggles.CUSTOM_PROPERTIES.enabled(request.domain) and 'custom_properties' in getattr(app, 'profile', {}):
         custom_properties_array = map(lambda p: {'key': p[0], 'value': p[1]},
                                       app.profile.get('custom_properties').items())
         app_view_options.update({'customProperties': custom_properties_array})
@@ -200,14 +203,32 @@ def get_app_view_context(request, app):
             app_ver = MAJOR_RELEASE_TO_VERSION[option.build.major_release()]
             builds["default"] = build_config.get_default(app_ver).to_string()
 
-    (build_spec_setting,) = filter(
-        lambda x: x['type'] == 'hq' and x['id'] == 'build_spec',
-        [setting for section in settings_layout
-            for setting in section['settings']]
-    ) if settings_layout else (None,)
+    def _get_setting(setting_type, setting_id):
+        # get setting dict from settings_layout
+        if not settings_layout:
+            return None
+        matched = filter(
+            lambda x: x['type'] == setting_type and x['id'] == setting_id,
+            [
+                setting for section in settings_layout
+                for setting in section['settings']
+            ]
+        )
+        if matched:
+            return matched[0]
+        else:
+            return None
+
+    build_spec_setting = _get_setting('hq', 'build_spec')
     if build_spec_setting:
         build_spec_setting['options_map'] = options_map
         build_spec_setting['default_app_version'] = app.application_version
+
+    practice_user_setting = _get_setting('hq', 'practice_mobile_worker_id')
+    if practice_user_setting and has_privilege(request, privileges.PRACTICE_MOBILE_WORKERS):
+        practice_users = get_practice_mode_mobile_workers(request.domain)
+        practice_user_setting['values'] = [''] + [u['_id'] for u in practice_users]
+        practice_user_setting['value_names'] = [_('Not set')] + [u['username'] for u in practice_users]
 
     context.update({
         'bulk_ui_translation_upload': {
@@ -294,7 +315,14 @@ def get_apps_base_context(request, domain, app):
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
             'show_shadow_forms': show_advanced,
+            'practice_users': [
+                {"id": u['_id'], "text": u["username"]} for u in get_practice_mode_mobile_workers(domain)],
         })
+
+    if toggles.APP_MANAGER_V2.enabled(request.user.username):
+        rollout = toggles.APP_MANAGER_V2.enabled_for_new_users_after
+        if not toggles.was_user_created_after(request.user.username, rollout):
+            context.update({'allow_v2_opt_out': True})
 
     return context
 
@@ -652,17 +680,26 @@ def edit_app_attr(request, domain, app_id, attr):
         'auto_gps_capture',
         # RemoteApp only
         'profile_url',
-        'manage_urls'
+        'manage_urls',
+        'mobile_ucr_sync_interval',
     ]
     if attr not in attributes:
         return HttpResponseBadRequest()
 
     def should_edit(attribute):
         return attribute == attr or ('all' == attr and attribute in hq_settings)
+
+    def parse_sync_interval(interval):
+        try:
+            return int(interval)
+        except ValueError:
+            pass
+
     resp = {"update": {}}
     # For either type of app
     easy_attrs = (
         ('build_spec', BuildSpec.from_string),
+        ('practice_mobile_worker_id', None),
         ('case_sharing', None),
         ('cloudcare_enabled', None),
         ('anonymous_cloudcare_enabled', None),
@@ -681,6 +718,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('comment', None),
         ('custom_base_url', None),
         ('use_j2me_endpoint', None),
+        ('mobile_ucr_sync_interval', parse_sync_interval),
     )
     for attribute, transformation in easy_attrs:
         if should_edit(attribute):
@@ -699,6 +737,13 @@ def edit_app_attr(request, domain, app_id, attr):
 
     if should_edit("build_spec"):
         resp['update']['commcare-version'] = app.commcare_minor_release
+
+    if should_edit("practice_mobile_worker_id"):
+        user_id = hq_settings['practice_mobile_worker_id']
+        if not app.enable_practice_users:
+            app.practice_mobile_worker_id = None
+        elif user_id:
+            get_and_assert_practice_user_in_domain(user_id, request.domain)
 
     if should_edit("admin_password"):
         admin_password = hq_settings.get('admin_password')
@@ -788,61 +833,6 @@ def rearrange(request, domain, app_id, key):
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
 
 
-@require_can_edit_apps
-def formdefs(request, domain, app_id):
-    # TODO: Looks like this function is never used
-    langs = [json.loads(request.GET.get('lang', '"en"'))]
-    format = request.GET.get('format', 'json')
-    app = get_app(domain, app_id)
-
-    def get_questions(form):
-        xform = XForm(form.source)
-        prefix = '/%s/' % xform.data_node.tag_name
-
-        def remove_prefix(string):
-            if string.startswith(prefix):
-                return string[len(prefix):]
-            else:
-                raise Exception()
-
-        def transform_question(q):
-            return {
-                'id': remove_prefix(q['value']),
-                'type': q['tag'],
-                'text': q['label'] if q['tag'] != 'hidden' else ''
-            }
-        return [transform_question(q) for q in xform.get_questions(langs)]
-    formdefs = [{
-        'name': "%s, %s" % (
-            f['form'].get_module().name['en'],
-            f['form'].name['en']
-        ) if f['type'] == 'module_form' else 'User Registration',
-        'columns': ['id', 'type', 'text'],
-        'rows': get_questions(f['form'])
-    } for f in app.get_forms(bare=False)]
-
-    if format == 'xlsx':
-        f = StringIO()
-        writer = Excel2007ExportWriter()
-        writer.open([(sheet['name'], [FormattedRow(sheet['columns'])]) for sheet in formdefs], f)
-        writer.write([(
-            sheet['name'],
-            [
-                FormattedRow([
-                    cell for (_, cell) in
-                    sorted(row.items(), key=lambda item: sheet['columns'].index(item[0]))
-                ])
-                for row in sheet['rows']
-            ]
-        ) for sheet in formdefs])
-        writer.close()
-        response = HttpResponse(f.getvalue(), content_type=Format.from_format('xlsx').mimetype)
-        set_file_download(response, 'formdefs.xlsx')
-        return response
-    else:
-        return json_response(formdefs)
-
-
 @require_GET
 @require_can_edit_apps
 def drop_user_case(request, domain, app_id):
@@ -874,38 +864,24 @@ def pull_master_app(request, domain, app_id):
     app = get_current_app_doc(domain, app_id)
     master_app = get_app(None, app['master'])
     latest_master_build = get_app(None, app['master'], latest=True)
-    params = {}
     if app['domain'] in master_app.linked_whitelist:
-        excluded_fields = set(Application._meta_fields).union(
-            ['date_created', 'build_profiles', 'copy_history', 'copy_of', 'name', 'comment', 'doc_type']
-        )
-        master_json = latest_master_build.to_json()
-        for key, value in master_json.iteritems():
-            if key not in excluded_fields:
-                app[key] = value
-        app['version'] = master_json['version']
-        wrapped_app = wrap_app(app)
-        mobile_ucrs = False
-        for module in wrapped_app.modules:
-            if isinstance(module, ReportModule):
-                mobile_ucrs = True
-                break
-        if mobile_ucrs:
-            messages.error(request, _('This linked application uses mobile UCRs '
+        report_map = get_static_report_mapping(master_app.domain, app['domain'], {})
+        try:
+            overwrite_app(app, latest_master_build, report_map)
+        except AppEditingError:
+            messages.error(request, _('This linked application uses dynamic mobile UCRs '
                                       'which are currently not supported. For this application '
                                       'to function correctly, you will need to remove those modules '
                                       'or revert to a previous version that did not include them.'))
         else:
             messages.success(request,
                              _('Your linked application was successfully updated to the latest version.'))
-        wrapped_app.copy_attachments(latest_master_build)
-        wrapped_app.save(increment_version=False)
     else:
         messages.error(request, _(
             'This project is not authorized to update from the master application. '
             'Please contact the maintainer of the master app if you believe this is a mistake. ')
         )
-    return HttpResponseRedirect(reverse_util('view_app', params=params, args=[domain, app_id]))
+    return HttpResponseRedirect(reverse_util('view_app', params={}, args=[domain, app_id]))
 
 
 @no_conflict_require_POST

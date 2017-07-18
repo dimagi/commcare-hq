@@ -19,6 +19,9 @@
 {% if strong_mobile_passwords %}
     <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
 {% endif %}
+{% if implement_password_obfuscation %}
+    {% include "nic_compliance/password_encoder.html" %}
+{% endif %}
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
@@ -36,6 +39,7 @@ $(function () {
         $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
         $httpProvider.defaults.xsrfCookieName = 'csrftoken';
         $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
+        $httpProvider.defaults.headers.common["X-CSRFToken"] = $("#csrfTokenContainer").val();
     }]);
     mobileWorkerApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
         djangoRMIProvider.configure({% djng_current_rmi %});

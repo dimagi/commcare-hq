@@ -10,7 +10,17 @@ from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
+from corehq.messaging.scheduling.tasks import (
+    refresh_case_alert_schedule_instances,
+    refresh_case_timed_schedule_instances,
+)
+from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
+    get_case_alert_schedule_instances_for_schedule_id,
+    get_case_timed_schedule_instances_for_schedule_id,
+)
 from corehq.util.log import with_progress_bar
+from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import date, datetime, time, timedelta
@@ -32,6 +42,12 @@ AUTO_UPDATE_XMLNS = 'http://commcarehq.org/hq_case_update_rule'
 
 
 class AutomaticUpdateRule(models.Model):
+    # Used when the rule performs case update actions
+    WORKFLOW_CASE_UPDATE = 'CASE_UPDATE'
+
+    # Used when the rule spawns schedule instances in the scheduling framework
+    WORKFLOW_SCHEDULING = 'SCHEDULING'
+
     domain = models.CharField(max_length=126, db_index=True)
     name = models.CharField(max_length=126)
     case_type = models.CharField(max_length=126)
@@ -46,6 +62,10 @@ class AutomaticUpdateRule(models.Model):
     # before we run the rule against it.
     server_modified_boundary = models.IntegerField(null=True)
     migrated = models.BooleanField(default=False)
+
+    # One of the WORKFLOW_* constants on this class describing the workflow
+    # that this rule belongs to.
+    workflow = models.CharField(max_length=126)
 
     class Meta:
         app_label = "data_interfaces"
@@ -113,11 +133,30 @@ class AutomaticUpdateRule(models.Model):
             return rule
 
     @classmethod
-    def by_domain(cls, domain, active_only=True):
-        filters = {'domain': domain}
+    def by_domain(cls, domain, workflow, active_only=True):
+        additional_filters = {}
         if active_only:
-            filters['active'] = True
-        return AutomaticUpdateRule.objects.filter(deleted=False, **filters)
+            additional_filters['active'] = True
+
+        return cls.objects.filter(
+            domain=domain,
+            workflow=workflow,
+            deleted=False,
+            **additional_filters
+        )
+
+    @classmethod
+    @quickcache(['domain', 'workflow', 'active_only'], timeout=30 * 60)
+    def by_domain_cached(cls, domain, workflow, active_only=True):
+        result = cls.by_domain(domain, workflow, active_only=active_only)
+        result = list(result)
+
+        for rule in result:
+            # Make the criteria and actions be memoized in the cached result
+            rule.memoized_criteria
+            rule.memoized_actions
+
+        return result
 
     @classmethod
     def organize_rules_by_case_type(cls, rules):
@@ -193,19 +232,20 @@ class AutomaticUpdateRule(models.Model):
     @property
     @memoized
     def memoized_criteria(self):
-        return self.caserulecriteria_set.all().select_related(
+        return list(self.caserulecriteria_set.all().select_related(
             'match_property_definition',
             'custom_match_definition',
             'closed_parent_definition',
-        )
+        ))
 
     @property
     @memoized
     def memoized_actions(self):
-        return self.caseruleaction_set.all().select_related(
+        return list(self.caseruleaction_set.all().select_related(
             'update_case_definition',
             'custom_action_definition',
-        )
+            'create_schedule_instance_definition',
+        ))
 
     def run_rule(self, case, now):
         """
@@ -223,17 +263,17 @@ class AutomaticUpdateRule(models.Model):
         if not isinstance(case, (CommCareCase, CommCareCaseSQL)) or case.domain != self.domain:
             raise self.RuleError("Invalid case given")
 
-        if case.is_deleted or case.closed:
-            return CaseRuleActionResult()
-
         if self.criteria_match(case, now):
-            return self.run_actions(case)
-
-        return CaseRuleActionResult()
+            return self.run_actions_when_case_matches(case)
+        else:
+            return self.run_actions_when_case_does_not_match(case)
 
     def criteria_match(self, case, now):
         if not self.migrated:
             raise self.MigrationError("Attempted to call new method on non-migrated model.")
+
+        if case.is_deleted or case.closed:
+            return False
 
         if case.type != self.case_type:
             return False
@@ -255,20 +295,27 @@ class AutomaticUpdateRule(models.Model):
 
         return True
 
-    def run_actions(self, case):
+    def _run_method_on_action_definitions(self, case, method):
         if not self.migrated:
             raise self.MigrationError("Attempted to call new method on non-migrated model.")
 
         aggregated_result = CaseRuleActionResult()
 
         for action in self.memoized_actions:
-            result = action.definition.run(case, self)
+            callable_method = getattr(action.definition, method)
+            result = callable_method(case, self)
             if not isinstance(result, CaseRuleActionResult):
                 raise TypeError("Expected CaseRuleActionResult")
 
             aggregated_result.add_result(result)
 
         return aggregated_result
+
+    def run_actions_when_case_matches(self, case):
+        return self._run_method_on_action_definitions(case, 'when_case_matches')
+
+    def run_actions_when_case_does_not_match(self, case):
+        return self._run_method_on_action_definitions(case, 'when_case_does_not_match')
 
     def delete_criteria(self):
         for item in self.caserulecriteria_set.all():
@@ -303,6 +350,23 @@ class AutomaticUpdateRule(models.Model):
         action.definition = definition
         action.save()
         return action, definition
+
+    def save(self, *args, **kwargs):
+        super(AutomaticUpdateRule, self).save(*args, **kwargs)
+        # If we're in a transaction.atomic() block, this gets executed after commit
+        # If we're not, this gets executed right away
+        transaction.on_commit(lambda: self.clear_caches(self.domain, self.workflow))
+
+    @classmethod
+    def clear_caches(cls, domain, workflow):
+        # domain and workflow should never change once set
+        for active_only in (True, False):
+            cls.by_domain_cached.clear(
+                AutomaticUpdateRule,
+                domain,
+                workflow,
+                active_only=active_only,
+            )
 
 
 class CaseRuleCriteria(models.Model):
@@ -613,6 +677,8 @@ class CaseRuleAction(models.Model):
     rule = models.ForeignKey('AutomaticUpdateRule', on_delete=models.PROTECT)
     update_case_definition = models.ForeignKey('UpdateCaseDefinition', on_delete=models.CASCADE, null=True)
     custom_action_definition = models.ForeignKey('CustomActionDefinition', on_delete=models.CASCADE, null=True)
+    create_schedule_instance_definition = models.ForeignKey('CreateScheduleInstanceActionDefinition',
+        on_delete=models.CASCADE, null=True)
 
     @property
     def definition(self):
@@ -620,6 +686,8 @@ class CaseRuleAction(models.Model):
             return self.update_case_definition
         elif self.custom_action_definition_id:
             return self.custom_action_definition
+        elif self.create_schedule_instance_definition_id:
+            return self.create_schedule_instance_definition
         else:
             raise ValueError("No available definition found")
 
@@ -627,11 +695,14 @@ class CaseRuleAction(models.Model):
     def definition(self, value):
         self.update_case_definition = None
         self.custom_action_definition = None
+        self.create_schedule_instance_definition = None
 
         if isinstance(value, UpdateCaseDefinition):
             self.update_case_definition = value
         elif isinstance(value, CustomActionDefinition):
             self.custom_action_definition = value
+        elif isinstance(value, CreateScheduleInstanceActionDefinition):
+            self.create_schedule_instance_definition = value
         else:
             raise ValueError("Unexpected type found: %s" % type(value))
 
@@ -645,22 +716,25 @@ class CaseRuleActionResult(object):
         if not isinstance(value, int):
             raise ValueError("Expected int")
 
-    def __init__(self, num_updates=0, num_closes=0, num_related_updates=0, num_related_closes=0):
+    def __init__(self, num_updates=0, num_closes=0, num_related_updates=0, num_related_closes=0, num_creates=0):
         self._validate_int(num_updates)
         self._validate_int(num_closes)
         self._validate_int(num_related_updates)
         self._validate_int(num_related_closes)
+        self._validate_int(num_creates)
 
         self.num_updates = num_updates
         self.num_closes = num_closes
         self.num_related_updates = num_related_updates
         self.num_related_closes = num_related_closes
+        self.num_creates = num_creates
 
     def add_result(self, result):
         self.num_updates += result.num_updates
         self.num_closes += result.num_closes
         self.num_related_updates += result.num_related_updates
         self.num_related_closes += result.num_related_closes
+        self.num_creates += result.num_creates
 
     @property
     def total_updates(self):
@@ -668,7 +742,8 @@ class CaseRuleActionResult(object):
             self.num_updates +
             self.num_closes +
             self.num_related_updates +
-            self.num_related_closes
+            self.num_related_closes +
+            self.num_creates
         )
 
 
@@ -677,11 +752,20 @@ class CaseRuleActionDefinition(models.Model):
     class Meta:
         abstract = True
 
-    def run(self, case, rule):
+    def when_case_matches(self, case, rule):
         """
+        Defines the actions to be taken when the case matches the rule.
         Should return an instance of CaseRuleActionResult
         """
         raise NotImplementedError()
+
+    def when_case_does_not_match(self, case, rule):
+        """
+        Defines the actions to be taken when the case does not match the rule.
+        This method can be optionally overriden, but by default does nothing.
+        Should return an instance of CaseRuleActionResult
+        """
+        return CaseRuleActionResult()
 
 
 class UpdateCaseDefinition(CaseRuleActionDefinition):
@@ -729,7 +813,7 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
 
         self.properties_to_update = result
 
-    def run(self, case, rule):
+    def when_case_matches(self, case, rule):
         cases_to_update = defaultdict(dict)
 
         def _get_case_property_value(current_case, name):
@@ -801,7 +885,7 @@ class UpdateCaseDefinition(CaseRuleActionDefinition):
 class CustomActionDefinition(CaseRuleActionDefinition):
     name = models.CharField(max_length=126)
 
-    def run(self, case, rule):
+    def when_case_matches(self, case, rule):
         if self.name not in settings.AVAILABLE_CUSTOM_RULE_ACTIONS:
             raise ValueError("%s not found in AVAILABLE_CUSTOM_RULE_ACTIONS" % self.name)
 
@@ -812,6 +896,61 @@ class CustomActionDefinition(CaseRuleActionDefinition):
             raise ValueError("Unable to resolve '%s'" % custom_function_path)
 
         return custom_function(case, rule)
+
+
+class CreateScheduleInstanceActionDefinition(CaseRuleActionDefinition):
+    alert_schedule = models.ForeignKey('scheduling.AlertSchedule', null=True, on_delete=models.PROTECT)
+    timed_schedule = models.ForeignKey('scheduling.TimedSchedule', null=True, on_delete=models.PROTECT)
+
+    # A List of [recipient_type, recipient_id]
+    recipients = jsonfield.JSONField(default=list)
+
+    # (Optional, ignored if None) The name of a case property whose value will be tracked
+    # over time on the schedule instance as last_reset_case_property_value.
+    # Every time the case property's value changes, the schedule's start date is
+    # reset to the current date.
+    reset_case_property_name = models.CharField(max_length=126, null=True)
+
+    @property
+    def schedule(self):
+        if self.alert_schedule_id:
+            return self.alert_schedule
+        elif self.timed_schedule_id:
+            return self.timed_schedule
+
+        raise ValueError("Expected a schedule")
+
+    @schedule.setter
+    def schedule(self, value):
+        from corehq.messaging.scheduling.models import AlertSchedule, TimedSchedule
+
+        self.alert_schedule = None
+        self.timed_schedule = None
+
+        if isinstance(value, AlertSchedule):
+            self.alert_schedule = value
+        elif isinstance(value, TimedSchedule):
+            self.timed_schedule = value
+        else:
+            raise TypeError("Expected an instance of AlertSchedule or TimedSchedule")
+
+    def when_case_matches(self, case, rule):
+        schedule = self.schedule
+        if isinstance(schedule, AlertSchedule):
+            refresh_case_alert_schedule_instances(case, schedule, self, rule)
+        elif isinstance(schedule, TimedSchedule):
+            refresh_case_timed_schedule_instances(case, schedule, self, rule)
+
+        return CaseRuleActionResult()
+
+    def when_case_does_not_match(self, case, rule):
+        if self.alert_schedule_id:
+            get_case_alert_schedule_instances_for_schedule_id(case.case_id, self.alert_schedule_id).delete()
+
+        if self.timed_schedule_id:
+            get_case_timed_schedule_instances_for_schedule_id(case.case_id, self.timed_schedule_id).delete()
+
+        return CaseRuleActionResult()
 
 
 class AutomaticUpdateAction(models.Model):
@@ -937,6 +1076,7 @@ class DomainCaseRuleRun(models.Model):
     num_closes = models.IntegerField(null=True)
     num_related_updates = models.IntegerField(null=True)
     num_related_closes = models.IntegerField(null=True)
+    num_creates = models.IntegerField(null=True)
 
     class Meta:
         index_together = (
@@ -953,5 +1093,6 @@ class DomainCaseRuleRun(models.Model):
         self.num_closes = result.num_closes
         self.num_related_updates = result.num_related_updates
         self.num_related_closes = result.num_related_closes
+        self.num_creates = result.num_creates
         self.finished_on = datetime.utcnow()
         self.save()

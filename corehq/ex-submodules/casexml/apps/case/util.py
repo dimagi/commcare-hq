@@ -7,6 +7,7 @@ import datetime
 
 from django.conf import settings
 from iso8601 import iso8601
+from restkit.errors import ResourceError
 
 from casexml.apps.case import const
 from casexml.apps.case.const import CASE_ACTION_UPDATE, CASE_ACTION_CREATE
@@ -112,6 +113,14 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
     try:
         sync_log.update_phone_lists(xform, cases)
     except SyncLogAssertionError as e:
+        soft_assert('@'.join(['skelly', 'dimagi.com']))(
+            False,
+            'SyncLogAssertionError raised while updating phone lists',
+            {
+                'form_id': xform.form_id,
+                'cases': [case.case_id for case in cases]
+            }
+        )
         if e.case_id and e.case_id not in case_id_blacklist:
             form_ids = get_case_xform_ids(e.case_id)
             case_id_blacklist.append(e.case_id)
@@ -132,6 +141,17 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
 
             update_sync_log_with_checks(updated_log, xform, cases, case_db,
                                         case_id_blacklist=case_id_blacklist)
+
+
+def prune_previous_log(sync_log):
+    previous_log = sync_log.get_previous_log()
+    if previous_log:
+        try:
+            previous_log.delete()
+            sync_log.previous_log_removed = True
+            sync_log.save()
+        except ResourceError:
+            pass
 
 
 def get_indexed_cases(domain, case_ids):

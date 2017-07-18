@@ -1,6 +1,6 @@
 from corehq.apps.commtrack.dbaccessors import get_supply_point_ids_in_domain_by_location
 from corehq.apps.products.models import Product
-from corehq.apps.locations.models import Location, SQLLocation
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.const import LOCATION_TYPE_SHEET_HEADERS, LOCATION_SHEET_HEADERS
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.supply import SupplyInterface
@@ -179,8 +179,8 @@ class LocationExporter(object):
 
         uncategorized_keys = set()
         tab_rows = []
-        for loc in Location.filter_by_type(self.domain, loc_type.name):
-
+        for loc in SQLLocation.active_objects.filter(domain=self.domain,
+                                                     location_type__name=loc_type.name):
             model_data, uncategorized_data = \
                 self.data_model.get_model_and_uncategorized(loc.metadata)
 

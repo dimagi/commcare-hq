@@ -1,47 +1,82 @@
+from collections import namedtuple
 import copy
 import logging
 import time
-from collections import namedtuple
 from urllib import unquote
-from elasticsearch import Elasticsearch
+
 from django.conf import settings
+from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ElasticsearchException
 
 from corehq.apps.es.utils import flatten_field_dict
-from corehq.util.datadog.gauges import datadog_gauge
-from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
-from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
-from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
+from corehq.util.datadog.gauges import datadog_histogram
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX_INFO
 from corehq.pillows.mappings.group_mapping import GROUP_INDEX_INFO
+from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
+from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from corehq.pillows.mappings.sms_mapping import SMS_INDEX_INFO
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
+from dimagi.utils.decorators.memoized import memoized
+from pillowtop.processors.elastic import send_to_elasticsearch as send_to_es
 
 
+def _es_hosts():
+    es_hosts = getattr(settings, 'ELASTICSEARCH_HOSTS', None)
+    if not es_hosts:
+        es_hosts = [settings.ELASTICSEARCH_HOST]
+
+    hosts = [
+        {
+            'host': host,
+            'port': settings.ELASTICSEARCH_PORT,
+        }
+        for host in es_hosts
+    ]
+    return hosts
+
+
+@memoized
 def get_es_new():
     """
     Get a handle to the configured elastic search DB.
     Returns an elasticsearch.Elasticsearch instance.
     """
-    if not getattr(get_es_new, '_es_client', None):
-        es_hosts = getattr(settings, 'ELASTICSEARCH_HOSTS', None)
-        if not es_hosts:
-            es_hosts = [settings.ELASTICSEARCH_HOST]
+    hosts = _es_hosts()
+    return Elasticsearch(hosts)
 
-        hosts = [
-            {
-                'host': host,
-                'port': settings.ELASTICSEARCH_PORT,
-            }
-            for host in es_hosts
-        ]
-        get_es_new._es_client = Elasticsearch(hosts)
-    return get_es_new._es_client
+
+@memoized
+def get_es_export():
+    """
+    Get a handle to the configured elastic search DB with settings geared towards exports.
+    Returns an elasticsearch.Elasticsearch instance.
+    """
+    hosts = _es_hosts()
+    return Elasticsearch(
+        hosts,
+        retry_on_timeout=True,
+        max_retries=3,
+        # Timeout in seconds for an elasticsearch query
+        timeout=30,
+    )
+
+ES_DEFAULT_INSTANCE = 'default'
+ES_EXPORT_INSTANCE = 'export'
+
+ES_INSTANCES = {
+    ES_DEFAULT_INSTANCE: get_es_new,
+    ES_EXPORT_INSTANCE: get_es_export,
+}
+
+
+def get_es_instance(es_instance_alias=ES_DEFAULT_INSTANCE):
+    assert es_instance_alias in ES_INSTANCES
+    return ES_INSTANCES[es_instance_alias]()
 
 
 def doc_exists_in_es(index_info, doc_id_or_dict):
@@ -79,6 +114,13 @@ def send_to_elasticsearch(index_name, doc, delete=False, es_merge_update=False):
         delete=delete,
         es_merge_update=es_merge_update,
     )
+
+
+def refresh_elasticsearch_index(index_name):
+    es_meta = ES_META[index_name]
+    es = get_es_new()
+    es.indices.refresh(index=es_meta.index)
+
 
 EsMeta = namedtuple('EsMeta', 'index, type')
 
@@ -144,7 +186,7 @@ class ESError(Exception):
     pass
 
 
-def run_query(index_name, q, debug_host=None):
+def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTANCE):
     # the debug_host parameter allows you to query another env for testing purposes
     if debug_host:
         if not settings.DEBUG:
@@ -154,7 +196,7 @@ def run_query(index_name, q, debug_host=None):
                                       'port': settings.ELASTICSEARCH_PORT}],
                                     timeout=3, max_retries=0)
     else:
-        es_instance = get_es_new()
+        es_instance = get_es_instance(es_instance_alias)
 
     try:
         es_meta = ES_META[index_name]
@@ -181,11 +223,11 @@ def mget_query(index_name, ids, source):
         raise ESError(e)
 
 
-def scroll_query(index_name, q):
+def scroll_query(index_name, q, es_instance_alias=ES_DEFAULT_INSTANCE):
     es_meta = ES_META[index_name]
     try:
         return scan(
-            get_es_new(),
+            get_es_instance(es_instance_alias),
             index=es_meta.index,
             doc_type=es_meta.type,
             query=q,
@@ -246,7 +288,7 @@ def scan(client, query=None, scroll='5m', **kwargs):
 
             start = int(time.time() * 1000)
             resp = client.scroll(scroll_id, scroll=scroll)
-            datadog_gauge('commcare.es_scroll', (time.time() * 1000) - start, tags=[
+            datadog_histogram('commcare.es_scroll', (time.time() * 1000) - start, tags=[
                 u'iteration:{}'.format(iteration),
             ])
 
@@ -271,38 +313,27 @@ def scan(client, query=None, scroll='5m', **kwargs):
     return ScanResult(count, fetch_all(initial_resp))
 
 
-def es_histogram(histo_type, domains=None, startdate=None, enddate=None,
-        interval="day", filters=[]):
-    q = {"query": {"match_all":{}}}
-
-    if domains is not None:
-        q["query"] = {"bool": {"must": [q["query"], {"in": {"domain.exact": domains}}]}}
-
+def es_histogram(histo_type, domains=None, startdate=None, enddate=None, interval="day", filters=[]):
+    from corehq.apps.es.es_query import HQESQuery
     date_field = DATE_FIELDS[histo_type]
 
-    q.update({
-        "facets": {
-            "histo": {
-                "date_histogram": {
-                    "field": date_field,
-                    "interval": interval
-                },
-                "facet_filter": {
-                    "and": [{
-                        "range": {
-                            date_field: {
-                                "from": startdate,
-                                "to": enddate
-                            }}}]}}},
-        "size": 0
-    })
+    query = (
+        HQESQuery(index=histo_type)
+        .range_filter(date_field, gte=startdate, lte=enddate)
+    )
 
-    q["facets"]["histo"]["facet_filter"]["and"].extend(filters)
-    q["facets"]["histo"]["facet_filter"]["and"].extend(ADD_TO_ES_FILTER.get(histo_type, []))
+    for filter_ in ADD_TO_ES_FILTER.get(histo_type, []):
+        query = query.filter(filter_)
 
-    es_meta = ES_META[histo_type]
-    ret_data = get_es_new().search(es_meta.index, es_meta.type, body=q)
-    return ret_data["facets"]["histo"]["entries"]
+    if domains is not None:
+        query = query.domain(domains)
+    if filters:
+        query = query.filter(filters)
+
+    query = query.date_histogram('histo', date_field, interval)
+
+    ret_data = query.run().aggregations.histo.as_facet_result()
+    return ret_data
 
 
 SIZE_LIMIT = 1000000

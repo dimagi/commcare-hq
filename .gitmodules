@@ -10,9 +10,6 @@
 [submodule "submodules/commcare-translations"]
 	path = submodules/commcare-translations
 	url = git://github.com/dimagi/commcare-translations.git
-[submodule "submodules/formtranslate-src"]
-	path = submodules/formtranslate-src
-	url = git://github.com/dimagi/formtranslate.git
 [submodule "submodules/langcodes"]
 	path = submodules/langcodes
 	url = git://github.com/dimagi/langcodes.git
@@ -49,6 +46,3 @@
 [submodule "deployment/commcare-hq-deploy"]
 	path = deployment/commcare-hq-deploy
 	url = https://github.com/dimagi/commcare-hq-deploy.git
-[submodule "submodules/motechhub"]
-	path = submodules/motechhub
-	url = https://github.com/dimagi/motechhub

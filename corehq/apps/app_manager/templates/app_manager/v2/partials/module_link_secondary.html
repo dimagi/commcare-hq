@@ -2,32 +2,18 @@
 {% load xforms_extras %}
 {% load hq_shared_tags %}
 
-{# For APP BUILDER PROTOTYPE use only #}
-
 {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
 
-  <form action="{% url "new_form" domain app.id module.id %}"
-        data-moduleid="{{ module.id }}"
-        data-updateprop="action"
-        data-updatevalue="{% url "new_form" domain app.id 'replacewithmoduleid' %}"
-        method="post"
-        class="hide">
-    {% csrf_token %}
-      <input type="hidden" name="case_action" />
-      <input type="hidden" name="name" />
-  </form>
-
   <a href="#"
-     class="appnav-secondary appnav-responsive js-new-form submit_on_click"
-     data-case-action="{% if module.is_surveys %}none{% else %}update{% endif %}">
+     class="appnav-secondary js-add-new-item"
+     data-slug="form"
+     data-moduleid="{{ module.id }}"
+     data-show-survey="{% if module.is_surveys %}1{% endif %}"
+     data-show-case-forms="{% if not module.is_surveys and module.doc_type != "AdvancedModule" %}1{% endif %}"
+     data-show-advanced="{% if module.doc_type == "AdvancedModule" %}1{% endif %}"
+     data-show-shadow="{% if module.doc_type == "AdvancedModule" %}1{% endif %}"
+  >
     <i class="fa fa-plus"></i>
-{#    <span class="text-muted">#}
-{#        {% if module.is_surveys %}#}
-{#            {% trans "Survey" %}#}
-{#        {% else %}#}
-{#            {% trans "Followup" %}#}
-{#        {% endif %}#}
-{#    </span>#}
   </a>
 
 {% endif %}

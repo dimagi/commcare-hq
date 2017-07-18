@@ -189,6 +189,34 @@ class IndicatorPillowTest(TestCase):
 
         CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
 
+    @patch('corehq.apps.userreports.specs.datetime')
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_process_filter_no_longer_pass(self, datetime_mock):
+        datetime_mock.utcnow.return_value = self.fake_time_now
+        sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
+
+        self.pillow.process_change(doc_to_change(sample_doc))
+        self._check_sample_doc_state(expected_indicators)
+
+        sample_doc['type'] = 'wrong_type'
+
+        self.pillow.process_change(doc_to_change(sample_doc))
+        self.adapter.refresh_table()
+
+        self.assertEqual(0, self.adapter.get_query_object().count())
+
+    @patch('corehq.apps.userreports.specs.datetime')
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_check_if_doc_exist(self, datetime_mock):
+        datetime_mock.utcnow.return_value = self.fake_time_now
+        sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
+
+        self.assertFalse(self.adapter.doc_exists(sample_doc))
+
+        self.pillow.process_change(doc_to_change(sample_doc))
+
+        self.assertIs(self.adapter.doc_exists(sample_doc), True)
+
 
 @override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
 class IndicatorPillowTestES(IndicatorPillowTest):
@@ -432,9 +460,7 @@ class AsyncIndicatorTest(TestCase):
         self.pillow.process_changes(since=since, forever=False)
         self.assertEqual(indicators.count(), 1)
 
-        # ensure the save errors and fails to produce a row
-        with self.assertRaises(AttributeError):
-            queue_async_indicators()
+        queue_async_indicators()
 
         rows = self.adapter.get_query_object()
         self.assertEqual(rows.count(), 0)

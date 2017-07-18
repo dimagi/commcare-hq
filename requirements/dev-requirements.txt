@@ -1,4 +1,4 @@
-django-debug-toolbar==1.6
+django-debug-toolbar==1.8
 django-devserver>=0.7.0
 guppy==0.1.10
 werkzeug==0.11.15
@@ -18,5 +18,6 @@ django-extensions==1.7.7
 ipython==5.2.2
 ipdb==0.9.4
 wheel==0.29.0
+graphviz==0.7
 
 --requirement=test-requirements.txt

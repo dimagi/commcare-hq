@@ -4,9 +4,6 @@ from datetime import datetime, time
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from corehq.apps.reports_core.exceptions import FilterValueException
-from corehq.apps.userreports.expressions.getters import transform_from_datatype
-from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, CHOICE_DELIMITER, \
-    LocationDrilldownFilterValue
 from corehq.apps.userreports.util import localize
 from corehq.util.dates import iso_string_to_date, get_quarter_date_range
 
@@ -184,6 +181,7 @@ class QuarterFilter(BaseFilter):
 
     @property
     def years(self):
+        from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
         start_year = getattr(settings, 'START_YEAR', 2008)
         years = [(str(y), y) for y in range(start_year, datetime.utcnow().year + 1)]
         years.reverse()
@@ -209,6 +207,7 @@ class QuarterFilter(BaseFilter):
 
     @memoized
     def value(self, **kwargs):
+        from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
         selected_year = kwargs[self.year_param_name]
         if selected_year == SHOW_ALL_CHOICE:
             # no filter translates to not filtering the dates at all
@@ -277,6 +276,7 @@ class PreFilter(BaseFilter):
         return self.default_value()
 
     def default_value(self, request_user=None):
+        from corehq.apps.userreports.expressions.getters import transform_from_datatype
         if self.pre_value is None:
             return {
                 'operator': self.pre_operator or 'is',
@@ -324,6 +324,8 @@ class ChoiceListFilter(BaseFilter):
         self.choice_provider = StaticChoiceProvider(self.choices)
 
     def value(self, **kwargs):
+        from corehq.apps.userreports.expressions.getters import transform_from_datatype
+        from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
         raw_value = kwargs[self.name]
         choice = transform_from_datatype(self.datatype)(raw_value) if raw_value != SHOW_ALL_CHOICE else raw_value
         choice_values = [c.value for c in self.choices]
@@ -380,6 +382,8 @@ class DynamicChoiceListFilter(BaseFilter):
             ]
 
     def value(self, **kwargs):
+        from corehq.apps.userreports.reports.filters.values import CHOICE_DELIMITER
+        from corehq.apps.userreports.expressions.getters import transform_from_datatype
         selection = six.text_type(kwargs.get(self.name, ""))
         user = kwargs.get(REQUEST_USER_KEY, None)
         if selection:
@@ -389,12 +393,20 @@ class DynamicChoiceListFilter(BaseFilter):
         return self.default_value(user)
 
     def default_value(self, request_user=None):
+        from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE
         if hasattr(self.choice_provider, 'default_value'):
             choice_provider_default = self.choice_provider.default_value(request_user)
             if choice_provider_default is not None:
                 return choice_provider_default
 
         return [Choice(SHOW_ALL_CHOICE, "[{}]".format(ugettext('Show All')))]
+
+
+class MultiFieldDynamicChoiceListFilter(DynamicChoiceListFilter):
+    def __init__(self, name, fields, datatype, label, show_all, url_generator, choice_provider):
+        super(MultiFieldDynamicChoiceListFilter, self).__init__(name, None, datatype, label, show_all,
+                                                                url_generator, choice_provider)
+        self.fields = fields
 
 
 class LocationDrilldownFilter(BaseFilter):
@@ -454,13 +466,14 @@ class LocationDrilldownFilter(BaseFilter):
     def default_value(self, request_user=None):
         # Returns list of visible locations for the user if user is assigned to a location
         #   or special value of SHOW_ALL or SHOW_NONE depending whether
-        #   user is domain-admin or not respectively
+        #   user can access all locations or not respectively
+        from corehq.apps.userreports.reports.filters.values import LocationDrilldownFilterValue
         if request_user:
             user_location_id = self.user_location_id(request_user)
-            if user_location_id:
-                return self.valid_location_ids(user_location_id)
-            elif request_user.is_domain_admin(self.domain):
+            if request_user.has_permission(self.domain, 'access_all_locations'):
                 return LocationDrilldownFilterValue.SHOW_ALL
+            elif user_location_id:
+                return self.valid_location_ids(user_location_id)
             else:
                 return LocationDrilldownFilterValue.SHOW_NONE
         else:
