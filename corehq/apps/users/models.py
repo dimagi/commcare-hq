@@ -1481,6 +1481,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return self.has_permission(domain, perm, data)
         return fn
 
+    def get_location_id(self, domain):
+        return getattr(self.get_domain_membership(domain), 'location_id', None)
+
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
 
@@ -2273,9 +2276,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if not membership.location_id and location_ids:
             membership.location_id = location_ids[0]
         self.save()
-
-    def get_location_id(self, domain):
-        return getattr(self.get_domain_membership(domain), 'location_id', None)
 
     @memoized
     def get_sql_location(self, domain):
