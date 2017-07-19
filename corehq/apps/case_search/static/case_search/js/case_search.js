@@ -8,6 +8,7 @@ hqDefine('case_search/js/case_search.js', function(){
         self.owner_id = ko.observable();
         self.customQueryAddition = ko.observable();
         self.results = ko.observableArray();
+        self.count = ko.observable();
         self.case_data_url = case_data_url;
         self.parameters = ko.observableArray([{
             key: "",
@@ -42,6 +43,7 @@ hqDefine('case_search/js/case_search.js', function(){
                 )},
                 success: function(data){
                     self.results(data.values);
+                    self.count(data.count);
                 },
             });
         };

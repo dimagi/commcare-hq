@@ -64,7 +64,7 @@ class MessagesReport(ProjectReport, ProjectReportParametersMixin, GenericTabular
         "This report will only show data for users whose phone numbers have "
         "been verified. Phone numbers can be verified from the Settings and "
         "Users tab.")
-    inclusive = False
+    default_datespan_end_date_to_today = True
 
     @property
     def headers(self):
@@ -134,7 +134,7 @@ def _sms_count(user, startdate, enddate):
 
 class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, GenericTabularReport, DatespanMixin):
     contact_index_in_result = 1
-    inclusive = False
+    default_datespan_end_date_to_today = True
 
     def _fmt(self, val):
         if val is None:

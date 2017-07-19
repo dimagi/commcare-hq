@@ -2664,7 +2664,6 @@
         "property_value": null
       }
     },
-    "asynchronous": true,
     "engine_id": "icds-ucr",
     "backend_id": "LABORATORY",
     "es_index_settings": {

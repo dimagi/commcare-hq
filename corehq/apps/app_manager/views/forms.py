@@ -32,7 +32,6 @@ from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
-    BlankXFormError,
     ConflictingCaseTypeError,
     FormNotFoundException, XFormValidationFailed)
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -130,10 +129,6 @@ def copy_form(request, domain, app_id, form_unique_id):
         if module['case_type'] != to_module['case_type']:
             messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
         app.save()
-    except BlankXFormError:
-        # don't save!
-        messages.error(request, _('We could not copy this form, because it is blank.'
-                                  'In order to copy this form, please add some questions first.'))
     except IncompatibleFormTypeException:
         # don't save!
         messages.error(request, _('This form could not be copied because it '

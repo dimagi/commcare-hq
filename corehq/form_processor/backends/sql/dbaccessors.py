@@ -17,6 +17,7 @@ from django.db.models.functions import Greatest
 from corehq.blobs import get_blob_db
 from corehq.form_processor.exceptions import (
     XFormNotFound,
+    XFormSaveError,
     CaseNotFound,
     AttachmentNotFound,
     CaseSaveError,
@@ -510,27 +511,41 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     @transaction.atomic
     def save_new_form(form):
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
         """
         Save a previously unsaved form
         """
+
+        db_name = get_db_alias_for_partitioned_doc(form.form_id)
         assert not form.is_saved(), 'form already saved'
         logging.debug('Saving new form: %s', form)
         unsaved_attachments = getattr(form, 'unsaved_attachments', [])
         if unsaved_attachments:
             for unsaved_attachment in unsaved_attachments:
+                if unsaved_attachment.is_saved():
+                    raise XFormSaveError(
+                        'XFormAttachmentSQL {} has already been saved'.format(unsaved_attachment.id)
+                    )
                 unsaved_attachment.form = form
 
         operations = form.get_tracked_models_to_create(XFormOperationSQL)
         for operation in operations:
+            if operation.is_saved():
+                raise XFormSaveError(
+                    'XFormOperationSQL {} has already been saved'.format(operation.id)
+                )
             operation.form = form
 
-        with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute(
-                'SELECT form_pk FROM save_new_form_and_related_models(%s, %s, %s, %s)',
-                [form.form_id, form, unsaved_attachments, operations]
-            )
-            result = fetchone_as_namedtuple(cursor)
-            form.id = result.form_pk
+        try:
+            with transaction.atomic(using=db_name):
+                form.save(using=db_name)
+                for attachment in unsaved_attachments:
+                    attachment.save(using=db_name)
+
+                for operation in operations:
+                    operation.save(using=db_name)
+        except InternalError as e:
+            raise XFormSaveError(e)
 
         try:
             del form.unsaved_attachments
@@ -855,6 +870,14 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
         attachments_to_save = case.get_tracked_models_to_create(CaseAttachmentSQL)
         attachment_ids_to_delete = [att.id for att in case.get_tracked_models_to_delete(CaseAttachmentSQL)]
+        for attachment in attachments_to_save:
+            if attachment.is_saved():
+                raise CaseSaveError(
+                    """Updating attachments is not supported.
+                    case id={}, attachment id={}""".format(
+                        case.case_id, attachment.attachment_id
+                    )
+                )
 
         try:
             with transaction.atomic(using=db_name):
@@ -873,13 +896,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 CommCareCaseIndexSQL.objects.using(db_name).filter(id__in=index_ids_to_delete).delete()
 
                 for attachment in attachments_to_save:
-                    if attachment.is_saved():
-                        raise CaseSaveError(
-                            """Updating attachments is not supported.
-                            case id={}, attachment id={}""".format(
-                                case.case_id, attachment.attachment_id
-                            )
-                        )
                     attachment.save(using=db_name)
 
                 CaseAttachmentSQL.objects.using(db_name).filter(id__in=attachment_ids_to_delete).delete()

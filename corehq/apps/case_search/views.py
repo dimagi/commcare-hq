@@ -60,5 +60,5 @@ class CaseSearchView(DomainViewMixin, TemplateView):
             addition = CaseSearchQueryAddition.objects.get(id=query_addition, domain=self.domain)
             new_query = merge_queries(search.get_query(), addition.query_addition)
             search = search.set_query(new_query)
-        search_results = search.run().raw_hits
-        return json_response({'values': search_results})
+        search_results = search.run()
+        return json_response({'values': search_results.raw_hits, 'count': search_results.total})

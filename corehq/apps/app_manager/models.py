@@ -128,7 +128,6 @@ from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from .exceptions import (
     AppEditingError,
-    BlankXFormError,
     ConflictingCaseTypeError,
     FormNotFoundException,
     IncompatibleFormTypeException,
@@ -6044,9 +6043,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return self._copy_form(from_module, form, to_module, rename=True)
 
     def _copy_form(self, from_module, form, to_module, *args, **kwargs):
-        if not form.source:
-            raise BlankXFormError()
-
         copy_source = deepcopy(form.to_json())
         if 'unique_id' in copy_source:
             del copy_source['unique_id']

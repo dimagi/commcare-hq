@@ -107,7 +107,6 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
             $location.search('location_id', '');
             $location.search('selectedLocationLevel', -1);
             $location.search('location_name', '');
-            $location.search('location', '');
         } else {
             $location.search('location_id', loc.location_id);
             $location.search('selectedLocationLevel', index);
