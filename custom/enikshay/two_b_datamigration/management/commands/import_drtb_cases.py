@@ -277,13 +277,6 @@ class MumbaiColumnMapping(ColumnMapping):
     follow_up_culture_month_start = 3
 
     @classmethod
-    def get_value(cls, normalized_column_name, row):
-        value = super(MumbaiColumnMapping, cls).get_value(normalized_column_name, row)
-        # Make cbnaat_result required
-        if value is None and normalized_column_name == "cbnaat_result":
-            raise Exception("All mumbai rows must contain cbnaat result")
-        return value
-    
     def get_follow_up_culture_result(cls, month, row):
         if month == 36:
             # For some reason the sheet jumps from 33 to 36, so just special casing it.
@@ -498,25 +491,43 @@ def get_episode_case_properties(domain, column_mapping, row):
     if treatment_initiation_date:
         properties["treatment_initiated"] = "yes_phi"
 
-    cbnaat_lab_name, cbnaat_lab_id = match_location(domain, column_mapping.get_value("cbnaat_lab", row))
-    if cbnaat_lab_name:
-        properties.update({
-            "diagnosing_facility_name": cbnaat_lab_name,
-            "diagnosing_facility_id": cbnaat_lab_id,
-            "diagnosis_test_type_label": "CBNAAT",
-            "diagnosis_test_type_value": "cbnaat",
-        })
-    if get_cbnaat_resistance(column_mapping, row):
-        properties["diagnosis_test_drug_resistance_list"] = "r"
+    properties.update(get_diagnosis_properties(column_mapping, domain, row))
 
-    cbnaat_result_date = column_mapping.get_value("cbnaat_result_date", row)
-    if cbnaat_result_date:
+    ip_to_cp_date = clean_date(column_mapping.get_value("ip_to_cp_date", row))
+    if ip_to_cp_date:
         properties.update({
-            "diagnosis_test_result_date": clean_date(cbnaat_result_date),
-            "date_of_diagnosis": clean_date(cbnaat_result_date),
+            "cp_initiated": "yes",
+            "cp_initiation_date": ip_to_cp_date,
         })
 
     return properties
+
+
+def get_diagnosis_properties(column_mapping, domain, row):
+    has_cbnaat_result = bool(column_mapping.get_value("cbnaat_result", row))
+    if has_cbnaat_result:
+        properties = {}
+        cbnaat_lab_name, cbnaat_lab_id = match_location(domain, column_mapping.get_value("cbnaat_lab", row))
+        if cbnaat_lab_name:
+            properties.update({
+                "diagnosing_facility_name": cbnaat_lab_name,
+                "diagnosing_facility_id": cbnaat_lab_id,
+                "diagnosis_test_type_label": "CBNAAT",
+                "diagnosis_test_type_value": "cbnaat",
+            })
+        if get_cbnaat_resistance(column_mapping, row):
+            properties["diagnosis_test_drug_resistance_list"] = "r"
+
+        cbnaat_result_date = column_mapping.get_value("cbnaat_result_date", row)
+        if cbnaat_result_date:
+            properties.update({
+                "diagnosis_test_result_date": clean_date(cbnaat_result_date),
+                "date_of_diagnosis": clean_date(cbnaat_result_date),
+            })
+        return properties
+    else:
+        # TODO: (WAITING) figure out how to set these properties based on other info
+        return {}
 
 
 def get_disease_site_properties(column_mapping, row):
