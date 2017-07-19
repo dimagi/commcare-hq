@@ -378,6 +378,6 @@ def heartbeat(request, domain, id):
     for_app_id = request.GET.get('app_id', '')
     return JsonResponse({
         "app_id": for_app_id,
-        "latest_apk_version": {"value": ""},
-        "latest_ccz_version": {"value": ""}
+        "latest_apk_version": {},
+        "latest_ccz_version": {}
     })
