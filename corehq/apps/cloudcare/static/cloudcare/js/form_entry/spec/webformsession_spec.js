@@ -82,9 +82,11 @@ describe('WebForm', function() {
             server.respondWith(
                 'POST',
                 new RegExp(params.xform_url + '.*'),
-                [200,
-                { 'Content-Type': 'application/json' },
-                '{ "status": "success", "session_id": "my-session" }']
+                [
+                    200,
+                    { 'Content-Type': 'application/json' },
+                    '{ "status": "success", "session_id": "my-session" }',
+                ]
             );
 
             // Setup server constants
