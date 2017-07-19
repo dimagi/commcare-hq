@@ -183,7 +183,7 @@ class MigrationTestCase(BaseMigrationTestCase):
             </data>""",
             self.domain_name,
         )
-        form = FormAccessors(self.domain_name).get_form('im-a-bad-form')
+        [form] = FormAccessors(self.domain.name).get_forms_by_type('XFormError', limit=1)
         form_json = form.to_json()
         form_json['doc_type'] = 'XFormInstance'
         XFormInstance.wrap(form_json).save()
