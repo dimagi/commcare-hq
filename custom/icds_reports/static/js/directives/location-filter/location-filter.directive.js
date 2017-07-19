@@ -46,7 +46,7 @@ function LocationModalController($uibModalInstance, locationsService, selectedLo
         }
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.id === userLocationId) {
+            if (key.location_id === userLocationId) {
                 i = value;
             }
         });

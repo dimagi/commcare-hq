@@ -844,7 +844,7 @@ var height_for_age = {
 
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, storageService) {
+function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, storageService, userLocationId) {
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
@@ -1101,6 +1101,16 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         beneficiary: { route: "/awc_reports/beneficiary", label: "Beneficiary List"},
     };
 
+    vm.getDisableIndex = function () {
+        var i = -1;
+        window.angular.forEach(vm.selectedLocations, function (key, value) {
+            if (key.location_id === userLocationId) {
+                i = value;
+            }
+        });
+        return i;
+    };
+
     vm.moveToLocation = function(loc, index) {
         if (loc === 'national') {
             $location.search('location_id', '');
@@ -1134,7 +1144,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getDataForStep(vm.step);
 }
 
-AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'storageService'];
+AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'storageService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive('awcReports', function() {
     return {
