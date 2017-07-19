@@ -19,16 +19,18 @@ from django_countries.data import COUNTRIES
 
 from corehq import toggles
 from corehq.apps.analytics.tasks import set_analytics_opt_out
+from corehq.apps.custom_data_fields import CustomDataEditor
 from corehq.apps.domain.forms import EditBillingAccountInfoForm, clean_password
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import user_can_access_location_id
+from custom.nic_compliance.forms import EncodedPasswordChangeFormMixin
 from corehq.apps.users.models import CouchUser
 from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.apps.users.util import format_username, cc_user_domain
 from corehq.apps.app_manager.models import validate_lang
 from corehq.apps.programs.models import Program
-
+from corehq.apps.hqwebapp.utils import decode_password
 # Bootstrap 3 Crispy Forms
 from crispy_forms import layout as cb3_layout
 from crispy_forms import helper as cb3_helper
@@ -355,15 +357,8 @@ class UpdateCommCareUserInfoForm(BaseUserInfoForm, UpdateUserRoleForm):
         if toggles.ENABLE_LOADTEST_USERS.enabled(self.domain):
             self.fields['loadtest_factor'].widget = forms.TextInput()
 
-        if toggles.MOBIE_UCR_SYNC_DELAY_CONFIG.enabled(self.domain):
+        if toggles.MOBILE_UCR.enabled(self.domain):
             self.fields['mobile_ucr_sync_interval'].widget = forms.NumberInput()
-
-        if self.initial['mobile_ucr_sync_interval']:
-            self.initial['mobile_ucr_sync_interval'] /= 3600  # convert seconds to hours
-
-    def clean_mobile_ucr_sync_interval(self):
-        if self.cleaned_data['mobile_ucr_sync_interval']:
-            return self.cleaned_data['mobile_ucr_sync_interval'] * 3600
 
     @property
     def direct_properties(self):
@@ -382,7 +377,7 @@ class RoleForm(forms.Form):
         self.fields['role'].choices = role_choices
 
 
-class SetUserPasswordForm(SetPasswordForm):
+class SetUserPasswordForm(EncodedPasswordChangeFormMixin, SetPasswordForm):
 
     new_password1 = forms.CharField(
         label=ugettext_noop("New password"),
@@ -432,9 +427,14 @@ class SetUserPasswordForm(SetPasswordForm):
         )
 
     def clean_new_password1(self):
+        password1 = decode_password(self.cleaned_data.get('new_password1'))
+        if password1 == '':
+            raise ValidationError(
+                _("Password cannot be empty"), code='new_password1_empty',
+            )
         if self.project.strong_mobile_passwords:
-            return clean_password(self.cleaned_data.get('new_password1'))
-        return self.cleaned_data.get('new_password1')
+            return clean_password(password1)
+        return password1
 
 
 class CommCareAccountForm(forms.Form):
@@ -551,14 +551,14 @@ class NewMobileWorkerForm(forms.Form):
         label=ugettext_noop("Password"),
     )
 
-    def __init__(self, project, user, *args, **kwargs):
+    def __init__(self, project, request_user, *args, **kwargs):
         super(NewMobileWorkerForm, self).__init__(*args, **kwargs)
         email_string = u"@{}.commcarehq.org".format(project.name)
         max_chars_username = 80 - len(email_string)
         self.project = project
         self.domain = self.project.name
-        self.user = user
-        self.can_access_all_locations = user.has_permission(self.domain, 'access_all_locations')
+        self.request_user = request_user
+        self.can_access_all_locations = request_user.has_permission(self.domain, 'access_all_locations')
         if not self.can_access_all_locations:
             self.fields['location_id'].required = True
 
@@ -638,7 +638,7 @@ class NewMobileWorkerForm(forms.Form):
 
     def clean_location_id(self):
         location_id = self.cleaned_data['location_id']
-        if not user_can_access_location_id(self.domain, self.user, location_id):
+        if not user_can_access_location_id(self.domain, self.request_user, location_id):
             raise forms.ValidationError("You do not have access to that location.")
         return location_id
 
@@ -649,9 +649,10 @@ class NewMobileWorkerForm(forms.Form):
         return clean_mobile_worker_username(self.domain, username)
 
     def clean_password(self):
+        cleaned_password = decode_password(self.cleaned_data.get('password'))
         if self.project.strong_mobile_passwords:
-            return clean_password(self.cleaned_data.get('password'))
-        return self.cleaned_data.get('password')
+            return clean_password(cleaned_password)
+        return cleaned_password
 
 
 class NewAnonymousMobileWorkerForm(forms.Form):
@@ -669,11 +670,11 @@ class NewAnonymousMobileWorkerForm(forms.Form):
         min_length=1,
     )
 
-    def __init__(self, project, user, *args, **kwargs):
+    def __init__(self, project, request_user, *args, **kwargs):
         super(NewAnonymousMobileWorkerForm, self).__init__(*args, **kwargs)
         self.project = project
-        self.user = user
-        self.can_access_all_locations = user.has_permission(self.project.name, 'access_all_locations')
+        self.request_user = request_user
+        self.can_access_all_locations = request_user.has_permission(self.project.name, 'access_all_locations')
         if not self.can_access_all_locations:
             self.fields['location_id'].required = True
 
@@ -816,7 +817,7 @@ class SupplyPointSelectWidget(forms.Widget):
         location_ids = value.split(',') if value else []
         locations = list(SQLLocation.active_objects
                          .filter(domain=self.domain, location_id__in=location_ids))
-        initial_data = [{'id': loc.location_id, 'name': loc.display_name} for loc in locations]
+        initial_data = [{'id': loc.location_id, 'name': loc.get_path_display()} for loc in locations]
 
         return get_template('locations/manage/partials/autocomplete_select_widget.html').render(Context({
             'id': self.id,
@@ -1174,3 +1175,39 @@ class AddPhoneNumberForm(forms.Form):
                 )
             )
         )
+        self.fields['phone_number'].label = ugettext_lazy('Phone number')
+
+
+class CommCareUserFormSet(object):
+    """Combines the CommCareUser form and the Custom Data form"""
+
+    def __init__(self, domain, editable_user, request_user, data=None, *args, **kwargs):
+        self.domain = domain
+        self.editable_user = editable_user
+        self.request_user = request_user
+        self.data = data
+
+    @property
+    @memoized
+    def user_form(self):
+        return UpdateCommCareUserInfoForm(
+            data=self.data, domain=self.domain, existing_user=self.editable_user)
+
+    @property
+    @memoized
+    def custom_data(self):
+        from corehq.apps.users.views.mobile.custom_data_fields import UserFieldsView
+        return CustomDataEditor(
+            domain=self.domain,
+            field_view=UserFieldsView,
+            existing_custom_data=self.editable_user.user_data,
+            post_dict=self.data,
+        )
+
+    def is_valid(self):
+        return (self.data is not None
+                and all([self.user_form.is_valid(), self.custom_data.is_valid()]))
+
+    def update_user(self):
+        self.user_form.existing_user.user_data = self.custom_data.get_data_to_save()
+        return self.user_form.update_user()

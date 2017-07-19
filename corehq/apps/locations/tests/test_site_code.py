@@ -3,7 +3,7 @@
 
 from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.models import Location, LocationType
+from corehq.apps.locations.models import make_location, LocationType
 
 
 class SiteCodeTest(TestCase):
@@ -22,7 +22,7 @@ class SiteCodeTest(TestCase):
         super(SiteCodeTest, cls).tearDownClass()
 
     def testSimpleName(self):
-        location = Location(
+        location = make_location(
             name="Some Location",
             domain=self.domain,
             location_type="type"
@@ -33,7 +33,7 @@ class SiteCodeTest(TestCase):
         self.assertEqual(location.site_code, 'some_location')
 
     def testOtherCharacters(self):
-        location = Location(
+        location = make_location(
             name=u"Somé$ #Location (Old)",
             domain=self.domain,
             location_type="type"
@@ -44,7 +44,7 @@ class SiteCodeTest(TestCase):
         self.assertEqual(location.site_code, 'some_location_old')
 
     def testDoesntDuplicate(self):
-        location = Location(
+        location = make_location(
             name="Location",
             domain=self.domain,
             location_type="type"
@@ -54,7 +54,7 @@ class SiteCodeTest(TestCase):
 
         self.assertEqual(location.site_code, 'location')
 
-        location = Location(
+        location = make_location(
             name="Location",
             domain=self.domain,
             location_type="type"

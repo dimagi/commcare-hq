@@ -362,9 +362,7 @@ class TestMultiMediaExportColumn(SimpleTestCase):
         result = column.get_value('my-domain', '1234', {'photo': '1234.jpg'}, [PathNode(name='form')])
         self.assertEqual(
             result,
-            '{}?attachment=1234.jpg'.format(
-                absolute_reverse('download_attachment', args=('my-domain', '1234'))
-            )
+            absolute_reverse('api_form_attachment', args=('my-domain', '1234', '1234.jpg'))
         )
         result = column.get_value('my-domain', '1234', {'photo': None}, [PathNode(name='form')])
         self.assertEqual(result, MISSING_VALUE)
@@ -388,8 +386,8 @@ class TestMultiMediaExportColumn(SimpleTestCase):
         )
         self.assertEqual(
             result,
-            '=HYPERLINK("{}?attachment=1234.jpg")'.format(
-                absolute_reverse('download_attachment', args=('my-domain', '1234'))
+            '=HYPERLINK("{}")'.format(
+                absolute_reverse('api_form_attachment', args=('my-domain', '1234', '1234.jpg'))
             )
         )
 

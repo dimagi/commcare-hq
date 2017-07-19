@@ -1,12 +1,13 @@
 {% extends 'reports/filters/datespan.html' %}
 {% load staticfiles %}
 {% load i18n %}
+{% block init_filter %}{% endblock %}
 {% block filter_js %}
 {% ifequal slug 'datespan'  %}
     <script type="text/javascript">
         $(function () {
             var separator = '{{ separator }}';
-            var report_labels = JSON.parse('{{ report_labels|safe }}');
+            var report_labels = JSON.parse('{{ report_labels_json|safe }}');
             var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
 
             $('#filter_range').createDateRangePicker(

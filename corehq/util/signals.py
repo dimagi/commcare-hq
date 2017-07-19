@@ -5,5 +5,4 @@ from django.conf import settings
 
 @task_failure.connect
 def log_celery_task_exception(task_id, exception, traceback, einfo, *args, **kwargs):
-    if settings.SERVER_ENVIRONMENT == 'icds':
-        notify_exception('Celery task failure', exec_info=einfo.exc_info)
+    notify_exception('Celery task failure', exec_info=einfo.exc_info)

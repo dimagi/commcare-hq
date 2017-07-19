@@ -158,8 +158,7 @@
             "property_name": "owner_id"
           }
         },
-        "column_id": "awc_id",
-        "create_index": true
+        "column_id": "awc_id"
       },
       {
         "display_name": null,
@@ -3458,6 +3457,10 @@
     "backend_id": "LABORATORY",
     "es_index_settings": {
       "number_of_shards": 5
-    }
+    },
+    "sql_column_indexes": [
+      {"column_ids": ["awc_id", "month"]},
+      {"column_ids": ["district_id", "month"]}
+    ]
   }
 }

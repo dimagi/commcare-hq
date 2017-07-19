@@ -16,7 +16,6 @@ from corehq.apps.app_manager.views.forms import \
     get_form_view_context_and_template
 from corehq.apps.app_manager.views.releases import get_releases_context
 from corehq.apps.app_manager.views.utils import bail, encode_if_unicode
-from corehq.apps.data_dictionary.util import get_case_property_description_dict
 from corehq.apps.hqmedia.controller import (
     MultimediaImageUploadController,
     MultimediaAudioUploadController,
@@ -43,6 +42,7 @@ from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
     ANDROID_LOGO_PROPERTY_MAPPING,
     ModuleNotFoundException,
+    ReportModule,
 )
 from django_prbac.utils import has_privilege
 from corehq.apps.analytics import ab_tests
@@ -96,8 +96,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             # Soft assert but then continue rendering; template will contain a user-facing warning
             _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
             _assert(False, 'vellum_case_management=False', {'domain': domain, 'app_id': app_id})
-        if (form is not None and toggles.USER_PROPERTY_EASY_REFS.enabled(domain)
-                and "usercase_preload" in form.actions
+        if (form is not None and "usercase_preload" in getattr(form, "actions", {})
                 and form.actions.usercase_preload.preload):
             _assert = soft_assert(['dmiller' + '@' + 'dimagi.com'])
             _assert(False, 'User property easy refs + old-style config = bad', {
@@ -136,12 +135,6 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         template, form_context = get_form_view_context_and_template(
             request, domain, form, context['langs']
         )
-        context.update({
-            'case_properties': get_all_case_properties(app),
-            'usercase_properties': get_usercase_properties(app),
-            'property_descriptions': get_case_property_description_dict(domain)
-        })
-
         context.update(form_context)
     elif module:
         template = get_module_template(request.user, module)
@@ -182,16 +175,14 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         if form_id:
             default_file_name = '%s_form%s' % (default_file_name, form_id)
 
-        specific_media = {
-            'menu': {
-                'menu_refs': app.get_menu_media(
-                    module, module_id, form=form, form_index=form_id, to_language=lang
-                ),
-                'default_file_name': '{name}_{lang}'.format(name=default_file_name, lang=lang),
-            }
-        }
+        specific_media = [{
+            'menu_refs': app.get_menu_media(
+                module, module_id, form=form, form_index=form_id, to_language=lang
+            ),
+            'default_file_name': '{name}_{lang}'.format(name=default_file_name, lang=lang),
+        }]
 
-        if module and module.uses_media():
+        if not form and module and not isinstance(module, ReportModule) and module.uses_media():
             def _make_name(suffix):
                 return "{default_name}_{suffix}_{lang}".format(
                     default_name=default_file_name,
@@ -199,46 +190,54 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
                     lang=lang,
                 )
 
-            specific_media['case_list_form'] = {
+            specific_media.append({
                 'menu_refs': app.get_case_list_form_media(module, module_id, to_language=lang),
                 'default_file_name': _make_name('case_list_form'),
-            }
-            specific_media['case_list_menu_item'] = {
+                'qualifier': 'case_list_form_',
+            })
+            specific_media.append({
                 'menu_refs': app.get_case_list_menu_item_media(module, module_id, to_language=lang),
                 'default_file_name': _make_name('case_list_menu_item'),
-            }
-            specific_media['case_list_lookup'] = {
-                'menu_refs': app.get_case_list_lookup_image(module, module_id),
-                'default_file_name': '{}_case_list_lookup'.format(default_file_name),
-            }
+                'qualifier': 'case_list-menu_item_',
+            })
+            if (toggles.CASE_LIST_LOOKUP.enabled(request.user.username) or
+                    toggles.CASE_LIST_LOOKUP.enabled(app.domain)):
+                specific_media.append({
+                    'menu_refs': app.get_case_list_lookup_image(module, module_id),
+                    'default_file_name': '{}_case_list_lookup'.format(default_file_name),
+                    'qualifier': 'case-list-lookupcase',
+                })
 
-            if hasattr(module, 'product_details'):
-                specific_media['product_list_lookup'] = {
-                    'menu_refs': app.get_case_list_lookup_image(module, module_id, type='product'),
-                    'default_file_name': '{}_product_list_lookup'.format(default_file_name),
-                }
+                if hasattr(module, 'product_details'):
+                    specific_media.append({
+                        'menu_refs': app.get_case_list_lookup_image(module, module_id, type='product'),
+                        'default_file_name': '{}_product_list_lookup'.format(default_file_name),
+                        'qualifier': 'case-list-lookupproduct',
+                    })
 
+        uploaders = {
+            'icon': MultimediaImageUploadController(
+                "hqimage",
+                reverse(ProcessImageFileUploadView.name,
+                        args=[app.domain, app.get_id])
+            ),
+            'audio': MultimediaAudioUploadController(
+                "hqaudio", reverse(ProcessAudioFileUploadView.name,
+                        args=[app.domain, app.get_id])
+            ),
+        }
         context.update({
             'multimedia': {
                 "object_map": app.get_object_map(),
-                'upload_managers': {
-                    'icon': MultimediaImageUploadController(
-                        "hqimage",
-                        reverse(ProcessImageFileUploadView.name,
-                                args=[app.domain, app.get_id])
-                    ),
-                    'audio': MultimediaAudioUploadController(
-                        "hqaudio", reverse(ProcessAudioFileUploadView.name,
-                                args=[app.domain, app.get_id])
-                    ),
-                },
+                'upload_managers': uploaders,
+                'upload_managers_js': {type: u.js_options for type, u in uploaders.iteritems()},
             }
         })
         try:
             context['multimedia']['references'] = app.get_references()
         except ReportConfigurationNotFoundError:
             pass
-        context['multimedia'].update(specific_media)
+        context['nav_menu_media_specifics'] = specific_media
 
     error = request.GET.get('error', '')
 
@@ -263,6 +262,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
     })
 
     context['latest_commcare_version'] = get_commcare_versions(request.user)[-1]
+    context['current_app_version_url'] = reverse('current_app_version', args=[domain, app_id])
 
     if app and app.doc_type == 'Application' and has_privilege(request, privileges.COMMCARE_LOGO_UPLOADER):
         uploader_slugs = ANDROID_LOGO_PROPERTY_MAPPING.keys()

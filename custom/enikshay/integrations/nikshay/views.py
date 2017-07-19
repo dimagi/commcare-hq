@@ -1,4 +1,4 @@
-from corehq.apps.repeaters.views import AddCaseRepeaterView
+from corehq.motech.repeaters.views import AddCaseRepeaterView, AddCustomSOAPCaseRepeaterView
 
 
 class RegisterNikshayPatientRepeaterView(AddCaseRepeaterView):
@@ -23,3 +23,9 @@ class NikshayPatientFollowupRepeaterView(AddCaseRepeaterView):
     urlname = 'nikshay_patient_followup'
     page_title = "Nikshay Patients Follow Up"
     page_name = "Nikshay Patients Follow Up"
+
+
+class RegisterNikshayPrivatePatientRepeaterView(AddCustomSOAPCaseRepeaterView):
+    urlname = 'register_nikshay_private_patient'
+    page_title = "Register Nikshay Private Patients"
+    page_name = "Register Nikshay Private Patients"

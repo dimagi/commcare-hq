@@ -1,5 +1,5 @@
 hqDefine('accounting/js/accounting.credits.js', function () {
-    var CreditsManager = function (products, features, paymentHandler, can_purchase_credits, is_plan_trial) {
+    var CreditsManager = function (products, features, paymentHandler, can_purchase_credits) {
         'use strict';
         var self = this;
 
@@ -8,7 +8,7 @@ hqDefine('accounting/js/accounting.credits.js', function () {
         self.features = ko.observableArray();
         self.prepayments = ko.observable();
 
-        can_purchase_credits = can_purchase_credits && !is_plan_trial;
+        can_purchase_credits = can_purchase_credits;
 
         self.init = function () {
             _.each(products, function (product) {

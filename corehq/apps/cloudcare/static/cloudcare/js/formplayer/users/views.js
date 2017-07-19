@@ -116,12 +116,11 @@ FormplayerFrontend.module("Users.Views", function(Views, FormplayerFrontend, Bac
         fetchUsers: function() {
             this.collection.fetch({
                 reset: true,
-                data: JSON.stringify({
+                data: {
                     query: this.model.get('query'),
                     limit: this.limit,
                     page: this.model.get('page'),
-                    include_location: true,
-                }),
+                },
             })
             .done(this.render.bind(this))
             .fail(function(xhr){

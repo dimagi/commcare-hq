@@ -34,10 +34,66 @@
         "display": "Filter by Block",
         "field": "block_id",
         "type": "location_drilldown",
-        "slug": "block_id"
+        "slug": "block_id",
+        "include_descendants": true,
+        "max_drilldown_levels": 3
       }
     ],
     "columns": [
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "state_id",
+        "field": "state_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "State",
+          "hin": "State"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "district_id",
+        "field": "district_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "District",
+          "hin": "District"
+        },
+        "aggregation": "simple"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "transform": {
+          "type": "custom",
+          "custom_type": "owner_display"
+        },
+        "column_id": "block_id",
+        "field": "block_id",
+        "calculate_total": false,
+        "type": "field",
+        "display": {
+          "en": "Block",
+          "hin": "Block"
+        },
+        "aggregation": "simple"
+      },
       {
         "sortable": false,
         "description": null,
@@ -159,7 +215,20 @@
         "aggregation": "simple"
       }
     ],
-    "sort_expression": [],
+    "sort_expression": [
+      {
+        "field": "state_id",
+        "order": "DESC"
+      },
+      {
+        "field": "district_id",
+        "order": "DESC"
+      },
+      {
+        "field": "block_id",
+        "order": "DESC"
+      }
+    ],
     "configured_charts": []
   }
 }

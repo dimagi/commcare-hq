@@ -23,7 +23,7 @@ class KafkaChangeFeed(ChangeFeed):
     """
     sequence_format = 'json'
 
-    def __init__(self, topics, group_id, strict=False):
+    def __init__(self, topics, group_id, strict=False, num_processes=1, process_num=0):
         """
         Create a change feed listener for a list of kafka topics, a group ID, and partition.
 
@@ -33,6 +33,8 @@ class KafkaChangeFeed(ChangeFeed):
         self._group_id = group_id
         self._processed_topic_offsets = {}
         self.strict = strict
+        self.num_processes = num_processes
+        self.process_num = process_num
 
     def __unicode__(self):
         return u'KafkaChangeFeed: topics: {}, group: {}'.format(self._topics, self._group_id)
@@ -44,7 +46,7 @@ class KafkaChangeFeed(ChangeFeed):
     @property
     @memoized
     def topic_and_partitions(self):
-        return list(self._processed_topic_offsets)
+        return list(self._get_partitioned_offsets(get_multi_topic_offset(self.topics)))
 
     def _get_single_topic_or_fail(self):
         if len(self._topics) != 1:
@@ -55,6 +57,7 @@ class KafkaChangeFeed(ChangeFeed):
         """
         Since must be a dictionary of topic partition offsets.
         """
+        since = self._filter_offsets(since)
         # a special value of since=None will start from the end of the change stream
         if since is not None and (not isinstance(since, dict) or not since):
             raise ValueError("'since' must be None or a topic offset dictionary")
@@ -80,9 +83,6 @@ class KafkaChangeFeed(ChangeFeed):
             offsets = [
                 copy(self._processed_topic_offsets)
             ]
-            topics_missing = set(self._topics) - checkpoint_topics
-            for topic in topics_missing:
-                offsets.append(topic)  # consume all available partitions
 
             # this is how you tell the consumer to start from a certain point in the sequence
             consumer.set_topic_partitions(*offsets)
@@ -98,15 +98,25 @@ class KafkaChangeFeed(ChangeFeed):
     def get_current_checkpoint_offsets(self):
         # the way kafka works, the checkpoint should increment by 1 because
         # querying the feed is inclusive of the value passed in.
-        return {
-            topic_partition: sequence + 1 for topic_partition, sequence in self._processed_topic_offsets.items()
-        }
+        latest_offsets = self.get_latest_offsets()
+        ret = {}
+        for topic_partition, sequence in self.get_processed_offsets().items():
+            if sequence == latest_offsets[topic_partition]:
+                # this topic and partition is totally up to date and if we add 1
+                # then kafka will give us an offset out of range error.
+                # not adding 1 to the partition means that we may process this
+                # change again later, but that should be OK
+                sequence = latest_offsets[topic_partition]
+            else:
+                sequence += 1
+            ret[topic_partition] = sequence
+        return self._filter_offsets(ret)
 
     def get_processed_offsets(self):
         return copy(self._processed_topic_offsets)
 
     def get_latest_offsets(self):
-        return get_multi_topic_offset(self.topics)
+        return self._filter_offsets(get_multi_topic_offset(self.topics))
 
     def get_latest_offsets_json(self):
         return json.loads(kafka_seq_to_str(self.get_latest_offsets()))
@@ -126,36 +136,14 @@ class KafkaChangeFeed(ChangeFeed):
             **config
         )
 
-
-class PartitionedKafkaChangeFeed(KafkaChangeFeed):
-    def __init__(self, topics, group_id, strict=False, num_processes=1, process_num=0):
-        self.num_processes = num_processes
-        self.process_num = process_num
-        super(PartitionedKafkaChangeFeed, self).__init__(topics, group_id, strict)
-
-    @property
-    @memoized
-    def topic_and_partitions(self):
-        return list(self._get_partitioned_offsets(get_multi_topic_offset(self.topics)))
-
-    def iter_changes(self, since, forever):
-        """
-        Since must be a dictionary of topic partition offsets.
-        """
-        since = self._filter_offsets(since)
-        return super(PartitionedKafkaChangeFeed, self).iter_changes(since, forever)
-
-    def get_current_checkpoint_offsets(self):
-        offsets = super(PartitionedKafkaChangeFeed, self).get_current_checkpoint_offsets()
-        return self._filter_offsets(offsets)
-
-    def get_latest_offsets(self):
-        offsets = super(PartitionedKafkaChangeFeed, self).get_latest_offsets()
-        return self._filter_offsets(offsets)
-
     def _filter_offsets(self, offsets):
+        if offsets is None:
+            return offsets
+
         return {
-            tp: offsets[tp] for tp in self.topic_and_partitions
+            tp: offsets[tp]
+            for tp in self.topic_and_partitions
+            if tp in offsets
         }
 
     def _get_partitioned_offsets(self, offsets):
@@ -178,8 +166,8 @@ class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):
     Event handler that supports checkpoints when subscribing to multiple topics.
     """
 
-    def __init__(self, checkpoint, checkpoint_frequency, change_feed):
-        super(KafkaCheckpointEventHandler, self).__init__(checkpoint, checkpoint_frequency)
+    def __init__(self, checkpoint, checkpoint_frequency, change_feed, checkpoint_callback=None):
+        super(KafkaCheckpointEventHandler, self).__init__(checkpoint, checkpoint_frequency, checkpoint_callback)
         assert isinstance(change_feed, KafkaChangeFeed)
         self.change_feed = change_feed
 

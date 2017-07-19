@@ -1008,6 +1008,7 @@ def test_invalid_eval_expression(self, source_doc, statement, context):
     ("a and b", {"a": 0, "b": 1}, False),
     # ranges > 100 items aren't supported
     ("range(200)", {}, None),
+    ("a and not b", {"a": 1, "b": 0}, True),
 ])
 def test_supported_evaluator_statements(self, eq, context, expected_value):
     self.assertEqual(eval_statements(eq, context), expected_value)
@@ -1016,13 +1017,16 @@ def test_supported_evaluator_statements(self, eq, context, expected_value):
 @generate_cases([
     # variables can't be strings
     ("a + b", {"a": 2, "b": 'text'}),
-    # missing context
+    # missing context, b not defined
     ("a + (a*b)", {"a": 2}),
     # power function not supported
     ("a**b", {"a": 2, "b": 23}),
+    # lambda not supported
     ("lambda x: x*x", {"a": 2}),
-    ("int(10 in range(1,20))", {"a": 2}),
+    # max function not defined
     ("max(a, b)", {"a": 3, "b": 5}),
+    # method calls not allowed
+    ('"WORD".lower()', {"a": 5}),
 ])
 def test_unsupported_evaluator_statements(self, eq, context):
     with self.assertRaises(InvalidExpression):
@@ -1388,6 +1392,18 @@ class SplitStringExpressionTest(SimpleTestCase):
                 "index_expression": index
             })
             self.assertEqual(expected, split_string_expression({"string_property": string_value}))
+
+    def test_split_string_delimiter_without_index(self):
+        split_string_expression = ExpressionFactory.from_spec({
+            "type": "split_string",
+            "string_expression": {
+                "type": "property_name",
+                "property_name": "string_property"
+            },
+            "delimiter": ","
+        })
+        self.assertListEqual(['a', 'b', 'c'], split_string_expression({"string_property": 'a,b,c'}))
+
 
 
 class TestCoalesceExpression(SimpleTestCase):

@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 from copy import copy
 from datetime import datetime
 from itertools import groupby
@@ -7,6 +8,7 @@ from collections import defaultdict, OrderedDict, namedtuple
 
 from couchdbkit import ResourceConflict
 from couchdbkit.ext.django.schema import IntegerProperty
+from django.utils.datastructures import OrderedSet
 from django.utils.translation import ugettext as _
 from django.urls import reverse
 from django.db import models
@@ -15,6 +17,10 @@ from corehq.apps.app_manager.app_schemas.case_properties import ParentCaseProper
     get_case_properties
 
 from corehq.apps.reports.models import HQUserType
+from corehq.blobs import get_blob_db
+from corehq.blobs.atomic import AtomicBlobs
+from corehq.blobs.exceptions import NotFound
+from corehq.blobs.util import random_url_id
 from soil.progress import set_task_progress
 
 from corehq.apps.export.esaccessors import get_ledger_section_entry_combinations
@@ -280,6 +286,9 @@ class ExportColumn(DocumentSchema):
                 pass
         if value is None:
             value = MISSING_VALUE
+
+        if isinstance(value, list):
+            value = ' '.join(value)
         return value
 
     @staticmethod
@@ -876,6 +885,19 @@ class ExportInstance(BlobMixin, Document):
         new_export = self.__class__.wrap(export_json)
         return new_export
 
+    def error_messages(self):
+        error_messages = []
+        if self.export_format == 'xls':
+            for table in self.tables:
+                if len(table.selected_columns) > 255:
+                    error_messages.append(_(
+                        "XLS format does not support more than 255 columns. "
+                        "Please select a different file type"
+                    ))
+                    break
+
+        return error_messages
+
 
 class CaseExportInstance(ExportInstance):
     case_type = StringProperty()
@@ -926,10 +948,6 @@ class FormExportInstance(ExportInstance):
     # static filters to limit the data in this export
     # filters are only used in daily saved and HTML (dashboard feed) exports
     filters = SchemaProperty(FormExportInstanceFilters)
-
-    @property
-    def identifier(self):
-        return self.xmlns
 
     @property
     def identifier(self):
@@ -1337,6 +1355,9 @@ class ExportDataSchema(Document):
         app_build_ids.extend(cls._get_current_app_ids_for_domain(domain, app_id))
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
+            doc_type = app_doc.get('doc_type', '')
+            if doc_type not in ('Application', 'LinkedApplication'):
+                continue
             if (not app_doc.get('has_submissions', False) and
                     app_doc.get('copy_of')):
                 continue
@@ -1552,16 +1573,23 @@ class FormExportDataSchema(ExportDataSchema):
 
     @classmethod
     def _process_app_build(cls, current_schema, app, form_xmlns):
-        form = app.get_form_by_xmlns(form_xmlns, log_missing=False)
-        if not form:
+        forms = app.get_forms_by_xmlns(form_xmlns, log_missing=False)
+        if not forms:
             return current_schema
 
-        case_updates = form.get_case_updates(form.get_module().case_type)
-        xform = form.wrapped_xform()
-        if isinstance(form.actions, AdvancedFormActions):
-            open_case_actions = form.actions.open_cases
-        else:
-            open_case_actions = form.actions.subcases
+        case_updates = OrderedSet()
+        for form in forms:
+            for update in form.get_case_updates(form.get_module().case_type):
+                case_updates.add(update)
+        xform = forms[0].wrapped_xform()  # This will be the same for any form in the list
+        open_case_actions = OrderedSet()
+        for form in forms:
+            if isinstance(form.actions, AdvancedFormActions):
+                actions = form.actions.open_cases
+            else:
+                actions = form.actions.subcases
+            for action in actions:
+                open_case_actions.add(action)
 
         repeats_with_subcases = {
             open_case_action for open_case_action in open_case_actions
@@ -2094,10 +2122,7 @@ class MultiMediaExportColumn(ExportColumn):
         if not value or value == MISSING_VALUE:
             return value
 
-        download_url = u'{url}?attachment={attachment}'.format(
-            url=absolute_reverse('download_attachment', args=(domain, doc_id)),
-            attachment=value,
-        )
+        download_url = absolute_reverse('api_form_attachment', args=(domain, doc_id, value))
         if transform_dates:
             download_url = u'=HYPERLINK("{}")'.format(download_url)
 
@@ -2449,6 +2474,43 @@ class DailySavedExportNotification(models.Model):
                 domain_has_excel_dashboard_access(domain)
             )
         )
+
+
+class DataFile(models.Model):
+    domain = models.CharField(max_length=126, db_index=True)
+    filename = models.CharField(max_length=255)
+    description = models.CharField(max_length=255)
+    content_type = models.CharField(max_length=255)
+    blob_id = models.CharField(max_length=255)
+    content_length = models.IntegerField(null=True)
+
+    class Meta(object):
+        app_label = 'export'
+
+    def get_blob(self):
+        db = get_blob_db()
+        try:
+            blob = db.get(self.blob_id)
+        except (KeyError, NotFound) as err:
+            raise NotFound(str(err))
+        return blob
+
+    def save_blob(self, file_obj):
+        with AtomicBlobs(get_blob_db()) as db:
+            info = db.put(file_obj, random_url_id(16))
+            self.blob_id = info.identifier
+            self.content_length = info.length
+            self.save()
+
+    def _delete_blob(self):
+        db = get_blob_db()
+        db.delete(self.blob_id)
+        self.blob_id = ''
+
+    def delete(self, using=None, keep_parents=False):
+        self._delete_blob()
+        return super(DataFile, self).delete(using, keep_parents)
+
 
 # These must match the constants in corehq/apps/export/static/export/js/const.js
 MAIN_TABLE = []

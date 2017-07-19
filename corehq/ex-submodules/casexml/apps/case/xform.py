@@ -7,13 +7,14 @@ from couchdbkit import ResourceNotFound
 from django.db.models import Q
 from casexml.apps.case.const import UNOWNED_EXTENSION_OWNER_ID, CASE_INDEX_EXTENSION
 from casexml.apps.case.signals import cases_received
-from casexml.apps.case.util import validate_phone_datetime
+from casexml.apps.case.util import validate_phone_datetime, update_sync_log_with_checks, prune_previous_log
 from casexml.apps.phone.cleanliness import should_create_flags_on_submission
 from casexml.apps.phone.models import OwnershipCleanlinessFlag
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION, EXTENSION_CASES_SYNC_ENABLED
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.soft_assert import soft_assert
 from couchforms.models import XFormInstance
 from casexml.apps.case.exceptions import (
     NoDomainProvided,
@@ -24,6 +25,7 @@ from casexml.apps.case import const
 from casexml.apps.case.xml.parser import case_update_from_block
 from dimagi.utils.logging import notify_exception
 
+_soft_assert = soft_assert(to="{}@{}.com".format('skelly', 'dimagi'), notify_admins=True)
 
 # Lightweight class used to store the dirtyness of a case/owner pair.
 DirtinessFlag = namedtuple('DirtinessFlag', ['case_id', 'owner_id'])
@@ -127,20 +129,14 @@ def process_cases_with_casedb(xforms, case_db, config=None):
 
 def _update_sync_logs(xform, case_db, config, cases):
     # handle updating the sync records for apps that use sync mode
-    try:
-        relevant_log = xform.get_sync_token()
-    except ResourceNotFound:
-        if LOOSE_SYNC_TOKEN_VALIDATION.enabled(xform.domain):
-            relevant_log = None
-        else:
-            raise
-
+    relevant_log = xform.get_sync_token()
     if relevant_log:
         # in reconciliation mode, things can be unexpected
         relevant_log.strict = config.strict_asserts
-        from casexml.apps.case.util import update_sync_log_with_checks
         update_sync_log_with_checks(relevant_log, xform, cases, case_db,
                                     case_id_blacklist=config.case_id_blacklist)
+
+        prune_previous_log(relevant_log)
 
 
 class CaseProcessingConfig(object):
@@ -270,6 +266,20 @@ def _validate_indices(case_db, cases):
                     invalid = True
                 if invalid:
                     # fail hard on invalid indices
+                    from distutils.version import LooseVersion
+                    if case_db.cached_xforms:
+                        xform = case_db.cached_xforms[0]
+                        if xform.metadata and xform.metadata.commcare_version:
+                            commcare_version = xform.metadata.commcare_version
+                            _soft_assert(
+                                commcare_version < LooseVersion("2.35"),
+                                "Invalid Case Index in CC version >= 2.35", {
+                                    'domain': case_db.domain,
+                                    'xform_id': xform.form_id,
+                                    'missing_case_id': index.referenced_id,
+                                    'version': str(commcare_version)
+                                }
+                            )
                     raise InvalidCaseIndex(
                         "Case '%s' references non-existent case '%s'" % (case.case_id, index.referenced_id)
                     )
@@ -291,9 +301,7 @@ def get_all_extensions_to_close(domain, case_updates):
 
 
 def get_extensions_to_close(case, domain):
-    outgoing_extension_indices = [index.relationship for index in case.indices
-                                  if index.relationship == CASE_INDEX_EXTENSION]
-    if not outgoing_extension_indices and case.closed and EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
+    if case.closed and EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
         return CaseAccessors(domain).get_extension_chain([case.case_id])
     else:
         return set()

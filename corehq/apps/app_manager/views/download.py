@@ -41,7 +41,8 @@ def download_odk_profile(request, domain, app_id):
 
     """
     if not request.app.copy_of:
-        make_async_build.delay(request.app)
+        username = request.GET.get('username', 'unknown user')
+        make_async_build.delay(request.app, username)
     return HttpResponse(
         request.app.create_profile(is_odk=True),
         content_type="commcare/profile"
@@ -51,7 +52,8 @@ def download_odk_profile(request, domain, app_id):
 @safe_download
 def download_odk_media_profile(request, domain, app_id):
     if not request.app.copy_of:
-        make_async_build.delay(request.app)
+        username = request.GET.get('username', 'unknown user')
+        make_async_build.delay(request.app, username)
     return HttpResponse(
         request.app.create_profile(is_odk=True, with_media=True),
         content_type="commcare/profile"
@@ -110,8 +112,8 @@ def download_xform(request, domain, app_id, module_id, form_id):
     except (IndexError, ModuleNotFoundException):
         raise Http404()
     except AppManagerException:
-        unique_form_id = request.app.get_module(module_id).get_form(form_id).unique_id
-        response = validate_form_for_build(request, domain, app_id, unique_form_id, ajax=False)
+        form_unique_id = request.app.get_module(module_id).get_form(form_id).unique_id
+        response = validate_form_for_build(request, domain, app_id, form_unique_id, ajax=False)
         response.status_code = 404
         return response
 
@@ -191,7 +193,11 @@ def download_raw_jar(request, domain, app_id):
 class DownloadCCZ(DownloadMultimediaZip):
     name = 'download_ccz'
     compress_zip = True
-    zip_name = 'commcare.ccz'
+
+    @property
+    def zip_name(self):
+        return 'commcare_v{}.ccz'.format(self.app.version)
+
     include_index_files = True
 
     def check_before_zipping(self):
@@ -319,7 +325,8 @@ def download_profile(request, domain, app_id):
 
     """
     if not request.app.copy_of:
-        make_async_build.delay(request.app)
+        username = request.GET.get('username', 'unknown user')
+        make_async_build.delay(request.app, username)
     return HttpResponse(
         request.app.create_profile()
     )
@@ -328,9 +335,19 @@ def download_profile(request, domain, app_id):
 @safe_download
 def download_media_profile(request, domain, app_id):
     if not request.app.copy_of:
-        make_async_build.delay(request.app)
+        username = request.GET.get('username', 'unknown user')
+        make_async_build.delay(request.app, username)
     return HttpResponse(
         request.app.create_profile(with_media=True)
+    )
+
+
+@safe_download
+def download_practice_user_restore(request, domain, app_id):
+    if not request.app.copy_of:
+        make_async_build.delay(request.app)
+    return HttpResponse(
+        request.app.create_practice_user_restore()
     )
 
 
@@ -357,7 +374,6 @@ def download_index(request, domain, app_id):
                 "We were unable to get your files "
                 "because your Application has errors. "
                 "Please click <strong>Make New Version</strong> "
-                "under <strong>Deploy</strong> "
                 "for feedback on how to fix these errors."
             ),
             extra_tags='html'
@@ -376,10 +392,10 @@ def download_index(request, domain, app_id):
     })
 
 
-def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
+def validate_form_for_build(request, domain, app_id, form_unique_id, ajax=True):
     app = get_app(domain, app_id)
     try:
-        form = app.get_form(unique_form_id)
+        form = app.get_form(form_unique_id)
     except FormNotFoundException:
         # this can happen if you delete the form from another page
         raise Http404()

@@ -1,4 +1,7 @@
+import os
+import yaml
 from collections import defaultdict
+from django.conf import settings
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.commcare_settings import (
     get_custom_commcare_settings,
@@ -6,7 +9,10 @@ from corehq.apps.app_manager.commcare_settings import (
     check_condition,
     circular_dependencies,
     parse_condition_string,
+    PROFILE_SETTINGS_TO_TRANSLATE,
+    LAYOUT_SETTINGS_TO_TRANSLATE,
 )
+from corehq.apps.app_manager.static_strings import STATICALLY_ANALYZABLE_TRANSLATIONS
 from corehq.apps.app_manager.models import Application
 
 
@@ -84,3 +90,45 @@ class CommCareSettingsTest(SimpleTestCase):
 
         self.assertEqual(test_app1.get_profile_setting("properties", "unsent-time-limit"), "30")
         self.assertEqual(test_app2.get_profile_setting("properties", "unsent-time-limit"), "5")
+
+    def test_translated_strings(self):
+        '''
+        Ensures all yaml strings are translated. To auto generate these strings,
+        see scripts/yaml_static_strings.py
+        '''
+        base_path = os.path.join(
+            settings.BASE_DIR, 'corehq', 'apps', 'app_manager', 'static', 'app_manager', 'json'
+        )
+
+        files_and_keys_to_translate = [
+            ('v1/commcare-profile-settings.yaml', PROFILE_SETTINGS_TO_TRANSLATE),
+            ('v2/commcare-profile-settings.yaml', PROFILE_SETTINGS_TO_TRANSLATE),
+            ('v1/commcare-app-settings.yaml', PROFILE_SETTINGS_TO_TRANSLATE),
+            ('v2/commcare-app-settings.yaml', PROFILE_SETTINGS_TO_TRANSLATE),
+            ('v1/commcare-settings-layout.yaml', LAYOUT_SETTINGS_TO_TRANSLATE),
+            ('v2/commcare-settings-layout.yaml', LAYOUT_SETTINGS_TO_TRANSLATE),
+        ]
+
+        static_strings = set(STATICALLY_ANALYZABLE_TRANSLATIONS)
+
+        for filepath, keys_to_translate in files_and_keys_to_translate:
+            with open(os.path.join(base_path, filepath)) as f:
+                cc_settings = yaml.load(f)
+                for setting in cc_settings:
+                    for key in keys_to_translate:
+                        value = setting.get(key)
+                        if not value:
+                            continue
+                        if not isinstance(value, basestring):
+                            for v in value:
+                                self.assertIn(
+                                    v,
+                                    static_strings,
+                                    'You need to add "{}" to static_strings.py'.format(v)
+                                )
+                        else:
+                            self.assertIn(
+                                value,
+                                static_strings,
+                                'You need to add "{}" to static_strings.py'.format(value)
+                            )

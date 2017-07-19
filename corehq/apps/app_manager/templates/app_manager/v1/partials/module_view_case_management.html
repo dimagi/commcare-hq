@@ -21,18 +21,6 @@
                 <span class="help-block" id="case_type_error" style="display: none;"></span>
             </div>
         </div>
-        <div class="form-group">
-            <label class="control-label col-sm-2">
-                {% trans "Label for Cases" %}
-                <span class="hq-help-template"
-                      data-title="{% trans "Label for Cases" %}"
-                      data-content="{% trans "This label will appear at the top of the phone's case select screen." %}"
-                ></span>
-            </label>
-            <div class="col-sm-4">
-                <input type="text" name="case_label" value="{{ module.case_label|trans:langs }}" class="form-control" />
-            </div>
-        </div>
     </fieldset>
     <fieldset>
         <legend>{% trans "Advanced" %}</legend>

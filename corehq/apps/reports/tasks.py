@@ -18,6 +18,7 @@ from celery.utils.log import get_task_logger
 
 from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.export.dbaccessors import get_all_daily_saved_export_instance_ids
+from corehq.apps.export.const import SAVED_EXPORTS_QUEUE
 from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.dates import iso_string_to_datetime
@@ -36,10 +37,8 @@ from corehq.apps.domain.calculations import (
     all_domain_stats,
     calced_props,
     CALC_FNS,
-    total_distinct_users,
 )
 from corehq.apps.es.domains import DomainES
-from corehq.apps.indicators.utils import get_mvp_domains
 from corehq.elastic import (
     stream_es_query,
     send_to_elasticsearch,
@@ -135,7 +134,15 @@ def saved_exports():
     for daily_saved_export_id in get_all_daily_saved_export_instance_ids():
         from corehq.apps.export.tasks import rebuild_export_task
         last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-        rebuild_export_task.delay(daily_saved_export_id, last_access_cutoff)
+        rebuild_export_task.apply_async(
+            args=[
+                daily_saved_export_id, last_access_cutoff
+            ],
+            # Normally the rebuild_export_task uses the background queue,
+            # however we want to override it to use its own queue so that it does
+            # not disrupt other actions.
+            queue=SAVED_EXPORTS_QUEUE,
+        )
 
 
 @task(queue='background_queue', ignore_result=True)
@@ -145,7 +152,7 @@ def rebuild_export_task(groupexport_id, index, last_access_cutoff=None, filter=N
     rebuild_export(config, schema, last_access_cutoff, filter=filter)
 
 
-@task(queue='saved_exports_queue', ignore_result=True)
+@task(queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
 def export_for_group_async(group_config_id):
     # exclude exports not accessed within the last 7 days
     last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
@@ -153,7 +160,7 @@ def export_for_group_async(group_config_id):
     export_for_group(group_config, last_access_cutoff=last_access_cutoff)
 
 
-@task(queue='saved_exports_queue', ignore_result=True)
+@task(queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
 def rebuild_export_async(config, schema):
     rebuild_export(config, schema)
 
@@ -222,7 +229,8 @@ def export_all_rows_task(ReportClass, report_state):
     setattr(report.request, 'REQUEST', {})
 
     file = report.excel_response
-    hash_id = _store_excel_in_redis(file)
+    report_class = report.__class__.__module__ + '.' + report.__class__.__name__
+    hash_id = _store_excel_in_redis(report_class, file)
     _send_email(report.request.couch_user, report, hash_id)
 
 
@@ -244,11 +252,11 @@ def _send_email(user, report, hash_id):
     )
 
 
-def _store_excel_in_redis(file):
+def _store_excel_in_redis(report_class, file):
     hash_id = uuid.uuid4().hex
 
     r = get_redis_client()
-    r.set(hash_id, file.getvalue())
+    r.set(hash_id, [report_class, file.getvalue()])
     r.expire(hash_id, EXPIRE_TIME)
 
     return hash_id
@@ -412,7 +420,7 @@ def _get_export_properties(export_id, export_is_legacy):
             export = FormExportInstance.get(export_id)
             for table in export.tables:
                 for column in table.columns:
-                    if column.item:
+                    if column.selected and column.item:
                         path_parts = [n.name for n in column.item.path]
                         path_parts = path_parts[1:] if path_parts[0] == "form" else path_parts
                         properties.add("-".join(path_parts))

@@ -52,14 +52,14 @@ class RegisterHandler(KeywordHandler):
             domain=domain,
             location_type__name="FACILITY",
             site_code__iexact=msd_code
-        ).couch_location
+        )
 
     def _get_district_location(self, domain, sp):
         return SQLLocation.objects.get(
             domain=domain,
             location_type__name="DISTRICT",
             name__iexact=sp,
-        ).couch_location
+        )
 
     def handle(self):
         text = ' '.join(self.msg.text.split()[1:])

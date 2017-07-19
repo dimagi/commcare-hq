@@ -36,6 +36,7 @@ class StreamTee(object):
         value = getattr(self.stream1, name)
         if not callable(value):
             return value
+
         def func(*args, **kw):
             try:
                 getattr(self.stream2, name)(*args, **kw)

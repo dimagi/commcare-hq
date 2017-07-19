@@ -2,13 +2,13 @@ import pytz
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from corehq.apps.locations.dbaccessors import (
-    generate_user_ids_from_primary_location_ids,
+    generate_user_ids_from_primary_location_ids_from_couch,
     get_location_ids_with_location_type,
 )
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reminders.tasks import CELERY_REMINDERS_QUEUE
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
-from corehq.apps.sms.api import send_sms
+from corehq.apps.sms.api import send_sms, MessageMetadata
 from corehq.apps.users.models import CommCareUser
 from corehq.util.timezones.conversions import ServerTime
 from custom.icds.messaging.indicators import (
@@ -30,6 +30,8 @@ MADHYA_PRADESH_SITE_CODE = '23'
 BIHAR_SITE_CODE = '10'
 CHHATTISGARH_SITE_CODE = '22'
 JHARKHAND_SITE_CODE = '20'
+RAJASTHAN_SITE_CODE = '08'
+UTTAR_PRADESH_SITE_CODE = 'state9'
 
 ENGLISH = 'en'
 HINDI = 'hin'
@@ -65,8 +67,12 @@ def run_indicator(domain, user_id, indicator_class, language_code=None):
     if not isinstance(messages, list):
         raise ValueError("Expected a list of messages")
 
+    metadata = MessageMetadata(custom_metadata={
+        'icds_indicator': indicator_class.slug,
+    })
+
     for message in messages:
-        send_sms(domain, usercase, phone_number, message)
+        send_sms(domain, usercase, phone_number, message, metadata=metadata)
 
 
 def get_awc_location_ids(domain):
@@ -88,7 +94,7 @@ def get_user_ids_under_location(domain, site_code):
 
     location = SQLLocation.objects.get(domain=domain, site_code=site_code)
     location_ids = list(location.get_descendants(include_self=False).filter(is_archived=False).location_ids())
-    return set(generate_user_ids_from_primary_location_ids(domain, location_ids))
+    return set(generate_user_ids_from_primary_location_ids_from_couch(domain, location_ids))
 
 
 def get_language_code(user_id, telugu_user_ids, marathi_user_ids):
@@ -101,7 +107,7 @@ def get_language_code(user_id, telugu_user_ids, marathi_user_ids):
 
 
 @periodic_task(
-    run_every=crontab(hour=3, minute=30, day_of_week='mon'),
+    run_every=crontab(hour=9, minute=0, day_of_week='mon'),
     queue=settings.CELERY_PERIODIC_QUEUE,
     ignore_result=True
 )
@@ -119,9 +125,12 @@ def run_weekly_indicators(phased_rollout=True):
         hindi_user_ids |= get_user_ids_under_location(domain, BIHAR_SITE_CODE)
         hindi_user_ids |= get_user_ids_under_location(domain, CHHATTISGARH_SITE_CODE)
         hindi_user_ids |= get_user_ids_under_location(domain, JHARKHAND_SITE_CODE)
-        user_ids_to_send_to = telugu_user_ids | hindi_user_ids
+        hindi_user_ids |= get_user_ids_under_location(domain, RAJASTHAN_SITE_CODE)
+        hindi_user_ids |= get_user_ids_under_location(domain, UTTAR_PRADESH_SITE_CODE)
+        user_ids_to_send_to = marathi_user_ids | telugu_user_ids | hindi_user_ids
 
-        for user_id in generate_user_ids_from_primary_location_ids(domain, get_awc_location_ids(domain)):
+        for user_id in generate_user_ids_from_primary_location_ids_from_couch(domain,
+                get_awc_location_ids(domain)):
             if phased_rollout and user_id not in user_ids_to_send_to:
                 continue
             language_code = get_language_code(user_id, telugu_user_ids, marathi_user_ids)
@@ -131,7 +140,8 @@ def run_weekly_indicators(phased_rollout=True):
 
             run_indicator.delay(domain, user_id, AWWSubmissionPerformanceIndicator, language_code)
 
-        for user_id in generate_user_ids_from_primary_location_ids(domain, get_supervisor_location_ids(domain)):
+        for user_id in generate_user_ids_from_primary_location_ids_from_couch(domain,
+                get_supervisor_location_ids(domain)):
             if phased_rollout and user_id not in user_ids_to_send_to:
                 continue
             language_code = get_language_code(user_id, telugu_user_ids, marathi_user_ids)

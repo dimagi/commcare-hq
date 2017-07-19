@@ -29,12 +29,14 @@
       },
       {
         "compare_as_string": false,
-        "datatype": "string",
-        "type": "location_drilldown",
         "required": false,
-        "slug": "block_id",
+        "datatype": "string",
+        "display": "Filter by Block",
         "field": "block_id",
-        "display": "Filter by Area"
+        "type": "location_drilldown",
+        "slug": "block_id",
+        "include_descendants": true,
+        "max_drilldown_levels": 3
       },
       {
         "compare_as_string": false,

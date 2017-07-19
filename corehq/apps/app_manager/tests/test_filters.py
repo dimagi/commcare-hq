@@ -15,7 +15,9 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.reports_core.filters import Choice
+from corehq.apps.reports_core.filters import Choice, DynamicChoiceListFilter
+from corehq.apps.userreports.reports.filters.choice_providers import DataSourceColumnChoiceProvider
+from corehq.apps.userreports.reports.filters.values import dynamic_choice_list_url
 from corehq.apps.users.models import CommCareUser
 
 
@@ -151,6 +153,7 @@ class AutoFilterTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(AutoFilterTests, cls).setUpClass()
         cls.domain = Domain(name=DOMAIN)
         cls.domain.save()
 
@@ -265,6 +268,7 @@ class AutoFilterTests(TestCase):
         cls.state.delete()
         cls.country.delete()
         cls.domain.delete()
+        super(AutoFilterTests, cls).tearDownClass()
 
     def test_filter_by_case_sharing_group_id(self):
         result = _filter_by_case_sharing_group_id(self.sheel, None)
@@ -290,12 +294,35 @@ class AutoFilterTests(TestCase):
         result = _filter_by_user_id(self.sheel, None)
         self.assertEqual(result, Choice(value=self.sheel._id, display=None))
 
+    def _get_dynamic_choice_list_ui_filter(self):
+        return DynamicChoiceListFilter(
+            "my name",
+            "my_field",
+            "string",
+            "my label",
+            True,
+            dynamic_choice_list_url,
+            DataSourceColumnChoiceProvider(None, None)
+        )
+
     # AncestorLocationTypeFilter is not an AutoFilter, but we'll hitch a ride here to reuse setup and teardown
     def test_ancestor_location_type_filter(self):
-        filt = AncestorLocationTypeFilter(ancestor_location_type_name='state')
-        nate_state = filt.get_filter_value(self.nate, None)
-        self.assertEqual(nate_state, self.massachusetts.location_id)
+        ucr_filter = AncestorLocationTypeFilter(ancestor_location_type_name='state')
+        ui_filter = self._get_dynamic_choice_list_ui_filter()
+        ancestor_state_value = ucr_filter.get_filter_value(self.nate, ui_filter)
+        self.assertEqual(
+            ancestor_state_value,
+            [Choice(
+                value=self.massachusetts.location_id,
+                display=self.massachusetts.location_id
+            )]
+        )
 
+    def test_ancestor_location_type_filter_with_no_location_found(self):
+        ucr_filter = AncestorLocationTypeFilter(ancestor_location_type_name='banana')
+        ui_filter = self._get_dynamic_choice_list_ui_filter()
+        ancestor_state_value = ucr_filter.get_filter_value(self.nate, ui_filter)
+        self.assertEqual(ancestor_state_value, ui_filter.default_value())
 
 class NumericFilterTests(TestCase):
 

@@ -50,15 +50,24 @@ class IndicatorAdapter(object):
         raise NotImplementedError
 
     def handle_exception(self, doc, exception):
-        notify_exception(
-            None,
-            u'unexpected error saving UCR doc: {}'.format(exception),
-            details={
-                'domain': self.config.domain,
-                'doc_id': doc.get('_id', '<unknown>'),
-                'table': '{} ({})'.format(self.config.display_name, self.config._id)
-            }
+        from corehq.util.cache_utils import is_rate_limited
+        ex_clss = exception.__class__
+        key = '{domain}.{table}.{ex_mod}.{ex_name}'.format(
+            domain=self.config.domain,
+            table=self.config.table_id,
+            ex_mod=ex_clss.__module__,
+            ex_name=ex_clss.__name__
         )
+        if not is_rate_limited(key):
+            notify_exception(
+                None,
+                u'unexpected error saving UCR doc: {}'.format(exception),
+                details={
+                    'domain': self.config.domain,
+                    'doc_id': doc.get('_id', '<unknown>'),
+                    'table': '{} ({})'.format(self.config.display_name, self.config._id)
+                }
+            )
 
     def save(self, doc, eval_context=None):
         """

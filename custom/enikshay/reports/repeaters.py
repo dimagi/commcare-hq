@@ -1,25 +1,32 @@
+from django.conf import settings
 from django.utils.html import escape
 from django.utils.translation import ugettext as _
 from django.urls import reverse
-from corehq.apps.repeaters.dbaccessors import iter_repeat_records_by_domain
+
+from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
 from corehq.apps.domain.views import DomainForwardingRepeatRecords
-from corehq.apps.repeaters.dbaccessors import get_repeaters_by_domain
+from corehq.motech.repeaters.dbaccessors import get_repeaters_by_domain
 from corehq.apps.reports.filters.select import RepeaterFilter
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 
 from custom.enikshay.case_utils import get_person_case
-from custom.enikshay.integrations.ninetyninedots.repeaters import Base99DOTSRepeater
-from custom.enikshay.integrations.nikshay.repeaters import BaseNikshayRepeater
 from custom.enikshay.exceptions import ENikshayException
 from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from corehq.apps.reports.filters.select import RepeatRecordStateFilter
+from dimagi.utils.modules import to_function
 
 
 class ENikshayRepeaterFilter(RepeaterFilter):
+
+    def __init__(self, *args, **kwargs):
+        super(ENikshayRepeaterFilter, self).__init__(*args, **kwargs)
+        self.enikshay_repeaters = tuple(to_function(cls, failhard=True) for cls in settings.ENIKSHAY_REPEATERS)
+
     def _get_repeaters(self):
-        return [repeater for repeater in get_repeaters_by_domain(self.domain)
-                if (isinstance(repeater, Base99DOTSRepeater)
-                    or isinstance(repeater, BaseNikshayRepeater))]
+        return [
+            repeater for repeater in get_repeaters_by_domain(self.domain)
+            if isinstance(repeater, self.enikshay_repeaters)
+        ]
 
 
 class ENikshayForwarderReport(DomainForwardingRepeatRecords):
@@ -30,6 +37,8 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
     fields = (ENikshayRepeaterFilter, RepeatRecordStateFilter)
     exportable = True
     exportable_all = True
+
+    emailable = True
 
     @property
     def get_all_rows(self):
@@ -46,7 +55,7 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
             DataTablesColumn(_('Person Case')),
             DataTablesColumn(_('URL')),
             DataTablesColumn(_('Last sent date')),
-            DataTablesColumn(_('Failure Reason')),
+            DataTablesColumn(_('Attempts')),
             DataTablesColumn(_('Payload')),
         ]
 
@@ -54,16 +63,21 @@ class ENikshayForwarderReport(DomainForwardingRepeatRecords):
 
     def _make_row(self, record):
         try:
-            payload = record.get_payload(save_failure=False)
+            payload = record.get_payload()
         except ENikshayException as error:
             payload = u"Error: {}".format(error)
+        attempt_messages = [
+            escape("{date}: {message}".format(
+                date=self._format_date(attempt.datetime),
+                message=attempt.message))
+            for attempt in record.attempts]
         row = [
             record._id,
             self._get_state(record)[1],
             self._get_person_id_link(record),
             record.url if record.url else _(u'Unable to generate url for record'),
             self._format_date(record.last_checked) if record.last_checked else '---',
-            escape(record.failure_reason) if not record.succeeded else None,
+            ",<br />".join(attempt_messages),
             payload,
         ]
         return row

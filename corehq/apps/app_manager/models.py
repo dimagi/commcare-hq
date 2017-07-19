@@ -120,14 +120,14 @@ from corehq.apps.app_manager.util import (
     xpath_references_case,
     xpath_references_user_case,
     module_case_hierarchy_has_circular_reference,
-    get_correct_app_class
+    get_correct_app_class,
+    get_and_assert_practice_user_in_domain,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from .exceptions import (
     AppEditingError,
-    BlankXFormError,
     ConflictingCaseTypeError,
     FormNotFoundException,
     IncompatibleFormTypeException,
@@ -143,7 +143,9 @@ from .exceptions import (
     ScheduleError,
     CaseXPathValidationError,
     UserCaseXPathValidationError,
-    XFormValidationFailed)
+    XFormValidationFailed,
+    PracticeUserException,
+)
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
 from jsonpath_rw import jsonpath, parse
 
@@ -161,6 +163,8 @@ ALL_WORKFLOWS = [
     WORKFLOW_PREVIOUS,
     WORKFLOW_FORM,
 ]
+# allow all options as fallback except the one for form linking
+WORKFLOW_FALLBACK_OPTIONS = list(ALL_WORKFLOWS).remove(WORKFLOW_FORM)
 
 DETAIL_TYPES = ['case_short', 'case_long', 'ref_short', 'ref_long']
 
@@ -893,6 +897,10 @@ class FormBase(DocumentSchema):
         default=WORKFLOW_DEFAULT,
         choices=ALL_WORKFLOWS
     )
+    post_form_workflow_fallback = StringProperty(
+        choices=WORKFLOW_FALLBACK_OPTIONS,
+        default=None,
+    )
     auto_gps_capture = BooleanProperty(default=False)
     no_vellum = BooleanProperty(default=False)
     form_links = SchemaListProperty(FormLink)
@@ -981,6 +989,7 @@ class FormBase(DocumentSchema):
     def validate_form(self):
         vc = self.validation_cache
         if vc is None:
+            # todo: now that we don't use formtranslate, does this still apply?
             # formtranslate requires all attributes to be valid xpaths, but
             # vellum namespaced attributes aren't
             form = self.wrapped_xform()
@@ -1020,7 +1029,7 @@ class FormBase(DocumentSchema):
         }
 
         xml_valid = False
-        if self.source == '':
+        if self.source == '' and self.form_type != 'shadow_form':
             errors.append(dict(type="blank form", **meta))
         else:
             try:
@@ -1044,7 +1053,7 @@ class FormBase(DocumentSchema):
             errors.append(error)
 
         if not errors:
-            if len(questions) == 0:
+            if len(questions) == 0 and self.form_type != 'shadow_form':
                 errors.append(dict(type="blank form", **meta))
             else:
                 try:
@@ -1816,9 +1825,19 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
                 hashtag = "#case"
             return types[hashtag], name
 
+        def parse_relationship(name):
+            if '/' not in name:
+                return name
+
+            relationship, property_name = name.split('/', 1)
+            if relationship == 'grandparent':
+                relationship = 'parent/parent'
+            return '/'.join([relationship, property_name])
+
         for case_load_reference in self.case_references.get_load_references():
             for name in case_load_reference.properties:
                 case_type, name = parse_case_type(name)
+                name = parse_relationship(name)
                 self.add_property_load(
                     app_case_meta,
                     case_type,
@@ -1915,6 +1934,7 @@ class DetailTab(IndexedSchema):
     # iterates through sub-nodes of an entity rather than a single entity
     has_nodeset = BooleanProperty(default=False)
     nodeset = StringProperty()
+    relevant = StringProperty()
 
 
 class DetailColumn(IndexedSchema):
@@ -2014,6 +2034,10 @@ class DetailColumn(IndexedSchema):
                     item.value[lang] = interpolate_media_path(path)
         return to_ret
 
+    @property
+    def invisible(self):
+        return self.format == 'invisible'
+
 
 class SortElement(IndexedSchema):
     field = StringProperty()
@@ -2069,6 +2093,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     get_tabs = IndexedSchema.Getter('tabs')
 
     sort_elements = SchemaListProperty(SortElement)
+    sort_nodeset_columns = BooleanProperty()
     filter = StringProperty()
 
     # If True, a small tile will display the case name after selection.
@@ -2084,6 +2109,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     custom_xml = StringProperty()
 
     persist_tile_on_forms = BooleanProperty()
+    # use case tile context persisted over forms from another module
+    persistent_case_tile_from_module = StringProperty()
     # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
 
@@ -2112,6 +2139,13 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     def rename_lang(self, old_lang, new_lang):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
+
+    def sort_nodeset_columns_for_detail(self):
+        return (
+            self.display == "long" and
+            self.sort_nodeset_columns and
+            any(tab for tab in self.get_tabs() if tab.has_nodeset)
+        )
 
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
@@ -2147,6 +2181,7 @@ class CaseSearch(DocumentSchema):
     search_button_display_condition = StringProperty()
     include_closed = BooleanProperty(default=False)
     default_properties = SchemaListProperty(DefaultCaseSearchProperty)
+    blacklisted_owner_ids_expression = StringProperty()
 
 
 class ParentSelect(DocumentSchema):
@@ -2530,8 +2565,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
 
     """
     module_type = 'basic'
-    case_label = DictProperty()
-    referral_label = DictProperty()
     forms = SchemaListProperty(Form)
     case_details = SchemaProperty(DetailPair)
     ref_details = SchemaProperty(DetailPair)
@@ -2566,7 +2599,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 short=Detail(detail.to_json()),
                 long=Detail(detail.to_json()),
             ),
-            case_label={(lang or 'en'): 'Cases'},
         )
         module.get_or_create_unique_id()
         return module
@@ -2996,7 +3028,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 class ShadowForm(AdvancedForm):
     form_type = 'shadow_form'
     # The unqiue id of the form we are shadowing
-    shadow_parent_form_id = StringProperty(required=False, default=None)
+    shadow_parent_form_id = FormIdProperty("modules[*].forms[*].shadow_parent_form_id")
 
     # form actions to be merged with the parent actions
     extra_actions = SchemaProperty(AdvancedFormActions)
@@ -3197,7 +3229,6 @@ class SchedulePhase(IndexedSchema):
 
 class AdvancedModule(ModuleBase):
     module_type = 'advanced'
-    case_label = DictProperty()
     forms = SchemaListProperty(FormBase)
     case_details = SchemaProperty(DetailPair)
     product_details = SchemaProperty(DetailPair)
@@ -3869,20 +3900,6 @@ class CareplanModule(ModuleBase):
         return errors
 
 
-class ReportGraphConfig(DocumentSchema):
-    graph_type = StringProperty(
-        choices=[
-            'bar',
-            'time',
-            'xy',
-        ],
-        default='bar',
-        required=True,
-    )
-    series_configs = DictProperty(DictProperty)
-    config = DictProperty()
-
-
 class ReportAppFilter(DocumentSchema):
 
     @classmethod
@@ -4160,14 +4177,18 @@ class AncestorLocationTypeFilter(ReportAppFilter):
 
     def get_filter_value(self, user, ui_filter):
         from corehq.apps.locations.models import SQLLocation
+        from corehq.apps.reports_core.filters import REQUEST_USER_KEY
 
+        kwargs = {REQUEST_USER_KEY: user}
         try:
             ancestor = user.sql_location.get_ancestors(include_self=True).\
                 get(location_type__name=self.ancestor_location_type_name)
+            kwargs[ui_filter.name] = ancestor.location_id
         except (AttributeError, SQLLocation.DoesNotExist):
             # user.sql_location is None, or location does not have an ancestor of that type
-            return None
-        return ancestor.location_id
+            pass
+
+        return ui_filter.value(**kwargs)
 
 
 class NumericFilter(ReportAppFilter):
@@ -4196,32 +4217,7 @@ class ReportAppConfig(DocumentSchema):
     xpath_description = StringProperty()
     use_xpath_description = BooleanProperty(default=False)
     show_data_table = BooleanProperty(default=True)
-    graph_configs = DictProperty(ReportGraphConfig) # deprecated
     complete_graph_configs = DictProperty(GraphConfiguration)
-
-    def migrate_graph_configs(self, domain):
-        if len(self.complete_graph_configs):
-            return
-
-        self.complete_graph_configs = {}
-        from corehq.apps.userreports.reports.specs import MultibarChartSpec
-        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import MobileSelectFilterHelpers
-        for chart_config in self.report(domain).charts:
-            if isinstance(chart_config, MultibarChartSpec):
-                limited_graph_config = self.graph_configs.get(chart_config.chart_id, ReportGraphConfig())
-                self.complete_graph_configs[chart_config.chart_id] = GraphConfiguration(
-                    graph_type=limited_graph_config.graph_type,
-                    config=limited_graph_config.config,
-                    series=[GraphSeries(
-                        config=limited_graph_config.series_configs.get(c.column_id, {}),
-                        locale_specific_config={},
-                        data_path="",
-                        x_function="",
-                        y_function="",
-                    ) for c in chart_config.y_axis_columns],
-                    locale_specific_config={},
-                    annotations=[]
-                )
 
     filters = SchemaDictProperty(ReportAppFilter)
     uuid = StringProperty(required=True)
@@ -4754,9 +4750,10 @@ def absolute_url_property(method):
 class BuildProfile(DocumentSchema):
     name = StringProperty()
     langs = StringListProperty()
+    practice_mobile_worker_id = StringProperty()
 
     def __eq__(self, other):
-        return self.langs == other.langs
+        return self.langs == other.langs and self.practice_mobile_worker_id == other.practice_mobile_worker_id
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -4849,11 +4846,13 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     # legacy property; kept around to be able to identify (deprecated) v1 apps
     application_version = StringProperty(default=APP_V2, choices=[APP_V1, APP_V2], required=False)
+    last_modified = DateTimeProperty()
 
     def assert_app_v2(self):
         assert self.application_version == APP_V2
 
     build_profiles = SchemaDictProperty(BuildProfile)
+    practice_mobile_worker_id = StringProperty()
 
     # each language is a key and the value is a list of multimedia referenced in that language
     media_language_map = SchemaDictProperty(MediaList)
@@ -4954,8 +4953,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         errors = []
         if hasattr(self, 'profile'):
             password_format = self.profile.get('properties', {}).get('password_format', 'n')
-            message = ('Your app requires {0} passwords '
-                       'but the admin password is not {0}')
+            message = _(
+                'Your app requires {0} passwords but the admin password is not '
+                '{0}. To resolve, go to app settings, Advanced Settings, Java '
+                'Phone General Settings, and reset the Admin Password to '
+                'something that is {0}'
+            )
 
             if password_format == 'n' and self.admin_password_charset in 'ax':
                 errors.append({'type': 'password_format',
@@ -5005,6 +5008,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     @absolute_url_property
     def key_server_url(self):
         return reverse('key_server_url', args=[self.domain])
+
+    @absolute_url_property
+    def heartbeat_url(self):
+        return reverse('phone_heartbeat', args=[self.domain, self.get_id])
 
     @absolute_url_property
     def ota_restore_url(self):
@@ -5117,7 +5124,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     @property
     def advanced_app_builder(self):
         properties = (self.profile or {}).get('properties', {})
-        return properties.get('advanced_app_builder', 'false') == 'true'
+        return properties.get('advanced_app_builder', 'true') == 'true'
 
     @property
     def jad_settings(self):
@@ -5188,6 +5195,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             self.validate_fixtures()
             self.validate_intents()
+            self.validate_practice_users()
             self.create_all_files()
         except CaseXPathValidationError as cve:
             errors.append({
@@ -5200,6 +5208,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 'type': 'invalid user property xpath reference',
                 'module': ucve.module,
                 'form': ucve.form,
+            })
+        except PracticeUserException as pue:
+            errors.append({
+                'type': 'practice user config error',
+                'message': unicode(pue),
+                'build_profile_id': pue.build_profile_id,
             })
         except (AppEditingError, XFormValidationError, XFormException,
                 PermissionDenied, SuiteValidationError) as e:
@@ -5347,6 +5361,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return record
 
     def save(self, response_json=None, increment_version=None, **params):
+        self.last_modified = datetime.datetime.utcnow()
         if not self._rev and not domain_has_apps(self.domain):
             domain_has_apps.clear(self.domain)
         user = getattr(view_utils.get_request(), 'couch_user', None)
@@ -5354,6 +5369,15 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             track_workflow(user.get_email(), 'Saved the App Builder within first 24 hours')
         super(ApplicationBase, self).save(
             response_json=response_json, increment_version=increment_version, **params)
+
+    @classmethod
+    def save_docs(cls, docs, **kwargs):
+        utcnow = datetime.datetime.utcnow()
+        for doc in docs:
+            doc['last_modified'] = utcnow
+        super(ApplicationBase, cls).save_docs(docs, **kwargs)
+
+    bulk_save = save_docs
 
     def set_form_versions(self, previous_version, force_new_version=False):
         # by default doing nothing here is fine.
@@ -5410,7 +5434,7 @@ def validate_property(property):
 
 def validate_detail_screen_field(field):
     # If you change here, also change here:
-    # corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js
+    # corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
     field_re = r'^([a-zA-Z][\w_-]*:)*([a-zA-Z][\w_-]*/)*#?[a-zA-Z][\w_-]*$'
     if not re.match(field_re, field):
         raise ValueError("Invalid Sort Field")
@@ -5468,6 +5492,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_grid_menus = BooleanProperty(default=False)
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
+    mobile_ucr_sync_interval = IntegerProperty()
 
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
@@ -5491,15 +5516,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     @classmethod
     def wrap(cls, data):
-        for module in data.get('modules', []):
-            for attr in ('case_label', 'referral_label'):
-                if not module.has_key(attr):
-                    module[attr] = {}
-            for lang in data['langs']:
-                if not module['case_label'].get(lang):
-                    module['case_label'][lang] = commcare_translations.load_translations(lang).get('cchq.case', 'Cases')
-                if not module['referral_label'].get(lang):
-                    module['referral_label'][lang] = commcare_translations.load_translations(lang).get('cchq.referral', 'Referrals')
         data.pop('commtrack_enabled', None)  # Remove me after migrating apps
         self = super(Application, cls).wrap(data)
 
@@ -5708,6 +5724,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
 
+        if toggles.PHONE_HEARTBEAT.enabled(self.domain):
+            apk_heartbeat_url = self.heartbeat_url
+        else:
+            apk_heartbeat_url = None
         locale = self.get_build_langs(build_profile_id)[0]
         return render_to_string(template, {
             'is_odk': is_odk,
@@ -5720,7 +5740,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'name': self.name,
             'descriptor': u"Profile File",
             'build_profile_id': build_profile_id,
-            'locale': locale
+            'locale': locale,
+            'apk_heartbeat_url': apk_heartbeat_url,
         }).encode('utf-8')
 
     @property
@@ -5740,6 +5761,73 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def create_media_suite(self, build_profile_id=None):
         return MediaSuiteGenerator(self, build_profile_id).generate_suite()
 
+    @memoized
+    def get_practice_user_id(self, build_profile_id=None):
+        # returns app or build profile specific practice_mobile_worker_id
+        if build_profile_id:
+            build_spec = self.build_profiles[build_profile_id]
+            return build_spec.practice_mobile_worker_id
+        else:
+            return self.practice_mobile_worker_id
+
+    @property
+    @memoized
+    def enable_practice_users(self):
+        return (
+            self.supports_practice_users and
+            domain_has_privilege(self.domain, privileges.PRACTICE_MOBILE_WORKERS)
+        )
+
+    @memoized
+    def get_practice_user(self, build_profile_id=None):
+        """
+        kwargs:
+            build_profile_id: id of a particular build profile to get the practice user for
+                If it's None, practice user of the default app is returned
+
+        Returns:
+            App or build profile specific practice user and validates that the user is
+                a practice mode user and that user belongs to app.domain
+
+        This is memoized to avoid refetching user when validating app, creating build files and
+            generating suite file.
+        """
+        practice_user_id = self.get_practice_user_id(build_profile_id=build_profile_id)
+        if practice_user_id:
+            return get_and_assert_practice_user_in_domain(practice_user_id, self.domain)
+        else:
+            return None
+
+    def create_practice_user_restore(self, build_profile_id=None):
+        """
+        Returns:
+            Returns restore xml as a string for the practice user of app or
+                app profile specfied by build_profile_id
+            Raises a PracticeUserException if the user is not practice user
+        """
+        from corehq.apps.ota.models import DemoUserRestore
+        if not self.enable_practice_users:
+            return None
+        user = self.get_practice_user(build_profile_id)
+        if user:
+            user_restore = DemoUserRestore.objects.get(id=user.demo_restore_id)
+            return user_restore.get_restore_as_string()
+        else:
+            return None
+
+    def validate_practice_users(self):
+        # validate practice_mobile_worker of app and all app profiles
+        # raises PracticeUserException in case of misconfiguration
+        if not self.enable_practice_users:
+            return
+        self.get_practice_user()
+        try:
+            for build_profile_id in self.build_profiles:
+                self.get_practice_user(build_profile_id)
+        except PracticeUserException as e:
+            e.build_profile_id = build_profile_id
+            raise e
+
     @classmethod
     def get_form_filename(cls, type=None, form=None, module=None):
         return 'modules-%s/forms-%s.xml' % (module.id, form.id)
@@ -5756,6 +5844,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             '{}suite.xml'.format(prefix): self.create_suite(build_profile_id),
             '{}media_suite.xml'.format(prefix): self.create_media_suite(build_profile_id),
         }
+
+        practice_user_restore = self.create_practice_user_restore(build_profile_id)
+        if practice_user_restore:
+            files.update({
+                '{}practice_user_restore.xml'.format(prefix): practice_user_restore
+            })
 
         langs_for_build = self.get_build_langs(build_profile_id)
         for lang in ['default'] + langs_for_build:
@@ -5803,22 +5897,22 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     'form': form
                 }
 
-    def get_form(self, unique_form_id, bare=True):
+    def get_form(self, form_unique_id, bare=True):
         def matches(form):
-            return form.get_unique_id() == unique_form_id
+            return form.get_unique_id() == form_unique_id
         for obj in self.get_forms(bare):
             if matches(obj if bare else obj['form']):
                 return obj
         raise FormNotFoundException(
             ("Form in app '%s' with unique id '%s' not found"
-             % (self.id, unique_form_id)))
+             % (self.id, form_unique_id)))
 
-    def get_form_location(self, unique_form_id):
+    def get_form_location(self, form_unique_id):
         for m_index, module in enumerate(self.get_modules()):
             for f_index, form in enumerate(module.get_forms()):
-                if unique_form_id == form.unique_id:
+                if form_unique_id == form.unique_id:
                     return m_index, f_index
-        raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, unique_form_id))
+        raise KeyError("Form in app '%s' with unique id '%s' not found" % (self.id, form_unique_id))
 
     @classmethod
     def new_app(cls, domain, name, lang="en"):
@@ -5917,9 +6011,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         try:
             form = from_module.forms.pop(j)
             if app_manager_v2:
-                if not to_module.is_surveys and i == 0:
-                    # first form is the reg form
-                    i = 1
                 if from_module.is_surveys != to_module.is_surveys:
                     if from_module.is_surveys:
                         form.requires = "case"
@@ -5949,12 +6040,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         from_module = self.get_module(module_id)
         form = from_module.get_form(form_id)
         to_module = self.get_module(to_module_id)
-        self._copy_form(from_module, form, to_module, rename=True)
+        return self._copy_form(from_module, form, to_module, rename=True)
 
     def _copy_form(self, from_module, form, to_module, *args, **kwargs):
-        if not form.source:
-            raise BlankXFormError()
-
         if from_module['case_type'] != to_module['case_type']:
             raise ConflictingCaseTypeError()
 
@@ -5969,6 +6057,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         save_xform(self, copy_form, form.source)
+        return copy_form
 
     @cached_property
     def has_case_management(self):
@@ -6000,28 +6089,45 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             xmlns_map[form.xmlns].append(form)
         return xmlns_map
 
-    def get_form_by_xmlns(self, xmlns, log_missing=True):
+    def get_forms_by_xmlns(self, xmlns, log_missing=True):
+        """
+        Return the forms with the given xmlns.
+        This function could return multiple forms if there are shadow forms in the app.
+        """
         if xmlns == "http://code.javarosa.org/devicereport":
-            return None
+            return []
         forms = self.get_xmlns_map()[xmlns]
-        if len(forms) != 1:
-            if log_missing or len(forms) > 1:
+        if len(forms) < 1:
+            if log_missing:
                 logging.error('App %s in domain %s has %s forms with xmlns %s' % (
                     self.get_id,
                     self.domain,
                     len(forms),
                     xmlns,
                 ))
+            return []
+        non_shadow_forms = [form for form in forms if form.form_type != 'shadow_form']
+        assert len(non_shadow_forms) <= 1
+        return forms
+
+    def get_xform_by_xmlns(self, xmlns, log_missing=True):
+        forms = self.get_forms_by_xmlns(xmlns, log_missing)
+        if not forms:
             return None
         else:
-            form, = forms
-        return form
+            # If there are multiple forms with the same xmlns, then all but one are shadow forms, therefore they
+            # all have the same xform.
+            return forms[0].wrapped_xform()
 
-    def get_questions(self, xmlns):
-        form = self.get_form_by_xmlns(xmlns)
-        if not form:
+
+    def get_questions(self, xmlns, langs=None, include_triggers=False, include_groups=False,
+                      include_translations=False):
+        forms = self.get_forms_by_xmlns(xmlns)
+        if not forms:
             return []
-        return form.get_questions(self.langs)
+        # If there are multiple forms with the same xmlns, then some of them are shadow forms, so all the questions
+        # will be the same.
+        return forms[0].get_questions(langs or self.langs, include_triggers, include_groups, include_translations)
 
     def check_subscription(self):
 
@@ -6034,12 +6140,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 'type': 'subscription',
                 'message': _('Your application is using User Properties. You can remove User Properties '
                              'functionality by opening the User Properties tab in a form that uses it, and '
-                             'clicking "Remove User Properties".')
-                           if toggles.USER_PROPERTY_EASY_REFS.enabled(self.domain) else
-                           # old message, to be removed with USER_PROPERTY_EASY_REFS toggle
-                           _('Your application is using User Case functionality. You can remove User Case '
-                             'functionality by opening the User Case Management tab in a form that uses it, and '
-                             'clicking "Remove User Case Properties".'),
+                             'clicking "Remove User Properties".'),
             })
         return errors
 

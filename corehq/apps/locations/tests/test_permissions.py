@@ -74,14 +74,14 @@ class FormEditRestrictionsMixin(object):
     def make_web_user(cls, location):
         username = ''.join(random.sample(string.letters, 8))
         user = WebUser.create(cls.domain, username, 'password')
-        user.set_location(cls.domain, cls.locations[location].couch_location)
+        user.set_location(cls.domain, cls.locations[location])
         return user
 
     @classmethod
     def make_mobile_user(cls, location):
         username = ''.join(random.sample(string.letters, 8))
         user = CommCareUser.create(cls.domain, username, 'password')
-        user.set_location(cls.locations[location].couch_location)
+        user.set_location(cls.locations[location])
         return user
 
     @classmethod
@@ -115,6 +115,7 @@ class FormEditRestrictionsMixin(object):
     def assertCannotEdit(self, user, form):
         msg = "This user CAN edit this form!"
         self.assertFalse(can_edit_form_location(self.domain, user, form), msg=msg)
+
 
 class TestDeprecatedFormEditRestrictions(FormEditRestrictionsMixin, LocationHierarchyTestCase):
     """This class mostly just tests the RESTRICT_FORM_EDIT_BY_LOCATION feature flag"""

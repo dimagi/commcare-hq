@@ -18,20 +18,27 @@ SHOULD = "should"
 BOOL = "bool"
 
 
-def BOOL_CLAUSE(query):
-    return {BOOL: query}
+def BOOL_CLAUSE(query, **kwargs):
+    return _CLAUSE(BOOL, query, **kwargs)
 
 
-def MUST_CLAUSE(query):
-    return {MUST: query}
+def MUST_CLAUSE(query, **kwargs):
+    return _CLAUSE(MUST, query, **kwargs)
 
 
-def MUST_NOT_CLAUSE(query):
-    return {MUST_NOT: query}
+def MUST_NOT_CLAUSE(query, **kwargs):
+    return _CLAUSE(MUST_NOT, query, **kwargs)
 
 
-def SHOULD_CLAUSE(query):
-    return {SHOULD: query}
+def SHOULD_CLAUSE(query, **kwargs):
+    return _CLAUSE(SHOULD, query, **kwargs)
+
+
+def _CLAUSE(clause, query, **kwargs):
+    clause = {clause: query}
+    clause.update(kwargs)
+    return clause
+
 
 CLAUSES = {
     MUST: MUST_CLAUSE,
@@ -98,6 +105,22 @@ def nested(path, query, *args, **kwargs):
     nested = {
         "path": path,
         "query": query
+    }
+    nested.update(kwargs)
+    return {
+        "nested": nested
+    }
+
+
+def nested_filter(path, filter_, *args, **kwargs):
+    """
+    Creates a nested query for use with nested documents
+
+    Keyword arguments such as score_mode and others can be added.
+    """
+    nested = {
+        "path": path,
+        "filter": filter_
     }
     nested.update(kwargs)
     return {

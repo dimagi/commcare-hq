@@ -230,24 +230,27 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         super(TestSQLDumpLoad, self).tearDown()
 
     def test_case_search_config(self):
-        from corehq.apps.case_search.models import CaseSearchConfig, CaseSearchConfigJSON
+        from corehq.apps.case_search.models import CaseSearchConfig, FuzzyProperties
         expected_object_counts = Counter({
             CaseSearchConfig: 1,
         })
 
         pre_config, created = CaseSearchConfig.objects.get_or_create(pk=self.domain_name)
         pre_config.enabled = True
-        fuzzies = CaseSearchConfigJSON()
-        fuzzies.add_fuzzy_properties('dog', ['breed', 'color'])
-        fuzzies.add_fuzzy_properties('owner', ['name'])
-        pre_config.config = fuzzies
+        fuzzies = [
+            FuzzyProperties(domain=self.domain, case_type='dog', properties=['breed', 'color']),
+            FuzzyProperties(domain=self.domain, case_type='owner', properties=['name']),
+        ]
+        for fuzzy in fuzzies:
+            fuzzy.save()
+        pre_config.fuzzy_properties = fuzzies
         pre_config.save()
 
         self._dump_and_load(expected_object_counts)
 
         post_config = CaseSearchConfig.objects.get(domain=self.domain_name)
         self.assertTrue(post_config.enabled)
-        self.assertDictEqual(pre_config.config.to_json(), post_config.config.to_json())
+        self.assertEqual(pre_config.fuzzy_properties, post_config.fuzzy_properties)
 
     def test_auto_case_update_rules(self):
         from corehq.apps.data_interfaces.models import (

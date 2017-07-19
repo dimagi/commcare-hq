@@ -541,7 +541,7 @@ def create_or_update_users_and_groups(domain, user_specs, group_specs, task=None
                     for group_id in Group.by_user(user, wrap=False):
                         group = group_memoizer.get(group_id)
                         if group.name not in group_names:
-                            group.remove_user(user, save=False)
+                            group.remove_user(user)
 
                     for group_name in group_names:
                         if group_name not in allowed_group_names:

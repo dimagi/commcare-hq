@@ -257,6 +257,11 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         return result[0] if result else None
 
     @property
+    def host(self):
+        result = self.get_parent(relationship=INDEX_RELATIONSHIP_EXTENSION)
+        return result[0] if result else None
+
+    @property
     def server_opened_on(self):
         try:
             open_action = self.actions[0]

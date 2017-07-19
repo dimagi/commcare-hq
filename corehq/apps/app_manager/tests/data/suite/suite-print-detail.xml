@@ -33,7 +33,7 @@
   <detail id="m0_case_short">
     <title>
       <text>
-        <locale id="m0.case_short.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <field>
@@ -57,7 +57,7 @@
   <detail id="m0_case_long">
     <title>
       <text>
-        <locale id="m0.case_long.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <field>
@@ -76,7 +76,7 @@
   <detail id="m1_case_short">
     <title>
       <text>
-        <locale id="m1.case_short.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <field>
@@ -100,7 +100,7 @@
   <detail print-template="jr://file/commcare/text/module_f681eaa9ed0eb82adb01c0aa7a3ac6be8b366232_detail_print.html" id="m1_case_long">
     <title>
       <text>
-        <locale id="m1.case_long.title"/>
+        <locale id="cchq.case"/>
       </text>
     </title>
     <field print-id="name">

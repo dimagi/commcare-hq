@@ -48,40 +48,83 @@
       data-content="{% blocktrans %}Do you have a lot of case properties? Try splitting them into tabs, which will appear as separate screens that mobile users can swipe through. Read more on the <a href='https://help.commcarehq.org/display/commcarepublic/Tabs+on+Case+Detail+Screen' target='_blank'>Help Site</a>.{% endblocktrans %}">
 </span>
 
+{% if detail.type == 'case' %}
+{{ request|toggle_tag_info:"DETAIL_LIST_TAB_NODESETS" }}
+{% if request|toggle_enabled:'DETAIL_LIST_TAB_NODESETS' %}
+<div class="spacer"></div>
+<div class="panel panel-appmanager">
+  <div class="panel-heading">
+    <h4 class="panel-title panel-title-nolink">
+      {% trans "Sorting" %}
+    </h4>
+  </div>
+  <div class="panel-body">
+    <div data-bind="with: longScreen">
+        <label>
+            <input data-bind="checked: sortNodesetColumns" type="checkbox">
+            <span>
+                {% trans "Sort entries in the Nodeset tabs" %}
+            </span>
+        </label>
+        <span class="hq-help-template"
+              data-title="{% trans "Sort Nodeset Entries" %}"
+              data-content=
+                  "{% blocktrans %}
+                      This makes 'Search Only' fields added under
+                      nodesets to be used for sorting. This
+                      is useful if for example you want higher
+                      priority entries to appear closer to the
+                      top of the list. The list under nodeset will sort
+                      by the first 'Search Only' property, then the second,
+                      etc.
+                  {% endblocktrans %}" >
+        </span>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endif %}
+
 {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
-    <br><br>
-    <legend>{% trans "Printing" %}</legend>
-    {% if app.enable_detail_print %}
-        <div class="form-group" data-bind="with: printTemplateReference">
-            <label class="col-sm-2 control-label">
-                {% trans "Document Template" %}
-            </label>
-            <div class="col-sm-4">
-                <a class="btn btn-default existing-media"
-                   data-bind="visible: url(), attr: {href: url()}"
-                   target="_blank"
-                   data-toggle="tooltip"
-                   data-title="{% trans "Opens file in new tab." %}">{% trans "Open HTML" %}</a>
-                <button type="button" class="btn btn-default" data-toggle="modal"
-                        data-target="#module_{{ module.unique_id }}_detail_print"
-                        data-bind="
-                            attr: { 'data-hqmediapath': path },
-                            event: { mediaUploadComplete: uploadComplete },
-                        ">
-                    <i class="fa fa-cloud-upload"></i>
-                    <span data-bind="{visible: !url()}">{% trans "Upload HTML" %}</span>
-                    <span data-bind="{visible: url()}">{% trans "Replace HTML" %}</span>
-                </button>
-                <a class="btn btn-danger"
-                   data-bind="
-                        click: removePrintTemplate,
-                        visible: url(),
-                ">
-                    <i class="fa fa-remove"></i>
-                </a>
+<br><br>
+<div class="panel panel-appmanager">
+    <div class="panel-heading">
+        <h4 class="panel-title panel-title-nolink">{% trans "Printing" %}</h4>
+    </div>
+    <div class="panel-body">
+        {% if app.enable_detail_print %}
+            <div class="form-group" data-bind="with: printTemplateReference">
+                <label class="col-sm-2 control-label">
+                    {% trans "Document Template" %}
+                </label>
+                <div class="col-sm-4">
+                    <a class="btn btn-default existing-media"
+                       data-bind="visible: url(), attr: {href: url()}"
+                       target="_blank"
+                       data-toggle="tooltip"
+                       data-title="{% trans "Opens file in new tab." %}">{% trans "Open HTML" %}</a>
+                    <button type="button" class="btn btn-default" data-toggle="modal"
+                            data-target="#module_{{ module.unique_id }}_detail_print"
+                            data-bind="
+                                attr: { 'data-hqmediapath': path },
+                                event: { mediaUploadComplete: uploadComplete },
+                            ">
+                        <i class="fa fa-cloud-upload"></i>
+                        <span data-bind="{visible: !url()}">{% trans "Upload HTML" %}</span>
+                        <span data-bind="{visible: url()}">{% trans "Replace HTML" %}</span>
+                    </button>
+                    <a class="btn btn-danger"
+                       data-bind="
+                            click: removePrintTemplate,
+                            visible: url(),
+                    ">
+                        <i class="fa fa-remove"></i>
+                    </a>
+                </div>
             </div>
-        </div>
-    {% else %}
-        <div class="alert alert-warning">{% trans "Printing the case detail is not supported on this version of CommCare" %}</div>
-    {% endif %}
+        {% else %}
+            <div class="alert alert-warning">{% trans "Printing the case detail is not supported on this version of CommCare" %}</div>
+        {% endif %}
+    </div>
+</div>
 {% endif %}

@@ -16,7 +16,8 @@ from sqlagg.filters import (
     NOTEQFilter,
     NOTNULLFilter,
     get_column,
-    ANDFilter)
+    ANDFilter,
+    ORFilter)
 from sqlalchemy import bindparam
 
 from corehq.apps.es import filters
@@ -173,7 +174,7 @@ class NumericFilterValue(FilterValue):
             return None
 
         filter_class = self.operators_to_filters[self.value['operator']].es
-        return filter_class(self.filter.field, self.filter.value)
+        return filter_class(self.filter.field, self.value['operand'])
 
 
 class BasicBetweenFilter(BasicFilter):
@@ -295,8 +296,10 @@ class PreFilterValue(FilterValue):
 
 class ChoiceListFilterValue(FilterValue):
 
+    ALLOWED_TYPES = ('choice_list', 'dynamic_choice_list', 'multi_field_dynamic_choice_list')
+
     def __init__(self, filter, value):
-        assert filter.type in ('choice_list', 'dynamic_choice_list')
+        assert filter.type in self.ALLOWED_TYPES
         if not isinstance(value, list):
             # if in single selection mode just force it to a list
             value = [value]
@@ -335,6 +338,32 @@ class ChoiceListFilterValue(FilterValue):
             return filters.missing(self.filter.field)
         terms = [v.value for v in self.value]
         return filters.term(self.filter.field, terms)
+
+
+class MultiFieldChoiceListFilterValue(ChoiceListFilterValue):
+    ALLOWED_TYPES = ('multi_field_dynamic_choice_list', )
+
+    def to_sql_filter(self):
+        if self.show_all:
+            return None
+        if self.is_null:
+            return ORFilter([ISNULLFilter(field) for field in self.filter.fields])
+        return ORFilter([
+            INFilter(
+                field,
+                get_INFilter_bindparams(self.filter.slug, self.value)
+            ) for field in self.filter.fields
+        ])
+
+    def to_es_filter(self):
+        if self.show_all:
+            return None
+        if self.is_null:
+            return filters.OR(*[filters.missing(field) for field in self.filter.fields])
+        terms = [v.value for v in self.value]
+        return filters.OR(
+            *[filters.term(self.filter.field, terms)]
+        )
 
 
 class LocationDrilldownFilterValue(FilterValue):

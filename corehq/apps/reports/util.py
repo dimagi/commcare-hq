@@ -6,6 +6,7 @@ import math
 import pytz
 import warnings
 
+from django.utils.translation import ugettext as _
 from django.conf import settings
 from django.http import Http404
 from django.utils import html, safestring
@@ -23,6 +24,7 @@ from dimagi.utils.dates import DateSpan
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_request
 
+from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.domain.models import Domain
 from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser
@@ -378,7 +380,7 @@ def get_possible_reports(domain_name):
             else:
                 report_to_check_if_viewable = model
 
-            if report_to_check_if_viewable.show_in_navigation(domain=domain_name, project=domain):
+            if report_to_check_if_viewable.show_in_user_roles(domain=domain_name, project=domain):
                 reports.append({
                     'path': model.__module__ + '.' + model.__name__,
                     'name': model.name
@@ -474,6 +476,14 @@ def resync_case_to_es(domain, case):
         publish_case_saved(case)
     else:
         CommCareCase.get_db().save_doc(case._doc)  # don't just call save to avoid signals
+
+
+def validate_xform_for_edit(xform):
+    for node in xform.bind_nodes:
+        if '@case_id' in node.attrib.get('nodeset') and node.attrib.get('calculate') == 'uuid()':
+            raise EditFormValidationError(_(u'Form cannot be edited because it will create a new case'))
+
+    return None
 
 
 @quickcache(['domain', 'mobile_user_and_group_slugs'], timeout=10)

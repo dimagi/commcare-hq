@@ -17,7 +17,7 @@
      {% endif %}
  {% endblock %}
  
-@@ -29,11 +25,10 @@
+@@ -29,12 +25,7 @@
          {% initial_page_data 'schedule_phases' schedule_phases %}
          {% registerurl 'edit_schedule_phases' app.domain app.id module.id %}
          <div class="tab-pane" id="visit-scheduler-module-config-tab">
@@ -27,7 +27,7 @@
          </div>
      {% endif %}
 -{% endblock %} 
-+{% endblock %}
- 
- {% block case-management-tab-content %}
-     {% include "app_manager/v1/partials/module_view_case_management_advanced.html" %}
+-
+-{% block case-management-tab-content %}
+-    {% include "app_manager/v1/partials/module_view_case_management_advanced.html" %}
+ {% endblock %}

@@ -339,7 +339,7 @@ def calced_props(dom, id, all_stats):
         "cp_n_active_cc_users": int(CALC_FNS["mobile_users"](dom)),
         "cp_n_cc_users": int(all_stats["commcare_users"].get(dom, 0)),
         "cp_n_active_cases": int(CALC_FNS["cases_in_last"](dom, 120)),
-        "cp_n_users_submitted_form": total_distinct_users([dom]),
+        "cp_n_users_submitted_form": total_distinct_users(dom),
         "cp_n_inactive_cases": int(CALC_FNS["inactive_cases_in_last"](dom, 120)),
         "cp_n_30_day_cases": int(CALC_FNS["cases_in_last"](dom, 30)),
         "cp_n_60_day_cases": int(CALC_FNS["cases_in_last"](dom, 60)),
@@ -377,18 +377,14 @@ def calced_props(dom, id, all_stats):
     }
 
 
-def total_distinct_users(domains=None):
+def total_distinct_users(domain):
     """
-    Get total number of users who've ever submitted a form.
+    Get total number of users who've ever submitted a form in a domain.
     """
-    query = {"in": {"domain.exact": domains}} if domains is not None else {"match_all": {}}
-    q = {
-        "query": query,
-        "filter": {"and": ADD_TO_ES_FILTER["forms"][:]},
+    query = FormES().domain(domain).user_aggregation()
+    terms = {
+        user_id for user_id in query.run().aggregations.user.keys
+        if user_id not in WEIRD_USER_IDS
     }
-
-    res = es_query(q=q, facets=["form.meta.userID"], es_index='forms', size=0)
-
-    user_ids = reduce(list.__add__, [CouchUser.ids_by_domain(d) for d in domains], [])
-    terms = [t.get('term') for t in res["facets"]["form.meta.userID"]["terms"]]
-    return len(filter(lambda t: t and t not in WEIRD_USER_IDS and t in user_ids, terms))
+    user_ids = terms.intersection(set(CouchUser.ids_by_domain(domain)))
+    return len(user_ids)

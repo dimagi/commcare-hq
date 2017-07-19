@@ -1,5 +1,12 @@
 {% load hq_shared_tags %}
 
+{% block js %}
+    <script src="{% static "reports/js/base_maps.js" %}"></script>
+{% endblock js %}
+
+{% initial_page_data 'context' context %}
+{% initial_page_data 'icon_path' 'leaflet/dist/images'|static %}
+
 <div class="panel panel-default">
     <div class="panel-heading">
         <h2 class="panel-title">
@@ -8,22 +15,6 @@
     </div>
     <div class="panel-body">
         <div class="hq-graphic-report">
-            {% block js-script %}
-            <script>
-
-            CONTEXT = {{ context|JSON }};
-            ICON_PATH = '{% static 'leaflet/dist/images' %}';
-            MIN_HEIGHT = 300; //px
-
-            $(function() {
-                if (CONTEXT !== '') {
-                    load(CONTEXT, ICON_PATH);
-                }
-            });
-
-            </script>
-            {% endblock js-script %}
-
             <script type="text/template" id="default_detail_popup">
                 <div class="default-popup">
                     <h3><%= name %></h3>

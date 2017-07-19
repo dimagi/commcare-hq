@@ -5,7 +5,8 @@ from lxml import etree
 from mock import patch
 
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.models import Application, Module, ReportModule, ReportAppConfig
+from corehq.apps.app_manager.models import Application, Module, GraphConfiguration, \
+    GraphSeries, ReportModule, ReportAppConfig
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.builds.models import BuildSpec
@@ -110,7 +111,13 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         report._id = 'd3ff18cd83adf4550b35db8d391f6008'
 
         report_app_config = ReportAppConfig(report_id=report._id,
-                                            header={'en': 'CommBugz'})
+                                            header={'en': 'CommBugz'},
+                                            complete_graph_configs={
+                                                chart.chart_id: GraphConfiguration(
+                                                    series=[GraphSeries() for c in chart.y_axis_columns],
+                                                )
+                                                for chart in report.charts
+                                            })
         report_app_config._report = report
         report_module.report_configs = [report_app_config]
         report_module._loaded = True

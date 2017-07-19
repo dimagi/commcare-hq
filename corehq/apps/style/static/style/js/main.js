@@ -59,6 +59,7 @@ COMMCAREHQ.transformHelpTemplate = function ($template, wrap) {
 COMMCAREHQ.initBlock = function ($elem) {
     'use strict';
 
+    // Can delete once APP_MANAGER_V2 is released
     $('.submit_on_click', $elem).on("click", function (e) {
         e.preventDefault();
         if (!$(this).data('clicked')) {
@@ -85,6 +86,10 @@ COMMCAREHQ.initBlock = function ($elem) {
     $("input[type='text'], input[type='password'], textarea", $elem);
     $('.container', $elem).addClass('ui-widget ui-widget-content');
     $('.config', $elem).wrap('<div />').parent().addClass('container block ui-corner-all');
+
+    $('.hq-help-template').each(function () {
+        COMMCAREHQ.transformHelpTemplate($(this), true);
+    });
 };
 
 COMMCAREHQ.updateDOM = function (update) {

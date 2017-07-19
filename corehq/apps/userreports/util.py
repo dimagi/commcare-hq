@@ -3,9 +3,7 @@ import collections
 import hashlib
 
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
 
-from corehq.util.soft_assert import soft_assert
 from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.userreports.const import (
@@ -18,7 +16,6 @@ from corehq.apps.userreports.const import (
 from django_prbac.utils import has_privilege
 
 from corehq.apps.userreports.dbaccessors import get_all_es_data_sources
-from corehq.apps.userreports.exceptions import BadBuilderConfigError
 
 
 def localize(value, lang):
@@ -191,3 +188,29 @@ def get_ucr_class_name(id):
 
 def get_async_indicator_modify_lock_key(doc_id):
     return 'async_indicator_save-{}'.format(doc_id)
+
+
+def get_static_report_mapping(from_domain, to_domain, report_map):
+    from corehq.apps.userreports.models import StaticReportConfiguration, STATIC_PREFIX, \
+        CUSTOM_REPORT_PREFIX
+
+    for static_report in StaticReportConfiguration.by_domain(from_domain):
+        if static_report.get_id.startswith(STATIC_PREFIX):
+            report_id = static_report.get_id.replace(
+                STATIC_PREFIX + from_domain + '-',
+                ''
+            )
+            is_custom_report = False
+        else:
+            report_id = static_report.get_id.replace(
+                CUSTOM_REPORT_PREFIX + from_domain + '-',
+                ''
+            )
+            is_custom_report = True
+        new_id = StaticReportConfiguration.get_doc_id(
+            to_domain, report_id, is_custom_report
+        )
+        # check that new report is in new domain's list of static reports
+        StaticReportConfiguration.by_id(new_id)
+        report_map[static_report.get_id] = new_id
+    return report_map

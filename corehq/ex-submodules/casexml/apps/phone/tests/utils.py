@@ -61,7 +61,8 @@ def get_exactly_one_wrapped_sync_log():
 
 
 def generate_restore_payload(project, user, restore_id="", version=V1, state_hash="",
-                             items=False, overwrite_cache=False, force_cache=False):
+                             items=False, overwrite_cache=False,
+                             force_cache=False, **kw):
     """
     Gets an XML payload suitable for OTA restore.
 
@@ -72,15 +73,27 @@ def generate_restore_payload(project, user, restore_id="", version=V1, state_has
         returns: the xml payload of the sync operation
     """
     return get_restore_config(
-        project, user, restore_id, version, state_hash, items, overwrite_cache, force_cache
+        project, user, restore_id, version, state_hash, items, overwrite_cache,
+        force_cache, **kw
     ).get_payload().as_string()
 
 
+def get_next_sync_log(*args, **kw):
+    """Perform a sync and return the new sync log
+
+    Expects same arguments as `generate_restore_payload`
+    """
+    payload = generate_restore_payload(*args, **kw)
+    return synclog_from_restore_payload(payload)
+
+
 def get_restore_config(project, user, restore_id="", version=V1, state_hash="",
-                       items=False, overwrite_cache=False, force_cache=False, device_id=None):
+                       items=False, overwrite_cache=False, force_cache=False,
+                       device_id=None, case_sync=None):
     return RestoreConfig(
         project=project,
         restore_user=user,
+        case_sync=case_sync,
         params=RestoreParams(
             sync_log_id=restore_id,
             version=version,
@@ -119,14 +132,14 @@ def has_cached_payload(sync_log, version, prefix=RESTORE_CACHE_KEY_PREFIX):
     )))
 
 
-def call_fixture_generator(gen, restore_user, project=None, last_sync=None, app=None):
+def call_fixture_generator(gen, restore_user, project=None, last_sync=None, app=None, device_id=''):
     """
     Convenience function for use in unit tests
     """
     from casexml.apps.phone.restore import RestoreState
     from casexml.apps.phone.restore import RestoreParams
     from corehq.apps.domain.models import Domain
-    params = RestoreParams(version=V2, app=app)
+    params = RestoreParams(version=V2, app=app, device_id=device_id)
     restore_state = RestoreState(
         project or Domain(name=restore_user.domain),
         restore_user,

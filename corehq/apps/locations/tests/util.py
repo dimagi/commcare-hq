@@ -1,13 +1,12 @@
-from django.test import TestCase
 from collections import namedtuple
+from django.test import TestCase
 from dimagi.utils.couch.database import iter_bulk_delete
 from corehq.util.test_utils import unit_testing_only
 from corehq.apps.commtrack.models import SupplyPointCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain
-from corehq.dbaccessors.couchapps.all_docs import delete_all_docs_by_doc_type
 from corehq.apps.users.models import UserRole, Permissions
 
-from ..models import Location, SQLLocation, LocationType
+from ..models import make_location, SQLLocation, LocationType
 
 TEST_DOMAIN = 'locations-test'
 TEST_LOCATION_TYPE = 'location'
@@ -16,7 +15,7 @@ TEST_LOCATION_TYPE = 'location'
 def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE,
              parent=None, is_archived=False):
     name = name or code
-    loc = Location(
+    loc = make_location(
         site_code=code, name=name, domain=domain, location_type=type,
         parent=parent, is_archived=is_archived
     )
@@ -31,7 +30,6 @@ def delete_all_locations():
         SupplyPointCase.get_db().view('supply_point_by_loc/view', reduce=False).all()
     ]
     iter_bulk_delete(SupplyPointCase.get_db(), ids)
-    delete_all_docs_by_doc_type(Location.get_db(), ['Location'])
     SQLLocation.objects.all().delete()
     LocationType.objects.all().delete()
 
@@ -78,8 +76,8 @@ def setup_locations(domain, locations, location_types):
 
     def create_locations(locations, types, parent):
         for name, children in locations:
-            location = Location(domain=domain, name=name, parent=parent,
-                                location_type=types[0])
+            location = make_location(domain=domain, name=name, parent=parent,
+                                     location_type=types[0])
             location.save()
             locations_dict[name] = location.sql_location
             create_locations(children, types[1:], location)
@@ -91,22 +89,24 @@ def setup_locations(domain, locations, location_types):
 LocationStructure = namedtuple('LocationStructure', ['name', 'type', 'children'])
 
 
-def setup_locations_with_structure(domain, locations):
+def setup_locations_with_structure(domain, locations, metadata=None):
     """
     Creates a hierarchy of locations given a recursive list of LocationStructure namedtuples
     This allows you to set complex (e.g. forked) location structures within tests
     """
     created_locations = {}
 
-    def create_locations(locations, parent):
+    def create_locations(locations, parent, metadata):
         for location in locations:
-            created_location = Location(domain=domain, name=location.name, parent=parent,
-                                        location_type=location.type)
+            created_location = make_location(domain=domain, name=location.name, parent=parent,
+                                             location_type=location.type)
+            if metadata:
+                created_location.metadata = metadata
             created_location.save()
             created_locations[location.name] = created_location.sql_location
-            create_locations(location.children, created_location)
+            create_locations(location.children, created_location, metadata)
 
-    create_locations(locations, None)
+    create_locations(locations, None, metadata)
     return created_locations
 
 

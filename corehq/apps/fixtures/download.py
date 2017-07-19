@@ -120,6 +120,7 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
           }
     """
     type_field_properties = {}
+    indexed_field_numbers = set()
     get_field_prop_format = lambda x, y: "field " + str(x) + " : property " + str(y)
     for event_count, data_type in enumerate(data_types_view):
         # Helpers to generate 'types' sheet
@@ -171,7 +172,14 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
     # Prepare 'types' sheet data
     types_sheet = {"headers": [], "rows": []}
     types_sheet["headers"] = [DELETE_HEADER, "table_id", 'is_global?']
-    types_sheet["headers"].extend(["field %d" % x for x in range(1, max_fields + 1)])
+    for x in range(1, max_fields + 1):
+        types_sheet["headers"].append("field %d" % x)
+        try:
+            if any(data_type.fields[x - 1].is_indexed for data_type in data_types_view):
+                indexed_field_numbers.add(x - 1)
+                types_sheet["headers"].append("field %d: is_indexed?" % x)
+        except IndexError:
+            continue
     types_sheet["headers"].extend(["property %d" % x for x in range(1, max_item_attributes + 1)])
     field_prop_headers = []
     for field_num, prop_num in enumerate(field_prop_count):
@@ -183,8 +191,18 @@ def _prepare_fixture(table_ids, domain, html_response=False, task=None):
 
     for data_type in data_types_book:
         common_vals = ["N", data_type.tag, yesno(data_type.is_global)]
-        field_vals = ([field.field_name for field in data_type.fields]
-                      + empty_padding_list(max_fields - len(data_type.fields)))
+        field_vals = []
+        # Count "is_indexed?" columns added, because data types with fewer fields will add fewer columns
+        indexed_field_count = 0
+        for i, field in enumerate(data_type.fields):
+            field_vals.append(field.field_name)
+            if i in indexed_field_numbers:
+                field_vals.append('yes' if field.is_indexed else 'no')
+                indexed_field_count += 1
+        field_vals.extend(empty_padding_list(
+            max_fields - len(data_type.fields) +
+            len(indexed_field_numbers) - indexed_field_count
+        ))
         item_att_vals = (data_type.item_attributes + empty_padding_list(
             max_item_attributes - len(data_type.item_attributes)
         ))

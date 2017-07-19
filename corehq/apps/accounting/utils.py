@@ -119,7 +119,7 @@ def domain_has_privilege_cache_args(domain, privilege_slug, **assignment):
 def domain_has_privilege(domain, privilege_slug, **assignment):
     from corehq.apps.accounting.models import Subscription
     try:
-        plan_version = Subscription.get_subscribed_plan_by_domain(domain)[0]
+        plan_version = Subscription.get_subscribed_plan_by_domain(domain)
         privilege = Role.get_privilege(privilege_slug, assignment)
         if privilege is None:
             return False
@@ -132,10 +132,10 @@ def domain_has_privilege(domain, privilege_slug, **assignment):
     return False
 
 
-@quickcache(['domain'], timeout=15 * 60)
-def domain_is_on_trial(domain):
+@quickcache(['domain_name'], timeout=15 * 60)
+def domain_is_on_trial(domain_name):
     from corehq.apps.accounting.models import Subscription
-    subscription = Subscription.get_subscribed_plan_by_domain(domain)[1]
+    subscription = Subscription.get_active_subscription_by_domain(domain_name)
     return subscription.is_trial
 
 

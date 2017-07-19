@@ -37,7 +37,7 @@ class KeywordHandler(object):
 
     @property
     def case_id(self):
-        return self.sql_location.couch_location.linked_supply_point().get_id
+        return self.sql_location.linked_supply_point().get_id
 
     @property
     def location_id(self):

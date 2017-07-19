@@ -39,13 +39,9 @@
         </div>
         <div class="form-group col-sm-9">
             <div class="input-group">
-                <input class="form-control js-anonymous-link" type="text" readonly="readonly" data-bind="
-                    style: {
-                        'background-color': 'white'
-                    },
-                    value: anonymousAppUrl(),
-                    click: selectText
-                    "></a>
+                <input class="form-control js-anonymous-link" type="text" readonly="readonly"
+                       value="{{ app.anonymous_cloudcare_url }}" style="background-color: white"
+                       data-bind="click: selectText"/>
                 <span class="input-group-btn">
                     <a class="btn btn-default" data-bind="
                             click: copyUrl
@@ -148,13 +144,6 @@
     </span>
 </script>
 
-<script>
-    $(function () {
-        var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
-        CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
-    });
-</script>
-
 <script type="text/html" id="CommcareSettings.widgets.text_input">
     <span data-bind="template: 'CommcareSettings.widgets.select'"></span>
     <aside id="custom-keys-help" data-bind="visible: visibleValue() === 'custom-keys'">
@@ -194,7 +183,6 @@
     url: '{% url "edit_app_attr" domain app.id 'comment' %}',
     placeholder: '{% trans "Enter app description here"|escapejs %}',
     saveValueName: 'comment',
-    readOnlyClass: 'app-comment',
     cols: 50,
 "></inline-edit>
 

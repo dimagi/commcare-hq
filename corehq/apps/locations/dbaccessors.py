@@ -85,13 +85,11 @@ def user_ids_at_locations(location_ids):
 
 
 def user_ids_at_locations_and_descendants(location_ids):
-    from corehq.apps.locations.models import SQLLocation
     location_ids_and_children = SQLLocation.objects.get_locations_and_children_ids(location_ids)
     return user_ids_at_locations(location_ids_and_children)
 
 
 def user_ids_at_accessible_locations(domain_name, user):
-    from corehq.apps.locations.models import SQLLocation
     accessible_location_ids = SQLLocation.active_objects.accessible_location_ids(domain_name, user)
     return user_ids_at_locations(accessible_location_ids)
 
@@ -145,6 +143,19 @@ def generate_user_ids_from_primary_location_ids(domain, location_ids):
     """
     for location_ids_chunk in chunked(location_ids, 50):
         for user_id in get_user_ids_from_primary_location_ids(domain, location_ids_chunk).keys():
+            yield user_id
+
+
+def generate_user_ids_from_primary_location_ids_from_couch(domain, location_ids):
+    """
+    Creates a generator for iterating through the user ids of the all the
+    mobile workers in the given domain whose primary location is given in
+    the list of location_ids.
+
+    Retrieves the information from couch instead of elasticsearch.
+    """
+    for location_id in location_ids:
+        for user_id in get_user_ids_by_location(domain, location_id):
             yield user_id
 
 

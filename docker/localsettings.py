@@ -52,6 +52,17 @@ if USE_PARTITIONED_DATABASE:
                 'SERIALIZE': False,
             },
         },
+        'warehouse': {
+             'ENGINE': 'django.db.backends.postgresql_psycopg2',
+             'NAME': 'commcarehq_warehouse',
+             'USER': 'commcarehq',
+             'PASSWORD': 'commcarehq',
+             'HOST': 'postgres',
+             'PORT': '5432',
+             'TEST': {
+                 'SERIALIZE': False,
+             },
+         },
     })
 
     PARTITION_DATABASE_CONFIG = {
@@ -68,6 +79,8 @@ if USE_PARTITIONED_DATABASE:
             'postgres': 'localhost'
         }
     }
+
+    WAREHOUSE_DATABASE_ALIAS = 'warehouse'
 
 ####### Couch Config ######
 COUCH_DATABASES = {
@@ -200,8 +213,6 @@ ELASTICSEARCH_VERSION = 1.7
 
 CACHE_REPORTS = True
 
-IS_BIGCOUCH = True
-
 if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
     UNIT_TESTING = False
     ADMINS = (('Admin', 'admin@example.com'),)
@@ -222,3 +233,5 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 
     RESTORE_PAYLOAD_DIR_NAME = 'restore'
     SHARED_TEMP_DIR_NAME = 'temp'
+
+BIGCOUCH = True

@@ -190,7 +190,7 @@ class AutoCloseExtensionsTest(TestCase):
         self.assertFalse(cases[2].closed)
 
         self.factory.create_or_update_case(CaseStructure(
-            case_id=self.extension_ids[0],
+            case_id=self.extension_ids[1],
             attrs={'close': True}
         ))
         cases = {
@@ -198,9 +198,9 @@ class AutoCloseExtensionsTest(TestCase):
             for case in CaseAccessors(self.domain).get_cases([self.host_id] + self.extension_ids)
         }
         self.assertFalse(cases[self.host_id])
-        self.assertTrue(cases[self.extension_ids[0]])
-        self.assertFalse(cases[self.extension_ids[1]])
-        self.assertFalse(cases[self.extension_ids[2]])
+        self.assertFalse(cases[self.extension_ids[0]])
+        self.assertTrue(cases[self.extension_ids[1]])
+        self.assertTrue(cases[self.extension_ids[2]])
 
         self.factory.create_or_update_case(CaseStructure(
             case_id=self.host_id,

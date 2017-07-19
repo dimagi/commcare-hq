@@ -1,10 +1,11 @@
+import re
 import json
 import datetime
 import socket
-
+from django.conf import settings
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.repeaters.exceptions import RequestConnectionError
-from corehq.apps.repeaters.repeater_generators import RegisterGenerator, BasePayloadGenerator
+from corehq.motech.repeaters.exceptions import RequestConnectionError
+from corehq.motech.repeaters.repeater_generators import BasePayloadGenerator, SOAPPayloadGeneratorMixin
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
     BACKUP_PHONE_NUMBER,
@@ -23,14 +24,11 @@ from custom.enikshay.case_utils import (
     get_open_episode_case_from_occurrence,
     get_person_case_from_occurrence,
     get_lab_referral_from_test)
-from custom.enikshay.integrations.nikshay.repeaters import (
-    NikshayRegisterPatientRepeater,
-    NikshayHIVTestRepeater,
-    NikshayTreatmentOutcomeRepeater,
-    NikshayFollowupRepeater,
-)
 from custom.enikshay.integrations.nikshay.exceptions import NikshayResponseException
-from custom.enikshay.exceptions import NikshayLocationNotFound, NikshayRequiredValueMissing
+from custom.enikshay.exceptions import (
+    NikshayLocationNotFound,
+    NikshayRequiredValueMissing,
+)
 from custom.enikshay.integrations.nikshay.field_mappings import (
     gender_mapping,
     occupation,
@@ -45,11 +43,17 @@ from custom.enikshay.integrations.nikshay.field_mappings import (
     art_initiated,
     purpose_of_testing,
     smear_result_grade,
-)
+    drug_susceptibility_test_status,
+    basis_of_diagnosis)
 from custom.enikshay.case_utils import update_case
+from dimagi.utils.post import parse_SOAP_response
+from dimagi.utils.decorators.memoized import memoized
 
 ENIKSHAY_ID = 8
 NIKSHAY_NULL_DATE = '1900-01-01'
+
+# to accept only alphanumberic, ignore any encoded text \u0000, non-word & _
+SOAP_RESTRICTED_TEXT_REGEX = r'(\\u[a-zA-Z0-9]{4}|\W|_)'
 
 
 class BaseNikshayPayloadGenerator(BasePayloadGenerator):
@@ -83,8 +87,9 @@ class BaseNikshayPayloadGenerator(BasePayloadGenerator):
         }
 
 
-@RegisterGenerator(NikshayRegisterPatientRepeater, 'case_json', 'JSON', is_default=True)
 class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
+    deprecated_format_names = ('case_json',)
+
     def get_payload(self, repeat_record, episode_case):
         """
         https://docs.google.com/document/d/1yUWf3ynHRODyVVmMrhv5fDhaK_ufZSY7y0h9ke5rBxU/edit#heading=h.a9uhx3ql595c
@@ -142,8 +147,8 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
             update_case(repeat_record.domain, repeat_record.payload_id, {"nikshay_error": unicode(exception)})
 
 
-@RegisterGenerator(NikshayTreatmentOutcomeRepeater, 'case_json', 'JSON', is_default=True)
 class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
+    deprecated_format_names = ('case_json',)
 
     def get_payload(self, repeat_record, episode_case):
         """
@@ -179,8 +184,9 @@ class NikshayTreatmentOutcomePayload(BaseNikshayPayloadGenerator):
                                 "treatment_outcome_nikshay_registered", "treatment_outcome_nikshay_error")
 
 
-@RegisterGenerator(NikshayHIVTestRepeater, 'case_json', 'JSON', is_default=True)
 class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
+    deprecated_format_names = ('case_json',)
+
     @property
     def content_type(self):
         return 'application/json'
@@ -196,12 +202,12 @@ class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
         base_properties.update({
             "PatientID": episode_case_properties.get('nikshay_id'),
             "HIVStatus": hiv_status.get(person_case_properties.get('hiv_status')),
-            "HIVTestDate": _format_date(person_case_properties, 'hiv_test_date'),
-            "CPTDeliverDate": _format_date(person_case_properties, 'cpt_1_date'),
-            "ARTCentreDate": _format_date(person_case_properties, 'art_initiation_date'),
+            "HIVTestDate": _format_date_or_null_date(person_case_properties, 'hiv_test_date'),
+            "CPTDeliverDate": _format_date_or_null_date(person_case_properties, 'cpt_1_date'),
+            "ARTCentreDate": _format_date_or_null_date(person_case_properties, 'art_initiation_date'),
             "InitiatedOnART": art_initiated.get(
                 person_case_properties.get('art_initiated', 'no'), art_initiated['no']),
-            "InitiatedDate": _format_date(person_case_properties, 'art_initiation_date'),
+            "InitiatedDate": _format_date_or_null_date(person_case_properties, 'art_initiation_date'),
         })
 
         return json.dumps(base_properties)
@@ -227,8 +233,9 @@ class NikshayHIVTestPayloadGenerator(BaseNikshayPayloadGenerator):
                                 "hiv_test_nikshay_registered", "hiv_test_nikshay_error")
 
 
-@RegisterGenerator(NikshayFollowupRepeater, 'case_json', 'JSON', is_default=True)
 class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
+    deprecated_format_names = ('case_json',)
+
     def get_payload(self, repeat_record, test_case):
         occurence_case = get_occurrence_case_from_test(test_case.domain, test_case.get_id)
         episode_case = get_open_episode_case_from_occurrence(test_case.domain, occurence_case.get_id)
@@ -240,7 +247,7 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         interval_id, lab_serial_number, result_grade, dmc_code = self._get_mandatory_fields(
             test_case, test_case_properties)
 
-        test_reported_on = _format_date(test_case_properties, 'date_reported')
+        test_reported_on = _format_date_or_null_date(test_case_properties, 'date_reported')
         properties_dict = self._base_properties(repeat_record)
         properties_dict.update({
             "PatientID": episode_case_properties.get('nikshay_id'),
@@ -335,6 +342,101 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
         if isinstance(exception, RequestConnectionError):
             _save_error_message(repeat_record.domain, repeat_record.payload_id, unicode(exception),
                                 "followup_nikshay_registered", "followup_nikshay_error")
+
+
+class NikshayRegisterPrivatePatientPayloadGenerator(SOAPPayloadGeneratorMixin, BaseNikshayPayloadGenerator):
+    format_name = 'case_xml'
+    format_label = 'XML'
+
+    @memoized
+    def _get_person_locations(self, episode_case):
+        person_case = self._get_person_case(episode_case)
+        return get_person_locations(person_case)
+
+    @memoized
+    def _get_person_case(self, episode_case):
+        return get_person_case_from_episode(episode_case.domain, episode_case.get_id)
+
+    def get_payload(self, repeat_record, episode_case):
+        person_case = self._get_person_case(episode_case)
+        episode_case_properties = episode_case.dynamic_case_properties()
+        person_case_properties = person_case.dynamic_case_properties()
+
+        person_locations = self._get_person_locations(episode_case)
+        episode_case_date = episode_case_properties.get('date_of_diagnosis', None)
+        if episode_case_date:
+            episode_date = datetime.datetime.strptime(episode_case_date, "%Y-%m-%d").date()
+        else:
+            episode_date = datetime.date.today()
+        return {
+            "Stocode": person_locations.sto,
+            "Dtocode": person_locations.dto,
+            "TBUcode": person_locations.tu,
+            "HFIDNO": person_locations.pcp,
+            "pname": sanitize_text_for_xml(person_case.name),
+            "fhname": sanitize_text_for_xml(person_case_properties.get('husband_father_name', '')),
+            "age": person_case_properties.get('age', ''),
+            "gender": person_case_properties.get('sex', '').capitalize(),
+            # API for Address with char ',' returns Invalid data format error
+            "Address": sanitize_text_for_xml(person_case_properties.get('current_address', '').replace(',', '')),
+            "pin": person_case_properties.get('current_address_postal_code', ''),
+            "lno": person_case_properties.get('phone_number', ''),
+            "mno": '0',
+            "tbdiagdate": _format_date(str(episode_date)),
+            "tbstdate": _format_date(
+                episode_case_properties.get(TREATMENT_START_DATE, str(datetime.date.today()))),
+            "Type": disease_classification.get(episode_case_properties.get('disease_classification', ''), ''),
+            "B_diagnosis": basis_of_diagnosis.get(episode_case_properties.get('basis_of_diagnosis', ''), ''),
+            "D_SUSTest": drug_susceptibility_test_status.get(episode_case_properties.get('dst_status', '')),
+            "Treat_I": episode_case_properties.get('treatment_initiation_status', ''),
+            "usersid": settings.ENIKSHAY_PRIVATE_API_USERS.get(person_locations.sto, ''),
+            "password": settings.ENIKSHAY_PRIVATE_API_PASSWORD,
+            "Source": ENIKSHAY_ID,
+        }
+
+    def handle_success(self, response, payload_doc, repeat_record):
+        # A successful response returns a Nikshay ID like 00001
+        # Failures also return with status code 200 and some message like
+        # Dublicate Entry or Invalid data format
+        # (Dublicate is not a typo)
+        message = parse_SOAP_response(
+            repeat_record.repeater.url,
+            repeat_record.repeater.operation,
+            response
+        )
+        try:
+            if isinstance(message, basestring) and message.isdigit():
+                health_facility_id = self._get_person_locations(payload_doc).pcp
+                nikshay_id = '-'.join([health_facility_id, message])
+                update_case(
+                    payload_doc.domain,
+                    payload_doc.case_id,
+                    {
+                        "private_nikshay_registered": "true",
+                        "nikshay_id": nikshay_id,
+                        "private_nikshay_error": "",
+                    },
+                    external_id=nikshay_id,
+                )
+            else:
+                self.handle_failure(message, payload_doc, repeat_record)
+        except NikshayResponseException as e:
+            _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(e.message))
+
+    def handle_failure(self, response, payload_doc, repeat_record):
+        _save_error_message(payload_doc.domain, payload_doc.case_id, unicode(response),
+                            "private_nikshay_registered", "private_nikshay_error"
+                            )
+
+    def handle_exception(self, exception, repeat_record):
+        if isinstance(exception, RequestConnectionError):
+            update_case(
+                repeat_record.domain,
+                repeat_record.payload_id,
+                {
+                    "private_nikshay_error": unicode(exception)
+                }
+            )
 
 
 def _get_nikshay_id_from_response(response):
@@ -452,9 +554,23 @@ def _save_error_message(domain, case_id, error, reg_field="nikshay_registered", 
     )
 
 
-def _format_date(case_properties, case_property):
+def _format_date_or_null_date(case_properties, case_property):
     date = case_properties.get(case_property) or NIKSHAY_NULL_DATE
     try:
-        return datetime.datetime.strptime(date, '%Y-%m-%d').strftime('%d/%m/%Y')
+        return _format_date(date)
     except ValueError:
-        return datetime.datetime.strptime(NIKSHAY_NULL_DATE, '%Y-%m-%d').strftime('%d/%m/%Y')
+        return _format_date(NIKSHAY_NULL_DATE)
+
+
+def _format_date(date):
+    return datetime.datetime.strptime(date, '%Y-%m-%d').strftime('%d/%m/%Y')
+
+
+def sanitize_text_for_xml(text):
+    # little hack to end up with proper spacing for valid text
+    # convert all restricted chars to * and then convert any group of *s to an empty space
+    return re.sub(
+        r'(\*+)',
+        ' ',
+        re.sub(SOAP_RESTRICTED_TEXT_REGEX, '*', text)
+    ).strip()

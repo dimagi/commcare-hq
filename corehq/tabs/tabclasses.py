@@ -11,6 +11,7 @@ from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import Invoice, Subscription
 from corehq.apps.accounting.utils import domain_has_privilege, is_accounting_admin
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
+from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView, Dhis2LogListView
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
     CommConnectProjectSpacesReport, CommTrackProjectSpacesReport, \
@@ -20,8 +21,6 @@ from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.locations.analytics import users_have_locations
-from corehq.apps.motech.views import OpenmrsInstancesMotechView, \
-    OpenmrsConceptMotechView
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
     CustomProjectReportDispatcher
 from corehq.apps.reports.models import ReportConfig, ReportsSidebarOrdering
@@ -162,7 +161,6 @@ class ProjectReportsTab(UITab):
 
         else:
             return (self._get_saved_reports_dropdown()
-                    + self._get_configurable_reports_dropdown()
                     + self._get_all_sidebar_items_as_dropdown())
 
     def _get_all_sidebar_items_as_dropdown(self):
@@ -173,21 +171,6 @@ class ProjectReportsTab(UITab):
             (header, map(show, pages))
             for header, pages in self.sidebar_items
         ])
-
-    def _get_configurable_reports_dropdown(self):
-        """Returns all the configurable reports turned on for that user
-        """
-        from corehq.reports import _safely_get_report_configs, _make_report_class
-        configurable_reports = [
-            _make_report_class(config, show_in_dropdown=True)
-            for config in _safely_get_report_configs(self.domain)
-        ]
-        configurable_reports_dropdown = [
-            dropdown_dict(report.name, report.get_url(self.domain))
-            for report in configurable_reports
-            if report.display_in_dropdown(domain=self.domain, project=self.project, user=self.couch_user)
-        ]
-        return configurable_reports_dropdown
 
 
 class IndicatorAdminTab(UITab):
@@ -719,6 +702,16 @@ class ProjectDataTab(UITab):
                     'subpages': []
                 })
 
+        if toggles.DATA_FILE_DOWNLOAD.enabled(self.domain):
+            from corehq.apps.export.views import DataFileDownloadList
+
+            export_data_views.append({
+                'title': _(DataFileDownloadList.page_title),
+                'url': reverse(DataFileDownloadList.urlname, args=(self.domain,)),
+                'show_in_dropdown': True,
+                'subpages': []
+            })
+
         if export_data_views:
             items.append([_("Export Data"), export_data_views])
 
@@ -885,6 +878,7 @@ class MessagingTab(UITab):
     view = "sms_default"
 
     url_prefix_formats = (
+        '/a/{domain}/messaging/',
         '/a/{domain}/sms/',
         '/a/{domain}/reminders/',
         '/a/{domain}/data/edit/case_groups/',
@@ -917,7 +911,7 @@ class MessagingTab(UITab):
     def reminders_urls(self):
         reminders_urls = []
 
-        if self.can_access_reminders:
+        if self.can_access_reminders and not self.project.uses_new_reminders:
             from corehq.apps.reminders.views import (
                 EditScheduledReminderView,
                 CreateScheduledReminderView,
@@ -987,7 +981,7 @@ class MessagingTab(UITab):
     def messages_urls(self):
         messages_urls = []
 
-        if self.can_use_outbound_sms:
+        if self.can_use_outbound_sms and not self.project.uses_new_reminders:
             messages_urls.extend([
                 {
                     'title': _('Compose SMS Message'),
@@ -996,33 +990,46 @@ class MessagingTab(UITab):
             ])
 
         if self.can_access_reminders:
-            from corehq.apps.reminders.views import (
-                BroadcastListView,
-                CreateBroadcastView,
-                EditBroadcastView,
-                CopyBroadcastView,
-            )
-            messages_urls.extend([
-                {
-                    'title': _("Broadcast Messages"),
-                    'url': reverse(BroadcastListView.urlname, args=[self.domain]),
-                    'subpages': [
-                        {
-                            'title': _("Edit Broadcast"),
-                            'urlname': EditBroadcastView.urlname,
-                        },
-                        {
-                            'title': _("New Broadcast"),
-                            'urlname': CreateBroadcastView.urlname,
-                        },
-                        {
-                            'title': _("Copy Broadcast"),
-                            'urlname': CopyBroadcastView.urlname,
-                        },
-                    ],
-                    'show_in_dropdown': True,
-                },
-            ])
+            if self.project.uses_new_reminders:
+                from corehq.messaging.scheduling.views import (
+                    BroadcastListView as NewBroadcastListView,
+                )
+                messages_urls.extend([
+                    {
+                        'title': _("Schedule a Message"),
+                        'url': reverse(NewBroadcastListView.urlname, args=[self.domain]),
+                        'subpages': [],
+                        'show_in_dropdown': True,
+                    },
+                ])
+            else:
+                from corehq.apps.reminders.views import (
+                    BroadcastListView as OldBroadcastListView,
+                    CreateBroadcastView,
+                    EditBroadcastView,
+                    CopyBroadcastView,
+                )
+                messages_urls.extend([
+                    {
+                        'title': _("Broadcast Messages"),
+                        'url': reverse(OldBroadcastListView.urlname, args=[self.domain]),
+                        'subpages': [
+                            {
+                                'title': _("Edit Broadcast"),
+                                'urlname': EditBroadcastView.urlname,
+                            },
+                            {
+                                'title': _("New Broadcast"),
+                                'urlname': CreateBroadcastView.urlname,
+                            },
+                            {
+                                'title': _("Copy Broadcast"),
+                                'urlname': CopyBroadcastView.urlname,
+                            },
+                        ],
+                        'show_in_dropdown': True,
+                    },
+                ])
 
         return messages_urls
 
@@ -1335,8 +1342,6 @@ class ProjectSettingsTab(UITab):
 
     @property
     def sidebar_items(self):
-        from corehq.apps.domain.views import FeatureFlagsView
-
         items = []
         user_is_admin = self.couch_user.is_domain_admin(self.domain)
         user_is_billing_admin = self.couch_user.can_edit_billing()
@@ -1387,7 +1392,7 @@ class ProjectSettingsTab(UITab):
                     DomainBillingStatementsView, ConfirmSubscriptionRenewalView,
                     InternalSubscriptionManagementView,
                 )
-                current_subscription = Subscription.get_subscribed_plan_by_domain(self.domain)[1]
+                current_subscription = Subscription.get_active_subscription_by_domain(self.domain)
                 subscription = [
                     {
                         'title': _(DomainSubscriptionView.page_title),
@@ -1443,8 +1448,12 @@ class ProjectSettingsTab(UITab):
             items.append((_('Project Tools'), project_tools))
 
         if self.couch_user.is_superuser:
-            from corehq.apps.domain.views import EditInternalDomainInfoView, \
-                EditInternalCalculationsView
+            from corehq.apps.domain.views import (
+                EditInternalDomainInfoView,
+                EditInternalCalculationsView,
+                FlagsAndPrivilegesView,
+            )
+
             internal_admin = [
                 {
                     'title': _(EditInternalDomainInfoView.page_title),
@@ -1457,8 +1466,8 @@ class ProjectSettingsTab(UITab):
                                    args=[self.domain])
                 },
                 {
-                    'title': _(FeatureFlagsView.page_title),
-                    'url': reverse(FeatureFlagsView.urlname, args=[self.domain])
+                    'title': _(FlagsAndPrivilegesView.page_title),
+                    'url': reverse(FlagsAndPrivilegesView.urlname, args=[self.domain])
                 },
             ]
             items.append((_('Internal Data (Dimagi Only)'), internal_admin))
@@ -1470,9 +1479,6 @@ def _get_administration_section(domain):
     from corehq.apps.domain.views import (
         FeaturePreviewsView,
         TransferDomainView,
-        Dhis2ConnectionView,
-        DataSetMapView,
-        Dhis2LogListView,
     )
 
     administration = []
@@ -1611,32 +1617,6 @@ class MySettingsTab(UITab):
                 'url': reverse(EnableMobilePrivilegesView.urlname),
             })
         return [[_("Manage My Settings"), menu_items]]
-
-
-class MotechTab(UITab):
-    title = ugettext_noop("Motech")
-    view = OpenmrsInstancesMotechView.urlname
-
-    url_prefix_formats = (
-        '/a/{domain}/motech/',
-    )
-
-    @property
-    def _is_viewable(self):
-        return MOTECH.enabled(self.domain) and self.couch_user.is_domain_admin(self.domain)
-
-    @property
-    @memoized
-    def sidebar_items(self):
-        return [
-            (_("OpenMRS"), [{
-                'title': OpenmrsInstancesMotechView.page_title,
-                'url': reverse(OpenmrsInstancesMotechView.urlname, args=[self.domain]),
-            }, {
-                'title': OpenmrsConceptMotechView.page_title,
-                'url': reverse(OpenmrsConceptMotechView.urlname, args=[self.domain]),
-            }])
-        ]
 
 
 class AccountingTab(UITab):

@@ -54,6 +54,7 @@ class AutomaticCaseUpdateTest(TestCase):
             case_type='test-case-type',
             active=True,
             server_modified_boundary=30,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
         self.rule.save()
         AutomaticUpdateRuleCriteria.objects.create(
@@ -75,6 +76,7 @@ class AutomaticCaseUpdateTest(TestCase):
             case_type='test-case-type-2',
             active=True,
             server_modified_boundary=30,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
         self.rule2.save()
         AutomaticUpdateAction.objects.create(
@@ -88,6 +90,7 @@ class AutomaticCaseUpdateTest(TestCase):
             case_type='test-case-type-2',
             active=True,
             server_modified_boundary=50,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
         self.rule3.save()
         AutomaticUpdateAction.objects.create(
@@ -101,6 +104,7 @@ class AutomaticCaseUpdateTest(TestCase):
             case_type='test-case-type',
             active=True,
             server_modified_boundary=30,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
         self.rule4.save()
         AutomaticUpdateRuleCriteria.objects.create(
@@ -124,7 +128,8 @@ class AutomaticCaseUpdateTest(TestCase):
             name='test-rule-5',
             case_type='test-case-type-3',
             active=True,
-            filter_on_server_modified=False
+            filter_on_server_modified=False,
+            workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
         )
         self.rule5.save()
         AutomaticUpdateRuleCriteria.objects.create(
@@ -420,7 +425,7 @@ class AutomaticCaseUpdateTest(TestCase):
             self.assertTrue(self.rule2.criteria_match(case, datetime(2016, 1, 1)))
 
     def test_get_rules_from_domain(self):
-        rules = AutomaticUpdateRule.by_domain(self.domain)
+        rules = AutomaticUpdateRule.by_domain(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
 
         expected_case_types = ['test-case-type', 'test-case-type-2', 'test-case-type-3']
@@ -440,7 +445,7 @@ class AutomaticCaseUpdateTest(TestCase):
         self.assertEqual(set(expected_rule_ids), set(actual_rule_ids))
 
     def test_boundary_date(self):
-        rules = AutomaticUpdateRule.by_domain(self.domain)
+        rules = AutomaticUpdateRule.by_domain(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
 
         boundary_date = AutomaticUpdateRule.get_boundary_date(
@@ -466,6 +471,7 @@ class AutomaticCaseUpdateTest(TestCase):
                 case_type='test-child-case-type',
                 active=True,
                 server_modified_boundary=30,
+                workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
             )
             rule.save()
             self.addCleanup(rule.delete)
@@ -594,6 +600,7 @@ def _create_empty_rule(domain, case_type='person', active=True, deleted=False):
         filter_on_server_modified=False,
         server_modified_boundary=None,
         migrated=True,
+        workflow=AutomaticUpdateRule.WORKFLOW_CASE_UPDATE,
     )
 
 
@@ -984,7 +991,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
         with _with_case(self.domain, 'person', datetime.utcnow()) as case:
             self.assertActionResult(rule, 0)
 
-            result = rule.run_actions(case)
+            result = rule.run_actions_when_case_matches(case)
             case = CaseAccessors(self.domain).get_case(case.case_id)
 
             self.assertTrue(isinstance(result, CaseRuleActionResult))
@@ -1002,7 +1009,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertActionResult(rule, 0)
 
             dynamic_properties_before = case.dynamic_case_properties()
-            result = rule.run_actions(case)
+            result = rule.run_actions_when_case_matches(case)
             case = CaseAccessors(self.domain).get_case(case.case_id)
             dynamic_properties_after = case.dynamic_case_properties()
 
@@ -1031,7 +1038,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             child_dynamic_properties_before = child.dynamic_case_properties()
 
             self.assertActionResult(rule, 0)
-            result = rule.run_actions(child)
+            result = rule.run_actions_when_case_matches(child)
             child = CaseAccessors(self.domain).get_case(child.case_id)
             parent = CaseAccessors(self.domain).get_case(parent.case_id)
 
@@ -1063,7 +1070,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             case = CaseAccessors(self.domain).get_case(case.case_id)
             self.assertNotIn('result', case.dynamic_case_properties())
 
-            result = rule.run_actions(case)
+            result = rule.run_actions_when_case_matches(case)
             case = CaseAccessors(self.domain).get_case(case.case_id)
 
             self.assertTrue(isinstance(result, CaseRuleActionResult))
@@ -1095,7 +1102,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertNotIn('result', child.dynamic_case_properties())
             parent_case_properties_before = parent.dynamic_case_properties()
 
-            result = rule.run_actions(child)
+            result = rule.run_actions_when_case_matches(child)
             child = CaseAccessors(self.domain).get_case(child.case_id)
             parent = CaseAccessors(self.domain).get_case(parent.case_id)
 
@@ -1127,7 +1134,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             server_modified_before = case.server_modified_on
             self.assertEqual(case.get_case_property('result'), 'xyz')
 
-            result = rule.run_actions(case)
+            result = rule.run_actions_when_case_matches(case)
             case = CaseAccessors(self.domain).get_case(case.case_id)
             self.assertEqual(case.server_modified_on, server_modified_before)
 
@@ -1159,7 +1166,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertActionResult(rule, 0)
 
             child = set_parent_case(self.domain, child, parent)
-            result = rule.run_actions(child)
+            result = rule.run_actions_when_case_matches(child)
 
             child = CaseAccessors(self.domain).get_case(child.case_id)
             parent = CaseAccessors(self.domain).get_case(parent.case_id)
@@ -1198,7 +1205,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertActionResult(rule, 0)
 
             child = set_parent_case(self.domain, child, parent)
-            result = rule.run_actions(child)
+            result = rule.run_actions_when_case_matches(child)
 
             child = CaseAccessors(self.domain).get_case(child.case_id)
             parent = CaseAccessors(self.domain).get_case(parent.case_id)
@@ -1254,7 +1261,7 @@ class CaseRuleActionsTest(BaseCaseRuleTest):
             self.assertActionResult(rule, 0)
 
             p.return_value = CaseRuleActionResult(num_related_updates=1)
-            result = rule.run_actions(case)
+            result = rule.run_actions_when_case_matches(case)
             p.assert_called_once_with(case, rule)
             case = CaseAccessors(self.domain).get_case(case.case_id)
 
@@ -1353,7 +1360,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         rule4 = _create_empty_rule(self.domain, case_type='person-2', active=False)
         rule5 = _create_empty_rule(self.domain, case_type='person-3', deleted=True)
 
-        rules = AutomaticUpdateRule.by_domain(self.domain)
+        rules = AutomaticUpdateRule.by_domain(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
 
         expected_case_types = ['person-1', 'person-2']
@@ -1386,7 +1393,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
 
         rule4 = _create_empty_rule(self.domain, case_type='person-2')
 
-        rules = AutomaticUpdateRule.by_domain(self.domain)
+        rules = AutomaticUpdateRule.by_domain(self.domain, AutomaticUpdateRule.WORKFLOW_CASE_UPDATE)
         rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
 
         boundary_date = AutomaticUpdateRule.get_boundary_date(
@@ -1401,7 +1408,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         self.assertEqual(DomainCaseRuleRun.objects.count(), count)
 
     def assertLastRuleRun(self, cases_checked, num_updates=0, num_closes=0, num_related_updates=0,
-            num_related_closes=0):
+            num_related_closes=0, num_creates=0):
         last_run = DomainCaseRuleRun.objects.filter(domain=self.domain).order_by('-finished_on')[0]
         self.assertEqual(last_run.status, DomainCaseRuleRun.STATUS_FINISHED)
         self.assertEqual(last_run.cases_checked, cases_checked)
@@ -1409,6 +1416,7 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
         self.assertEqual(last_run.num_closes, num_closes)
         self.assertEqual(last_run.num_related_updates, num_related_updates)
         self.assertEqual(last_run.num_related_closes, num_related_closes)
+        self.assertEqual(last_run.num_creates, num_creates)
 
     @run_with_all_backends
     def test_scheduled_task_run(self):

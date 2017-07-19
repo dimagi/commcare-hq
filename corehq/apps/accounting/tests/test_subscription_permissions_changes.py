@@ -68,7 +68,7 @@ class TestSubscriptionPermissionsChanges(BaseAccountingTest):
         )
 
     def _subscribe_to_pro_with_rb(self):
-        subscription = Subscription.get_subscribed_plan_by_domain(self.project)[1]
+        subscription = Subscription.get_active_subscription_by_domain(self.project.name)
 
         new_subscription = subscription.change_plan(
             self.pro_rb_version,

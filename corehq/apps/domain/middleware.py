@@ -4,13 +4,16 @@ from __future__ import unicode_literals, print_function, absolute_import
 from django.template.response import TemplateResponse
 
 # External imports
-from corehq.apps.accounting.exceptions import AccountingError
-from corehq.apps.accounting.models import Subscription
+from django.utils.deprecation import MiddlewareMixin
+
+from corehq.apps.accounting.models import (
+    DefaultProductPlan,
+    Subscription,
+)
 from corehq.toggles import DATA_MIGRATION
-from django_prbac.models import Role
 
 
-class CCHQPRBACMiddleware(object):
+class CCHQPRBACMiddleware(MiddlewareMixin):
     """
     MiddleWare to add request.role based on user or domain
     information. This _must_ be placed after the
@@ -31,23 +34,22 @@ class CCHQPRBACMiddleware(object):
 
     @classmethod
     def apply_prbac(cls, request):
-        if hasattr(request, 'domain'):
-            try:
-                plan_version, subscription = Subscription.get_subscribed_plan_by_domain(request.domain)
-                request.role = plan_version.role
-                request.plan = plan_version
-                request.subscription = subscription
-                return None
-            except AccountingError:
-                pass
-        privilege = Role.get_privilege('community_plan_v1')
-        if privilege is not None:
-            request.role = privilege.role
+        subscription = (
+            Subscription.get_active_subscription_by_domain(request.domain)
+            if hasattr(request, 'domain') else None
+        )
+        if subscription:
+            plan_version = subscription.plan_version
+            request.role = plan_version.role
+            request.plan = plan_version
+            request.subscription = subscription
         else:
-            request.role = Role()  # A fresh Role() has no privileges
+            plan_version = DefaultProductPlan.get_default_plan_version()
+            request.role = plan_version.role
+            request.plan = plan_version
 
 
-class DomainHistoryMiddleware(object):
+class DomainHistoryMiddleware(MiddlewareMixin):
 
     def process_response(self, request, response):
         if hasattr(request, 'domain'):
@@ -60,7 +62,7 @@ class DomainHistoryMiddleware(object):
             request.session['last_visited_domain'] = request.domain
 
 
-class DomainMigrationMiddleware(object):
+class DomainMigrationMiddleware(MiddlewareMixin):
     """
     Redirects web requests to a page explaining a data migration is occurring
     """

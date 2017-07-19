@@ -9,6 +9,8 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from couchdbkit import ResourceConflict, BulkSaveError
 from casexml.apps.case.mock import CaseBlock
+
+from corehq import toggles
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.models import UserArchivedRebuild
 from corehq.util.log import SensitiveErrorMail
@@ -136,15 +138,20 @@ def tag_system_forms_as_deleted(domain, deleted_forms, deleted_cases, deletion_i
         # all cases touched by this form are deleted
         return True
 
-    for form in FormAccessors(domain).iter_forms(form_ids_to_delete):
-        if not _is_safe_to_delete(form):
-            form_ids_to_delete.remove(form.form_id)
+    safe_form_ids_to_delete = [
+        form.form_id
+        for form in FormAccessors(domain).iter_forms(form_ids_to_delete)
+        if _is_safe_to_delete(form)
+    ]
 
-    FormAccessors(domain).soft_delete_forms(list(form_ids_to_delete), deletion_date, deletion_id)
+    FormAccessors(domain).soft_delete_forms(safe_form_ids_to_delete, deletion_date, deletion_id)
 
 
 @task(queue='background_queue', ignore_result=True, acks_late=True)
 def _remove_indices_from_deleted_cases_task(domain, case_ids):
+    if toggles.SKIP_REMOVE_INDICES.enabled(domain):
+        return
+
     # todo: we may need to add retry logic here but will wait to see
     # what errors we should be catching
     try:
@@ -213,11 +220,13 @@ def resend_pending_invitations():
 
 
 @task
-def turn_on_demo_mode_task(couch_user, domain):
+def turn_on_demo_mode_task(commcare_user_id, domain):
     from corehq.apps.ota.utils import turn_on_demo_mode
+    from corehq.apps.users.models import CommCareUser
 
+    user = CommCareUser.get(commcare_user_id)
     DownloadBase.set_progress(turn_on_demo_mode_task, 0, 100)
-    results = turn_on_demo_mode(couch_user, domain)
+    results = turn_on_demo_mode(user, domain)
     DownloadBase.set_progress(turn_on_demo_mode_task, 100, 100)
 
     return {
@@ -226,13 +235,16 @@ def turn_on_demo_mode_task(couch_user, domain):
 
 
 @task
-def reset_demo_user_restore_task(couch_user, domain):
+def reset_demo_user_restore_task(commcare_user_id, domain):
     from corehq.apps.ota.utils import reset_demo_user_restore
+    from corehq.apps.users.models import CommCareUser
+
+    user = CommCareUser.get(commcare_user_id)
 
     DownloadBase.set_progress(reset_demo_user_restore_task, 0, 100)
 
     try:
-        reset_demo_user_restore(couch_user, domain)
+        reset_demo_user_restore(user, domain)
         results = {'errors': []}
     except Exception as e:
         notify_exception(None, message=e.message)

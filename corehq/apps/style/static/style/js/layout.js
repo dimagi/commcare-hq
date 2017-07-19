@@ -4,11 +4,12 @@ var hqLayout = {};
 hqLayout.selector = {
     navigation: '#hq-navigation',
     content: '#hq-content',
-    appmanager: '#js-appmanager-body.appmanager-content',
+    appmanager: '#js-appmanager-body',
     footer: '#hq-footer',
     sidebar: '#hq-sidebar',
     breadcrumbs: '#hq-breadcrumbs',
     messages: '#hq-messages-container',
+    publishStatus: '#js-publish-status',
 };
 
 hqLayout.values = {

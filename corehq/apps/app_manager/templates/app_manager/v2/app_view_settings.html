@@ -5,7 +5,7 @@
 {% load crispy_forms_tags %}
 
 {% block title %}
-  Settings -
+  {% trans "Settings" %} -
   {% if app.name %}
     {{ app.name|html_name }}
   {% else %}
@@ -14,98 +14,19 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-  <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
+  <script src="{% static 'app_manager/js/settings/app_logos.js' %}"></script>
+  <script src="{% static 'app_manager/js/settings/commcare_settings.js' %}"></script>
     {% if linked_apps_enabled %}
-        <script src="{% static 'app_manager/js/linked_whitelist.js' %}"></script>
+        <script src="{% static 'app_manager/js/settings/linked_whitelist.js' %}"></script>
     {% endif %}
     <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
 {% endblock js %}
 
 {% block js-inline %}{{ block.super }}
-  {% if not app.is_remote_app %}
-    <script>
-      $(function () {
-        var MultimediaTab = function () {
-          var self = {};
-          self.load_state = ko.observable(null);
-          self.multimedia_page_html = ko.observable('');
-          self.load_if_necessary = function () {
-            if (!self.load_state() || self.load_state() === 'error') {
-              self.load_state('loading');
-              $.ajax({
-                url: '{% url 'app_multimedia_ajax' domain app.get_id %}',
-                success: function(content) {
-                  self.load_state('loaded');
-                  self.multimedia_page_html(content);
-                },
-                error: function() {
-                  alert('Oops, there was a problem loading this section. Please try again.');
-                  self.load_state('error');
-                },
-              });
-            }
-          };
-          return self;
-        };
-        var multimediaTab = new MultimediaTab();
-        $("#multimedia-tab").koApplyBindings(multimediaTab);
-        $('[href="#multimedia-tab"]').on('shown.bs.tab', function () {
-          if (multimediaTab.load_state() === null) {
-            multimediaTab.load_if_necessary();
-          }
-        });
-      });
-    </script>
-  {% endif %}
-
   <script>
-    var HQMediaUploaders = hqImport("hqmedia/js/hqmediauploaders.js").get();
-    var refs = {{ refs|JSON }};
-    var media_info = {{ media_info|JSON }};
-    var image_refs = {};
-    for (var slug in refs) {
-      image_refs[slug] = new ImageReference(refs[slug]);
-      image_refs[slug].upload_controller = HQMediaUploaders[slug];
-      image_refs[slug].setObjReference(media_info[slug]);
-    }
-    function urlFromLogo(slug) {
-      return image_refs[slug].url;
-    }
-    function thumbUrlFromLogo(slug) {
-      return image_refs[slug].thumb_url;
-    }
-    function triggerUploadForLogo(slug) {
-      if(image_refs[slug]) {
-        image_refs[slug].triggerUpload();
-      }
-    }
-    function uploadCompleteForLogo(slug, response) {
-      if(image_refs[slug]) {
-        image_refs[slug].uploadComplete(null, null, response);
-      }
-    }
-    function getPathFromSlug(slug) {
-      return image_refs[slug].path;
-    }
-    function removeLogo(slug) {
-      $.post(
-        '{% url "hqmedia_remove_logo" domain app.id %}',
-        {
-          logo_slug: slug
-        },
-        function(data, status) {
-          if(status == 'success'){
-            image_refs[slug].url("");
-          }
-        }
-      );
-    }
-    function anonymousAppUrl() {
-        return '{{ app.anonymous_cloudcare_url }}';
-    }
+      hqImport('app_manager/js/app_manager.js').setPrependedPageTitle("{% trans 'Settings' %}");
   </script>
 {% endblock js-inline %}
-
 
 {% block app_view_tabs %}
   {% initial_page_data 'app_view_options' app_view_options %}
@@ -113,9 +34,15 @@
   {% initial_page_data 'is_remote_app' app.is_remote_app %}
   {% initial_page_data 'is_superuser' request.user.is_superuser %}
   {% initial_page_data 'langs' app.langs %}
+  {% initial_page_data 'linked_whitelist' app.linked_whitelist %}
+  {% initial_page_data 'media_refs' refs %}
+  {% initial_page_data 'media_info' media_info %}
   {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
   {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
   {% initial_page_data 'uploaders' uploaders_js %}
+  {% registerurl 'app_multimedia_ajax' domain app.get_id %}
+  {% registerurl "hqmedia_remove_logo" domain app.id %}
   {% registerurl "toggle_diff" domain %}
+  {% registerurl "update_linked_whitelist" domain app.id %}
   {% include "app_manager/v2/partials/app-settings.html" %}
 {% endblock app_view_tabs %}

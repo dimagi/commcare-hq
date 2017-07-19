@@ -74,15 +74,7 @@ hqDefine('cloudcare/js/backbone/cases.js', function () {
         },
 
         caseDetailsLabel: function(language) {
-            var caseLabel = (this.get("module") ?
-                             this.get("module").get("case_label")[language] :
-                             this.get("appConfig").module.get("case_label")[language]) +
-                            ": ";
-            if (caseLabel === "Cases: "){
-                caseLabel = "";
-            }
-            var caseName = this.get("properties").case_name;
-            return caseLabel + caseName;
+            return this.get("properties").case_name;
 
         },
 

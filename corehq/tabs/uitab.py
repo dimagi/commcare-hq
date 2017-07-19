@@ -1,12 +1,14 @@
+from django.conf import settings
 from django.core.cache import cache
 from django.urls import reverse, resolve, Resolver404
 from django.utils.translation import get_language
+
+from corehq.apps.domain.models import Domain
 from corehq.tabs.exceptions import UrlPrefixFormatError, UrlPrefixFormatsSuggestion
 from corehq.tabs.utils import sidebar_to_dropdown
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.django.cache import make_template_fragment_key
 from dimagi.utils.web import get_url_base
-from django.conf import settings
 
 
 def url_is_location_safe(url):
@@ -38,7 +40,7 @@ class UITab(object):
 
         self.domain = domain
         self.couch_user = couch_user
-        self.project = project
+        self._project = project
 
         # This should not be considered as part of the subclass API unless it
         # is necessary. Try to add new explicit parameters instead.
@@ -62,6 +64,12 @@ class UITab(object):
                     raise UrlPrefixFormatError(
                         'Class {} has url_prefix_format has an issue: {}'
                         .format(self.__class__.__name__, url_prefix_formats))
+
+    @property
+    def project(self):
+        if not self._project and self.domain:
+            self._project = Domain.get_by_name(self.domain)
+        return self._project
 
     @property
     def request_path(self):

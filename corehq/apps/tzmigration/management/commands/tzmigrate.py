@@ -12,6 +12,18 @@ from corehq.apps.tzmigration.timezonemigration import prepare_planning_db, \
 from corehq.form_processor.utils import should_use_sql_backend
 from couchforms.dbaccessors import get_form_ids_by_type
 
+ARGS = [
+    'BEGIN',
+    'COMMIT',
+    'ABORT',
+    'prepare',
+    'prepare-case-json',
+    'blow-away',
+    'stats',
+    'show-diffs',
+    'play',
+]
+
 
 class Command(BaseCommand):
 
@@ -30,7 +42,7 @@ class Command(BaseCommand):
     @staticmethod
     def require_only_option(sole_option, options):
         assert all(not value for key, value in options.items()
-                   if key != sole_option)
+                   if key != sole_option and key in ARGS)
 
     def handle(self, domain, **options):
         if should_use_sql_backend(domain):

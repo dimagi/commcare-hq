@@ -1,5 +1,5 @@
 from django.urls import reverse
-from django.utils.translation import ugettext_noop, ugettext_lazy
+from django.utils.translation import ugettext_lazy
 from corehq.apps.reports.filters.base import (
     BaseReportFilter, BaseSingleOptionFilter, BaseTagsFilter, BaseMultipleOptionFilter
 )
@@ -10,7 +10,7 @@ from phonelog.models import DeviceReportEntry
 
 class DeviceLogTagFilter(BaseReportFilter):
     slug = "logtag"
-    label = ugettext_noop("Filter Logs by Tag")
+    label = ugettext_lazy("Filter Logs by Tag")
     errors_only_slug = "errors_only"
     template = "reports/filters/devicelog_tags.html"
 
@@ -57,7 +57,7 @@ class DeviceLogCommCareVersionFilter(BaseTagsFilter):
 class BaseDeviceLogFilter(BaseMultipleOptionFilter):
     slug = "logfilter"
     field = None
-    label = ugettext_noop("Filter Logs By")
+    label = ugettext_lazy("Filter Logs By")
     url_param_map = {'Unknown': None}
     endpoint = None
 
@@ -89,13 +89,13 @@ class BaseDeviceLogFilter(BaseMultipleOptionFilter):
 
 class DeviceLogUsersFilter(BaseDeviceLogFilter):
     slug = "loguser"
-    label = ugettext_noop("Filter Logs by Username")
+    label = ugettext_lazy("Filter Logs by Username")
     field = 'username'
     endpoint = 'device_log_users'
 
 
 class DeviceLogDevicesFilter(BaseDeviceLogFilter):
     slug = "logdevice"
-    label = ugettext_noop("Filter Logs by Device")
+    label = ugettext_lazy("Filter Logs by Device")
     field = 'device_id'
     endpoint = 'device_log_ids'

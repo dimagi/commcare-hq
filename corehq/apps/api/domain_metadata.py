@@ -47,15 +47,14 @@ class DomainMetadataResource(CouchResourceMixin, HqBaseResource):
 
     def dehydrate_billing_properties(self, bundle):
         domain = _get_domain(bundle)
-        plan_version, subscription = (
-            Subscription.get_subscribed_plan_by_domain(domain)
-        )
+        subscription = Subscription.get_active_subscription_by_domain(domain.name)
         return {
             "date_start": (subscription.date_start
                            if subscription is not None else None),
             "date_end": (subscription.date_end
                          if subscription is not None else None),
-            "plan_version": plan_version,
+            "plan_version": (subscription.plan_version
+                             if subscription is not None else None),
         }
 
     def dehydrate_calculated_properties(self, bundle):

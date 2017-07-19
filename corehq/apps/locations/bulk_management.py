@@ -13,6 +13,7 @@ from django.db import transaction
 from django.utils.translation import string_concat, ugettext as _, ugettext_lazy
 
 from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.chunked import chunked
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -159,6 +160,7 @@ class LocationStub(object):
         # Whether the db_object needs a SQL save, either because it's new or because some attributes
         #   are changed
         self.needs_save = False
+        self.moved_to_root = False
 
     @classmethod
     def from_excel_row(cls, row, index, location_type):
@@ -200,6 +202,7 @@ class LocationStub(object):
             self.db_object = copy.copy(old_collection.locations_by_id[self.location_id])
 
         self.needs_save = self._needs_save()
+        self.moved_to_root = self._moved_to_root()
 
         for attr in self.meta_data_attrs:
             setattr(self.db_object, attr, getattr(self, attr, None))
@@ -274,6 +277,12 @@ class LocationStub(object):
         if old_parent != self.parent_code:
             return True
 
+        return False
+
+    def _moved_to_root(self):
+        old_parent = self.db_object.parent.site_code if self.db_object.parent else ROOT_LOCATION_TYPE
+        if not self.is_new and self.parent_code == ROOT_LOCATION_TYPE and old_parent != ROOT_LOCATION_TYPE:
+            return True
         return False
 
 
@@ -388,7 +397,7 @@ class NewLocationImporter(object):
     and saves the changes in a transaction.
     """
 
-    def __init__(self, domain, type_rows, location_rows, excel_importer=None):
+    def __init__(self, domain, type_rows, location_rows, excel_importer=None, chunk_size=100):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)
         self.type_rows = type_rows
@@ -396,6 +405,7 @@ class NewLocationImporter(object):
         self.result = LocationUploadResult()
         self.old_collection = LocationCollection(self.domain_obj)
         self.excel_importer = excel_importer  # excel_importer is used for providing progress feedback
+        self.chunk_size = chunk_size
 
     @classmethod
     def from_excel_importer(cls, domain, excel_importer):
@@ -421,7 +431,11 @@ class NewLocationImporter(object):
             loc.lookup_old_collection_data(self.old_collection)
 
         type_objects = save_types(type_stubs, self.excel_importer)
-        save_locations(location_stubs, type_objects, self.domain, self.excel_importer)
+        types_changed = any(loc_type.needs_save for loc_type in type_stubs)
+        moved_to_root = any(loc.moved_to_root for loc in location_stubs)
+        delay_updates = not (types_changed or moved_to_root)
+        save_locations(location_stubs, type_objects, self.domain,
+                       delay_updates, self.excel_importer, self.chunk_size)
         # Since we updated LocationType objects in bulk, some of the post-save logic
         #   that occurs inside LocationType.save needs to be explicitly called here
         for lt in type_stubs:
@@ -836,7 +850,7 @@ def save_types(type_stubs, excel_importer=None):
     return all_objs_by_code
 
 
-def save_locations(location_stubs, types_by_code, domain, excel_importer=None):
+def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_importer=None, chunk_size=100):
     """
     :param location_stubs: (list) List of LocationStub objects with
         attributes like 'db_object', 'needs_save', 'do_delete' set
@@ -870,31 +884,43 @@ def save_locations(location_stubs, types_by_code, domain, excel_importer=None):
 
         return top_to_bottom_locations
 
+    def _process_locations(locs_to_process, to_be_deleted):
+        for loc in locs_to_process:
+            if excel_importer:
+                excel_importer.add_progress()
+            if loc.do_delete:
+                # keep track of to be deleted items to delete them in top-to-bottom order
+                to_be_deleted.append(loc.db_object)
+            elif loc.needs_save:
+                loc_object = loc.db_object
+                loc_object.location_type = types_by_code.get(loc.location_type)
+                if loc.parent_code and loc.parent_code is not ROOT_LOCATION_TYPE:
+                    # refetch parent_location object so that mptt related fields are updated consistently,
+                    #   since we are saving top to bottom, parent_location would not have any pending
+                    #   saves, so this is the right point to refetch the object.
+                    loc_object.parent = SQLLocation.objects.get(
+                        domain=domain,
+                        site_code__iexact=loc.parent_code
+                    )
+                else:
+                    loc_object.parent = None
+                loc.db_object.save()
+
     to_be_deleted = []
 
     top_to_bottom_locations = order_by_location_type()
-    for loc in top_to_bottom_locations:
-        if excel_importer:
-            excel_importer.add_progress()
-        if loc.do_delete:
-            # keep track of to be deleted items to delete them in top-to-bottom order
-            to_be_deleted.append(loc.db_object)
-        elif loc.needs_save:
-            loc_object = loc.db_object
-            loc_object.location_type = types_by_code.get(loc.location_type)
-            if loc.parent_code and loc.parent_code is not ROOT_LOCATION_TYPE:
-                # refetch parent_location object so that mptt related fields are updated consistently,
-                #   since we are saving top to bottom, parent_location would not have any pending
-                #   saves, so this is the right point to refetch the object.
-                loc_object.parent = SQLLocation.objects.get(
-                    domain=domain,
-                    site_code__iexact=loc.parent_code
-                )
-            else:
-                loc_object.parent = None
-            loc.db_object.save()
+    if delay_updates:
+        for locs in chunked(top_to_bottom_locations, chunk_size):
+            with transaction.atomic():
+                with SQLLocation.objects.delay_mptt_updates():
+                    _process_locations(locs, to_be_deleted)
+    else:
+        _process_locations(top_to_bottom_locations, to_be_deleted)
 
-    for l in reversed(to_be_deleted):
+    for locs in chunked(reversed(to_be_deleted), chunk_size):
         # Deletion has to happen bottom to top, otherwise mptt complains
         #   about missing parents
-        l.delete()
+        with transaction.atomic():
+            with SQLLocation.objects.delay_mptt_updates():
+                for l in locs:
+                    l.delete()

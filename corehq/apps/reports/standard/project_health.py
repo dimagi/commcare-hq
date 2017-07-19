@@ -1,6 +1,6 @@
 from collections import namedtuple
 import datetime
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.data_analytics.models import MALTRow
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.standard import ProjectReport
@@ -407,18 +407,27 @@ class ProjectHealthDashboard(ProjectReport):
             self.export_summary(previous_months_reports),
             build_worksheet(title="Inactive Users", headers=header,
                             rows=extract_user_stat(last_month.get_dropouts())),
-            build_worksheet(title="Low Performing Users", headers=header,
+            build_worksheet(title=_("Low Performing Users"), headers=header,
                             rows=extract_user_stat(last_month.get_unhealthy_users())),
-            build_worksheet(title="New Performing Users", headers=header,
+            build_worksheet(title=_("New Performing Users"), headers=header,
                             rows=extract_user_stat(last_month.get_newly_performing())),
         ]
 
     @property
     def template_context(self):
-        prior_months_reports = self.previous_months_summary(self.get_number_of_months())
         performance_threshold = get_performance_threshold(self.domain)
+        prior_months_reports = self.previous_months_summary(self.get_number_of_months())
+        six_months_reports = []
+
+        for report in prior_months_reports:
+            r = report.to_json()
+            # inactive is a calculated property and this is transformed to json in
+            # the template so we need to precompute here
+            r.update({'inactive': report.inactive})
+            six_months_reports.append(r)
+
         return {
-            'six_months_reports': prior_months_reports,
+            'six_months_reports': six_months_reports,
             'this_month': prior_months_reports[-1],
             'last_month': prior_months_reports[-2],
             'threshold': performance_threshold,

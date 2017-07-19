@@ -23,7 +23,6 @@ def get_default_monthly_consumption(domain, product_id, location_type, case_id):
         keys=keys,
         reduce=False,
         limit=1,
-        descending=True,
     )
     results = results[0] if results else None
     if results and results['value']:

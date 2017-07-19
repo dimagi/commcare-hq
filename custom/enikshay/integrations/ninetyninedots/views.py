@@ -8,12 +8,13 @@ from corehq import toggles
 from corehq.apps.domain.decorators import login_or_digest_or_basic_or_apikey
 from dimagi.utils.web import json_response
 
-from corehq.apps.repeaters.views import AddCaseRepeaterView
+from corehq.motech.repeaters.views import AddCaseRepeaterView
 from custom.enikshay.integrations.ninetyninedots.exceptions import AdherenceException
 from custom.enikshay.integrations.ninetyninedots.utils import (
     create_adherence_cases,
     update_adherence_confidence_level,
     update_default_confidence_level,
+    update_episode_adherence_properties,
 )
 
 
@@ -58,6 +59,7 @@ def update_patient_adherence(request, domain):
         validate_beneficiary_id(beneficiary_id)
         validate_adherence_values(adherence_values)
         create_adherence_cases(domain, beneficiary_id, adherence_values)
+        update_episode_adherence_properties(domain, beneficiary_id)
     except AdherenceException as e:
         return json_response({"error": e.message}, status_code=400)
 

@@ -9,6 +9,7 @@ couch:
   extends:
     file: hq-compose.yml
     service: couch
+  command: ["--with-haproxy", "--admin=commcarehq:commcarehq", "-n", "1"]
   ports:
     - "5984:5984"
 

@@ -1,5 +1,6 @@
 from distutils.version import LooseVersion
 
+from django.conf import settings
 from django.http import JsonResponse
 from django.urls import reverse
 from django.shortcuts import redirect
@@ -9,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
 
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from django_prbac.utils import has_privilege
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
@@ -18,25 +20,24 @@ from corehq import toggles, privileges
 from corehq.const import OPENROSA_VERSION_MAP, OPENROSA_DEFAULT_VERSION
 from corehq.middleware import OPENROSA_VERSION_HEADER
 from corehq.apps.app_manager.dbaccessors import get_app
-from corehq.apps.case_search.models import CaseSearchConfig, merge_queries, CaseSearchQueryAddition, \
-    SEARCH_QUERY_ADDITION_KEY, QueryMergeException
+from corehq.apps.case_search.models import QueryMergeException
+from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.decorators import (
     domain_admin_required,
     login_or_digest_or_basic_or_apikey,
     check_domain_migration,
     login_or_digest_or_basic_or_apikey_or_token,
 )
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
-from corehq.apps.es.case_search import CaseSearchES, flatten_result
+from corehq.apps.es.case_search import flatten_result
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.ota.forms import PrimeRestoreCacheForm, AdvancedPrimeRestoreCacheForm
 from corehq.apps.ota.tasks import queue_prime_restore
-from corehq.apps.users.models import CouchUser, CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_MAX_RESULTS
+from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from django.http import HttpResponse
@@ -45,6 +46,33 @@ from soil import MultipleTaskDownload
 from .utils import (
     demo_user_restore_response, get_restore_user, is_permitted_to_restore,
     handle_401_response, update_device_id)
+
+
+RESTORE_SEGMENTS = {
+    "FixtureElementProvider": "fixtures",
+    "CasePayloadProvider": "cases",
+}
+
+
+def _get_time_bucket(duration):
+    """Get time bucket for the given duration
+
+    Bucket restore times because datadog's histogram is too limited
+
+    Basically restore frequency is not high enough to have a meaningful
+    time distribution with datadog's 10s aggregation window, especially
+    with tags. More details:
+    https://help.datadoghq.com/hc/en-us/articles/211545826
+    """
+    if duration < 5:
+        return "lt_005s"
+    if duration < 20:
+        return "lt_020s"
+    if duration < 60:
+        return "lt_060s"
+    if duration < 120:
+        return "lt_120s"
+    return "over_120s"
 
 
 @location_safe
@@ -56,23 +84,25 @@ def restore(request, domain, app_id=None):
     We override restore because we have to supply our own
     user model (and have the domain in the url)
     """
-    if toggles.ENIKSHAY.enabled(domain):
-        update_device_id(request.couch_user, request.GET.get('device_id'))
-    response, timing_context = get_restore_response(domain, request.couch_user, app_id, **get_restore_params(request))
+    response, timing_context = get_restore_response(
+        domain, request.couch_user, app_id, **get_restore_params(request))
     tags = [
         u'status_code:{}'.format(response.status_code),
     ]
-    datadog_counter('commcare.restores.count', tags=tags)
+    env = settings.SERVER_ENVIRONMENT
+    if (env, domain) in settings.RESTORE_TIMING_DOMAINS:
+        tags.append(u'domain:{}'.format(domain))
     if timing_context is not None:
         for timer in timing_context.to_list(exclude_root=True):
-            # Only record leaf nodes so we can sum to get the total
-            if timer.is_leaf_node:
-                datadog_gauge(
-                    'commcare.restores.timings',
-                    timer.duration,
-                    tags=tags + [u'segment:{}'.format(timer.name)],
+            if timer.name in RESTORE_SEGMENTS:
+                segment = RESTORE_SEGMENTS[timer.name]
+                bucket = _get_time_bucket(timer.duration)
+                datadog_counter(
+                    'commcare.restores.{}.{}'.format(segment, bucket),
+                    tags=tags,
                 )
-
+        tags.append('duration:%s' % _get_time_bucket(timing_context.duration))
+    datadog_counter('commcare.restores.count', tags=tags)
     return response
 
 
@@ -90,66 +120,19 @@ def search(request, domain):
     except KeyError:
         return HttpResponse('Search request must specify case type', status=400)
     try:
-        include_closed = criteria.pop('include_closed')
-    except KeyError:
-        include_closed = False
-
-    search_es = (CaseSearchES()
-                 .domain(domain)
-                 .case_type(case_type)
-                 .size(CASE_SEARCH_MAX_RESULTS))
-
-    if include_closed != 'True':
-        search_es = search_es.is_closed(False)
-
-    try:
-        config = CaseSearchConfig.objects.get(domain=domain)
-    except CaseSearchConfig.DoesNotExist as e:
-        from corehq.util.soft_assert import soft_assert
-        _soft_assert = soft_assert(
-            to="{}@{}.com".format('frener', 'dimagi'),
-            notify_admins=False, send_to_ops=False
-        )
-        _soft_assert(False, u"Someone in domain: {} tried accessing case search without a config".format(domain), e)
-        config = CaseSearchConfig(domain=domain)
-
-    query_addition_id = criteria.pop(SEARCH_QUERY_ADDITION_KEY, None)
-
-    owner_id = criteria.pop('owner_id', False)
-    if owner_id:
-        search_es = search_es.owner(owner_id)
-
-    fuzzies = config.config.get_fuzzy_properties_for_case_type(case_type)
-    for key, value in criteria.items():
-        search_es = search_es.case_property_query(key, value, fuzzy=(key in fuzzies))
-
-    query_addition_debug_details = {}
-    try:
-        search_es = _add_case_search_addition(
-            request, domain, search_es, query_addition_id, query_addition_debug_details
-        )
+        case_search_criteria = CaseSearchCriteria(domain, case_type, criteria)
+        search_es = case_search_criteria.search_es
     except QueryMergeException as e:
         return _handle_query_merge_exception(request, e)
     try:
-        results = search_es.values()
+        hits = search_es.run().raw_hits
     except Exception as e:
-        return _handle_es_exception(request, e, query_addition_debug_details)
+        return _handle_es_exception(request, e, case_search_criteria.query_addition_debug_details)
 
-    # Even if it's a SQL domain, we just need to render the results as cases, so CommCareCase.wrap will be fine
-    cases = [CommCareCase.wrap(flatten_result(result)) for result in results]
+    # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
+    cases = [CommCareCase.wrap(flatten_result(result)) for result in hits]
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
-
-
-def _add_case_search_addition(request, domain, search_es, query_addition_id, query_addition_debug_details):
-    if query_addition_id:
-        query_addition = CaseSearchQueryAddition.objects.get(id=query_addition_id, domain=domain)
-        query_addition_debug_details['original_query'] = search_es.get_query()
-        query_addition_debug_details['query_addition'] = query_addition.query_addition
-        new_query = merge_queries(search_es.get_query(), query_addition.query_addition)
-        query_addition_debug_details['new_query'] = new_query
-        search_es = search_es.set_query(new_query)
-    return search_es
 
 
 def _handle_query_merge_exception(request, exception):
@@ -180,6 +163,7 @@ def claim(request, domain):
     """
     as_user = request.POST.get('commcare_login_as', None)
     restore_user = get_restore_user(domain, request.couch_user, as_user)
+    cache = get_redis_default_cache()
 
     case_id = request.POST.get('case_id', None)
     if case_id is None:
@@ -187,7 +171,7 @@ def claim(request, domain):
 
     try:
         if (
-            request.session.get('last_claimed_case_id') == case_id or
+            cache.get(_claim_key(restore_user.user_id)) == case_id or
             get_first_claim(domain, restore_user.user_id, case_id)
         ):
             return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
@@ -198,8 +182,12 @@ def claim(request, domain):
     except CaseNotFound:
         return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
                             status=410)
-    request.session['last_claimed_case_id'] = case_id
+    cache.set(_claim_key(restore_user.user_id), case_id)
     return HttpResponse(status=200)
+
+
+def _claim_key(user_id):
+    return u'last_claimed_case_case_id-{}'.format(user_id)
 
 
 def get_restore_params(request):
@@ -215,7 +203,7 @@ def get_restore_params(request):
 
     return {
         'since': request.GET.get('since'),
-        'version': request.GET.get('version', "1.0"),
+        'version': request.GET.get('version', "2.0"),
         'state': request.GET.get('state'),
         'items': request.GET.get('items') == 'true',
         'as_user': request.GET.get('as'),
@@ -223,6 +211,8 @@ def get_restore_params(request):
         'overwrite_cache': request.GET.get('overwrite_cache') == 'true',
         'openrosa_version': openrosa_version,
         'device_id': request.GET.get('device_id'),
+        'user_id': request.GET.get('user_id'),
+        'case_sync': request.GET.get('case_sync'),
     }
 
 
@@ -230,9 +220,22 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
                          force_restore_mode=None,
-                         as_user=None, device_id=None,
+                         as_user=None, device_id=None, user_id=None,
                          has_data_cleanup_privelege=False,
-                         openrosa_version=OPENROSA_DEFAULT_VERSION):
+                         openrosa_version=OPENROSA_DEFAULT_VERSION,
+                         case_sync=None):
+
+    if user_id and user_id != couch_user.user_id:
+        # sync with a user that has been deleted but a new
+        # user was created with the same username and password
+        from couchforms.openrosa_response import get_simple_response_xml
+        from couchforms.openrosa_response import ResponseNature
+        response = get_simple_response_xml(
+            'Attempt to sync with invalid user.',
+            ResponseNature.OTA_RESTORE_ERROR
+        )
+        return HttpResponse(response, content_type="text/xml; charset=utf-8", status=412), None
+
     # not a view just a view util
     is_permitted, message = is_permitted_to_restore(
         domain,
@@ -243,7 +246,13 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     if not is_permitted:
         return HttpResponse(message, status=401), None
 
-    if couch_user.is_commcare_user() and couch_user.is_demo_user:
+    is_demo_restore = couch_user.is_commcare_user() and couch_user.is_demo_user
+    couch_restore_user = couch_user
+    if not is_demo_restore and as_user is not None:
+        couch_restore_user = CouchUser.get_by_username(as_user)
+    update_device_id(couch_restore_user, device_id)
+
+    if is_demo_restore:
         # if user is in demo-mode, return demo restore
         return demo_user_restore_response(couch_user), None
 
@@ -273,7 +282,8 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
             cache_timeout=cache_timeout,
             overwrite_cache=overwrite_cache
         ),
-        async=async_restore_enabled
+        async=async_restore_enabled,
+        case_sync=case_sync,
     )
     return restore_config.get_response(), restore_config.timing_context
 
@@ -380,4 +390,10 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
 @login_or_digest_or_basic_or_apikey()
 @require_GET
 def heartbeat(request, domain, id):
-    return JsonResponse({})
+    # mobile needs this. This needs to be revisited to actually work dynamically (Sravan June 7, 17)
+    for_app_id = request.GET.get('app_id', '')
+    return JsonResponse({
+        "app_id": for_app_id,
+        "latest_apk_version": {},
+        "latest_ccz_version": {}
+    })

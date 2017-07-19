@@ -57,6 +57,13 @@ class FormMultimediaExportTest(SimpleTestCase):
                             ),
                             selected=True,
                         ),
+                        ExportColumn(
+                            label="dontshow",
+                            item=ScalarItem(
+                                path=[PathNode(name='form'), PathNode(name='dontshow')],
+                            ),
+                            selected=False,
+                        ),
                     ]
                 ),
                 TableConfiguration(

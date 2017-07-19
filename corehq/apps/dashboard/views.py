@@ -20,7 +20,7 @@ from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin
 from corehq.apps.users.views import DefaultProjectUserSettingsView
 from corehq.apps.locations.permissions import location_safe, user_can_edit_location_types
 from corehq.apps.style.decorators import use_angular_js
-from corehq.toggles import DASHBOARD_GRAPHS
+from corehq.toggles import APP_MANAGER_V2, DASHBOARD_GRAPHS
 from django_prbac.utils import has_privilege
 
 
@@ -207,7 +207,7 @@ def _get_default_tile_configurations():
             icon='fcc fcc-applications',
             context_processor_class=AppsPaginatedContext,
             visibility_check=can_edit_apps,
-            urlname='default_app',
+            urlname='default_new_app' if APP_MANAGER_V2.enabled_for_request else 'default_app',
             help_text=_('Build, update, and deploy applications'),
         ),
         TileConfiguration(

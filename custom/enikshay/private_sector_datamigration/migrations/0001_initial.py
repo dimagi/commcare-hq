@@ -138,6 +138,7 @@ class Migration(migrations.Migration):
                 ('associatedFO', models.CharField(max_length=255, null=True)),
                 ('bankName', models.CharField(max_length=255, null=True)),
                 ('basisOfDiagnosis', models.CharField(max_length=255, null=True)),
+                ('beneficiaryID', models.CharField(max_length=18)),
                 ('branchName', models.CharField(max_length=255, null=True)),
                 ('creationDate', models.DateTimeField(null=True)),
                 ('creator', models.CharField(max_length=255, null=True)),
@@ -186,7 +187,6 @@ class Migration(migrations.Migration):
                 ('treatmentCompletionInsentiveFlag', models.CharField(max_length=1, null=True)),
                 ('mermIMIEno', models.CharField(max_length=255, null=True)),
                 ('adherenceSupportAssigned', models.CharField(max_length=255, null=True)),
-                ('beneficiaryID', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='private_sector_datamigration.Beneficiary')),
             ],
         ),
         migrations.CreateModel(
