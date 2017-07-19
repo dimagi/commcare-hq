@@ -143,16 +143,15 @@ class AutoCloseExtensionsTest(TestCase):
         no_cases = get_extensions_to_close(created_cases[-1], self.domain)
         self.assertEqual(set(), no_cases)
 
-        created_cases[-1] = self.factory.create_or_update_case(CaseStructure(
-            case_id=self.host_id,
-            attrs={'close': True}
-        ))[0]
+        # don't actually close the cases otherwise they will get excluded
+        created_cases[-1].closed = True
 
         # host closed, should get full chain
         full_chain = get_extensions_to_close(created_cases[-1], self.domain)
         self.assertEqual(set(self.extension_ids), full_chain)
 
         # extension (not a host), should be empty
+        created_cases[2].closed = True
         no_cases = get_extensions_to_close(created_cases[2], self.domain)
         self.assertEqual(set(), no_cases)
 
@@ -165,18 +164,13 @@ class AutoCloseExtensionsTest(TestCase):
         self.assertEqual(set(), no_cases)
 
         # close parent, shouldn't get extensions
-        created_cases[-1] = self.factory.create_or_update_case(CaseStructure(
-            case_id=self.parent_id,
-            attrs={'close': True}
-        ))[0]
+        # don't actually close the cases otherwise they will get excluded
+        created_cases[-1].closed = True
         no_cases = get_extensions_to_close(created_cases[-1], self.domain)
         self.assertEqual(set(), no_cases)
 
         # close host that is also a child
-        created_cases[-2] = self.factory.create_or_update_case(CaseStructure(
-            case_id=self.host_id,
-            attrs={'close': True}
-        ))[0]
+        created_cases[-2].closed = True
         full_chain = get_extensions_to_close(created_cases[-2], self.domain)
         self.assertEqual(set(self.extension_ids[0:2]), full_chain)
 
