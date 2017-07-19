@@ -549,7 +549,7 @@ def _save_error_message(domain, case_id, error, reg_field="nikshay_registered", 
         case_id,
         {
             reg_field: "false",
-            error_field: error,
+            error_field: unicode(error),
         },
     )
 
