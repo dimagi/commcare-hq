@@ -14,6 +14,7 @@ from custom.enikshay.tests.utils import (
     get_referral_case_structure,
     get_trail_case_structure,
 )
+from .management.commands.enikshay_2b_case_properties import get_relevant_person_cases
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -31,6 +32,8 @@ class TestCreateEnikshayCases(TestCase):
         self.project.delete()
 
     def setup_cases(self):
+        private_person = self._get_person_structure('susanna-dean', self.locations['DTO'].location_id)
+        private_person.attrs['update'][ENROLLED_IN_PRIVATE] = 'true'  # should be excluded
         person = self._get_person_structure('roland-deschain', self.locations['DTO'].location_id)
         occurrence = self._get_occurrence_structure(person)
         episode = self._get_episode_structure(occurrence)
@@ -38,7 +41,7 @@ class TestCreateEnikshayCases(TestCase):
         referral = self._get_referral_structure(person)
         trail = self._get_trail_structure(referral)
         return {c.case_id: c for c in self.factory.create_or_update_cases([
-            episode, test, referral, trail
+            private_person, episode, test, referral, trail
         ])}
 
     def _get_person_structure(self, person_id, owner_id):
@@ -73,3 +76,13 @@ class TestCreateEnikshayCases(TestCase):
             related_type='occurrence',
         )]
         return trail
+
+    def test(self):
+        # first check some utils
+        person_cases = list(get_relevant_person_cases(self.domain, self.locations['DTO']))
+        self.assertEqual(len(person_cases), 1)
+        self.assertEqual('roland-deschain', person_cases[0].case_id)
+
+        # run the actual migration
+
+        # check the results

@@ -6,6 +6,9 @@ import datetime
 import logging
 from django.core.management import BaseCommand
 from corehq.apps.locations.models import SQLLocation
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from custom.enikshay.case_utils import CASE_TYPE_PERSON
+from custom.enikshay.const import ENROLLED_IN_PRIVATE, CASE_VERSION
 
 logger = logging.getLogger('two_b_datamigration')
 
@@ -39,11 +42,25 @@ class Command(BaseCommand):
         ))
         dto = SQLLocation.objects.get(
             domain=domain, location_id=dto_id, location_type__code='dto')
-        confirm("Do you want to migrate the DTO '{}', which has {} children?"
-                .format(dto.get_path_display(), dto.get_children().count()))
+        num_descendants = dto.get_descendants(include_self=True).count()
+        confirm("Do you want to migrate the DTO '{}', which has {} descendants?"
+                .format(dto.get_path_display(), num_descendants))
+
+        persons = get_relevant_person_cases(domain, dto)
+        migrate_person_cases(persons, commit=commit)
 
 
-def _get_relevant_person_cases(domain, dto):
+def get_relevant_person_cases(domain, dto):
     # enrolled_in_private is blank/not set AND case_version is blank/not set
     # AND owner_id is within the location set being migrated
+    location_owners = dto.get_descendants(include_self=True).location_ids()
+    accessor = CaseAccessors(domain)
+    person_ids = accessor.get_open_case_ids_in_domain_by_type(CASE_TYPE_PERSON, location_owners)
+    for person in accessor.iter_cases(person_ids):
+        if (person.get_case_property(ENROLLED_IN_PRIVATE) != 'true'
+                and not person.get_case_property(CASE_VERSION)):
+            yield person
+
+
+def migrate_person_cases(persons, commit):
     pass
