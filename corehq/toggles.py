@@ -1273,3 +1273,10 @@ SKIP_REMOVE_INDICES = StaticToggle(
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )
+
+PREVENT_MOBILE_UCR_SYNC = StaticToggle(
+    'prevent_mobile_ucr_sync',
+    'Used for ICDS emergencies when UCR sync is killing the DB',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
