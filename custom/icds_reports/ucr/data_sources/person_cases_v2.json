@@ -2188,22 +2188,43 @@
         "column_id": "disabled_speaking_count"
       },
       {
+        "comment": "This filters on both registered status and migration status",
         "column_id": "seeking_services",
         "type": "boolean",
         "filter": {
-          "type": "not",
-          "filter": {
-            "operator": "eq",
-            "type": "boolean_expression",
-            "expression": {
-              "type": "root_doc",
-              "expression": {
-                "property_name": "registered_status",
-                "type": "property_name"
+          "type": "and",
+          "filters": [
+            {
+              "type": "not",
+              "filter": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "property_name": "registered_status",
+                    "type": "property_name"
+                  }
+                },
+                "property_value": "not_registered"
               }
             },
-            "property_value": "not_registered"
-          }
+            {
+              "type": "not",
+              "filter": {
+                "operator": "eq",
+                "type": "boolean_expression",
+                "expression": {
+                  "type": "root_doc",
+                  "expression": {
+                    "property_name": "migration_status",
+                    "type": "property_name"
+                  }
+                },
+                "property_value": "migrated"
+              }
+            }
+          ]
         }
       },
       {
@@ -2671,9 +2692,24 @@
       "number_of_shards": 8
     },
     "sql_column_indexes": [
-      {"column_ids": ["supervisor_id", "dob"]},
-      {"column_ids": ["awc_id", "dob"]},
-      {"column_ids": ["awc_id", "opened_on"]}
+      {
+        "column_ids": [
+          "supervisor_id",
+          "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "awc_id",
+          "dob"
+        ]
+      },
+      {
+        "column_ids": [
+          "awc_id",
+          "opened_on"
+        ]
+      }
     ]
   }
 }
