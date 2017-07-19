@@ -123,24 +123,14 @@ def default_new_app(request, domain):
     """
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
-    if tours.NEW_APP.is_enabled(request.user) and not toggles.APP_MANAGER_V2.enabled(request.user.username):
-        identify.delay(request.couch_user.username, {'First Template App Chosen': 'blank'})
     lang = 'en'
     app = Application.new_app(domain, _("Untitled Application"), lang=lang)
-
-    if not toggles.APP_MANAGER_V2.enabled(request.user.username):
-        # APP MANAGER V2 is completely blank on new app
-        module = Module.new_module(_("Untitled Module"), lang)
-        app.add_module(module)
-        app.new_form(0, _("Untitled Form"), lang)
 
     if request.project.secure_submissions:
         app.secure_submissions = True
     clear_app_cache(request, domain)
     app.save()
-    if toggles.APP_MANAGER_V2.enabled(request.user.username):
-        return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
-    return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, 0, 0]))
+    return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
 
 
 def get_app_view_context(request, app):
@@ -324,11 +314,6 @@ def get_apps_base_context(request, domain, app):
             'practice_users': [
                 {"id": u['_id'], "text": u["username"]} for u in get_practice_mode_mobile_workers(domain)],
         })
-
-    if toggles.APP_MANAGER_V2.enabled(request.user.username):
-        rollout = toggles.APP_MANAGER_V2.enabled_for_new_users_after
-        if not toggles.was_user_created_after(request.user.username, rollout):
-            context.update({'allow_v2_opt_out': True})
 
     return context
 
