@@ -941,14 +941,14 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             [domain, case_ids, list(exclude_indices)]))
 
     @staticmethod
-    def get_closed_and_deleted_ids(accessor, case_ids):
+    def get_closed_and_deleted_ids(domain, case_ids):
         assert isinstance(case_ids, list), case_ids
         if not case_ids:
             return []
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
                 'SELECT case_id, closed, deleted FROM get_closed_and_deleted_ids(%s, %s)',
-                [accessor.domain, case_ids]
+                [domain, case_ids]
             )
             return list(fetchall_as_namedtuple(cursor))
 

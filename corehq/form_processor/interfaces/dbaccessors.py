@@ -345,7 +345,7 @@ class CaseAccessors(object):
 
         :returns: List of three-tuples: `(case_id, closed, deleted)`
         """
-        return self.db_accessor.get_closed_and_deleted_ids(self, case_ids)
+        return self.db_accessor.get_closed_and_deleted_ids(self.domain, case_ids)
 
     def get_modified_case_ids(self, case_ids, sync_log):
         """Get the subset of given list of case ids that have been modified

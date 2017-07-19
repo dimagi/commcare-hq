@@ -5,10 +5,10 @@ from casexml.apps.case.dbaccessors.related import get_reverse_indexed_cases
 from casexml.apps.case.exceptions import IllegalCaseId
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.util import iter_cases
+from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdateStrategy
 from corehq.form_processor.casedb_base import AbstractCaseDbCache
 from corehq.form_processor.exceptions import CouchSaveAborted
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 class CaseDbCacheCouch(AbstractCaseDbCache):
@@ -80,7 +80,7 @@ class CaseDbCacheCouch(AbstractCaseDbCache):
             # filter out any other cases that are already closed (or deleted)
             closed_deleted = [
                 case_id for case_id, _, _ in
-                CaseAccessors(self.domain).get_closed_and_deleted_ids(extensions_to_close)
+                CaseAccessorCouch.get_closed_and_deleted_ids(self.domain, extensions_to_close)
             ]
             extensions_to_close = [case_id for case_id in extensions_to_close if case_id not in closed_deleted]
 

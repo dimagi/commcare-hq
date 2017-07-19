@@ -20,7 +20,7 @@ from corehq.apps.hqcase.dbaccessors import (
     get_case_ids_in_domain_by_owner,
     get_cases_in_domain_by_external_id,
     get_deleted_case_ids_by_owner,
-    get_all_case_owner_ids)
+    get_all_case_owner_ids, iter_lite_cases_json)
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
 from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
@@ -136,14 +136,21 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_related_indices(domain, case_ids, exclude_indices)
 
     @staticmethod
-    def get_closed_and_deleted_ids(accessor, case_ids):
+    def get_closed_and_deleted_ids(domain, case_ids):
         """Get the subset of given list of case ids that are closed or deleted
 
         WARNING this is inefficient (better version in SQL).
         """
-        return [(case.case_id, case.closed, case.is_deleted)
-            for case in accessor.iter_cases(case_ids)
-            if case.closed or case.is_deleted]
+        from dimagi.utils.couch.undo import DELETED_SUFFIX
+
+        def _is_deleted(case_doc):
+            return case_doc['doc_type'].endswith(DELETED_SUFFIX)
+
+        return [
+            (case['_id'], case['closed'], _is_deleted(case))
+            for case in iter_lite_cases_json(case_ids)
+            if case['domain'] == domain and (case['closed'] or _is_deleted(case))
+        ]
 
     @staticmethod
     def get_modified_case_ids(accessor, case_ids, sync_log):
