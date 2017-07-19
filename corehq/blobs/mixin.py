@@ -283,6 +283,10 @@ class BlobHelper(object):
     def blobs(self):
         return BlobMixin.blobs.fget(self)
 
+    @property
+    def blob_identifier(self):
+        return self._id
+
     def _blobdb_bucket(self):
         return join(self.database.dbname, safe_id(self._id))
 
