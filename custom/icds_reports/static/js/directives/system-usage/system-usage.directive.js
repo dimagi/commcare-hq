@@ -1,6 +1,6 @@
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function SystemUsageController($http, $log, $routeParams, $location, storageService) {
+function SystemUsageController($http, $log, $routeParams, $location, storageService, userLocationId) {
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
@@ -36,6 +36,16 @@ function SystemUsageController($http, $log, $routeParams, $location, storageServ
         "awc_infrastructure": {"route": "/program_summary/awc_infrastructure", "label": "AWC Infrastructure", "data": null},
     };
 
+    vm.getDisableIndex = function () {
+        var i = -1;
+        window.angular.forEach(vm.selectedLocations, function (key, value) {
+            if (key.location_id === userLocationId) {
+                i = value;
+            }
+        });
+        return i;
+    };
+
     vm.moveToLocation = function(loc, index) {
         if (loc === 'national') {
             $location.search('location_id', '');
@@ -51,7 +61,7 @@ function SystemUsageController($http, $log, $routeParams, $location, storageServ
     vm.getDataForStep(vm.step);
 }
 
-SystemUsageController.$inject = ['$http', '$log', '$routeParams', '$location', 'storageService'];
+SystemUsageController.$inject = ['$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive('systemUsage', function() {
     return {
