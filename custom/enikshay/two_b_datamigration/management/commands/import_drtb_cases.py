@@ -165,7 +165,7 @@ MUMBAI_MAP = {
     "district_name": 18,
     "phi_name": 21,
     "site_of_disease": 24,
-    "type_of_patient": 25,  # TODO: Map this value to case properties
+    "type_of_patient": 25,  # TODO: (WAITING) Map this value to case properties
     "weight": 26,
     "weight_band": 27,
     "height": 28,
@@ -193,7 +193,17 @@ MUMBAI_MAP = {
     "culture_type": 50,
     "culture_result": 51,
     "culture_result_date": 52,
-    # TODO: Finish me
+    "dst_sample_date": 53,
+    "dst_type": 54,
+    # TODO: (WAITING) DST Drug specific columns
+    # TODO: (WAITING) not sure how this maps
+    "bdq_eligible": 70,
+    "treatment_initiation_date": 71,
+    "treatment_initiated_by": 72,
+    "drtb_type": 74,
+    # TODO: (WAITING) treatment status here is different sorts of values than in the other mappings
+    # "treatment_status": 75,
+    "ip_to_cp_date": 79,
 }
 
 
@@ -246,7 +256,11 @@ class ColumnMapping(object):
         if exists_in_some_mapping:
             return None
         else:
-            raise KeyError("Invalid normalized_column_name passed to ColumnMapping.get_value()")
+            raise KeyError(
+                "Invalid normalized_column_name '{}' passed to ColumnMapping.get_value()".format(
+                    normalized_column_name
+                )
+            )
 
 
 class Mehsana2017ColumnMapping(ColumnMapping):
@@ -259,6 +273,8 @@ class Mehsana2016ColumnMapping(ColumnMapping):
 
 class MumbaiColumnMapping(ColumnMapping):
     mapping_dict = MUMBAI_MAP
+    follow_up_culture_index_start = 90
+    follow_up_culture_month_start = 3
 
     @classmethod
     def get_value(cls, normalized_column_name, row):
@@ -267,11 +283,39 @@ class MumbaiColumnMapping(ColumnMapping):
         if value is None and normalized_column_name == "cbnaat_result":
             raise Exception("All mumbai rows must contain cbnaat result")
         return value
+    
+    def get_follow_up_culture_result(cls, month, row):
+        if month == 36:
+            # For some reason the sheet jumps from 33 to 36, so just special casing it.
+            index = 152
+        else:
+            assert month >= 3 and month <= 33
+            offset = (month - 3) * 2
+            index = cls.follow_up_culture_index_start + offset
+        try:
+            return row[index].value
+        except IndexError:
+            return None
+
+    @classmethod
+    def get_follow_up_culture_date(cls, month, row):
+        if month == 36:
+            # For some reason the sheet jumps from 33 to 36, so just special casing it.
+            index = 153
+        else:
+            assert month >= 3 and month <= 33
+            offset = ((month - 3) * 2) + 1
+            index = cls.follow_up_culture_index_start + offset
+        try:
+            return row[index].value
+        except IndexError:
+            return None
 
 
 class MumbaiConstants(object):
     """A collection of Mumbai specific constants"""
-    # TODO: (WAITING) find out these values
+    # TODO: (WAITING) Fill in these values
+    # This is waiting on upload of the locations. It looks like for mumbai these might not be constants
     drtb_center_name = None
     drtb_center_id = None
 
@@ -279,6 +323,7 @@ class MumbaiConstants(object):
 class MehsanaConstants(object):
     """A collection of Mehsana specific constants"""
     # TODO: (WAITING) Fill in these values
+    # This is waiting on upload of the locations
     drtb_center_name = None
     drtb_center_id = None
 
@@ -376,7 +421,7 @@ def get_person_case_properties(domain, column_mapping, row):
     if properties["art_initiation_date"]:
         properties["art_initiated"] = "yes"
 
-    phone_number = column_mapping.get_value("phone_number", row),
+    phone_number = column_mapping.get_value("phone_number", row)
     if phone_number:
         properties['contact_phone_number'] = clean_phone_number(phone_number, 12)
         properties['phone_number'] = clean_phone_number(phone_number, 10)
@@ -395,12 +440,17 @@ def get_occurrence_case_properties(column_mapping, row):
         "current_episode_type": "confirmed_drtb",
         "initial_home_visit_status":
             "completed" if column_mapping.get_value("initial_home_visit_date", row) else None,
+        "drtb_type": clean_drtb_type(column_mapping.get_value("drtb_type", row)),
     }
     properties.update(get_disease_site_properties(column_mapping, row))
     return properties
 
 
 def get_episode_case_properties(domain, column_mapping, row):
+
+    if column_mapping.get_value("treatment_initiated_by", row):
+        raise NotImplementedError(
+            "No example data was in the original data dump, so didn't know how to handle it.")
 
     report_sending_date = column_mapping.get_value("report_sending_date", row)
     report_sending_date = clean_date(report_sending_date)
@@ -598,6 +648,9 @@ def get_test_case_properties(domain, column_mapping, row, treatment_initiation_d
         test_cases.append(get_sl_lpa_test_case_properties(domain, column_mapping, row))
     if column_mapping.get_value("culture_result", row):
         test_cases.append(get_culture_test_case_properties(domain, column_mapping, row))
+    dst_test_case_properties = get_dst_test_case_properties(column_mapping, row)
+    if dst_test_case_properties:
+        test_cases.append(dst_test_case_properties)
 
     test_cases.extend(get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date))
     return test_cases
@@ -642,7 +695,8 @@ def get_lpa_test_case_properties(domain, column_mapping, row):
         "test_type_label": "FL LPA",
         "test_type_value": "fl_line_probe_assay",
         "date_tested": clean_date(column_mapping.get_value("lpa_sample_date", row)),
-        "date_reported": column_mapping.get_value("lpa_result_date", row),
+        "date_reported": clean_date(column_mapping.get_value("lpa_result_date", row)),
+        # TODO: Should this have a "result"?
     }
 
     properties.update(get_lpa_test_resistance_properties(column_mapping, row))
@@ -658,7 +712,8 @@ def get_sl_lpa_test_case_properties(domain, column_mapping, row):
         "test_type_label": "SL LPA",
         "test_type_value": "sl_line_probe_assay",
         "date_tested": clean_date(column_mapping.get_value("lpa_sample_date", row)),
-        "date_reported": column_mapping.get_value("lpa_result_date", row),
+        "date_reported": clean_date(column_mapping.get_value("lpa_result_date", row)),
+        # TODO: Should this have a "result"?
     }
 
     properties.update(get_sl_lpa_test_resistance_properties(column_mapping, row))
@@ -675,11 +730,34 @@ def get_culture_test_case_properties(domain, column_mapping, row):
         "test_type_label": "Culture",
         "test_type_value": "culture",
         "date_tested": clean_date(column_mapping.get_value("culture_sample_date", row)),
-        "date_reported": column_mapping.get_value("culture_result_date", row),
+        "date_reported": clean_date(column_mapping.get_value("culture_result_date", row)),
         # NEEDED: Culture type
         # NEEDED: Result
     }
     return properties
+
+
+def get_dst_test_case_properties(column_mapping, row):
+    if column_mapping.get_value("dst_type", row):
+        raise NotImplementedError(
+            "No example data was in the original data dump, so didn't know how to handle it.")
+    # TODO: (WAITING) Return None if this doesn't have anything
+    resistance_props = get_dst_test_resistance_properties(column_mapping, row)
+    properties = {
+        "owner_id": "-",
+        "date_tested": clean_date(column_mapping.get_value("dst_sample_date", row)),
+        "date_reported": column_mapping.get_value("culture_result_date", row),
+    }
+    # TODO: (WAITING) Finish this. (waiting on drug details)
+    return None
+
+
+
+def get_dst_test_resistance_properties(column_mapping, row):
+    pass
+    # TODO: (WAITING) determine how excel columns map to enikshay drug ids
+
+
 
 def get_drug_resistance_case_properties(column_mapping, row):
     resistant_drugs = {
@@ -803,6 +881,8 @@ def get_drug_resistances_from_sl_lpa(column_mapping, row):
 
 def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation_date):
     properties_list = []
+
+    # Mehsana
     for follow_up in (3, 4, 5, 6, 9, 12, "end"):
         if column_mapping.get_value("month_{}_follow_up_send_date".format(follow_up), row):
             properties = {
@@ -814,7 +894,7 @@ def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation
                 "result": clean_result(
                     column_mapping.get_value("month_{}_follow_up_result".format(follow_up), row)),
                 "test_type_value": "culture",
-                "test_type_label": "culture",
+                "test_type_label": "Culture",
                 "rft_general": "follow_up_drtb",
             }
             properties["rft_drtb_follow_up_treatment_month"] = get_follow_up_month(
@@ -823,6 +903,30 @@ def get_follow_up_test_case_properties(column_mapping, row, treatment_initiation
             properties["result_summary_label"] = result_label(properties['result'])
 
             properties_list.append(properties)
+
+    # Mumbai
+    if hasattr(column_mapping, "follow_up_culture_month_start"):
+        month = column_mapping.follow_up_culture_month_start
+        while month <= 36:
+            if month == 34 or month == 35:
+                pass
+            else:
+                result = column_mapping.get_follow_up_culture_result(month, row)
+                if result:
+                    date_tested = clean_date(column_mapping.get_follow_up_culture_date(month, row))
+                    properties = {
+                        "owner_id": "-",
+                        "test_type": "culture",
+                        "test_type_label": "Culture",
+                        "rft_general": "follow_up_drtb",
+                        "rft_drtb_follow_up_treatment_month": month,
+                        "date_tested": date_tested,
+                        "result": clean_result(result),
+                    }
+                    properties["result_summary_label"] = result_label(properties['result'])
+                    properties_list.append(properties)
+            month += 1
+
     return properties_list
 
 
@@ -905,6 +1009,20 @@ def clean_result(value):
         "negative": NOT_DETECTED,
         "pos": DETECTED,
         "Positive": DETECTED,
+    }[value]
+
+
+def clean_drtb_type(value):
+    if value is None:
+        return "unknown"
+    return {
+        "MDR": "mdr",
+        "XDR": "xdr",
+        "Modified MDR": "mdr",  # TODO: (WAITING) confirm this value
+        "RR TB": "rr",
+        "MDR TB": "mdr",
+        "XDR TB": "xdr",
+        "RRTB": "rr",
     }[value]
 
 
