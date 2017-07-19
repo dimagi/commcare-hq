@@ -109,6 +109,8 @@ class Command(BaseCommand):
         num_failed = 0
         num_matching_case_not_migrated = 0
         num_missing_person_case = 0
+        num_skipped = 0
+        num_tries = 0
         logger.info('Starting migration of %d patient cases on domain %s.' % (total, domain))
         nikshay_codes_to_location = get_nikshay_codes_to_location(domain)
         # factory = CaseFactory(domain=domain)
@@ -119,7 +121,11 @@ class Command(BaseCommand):
             case_factory = EnikshayCaseFactory(
                 domain, migration_comment, patient_detail, nikshay_codes_to_location, test_phi
             )
+            if case_factory.existing_person_case:
+                num_skipped += 1
+                continue
             try:
+                num_tries += 1
                 cases = case_factory.get_case_structures_to_create()
                 # case_structures.extend(cases)
             except MatchingNikshayIdCaseNotMigrated:
@@ -130,7 +136,7 @@ class Command(BaseCommand):
                     )
                 )
                 if case_factory.existing_person_case:
-                    logger.info('person case exists')
+                    pass
                 else:
                     num_missing_person_case += 1
                     logger.info('person case is missing for %s' % patient_detail.PregId)
@@ -166,6 +172,8 @@ class Command(BaseCommand):
         logger.info('Number of failures: %d.' % num_failed)
         logger.info('Number of cases matched but not migrated: %d.' % num_matching_case_not_migrated)
         logger.info('Number of cases matched but not migrated, missing person case: %d.' % num_missing_person_case)
+        logger.info('Number of existing patients skipped: %d' % num_skipped)
+        logger.info('Number of tries: %d' % num_tries)
 
         # since we circumvented cleanliness checks just call this at the end
         # logger.info('Setting cleanliness flags')
