@@ -99,3 +99,4 @@ quickcache==0.0.1
 zeep==1.6.0
 ethiopian_date==0.1.1
 architect==0.5.6
+contextlib2=0.5.4
