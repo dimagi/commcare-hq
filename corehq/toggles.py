@@ -1253,6 +1253,15 @@ ENTERPRISE_OPTIMIZATIONS = StaticToggle(
     always_enabled={'icds-cas'}
 )
 
+MOBIE_UCR_SYNC_DELAY_CONFIG = StaticToggle(
+    'mobile_ucr_sync_delay',
+    "Show settings for configuring mobile UCR sync delay",
+    TAG_EXPERIMENTAL,
+    [NAMESPACE_DOMAIN],
+    always_enabled={'icds-cas'},
+    help_link="https://confluence.dimagi.com/display/ccinternal/Mobile+Reports+Sync+Delay"
+)
+
 DISPLAY_CONDITION_ON_TABS = StaticToggle(
     'display_condition_on_nodeset',
     'Show Display Condition on Case Detail Tabs',
