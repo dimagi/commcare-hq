@@ -779,13 +779,13 @@ class QueryDictUtilTest(SimpleTestCase):
             request_dict,
             {
                 # keys marked as string should not be casted to bool
-                'my_string_key': 'true',
-                'another_string': 'false',
-                'string_int': '1',
+                'my_string_key': u'true',
+                'another_string': u'false',
+                'string_int': u'1',
                 # keys not marked as string are casted to bool
                 'non_string': True,
                 'non_string_2': False,
-                'domain': 'some_domain',
+                'domain': u'some_domain',
                 'non_string_int': 2,
             }
         )
