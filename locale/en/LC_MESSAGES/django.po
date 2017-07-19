@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-07-19 15:37+0000\n"
+"POT-Creation-Date: 2017-07-19 18:28+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3228,7 +3228,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/ng_partials/case_summary_view_v2.html:131
 #: corehq/apps/app_manager/templates/app_manager/v1/managed_app.html:202
 #: corehq/apps/app_manager/templates/app_manager/v1/managed_app.html:220
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:193
+#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:175
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/form_error_message.html:7
 #: corehq/apps/commtrack/templates/commtrack/manage/rebuild_stock_state.html:57
 #: corehq/apps/data_interfaces/interfaces.py:235
@@ -3404,14 +3404,12 @@ msgstr ""
 #: corehq/apps/app_manager/models.py:2595
 #: corehq/apps/app_manager/models.py:3266
 #: corehq/apps/app_manager/models.py:4440
-#: corehq/apps/app_manager/views/apps.py:133
 msgid "Untitled Module"
 msgstr ""
 
 #: corehq/apps/app_manager/models.py:2609
 #: corehq/apps/app_manager/models.py:3293
 #: corehq/apps/app_manager/models.py:3308
-#: corehq/apps/app_manager/views/apps.py:135
 #: corehq/apps/app_manager/views/modules.py:611
 #: corehq/apps/reports/views.py:1635 corehq/apps/reports/views.py:1663
 msgid "Untitled Form"
@@ -3524,7 +3522,7 @@ msgid "Latest report"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #: corehq/apps/app_manager/models.py:3787
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:157
+#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:139
 #: custom/_legacy/pact/templates/pact/patient/pactpatient_base.html:33
 #: custom/_legacy/pact/templates/pact/patient/pactpatient_submissions.html:31
 msgid "Care Plan"
@@ -3543,7 +3541,7 @@ msgid "Task"
 msgstr ""
 
 #: corehq/apps/app_manager/models.py:3817
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:179
+#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:161
 #: corehq/apps/app_manager/views/forms.py:396
 #: corehq/apps/app_manager/views/modules.py:987
 msgid "Followup"
@@ -3666,28 +3664,28 @@ msgstr ""
 msgid "Could not find module with ID='{unique_id}' in app '{app_name}'."
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:6056
+#: corehq/apps/app_manager/models.py:6053
 #, python-brace-format
 msgid "Copy of {name}"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:6141
+#: corehq/apps/app_manager/models.py:6139
 msgid ""
 "Your application is using User Properties. You can remove User Properties "
 "functionality by opening the User Properties tab in a form that uses it, and "
 "clicking \"Remove User Properties\"."
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:6289
+#: corehq/apps/app_manager/models.py:6287
 msgid "Error in case type hierarchy"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:6408
+#: corehq/apps/app_manager/models.py:6406
 msgid ""
 "Problem loading suite file from profile file. Is your profile file correct?"
 msgstr ""
 
-#: corehq/apps/app_manager/models.py:6552
+#: corehq/apps/app_manager/models.py:6550
 #, fuzzy
 msgid "Could not find form '{}'"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
@@ -4378,7 +4376,6 @@ msgid "OTA Restore Tolerance"
 msgstr "Manejo de Casos"
 
 #: corehq/apps/app_manager/static_strings.py:144
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:84
 #: corehq/apps/groups/templates/groups/group_members.html:188
 #: corehq/apps/groups/templates/groups/group_members.html:204
 #: corehq/apps/reports/templates/reports/filters/location_async.html:11
@@ -4393,7 +4390,6 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:146
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:78
 #: corehq/apps/groups/templates/groups/group_members.html:187
 #: corehq/apps/groups/templates/groups/group_members.html:203
 #: corehq/apps/reports/templates/reports/filters/location_async.html:10
@@ -4916,8 +4912,6 @@ msgstr ""
 #: custom/ewsghana/templates/ewsghana/facility_page_print_report.html:77
 #: custom/ewsghana/templates/ewsghana/reporting_rates_print_report.html:85
 #: custom/ewsghana/templates/ewsghana/stock_status_print_report.html:78
-#: custom/opm/templates/opm/met_print_report.html:83
-#: custom/opm/templates/opm/new_hsr_print.html:62
 msgid "Loading ..."
 msgstr ""
 
@@ -5180,14 +5174,14 @@ msgid "Delete this application"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/v1/apps_base.html:104
-#: corehq/apps/app_manager/templates/app_manager/v2/apps_base.html:67
+#: corehq/apps/app_manager/templates/app_manager/v2/apps_base.html:91
 msgid ""
 "Oops! We can't create that application; you already have one with the same "
 "name."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/v1/apps_base.html:116
-#: corehq/apps/app_manager/templates/app_manager/v2/apps_base.html:79
+#: corehq/apps/app_manager/templates/app_manager/v2/apps_base.html:103
 msgid ""
 "\n"
 "                Welcome to the CommCare Application Builder.\n"
@@ -5198,23 +5192,23 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/v1/apps_base.html:139
-#: corehq/apps/app_manager/templates/app_manager/v2/apps_base.html:102
+#: corehq/apps/app_manager/templates/app_manager/v2/apps_base.html:126
 msgid "Oops! This application was deleted."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/v1/apps_base.html:142
-#: corehq/apps/app_manager/templates/app_manager/v2/apps_base.html:105
+#: corehq/apps/app_manager/templates/app_manager/v2/apps_base.html:129
 msgid "If you want your application back, click Restore."
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/v1/apps_base.html:146
-#: corehq/apps/app_manager/templates/app_manager/v2/apps_base.html:109
+#: corehq/apps/app_manager/templates/app_manager/v2/apps_base.html:133
 #: corehq/apps/reports/templates/reports/reportdata/excel_export_data.html:233
 msgid "Restore"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/v1/apps_base.html:149
-#: corehq/apps/app_manager/templates/app_manager/v2/apps_base.html:112
+#: corehq/apps/app_manager/templates/app_manager/v2/apps_base.html:136
 msgid "No thanks, get me out of here"
 msgstr ""
 
@@ -5462,7 +5456,6 @@ msgid "Multimedia"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/v1/managed_app.html:102
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:86
 #, fuzzy
 msgid "New App Builder"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
@@ -6299,7 +6292,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/case_config_advanced.html:189
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/case_config_advanced.html:329
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:125
+#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:107
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/case_config_advanced.html:221
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/case_config_advanced.html:395
 #: corehq/apps/app_manager/views/modules.py:374
@@ -8666,6 +8659,26 @@ msgstr ""
 msgid "Releases"
 msgstr "Manejo de Casos"
 
+#: corehq/apps/app_manager/templates/app_manager/v2/apps_base.html:70
+#, fuzzy
+msgid "New App Builder Officially Released"
+msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#: corehq/apps/app_manager/templates/app_manager/v2/apps_base.html:72
+msgid ""
+"\n"
+"                After months of testing and feedback, we are happy to "
+"announce the\n"
+"                official release of the new CommCare App Builder. The "
+"previous App Builder\n"
+"                interface is now no longer available.\n"
+"            "
+msgstr ""
+
+#: corehq/apps/app_manager/templates/app_manager/v2/apps_base.html:82
+msgid "Learn More"
+msgstr ""
+
 #: corehq/apps/app_manager/templates/app_manager/v2/form_designer.html:39
 #: corehq/apps/app_manager/templates/app_manager/v2/form_view.html:77
 #, fuzzy
@@ -8770,58 +8783,54 @@ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 msgid "Updates Available to Publish"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:89
-msgid "Turn off new app builder for now."
-msgstr ""
-
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:119
+#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:101
 #, fuzzy
 msgid "Surveys"
 msgstr "Manejo de Casos"
 
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:120
+#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:102
 #, fuzzy
 msgid "Collect data once."
 msgstr "Casos IRA Tratados"
 
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:126
+#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:108
 msgid "Track items over time."
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:132
+#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:114
 #, fuzzy
 msgid "Advanced Menu"
 msgstr "Casos IRA Tratados"
 
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:133
+#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:115
 #, fuzzy
 msgid "Complex case management."
 msgstr "Manejo de Casos"
 
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:140
+#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:122
 #, fuzzy
 msgid "Report Menu"
 msgstr "Manejo de Casos"
 
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:141
+#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:123
 #, fuzzy
 msgid "Worker performance."
 msgstr "Casos IRA Tratados"
 
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:148
+#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:130
 #, fuzzy
 msgid "Shadow Menu"
 msgstr "Manejo de Casos"
 
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:149
+#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:131
 msgid "Mimic another menu."
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:158
+#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:140
 msgid "Tasks and goals."
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:171
+#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:153
 #: corehq/apps/app_manager/views/modules.py:998
 #: corehq/apps/dashboard/views.py:104 corehq/apps/reminders/forms.py:1778
 #: corehq/apps/reminders/forms.py:1980 corehq/apps/reminders/forms.py:2003
@@ -8831,14 +8840,14 @@ msgstr ""
 msgid "Survey"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:185
+#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:167
 #: corehq/apps/app_manager/views/forms.py:396
 #: corehq/apps/app_manager/views/modules.py:981 corehq/apps/users/forms.py:1105
 #: corehq/apps/users/forms.py:1113
 msgid "Register"
 msgstr ""
 
-#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:201
+#: corehq/apps/app_manager/templates/app_manager/v2/managed_app.html:183
 #, fuzzy
 msgid "Shadow Form"
 msgstr "Manejo de Casos"
@@ -9682,76 +9691,76 @@ msgid ""
 "You have deleted an application. <a href=\"%s\" class=\"post-link\">Undo</a>"
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:129
+#: corehq/apps/app_manager/views/apps.py:127
 msgid "Untitled Application"
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:185
+#: corehq/apps/app_manager/views/apps.py:175
 msgid "This is not an allowed value for this field"
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:237
+#: corehq/apps/app_manager/views/apps.py:227
 #, fuzzy
 msgid "Not set"
 msgstr "Manejo de Casos"
 
-#: corehq/apps/app_manager/views/apps.py:245
+#: corehq/apps/app_manager/views/apps.py:235
 msgid "U​I translation"
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:246
+#: corehq/apps/app_manager/views/apps.py:236
 msgid "U​I translations"
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:253
+#: corehq/apps/app_manager/views/apps.py:243
 #, fuzzy
 msgid "app translation"
 msgstr "Criança com problemas de malnutrição"
 
-#: corehq/apps/app_manager/views/apps.py:254
+#: corehq/apps/app_manager/views/apps.py:244
 #, fuzzy
 msgid "app translations"
 msgstr "Criança com problemas de malnutrição"
 
-#: corehq/apps/app_manager/views/apps.py:377
+#: corehq/apps/app_manager/views/apps.py:362
 msgid ""
 "This linked application uses mobile UCRs which are currently not supported. "
 "For this application to function correctly, you will need to remove those "
 "modules."
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:441
+#: corehq/apps/app_manager/views/apps.py:426
 msgid "You must submit a name for the application you are importing."
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:444
+#: corehq/apps/app_manager/views/apps.py:429
 msgid "You must submit the source data."
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:821
+#: corehq/apps/app_manager/views/apps.py:806
 msgid "The form cannot be moved into the desired menu."
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:825
+#: corehq/apps/app_manager/views/apps.py:810
 msgid "The form can not be moved into the desired module."
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:830
+#: corehq/apps/app_manager/views/apps.py:815
 msgid ""
 "Oops. Looks like you got out of sync with us. The sidebar has been updated, "
 "so please try again."
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:860
+#: corehq/apps/app_manager/views/apps.py:845
 msgid "You have successfully removed User Properties from this application."
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:862
+#: corehq/apps/app_manager/views/apps.py:847
 msgid ""
 "You have successfully removed User Case properties from this application."
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:878
+#: corehq/apps/app_manager/views/apps.py:863
 msgid ""
 "This linked application uses dynamic mobile UCRs which are currently not "
 "supported. For this application to function correctly, you will need to "
@@ -9759,11 +9768,11 @@ msgid ""
 "them."
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:884
+#: corehq/apps/app_manager/views/apps.py:869
 msgid "Your linked application was successfully updated to the latest version."
 msgstr ""
 
-#: corehq/apps/app_manager/views/apps.py:887
+#: corehq/apps/app_manager/views/apps.py:872
 msgid ""
 "This project is not authorized to update from the master application. Please "
 "contact the maintainer of the master app if you believe this is a mistake. "
@@ -9795,7 +9804,7 @@ msgid ""
 "error to see case properties in this tree"
 msgstr ""
 
-#: corehq/apps/app_manager/views/forms.py:133
+#: corehq/apps/app_manager/views/forms.py:134
 msgid ""
 "This form could not be copied because it is not compatible with the selected "
 "module."
@@ -10695,8 +10704,6 @@ msgstr ""
 
 #: corehq/apps/case_importer/templates/case_importer/excel_config.html:92
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:94
-#: custom/opm/beneficiary.py:877 custom/opm/beneficiary.py:960
-#: custom/opm/beneficiary.py:985
 msgid "Case ID"
 msgstr ""
 
@@ -25018,7 +25025,6 @@ msgstr ""
 
 #: corehq/apps/reminders/templates/reminders/partial/complex_message_table.html:30
 #: corehq/apps/reminders/templates/reminders/partial/complex_message_table.html:32
-#: custom/opm/beneficiary.py:868 custom/opm/beneficiary.py:1010
 msgid "Window"
 msgstr ""
 
@@ -25657,15 +25663,15 @@ msgstr ""
 #: corehq/apps/reports/filters/select.py:144
 #: corehq/apps/reports_core/filters.py:402
 #: corehq/apps/userreports/reports/filters/choice_providers.py:285
-#: custom/enikshay/reports/filters.py:83 custom/opm/filters.py:101
+#: custom/enikshay/reports/filters.py:83
 msgid "Show All"
 msgstr ""
 
-#: corehq/apps/reports/filters/select.py:91 custom/opm/filters.py:102
+#: corehq/apps/reports/filters/select.py:91
 msgid "Only Open"
 msgstr ""
 
-#: corehq/apps/reports/filters/select.py:92 custom/opm/filters.py:103
+#: corehq/apps/reports/filters/select.py:92
 msgid "Only Closed"
 msgstr ""
 
@@ -33305,7 +33311,6 @@ msgid "Modified On"
 msgstr ""
 
 #: corehq/ex-submodules/casexml/apps/case/templatetags/case_tags.py:71
-#: custom/opm/beneficiary.py:878 custom/opm/beneficiary.py:962
 msgid "Closed On"
 msgstr ""
 
@@ -35285,7 +35290,7 @@ msgstr ""
 
 #: custom/bihar/reports/indicators/clientlistdisplay.py:79
 #: custom/bihar/reports/indicators/clientlistdisplay.py:97
-#: custom/bihar/reports/mch_reports.py:151 custom/opm/beneficiary.py:1008
+#: custom/bihar/reports/mch_reports.py:151
 msgid "EDD"
 msgstr ""
 
@@ -35495,8 +35500,7 @@ msgstr ""
 msgid "Beneficiary Information"
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:134 custom/opm/beneficiary.py:863
-#: custom/opm/beneficiary.py:946 custom/opm/beneficiary.py:994
+#: custom/bihar/reports/mch_reports.py:134
 msgid "Husband Name"
 msgstr ""
 
@@ -35777,7 +35781,7 @@ msgstr ""
 msgid "Migrate status "
 msgstr ""
 
-#: custom/bihar/reports/mch_reports.py:315 custom/opm/beneficiary.py:866
+#: custom/bihar/reports/mch_reports.py:315
 msgid "Child Name"
 msgstr ""
 
@@ -39843,872 +39847,6 @@ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 msgid "Update OpenClinica settings"
 msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
-#: custom/opm/beneficiary.py:786
-msgid "Incorrect EDD"
-msgstr ""
-
-#: custom/opm/beneficiary.py:792
-msgid "Incorrect DOD"
-msgstr ""
-
-#: custom/opm/beneficiary.py:797
-msgid "Incorrect LMP date"
-msgstr ""
-
-#: custom/opm/beneficiary.py:802
-msgid "Account number is the wrong length"
-msgstr ""
-
-#: custom/opm/beneficiary.py:807
-msgid "IFSC {} incorrect"
-msgstr ""
-
-#: custom/opm/beneficiary.py:811
-msgid "Pregnancy Bonus due for 2 years"
-msgstr ""
-
-#: custom/opm/beneficiary.py:815
-msgid "Pregnancy Bonus due for 3 years"
-msgstr ""
-
-#: custom/opm/beneficiary.py:858 custom/opm/beneficiary.py:983
-msgid "Serial number"
-msgstr ""
-
-#: custom/opm/beneficiary.py:859 custom/opm/beneficiary.py:945
-#: custom/opm/beneficiary.py:984
-msgid "List of Beneficiaries"
-msgstr ""
-
-#: custom/opm/beneficiary.py:860 custom/opm/beneficiary.py:947
-#: custom/opm/beneficiary.py:986 custom/opm/health_status.py:18
-#, fuzzy
-msgid "AWC Name"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: custom/opm/beneficiary.py:861 custom/opm/beneficiary.py:987
-#: custom/opm/health_status.py:14
-#, fuzzy
-msgid "AWC Code"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: custom/opm/beneficiary.py:862 custom/opm/beneficiary.py:952
-#: custom/opm/beneficiary.py:988
-msgid "Block Name"
-msgstr ""
-
-#: custom/opm/beneficiary.py:864 custom/opm/beneficiary.py:1006
-msgid "Current status"
-msgstr ""
-
-#: custom/opm/beneficiary.py:865
-msgid "Pregnancy Month"
-msgstr ""
-
-#: custom/opm/beneficiary.py:867
-msgid "Child Age"
-msgstr ""
-
-#: custom/opm/beneficiary.py:869
-#, fuzzy
-msgid "Condition 1"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: custom/opm/beneficiary.py:870
-#, fuzzy
-msgid "Condition 2"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: custom/opm/beneficiary.py:871
-#, fuzzy
-msgid "Condition 3"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: custom/opm/beneficiary.py:872
-#, fuzzy
-msgid "Condition 4"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: custom/opm/beneficiary.py:873
-#, fuzzy
-msgid "Condition 5"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: custom/opm/beneficiary.py:874
-#, fuzzy
-msgid "Payment amount this month (Rs.)"
-msgstr "Casos IRA Tratados"
-
-#: custom/opm/beneficiary.py:875
-#, fuzzy
-msgid "Payment amount last month (Rs.)"
-msgstr "Casos IRA Tratados"
-
-#: custom/opm/beneficiary.py:876 custom/opm/beneficiary.py:1042
-#, fuzzy
-msgid "Cash received last month"
-msgstr "Casos IRA Tratados"
-
-#: custom/opm/beneficiary.py:879 custom/opm/beneficiary.py:965
-#: custom/opm/beneficiary.py:1043
-msgid "Issues"
-msgstr ""
-
-#: custom/opm/beneficiary.py:948 custom/opm/beneficiary.py:1001
-#, fuzzy
-msgid "Bank Name"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: custom/opm/beneficiary.py:949 custom/opm/beneficiary.py:1003
-msgid "Bank Branch Name"
-msgstr ""
-
-#: custom/opm/beneficiary.py:950 custom/opm/beneficiary.py:1005
-msgid "IFS Code"
-msgstr ""
-
-#: custom/opm/beneficiary.py:951 custom/opm/beneficiary.py:1002
-msgid "Bank Account Number"
-msgstr ""
-
-#: custom/opm/beneficiary.py:953
-#, fuzzy
-msgid "Village Name"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: custom/opm/beneficiary.py:954
-msgid "Number of Children"
-msgstr ""
-
-#: custom/opm/beneficiary.py:955
-msgid "Birth Preparedness Form 1"
-msgstr ""
-
-#: custom/opm/beneficiary.py:956
-msgid "Birth Preparedness Form 2"
-msgstr ""
-
-#: custom/opm/beneficiary.py:957
-msgid "Child Followup Form"
-msgstr ""
-
-#: custom/opm/beneficiary.py:958
-msgid "Bonus Payment"
-msgstr ""
-
-#: custom/opm/beneficiary.py:959
-msgid "Amount to be paid to beneficiary"
-msgstr ""
-
-#: custom/opm/beneficiary.py:961
-msgid "Owner ID"
-msgstr ""
-
-#: custom/opm/beneficiary.py:963
-msgid "VHND organised this month"
-msgstr ""
-
-#: custom/opm/beneficiary.py:964
-#, fuzzy
-msgid "Payment last month"
-msgstr "Casos IRA Tratados"
-
-#: custom/opm/beneficiary.py:989
-msgid "Gram Panchayat name"
-msgstr ""
-
-#: custom/opm/beneficiary.py:990
-#, fuzzy
-msgid "Village name"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: custom/opm/beneficiary.py:991
-msgid "Dob Known"
-msgstr ""
-
-#: custom/opm/beneficiary.py:992
-#, fuzzy
-msgid "Mother's Age"
-msgstr "Outros (negativos / indeterminados) "
-
-#: custom/opm/beneficiary.py:993
-#, fuzzy
-msgid "Caste tribe status"
-msgstr "Diagnóstico de Casos"
-
-#: custom/opm/beneficiary.py:995
-msgid "Prev pregnancies"
-msgstr ""
-
-#: custom/opm/beneficiary.py:996
-msgid "Prev live births"
-msgstr ""
-
-#: custom/opm/beneficiary.py:997
-msgid "Sons alive"
-msgstr ""
-
-#: custom/opm/beneficiary.py:998
-msgid "Daughters alive"
-msgstr ""
-
-#: custom/opm/beneficiary.py:999
-msgid "Sum children"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1000
-msgid "Contact phone number"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1004
-msgid "Brank Branch Code"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1007
-#, fuzzy
-msgid "Lmp Date"
-msgstr "Casos IRA Tratados"
-
-#: custom/opm/beneficiary.py:1009
-#, fuzzy
-msgid "Pregnancy month"
-msgstr "Casos IRA Tratados"
-
-#: custom/opm/beneficiary.py:1011
-#, fuzzy
-msgid "Child 1 Age"
-msgstr "Crianças (2 - 59 meses)"
-
-#: custom/opm/beneficiary.py:1012
-#, fuzzy
-msgid "Child 1 Name"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: custom/opm/beneficiary.py:1013
-#, fuzzy
-msgid "Child 1 Sex"
-msgstr "Crianças (2 - 59 meses)"
-
-#: custom/opm/beneficiary.py:1014
-msgid "Child DOB"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1015
-#, fuzzy
-msgid "Child 2 Age"
-msgstr "Crianças (2 - 59 meses)"
-
-#: custom/opm/beneficiary.py:1016
-#, fuzzy
-msgid "Child 2 Name"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: custom/opm/beneficiary.py:1017
-#, fuzzy
-msgid "Child 2 Sex"
-msgstr "Crianças (2 - 59 meses)"
-
-#: custom/opm/beneficiary.py:1018
-#, fuzzy
-msgid "Child 3 Age"
-msgstr "Crianças (2 - 59 meses)"
-
-#: custom/opm/beneficiary.py:1019
-#, fuzzy
-msgid "Child 3 Name"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: custom/opm/beneficiary.py:1020
-#, fuzzy
-msgid "Child 3 Sex"
-msgstr "Crianças (2 - 59 meses)"
-
-#: custom/opm/beneficiary.py:1021
-msgid "Condition 1 / pregnant woman attended VHND"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1022
-msgid "Condition 2 /pregnant woman's weight taken in first trimester"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1023
-msgid "Condition 3/ Received 30 IFA pills"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1024
-msgid "Condition 2 /pregnant woman's weight taken in second trimester"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1025
-msgid "Condition 4/mother attended VHND with child"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1026
-msgid "Condition 5/child birth registered"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1027
-msgid "Condition 6/ child birth weight taken"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1028
-msgid "Condition 7 /exclusively breastfed for first 6 months"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1029
-msgid "Condition 8 /child weight monitored this month"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1030
-msgid "Condition 9 /ORS administered if child had diarrhea"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1031
-msgid "Condition 10/ Measles vaccine given before child turns 1"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1032
-msgid "Incidence Of Diarrhea"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1033
-msgid "Birth Spacing Bonus"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1034
-msgid "Weight This Month - Child 1"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1035
-msgid "Weight This Month - Child 2"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1036
-msgid "Weight This Month - Child 3"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1037
-msgid "Nutritional Status This Month - Child 1"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1038
-msgid "Nutritional Status This Month - Child 2"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1039
-msgid "Nutritional Status This Month - Child 3"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1040
-msgid "Nutritional Status Bonus"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1041
-#, fuzzy
-msgid "Payment amount for the month"
-msgstr "Casos IRA Tratados"
-
-#: custom/opm/beneficiary.py:1044
-msgid "VHND held this month?"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1045
-msgid "Opened on"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1046
-#, fuzzy
-msgid "Closed on"
-msgstr "Casos IRA Tratados"
-
-#: custom/opm/beneficiary.py:1047
-msgid "Close mother dup"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1048
-msgid "Close mother mo"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1049
-#, fuzzy
-msgid "Leave program"
-msgstr "Manejo de Casos"
-
-#: custom/opm/beneficiary.py:1050
-msgid "Close mother dead"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1051
-msgid "Calendar year"
-msgstr ""
-
-#: custom/opm/beneficiary.py:1052
-#, fuzzy
-msgid "Calendar month"
-msgstr "Casos IRA Tratados"
-
-#: custom/opm/filters.py:71 custom/opm/filters.py:84
-#: custom/up_nrhm/filters.py:38
-msgid "Hierarchy"
-msgstr ""
-
-#: custom/opm/health_status.py:22
-msgid "Gram Panchayat"
-msgstr ""
-
-#: custom/opm/health_status.py:26
-msgid "Registered Beneficiaries"
-msgstr ""
-
-#: custom/opm/health_status.py:27
-msgid "Beneficiaries registered with BCSP"
-msgstr ""
-
-#: custom/opm/health_status.py:30
-msgid "Registered pregnant women"
-msgstr ""
-
-#: custom/opm/health_status.py:31
-msgid "Pregnant women registered with BCSP"
-msgstr ""
-
-#: custom/opm/health_status.py:34
-msgid "Registered mothers"
-msgstr ""
-
-#: custom/opm/health_status.py:35
-msgid "Mothers registered with BCSP"
-msgstr ""
-
-#: custom/opm/health_status.py:38
-#, fuzzy
-msgid "Registered children"
-msgstr "Crianças (2 - 59 meses)"
-
-#: custom/opm/health_status.py:39
-msgid "Children below 3 years of age registered with BCSP"
-msgstr ""
-
-#: custom/opm/health_status.py:42
-msgid "Eligible for payment upon fulfillment of cash conditions"
-msgstr ""
-
-#: custom/opm/health_status.py:43
-msgid ""
-"Registered beneficiaries eligilble for cash payment for the month upon "
-"fulfillment of cash conditions"
-msgstr ""
-
-#: custom/opm/health_status.py:47
-msgid "Eligible for payment upon absence of services"
-msgstr ""
-
-#: custom/opm/health_status.py:48
-msgid ""
-"Registered beneficiaries eligilble for cash payment for the month upon "
-"absence of services at VHND"
-msgstr ""
-
-#: custom/opm/health_status.py:51
-msgid "Eligible for payment"
-msgstr ""
-
-#: custom/opm/health_status.py:52
-msgid "Registered beneficiaries eligilble for cash payment for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:55
-msgid "Total cash payment"
-msgstr ""
-
-#: custom/opm/health_status.py:56
-msgid "Total cash payment made to registered beneficiaries for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:59
-msgid "Pregnant women attended VHND"
-msgstr ""
-
-#: custom/opm/health_status.py:60
-msgid "Registered pregnant women who attended VHND for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:63
-msgid "Children attended VHND"
-msgstr ""
-
-#: custom/opm/health_status.py:64
-msgid ""
-"Registered children below 3 years of age who attended VHND for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:67
-msgid "Beneficiaries attended VHND"
-msgstr ""
-
-#: custom/opm/health_status.py:68
-msgid "Registered beneficiaries who attended VHND for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:71
-msgid "Received at least 30 IFA tablets"
-msgstr ""
-
-#: custom/opm/health_status.py:72
-msgid ""
-"Registered pregnant women (6 months pregnant) who received at least 30 IFA "
-"tablets in second trimester"
-msgstr ""
-
-#: custom/opm/health_status.py:76
-msgid "Weight monitored in second trimester"
-msgstr ""
-
-#: custom/opm/health_status.py:77
-msgid ""
-"Registered pregnant women (6 months pregnant) who got their weight monitored "
-"in second trimester"
-msgstr ""
-
-#: custom/opm/health_status.py:80
-msgid "Weight monitored in third trimester"
-msgstr ""
-
-#: custom/opm/health_status.py:81
-msgid ""
-"Registered pregnant women (9 months pregnant) who got their weight monitored "
-"in third trimester"
-msgstr ""
-
-#: custom/opm/health_status.py:84
-msgid "Weight monitored at birth"
-msgstr ""
-
-#: custom/opm/health_status.py:85
-msgid "Registered children (3 months old) whose weight was monitored at birth"
-msgstr ""
-
-#: custom/opm/health_status.py:88
-msgid "Child birth registered"
-msgstr ""
-
-#: custom/opm/health_status.py:89
-msgid ""
-"Registered children (6 months old) whose birth was registered in the first 6 "
-"months after birth"
-msgstr ""
-
-#: custom/opm/health_status.py:92
-msgid "Growth monitoring when 0-3 months old"
-msgstr ""
-
-#: custom/opm/health_status.py:93
-msgid ""
-"Registered Children (3 months old) who have attended at least one growth "
-"monitoring session between the age 0-3 months"
-msgstr ""
-
-#: custom/opm/health_status.py:97
-msgid "Growth Monitoring when 4-6 months old"
-msgstr ""
-
-#: custom/opm/health_status.py:98
-msgid ""
-"Registered Children (6 months old) who have attended at least one growth "
-"monitoring session between the age 4-6 months"
-msgstr ""
-
-#: custom/opm/health_status.py:102
-msgid "Growth Monitoring when 7-9 months old"
-msgstr ""
-
-#: custom/opm/health_status.py:103
-msgid ""
-"Registered Children (9 months old) who have attended at least one growth "
-"monitoring session between the age 7-9 months"
-msgstr ""
-
-#: custom/opm/health_status.py:107
-msgid "Growth Monitoring when 10-12 months old"
-msgstr ""
-
-#: custom/opm/health_status.py:108
-msgid ""
-"Registered Children (12 months old) who have attended at least one growth "
-"monitoring session between the age 10-12 months"
-msgstr ""
-
-#: custom/opm/health_status.py:112
-msgid "Growth Monitoring when 13-15 months old"
-msgstr ""
-
-#: custom/opm/health_status.py:113
-msgid ""
-"Registered Children (15 months old) who have attended at least one growth "
-"monitoring session between the age 13-15 months"
-msgstr ""
-
-#: custom/opm/health_status.py:117
-msgid "Growth Monitoring when 16-18 months old"
-msgstr ""
-
-#: custom/opm/health_status.py:118
-msgid ""
-"Registered Children (18 months old) who have attended at least one growth "
-"monitoring session between the age 16-18 months"
-msgstr ""
-
-#: custom/opm/health_status.py:122
-msgid "Growth Monitoring when 19-21 months old"
-msgstr ""
-
-#: custom/opm/health_status.py:123
-msgid ""
-"Registered Children (21 months old) who have attended at least one growth "
-"monitoring session between the age 19-21 months"
-msgstr ""
-
-#: custom/opm/health_status.py:127
-msgid "Growth Monitoring when 22-24 months old"
-msgstr ""
-
-#: custom/opm/health_status.py:128
-msgid ""
-"Registered Children (24 months old) who have attended at least one growth "
-"monitoring session between the age 22-24 months"
-msgstr ""
-
-#: custom/opm/health_status.py:132 custom/opm/health_status.py:133
-msgid "Incidence of diarrhea"
-msgstr ""
-
-#: custom/opm/health_status.py:136
-msgid "Received ORS and Zinc treatment for diarrhoea"
-msgstr ""
-
-#: custom/opm/health_status.py:137
-msgid ""
-"Registered children who received ORS and Zinc treatment if he/she contracts "
-"diarrhoea"
-msgstr ""
-
-#: custom/opm/health_status.py:140
-msgid "Exclusively breastfed for first 6 months"
-msgstr ""
-
-#: custom/opm/health_status.py:141
-msgid ""
-"Registered children (6 months old) who have been exclusively breastfed for "
-"first 6 months"
-msgstr ""
-
-#: custom/opm/health_status.py:144
-msgid "Received Measles vaccine"
-msgstr ""
-
-#: custom/opm/health_status.py:145
-msgid "Registered children (12 months old) who have received Measles vaccine"
-msgstr ""
-
-#: custom/opm/health_status.py:148
-msgid "VHND organised"
-msgstr ""
-
-#: custom/opm/health_status.py:149
-msgid "Whether VHND was organised at AWC for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:152
-msgid "Adult Weighing Machine Available"
-msgstr ""
-
-#: custom/opm/health_status.py:153
-msgid "Whether adult weighing machine was available for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:156
-msgid "Adult Weighing Machine Functional"
-msgstr ""
-
-#: custom/opm/health_status.py:157
-msgid "Whether adult weighing machine was functional for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:160
-msgid "Child Weighing Machine Available"
-msgstr ""
-
-#: custom/opm/health_status.py:161
-msgid "Whether child weighing machine was available for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:164
-msgid "Child Weighing Machine Functional"
-msgstr ""
-
-#: custom/opm/health_status.py:165
-msgid "Whether child weighing machine was functional for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:168
-msgid "ANM Present"
-msgstr ""
-
-#: custom/opm/health_status.py:169
-msgid "Whether ANM present at VHND for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:172
-msgid "ASHA Present"
-msgstr ""
-
-#: custom/opm/health_status.py:173
-msgid "Whether ASHA present at VHND for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:176
-msgid "CMG Present"
-msgstr ""
-
-#: custom/opm/health_status.py:177
-msgid "Whether CMG present at VHND for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:180
-#, fuzzy
-msgid "Stock of IFA tablets"
-msgstr "Balanço do Stock"
-
-#: custom/opm/health_status.py:181
-msgid "Whether AWC has enough stock of IFA tablets for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:184
-msgid "Stock of ORS packets"
-msgstr ""
-
-#: custom/opm/health_status.py:185
-msgid "Whether AWC has enough stock of ORS packets for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:188
-#, fuzzy
-msgid "Stock of ZINC tablets"
-msgstr "Balanço do Stock"
-
-#: custom/opm/health_status.py:189
-msgid "Whether AWC has enough stock of Zinc Tablets for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:192
-msgid "Stock of Measles Vaccine"
-msgstr ""
-
-#: custom/opm/health_status.py:193
-msgid "Whether AWC has enough stock of measles vaccine for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:196
-msgid "Eligilble for Birth Spacing bonus"
-msgstr ""
-
-#: custom/opm/health_status.py:197
-msgid "Registered beneficiaries eligible for birth spacing bonus for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:200
-msgid "Severely underweight"
-msgstr ""
-
-#: custom/opm/health_status.py:201
-msgid ""
-"Registered children severely underweight (very low weight for age) for the "
-"month"
-msgstr ""
-
-#: custom/opm/health_status.py:204
-msgid "Underweight"
-msgstr ""
-
-#: custom/opm/health_status.py:205
-msgid "Registered children underweight (low weight for age) for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:208
-msgid "Normal weight for age"
-msgstr ""
-
-#: custom/opm/health_status.py:209
-msgid "Registered children with normal weight for age for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:212
-msgid "Eligilble for Nutritional status bonus"
-msgstr ""
-
-#: custom/opm/health_status.py:213
-msgid ""
-"Registered beneficiaries eligible for nutritonal status bonus for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:216
-msgid "Pregnant women cases closed"
-msgstr ""
-
-#: custom/opm/health_status.py:217
-#, fuzzy
-msgid "Registered pregnant women cases closed for the month"
-msgstr "Casos IRA Tratados"
-
-#: custom/opm/health_status.py:220
-msgid "Mother cases closed"
-msgstr ""
-
-#: custom/opm/health_status.py:221
-msgid "Registered mother cases closed for the month"
-msgstr ""
-
-#: custom/opm/health_status.py:224
-msgid "Children cases closed"
-msgstr ""
-
-#: custom/opm/health_status.py:225
-msgid "Registered children cases closed for the month"
-msgstr ""
-
-#: custom/opm/reports.py:290 custom/opm/reports.py:291
-#: custom/opm/reports.py:560 custom/opm/reports.py:1195
-#, fuzzy
-msgid "Reporting period incomplete"
-msgstr "Manejo de Casos"
-
-#: custom/opm/reports.py:518
-msgid "Check for multiple pregnancies"
-msgstr ""
-
-#: custom/opm/reports.py:520
-msgid "Duplicate account number"
-msgstr ""
-
-#: custom/opm/reports.py:528
-#, fuzzy
-msgid "Conditions Met Report"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: custom/opm/reports.py:567
-msgid "Total Payment"
-msgstr ""
-
-#: custom/opm/templates/opm/beneficiary_report.html:36
-#: custom/opm/templates/opm/new_hsr_print.html:16
-msgid "Prepared and verified by:"
-msgstr ""
-
-#: custom/opm/templates/opm/beneficiary_report.html:37
-#: custom/opm/templates/opm/new_hsr_print.html:17
-msgid "Approved by:"
-msgstr ""
-
 #: custom/reports/mc/reports/definitions.py:7
 #: custom/reports/mc/reports/definitions.py:108
 #: custom/reports/mc/reports/definitions.py:150
@@ -41718,6 +40856,10 @@ msgstr ""
 msgid "Rancho Los Amigos"
 msgstr ""
 
+#: custom/up_nrhm/filters.py:38
+msgid "Hierarchy"
+msgstr ""
+
 #: custom/up_nrhm/filters.py:109
 #, fuzzy
 msgid "Report type"
@@ -42116,6 +41258,154 @@ msgid ""
 "An error occurred while trying to connect to the CloudCare service. If you "
 "have problems filling in the rest of your form please report an issue."
 msgstr ""
+
+#, fuzzy
+#~ msgid "AWC Name"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#, fuzzy
+#~ msgid "AWC Code"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#, fuzzy
+#~ msgid "Condition 1"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#, fuzzy
+#~ msgid "Condition 2"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#, fuzzy
+#~ msgid "Condition 3"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#, fuzzy
+#~ msgid "Condition 4"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#, fuzzy
+#~ msgid "Condition 5"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#, fuzzy
+#~ msgid "Payment amount this month (Rs.)"
+#~ msgstr "Casos IRA Tratados"
+
+#, fuzzy
+#~ msgid "Payment amount last month (Rs.)"
+#~ msgstr "Casos IRA Tratados"
+
+#, fuzzy
+#~ msgid "Cash received last month"
+#~ msgstr "Casos IRA Tratados"
+
+#, fuzzy
+#~ msgid "Bank Name"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#, fuzzy
+#~ msgid "Village Name"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#, fuzzy
+#~ msgid "Payment last month"
+#~ msgstr "Casos IRA Tratados"
+
+#, fuzzy
+#~ msgid "Village name"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#, fuzzy
+#~ msgid "Mother's Age"
+#~ msgstr "Outros (negativos / indeterminados) "
+
+#, fuzzy
+#~ msgid "Caste tribe status"
+#~ msgstr "Diagnóstico de Casos"
+
+#, fuzzy
+#~ msgid "Lmp Date"
+#~ msgstr "Casos IRA Tratados"
+
+#, fuzzy
+#~ msgid "Pregnancy month"
+#~ msgstr "Casos IRA Tratados"
+
+#, fuzzy
+#~ msgid "Child 1 Age"
+#~ msgstr "Crianças (2 - 59 meses)"
+
+#, fuzzy
+#~ msgid "Child 1 Name"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#, fuzzy
+#~ msgid "Child 1 Sex"
+#~ msgstr "Crianças (2 - 59 meses)"
+
+#, fuzzy
+#~ msgid "Child 2 Age"
+#~ msgstr "Crianças (2 - 59 meses)"
+
+#, fuzzy
+#~ msgid "Child 2 Name"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#, fuzzy
+#~ msgid "Child 2 Sex"
+#~ msgstr "Crianças (2 - 59 meses)"
+
+#, fuzzy
+#~ msgid "Child 3 Age"
+#~ msgstr "Crianças (2 - 59 meses)"
+
+#, fuzzy
+#~ msgid "Child 3 Name"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#, fuzzy
+#~ msgid "Child 3 Sex"
+#~ msgstr "Crianças (2 - 59 meses)"
+
+#, fuzzy
+#~ msgid "Payment amount for the month"
+#~ msgstr "Casos IRA Tratados"
+
+#, fuzzy
+#~ msgid "Closed on"
+#~ msgstr "Casos IRA Tratados"
+
+#, fuzzy
+#~ msgid "Leave program"
+#~ msgstr "Manejo de Casos"
+
+#, fuzzy
+#~ msgid "Calendar month"
+#~ msgstr "Casos IRA Tratados"
+
+#, fuzzy
+#~ msgid "Registered children"
+#~ msgstr "Crianças (2 - 59 meses)"
+
+#, fuzzy
+#~ msgid "Stock of IFA tablets"
+#~ msgstr "Balanço do Stock"
+
+#, fuzzy
+#~ msgid "Stock of ZINC tablets"
+#~ msgstr "Balanço do Stock"
+
+#, fuzzy
+#~ msgid "Registered pregnant women cases closed for the month"
+#~ msgstr "Casos IRA Tratados"
+
+#, fuzzy
+#~ msgid "Reporting period incomplete"
+#~ msgstr "Manejo de Casos"
+
+#, fuzzy
+#~ msgid "Conditions Met Report"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #, fuzzy
 #~ msgid "App Preview"
