@@ -56,9 +56,9 @@ class CaseProcessingResult(object):
 
     def close_extensions(self, case_db):
         from casexml.apps.case.cleanup import close_cases
-        extensions_to_close = list(self.extensions_to_close)
+        extensions_to_close = case_db.filter_closed_extensions(list(self.extensions_to_close))
         if extensions_to_close:
-            return close_cases(list(self.extensions_to_close), self.domain, SYSTEM_USER_ID, case_db)
+            return close_cases(extensions_to_close, self.domain, SYSTEM_USER_ID, case_db)
 
     def commit_dirtiness_flags(self):
         """
