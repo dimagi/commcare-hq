@@ -232,7 +232,6 @@ def get_location_filter(location, domain, config):
         try:
             sql_location = SQLLocation.objects.get(location_id=location, domain=domain)
             aggregation_level = sql_location.get_ancestors(include_self=True).count() + 1
-            location_code = sql_location.site_code
             if sql_location.location_type.code != LocationTypes.AWC:
                 loc_level = LocationType.objects.filter(
                     parent_type=sql_location.location_type,
@@ -240,9 +239,9 @@ def get_location_filter(location, domain, config):
                 )[0].code
             else:
                 loc_level = LocationTypes.AWC
-            location_key = '%s_site_code' % sql_location.location_type.code
+            location_key = '%s_id' % sql_location.location_type.code
             config.update({
-                location_key: location_code,
+                location_key: sql_location.location_id,
                 'aggregation_level': aggregation_level
             })
         except SQLLocation.DoesNotExist:
@@ -1701,10 +1700,10 @@ def get_awc_report_demographics(config, month):
     }
 
 
-def get_awc_report_beneficiary(awc_site_code, month, two_before):
+def get_awc_report_beneficiary(awc_id, month, two_before):
     data = ChildHealthMonthlyView.objects.filter(
         month__range=(datetime(*two_before), datetime(*month)),
-        awc_site_code="awc_site_code",
+        awc_id=awc_id,
         open_in_month=1,
         valid_in_month=1,
         age_in_months__lte=72
