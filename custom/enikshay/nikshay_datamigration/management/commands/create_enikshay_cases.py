@@ -28,6 +28,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument('migration_comment')
         parser.add_argument(
             '--start',
             dest='start',
@@ -66,7 +67,7 @@ class Command(BaseCommand):
         )
 
     @mock_ownership_cleanliness_checks()
-    def handle(self, domain, **options):
+    def handle(self, domain, migration_comment, **options):
         if not settings.UNIT_TESTING:
             raise CommandError('must migrate case data from phone_number to contact_phone_number before running')
 
@@ -116,7 +117,7 @@ class Command(BaseCommand):
             counter += 1
             try:
                 case_factory = EnikshayCaseFactory(
-                    domain, patient_detail, nikshay_codes_to_location, test_phi
+                    domain, migration_comment, patient_detail, nikshay_codes_to_location, test_phi
                 )
                 case_structures.extend(case_factory.get_case_structures_to_create())
             except MatchingNikshayIdCaseNotMigrated:

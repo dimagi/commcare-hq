@@ -51,8 +51,9 @@ class EnikshayCaseFactory(object):
     domain = None
     patient_detail = None
 
-    def __init__(self, domain, patient_detail, nikshay_codes_to_location, test_phi=None):
+    def __init__(self, domain, migration_comment, patient_detail, nikshay_codes_to_location, test_phi=None):
         self.domain = domain
+        self.migration_comment = migration_comment
         self.patient_detail = patient_detail
         self.case_accessor = CaseAccessors(domain)
         self.nikshay_codes_to_location = nikshay_codes_to_location
@@ -172,6 +173,7 @@ class EnikshayCaseFactory(object):
                     'secondary_contact_phone_number': validate_phone_number(self.patient_detail.cmob),
                     'sex': self.patient_detail.sex,
 
+                    'migration_comment': self.migration_comment,
                     'migration_created_case': 'true',
                     'migration_created_from_record': self.patient_detail.PregId,
                 },
@@ -229,6 +231,7 @@ class EnikshayCaseFactory(object):
                     'occurrence_episode_count': 1,
                     'occurrence_id': get_human_friendly_id(),
 
+                    'migration_comment': self.migration_comment,
                     'migration_created_case': 'true',
                     'migration_created_from_record': self.patient_detail.PregId,
                 },
@@ -299,6 +302,7 @@ class EnikshayCaseFactory(object):
                     'treatment_supporter_last_name': self.patient_detail.treatment_supporter_last_name,
                     'treatment_supporter_mobile_number': validate_phone_number(self.patient_detail.dotmob),
 
+                    'migration_comment': self.migration_comment,
                     'migration_created_case': 'true',
                     'migration_created_from_record': self.patient_detail.PregId,
                 },
@@ -337,6 +341,7 @@ class EnikshayCaseFactory(object):
                 'update': {
                     'name': self.patient_detail.pname,
 
+                    'migration_comment': self.migration_comment,
                     'migration_created_case': 'true',
                     'migration_created_from_record': self.patient_detail.PregId,
                 }
@@ -372,6 +377,7 @@ class EnikshayCaseFactory(object):
                     'result_recorded': 'yes',
                     'testing_facility_id': followup.DMC,
 
+                    'migration_comment': self.migration_comment,
                     'migration_created_case': 'true',
                     'migration_created_from_id': followup.id,
                     'migration_created_from_record': self.patient_detail.PregId,
