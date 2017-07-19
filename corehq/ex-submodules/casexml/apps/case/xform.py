@@ -302,7 +302,7 @@ def get_all_extensions_to_close(domain, case_updates):
 
 def get_extensions_to_close(case, domain):
     if case.closed and EXTENSION_CASES_SYNC_ENABLED.enabled(domain):
-        return CaseAccessors(domain).get_extension_chain([case.case_id])
+        return CaseAccessors(domain).get_extension_chain([case.case_id], include_closed=False)
     else:
         return set()
 

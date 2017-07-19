@@ -976,16 +976,24 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.case_id for result in results]
 
     @staticmethod
-    def get_extension_case_ids(domain, case_ids):
+    def get_extension_case_ids(domain, case_ids, include_closed=True):
         """
         Given a base list of case ids, get all ids of all extension cases that reference them
         """
         if not case_ids:
             return []
-        with get_cursor(CommCareCaseIndexSQL) as cursor:
-            cursor.execute('SELECT case_id FROM get_extension_case_ids(%s, %s)', [domain, list(case_ids)])
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
+
+        extension_case_ids = set()
+        for db_name in get_sql_db_aliases_in_use():
+            query = CommCareCaseIndexSQL.objects.using(db_name).filter(
+                domain=domain,
+                relationship_id=CommCareCaseIndexSQL.EXTENSION,
+                case__deleted=False,
+                referenced_id__in=case_ids)
+            if not include_closed:
+                query = query.filter(case__closed=False)
+            extension_case_ids.update(query.values_list('case_id', flat=True))
+        return list(extension_case_ids)
 
     @staticmethod
     def get_last_modified_dates(domain, case_ids):
