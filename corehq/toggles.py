@@ -53,7 +53,7 @@ class StaticToggle(object):
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None, always_enabled=None,
                  always_disabled=None, enabled_for_new_domains_after=None,
-                 enabled_for_new_users_after=None):
+                 enabled_for_new_users_after=None, force_enable=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -67,12 +67,15 @@ class StaticToggle(object):
         self.always_disabled = always_disabled or set()
         self.enabled_for_new_domains_after = enabled_for_new_domains_after
         self.enabled_for_new_users_after = enabled_for_new_users_after
+        self.force_enable = force_enable
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
             self.namespaces = [None]
 
     def enabled(self, item, namespace=Ellipsis):
+        if self.force_enable:
+            return True
         if item in self.always_enabled:
             return True
         elif item in self.always_disabled:
@@ -1081,12 +1084,12 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-APP_MANAGER_V2 = PredictablyRandomToggle(
+APP_MANAGER_V2 = StaticToggle(
     'app_manager_v2',
     'Prototype for case management onboarding (App Manager V2)',
     TAG_PRODUCT_PATH,
     [NAMESPACE_USER],
-    randomness=1.0,
+    force_enable=True
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
