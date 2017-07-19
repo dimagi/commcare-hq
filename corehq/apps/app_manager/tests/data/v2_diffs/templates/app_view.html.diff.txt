@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,206 +1,71 @@
+@@ -1,206 +1,73 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -64,6 +64,7 @@
 +      <script src="{% static 'app_manager/js/app_view_application.js' %}"></script>
 +      <script src="{% static 'translations/js/translations.js' %}"></script>
 +  {% endif %}
++  <script src="{% static 'app_manager/js/add_ons.js' %}"></script>
 +{% endblock js %}
 +
 +{% block pre_form_content %}
@@ -246,6 +247,7 @@
 -            </form>
 -        </div>
 -    </div>
++  {% registerurl "edit_add_ons" domain app.id %}
 +  <div class="appmanager-tabs-container">
 +  {% block app_view_tabs %}{% endblock app_view_tabs %}
 +  </div>
