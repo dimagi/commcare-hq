@@ -22,7 +22,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
     @patch('custom.enikshay.nikshay_datamigration.factory.datetime')
     def test_case_creation(self, mock_datetime):
         mock_datetime.utcnow.return_value = datetime(2016, 9, 8, 1, 2, 3, 4123)
-        call_command('create_enikshay_cases', self.domain)
+        call_command('create_enikshay_cases', self.domain, 'test_migration')
 
         person_case_ids = self.case_accessor.get_case_ids_in_domain(type='person')
         self.assertEqual(1, len(person_case_ids))
@@ -44,6 +44,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
                 ('hiv_status', 'non_reactive'),
                 ('is_active', 'yes'),
                 ('last_name', 'C'),
+                ('migration_comment', 'test_migration'),
                 ('migration_created_case', 'true'),
                 ('migration_created_from_record', 'MH-ABD-05-16-0001'),
                 ('person_id', 'NIK-MH-ABD-05-16-0001'),
@@ -71,6 +72,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
                 ('current_episode_type', 'confirmed_tb'),
                 ('ihv_date', '2016-12-25'),
                 ('initial_home_visit_status', 'completed'),
+                ('migration_comment', 'test_migration'),
                 ('migration_created_case', 'true'),
                 ('migration_created_from_record', 'MH-ABD-05-16-0001'),
                 ('occurrence_episode_count', '1'),
@@ -108,6 +110,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
                 ('episode_id', '20160908010203004'),
                 ('episode_pending_registration', 'no'),
                 ('episode_type', 'confirmed_tb'),
+                ('migration_comment', 'test_migration'),
                 ('migration_created_case', 'true'),
                 ('migration_created_from_record', 'MH-ABD-05-16-0001'),
                 ('nikshay_id', 'MH-ABD-05-16-0001'),
@@ -165,6 +168,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         self.assertEqual(self.drtb_hiv.location_id, drtb_hiv_referral_case.owner_id)
         self.assertEqual(
             OrderedDict([
+                ('migration_comment', 'test_migration'),
                 ('migration_created_case', 'true'),
                 ('migration_created_from_record', 'MH-ABD-05-16-0001'),
             ]),
@@ -350,6 +354,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
             ('diagnostic_test_reason', 'presumptive_tb'),
             ('episode_type_at_request', 'presumptive_tb'),
             ('lab_serial_number', '2073'),
+            ('migration_comment', 'test_migration'),
             ('migration_created_case', 'true'),
             ('migration_created_from_id', str(followup.id)),
             ('migration_created_from_record', self.patient_detail.PregId),
@@ -397,6 +402,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
             ('episode_type_at_request', 'confirmed_tb'),
             ('follow_up_test_reason', 'end_of_ip'),
             ('lab_serial_number', '2073'),
+            ('migration_comment', 'test_migration'),
             ('migration_created_case', 'true'),
             ('migration_created_from_id', str(followup.id)),
             ('migration_created_from_record', self.patient_detail.PregId),
@@ -444,6 +450,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
             ('episode_type_at_request', 'confirmed_tb'),
             ('follow_up_test_reason', 'end_of_cp'),
             ('lab_serial_number', '2073'),
+            ('migration_comment', 'test_migration'),
             ('migration_created_case', 'true'),
             ('migration_created_from_id', str(followup.id)),
             ('migration_created_from_record', self.patient_detail.PregId),
