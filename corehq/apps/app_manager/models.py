@@ -6024,6 +6024,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         except IndexError:
             raise RearrangeError()
         if to_module.case_type != from_module.case_type and not app_manager_v2:
+            # TODO: deprecate this exception when removing APP_MANAGER_V2 flag
             raise ConflictingCaseTypeError()
 
     def scrub_source(self, source):
@@ -6032,8 +6033,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def copy_form(self, module_id, form_id, to_module_id):
         """
         The case type of the two modules conflict,
-        ConflictingCaseTypeError is raised,
-        but the copying (confusingly) goes through anyway.
+        copying (confusingly) is still allowed.
         This is intentional.
 
         """
@@ -6043,9 +6043,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return self._copy_form(from_module, form, to_module, rename=True)
 
     def _copy_form(self, from_module, form, to_module, *args, **kwargs):
-        if from_module['case_type'] != to_module['case_type']:
-            raise ConflictingCaseTypeError()
-
         copy_source = deepcopy(form.to_json())
         if 'unique_id' in copy_source:
             del copy_source['unique_id']
@@ -6057,6 +6054,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         save_xform(self, copy_form, form.source)
+
         return copy_form
 
     @cached_property
