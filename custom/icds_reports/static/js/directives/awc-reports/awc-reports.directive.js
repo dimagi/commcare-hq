@@ -901,6 +901,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         }
     };
 
+    $scope.$on('filtersChange', function() {
+        vm.getDataForStep(vm.step);
+    });
+
     vm.getPopoverContent = function (data, type) {
         var html = '';
         if (type === 'weight' || type === 'both') {
@@ -1108,8 +1112,6 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             $location.search('location_name', loc.name);
         }
     };
-
-
 
     vm.layers = {
         baselayers: {

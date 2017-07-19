@@ -103,7 +103,7 @@ function IndieMapController($scope, $compile, $location, storageService) {
         };
         vm.updateMap = function (geography) {
             $location.search('location_name', geography.id);
-            storageService.set($location.search());
+            storageService.setKey('search', $location.search());
             $scope.$apply();
         };
 

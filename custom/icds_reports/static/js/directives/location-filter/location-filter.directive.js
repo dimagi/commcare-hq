@@ -91,6 +91,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
     vm.hierarchy = [];
     vm.currentLevel = 0;
     vm.maxLevel = 0;
+    vm.location_id = $location.search()['location_id'] || vm.selectedLocationId;
 
     var ALL_OPTION = {name: 'All', location_id: 'all'};
 
@@ -211,8 +212,8 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
             controller: LocationModalController,
             controllerAs: '$ctrl',
             resolve: {
-                location: function () {
-                    return vm.location;
+                location_id: function () {
+                    return vm.location_id;
                 },
                 selectedLocationId: function () {
                     return vm.selectedLocationId;
@@ -240,7 +241,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
 
             if (selectedLocationIndex() >= 0) {
                 vm.selectedLocationId = vm.selectedLocation.location_id;
-                vm.location = vm.selectedLocationId;
+                vm.location_id = vm.selectedLocationId;
                 var locations = vm.getLocationsForLevel(selectedLocationIndex());
                 var loc = _.filter(locations, function (loc) {
                     return loc.location_id === vm.selectedLocationId;
@@ -252,7 +253,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
                 $location.search('location_name', '');
                 $location.search('location_id', '');
                 $location.search('selectedLocationLevel', '');
-                vm.location = 'all';
+                vm.location_id = 'all';
             }
             storageService.setKey('search', $location.search());
             if (selectedLocationIndex() === 4) {
@@ -290,12 +291,10 @@ window.angular.module('icdsApp').directive("locationFilter", function() {
     return {
         restrict:'E',
         scope: {
-            location_id: '=',
             selectedLocationId: '=',
             selectedLocations: '=',
         },
         bindToController: true,
-        require: 'ngModel',
         templateUrl: url('icds-ng-template', 'location_filter'),
         controller: LocationFilterController,
         controllerAs: "$ctrl",
