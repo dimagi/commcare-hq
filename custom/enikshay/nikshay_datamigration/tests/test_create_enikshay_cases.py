@@ -10,6 +10,8 @@ from casexml.apps.case.const import ARCHIVED_CASE_OWNER_ID
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 
+from custom.enikshay.nikshay_datamigration.exceptions import MatchingNikshayIdCaseNotMigrated
+from custom.enikshay.nikshay_datamigration.factory import EnikshayCaseFactory
 from custom.enikshay.nikshay_datamigration.models import Followup
 from custom.enikshay.nikshay_datamigration.tests.utils import NikshayMigrationMixin, ORIGINAL_PERSON_NAME
 
@@ -207,6 +209,15 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
         self.assertEqual(1, len(drtb_hiv_referral_case_ids))
         drtb_hiv_referral_case = self.case_accessor.get_case(drtb_hiv_referral_case_ids[0])
         self.assertEqual(drtb_hiv_referral_case.name, new_pname)
+
+    def test_matching_case_not_migrated(self):
+        call_command('create_enikshay_cases', self.domain)
+        episode_case_ids = self.case_accessor.get_case_ids_in_domain(type='episode')
+        CaseFactory(self.domain).update_case(episode_case_ids[0], update={'migration_created_case': ''})
+        with self.assertRaises(MatchingNikshayIdCaseNotMigrated):
+            EnikshayCaseFactory(
+                self.domain, self.patient_detail, {}, 'test_phi'
+            ).get_case_structures_to_create()
 
     def test_location_not_found(self):
         self.phi.delete()
