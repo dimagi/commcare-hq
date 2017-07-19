@@ -133,7 +133,7 @@ class Command(BaseCommand):
                     logger.info('person case exists')
                 else:
                     num_missing_person_case += 1
-                    logger.info('person case is missing')
+                    logger.info('person case is missing for %s' % patient_detail.PregId)
             except Exception:
                 num_failed += 1
                 logger.error(

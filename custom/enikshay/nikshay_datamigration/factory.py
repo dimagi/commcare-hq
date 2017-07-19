@@ -65,7 +65,18 @@ class EnikshayCaseFactory(object):
 
     @property
     @memoized
-    def existing_episode_case(self):
+    def existing_migrated_episode_case(self):
+        if (
+            self._existing_episode_case and
+            self._existing_episode_case.dynamic_case_properties().get('migration_created_case') != 'true'
+        ):
+            raise MatchingNikshayIdCaseNotMigrated
+        return self._existing_episode_case
+
+
+    @property
+    @memoized
+    def _existing_episode_case(self):
         """
         Get the existing episode case for this nikshay ID, or None if no episode case exists
         """
@@ -74,9 +85,6 @@ class EnikshayCaseFactory(object):
         )
         if matching_external_ids:
             assert len(matching_external_ids) == 1
-            existing_episode = matching_external_ids[0]
-            if existing_episode.dynamic_case_properties().get('migration_created_case') != 'true':
-                raise MatchingNikshayIdCaseNotMigrated
             return matching_external_ids[0]
         return None
 
@@ -86,10 +94,10 @@ class EnikshayCaseFactory(object):
         """
         Get the existing occurrence case for this nikshay ID, or None if no occurrence case exists
         """
-        if self.existing_episode_case:
+        if self._existing_episode_case:
             try:
                 return get_first_parent_of_case(
-                    self.domain, self.existing_episode_case.case_id, OCCURRENCE_CASE_TYPE
+                    self.domain, self._existing_episode_case.case_id, OCCURRENCE_CASE_TYPE
                 )
             except ENikshayCaseNotFound:
                 return None
@@ -114,10 +122,10 @@ class EnikshayCaseFactory(object):
         """
         Get the existing episode case for this nikshay ID, or None if no episode case exists
         """
-        if self.existing_episode_case:
+        if self._existing_episode_case:
             try:
                 return get_open_drtb_hiv_case_from_episode(
-                    self.domain, self.existing_episode_case.case_id
+                    self.domain, self._existing_episode_case.case_id
                 )
             except ENikshayCaseNotFound:
                 return None
@@ -325,8 +333,8 @@ class EnikshayCaseFactory(object):
             if self._outcome.is_treatment_ended:
                 kwargs['attrs']['close'] = True
 
-        if self.existing_episode_case:
-            kwargs['case_id'] = self.existing_episode_case.case_id
+        if self.existing_migrated_episode_case:
+            kwargs['case_id'] = self.existing_migrated_episode_case.case_id
             kwargs['attrs']['create'] = False
         else:
             kwargs['attrs']['create'] = True
