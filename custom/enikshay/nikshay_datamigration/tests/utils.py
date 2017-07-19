@@ -35,7 +35,7 @@ class NikshayMigrationMixin(ENikshayLocationStructureMixin):
             dotpType=1,
             PHI=2,
             atbtreatment='',
-            Ptype=4,
+            Ptype='4',
             pcategory='1',
             cvisitedDate1='2016-12-25 00:00:00.000',
             InitiationDate1='2016-12-22 16:06:47.726',
