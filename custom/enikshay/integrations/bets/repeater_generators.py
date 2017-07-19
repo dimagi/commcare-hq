@@ -346,7 +346,10 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
                    "one threshold to trigger. Episode case: {}".format(episode_case.case_id))
         _assert(len(thresholds_to_send) == 1, message)
 
-        return thresholds_to_send[0]
+        try:
+            return thresholds_to_send[0]
+        except IndexError:
+            return 0
 
     def get_payload(self, repeat_record, episode_case):
         n = self._get_prescription_threshold_to_send(episode_case)
