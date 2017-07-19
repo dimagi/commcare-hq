@@ -434,8 +434,12 @@ def get_occurrence_case_properties(column_mapping, row):
         "initial_home_visit_status":
             "completed" if column_mapping.get_value("initial_home_visit_date", row) else None,
         "drtb_type": clean_drtb_type(column_mapping.get_value("drtb_type", row)),
+
+        'name': 'Occurrence #1',
+        'occurrence_episode_count': 1,
     }
     properties.update(get_disease_site_properties(column_mapping, row))
+
     return properties
 
 
@@ -476,7 +480,7 @@ def get_episode_case_properties(domain, column_mapping, row):
         "treatment_outcome_date": clean_date(column_mapping.get_value("date_of_treatment_outcome", row)),
         "weight": column_mapping.get_value("weight", row),
         "weight_band": clean_weight_band(column_mapping.get_value("weight_band", row)),
-        "height": column_mapping.get_value("height", row),  # TODO: Do I need to clean this?
+        "height": clean_height(column_mapping.get_value("height", row)),
         "diagnosis_test_specimen_date": clean_date(column_mapping.get_value("cbnaat_sample_date", row))
     }
 
@@ -607,7 +611,7 @@ def get_cbnaat_resistance(column_mapping, row):
 def clean_mumbai_test_resistance_value(value):
     if value is None:
         return None
-    if value.startswith("R ") or value == "R":
+    if value.startswith("R ") or value in ("R", "R\n R", "RR"):
         resistant = True
     elif value == "S":
         resistant = False
@@ -653,7 +657,7 @@ def get_test_case_properties(domain, column_mapping, row, treatment_initiation_d
     elif column_mapping.get_value("testing_facility", row):
         test_cases.append(get_mehsana_test_case_properties(domain, column_mapping, row))
 
-    if column_mapping.get_value("lpa_rif_result") or column_mapping.get_value("lpa_inh_result"):
+    if column_mapping.get_value("lpa_rif_result", row) or column_mapping.get_value("lpa_inh_result", row):
         test_cases.append(get_lpa_test_case_properties(domain, column_mapping, row))
     if column_mapping.get_value("sl_lpa_result", row):
         test_cases.append(get_sl_lpa_test_case_properties(domain, column_mapping, row))
@@ -789,13 +793,14 @@ def get_drug_resistances_from_individual_drug_columns(column_mapping, row):
     case_properties = []
     for drug_column_key, drug_id in DRUG_MAP.iteritems():
         value = column_mapping.get_value(drug_column_key, row)
-        properties = {
-            "name": drug_id,
-            "owner_id": "-",
-            "sensitivity": convert_sensitivity(value),
-            "drug_id": drug_id,
-        }
-        case_properties.append(properties)
+        if value:
+            properties = {
+                "name": drug_id,
+                "owner_id": "-",
+                "sensitivity": convert_sensitivity(value),
+                "drug_id": drug_id,
+            }
+            case_properties.append(properties)
     return case_properties
 
 
@@ -828,7 +833,10 @@ def convert_treatment_status(status_in_xlsx):
 
 
 def get_drug_resistances_from_mehsana_drug_resistance_list(column_mapping, row):
-    drugs = get_mehsana_resistance_properties(column_mapping, row).get("drug_resistance_list", "").split(" ")
+
+    drugs = get_mehsana_resistance_properties(column_mapping, row).get("drug_resistance_list", [])
+    if drugs:
+        drugs = drugs.split(" ")
     case_properties = []
     for drug in drugs:
         properties = {
@@ -957,16 +965,25 @@ def get_secondary_owner_case_properties(city_constants):
 
 
 def clean_diabetes_status(xlsx_value):
+    if xlsx_value is None:
+        return "unknown"
     return {
-        "No": "non_diabetic",
-        "Yes": "diabetic",
-        None: "unknown",
-    }[xlsx_value]
+        "no": "non_diabetic",
+        "yes": "diabetic",
+    }[xlsx_value.lower()]
 
 
 def clean_weight_band(value):
     pass
     # TODO: Finish me
+
+
+def clean_height(value):
+    if value is None:
+        return None
+    if re.match("[0-9]*", str(value)):
+        return value
+    raise Exception("Invalid height: {}".format(value))
 
 
 def clean_phone_number(value, digits):
@@ -977,7 +994,16 @@ def clean_phone_number(value, digits):
         return None
     assert digits in (10, 12)
     exception = Exception("Unexpected phone number format: {}".format(value))
-    cleaned = re.sub('[^0-9]', '', value)
+
+    # TODO: (ASK) ask sheel what to do if there are two numbers
+    try:
+        values = value.split("/")
+        value = values[0]
+    except AttributeError:
+        # This exception will be raised if value is an int.
+        pass
+
+    cleaned = re.sub('[^0-9]', '', str(value))
     if len(cleaned) == 12 and cleaned[:2] == "91":
         if digits == 12:
             return cleaned
@@ -992,18 +1018,28 @@ def clean_phone_number(value, digits):
         raise exception
 
 
+def _starts_with_any(value, strings):
+    for s in strings:
+        if value.startswith(s):
+            return True
+    return False
+
+
 def clean_hiv_status(value):
     NON_REACTIVE = "non_reactive"
     REACTIVE = "reactive"
     if not value:
         return None
-    if value.startswith("Non Reactive") or value.startswith("NR") or value.startswith("Nr"):
+    if _starts_with_any(value, ["Non Reactive", "NR", "Nr", "NON REACTIVE"]):
         return NON_REACTIVE
-    if value.startswith("R ") or value.startswith("Reactive") or value.startswith("Ractive"):
+    if _starts_with_any(value, ["R ", "Reactive", "Ractive"]) or value == "R":
         return REACTIVE
     return {
-        "Pos": REACTIVE,  # TODO: (WAITING) is this right?
-        "Positive": REACTIVE,  # TODO: (WAITING) is this right?
+        # TODO: (WAITING) Have we mapped pos/neg to reactive/non-reactive correctly?
+        "Pos": REACTIVE,
+        "Positive": REACTIVE,
+        "Negative": NON_REACTIVE,
+        "Neg": NON_REACTIVE,
     }[value]
 
 
@@ -1013,13 +1049,16 @@ def clean_result(value):
         "conta": NO_RESULT,
         "Conta": NO_RESULT,
         "CONTA": NO_RESULT,
+        "Contaminated": NO_RESULT,
         "NA": NO_RESULT,
         "Neg": NO_RESULT,
         "NEG": NOT_DETECTED,
         "Negative": NOT_DETECTED,
+        "Negetive": NOT_DETECTED,
         "negative": NOT_DETECTED,
         "pos": DETECTED,
         "Positive": DETECTED,
+        "QNS": NO_RESULT,  # TODO: (WAITING) what should this really be?
     }[value]
 
 
@@ -1146,6 +1185,11 @@ class Command(BaseCommand):
                 if i == 0:
                     # Skip the headers row
                     continue
+
+                row_contains_data = any(cell.value for cell in row)
+                if not row_contains_data:
+                    continue
+
                 try:
                     case_structures = get_case_structures_from_row(
                         domain, migration_id, column_mapping, city_constants, row
@@ -1183,6 +1227,6 @@ class Command(BaseCommand):
         if format in (cls.MEHSANA_2016, cls.MEHSANA_2017):
             return MehsanaConstants
         elif format == cls.MUMBAI:
-            return MumbaiColumnMapping
+            return MumbaiConstants
         else:
             raise Exception("Invalid format. Options are: {}.".format(", ".join(cls.FORMATS)))
