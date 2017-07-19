@@ -21,7 +21,7 @@ hqDefine("reports/js/filters.js", function() {
                 var $firstChild = $el.children().first();
                 $firstChild.addClass('btn-success');
                 $('#'+$firstChild.data("checkfilter")).prop("checked", true);
-                if ($(this).data("checkfilter") != $firstChild.data("checkfilter")) {
+                if ($(this).data("checkfilter") !== $firstChild.data("checkfilter")) {
                     $firstChild.removeClass('active');
                 } else {
                     return false;
@@ -44,7 +44,7 @@ hqDefine("reports/js/filters.js", function() {
                     $filterRange.data('startDate'),
                     $filterRange.data('endDate')
                 );
-                $filterRange.on('change apply', function(ev) {
+                $filterRange.on('change apply', function() {
                     var dates = $(this).val().split(separator);
                     $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.startdate', dates[0]);
                     $('#report_filter_datespan_startdate').val(dates[0]);
