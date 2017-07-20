@@ -46,7 +46,7 @@ function LocationModalController($uibModalInstance, locationsService, selectedLo
         }
         var i = -1;
         window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key.location_id === userLocationId) {
+            if (key !== null && key.location_id === userLocationId) {
                 i = value;
             }
         });
@@ -65,6 +65,23 @@ function LocationModalController($uibModalInstance, locationsService, selectedLo
     vm.apply = function() {
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
         $uibModalInstance.close(vm.selectedLocations);
+    };
+
+    vm.reset = function() {
+        if (userLocationId !== null) {
+            var i = -1;
+            window.angular.forEach(vm.selectedLocations, function (key, value) {
+                if (key !== null && key.location_id === userLocationId) {
+                    i = value;
+                }
+            });
+            vm.selectedLocations = vm.selectedLocations.slice(0, i + 1);
+            vm.selectedLocations.push(ALL_OPTION);
+            vm.selectedLocationId = userLocationId;
+        } else {
+            vm.selectedLocations = [ALL_OPTION];
+            vm.selectedLocationId = null;
+        }
     };
 
     vm.close = function () {
