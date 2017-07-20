@@ -103,7 +103,7 @@ class TestCreateEnikshayCases(NikshayMigrationMixin, TestCase):
             OrderedDict([
                 ('adherence_schedule_date_start', '2016-12-22'),
                 ('adherence_schedule_id', 'schedule_mwf'),
-                ('date_of_diagnosis', '2016-12-13'),
+                ('date_of_diagnosis', '2016-12-22'),
                 ('date_of_mo_signature', '2016-12-23'),
                 ('disease_classification', 'extra_pulmonary'),
                 ('dots_99_enabled', 'false'),
