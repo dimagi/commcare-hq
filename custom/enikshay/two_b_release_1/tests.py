@@ -73,7 +73,7 @@ class TestCreateEnikshayCases(TestCase):
             CaseStructure(case_id=referral.case_id, attrs={"create": False}),
             identifier='parent',
             relationship=CASE_INDEX_CHILD,
-            related_type='occurrence',
+            related_type='referral',
         )]
         return trail
 
@@ -81,9 +81,15 @@ class TestCreateEnikshayCases(TestCase):
         migrator = ENikshay2BMigrator(self.domain, self.locations['DTO'], commit=True)
         # first check some utils
         person_case_ids = migrator.get_relevant_person_case_ids()
-        person_cases = list(migrator.get_relevant_person_cases(person_case_ids))
-        self.assertEqual(len(person_cases), 1)
-        self.assertEqual('roland-deschain', person_cases[0].case_id)
+        person_case_sets = list(migrator.get_relevant_person_case_sets(person_case_ids))
+        self.assertEqual(1, len(person_case_sets))
+        person = person_case_sets[0]
+        self.assertEqual('roland-deschain', person.person.case_id)
+        self.assertItemsEqual(['roland-deschain-occurrence'], [c.case_id for c in person.occurrences])
+        self.assertItemsEqual(['roland-deschain-occurrence-episode'], [c.case_id for c in person.episodes])
+        self.assertItemsEqual(['roland-deschain-occurrence-test'], [c.case_id for c in person.tests])
+        self.assertItemsEqual(['roland-deschain-referral'], [c.case_id for c in person.referrals])
+        self.assertItemsEqual(['roland-deschain-referral-trail'], [c.case_id for c in person.trails])
 
         # run the actual migration
 
