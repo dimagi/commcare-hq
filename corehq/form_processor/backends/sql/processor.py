@@ -1,6 +1,7 @@
 import datetime
 import logging
 import uuid
+from contextlib2 import ExitStack
 
 import redis
 from PIL import Image
@@ -74,18 +75,37 @@ class FormProcessorSQL(object):
 
     @classmethod
     def save_processed_models(cls, processed_forms, cases=None, stock_result=None, publish_to_kafka=True):
-        # Save deprecated form first to avoid ID conflicts
-        if processed_forms.deprecated:
-            FormAccessorSQL.save_deprecated_form(processed_forms.deprecated)
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 
-        FormAccessorSQL.save_new_form(processed_forms.submitted)
+        db_names = {get_db_alias_for_partitioned_doc(processed_forms.submitted.form_id)}
+        if processed_forms.deprecated:
+            db_names |= {get_db_alias_for_partitioned_doc(processed_forms.deprecated.form_id)}
+
         if cases:
-            for case in cases:
-                CaseAccessorSQL.save_case(case)
+            db_names |= {get_db_alias_for_partitioned_doc(case.case_id) for case in cases}
 
         if stock_result:
-            ledgers_to_save = stock_result.models_to_save
-            LedgerAccessorSQL.save_ledger_values(ledgers_to_save, processed_forms.deprecated)
+            db_names |= {
+                get_db_alias_for_partitioned_doc(ledger_value.case_id)
+                for ledger_value in stock_result.models_to_save
+            }
+
+        with ExitStack() as stack:
+            for db_name in db_names:
+                stack.enter_context(transaction.atomic(db_name))
+
+            # Save deprecated form first to avoid ID conflicts
+            if processed_forms.deprecated:
+                FormAccessorSQL.save_deprecated_form(processed_forms.deprecated)
+
+            FormAccessorSQL.save_new_form(processed_forms.submitted)
+            if cases:
+                for case in cases:
+                    CaseAccessorSQL.save_case(case)
+
+            if stock_result:
+                ledgers_to_save = stock_result.models_to_save
+                LedgerAccessorSQL.save_ledger_values(ledgers_to_save, processed_forms.deprecated)
 
         if publish_to_kafka:
             cls._publish_changes(processed_forms, cases, stock_result)
