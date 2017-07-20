@@ -302,7 +302,6 @@ class SubmissionPost(object):
 
     def process_signals(self, instance):
         # send and process 'successful_form_received' signal
-        from corehq.form_processor.change_publishers import publish_form_saved, publish_form_deleted
         feedback = successful_form_received.send_robust(None, xform=instance)
         errors = []
         for func, resp in feedback:
@@ -316,8 +315,6 @@ class SubmissionPost(object):
         if errors:
             self.interface.xformerror_from_xform_instance(instance, ", ".join(errors), with_new_id=True)
             self.formdb.update_form_problem_and_state(instance)
-            publish_form_deleted(self.domain, instance.orig_id)
-            publish_form_saved(instance)
         return errors
 
     def _set_response_headers(self, response, form_id):
