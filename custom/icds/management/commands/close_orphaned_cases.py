@@ -31,7 +31,7 @@ class Command(BaseCommand):
         with open(log_file, "w") as fh:
             fh.write('--------Successful Form Ids----------\n')
             for cases in chunked(with_progress_bar(self._get_cases_to_process(domain), total_cases), 100):
-                related_cases = _get_related_cases(cases)
+                related_cases = self._get_related_cases(cases)
                 case_tupes = [(case_id, {}, True) for case_id in related_cases]
                 try:
                     xform, cases = bulk_update_cases(domain, case_tupes)
@@ -56,3 +56,4 @@ class Command(BaseCommand):
                          if case.relationship == CommCareCaseIndexSQL.CHILD}
         related_cases |= {case.case_id for case in self.case_accessor.get_all_reverse_indices_info(list(related_cases))
                          if case.relationship == CommCareCaseIndexSQL.CHILD}
+        return related_cases
