@@ -1,4 +1,5 @@
 import json
+import re
 import uuid
 from urllib import urlencode
 from django.contrib import messages
@@ -10,7 +11,9 @@ from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain
 from corehq.apps.app_manager.decorators import require_deploy_apps
 from corehq.apps.app_manager.exceptions import AppEditingError
-from corehq.apps.app_manager.models import Application, ReportModule
+from corehq.apps.app_manager.models import Application, ReportModule, ATTACHMENT_REGEX
+
+from dimagi.utils.make_uuid import random_hex
 
 CASE_TYPE_CONFLICT_MSG = (
     "Warning: The form's new module "
@@ -132,6 +135,7 @@ def overwrite_app(app, master_build, report_map=None):
     excluded_fields = set(Application._meta_fields).union(
         ['date_created', 'build_profiles', 'copy_history', 'copy_of', 'name', 'comment', 'doc_type']
     )
+    id_map = _get_form_id_map(app)
     master_json = master_build.to_json()
     for key, value in master_json.iteritems():
         if key not in excluded_fields:
@@ -148,9 +152,59 @@ def overwrite_app(app, master_build, report_map=None):
                         raise AppEditingError('Dynamic UCR used in linked app')
             else:
                 raise AppEditingError('Report map not passed to overwrite_app')
-    wrapped_app.copy_attachments(master_build)
-    wrapped_app.save(increment_version=False)
+    new_wrapped_app = _update_form_ids(wrapped_app, master_build, id_map)
+    new_wrapped_app.save(increment_version=False)
 
+
+def _get_form_id_map(app):
+    id_map = {}
+    for module in app['modules'].values():
+        for form in module['forms'].values():
+            id_map[form['xmlns']] = form['unique_id']
+    return id_map
+
+
+def _update_form_ids(app, master_app, id_map):
+    from corehq.apps.app_manager.models import form_id_references, jsonpath_update
+
+    id_changes = {}
+    attachments = _get_attachments(master_app)
+
+    for module in app.modules:
+        for form in module.forms:
+            new_id = id_map.get(form.xmlns, random_hex())
+            id_changes[form.unique_id] = new_id
+            if ("%s.xml" % form.unique_id) in attachments:
+                attachments["%s.xml" % new_id] = attachments.pop("%s.xml" % form.unique_id)
+            form.unique_id = new_id
+    app_source = app.to_json()
+    app_source.pop('external_blobs')
+
+    for reference_path in form_id_references:
+        for reference in reference_path.find(app_source):
+            if reference.value in id_changes:
+                jsonpath_update(reference, id_changes[reference.value])
+
+    new_wrapped_app = Application.wrap(app_source)
+    new_wrapped_app = _save_attachments(new_wrapped_app, attachments)
+    return new_wrapped_app
+
+
+def _get_attachments(app):
+    attachments = {}
+    for name in app.lazy_list_attachments():
+        if re.match(ATTACHMENT_REGEX, name):
+            # FIXME loss of metadata (content type, etc.)
+            attachments[name] = app.lazy_fetch_attachment(name)
+    return attachments
+
+
+def _save_attachments(app, attachments):
+    with app.atomic_blobs():
+        for name, attachment in attachments.items():
+            if re.match(ATTACHMENT_REGEX, name):
+                app.put_attachment(attachment, name)
+    return app
 
 def get_practice_mode_configured_apps(domain, mobile_worker_id=None):
 
