@@ -170,7 +170,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
                     tooltip_content += "<p>% children moderately underweight: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
                     tooltip_content += "<p>% children severely underweight: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<span>Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.</span>";
+                    tooltip_content += "<span>Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age below -2 standard deviations of the WHO Child Growth Standards median (moderately underweight) or weight-for-age below -3 standard deviations of the WHO Growth Standards median (severely underweight).</span>";
 
                     return tooltip_content;
                 });

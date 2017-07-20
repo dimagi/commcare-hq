@@ -1836,11 +1836,7 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
         valid=Sum('height_eligible'),
     ).order_by('month')
 
-    locations_for_lvl = SQLLocation.objects.filter(location_type__code=loc_level).count()
-
     data = {
-        'green': OrderedDict(),
-        'orange': OrderedDict(),
         'red': OrderedDict()
     }
 
@@ -1848,8 +1844,6 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['green'][miliseconds] = {'y': 0, 'all': 0}
-        data['orange'][miliseconds] = {'y': 0, 'all': 0}
         data['red'][miliseconds] = {'y': 0, 'all': 0}
 
     best_worst = {}
@@ -1860,24 +1854,17 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
         severe = row['severe']
         moderate = row['moderate']
 
-        underweight = ((moderate or 0) + (severe or 0)) * 100 / (valid or 1)
+        underweight = (moderate or 0) + (severe or 0)
 
         if location in best_worst:
-            best_worst[location].append(underweight)
+            best_worst[location].append(underweight / float(valid or 1))
         else:
-            best_worst[location] = [underweight]
+            best_worst[location] = [underweight / float(valid or 1)]
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        if underweight < 5:
-            data['green'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
-        elif 5 <= underweight < 7:
-            data['orange'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
-        elif underweight >= 7:
-            data['red'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
+        data['red'][date_in_miliseconds]['y'] += underweight
+        data['red'][date_in_miliseconds]['all'] += valid
 
     top_locations = sorted(
         [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
@@ -1891,37 +1878,11 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
-                        'all': value['all']
-                    } for key, value in data['green'].iteritems()
-                ],
-                "key": "Between 0%-5%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": GREEN
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
-                        'all': value['all']
-                    } for key, value in data['orange'].iteritems()
-                ],
-                "key": "Between 5%-7%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": ORANGE
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
+                        'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
                     } for key, value in data['red'].iteritems()
                 ],
-                "key": "Between 7%-100%",
+                "key": "Severe and Moderate Acute Malnutrition (SAM and MAM)",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
