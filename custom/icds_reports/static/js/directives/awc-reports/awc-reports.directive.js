@@ -844,7 +844,7 @@ var height_for_age = {
 
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, storageService) {
+function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, storageService, userLocationId) {
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
@@ -852,18 +852,29 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.step = $routeParams.step;
     vm.data = null;
     vm.filters = [];
-    vm.dtOptions = DTOptionsBuilder.newOptions().withBootstrap().withOption('scrollX', '100%');
+    vm.dtOptions = DTOptionsBuilder.newOptions().withOption('scrollX', '100%');
     vm.showTable = true;
     vm.showBeneficiary = false;
     vm.beneficiary = null;
-    $location.search(storageService.get());
+    vm.markers = {};
+    vm.center = {
+        lat: 22.10,
+        lng: 78.22,
+        zoom: 5,
+    };
+    if (Object.keys($location.search()).length === 0) {
+        $location.search(storageService.getKey('search'));
+    } else {
+        storageService.setKey('search', $location.search());
+    }
     vm.filtersData = $location.search();
     vm.xTicks = [];
-    vm.selectedLocationLevel = storageService.getKey('selectedLocationLevel') || 0;
+    vm.message = true;
+    vm.selectedLocationLevel = storageService.getKey('search')['selectedLocationLevel'] || 0;
 
     vm.getDataForStep = function(step) {
         var get_url = url('awc_reports', step);
-        if (vm.selectedLocationLevel === 4) {
+        if (parseInt(vm.selectedLocationLevel) === 4) {
             $http({
                 method: "GET",
                 url: get_url,
@@ -871,6 +882,17 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             }).then(
                 function (response) {
                     vm.data = response.data;
+                    vm.message = false;
+                    if (vm.data.map) {
+                        vm.markers = vm.data.map.markers;
+                        if (Object.keys(vm.markers).length > 0) {
+                            vm.center = {
+                                lat: vm.markers[Object.keys(vm.markers)[0]].lat,
+                                lng: vm.markers[Object.keys(vm.markers)[0]].lng,
+                                zoom: 15,
+                            };
+                        }
+                    }
                 },
                 function (error) {
                     $log.error(error);
@@ -878,6 +900,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             );
         }
     };
+
+    $scope.$on('filtersChange', function() {
+        vm.getDataForStep(vm.step);
+    });
 
     vm.getPopoverContent = function (data, type) {
         var html = '';
@@ -890,43 +916,44 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         return html;
     };
 
-    vm.getDataForStep(vm.step);
-
-    vm.chartOptions = {
-        chart: {
-            type: 'multiBarChart',
-            height: 450,
-            margin: {
-                top: 20,
-                right: 20,
-                bottom: 50,
-                left: 80,
-            },
-            x: function (d) {
-                return d[0];
-            },
-            y: function (d) {
-                return d[1];
-            },
-            showValues: true,
-            useInteractiveGuideline: true,
-            clipVoronoi: false,
-            duration: 500,
-            xAxis: {
-                axisLabel: '',
-                tickFormat: function (d) {
-                    if (typeof d === 'number') {
-                        return d3.time.format('%m/%d/%y')(new Date(d));
-                    } else if (typeof d === 'string') {
-                        return d;
-                    }
+    setTimeout(function() {
+        vm.chartOptions = {
+            chart: {
+                type: 'multiBarChart',
+                height: 450,
+                margin: {
+                    top: 20,
+                    right: 20,
+                    bottom: 50,
+                    left: 80,
+                },
+                x: function (d) {
+                    return d[0];
+                },
+                y: function (d) {
+                    return d[1];
+                },
+                showValues: true,
+                useInteractiveGuideline: true,
+                clipVoronoi: false,
+                duration: 500,
+                xAxis: {
+                    axisLabel: '',
+                    tickFormat: function (d) {
+                        if (typeof d === 'number') {
+                            return d3.time.format('%m/%d/%y')(new Date(d));
+                        } else if (typeof d === 'string') {
+                            return d;
+                        }
+                    },
+                },
+                yAxis: {
+                    axisLabel: '',
                 },
             },
-            yAxis: {
-                axisLabel: '',
-            },
-        },
-    };
+        };
+        $scope.$apply();
+    }, 1000);
 
     vm.beneficiaryChartOptions = {
         chart: {
@@ -1067,16 +1094,57 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     };
 
     vm.steps ={
-        system_usage: { route: "/awc_reports/system_usage", label: "System Usage"},
+        // system_usage: { route: "/awc_reports/system_usage", label: "System Usage"},
         pse: { route: "/awc_reports/pse", label: "Primary School Education (PSE)"},
         maternal_child: { route: "/awc_reports/maternal_child", label: "Maternal & Child Health"},
         demographics: { route: "/awc_reports/demographics", label: "Demographics"},
         beneficiary: { route: "/awc_reports/beneficiary", label: "Beneficiary List"},
     };
 
+    vm.getDisableIndex = function () {
+        var i = -1;
+        window.angular.forEach(vm.selectedLocations, function (key, value) {
+            if (key.location_id === userLocationId) {
+                i = value;
+            }
+        });
+        return i;
+    };
+
+    vm.moveToLocation = function(loc, index) {
+        if (loc === 'national') {
+            $location.search('location_id', '');
+            $location.search('selectedLocationLevel', -1);
+            $location.search('location_name', '');
+        } else {
+            $location.search('location_id', loc.location_id);
+            $location.search('selectedLocationLevel', index);
+            $location.search('location_name', loc.name);
+        }
+    };
+
+    vm.layers = {
+        baselayers: {
+            mapbox_light: {
+                name: 'Mapbox Light',
+                url: 'https://api.mapbox.com/styles/v1/dimagi/cj2rl1t0w001f2rnr0y8hfhho/tiles/{z}/{x}/{y}?access_token={apikey}',
+                type: 'xyz',
+                layerOptions: {
+                    apikey: 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA',
+                },
+            },
+            osm: {
+                name: 'OpenStreetMap',
+                url: 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                type: 'xyz',
+            },
+        },
+    };
+
+    vm.getDataForStep(vm.step);
 }
 
-AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'storageService'];
+AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'storageService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive('awcReports', function() {
     return {

@@ -540,9 +540,8 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
 
     @property
     @memoized
-    def has_submisions(self):
-        from couchforms.analytics import get_first_form_submission_received
-        return get_first_form_submission_received(self.domain) is not None
+    def default_datespan(self):
+        return datespan_from_beginning(self.domain_object, self.timezone)
 
     @property
     def page_context(self):
@@ -556,11 +555,22 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
             'check_for_multimedia': self.check_for_multimedia,
             'is_sms_export': self.sms_export,
         }
-        context.update({
-            'default_date_range': _('Export All Data'),
-        })
-        if not self.has_submisions:
+        if (
+            self.default_datespan.startdate is not None
+            and self.default_datespan.enddate is not None
+        ):
             context.update({
+                'default_date_range': '{startdate}{separator}{enddate}'.format(
+                    startdate=self.default_datespan.startdate.strftime('%Y-%m-%d'),
+                    enddate=self.default_datespan.enddate.strftime('%Y-%m-%d'),
+                    separator=DateRangePickerWidget.separator,
+                ),
+            })
+        else:
+            context.update({
+                'default_date_range': _(
+                    "You have no submissions in this project."
+                ),
                 'show_no_submissions_warning': True,
             })
 

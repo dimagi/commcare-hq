@@ -57,8 +57,7 @@
         "transform": {},
         "is_nullable": true,
         "type": "expression",
-        "column_id": "awc_id",
-        "create_index": true
+        "column_id": "awc_id"
       },
       {
         "display_name": "Supervisor ID",
@@ -94,8 +93,7 @@
         "transform": {},
         "is_nullable": true,
         "type": "expression",
-        "column_id": "supervisor_id",
-        "create_index": true
+        "column_id": "supervisor_id"
       },
       {
         "display_name": "Block ID",
@@ -638,6 +636,10 @@
     "backend_id": "LABORATORY",
     "es_index_settings": {
       "number_of_shards": 5
-    }
+    },
+    "sql_column_indexes": [
+      {"column_ids": ["awc_id", "last_date_gmp"]},
+      {"column_ids": ["supervisor_id", "last_date_gmp"]}
+    ]
   }
 }

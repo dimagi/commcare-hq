@@ -39,4 +39,4 @@ esac
 # grep supervisor status for all processes containing the pattern
 # strip away everything except just the process name
 # and pass that to supervisorctl as args
-sudo supervisorctl status | grep "$pattern" | cut -d' ' -f1 | xargs sudo supervisorctl $command
+sudo supervisorctl status | grep "$pattern" | cut -d' ' -f1 | xargs -n 1 -P 10 sudo supervisorctl $command

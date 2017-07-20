@@ -148,7 +148,7 @@ class FormProcessorInterface(object):
             from corehq.form_processor.submission_post import handle_unexpected_error
             handle_unexpected_error(self, forms.submitted, e, error_message)
             e.sentry_capture = False  # we've already notified
-            raise e
+            raise
 
     def hard_delete_case_and_forms(self, case, xforms):
         domain = case.domain

@@ -14,7 +14,7 @@ from couchforms.models import UnfinishedSubmissionStub
 
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend, post_xform
-from corehq.util.test_utils import TestFileMixin
+from corehq.util.test_utils import TestFileMixin, softer_assert
 
 
 class EditFormTest(TestCase, TestFileMixin):
@@ -292,6 +292,37 @@ class EditFormTest(TestCase, TestFileMixin):
                 [create_form_id, create_form_id, edit_form_id, second_edit_form_id],
                 [a.xform_id for a in case.actions]
             )
+
+    @softer_assert()
+    def test_edit_different_xmlns(self):
+        form_id = uuid.uuid4().hex
+        case1_id = uuid.uuid4().hex
+        case2_id = uuid.uuid4().hex
+        xmlns1 = 'http://commcarehq.org/xmlns1'
+        xmlns2 = 'http://commcarehq.org/xmlns2'
+
+        case_block = CaseBlock(
+            create=True,
+            case_id=case1_id,
+            case_type='person',
+            owner_id='owner1',
+        ).as_string()
+        xform, cases = submit_case_blocks(case_block, domain=self.domain, xmlns=xmlns1, form_id=form_id)
+
+        self.assertTrue(xform.is_normal)
+        self.assertEqual(form_id, xform.form_id)
+
+        case_block = CaseBlock(
+            create=True,
+            case_id=case2_id,
+            case_type='goat',
+            owner_id='owner1',
+        ).as_string()
+        # submit new form with same form ID but different XMLNS
+        xform, cases = submit_case_blocks(case_block, domain=self.domain, xmlns=xmlns2, form_id=form_id)
+
+        self.assertTrue(xform.is_normal)
+        self.assertNotEqual(form_id, xform.form_id)  # form should have a different ID
 
 
 @use_sql_backend

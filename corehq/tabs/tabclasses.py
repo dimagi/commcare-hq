@@ -161,7 +161,6 @@ class ProjectReportsTab(UITab):
 
         else:
             return (self._get_saved_reports_dropdown()
-                    + self._get_configurable_reports_dropdown()
                     + self._get_all_sidebar_items_as_dropdown())
 
     def _get_all_sidebar_items_as_dropdown(self):
@@ -172,21 +171,6 @@ class ProjectReportsTab(UITab):
             (header, map(show, pages))
             for header, pages in self.sidebar_items
         ])
-
-    def _get_configurable_reports_dropdown(self):
-        """Returns all the configurable reports turned on for that user
-        """
-        from corehq.reports import _safely_get_report_configs, _make_report_class
-        configurable_reports = [
-            _make_report_class(config, show_in_dropdown=True)
-            for config in _safely_get_report_configs(self.domain)
-        ]
-        configurable_reports_dropdown = [
-            dropdown_dict(report.name, report.get_url(self.domain))
-            for report in configurable_reports
-            if report.display_in_dropdown(domain=self.domain, project=self.project, user=self.couch_user)
-        ]
-        return configurable_reports_dropdown
 
 
 class IndicatorAdminTab(UITab):
@@ -1467,8 +1451,7 @@ class ProjectSettingsTab(UITab):
             from corehq.apps.domain.views import (
                 EditInternalDomainInfoView,
                 EditInternalCalculationsView,
-                FeatureFlagsView,
-                PrivilegesView
+                FlagsAndPrivilegesView,
             )
 
             internal_admin = [
@@ -1483,12 +1466,8 @@ class ProjectSettingsTab(UITab):
                                    args=[self.domain])
                 },
                 {
-                    'title': _(FeatureFlagsView.page_title),
-                    'url': reverse(FeatureFlagsView.urlname, args=[self.domain])
-                },
-                {
-                    'title': _(PrivilegesView.page_title),
-                    'url': reverse(PrivilegesView.urlname, args=[self.domain])
+                    'title': _(FlagsAndPrivilegesView.page_title),
+                    'url': reverse(FlagsAndPrivilegesView.urlname, args=[self.domain])
                 },
             ]
             items.append((_('Internal Data (Dimagi Only)'), internal_admin))

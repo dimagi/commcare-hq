@@ -53,7 +53,7 @@ class StaticToggle(object):
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None, always_enabled=None,
                  always_disabled=None, enabled_for_new_domains_after=None,
-                 enabled_for_new_users_after=None):
+                 enabled_for_new_users_after=None, force_enable=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -67,12 +67,15 @@ class StaticToggle(object):
         self.always_disabled = always_disabled or set()
         self.enabled_for_new_domains_after = enabled_for_new_domains_after
         self.enabled_for_new_users_after = enabled_for_new_users_after
+        self.force_enable = force_enable
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
             self.namespaces = [None]
 
     def enabled(self, item, namespace=Ellipsis):
+        if self.force_enable:
+            return True
         if item in self.always_enabled:
             return True
         elif item in self.always_disabled:
@@ -1086,7 +1089,7 @@ APP_MANAGER_V2 = StaticToggle(
     'Prototype for case management onboarding (App Manager V2)',
     TAG_PRODUCT_PATH,
     [NAMESPACE_USER],
-    enabled_for_new_users_after=datetime(2017, 5, 16, 20),  # 8pm UTC
+    force_enable=True
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(
@@ -1255,6 +1258,20 @@ DISPLAY_CONDITION_ON_TABS = StaticToggle(
 PHONE_HEARTBEAT = StaticToggle(
     'phone_apk_heartbeat',
     'Expose phone apk heartbeat URL and add it profile.xml',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+SKIP_REMOVE_INDICES = StaticToggle(
+    'skip_remove_indices',
+    'Make _remove_indices_from_deleted_cases_task into a no-op.',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+PREVENT_MOBILE_UCR_SYNC = StaticToggle(
+    'prevent_mobile_ucr_sync',
+    'Used for ICDS emergencies when UCR sync is killing the DB',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )

@@ -1,4 +1,4 @@
-/* globals hqDefine COMMCAREHQ django */
+/* globals hqDefine COMMCAREHQ django hqLayout */
 hqDefine('app_manager/js/app_manager.js', function () {
     'use strict';
     var module = eventize({});
@@ -86,6 +86,14 @@ hqDefine('app_manager/js/app_manager.js', function () {
         }
     };
 
+    module.setPublishStatus = function (isOn) {
+        if (isOn) {
+            $(hqLayout.selector.publishStatus).fadeIn();
+        } else {
+            $(hqLayout.selector.publishStatus).fadeOut();
+        }
+    };
+
     module.init = function (args) {
 
         _initCommcareVersion(args);
@@ -97,6 +105,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
         if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
             _initResponsiveMenus();
             _initAddItemPopovers();
+            _initPublishStatus();
         } else {
             // legacy JS
             $('#form-tabs').show();
@@ -160,6 +169,34 @@ hqDefine('app_manager/js/app_manager.js', function () {
             });
         });
         module.setCommcareVersion(args.commcareVersion);
+    };
+
+    var _initPublishStatus = function () {
+        var currentAppVersionUrl = hqImport('hqwebapp/js/initial_page_data.js').get('current_app_version_url');
+        var _checkPublishStatus = function () {
+            $.ajax({
+                url: currentAppVersionUrl,
+                success: function (data) {
+                    module.setPublishStatus((!data.latestRelease && data.currentVersion > 1) || (data.latestRelease !== null && data.latestRelease < data.currentVersion));
+                },
+            });
+        };
+        _checkPublishStatus();
+        // check publish status every 20 seconds
+        setInterval(_checkPublishStatus, 20000);
+
+        // sniff ajax calls to other urls that make app changes
+        $(document).ajaxComplete(function(e, xhr, options) {
+            if (/edit_form_attr/.test(options.url) ||
+                /edit_module_attr/.test(options.url) ||
+                /edit_module_detail_screens/.test(options.url) ||
+                /edit_app_attr/.test(options.url) ||
+                /edit_form_actions/.test(options.url) ||
+                /edit_commcare_settings/.test(options.url) ||
+                /patch_xform/.test(options.url)) {
+                module.setPublishStatus(true);
+            }
+        });
     };
 
     /**
@@ -392,6 +429,8 @@ hqDefine('app_manager/js/app_manager.js', function () {
                             }
                             $form.submit();
                         }
+
+                        module.setPublishStatus(true);
                     }
                 };
                 if (sorting_forms) {
@@ -425,7 +464,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
                         }
                         if (data.hasOwnProperty('case_list-show') &&
                                 module.hasOwnProperty('module_view')) {
-                            var requires_case_details = hqImport('app_manager/js/detail-screen-config.js').state.requires_case_details;
+                            var requires_case_details = hqImport('app_manager/js/details/screen_config.js').state.requires_case_details;
                             requires_case_details(data['case_list-show']);
                         }
                     },

@@ -74,20 +74,18 @@ class FormProcessorSQL(object):
 
     @classmethod
     def save_processed_models(cls, processed_forms, cases=None, stock_result=None, publish_to_kafka=True):
-        with transaction.atomic():
-            logging.debug('Beginning atomic commit\n')
-            # Save deprecated form first to avoid ID conflicts
-            if processed_forms.deprecated:
-                FormAccessorSQL.save_deprecated_form(processed_forms.deprecated)
+        # Save deprecated form first to avoid ID conflicts
+        if processed_forms.deprecated:
+            FormAccessorSQL.save_deprecated_form(processed_forms.deprecated)
 
-            FormAccessorSQL.save_new_form(processed_forms.submitted)
-            if cases:
-                for case in cases:
-                    CaseAccessorSQL.save_case(case)
+        FormAccessorSQL.save_new_form(processed_forms.submitted)
+        if cases:
+            for case in cases:
+                CaseAccessorSQL.save_case(case)
 
-            if stock_result:
-                ledgers_to_save = stock_result.models_to_save
-                LedgerAccessorSQL.save_ledger_values(ledgers_to_save, processed_forms.deprecated)
+        if stock_result:
+            ledgers_to_save = stock_result.models_to_save
+            LedgerAccessorSQL.save_ledger_values(ledgers_to_save, processed_forms.deprecated)
 
         if publish_to_kafka:
             cls._publish_changes(processed_forms, cases, stock_result)

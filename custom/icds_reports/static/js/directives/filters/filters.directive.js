@@ -1,8 +1,5 @@
-function FiltersController(userLocationId) {
-    this.data.location = userLocationId;
+function FiltersController() {
 }
-
-FiltersController.$inject = ['userLocationId'];
 
 window.angular.module('icdsApp').directive("filters", function() {
     var url = hqImport('hqwebapp/js/urllib.js').reverse;
@@ -11,6 +8,7 @@ window.angular.module('icdsApp').directive("filters", function() {
         scope: {
             data: '=',
             filters: '=',
+            selectedLocations: '=',
         },
         bindToController: true,
         templateUrl: url('icds-ng-template', 'filters'),

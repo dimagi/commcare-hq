@@ -51,7 +51,6 @@
         "is_nullable": false,
         "is_primary_key": false,
         "column_id": "awc_id",
-        "create_index": true,
         "type": "expression"
       },
       {
@@ -62,7 +61,6 @@
         "is_nullable": true,
         "is_primary_key": false,
         "column_id": "supervisor_id",
-        "create_index": true,
         "expression": {
           "location_id_expression": {
             "expression": {
@@ -2666,11 +2664,15 @@
         "property_value": null
       }
     },
-    "asynchronous": true,
     "engine_id": "icds-ucr",
     "backend_id": "LABORATORY",
     "es_index_settings": {
       "number_of_shards": 8
-    }
+    },
+    "sql_column_indexes": [
+      {"column_ids": ["supervisor_id", "dob"]},
+      {"column_ids": ["awc_id", "dob"]},
+      {"column_ids": ["awc_id", "opened_on"]}
+    ]
   }
 }

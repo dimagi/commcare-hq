@@ -1,3 +1,4 @@
+from couchdbkit.exceptions import NoResultFound
 from django.test import TestCase
 from corehq.apps.app_manager.dbaccessors import (
     domain_has_apps,
@@ -15,7 +16,7 @@ from corehq.apps.app_manager.dbaccessors import (
     get_latest_app_ids_and_versions,
     get_latest_released_app_doc,
     get_apps_by_id,
-)
+    get_brief_app)
 from corehq.apps.app_manager.models import Application, RemoteApp, Module
 from corehq.apps.domain.models import Domain
 from corehq.util.test_utils import DocTestMixin
@@ -100,6 +101,22 @@ class DBAccessorsTest(TestCase, DocTestMixin):
 
         self.assert_docs_equal(remote_app, brief_remote)
         self.assert_docs_equal(normal_app, brief_normal_app)
+
+    def test_get_brief_app(self):
+        self.apps[0].mobile_ucr_sync_interval = 7
+        self.apps[0].save()
+        brief_app = get_brief_app(self.domain, self.apps[0]._id)
+        self.assertIsNotNone(brief_app)
+        brief_app.anonymous_cloudcare_hash = None
+
+        exepcted_app = self._make_app_brief(self.apps[0])
+        exepcted_app.anonymous_cloudcare_hash = None
+        self.assert_docs_equal(brief_app, exepcted_app)
+        self.assertEqual(brief_app.mobile_ucr_sync_interval, 7)
+
+    def test_get_brief_app_not_found(self):
+        with self.assertRaises(NoResultFound):
+            get_brief_app(self.domain, 'missing')
 
     def test_get_apps_in_domain(self):
         apps = get_apps_in_domain(self.domain)

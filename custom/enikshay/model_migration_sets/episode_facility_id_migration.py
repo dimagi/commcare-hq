@@ -34,11 +34,11 @@ class EpisodeFacilityIDMigration(object):
         }
 
         diagnosing_facility_id = self.episode.get_case_property('diagnosing_facility_id')
-        if ((diagnosing_facility_id is None or diagnosing_facility_id == '-') and self.diagnosing_facility_id):
+        if ((diagnosing_facility_id is None or diagnosing_facility_id == '') and self.diagnosing_facility_id):
             update['diagnosing_facility_id'] = self.diagnosing_facility_id
 
         treatment_initiating_facility_id = self.episode.get_case_property('treatment_initiating_facility_id')
-        if ((treatment_initiating_facility_id is None or treatment_initiating_facility_id == '-')
+        if ((treatment_initiating_facility_id is None or treatment_initiating_facility_id == '')
            and self.treatment_initiating_facility_id):
             update['treatment_initiating_facility_id'] = self.treatment_initiating_facility_id
 
@@ -52,9 +52,9 @@ class EpisodeFacilityIDMigration(object):
         diagnosing_facility_id = self.episode.get_case_property('diagnosing_facility_id')
         treatment_initiating_facility_id = self.episode.get_case_property('treatment_initiating_facility_id')
         if (diagnosing_facility_id is not None
-           and diagnosing_facility_id != '-'
+           and diagnosing_facility_id != u''
            and treatment_initiating_facility_id is not None
-           and treatment_initiating_facility_id != '-'):
+           and treatment_initiating_facility_id != u''):
             return False
 
         if self.episode.get_case_property('enrolled_in_private') == 'true':
@@ -112,7 +112,7 @@ class EpisodeFacilityIDMigration(object):
 
         for transaction in reversed(self._person_actions()):
             # go backwards in time, and find the first changed owner_id of the person case
-            owner_id = self._get_owner_id_from_transaction(transaction)
+            owner_id = self._get_owner_id_from_transaction(transaction, self.person.case_id)
             if owner_id and parse_datetime(owner_id.modified_on) <= date:
                 return owner_id.new_value
 
@@ -122,15 +122,22 @@ class EpisodeFacilityIDMigration(object):
             for update in get_case_updates(action.form)
         ]
         for (modified_on, action) in update_actions:
-            property_changed = action.dynamic_properties.get(case_property)
-            if property_changed:
-                return PropertyChangedInfo(property_changed, modified_on)
+            if action:
+                property_changed = action.dynamic_properties.get(case_property)
+                if property_changed:
+                    return PropertyChangedInfo(property_changed, modified_on)
         return False
 
-    def _get_owner_id_from_transaction(self, transaction):
+    def _get_owner_id_from_transaction(self, transaction, case_id):
         case_updates = get_case_updates(transaction.form)
-        update_actions = [(update.modified_on_str, update.get_update_action()) for update in case_updates]
-        create_actions = [(update.modified_on_str, update.get_create_action()) for update in case_updates]
+        update_actions = [
+            (update.modified_on_str, update.get_update_action()) for update in case_updates
+            if update.id == case_id
+        ]
+        create_actions = [
+            (update.modified_on_str, update.get_create_action()) for update in case_updates
+            if update.id == case_id
+        ]
         all_actions = update_actions + create_actions  # look through updates first, as these trump creates
         for modified_on, action in all_actions:
             if action:

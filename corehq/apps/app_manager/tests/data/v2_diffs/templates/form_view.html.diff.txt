@@ -22,18 +22,19 @@
      {% include 'hqmedia/partials/multimedia_js.html' %}
      <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
      <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
-@@ -68,6 +68,40 @@
+@@ -68,6 +68,41 @@
      {% if request|toggle_enabled:"CUSTOM_INSTANCES"%}
-         <script src="{% static 'app_manager/js/custom_instances.js' %}"></script>
+         <script src="{% static 'app_manager/js/forms/custom_instances.js' %}"></script>
      {% endif %}
 +{% endblock %}
 +
 +{% block pre_form_content %}
-+    {% if can_preview_form %}
 +    <div class="appmanager-page-actions">
-+        {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
++        {% include 'app_manager/v2/partials/app_summary_button.html' %}
++        <a class="btn btn-primary" href="{% url "form_source" domain app.id module.id form.id %}">
++            <i class="fa fa-pencil"></i> {% trans "Edit Form" %}
++        </a>
 +    </div>
-+    {% endif %}
 +
 +    <div class="appmanager-edit-title">
 +      {% with postSave="function(data) { var appManager = hqImport('app_manager/js/app_manager.js'); appManager.updatePageTitle(data.update['.variable-form_name']); return appManager.updateDOM(data.update);}" %}
@@ -63,7 +64,7 @@
  {% endblock %}
  
  {% block form-view %}
-@@ -104,80 +138,21 @@
+@@ -104,80 +139,21 @@
      {% initial_page_data 'uses_form_workflow' uses_form_workflow %}
      {% registerurl "get_form_datums" domain app.id %}
  
@@ -153,7 +154,7 @@
              {% if form.form_type == 'module_form' %}{% if allow_usercase or form.uses_usercase %}
              <li>
                  <a id="usercase-configuration-tab" href="#usercase-configuration" data-toggle="tab">
-@@ -185,35 +160,36 @@
+@@ -185,35 +161,36 @@
                  </a>
              </li>
              {% endif %}{% endif %}
@@ -207,7 +208,7 @@
                      <div class="alert alert-warning">
                          {% trans "You are viewing a shadow form, therefore:" %}
                          <ul>
-@@ -225,77 +201,72 @@
+@@ -225,77 +202,72 @@
                              <li>{% trans 'You are not allowed to specify case closures here'%}</li>
                          </ul>
                      </div>
@@ -335,7 +336,7 @@
                          {% endblock %}
                      </div>
                  {% else %}
-@@ -304,14 +275,15 @@
+@@ -304,14 +276,15 @@
                      </p>
                  {% endif %}
              </div>
@@ -353,7 +354,7 @@
              {% endif %}
          </div>
      </div>
-@@ -319,12 +291,13 @@
+@@ -319,12 +292,13 @@
  {% endblock %}
  
  {% block modals %}{{ block.super }}

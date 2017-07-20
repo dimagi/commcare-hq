@@ -1,12 +1,13 @@
 from __future__ import absolute_import
 from collections import defaultdict
 from datetime import datetime, timedelta
+import logging
 
 from botocore.vendored.requests.exceptions import ReadTimeout
 from botocore.vendored.requests.packages.urllib3.exceptions import ProtocolError
 from celery.schedules import crontab
 from celery.task import task, periodic_task
-from couchdbkit import ResourceConflict
+from couchdbkit import ResourceConflict, ResourceNotFound
 from django.conf import settings
 from django.db import InternalError, DatabaseError
 from django.db.models import Count, F
@@ -20,6 +21,7 @@ from corehq.apps.userreports.const import (
     ASYNC_INDICATOR_QUEUE_TIME, ASYNC_INDICATOR_CHUNK_SIZE
 )
 from corehq.apps.userreports.document_stores import get_document_store
+from corehq.apps.userreports.exceptions import StaticDataSourceConfigurationNotFoundError
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.apps.userreports.models import (
@@ -39,6 +41,8 @@ from corehq.util.timer import TimingContext
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
+
+celery_task_logger = logging.getLogger('celery.task')
 
 
 def _get_config_by_id(indicator_config_id):
@@ -201,7 +205,7 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, s
 
 
 @periodic_task(
-    run_every=crontab(minute="*/5", hour="0-8,18-23"),
+    run_every=crontab(minute="*/5"),
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def queue_async_indicators():
@@ -306,33 +310,36 @@ def save_document(doc_ids):
 
 def _save_document_helper(indicator, doc):
     eval_context = EvaluationContext(doc)
-    working_config_ids = []
-    failed_config_ids = []
+    something_failed = False
     for config_id in indicator.indicator_config_ids:
         adapter = None
         try:
             config = _get_config(config_id)
+        except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
+            celery_task_logger.info("{} no longer exists, skipping".format(config_id))
+            continue
+        except ESError:
+            celery_task_logger.info("ES errored when trying to retrieve config")
+            something_failed = True
+            return
+        try:
             adapter = get_indicator_adapter(config, can_handle_laboratory=True)
             adapter.save(doc, eval_context)
             eval_context.reset_iteration()
-            working_config_ids.append(config_id)
         except (DatabaseError, ESError, InternalError, RequestError,
                 ConnectionTimeout, ProtocolError, ReadTimeout):
-            # a database had an issue so don't log it and go on to the next config
-            failed_config_ids.append(config_id)
+            # a database had an issue so log it and go on to the next document
+            celery_task_logger.info("DB error when saving config: {}".format(config_id))
+            something_failed = True
+            return
         except Exception as e:
             # getting the config could fail before the adapter is set
             if adapter:
                 adapter.handle_exception(doc, e)
-            failed_config_ids.append(config_id)
+            something_failed = True
+            return
 
-    # only want to change if there were some that worked and failed
-    if failed_config_ids and working_config_ids:
-        AsyncIndicator.objects.filter(pk=indicator.pk).update(
-            indicator_config_ids=failed_config_ids
-        )
-
-    return len(failed_config_ids) == 0
+    return not something_failed
 
 
 @periodic_task(
@@ -340,8 +347,8 @@ def _save_document_helper(indicator, doc):
     queue=settings.CELERY_PERIODIC_QUEUE,
 )
 def async_indicators_metrics():
-    for config_id, count in _indicators_by_count():
-        datadog_gauge('commcare.async_indicator.indicator_count', count, tags=config_id)
+    for config_id, count in _indicators_by_count().iteritems():
+        datadog_gauge('commcare.async_indicator.indicator_count', count, tags=["config_id:{}".format(config_id)])
 
 
 def _indicators_by_count(date_created=None):
@@ -375,5 +382,5 @@ def _indicators_by_count(date_created=None):
 def icds_async_indicators_metrics():
     indicator_count_until_28 = _indicators_by_count(datetime(2017, 6, 28))
 
-    for config_id, count in indicator_count_until_28:
-        datadog_gauge('commcare.async_indicator.icds_rebuild', count, tags=config_id)
+    for config_id, count in indicator_count_until_28.iteritems():
+        datadog_gauge('commcare.async_indicator.icds_rebuild', count, tags=["config_id:{}".format(config_id)])

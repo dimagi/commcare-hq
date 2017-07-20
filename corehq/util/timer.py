@@ -30,6 +30,7 @@ class NestableTimer(object):
 
     @property
     def duration(self):
+        """Get timer duration in seconds"""
         if self.beginning and self.end:
             return self.end - self.beginning
 
@@ -128,7 +129,7 @@ class TimingContext(object):
 
     @property
     def duration(self):
-        return self.to_dict()['duration']
+        return self.root.duration
 
     def to_list(self, exclude_root=False):
         """Get the list of ``NestableTimer`` objects in hierarchy order"""

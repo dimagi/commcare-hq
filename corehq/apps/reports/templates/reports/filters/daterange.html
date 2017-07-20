@@ -2,14 +2,6 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block filter_js %}
-    <script>
-        $(function() {
-            $('.date-range').datepicker({{ datepicker_config|JSON }});
-        });
-    </script>
-{% endblock %}
-
 {% block filter_content %}
     <div class="form-inline">
         <label for="{{ css_id }}_startdate" class="sub-label">

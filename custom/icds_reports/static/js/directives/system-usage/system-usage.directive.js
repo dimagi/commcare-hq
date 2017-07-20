@@ -1,13 +1,16 @@
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function SystemUsageController($http, $log, $routeParams, $location, storageService) {
+function SystemUsageController($http, $log, $routeParams, $location, storageService, userLocationId) {
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
-    vm.tooltipPlacement = "right";
     vm.filters = ['gender', 'age'];
     vm.step = $routeParams.step;
-    $location.search(storageService.get());
+    if (Object.keys($location.search()).length === 0) {
+        $location.search(storageService.getKey('search'));
+    } else {
+        storageService.setKey('search', $location.search());
+    }
     vm.filtersData = $location.search();
 
     vm.getDataForStep = function(step) {
@@ -27,17 +30,38 @@ function SystemUsageController($http, $log, $routeParams, $location, storageServ
     };
 
     vm.steps = {
-        "system_usage": {"route": "/program_summary/system_usage", "label": "System Usage", "data": null},
-        "maternal_child": {"route": "/program_summary/maternal_child", "label": "Maternal & Child Health", "data": null},
-        "icds_cas_reach": {"route": "/program_summary/icds_cas_reach", "label": "ICDS-CAS Reach", "data": null},
+        "maternal_child": {"route": "/program_summary/maternal_child", "label": "Maternal & Child Nutrition", "data": null},
+        "icds_cas_reach": {"route": "/program_summary/icds_cas_reach", "label": "ICDS CAS Reach", "data": null},
         "demographics": {"route": "/program_summary/demographics", "label": "Demographics", "data": null},
         "awc_infrastructure": {"route": "/program_summary/awc_infrastructure", "label": "AWC Infrastructure", "data": null},
+    };
+
+    vm.getDisableIndex = function () {
+        var i = -1;
+        window.angular.forEach(vm.selectedLocations, function (key, value) {
+            if (key.location_id === userLocationId) {
+                i = value;
+            }
+        });
+        return i;
+    };
+
+    vm.moveToLocation = function(loc, index) {
+        if (loc === 'national') {
+            $location.search('location_id', '');
+            $location.search('selectedLocationLevel', -1);
+            $location.search('location_name', '');
+        } else {
+            $location.search('location_id', loc.location_id);
+            $location.search('selectedLocationLevel', index);
+            $location.search('location_name', loc.name);
+        }
     };
 
     vm.getDataForStep(vm.step);
 }
 
-SystemUsageController.$inject = ['$http', '$log', '$routeParams', '$location', 'storageService'];
+SystemUsageController.$inject = ['$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive('systemUsage', function() {
     return {
