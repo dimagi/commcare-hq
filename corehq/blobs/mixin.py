@@ -411,7 +411,7 @@ class DeferredBlobMixin(BlobMixin):
                 raise ResourceNotFound(
                     u"{model} {model_id} attachment: {name!r}".format(
                         model=type(self).__name__,
-                        model_id=self.blobdb_bucket_id,
+                        model_id=self._id,
                         name=name,
                     ))
             body = self._deferred_blobs[name]["content"]
