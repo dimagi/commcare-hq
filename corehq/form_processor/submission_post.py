@@ -164,7 +164,7 @@ class SubmissionPost(object):
             else:
                 case_db_cache = self.interface.casedb_cache(domain=domain, lock=True, deleted_ok=True, xforms=xforms)
 
-            known_submission_error = False
+            known_submission_error = None
             with case_db_cache as case_db:
                 instance = xforms[0]
                 if instance.xmlns == DEVICE_LOG_XMLNS:
@@ -208,17 +208,23 @@ class SubmissionPost(object):
                     submission_type = 'error'
 
             errors = self.process_signals(instance)
-            if instance.is_normal and not errors:
-                response = self.get_success_response()
-            elif not self.is_openrosa_version3():
-                response = self.get_failure_response(instance.problem)
-            elif known_submission_error:
-                response = self.get_retry_response(known_submission_error, ResponseNature.KNOWN_PROCESSING_ERROR)
-            else:
-                response = self.get_retry_response(instance.problem, ResponseNature.SUBMIT_ERROR)
-
-            self._set_response_headers(response, instance.form_id)
+            response = self._get_openrosa_response(
+                instance, errors, known_submission_error
+            )
             return FormProcessingResult(response, instance, cases, ledgers, submission_type)
+
+    def _get_openrosa_response(self, instance, errors, known_submission_error):
+        if instance.is_normal and not errors:
+            response = self.get_success_response()
+        elif not self.is_openrosa_version3():
+            response = self.get_failure_response(instance.problem)
+        elif known_submission_error:
+            response = self.get_retry_response(known_submission_error, ResponseNature.KNOWN_PROCESSING_ERROR)
+        else:
+            response = self.get_retry_response(instance.problem, ResponseNature.SUBMIT_ERROR)
+
+        self._set_response_headers(response, instance.form_id)
+        return response
 
     @property
     def _cache(self):
