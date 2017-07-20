@@ -1082,19 +1082,19 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
         }
 
         var addOns = hqImport("hqwebapp/js/initial_page_data.js").get("add_ons");
-        if (addOns.enum_image.show) {
+        if (addOns.enum_image) {
             DetailScreenConfig.MENU_OPTIONS.push(
-                {value: "enum-image", label: gettext('Icon') + gettext(' (Preview!)')}
+                {value: "enum-image", label: gettext('Icon')}
             );
         }
-        if (addOns.conditional_enum.show) {
+        if (addOns.conditional_enum) {
             DetailScreenConfig.MENU_OPTIONS.push(
-                {value: "conditional-enum", label: gettext('Conditional ID Mapping') + gettext(' (Preview!)')}
+                {value: "conditional-enum", label: gettext('Conditional ID Mapping')}
             );
         }
-        if (addOns.calc_xpaths.show) {
+        if (addOns.calc_xpaths) {
             DetailScreenConfig.MENU_OPTIONS.push(
-                {value: "calculate", label: gettext('Calculate') + gettext(' (Preview!)')}
+                {value: "calculate", label: gettext('Calculate')}
             );
         }
 

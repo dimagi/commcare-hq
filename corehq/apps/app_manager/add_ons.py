@@ -70,12 +70,12 @@ _ADD_ONS = {
     "case_detail_overwrite": AddOn(
         name=_("Case Detail Overwrite"),
         description=_("Ability to overwrite one case list or detail's settings with another's. "
-        "Available in case menu's settings."),
+        "Available in menu settings, in the actions tab."),
     ),
     "case_list_menu_item": AddOn(
         name=_("Case List Menu Item"),
         description=_("Allows the mobile user to view the case list and case details without actually opening "
-        "a form. Available in the case menu's settings."),
+        "a form. Available in menu settings."),
         used_in_module=lambda m: _uses_case_list_menu_item(m),
     ),
     "conditional_enum": AddOn(
@@ -86,19 +86,21 @@ _ADD_ONS = {
     "conditional_form_actions": AddOn(
         name=_('Case Conditions'),
         description=_("Open or close a case only if a specific question has a particular answer. "
-        "Available in form settings."),
+        "Available in form settings, under <strong>Case Management</strong>."),
         help_link="https://confluence.dimagi.com/display/commcarepublic/Case+Configuration",
         used_in_form=lambda f: _uses_conditional_form_actions(f)
     ),
-    "form_display_conditions": AddOn(
-        name=_("Form Display Conditions"),
-        description=_("Write logic to show or hide forms on the mobile device. Available in form settings."),
-        help_link="https://confluence.dimagi.com/display/commcarepublic/Form+Display+Conditions",
-        used_in_form=lambda f: bool(f.form_filter),
+    "display_conditions": AddOn(
+        name=_("Display Conditions"),
+        description=_("Write logic to show or hide forms and menus on the mobile device. "
+        "Available in form and menu settings."),
+        help_link="https://confluence.dimagi.com/display/commcarepublic/Application+Design",
+        used_in_form=lambda f: bool(getattr(f, 'form_filter', False)),
+        used_in_module=lambda m: bool(m.module_filter),
     ),
     "edit_form_actions": AddOn(
         name=_("Edit Form Actions"),
-        description=_("Allow changing form actions. Available in form settings."),
+        description=_("Choose whether each form in a case list should register, update, or close a case."),
         help_link="https://confluence.dimagi.com/display/commcarepublic/Case+Configuration",
     ),
     "enum_image": AddOn(
@@ -113,12 +115,6 @@ _ADD_ONS = {
         "Available in menu settings."),
         used_in_module=lambda m: getattr(m, 'put_in_root', False),
     ),
-    "module_display_conditions": AddOn(
-        name=_("Menu Display Conditions"),
-        description=_("Write logic to show or hide menus on the mobile device. Available in menu settings."),
-        help_link="https://confluence.dimagi.com/display/commcarepublic/Module+Filtering",
-        used_in_module=lambda m: bool(m.module_filter),
-    ),
     "register_from_case_list": AddOn(
         name=_("Register from case list"),
         description=_("Minimize duplicates by making registration forms available directly from the case list "
@@ -128,15 +124,14 @@ _ADD_ONS = {
     ),
     "subcases": AddOn(
         name=_("Child Cases"),
-        description=_("Open other types of cases for use in other modules, linking them to the case that "
+        description=_("Open other types of cases, linking them to the case that "
         "created them. Available in form settings."),
         help_link="https://confluence.dimagi.com/display/commcarepublic/Child+Cases",
         used_in_form=lambda f: f.form_type != "module_form" or bool(f.actions.subcases),
     ),
-    "unstructured_case_lists": AddOn(
-        name=_("Customize Case List Registration"),
-        description=_("Create new case lists without a registration form, "
-        "and allow deletion of registration forms."),
+    "empty_case_lists": AddOn(
+        name=_("New Case Lists Created Empty"),
+        description=_("When adding a new case list, don't include a registration and followup form."),
     ),
 }
 
@@ -146,7 +141,7 @@ _LAYOUT = [
         "collapse": False,
         "name": _("Case Management"),
         "description": _("Build more complex workflows"),
-        "slugs": ["conditional_form_actions", "edit_form_actions", "unstructured_case_lists", "subcases"],
+        "slugs": ["conditional_form_actions", "edit_form_actions", "empty_case_lists", "subcases"],
     },
     {
         "slug": "mobile",
@@ -160,7 +155,7 @@ _LAYOUT = [
         "collapse": True,
         "name": _("Calculations"),
         "description": _("Add logic to your app with XPath expressions"),
-        "slugs": ["form_display_conditions", "module_display_conditions", "calc_xpaths", "conditional_enum", "advanced_itemsets"],
+        "slugs": ["display_conditions", "conditional_enum", "calc_xpaths", "advanced_itemsets"],
     },
     {
         "slug": "efficiency",

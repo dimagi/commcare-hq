@@ -977,19 +977,19 @@ def new_module(request, domain, app_id):
 
         form_id = None
         if toggles.APP_MANAGER_V2.enabled(request.user.username):
-            unstructured = add_ons.show("unstructured_case_lists", request, app)
+            unstructured = add_ons.show("empty_case_lists", request, app)
             if module_type == 'case':
                 if not unstructured:
                     # registration form
-                    register = app.new_form(module_id, _("Register"), lang)
+                    register = app.new_form(module_id, _("Registration Form"), lang)
                     register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
                     register.actions.update_case = UpdateCaseAction(
                         condition=FormActionCondition(type='always'))
 
-                # one followup form
-                followup = app.new_form(module_id, _("Followup"), lang)
-                followup.requires = "case"
-                followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
+                    # one followup form
+                    followup = app.new_form(module_id, _("Followup Form"), lang)
+                    followup.requires = "case"
+                    followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 
                 # make case type unique across app
                 app_case_types = [m.case_type for m in app.modules if m.case_type]
