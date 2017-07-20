@@ -231,7 +231,8 @@ def get_location_filter(location, domain, config):
     if location:
         try:
             sql_location = SQLLocation.objects.get(location_id=location, domain=domain)
-            aggregation_level = sql_location.get_ancestors(include_self=True).count() + 1
+            locations = sql_location.get_ancestors(include_self=True)
+            aggregation_level = locations.count() + 1
             if sql_location.location_type.code != LocationTypes.AWC:
                 loc_level = LocationType.objects.filter(
                     parent_type=sql_location.location_type,
@@ -239,9 +240,12 @@ def get_location_filter(location, domain, config):
                 )[0].code
             else:
                 loc_level = LocationTypes.AWC
-            location_key = '%s_id' % sql_location.location_type.code
+            for loc in locations:
+                location_key = '%s_id' % loc.location_type.code
+                config.update({
+                    location_key: loc.location_id,
+                })
             config.update({
-                location_key: sql_location.location_id,
                 'aggregation_level': aggregation_level
             })
         except SQLLocation.DoesNotExist:
