@@ -183,9 +183,11 @@ def show(slug, request, app, module=None, form=None):
     show = slug in app.add_ons and app.add_ons[slug]
 
     # Show if add-on is also a feature preview this domain has on
-    previews = feature_previews.previews_dict(app.domain)
-    if slug in previews:
-        show = show or previews[slug]
+    # (that has not been turned off for this app specifically)
+    if slug not in app.add_ons:
+        previews = feature_previews.previews_dict(app.domain)
+        if slug in previews:
+            show = show or previews[slug]
 
     # Show if add-on is being used by the current form/module
     if form:
