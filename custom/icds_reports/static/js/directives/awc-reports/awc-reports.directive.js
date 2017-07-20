@@ -847,7 +847,7 @@ var url = hqImport('hqwebapp/js/urllib.js').reverse;
 function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, storageService, userLocationId) {
     var vm = this;
     vm.data = {};
-    vm.label = "Program Summary";
+    vm.label = "AWC Report";
     vm.tooltipPlacement = "right";
     vm.step = $routeParams.step;
     vm.data = null;
