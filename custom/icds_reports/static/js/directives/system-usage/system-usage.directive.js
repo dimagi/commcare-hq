@@ -30,7 +30,7 @@ function SystemUsageController($http, $log, $routeParams, $location, storageServ
     };
 
     vm.steps = {
-        "maternal_child": {"route": "/program_summary/maternal_child", "label": "Maternal & Child Nutrition", "data": null},
+        "maternal_child": {"route": "/program_summary/maternal_child", "label": "Maternal and Child Nutrition", "data": null},
         "icds_cas_reach": {"route": "/program_summary/icds_cas_reach", "label": "ICDS CAS Reach", "data": null},
         "demographics": {"route": "/program_summary/demographics", "label": "Demographics", "data": null},
         "awc_infrastructure": {"route": "/program_summary/awc_infrastructure", "label": "AWC Infrastructure", "data": null},
