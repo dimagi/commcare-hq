@@ -378,7 +378,7 @@ class XFormError(XFormInstance):
         return True
 
     @property
-    def blob_identifier(self):
+    def blobdb_bucket_id(self):
         return self.orig_id if self.orig_id else self._id
 
 
