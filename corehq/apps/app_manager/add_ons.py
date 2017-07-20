@@ -3,7 +3,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from dimagi.utils.decorators.memoized import memoized
 
-from corehq import feature_previews
+from corehq import feature_previews, toggles
 from corehq.apps.app_manager.exceptions import AddOnNotFoundException
 from corehq.apps.app_manager.models import Module, AdvancedModule, CareplanModule, ShadowModule
 from corehq.privileges import LOOKUP_TABLES
@@ -86,7 +86,7 @@ _ADD_ONS = {
     "conditional_form_actions": AddOn(
         name=_('Case Conditions'),
         description=_("Open or close a case only if a specific question has a particular answer. "
-        "Available in form settings, under <strong>Case Management</strong>."),
+        "Available in form settings, under Case Management."),
         help_link="https://confluence.dimagi.com/display/commcarepublic/Case+Configuration",
         used_in_form=lambda f: _uses_conditional_form_actions(f)
     ),
@@ -178,6 +178,10 @@ def show(slug, request, app, module=None, form=None):
     # Do not show if there's a required privilege missing
     if not add_on.has_privilege(request):
         return False
+
+    # Show if flag to enable all toggles is on
+    if toggles.ENABLE_ALL_ADD_ONS.enabled_for_request(request):
+        return True
 
     # Show if add-on has been enabled for app
     show = slug in app.add_ons and app.add_ons[slug]
