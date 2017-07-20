@@ -425,8 +425,8 @@ class BETSBeneficiaryRepeater(BaseBETSRepeater):
 
     def allowed_to_forward(self, person_case):
         return (person_case.type == CASE_TYPE_PERSON
-                and is_valid_person_submission(person_case)
                 and person_case.get_case_property(ENROLLED_IN_PRIVATE) == 'true'
+                and is_valid_person_submission(person_case)
                 and (case_was_created(person_case)
                      or case_properties_changed(person_case, self.properties_we_care_about)))
 
