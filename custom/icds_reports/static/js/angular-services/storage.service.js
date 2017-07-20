@@ -1,7 +1,7 @@
 window.angular.module('icdsApp').factory('storageService', ['userLocationId', function(userLocationId) {
     var storage = {
         'search': {
-            'location': userLocationId,
+            'location_id': userLocationId,
         },
     };
 

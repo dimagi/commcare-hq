@@ -3,7 +3,8 @@ from __future__ import unicode_literals
 
 from django.db import migrations
 
-from corehq.sql_db.operations import RawSQLMigration, noop_migration
+from corehq.form_processor.models import CommCareCaseIndexSQL
+from corehq.sql_db.operations import HqRunSQL, RawSQLMigration
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {})
 
@@ -11,9 +12,9 @@ migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {})
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('sql_accessors', '0037_delete_ledgers_with_case'),
+        ('sql_accessors', '0049_remove_save_case'),
     ]
 
     operations = [
-        noop_migration()
+        migrator.get_migration('get_reverse_indexed_cases_2.sql'),
     ]

@@ -62,10 +62,13 @@ hqDefine("reports/js/standard_hq_report.js", function() {
         return asyncReport;
     };
 
-    standardReport = getStandard(),
-    asyncReport = getAsync();
-
     $(function() {
+        // Initialize reports. This must be done inside of a document ready handler
+        // so that if this is UCR, userreports/js/configurable_report.js will
+        // have been loaded and getStandard will execute the proper branch
+        standardReport = getStandard(),
+        asyncReport = getAsync();
+
         $('#apply-btn').on('click', function() {
             $('.hq-generic-report').trigger('apply-click');
         });

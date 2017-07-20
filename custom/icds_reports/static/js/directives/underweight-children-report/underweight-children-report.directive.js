@@ -96,18 +96,25 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
 
     init();
 
-
     $scope.$on('filtersChange', function() {
         vm.loadData();
     });
 
+    vm.getDisableIndex = function () {
+        var i = -1;
+        window.angular.forEach(vm.selectedLocations, function (key, value) {
+            if (key.location_id === userLocationId) {
+                i = value;
+            }
+        });
+        return i;
+    };
 
     vm.moveToLocation = function(loc, index) {
         if (loc === 'national') {
             $location.search('location_id', '');
             $location.search('selectedLocationLevel', -1);
             $location.search('location_name', '');
-            $location.search('location', '');
         } else {
             $location.search('location_id', loc.location_id);
             $location.search('selectedLocationLevel', index);

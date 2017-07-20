@@ -386,7 +386,7 @@ class AwcReportsView(View):
         if location:
             try:
                 sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
-                location_key = '%s_site_code' % sql_location.location_type.code
+                location_key = '%s_id' % sql_location.location_type.code
                 config.update({
                     location_key: sql_location.site_code,
                 })
@@ -422,7 +422,7 @@ class AwcReportsView(View):
             )
         elif step == 'beneficiary':
             data = get_awc_report_beneficiary(
-                config['awc_site_code'],
+                config['awc_id'],
                 tuple(month.timetuple())[:3],
                 tuple(two_before.timetuple())[:3],
             )
@@ -458,10 +458,9 @@ class ExportIndicatorView(View):
         if location:
             try:
                 sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
-                location_code = sql_location.site_code
-                location_key = '%s_site_code' % sql_location.location_type.code
+                location_key = '%s_id' % sql_location.location_type.code
                 config.update({
-                    location_key: location_code,
+                    location_key: sql_location.location_id,
                 })
             except SQLLocation.DoesNotExist:
                 pass

@@ -21,7 +21,7 @@
  {% endblock %}
  
  {% block breadcrumbs %}
-@@ -26,291 +29,190 @@
+@@ -26,291 +29,172 @@
  {% endblock %}
  
  {% block page_navigation %}
@@ -334,24 +334,6 @@
 +                        </option>
 +                    {% endfor %}
 +                </select>
-+          </div>
-+        {% endif %}
-+
-+        {% if allow_v2_opt_out %}
-+          <div class="appnav-toggle-label">
-+              <div class="btn-group pull-right">
-+                <button type="button" class="btn btn-xs btn-default active">{% trans "On" %}</button>
-+                <button type="button"
-+                        class="btn btn-xs btn-default"
-+                        data-toggle="modal"
-+                        data-target="#rollout-revert-modal"
-+                        data-redirect="{% url "view_app" domain app.id %}"
-+                >{% trans "Off" %}</button>
-+              </div>
-+              {% trans "New App Builder" %}
-+              <span class="hq-help-template"
-+                    data-title="New App Builder"
-+                    data-content="{% trans "Turn off new app builder for now." %}"></span>
 +          </div>
 +        {% endif %}
 +

@@ -1,5 +1,7 @@
 hqDefine("reports/js/base.js", function() {
     $(function() {
+        hqImport("reports/js/filters.js").init();
+
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data.js").get;
         var defaultConfig = initial_page_data('default_config') || {};
         if (initial_page_data('has_datespan')) {
