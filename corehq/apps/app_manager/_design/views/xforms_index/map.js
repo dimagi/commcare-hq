@@ -6,7 +6,7 @@ function (doc) {
             "unique_id": form.unique_id
         });
     }
-    if (doc.doc_type === 'Application' && !doc.copy_of) {
+    if (doc.doc_type === 'Application' || doc.doc_type === 'LinkedApplication' && !doc.copy_of) {
         if (doc.user_registration) {
             doEmit(doc.user_registration);
         }
