@@ -1,3 +1,4 @@
+/* globals COMMCAREHQ */
 hqDefine("app_manager/js/add_ons.js", function() {
     var sectionChanger = hqImport("app_manager/js/section_changer.js");
 

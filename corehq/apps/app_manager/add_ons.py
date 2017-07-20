@@ -216,11 +216,11 @@ def get_layout(request):
             raise AddOnNotFoundException("Add-ons not in layout: {}".format(difference))
         raise AddOnNotFoundException("Add-ons in layout do not exist: {}".format(difference))
     return [dict({'add_ons': [{
-                    'slug': slug,
-                    'name': _ADD_ONS[slug].name,
-                    'description': _ADD_ONS[slug].description,
-                    'help_link': _ADD_ONS[slug].help_link,
-           } for slug in section['slugs'] if _ADD_ONS[slug].has_privilege(request)]}, **section) for section in _LAYOUT]
+        'slug': slug,
+        'name': _ADD_ONS[slug].name,
+        'description': _ADD_ONS[slug].description,
+        'help_link': _ADD_ONS[slug].help_link,
+    } for slug in section['slugs'] if _ADD_ONS[slug].has_privilege(request)]}, **section) for section in _LAYOUT]
 
 
 # Lazily migrate an app that doesn't have any add_ons configured yet.
