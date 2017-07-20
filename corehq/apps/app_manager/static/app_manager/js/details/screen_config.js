@@ -1,7 +1,8 @@
-/*globals $, _, uiElement, eventize, COMMCAREHQ, DOMPurify */
+/*globals $, _, eventize, COMMCAREHQ, DOMPurify */
 
 hqDefine('app_manager/js/details/screen_config.js', function () {
-    var module = {};
+    var module = {},
+        uiElement = hqImport('style/js/ui-element.js');
 
     module.CC_DETAIL_SCREEN = {
         getFieldHtml: function (field) {
@@ -344,7 +345,7 @@ hqDefine('app_manager/js/details/screen_config.js', function () {
                         for (i = 0; i < that.screen.langs.length; i += 1) {
                             lang = that.screen.langs[i];
                             if (that.original.header[lang]) {
-                                visibleVal = that.original.header[lang] + langcodeTag.LANG_DELIN + lang;
+                                visibleVal = that.original.header[lang] + hqImport('style/js/langcode_tag.js').LANG_DELIN + lang;
                                 break;
                             }
                         }
