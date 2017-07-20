@@ -179,11 +179,14 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
     def get_or_create_wrapped(self, verify_unchanged=None):
         checkpoints = self._get_checkpoints()
         ret = {}
-        timestamp = checkpoints[0].last_modified
-        for checkpoint in checkpoints:
-            ret[(checkpoint.topic, checkpoint.partition)] = checkpoint.offset
-            if checkpoint.last_modified > timestamp:
-                timestamp = checkpoint.last_modified
+        if checkpoints:
+            timestamp = checkpoints[0].last_modified
+            for checkpoint in checkpoints:
+                ret[(checkpoint.topic, checkpoint.partition)] = checkpoint.offset
+                if checkpoint.last_modified > timestamp:
+                    timestamp = checkpoint.last_modified
+        else:
+            timestamp = datetime.datetime.fromtimestamp(0)
 
         return WrappedCheckpoint(ret, timestamp)
 
