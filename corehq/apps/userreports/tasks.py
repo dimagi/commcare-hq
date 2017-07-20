@@ -358,7 +358,7 @@ def _indicator_metrics(date_created=None):
     returns {
         "config_id": {
             "count": number of indicators with that config,
-            "lag": earliest created record
+            "lag": number of seconds ago that the row was created
         }
     }
     """
@@ -369,15 +369,16 @@ def _indicator_metrics(date_created=None):
         .annotate(Count('indicator_config_ids'), Min('date_created'))
         .order_by()  # needed to get rid of implict ordering by date_created
     )
+    now = datetime.utcnow()
     if date_created:
         indicator_metrics = indicator_metrics.filter(date_created__lt=date_created)
     for ind in indicator_metrics:
         count = ind['indicator_config_ids__count']
-        lag = ind['date_created__min']
+        lag = (now - ind['date_created__min']).total_seconds()
         for config_id in ind['indicator_config_ids']:
             if ret.get(config_id):
                 ret[config_id]['count'] += ind['indicator_config_ids__count']
-                ret[config_id]['lag'] = min(lag, ret['config_id']['lag'])
+                ret[config_id]['lag'] = max(lag, ret['config_id']['lag'])
             else:
                 ret[config_id] = {
                     "count": count,
