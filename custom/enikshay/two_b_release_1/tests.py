@@ -3,6 +3,7 @@ from django.test import TestCase, override_settings
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.domain.models import Domain
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
 from custom.enikshay.tests.utils import (
@@ -32,9 +33,9 @@ class TestCreateEnikshayCases(TestCase):
         self.project.delete()
 
     def setup_cases(self):
-        private_person = self._get_person_structure('susanna-dean', self.locations['DTO'].location_id)
+        private_person = self._get_person_structure('susanna-dean', self.locations['PHI'].location_id)
         private_person.attrs['update'][ENROLLED_IN_PRIVATE] = 'true'  # should be excluded
-        person = self._get_person_structure('roland-deschain', self.locations['DTO'].location_id)
+        person = self._get_person_structure('roland-deschain', self.locations['PHI'].location_id)
         occurrence = self._get_occurrence_structure(person)
         episode = self._get_episode_structure(occurrence)
         test = self._get_test_structure(occurrence)
@@ -48,6 +49,12 @@ class TestCreateEnikshayCases(TestCase):
         person_fields = {ENROLLED_IN_PRIVATE: ""}
         person = get_person_case_structure(person_id, owner_id, extra_update=person_fields)
         person.attrs['owner_id'] = owner_id
+        person.attrs['update'].update({
+            'phi_area': 'phi_area',
+            'date_referred_out': 'date_referred_out',
+            'date_by_id': 'date_by_id',
+            'phone_number': '1234567890',
+        })
         return person
 
     def _get_occurrence_structure(self, person):
@@ -56,7 +63,17 @@ class TestCreateEnikshayCases(TestCase):
 
     def _get_episode_structure(self, occurrence):
         case_id = occurrence.case_id + '-episode'
-        return get_episode_case_structure(case_id, occurrence)
+        episode = get_episode_case_structure(case_id, occurrence)
+        episode.attrs['update'].update({
+            'episode_type': "confirmed_tb",
+            'alcohol_history': "alcohol_history",
+            'alcohol_deaddiction': "alcohol_deaddiction",
+            'tobacco_user': "tobacco_user",
+            'occupation': "occupation",
+            'nikshay_id': "nikshay_id",
+            'phone_number_other': "phone_number_other",
+        })
+        return episode
 
     def _get_test_structure(self, occurrence):
         case_id = occurrence.case_id + '-test'
@@ -92,5 +109,26 @@ class TestCreateEnikshayCases(TestCase):
         self.assertItemsEqual(['roland-deschain-referral-trail'], [c.case_id for c in person.trails])
 
         # run the actual migration
+        migrator.migrate()
 
         # check the results
+        accessor = CaseAccessors(self.domain)
+        new_person = accessor.get_case(person.person.case_id)
+        self.assertDictContainsSubset({
+            'area': 'phi_area',
+            'referred_outside_enikshay_date': 'date_referred_out',
+            'referred_outside_enikshay_by_id': 'date_by_id',
+            'contact_phone_number': '911234567890',
+            'current_episode_type': "confirmed_tb",
+            'alcohol_history': "alcohol_history",
+            'alcohol_deaddiction': "alcohol_deaddiction",
+            'tobacco_user': "tobacco_user",
+            'occupation': "occupation",
+            'nikshay_id': "nikshay_id",
+            'phone_number_other': "phone_number_other",
+            'phi_name': 'PHI',
+            'tu_name': 'TU',
+            'tu_id': self.locations['TU'].location_id,
+            'dto_name': 'DTO',
+            'dto_id': self.locations['DTO'].location_id,
+        }, new_person.dynamic_case_properties())
