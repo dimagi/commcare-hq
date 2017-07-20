@@ -206,6 +206,7 @@ def _save_attachments(app, attachments):
                 app.put_attachment(attachment, name)
     return app
 
+
 def get_practice_mode_configured_apps(domain, mobile_worker_id=None):
 
     def is_set(app_or_profile):
