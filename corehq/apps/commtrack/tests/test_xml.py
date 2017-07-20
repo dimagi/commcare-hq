@@ -230,12 +230,12 @@ class CommTrackSubmissionTest(XMLTest):
             timestamp=timestamp,
             date_formatter=date_formatter,
         )
-        submit_form_locally(
+        result = submit_form_locally(
             instance=instance,
             domain=self.domain.name,
             **submit_extras
         )
-        return instance_id
+        return result.xform.form_id
 
     def check_product_stock(self, case, product_id, expected_soh, expected_qty, section_id='stock'):
         if not isinstance(expected_qty, Decimal):
@@ -444,7 +444,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         initial = float(100)
         balances = [('', initial)]
         instance_id = self.submit_xml_form(balance_submission(balances))
-        [instance] = FormAccessors(self.domain.name).get_forms_by_type('XFormError', limit=1)
+        instance = FormAccessors(self.domain_name).get_form(instance_id)
         self.assertTrue(instance.is_error)
         self.assertTrue('MissingProductId' in instance.problem)
 
