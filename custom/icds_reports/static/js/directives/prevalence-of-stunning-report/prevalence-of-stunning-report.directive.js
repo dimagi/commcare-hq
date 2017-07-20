@@ -143,13 +143,11 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
 
                     var findValue = function (values, date) {
                         var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
-                        return day['all'];
+                        return d3.format(".2%")(day['y']);
                     };
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>38-100% children with stunted growth: <strong>" + findValue(vm.chartData[2].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>25-38% children with stunted growth: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>0-25% children with stunted growth: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p><br/>";
+                    tooltip_content += "<p>% children with moderate or severely stunted growth: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
                     tooltip_content += "<span>Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median.</span>";
 
                     return tooltip_content;
