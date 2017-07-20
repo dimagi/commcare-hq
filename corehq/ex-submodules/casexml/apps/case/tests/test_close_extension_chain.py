@@ -146,14 +146,14 @@ class AutoCloseExtensionsTest(TestCase):
         # don't actually close the cases otherwise they will get excluded
         created_cases[-1].closed = True
 
-        # host closed, should get full chain
+        # top level host closed, should get full chain
         full_chain = get_extensions_to_close(created_cases[-1], self.domain)
         self.assertEqual(set(self.extension_ids), full_chain)
 
-        # extension (not a host), should be empty
+        # extension (also a host), should get it's chain
         created_cases[2].closed = True
         no_cases = get_extensions_to_close(created_cases[2], self.domain)
-        self.assertEqual(set(), no_cases)
+        self.assertEqual(set(self.extension_ids[1:3]), no_cases)
 
     @flag_enabled('EXTENSION_CASES_SYNC_ENABLED')
     def test_get_extension_to_close_child_host(self):
