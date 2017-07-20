@@ -142,7 +142,7 @@ class BlobMixin(Document):
                 u"{model} {model_id} attachment: {name!r}".format(
                     model=type(self).__name__,
                     name=name,
-                    model_id=self.blobdb_bucket_id,
+                    model_id=self._id,
                 ))
         if stream:
             return blob
@@ -259,9 +259,17 @@ class BlobHelper(object):
     """
 
     def __init__(self, doc, database):
-        if doc.get("_id") is None:
+        from couchforms.models import all_known_formlike_doc_types
+
+        if doc['doc_type'] in all_known_formlike_doc_types():
+            bucket_id = doc.get('orig_id', doc['_id])
+        else:
+            bucket_id = doc['_id']
+
+        if bucket_id is None:
             raise TypeError("BlobHelper requires a real _id")
-        self._id = doc["_id"]
+
+        self._id = bucket_id
         self.doc = doc
         self.doc_type = doc["doc_type"]
         self.database = database
@@ -282,10 +290,6 @@ class BlobHelper(object):
     @property
     def blobs(self):
         return BlobMixin.blobs.fget(self)
-
-    @property
-    def blobdb_bucket_id(self):
-        return self._id
 
     def _blobdb_bucket(self):
         return join(self.database.dbname, safe_id(self._id))
