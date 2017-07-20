@@ -186,7 +186,7 @@ class KafkaPillowCheckpoint(PillowCheckpoint):
                 if checkpoint.last_modified > timestamp:
                     timestamp = checkpoint.last_modified
         else:
-            timestamp = datetime.datetime.fromtimestamp(0)
+            timestamp = datetime.fromtimestamp(0)
 
         return WrappedCheckpoint(ret, timestamp)
 
