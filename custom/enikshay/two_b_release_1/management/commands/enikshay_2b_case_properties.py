@@ -7,6 +7,7 @@ import logging
 from django.core.management import BaseCommand
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.log import with_progress_bar
 from custom.enikshay.case_utils import CASE_TYPE_PERSON
 from custom.enikshay.const import ENROLLED_IN_PRIVATE, CASE_VERSION
 
@@ -56,15 +57,18 @@ class ENikshay2BMigrator(object):
         self.accessor = CaseAccessors(self.domain)
 
     def migrate(self):
-        persons = self.get_relevant_person_cases()
-        for person in persons:
+        person_ids = self.get_relevant_person_case_ids()
+        persons = self.get_relevant_person_cases(person_ids)
+        for person in with_progress_bar(persons, len(person_ids)):
             self.migrate_person_case(person)
 
-    def get_relevant_person_cases(self):
+    def get_relevant_person_case_ids(self):
+        location_owners = self.dto.get_descendants(include_self=True).location_ids()
+        return self.accessor.get_open_case_ids_in_domain_by_type(CASE_TYPE_PERSON, location_owners)
+
+    def get_relevant_person_cases(self, person_ids):
         # enrolled_in_private is blank/not set AND case_version is blank/not set
         # AND owner_id is within the location set being migrated
-        location_owners = self.dto.get_descendants(include_self=True).location_ids()
-        person_ids = self.accessor.get_open_case_ids_in_domain_by_type(CASE_TYPE_PERSON, location_owners)
         for person in self.accessor.iter_cases(person_ids):
             if (person.get_case_property(ENROLLED_IN_PRIVATE) != 'true'
                     and not person.get_case_property(CASE_VERSION)):
