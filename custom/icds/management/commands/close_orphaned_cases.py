@@ -26,13 +26,12 @@ class Command(BaseCommand):
 
     def handle(self, domain, log_file, **options):
         total_cases = CaseES().domain(domain).case_type('household').is_closed().count()
-        case_accessor = CaseAccessors(domain)
+        self.case_accessor = CaseAccessors(domain)
         failed_updates = []
         with open(log_file, "w") as fh:
             fh.write('--------Successful Form Ids----------\n')
             for cases in chunked(with_progress_bar(self._get_cases_to_process(domain), total_cases), 100):
-                related_cases = {case.case_id for case in case_accessor.get_all_reverse_indices_info(list(cases))
-                                 if case.relationship == CommCareCaseIndexSQL.CHILD}
+                related_cases = _get_related_cases(cases)
                 case_tupes = [(case_id, {}, True) for case_id in related_cases]
                 try:
                     xform, cases = bulk_update_cases(domain, case_tupes)
@@ -51,3 +50,9 @@ class Command(BaseCommand):
             cases = CommCareCaseSQL.objects.using(db).filter(domain=domain, type='household', closed=True)
             for case in cases:
                 yield case.case_id
+
+    def _get_related_cases(self, cases):
+        related_cases = {case.case_id for case in self.case_accessor.get_all_reverse_indices_info(list(cases))
+                         if case.relationship == CommCareCaseIndexSQL.CHILD}
+        related_cases |= {case.case_id for case in self.case_accessor.get_all_reverse_indices_info(list(related_cases))
+                         if case.relationship == CommCareCaseIndexSQL.CHILD}
