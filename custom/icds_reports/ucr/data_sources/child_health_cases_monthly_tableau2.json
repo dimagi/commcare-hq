@@ -2974,6 +2974,36 @@
           "constant": "no"
         }
       },
+      "not_migrated": {
+        "type": "conditional",
+        "test": {
+          "type": "not",
+          "filter": {
+            "operator": "eq",
+            "type": "boolean_expression",
+            "expression": {
+              "doc_id_expression": {
+                "type": "icds_parent_id"
+              },
+              "related_doc_type": "CommCareCase",
+              "type": "related_doc",
+              "value_expression": {
+                "property_name": "migration_status",
+                "type": "property_name"
+              }
+            },
+            "property_value": "migrated"
+          }
+        },
+        "expression_if_true": {
+          "type": "constant",
+          "constant": "yes"
+        },
+        "expression_if_false": {
+          "type": "constant",
+          "constant": "no"
+        }
+      },
       "valid_in_month": {
         "type": "conditional",
         "test": {
@@ -3002,6 +3032,15 @@
               "expression": {
                 "type": "named",
                 "name": "seeking_services"
+              }
+            },
+            {
+              "type": "boolean_expression",
+              "operator": "eq",
+              "property_value": "yes",
+              "expression": {
+                "type": "named",
+                "name": "not_migrated"
               }
             },
             {
@@ -3377,6 +3416,15 @@
             "expression": {
               "type": "named",
               "name": "seeking_services"
+            }
+          },
+          {
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "named",
+              "name": "not_migrated"
             }
           },
           {
