@@ -14,7 +14,7 @@ from custom.enikshay.tests.utils import (
     get_referral_case_structure,
     get_trail_case_structure,
 )
-from .management.commands.enikshay_2b_case_properties import get_relevant_person_cases
+from .management.commands.enikshay_2b_case_properties import ENikshay2BMigrator
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -78,8 +78,10 @@ class TestCreateEnikshayCases(TestCase):
         return trail
 
     def test(self):
+        migrator = ENikshay2BMigrator(self.domain, self.locations['DTO'], commit=True)
         # first check some utils
-        person_cases = list(get_relevant_person_cases(self.domain, self.locations['DTO']))
+        person_case_ids = migrator.get_relevant_person_case_ids()
+        person_cases = list(migrator.get_relevant_person_cases(person_case_ids))
         self.assertEqual(len(person_cases), 1)
         self.assertEqual('roland-deschain', person_cases[0].case_id)
 

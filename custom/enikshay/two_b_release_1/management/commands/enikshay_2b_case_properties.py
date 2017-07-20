@@ -45,22 +45,30 @@ class Command(BaseCommand):
         num_descendants = dto.get_descendants(include_self=True).count()
         confirm("Do you want to migrate the DTO '{}', which has {} descendants?"
                 .format(dto.get_path_display(), num_descendants))
-
-        persons = get_relevant_person_cases(domain, dto)
-        migrate_person_cases(persons, commit=commit)
+        migrator = ENikshay2BMigrator(domain, dto, commit)
 
 
-def get_relevant_person_cases(domain, dto):
-    # enrolled_in_private is blank/not set AND case_version is blank/not set
-    # AND owner_id is within the location set being migrated
-    location_owners = dto.get_descendants(include_self=True).location_ids()
-    accessor = CaseAccessors(domain)
-    person_ids = accessor.get_open_case_ids_in_domain_by_type(CASE_TYPE_PERSON, location_owners)
-    for person in accessor.iter_cases(person_ids):
-        if (person.get_case_property(ENROLLED_IN_PRIVATE) != 'true'
-                and not person.get_case_property(CASE_VERSION)):
-            yield person
+class ENikshay2BMigrator(object):
+    def __init__(self, domain, dto, commit):
+        self.domain = domain
+        self.dto = dto
+        self.commit = commit
+        self.accessor = CaseAccessors(self.domain)
 
+    def migrate(self):
+        persons = self.get_relevant_person_cases()
+        for person in persons:
+            self.migrate_person_case(person)
 
-def migrate_person_cases(persons, commit):
-    pass
+    def get_relevant_person_cases(self):
+        # enrolled_in_private is blank/not set AND case_version is blank/not set
+        # AND owner_id is within the location set being migrated
+        location_owners = self.dto.get_descendants(include_self=True).location_ids()
+        person_ids = self.accessor.get_open_case_ids_in_domain_by_type(CASE_TYPE_PERSON, location_owners)
+        for person in self.accessor.iter_cases(person_ids):
+            if (person.get_case_property(ENROLLED_IN_PRIVATE) != 'true'
+                    and not person.get_case_property(CASE_VERSION)):
+                yield person
+
+    def migrate_person_case(self, person):
+        pass
