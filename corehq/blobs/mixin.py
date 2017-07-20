@@ -262,7 +262,9 @@ class BlobHelper(object):
         from couchforms.models import all_known_formlike_doc_types
 
         if doc['doc_type'] in all_known_formlike_doc_types():
-            bucket_id = doc.get('orig_id', doc['_id'])
+            # XFormError might have its id changed, but the blob bucket id
+            #   will still be orig_id
+            bucket_id = doc.get('orig_id') or doc['_id']
         else:
             bucket_id = doc['_id']
 

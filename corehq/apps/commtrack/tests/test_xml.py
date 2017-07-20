@@ -444,7 +444,7 @@ class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
         initial = float(100)
         balances = [('', initial)]
         instance_id = self.submit_xml_form(balance_submission(balances))
-        instance = FormAccessors(self.domain_name).get_form(instance_id)
+        instance = FormAccessors(self.domain.name).get_form(instance_id)
         self.assertTrue(instance.is_error)
         self.assertTrue('MissingProductId' in instance.problem)
 
