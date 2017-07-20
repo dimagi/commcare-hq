@@ -7,6 +7,7 @@ import logging
 from collections import namedtuple
 from dimagi.utils.chunked import chunked
 from django.core.management import BaseCommand
+from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.log import with_progress_bar
@@ -61,12 +62,13 @@ class ENikshay2BMigrator(object):
         self.dto = dto
         self.commit = commit
         self.accessor = CaseAccessors(self.domain)
+        self.factory = CaseFactory(self.domain)
 
     def migrate(self):
         person_ids = self.get_relevant_person_case_ids()
         persons = self.get_relevant_person_case_sets(person_ids)
         for person in with_progress_bar(persons, len(person_ids)):
-            self.migrate_person(person)
+            self.migrate_person_case_set(person)
 
     def get_relevant_person_case_ids(self):
         location_owners = self.dto.get_descendants(include_self=True).location_ids()
@@ -125,14 +127,73 @@ class ENikshay2BMigrator(object):
             for person_case_set in all_persons.values():
                 yield person_case_set
 
-    @staticmethod
-    def _is_active_person_case(case):
-        return not case.closed and case.type == CASE_TYPE_OCCURRENCE
+    def migrate_person_case_set(self, person):
+        self.factory.create_or_update_cases([
+            self.migrate_person(person.person, person.occurrences, person.episodes),
+        ])
 
-    @staticmethod
-    def _is_open_episode_case(case):
-        return (not case.closed and case.type == CASE_TYPE_EPISODE
-                and case.get_case_property('episode_type') == "confirmed_tb")
+    def migrate_person(self, person, occurrences, episodes):
+        occurrences = [case for case in occurrences
+                       if not case.closed and case.type == CASE_TYPE_OCCURRENCE]
+        occurrence = occurrences[0] if occurrences else None
 
-    def migrate_person(self, person):
-        logger.info("hi")
+        if occurrence:
+            episodes = [case for case in episodes
+                        if not case.closed and case.type == CASE_TYPE_EPISODE
+                        and any([index.referenced_id == occurrence.case_id for index in case.indices])
+                        and case.dynamic_case_properties().get('episode_type') == "confirmed_tb"]
+            episode = episodes[0] if episodes else None
+        else:
+            episode = None
+
+        props = {
+            'enrolled_in_private': 'false',
+            'case_version': '20',
+            'area': person.get_case_property('phi_area'),
+            'language_code': 'hin',
+            'referred_outside_enikshay_date': person.get_case_property('date_referred_out'),
+            'referred_outside_enikshay_by_id': person.get_case_property('date_by_id'),
+        }
+        if episode:
+            props.update({
+                'current_episode_type': episode.get_case_property('episode_type'),
+                'alcohol_history': episode.get_case_property('alcohol_history'),
+                'alcohol_deaddiction': episode.get_case_property('alcohol_deaddiction'),
+                'tobacco_user': episode.get_case_property('tobacco_user'),
+                'occupation': episode.get_case_property('occupation'),
+                'nikshay_id': episode.get_case_property('nikshay_id'),
+                'phone_number_other': episode.get_case_property('phone_number_other'),
+            })
+
+        phone_number = person.get_case_property('phone_number')
+        if phone_number:
+            # TODO check if it already begins with 91 or has a certain length?
+            props['contact_phone_number'] = '91' + phone_number
+
+        try:
+            # TODO pull this location stuff out
+            location = SQLLocation.objects.get(domain=self.domain, location_id=person.owner_id)
+        except SQLLocation.DoesNotExist:
+            pass
+        else:
+            if location.location_type.code == 'phi':
+                props['phi_name'] = location.name
+            ancestors_by_type = {loc.location_type.code: loc
+                                 for loc in location.get_ancestors(include_self=True)
+                                                    .prefetch_related('location_type')}
+            if 'tu' in ancestors_by_type:
+                props['tu_name'] = ancestors_by_type['tu'].name
+                props['tu_id'] = ancestors_by_type['tu'].location_id
+            if 'dto' in ancestors_by_type:
+                props['dto_name'] = ancestors_by_type['dto'].name
+                props['dto_id'] = ancestors_by_type['dto'].location_id
+
+        return CaseStructure(
+            case_id=person.case_id,
+            walk_related=False,
+            attrs={
+                "create": False,
+                "owner_id": person.owner_id or '-',
+                "update": props,
+            },
+        )
