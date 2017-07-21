@@ -12,7 +12,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
-        parser.add_arguments(
+        parser.add_argument(
             '--write',
             action='store_true',
             default=False,
@@ -39,9 +39,9 @@ def get_phi_location_id(patient_detail, nikshay_code_to_phi):
 
 def update_properties_by_nikshay_id(nikshay_id, domain, nikshay_code_to_phi, write):
     case_accessor = CaseAccessors(domain)
-    episode_case_ids = case_accessor.get_cases_by_external_id(nikshay_id, case_type='episode')
-    assert len(episode_case_ids) == 1
-    episode_case = case_accessor.get_case(episode_case_ids[0])
+    episode_cases_by_nikshay_id = case_accessor.get_cases_by_external_id(nikshay_id, case_type='episode')
+    assert len(episode_cases_by_nikshay_id) == 1
+    episode_case = episode_cases_by_nikshay_id[0]
     assert episode_case.dynamic_case_properties()['migration_created_case'] == 'true'
 
     patient_detail = PatientDetail.objects.get(PregId=nikshay_id)
