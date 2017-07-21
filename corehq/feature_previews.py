@@ -48,6 +48,7 @@ def all_previews_by_name():
     return all_toggles_by_name_in_scope(globals())
 
 
+@quickcache(['domain'])
 def previews_dict(domain):
     return {t.slug: True for t in all_previews() if t.enabled(domain)}
 
@@ -78,9 +79,9 @@ ENUM_IMAGE = FeaturePreview(
 
 CONDITIONAL_ENUM = FeaturePreview(
     slug='conditional_enum',
-    label=_('Conditional Enum in Case List'),
+    label=_('Conditional ID Mapping in Case List'),
     description=_(
-        "Specify a custom xpath expression to calculate a lookup key in the case list, case detail screen or"
+        "Specify a custom xpath expression to calculate a lookup key in the case list, case detail screen or "
         "case tile enum columns"
     ),
 )
@@ -123,7 +124,9 @@ VELLUM_ADVANCED_ITEMSETS = FeaturePreview(
     label=_("Custom Single and Multiple Answer Questions"),
     description=_(
         "Allows display of custom lists, such as case sharing groups or locations as choices in Single Answer or "
-        "Multiple Answer lookup Table questions. Configuring these questions requires specifying advanced logic."
+        "Multiple Answer lookup Table questions. Configuring these questions requires specifying advanced logic. "
+        "Available in form builder, as an additional option on the <strong>Lookup Table Data</strong> for lookup "
+        "table questions."
     ),
     privilege=LOOKUP_TABLES,
 )

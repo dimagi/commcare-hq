@@ -1,7 +1,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% if app.advanced_app_builder or value or ko_value %}
+{% if add_ons.display_conditions %}
     <div class="form-group" id="module-filter">
         <label class="col-sm-2 control-label">
             {% trans "Display Condition" %}

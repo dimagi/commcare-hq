@@ -5,7 +5,7 @@
  {% load hq_shared_tags %}
  {% load i18n %}
 +
-+{% if app.advanced_app_builder or module.case_list_form.form_id %}
++{% if add_ons.register_from_case_list %}
  
    <div id="case-list-form">
        <div class="form-group">
