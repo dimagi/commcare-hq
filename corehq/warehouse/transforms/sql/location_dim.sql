@@ -56,7 +56,7 @@ SELECT
     '{{ batch_id }}'
 FROM
     {{ location_staging }} as l_table
-LEFT OUTER JOIN
+INNER JOIN
     {{ location_type_staging }} as lt_table
 ON l_table.location_type_id = lt_table.location_type_id AND l_table.domain = lt_table.domain;
 
