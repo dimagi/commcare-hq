@@ -125,7 +125,7 @@ VELLUM_ADVANCED_ITEMSETS = FeaturePreview(
     description=_(
         "Allows display of custom lists, such as case sharing groups or locations as choices in Single Answer or "
         "Multiple Answer lookup Table questions. Configuring these questions requires specifying advanced logic. "
-        "Available in form builder, as an additional option on the <strong>Lookup Table Data</strong> for lookup "
+        "Available in form builder, as an additional option on the Lookup Table Data for lookup "
         "table questions."
     ),
     privilege=LOOKUP_TABLES,
