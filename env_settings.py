@@ -107,4 +107,55 @@ ES_META = {
             },
         }
     },
+
+    'swiss': {
+        'hqusers': {
+            "settings": {
+                "number_of_shards": 2,
+                "analysis": {
+                    "analyzer": {
+                        "default": {
+                            "type": "custom",
+                            "tokenizer": "whitespace",
+                            "filter": ["lowercase"]
+                        },
+                    }
+                }
+            }
+        },
+    },
+
+    'l10k': {
+        'hqusers': {
+            "settings": {
+                "number_of_shards": 2,
+                "analysis": {
+                    "analyzer": {
+                        "default": {
+                            "type": "custom",
+                            "tokenizer": "whitespace",
+                            "filter": ["lowercase"]
+                        },
+                    }
+                }
+            }
+        },
+    },
+
+    'staging': {
+        'hqusers': {
+            "settings": {
+                "number_of_shards": 2,
+                "analysis": {
+                    "analyzer": {
+                        "default": {
+                            "type": "custom",
+                            "tokenizer": "whitespace",
+                            "filter": ["lowercase"]
+                        },
+                    }
+                }
+            }
+        },
+    },
 }
