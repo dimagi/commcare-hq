@@ -53,6 +53,7 @@ def update_properties_by_nikshay_id(nikshay_id, domain, nikshay_code_to_phi, wri
         if prop not in episode_case.dynamic_case_properties():
             if write:
                 CaseFactory(domain=domain).update_case(
+                    episode_case.case_id,
                     update={prop: get_phi_location_id(patient_detail, nikshay_code_to_phi)}
                 )
         else:
