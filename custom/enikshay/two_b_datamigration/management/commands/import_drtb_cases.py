@@ -993,7 +993,6 @@ def clean_phone_number(value, digits):
     if not value:
         return None
     assert digits in (10, 12)
-    exception = Exception("Unexpected phone number format: {}".format(value))
 
     # TODO: (ASK) ask sheel what to do if there are two numbers
     try:
@@ -1005,17 +1004,12 @@ def clean_phone_number(value, digits):
 
     cleaned = re.sub('[^0-9]', '', str(value))
     if len(cleaned) == 12 and cleaned[:2] == "91":
-        if digits == 12:
-            return cleaned
-        else:
+        if digits != 12:
             return cleaned[2:]
     elif len(cleaned) == 10:
-        if digits == 10:
-            return cleaned
-        else:
+        if digits != 10:
             return "91" + cleaned
-    else:
-        raise exception
+    return cleaned
 
 
 def _starts_with_any(value, strings):

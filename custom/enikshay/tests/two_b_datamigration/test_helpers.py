@@ -65,13 +65,6 @@ class TestCleaningFucntions(SimpleTestCase):
         good_number_with_punc = "+91 123-456-7890"
         good_short_number = "123-456-7890"
 
-        too_short_number = "123-4567"
-        bad_number = "01 123-456-7890"
-
         for number in (good_number, good_number_with_punc, good_short_number):
             self.assertEqual(clean_phone_number(number, 12), "911234567890")
             self.assertEqual(clean_phone_number(number, 10), "1234567890")
-
-        for number in (too_short_number, bad_number):
-            with self.assertRaises(Exception):
-                clean_contact_phone_number(number)
