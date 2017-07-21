@@ -2340,7 +2340,7 @@ def get_newborn_with_low_birth_weight_chart(config, loc_level):
         data['red'][date_in_miliseconds]['y'] += low_birth
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        [dict(loc_name=key, percent=sum(val) / len(val)) for key, val in best_worst.iteritems()],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -2351,9 +2351,9 @@ def get_newborn_with_low_birth_weight_chart(config, loc_level):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'],
-                        'all': value['all']
-                    } for key, value in data['blue'].iteritems()
+                        'y': val['y'],
+                        'all': val['all']
+                    } for key, val in data['blue'].iteritems()
                 ],
                 "key": "Total newborns",
                 "strokeWidth": 2,
@@ -2364,9 +2364,9 @@ def get_newborn_with_low_birth_weight_chart(config, loc_level):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'],
-                        'all': value['all']
-                    } for key, value in data['red'].iteritems()
+                        'y': val['y'],
+                        'all': val['all']
+                    } for key, val in data['red'].iteritems()
                 ],
                 "key": "Low birth weight newborns",
                 "strokeWidth": 2,
@@ -2581,7 +2581,7 @@ def get_early_initiation_breastfeeding_chart(config, loc_level):
         data['blue'][date_in_miliseconds]['y'] += in_month
 
     top_locations = sorted(
-        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        [dict(loc_name=key, percent=sum(val) / len(val)) for key, val in best_worst.iteritems()],
         key=lambda x: x['percent'],
         reverse=True
     )
@@ -2592,9 +2592,9 @@ def get_early_initiation_breastfeeding_chart(config, loc_level):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'],
-                        'all': value['all']
-                    } for key, value in data['green'].iteritems()
+                        'y': val['y'],
+                        'all': val['all']
+                    } for key, val in data['green'].iteritems()
                 ],
                 "key": "Children breastfed within one hour of birth",
                 "strokeWidth": 2,
@@ -2605,9 +2605,9 @@ def get_early_initiation_breastfeeding_chart(config, loc_level):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'],
-                        'all': value['all']
-                    } for key, value in data['blue'].iteritems()
+                        'y': val['y'],
+                        'all': val['all']
+                    } for key, val in data['blue'].iteritems()
                 ],
                 "key": "Total births",
                 "strokeWidth": 2,
