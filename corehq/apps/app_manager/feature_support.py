@@ -135,3 +135,10 @@ class CommCareFeatureSupportMixin(object):
         Ability to configure practice mobile workers for apps
         """
         return self._require_minimum_version('2.26')
+
+    @property
+    def enable_sorted_itemsets(self):
+        """
+        Enable sorted itemsets in the form builder.
+        """
+        return self._require_minimum_version('2.37')

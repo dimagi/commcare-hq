@@ -117,7 +117,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'templated_intents': domain_has_privilege(domain, privileges.TEMPLATED_INTENTS),
         'custom_intents': domain_has_privilege(domain, privileges.CUSTOM_INTENTS),
         'rich_text': True,
-        'sorted_itemsets': app.build_version >= '2.37',
+        'sorted_itemsets': app.enable_sorted_itemsets,
     })
 
     has_schedule = (
