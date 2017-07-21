@@ -4,8 +4,7 @@ INSERT INTO {{ location_dim }} (
 
     location_id,
     sql_location_id,
-    location_level_0,
-    location_level_1,
+    sql_parent_location_id,
 
     name,
     site_code,
@@ -34,7 +33,6 @@ SELECT
 
     l_table.location_id,
     l_table.sql_location_id,
-    l_table.sql_location_id,
     l_table.sql_parent_location_id,
 
     l_table.name,
@@ -58,7 +56,7 @@ SELECT
     '{{ batch_id }}'
 FROM
     {{ location_staging }} as l_table
-INNER JOIN
+LEFT OUTER JOIN
     {{ location_type_staging }} as lt_table
 ON l_table.location_type_id = lt_table.location_type_id AND l_table.domain = lt_table.domain;
 
@@ -87,13 +85,19 @@ SET
     ) - 1
 
 FROM {{ location_dim }} AS l0
-LEFT JOIN {{ location_dim }} l1 ON l0.location_level_1 = l1.location_level_0
-LEFT JOIN {{ location_dim }} l2 ON l1.location_level_1 = l2.location_level_0
-LEFT JOIN {{ location_dim }} l3 ON l2.location_level_1 = l3.location_level_0
-LEFT JOIN {{ location_dim }} l4 ON l3.location_level_1 = l4.location_level_0
-LEFT JOIN {{ location_dim }} l5 ON l4.location_level_1 = l5.location_level_0
-LEFT JOIN {{ location_dim }} l6 ON l5.location_level_1 = l6.location_level_0
-LEFT JOIN {{ location_dim }} l7 ON l6.location_level_1 = l7.location_level_0
+LEFT JOIN {{ location_dim }} l1 ON l0.sql_parent_location_id IS NULL
+LEFT JOIN {{ location_dim }} l2 ON l1.sql_location_id<>l0.sql_location_id AND l1.sql_location_id = l2.sql_parent_location_id
+LEFT JOIN {{ location_dim }} l3 ON l2.sql_location_id<>l0.sql_location_id AND l2.sql_location_id = l3.sql_parent_location_id
+LEFT JOIN {{ location_dim }} l4 ON l3.sql_location_id<>l0.sql_location_id AND l3.sql_location_id = l4.sql_parent_location_id
+LEFT JOIN {{ location_dim }} l5 ON l4.sql_location_id<>l0.sql_location_id AND l4.sql_location_id = l5.sql_parent_location_id
+LEFT JOIN {{ location_dim }} l6 ON l5.sql_location_id<>l0.sql_location_id AND l5.sql_location_id = l6.sql_parent_location_id
+LEFT JOIN {{ location_dim }} l7 ON l6.sql_location_id<>l0.sql_location_id AND l6.sql_location_id = l7.sql_parent_location_id
 
 WHERE
-    location_dim_target.sql_location_id = l0.sql_location_id;
+    location_dim_target.sql_location_id = l1.sql_location_id OR
+    location_dim_target.sql_location_id = l2.sql_location_id OR
+    location_dim_target.sql_location_id = l3.sql_location_id OR
+    location_dim_target.sql_location_id = l4.sql_location_id OR
+    location_dim_target.sql_location_id = l5.sql_location_id OR
+    location_dim_target.sql_location_id = l6.sql_location_id OR
+    location_dim_target.sql_location_id = l7.sql_location_id;
