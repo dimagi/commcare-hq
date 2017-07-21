@@ -44,20 +44,6 @@ def force_to_datetime(val):
         raise ValueError("object must be date or datetime!")
 
 
-def safe_date_add(startdate, days, force_to_date_flag=True):
-    if not startdate:
-        return None
-    try: 
-        val = startdate + datetime.timedelta(days)
-        if force_to_date_flag:
-            return force_to_date(val)
-        else:
-            return val
-    except OverflowError as e:
-        logging.exception(str(e))
-        return None
-
-
 def months_between(start, end):
     """
     Given a start date and enddate return all months between them.
