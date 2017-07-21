@@ -7,7 +7,7 @@ function IntrahealthLocModel(data, root, depth) {
             api_get_children(this.uuid(), function (resp) {
                 loc.set_children(resp);
                 callback(loc);
-            });
+            }, root.loc_url);
         }
     };
 }

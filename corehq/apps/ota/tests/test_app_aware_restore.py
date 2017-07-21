@@ -1,7 +1,8 @@
 from django.test import TestCase
 from mock import patch
 
-from casexml.apps.phone.tests.utils import create_restore_user
+from corehq.util.test_utils import flag_enabled
+from casexml.apps.phone.tests.utils import create_restore_user, call_fixture_generator
 from corehq import toggles
 from corehq.apps.app_manager.fixtures.mobile_ucr import report_fixture_generator
 from corehq.apps.app_manager.models import Application, ReportModule, ReportAppConfig
@@ -11,6 +12,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.userreports.tests.utils import (
     get_sample_report_config, mock_datasource_config, mock_sql_backend
 )
+from corehq.apps.users.models import UserRole, Permissions
 
 
 class AppAwareSyncTests(TestCase):
@@ -23,8 +25,9 @@ class AppAwareSyncTests(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(AppAwareSyncTests, cls).setUpClass()
         delete_all_users()
-        create_domain(cls.domain)
+        cls.domain_obj = create_domain(cls.domain)
         toggles.MOBILE_UCR.set(cls.domain, True, toggles.NAMESPACE_DOMAIN)
         cls.user = create_restore_user(cls.domain)
 
@@ -65,6 +68,7 @@ class AppAwareSyncTests(TestCase):
         delete_all_users()
         domain = Domain.get_by_name(cls.domain)
         domain.delete()
+        super(AppAwareSyncTests, cls).tearDownClass()
 
     def test_report_fixtures_provider_without_app(self):
         """
@@ -75,7 +79,7 @@ class AppAwareSyncTests(TestCase):
             get_data_mock.return_value = self.rows
             with mock_sql_backend():
                 with mock_datasource_config():
-                    fixtures = report_fixture_generator(self.user, '2.0', None)
+                    fixtures = call_fixture_generator(report_fixture_generator, self.user)
         reports = fixtures[0].findall('.//report')
         self.assertEqual(len(reports), 2)
         report_ids = {r.attrib.get('id') for r in reports}
@@ -90,7 +94,37 @@ class AppAwareSyncTests(TestCase):
             get_data_mock.return_value = self.rows
             with mock_sql_backend():
                 with mock_datasource_config():
-                    fixtures = report_fixture_generator(self.user, '2.0', None, app=self.app1)
+                    fixtures = call_fixture_generator(report_fixture_generator, self.user, app=self.app1)
+        reports = fixtures[0].findall('.//report')
+        self.assertEqual(len(reports), 1)
+        self.assertEqual(reports[0].attrib.get('id'), '123456')
+
+    @flag_enabled('ROLE_WEBAPPS_PERMISSIONS')
+    def test_report_fixtures_provider_with_cloudcare(self):
+        """
+        ReportFixturesProvider should iterate only allowed apps if sync is from cloudcare
+        """
+        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+        role = UserRole(
+            domain=self.domain,
+            permissions=Permissions(
+                view_web_apps=False,
+                view_web_apps_list=[self.app1._id]
+            ),
+            name='WebApp Restricted'
+        )
+        role.save()
+        self.user._couch_user.set_role(self.domain, role.get_qualified_id())
+
+        with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
+            get_data_mock.return_value = self.rows
+            with mock_sql_backend():
+                with mock_datasource_config():
+                    fixtures = call_fixture_generator(
+                        report_fixture_generator,
+                        self.user,
+                        device_id="WebAppsLogin|user@project.commcarehq.org"
+                    )
         reports = fixtures[0].findall('.//report')
         self.assertEqual(len(reports), 1)
         self.assertEqual(reports[0].attrib.get('id'), '123456')
@@ -99,5 +133,19 @@ class AppAwareSyncTests(TestCase):
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
         with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
             get_data_mock.return_value = self.rows
-            fixtures = report_fixture_generator(self.user, '2.0', None, app=self.app3)
+            fixtures = call_fixture_generator(report_fixture_generator, self.user, app=self.app3)
         self.assertEqual(len(fixtures), 0)
+
+    def test_user_restore(self):
+        from casexml.apps.phone.tests.utils import generate_restore_payload
+        from casexml.apps.case.xml import V3
+        from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
+
+        with patch.object(ConfigurableReportDataSource, 'get_data') as get_data_mock:
+            get_data_mock.return_value = self.rows
+            with mock_sql_backend():
+                with mock_datasource_config():
+                    restore = generate_restore_payload(self.domain_obj, self.user, version=V3)
+                    self.assertIn('<fixture id="commcare:reports"', restore)
+                    self.assertIn('report_id="{id}"'.format(id=self.report_config1._id), restore)
+                    self.assertIn('report_id="{id}"'.format(id=self.report_config2._id), restore)

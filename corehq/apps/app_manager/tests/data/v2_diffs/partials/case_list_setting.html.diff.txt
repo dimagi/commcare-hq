@@ -1,0 +1,71 @@
+--- 
++++ 
+@@ -1,35 +1,40 @@
+ {% load xforms_extras %}
+ {% load hq_shared_tags %}
+ {% load i18n %}
+-<div class="form-group">
+-    <label class="col-sm-2 control-label">
+-        {% trans LABEL %}
+-        <span class="hq-help-template"
+-              data-title="{% trans LABEL %}"
+-              data-content="{% trans DESC %}"
+-        ></span>
+-    </label>
+-    <div class="col-sm-4">
+-        <select class="form-control case-list-setting-show" type="text" data-slug="{{ SLUG }}" name="{{ SLUG }}-show">
+-            <option value="false" {% if not case_list.show %}selected{% endif %}>Don't Show</option>
+-            <option value="true" {% if case_list.show %}selected{% endif %}>Show</option>
+-        </select>
++
++{% if app.advanced_app_builder or case_list.show %}
++
++    <div class="form-group">
++        <label class="col-sm-2 control-label">
++            {% trans LABEL %}
++            <span class="hq-help-template"
++                  data-title="{% trans LABEL %}"
++                  data-content="{% trans DESC %}"
++            ></span>
++        </label>
++        <div class="col-sm-4">
++            <select class="form-control case-list-setting-show" type="text" data-slug="{{ SLUG }}" name="{{ SLUG }}-show">
++                <option value="false" {% if not case_list.show %}selected{% endif %}>Don't Show</option>
++                <option value="true" {% if case_list.show %}selected{% endif %}>Show</option>
++            </select>
++        </div>
+     </div>
+-</div>
+-<div class="form-group case-list-setting-label" data-slug="{{ SLUG }}">
+-    <label class="col-sm-2 control-label">
+-        Label for Case List Menu Item
+-    </label>
+-    <div class="col-sm-4">
+-        {% input_trans case_list.label langs %}
++    <div class="form-group case-list-setting-label" data-slug="{{ SLUG }}">
++        <label class="col-sm-2 control-label">
++            {% trans "Label for Case List Menu Item" %}
++        </label>
++        <div class="col-sm-4">
++            {% input_trans case_list.label langs %}
++        </div>
++        <div class="col-sm-2">
++            <span class="label label-danger hide" id="case_list_label_error">
++                {% trans "Case list menu item requires a label" %}
++            </span>
++        </div>
+     </div>
+-    <div class="col-sm-2">
+-        <span class="label label-danger hide" id="case_list_label_error">
+-            {% trans "Case list menu item requires a label" %}
+-        </span>
++
++    <div class="case-list-setting-media" data-slug="{{ SLUG }}">
++        {% include "app_manager/v2/partials/nav_menu_media.html" with ICON_LABEL="Icon for Case List Menu Item" AUDIO_LABEL="Audio for Case List Menu Item" qualifier="case_list-menu_item_" %}
+     </div>
+-</div>
+ 
+-<div class="case-list-setting-media" data-slug="{{ SLUG }}">
+-    {% include "app_manager/v1/partials/nav_menu_media.html" with ICON_LABEL="Icon for Case List Menu Item" AUDIO_LABEL="Audio for Case List Menu Item" qualifier="case_list-menu_item_" %}
+-</div>
++{% endif %}

@@ -1,6 +1,5 @@
 from corehq.apps.app_manager import id_strings
-from corehq.apps.app_manager.models import ReportModule, ReportGraphConfig, \
-    MobileSelectFilter
+from corehq.apps.app_manager.models import ReportModule, MobileSelectFilter
 from corehq.apps.app_manager import models
 from corehq.apps.app_manager.suite_xml.xml_models import Locale, Text, Command, Entry, \
     SessionDatum, Detail, Header, Field, Template, Series, ConfigurationGroup, \
@@ -8,6 +7,10 @@ from corehq.apps.app_manager.suite_xml.xml_models import Locale, Text, Command, 
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter, ChoiceListFilter
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.util.quickcache import quickcache
+
+
+COLUMN_XPATH_TEMPLATE = "column[@id='{}']"
+COLUMN_XPATH_CLIENT_TEMPLATE = "column[@id='<%= id %>']"
 
 
 @quickcache(['report_module.unique_id'])
@@ -33,11 +36,12 @@ class ReportModuleSuiteHelper(object):
     def get_details(self):
         _load_reports(self.report_module)
         for config in self.report_module.report_configs:
-            for filter_slug, f in _MobileSelectFilterHelpers.get_filters(config, self.domain):
-                yield (_MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
-                       _MobileSelectFilterHelpers.get_select_details(config, filter_slug, self.domain), True)
+            for filter_slug, f in MobileSelectFilterHelpers.get_filters(config, self.domain):
+                yield (MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
+                       MobileSelectFilterHelpers.get_select_details(config, filter_slug, self.domain), True)
             yield (_get_select_detail_id(config), _get_select_details(config), True)
-            yield (_get_summary_detail_id(config), _get_summary_details(config, self.domain), True)
+            yield (_get_summary_detail_id(config),
+                   _get_summary_details(config, self.domain, self.report_module), True)
 
     def get_custom_entries(self):
         _load_reports(self.report_module)
@@ -55,12 +59,12 @@ def _get_config_entry(config, domain):
         ),
         datums=[
             SessionDatum(
-                detail_select=_MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
-                id=_MobileSelectFilterHelpers.get_datum_id(config, filter_slug),
-                nodeset=_MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug),
+                detail_select=MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
+                id=MobileSelectFilterHelpers.get_datum_id(config, filter_slug),
+                nodeset=MobileSelectFilterHelpers.get_options_nodeset(config, filter_slug),
                 value='./@value',
             )
-            for filter_slug, f in _MobileSelectFilterHelpers.get_filters(config, domain)
+            for filter_slug, f in MobileSelectFilterHelpers.get_filters(config, domain)
         ] + [
             SessionDatum(
                 detail_confirm=_get_summary_detail_id(config),
@@ -105,43 +109,68 @@ def _get_select_details(config):
     ).serialize().decode('utf-8'))
 
 
-def _get_summary_details(config, domain):
+def get_data_path(config, domain):
+    return (
+        "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
+        .format(
+            config.uuid,
+            MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)
+        )
+    )
+
+
+def _get_summary_details(config, domain, module):
     def _get_graph_fields():
         from corehq.apps.userreports.reports.specs import MultibarChartSpec
-        # todo: make this less hard-coded
+        from corehq.apps.app_manager.models import GraphConfiguration, GraphSeries
+
+        def _locale_config(key):
+            return id_strings.mobile_ucr_configuration(
+                module,
+                config.uuid,
+                key
+            )
+
+        def _locale_series_config(index, key):
+            return id_strings.mobile_ucr_series_configuration(
+                module,
+                config.uuid,
+                index,
+                key
+            )
+
+        def _locale_annotation(index):
+            return id_strings.mobile_ucr_annotation(
+                module,
+                config.uuid,
+                index
+            )
+
+
         for chart_config in config.report(domain).charts:
             if isinstance(chart_config, MultibarChartSpec):
-                graph_config = config.graph_configs.get(chart_config.chart_id, ReportGraphConfig())
-
-                def _column_to_series(column):
-                    return Series(
-                        nodeset=(
-                            "instance('reports')/reports/report[@id='{}']/rows/row[@is_total_row='False']{}"
-                            .format(
-                                config.uuid,
-                                _MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)
-                            )
-                        ),
-                        x_function="column[@id='{}']".format(chart_config.x_axis_column),
-                        y_function="column[@id='{}']".format(column),
-                        configuration=ConfigurationGroup(configs=[
-                            ConfigurationItem(id=key, xpath_function=value)
-                            for key, value in graph_config.series_configs.get(column, {}).items()
-                        ])
+                graph_config = config.complete_graph_configs.get(chart_config.chart_id, GraphConfiguration(
+                    series=[GraphSeries() for c in chart_config.y_axis_columns],
+                ))
+                for index, column in enumerate(chart_config.y_axis_columns):
+                    graph_config.series[index].data_path = (
+                        graph_config.series[index].data_path or
+                        get_data_path(config, domain)
+                    )
+                    graph_config.series[index].x_function = (
+                        graph_config.series[index].x_function
+                        or COLUMN_XPATH_TEMPLATE.format(chart_config.x_axis_column)
+                    )
+                    graph_config.series[index].y_function = (
+                        graph_config.series[index].y_function
+                        or COLUMN_XPATH_TEMPLATE.format(column.column_id)
                     )
                 yield Field(
                     header=Header(text=Text()),
-                    template=GraphTemplate(
-                        form='graph',
-                        graph=Graph(
-                            type=graph_config.graph_type,
-                            series=[_column_to_series(c.column_id) for c in chart_config.y_axis_columns],
-                            configuration=ConfigurationGroup(configs=[
-                                ConfigurationItem(id=key, xpath_function=value)
-                                for key, value in graph_config.config.items()
-                            ]),
-                        ),
-                    )
+                    template=GraphTemplate.build('graph', graph_config,
+                                                 locale_config=_locale_config,
+                                                 locale_series_config=_locale_series_config,
+                                                 locale_annotation=_locale_annotation)
                 )
 
     def _get_description_text(report_config):
@@ -154,59 +183,62 @@ def _get_summary_details(config, domain):
                 locale=Locale(id=id_strings.report_description(report_config.uuid))
             )
 
-    return models.Detail(custom_xml=Detail(
-        id='reports.{}.summary'.format(config.uuid),
+    detail_id = 'reports.{}.summary'.format(config.uuid)
+    detail = Detail(
         title=Text(
             locale=Locale(id=id_strings.report_menu()),
         ),
-        details=[
-            Detail(
-                title=Text(
-                    locale=Locale(id=id_strings.report_menu()),
+        fields=[
+            Field(
+                header=Header(
+                    text=Text(
+                        locale=Locale(id=id_strings.report_name_header())
+                    )
                 ),
-                fields=[
-                    Field(
-                        header=Header(
-                            text=Text(
-                                locale=Locale(id=id_strings.report_name_header())
-                            )
-                        ),
-                        template=Template(
-                            text=Text(
-                                locale=Locale(id=id_strings.report_name(config.uuid))
-                            )
-                        ),
-                    ),
-                    Field(
-                        header=Header(
-                            text=Text(
-                                locale=Locale(id=id_strings.report_description_header()),
-                            )
-                        ),
-                        template=Template(
-                            text=_get_description_text(config)
-                        ),
-                    ),
-                ] + [
-                    Field(
-                        header=Header(
-                            text=Text(
-                                locale=Locale(id=id_strings.report_last_sync())
-                            )
-                        ),
-                        template=Template(
-                            text=Text(
-                                xpath=Xpath(
-                                    function="format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"
-                                )
-                            )
-                        )
-                    ),
-                ] + list(_get_graph_fields()),
+                template=Template(
+                    text=Text(
+                        locale=Locale(id=id_strings.report_name(config.uuid))
+                    )
+                ),
             ),
-            _get_data_detail(config, domain),
-        ],
-    ).serialize().decode('utf-8'))
+            Field(
+                header=Header(
+                    text=Text(
+                        locale=Locale(id=id_strings.report_description_header()),
+                    )
+                ),
+                template=Template(
+                    text=_get_description_text(config)
+                ),
+            ),
+        ] + [
+            Field(
+                header=Header(
+                    text=Text(
+                        locale=Locale(id=id_strings.report_last_sync())
+                    )
+                ),
+                template=Template(
+                    text=Text(
+                        xpath=Xpath(
+                            function="format-date(date(instance('reports')/reports/@last_sync), '%Y-%m-%d %H:%M')"
+                        )
+                    )
+                )
+            ),
+        ] + list(_get_graph_fields()),
+    )
+    if config.show_data_table:
+        return models.Detail(custom_xml=Detail(
+            id=detail_id,
+            title=Text(
+                locale=Locale(id=id_strings.report_menu()),
+            ),
+            details=[detail, _get_data_detail(config, domain)]
+        ).serialize().decode('utf-8'))
+    else:
+        detail.id = detail_id
+        return models.Detail(custom_xml=detail.serialize().decode('utf-8'))
 
 
 def _get_data_detail(config, domain):
@@ -233,7 +265,11 @@ def _get_data_detail(config, domain):
                     )
                 return word_eval
 
-            transform = col['transform']
+            try:
+                transform = col['transform']
+            except KeyError:
+                transform = {}
+
             if transform.get('type') == 'translation':
                 default_val = "column[@id='{column_id}']"
                 xpath_function = default_val
@@ -279,7 +315,7 @@ def _get_data_detail(config, domain):
 
     return Detail(
         id='reports.{}.data'.format(config.uuid),
-        nodeset='rows/row{}'.format(_MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)),
+        nodeset='rows/row{}'.format(MobileSelectFilterHelpers.get_data_filter_xpath(config, domain)),
         title=Text(
             locale=Locale(id=id_strings.report_data_table()),
         ),
@@ -287,7 +323,7 @@ def _get_data_detail(config, domain):
     )
 
 
-class _MobileSelectFilterHelpers(object):
+class MobileSelectFilterHelpers(object):
 
     @staticmethod
     def get_options_nodeset(config, filter_slug):
@@ -314,7 +350,7 @@ class _MobileSelectFilterHelpers(object):
     @staticmethod
     def get_select_details(config, filter_slug, domain):
         detail = Detail(
-            id=_MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
+            id=MobileSelectFilterHelpers.get_select_detail_id(config, filter_slug),
             title=Text(config.report(domain).get_ui_filter(filter_slug).label),
             fields=[
                 Field(
@@ -334,8 +370,8 @@ class _MobileSelectFilterHelpers(object):
         return ''.join([
             "[column[@id='{column_id}']=instance('commcaresession')/session/data/{datum_id}]".format(
                 column_id=config.report(domain).get_ui_filter(slug).field,
-                datum_id=_MobileSelectFilterHelpers.get_datum_id(config, slug))
-            for slug, f in _MobileSelectFilterHelpers.get_filters(config, domain)])
+                datum_id=MobileSelectFilterHelpers.get_datum_id(config, slug))
+            for slug, f in MobileSelectFilterHelpers.get_filters(config, domain)])
 
 
 def is_valid_mobile_select_filter_type(ui_filter):

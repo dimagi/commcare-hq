@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <apps>
-  <app profile="http://onering.com/a/rohan/apps/download/app_id/profile.xml?latest=true" domain="rohan" name="Untitled Application" environment="production" media-profile="http://onering.com/a/rohan/apps/download/app_id/media_profile.xml?latest=true"/>
-  <app profile="http://onering.com/a/angmar/apps/download/app_id/profile.xml?latest=true" domain="angmar" name="Untitled Application" environment="production" media-profile="http://onering.com/a/angmar/apps/download/app_id/media_profile.xml?latest=true"/>
-  <app profile="http://onering.com/a/mordor/apps/download/app_id/profile.xml?latest=true" domain="mordor" name="Untitled Application" environment="production" media-profile="http://onering.com/a/mordor/apps/download/app_id/media_profile.xml?latest=true"/>
+  <app profile="http://onering.com/a/rohan/apps/download/app_id/profile.ccpr" domain="rohan" name="Untitled Application" environment="production" media-profile="http://onering.com/a/rohan/apps/download/app_id/media_profile.ccpr"/>
+  <app profile="http://onering.com/a/angmar/apps/download/app_id/profile.ccpr" domain="angmar" name="Untitled Application" environment="production" media-profile="http://onering.com/a/angmar/apps/download/app_id/media_profile.ccpr"/>
+  <app profile="http://onering.com/a/mordor/apps/download/app_id/profile.ccpr" domain="mordor" name="Untitled Application" environment="production" media-profile="http://onering.com/a/mordor/apps/download/app_id/media_profile.ccpr"/>
 </apps>

@@ -62,28 +62,8 @@ class SubmitHistoryMixin(ElasticProjectInspectionReport,
         return datespan_from_beginning(self.domain_object, self.timezone)
 
     def _get_users_filter(self, mobile_user_and_group_slugs):
-        truthy_only = functools.partial(filter, None)
-        users_data = EMWF.pull_users_and_groups(
-            self.domain,
-            mobile_user_and_group_slugs,
-            include_inactive=True
-        )
-        selected_user_types = EMWF.selected_user_types(mobile_user_and_group_slugs)
-        all_mobile_workers_selected = HQUserType.REGISTERED in selected_user_types
-        if not self.request.can_access_all_locations or (not all_mobile_workers_selected or
-                                                         users_data.admin_and_demo_users):
-            return form_es.user_id(truthy_only(
-                u.user_id for u in users_data.combined_users
-            ))
-        else:
-            negated_ids = util.get_all_users_by_domain(
-                self.domain,
-                user_filter=HQUserType.all_but_users(),
-                simplified=True,
-            )
-            return es_filters.NOT(form_es.user_id(truthy_only(
-                user.user_id for user in negated_ids
-            )))
+        user_ids = EMWF.user_es_query(self.domain, mobile_user_and_group_slugs).values_list('_id', flat=True)
+        return form_es.user_id(user_ids)
 
     @staticmethod
     def _form_filter(form):

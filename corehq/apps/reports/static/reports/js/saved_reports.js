@@ -36,6 +36,7 @@ var ReportConfig = function (data) {
 
     self.unwrap = function () {
         var data = ko.mapping.toJS(self);
+        var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
         if (null !== standardHQReport.slug) {
             data['report_slug'] = standardHQReport.slug;
         }
@@ -254,6 +255,7 @@ var ReportConfigsViewModel = function (options) {
                     var valid = self.validate();
                     if (!valid) {
                         jqXHR.abort();
+                        $('#modal-save-button')[0].saveButton.setState('retry');
                     }
                 }
             };
@@ -275,7 +277,12 @@ $.fn.reportUserConfigurableConfigEditor = function (options) {
     viewModel.setUserConfigurableConfigBeingViewed(new ReportConfig(options.defaultItem));
 };
 
-$.fn.reportConfigList = function (options) {
-    var viewModel = new ReportConfigsViewModel(options);
-    $(this).koApplyBindings(viewModel);
-};
+$(function() {
+    var $configList = $("#ko-report-config-list");
+    if ($configList.length) {
+        $configList.koApplyBindings(new ReportConfigsViewModel({
+            items: hqImport("hqwebapp/js/initial_page_data.js").get('configs'),
+            saveUrl: hqImport("hqwebapp/js/urllib.js").reverse("add_report_config"),
+        }));
+    }
+});

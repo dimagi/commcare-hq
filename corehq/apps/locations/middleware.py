@@ -1,5 +1,7 @@
+from django.utils.deprecation import MiddlewareMixin
 from django.utils.translation import ugettext_lazy
 from corehq.apps.hqwebapp.views import no_permissions
+from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from .permissions import is_location_safe, location_restricted_response
 
 RESTRICTED_USER_UNASSIGNED_MSG = ugettext_lazy("""
@@ -10,7 +12,7 @@ your project administrator to be assigned to a location.
 """)
 
 
-class LocationAccessMiddleware(object):
+class LocationAccessMiddleware(MiddlewareMixin):
     """
     Many large projects want to restrict data access by location.
     Views which handle that properly are called "location safe". This
@@ -30,7 +32,12 @@ class LocationAccessMiddleware(object):
         if not domain or not user or not user.is_member_of(domain):
             # This is probably some non-domain page or a test, let normal auth handle it
             request.can_access_all_locations = True
-        elif user.has_permission(domain, 'access_all_locations'):
+        elif (
+            user.has_permission(domain, 'access_all_locations') or (
+                user.is_anonymous and
+                PUBLISH_CUSTOM_REPORTS.enabled(domain)
+            )
+        ):
             request.can_access_all_locations = True
         else:
             request.can_access_all_locations = False

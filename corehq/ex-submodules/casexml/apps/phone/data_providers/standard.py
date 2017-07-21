@@ -54,15 +54,10 @@ class FixtureElementProvider(RestoreDataProvider):
         # fixture block
         providers = generator.get_providers(
             restore_state.restore_user,
-            restore_state.version,
+            version=restore_state.version,
         )
         for provider in providers:
             with self.timing_context(provider.__class__.__name__):
-                elements = provider(
-                    restore_state.restore_user,
-                    restore_state.version,
-                    restore_state.last_sync_log,
-                    app=restore_state.params.app
-                )
+                elements = provider(restore_state)
                 for element in elements:
                     yield element

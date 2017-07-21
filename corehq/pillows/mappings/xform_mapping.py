@@ -1,4 +1,3 @@
-from corehq.pillows.base import DEFAULT_META
 from corehq.pillows.core import DATE_FORMATS_STRING, DATE_FORMATS_ARR
 from corehq.pillows.mappings import NULL_VALUE
 from corehq.util.elastic import es_index
@@ -125,6 +124,5 @@ XFORM_INDEX_INFO = ElasticsearchIndexInfo(
     index=XFORM_INDEX,
     alias=XFORM_ALIAS,
     type=XFORM_ES_TYPE,
-    meta=DEFAULT_META,
     mapping=XFORM_MAPPING,
 )

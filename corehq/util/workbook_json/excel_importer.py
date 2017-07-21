@@ -15,6 +15,7 @@ class ExcelImporter(object):
     def __init__(self, task, file_ref_id):
         self.task = task
         self.progress = 0
+        self.total_rows = 100
 
         if self.task:
             DownloadBase.set_progress(self.task, 0, 100)
@@ -55,4 +56,8 @@ class MultiExcelImporter(ExcelImporter):
     def __init__(self, task, file_ref_id):
         super(MultiExcelImporter, self).__init__(task, file_ref_id)
         self.worksheets = self.workbook.worksheets
-        self.total_rows = sum(ws.worksheet.get_highest_row() for ws in self.worksheets)
+        self.add_progress(2)  # Show the user we're on it
+        total_rows = sum(ws.worksheet.get_highest_row() for ws in self.worksheets)
+        # That took a non-negligible amount of time. Give the user some feedback.
+        self.add_progress(3)
+        self.total_rows = total_rows

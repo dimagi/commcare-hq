@@ -1,0 +1,8 @@
+--- 
++++ 
+@@ -1,4 +1,4 @@
+-{% extends "app_manager/v1/source_files.html" %}
++{% extends "app_manager/v2/source_files.html" %}
+ {% load hq_shared_tags %}
+ {% load compress %}
+ 

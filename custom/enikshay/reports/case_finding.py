@@ -105,8 +105,8 @@ class LaboratoryDiagnosticActivity(EnikshayReport):
     @property
     def headers(self):
         return DataTablesHeader(
-            DataTablesColumn(_('Patients with presumptive TB undergoing bacteriological examination (a)')),
-            DataTablesColumn(_('Of (a) Patients with bacteriological positive result (b)')),
+            DataTablesColumn(_('Cases with presumptive TB undergoing bacteriological examination (a)')),
+            DataTablesColumn(_('Of (a) Cases with bacteriological positive result (b)')),
         )
 
     @property

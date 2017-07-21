@@ -12,6 +12,7 @@ from corehq.apps.reports.filters.users import UserTypeFilter
 from corehq.apps.reports.generic import GenericReportView
 from corehq.apps.reports.filters.select import MonthFilter, YearFilter
 from corehq.apps.users.models import CommCareUser
+from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.dates import DateSpan
 from django.utils.translation import ugettext_noop
 from dimagi.utils.decorators.memoized import memoized
@@ -32,6 +33,7 @@ class ProjectReport(GenericReportView):
 class CustomProjectReport(ProjectReport):
     dispatcher = CustomProjectReportDispatcher
     emailable = True
+    is_public = False
 
 
 class CommCareUserMemoizer(object):
@@ -211,6 +213,7 @@ class DatespanMixin(object):
     datespan_default_days = 7
     datespan_max_days = None
     inclusive = True
+    default_datespan_end_date_to_today = False
 
     _datespan = None
 
@@ -232,7 +235,13 @@ class DatespanMixin(object):
 
     @property
     def default_datespan(self):
-        datespan = DateSpan.since(self.datespan_default_days, timezone=self.timezone, inclusive=self.inclusive)
+        # DateSpan.since() will make enddate default to yesterday when it's None
+        enddate = None
+        if self.default_datespan_end_date_to_today:
+            enddate = ServerTime(datetime.utcnow()).user_time(self.timezone).done().date()
+
+        datespan = DateSpan.since(self.datespan_default_days, enddate=enddate, inclusive=self.inclusive,
+            timezone=self.timezone)
         datespan.max_days = self.datespan_max_days
         datespan.is_default = True
         return datespan

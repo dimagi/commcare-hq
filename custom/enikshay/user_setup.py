@@ -5,10 +5,21 @@ domain and HQ admins are excepted, in case we ever need to violate the
 assumptions laid out here.
 """
 import math
+import re
+import uuid
+from crispy_forms import layout as crispy
+from django import forms
+from django.core.validators import RegexValidator
+from django.utils.text import slugify
 from django.utils.translation import ugettext as _
+from dimagi.utils.decorators.memoized import memoized
 from corehq import toggles
-from corehq.apps.users.signals import clean_commcare_user, commcare_user_post_save
-from corehq.apps.locations.signals import clean_location
+from corehq.apps.custom_data_fields import CustomDataEditor
+from corehq.apps.locations.forms import LocationFormSet, LocationForm
+from corehq.apps.users.forms import NewMobileWorkerForm, clean_mobile_worker_username
+from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.signals import commcare_user_post_save
+from .const import AGENCY_USER_FIELDS, AGENCY_LOCATION_FIELDS, DEFAULT_MOBILE_WORKER_ROLE
 from .models import IssuerId
 
 TYPES_WITH_REQUIRED_NIKSHAY_CODES = ['sto', 'dto', 'tu', 'dmc', 'phi']
@@ -24,8 +35,13 @@ LOC_TYPES_TO_USER_TYPES = {
 }
 
 
+def skip_custom_setup(domain, request_user):
+    return True  # We're gonna revisit this, turning off for now
+    return not toggles.ENIKSHAY.enabled(domain) or request_user.is_domain_admin(domain)
+
+
 def clean_user_callback(sender, domain, request_user, user, forms, **kwargs):
-    if not toggles.ENIKSHAY.enabled(domain) or request_user.is_domain_admin(domain):
+    if skip_custom_setup(domain, request_user):
         return
 
     new_user_form = forms.get('NewMobileWorkerForm')
@@ -37,13 +53,20 @@ def clean_user_callback(sender, domain, request_user, user, forms, **kwargs):
         if not custom_data:
             raise AssertionError("Expected user form and custom data form to be submitted together")
 
-        location = (validate_location(domain, new_user_form)
-                    if new_user_form else user.get_sql_location(domain))
-        if not location:
-            return
+        if sender == 'LocationFormSet':
+            location_type = new_user_form.data['location_type']
+        elif new_user_form:
+            location_type = validate_location(domain, new_user_form).location_type.code
+        else:
+            location = user.get_sql_location(domain)
+            if not location:
+                return
+            location_type = user.get_sql_location(domain).location_type.code
 
+        if 'usertype' not in custom_data.form.cleaned_data:
+            return  # There was probably a validation error
         usertype = custom_data.form.cleaned_data['usertype']
-        validate_usertype(domain, location, usertype, custom_data)
+        validate_usertype(location_type, usertype, custom_data)
         if new_user_form:
             set_user_role(domain, user, usertype, new_user_form)
         else:
@@ -53,10 +76,10 @@ def clean_user_callback(sender, domain, request_user, user, forms, **kwargs):
         location_form.add_error('assigned_locations', _("You cannot edit the location of existing users."))
 
 
-def validate_usertype(domain, location, usertype, custom_data):
+def validate_usertype(location_type, usertype, custom_data):
     """Restrict choices for custom user data role field based on the chosen
     location's type"""
-    allowable_usertypes = LOC_TYPES_TO_USER_TYPES[location.location_type.code]
+    allowable_usertypes = LOC_TYPES_TO_USER_TYPES[location_type]
     if usertype not in allowable_usertypes:
         msg = _("'User Type' must be one of the following: {}").format(', '.join(allowable_usertypes))
         custom_data.form.add_error('usertype', msg)
@@ -77,11 +100,6 @@ def set_user_role(domain, user, usertype, user_form):
     else:
         role = roles[0]
         user.set_role(domain, role.get_qualified_id())
-
-
-def get_user_data_code(domain, user):
-    """Add a mobile worker code (custom user data) that's unique across all
-    users at that location"""
 
 
 def validate_role_unchanged(domain, user, user_form):
@@ -109,73 +127,56 @@ def validate_location(domain, user_form):
     user_form.add_error('location_id', _("You must select a location."))
 
 
-def clean_location_callback(sender, domain, request_user, location, forms, **kwargs):
-    if not toggles.ENIKSHAY.enabled(domain) or request_user.is_domain_admin(domain):
-        return
+def get_site_code(name, nikshay_code, type_code, parent):
 
-    location_form = forms.get('LocationForm')
+    def code_ify(word):
+        return slugify(re.sub(r'\s+', '_', word))
 
-    if location_form.is_new_location:
-        validate_nikshay_code(domain, location_form)
-        set_site_code(location_form)
-    else:
-        validate_nikshay_code_unchanged(location, location_form)
+    nikshay_code = code_ify(nikshay_code)
+    if nikshay_code in map(str, range(0, 10)):
+        nikshay_code = "0{}".format(nikshay_code)
 
-    set_available_tests(location, location_form)
+    parent_site_code = parent.site_code
+    parent_prefix = ('drtbhiv_' if parent.location_type.code == 'drtb-hiv' else
+                     "{}_".format(parent.location_type.code))
+    if parent_site_code.startswith(parent_prefix):
+        parent_site_code = parent_site_code[len(parent_prefix):]
 
+    name_code = code_ify(name)
 
-def set_site_code(location_form):
-    """Autogenerate site_code based on custom location data nikshay code and
-    the codes of the ancestor locations."""
-    # TODO How is this supposed to work if 'nikshay_code' isn't always required?
-    # maybe use site_code?
-    # nikshay_code = location_form.custom_data.form.cleaned_data.get('nikshay_code') or ''
-    # parent = location_form.cleaned_data['parent']
-    # ancestors = parent.get_ancestors(include_self=True) if parent else []
-    # ancestor_codes = [l.metadata.get('nikshay_code') or '' for l in ancestors]
-    # ancestor_codes.append(nikshay_code)
-    # location_form.cleaned_data['site_code'] = '-'.join(ancestor_codes)
-
-
-def validate_nikshay_code(domain, location_form):
-    """When locations are created, enforce that a custom location data field
-    (Nikshay code) is unique amongst sibling locations"""
-    from corehq.apps.locations.models import SQLLocation
-    nikshay_code = location_form.custom_data.form.cleaned_data.get('nikshay_code', None)
-    loctype = location_form.cleaned_data['location_type']
-    if loctype not in TYPES_WITH_REQUIRED_NIKSHAY_CODES:
-        return
-    if not nikshay_code:
-        location_form.add_error(None, "You cannot create this location without providing a nikshay_code.")
-    parent = location_form.cleaned_data['parent']
-    sibling_codes = [
-        loc.metadata.get('nikshay_code', None)
-        for loc in SQLLocation.objects.filter(domain=domain, parent=parent)
-    ]
-    if nikshay_code in sibling_codes:
-        msg = "Nikshay Code '{}' is already in use.".format(nikshay_code)
-        location_form.custom_data.form.add_error('nikshay_code', msg)
-
-
-def validate_nikshay_code_unchanged(location, location_form):
-    """Block edit of custom location data nikshay code after creation"""
-    specified_nikshay_code = location_form.custom_data.form.cleaned_data.get('nikshay_code', None)
-    existing_nikshay_code = location.metadata.get('nikshay_code', None)
-    if existing_nikshay_code and specified_nikshay_code != existing_nikshay_code:
-        msg = "You cannot modify the Nikshay Code of an existing location."
-        location_form.custom_data.form.add_error('nikshay_code', msg)
-
-
-def set_available_tests(location, location_form):
-    if location_form.cleaned_data['location_type'] == 'cdst':
-        location.metadata['tests_available'] = 'cbnaat'
+    if type_code in ['sto', 'cdst']:
+        return '_'.join([type_code, nikshay_code])
+    elif type_code == 'cto':
+        return '_'.join([type_code, parent_site_code, name_code])
+    elif type_code == 'drtb-hiv':
+        return '_'.join(['drtbhiv', parent_site_code])
+    elif type_code in ['dto', 'tu', 'dmc', 'phi']:
+        return '_'.join([type_code, parent_site_code, nikshay_code])
+    elif type_code in ['ctd', 'drtb']:
+        return None  # we don't do anything special for these yet
+    return None
 
 
 def save_user_callback(sender, couch_user, **kwargs):
     commcare_user = couch_user  # django signals enforce param names
     if toggles.ENIKSHAY.enabled(commcare_user.domain):
-        set_issuer_id(commcare_user.domain, commcare_user)
-        add_drtb_hiv_to_dto(commcare_user.domain, commcare_user)
+        changed = False
+        if kwargs.get('is_new_user', False):
+            changed = set_default_role(commcare_user.domain, commcare_user) or changed
+        changed = set_issuer_id(commcare_user.domain, commcare_user) or changed
+        changed = add_drtb_hiv_to_dto(commcare_user.domain, commcare_user) or changed
+        if changed:
+            commcare_user.save()
+
+
+def set_default_role(domain, commcare_user):
+    from corehq.apps.users.models import UserRole
+    if commcare_user.get_role(domain):
+        return
+    roles = UserRole.by_domain_and_name(domain, DEFAULT_MOBILE_WORKER_ROLE)
+    if roles:
+        commcare_user.set_role(domain, roles[0].get_qualified_id())
+        commcare_user.save()
 
 
 def compress_nikshay_id(serial_id, body_digit_count):
@@ -259,10 +260,7 @@ def set_issuer_id(domain, user):
         user.user_data['id_device_body'] = compress_nikshay_id(device_number, 0)
         changed = True
 
-    if changed:
-        # note that this is saving the user a second time 'cause it needs a
-        # user id first, but if refactoring, be wary of a loop!
-        user.save()
+    return changed
 
 
 def add_drtb_hiv_to_dto(domain, user):
@@ -271,10 +269,256 @@ def add_drtb_hiv_to_dto(domain, user):
         # also assign user to the parent DTO
         loc_ids = user.get_location_ids(domain)
         if location.parent.location_id not in loc_ids:
-            user.add_to_assigned_locations(location.parent)
+            user.add_to_assigned_locations(location.parent, commit=False)
+            return True
 
 
 def connect_signals():
-    clean_location.connect(clean_location_callback, dispatch_uid="clean_location_callback")
-    clean_commcare_user.connect(clean_user_callback, dispatch_uid="clean_user_callback")
     commcare_user_post_save.connect(save_user_callback, dispatch_uid="save_user_callback")
+
+
+class ENikshayNewMobileWorkerForm(NewMobileWorkerForm):
+    """Mobile worker list view create modal"""
+    def __init__(self, *args, **kwargs):
+        super(ENikshayNewMobileWorkerForm, self).__init__(*args, **kwargs)
+
+
+# pcp -> MBBS
+# pac -> AYUSH/other
+# plc -> Private Lab
+# pcc -> pharmacy / chemist
+# dto -> Field officer??
+
+def _make_field_visible_to(field, type_code):
+    # loc_type() is available because this is inside the location form
+    return crispy.Div(field, data_bind="visible: loc_type() === '{}'".format(type_code))
+
+
+class ENikshayLocationUserDataEditor(CustomDataEditor):
+    """Custom User Data on Virtual Location User (agency) creation"""
+
+    @property
+    @memoized
+    def fields(self):
+        # non-required fields are typically excluded from creation UIs
+        fields_to_include = [field[0] for field in AGENCY_USER_FIELDS]
+        return [
+            field for field in self.model.get_fields(required_only=False)
+            if field.is_required or field.slug in fields_to_include
+        ]
+
+    def init_form(self, post_dict=None):
+        form = super(ENikshayLocationUserDataEditor, self).init_form(post_dict)
+        fs = form.helper.layout[0]
+        assert isinstance(fs, crispy.Fieldset)
+
+        fields_to_loc_types = {
+            'pcp_professional_org_membership': 'pcp',
+            'pac_qualification': 'pac',
+            'pcp_qualification': 'pcp',
+            'plc_lab_collection_center_name': 'plc',
+            'plc_lab_or_collection_center': 'plc',
+            'plc_accredidation': 'plc',
+            'plc_tb_tests': 'plc',
+            'plc_hf_if_nikshay': 'plc',
+            'pcc_pharmacy_name': 'pcc',
+            'pcc_pharmacy_affiliation': 'pcc',
+            'pcc_tb_drugs_in_stock': 'pcc',
+        }
+
+        for i, field in enumerate(fs.fields):
+            if field in fields_to_loc_types:
+                fs[i] = _make_field_visible_to(field, fields_to_loc_types[field])
+        return form
+
+    def _make_field(self, field):
+        if field.slug == 'language_code':
+            return forms.ChoiceField(
+                label=field.label,
+                required=True,
+                choices=[
+                    ('', _('Select one')),
+                    ("en", "English"),
+                    ("hin", "Hindi"),
+                    ("mar", "Marathi"),
+                    ("bho", "Bhojpuri"),
+                    ('guj', "Gujarati"),
+                ],
+            )
+        if field.slug == 'contact_phone_number':
+            regexp = "^91[0-9]{10}$"
+            help_text = "Please enter only digits. Enter 91 followed by the 10-digit national number."
+            return forms.CharField(
+                widget=forms.TextInput(attrs={"pattern": regexp, "title": help_text}),
+                label=field.label,
+                required=True,
+                validators=[RegexValidator(regexp, help_text)],
+            )
+        if field.slug == 'user_level':
+            return forms.ChoiceField(
+                label=field.label,
+                required=field.is_required,
+                choices=[
+                    ("real", "Real"),
+                    ("dev", "Developer"),
+                    ("test", "Test"),
+                ],
+            )
+        return super(ENikshayLocationUserDataEditor, self)._make_field(field)
+
+
+class ENikshayUserLocationDataEditor(CustomDataEditor):
+    """Custom Location Data on Virtual Location User (agency) creation"""
+
+    @property
+    @memoized
+    def fields(self):
+        if not self.required_only:
+            return self.model.get_fields(required_only=False)
+
+        # non-required fields are typically excluded from creation UIs
+        fields_to_include = [field[0] for field in AGENCY_LOCATION_FIELDS]
+        return [
+            field for field in self.model.get_fields(required_only=False)
+            if field.is_required or field.slug in fields_to_include
+        ]
+
+    def _make_field(self, field):
+        if field.slug == 'private_sector_org_id':
+            return forms.ChoiceField(
+                label=field.label,
+                required=field.is_required,
+                choices=[
+                    ('', _('Select one')),
+                    ('1', "PATH"),
+                    ('2', "MJK"),
+                    ('3', "Alert-India"),
+                    ('4', "WHP"),
+                    ('5', "DTO-Mehsana"),
+                    ('6', "Vertex"),
+                    ('7', "Accenture"),
+                    ('8', "BMGF"),
+                    ('9', "EY"),
+                    ('10', "CTD"),
+                    ('11', "Nagpur"),
+                    ('12', "Nagpur-rural"),
+                    ('13', "Nagpur_Corp"),
+                    ('14', "Surat"),
+                    ('15', "SMC"),
+                    ('16', "Surat_Rural"),
+                    ('17', "Rajkot"),
+                ],
+            )
+        return super(ENikshayUserLocationDataEditor, self)._make_field(field)
+
+
+def get_new_username_and_id(domain, attempts_remaining=3):
+    if attempts_remaining <= 0:
+        raise AssertionError(
+            "3 IssuerIds were created, but they all corresponded to existing "
+            "users.  Are there a bunch of users with usernames matching "
+            "possible compressed ids?  Better investigate.")
+
+    user_id = uuid.uuid4().hex
+    issuer_id, created = IssuerId.objects.get_or_create(domain=domain, user_id=user_id)
+    compressed_issuer_id = compress_nikshay_id(issuer_id.pk, 3)
+    try:
+        return clean_mobile_worker_username(domain, compressed_issuer_id), user_id
+    except forms.ValidationError:
+        issuer_id.delete()
+        return get_new_username_and_id(domain, attempts_remaining - 1)
+
+
+class ENikshayLocationFormSet(LocationFormSet):
+    """Location, custom data, and possibly location user and data forms"""
+    _location_form_class = LocationForm
+    _location_data_editor = ENikshayUserLocationDataEditor
+    _user_form_class = ENikshayNewMobileWorkerForm
+    _user_data_editor = ENikshayLocationUserDataEditor
+
+    @property
+    @memoized
+    def user(self):
+        user_data = (self.custom_user_data.get_data_to_save()
+                     if self.custom_user_data.is_valid() else {})
+        password = self.user_form.cleaned_data.get('password', "")
+        first_name = self.user_form.cleaned_data.get('first_name', "")
+        last_name = self.user_form.cleaned_data.get('last_name', "")
+
+        username, user_id = get_new_username_and_id(self.domain)
+
+        return CommCareUser.create(
+            self.domain,
+            username=username,  # TODO should this be compressed?
+            password=password,
+            device_id="Generated from HQ",
+            first_name=first_name,
+            last_name=last_name,
+            user_data=user_data,
+            uuid=user_id,
+            commit=False,
+        )
+
+    def _get_user_form(self, bound_data):
+        form = super(ENikshayLocationFormSet, self)._get_user_form(bound_data)
+        # Hide username, since we'll set it automatically
+        form.fields.pop('username')
+        return form
+
+    @memoized
+    def is_valid(self):
+        if skip_custom_setup(self.domain, self.request_user):
+            return super(ENikshayLocationFormSet, self).is_valid()
+
+        for form in self.forms:
+            form.errors
+
+        if self.location_form.is_new_location:
+            self.validate_nikshay_code()
+            self.set_site_code()
+        else:
+            self.validate_nikshay_code_unchanged()
+
+        self.set_available_tests()
+
+        return all(form.is_valid() for form in self.forms)
+
+    def set_site_code(self):
+        # https://docs.google.com/document/d/1Pr19kp5cQz9412Q1lbVgszeZJTv0XRzizb0bFHDxvoA/edit#heading=h.9v4rs82o0soc
+        nikshay_code = self.custom_location_data.form.cleaned_data.get('nikshay_code') or ''
+        type_code = self.location_form.cleaned_data['location_type']
+        parent = self.location_form.cleaned_data['parent']
+        name = self.location_form.cleaned_data['name']
+        self.location_form.cleaned_data['site_code'] = get_site_code(
+            name, nikshay_code, type_code, parent)
+
+    def validate_nikshay_code(self):
+        """When locations are created, enforce that a custom location data field
+        (Nikshay code) is unique amongst sibling locations"""
+        from corehq.apps.locations.models import SQLLocation
+        nikshay_code = self.custom_location_data.form.cleaned_data.get('nikshay_code', None)
+        loctype = self.location_form.cleaned_data['location_type']
+        if loctype not in TYPES_WITH_REQUIRED_NIKSHAY_CODES:
+            return
+        if not nikshay_code:
+            self.location_form.add_error(None, "You cannot create this location without providing a nikshay_code.")
+        parent = self.location_form.cleaned_data['parent']
+        sibling_codes = [
+            loc.metadata.get('nikshay_code', None)
+            for loc in SQLLocation.objects.filter(domain=self.domain, parent=parent)
+        ]
+        if nikshay_code in sibling_codes:
+            msg = "Nikshay Code '{}' is already in use.".format(nikshay_code)
+            self.custom_location_data.form.add_error('nikshay_code', msg)
+
+    def validate_nikshay_code_unchanged(self):
+        """Block edit of custom location data nikshay code after creation"""
+        specified_nikshay_code = self.custom_location_data.form.cleaned_data.get('nikshay_code', None)
+        existing_nikshay_code = self.location.metadata.get('nikshay_code', None)
+        if existing_nikshay_code and specified_nikshay_code != existing_nikshay_code:
+            msg = "You cannot modify the Nikshay Code of an existing location."
+            self.custom_location_data.form.add_error('nikshay_code', msg)
+
+    def set_available_tests(self):
+        if self.location_form.cleaned_data['location_type'] == 'cdst':
+            self.location.metadata['tests_available'] = 'cbnaat'

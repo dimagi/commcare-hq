@@ -1,14 +1,13 @@
-from collections import namedtuple
 import logging
+from collections import namedtuple
 
 from couchdbkit.exceptions import BulkSaveError
+from django.conf import settings
 from redis.exceptions import RedisError
 
 from casexml.apps.case.exceptions import IllegalCaseId
 from dimagi.utils.decorators.memoized import memoized
-
 from ..utils import should_use_sql_backend
-
 
 CaseUpdateMetadata = namedtuple('CaseUpdateMetadata', ['case', 'is_creation', 'previous_owner_id'])
 ProcessedForms = namedtuple('ProcessedForms', ['submitted', 'deprecated'])
@@ -87,7 +86,7 @@ class FormProcessorInterface(object):
             return LedgerDBCouch()
 
     def acquire_lock_for_xform(self, xform_id):
-        lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=2 * 60)
+        lock = self.xform_model.get_obj_lock_by_id(xform_id, timeout_seconds=5 * 60)
         try:
             lock.acquire()
         except RedisError:
@@ -113,7 +112,14 @@ class FormProcessorInterface(object):
         else:
             # check across Couch & SQL to ensure global uniqueness
             # check this domains DB first to support existing bad data
-            return self.processor.is_duplicate(xform_id) or self.other_db_processor().is_duplicate(xform_id)
+            return (
+                self.processor.is_duplicate(xform_id) or
+                # don't bother checking other DB if there's only one active domain
+                (
+                    not settings.ENTERPRISE_MODE and
+                    self.other_db_processor().is_duplicate(xform_id)
+                )
+            )
 
     def new_xform(self, form_json):
         return self.processor.new_xform(form_json)
@@ -132,8 +138,7 @@ class FormProcessorInterface(object):
                 stock_result=stock_result,
             )
         except BulkSaveError as e:
-            logging.error('BulkSaveError saving forms', exc_info=1,
-                          extra={'details': {'errors': e.errors}})
+            logging.exception('BulkSaveError saving forms', extra={'details': {'errors': e.errors}})
             raise
         except Exception as e:
             xforms_being_saved = [form.form_id for form in forms if form]
@@ -142,6 +147,7 @@ class FormProcessorInterface(object):
             )
             from corehq.form_processor.submission_post import handle_unexpected_error
             handle_unexpected_error(self, forms.submitted, e, error_message)
+            e.sentry_capture = False  # we've already notified
             raise
 
     def hard_delete_case_and_forms(self, case, xforms):
@@ -192,13 +198,9 @@ class FormProcessorInterface(object):
         if case:
             return case, lock
 
-        if not couch_sql_migration_in_progress(self.domain):
+        if not couch_sql_migration_in_progress(self.domain) and not settings.ENTERPRISE_MODE:
             # during migration we're copying from one DB to the other so this check will always fail
-            case, _ = self.other_db_processor().get_case_with_lock(
-                case_id, lock=False, strip_history=True, wrap=False
-            )
-            if case:
-                # case exists in other database
+            if self.other_db_processor().case_exists(case_id):
                 raise IllegalCaseId("Bad case id")
 
         return case, lock

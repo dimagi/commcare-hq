@@ -54,7 +54,7 @@ hqDefine('registration/js/new_user.ko.js', function () {
 
     module.initRMI = function (rmiUrl) {
         _private.rmiUrl = rmiUrl;
-        _private.csrf = $.cookie('csrftoken');
+        _private.csrf = $("#csrfTokenContainer").val();
 
         _private.rmi = function (remoteMethod, data, options) {
             options = options || {};
@@ -178,10 +178,14 @@ hqDefine('registration/js/new_user.ko.js', function () {
         self.currentStep = ko.observable(0);
 
         var _getDataForSubmission = function () {
+            var password = self.password();
+            if(typeof(hex_parser) !== 'undefined') {
+                password = (new hex_parser()).encode(self.password());
+            }
             return {
                 full_name: self.fullName(),
                 email: self.email(),
-                password: self.password(),
+                password: password,
                 project_name: self.projectName(),
                 eula_confirmed: self.eulaConfirmed(),
                 phone_number: _private.getPhoneNumberFn() || self.phoneNumber(),

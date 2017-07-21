@@ -1,8 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% include 'app_manager/v1/partials/case_config_shared.html' %}
-
 <script type="text/html" id="remove-subcase-modal-template">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -107,7 +105,7 @@
                     <span class="help-block" data-bind="visible: !case_type()">{% trans "Required" %}</span>
                     {% if show_custom_ref %}
                         <label>{% trans "Override reference id: " %}</label>
-                        <input type="text" data-bind="value: reference_id"/>
+                        <input type="text" class="form-control" data-bind="value: reference_id"/>
                     {% endif %}
                 </span>
                 <a href="#" data-bind="openModal: 'remove-subcase-modal-template'" class="pull-right">

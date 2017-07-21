@@ -16,6 +16,8 @@ def get_column_name(path):
     def _hash(parts):
         front = "/".join(parts[:-1])
         end = parts[-1]
+        front = front.encode('unicode-escape')
+        end = end.encode('unicode-escape')
         return hashlib.sha1('{}_{}'.format(hashlib.sha1(front).hexdigest(), end)).hexdigest()[:8]
 
     new_parts = path[-54:].split("/")

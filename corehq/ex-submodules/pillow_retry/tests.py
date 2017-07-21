@@ -32,7 +32,7 @@ def FakePillow():
 def GetDocPillow():
     return FakeConstructedPillow(
         name='GetDocPillow',
-        checkpoint=PillowCheckpoint('get_doc_processor'),
+        checkpoint=PillowCheckpoint('get_doc_processor', 'text'),
         change_feed=RandomChangeFeed(10),
         processor=GetDocProcessor(),
     )
@@ -277,6 +277,7 @@ class ExceptionA(Exception):
 class PillowtopRetryAllPillowsTests(TestCase):
     @classmethod
     def setUpClass(cls):
+        super(PillowtopRetryAllPillowsTests, cls).setUpClass()
         cls._PILLOWTOPS = settings.PILLOWTOPS
         if not settings.PILLOWTOPS:
             # assumes HqTestSuiteRunner, which blanks this out and saves a copy here
@@ -285,6 +286,7 @@ class PillowtopRetryAllPillowsTests(TestCase):
     @classmethod
     def tearDownClass(cls):
         settings.PILLOWTOPS = cls._PILLOWTOPS
+        super(PillowtopRetryAllPillowsTests, cls).tearDownClass()
 
     def tearDown(self):
         PillowError.objects.all().delete()

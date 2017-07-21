@@ -84,6 +84,7 @@ treatment_outcome = {
     'died': '3',
     'failure': '4',
     'regimen_changed': '7',
+    'loss_to_follow_up': '5',
 }
 
 hiv_status = {
@@ -117,4 +118,22 @@ smear_result_grade = {
     '1+': 11,
     '2+': 12,
     '3+': 13,
+}
+
+drug_susceptibility_test_status = {
+    'pending': 'N',
+    'not_done': 'N',
+    'rif_sensitive': 'S',
+    'rif_resistant': 'R',
+    'xdr': 'N'
+}
+
+basis_of_diagnosis = {
+    'clinical_chest': 'X',
+    'clinical_other': 'E',
+    'microbiological_smear': 'S',
+    'microbiological_cbnaat': 'M',
+    'microbiological_culture': 'C',
+    'microbiological_pcr': 'M',
+    'microbiological_other': 'M',
 }

@@ -295,32 +295,28 @@
                                     must go in a different module).
                                 {% endblocktrans %}
                             {% endif %}
+                        {% case "practice user config error" %}
+                            {% if error.build_profile_id %}
+                                {% blocktrans with profile=app.build_profiles|getattr:error.build_profile_id %}
+                                    Error with Practice Mobile Worker in Application Profile {{ profile.name }}.
+                                {% endblocktrans %}
+                            {% else %}
+                                {% blocktrans%}
+                                    Error with Practice Mobile Worker in Application Settings.
+                                {% endblocktrans %}
+                            {% endif %}
                         {% case "invalid user property xpath reference" %}
                             {% if error.form %}
                                 {% url "view_form" domain app.id error.module.id error.form.id as form_url %}
-                              {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
                                 {% blocktrans with form_name=error.form.name|trans:langs %}
                                     Your form display condition for form <a href="{{ form_url }}">{{ form_name }}</a> refers to a user property,
                                     but your project does not use user properties. Please remove the user property reference.
                                 {% endblocktrans %}
-                              {% else %}
-                                {% blocktrans with form_name=error.form.name|trans:langs %}
-                                    Your form display condition for form <a href="{{ form_url }}">{{ form_name }}</a> refers to a user case,
-                                    but your project does not use user case management. Please remove the user case reference.
-                                {% endblocktrans %}
-                              {% endif %}
                             {% else %}
-                              {% if request|toggle_enabled:"USER_PROPERTY_EASY_REFS" %}
                                 {% blocktrans %}
                                     You have a display condition which refers to a user property, but your project does not use user properties.
                                     Please remove the user property reference.
                                 {% endblocktrans %}
-                              {% else %}
-                                {% blocktrans %}
-                                    You have a display condition which refers to a user case, but your project does not use user case management.
-                                    Please remove the user case reference.
-                                {% endblocktrans %}
-                              {% endif %}
                             {% endif %}
                         {% case "error" %}
                             Details: {{ error.message }}
@@ -328,6 +324,18 @@
                             Your application uses a feature that is not available in your current subscription. You
                             can <a href="{% url 'domain_select_plan' domain %}">change your subscription</a>, or
                             remove the feature as follows.
+                        {% case "missing shadow parent" %}
+                            A shadow parent must be specified
+                            {% if not not_actual_build %}for form {% include "app_manager/v1/partials/form_error_message.html" %}{% endif %}
+                            Select a shadow parent in the "Advanced" section of the shadow form's settings tab.
+                        {% case "shadow parent does not exist" %}
+                            A shadow parent specified
+                            {% if not not_actual_build %}for form {% include "app_manager/v1/partials/form_error_message.html" %}{% endif %}
+                            does not exist. Select a new shadow parent in the "Advanced" section of the shadow form's settings tab.
+                        {% case "missing shadow parent tag" %}
+                            Shadow parent form action tags do not appear in the action configuration for the shadow form.
+                            The missing tags are: {{ error.case_tags|join:", " }}
+                            {% if not not_actual_build %}The shadow form is {% include "app_manager/v1/partials/form_error_message.html" %}{% endif %}
                         {% else %}
                             Unknown error: {{ error.type }}
                             Details: {{ error }}

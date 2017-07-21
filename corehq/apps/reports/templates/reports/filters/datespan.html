@@ -6,8 +6,13 @@
         <div class="col-xs-6">
             <input type="text"
                    id="filter_range"
-                   class="date-range-picker form-control"
-                   value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}" />
+                   class="date-range-picker form-control report-filter-datespan"
+                   value="{{ datespan.startdate|date:'Y-m-d' }} to {{ datespan.enddate|date:'Y-m-d' }}"
+                   data-init="{% block init_filter %}{% if slug == 'datespan' %}1{% endif %}{% endblock %}"
+                   data-separator="{% html_attr separator %}" 
+                   data-report-labels="{% html_attr report_labels %}"
+                   data-start-date="{{ datespan.startdate|date:"Y-m-d" }}"
+                   data-end-date="{{ datespan.enddate|date:"Y-m-d" }}" />
             <!-- Since a lot parts of commcarehq are using 'startdate' and 'enddate' parameters, we could keep them for backward compatibility -->
             <input type="hidden"
                    id="{{ css_id }}_startdate"
@@ -28,27 +33,4 @@
             </p>
         </div>
     </div>
-{% endblock %}
-{% block filter_js %}
-{% ifequal slug 'datespan'  %}
-    <script>
-        $(function () {
-            var separator = '{{ separator }}';
-            var report_labels = JSON.parse('{{ report_labels|safe }}');
-
-            $('#filter_range').createDateRangePicker(
-                report_labels, separator,
-                '{{ datespan.startdate|date:"Y-m-d" }}',
-                '{{ datespan.enddate|date:"Y-m-d" }}'
-            );
-            $('#filter_range').on('change apply', function(ev, picker) {
-                var dates = $(this).val().split(separator);
-                $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.startdate', dates[0]);
-                $('#report_filter_datespan_startdate').val(dates[0]);
-                $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.enddate', dates[1]);
-                $('#report_filter_datespan_enddate').val(dates[1]);
-            });
-        });
-    </script>
-{% endifequal %}
 {% endblock %}

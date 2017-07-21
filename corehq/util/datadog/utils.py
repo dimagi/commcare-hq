@@ -7,8 +7,6 @@ from datadog import api
 
 from corehq.util.datadog.const import ALERT_INFO
 
-datadog_metric_logger = logging.getLogger('datadog-metrics')
-
 WILDCARD = '*'
 DATADOG_WEB_USERS_GAUGE = 'commcare.hubspot.web_users_processed'
 DATADOG_DOMAINS_EXCEEDING_FORMS_GAUGE = 'commcare.hubspot.domains_with_forms_gt_threshold'
@@ -16,21 +14,25 @@ DATADOG_HUBSPOT_SENT_FORM_METRIC = 'commcare.hubspot.sent_form'
 DATADOG_HUBSPOT_TRACK_DATA_POST_METRIC = 'commcare.hubspot.track_data_post'
 
 
-def count_by_response_code(metric_prefix):
+def count_by_response_code(metric_name):
+    from corehq.util.datadog.gauges import datadog_counter
+
     def _wrapper(fn):
         @wraps(fn)
         def _inner(*args, **kwargs):
             response = fn(*args, **kwargs)
 
             try:
-                metric_name = '{}.{}'.format(metric_prefix, response.status_code)
-                statsd.increment(metric_name)
+                datadog_counter(metric_name, tags=[
+                    'status_code:{}'.format(response.status_code)
+                ])
             except Exception:
                 datadog_logger.exception('Unable to record Datadog stats')
 
             return response
 
         return _inner
+
     return _wrapper
 
 
@@ -50,19 +52,6 @@ def create_datadog_event(title, text, alert_type=ALERT_INFO, tags=None, aggregat
             datadog_logger.exception('Error creating Datadog event', e)
     else:
         datadog_logger.debug('Datadog event: (%s) %s\n%s', alert_type, title, text)
-
-
-def log_counter(metric, details=None):
-    details = details or {}
-    message = ' '.join(['{}={}'.format(key, value) for key, value in details.iteritems()])
-    datadog_metric_logger.info(
-        message,
-        extra={
-            'value': 1,
-            'metric_type': 'counter',
-            'metric': metric,
-        },
-    )
 
 
 def sanitize_url(url):

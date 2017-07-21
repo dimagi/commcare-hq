@@ -22,8 +22,6 @@ class Command(BaseCleanupCommand):
         'InitiatedOnART',
         'InitiatedDate',
         'userName',
-        'loginDate',
-        'OutcomeDate1',
     ]
 
     @staticmethod

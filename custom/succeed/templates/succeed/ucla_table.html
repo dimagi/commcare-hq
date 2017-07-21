@@ -4,6 +4,7 @@
 {% block js-inline %}
     <script type="text/javascript">
 
+        $(function() {
         {% if report_table and report_table.datatables %}
             var reportTables = new HQReportDataTables({
                 dataTableElem: '#report_table_{{ report.slug }}',
@@ -36,13 +37,13 @@
                 includeFilter: true,
                 aaSorting: [[5, 'asc']],
             });
+            var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
             if (typeof standardHQReport !== 'undefined') {
                 standardHQReport.handleTabularReportCookies(reportTables);
             }
             reportTables.render();
         {% endif %}
 
-        $(function() {
             $('.header-popover').popout({
                 trigger: 'hover',
                 placement: 'bottom'

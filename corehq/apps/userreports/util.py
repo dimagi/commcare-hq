@@ -3,21 +3,19 @@ import collections
 import hashlib
 
 from django.conf import settings
-from django.utils.translation import ugettext_lazy as _
 
-from corehq.util.soft_assert import soft_assert
 from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.userreports.const import (
     REPORT_BUILDER_EVENTS_KEY,
     UCR_ES_BACKEND,
+    UCR_ES_PRIMARY,
     UCR_LABORATORY_BACKEND,
     UCR_SQL_BACKEND,
 )
 from django_prbac.utils import has_privilege
 
 from corehq.apps.userreports.dbaccessors import get_all_es_data_sources
-from corehq.apps.userreports.exceptions import BadBuilderConfigError
 
 
 def localize(value, lang):
@@ -120,20 +118,20 @@ def get_indicator_adapter(config, raise_errors=False, can_handle_laboratory=Fals
 
     backend_id = get_backend_id(config, can_handle_laboratory)
 
-    if backend_id == UCR_ES_BACKEND:
-        return IndicatorESAdapter(config)
-    elif backend_id == UCR_LABORATORY_BACKEND:
-        return IndicatorLaboratoryAdapter(config)
-    else:
-        if raise_errors:
-            return ErrorRaisingIndicatorSqlAdapter(config)
-        return IndicatorSqlAdapter(config)
+    return {
+        UCR_ES_BACKEND: IndicatorESAdapter,
+        UCR_LABORATORY_BACKEND: IndicatorLaboratoryAdapter,
+        UCR_ES_PRIMARY: IndicatorESAdapter,
+        UCR_SQL_BACKEND: ErrorRaisingIndicatorSqlAdapter if raise_errors else IndicatorSqlAdapter
+    }[backend_id](config)
 
 
 def get_table_name(domain, table_id):
     def _hash(domain, table_id):
         return hashlib.sha1('{}_{}'.format(hashlib.sha1(domain).hexdigest(), table_id)).hexdigest()[:8]
 
+    domain = domain.encode('unicode-escape')
+    table_id = table_id.encode('unicode-escape')
     return truncate_value(
         'config_report_{}_{}_{}'.format(domain, table_id, _hash(domain, table_id)),
         from_left=False
@@ -151,6 +149,7 @@ def truncate_value(value, max_length=63, from_left=True):
     """
     hash_length = 8
     truncated_length = max_length - hash_length - 1
+    value = value.encode('unicode-escape')
     if from_left:
         truncated_value = value[-truncated_length:]
     else:
@@ -189,3 +188,29 @@ def get_ucr_class_name(id):
 
 def get_async_indicator_modify_lock_key(doc_id):
     return 'async_indicator_save-{}'.format(doc_id)
+
+
+def get_static_report_mapping(from_domain, to_domain, report_map):
+    from corehq.apps.userreports.models import StaticReportConfiguration, STATIC_PREFIX, \
+        CUSTOM_REPORT_PREFIX
+
+    for static_report in StaticReportConfiguration.by_domain(from_domain):
+        if static_report.get_id.startswith(STATIC_PREFIX):
+            report_id = static_report.get_id.replace(
+                STATIC_PREFIX + from_domain + '-',
+                ''
+            )
+            is_custom_report = False
+        else:
+            report_id = static_report.get_id.replace(
+                CUSTOM_REPORT_PREFIX + from_domain + '-',
+                ''
+            )
+            is_custom_report = True
+        new_id = StaticReportConfiguration.get_doc_id(
+            to_domain, report_id, is_custom_report
+        )
+        # check that new report is in new domain's list of static reports
+        StaticReportConfiguration.by_id(new_id)
+        report_map[static_report.get_id] = new_id
+    return report_map

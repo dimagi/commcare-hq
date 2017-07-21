@@ -61,6 +61,10 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
+    def iter_forms_by_last_modified(start_datetime, end_datetime):
+        raise NotImplementedError
+
+    @abstractmethod
     def get_with_attachments(form_id):
         raise NotImplementedError
 
@@ -133,6 +137,12 @@ class FormAccessors(object):
     def get_forms_by_type(self, type_, limit, recent_first=False):
         return self.db_accessor.get_forms_by_type(self.domain, type_, limit, recent_first)
 
+    def iter_forms_by_last_modified(self, start_datetime, end_datetime):
+        return self.db_accessor.iter_forms_by_last_modified(
+            start_datetime,
+            end_datetime,
+        )
+
     def get_with_attachments(self, form_id):
         return self.db_accessor.get_with_attachments(form_id)
 
@@ -168,7 +178,11 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_cases(case_ids):
+    def get_cases(case_ids, ordered=False, prefetched_indices=None):
+        raise NotImplementedError
+
+    @abstractmethod
+    def case_exists(case_id):
         raise NotImplementedError
 
     @abstractmethod
@@ -196,11 +210,19 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
+    def get_open_case_ids(case_ids):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_related_indices(case_ids, exclude_indices):
+        raise NotImplementedError
+
+    @abstractmethod
     def get_case_ids_modified_with_owner_since(domain, owner_id, reference_date):
         raise NotImplementedError
 
     @abstractmethod
-    def get_extension_case_ids(domain, case_ids):
+    def get_extension_case_ids(domain, case_ids, include_closed):
         raise NotImplementedError
 
     @abstractmethod
@@ -247,6 +269,10 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
     def get_deleted_case_ids_by_owner(domain, owner_id):
         raise NotImplementedError
 
+    @abstractmethod
+    def get_case_owner_ids(domain):
+        raise NotImplementedError
+
 
 class CaseAccessors(object):
     """
@@ -269,8 +295,9 @@ class CaseAccessors(object):
     def get_case(self, case_id):
         return self.db_accessor.get_case(case_id)
 
-    def get_cases(self, case_ids, ordered=False):
-        return self.db_accessor.get_cases(case_ids, ordered=ordered)
+    def get_cases(self, case_ids, ordered=False, prefetched_indices=None):
+        return self.db_accessor.get_cases(
+            case_ids, ordered=ordered, prefetched_indices=prefetched_indices)
 
     def iter_cases(self, case_ids):
         for chunk in chunked(case_ids, 100):
@@ -302,6 +329,29 @@ class CaseAccessors(object):
 
     def get_open_case_ids_in_domain_by_type(self, case_type, owner_ids=None):
         return self.db_accessor.get_open_case_ids_in_domain_by_type(self.domain, case_type, owner_ids)
+
+    def get_related_indices(self, case_ids, exclude_indices):
+        """Get indices (forward and reverse) for the given set of case ids
+
+        :param case_ids: A list of case ids.
+        :param exclude_indices: A set or dict of index id strings with
+        the format ``'<index.case_id> <index.identifier>'``.
+        :returns: A list of CommCareCaseIndex-like objects.
+        """
+        return self.db_accessor.get_related_indices(self.domain, case_ids, exclude_indices)
+
+    def get_closed_and_deleted_ids(self, case_ids):
+        """Get the subset of given list of case ids that are closed or deleted
+
+        :returns: List of three-tuples: `(case_id, closed, deleted)`
+        """
+        return self.db_accessor.get_closed_and_deleted_ids(self.domain, case_ids)
+
+    def get_modified_case_ids(self, case_ids, sync_log):
+        """Get the subset of given list of case ids that have been modified
+        since sync date/log id
+        """
+        return self.db_accessor.get_modified_case_ids(self, case_ids, sync_log)
 
     def get_case_ids_modified_with_owner_since(self, owner_id, reference_date):
         return self.db_accessor.get_case_ids_modified_with_owner_since(self.domain, owner_id, reference_date)
@@ -342,20 +392,23 @@ class CaseAccessors(object):
     def get_deleted_case_ids_by_owner(self, owner_id):
         return self.db_accessor.get_deleted_case_ids_by_owner(self.domain, owner_id)
 
-    def get_extension_chain(self, case_ids):
+    def get_extension_chain(self, case_ids, include_closed=True):
         assert isinstance(case_ids, list)
         get_extension_case_ids = self.db_accessor.get_extension_case_ids
 
-        incoming_extensions = set(get_extension_case_ids(self.domain, case_ids))
+        incoming_extensions = set(get_extension_case_ids(self.domain, case_ids, include_closed))
         all_extension_ids = set(incoming_extensions)
         new_extensions = set(incoming_extensions)
         while new_extensions:
             new_extensions = (
-                set(get_extension_case_ids(self.domain, list(new_extensions))) -
+                set(get_extension_case_ids(self.domain, list(new_extensions), include_closed)) -
                 all_extension_ids
             )
             all_extension_ids = all_extension_ids | new_extensions
         return all_extension_ids
+
+    def get_case_owner_ids(self):
+        return self.db_accessor.get_case_owner_ids(self.domain)
 
 
 def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
@@ -394,7 +447,7 @@ class AbstractLedgerAccessor(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def get_latest_transaction(case_id, section_id, entry_id):
-        raise NotImplementedError\
+        raise NotImplementedError
 
     @abstractmethod
     def get_current_ledger_state(case_ids, ensure_form_id=False):

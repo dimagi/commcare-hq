@@ -2,7 +2,7 @@
     'use strict';
     $.extend({
         postGo: function (url, params) {
-            params.csrfmiddlewaretoken = $.cookie('csrftoken');
+            params.csrfmiddlewaretoken = $("#csrfTokenContainer").val();
             var $form = $("<form>")
                 .attr("method", "post")
                 .attr("action", url);

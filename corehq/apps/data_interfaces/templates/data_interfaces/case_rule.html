@@ -1,0 +1,33 @@
+{% extends 'data_interfaces/case_rule_criteria_base.html' %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static 'data_interfaces/js/case_rule_actions.js' %}"></script>
+    <script src="{% static 'data_interfaces/js/case_rule.js' %}"></script>
+{% endblock %}
+
+{% block page_content %}{{ block.super }}
+
+{% initial_page_data 'actions_initial' actions_form.current_values %}
+{% initial_page_data 'read_only_mode' read_only_mode %}
+{% include 'data_interfaces/partials/case_rule_actions.html' with form=actions_form %}
+
+<div id="rule-definition">
+    {% if read_only_mode %}
+        <p class="alert alert-block alert-warning">
+            {% trans "NOTE: A system administrator is required to edit this rule." %}
+        </p>
+    {% endif %}
+    <form id="rule-definition-form" class="form form-horizontal" method="POST" action="#">
+        {% crispy rule_form %}
+        {% crispy criteria_form %}
+        {% crispy actions_form %}
+        <div class="col-xs-1">
+            <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

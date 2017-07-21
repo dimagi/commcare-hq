@@ -2,18 +2,19 @@ from __future__ import absolute_import
 import os
 import weakref
 from contextlib import contextmanager
+from io import UnsupportedOperation
 
 from corehq.blobs import BlobInfo, DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName, NotFound
-from corehq.blobs.util import ClosingContextProxy
+from corehq.blobs.interface import AbstractBlobDB, SAFENAME
+from corehq.blobs.util import ClosingContextProxy, set_blob_expire_object
+from corehq.util.datadog.gauges import datadog_counter
 
 import boto3
 from botocore.client import Config
 from botocore.handlers import calculate_md5
 from botocore.exceptions import ClientError
 from botocore.utils import fix_s3_host
-
-from corehq.blobs.interface import AbstractBlobDB, SAFENAME
 
 DEFAULT_S3_BUCKET = "blobdb"
 
@@ -36,7 +37,7 @@ class S3BlobDB(AbstractBlobDB):
         # https://github.com/boto/boto3/issues/259
         self.db.meta.client.meta.events.unregister('before-sign.s3', fix_s3_host)
 
-    def put(self, content, identifier, bucket=DEFAULT_BUCKET):
+    def put(self, content, identifier, bucket=DEFAULT_BUCKET, timeout=None):
         path = self.get_path(identifier, bucket)
         s3_bucket = self._s3_bucket(create=True)
         if isinstance(content, BlobStream) and content.blob_db is self:
@@ -49,6 +50,8 @@ class S3BlobDB(AbstractBlobDB):
         content_md5 = get_content_md5(content)
         content_length = get_file_size(content)
         s3_bucket.upload_fileobj(content, path)
+        if timeout is not None:
+            set_blob_expire_object(bucket, identifier, content_length, timeout)
         return BlobInfo(identifier, content_length, "md5-" + content_md5)
 
     def get(self, identifier, bucket=DEFAULT_BUCKET):
@@ -56,6 +59,11 @@ class S3BlobDB(AbstractBlobDB):
         with maybe_not_found(throw=NotFound(identifier, bucket)):
             resp = self._s3_bucket().Object(path).get()
         return BlobStream(resp["Body"], self, path)
+
+    def size(self, identifier, bucket=DEFAULT_BUCKET):
+        path = self.get_path(identifier, bucket)
+        with maybe_not_found(throw=NotFound(identifier, bucket)):
+            return self._s3_bucket().Object(path).content_length
 
     def exists(self, identifier, bucket=DEFAULT_BUCKET):
         path = self.get_path(identifier, bucket)
@@ -105,6 +113,7 @@ class S3BlobDB(AbstractBlobDB):
                 self.db.meta.client.head_bucket(Bucket=self.s3_bucket_name)
             except ClientError as err:
                 if not is_not_found(err):
+                    datadog_counter('commcare.blobdb.notfound')
                     raise
                 self.db.create_bucket(Bucket=self.s3_bucket_name)
             self._s3_bucket_exists = True
@@ -155,14 +164,22 @@ def get_content_md5(content):
 
 
 def get_file_size(fileobj):
-    if not hasattr(fileobj, 'fileno'):
-        pos = fileobj.tell()
+
+    def tell_end(fileobj_):
+        pos = fileobj_.tell()
         try:
-            fileobj.seek(0, os.SEEK_END)
-            return fileobj.tell()
+            fileobj_.seek(0, os.SEEK_END)
+            return fileobj_.tell()
         finally:
-            fileobj.seek(pos)
-    return os.fstat(fileobj.fileno()).st_size
+            fileobj_.seek(pos)
+
+    if not hasattr(fileobj, 'fileno'):
+        return tell_end(fileobj)
+    try:
+        fileno = fileobj.fileno()
+    except UnsupportedOperation:
+        return tell_end(fileobj)
+    return os.fstat(fileno).st_size
 
 
 @contextmanager
@@ -171,6 +188,7 @@ def maybe_not_found(throw=None):
         yield
     except ClientError as err:
         if not is_not_found(err):
+            datadog_counter('commcare.blobdb.notfound')
             raise
         if throw is not None:
             raise throw

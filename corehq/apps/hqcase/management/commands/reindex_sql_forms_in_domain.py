@@ -20,8 +20,10 @@ def reindex_sql_forms_in_domain(domain):
 
 
 class Command(BaseCommand):
-    args = 'domain'
     help = 'Reindex a pillowtop index'
+
+    def add_arguments(self, parser):
+        parser.add_argument('domain')
 
     def handle(self, domain, *args, **options):
         reindex_sql_forms_in_domain(domain)

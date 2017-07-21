@@ -1,36 +1,48 @@
+from copy import deepcopy
 import uuid
 from django.test import TestCase, override_settings
 import mock
 from casexml.apps.case.mock import CaseStructure, CaseFactory
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
-from corehq.apps.es.fake.forms_fake import FormESFake
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.specs import EvaluationContext
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 
+es_form_cache = []
+
+
+def mget_query_fake(index, ids, source):
+    return [
+        {"_id": form['_id'], "_source": form}
+        for form in es_form_cache
+        if form['_id'] in ids
+    ]
+
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
-@mock.patch('custom.icds_reports.ucr.expressions.FormES', FormESFake)
+@mock.patch('custom.icds_reports.ucr.expressions.mget_query', mget_query_fake)
 class TestFormsExpressionSpecWithFilter(TestCase):
 
     @classmethod
     def setUpClass(cls):
         super(TestFormsExpressionSpecWithFilter, cls).setUpClass()
+        global es_form_cache
         cls.domain = uuid.uuid4().hex
         factory = CaseFactory(domain=cls.domain)
         [cls.case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
         cls.forms = [f.to_json() for f in FormAccessors(cls.domain).get_forms(cls.case.xform_ids)]
         for form in cls.forms:
-            FormESFake.save_doc(form)
-        #  redundant case to create extra forms that shouldn't be in the results for cls.case
+            es_form_cache.append(deepcopy(form))
+        # redundant case to create extra forms that shouldn't be in the results for cls.case
         [cls.case_b] = factory.create_or_update_case(CaseStructure(attrs={'create': True}))
         cls.forms_b = [f.to_json() for f in FormAccessors(cls.domain).get_forms(cls.case_b.xform_ids)]
         for form in cls.forms_b:
-            FormESFake.save_doc(form)
+            es_form_cache.append(deepcopy(form))
 
     @classmethod
     def tearDownClass(cls):
-        FormESFake.reset_docs()
+        global es_form_cache
+        es_form_cache = []
         delete_all_xforms()
         delete_all_cases()
         super(TestFormsExpressionSpecWithFilter, cls).tearDownClass()

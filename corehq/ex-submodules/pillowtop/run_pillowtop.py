@@ -39,6 +39,3 @@ def start_pillow(pillow_instance):
         print("Starting pillow %s.run()" % pillow_instance.__class__)
         pillow_instance.run()
         print("Pillow %s.run() completed, restarting" % pillow_instance.__class__)
-
-
-

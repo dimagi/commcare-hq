@@ -8,9 +8,8 @@ import mock
 
 from casexml.apps.case.const import CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex
-from corehq.apps.es.fake.forms_fake import FormESFake
 from corehq.apps.userreports.const import UCR_SQL_BACKEND
-from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, add_element
+from custom.icds_reports.ucr.tests.base_test import BaseICDSDatasourceTest, add_element, mget_query_fake
 
 XMNLS_BP_FORM = 'http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB'
 XMLNS_THR_FORM = 'http://openrosa.org/formdesigner/F1B73934-8B70-4CEE-B462-3E4C81F80E4A'
@@ -30,9 +29,9 @@ NUTRITION_STATUS_SEVERE = "red"
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 @override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
-@mock.patch('custom.icds_reports.ucr.expressions.FormES', FormESFake)
+@mock.patch('custom.icds_reports.ucr.expressions.mget_query', mget_query_fake)
 class TestChildHealthDataSource(BaseICDSDatasourceTest):
-    datasource_filename = 'child_health_cases_monthly_tableau'
+    datasource_filename = 'child_health_cases_monthly_tableau2'
 
     def _create_case(
             self, case_id, dob,
@@ -658,12 +657,12 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         case_id = uuid.uuid4().hex
         self._create_case(
             case_id=case_id,
-            dob=date(2013, 2, 12),
-            date_opened=datetime(2013, 2, 14),
+            dob=date(2011, 2, 12),
+            date_opened=datetime(2011, 2, 14),
             date_modified=datetime(2016, 3, 12),
         )
 
-        # Not eligible after 36 months old
+        # Not eligible after 5 years old
         cases = [
             (1, [('wer_eligible', 1)]),
             (2, [('wer_eligible', 1)]),
@@ -1080,7 +1079,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 3, 12),
         )
 
-        # Dec: No data, Jan: EBF, Mar: Not EBF
+        # Dec: No data, Jan: EBF, Feb: No data, Mar: Not EBF
         self._submit_ebf_form(
             form_date=datetime(2016, 1, 10),
             case_id=case_id,
@@ -1107,6 +1106,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
 
         cases = [
             (0, [('ebf_eligible', 1),
+                 ('ebf_no_info_recorded', 1),
                  ('ebf_in_month', 0),
                  ('ebf_not_breastfeeding_reason', None),
                  ('ebf_drinking_liquid', 0),
@@ -1131,7 +1131,8 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
                  ('counsel_ebf', 0), ]
              ),
             (2, [('ebf_eligible', 1),
-                 ('ebf_in_month', 1),
+                 ('ebf_in_month', 0),
+                 ('ebf_no_info_recorded', 1),
                  ('ebf_not_breastfeeding_reason', None),
                  ('ebf_drinking_liquid', 0),
                  ('ebf_eating', 0),
@@ -1144,6 +1145,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
              ),
             (3, [('ebf_eligible', 1),
                  ('ebf_in_month', 0),
+                 ('ebf_no_info_recorded', 0),
                  ('ebf_not_breastfeeding_reason', 'not_enough_milk'),
                  ('ebf_drinking_liquid', 1),
                  ('ebf_eating', 1),
@@ -1156,10 +1158,11 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
              ),
             (4, [('ebf_eligible', 1),
                  ('ebf_in_month', 0),
-                 ('ebf_not_breastfeeding_reason', 'not_enough_milk'),
-                 ('ebf_drinking_liquid', 1),
-                 ('ebf_eating', 1),
-                 ('ebf_no_bf_no_milk', 1),
+                 ('ebf_no_info_recorded', 1),
+                 ('ebf_not_breastfeeding_reason', None),
+                 ('ebf_drinking_liquid', 0),
+                 ('ebf_eating', 0),
+                 ('ebf_no_bf_no_milk', 0),
                  ('ebf_no_bf_pregnant_again', 0),
                  ('ebf_no_bf_child_too_old', 0),
                  ('ebf_no_bf_mother_sick', 0),
@@ -1185,7 +1188,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             date_modified=datetime(2016, 3, 12),
         )
 
-        # Dec: not EBF, Jan: EBF
+        # Dec: not EBF, Jan: EBF, Feb: No info
         self._submit_pnc_form(
             form_date=datetime(2015, 12, 14),
             case_id=case_id,
@@ -1211,6 +1214,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             (0, [('ebf_eligible', 1),
                  ('pnc_eligible', 1),
                  ('ebf_in_month', 0),
+                 ('ebf_no_info_recorded', 0),
                  ('ebf_not_breastfeeding_reason', None),
                  ('ebf_drinking_liquid', 1),
                  ('ebf_eating', 0),
@@ -1225,6 +1229,7 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             (1, [('ebf_eligible', 1),
                  ('pnc_eligible', 1),
                  ('ebf_in_month', 1),
+                 ('ebf_no_info_recorded', 0),
                  ('ebf_not_breastfeeding_reason', None),
                  ('ebf_drinking_liquid', 0),
                  ('ebf_eating', 0),
@@ -1238,7 +1243,8 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
              ),
             (2, [('ebf_eligible', 1),
                  ('pnc_eligible', 0),
-                 ('ebf_in_month', 1),
+                 ('ebf_in_month', 0),
+                 ('ebf_no_info_recorded', 1),
                  ('ebf_not_breastfeeding_reason', None),
                  ('ebf_drinking_liquid', 0),
                  ('ebf_eating', 0),

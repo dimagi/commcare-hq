@@ -13,9 +13,10 @@ from couchforms.models import doc_types
 
 class Command(BaseCommand):
     help = "Print doc IDs that are in the primary DB but not in ES. Use in conjunction with 'raw_doc' view."
-    args = '<domain> <doc_type>'
 
     def add_arguments(self, parser):
+        parser.add_argument('domain')
+        parser.add_argument('doc_type')
         parser.add_argument('--csv', action='store_true', default=False, dest='csv',
                             help='Write output in CSV format.')
 

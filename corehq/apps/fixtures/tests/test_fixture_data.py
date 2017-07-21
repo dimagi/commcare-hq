@@ -1,7 +1,7 @@
 from xml.etree import ElementTree
 from django.test import TestCase
 from casexml.apps.case.tests.util import check_xml_line_by_line
-from casexml.apps.case.xml import V2
+from casexml.apps.phone.tests.utils import call_fixture_generator
 from corehq.apps.fixtures import fixturegenerators
 from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data_types, \
     get_fixture_data_types_in_domain
@@ -115,7 +115,7 @@ class FixtureDataTest(TestCase):
         self.assertItemsEqual([self.data_item.get_id], FixtureDataItem.by_user(self.user, wrap=False))
         self.assertItemsEqual([self.user.get_id], self.data_item.get_all_users(wrap=False))
 
-        fixture, = fixturegenerators.item_lists(self.user.to_ota_restore_user(), V2)
+        fixture, = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
 
         check_xml_line_by_line(self, """
         <fixture id="item-list:district" user_id="%s">
@@ -144,7 +144,7 @@ class FixtureDataTest(TestCase):
 
         self.data_item.remove_user(self.user)
 
-        fixtures = fixturegenerators.item_lists(self.user.to_ota_restore_user(), V2)
+        fixtures = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
         self.assertEqual(1, len(fixtures))
         check_xml_line_by_line(
             self,
@@ -169,4 +169,80 @@ class FixtureDataTest(TestCase):
         self.assertEqual(
             FixtureDataItem.by_field_value(self.domain, self.data_type, 'state_name', 'Delhi_state').one().get_id,
             self.data_item.get_id
+        )
+
+    def test_fixture_is_indexed(self):
+        self.data_type.fields[2].is_indexed = True  # Set "district_id" as indexed
+        self.data_type.save()
+
+        fixtures = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
+        self.assertEqual(len(fixtures), 2)
+        check_xml_line_by_line(
+            self,
+            """
+            <fixtures>
+                <schema id="item-list:district">
+                    <indices>
+                        <index>district_id</index>
+                    </indices>
+                </schema>
+                <fixture id="item-list:district" indexed="true" user_id="{}">
+                    <district_list>
+                        <district>
+                            <state_name>Delhi_state</state_name>
+                            <district_name lang="hin">Delhi_in_HIN</district_name>
+                            <district_name lang="eng">Delhi_in_ENG</district_name>
+                            <district_id>Delhi_id</district_id>
+                        </district>
+                    </district_list>
+                </fixture>
+            </fixtures>
+            """.format(self.user.user_id),
+            """
+            <fixtures>
+                {}
+                {}
+            </fixtures>
+            """.format(*[ElementTree.tostring(fixture) for fixture in fixtures])
+        )
+
+    def test_empty_data_types(self):
+        empty_data_type = FixtureDataType(
+            domain=self.domain,
+            tag='blank',
+            name="blank",
+            fields=[
+                FixtureTypeField(
+                    field_name="name",
+                    properties=[]
+                ),
+            ],
+            item_attributes=[],
+        )
+        empty_data_type.save()
+        self.addCleanup(empty_data_type.delete)
+        get_fixture_data_types_in_domain.clear(self.domain)
+
+        fixtures = call_fixture_generator(fixturegenerators.item_lists, self.user.to_ota_restore_user())
+        self.assertEqual(2, len(fixtures))
+        check_xml_line_by_line(
+            self,
+            """
+            <f>
+            <fixture id="item-list:blank" user_id="{0}">
+              <blank_list/>
+            </fixture>
+            <fixture id="item-list:district" user_id="{0}">
+              <district_list>
+                <district>
+                  <state_name>Delhi_state</state_name>
+                  <district_name lang="hin">Delhi_in_HIN</district_name>
+                  <district_name lang="eng">Delhi_in_ENG</district_name>
+                  <district_id>Delhi_id</district_id>
+                </district>
+              </district_list>
+            </fixture>
+            </f>
+            """.format(self.user.user_id),
+            '<f>{}\n{}\n</f>'.format(*[ElementTree.tostring(fixture) for fixture in fixtures])
         )

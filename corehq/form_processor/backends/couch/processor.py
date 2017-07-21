@@ -1,5 +1,6 @@
 import datetime
 import logging
+import uuid
 
 import redis
 from couchdbkit.exceptions import ResourceNotFound
@@ -10,6 +11,7 @@ from casexml.apps.case.models import CommCareCase, CommCareCaseAction
 from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from corehq.blobs.mixin import bulk_atomic_blobs
+from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
 from corehq.form_processor.exceptions import CaseNotFound
 from couchforms.util import fetch_and_wrap_form
 from couchforms.models import (
@@ -32,7 +34,7 @@ class FormProcessorCouch(object):
 
     @classmethod
     def new_xform(cls, form_data):
-        _id = extract_meta_instance_id(form_data) or XFormInstance.get_db().server.next_uuid()
+        _id = extract_meta_instance_id(form_data) or uuid.uuid4().hex
         assert _id
         xform = XFormInstance(
             # form has to be wrapped
@@ -96,8 +98,7 @@ class FormProcessorCouch(object):
     @classmethod
     def assign_new_id(cls, xform):
         assert not xform.persistent_blobs, "some blobs would be lost"
-        new_id = XFormInstance.get_db().server.next_uuid()
-        xform._id = new_id
+        xform._id = uuid.uuid4().hex
         return xform
 
     @classmethod
@@ -196,6 +197,10 @@ class FormProcessorCouch(object):
             return None, None
 
         return case_doc, None
+
+    @staticmethod
+    def case_exists(case_id):
+        return CaseAccessorCouch.case_exists(case_id)
 
 
 def _get_actions_from_forms(domain, sorted_forms, case_id):

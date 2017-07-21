@@ -23,7 +23,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         childView: Views.QueryView,
         childViewContainer: "tbody",
 
-        initialize: function(options) {
+        initialize: function (options) {
             this.parentModel = options.collection.models;
         },
 
@@ -41,12 +41,14 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             'click @ui.submitButton': 'submitAction',
         },
 
-        submitAction: function() {
+        submitAction: function () {
             var payload = {};
             var fields = $(".query-field");
             var model = this.parentModel;
-            fields.each(function(index) {
-                payload[model[index].get('id')] = this.value;
+            fields.each(function (index) {
+                if (this.value !== '') {
+                    payload[model[index].get('id')] = this.value;
+                }
             });
             FormplayerFrontend.trigger("menu:query", payload);
         },

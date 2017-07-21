@@ -1,3 +1,4 @@
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.translation import ugettext_noop
 
@@ -38,6 +39,35 @@ class BaseMultimediaUploadController(object):
     def processing_url(self):
         from corehq.apps.hqmedia.views import MultimediaUploadStatusView
         return reverse(MultimediaUploadStatusView.name)
+
+    @property
+    def js_options(self):
+        options = {
+            'allowCloseDuringUpload': True,
+            'fileFilters': self.supported_files,
+            'uploadURL': self.destination,
+            'processingURL': self.processing_url,
+            'isMultiFileUpload': self.is_multi_file,
+            'uploadParams': self.upload_params,
+            'licensingParams': self.licensing_params,
+        }
+        if hasattr(self, 'queue_template'):
+            options.update({'queueTemplate': render_to_string(self.queue_template)})
+        if hasattr(self, 'status_template'):
+            options.update({'statusTemplate': render_to_string(self.status_template)})
+        if hasattr(self, 'details_template'):
+            options.update({'detailsTemplate': render_to_string(self.details_template)})
+        if hasattr(self, 'errors_template'):
+            options.update({'errorsTemplate': render_to_string(self.errors_template)})
+        if hasattr(self, 'existing_file_template'):
+            options.update({'existingFileTemplate': render_to_string(self.existing_file_template)})
+
+        return {
+            'slug': self.slug,
+            'uploader_type': self.uploader_type,
+            'media_type': self.media_type,
+            'options': options,
+        }
 
 
 class MultimediaBulkUploadController(BaseMultimediaUploadController):

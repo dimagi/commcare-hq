@@ -173,6 +173,9 @@ fi
 export JS_SETUP="${JS_SETUP:-no}"
 export NOSE_DIVIDED_WE_RUN="$NOSE_DIVIDED_WE_RUN"
 export REUSE_DB="$REUSE_DB"
+export TRAVIS_JOB_NUMBER="$TRAVIS_JOB_NUMBER"
+export TRAVIS_BUILD_ID="$TRAVIS_BUILD_ID"
+export TRAVIS_BUILD_NUMBER="$TRAVIS_BUILD_NUMBER"
 export TRAVIS_HQ_USERNAME="$TRAVIS_HQ_USERNAME"
 export TRAVIS_HQ_PASSWORD="$TRAVIS_HQ_PASSWORD"
 export DATADOG_API_KEY="$DATADOG_API_KEY"
@@ -214,6 +217,7 @@ case $CMD in
 esac
 
 if [ "$CMD" == "test" ]; then
+    docker-compose pull --parallel couch postgres redis elasticsearch kafka riakcs
     docker-compose run --rm web run_tests "${TEST:-python}" "$@"
 elif [ "$CMD" == "shell" ]; then
     docker-compose run --rm web ./manage.py $CMD "$@"

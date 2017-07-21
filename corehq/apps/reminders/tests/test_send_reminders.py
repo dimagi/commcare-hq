@@ -634,12 +634,6 @@ class CaseTypeReminderTestCase(BaseReminderTestCase):
         return create_test_case(self.domain, 'case_type_b', 'test-case-2',
             drop_signals=False, user_id=self.user.get_id)
 
-    def update_case_type(self, case, case_type):
-        post_case_blocks(
-            [CaseBlock(case_id=case.case_id, case_type=case_type, user_id=self.user.get_id).as_xml()],
-            domain=self.domain
-        )
-
     @run_with_all_backends
     def test_ok(self):
         with self.create_case_1() as case1, self.create_case_2() as case2:
@@ -666,85 +660,6 @@ class CaseTypeReminderTestCase(BaseReminderTestCase):
             self.assertEqual(
                 self.handler2.get_reminder(case1).next_fire,
                 CaseReminderHandler.now + timedelta(days=self.handler2.start_offset)
-            )
-
-            # Test deactivation and spawn on change of CaseReminderHandler.case_type
-            CaseReminderHandler.now = datetime(year=2012, month=2, day=16, hour=11, minute=15)
-
-            self.handler1.case_type = 'case_type_b'
-            self.handler1.save()
-            self.handler2.case_type = 'case_type_b'
-            self.handler2.save()
-            self.handler3.case_type = 'case_type_b'
-            self.handler3.save()
-
-            self.assertIsNone(self.handler1.get_reminder(case1))
-            self.assertIsNotNone(self.handler1.get_reminder(case2))
-            self.assertIsNone(self.handler2.get_reminder(case1))
-            self.assertIsNone(self.handler2.get_reminder(case2))
-            self.assertIsNone(self.handler3.get_reminder(case1))
-            self.assertIsNotNone(self.handler3.get_reminder(case2))
-
-            self.assertEqual(
-                self.handler1.get_reminder(case2).next_fire,
-                CaseReminderHandler.now + timedelta(days=self.handler1.start_offset)
-            )
-            self.assertEqual(
-                self.handler3.get_reminder(case2).next_fire,
-                CaseReminderHandler.now + timedelta(days=self.handler3.start_offset)
-            )
-
-            # Test spawn on change of Case.type
-            prev_now = CaseReminderHandler.now
-            CaseReminderHandler.now = datetime(year=2012, month=2, day=16, hour=11, minute=30)
-
-            self.update_case_type(case1, 'case_type_b')
-
-            self.assertIsNotNone(self.handler1.get_reminder(case1))
-            self.assertIsNotNone(self.handler1.get_reminder(case2))
-            self.assertIsNotNone(self.handler2.get_reminder(case1))
-            self.assertIsNone(self.handler2.get_reminder(case2))
-            self.assertIsNone(self.handler3.get_reminder(case1))
-            self.assertIsNotNone(self.handler3.get_reminder(case2))
-
-            self.assertEqual(
-                self.handler1.get_reminder(case1).next_fire,
-                CaseReminderHandler.now + timedelta(days=self.handler1.start_offset)
-            )
-            self.assertEqual(
-                self.handler2.get_reminder(case1).next_fire,
-                CaseReminderHandler.now + timedelta(days=self.handler2.start_offset)
-            )
-
-            self.assertEqual(
-                self.handler1.get_reminder(case2).next_fire,
-                prev_now + timedelta(days=self.handler1.start_offset)
-            )
-            self.assertEqual(
-                self.handler3.get_reminder(case2).next_fire,
-                prev_now + timedelta(days=self.handler3.start_offset)
-            )
-
-            # Test deactivation on change of Case.type
-            prev_now = CaseReminderHandler.now
-            CaseReminderHandler.now = datetime(year=2012, month=2, day=16, hour=11, minute=45)
-
-            self.update_case_type(case2, 'case_type_a')
-
-            self.assertIsNotNone(self.handler1.get_reminder(case1))
-            self.assertIsNone(self.handler1.get_reminder(case2))
-            self.assertIsNotNone(self.handler2.get_reminder(case1))
-            self.assertIsNone(self.handler2.get_reminder(case2))
-            self.assertIsNone(self.handler3.get_reminder(case1))
-            self.assertIsNone(self.handler3.get_reminder(case2))
-
-            self.assertEqual(
-                self.handler1.get_reminder(case1).next_fire,
-                prev_now + timedelta(days=self.handler1.start_offset)
-            )
-            self.assertEqual(
-                self.handler2.get_reminder(case1).next_fire,
-                prev_now + timedelta(days=self.handler2.start_offset)
             )
 
 

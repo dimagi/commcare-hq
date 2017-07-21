@@ -1,5 +1,6 @@
 import uuid
 from tempfile import mkdtemp
+from datetime import datetime
 
 from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
@@ -14,15 +15,18 @@ from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import ProcessedForms
-from corehq.form_processor.models import (XFormInstanceSQL, XFormOperationSQL,
-    XFormAttachmentSQL)
+from corehq.form_processor.models import (
+    XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
+)
 from corehq.form_processor.parsers.form import apply_deprecation
-from corehq.form_processor.tests.utils import (create_form_for_test,
-    FormProcessorTestUtils, use_sql_backend)
+from corehq.form_processor.tests.utils import (
+    create_form_for_test, FormProcessorTestUtils, use_sql_backend
+)
 from corehq.form_processor.utils import get_simple_form_xml, get_simple_wrapped_form
 from corehq.form_processor.utils.xform import TestFormMetadata
+from corehq.sql_db.models import PartitionedModel
 from corehq.sql_db.routers import db_for_read_write
-from corehq.util.mixin import DisabledDbMixin
+from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from corehq.util.test_utils import trap_extra_setup
 
 DOMAIN = 'test-form-accessor'
@@ -61,6 +65,32 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(2, len(forms))
         self.assertEqual(form1.form_id, forms[0].form_id)
         self.assertEqual(form2.form_id, forms[1].form_id)
+
+    def test_get_forms_by_last_modified(self):
+        start = datetime(2016, 1, 1)
+        end = datetime(2018, 1, 1)
+
+        form1 = create_form_for_test(DOMAIN, received_on=datetime(2017, 1, 1))
+        create_form_for_test(DOMAIN, received_on=datetime(2015, 1, 1))
+        # Test that it gets all states
+        form2 = create_form_for_test(
+            DOMAIN,
+            state=XFormInstanceSQL.ARCHIVED,
+            received_on=datetime(2017, 1, 1)
+        )
+        # Test that other date fields are properly fetched
+        form3 = create_form_for_test(
+            DOMAIN,
+            received_on=datetime(2015, 1, 1),
+            edited_on=datetime(2017, 1, 1),
+        )
+
+        forms = list(FormAccessorSQL.iter_forms_by_last_modified(start, end))
+        self.assertEqual(3, len(forms))
+        self.assertEqual(
+            {form1.form_id, form2.form_id, form3.form_id},
+            {form.form_id for form in forms},
+        )
 
     def test_get_with_attachments(self):
         form = create_form_for_test(DOMAIN)
@@ -357,8 +387,8 @@ class FormAccessorsTests(TestCase):
 
         for form_id in ['f1', 'f2']:
             form = FormAccessors(DOMAIN).get_form(form_id)
-            if isinstance(form, DisabledDbMixin):
-                super(DisabledDbMixin, form).delete()
+            if isinstance(form, PartitionedModel):
+                form.delete(using=get_db_alias_for_partitioned_doc(form.form_id))
             else:
                 form.delete()
 

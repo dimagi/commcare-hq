@@ -365,8 +365,8 @@
 +                                    must go in a different case list).
                                  {% endblocktrans %}
                              {% endif %}
-                         {% case "invalid user property xpath reference" %}
-@@ -341,14 +334,14 @@
+                         {% case "practice user config error" %}
+@@ -349,14 +342,14 @@
                  </li>
              {% endfor %}
          </ul>
@@ -381,7 +381,7 @@
 -        </p>
 +{#        <p class="help-block">#}
 +{#            {% if not_actual_build %}#}
-+{#                {% trans "Build errors prevent you from building your application in the Release Manager." %}#}
++{#                {% trans "Build errors prevent you from creating a new version of your application." %}#}
 +{#            {% endif %}#}
 +{#            {% trans "For more information on build errors, please see" %}#}
 +{#            <a href="https://confluence.dimagi.com/display/commcarepublic/Errors+Building+an+Application" target="_blank">#}

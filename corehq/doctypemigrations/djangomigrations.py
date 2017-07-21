@@ -29,6 +29,13 @@ https://github.com/dimagi/commcare-hq/blob/master/corehq/doctypemigrations/READM
 
 Instead of the "current" release, use the path to this release.
 (This simply has the effect of running the process on up-to-date code.)
+
+NOTE: If you are seeing this on a fresh install of CommCareHQ, then you can
+ignore the above. Instead, the first time you run migrate, run it with the
+following command (this command assumes a linux environment - for other platforms
+you just need to run python manage.py migrate with a temporary environment
+variable CCHQ_IS_FRESH_INSTALL set to 1):
+    env CCHQ_IS_FRESH_INSTALL=1 python manage.py migrate
 """
 
 

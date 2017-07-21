@@ -90,10 +90,9 @@ class ZapierCustomTriggerFieldFormResource(BaseZapierCustomFieldResource):
         except ResourceNotFound:
             raise NotFound
 
-        form = app.get_form_by_xmlns(xmlns)
         custom_fields = []
 
-        for idx, question in enumerate(form.get_questions(app.langs)):
+        for idx, question in enumerate(app.get_questions(xmlns)):
             if self._has_default_label(question):
                 label = question['label'].split('/')[-1]
             else:

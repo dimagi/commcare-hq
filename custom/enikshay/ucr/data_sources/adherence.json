@@ -1,0 +1,167 @@
+{
+    "domains": [
+        "enikshay",
+        "enikshay-reports-qa"
+    ],
+    "server_environment": [
+      "softlayer"
+    ],
+    "config": {
+        "referenced_doc_type": "CommCareCase",
+        "asynchronous": true,
+        "backend_id": "ES",
+        "description": "",
+        "base_item_expression": {
+        },
+        "table_id": "adherence",
+        "display_name": "adherence",
+        "configured_filter": {
+            "type": "and",
+            "filters": [
+                {
+                    "operator": "eq",
+                    "expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "type"
+                    },
+                    "type": "boolean_expression",
+                    "property_value": "adherence"
+                }
+            ]
+        },
+        "configured_indicators": [
+            {
+                "display_name": "episode_id",
+                "transform": {
+
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": false,
+                "column_id": "episode_id",
+                "expression": {
+                    "type": "nested",
+                    "value_expression": {
+                        "datatype": null,
+                        "type": "property_name",
+                        "property_name": "referenced_id"
+                    },
+                    "argument_expression": {
+                        "type": "array_index",
+                        "array_expression": {
+                            "datatype": null,
+                            "type": "property_name",
+                            "property_name": "indices"
+                        },
+                        "index_expression": {
+                            "type": "constant",
+                            "constant": 0
+                        }
+                    }
+                }
+            },
+            {
+                "display_name": "adherence_value",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "adherence_value",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "adherence_value"
+                }
+            },
+            {
+                "display_name": "closed",
+                "transform": {
+                },
+                "datatype": "integer",
+                "type": "expression",
+                "column_id": "closed",
+                "is_primary_key": false,
+                "is_nullable": false,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "closed"
+                }
+            },
+            {
+                "display_name": "adherence_closure_reason",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "column_id": "adherence_closure_reason",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "adherence_closure_reason"
+                }
+            },
+            {
+                "display_name": "adherence_source",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "column_id": "adherence_source",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "adherence_source"
+                }
+            },
+            {
+                "display_name": "adherence_report_source",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "column_id": "adherence_report_source",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "adherence_report_source"
+                }
+            },
+            {
+                "display_name": "modified_on",
+                "property_path": [],
+                "datatype": "datetime",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "modified_on",
+                "type": "raw",
+                "property_name": "modified_on"
+            },
+            {
+                "display_name": "adherence_date",
+                "transform": {
+                },
+                "datatype": "date",
+                "type": "expression",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "column_id": "adherence_date",
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "adherence_date"
+                }
+            }
+        ]
+    }
+}

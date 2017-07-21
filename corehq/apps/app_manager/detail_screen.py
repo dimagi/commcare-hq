@@ -26,9 +26,10 @@ CASE_PROPERTY_MAP = {
 
 
 def get_column_generator(app, module, detail, column, sort_element=None,
-                         order=None, detail_type=None):
+                         order=None, detail_type=None, parent_tab_nodeset=None):
     cls = get_class_for_format(column.format)  # cls will be FormattedDetailColumn or a subclass of it
-    return cls(app, module, detail, column, sort_element, order, detail_type=detail_type)
+    return cls(app, module, detail, column, sort_element, order,
+               detail_type=detail_type, parent_tab_nodeset=parent_tab_nodeset)
 
 
 def get_class_for_format(slug):
@@ -89,7 +90,7 @@ class FormattedDetailColumn(object):
     SORT_TYPE = 'string'
 
     def __init__(self, app, module, detail, column, sort_element=None,
-                 order=None, detail_type=None):
+                 order=None, detail_type=None, parent_tab_nodeset=None):
         self.app = app
         self.module = module
         self.detail = detail
@@ -98,6 +99,10 @@ class FormattedDetailColumn(object):
         self.sort_element = sort_element
         self.order = order
         self.id_strings = id_strings
+        self.parent_tab_nodeset = parent_tab_nodeset
+
+    def has_sort_node_for_nodeset_column(self):
+        return False
 
     @property
     def locale_id(self):
@@ -132,7 +137,9 @@ class FormattedDetailColumn(object):
 
     @property
     def sort_node(self):
-        if not (self.app.enable_multi_sort and self.detail.display == 'short'):
+        if not (self.app.enable_multi_sort and
+                (self.detail.display == 'short' or self.has_sort_node_for_nodeset_column())
+                ):
             return
 
         sort = None
@@ -255,7 +262,7 @@ class HideShortHeaderColumn(FormattedDetailColumn):
 
     @property
     def header(self):
-        if self.detail.display == 'short':
+        if self.detail.display == 'short' or self.has_sort_node_for_nodeset_column():
             header = sx.Header(
                 text=sx.Text(),
                 width=self.template_width
@@ -269,7 +276,7 @@ class HideShortColumn(HideShortHeaderColumn):
 
     @property
     def template_width(self):
-        if self.detail.display == 'short':
+        if self.detail.display == 'short' or self.has_sort_node_for_nodeset_column():
             return 0
 
 
@@ -352,6 +359,35 @@ class Enum(FormattedDetailColumn):
         return variables
 
 
+@register_format_type('conditional-enum')
+class ConditionalEnum(Enum):
+    @property
+    def sort_node(self):
+        node = super(ConditionalEnum, self).sort_node
+        if node:
+            variables = self.variables
+            for key in variables:
+                node.text.xpath.node.append(
+                    sx.XpathVariable(name=key, locale_id=variables[key]).node
+                )
+        return node
+
+    def _make_xpath(self, type):
+        xpath_template = u"if({key_as_condition}, {key_as_var_name}"
+        parts = []
+        for i, item in enumerate(self.column.enum):
+            parts.append(
+                xpath_template.format(
+                    key_as_condition=item.key_as_condition(self.xpath),
+                    key_as_var_name=item.ref_to_key_variable(i, 'display')
+                )
+            )
+
+        parts.append(u"''")
+        parts.append(u")" * (len(self.column.enum)))
+        return ''.join(parts)
+
+
 @register_format_type('enum-image')
 class EnumImage(Enum):
     template_form = 'image'
@@ -404,6 +440,10 @@ class LateFlag(HideShortHeaderColumn):
 
 @register_format_type('invisible')
 class Invisible(HideShortColumn):
+
+    def has_sort_node_for_nodeset_column(self):
+        return self.parent_tab_nodeset and self.detail.sort_nodeset_columns_for_detail()
+
     @property
     def header(self):
         """
@@ -472,87 +512,34 @@ class Graph(FormattedDetailColumn):
 
     @property
     def template(self):
-        template = sx.GraphTemplate(
-            form=self.template_form,
-            graph=sx.Graph(
-                type=self.column.graph_configuration.graph_type,
-                series=[
-                    sx.Series(
-                        nodeset=s.data_path,
-                        x_function=s.x_function,
-                        y_function=s.y_function,
-                        radius_function=s.radius_function,
-                        configuration=sx.ConfigurationGroup(
-                            configs=(
-                                [
-                                    # TODO: It might be worth wrapping
-                                    #       these values in quotes (as appropriate)
-                                    #       to prevent the user from having to
-                                    #       figure out why their unquoted colors
-                                    #       aren't working.
-                                    sx.ConfigurationItem(id=k, xpath_function=v)
-                                    for k, v in s.config.iteritems()
-                                ] + [
-                                    sx.ConfigurationItem(
-                                        id=k,
-                                        locale_id=self.id_strings.graph_series_configuration(
-                                            self.module,
-                                            self.detail_type,
-                                            self.column,
-                                            index,
-                                            k
-                                        )
-                                    )
-                                    for k, v in s.locale_specific_config.iteritems()
-                                ]
-                            )
-                        )
-                    )
-                    for index, s in enumerate(self.column.graph_configuration.series)],
-                configuration=sx.ConfigurationGroup(
-                    configs=(
-                        [
-                            sx.ConfigurationItem(id=k, xpath_function=v)
-                            for k, v
-                            in self.column.graph_configuration.config.iteritems()
-                        ] + [
-                            sx.ConfigurationItem(
-                                id=k,
-                                locale_id=self.id_strings.graph_configuration(
-                                    self.module,
-                                    self.detail_type,
-                                    self.column,
-                                    k
-                                )
-                            )
-                            for k, v
-                            in self.column.graph_configuration.locale_specific_config.iteritems()
-                        ]
-                    )
-                ),
-                annotations=[
-                    sx.Annotation(
-                        x=sx.Text(xpath_function=a.x),
-                        y=sx.Text(xpath_function=a.y),
-                        text=sx.Text(
-                            locale_id=self.id_strings.graph_annotation(
-                                self.module,
-                                self.detail_type,
-                                self.column,
-                                i
-                            )
-                        )
-                    )
-                    for i, a in enumerate(
-                        self.column.graph_configuration.annotations
-                    )]
+        def _locale_config(key):
+            return self.id_strings.graph_configuration(
+                self.module,
+                self.detail_type,
+                self.column,
+                key
             )
-        )
 
-        # TODO: what are self.variables and do I need to care about them here?
-        # (see FormattedDetailColumn.template)
+        def _locale_series_config(index, key):
+            return self.id_strings.graph_series_configuration(
+                self.module,
+                self.detail_type,
+                self.column,
+                index,
+                key
+            )
 
-        return template
+        def _locale_annotation(index):
+            return self.id_strings.graph_annotation(
+                self.module,
+                self.detail_type,
+                self.column,
+                index
+            )
+
+        return sx.GraphTemplate.build(self.template_form, self.column.graph_configuration,
+                                      locale_config=_locale_config, locale_series_config=_locale_series_config,
+                                      locale_annotation=_locale_annotation)
 
 
 @register_type_processor(const.FIELD_TYPE_ATTACHMENT)

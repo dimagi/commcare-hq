@@ -2,12 +2,12 @@ from django.test import TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_location_types
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import CommCareUser, WebUser
-from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from ..analytics import users_have_locations
 from ..dbaccessors import (get_users_by_location_id, get_user_ids_by_location,
                            get_one_user_at_location, get_user_docs_by_location,
-                           get_all_users_by_location, get_users_assigned_to_locations)
-from .util import make_loc, delete_all_locations
+                           get_all_users_by_location, get_users_assigned_to_locations,
+                           generate_user_ids_from_primary_location_ids_from_couch)
+from .util import make_loc
 
 
 class TestUsersByLocation(TestCase):
@@ -15,8 +15,6 @@ class TestUsersByLocation(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestUsersByLocation, cls).setUpClass()
-        delete_all_locations()
-        delete_all_users()
         cls.domain = 'test-domain'
         cls.domain_obj = create_domain(cls.domain)
         bootstrap_location_types(cls.domain)
@@ -42,8 +40,8 @@ class TestUsersByLocation(TestCase):
 
     @classmethod
     def tearDownClass(cls):
+        cls.george.delete()
         cls.domain_obj.delete()
-        delete_all_locations()
         super(TestUsersByLocation, cls).tearDownClass()
 
     def test_get_users_by_location_id(self):
@@ -85,3 +83,13 @@ class TestUsersByLocation(TestCase):
             [self.varys._id, self.tyrion._id, self.daenerys._id, self.george._id]
         )
         other_user.delete()
+
+    def test_generate_user_ids_from_primary_location_ids_from_couch(self):
+        self.assertItemsEqual(
+            list(
+                generate_user_ids_from_primary_location_ids_from_couch(
+                    self.domain, [self.pentos.location_id, self.meereen.location_id]
+                )
+            ),
+            [self.varys._id, self.tyrion._id, self.daenerys._id]
+        )

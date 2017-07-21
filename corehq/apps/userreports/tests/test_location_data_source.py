@@ -5,7 +5,6 @@ from kafka.common import KafkaUnavailableError
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.util.test_utils import trap_extra_setup
 
 from corehq.apps.userreports.app_manager import _clean_table_name
@@ -19,7 +18,6 @@ class TestLocationDataSource(TestCase):
     domain = "delos_corp"
 
     def setUp(self):
-        delete_all_locations()
         self.domain_obj = create_domain(self.domain)
 
         self.region = LocationType.objects.create(domain=self.domain, name="region")
@@ -52,7 +50,6 @@ class TestLocationDataSource(TestCase):
 
     def tearDown(self):
         self.domain_obj.delete()
-        delete_all_locations()
         self.data_source_config.delete()
 
     def _make_loc(self, name, location_type):

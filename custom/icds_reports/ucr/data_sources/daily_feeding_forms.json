@@ -283,6 +283,7 @@
         "is_primary_key": false,
         "transform": {},
         "is_nullable": true,
+        "create_index": true,
         "expression": {
           "type": "root_doc",
           "expression": {
@@ -399,12 +400,8 @@
               "operator": "gte",
               "type": "boolean_expression",
               "expression": {
-                "datatype": "integer",
-                "type": "property_path",
-                "property_path": [
-                  "form",
-                  "num_attended_children"
-                ]
+                "type": "named",
+                "name": "attended_children"
               },
               "property_value": 0
             }
@@ -529,12 +526,8 @@
         "expression": {
           "type": "root_doc",
           "expression": {
-            "datatype": "integer",
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "num_attended_children"
-            ]
+            "type": "named",
+            "name": "attended_children"
           }
         }
       },
@@ -939,12 +932,8 @@
         "statement": "num_attended_children / eligible_children",
         "context_variables": {
           "num_attended_children": {
-            "datatype": "integer",
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "num_attended_children"
-            ]
+            "type": "named",
+            "name": "attended_children"
           },
           "eligible_children": {
             "datatype": "integer",
@@ -954,6 +943,67 @@
               "num_children"
             ]
           }
+        }
+      },
+      "attended_children": {
+        "comment": "This expression has logic to deal with a bug in the app.  The app counts an extra child if active is blank and inactive is not since it concats an extra space",
+        "type": "conditional",
+        "test": {
+          "type": "and",
+          "filters": [
+            {
+              "type": "boolean_expression",
+              "operator": "in",
+              "property_value": ["", null],
+              "expression": {
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "child_attendance_ql",
+                  "attendance_active"
+                ]
+              }
+            },
+            {
+              "type": "not",
+              "filter": {
+                "type": "boolean_expression",
+                "operator": "in",
+                "property_value": ["", null],
+                "expression": {
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "child_attendance_ql",
+                    "attendance_inactive"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "expression_if_true": {
+          "type": "evaluator",
+          "datatype": "integer",
+          "statement": "num_attended_children - 1",
+          "context_variables": {
+            "num_attended_children": {
+              "datatype": "integer",
+              "type": "property_path",
+              "property_path": [
+                "form",
+                "num_attended_children"
+              ]
+            }
+          }
+        },
+        "expression_if_false": {
+          "datatype": "integer",
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "num_attended_children"
+          ]
         }
       }
     },
@@ -991,6 +1041,12 @@
       }
     },
     "engine_id": "icds-ucr",
-    "backend_id": "LABORATORY"
+    "backend_id": "LABORATORY",
+    "es_index_settings": {
+      "number_of_shards": 5
+    },
+    "sql_column_indexes": [
+      {"column_ids": ["awc_id", "submitted_on"]}
+    ]
   }
 }

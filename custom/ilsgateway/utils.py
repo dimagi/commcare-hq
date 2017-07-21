@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from casexml.apps.stock.models import StockReport, StockTransaction
 from corehq.apps.commtrack.models import SupplyPointCase
-from corehq.apps.locations.models import LocationType, Location, SQLLocation
+from corehq.apps.locations.models import LocationType, make_location, SQLLocation
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.reminders.util import get_two_way_number_for_recipient
 from corehq.apps.sms.api import send_sms_to_verified_number
@@ -69,7 +69,7 @@ def send_translated_message(user, message, **kwargs):
 def make_loc(code, name, domain, type, metadata=None, parent=None):
     name = name or code
     LocationType.objects.get(domain=domain, name=type)
-    loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
+    loc = make_location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
     loc.metadata = metadata or {}
     loc.save()
     return loc

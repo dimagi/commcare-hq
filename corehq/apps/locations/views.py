@@ -11,12 +11,6 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from django.views.decorators.http import require_http_methods
 
-from couchdbkit import ResourceNotFound, BulkSaveError
-from corehq.apps.style.decorators import (
-    use_jquery_ui,
-    use_multiselect,
-)
-from corehq.util.files import file_extention_from_filename
 from couchexport.models import Format
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import json_response
@@ -33,9 +27,12 @@ from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.apps.products.models import Product, SQLProduct
+from corehq.apps.style.decorators import use_jquery_ui, use_multiselect
 from corehq.apps.users.forms import MultipleSelectionForm
 from corehq.apps.locations.permissions import location_safe
 from corehq.util import reverse
+from corehq.util.files import file_extention_from_filename
+from custom.enikshay.user_setup import ENikshayLocationFormSet
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 
@@ -54,8 +51,7 @@ from .permissions import (
     can_edit_any_location,
 )
 from .models import LocationType, SQLLocation, filter_for_archived
-from .forms import LocationForm, UsersAtLocationForm
-from .signals import clean_location
+from .forms import LocationFormSet, UsersAtLocationForm
 from .tree_utils import assert_no_cycles
 from .util import load_locs_json, location_hierarchy_config, dump_locations
 
@@ -78,7 +74,7 @@ def lock_locations(func):
     def func_wrapper(request, *args, **kwargs):
         key = location_lock_key(request.domain)
         client = get_redis_client()
-        lock = client.lock(key, LOCK_LOCATIONS_TIMEOUT)
+        lock = client.lock(key, timeout=LOCK_LOCATIONS_TIMEOUT)
         if lock.acquire(blocking=False):
             try:
                 return func(request, *args, **kwargs)
@@ -275,6 +271,7 @@ class LocationTypesView(BaseDomainView):
             'administrative': loc_type.administrative,
             'shares_cases': loc_type.shares_cases,
             'view_descendants': loc_type.view_descendants,
+            'has_user': loc_type.has_user,
             'code': loc_type.code,
             'expand_from': loc_type.expand_from.pk if loc_type.expand_from else None,
             'expand_from_root': loc_type.expand_from_root,
@@ -291,7 +288,7 @@ class LocationTypesView(BaseDomainView):
         def _is_fake_pk(pk):
             return isinstance(pk, basestring) and pk.startswith("fake-pk-")
 
-        def mk_loctype(name, parent_type, administrative,
+        def mk_loctype(name, parent_type, administrative, has_user,
                        shares_cases, view_descendants, pk, code, **kwargs):
             parent = sql_loc_types[parent_type] if parent_type else None
 
@@ -309,6 +306,7 @@ class LocationTypesView(BaseDomainView):
             loc_type.shares_cases = shares_cases
             loc_type.view_descendants = view_descendants
             loc_type.code = unicode_slug(code)
+            loc_type.has_user = has_user
             sql_loc_types[pk] = loc_type
             loc_type.save()
 
@@ -485,10 +483,12 @@ class NewLocationView(BaseLocationView):
     @memoized
     def location_form(self):
         data = self.request.POST if self.request.method == 'POST' else None
-        return LocationForm(
+        form_set = (ENikshayLocationFormSet if toggles.ENIKSHAY.enabled(self.domain)
+                    else LocationFormSet)
+        return form_set(
             self.location,
             bound_data=data,
-            user=self.request.couch_user,
+            request_user=self.request.couch_user,
             is_new=self.creates_new_location,
         )
 
@@ -501,7 +501,14 @@ class NewLocationView(BaseLocationView):
             'locations': load_locs_json(self.domain, self.location.parent_location_id,
                                         user=self.request.couch_user),
             'form_tab': self.form_tab,
+            'creates_new_location': self.creates_new_location,
+            'loc_types_with_users': self._get_loc_types_with_users(),
         }
+
+    def _get_loc_types_with_users(self):
+        return list(LocationType.objects
+                    .filter(domain=self.domain, has_user=True)
+                    .values_list('name', flat=True))
 
     def form_valid(self):
         messages.success(self.request, _('Location saved!'))
@@ -511,14 +518,6 @@ class NewLocationView(BaseLocationView):
         )
 
     def settings_form_post(self, request, *args, **kwargs):
-        self.location_form.is_valid()
-        clean_location.send(
-            self.__class__.__name__,
-            domain=self.domain,
-            request_user=self.request.user,
-            location=self.location,
-            forms={self.location_form.__class__.__name__: self.location_form},
-        )
         if self.location_form.is_valid():
             self.location_form.save()
             return self.form_valid()
@@ -532,10 +531,7 @@ class NewLocationView(BaseLocationView):
 @location_safe
 @can_edit_location
 def archive_location(request, domain, loc_id):
-    try:
-        loc = SQLLocation.objects.get(domain=domain, location_id=loc_id)
-    except SQLLocation.DoesNotExist:
-        raise Http404()
+    loc = get_object_or_404(SQLLocation, domain=domain, location_id=loc_id)
     loc.archive()
     return json_response({
         'success': True,
@@ -551,22 +547,8 @@ def archive_location(request, domain, loc_id):
 @lock_locations
 @location_safe
 def delete_location(request, domain, loc_id):
-    try:
-        loc = SQLLocation.objects.get(domain=domain, location_id=loc_id)
-    except SQLLocation.DoesNotExist:
-        raise Http404()
-    try:
-        loc.full_delete()
-    except (ResourceNotFound, BulkSaveError):
-        # Sometimes the couch and sql locations go out of sync and we can end up
-        # in a state where the couch doc is deleted and the sql doc still exists.
-        # delete the sql locations anyway
-        loc.sql_full_delete()
-        logger.error(
-            'Location with ID [{}] in domain [{}] was missing its couch doc '
-            'upon deletion. If this is recurring it might be worth checking '
-            'out any couch to postrgres issues.'.format(loc_id, domain)
-        )
+    loc = get_object_or_404(SQLLocation, domain=domain, location_id=loc_id)
+    loc.full_delete()
     return json_response({
         'success': True,
         'message': _("Location '{location_name}' has successfully been {action}.").format(
@@ -576,11 +558,11 @@ def delete_location(request, domain, loc_id):
     })
 
 
+@can_edit_location
+@location_safe
 def location_descendants_count(request, domain, loc_id):
-    location = SQLLocation.objects.get(location_id=loc_id)
-    if location.domain != domain:
-        raise Http404()
-    count = len(location.get_descendants(include_self=True))
+    loc = get_object_or_404(SQLLocation, domain=domain, location_id=loc_id)
+    count = loc.get_descendants(include_self=True).count()
     return json_response({
         'count': count
     })
@@ -589,10 +571,7 @@ def location_descendants_count(request, domain, loc_id):
 @can_edit_location
 @location_safe
 def unarchive_location(request, domain, loc_id):
-    try:
-        loc = SQLLocation.objects.get(domain=domain, location_id=loc_id)
-    except SQLLocation.DoesNotExist:
-        raise Http404()
+    loc = get_object_or_404(SQLLocation, domain=domain, location_id=loc_id)
     loc.unarchive()
     return json_response({
         'success': True,
@@ -624,23 +603,6 @@ class EditLocationView(NewLocationView):
                                  location_id=self.location_id)
 
     @property
-    @memoized
-    def sql_location(self):
-        try:
-            location = SQLLocation.objects.get(location_id=self.location_id)
-            if location.domain != self.domain:
-                raise Http404()
-        except ResourceNotFound:
-            raise Http404()
-        else:
-            return location
-
-    @property
-    @memoized
-    def supply_point(self):
-        return self.location.linked_supply_point()
-
-    @property
     def page_url(self):
         return reverse(self.urlname, args=[self.domain, self.location_id])
 
@@ -652,9 +614,7 @@ class EditLocationView(NewLocationView):
                 self.domain,
                 product._id,
                 self.location.location_type_name,
-                # FIXME accessing this value from the sql location
-                # would be faster
-                self.supply_point.case_id if self.supply_point else None,
+                self.location.supply_point_id or None,
             )
             if consumption:
                 consumptions.append((product.name, consumption))
@@ -702,7 +662,7 @@ class EditLocationView(NewLocationView):
 
     @property
     def products_at_location(self):
-        return [p.product_id for p in self.sql_location.products.all()]
+        return [p.product_id for p in self.location.products.all()]
 
     @property
     def page_name(self):
@@ -732,8 +692,8 @@ class EditLocationView(NewLocationView):
         products = SQLProduct.objects.filter(
             product_id__in=request.POST.getlist('products-selected_ids', [])
         )
-        self.sql_location.products = products
-        self.sql_location.save()
+        self.location.products = products
+        self.location.save()
         return self.form_valid()
 
     @method_decorator(lock_locations)
@@ -818,18 +778,18 @@ class LocationImportView(BaseLocationView):
         domain = args[0]
 
         # stash this in soil to make it easier to pass to celery
-        ONE_HOUR = 1*60*60
+        TEN_HOURS = 10 * 60 * 60
         file_ref = expose_cached_download(
             upload.read(),
-            expiry=ONE_HOUR,
+            expiry=TEN_HOURS,
             file_extension=file_extention_from_filename(upload.name),
         )
-        task = import_locations_async.delay(
-            domain,
-            file_ref.download_id,
-        )
+        # We need to start this task after this current request finishes because this
+        # request uses the lock_locations decorator which acquires the same lock that
+        # the task will try to acquire.
+        task = import_locations_async.apply_async(args=[domain, file_ref.download_id], countdown=10)
         # put the file_ref.download_id in cache to lookup from elsewhere
-        cache.set(import_locations_task_key(domain), file_ref.download_id, ONE_HOUR)
+        cache.set(import_locations_task_key(domain), file_ref.download_id, TEN_HOURS)
         file_ref.set_task(task)
         return HttpResponseRedirect(
             reverse(
@@ -872,7 +832,7 @@ def location_export(request, domain):
 @locations_access_required
 @location_safe
 def child_locations_for_select2(request, domain):
-    id = request.GET.get('id')
+    location_id = request.GET.get('id')
     ids = request.GET.get('ids')
     query = request.GET.get('name', '').lower()
     user = request.couch_user
@@ -880,16 +840,16 @@ def child_locations_for_select2(request, domain):
     base_queryset = SQLLocation.objects.accessible_to_user(domain, user)
 
     def loc_to_payload(loc):
-        return {'id': loc.location_id, 'name': loc.display_name}
+        return {'id': loc.location_id, 'name': loc.get_path_display()}
 
-    if id:
+    if location_id:
         try:
-            loc = base_queryset.get(location_id=id)
+            loc = base_queryset.get(location_id=location_id)
             if loc.domain != domain:
                 raise SQLLocation.DoesNotExist()
         except SQLLocation.DoesNotExist:
             return json_response(
-                {'message': 'no location with id %s found' % id},
+                {'message': 'no location with id %s found' % location_id},
                 status_code=404,
             )
         else:

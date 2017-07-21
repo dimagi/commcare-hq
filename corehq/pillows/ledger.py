@@ -1,5 +1,5 @@
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.locations.models import SQLLocation
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import LedgerReindexAccessor
@@ -8,7 +8,7 @@ from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.mappings.ledger_mapping import LEDGER_INDEX_INFO
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.quickcache import quickcache
-from pillowtop.checkpoints.manager import PillowCheckpointEventHandler, get_checkpoint_for_elasticsearch_pillow
+from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
@@ -55,21 +55,25 @@ def _get_daily_consumption_for_ledger(ledger):
     return daily_consumption
 
 
-def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow'):
+def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow', num_processes=1,
+                                       process_num=0, **kwargs):
     assert pillow_id == 'LedgerToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, LEDGER_INDEX_INFO)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, LEDGER_INDEX_INFO, [topics.LEDGER])
     processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=LEDGER_INDEX_INFO,
         doc_prep_fn=_prepare_ledger_for_es
     )
+    change_feed = KafkaChangeFeed(
+        topics=[topics.LEDGER], group_id='ledgers-to-es', num_processes=num_processes, process_num=process_num
+    )
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
-        change_feed=KafkaChangeFeed(topics=[topics.LEDGER], group_id='ledgers-to-es'),
+        change_feed=change_feed,
         processor=processor,
-        change_processed_event_handler=PillowCheckpointEventHandler(
-            checkpoint=checkpoint, checkpoint_frequency=100
+        change_processed_event_handler=KafkaCheckpointEventHandler(
+            checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
     )
 

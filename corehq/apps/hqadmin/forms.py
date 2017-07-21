@@ -110,7 +110,9 @@ class SuperuserManagementForm(forms.Form):
         choices=[
             ('is_superuser', 'Mark as superuser'),
         ],
-        widget=forms.CheckboxSelectMultiple())
+        widget=forms.CheckboxSelectMultiple(),
+        required=False,
+    )
 
     def clean(self):
         from email.utils import parseaddr
@@ -131,7 +133,9 @@ class SuperuserManagementForm(forms.Form):
             try:
                 users.append(User.objects.get(username=username))
             except User.DoesNotExist:
-                raise forms.ValidationError(u"User with email address '{}' does not exist".format(username))
+                raise forms.ValidationError(
+                    u"User with email address '{}' does not exist on "
+                    "this site, please have the user registered first".format(username))
 
         self.cleaned_data['users'] = users
         return self.cleaned_data

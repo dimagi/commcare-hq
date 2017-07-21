@@ -55,7 +55,7 @@ $(function () {
     if (initial_page_data('show_number')) {
         var $number = $('#id_phone_number');
         $number.intlTelInput({
-            nationalMode: true,
+            separateDialCode: true,
             utilsScript: initial_page_data('number_utils_script'),
         });
         $number.keydown(function (e) {

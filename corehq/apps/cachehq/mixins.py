@@ -2,7 +2,7 @@ import logging
 from django.conf import settings
 from couchdbkit import ResourceNotFound
 from corehq.apps.cachehq.invalidate import invalidate_document
-from corehq.util.quickcache import skippable_quickcache
+from corehq.util.quickcache import quickcache
 from dimagi.utils.couch.cache import cache_core
 
 
@@ -62,7 +62,7 @@ class QuickCachedDocumentMixin(_InvalidateCacheMixin):
             self.get.clear(self.__class__, self._id)
 
     @classmethod
-    @skippable_quickcache(['cls.__name__', 'doc_id'], skip_arg=dont_cache_docs)
+    @quickcache(['cls.__name__', 'doc_id'], skip_arg=dont_cache_docs)
     def get(cls, doc_id, *args, **kwargs):
         return super(QuickCachedDocumentMixin, cls).get(doc_id, *args, **kwargs)
 

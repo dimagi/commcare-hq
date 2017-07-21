@@ -31,6 +31,7 @@ class TestViews(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestViews, cls).setUpClass()
         cls.domain = Domain(name='app-manager-testviews-domain', is_active=True)
         cls.domain.save()
         cls.username = 'cornelius'
@@ -51,8 +52,12 @@ class TestViews(TestCase):
         cls.user.delete()
         cls.build.delete()
         if cls.app:
-            cls.app.delete()
+            try:
+                cls.app.delete()
+            except TypeError:
+                pass 
         cls.domain.delete()
+        super(TestViews, cls).tearDownClass()
 
     def test_download_file_bad_xform_404(self, mock):
         '''
@@ -212,54 +217,14 @@ class TestViews(TestCase):
             'domain': self.domain.name,
         }, True)
 
-
-class TestTemplateAppViews(TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        cls.domain = Domain(name='template-app-testviews-domain', is_active=True)
-        cls.domain.save()
-        cls.username = 'cornelius'
-        cls.password = 'fudge'
-        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, is_active=True)
-        cls.user.is_superuser = True
-        cls.user.save()
-
-    def setUp(self):
-        self.client.login(username=self.username, password=self.password)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.user.delete()
-        cls.domain.delete()
-
-    def _check_response(self, response):
-        self.assertEqual(response.status_code, 302)
-        redirect_location = response['Location']
-        [app_id] = re.compile(r'[a-fA-F0-9]{32}').findall(redirect_location)
-        expected = '{}/modules-0/forms-0/'.format(app_id)
-        self.assertTrue(redirect_location.endswith(expected))
-        self.addCleanup(lambda: Application.get_db().delete_doc(app_id))
-
-    def test_case_management_app_from_template(self):
-        response = self.client.get(reverse('app_from_template', kwargs={
-            'domain': self.domain.name,
-            'slug': 'case_management'
-        }), follow=False)
-
-        self._check_response(response)
-
-    def test_survey_app_from_template(self):
-        response = self.client.get(reverse('app_from_template', kwargs={
-            'domain': self.domain.name,
-            'slug': 'survey'
-        }), follow=False)
-
-        self._check_response(response)
-
-    def test_default_new_app(self):
+    def test_default_new_app(self, mock):
         response = self.client.get(reverse('default_new_app', kwargs={
             'domain': self.domain.name,
         }), follow=False)
 
-        self._check_response(response)
+        self.assertEqual(response.status_code, 302)
+        redirect_location = response['Location']
+        [app_id] = re.compile(r'[a-fA-F0-9]{32}').findall(redirect_location)
+        expected = '/apps/view/{}/'.format(app_id)
+        self.assertTrue(redirect_location.endswith(expected))
+        self.addCleanup(lambda: Application.get_db().delete_doc(app_id))

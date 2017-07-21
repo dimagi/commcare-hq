@@ -5,7 +5,7 @@ from tastypie.resources import Resource
 
 from corehq.apps.api.resources.auth import LoginAndDomainAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
-from corehq.apps.api.util import get_object_or_not_exist
+from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.permissions import (
@@ -14,8 +14,15 @@ from corehq.apps.users.models import WebUser
 from corehq.util.quickcache import quickcache
 from dimagi.utils.decorators.memoized import memoized
 
-from ..models import Location, SQLLocation
+from ..models import SQLLocation
 from ..permissions import user_can_access_location_id
+
+
+def get_location_or_not_exist(location_id, domain):
+    try:
+        return SQLLocation.objects.get(location_id=location_id, domain=domain)
+    except SQLLocation.DoesNotExist:
+        raise object_does_not_exist('Location', location_id)
 
 
 @quickcache(['user._id', 'project.name', 'only_editable'], timeout=10)
@@ -60,7 +67,7 @@ class LocationResource(HqBaseResource):
         location_id = kwargs['pk']
         if not user_can_access_location_id(domain, bundle.request.couch_user, location_id):
             raise BadRequest(LOCATION_ACCESS_DENIED)
-        return get_object_or_not_exist(Location, location_id, domain)
+        return get_location_or_not_exist(location_id, domain)
 
     def child_queryset(self, domain, include_inactive, parent):
         return parent.sql_location.child_locations(include_inactive)
@@ -84,7 +91,7 @@ class LocationResource(HqBaseResource):
         else:
             if not user_can_access_location_id(kwargs['domain'], user, parent_id):
                 raise BadRequest(LOCATION_ACCESS_DENIED)
-            parent = get_object_or_not_exist(Location, parent_id, domain)
+            parent = get_location_or_not_exist(parent_id, domain)
             locs = self.child_queryset(domain, include_inactive, parent)
         return [child for child in locs if child.location_id in viewable]
 
@@ -95,9 +102,10 @@ class LocationResource(HqBaseResource):
 
     class Meta(CustomResourceMeta):
         authentication = LoginAndDomainAuthentication()
-        object_class = Location
+        object_class = SQLLocation
         resource_name = 'location'
         limit = 0
+        max_limit = 10000
 
 
 @location_safe
@@ -109,6 +117,6 @@ class InternalLocationResource(LocationResource):
 
     class Meta(CustomResourceMeta):
         authentication = LoginAndDomainAuthentication(allow_session_auth=True)
-        object_class = Location
+        object_class = SQLLocation
         resource_name = 'location_internal'
         limit = 0

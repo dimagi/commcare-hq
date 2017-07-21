@@ -71,62 +71,88 @@ def render_form(form, domain, options):
     Change to kwargs when we're on a version of Django that does.
 
     """
-
-    timezone = get_timezone_for_request()
     case_id = options.get('case_id')
     side_pane = options.get('side_pane', False)
     user = options.get('user', None)
     request = options.get('request', None)
     support_enabled = toggle_enabled(request, toggles.SUPPORT)
 
-    _get_tables_as_columns = partial(get_tables_as_columns, timezone=timezone)
-
-    # Form Data tab
     form_data, question_list_not_found = get_readable_data_for_submission(form)
 
-    # Case Changes tab
-    case_blocks = extract_case_blocks(form)
-    for i, block in enumerate(list(case_blocks)):
-        if case_id and block.get(const.CASE_ATTR_ID) == case_id:
-            case_blocks.pop(i)
-            case_blocks.insert(0, block)
+    context = {
+        "context_case_id": case_id,
+        "instance": form,
+        "is_archived": form.is_archived,
+        "edit_info": _get_edit_info(form),
+        "domain": domain,
+        'question_list_not_found': question_list_not_found,
+        "form_data": form_data,
+        "form_table_options": {
+            # todo: wells if display config has more than one column
+            "put_loners_in_wells": False
+        },
+        "side_pane": side_pane,
+    }
 
-    cases = []
-    for b in case_blocks:
-        this_case_id = b.get(const.CASE_ATTR_ID)
-        try:
-            this_case = CaseAccessors(domain).get_case(this_case_id) if this_case_id else None
-            valid_case = True
-        except ResourceNotFound:
-            this_case = None
-            valid_case = False
+    context.update(_get_cases_changed_context(domain, form, case_id))
+    context.update(_get_form_metadata_context(domain, form, support_enabled))
+    context.update(_get_display_options(request, domain, user, form, support_enabled))
+    context.update(_get_edit_info(form))
+    return render_to_string("reports/form/partials/single_form.html", context, request=request)
 
-        if this_case and this_case.case_id:
-            url = reverse('case_details', args=[domain, this_case.case_id])
-        else:
-            url = "#"
 
-        definition = get_default_definition(
-            sorted_case_update_keys(b.keys()),
-            assume_phonetimes=(not form.metadata or
-                               (form.metadata.deviceID != CLOUDCARE_DEVICE_ID)),
-        )
-        cases.append({
-            "is_current_case": case_id and this_case_id == case_id,
-            "name": case_inline_display(this_case),
-            "table": _get_tables_as_columns(b, definition),
-            "url": url,
-            "valid_case": valid_case
+def _get_edit_info(instance):
+    info = {
+        'was_edited': False,
+        'is_edit': False,
+    }
+    if instance.is_deprecated:
+        info.update({
+            'was_edited': True,
+            'latest_version': instance.orig_id,
         })
+    if getattr(instance, 'edited_on', None) and getattr(instance, 'deprecated_form_id', None):
+        info.update({
+            'is_edit': True,
+            'edited_on': instance.edited_on,
+            'previous_version': instance.deprecated_form_id
+        })
+    return info
 
-    # Form Metadata tab
+
+def _get_display_options(request, domain, user, form, support_enabled):
+    user_can_edit = (
+        request and user and request.domain and user.can_edit_data()
+    )
+    show_edit_options = (
+        user_can_edit
+        and can_edit_form_location(domain, user, form)
+    )
+    show_edit_submission = (
+        user_can_edit
+        and has_privilege(request, privileges.DATA_CLEANUP)
+        and not form.is_deprecated
+    )
+
+    show_resave = (
+        user_can_edit and support_enabled
+    )
+
+    return {
+        "show_edit_options": show_edit_options,
+        "show_edit_submission": show_edit_submission,
+        "show_resave": show_resave,
+    }
+
+
+def _get_form_metadata_context(domain, form, support_enabled=False):
     meta = _top_level_tags(form).get('meta', None) or {}
     meta['received_on'] = json_format_datetime(form.received_on)
     if support_enabled:
         meta['last_sync_token'] = form.last_sync_token
 
     definition = get_default_definition(sorted_form_metadata_keys(meta.keys()))
-    form_meta_data = _get_tables_as_columns(meta, definition)
+    form_meta_data = get_tables_as_columns(meta, definition, timezone=get_timezone_for_request())
     if getattr(form, 'auth_context', None):
         auth_context = AuthContext(form.auth_context)
         auth_context_user_id = auth_context.user_id
@@ -153,64 +179,52 @@ def render_form(form, domain, options):
     else:
         user_info = get_doc_info_by_id(domain, meta_userID)
 
-    user_can_edit = (
-        request and user and request.domain
-        and (user.can_edit_data() or user.is_commcare_user())
-    )
-    show_edit_options = (
-        user_can_edit
-        and can_edit_form_location(domain, user, form)
-    )
-    show_edit_submission = (
-        user_can_edit
-        and has_privilege(request, privileges.DATA_CLEANUP)
-        and not form.is_deprecated
-    )
-
-    show_resave = (
-        user_can_edit and support_enabled
-    )
-
-    def _get_edit_info(instance):
-        info = {
-            'was_edited': False,
-            'is_edit': False,
-        }
-        if instance.is_deprecated:
-            info.update({
-                'was_edited': True,
-                'latest_version': instance.orig_id,
-            })
-        if getattr(instance, 'edited_on', None) and getattr(instance, 'deprecated_form_id', None):
-            info.update({
-                'is_edit': True,
-                'edited_on': instance.edited_on,
-                'previous_version': instance.deprecated_form_id
-            })
-        return info
-
-    return render_to_string("reports/form/partials/single_form.html", {
-        "context_case_id": case_id,
-        "instance": form,
-        "is_archived": form.is_archived,
-        "edit_info": _get_edit_info(form),
-        "domain": domain,
-        'question_list_not_found': question_list_not_found,
-        "form_data": form_data,
-        "cases": cases,
-        "form_table_options": {
-            # todo: wells if display config has more than one column
-            "put_loners_in_wells": False
-        },
+    return {
         "form_meta_data": form_meta_data,
         "auth_context": auth_context,
         "auth_user_info": auth_user_info,
         "user_info": user_info,
-        "side_pane": side_pane,
-        "show_edit_options": show_edit_options,
-        "show_edit_submission": show_edit_submission,
-        "show_resave": show_resave,
-    }, request=request)
+    }
+
+
+def _get_cases_changed_context(domain, form, case_id=None):
+    case_blocks = extract_case_blocks(form)
+    for i, block in enumerate(list(case_blocks)):
+        if case_id and block.get(const.CASE_ATTR_ID) == case_id:
+            case_blocks.pop(i)
+            case_blocks.insert(0, block)
+    cases = []
+    for b in case_blocks:
+        this_case_id = b.get(const.CASE_ATTR_ID)
+        try:
+            this_case = CaseAccessors(domain).get_case(this_case_id) if this_case_id else None
+            valid_case = True
+        except ResourceNotFound:
+            this_case = None
+            valid_case = False
+
+        if this_case and this_case.case_id:
+            url = reverse('case_details', args=[domain, this_case.case_id])
+        else:
+            url = "#"
+
+        definition = get_default_definition(
+            sorted_case_update_keys(b.keys()),
+            assume_phonetimes=(not form.metadata or
+                               (form.metadata.deviceID != CLOUDCARE_DEVICE_ID)),
+        )
+        cases.append({
+            "is_current_case": case_id and this_case_id == case_id,
+            "name": case_inline_display(this_case),
+            "table": get_tables_as_columns(b, definition, timezone=get_timezone_for_request()),
+            "url": url,
+            "valid_case": valid_case,
+            "case_type": this_case.type if valid_case else None,
+        })
+
+    return {
+        'cases': cases
+    }
 
 
 def _top_level_tags(form):
@@ -222,7 +236,7 @@ def _top_level_tags(form):
         to_return = OrderedDict()
 
         element = form.get_xml_element()
-        if not element:
+        if element is None:
             return OrderedDict(sorted(form.form_data.items()))
 
         for child in element:

@@ -30,7 +30,6 @@
 {% endblock %}
 
 {% block js %} {{ block.super }}
-    <script src="{% static 'style/js/main.js' %}"></script>
     <!-- todo add the media player back in -->
     <script src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
     <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
@@ -50,8 +49,7 @@
         $('.preview-media').tooltip();
     </script>
     {% url "download_multimedia_zip" domain app.get_id as media_url%}
-    {% include 'app_manager/v1/partials/download_async_modal.html' with element_id='multimedia-zip-modal' %}
-    {% include 'app_manager/v1/partials/download_async_modal_inline.html' with element_id='multimedia-zip-modal' download_url=media_url%}
+    {% include 'app_manager/v1/partials/download_async_modal.html' with element_id='multimedia-zip-modal' url=media_url%}
 {% endblock %}
 
 {% block page_name %}
@@ -72,6 +70,10 @@
 {% endblock %}
 
 {% block page_content %}
+{% initial_page_data 'sessionid' request.COOKIES.sessionid %}
+{% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
+{% initial_page_data 'uploaders' uploaders_js %}
+
 <div id="multimedia-reference-checker">
 
     <div class="row">

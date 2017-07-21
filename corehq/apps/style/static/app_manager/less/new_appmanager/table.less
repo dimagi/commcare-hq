@@ -46,25 +46,23 @@
   }
 }
 
-.table-releases {
-  margin-top: 10px;
-  thead > tr > th {
-    border: none;
-  }
-  tbody > tr > td,
-  tbody > tr > th {
-    vertical-align: middle;
-    border: none;
-    > span {
-        margin-top: 8px;
-        display: inline-block;
+.table-profiles {
+  clear: both;
+
+  tbody > tr {
+    &:nth-child(even) {
+      background-color: @cc-bg;
     }
   }
-  tbody > tr,
-  thead > tr {
-    border: none;
+  .form-control {
+    width: 100%;
   }
-  tbody > tr:nth-child(even) {
-    background-color: @cc-bg;
+  td > a {
+    line-height: 30px;
   }
+}
+
+.full-width-select2 .select2-container {
+  width: 100% !important;
+  min-width: 200px;
 }

@@ -37,7 +37,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 
 ########################################################################################################
-from corehq.toggles import IS_DEVELOPER, DATA_MIGRATION
+from corehq.toggles import IS_DEVELOPER, DATA_MIGRATION, PUBLISH_CUSTOM_REPORTS
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +116,11 @@ def login_and_domain_required(view_func):
                     return DomainRequestView.as_view()(req, *args, **kwargs)
                 else:
                     raise Http404
+            elif (
+                req.path.startswith(u'/a/{}/reports/custom'.format(domain_name)) and
+                PUBLISH_CUSTOM_REPORTS.enabled(domain_name)
+            ):
+                return view_func(req, domain_name, *args, **kwargs)
             else:
                 login_url = reverse('domain_login', kwargs={'domain': domain})
                 return _redirect_for_login_or_domain(req, REDIRECT_FIELD_NAME, login_url)

@@ -59,32 +59,34 @@
                 <img src="{{ url_prefix }}{% static 'registration/images/commcarehq_email_header.jpg' %}"
                      width="240" height="37" />
             </div>
-            <p>
-                {% blocktrans %}Dear {{ full_name }},{% endblocktrans %}
-            </p>
+            {% block content %}
+                <p>
+                    {% blocktrans %}Dear {{ full_name }},{% endblocktrans %}
+                </p>
 
-            <p>
-                {% blocktrans %}Welcome to CommCare!{% endblocktrans %}
-                {% blocktrans %}Please click the button below to activate your CommCare project <strong>{{ domain }}</strong>.{% endblocktrans %}
-            </p>
-            <p style="text-align: center;">
-                <a class="btn"
-                   href="{{ registration_link }}"
-                   style="color: #ffffff; text-decoration: none; padding: 10px 15px; background-color: #004ebc; border-radius: 5px; font-size: 20px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer;">
-                    {% trans "Activate CommCare" %}
-                </a>
-            </p>
-            <p>
-                {% blocktrans %}
-                Once you do this, our team will be in touch with some helpful tips for getting started!
-                {% endblocktrans %}
-            </p>
-            <p>
-                {% blocktrans %}
-                Cheers,<br />
-                The CommCare Team
-                {% endblocktrans %}
-            </p>
+                <p>
+                    {% blocktrans %}Welcome to CommCare!{% endblocktrans %}
+                    {% blocktrans %}Please click the button below to activate your CommCare project <strong>{{ domain }}</strong>.{% endblocktrans %}
+                </p>
+                <p style="text-align: center;">
+                    <a class="btn"
+                       href="{{ registration_link }}"
+                       style="color: #ffffff; text-decoration: none; padding: 10px 15px; background-color: #004ebc; border-radius: 5px; font-size: 20px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer;">
+                        {% trans "Activate CommCare" %}
+                    </a>
+                </p>
+                <p>
+                    {% blocktrans %}
+                    Once you do this, our team will be in touch with some helpful tips for getting started!
+                    {% endblocktrans %}
+                </p>
+                <p>
+                    {% blocktrans %}
+                    Cheers,<br />
+                    The CommCare Team
+                    {% endblocktrans %}
+                </p>
+            {% endblock %}
             <img src="{{ url_prefix }}{% static 'registration/images/field.jpg' %}"
                  width="600" height="150" />
         </div>

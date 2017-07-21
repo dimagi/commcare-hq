@@ -19,10 +19,11 @@ class ChangeFeedDbTest(TestCase):
         self.couch_db.save_doc({'_id': doc_id, 'property': 'property_value'})
         pillow.process_changes(since=self.update_seq, forever=False)
 
-        change = self._extract_change_from_call_args(pillow.process_change.call_args)
+        changes = self._extract_changes_from_call_args(pillow.process_change.call_args_list)
+        change_ids = {change['id'] for change in changes}
         # validate the structure of the change. some implicit asserts here
-        self.assertEqual(doc_id, change['id'])
-        doc = change['doc']
+        self.assertIn(doc_id, change_ids)
+        doc = [change['doc'] for change in changes if change['doc']['_id'] == doc_id][0]
         self.assertEqual(doc_id, doc['_id'])
         self.assertEqual('property_value', doc['property'])
 
@@ -32,8 +33,10 @@ class ChangeFeedDbTest(TestCase):
         self.couch_db.save_doc({'_id': doc_id, 'property': 'property_value'})
         pillow.process_changes(since=self.update_seq, forever=False)
 
-        change = self._extract_change_from_call_args(pillow.process_change.call_args)
-        self.assertEqual(doc_id, change['id'])
+        changes = self._extract_changes_from_call_args(pillow.process_change.call_args_list)
+        change_ids = {change['id'] for change in changes}
+        self.assertIn(doc_id, change_ids)
+        change = [change for change in changes if change['id'] == doc_id][0]
         self.assertTrue(change.get('doc', None) is None)
 
     def test_couch_filter(self):
@@ -45,15 +48,20 @@ class ChangeFeedDbTest(TestCase):
         form.save()
         pillow.process_changes(since=self.update_seq, forever=False)
 
-        change = self._extract_change_from_call_args(pillow.process_change.call_args)
-        self.assertEqual(form._id, change['id'])
-        self.assertEqual(form.domain, change['doc']['domain'])
+        changes = self._extract_changes_from_call_args(pillow.process_change.call_args_list)
+        change_ids = {change['id'] for change in changes}
+        change_domains = {change['doc'].get('domain', None) for change in changes}
+        self.assertIn(form._id, change_ids)
+        self.assertIn(form.domain, change_domains)
 
-    def _extract_change_from_call_args(self, call_args):
-        ordered_args, keyword_args = call_args
-        self.assertEqual(1, len(ordered_args))
-        self.assertEqual(0, len(keyword_args))
-        return ordered_args[0]
+    def _extract_changes_from_call_args(self, call_args_list):
+        ret = []
+        for call_args in call_args_list:
+            ordered_args, keyword_args = call_args
+            self.assertEqual(1, len(ordered_args))
+            self.assertEqual(0, len(keyword_args))
+            ret.append(ordered_args[0])
+        return ret
 
 
 def _make_couch_pillow(couch_db, include_docs=True):
@@ -63,7 +71,7 @@ def _make_couch_pillow(couch_db, include_docs=True):
 
     pillow = FakeConstructedPillow(
         name='fake-couch-pillow',
-        checkpoint=PillowCheckpoint('fake-feed-test-checkpoint'),
+        checkpoint=PillowCheckpoint('fake-feed-test-checkpoint', 'text'),
         change_feed=CouchChangeFeed(couch_db=couch_db, include_docs=include_docs),
         processor=LoggingProcessor(),
     )

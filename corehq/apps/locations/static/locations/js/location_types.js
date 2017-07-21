@@ -187,6 +187,7 @@ hqDefine('locations/js/location_types.js', function(){
         self.tracks_stock = ko.observable(!loc_type.administrative);
         self.shares_cases = ko.observable(loc_type.shares_cases);
         self.view_descendants = ko.observable(loc_type.view_descendants);
+        self.has_user = ko.observable(loc_type.has_user);
         self.code = ko.observable(loc_type.code || '');
         self.expand_from = ko.observable(loc_type.expand_from_root ? ROOT_LOCATION_ID : loc_type.expand_from);
         self.expand_to = ko.observable(loc_type.expand_to);
@@ -327,6 +328,7 @@ hqDefine('locations/js/location_types.js', function(){
                 administrative: commtrack_enabled ? !self.tracks_stock() : true,
                 shares_cases: self.shares_cases() === true,
                 view_descendants: self.view_descendants() === true,
+                has_user: self.has_user() === true,
                 code: self.code().trim() || '',
                 expand_from: (self.expand_from() !== -1 ? self.expand_from() : null) || null,
                 expand_from_root: self.expand_from() === ROOT_LOCATION_ID,

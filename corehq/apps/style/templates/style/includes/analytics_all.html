@@ -141,5 +141,13 @@
         analytics.identify({'hq_instance': '{{ANALYTICS_CONFIG.HQ_INSTANCE}}'});
     {% endif %}
 
+    $(function() {
+        $(document).on('click', '.track-usage-link', function(e) {
+            var $link = $(e.currentTarget),
+                data = $link.data();
+            window.analytics.trackUsageLink($link, data.category, data.action, data.label, data.value);
+        });
+    });
+
 </script>
 {% endaddtoblock %}

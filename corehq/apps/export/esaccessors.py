@@ -4,16 +4,20 @@ from corehq.apps.es import CaseES, GroupES, LedgerES
 from corehq.apps.es import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper
-from corehq.elastic import get_es_new
+from corehq.elastic import get_es_new, ES_EXPORT_INSTANCE
+from corehq.toggles import EXPORT_NO_SORT
 
 
 def get_form_export_base_query(domain, app_id, xmlns, include_errors):
-    query = (FormES()
+    query = (FormES(es_instance_alias=ES_EXPORT_INSTANCE)
             .domain(domain)
             .app(app_id)
             .xmlns(xmlns)
-            .sort("received_on")
             .remove_default_filter('has_user'))
+
+    if not EXPORT_NO_SORT.enabled(domain):
+        query = query.sort("received_on")
+
     if include_errors:
         query = query.remove_default_filter("is_xform_instance")
         query = query.doc_type(["xforminstance", "xformarchived", "xformdeprecated", "xformduplicate"])
@@ -21,14 +25,18 @@ def get_form_export_base_query(domain, app_id, xmlns, include_errors):
 
 
 def get_case_export_base_query(domain, case_type):
-    return (CaseES()
+    query = (CaseES(es_instance_alias=ES_EXPORT_INSTANCE)
             .domain(domain)
-            .case_type(case_type)
-            .sort("opened_on"))
+            .case_type(case_type))
+
+    if not EXPORT_NO_SORT.enabled(domain):
+        query = query.sort("opened_on")
+
+    return query
 
 
 def get_sms_export_base_query(domain):
-    return (SMSES()
+    return (SMSES(es_instance_alias=ES_EXPORT_INSTANCE)
             .domain(domain)
             .processed_or_incoming_messages()
             .sort("date"))

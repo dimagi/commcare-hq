@@ -1,14 +1,15 @@
 language: python
 sudo: required
+group: edge
 branches:
   only:
     - master
 env:
   matrix:
     # need node installs for app_manager.XpathValidatorTest
-    - TEST=python NOSE_DIVIDED_WE_RUN=04 JS_SETUP=yes
-    - TEST=python NOSE_DIVIDED_WE_RUN=59 JS_SETUP=yes
-    - TEST=python NOSE_DIVIDED_WE_RUN=af JS_SETUP=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=05 JS_SETUP=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=6a JS_SETUP=yes
+    - TEST=python NOSE_DIVIDED_WE_RUN=bf JS_SETUP=yes
     - TEST=python-sharded-and-javascript JS_SETUP=yes
   global:
     # TRAVIS_HQ_USERNAME
@@ -19,7 +20,7 @@ env:
     - secure: "IDSCI7WXoTowmqcPM6Ip5I8iNu+utvLgzhpuI55Imi0kT6DEgqhYmRzHGY2AfSNKlhClYiGSGzWfqub3/0KyxXSkJB7VcqPQR6CToRfR9zgnu92e9yqmOwMsi5wXxQ0ZRt8l2Oh+WiTtLjGwkD3bvUAHDq2fk9bU7aE03562MTE="
 before_install:
   # get newer version of docker-compose for variable substitution in compose files
-  - curl -L https://github.com/docker/compose/releases/download/1.5.2/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/1.13.0/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv -v docker-compose /usr/local/bin/
 install:

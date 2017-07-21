@@ -147,8 +147,9 @@ If you want to load balance the Outbound SMS traffic automatically across multip
    sending. This is always sent to the send() method, even if there is just one phone number to load balance over.
 
 From there, the framework will automatically handle managing the phone numbers through the create/edit gateway UI
-and balancing the load across the numbers when sending. A simple round robin approach is taken when balancing the
-load.
+and balancing the load across the numbers when sending. When choosing the originating phone number, the
+destination number is hashed and that hash is used to choose from the list of load balancing phone numbers, so that
+a recipient always receives messages from the same originating number.
 
 If your backend uses load balancing and rate limiting, the framework applies the rate limit to each phone number
 separately as you would expect.

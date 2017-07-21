@@ -39,13 +39,9 @@
         </div>
         <div class="form-group col-sm-9">
             <div class="input-group">
-                <input class="form-control js-anonymous-link" type="text" readonly="readonly" data-bind="
-                    style: {
-                        'background-color': 'white'
-                    },
-                    value: anonymousAppUrl(),
-                    click: selectText
-                    "></a>
+                <input class="form-control js-anonymous-link" type="text" readonly="readonly"
+                       value="{{ app.anonymous_cloudcare_url }}" style="background-color: white"
+                       data-bind="click: selectText"/>
                 <span class="input-group-btn">
                     <a class="btn btn-default" data-bind="
                             click: copyUrl
@@ -148,13 +144,6 @@
     </span>
 </script>
 
-<script>
-    $(function () {
-        var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
-        CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
-    });
-</script>
-
 <script type="text/html" id="CommcareSettings.widgets.text_input">
     <span data-bind="template: 'CommcareSettings.widgets.select'"></span>
     <aside id="custom-keys-help" data-bind="visible: visibleValue() === 'custom-keys'">
@@ -164,16 +153,16 @@
         <div id="custom-keys-example" style="display: none;">
             <h6>Example:</h6>
             <div class="row">
-                <div class="col-sm-6">polish.TextField.charactersKey1</div><div class="col-sm-6">.,</div>
-                <div class="col-sm-6">polish.TextField.charactersKey2</div><div class="col-sm-6">abc2</div>
-                <div class="col-sm-6">polish.TextField.charactersKey3</div><div class="col-sm-6">def3</div>
-                <div class="col-sm-6">polish.TextField.charactersKey4</div><div class="col-sm-6">ghi4</div>
-                <div class="col-sm-6">polish.TextField.charactersKey5</div><div class="col-sm-6">jkl5</div>
-                <div class="col-sm-6">polish.TextField.charactersKey6</div><div class="col-sm-6">mno6</div>
-                <div class="col-sm-6">polish.TextField.charactersKey7</div><div class="col-sm-6">pqrs7</div>
-                <div class="col-sm-6">polish.TextField.charactersKey8</div><div class="col-sm-6">tuv8</div>
-                <div class="col-sm-6">polish.TextField.charactersKey9</div><div class="col-sm-6">wxyz9</div>
-                <div class="col-sm-6">polish.TextField.charactersKey0</div><div class="col-sm-6"> 0</div>
+                <div class="col-sm-9">polish.TextField.charactersKey1</div><div class="col-sm-3">.,</div>
+                <div class="col-sm-9">polish.TextField.charactersKey2</div><div class="col-sm-3">abc2</div>
+                <div class="col-sm-9">polish.TextField.charactersKey3</div><div class="col-sm-3">def3</div>
+                <div class="col-sm-9">polish.TextField.charactersKey4</div><div class="col-sm-3">ghi4</div>
+                <div class="col-sm-9">polish.TextField.charactersKey5</div><div class="col-sm-3">jkl5</div>
+                <div class="col-sm-9">polish.TextField.charactersKey6</div><div class="col-sm-3">mno6</div>
+                <div class="col-sm-9">polish.TextField.charactersKey7</div><div class="col-sm-3">pqrs7</div>
+                <div class="col-sm-9">polish.TextField.charactersKey8</div><div class="col-sm-3">tuv8</div>
+                <div class="col-sm-9">polish.TextField.charactersKey9</div><div class="col-sm-3">wxyz9</div>
+                <div class="col-sm-9">polish.TextField.charactersKey0</div><div class="col-sm-3"> 0</div>
             </div>
         </div>
     </aside>
@@ -194,7 +183,6 @@
     url: '{% url "edit_app_attr" domain app.id 'comment' %}',
     placeholder: '{% trans "Enter app description here"|escapejs %}',
     saveValueName: 'comment',
-    readOnlyClass: 'app-comment',
     cols: 50,
 "></inline-edit>
 

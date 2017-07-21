@@ -32,16 +32,11 @@
         "compare_as_string": false,
         "required": false,
         "datatype": "string",
-        "choice_provider": {
-          "type": "location",
-          "order_by_hierarchy": true,
-          "show_full_path": true
-        },
-        "show_all": true,
         "display": "Filter by State",
         "field": "state_id",
-        "type": "dynamic_choice_list",
-        "slug": "state_id"
+        "type": "location_drilldown",
+        "slug": "state_id",
+        "max_drilldown_levels": 1
       }
     ],
     "columns": [
@@ -106,7 +101,16 @@
         "display": "Resolved"
       }
     ],
-    "sort_expression": [],
+    "sort_expression": [
+      {
+        "field": "state_id",
+        "order": "DESC"
+      },
+      {
+        "field": "district_id",
+        "order": "DESC"
+      }
+    ],
     "configured_charts": []
   }
 }

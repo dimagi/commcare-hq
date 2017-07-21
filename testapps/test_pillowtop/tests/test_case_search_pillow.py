@@ -1,7 +1,7 @@
 import uuid
 
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
-from corehq.apps.case_search.models import CaseSearchConfig
+from corehq.apps.case_search.models import CaseSearchConfig, case_search_enabled_for_domain
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import \
     change_meta_from_kafka_message
@@ -68,6 +68,8 @@ class CaseSearchPillowTest(TestCase):
         """
         other_domain = "yunkai"
         CaseSearchConfig.objects.get_or_create(pk=other_domain, enabled=True)
+        case_search_enabled_for_domain.clear(self.domain)
+        case_search_enabled_for_domain.clear(other_domain)
 
         desired_case = self._make_case(domain=other_domain)
         undesired_case = self._make_case(domain=self.domain)  # noqa
@@ -163,5 +165,6 @@ class CaseSearchPillowTest(TestCase):
     def _bootstrap_cases_in_es_for_domain(self, domain):
         case = self._make_case(domain)
         CaseSearchConfig.objects.get_or_create(pk=domain, enabled=True)
+        case_search_enabled_for_domain.clear(domain)
         get_case_search_reindexer(domain).reindex()
         return case

@@ -77,6 +77,13 @@ class AppFactory(object):
             form.xmlns = "http://openrosa.org/formdesigner/{}".format(uuid.uuid4().hex)
         return form
 
+    def new_shadow_form(self, module):
+        slug = self.slugs[module.unique_id]
+        index = len(module.forms)
+        form = module.new_shadow_form('{} form {}'.format(slug, index), None)
+        form.unique_id = '{}_form_{}'.format(slug, index)
+        return form
+
     @staticmethod
     def form_requires_case(form, case_type=None, parent_case_type=None, update=None, preload=None):
         if form.form_type == 'module_form':
@@ -151,6 +158,10 @@ class AppFactory(object):
                 form.actions.usercase_preload.condition.type = 'always'
         else:
             AppFactory.advanced_form_autoloads(form, AUTO_SELECT_USERCASE, None)
+
+    @staticmethod
+    def form_workflow(form, mode):
+        form.post_form_workflow = mode
 
     @classmethod
     def case_list_form_app_factory(cls):

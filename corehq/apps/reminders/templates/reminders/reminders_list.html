@@ -8,27 +8,6 @@
     <script src="{% static 'reminders/js/reminders.list.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %} {{ block.super }}
-    <script>
-        var remindersList = new RemindersListModel({{ reminders|JSON }},
-            '{% url "reminder_rule_progress" domain %}');
-        $('#reminders-list').koApplyBindings(remindersList);
-        remindersList.init();
-
-        $(function() {
-            $("#reminder-list-table").dataTable({
-                "paginateType": "bootstrap",
-                "lengthChange": false,
-                "filter": true,
-                "oLanguage": {"emptyTable": "{% trans 'There are no reminders to display.' %}", "infoEmpty" : ""},
-                "sort": true,
-                "sorting": [[0, "asc"]],
-                "displayLength": 5
-            });
-        });
-    </script>
-{% endblock %}
-
 {% block stylesheets %}
     <style>
         .label {
@@ -38,6 +17,8 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'reminders' reminders %}
+    {% registerurl 'reminder_rule_progress' domain %}
     <h2>{% trans 'Reminders' %}</h2>
     <div class="btn-group">
         <a href="{% url "create_reminder_schedule" domain %}" class="btn btn-success">

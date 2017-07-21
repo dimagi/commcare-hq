@@ -127,7 +127,7 @@ def flag_enabled(toggle_class_string):
     """
     return mock.patch(
         '.'.join(['corehq.toggles', toggle_class_string, 'enabled']),
-        new=lambda *args: True,
+        new=lambda *args, **kwargs: True,
     )
 
 
@@ -477,12 +477,11 @@ def teardown(do_teardown):
     return decorate
 
 
-def set_parent_case(domain, child_case, parent_case):
+def set_parent_case(domain, child_case, parent_case, relationship='child'):
     """
     Creates a parent-child relationship between child_case and parent_case.
     """
     from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
-    from casexml.apps.case.models import INDEX_RELATIONSHIP_CHILD
     from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 
     parent = CaseStructure(case_id=parent_case.case_id)
@@ -492,7 +491,7 @@ def set_parent_case(domain, child_case, parent_case):
             indices=[CaseIndex(
                 related_structure=parent,
                 identifier=DEFAULT_PARENT_IDENTIFIER,
-                relationship=INDEX_RELATIONSHIP_CHILD
+                relationship=relationship
             )],
         )
     )

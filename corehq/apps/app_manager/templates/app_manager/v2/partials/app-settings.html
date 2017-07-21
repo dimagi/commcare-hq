@@ -40,13 +40,9 @@
         </div>
         <div class="form-group col-sm-9">
             <div class="input-group">
-                <input class="form-control js-anonymous-link" type="text" readonly="readonly" data-bind="
-                    style: {
-                        'background-color': 'white'
-                    },
-                    value: anonymousAppUrl(),
-                    click: selectText
-                    "></a>
+                <input class="form-control js-anonymous-link" type="text" readonly="readonly"
+                       value="{{ app.anonymous_cloudcare_url }}" style="background-color: white"
+                       data-bind="click: selectText"/>
                 <span class="input-group-btn">
                     <a class="btn btn-default" data-bind="
                             click: copyUrl
@@ -149,25 +145,6 @@
     </span>
 </script>
 
-<script>
-  $(function () {
-    var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
-    CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
-  });
-</script>
-
-{% if linked_apps_enabled and app.get_doc_type != 'LinkedApplication' %}
-<script>
-     $(function () {
-        var domains = {{ app.linked_whitelist|JSON }};
-        var save = '{% url "update_linked_whitelist" domain app.id %}';
-        var LinkedWhitelist = hqImport('app_manager/js/linked_whitelist.js').LinkedWhitelist;
-        linkedWhitelist = new LinkedWhitelist(domains, save);
-        $('#whitelist-section').koApplyBindings(linkedWhitelist);
-     });
-</script>
-{% endif %}
-
 <script type="text/html" id="CommcareSettings.widgets.text_input">
   <span data-bind="template: 'CommcareSettings.widgets.select'"></span>
   <aside id="custom-keys-help" data-bind="visible: visibleValue() === 'custom-keys'">
@@ -177,16 +154,16 @@
     <div id="custom-keys-example" style="display: none;">
       <h6>Example:</h6>
       <div class="row">
-        <div class="col-sm-6">polish.TextField.charactersKey1</div><div class="col-sm-6">.,</div>
-        <div class="col-sm-6">polish.TextField.charactersKey2</div><div class="col-sm-6">abc2</div>
-        <div class="col-sm-6">polish.TextField.charactersKey3</div><div class="col-sm-6">def3</div>
-        <div class="col-sm-6">polish.TextField.charactersKey4</div><div class="col-sm-6">ghi4</div>
-        <div class="col-sm-6">polish.TextField.charactersKey5</div><div class="col-sm-6">jkl5</div>
-        <div class="col-sm-6">polish.TextField.charactersKey6</div><div class="col-sm-6">mno6</div>
-        <div class="col-sm-6">polish.TextField.charactersKey7</div><div class="col-sm-6">pqrs7</div>
-        <div class="col-sm-6">polish.TextField.charactersKey8</div><div class="col-sm-6">tuv8</div>
-        <div class="col-sm-6">polish.TextField.charactersKey9</div><div class="col-sm-6">wxyz9</div>
-        <div class="col-sm-6">polish.TextField.charactersKey0</div><div class="col-sm-6"> 0</div>
+        <div class="col-sm-9">polish.TextField.charactersKey1</div><div class="col-sm-3">.,</div>
+        <div class="col-sm-9">polish.TextField.charactersKey2</div><div class="col-sm-3">abc2</div>
+        <div class="col-sm-9">polish.TextField.charactersKey3</div><div class="col-sm-3">def3</div>
+        <div class="col-sm-9">polish.TextField.charactersKey4</div><div class="col-sm-3">ghi4</div>
+        <div class="col-sm-9">polish.TextField.charactersKey5</div><div class="col-sm-3">jkl5</div>
+        <div class="col-sm-9">polish.TextField.charactersKey6</div><div class="col-sm-3">mno6</div>
+        <div class="col-sm-9">polish.TextField.charactersKey7</div><div class="col-sm-3">pqrs7</div>
+        <div class="col-sm-9">polish.TextField.charactersKey8</div><div class="col-sm-3">tuv8</div>
+        <div class="col-sm-9">polish.TextField.charactersKey9</div><div class="col-sm-3">wxyz9</div>
+        <div class="col-sm-9">polish.TextField.charactersKey0</div><div class="col-sm-3"> 0</div>
       </div>
     </div>
   </aside>
@@ -216,9 +193,6 @@
             </a>
         </div>
         {% endif %}
-        <div class="tab-pane" id="commcare-settings">
-            {% include 'app_manager/v2/partials/commcare_settings.html' %}
-        </div>
         {% if app.get_doc_type == 'Application' %}
             <div class="tab-pane" id="multimedia-tab">
                 <div data-bind="if: load_state() === 'loading'">
@@ -247,7 +221,7 @@
                     </div>
                 {% endif %}
                 {% if linked_apps_enabled %}
-                    <div id="whitelist-section" class="panel panel-appmanager panel-appmanager-form" data-bind="visible: linkedDomains().length > 0">
+                    <div id="linked-whitelist" class="panel panel-appmanager panel-appmanager-form" data-bind="visible: linkedDomains().length > 0">
                     <legend>{% trans 'Linked Project Whitelist' %}</legend>
                     <div class="tab-pane panel-body">
                         <div class="help-block">
@@ -280,15 +254,18 @@
                 {% endif %}
                 {{ request|toggle_tag_info:"EXPORT_ZIPPED_APPS" }}
                 {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
-                    <legend>Export compressed application</legend>
-                    <form action="{% url "gzip_app" domain app.id %}" method="POST">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fa fa-arrow-down"></i>
-                            {% trans "Download" %}
-                        </button>
-                    </form>
-                    <br>
+                    <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
+                        <form action="{% url "gzip_app" domain app.id %}" method="POST">
+                            {% csrf_token %}
+                            <legend>Export compressed application</legend>
+                            <div class="panel-body">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-arrow-down"></i>
+                                    {% trans "Download" %}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 {% endif %}
             {% endif %}
             <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">

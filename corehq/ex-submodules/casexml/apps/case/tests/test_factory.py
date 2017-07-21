@@ -6,7 +6,6 @@ from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from corehq.form_processor.tests.utils import use_sql_backend
-from corehq.toggles import LOOSE_SYNC_TOKEN_VALIDATION
 
 
 class CaseRelationshipTest(SimpleTestCase):
@@ -177,7 +176,6 @@ class CaseFactoryTest(TestCase):
 
     def test_form_extras(self):
         domain = uuid.uuid4().hex
-        LOOSE_SYNC_TOKEN_VALIDATION.set(domain, True, namespace='domain')
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain)
         [case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}), form_extras={'last_sync_token': token_id})
@@ -188,7 +186,6 @@ class CaseFactoryTest(TestCase):
         domain = uuid.uuid4().hex
         # have to enable loose sync token validation for the domain or create actual SyncLog documents.
         # this is the easier path.
-        LOOSE_SYNC_TOKEN_VALIDATION.set(domain, True, namespace='domain')
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain, form_extras={'last_sync_token': token_id})
         case = factory.create_case()
@@ -197,7 +194,6 @@ class CaseFactoryTest(TestCase):
 
     def test_form_extras_override_defaults(self):
         domain = uuid.uuid4().hex
-        LOOSE_SYNC_TOKEN_VALIDATION.set(domain, True, namespace='domain')
         token_id = uuid.uuid4().hex
         factory = CaseFactory(domain=domain, form_extras={'last_sync_token': token_id})
         [case] = factory.create_or_update_case(CaseStructure(attrs={'create': True}), form_extras={'last_sync_token': 'differenttoken'})

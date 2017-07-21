@@ -62,8 +62,8 @@ function WebFormSession(params) {
     self.formContext = params.formContext;
     self.domain = params.domain;
     self.username = params.username;
-    self.formplayerEnabled = params.formplayerEnabled;
     self.debuggerEnabled = params.debuggerEnabled;
+    self.formplayerEnabled = params.formplayerEnabled;
     self.post_url = params.post_url;
     self.displayOptions = params.displayOptions;
     self.restoreAs = params.restoreAs;
@@ -157,36 +157,21 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     this.numPendingRequests++;
     this.onLoading();
 
-    if (self.formplayerEnabled){
-        $.ajax({
-            type: 'POST',
-            url: url + "/" + requestParams.action,
-            data: JSON.stringify(requestParams),
-            contentType: "application/json",
-            dataType: "json",
-            crossDomain: {crossDomain: true},
-            xhrFields: {withCredentials: true},
-            success: function(resp) {
-                self.handleSuccess(resp, requestParams.action, callback);
-            },
-            error: function(resp, textStatus) {
-                self.handleFailure(resp, requestParams.action, textStatus);
-            },
-        });
-    } else {
-        $.ajax({
-            type: 'POST',
-            url: url,
-            data: JSON.stringify(requestParams),
-            dataType: "text",  // we don't use JSON because of a weird bug: http://manage.dimagi.com/default.asp?190983
-            success: function(resp) {
-                self.handleSuccess(JSON.parse(resp), requestParams.action, callback);
-            },
-            error: function(resp, textStatus) {
-                self.handleFailure(JSON.parse(resp), requestParams.action, textStatus);
-            },
-        });
-    }
+    $.ajax({
+        type: 'POST',
+        url: url + "/" + requestParams.action,
+        data: JSON.stringify(requestParams),
+        contentType: "application/json",
+        dataType: "json",
+        crossDomain: {crossDomain: true},
+        xhrFields: {withCredentials: true},
+        success: function(resp) {
+            self.handleSuccess(resp, requestParams.action, callback);
+        },
+        error: function(resp, textStatus) {
+            self.handleFailure(resp, requestParams.action, textStatus);
+        },
+    });
 };
 
 /*
@@ -207,9 +192,6 @@ WebFormSession.prototype.handleSuccess = function(resp, action, callback) {
 
         try {
             callback(resp);
-            if (self.shouldUpdateDebugger(action)) {
-                $.publish('debugger.update');
-            }
         } catch (err) {
             console.error(err);
             self.onerror({message: Formplayer.Utils.touchformsError(err)});
@@ -345,7 +327,7 @@ WebFormSession.prototype.nextQuestion = function(opts) {
             'action': Formplayer.Const.NEXT_QUESTION,
         },
         function(resp) {
-            opts.callback(parseInt(resp.currentIndex), resp.isAtLastIndex);
+            opts.callback(parseInt(resp.currentIndex), resp.isAtFirstIndex, resp.isAtLastIndex);
             resp.title = opts.title;
             $.publish('session.reconcile', [resp, {}]);
         });
@@ -356,7 +338,7 @@ WebFormSession.prototype.prevQuestion = function(opts) {
             'action': Formplayer.Const.PREV_QUESTION,
         },
         function(resp) {
-            opts.callback(parseInt(resp.currentIndex), false);
+            opts.callback(parseInt(resp.currentIndex), resp.isAtFirstIndex, resp.isAtLastIndex);
             resp.title = opts.title;
             $.publish('session.reconcile', [resp, {}]);
         });
@@ -378,7 +360,7 @@ WebFormSession.prototype.evaluateXPath = function(xpath, callback) {
             'xpath': xpath
         },
         function(resp) {
-            callback(resp.output, resp.status);
+            callback(resp);
         });
 };
 
@@ -469,15 +451,6 @@ WebFormSession.prototype.submitForm = function(form) {
         true);
 };
 
-WebFormSession.prototype.shouldUpdateDebugger = function(action) {
-    return _.contains([
-        Formplayer.Const.NEW_FORM,
-        Formplayer.Const.ANSWER,
-        Formplayer.Const.NEW_REPEAT,
-        Formplayer.Const.DELETE_REPEAT,
-    ], action) && this.debuggerEnabled;
-};
-
 WebFormSession.prototype.serverError = function(q, resp) {
     if (resp.type === "required") {
         q.serverError("An answer is required");
@@ -498,7 +471,4 @@ WebFormSession.prototype.renderFormXml = function (resp, $form) {
     var self = this;
     self.session_id = self.session_id || resp.session_id;
     self.form = Formplayer.Utils.initialRender(resp, self.resourceMap, $form);
-    if (self.debuggerEnabled) {
-        $.publish('debugger.update');
-    }
 };

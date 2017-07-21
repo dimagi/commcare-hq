@@ -95,12 +95,7 @@ class Command(BaseCommand):
                 logger.info('Role already exists: %s', role.name)
         if roles_to_save:
             roles = Role.objects.bulk_create(roles_to_save)
-            if roles[0].id is None:
-                # pre Django 1.10
-                self.roles_by_slug = {role.slug: role for role in Role.objects.all()}
-            else:
-                # Django 1.10 (omit extra query)
-                self.roles_by_slug.update((role.slug, role) for role in roles)
+            self.roles_by_slug.update((role.slug, role) for role in roles)
 
     BOOTSTRAP_PRIVILEGES = [
         Role(slug=privileges.API_ACCESS, name='API Access', description=''),
@@ -142,6 +137,8 @@ class Command(BaseCommand):
              description='Allows for specifying custom intents'),
         Role(slug=privileges.ADVANCED_DOMAIN_SECURITY, name='Advanced Domain Security',
              description='Allows domains to set security policies for all web users'),
+        Role(slug=privileges.PRACTICE_MOBILE_WORKERS, name='Practice mode for mobile workers',
+             description='Allows turning on practice mode for mobile workers and link them to applications'),
         Role(slug=privileges.BUILD_PROFILES, name='Application Profiles',
              description='Allows domains to create application profiles to customize app deploys'),
         Role(slug=privileges.EXCEL_DASHBOARD, name="Excel Dashbord",
@@ -149,7 +146,9 @@ class Command(BaseCommand):
         Role(slug=privileges.DAILY_SAVED_EXPORT, name='DAILY_SAVED_EXPORT',
              description="Allows domains to create Daily Saved Exports"),
         Role(slug=privileges.ZAPIER_INTEGRATION, name='Zapier Integration',
-             description='Allows domains to use zapier (zapier.com) integration')
+             description='Allows domains to use zapier (zapier.com) integration'),
+        Role(slug=privileges.LOGIN_AS, name='Login As for App Preview',
+                     description='Allows domains to use the login as feature of app preview')
     ]
 
     BOOTSTRAP_PLANS = [
@@ -186,7 +185,8 @@ class Command(BaseCommand):
         privileges.LOCATIONS,
         privileges.USER_CASE,
         privileges.ZAPIER_INTEGRATION,
-        privileges.LOGIN_AS
+        privileges.LOGIN_AS,
+        privileges.PRACTICE_MOBILE_WORKERS,
     ]
 
     pro_plan_features = standard_plan_features + [

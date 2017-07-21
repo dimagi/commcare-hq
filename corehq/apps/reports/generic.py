@@ -477,6 +477,7 @@ class GenericReportView(object):
                 report_title=self.report_title or self.rendered_report_title,
                 report_subtitles=self.report_subtitles,
                 export_target=self.export_target,
+                js_options=self.js_options,
             ),
             current_config_id=current_config_id,
             default_config=default_config,
@@ -485,6 +486,23 @@ class GenericReportView(object):
             domain=self.domain,
             layout_flush_content=self.flush_layout
         )
+
+    @property
+    def js_options(self):
+        return {
+            'async': self.asynchronous,
+            'domain': self.domain,
+            'filterSet': self.filter_set,
+            'isEmailable': self.emailable,
+            'isExportAll': self.exportable_all,
+            'isExportable': self.exportable,
+            'needsFilters': self.needs_filters,
+            'slug': self.slug,
+            'subReportSlug': None,
+            'emailDefaultSubject': self.rendered_report_title,
+            'type': self.dispatcher.prefix,
+            'urlRoot': self.url_root,
+        }
 
     def update_filter_context(self):
         """
@@ -693,6 +711,14 @@ class GenericReportView(object):
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
         return True
+
+    @classmethod
+    def show_in_user_roles(cls, domain=None, project=None, user=None):
+        """
+        User roles can specify specific reports that users can view. Return True if this report should show in
+        the list of specific reports that can be viewed.
+        """
+        return cls.show_in_navigation(domain, project, user)
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):

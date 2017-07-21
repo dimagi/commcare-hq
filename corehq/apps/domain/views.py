@@ -1,16 +1,15 @@
 import copy
 import datetime
-import re
-from collections import defaultdict
 from decimal import Decimal
 import logging
 import json
 import cStringIO
-import pytz
 import sys
 
+import pytz
 from couchdbkit import ResourceNotFound
 import dateutil
+from requests.auth import HTTPBasicAuth, HTTPDigestAuth
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.core.validators import validate_email
@@ -33,7 +32,6 @@ from django.views.decorators.http import require_POST
 from PIL import Image
 from django.utils.translation import ugettext as _, ugettext_lazy
 from django.contrib.auth.models import User
-from django.utils.html import escape
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
@@ -41,19 +39,18 @@ from corehq.apps.calendar_fixture.forms import CalendarFixtureForm
 from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
 from corehq.apps.case_search.models import (
     CaseSearchConfig,
-    CaseSearchConfigJSON,
+    FuzzyProperties,
+    IgnorePatterns,
     enable_case_search,
     disable_case_search,
 )
-from corehq.apps.dhis2.dbaccessors import get_dhis2_connection
-from corehq.apps.dhis2.forms import Dhis2ConnectionForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
-from corehq.apps.repeaters.repeater_generators import RegisterGenerator
-
+from corehq.motech.repeaters.models import BASIC_AUTH, DIGEST_AUTH
+from corehq.motech.repeaters.repeater_generators import RegisterGenerator
 from corehq.const import USER_DATE_FORMAT
-from corehq.tabs.tabclasses import ProjectSettingsTab
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
@@ -77,7 +74,7 @@ from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import (
     get_change_status, get_privileges, fmt_dollar_amount,
     quantize_accounting_decimal, get_customer_cards,
-    log_accounting_error,
+    log_accounting_error, domain_has_privilege,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
@@ -89,7 +86,7 @@ from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFE
 from custom.openclinica.forms import OpenClinicaSettingsForm
 from custom.openclinica.models import OpenClinicaSettings
 from dimagi.utils.couch.resource_conflict import retry_resource
-from dimagi.utils.web import json_request, json_response
+from dimagi.utils.web import json_request
 from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege
 from corehq.apps.accounting.models import (
@@ -131,14 +128,14 @@ from corehq.apps.domain.forms import ProjectSettingsForm
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.web import get_ip, json_response, get_site_domain
 from corehq.apps.users.decorators import require_can_edit_web_users, require_permission
-from corehq.apps.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
-from corehq.apps.repeaters.models import Repeater, RepeatRecord
-from corehq.apps.repeaters.dbaccessors import (
+from corehq.motech.repeaters.forms import GenericRepeaterForm, FormRepeaterForm
+from corehq.motech.repeaters.models import Repeater, RepeatRecord
+from corehq.motech.repeaters.dbaccessors import (
     get_paged_repeat_records,
     get_repeat_record_count,
 )
-from corehq.apps.repeaters.utils import get_all_repeater_types, get_repeater_auth_header
-from corehq.apps.repeaters.const import (
+from corehq.motech.repeaters.utils import get_all_repeater_types
+from corehq.motech.repeaters.const import (
     RECORD_FAILURE_STATE,
     RECORD_PENDING_STATE,
     RECORD_CANCELLED_STATE,
@@ -311,12 +308,6 @@ class BaseProjectSettingsView(BaseDomainView):
     def main_context(self):
         main_context = super(BaseProjectSettingsView, self).main_context
         main_context.update({
-            'active_tab': ProjectSettingsTab(
-                self.request,
-                domain=self.domain,
-                couch_user=self.request.couch_user,
-                project=self.request.project
-            ),
             'is_project_settings': True,
         })
         return main_context
@@ -404,6 +395,7 @@ class EditBasicProjectInfoView(BaseEditProjectInfoView):
             'call_center_case_owner': self.initial_call_center_case_owner,
             'call_center_case_type': self.domain_object.call_center_config.case_type,
             'commtrack_enabled': self.domain_object.commtrack_enabled,
+            'mobile_ucr_sync_interval': self.domain_object.default_mobile_ucr_sync_interval
         }
         if self.can_user_see_meta:
             initial.update({
@@ -587,7 +579,7 @@ def test_repeater(request, domain):
     repeater_type = request.POST['repeater_type']
     format = request.POST.get('format', None)
     repeater_class = get_all_repeater_types()[repeater_type]
-    use_basic_auth = request.POST.get('use_basic_auth')
+    auth_type = request.POST.get('auth_type')
 
     form = GenericRepeaterForm(
         {"url": url, "format": format},
@@ -602,13 +594,17 @@ def test_repeater(request, domain):
         fake_post = generator.get_test_payload(domain)
         headers = generator.get_headers()
 
-        if use_basic_auth == 'true':
-            username = request.POST.get('username')
-            password = request.POST.get('password')
-            headers.update(get_repeater_auth_header(headers, username, password))
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        if auth_type == BASIC_AUTH:
+            auth = HTTPBasicAuth(username, password)
+        elif auth_type == DIGEST_AUTH:
+            auth = HTTPDigestAuth(username, password)
+        else:
+            auth = None
 
         try:
-            resp = simple_post(fake_post, url, headers=headers)
+            resp = simple_post(fake_post, url, headers=headers, auth=auth)
             if 200 <= resp.status_code < 300:
                 return HttpResponse(json.dumps({"success": True,
                                                 "response": resp.content,
@@ -631,6 +627,7 @@ def autocomplete_fields(request, field):
     return HttpResponse(json.dumps(results))
 
 
+@location_safe
 def logo(request, domain):
     logo = Domain.get_by_name(domain).get_custom_logo()
     if logo is None:
@@ -656,7 +653,7 @@ class DomainAccountingSettings(BaseProjectSettingsView):
 
     @property
     def current_subscription(self):
-        return Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+        return Subscription.get_active_subscription_by_domain(self.domain)
 
 
 class DomainSubscriptionView(DomainAccountingSettings):
@@ -671,7 +668,8 @@ class DomainSubscriptionView(DomainAccountingSettings):
     @property
     @memoized
     def plan(self):
-        plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
         date_end = None
         next_subscription = {
             'exists': False,
@@ -1129,7 +1127,7 @@ class CreditsStripePaymentView(BaseStripePaymentView):
             self.get_or_create_payment_method(),
             self.domain,
             self.account,
-            subscription=Subscription.get_subscribed_plan_by_domain(self.domain_object)[1],
+            subscription=Subscription.get_active_subscription_by_domain(self.domain),
             post_data=self.request.POST.copy(),
         )
 
@@ -1332,7 +1330,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
     def page_context(self):
         return {
             'is_form_editable': self.is_form_editable,
-            'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain)[0],
+            'plan_name': Subscription.get_subscribed_plan_by_domain(self.domain),
             'select_subscription_type_form': self.select_subscription_type_form,
             'subscription_management_forms': self.slug_to_form.values(),
             'today': datetime.date.today(),
@@ -1360,7 +1358,7 @@ class InternalSubscriptionManagementView(BaseAdminProjectSettingsView):
             })
 
         subscription_type = None
-        subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
         if subscription is None:
             subscription_type = None
         else:
@@ -1549,10 +1547,11 @@ class ConfirmSelectedPlanView(SelectPlanView):
 
     @property
     def downgrade_messages(self):
-        current_plan_version, subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)
-        if subscription is None:
-            current_plan_version = None
-        downgrades = get_change_status(current_plan_version, self.selected_plan_version)[1]
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
+        downgrades = get_change_status(
+            subscription.plan_version if subscription else None,
+            self.selected_plan_version
+        )[1]
         downgrade_handler = DomainDowngradeStatusHandler(
             self.domain_object, self.selected_plan_version, downgrades,
         )
@@ -1678,7 +1677,7 @@ class SubscriptionMixin(object):
     @property
     @memoized
     def subscription(self):
-        subscription = Subscription.get_subscribed_plan_by_domain(self.domain_object)[1]
+        subscription = Subscription.get_active_subscription_by_domain(self.domain)
         if subscription is None:
             raise Http404
         if subscription.is_renewed:
@@ -2167,37 +2166,53 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
         return super(CaseSearchConfigView, self).dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
+        request_json = json.loads(request.body)
+        enable = request_json.get('enable')
+        fuzzies_by_casetype = request_json.get('fuzzy_properties')
+        updated_fuzzies = []
+        for case_type, properties in fuzzies_by_casetype.iteritems():
+            fp, created = FuzzyProperties.objects.get_or_create(
+                domain=self.domain,
+                case_type=case_type
+            )
+            fp.properties = properties
+            fp.save()
+            updated_fuzzies.append(fp)
 
-        def unpack_fuzzies(query_dict):
-            """
-            Builds an integer-keyed dictionary from POST request data, and returns a list of dictionaries that can
-            be wrapped by CaseSearchConfigJSON
-            """
-            # match "config[fuzzy_properties][0][case_type]" and "config[fuzzy_properties][0][properties][]" but
-            # not "enable"
-            pattern = re.compile(r'^config\[fuzzy_properties]\[(?P<index>\d+)]\[(?P<attr>\w+)](?:\[])?$')
-            fuzzy_dict = defaultdict(dict)
-            for key in query_dict:
-                match = pattern.match(key)
-                if match:
-                    i = int(match.group('index'))
-                    attr = match.group('attr')
-                    is_list = key.endswith('[]')  # i.e. "...[properties][]"
-                    fuzzy_dict[i][attr] = query_dict.getlist(key) if is_list else query_dict[key]
-            if not fuzzy_dict:
-                return []
-            return [fuzzy_dict[i] for i in range(max(fuzzy_dict.keys()) + 1) if fuzzy_dict[i]]
+        unneeded_fuzzies = FuzzyProperties.objects.filter(domain=self.domain).exclude(
+            case_type__in=fuzzies_by_casetype.keys()
+        )
+        unneeded_fuzzies.delete()
 
-        if request.POST['enable'] == 'true':
+        ignore_patterns = request_json.get('ignore_patterns')
+        updated_ignore_patterns = []
+        update_ignore_pattern_ids = []
+        for ignore_pattern_regex in ignore_patterns:
+            rc, created = IgnorePatterns.objects.get_or_create(
+                domain=self.domain,
+                case_type=ignore_pattern_regex.get('case_type'),
+                case_property=ignore_pattern_regex.get('case_property'),
+                regex=ignore_pattern_regex.get('regex')
+            )
+            updated_ignore_patterns.append(rc)
+            update_ignore_pattern_ids.append(rc.pk)
+
+        unneeded_ignore_patterns = IgnorePatterns.objects.filter(domain=self.domain).exclude(
+            pk__in=update_ignore_pattern_ids
+        )
+        unneeded_ignore_patterns.delete()
+
+        if enable:
             enable_case_search(self.domain)
         else:
             disable_case_search(self.domain)
+
         CaseSearchConfig.objects.update_or_create(domain=self.domain, defaults={
-            'enabled': request.POST['enable'] == 'true',
-            'config': CaseSearchConfigJSON({'fuzzy_properties': unpack_fuzzies(request.POST)})
+            'enabled': request_json.get('enable'),
+            'fuzzy_properties': updated_fuzzies,
+            'ignore_patterns': updated_ignore_patterns,
         })
-        messages.success(request, _("Case search configuration updated successfully"))
-        return self.get(request, *args, **kwargs)
+        return json_response(self.page_context)
 
     @property
     def page_context(self):
@@ -2208,7 +2223,14 @@ class CaseSearchConfigView(BaseAdminProjectSettingsView):
             'case_types': sorted(list(case_types)),
             'values': {
                 'enabled': current_values.enabled if current_values else False,
-                'config': current_values.config if current_values else {}
+                'fuzzy_properties': {
+                    fp.case_type: fp.properties for fp in current_values.fuzzy_properties.all()
+                } if current_values else {},
+                'ignore_patterns': [{
+                    'case_type': rc.case_type,
+                    'case_property': rc.case_property,
+                    'regex': rc.regex
+                } for rc in current_values.ignore_patterns.all()] if current_values else {}
             }
         }
 
@@ -2321,10 +2343,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         </button>
         '''.format(record_id)
 
-    def _make_state_label(self, record):
-        label_cls = ''
-        label_text = ''
-
+    def _get_state(self, record):
         if record.state == RECORD_SUCCESS_STATE:
             label_cls = 'success'
             label_text = _('Success')
@@ -2337,24 +2356,18 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
         elif record.state == RECORD_FAILURE_STATE:
             label_cls = 'danger'
             label_text = _('Failed')
+        else:
+            label_cls = ''
+            label_text = ''
 
+        return (label_cls, label_text)
+
+    def _make_state_label(self, record):
         return '''
         <span class="label label-{}">
             {}
         </span>
-        '''.format(label_cls, label_text)
-
-    @property
-    def report_context(self):
-        context = super(DomainForwardingRepeatRecords, self).report_context
-        context.update({
-            'active_tab': ProjectSettingsTab(
-                self.request,
-                domain=self.domain,
-                couch_user=self.request.couch_user,
-            )
-        })
-        return context
+        '''.format(*self._get_state(record))
 
     @property
     def total_records(self):
@@ -2369,7 +2382,7 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
 
     def _format_date(self, date):
         tz_utc_aware_date = pytz.utc.localize(date)
-        return tz_utc_aware_date.astimezone(self.timezone).strftime('%b %d, %Y %H:%M %Z')
+        return tz_utc_aware_date.astimezone(self.timezone).strftime('%b %d, %Y %H:%M:%S %Z')
 
     @property
     def rows(self):
@@ -2382,37 +2395,44 @@ class DomainForwardingRepeatRecords(GenericTabularReport):
             repeater_id=self.repeater_id,
             state=self.state
         )
-        return map(
-            lambda record: [
-                self._make_state_label(record),
-                record.url if record.url else _(u'Unable to generate url for record'),
-                self._format_date(record.last_checked) if record.last_checked else '---',
-                self._format_date(record.next_check) if record.next_check else '---',
-                escape(record.failure_reason) if not record.succeeded else None,
-                record.overall_tries if record.overall_tries > 0 else None,
-                self._make_view_payload_button(record.get_id),
-                self._make_resend_payload_button(record.get_id),
-                self._make_requeue_payload_button(record.get_id) if record.cancelled and not record.succeeded
-                else self._make_cancel_payload_button(record.get_id) if not record.cancelled
-                and not record.succeeded
-                else None
-            ],
-            records
-        )
+        rows = [self._make_row(record) for record in records]
+        return rows
+
+    def _make_row(self, record):
+        row = [
+            self._make_state_label(record),
+            record.url if record.url else _(u'Unable to generate url for record'),
+            self._format_date(record.last_checked) if record.last_checked else '---',
+            self._format_date(record.next_check) if record.next_check else '---',
+            render_to_string('domain/repeaters/partials/attempt_history.html', {'record': record}),
+            self._make_view_payload_button(record.get_id),
+            self._make_resend_payload_button(record.get_id),
+            self._make_requeue_payload_button(record.get_id) if record.cancelled and not record.succeeded
+            else self._make_cancel_payload_button(record.get_id) if not record.cancelled
+            and not record.succeeded
+            else None
+        ]
+
+        if toggles.SUPPORT.enabled_for_request(self.request):
+            row.insert(1, record.payload_id)
+        return row
 
     @property
     def headers(self):
-        return DataTablesHeader(
+        columns = [
             DataTablesColumn(_('Status')),
             DataTablesColumn(_('URL')),
             DataTablesColumn(_('Last sent date')),
             DataTablesColumn(_('Retry Date')),
-            DataTablesColumn(_('Failure Reason')),
-            DataTablesColumn(_('Failure Count')),
+            DataTablesColumn(_('Delivery Attempts')),
             DataTablesColumn(_('View payload')),
             DataTablesColumn(_('Resend')),
             DataTablesColumn(_('Cancel or Requeue payload'))
-        )
+        ]
+        if toggles.SUPPORT.enabled_for_request(self.request):
+            columns.insert(1, DataTablesColumn(_('Payload ID')))
+
+        return DataTablesHeader(*columns)
 
 
 class DomainForwardingOptionsView(BaseAdminProjectSettingsView):
@@ -2481,7 +2501,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
         except KeyError:
             raise Http404(
                 "No such repeater {}. Valid types: {}".format(
-                    self.repeater_type, get_all_repeater_types.keys()
+                    self.repeater_type, get_all_repeater_types().keys()
                 )
             )
 
@@ -2510,7 +2530,7 @@ class AddRepeaterView(BaseAdminProjectSettingsView):
         repeater = self.repeater_class(
             domain=self.domain,
             url=self.add_repeater_form.cleaned_data['url'],
-            use_basic_auth=self.add_repeater_form.cleaned_data['use_basic_auth'],
+            auth_type=self.add_repeater_form.cleaned_data['auth_type'] or None,
             username=self.add_repeater_form.cleaned_data['username'],
             password=self.add_repeater_form.cleaned_data['password'],
             format=self.add_repeater_form.cleaned_data['format']
@@ -2920,14 +2940,14 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
                 feature.save_fn(self.domain, new_state)
 
 
-class FeatureFlagsView(BaseAdminProjectSettingsView):
-    urlname = 'domain_feature_flags'
-    page_title = ugettext_lazy("Feature Flags")
-    template_name = 'domain/admin/feature_flags.html'
+class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
+    urlname = 'feature_flags_and_privileges'
+    page_title = ugettext_lazy("Feature Flags and Privileges")
+    template_name = 'domain/admin/flags_and_privileges.html'
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
-        return super(FeatureFlagsView, self).dispatch(request, *args, **kwargs)
+        return super(FlagsAndPrivilegesView, self).dispatch(request, *args, **kwargs)
 
     @memoized
     def enabled_flags(self):
@@ -2939,11 +2959,19 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
             key=_sort_key,
         )
 
+    def _get_privileges(self):
+        return sorted([
+            (privileges.Titles.get_name_from_privilege(privilege),
+             domain_has_privilege(self.domain, privilege))
+            for privilege in privileges.MAX_PRIVILEGES
+        ], key=lambda (name, has): (not has, name))
+
     @property
     def page_context(self):
         return {
             'flags': self.enabled_flags(),
-            'use_sql_backend': self.domain_object.use_sql_backend
+            'use_sql_backend': self.domain_object.use_sql_backend,
+            'privileges': self._get_privileges(),
         }
 
 
@@ -3085,31 +3113,6 @@ class DeactivateTransferDomainView(View):
         return super(DeactivateTransferDomainView, self).dispatch(*args, **kwargs)
 
 
-class Dhis2ConnectionView(BaseAdminProjectSettingsView):
-    urlname = 'dhis2_connection_view'
-    page_title = ugettext_lazy("DHIS2 Connection Settings")
-    template_name = 'domain/admin/dhis2/connection_settings.html'
-
-    @method_decorator(domain_admin_required)
-    def dispatch(self, request, *args, **kwargs):
-        if not toggles.DHIS2_INTEGRATION.enabled(request.domain):
-            raise Http404()
-        return super(Dhis2ConnectionView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    @memoized
-    def dhis2_connection_form(self):
-        dhis2_conn = get_dhis2_connection(self.request.domain)
-        initial = dict(dhis2_conn) if dhis2_conn else {}
-        if self.request.method == 'POST':
-            return Dhis2ConnectionForm(self.request.POST, initial=initial)
-        return Dhis2ConnectionForm(initial=initial)
-
-    @property
-    def page_context(self):
-        return {'dhis2_connection_form': self.dhis2_connection_form}
-
-
 from corehq.apps.smsbillables.forms import PublicSMSRateCalculatorForm
 from corehq.apps.smsbillables.async_handlers import PublicSMSRatesAsyncHandler
 
@@ -3247,6 +3250,7 @@ class PasswordResetView(View):
     def get(self, request, *args, **kwargs):
         extra_context = kwargs.setdefault('extra_context', {})
         extra_context['hide_password_feedback'] = settings.ENABLE_DRACONIAN_SECURITY_FEATURES
+        extra_context['implement_password_obfuscation'] = settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
         return password_reset_confirm(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -3259,25 +3263,3 @@ class PasswordResetView(View):
         couch_user = CouchUser.from_django_user(user)
         clear_login_attempts(couch_user)
         return response
-
-
-def exception_safe_password_reset(request, *args, **kwargs):
-    """
-    Django's password reset function raises SMTP errors if there's any
-    problem with the mailserver. Catch that more elegantly with a simple wrapper.
-    """
-    # Django docs on password reset are weak. See these links instead:
-    #
-    # http://streamhacker.com/2009/09/19/django-ia-auth-password-reset/
-    # http://www.rkblog.rk.edu.pl/w/p/password-reset-django-10/
-    # http://blog.montylounge.com/2009/jul/12/django-forgot-password/
-    try:
-        return password_reset(request, *args, **kwargs)
-    except None:
-        vals = {
-            'current_page': {'page_name': _('Oops!')},
-            'error_msg': 'There was a problem with your request',
-            'error_details': sys.exc_info(),
-            'show_homepage_link': 1,
-        }
-        return render_to_response('error.html', vals, context_instance=RequestContext(request))

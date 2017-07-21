@@ -4,15 +4,18 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import SuspiciousOperation
+from django.db.models import Sum
 from django.urls import reverse
-from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
+from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, StreamingHttpResponse
 from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 
+from corehq.blobs.exceptions import NotFound
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
-from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification
+from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile
+from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -28,7 +31,7 @@ import re
 from django.utils.safestring import mark_safe
 from django.views.generic import View
 
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djangular.views.mixins import allow_remote_invocation
 import pytz
 from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -74,6 +77,8 @@ from corehq.apps.export.const import (
     FORM_EXPORT,
     CASE_EXPORT,
     MAX_EXPORTABLE_ROWS,
+    MAX_DATA_FILE_SIZE,
+    MAX_DATA_FILE_SIZE_TOTAL,
 )
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
@@ -113,7 +118,8 @@ from dimagi.utils.decorators.memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import json_format_date
-from dimagi.utils.web import json_response
+from dimagi.utils.web import json_response, get_url_base
+from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from soil import DownloadBase
 from soil.exceptions import TaskFailedError
@@ -501,7 +507,7 @@ def create_basic_form_checkpoint(index):
     return checkpoint
 
 
-class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BaseProjectDataView):
+class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/download_export.html'
     http_method_names = ['get', 'post']
     show_sync_to_dropbox = False  # remove when DBox issue is resolved.
@@ -677,13 +683,14 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
         try:
             download_id = in_data['download_id']
         except KeyError:
-            return format_angular_error(_("Requires a download id"))
+            return format_angular_error(_("Requires a download id"), log_error=False)
         try:
             context = get_download_context(download_id)
         except TaskFailedError:
             return format_angular_error(
                 _("Download Task Failed to Start. It seems that the server "
-                  "might be under maintenance.")
+                  "might be under maintenance."),
+                log_error=False,
             )
         if context.get('is_ready', False):
             context.update({
@@ -779,14 +786,10 @@ class BaseDownloadExportView(ExportsPermissionsMixin, JSONResponseMixin, BasePro
         """
         try:
             download = self._get_download_task(in_data)
-        except ExportAsyncException as e:
-            return format_angular_error(e.message)
-        except Exception as e:
-            return format_angular_error(
-                e.message,
-                log_error=True,
-                exception=e,
-            )
+        except ExportAsyncException:
+            return format_angular_error(_("There was an error."), log_error=True)
+        except Exception:
+            return format_angular_error(_("There was an error."), log_error=True)
         return format_angular_success({
             'download_id': download.download_id,
         })
@@ -857,8 +860,8 @@ class DownloadFormExportView(BaseDownloadExportView):
                     export_object.app_id,
                     getattr(export_object, 'xmlns', '')
                 )
-        except Exception as e:
-            return format_angular_error(e.message)
+        except Exception:
+            return format_angular_error(_("There was an error"), log_error=True)
         return format_angular_success({
             'hasMultimedia': has_multimedia,
         })
@@ -884,8 +887,8 @@ class DownloadFormExportView(BaseDownloadExportView):
                                                           download.download_id)
             from corehq.apps.reports.tasks import build_form_multimedia_zip
             download.set_task(build_form_multimedia_zip.delay(**task_kwargs))
-        except Exception as e:
-            return format_angular_error(str(e))
+        except Exception:
+            return format_angular_error(_("There was an error"), log_error=True)
         return format_angular_success({
             'download_id': download.download_id,
         })
@@ -964,7 +967,7 @@ class DownloadCaseExportView(BaseDownloadExportView):
         return filter_form
 
 
-class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProjectDataView):
+class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProjectDataView):
     template_name = 'export/export_list.html'
     allow_bulk_export = True
     is_deid = False
@@ -1004,6 +1007,7 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             "export_type_plural": _("exports"),
             "model_type": self.form_or_case,
             "static_model_type": True,
+            'max_exportable_rows': MAX_EXPORTABLE_ROWS,
         }
 
     @property
@@ -1194,7 +1198,6 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             return format_angular_error(
                 _("Issue fetching list of exports: {}").format(e),
                 log_error=True,
-                exception=e,
             )
         return format_angular_success({
             'exports': saved_exports,
@@ -1257,17 +1260,20 @@ class BaseExportListView(ExportsPermissionsMixin, JSONResponseMixin, BaseProject
             form_data = in_data['formData']
         except KeyError:
             return format_angular_error(
-                _("The form's data was not correctly formatted.")
+                _("The form's data was not correctly formatted."),
+                log_error=False,
             )
         try:
             create_url = self.get_create_export_url(form_data)
         except ExportFormValidationException:
             return format_angular_error(
-                _("The form did not validate.")
+                _("The form did not validate."),
+                log_error=False,
             )
         except Exception as e:
             return format_angular_error(
                 _("Problem getting link to custom export form: {}").format(e),
+                log_error=False,
             )
         return format_angular_success({
             'url': create_url,
@@ -1387,11 +1393,10 @@ class DailySavedExportListView(BaseExportListView):
         try:
             rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
             response = rmi_helper.get_dual_model_rmi_response()
-        except Exception as e:
+        except Exception:
             return format_angular_error(
-                _("Problem getting Create Daily Saved Export Form: {} {}").format(
-                    e.__class__, e
-                ),
+                _("Problem getting Create Daily Saved Export Form"),
+                log_error=True,
             )
         return format_angular_success(response)
 
@@ -1453,11 +1458,12 @@ class DailySavedExportListView(BaseExportListView):
                     rebuild_export_task.delay(export_id)
                 return format_angular_success()
             else:
-                return format_angular_error("Problem saving dashboard feed filters: Invalid form")
-        except Exception as e:
-            msg = "Problem saving dashboard feed filters: {} {}"
-            notify_exception(self.request, message=msg.format(e.__class__, e))
-            return format_angular_error(_(msg).format(e.__class__, e))
+                return format_angular_error(
+                    _("Problem saving dashboard feed filters: Invalid form"),
+                    log_error=True)
+        except Exception:
+            return format_angular_error(_("Problem saving dashboard feed filters"),
+                                        log_error=True)
 
 
 @location_safe
@@ -1510,6 +1516,76 @@ class DashboardFeedListView(DailySavedExportListView):
             combined_exports.extend(_get_case_exports_by_domain(self.domain, self.has_deid_view_permissions))
         combined_exports = sorted(combined_exports, key=lambda x: x.name)
         return filter(lambda x: x.is_daily_saved_export and x.export_format == "html", combined_exports)
+
+
+@location_safe
+class DataFileDownloadList(BaseProjectDataView):
+    urlname = 'download_data_files'
+    template_name = 'export/download_data_files.html'
+    page_title = ugettext_lazy("Download Data Files")
+
+    def get_context_data(self, **kwargs):
+        context = super(DataFileDownloadList, self).get_context_data(**kwargs)
+        context.update({
+            'data_files': DataFile.objects.filter(domain=self.domain).order_by('filename').all(),
+            'is_admin': self.request.couch_user.is_domain_admin(self.domain),
+            'url_base': get_url_base(),
+        })
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if request.FILES['file'].size > MAX_DATA_FILE_SIZE:
+            messages.warning(
+                request,
+                _('The data file exceeds the maximum size of {} MB.').format(MAX_DATA_FILE_SIZE / (1024 * 1024))
+            )
+            return self.get(request, *args, **kwargs)
+
+        aggregate = DataFile.objects.filter(domain=self.domain).aggregate(total_size=Sum('content_length'))
+        if (
+            aggregate['total_size'] and
+            aggregate['total_size'] + request.FILES['file'].size > MAX_DATA_FILE_SIZE_TOTAL
+        ):
+            messages.warning(
+                request,
+                _('Uploading this data file would exceed the total allowance of {} GB for this project space. '
+                  'Please remove some files in order to upload new files.').format(
+                    MAX_DATA_FILE_SIZE_TOTAL / (1024 * 1024 * 1024))
+            )
+            return self.get(request, *args, **kwargs)
+
+        data_file = DataFile()
+        data_file.domain = self.domain
+        data_file.filename = request.FILES['file'].name
+        data_file.description = request.POST['description']
+        data_file.content_type = request.FILES['file'].content_type
+        data_file.content_length = request.FILES['file'].size
+        data_file.save_blob(request.FILES['file'])
+        messages.success(request, _(u'Data file "{}" uploaded'.format(data_file.description)))
+        return HttpResponseRedirect(reverse(self.urlname, kwargs={'domain': self.domain}))
+
+
+class DataFileDownloadDetail(BaseProjectDataView):
+    urlname = 'download_data_file'
+
+    def get(self, request, *args, **kwargs):
+        try:
+            data_file = DataFile.objects.filter(domain=self.domain).get(pk=kwargs['pk'])
+            blob = data_file.get_blob()
+            response = StreamingHttpResponse(blob, content_type=data_file.content_type)
+        except (DataFile.DoesNotExist, NotFound):
+            raise Http404
+        response['Content-Disposition'] = 'attachment; filename="' + data_file.filename + '"'
+        response['Content-Length'] = data_file.content_length
+        return response
+
+    def delete(self, request, *args, **kwargs):
+        try:
+            data_file = DataFile.objects.filter(domain=self.domain).get(pk=kwargs['pk'])
+        except DataFile.DoesNotExist:
+            raise Http404
+        data_file.delete()
+        return HttpResponse(status=204)
 
 
 class DailySavedExportPaywall(BaseProjectDataView):
@@ -1610,11 +1686,10 @@ class FormExportListView(BaseExportListView):
         try:
             rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
             response = rmi_helper.get_form_rmi_response()
-        except Exception as e:
+        except Exception:
             return format_angular_error(
-                _("Problem getting Create Export Form: {} {}").format(
-                    e.__class__, e
-                ),
+                _("Problem getting Create Export Form"),
+                log_error=True,
             )
         return format_angular_success(response)
 
@@ -1755,11 +1830,10 @@ class CaseExportListView(BaseExportListView):
         try:
             rmi_helper = ApplicationDataRMIHelper(self.domain, self.request.couch_user)
             response = rmi_helper.get_case_rmi_response()
-        except Exception as e:
+        except Exception:
             return format_angular_error(
-                _("Problem getting Create Export Form: {}").format(e.message),
+                _("Problem getting Create Export Form"),
                 log_error=True,
-                exception=e,
             )
         return format_angular_success(response)
 
@@ -1925,7 +1999,7 @@ class DailySavedExportMixin(object):
 
         span = datespan_from_beginning(self.domain_object, _get_timezone(self.domain, self.request.couch_user))
         instance.filters.date_period = DatePeriod(
-            period_type="range", begin=span.startdate.date(), end=span.enddate.date()
+            period_type="since", begin=span.startdate.date()
         )
         if not self.request.can_access_all_locations:
             accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
@@ -2070,6 +2144,8 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
             saved_export=export_instance,
             auto_select=auto_select
         )
+        for message in self.export_instance.error_messages():
+            messages.error(request, message)
         return super(BaseEditNewCustomExportView, self).get(request, *args, **kwargs)
 
 
@@ -2393,40 +2469,59 @@ class GenerateSchemaFromAllBuildsView(View):
         })
 
 
+def can_download_daily_saved_export(export, domain, couch_user):
+    if (export.is_deidentified
+        and user_can_view_deid_exports(domain, couch_user)
+    ):
+        return True
+    elif export.type == FORM_EXPORT and has_permission_to_view_report(
+            couch_user, domain, FORM_EXPORT_PERMISSION):
+        return True
+    elif export.type == CASE_EXPORT and has_permission_to_view_report(
+            couch_user, domain, CASE_EXPORT_PERMISSION):
+        return True
+    return False
+
+
 @location_safe
 @csrf_exempt
 @login_or_digest_or_basic_or_apikey(default='digest')
-@require_form_export_permission
 @require_GET
 def download_daily_saved_export(req, domain, export_instance_id):
-    export_instance = get_properly_wrapped_export_instance(export_instance_id)
-    assert domain == export_instance.domain
+    with CriticalSection(['export-last-accessed-{}'.format(export_instance_id)]):
+        export_instance = get_properly_wrapped_export_instance(export_instance_id)
+        assert domain == export_instance.domain
 
-    if export_instance.export_format == "html":
-        if not domain_has_privilege(domain, EXCEL_DASHBOARD):
+        if export_instance.export_format == "html":
+            if not domain_has_privilege(domain, EXCEL_DASHBOARD):
+                raise Http404
+        elif export_instance.is_daily_saved_export:
+            if not domain_has_privilege(domain, DAILY_SAVED_EXPORT):
+                raise Http404
+
+        if not export_instance.filters.is_location_safe_for_user(req):
+            return location_restricted_response(req)
+
+        if not can_download_daily_saved_export(export_instance, domain, req.couch_user):
             raise Http404
-    elif export_instance.is_daily_saved_export:
-        if not domain_has_privilege(domain, DAILY_SAVED_EXPORT):
-            raise Http404
 
-    if not export_instance.filters.is_location_safe_for_user(req):
-        return location_restricted_response(req)
+        if should_update_export(export_instance.last_accessed):
+            try:
+                from corehq.apps.export.tasks import rebuild_export_task
+                rebuild_export_task.delay(export_instance_id)
+            except Exception:
+                notify_exception(
+                    req,
+                    'Failed to rebuild export during download',
+                    {
+                        'export_instance_id': export_instance_id,
+                        'domain': domain,
+                    },
+                )
 
-    if should_update_export(export_instance.last_accessed):
-        try:
-            from corehq.apps.export.tasks import rebuild_export_task
-            rebuild_export_task.delay(export_instance_id)
-        except Exception:
-            notify_exception(
-                req,
-                'Failed to rebuild export during download',
-                {
-                    'export_instance_id': export_instance_id,
-                    'domain': domain,
-                },
-            )
-    export_instance.last_accessed = datetime.utcnow()
-    export_instance.save()
+        export_instance.last_accessed = datetime.utcnow()
+        export_instance.save()
+
     payload = export_instance.get_payload(stream=True)
     return build_download_saved_export_response(
         payload, export_instance.export_format, export_instance.filename

@@ -24,9 +24,8 @@ from corehq.apps.receiverwrapper.util import (
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
-from corehq.util.datadog.gauges import datadog_gauge, datadog_counter
+from corehq.util.datadog.gauges import datadog_histogram, datadog_counter
 from corehq.util.datadog.metrics import MULTIMEDIA_SUBMISSION_ERROR_COUNT
-from corehq.util.datadog.utils import log_counter
 from corehq.util.timer import TimingContext
 import couchforms
 from django.views.decorators.http import require_POST
@@ -41,80 +40,93 @@ from corehq import toggles
 
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
+    metric_tags = [
+        'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
+        u'domain:{}'.format(domain),
+    ]
     if should_ignore_submission(request):
         # silently ignore submission if it meets ignore-criteria
-        return SubmissionPost.submission_ignored_response()
+        response = SubmissionPost.submission_ignored_response()
+        _record_metrics(metric_tags, 'ignored', response)
+        return response
 
     if toggles.FORM_SUBMISSION_BLACKLIST.enabled(domain):
-        return SubmissionPost.get_blacklisted_response()
+        response = SubmissionPost.get_blacklisted_response()
+        _record_metrics(metric_tags, 'blacklisted', response)
+        return response
 
-    try:
-        instance, attachments = couchforms.get_instance_and_attachment(request)
-    except MultimediaBug as e:
-        try:
-            instance = request.FILES[MAGIC_PROPERTY].read()
-            xform = convert_xform_to_json(instance)
-            meta = xform.get("meta", {})
-        except:
-            meta = {}
-
-        details = {
-            "domain": domain,
-            "app_id": app_id,
-            "user_id": user_id,
-            "authenticated": authenticated,
-            "form_meta": meta,
-        }
-        log_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, details)
-        notify_exception(request, "Received a submission with POST.keys()", details)
-        return HttpResponseBadRequest(e.message)
-
-    app_id, build_id = get_app_and_build_ids(domain, app_id)
-    submission_post = SubmissionPost(
-        instance=instance,
-        attachments=attachments,
-        domain=domain,
-        app_id=app_id,
-        build_id=build_id,
-        auth_context=auth_cls(
-            domain=domain,
-            user_id=user_id,
-            authenticated=authenticated,
-        ),
-        location=couchforms.get_location(request),
-        received_on=couchforms.get_received_on(request),
-        date_header=couchforms.get_date_header(request),
-        path=couchforms.get_path(request),
-        submit_ip=couchforms.get_submit_ip(request),
-        last_sync_token=couchforms.get_last_sync_token(request),
-        openrosa_headers=couchforms.get_openrosa_headers(request),
-    )
     with TimingContext() as timer:
+        try:
+            instance, attachments = couchforms.get_instance_and_attachment(request)
+        except MultimediaBug as e:
+            try:
+                instance = request.FILES[MAGIC_PROPERTY].read()
+                xform = convert_xform_to_json(instance)
+                meta = xform.get("meta", {})
+            except:
+                meta = {}
+
+            details = [
+                u"domain:{}".format(domain),
+                u"app_id:{}".format(app_id),
+                u"user_id:{}".format(user_id),
+                u"authenticated:{}".format(authenticated),
+                u"form_meta:{}".format(meta),
+            ]
+            datadog_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, tags=details)
+            notify_exception(request, "Received a submission with POST.keys()", details)
+            response = HttpResponseBadRequest(e.message)
+            _record_metrics(metric_tags, 'unknown', response)
+            return response
+
+        app_id, build_id = get_app_and_build_ids(domain, app_id)
+        submission_post = SubmissionPost(
+            instance=instance,
+            attachments=attachments,
+            domain=domain,
+            app_id=app_id,
+            build_id=build_id,
+            auth_context=auth_cls(
+                domain=domain,
+                user_id=user_id,
+                authenticated=authenticated,
+            ),
+            location=couchforms.get_location(request),
+            received_on=couchforms.get_received_on(request),
+            date_header=couchforms.get_date_header(request),
+            path=couchforms.get_path(request),
+            submit_ip=couchforms.get_submit_ip(request),
+            last_sync_token=couchforms.get_last_sync_token(request),
+            openrosa_headers=couchforms.get_openrosa_headers(request),
+        )
+
         result = submission_post.run()
 
     response = result.response
-
-    tags = [
-        'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
-        u'domain:{}'.format(domain)
-    ]
-    datadog_counter('commcare.xform_submissions.count', tags=tags + ['status_code:{}'.format(response.status_code)])
 
     if response.status_code == 400:
         logging.error(
             'Status code 400 for a form submission. '
             'Response is: \n{0}\n'
         )
-    elif response.status_code == 201:
 
-        datadog_gauge('commcare.xform_submissions.timings', timer.duration, tags=tags)
-        # normalize over number of items (form or case) saved
-        normalized_time = timer.duration / (1 + len(result.cases))
-        datadog_gauge('commcare.xform_submissions.normalized_timings', normalized_time, tags=tags)
-        datadog_counter('commcare.xform_submissions.case_count', len(result.cases), tags=tags)
-        datadog_counter('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=tags)
+    _record_metrics(metric_tags, result.submission_type, response, result, timer)
 
     return response
+
+
+def _record_metrics(base_tags, submission_type, response, result=None, timer=None):
+    base_tags += 'submission_type:{}'.format(submission_type),
+    datadog_counter('commcare.xform_submissions.count', tags=base_tags + [
+        'status_code:{}'.format(response.status_code)
+    ])
+    if response.status_code == 201 and timer and result:
+        datadog_histogram('commcare.xform_submissions.timings', timer.duration, tags=base_tags)
+        # normalize over number of items (form or case) saved
+        normalized_time = timer.duration / (1 + len(result.cases))
+        datadog_histogram('commcare.xform_submissions.normalized_timings', normalized_time, tags=base_tags)
+        datadog_histogram('commcare.xform_submissions.case_count', len(result.cases), tags=base_tags)
+        datadog_histogram('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=base_tags)
 
 
 @csrf_exempt

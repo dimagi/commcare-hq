@@ -4,6 +4,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext
 from django.views.generic.base import View
 
+from corehq.apps.users.models import AnonymousCouchUser
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.modules import to_function
 
@@ -161,9 +162,9 @@ class ReportDispatcher(View):
             and permissions_check(class_name, request, domain=domain)
             and self.toggles_enabled(cls, request)
         ):
-            report = cls(request, domain=domain, **report_kwargs)
-            report.rendered_as = render_as
             try:
+                report = cls(request, domain=domain, **report_kwargs)
+                report.rendered_as = render_as
                 report.decorator_dispatcher(
                     request, domain=domain, report_slug=report_slug, *args, **kwargs
                 )
@@ -291,6 +292,13 @@ class CustomProjectReportDispatcher(ProjectReportDispatcher):
     def permissions_check(self, report, request, domain=None, is_navigation_check=False):
         if is_navigation_check and not has_privilege(request, privileges.CUSTOM_REPORTS):
             return False
+        if isinstance(request.couch_user, AnonymousCouchUser) and self.prefix == 'custom_project_report':
+            reports = self.get_reports(domain)
+            for section in reports:
+                for report_class in section[1]:
+                    report_class_name = report_class.__module__ + '.' + report_class.__name__
+                    if report_class_name == report and report_class.is_public:
+                        return True
         return super(CustomProjectReportDispatcher, self).permissions_check(report, request, domain)
 
 

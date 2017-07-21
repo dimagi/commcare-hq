@@ -166,7 +166,7 @@ class ApplicationDataRMIHelper(object):
         self.as_dict = as_dict
         default_form_placeholder = AppFormRMIPlaceholder(
             application=_("Select Application"),
-            module=_("Select Menu" if toggles.APP_MANAGER_V2.enabled(domain)
+            module=_("Select Menu" if toggles.APP_MANAGER_V2.enabled(user.username)
                      else "Select Module"),
             form=_("Select Form"),
         )

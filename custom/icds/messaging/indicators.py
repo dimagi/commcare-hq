@@ -33,6 +33,7 @@ from custom.icds.const import (
     THR_REPORT_ID,
     VHND_SURVEY_XMLNS,
 )
+from lxml import etree
 
 DEFAULT_LANGUAGE = 'hin'
 
@@ -56,15 +57,24 @@ def get_report_configs(domain):
 
 
 @quickcache(['domain', 'report_id', 'ota_user.user_id'], timeout=12 * 60 * 60)
-def get_report_fixture_for_user(domain, report_id, ota_user):
+def _get_report_fixture_for_user(domain, report_id, ota_user):
     """
     :param domain: the domain
     :param report_id: the index to the result from get_report_configs()
     :param ota_user: the OTARestoreCommCareUser for which to get the report fixture
     """
-    return ReportFixturesProvider.report_config_to_fixture(
+    xml = ReportFixturesProvider.report_config_to_fixture(
         get_report_configs(domain)[report_id], ota_user
     )
+    return etree.tostring(xml)
+
+
+def get_report_fixture_for_user(domain, report_id, ota_user):
+    """
+    The Element objects used by the lxml library don't cache properly.
+    So instead we cache the XML string and convert back here.
+    """
+    return etree.fromstring(_get_report_fixture_for_user(domain, report_id, ota_user))
 
 
 class IndicatorError(Exception):
@@ -84,6 +94,9 @@ class SMSIndicator(object):
     # For AWWIndicator, this is the AWW CommCareUser
     # For LSIndicator, this is the LS CommCareUser
     user = None
+
+    # This is used to identify the indicator in the SMS data
+    slug = None
 
     def __init__(self, domain, user):
         self.domain = domain
@@ -123,7 +136,14 @@ class AWWIndicator(SMSIndicator):
     @property
     @memoized
     def supervisor(self):
+        """
+        Returns None if there is a misconfiguration (i.e., if the AWW's location
+        has no parent location, or if there are no users at the parent location).
+        """
         supervisor_location = self.user.sql_location.parent
+        if supervisor_location is None:
+            return None
+
         return get_users_by_location_id(self.domain, supervisor_location.location_id).first()
 
 
@@ -164,6 +184,7 @@ class LSIndicator(SMSIndicator):
 
 class AWWAggregatePerformanceIndicator(AWWIndicator):
     template = 'aww_aggregate_performance.txt'
+    slug = 'aww_2'
 
     def get_value_from_fixture(self, fixture, attribute):
         xpath = './rows/row[@is_total_row="False"]'
@@ -182,6 +203,9 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
         raise IndicatorError("AWC {} not found in the restore".format(location_name))
 
     def get_messages(self, language_code=None):
+        if self.supervisor is None:
+            return []
+
         agg_perf = LSAggregatePerformanceIndicator(self.domain, self.supervisor)
 
         visits = self.get_value_from_fixture(agg_perf.visits_fixture, 'count')
@@ -204,6 +228,7 @@ class AWWAggregatePerformanceIndicator(AWWIndicator):
 class AWWSubmissionPerformanceIndicator(AWWIndicator):
     template = 'aww_no_submissions.txt'
     last_submission_date = None
+    slug = 'aww_1'
 
     def __init__(self, domain, user):
         super(AWWSubmissionPerformanceIndicator, self).__init__(domain, user)
@@ -241,6 +266,7 @@ class AWWSubmissionPerformanceIndicator(AWWIndicator):
 
 class LSSubmissionPerformanceIndicator(LSIndicator):
     template = 'ls_no_submissions.txt'
+    slug = 'ls_6'
 
     def __init__(self, domain, user):
         super(LSSubmissionPerformanceIndicator, self).__init__(domain, user)
@@ -285,6 +311,7 @@ class LSSubmissionPerformanceIndicator(LSIndicator):
 
 class LSVHNDSurveyIndicator(LSIndicator):
     template = 'ls_vhnd_survey.txt'
+    slug = 'ls_2'
 
     def __init__(self, domain, user):
         super(LSVHNDSurveyIndicator, self).__init__(domain, user)
@@ -300,7 +327,7 @@ class LSVHNDSurveyIndicator(LSIndicator):
         now_date = self.now.date()
         user_ids_with_forms_in_time_frame = set()
         for user_id, forms in self.forms.items():
-            vhnd_date = convert_to_date(forms[0]['form']['vhsnd_date_planned'])
+            vhnd_date = convert_to_date(forms[0]['form']['vhsnd_date_past_month'])
             if (now_date - vhnd_date).days < 37:
                 user_ids_with_forms_in_time_frame.add(user_id)
 
@@ -321,6 +348,7 @@ class LSVHNDSurveyIndicator(LSIndicator):
 
 class LSAggregatePerformanceIndicator(LSIndicator):
     template = 'ls_aggregate_performance.txt'
+    slug = 'ls_1'
 
     @property
     @memoized

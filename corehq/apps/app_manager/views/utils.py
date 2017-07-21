@@ -7,9 +7,10 @@ from django.http import HttpResponseRedirect
 from django.template.loader import render_to_string
 
 from corehq import toggles
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import get_app, wrap_app, get_apps_in_domain
 from corehq.apps.app_manager.decorators import require_deploy_apps
-
+from corehq.apps.app_manager.exceptions import AppEditingError
+from corehq.apps.app_manager.models import Application, ReportModule
 
 CASE_TYPE_CONFLICT_MSG = (
     "Warning: The form's new module "
@@ -21,7 +22,7 @@ CASE_TYPE_CONFLICT_MSG = (
 
 @require_deploy_apps
 def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
-                 unique_form_id=None):
+                 form_unique_id=None):
     """
     returns an HttpResponseRedirect back to the main page for the App Manager app
     with the correct GET parameters.
@@ -36,18 +37,24 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
     params = {}
 
     args = [domain]
+    form_view = 'form_source' if toggles.APP_MANAGER_V2.enabled(request.user.username) else 'view_form'
 
     if app_id is not None:
         args.append(app_id)
-        if unique_form_id is not None:
+        if form_unique_id is not None:
             app = get_app(domain, app_id)
-            obj = app.get_form(unique_form_id, bare=False)
+            obj = app.get_form(form_unique_id, bare=False)
             module_id = obj['module'].id
             form_id = obj['form'].id
+            if obj['form'].no_vellum:
+                form_view = 'view_form'
         if module_id is not None:
             args.append(module_id)
             if form_id is not None:
                 args.append(form_id)
+                app = get_app(domain, app_id)
+                if app.get_module(module_id).get_form(form_id).no_vellum:
+                    form_view = 'view_form'
 
     if page:
         view_name = page
@@ -56,7 +63,7 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
             1: 'default_app',
             2: 'view_app',
             3: 'view_module',
-            4: 'form_source' if toggles.APP_MANAGER_V2.enabled(domain) else 'view_form',
+            4: form_view,
         }[len(args)]
 
     return HttpResponseRedirect(
@@ -119,3 +126,78 @@ def get_blank_form_xml(form_name):
         'xmlns': str(uuid.uuid4()).upper(),
         'name': form_name,
     })
+
+
+def overwrite_app(app, master_build, report_map=None):
+    excluded_fields = set(Application._meta_fields).union(
+        ['date_created', 'build_profiles', 'copy_history', 'copy_of', 'name', 'comment', 'doc_type']
+    )
+    master_json = master_build.to_json()
+    for key, value in master_json.iteritems():
+        if key not in excluded_fields:
+            app[key] = value
+    app['version'] = master_json['version']
+    wrapped_app = wrap_app(app)
+    for module in wrapped_app.modules:
+        if isinstance(module, ReportModule):
+            if report_map is not None:
+                for config in module.report_configs:
+                    try:
+                        config.report_id = report_map[config.report_id]
+                    except KeyError:
+                        raise AppEditingError('Dynamic UCR used in linked app')
+            else:
+                raise AppEditingError('Report map not passed to overwrite_app')
+    wrapped_app.copy_attachments(master_build)
+    wrapped_app.save(increment_version=False)
+
+
+def get_practice_mode_configured_apps(domain, mobile_worker_id=None):
+
+    def is_set(app_or_profile):
+        if mobile_worker_id:
+            if app_or_profile.practice_mobile_worker_id == mobile_worker_id:
+                return True
+        else:
+            if app_or_profile.practice_mobile_worker_id:
+                return True
+
+    def _practice_mode_configured(app):
+        if is_set(app):
+            return True
+        return any(is_set(profile) for _, profile in app.build_profiles.items())
+
+    return [app for app in get_apps_in_domain(domain) if _practice_mode_configured(app)]
+
+
+def unset_practice_mode_configured_apps(domain, mobile_worker_id=None):
+    """
+    Unset practice user for apps that have a practice user configured directly or
+    on a build profile of apps in the domain. If a mobile_worker_id is specified,
+    only apps configured with that user will be unset
+
+    returns:
+        list of apps on which the practice user was unset
+
+    kwargs:
+        mobile_worker_id: id of mobile worker. If this is specified, only those apps
+        configured with this mobile worker will be unset. If not, apps that are configured
+        with any mobile worker are unset
+    """
+
+    def unset_user(app_or_profile):
+        if mobile_worker_id:
+            if app_or_profile.practice_mobile_worker_id == mobile_worker_id:
+                app_or_profile.practice_mobile_worker_id = None
+        else:
+            if app_or_profile.practice_mobile_worker_id:
+                app_or_profile.practice_mobile_worker_id = None
+
+    apps = get_practice_mode_configured_apps(domain, mobile_worker_id)
+    for app in apps:
+        unset_user(app)
+        for _, profile in app.build_profiles.iteritems():
+            unset_user(profile)
+        app.save()
+
+    return apps

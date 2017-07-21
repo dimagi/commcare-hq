@@ -77,7 +77,6 @@ from tempfile import mkdtemp
 
 from django.conf import settings
 
-from corehq.apps.dump_reload.sql.dump import allow_form_processing_queries
 from corehq.apps.export import models as exports
 from corehq.apps.ota.models import DemoUserRestore
 from corehq.blobs import get_blob_db, DEFAULT_BUCKET, BlobInfo
@@ -267,6 +266,7 @@ class BlobDbBackendMigrator(BaseDocMigrator):
         self.db = get_blob_db()
         self.total_blobs = 0
         self.not_found = 0
+        self.bad_blobs_state = 0
         if not isinstance(self.db, MigratingBlobDB):
             raise MigrationError(
                 "Expected to find migrating blob db backend (got %r)" % self.db)
@@ -277,19 +277,27 @@ class BlobDbBackendMigrator(BaseDocMigrator):
     def _do_migration(self, doc):
         obj = self.blob_helper(doc, self.couchdb)
         bucket = obj._blobdb_bucket()
-        assert obj.external_blobs and obj.external_blobs == obj.blobs, doc
-        for name, meta in obj.blobs.iteritems():
+        if obj.external_blobs != obj.blobs:
+            self.bad_blobs_state += 1
+            super(BlobDbBackendMigrator, self)._backup_doc({
+                "doc_type": obj.doc_type,
+                "doc_id": obj._id,
+                "error": "blobs != external_blobs",
+            })
+        for name, meta in obj.external_blobs.iteritems():
             self.total_blobs += 1
             try:
                 content = self.db.old_db.get(meta.id, bucket)
             except NotFound:
-                super(BlobDbBackendMigrator, self)._backup_doc({
-                    "doc_type": obj.doc_type,
-                    "doc_id": obj._id,
-                    "blob_identifier": meta.id,
-                    "blob_bucket": bucket,
-                })
-                self.not_found += 1
+                if not self.db.new_db.exists(meta.id, bucket):
+                    super(BlobDbBackendMigrator, self)._backup_doc({
+                        "doc_type": obj.doc_type,
+                        "doc_id": obj._id,
+                        "blob_identifier": meta.id,
+                        "blob_bucket": bucket,
+                        "error": "not found",
+                    })
+                    self.not_found += 1
             else:
                 with content:
                     self.db.copy_blob(content, meta.info, bucket)
@@ -302,6 +310,11 @@ class BlobDbBackendMigrator(BaseDocMigrator):
             if self.dirpath is None:
                 print("Missing blob ids have been written in the log file:")
                 print(self.filename)
+        if self.bad_blobs_state:
+            print("{count} documents had `blobs != external_blobs`, which is "
+                  "not a valid state. Search for 'blobs != external_blobs' in "
+                  "the migration logs to find them."
+                  .format(count=self.bad_blobs_state))
 
     def should_process(self, doc):
         return self.blob_helper.get_external_blobs(doc)
@@ -533,10 +546,6 @@ class SqlMigrator(Migrator):
         super(SqlMigrator, self).__init__(slug, types, doc_migrator)
         self.reindexer = reindexer
 
-    def migrate(self, *args, **kw):
-        with allow_form_processing_queries():
-            return super(SqlMigrator, self).migrate(*args, **kw)
-
     def _get_document_provider(self):
         return SqlDocumentProvider(self.iteration_key, self.reindexer)
 
@@ -628,12 +637,11 @@ class SqlModelMigrator(Migrator):
         migrator = self.migrator_class(self.slug, self.domain)
 
         with migrator:
-            with allow_form_processing_queries():
-                for model_class, queryset in get_all_model_querysets_for_domain(self.model_class, self.domain):
-                    for obj in queryset.iterator():
-                        migrator.process_object(obj)
-                        if migrator.total_blobs % chunk_size == 0:
-                            print("Processed {} {} objects".format(migrator.total_blobs, self.slug))
+            for model_class, queryset in get_all_model_querysets_for_domain(self.model_class, self.domain):
+                for obj in queryset.iterator():
+                    migrator.process_object(obj)
+                    if migrator.total_blobs % chunk_size == 0:
+                        print("Processed {} {} objects".format(migrator.total_blobs, self.slug))
 
         return migrator.total_blobs, 0
 

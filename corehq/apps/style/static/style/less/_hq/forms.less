@@ -111,21 +111,29 @@ legend .subtext {
     }
 }
 
+.property-descriptions(@width) {
+    width: @width;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+}
+
 #case-config-ko, #usercase-config-ko {
     @select2Width: 210px;
 
     .case-config-select2s(@select2Width);
 
-    .wide-select2s {
-      .case-config-select2s(@select2Width * 1.5);
+    .property-description {
+      .property-descriptions(@select2Width);
     }
 
-    .property-description {
-      width: @select2Width;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: inline-block;
+    .wide-select2s {
+      @wideWidth: @select2Width * 1.5;
+      .case-config-select2s(@wideWidth);
+      .property-description {
+        .property-descriptions(@wideWidth);
+      }
     }
 }
 
@@ -214,6 +222,12 @@ textarea.vertical-resize {
     resize: vertical;
 }
 
+.ko-inline-edit-with-help {
+    .hq-help {
+        vertical-align: middle;
+    }
+}
+
 .ko-inline-edit {
     &.inline {
         display: inline-block;
@@ -239,6 +253,10 @@ textarea.vertical-resize {
             margin-left: 5px;
             margin-top: 2px;
         }
+
+        .text {
+            white-space: pre-wrap;
+        }
     }
 
     .read-write {
@@ -256,4 +274,17 @@ textarea.vertical-resize {
 
 table .ko-inline-edit .read-only:hover {
     background-color: @cc-neutral-hi;
+}
+
+.select2-container.select2-container-active > .select2-choice {
+  .box-shadow(0 0 10px @cc-brand-mid);
+}
+
+.form-config-report {
+  fieldset {
+    padding-bottom: 20px;
+  }
+  .form-actions {
+    margin-top: 0;
+  }
 }

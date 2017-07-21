@@ -1,0 +1,11 @@
+{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
+
+అంగన్ వాడీ కేంద్రం పని తీరుపై సగటు నివేదిక
+
+గృహ సందర్శనలు  {{ visits }}
+
+టి.హెచ్.ఆర్. (T.H.R.) వితరణ: {{ thr_distribution }}
+
+బరువు తూయబడ్డ పిల్లలు: {{ children_weighed }}
+
+అంగన్ వాడీ పని చేసిన రోజులు: {{ days_open }} / 25

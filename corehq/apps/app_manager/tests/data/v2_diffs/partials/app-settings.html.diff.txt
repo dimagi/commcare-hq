@@ -21,7 +21,7 @@
          <input type="checkbox"
                 data-bind="checked: boolValue, attr: {disabled: !enabled(), id: inputId}"/>
      </span>
-@@ -59,35 +60,35 @@
+@@ -55,35 +56,35 @@
  </script>
  
  <script type="text/html" id="CommcareSettings.widgets.customProperty">
@@ -79,7 +79,7 @@
          attr: {
              'data-hqmediapath': path,
              href: href
-@@ -97,27 +98,27 @@
+@@ -93,27 +94,27 @@
              mediaUploadComplete: uploadComplete
          }
      ">
@@ -116,7 +116,7 @@
          <input type="text" class="col-sm-6 form-control" data-bind="
              value: visibleValue,
              valueUpdate: 'textchange',
-@@ -127,7 +128,7 @@
+@@ -123,7 +124,7 @@
  </script>
  
  <script type="text/html" id="CommcareSettings.widgets.number">
@@ -125,7 +125,7 @@
          <input type="number" class="col-sm-3 form-control" data-bind="
              value: visibleValue,
              valueUpdate: 'textchange',
-@@ -137,166 +138,174 @@
+@@ -133,158 +134,155 @@
  </script>
  
  <script type="text/html" id="CommcareSettings.widgets.textarea">
@@ -142,30 +142,6 @@
      </span>
  </script>
  
- <script>
--    $(function () {
--        var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
--        CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
--    });
--</script>
-+  $(function () {
-+    var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
-+    CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
-+  });
-+</script>
-+
-+{% if linked_apps_enabled and app.get_doc_type != 'LinkedApplication' %}
-+<script>
-+     $(function () {
-+        var domains = {{ app.linked_whitelist|JSON }};
-+        var save = '{% url "update_linked_whitelist" domain app.id %}';
-+        var LinkedWhitelist = hqImport('app_manager/js/linked_whitelist.js').LinkedWhitelist;
-+        linkedWhitelist = new LinkedWhitelist(domains, save);
-+        $('#whitelist-section').koApplyBindings(linkedWhitelist);
-+     });
-+</script>
-+{% endif %}
- 
  <script type="text/html" id="CommcareSettings.widgets.text_input">
 -    <span data-bind="template: 'CommcareSettings.widgets.select'"></span>
 -    <aside id="custom-keys-help" data-bind="visible: visibleValue() === 'custom-keys'">
@@ -177,73 +153,17 @@
 -        <div id="custom-keys-example" style="display: none;">
 -            <h6>Example:</h6>
 -            <div class="row">
--                <div class="col-sm-6">polish.TextField.charactersKey1</div><div class="col-sm-6">.,</div>
--                <div class="col-sm-6">polish.TextField.charactersKey2</div><div class="col-sm-6">abc2</div>
--                <div class="col-sm-6">polish.TextField.charactersKey3</div><div class="col-sm-6">def3</div>
--                <div class="col-sm-6">polish.TextField.charactersKey4</div><div class="col-sm-6">ghi4</div>
--                <div class="col-sm-6">polish.TextField.charactersKey5</div><div class="col-sm-6">jkl5</div>
--                <div class="col-sm-6">polish.TextField.charactersKey6</div><div class="col-sm-6">mno6</div>
--                <div class="col-sm-6">polish.TextField.charactersKey7</div><div class="col-sm-6">pqrs7</div>
--                <div class="col-sm-6">polish.TextField.charactersKey8</div><div class="col-sm-6">tuv8</div>
--                <div class="col-sm-6">polish.TextField.charactersKey9</div><div class="col-sm-6">wxyz9</div>
--                <div class="col-sm-6">polish.TextField.charactersKey0</div><div class="col-sm-6"> 0</div>
-+    <div id="custom-keys-example" style="display: none;">
-+      <h6>Example:</h6>
-+      <div class="row">
-+        <div class="col-sm-6">polish.TextField.charactersKey1</div><div class="col-sm-6">.,</div>
-+        <div class="col-sm-6">polish.TextField.charactersKey2</div><div class="col-sm-6">abc2</div>
-+        <div class="col-sm-6">polish.TextField.charactersKey3</div><div class="col-sm-6">def3</div>
-+        <div class="col-sm-6">polish.TextField.charactersKey4</div><div class="col-sm-6">ghi4</div>
-+        <div class="col-sm-6">polish.TextField.charactersKey5</div><div class="col-sm-6">jkl5</div>
-+        <div class="col-sm-6">polish.TextField.charactersKey6</div><div class="col-sm-6">mno6</div>
-+        <div class="col-sm-6">polish.TextField.charactersKey7</div><div class="col-sm-6">pqrs7</div>
-+        <div class="col-sm-6">polish.TextField.charactersKey8</div><div class="col-sm-6">tuv8</div>
-+        <div class="col-sm-6">polish.TextField.charactersKey9</div><div class="col-sm-6">wxyz9</div>
-+        <div class="col-sm-6">polish.TextField.charactersKey0</div><div class="col-sm-6"> 0</div>
-+      </div>
-+    </div>
-+  </aside>
-+</script>
-+
-+<div class="tabbable">
-+    <ul class="nav nav-tabs">
-+    {% if app.get_doc_type == 'LinkedApplication' %}
-+        <li class="active"><a href="#linked-app" data-toggle="tab">{% trans "Linked Application" %}</a></li>
-+        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
-+    {% else %}
-+        <li class="active"><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
-+        {% if app.get_doc_type == 'Application' %}
-+            <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
-+        {% endif %}
-+        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
-+        <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
-+    {% endif %}
-+    </ul>
-+    <div class="tab-content appmanager-tab-content">
-+        {% if app.get_doc_type == 'LinkedApplication' %}
-+        <div class="tab-pane active" id="linked-app">
-+            <p> Your app is at version {{ app.version }}. The master app is at version {{ master_version }}. </p>
-+            <a class="btn btn-primary"
-+               href="{% url 'pull_master_app' domain app.id %}">
-+                {% trans 'Update from Master App' %}
-+            </a>
-+        </div>
-+        {% endif %}
-+        <div class="tab-pane" id="commcare-settings">
-+            {% include 'app_manager/v2/partials/commcare_settings.html' %}
-+        </div>
-+        {% if app.get_doc_type == 'Application' %}
-+            <div class="tab-pane" id="multimedia-tab">
-+                <div data-bind="if: load_state() === 'loading'">
-+                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator"/>
-+                    {% trans "Loading ..." %}
-+                </div>
-+                <div data-bind="html: multimedia_page_html"></div>
-+                <div data-bind="if: load_state() === 'error'">
-+                    <button class="btn btn-default"
-+                            data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
-+                </div>
-             </div>
+-                <div class="col-sm-9">polish.TextField.charactersKey1</div><div class="col-sm-3">.,</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey2</div><div class="col-sm-3">abc2</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey3</div><div class="col-sm-3">def3</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey4</div><div class="col-sm-3">ghi4</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey5</div><div class="col-sm-3">jkl5</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey6</div><div class="col-sm-3">mno6</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey7</div><div class="col-sm-3">pqrs7</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey8</div><div class="col-sm-3">tuv8</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey9</div><div class="col-sm-3">wxyz9</div>
+-                <div class="col-sm-9">polish.TextField.charactersKey0</div><div class="col-sm-3"> 0</div>
+-            </div>
 -        </div>
 -    </aside>
 -</script>
@@ -263,29 +183,46 @@
 -    url: '{% url "edit_app_attr" domain app.id 'comment' %}',
 -    placeholder: '{% trans "Enter app description here"|escapejs %}',
 -    saveValueName: 'comment',
--    readOnlyClass: 'app-comment',
 -    cols: 50,
 -"></inline-edit>
 -
 -<div class="tab-pane" id="commcare-settings">
--    {% if app.get_doc_type == 'LinkedApplication' %}
++    <div id="custom-keys-example" style="display: none;">
++      <h6>Example:</h6>
++      <div class="row">
++        <div class="col-sm-9">polish.TextField.charactersKey1</div><div class="col-sm-3">.,</div>
++        <div class="col-sm-9">polish.TextField.charactersKey2</div><div class="col-sm-3">abc2</div>
++        <div class="col-sm-9">polish.TextField.charactersKey3</div><div class="col-sm-3">def3</div>
++        <div class="col-sm-9">polish.TextField.charactersKey4</div><div class="col-sm-3">ghi4</div>
++        <div class="col-sm-9">polish.TextField.charactersKey5</div><div class="col-sm-3">jkl5</div>
++        <div class="col-sm-9">polish.TextField.charactersKey6</div><div class="col-sm-3">mno6</div>
++        <div class="col-sm-9">polish.TextField.charactersKey7</div><div class="col-sm-3">pqrs7</div>
++        <div class="col-sm-9">polish.TextField.charactersKey8</div><div class="col-sm-3">tuv8</div>
++        <div class="col-sm-9">polish.TextField.charactersKey9</div><div class="col-sm-3">wxyz9</div>
++        <div class="col-sm-9">polish.TextField.charactersKey0</div><div class="col-sm-3"> 0</div>
++      </div>
++    </div>
++  </aside>
++</script>
++
++<div class="tabbable">
++    <ul class="nav nav-tabs">
+     {% if app.get_doc_type == 'LinkedApplication' %}
 -        <p> Your app is at version {{ app.version }}. The master app is at version {{ master_version }}. </p>
 -        <a class="btn btn-primary"
 -            href="{% url 'pull_master_app' domain app.id %}">
 -            {% trans 'Update from Master App' %}
 -        </a>
 -
--    {% else %}
++        <li class="active"><a href="#linked-app" data-toggle="tab">{% trans "Linked Application" %}</a></li>
++        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
+     {% else %}
 -    <br />
 -    <form class="form-horizontal">
 -        <div class="clearfix">
 -            <div class="pull-right">
 -                <div id="settings-save-btn"></div>
-+        {% endif %}
-+        {% if app.get_doc_type != 'LinkedApplication' %}
-+            <div class="tab-pane active" id="languages">
-+                {% include 'app_manager/v2/languages.html' %}
-             </div>
+-            </div>
 -        </div>
 -        <div data-bind="foreach: sections">
 -            <fieldset data-bind="visible: notEmpty">
@@ -303,6 +240,41 @@
 -                        <div class="col-sm-2 control-label">
 -                            <label data-bind="html: name, attr: {for: inputId}" class="inner-control-label"></label>
 -                            <span data-bind="makeHqHelp: { name: name, description: $data.description, format: $data.description_format}, visible: $data.description"></span>
++        <li class="active"><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
++        {% if app.get_doc_type == 'Application' %}
++            <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
++        {% endif %}
++        <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
++        <li><a href="#commcare-settings" data-toggle="tab">{% trans "Advanced Settings" %}</a></li>
++    {% endif %}
++    </ul>
++    <div class="tab-content appmanager-tab-content">
++        {% if app.get_doc_type == 'LinkedApplication' %}
++        <div class="tab-pane active" id="linked-app">
++            <p> Your app is at version {{ app.version }}. The master app is at version {{ master_version }}. </p>
++            <a class="btn btn-primary"
++               href="{% url 'pull_master_app' domain app.id %}">
++                {% trans 'Update from Master App' %}
++            </a>
++        </div>
++        {% endif %}
++        {% if app.get_doc_type == 'Application' %}
++            <div class="tab-pane" id="multimedia-tab">
++                <div data-bind="if: load_state() === 'loading'">
++                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator"/>
++                    {% trans "Loading ..." %}
++                </div>
++                <div data-bind="html: multimedia_page_html"></div>
++                <div data-bind="if: load_state() === 'error'">
++                    <button class="btn btn-default"
++                            data-bind="click: load_if_necessary">{% trans "Try again" %}</button>
++                </div>
++            </div>
++        {% endif %}
++        {% if app.get_doc_type != 'LinkedApplication' %}
++            <div class="tab-pane active" id="languages">
++                {% include 'app_manager/v2/languages.html' %}
++            </div>
 +        {% endif %}
 +        <div class="tab-pane" id="actions">
 +            {% if app.get_doc_type != 'LinkedApplication' %}
@@ -314,7 +286,7 @@
 +                    </div>
 +                {% endif %}
 +                {% if linked_apps_enabled %}
-+                    <div id="whitelist-section" class="panel panel-appmanager panel-appmanager-form" data-bind="visible: linkedDomains().length > 0">
++                    <div id="linked-whitelist" class="panel panel-appmanager panel-appmanager-form" data-bind="visible: linkedDomains().length > 0">
 +                    <legend>{% trans 'Linked Project Whitelist' %}</legend>
 +                    <div class="tab-pane panel-body">
 +                        <div class="help-block">
@@ -352,8 +324,6 @@
 -                                    <i class="fa" data-bind="css: {'fa-arrow-left': !optionOK(), 'fa-check': optionOK}"></i>
 -                                    <span data-bind="text: disabledMessage()"></span>
 -                                </span>
--                            </div>
--                        </div>
 +                        <div data-bind="saveButton: saveButton"></div>
 +                        <table class="table">
 +                            <thead>
@@ -370,7 +340,23 @@
 +                            </tr>
 +                            </tbody>
 +                        </table>
-                     </div>
++                    </div>
++                    </div>
++                {% endif %}
++                {{ request|toggle_tag_info:"EXPORT_ZIPPED_APPS" }}
++                {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
++                    <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
++                        <form action="{% url "gzip_app" domain app.id %}" method="POST">
++                            {% csrf_token %}
++                            <legend>Export compressed application</legend>
++                            <div class="panel-body">
++                                <button type="submit" class="btn btn-primary">
++                                    <i class="fa fa-arrow-down"></i>
++                                    {% trans "Download" %}
++                                </button>
+                             </div>
+-                        </div>
+-                    </div>
 -                </div>
 -            </fieldset>
 -        </div>
@@ -398,25 +384,20 @@
 -                            name: 'CommcareSettings.widgets.customProperty'
 -                        }
 -                        ">
-                     </div>
+-                    </div>
 -
 -                </div>
 -                <button class="btn btn-default" data-bind="click: onAddCustomProperty">
 -                    <i class="fa fa-plus"></i>
 -                    {% trans "Add Custom Property" %}
 -                </button>
-+                {% endif %}
-+                {{ request|toggle_tag_info:"EXPORT_ZIPPED_APPS" }}
-+                {% if request|toggle_enabled:"EXPORT_ZIPPED_APPS" %}
-+                    <legend>Export compressed application</legend>
-+                    <form action="{% url "gzip_app" domain app.id %}" method="POST">
-+                        {% csrf_token %}
-+                        <button type="submit" class="btn btn-primary">
-+                            <i class="fa fa-arrow-down"></i>
-+                            {% trans "Download" %}
-+                        </button>
-+                    </form>
-+                    <br>
+-            </div>
+-        </fieldset>
+-        {% endif %}
+-    </form>
+-    {% endif %}
++                        </form>
++                    </div>
 +                {% endif %}
 +            {% endif %}
 +            <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
@@ -430,11 +411,7 @@
 +                        </button>
 +                    </div>
 +                </form>
-             </div>
--        </fieldset>
--        {% endif %}
--    </form>
--    {% endif %}
++            </div>
 +        </div>
 +        <div class="tab-pane" id="commcare-settings">
 +            {% include 'app_manager/v2/partials/commcare_settings.html' %}

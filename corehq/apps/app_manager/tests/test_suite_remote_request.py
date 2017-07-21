@@ -91,3 +91,36 @@ class RemoteRequestSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         suite = self.app.create_suite()
         suite = parse_normalize(suite, to_string=False)
         self.assertEqual(condition, suite.xpath('./detail[1]/action/@relevant')[0])
+
+    def test_only_default_properties(self):
+        self.module.search_config = CaseSearch(
+            default_properties=[
+                DefaultCaseSearchProperty(
+                    property=u'ɨŧsȺŧɍȺᵽ',
+                    defaultValue=(
+                        u"instance('casedb')/case"
+                        u"[@case_id='instance('commcaresession')/session/data/case_id']"
+                        u"/ɨŧsȺŧɍȺᵽ")
+                ),
+                DefaultCaseSearchProperty(
+                    property='name',
+                    defaultValue="instance('locations')/locations/location[@id=123]/@type",
+                ),
+            ],
+        )
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            suite = self.app.create_suite()
+        self.assertXmlPartialEqual(self.get_xml('search_config_default_only'), suite, "./remote-request[1]")
+
+    def test_blacklisted_owner_ids(self):
+        self.module.search_config = CaseSearch(
+            properties=[
+                CaseSearchProperty(name='name', label={'en': 'Name'}),
+            ],
+            blacklisted_owner_ids_expression="instance('commcaresession')/session/context/userid",
+        )
+        with patch('corehq.util.view_utils.get_url_base') as get_url_base_patch:
+            get_url_base_patch.return_value = 'https://www.example.com'
+            suite = self.app.create_suite()
+        self.assertXmlPartialEqual(self.get_xml('search_config_blacklisted_owners'), suite, "./remote-request[1]")

@@ -1,28 +1,18 @@
-from lxml import etree
-from lxml.builder import E
-
 import HTMLParser
 import json
 import socket
-from datetime import timedelta, date
-from collections import defaultdict, namedtuple, OrderedDict
 from StringIO import StringIO
+from collections import defaultdict, namedtuple, OrderedDict
+from datetime import timedelta, date
 
 import dateutil
-from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
-from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.csv import UnicodeWriter
-from dimagi.utils.dates import add_months
-from django.views.decorators.http import require_POST
+from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.models import User
 from django.contrib.auth import login
+from django.contrib.auth.models import User
 from django.core import management, cache
-from django.shortcuts import render
-from django.views.generic import FormView, TemplateView, View
-from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import (
     HttpResponseRedirect,
     HttpResponse,
@@ -31,26 +21,49 @@ from django.http import (
     JsonResponse,
     StreamingHttpResponse,
 )
+from django.http.response import Http404
+from django.shortcuts import render
+from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _, ugettext_lazy
+from django.views.decorators.http import require_POST
+from django.views.generic import FormView, TemplateView, View
+from lxml import etree
+from lxml.builder import E
 from restkit import Resource
 from restkit.errors import Unauthorized
-from couchdbkit import ResourceNotFound
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.xml import SYNC_XMLNS
+from corehq.apps.app_manager.models import ApplicationBase
 from corehq.apps.callcenter.indicator_sets import CallCenterIndicators
 from corehq.apps.callcenter.utils import CallCenterCase
+from corehq.apps.data_analytics.admin import MALTRowAdmin
+from corehq.apps.data_analytics.const import GIR_FIELDS
+from corehq.apps.data_analytics.models import MALTRow, GIRRow
 from corehq.apps.domain.auth import basicauth
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.domain.decorators import (
+    require_superuser, require_superuser_or_developer,
+    login_or_basic, domain_admin_required,
+    check_lockout)
+from corehq.apps.domain.models import Domain
+from corehq.apps.es import filters
+from corehq.apps.es.domains import DomainES
+from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
 from corehq.apps.hqwebapp.views import BaseSectionPageView
+from corehq.apps.locations.models import SQLLocation
+from corehq.apps.ota.views import get_restore_response, get_restore_params
 from corehq.apps.style.decorators import use_datatables, use_jquery_ui, \
     use_nvd3_v3
-from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
+from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
+from corehq.apps.users.util import format_username
+from corehq.elastic import parse_args_for_es, run_query, ES_META
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
+from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.serializers import XFormInstanceSQLRawDocSerializer, \
     CommCareCaseSQLRawDocSerializer
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import any_toggle_enabled, SUPPORT
 from corehq.util import reverse
 from corehq.util.couchdb_management import couch_config
@@ -60,39 +73,29 @@ from corehq.util.supervisord.api import (
     all_pillows_supervisor_status,
     pillow_supervisor_status
 )
-from corehq.apps.app_manager.models import ApplicationBase
-from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
-from corehq.apps.data_analytics.models import MALTRow, GIRRow
-from corehq.apps.data_analytics.const import GIR_FIELDS
-from corehq.apps.data_analytics.admin import MALTRowAdmin
-from corehq.apps.domain.decorators import (
-    require_superuser, require_superuser_or_developer,
-    login_or_basic, domain_admin_required,
-    check_lockout)
-from corehq.apps.domain.models import Domain
-from corehq.apps.ota.views import get_restore_response, get_restore_params
-from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
-from corehq.apps.users.util import format_username
-from corehq.elastic import parse_args_for_es, run_query, ES_META
 from corehq.util.timer import TimingContext
 from couchforms.models import XFormInstance
+from couchforms.openrosa_response import RESPONSE_XMLNS
 from dimagi.utils.couch.database import get_db, is_bigcouch
-from dimagi.utils.dates import force_to_date
-from dimagi.utils.django.management import export_as_csv_action
+from dimagi.utils.csv import UnicodeWriter
+from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.datespan import datespan_in_request
+from dimagi.utils.decorators.memoized import memoized
+from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
-
 from . import service_checks, escheck
-from .forms import AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm, ReprocessMessagingCaseUpdatesForm
+from .forms import (
+    AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm,
+    ReprocessMessagingCaseUpdatesForm
+)
 from .history import get_recent_changes, download_changes
 from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
 from .utils import get_celery_stats
-from corehq.apps.es.domains import DomainES
-from corehq.apps.es import filters
+
 
 @require_superuser
 def default(request):
@@ -379,7 +382,7 @@ class SystemInfoView(BaseAdminSectionView):
         context['celery_stats'] = get_celery_stats()
         context['heartbeat'] = service_checks.check_heartbeat()
 
-        context['elastic'] = escheck.check_es_cluster_health()
+        context['cluster_health'] = escheck.check_es_cluster_health()
 
         return context
 
@@ -454,6 +457,8 @@ class AdminRestoreView(TemplateView):
     def dispatch(self, request, *args, **kwargs):
         return super(AdminRestoreView, self).dispatch(request, *args, **kwargs)
 
+    def _validate_user_access(self, user):
+        return True
 
     def get(self, request, *args, **kwargs):
         full_username = request.GET.get('as', '')
@@ -467,6 +472,9 @@ class AdminRestoreView(TemplateView):
         self.user = CommCareUser.get_by_username(full_username)
         if not self.user:
             return HttpResponseNotFound('User %s not found.' % full_username)
+
+        if not self._validate_user_access(self.user):
+            raise Http404()
 
         self.app_id = kwargs.get('app_id', None)
 
@@ -498,13 +506,16 @@ class AdminRestoreView(TemplateView):
             xml_payload = etree.fromstring(string_payload)
             restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
             num_cases = len(xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case'))
+            num_locations = len(
+                xml_payload.findall("{{{0}}}fixture[@id='locations']/{{{0}}}locations/{{{0}}}location"
+                                    .format(RESPONSE_XMLNS)))
         else:
             if response.status_code in (401, 404):
                 # corehq.apps.ota.views.get_restore_response couldn't find user or user didn't have perms
                 xml_payload = E.error(response.content)
             elif response.status_code == 412:
                 # RestoreConfig.get_response returned HttpResponse 412. Response content is already XML
-                xml_payload = response.content
+                xml_payload = etree.fromstring(response.content)
             else:
                 message = _('Unexpected restore response {}: {}. '
                             'If you believe this is a bug please report an issue.').format(response.status_code,
@@ -512,6 +523,7 @@ class AdminRestoreView(TemplateView):
                 xml_payload = E.error(message)
             restore_id_element = None
             num_cases = 0
+            num_locations = 0
         formatted_payload = etree.tostring(xml_payload, pretty_print=True)
         context.update({
             'payload': formatted_payload,
@@ -519,6 +531,7 @@ class AdminRestoreView(TemplateView):
             'status_code': response.status_code,
             'timing_data': timing_context.to_list(),
             'num_cases': num_cases,
+            'num_locations': num_locations,
         })
         return context
 
@@ -531,8 +544,12 @@ class DomainAdminRestoreView(AdminRestoreView):
 
     @method_decorator(login_or_basic)
     @method_decorator(domain_admin_required)
-    def get(self, request, *args, **kwargs):
-        return super(DomainAdminRestoreView, self).get(request, *args, **kwargs)
+    def get(self, request, domain, **kwargs):
+        self.domain = domain
+        return super(DomainAdminRestoreView, self).get(request, **kwargs)
+
+    def _validate_user_access(self, user):
+        return self.domain == user.domain
 
 
 @require_POST
@@ -632,7 +649,7 @@ class _Db(object):
     def get(self, record_id):
         try:
             return self._getter(record_id)
-        except (XFormNotFound, CaseNotFound):
+        except (XFormNotFound, CaseNotFound, ObjectDoesNotExist):
             raise ResourceNotFound("missing")
 
 
@@ -646,6 +663,11 @@ _SQL_DBS = OrderedDict((db.dbname, db) for db in [
         CommCareCaseSQL._meta.db_table,
         lambda id_: CommCareCaseSQLRawDocSerializer(CommCareCaseSQL.get_obj_by_id(id_)).data,
         CommCareCaseSQL.__name__
+    ),
+    _Db(
+        SQLLocation._meta.db_table,
+        lambda id_: SQLLocation.objects.get(location_id=id_).to_json(),
+        SQLLocation.__name__
     ),
 ])
 
@@ -1056,8 +1078,7 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
         return None
 
     def post(self, request, *args, **kwargs):
-        from corehq.apps.reminders.signals import case_changed_receiver as reminders_case_changed_receiver
-        from corehq.apps.sms.signals import case_changed_receiver as sms_case_changed_receiver
+        from corehq.messaging.signals import messaging_case_changed_receiver
 
         if self.form.is_valid():
             case_ids = self.form.cleaned_data['case_ids']
@@ -1068,8 +1089,7 @@ class ReprocessMessagingCaseUpdatesView(BaseAdminSectionView):
                 if not case or case.doc_type != 'CommCareCase':
                     case_ids_not_processed.append(case_id)
                 else:
-                    reminders_case_changed_receiver(None, case)
-                    sms_case_changed_receiver(None, case)
+                    messaging_case_changed_receiver(None, case)
                     case_ids_processed.append(case_id)
 
             if case_ids_processed:

@@ -2,59 +2,51 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% if not module.is_surveys and app.advanced_app_builder %}
-
-  <script>
-      // show extra fields if user wants reg form in both case list and menu
-      $(function() {
-          var $form = $("#case-list-form"),
-              $config = $("#case_list_form-label, #case_list_media");
-          $config.addClass("hide");
-          $form.on("change", "input[type='checkbox']", function() {
-              if ($form.find(":checked").length === 2) {
-                  $config.removeClass("hide");
-              } else {
-                  $config.addClass("hide");
-              }
-          });
-      });
-  </script>
+{% if app.advanced_app_builder or module.case_list_form.form_id %}
 
   <div id="case-list-form">
-      <div class="form-group">
-          <label class="col-sm-2 control-label">
-              Registration Form Accessible in Menu
-              <span class="hq-help-template"
-                    data-title="{% trans "Registration Form Accessible from Case List" %}"
-                    data-content="{% blocktrans %}Minimize duplicate case registrations by requiring mobile workers
-                    to search the case list before they can enter a form that registers new cases.{% endblocktrans %}"
-              ></span>
-          </label>
-          <div class="col-sm-4">
-              <div class="checkbox">
-                  <label>
-                      <input type="checkbox" />
-                  </label>
-              </div>
-          </div>
-      </div>
       <div class="form-group">
           <label class="col-sm-2 control-label">
               {% trans "Registration Form Accessible from Case List" %}
               <span class="hq-help-template"
                     data-title="{% trans "Registration Form Accessible from Case List" %}"
-                    data-content="{% blocktrans %}Include a registration form in the application's menu of forms.{% endblocktrans %}"
+                    data-content="{% blocktrans %}Minimize duplicate registrations by requiring mobile workers to search the case list before registering a new case. Read more on the <a href='https://help.commcarehq.org/display/commcarepublic/Minimize+Duplicates'>Help Site</a>.{% endblocktrans %}"
               ></span>
           </label>
-          <div class="col-sm-4">
-              <div class="checkbox">
-                  <label>
-                      <input type="checkbox" checked />
-                  </label>
+          {% if not case_list_form_not_allowed_reasons %}
+              <div class="col-sm-4" data-bind="css: {'has-error': formMissing()}">
+                  <select class="form-control" data-bind="value: caseListForm">
+                    {% if case_list_form_options.form.form_id and case_list_form_options.form.form_id not in case_list_form_options.options.keys %}
+                        <option value="{{ case_list_form_options.form.form_id }}" selected>{% trans "Unknown Form (missing)" %}</option>
+                    {% endif %}
+                    <option value="">{% trans "Don't Show" %}</option>
+                    {% for id, name in case_list_form_options.options.items %}
+                        <option value="{{ id }}">{{ name }}</option>
+                    {% endfor %}
+                  </select>
+                  <input type="hidden" name="case_list_form_id" data-bind="value: caseListForm" />
+                  <div data-bind="visible: formMissing()" class="help-block">
+                      {% trans "Error! The selected form does not exist." %}
+                  </div>
               </div>
-          </div>
+          {% else %}
+              <div class="col-sm-8 alert alert-info">
+                      {% trans "Registration from the case list is not available because" %}
+                      {% if case_list_form_not_allowed_reasons|length == 1 %}
+                        {% for reason in case_list_form_not_allowed_reasons %}
+                            {{ reason }}
+                        {% endfor %}
+                      {% else %}
+                        <ul>
+                            {% for reason in case_list_form_not_allowed_reasons %}
+                                <li>{{ reason }}</li>
+                            {% endfor %}
+                        </ul>
+                      {% endif %}
+              </div>
+          {% endif %}
       </div>
-      <div class="form-group" id="case_list_form-label">
+      <div class="form-group" id="case_list_form-label" data-bind="visible: caseListForm()">
           <label class="col-sm-2 control-label">
               {% trans "Label for Case List Registration" %}
           </label>

@@ -21,6 +21,11 @@ class _BlobDBTests(object):
         with self.db.get(info.identifier) as fh:
             self.assertEqual(fh.read(), b"content")
 
+    def test_put_and_size(self):
+        identifier = get_id()
+        info = self.db.put(StringIO(b"content"), identifier)
+        self.assertEqual(self.db.size(info.identifier), len(b'content'))
+
     def test_put_and_get_with_unicode_names(self):
         bucket = "doc.4500"
         info = self.db.put(StringIO(b"content"), get_id(), bucket=bucket)
@@ -152,6 +157,7 @@ class TestFilesystemBlobDB(TestCase, _BlobDBTests):
 
     @classmethod
     def setUpClass(cls):
+        super(TestFilesystemBlobDB, cls).setUpClass()
         cls.rootdir = mkdtemp(prefix="blobdb")
         cls.db = mod.FilesystemBlobDB(cls.rootdir)
 
@@ -160,6 +166,7 @@ class TestFilesystemBlobDB(TestCase, _BlobDBTests):
         cls.db = None
         rmtree(cls.rootdir)
         cls.rootdir = None
+        super(TestFilesystemBlobDB, cls).tearDownClass()
 
     def test_put_with_colliding_blob_id(self):
         # unfortunately can't do this on S3 because there is no way to

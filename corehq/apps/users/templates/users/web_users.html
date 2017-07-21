@@ -7,140 +7,25 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'users/js/roles.js' %}"></script>
     <script src="{% static 'users/js/web_users_list.ng.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-<script>
-(function (angular, undefined) {
-    'use strict';
-    var usersApp = angular.module('usersApp', ['hq.web_users']);
-    usersApp.config(['$httpProvider', function($httpProvider) {
-        $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-        $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-        $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-    }]);
-    usersApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
-        djangoRMIProvider.configure({% djng_current_rmi %});
-    }]);
-}(window.angular));
-</script>
-<script>
-    $(function () {
-        function selectText(element) {
-            /* copied from http://stackoverflow.com/questions/985272/jquery-selecting-text-in-an-element-akin-to-highlighting-with-your-mouse */
-            var doc = document;
-            var text = element[0];
-
-            if (doc.body.createTextRange) { // ms
-                var range = doc.body.createTextRange();
-                range.moveToElementText(text);
-                range.select();
-            } else if (window.getSelection) { // moz, opera, webkit
-                var selection = window.getSelection();
-                var range = doc.createRange();
-                range.selectNodeContents(text);
-                selection.removeAllRanges();
-                selection.addRange(range);
-            }
-        }
-        $('#adminEmails').on('shown.bs.collapse', function () {
-            selectText($('#adminEmails .panel-body'));
-            $(window).trigger('scroll');
-        });
-    });
-</script>
-<script>
-    $(function () {
-        $('#restrict_users').on('change', function () {
-            var $saveButton = $('#save_restrict_option');
-            $saveButton
-                    .prop('disabled', false)
-                    .removeClass('disabled btn-default')
-                    .addClass('btn-success')
-                    .text('{% trans "Save" %}');
-        });
-        $('#save_restrict_option').click(function(e) {
-            var post_url = '{% url "location_restriction_for_users" domain %}';
-            $(this).text('Saving ...');
-            $.post(post_url,
-                {restrict_users: $('#restrict_users')[0].checked},
-                function(data, status) {
-                    $('#save_restrict_option')
-                            .text('{% trans "Saved" %}')
-                            .removeClass('btn-success')
-                            .prop('disabled', true)
-                            .addClass('disabled btn-default');
-            });
-            e.preventDefault();
-        });
-
-        $('.resend-invite').click(function (e) {
-            $(this).addClass('disabled').prop('disabled', true);
-            var post_url = '{% url "reinvite_web_user" domain %}';
-            var doc_id = this.getAttribute('data-invite');
-            var self = this;
-            $.post(post_url, {invite: doc_id},
-                function(data) {
-                    $(self).parent().text(data.response);
-                    self.remove();
-                }
-            );
-            e.preventDefault();
-        });
-
-        var $userRolesTable = $('#user-roles-table');
-        hqImport('users/js/roles.js').initUserRoles($userRolesTable, {
-            userRoles: {{ user_roles|JSON }},
-            defaultRole: {{ default_role|JSON }},
-            saveUrl: '{% url "post_user_role" domain %}',
-            deleteUrl: '{% url "delete_user_role" domain %}',
-            reportOptions: {{ report_list|JSON }},
-            allowEdit: {{ can_edit_roles|BOOL }},
-            canRestrictAccessByLocation: {{ can_restrict_access_by_location|BOOL }},
-            landingPageChoices: {{ landing_page_choices|JSON }},
-        });
-        $userRolesTable.show();
-
-        function handleDeletion($el, title, body, post_url, data) {
-            var id = $el.data('id');
-            $('#confirm-delete').off('click');
-            $('#confirm-delete').on('click', function () {
-                var $button = $(this);
-                $button.addClass('disabled').prop('disabled', true);
-                $.post(post_url, {id: id},
-                    function(data) {
-                        $el.closest("tr").remove();
-                        $button.removeClass('disabled').prop('disabled', false);
-                        $('#modal-deletion').modal('hide');
-                    }
-                );
-            });
-            $('#modal-deletion').find(".modal-title").html(title);
-            $('#modal-deletion').find(".modal-body").html($("<p/>").append(body));
-            $('#modal-deletion').modal('show');
-        };
-
-        $('.delete-request').on('click', function(e) {
-            handleDeletion($(this),
-                '{% trans "Delete request" %}',
-                '{% trans "Are you sure you want to delete this request?" %}',
-                '{% url "delete_request" domain %}'
-            );
-            e.preventDefault();
-        });
-        $('.delete-invitation').on('click', function(e) {
-            handleDeletion($(this),
-                '{% trans "Delete invitation" %}',
-                '{% trans "Are you sure you want to delete this invitation?" %}',
-                '{% url "delete_invitation" domain %}'
-            );
-            e.preventDefault();
-        });
-    });
-</script>
+    <script src="{% static 'users/js/web_users.js' %}"></script>
 {% endblock %}
 
 {% block page_content %}
+    {% registerurl "delete_invitation" domain %}
+    {% registerurl "delete_request" domain %}
+    {% registerurl "post_user_role" domain %}
+    {% registerurl "delete_user_role" domain %}
+    {% registerurl "location_restriction_for_users" domain %}
+    {% registerurl "reinvite_web_user" domain %}
+    {% initial_page_data "djng_current_rmi" djng_current_rmi %}
+    {% initial_page_data "user_roles" user_roles %}
+    {% initial_page_data "default_role" default_role %}
+    {% initial_page_data "report_list" report_list %}
+    {% initial_page_data "web_apps_list" web_apps_list %}
+    {% initial_page_data "can_edit_roles" can_edit_roles %}
+    {% initial_page_data "can_restrict_access_by_location" can_restrict_access_by_location %}
+    {% initial_page_data "landing_page_choices" landing_page_choices %}
+
     <p class="lead">
         {% blocktrans with hq_name=commcare_hq_names.COMMCARE_HQ_NAME cc_name=commcare_hq_names.COMMCARE_NAME %}
             Web Users can manage and view data on {{ hq_name }}.
@@ -689,6 +574,44 @@
                                             </div>
                                         </div>
                                     </div>
+                                    {% if request|toggle_enabled:"ROLE_WEBAPPS_PERMISSIONS" %}
+                                        <div class="form-group">
+                                            <label class="col-sm-4 control-label">
+                                                {% trans "View All Web Apps" %}
+                                            </label>
+                                            <div class="col-sm-8 controls">
+                                                <div class="checkbox">
+                                                    <label>
+                                                        <input type="checkbox"
+                                                               data-bind="checked: webAppsPermissions.all" />
+                                                        {% trans "Allow role to view all Web Apps." %}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group"
+                                             data-bind="visible: !webAppsPermissions.all()">
+                                            <label class="col-sm-4 control-label">
+                                                {% trans "Web Apps Permissions" %}
+                                            </label>
+                                            <div class="col-sm-8 controls">
+                                                <div class="panel panel-default">
+                                                    <div class="panel-heading">
+                                                        {% trans "Select which Web Apps the role can view:" %}
+                                                    </div>
+                                                    <div class="panel-body"
+                                                         data-bind="foreach: webAppsPermissions.specific, visibleFade: !webAppsPermissions.all()">
+                                                        <div class="checkbox">
+                                                            <label>
+                                                                <input type="checkbox" data-bind="checked: value"/>
+                                                                <span data-bind="html: name"></span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
                                     <div class="form-group">
                                         <label class="col-sm-4 control-label"
                                                for="landing-page">
@@ -701,6 +624,20 @@
                                                 optionsValue: 'id',
                                                 value: default_landing_page
                                             "></select>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-4 control-label">
+                                            {% trans "Allow Reporting Issues" %}
+                                        </label>
+                                        <div class="col-sm-8 controls">
+                                            <div class="checkbox">
+                                                <label>
+                                                    <input type="checkbox"
+                                                           data-bind="checked: permissions.report_an_issue" />
+                                                    {% trans "Allow this role to report issues." %}
+                                                </label>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="form-group">

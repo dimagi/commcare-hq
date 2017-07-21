@@ -326,7 +326,6 @@
     ],
     "named_expressions": {},
     "named_filters": {},
-    "engine_id": "icds-ucr",
-    "backend_id": "LABORATORY"
+    "engine_id": "icds-ucr"
   }
 }

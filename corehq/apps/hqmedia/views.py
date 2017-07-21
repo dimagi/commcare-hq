@@ -82,6 +82,7 @@ class BaseMultimediaUploaderView(BaseMultimediaTemplateView):
     def page_context(self):
         return {
             'uploaders': self.upload_controllers,
+            'uploaders_js': [u.js_options for u in self.upload_controllers],
             "sessionid": self.request.COOKIES.get('sessionid'),
         }
 
@@ -527,9 +528,12 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
 
     name = "download_multimedia_zip"
     compress_zip = False
-    zip_name = 'commcare.zip'
     include_multimedia_files = True
     include_index_files = False
+
+    @property
+    def zip_name(self):
+        return 'commcare_v{}.zip'.format(self.app.version)
 
     def check_before_zipping(self):
         if not self.app.multimedia_map and self.include_multimedia_files:
@@ -665,6 +669,7 @@ class ViewMultimediaFile(View):
 
 def iter_index_files(app, build_profile_id=None):
     from corehq.apps.app_manager.views.download import download_index_files
+    from dimagi.utils.logging import notify_exception
     skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
     text_extensions = ('.xml', '.ccpr', '.txt')
     files = []
@@ -688,6 +693,7 @@ def iter_index_files(app, build_profile_id=None):
     try:
         files = download_index_files(app, build_profile_id)
     except Exception as e:
+        notify_exception(None, e.message)
         errors = [unicode(e)]
 
     return _files(files), errors

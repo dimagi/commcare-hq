@@ -7,7 +7,8 @@ class DataTablesColumn(object):
 
     def __init__(self, name, span=0, sort_type=None, sort_direction=None,
                  help_text=None, sortable=True, rotate=False,
-                 expected=None, prop_name=None, visible=True, data_slug=None):
+                 expected=None, prop_name=None, visible=True, data_slug=None,
+                 alt_prop_name=None):
         self.html = name
         self.css_span = span
         self.sort_type = sort_type
@@ -21,6 +22,7 @@ class DataTablesColumn(object):
             expected = "%d" % expected
         self.expected = expected
         self.data_slug = data_slug
+        self.alt_prop_name = alt_prop_name
 
     @property
     def render_html(self):
@@ -120,6 +122,7 @@ class DataTablesHeader(object):
     no_sort = False
     complex = True
     span = 0
+    auto_width = False
     custom_sort = None
 
     def __init__(self, *args):

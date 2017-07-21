@@ -16,6 +16,10 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             "click .js-module-audio-pause": "audioPause",
         },
 
+        initialize: function (options) {
+            this.menuIndex = options.menuIndex;
+        },
+
         getTemplate: function () {
             if (this.model.collection.layoutStyle === FormplayerFrontend.Constants.LayoutStyles.GRID) {
                 return "#menu-view-grid-item-template";
@@ -71,6 +75,7 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
                 navState: navState,
                 imageUrl: imageUri ? FormplayerFrontend.request('resourceMap', imageUri, appId) : "",
                 audioUrl: audioUri ? FormplayerFrontend.request('resourceMap', audioUri, appId) : "",
+                menuIndex: this.menuIndex,
             };
         },
     });
@@ -92,9 +97,10 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
                 environment: FormplayerFrontend.request('currentUser').environment,
             };
         },
-        childViewOptions: function () {
+        childViewOptions: function (model, index) {
             return {
                 sessionId: this.options.sessionId,
+                menuIndex: index,
             };
         },
     });
@@ -203,15 +209,16 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
     Views.CaseView = Marionette.ItemView.extend({
         tagName: "tr",
         template: "#case-view-item-template",
-        className: "formplayer-request",
 
         events: {
             "click": "rowClick",
         },
 
+        className: "formplayer-request",
+
         rowClick: function (e) {
             e.preventDefault();
-            FormplayerFrontend.trigger("menu:show:detail", this.options.model.get('id'), 0);
+            FormplayerFrontend.trigger("menu:show:detail", this.model.get('id'), 0, false);
         },
 
         templateHelpers: function () {
@@ -226,12 +233,25 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
         },
     });
 
+    Views.CaseViewUnclickable = Views.CaseView.extend({
+        events: {},
+        className: "",
+        rowClick: function () {},
+    });
+
     Views.CaseTileView = Views.CaseView.extend({
         template: "#case-tile-view-item-template",
         templateHelpers: function () {
             var dict = Views.CaseTileView.__super__.templateHelpers.apply(this, arguments);
             dict['prefix'] = this.options.prefix;
             return dict;
+        },
+    });
+
+    Views.PersistentCaseTileView = Views.CaseTileView.extend({
+        rowClick: function (e) {
+            e.preventDefault();
+            FormplayerFrontend.trigger("menu:show:detail", this.options.model.get('id'), 0, true);
         },
     });
 
@@ -374,6 +394,11 @@ FormplayerFrontend.module("Menus.Views", function (Views, FormplayerFrontend, Ba
             Views.GridCaseTileListView.__super__.initialize.apply(this, arguments);
         },
         childView: Views.GridCaseTileViewItem,
+    });
+
+    Views.CaseListDetailView = Views.CaseListView.extend({
+        template: "#case-view-list-detail-template",
+        childView: Views.CaseViewUnclickable,
     });
 
     Views.BreadcrumbView = Marionette.ItemView.extend({

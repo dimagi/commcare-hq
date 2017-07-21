@@ -29,6 +29,10 @@
 
 
 {% block page_content %}
+    {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
+    {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
+    {% initial_page_data 'uploaders' uploaders_js %}
+
     <p>{% blocktrans %}Use this tool to upload ZIP files of your multimedia, so you don't have to
         upload each file one-by-one.{% endblocktrans %}</p>
     <p>{% blocktrans %}The bulk uploader will compare the file paths in your form with the file paths

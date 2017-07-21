@@ -11,11 +11,12 @@ from corehq.apps.es import case_search as case_search_es
 """
 from . import filters, queries
 
-from corehq.apps.es.cases import CaseES
+from corehq.apps.es.cases import CaseES, owner
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
 
 
 PATH = "case_properties"
+RELEVANCE_SCORE = "commcare_search_score"
 
 
 class CaseSearchES(CaseES):
@@ -23,7 +24,7 @@ class CaseSearchES(CaseES):
 
     @property
     def builtin_filters(self):
-        return [case_property_filter] + super(CaseSearchES, self).builtin_filters
+        return [case_property_filter, blacklist_owner_id] + super(CaseSearchES, self).builtin_filters
 
     @property
     def _case_property_queries(self):
@@ -86,13 +87,19 @@ def case_property_filter(key, value):
     )
 
 
-def flatten_result(result):
+def blacklist_owner_id(owner_id):
+    return filters.NOT(owner(owner_id))
+
+
+def flatten_result(hit):
     """Flattens a result from CaseSearchES into the format that Case serializers
     expect
 
     i.e. instead of {'name': 'blah', 'case_properties':{'key':'foo', 'value':'bar'}} we return
     {'name': 'blah', 'foo':'bar'}
     """
+    result = hit['_source']
+    result[RELEVANCE_SCORE] = hit['_score']
     case_properties = result.pop('case_properties', [])
     for case_property in case_properties:
         key = case_property.get('key')

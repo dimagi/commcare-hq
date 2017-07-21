@@ -1,7 +1,7 @@
 from functools import partial
 from dateutil import rrule
 from corehq.apps.locations.dbaccessors import get_one_user_at_location
-from corehq.apps.locations.models import SQLLocation, Location
+from corehq.apps.locations.models import SQLLocation, get_location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from custom.ilsgateway.filters import ProgramFilter, ILSDateFilter, ILSAsyncLocationFilter
 from custom.ilsgateway.models import OrganizationSummary, GroupSummary, SupplyPointStatusTypes, DeliveryGroups
@@ -204,7 +204,7 @@ class RRreport(DetailsReport):
         data_providers = []
         if config['location_id']:
             data_providers = [RandRSubmissionData(config=config, css_class='row_chart_all')]
-            location = Location.get(config['location_id'])
+            location = get_location(config['location_id'])
             if location.location_type_name in ['REGION', 'MSDZONE', 'MOHSW']:
                 data_providers.append(RRStatus(config=config, css_class='row_chart_all'))
             elif location.location_type_name == 'FACILITY':

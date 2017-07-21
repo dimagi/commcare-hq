@@ -19,6 +19,7 @@
   collapse: true
   settings:
     - hq.build_spec  # CommCare Version
+    - hq.practice_mobile_worker_id # Practice Mobile Worker
     - properties.cc-autoup-freq  # Auto Update Frequency
     - properties.unsent-number-limit  # Unsent Form Limit
     - properties.cc-content-valid  # Multimedia Validation
@@ -33,9 +34,9 @@
     - hq.use_j2me_endpoint  # Use HTTP
     - hq.platform  # J2ME Platform
     - hq.admin_password  # Admin Password
+    - properties.password_format  # Password Format
     - properties.cc-send-procedure  # Send Data
     - properties.server-tether  # Sync Mode
-    - properties.password_format  # Password Format
     - properties.logenabled  # Logging Enabled
 
 
@@ -74,11 +75,11 @@
   id: app-settings-advanced
   collapse: true
   settings:
-    - properties.advanced_app_builder
     - properties.log_prop_weekly  # Weekly Log Sending Frequency
     - properties.log_prop_daily  # Daily Log Sending Frequency
     - hq.secure_submissions
     - hq.translation_strategy
+    - hq.mobile_ucr_sync_interval
 
 - title: 'Disabled'
   id: app-settings-disabled

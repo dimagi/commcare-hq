@@ -1,6 +1,7 @@
 import datetime
 
-from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper, TermsAggregation
+from corehq.apps.es.aggregations import AggregationTerm, NestedTermAggregationsHelper, TermsAggregation, \
+    TopHitsAggregation
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.sms import SMSES
 from corehq.apps.hqadmin.reporting.reports import (
@@ -12,6 +13,7 @@ from dimagi.utils.dates import add_months
 
 
 def get_app_submission_breakdown_es(domain_name, monthspan):
+    # takes > 1 m to load at 50k worker scale
     terms = [
         AggregationTerm('app_id', 'app_id'),
         AggregationTerm('device_id', 'form.meta.deviceID'),
@@ -64,6 +66,18 @@ def active_mobile_users(domain, start, end, *args):
     )
 
     return set(user_ids), form_users, sms_users
+
+
+def get_forms_for_users(domain, user_ids, start, end):
+    query = (
+        FormES()
+        .domain(domain)
+        .submitted(gte=start, lte=end)
+        .user_id(user_ids)
+        .source(['form.meta.userID', 'form.case', 'form.@xmlns'])
+    )
+
+    return query.scroll()
 
 
 def get_possibly_experienced(domain, start):

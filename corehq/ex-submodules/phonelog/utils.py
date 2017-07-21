@@ -59,6 +59,7 @@ def _process_user_subreport(xform):
             user_id=log["user_id"],
             username=log["username"],
             sync_token=log["sync_token"],
+            server_date=xform.received_on
         ))
     UserEntry.objects.bulk_create(to_save)
 

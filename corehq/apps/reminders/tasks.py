@@ -1,9 +1,13 @@
 from datetime import datetime, timedelta
+from celery.schedules import crontab
 from celery.task import periodic_task, task
+from corehq.apps.hqcase.esaccessors import scroll_case_ids_by_domain_and_case_type
 from corehq.apps.reminders.models import (CaseReminderHandler, CaseReminder,
     CASE_CRITERIA, REMINDER_TYPE_DEFAULT)
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.celery_utils import no_result_task
+from corehq.util.decorators import serial_task
 from django.conf import settings
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.chunked import chunked
@@ -32,9 +36,8 @@ if not settings.REMINDERS_QUEUE_ENABLED:
         CaseReminderHandler.fire_reminders()
 
 
-@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
-      default_retry_delay=CASE_CHANGED_RETRY_INTERVAL * 60, max_retries=CASE_CHANGED_RETRY_MAX,
-      bind=True)
+@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True, bind=True,
+                default_retry_delay=CASE_CHANGED_RETRY_INTERVAL * 60, max_retries=CASE_CHANGED_RETRY_MAX)
 def case_changed(self, domain, case_id):
     try:
         handler_ids = CaseReminderHandler.get_handler_ids(
@@ -47,9 +50,26 @@ def case_changed(self, domain, case_id):
         self.retry(exc=e)
 
 
+@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True, bind=True,
+                default_retry_delay=CASE_CHANGED_RETRY_INTERVAL * 60, max_retries=CASE_CHANGED_RETRY_MAX)
+def process_handlers_for_case_changed(self, domain, case_id, handler_ids):
+    try:
+        _case_changed(domain, case_id, handler_ids)
+    except Exception as e:
+        self.retry(exc=e)
+
+
 def _case_changed(domain, case_id, handler_ids):
     case = CaseAccessors(domain).get_case(case_id)
+    _process_case_changed_for_case(domain, case, handler_ids)
+
+
+def _process_case_changed_for_case(domain, case, handler_ids):
     for handler in CaseReminderHandler.get_handlers_from_ids(handler_ids):
+        if handler.case_type != case.type:
+            continue
+        if handler.domain != domain:
+            raise ValueError("Unexpected domain mismatch: %s, %s" % (handler.domain, domain))
         if handler.start_condition_type == CASE_CRITERIA:
             kwargs = {}
             if handler.uses_time_case_property:
@@ -58,13 +78,9 @@ def _case_changed(domain, case_id, handler_ids):
                     'prev_definition': handler,
                 }
             handler.case_changed(case, **kwargs)
-            if handler.uses_parent_case_property:
-                subcases = case.get_subcases(index_identifier=DEFAULT_PARENT_IDENTIFIER)
-                for subcase in subcases:
-                    handler.case_changed(subcase, **kwargs)
 
 
-@task(queue=settings.CELERY_REMINDER_RULE_QUEUE, ignore_result=True, acks_late=True)
+@no_result_task(queue=settings.CELERY_REMINDER_RULE_QUEUE, acks_late=True)
 def process_reminder_rule(handler, schedule_changed, prev_definition,
     send_immediately):
     try:
@@ -75,7 +91,7 @@ def process_reminder_rule(handler, schedule_changed, prev_definition,
     handler.save(unlock=True)
 
 
-@task(queue=CELERY_REMINDERS_QUEUE, ignore_result=True, acks_late=True)
+@no_result_task(queue=CELERY_REMINDERS_QUEUE, acks_late=True)
 def fire_reminder(reminder_id, domain):
     try:
         if reminder_rate_limiter.can_perform_action(domain):
@@ -113,7 +129,7 @@ def _fire_reminder(reminder_id):
                 reminder.save()
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
+@no_result_task(queue='background_queue', acks_late=True)
 def delete_reminders_for_cases(domain, case_ids):
     handler_ids = CaseReminderHandler.get_handler_ids(
         domain, reminder_type_filter=REMINDER_TYPE_DEFAULT)

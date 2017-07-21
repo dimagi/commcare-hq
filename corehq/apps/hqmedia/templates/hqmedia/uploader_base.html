@@ -1,9 +1,7 @@
 {% extends "style/base_page.html" %}
+{% load hq_shared_tags %}
 
 {% block js %} {{ block.super }}
     {% include 'hqmedia/partials/multimedia_js.html' %}
-{% endblock %}
-
-{% block js-inline %} {{ block.super }}
-    {% include 'hqmedia/partials/multimedia_init.html' %}
+    <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
 {% endblock %}

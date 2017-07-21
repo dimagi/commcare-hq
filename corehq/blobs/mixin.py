@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import re
 import sys
+import uuid
 from collections import defaultdict
 from contextlib import contextmanager, nested
 from cStringIO import StringIO
@@ -190,7 +191,7 @@ class BlobMixin(Document):
         @contextmanager
         def atomic_blobs_context():
             if self._id is None:
-                self._id = self.get_db().server.next_uuid()
+                self._id = uuid.uuid4().hex
             old_external_blobs = dict(self.external_blobs)
             if self._migrating_blobs_from_couch:
                 if self._attachments:

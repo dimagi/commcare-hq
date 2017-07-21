@@ -5,21 +5,19 @@
 {# For APP BUILDER PROTOTYPE use only #}
 
 <a id="view_form_{{ module.id }}_{{ form.id }}_sidebar"
+   {% if form.no_vellum %}
+   href="{% url "view_form" domain app.id module.id form.id %}"
+   {% else %}
    href="{% url "form_source" domain app.id module.id form.id %}"
-   data-moduleid="{{ module.id }}"
-   data-formid="{{ form.id }}"
-   data-updateprop="href"
-   data-updatevalue="{% url "form_source" domain app.id 'replacewithmoduleid' 'replacewithformid' %}"
+   {% endif %}
+   data-category="App Builder"
+   data-action="Open Form"
+   data-label="Edit Pen"
    class="appnav-title
+          track-usage-link
           {% if not form.no_vellum %}appnav-title-secondary {% endif %}
-          {% if form.get_action_type == 'open' %}appnav-title-no-delete  appnav-title-registration
-          {% elif form.get_action_type == 'close' or form.get_action_type == 'update' %} appnav-title-followup
-          {% else %}appnav-title-survey
-          {% endif %}
           appnav-responsive">
-    {% if form.get_action_type != 'open' %}
         <i class="drag_handle appnav-drag-icon"></i>
-    {% endif %}
     <i
     {% if form.get_action_type == 'open' %}
         class="fcc fcc-app-createform appnav-primary-icon appnav-primary-icon-lg"
@@ -37,6 +35,6 @@
         >
     </i>
     <span {% if form == selected_form %}class="variable-form_name"{% endif %}>
-    {{ form.name|html_trans_prefix:langs }}
+        {{ form.name|html_trans_prefix:langs }}
     </span>
 </a>

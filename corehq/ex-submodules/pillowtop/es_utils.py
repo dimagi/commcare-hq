@@ -1,5 +1,6 @@
 from dimagi.ext import jsonobject
-from copy import copy
+from django.conf import settings
+from copy import copy, deepcopy
 from datetime import datetime
 from elasticsearch import TransportError
 from pillowtop import get_all_pillow_classes
@@ -7,11 +8,10 @@ from pillowtop.logger import pillow_logging
 
 INDEX_REINDEX_SETTINGS = {
     "index": {
-        "refresh_interval": "900s",
+        "refresh_interval": "1800s",
         "merge.policy.merge_factor": 20,
         "store.throttle.max_bytes_per_sec": "1mb",
         "store.throttle.type": "merge",
-        "number_of_replicas": "0"
     }
 }
 
@@ -21,7 +21,6 @@ INDEX_STANDARD_SETTINGS = {
         "merge.policy.merge_factor": 10,
         "store.throttle.max_bytes_per_sec": "5mb",
         "store.throttle.type": "node",
-        "number_of_replicas": "0"
     }
 }
 
@@ -30,12 +29,26 @@ class ElasticsearchIndexInfo(jsonobject.JsonObject):
     index = jsonobject.StringProperty(required=True)
     alias = jsonobject.StringProperty()
     type = jsonobject.StringProperty()
-    meta = jsonobject.DictProperty()
     mapping = jsonobject.DictProperty()
 
     def __unicode__(self):
         return u'{} ({})'.format(self.alias, self.index)
 
+    @property
+    def meta(self):
+        meta_settings = deepcopy(settings.ES_META['default'])
+        meta_settings.update(
+            settings.ES_META.get(self.alias, {})
+        )
+        meta_settings.update(
+            settings.ES_META.get(settings.SERVER_ENVIRONMENT, {}).get(self.alias, {})
+        )
+        return meta_settings
+
+    def to_json(self):
+        json = super(ElasticsearchIndexInfo, self).to_json()
+        json['meta'] = self.meta
+        return json
 
 def update_settings(es, index, settings_dict):
     return es.indices.put_settings(settings_dict, index=index)

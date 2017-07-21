@@ -1,6 +1,21 @@
 --- 
 +++ 
-@@ -20,32 +20,39 @@
+@@ -7,47 +7,54 @@
+             <button type="button" class="close" data-dismiss="modal">
+                 <span aria-hidden="true">&times;</span>
+             </button>
+-            <h4 class="modal-title">{% trans "Deploying version" %} <span data-bind="text: version"></span></h4>
++            <h4 class="modal-title">{% trans "Version" %} <span data-bind="text: version"></span></h4>
+         </div>
+         <div class="modal-body">
+         {% if not has_mobile_workers %}
+             <div class="alert alert-danger">
+                 {% blocktrans %}
+                     Your project does not have any mobile workers!  Only mobile workers can log into a CommCare application.
+-                    Before you can deploy your application,
++                    Before you can publish your application,
+                 {% endblocktrans %}
+                 <a href="{% url "mobile_workers" domain %}">{% trans "create your first mobile worker" %}</a>.
              </div>
          {% else %}
              <div class="panel-group" data-bind="attr: {id: 'deploy-accordion_' + id()}">
@@ -12,8 +27,10 @@
 -                            href="#panel-android"
 -                            aria-expanded="true"
 -                            aria-controls="panel-android"
--                            data-bind="attr: {'data-parent': '#deploy-accordion_' + id()}"
--                            >
+-                            data-bind="
+-                                click: get_short_odk_url,
+-                                attr: {'data-parent': '#deploy-accordion_' + id()}
+-                            ">
 -                            {% trans "Download to Android" %}
 -                        </a>
 +                        <h4 class="panel-title">
@@ -22,8 +39,10 @@
 +                                href="#panel-android"
 +                                aria-expanded="true"
 +                                aria-controls="panel-android"
-+                                data-bind="attr: {'data-parent': '#deploy-accordion_' + id()}"
-+                                >
++                                data-bind="
++                                    click: get_short_odk_url,
++                                    attr: {'data-parent': '#deploy-accordion_' + id()}
++                                ">
 +                                {% trans "Download to Android" %}
 +                            </a>
 +                        </h4>
@@ -39,7 +58,7 @@
 -                                        <li>
 -                                            <a>{% trans "Offline Install" %}</a>
 -                                        </li>
-+                                    <ul class="nav nav-tabs" role="tablist">
++                                    <ul class="nav nav-pills" role="tablist">
 +                                      <li class="active">
 +                                        <a href="#online-install-tab" data-toggle="tab">
 +                                          {% trans "Online Install" %}
@@ -59,7 +78,7 @@
                                              <p>
                                                  {% trans "Download" %}
                                                  <a href="https://play.google.com/store/apps/details?id=org.commcare.dalvik">
-@@ -106,7 +113,7 @@
+@@ -108,7 +115,7 @@
                                                      </span>
                                                  </p>
                                              </div>
@@ -68,7 +87,7 @@
                                              <div data-bind="ifnot: hqImport('app_manager/js/app_manager.js').versionGE(build_spec.version(), '2.13.0')">
                                                  Upgrade to CommCare 2.13 to use this feature
                                              </div>
-@@ -164,20 +171,22 @@
+@@ -166,20 +173,22 @@
                          </div>
                      </div>
                  </div>
@@ -104,7 +123,7 @@
                      </div>
                      <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_download_java'}">
                          <div class="panel-body">
-@@ -207,8 +216,9 @@
+@@ -209,8 +218,9 @@
                      </div>
                  </div>
                  {% if can_send_sms %}
@@ -115,7 +134,7 @@
                              <a data-toggle="collapse"
                                 data-bind="
                                     click: onSMSPanelClick,
-@@ -219,8 +229,9 @@
+@@ -221,8 +231,9 @@
                                     }
                                  "
                                 aria-expanded="true" aria-controls="panel-sms">
@@ -127,7 +146,7 @@
                      </div>
                      <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_sms'}">
                          <div class="panel-body">
-@@ -277,20 +288,22 @@
+@@ -279,20 +290,22 @@
                  </div>
                  {% endif %}
                  {% if multimedia_state.has_media %}
@@ -163,3 +182,29 @@
                          </div>
                          <div class="panel-collapse collapse" data-bind="attr: {id: id() + '_multimedia'}">
                              <div class="panel-body">
+@@ -302,15 +315,17 @@
+                     </div>
+                 {% endif %}
+                 {% if request.user.is_superuser %}
+-                    <div class="panel panel-default">
++                    <div class="panel panel-appmanager">
+                         <div class="panel-heading">
+-                            <a class="track-usage-link"
+-                               data-category="App Manager"
+-                               data-action="Deploy Type"
+-                               data-label="View Source Files"
+-                               data-bind="attr: {href: $root.reverse('download_index', id)}">
+-                                {% trans 'View Source Files' %}
+-                            </a>
++                            <h4 class="panel-title">
++                                <a class="track-usage-link"
++                                   data-category="App Manager"
++                                   data-action="Deploy Type"
++                                   data-label="View Source Files"
++                                   data-bind="attr: {href: $root.reverse('download_index', id)}">
++                                    {% trans 'View Source Files' %}
++                                </a>
++                            </h4>
+                         </div>
+                     </div>
+                 {% endif %}

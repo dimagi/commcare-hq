@@ -17,16 +17,20 @@ def copy_payload_and_synclog_and_get_new_file(filelike_payload):
     makes a copy of the sync log, and then returns a new FileReference with the same contents
     except using the new sync log ID.
     """
-    synclog_id, end_position = extract_synclog_id_from_filelike_payload(filelike_payload)
-    old_sync_log = get_properly_wrapped_sync_log(synclog_id)
-    new_sync_log_doc = old_sync_log.to_json()
-    new_sync_log_id = uuid.uuid4().hex
-    new_sync_log_doc['_id'] = new_sync_log_id
-    del new_sync_log_doc['_rev']
-    old_sync_log.get_db().save_doc(new_sync_log_doc)
-    return replace_sync_log_id_in_filelike_payload(
-        filelike_payload, old_sync_log._id, new_sync_log_id, end_position
-    )
+    fd, path = tempfile.mkstemp()
+    with os.fdopen(fd, 'r+') as tmp_payload:
+        shutil.copyfileobj(filelike_payload, tmp_payload)
+
+        synclog_id, end_position = extract_synclog_id_from_filelike_payload(tmp_payload)
+        old_sync_log = get_properly_wrapped_sync_log(synclog_id)
+        new_sync_log_doc = old_sync_log.to_json()
+        new_sync_log_id = uuid.uuid4().hex
+        new_sync_log_doc['_id'] = new_sync_log_id
+        del new_sync_log_doc['_rev']
+        old_sync_log.get_db().save_doc(new_sync_log_doc)
+        return replace_sync_log_id_in_filelike_payload(
+            tmp_payload, old_sync_log._id, new_sync_log_id, end_position
+        )
 
 
 def extract_synclog_id_from_filelike_payload(filelike_payload):

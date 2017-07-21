@@ -3,20 +3,11 @@
 {% load hq_shared_tags %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static 'style/js/main.js' %}"></script>
+    <script src="{% static 'userreports/js/data_source_select.js' %}"></script>
 {% endblock %}
 
 {% block page_title %}{% trans "Step 1 of 2 - Select Data Source" %}{% endblock page_title %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        $(function () {
-            $("#report-builder-form").koApplyBindings({
-                application: ko.observable(""),
-                sourceType: ko.observable(""),
-                sourcesMap: {{ sources_map|JSON }},
-                labelMap: {'case': gettext('Case'), 'form': gettext('Form')}
-            });
-        });
-    </script>
+{% block page_content %}{{ block.super }}
+    {% initial_page_data 'sources_map' sources_map %}
 {% endblock %}

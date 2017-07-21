@@ -170,6 +170,9 @@ ANALYTICS_CONFIG = {
     "HQ_INSTANCE": ''  # e.g. "www", or "india", or "staging"
 }
 
+# Green house api key
+GREENHOUSE_API_KEY = ''
+
 AXES_LOCK_OUT_AT_FAILURE = False
 LUCENE_ENABLED = True
 
@@ -201,9 +204,11 @@ LOCAL_APPS = (
 #    'dimagi.utils',
 #    'testapps.test_elasticsearch',
 #    'testapps.test_pillowtop',
+#    'django_fsm', # Adds the ability to generate state diagrams for models using django-fsm
+#    'kombu.transport.django', # required for celery
 )
 
-LOCAL_MIDDLEWARE_CLASSES = [
+LOCAL_MIDDLEWARE = [
     # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 

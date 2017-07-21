@@ -46,19 +46,16 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging # J$ 11/13
-  - nh/240812/mw_pwd_reset  # Norman 3/23
-  - nh/dhis2_logs  # Norman 3/23
+#  - nh/240812/mw_pwd_reset  # Norman 3/23
   - nh/new_rb  # Norman 11/22
-  - nc/adherence-mockup  # Noah 3/2
+  - app-manager-labs # Jenny 6/19
+  - lwyszomi-icds_dashboard_v2  # https://github.com/dimagi/commcare-hq/pull/16802
+  - br/kill-old-cloucare  # Danny 7/21
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
     # just so we always get latest master
-    branches:
-      - commcare_2.33 # WSP 2/8
-  submodules/formtranslate-src:
-    branches:
-      - commcare_2.33 # WSP 2/8
+    branches: []
   submodules/django-digest-src:
     branches: []
   submodules/dimagi-utils-src:
@@ -70,7 +67,6 @@ submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
   deployment/commcare-hq-deploy:
-    branches:
-      - br/gevent-bckd-queue
+    branches: []
   submodules/commcare-translations:
     branches: []

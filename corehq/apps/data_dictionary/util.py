@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 
 from corehq import toggles
+from corehq.apps.app_manager.app_schemas.case_properties import all_case_properties_by_domain
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.data_dictionary.models import CaseProperty, CaseType
 
@@ -20,7 +21,6 @@ def generate_data_dictionary(domain):
 
 def _get_all_case_properties(domain):
     # moved here to avoid circular import
-    from corehq.apps.app_manager.util import all_case_properties_by_domain
     from corehq.apps.export.models.new import CaseExportDataSchema
 
     case_type_to_properties = {}

@@ -52,6 +52,17 @@ if USE_PARTITIONED_DATABASE:
                 'SERIALIZE': False,
             },
         },
+        'warehouse': {
+             'ENGINE': 'django.db.backends.postgresql_psycopg2',
+             'NAME': 'commcarehq_warehouse',
+             'USER': 'commcarehq',
+             'PASSWORD': 'commcarehq',
+             'HOST': 'postgres',
+             'PORT': '5432',
+             'TEST': {
+                 'SERIALIZE': False,
+             },
+         },
     })
 
     PARTITION_DATABASE_CONFIG = {
@@ -69,12 +80,19 @@ if USE_PARTITIONED_DATABASE:
         }
     }
 
+    WAREHOUSE_DATABASE_ALIAS = 'warehouse'
+
 ####### Couch Config ######
-COUCH_HTTPS = False
-COUCH_SERVER_ROOT = 'couch:5984'
-COUCH_USERNAME = ''
-COUCH_PASSWORD = ''
-COUCH_DATABASE_NAME = 'commcarehq'
+COUCH_DATABASES = {
+    'default': {
+        # for production this ought to be set to true on your configured couch instance
+        'COUCH_HTTPS': False,
+        'COUCH_SERVER_ROOT': 'couch:5984',  # 6984 for https couch
+        'COUCH_USERNAME': '',
+        'COUCH_PASSWORD': '',
+        'COUCH_DATABASE_NAME': 'commcarehq'
+    }
+}
 
 redis_host = 'redis'
 
@@ -215,3 +233,5 @@ if os.environ.get("COMMCAREHQ_BOOTSTRAP") == "yes":
 
     RESTORE_PAYLOAD_DIR_NAME = 'restore'
     SHARED_TEMP_DIR_NAME = 'temp'
+
+BIGCOUCH = True

@@ -15,12 +15,7 @@
         // Multiselect widget
         $(function () {
             var multiselect_utils = hqImport('style/js/multiselect_utils');
-            multiselect_utils.createFullMultiselectWidget(
-                'id_users-selected_ids',
-                django.gettext("Available Workers"),
-                django.gettext("Workers in Location"),
-                django.gettext("Search Workers...")
-            );
+
             multiselect_utils.createFullMultiselectWidget(
                 'id_products-selected_ids',
                 django.gettext("Available Products"),
@@ -43,6 +38,7 @@
           var location_url = '{{ api_root }}';
           var loc_id = {{ location.get_id|JSON }};
           var hierarchy = {{ hierarchy|JSON }};
+          var loc_types_with_users = {{ loc_types_with_users|JSON }};
 
           model = new LocationSelectViewModel({
               "hierarchy": hierarchy,
@@ -66,8 +62,15 @@
                   var $e = $(e);
                   var loc_type = $e.attr('loctype');
                   $e[loc_type == val ? 'show' : 'hide']();
-                });
-            });
+              });
+          });
+
+          model.has_user = ko.computed(function() {
+              var loc_type = model.allowed_child_types().length === 1 ?
+                             model.allowed_child_types()[0] :
+                             model.loc_type();
+              return loc_types_with_users.indexOf(loc_type) !== -1;
+          });
 
           var locs = {{ locations|JSON }};
           var selected_parent = '{{ location.parent.get_id }}';
@@ -98,7 +101,7 @@
         });
       </script>
 
-      {% if not form.is_new_location %}
+      {% if not creates_new_location %}
 
         <p class="lead">
           {{ location.name }}
@@ -110,6 +113,12 @@
           {% if location.get_id and location.location_type_object.can_have_children %}
           <a class="btn btn-success" href="{% url "create_location" domain %}?parent={{ location.get_id }}">
             <i class="fa fa-plus"></i> {% trans "New Child Location" %}
+          </a>
+          {% endif %}
+
+          {% if location.user_id %}
+          <a class="btn btn-default" href="{% url "edit_commcare_user" domain location.user_id %}">
+            <i class="fa fa-external-link"></i> {% trans "Location User" %}
           </a>
           {% endif %}
 
@@ -144,9 +153,17 @@
         <div class="tab-pane {% if form_tab == "basic" %}active{% endif %}" id="basic-info">
           <form id="loc_form" class="form form-horizontal" name="product" method="post">
             {% bootstrap_form_errors form %}
-            {% crispy form %}
+            {% crispy form.location_form %}
 
-            {% crispy form.custom_data.form %}
+            {% crispy form.custom_location_data.form %}
+
+            {% if form.user_form %}
+            <!-- ko if: has_user -->
+            {% crispy form.user_form %}
+            {% crispy form.custom_user_data.form %}
+            <!-- /ko -->
+            {% endif %}
+
             <input type="hidden" name="form_type" value="location-settings" />
 
             {% if consumption %}

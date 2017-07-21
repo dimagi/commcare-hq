@@ -13,7 +13,7 @@ from corehq.apps.userreports.util import get_table_name
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.style import crispy as hqcrispy
 from corehq.apps.style.forms.widgets import BootstrapCheckboxInput
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND
+from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
 
 
 class DocumentFormBase(forms.Form):
@@ -48,6 +48,9 @@ VISIBILITY_CHOICES = (
 )
 
 
+SOFT_ROLLOUT_HELP_TEXT = "Percentage of requests to send to ES. Only useful for Laboratory reports"
+
+
 class ConfigurableReportEditForm(DocumentFormBase):
 
     config_id = forms.ChoiceField()  # gets overridden on instantiation
@@ -59,6 +62,7 @@ class ConfigurableReportEditForm(DocumentFormBase):
     columns = JsonField(expected_type=list)
     configured_charts = JsonField(expected_type=list)
     sort_expression = JsonField(expected_type=list)
+    soft_rollout = forms.DecimalField(min_value=0, max_value=1, help_text=SOFT_ROLLOUT_HELP_TEXT)
 
     def __init__(self, domain, instance=None, read_only=False, *args, **kwargs):
         super(ConfigurableReportEditForm, self).__init__(instance, read_only, *args, **kwargs)
@@ -85,6 +89,7 @@ class ConfigurableReportEditForm(DocumentFormBase):
                 'columns',
                 'configured_charts',
                 'sort_expression',
+                'soft_rollout',
             ),
         )
         # Restrict edit for static reports
@@ -130,6 +135,7 @@ BACKEND_CHOICES = (
     (UCR_SQL_BACKEND, 'Postgres'),
     (UCR_ES_BACKEND, 'ElasticSearch'),
     (UCR_LABORATORY_BACKEND, 'Laboratory'),
+    (UCR_ES_PRIMARY, 'ES primary'),
 )
 
 

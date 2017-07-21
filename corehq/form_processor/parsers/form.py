@@ -4,6 +4,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import Attachment
 from corehq.form_processor.utils import convert_xform_to_json, adjust_datetimes
+from corehq.util.soft_assert.api import soft_assert
 from couchforms import XMLSyntaxError
 from couchforms.exceptions import DuplicateError, MissingXMLNSError
 from dimagi.utils.couch import LockManager, ReleaseOnError
@@ -78,7 +79,7 @@ def process_xform_xml(domain, instance, attachments=None):
     except (MissingXMLNSError, XMLSyntaxError) as e:
         return _get_submission_error(domain, instance, e)
     except DuplicateError as e:
-        return _handle_id_conflict(instance, e.xform, domain)
+        return _handle_id_conflict(e.xform, domain)
 
 
 def _create_new_xform(domain, instance_xml, attachments=None):
@@ -138,7 +139,7 @@ def _get_submission_error(domain, instance, error):
     return FormProcessingResult(xform)
 
 
-def _handle_id_conflict(instance, xform, domain):
+def _handle_id_conflict(xform, domain):
     """
     For id conflicts, we check if the files contain exactly the same content,
     If they do, we just log this as a dupe. If they don't, we deprecate the
@@ -151,7 +152,7 @@ def _handle_id_conflict(instance, xform, domain):
     interface = FormProcessorInterface(domain)
     if interface.is_duplicate(conflict_id, domain):
         # It looks like a duplicate/edit in the same domain so pursue that workflow.
-        return _handle_duplicate(xform, instance)
+        return _handle_duplicate(xform)
     else:
         # the same form was submitted to two domains, or a form was submitted with
         # an ID that belonged to a different doc type. these are likely developers
@@ -160,7 +161,7 @@ def _handle_id_conflict(instance, xform, domain):
         return FormProcessingResult(xform)
 
 
-def _handle_duplicate(new_doc, instance):
+def _handle_duplicate(new_doc):
     """
     Handle duplicate xforms and xform editing ('deprecation')
 
@@ -176,13 +177,29 @@ def _handle_duplicate(new_doc, instance):
     new_md5 = new_doc.xml_md5()
 
     if existing_md5 != new_md5:
-        # if the form contents are not the same:
-        #  - "Deprecate" the old form by making a new document with the same contents
-        #    but a different ID and a doc_type of XFormDeprecated
-        #  - Save the new instance to the previous document to preserve the ID
-        existing_doc, new_doc = apply_deprecation(existing_doc, new_doc, interface)
-
-        return FormProcessingResult(new_doc, existing_doc)
+        if new_doc.xmlns != existing_doc.xmlns:
+            # if the XMLNS has changed this probably isn't a form edit
+            # it could be a UUID clash (yes we've had that before)
+            # Assign a new ID to the form and process as normal + notify_admins
+            xform = interface.assign_new_id(new_doc)
+            soft_assert(to='{}@{}.com'.format('skelly', 'dimagi'), exponential_backoff=False)(
+                False, "Potential UUID clash", {
+                    'incoming_form_id': conflict_id,
+                    'existing_form_id': existing_doc.form_id,
+                    'new_form_id': xform.form_id,
+                    'incoming_xmlns': new_doc.xmlns,
+                    'existing_xmlns': existing_doc.xmlns,
+                    'domain': new_doc.domain,
+                }
+            )
+            return FormProcessingResult(xform)
+        else:
+            # if the form contents are not the same:
+            #  - "Deprecate" the old form by making a new document with the same contents
+            #    but a different ID and a doc_type of XFormDeprecated
+            #  - Save the new instance to the previous document to preserve the ID
+            existing_doc, new_doc = apply_deprecation(existing_doc, new_doc, interface)
+            return FormProcessingResult(new_doc, existing_doc)
     else:
         # follow standard dupe handling, which simply saves a copy of the form
         # but a new doc_id, and a doc_type of XFormDuplicate

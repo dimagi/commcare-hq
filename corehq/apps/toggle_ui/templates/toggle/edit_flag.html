@@ -8,7 +8,6 @@
 
 {% block js %}{{ block.super }}
     {% compress js %}
-        <script src="{% static 'style/js/main.js' %}"></script>
         <script src="{% static 'toggle_ui/js/edit-flag.js' %}"></script>
     {% endcompress %}
 {% endblock %}

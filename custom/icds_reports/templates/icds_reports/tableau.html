@@ -1,61 +1,210 @@
-{% load compress %}{% load hq_shared_tags %}<!DOCTYPE html>
-<link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
-<script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'tableau.min.js' %}"></script>
+{% load menu_tags %}
+{% load compress %}
+{% load hq_shared_tags %}
+{% load i18n %}
+<!DOCTYPE html>
+<html>
+<head>
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
+    <link type="text/css" rel="stylesheet" media="all" href="{% static 'select2/dist/css/select2.min.css' %}"/>
 
-<script type="text/javascript" src="{% static 'underscore/underscore.js' %}"></script>
-<script type="text/javascript" src="{% static 'tableau_app.js' %}">></script>
+    <link type="text/css"
+          rel="stylesheet"
+          media="all"
+          href="{% static 'font-awesome/css/font-awesome.min.css' %}" />
 
-<script>
-    var tableauOptions = {
-        currentSheet: "{{ report_worksheet }}",
-        tableauUrl: "{{ tableau_access_url }}{{ report_workbook }}/{{ report_worksheet }}",
-        userLocationLevel: "{{ view_by }}",
-        userLocation: "{{ view_by_value|default:'' }}",
-        stateCode: "{{ state_id|default:'All' }}",
-        districtCode: "{{ district_id|default:'All' }}",
-        blockCode: "{{ block_id|default:'All' }}",
-        isDebug: {{ debug|yesno:"true,false" }},
-    };
+    <style>
+        .responsive-label {
+            display: none;
+        }
+        .filter {
+            margin-bottom: 10px;
+        }
 
-    $(function(){
-        initializeViz(tableauOptions);
-    });
-</script>
+        .navbar-hq-main-menu .navbar-brand {
+            padding: 11px;
+        }
 
-<nav class="navbar navbar-default">
-    <div class="container-fluid">
-        <div class="nav navbar-nav">
-            <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Reports<span class="caret"></span></a>
-                <ul class="dropdown-menu"></ul>
-            </li>
-        </div>
-    </div>
+        .navbar {
+            min-height: 60px;
+        }
 
-</nav>
+        div.logo {
+            background-image: url(/static/hqstyle/images/commcare-flower.png);
+            background-size: contain;
+            width: 38px;
+            height: 38px;
+        }
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-2">
-            <button id="resetFilters" class="btn btn-block btn-primary">Reset Drilldown</button>
-            {% if debug %}
-                <button id="inspectButton" class="btn btn-block btn-primary" disabled="disabled">Inspect</button>
-                <div id="debugbar" class="well">
-                </div>
-                <div class="well">
-                    USER FILTERING DEBUG INFO (inital values):
-                    <ul>
-                        <li>view_by = {{ view_by }}</li>
-                        <li>user_{{ view_by }} = {{ view_by_value|default:'not set' }}</li>
+        @media only screen and (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            div.logo {
+                background-image: url(/static/hqstyle/images/commcare-flower-lg.png);
+                width: 51px;
+            }
+        }
+
+        .nav-main-icon {
+            font-size: 1.7em;
+            line-height: 0.7em;
+        }
+
+        .dropdown-menu .login-container {
+            padding: 2px 20px 5px;
+        }
+
+        .navbar-nav > li > a {
+            padding-top: 21px;
+            padding-bottom: 21px;
+        }
+    </style>
+    <script type="text/javascript" src="{% static 'jquery/dist/jquery.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'tableau.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'knockout/dist/knockout.js' %}"></script>
+    <script type="text/javascript" src="{% static 'style/js/hq.helpers.js' %}"></script>
+    <script type="text/javascript" src="{% static 'select2/dist/js/select2.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'underscore/underscore.js' %}"></script>
+    <script type="text/javascript" src="{% static 'tableau_app.js' %}"></script>
+</head>
+<body>
+    <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <div class="navbar-header hq-header navbar-hq-main-menu">
+                <a href="{% if request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}#{% else %}{% url "homepage" %}{% endif %}" class="navbar-brand">
+                    {% if CUSTOM_LOGO_URL %}
+                        <img src="{{ CUSTOM_LOGO_URL }}" alt="CommCare HQ Logo" />
+                    {% else %}
+                        <!-- navbar.less supplies the default logo -->
+                        <div class="logo"></div>
+                    {% endif %}
+                </a>
+            </div>
+            <div class="nav navbar-nav tableau-reports">
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Reports<span class="caret"></span></a>
+                    <ul class="dropdown-menu"></ul>
+                </li>
+            </div>
+            <nav class="navbar-menus fullmenu" id="hq-full-menu" role="navigation">
+                <div class="nav-settings-bar pull-right">
+                    <ul class="nav navbar-nav" role="menu">
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle dropdown-toggle-with-icon" data-toggle="dropdown">
+                                <i class="fa fa-cog nav-main-icon"></i> <span class="responsive-label">{% trans "Manage" %}</span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                                <li class="dropdown-header nav-header">{% trans 'Logged in As' %}</li>
+                                <li class="nav-login-header">
+                                    <div class="login-container">
+                                        <p>
+                                            {% if user.first_name %}
+                                                {{ user.first_name }} {{ user.last_name }}
+                                                <br />{{ user.username }}
+                                            {% else %}
+                                                {{ user.username }}
+                                            {% endif %}
+                                        </p>
+                                        {% with request.couch_user.role_label.strip as role %}
+                                            {% if role %}
+                                                <div class="label label-default">
+                                                    {{ role }}
+                                                </div>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </div>
+                                </li>
+                                <li class="nav-divider divider"></li>
+                                <li class="dropdown-header nav-header">{% trans 'Manage Account' %}</li>
+                                <li>
+                                    <a href="{% url "my_account_settings" %}">
+                                        <i class="fa fa-user icon-user dropdown-icon"></i> {% trans 'My Account Settings' %}
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{% url "logout" %}">
+                                        <i class="icon-signout fa fa-sign-out"></i>
+                                        {% trans 'Sign Out' %}
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
                     </ul>
                 </div>
-            {% endif %}
+            </nav>
         </div>
-        <div class="col-md-10">
-            <div id="tableauPlaceholder" style="width:1100px; height:2400px; overflow:visible;"></div>
+
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="row filter">
+                    <button id="resetFilters" class="btn btn-block btn-primary">Reset Drilldown</button>
+                </div>
+
+                {% if debug %}
+                    <div class="row filter">
+                        <button id="inspectButton" class="btn btn-block btn-primary" disabled="disabled">Inspect</button>
+                        <div id="debugbar" class="well">
+                        </div>
+                        <div class="well">
+                            USER FILTERING DEBUG INFO (inital values):
+                            <ul>
+                                <li>view_by = {{ view_by }}</li>
+                                <li>user_{{ view_by }} = {{ view_by_value|default:'not set' }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                {% endif %}
+                {% for filter in filters|slice:":3" %}
+                    <div id="group_{{ filter.slug }}" class="row filter">
+                        {{ filter.html }}
+                    </div>
+                {% endfor %}
+                <div class="panel-group" id="accordion" role="tablist">
+                    <div class="panel panel-default">
+                        <div class="panel-heading" role="tab">
+                            <h4 class="panel-title">
+                                <a role="button" data-toggle="collapse" data-parent="#accordion" href="#additionalFilters" aria-expanded="false" aria-controls="additionalFilters">
+                                    Additional filters
+                                </a>
+                            </h4>
+                        </div>
+                        <div id="additionalFilters" class="panel-collapse collapse" role="tabpanel" aria-labelledby="additionalFilters">
+                            <div class="panel-body">
+                                {% for filter in filters|slice:"3:" %}
+                                    <div id="group_{{ filter.slug }}" class="row filter">
+                                        {{ filter.html }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row filter pull-right">
+                    <button class="btn btn-default" id="applyFilters">Apply</button>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div id="tableauPlaceholder" style="width:1100px; height:2400px; overflow:visible;"></div>
+            </div>
         </div>
     </div>
-
-</div>
+    <script>
+        $(function() {
+            var tableauOptions = {
+                currentSheet: "{{ report_worksheet }}",
+                tableauUrl: "{{ tableau_access_url }}{{ report_workbook }}/{{ report_worksheet }}",
+                userLocationLevel: "{{ view_by }}",
+                userLocation: "{{ view_by_value|default:'' }}",
+                stateCode: "{{ state_id|default:'All' }}",
+                districtCode: "{{ district_id|default:'All' }}",
+                blockCode: "{{ block_id|default:'All' }}",
+                isDebug: {{ debug|yesno:"true,false" }},
+            };
+            initializeViz(tableauOptions);
+        });
+    </script>
+</body>
+</html>

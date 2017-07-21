@@ -16,12 +16,13 @@ from casexml.apps.case.xml import V2
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB
+from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
 from couchforms.models import XFormInstance
 from dimagi.utils.parsing import json_format_datetime
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
-from corehq.util.test_utils import TestFileMixin, trap_extra_setup
+from corehq.util.test_utils import TestFileMixin, trap_extra_setup, flag_enabled
 
 TEST_CASE_ID = "EOL9FIAKIQWOFXFOH0QAMWU64"
 CREATE_XFORM_ID = "6RGAZTETE3Z2QC0PE2DKM88MO"
@@ -90,20 +91,19 @@ class BaseCaseMultimediaTest(TestCase, TestFileMixin):
         """
         RequestFactory submitter - simulates direct submission to server directly (no need to call process case after fact)
         """
-        response, form, cases, _ = submit_form_locally(
+        result = submit_form_locally(
             xml_data,
             TEST_DOMAIN_NAME,
             attachments=dict_attachments,
             last_sync_token=sync_token,
             received_on=date
         )
-        attachments = form.attachments
+        attachments = result.xform.attachments
         self.assertEqual(set(dict_attachments.keys()),
                          set(attachments.keys()))
-        [case] = cases
-        self.assertEqual(case.case_id, TEST_CASE_ID)
+        self.assertEqual(result.case.case_id, TEST_CASE_ID)
 
-        return response, form, cases
+        return result.response, result.xform, result.cases
 
     def _submit_and_verify(self, doc_id, xml_data, dict_attachments,
                            sync_token=None, date=None):
@@ -202,14 +202,22 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
             self.assertFalse(form.is_archived)
 
     def testAttachRemoveSingle(self):
-        self._doCreateCaseWithMultimedia()
+        _, case = self._doCreateCaseWithMultimedia()
+        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
+            attachment_sql = case.case_attachments['fruity_file']
+            self.assertTrue(len(attachment_sql.read_content()) > 0)
+
         new_attachments = []
         removes = ['fruity_file']
         _, case = self._doSubmitUpdateWithMultimedia(new_attachments=new_attachments, removes=removes)
 
         self.assertEqual(0, len(case.case_attachments))
 
-        if not getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
+        if getattr(settings, 'TESTS_SHOULD_USE_SQL_BACKEND', False):
+            self.assertEqual(case.case_attachments, {})
+            with self.assertRaises(AttachmentNotFound):
+                attachment_sql.read_content()
+        else:
             attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
             self.assertEqual(2, len(attach_actions))
             last_action = attach_actions[-1]
@@ -228,11 +236,13 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
             attach_actions = filter(lambda x: x['action_type'] == 'attachment', case.actions)
             self.assertEqual(2, len(attach_actions))
 
+    @flag_enabled('MM_CASE_PROPERTIES')
     def testOTARestoreSingle(self):
         _, case = self._doCreateCaseWithMultimedia()
         restore_attachments = ['fruity_file']
         self._validateOTARestore(case.case_id, restore_attachments)
 
+    @flag_enabled('MM_CASE_PROPERTIES')
     def testOTARestoreMultiple(self):
         _, case = self._doCreateCaseWithMultimedia()
         restore_attachments = ['commcare_logo_file', 'dimagi_logo_file']

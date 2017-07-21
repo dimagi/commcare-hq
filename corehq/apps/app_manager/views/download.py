@@ -41,7 +41,8 @@ def download_odk_profile(request, domain, app_id):
 
     """
     if not request.app.copy_of:
-        make_async_build.delay(request.app)
+        username = request.GET.get('username', 'unknown user')
+        make_async_build.delay(request.app, username)
     return HttpResponse(
         request.app.create_profile(is_odk=True),
         content_type="commcare/profile"
@@ -51,7 +52,8 @@ def download_odk_profile(request, domain, app_id):
 @safe_download
 def download_odk_media_profile(request, domain, app_id):
     if not request.app.copy_of:
-        make_async_build.delay(request.app)
+        username = request.GET.get('username', 'unknown user')
+        make_async_build.delay(request.app, username)
     return HttpResponse(
         request.app.create_profile(is_odk=True, with_media=True),
         content_type="commcare/profile"
@@ -110,8 +112,8 @@ def download_xform(request, domain, app_id, module_id, form_id):
     except (IndexError, ModuleNotFoundException):
         raise Http404()
     except AppManagerException:
-        unique_form_id = request.app.get_module(module_id).get_form(form_id).unique_id
-        response = validate_form_for_build(request, domain, app_id, unique_form_id, ajax=False)
+        form_unique_id = request.app.get_module(module_id).get_form(form_id).unique_id
+        response = validate_form_for_build(request, domain, app_id, form_unique_id, ajax=False)
         response.status_code = 404
         return response
 
@@ -191,7 +193,11 @@ def download_raw_jar(request, domain, app_id):
 class DownloadCCZ(DownloadMultimediaZip):
     name = 'download_ccz'
     compress_zip = True
-    zip_name = 'commcare.ccz'
+
+    @property
+    def zip_name(self):
+        return 'commcare_v{}.ccz'.format(self.app.version)
+
     include_index_files = True
 
     def check_before_zipping(self):
@@ -234,11 +240,17 @@ def download_file(request, domain, app_id, path):
 
     try:
         assert request.app.copy_of
-        obj = CachedObject('{id}::{path}'.format(
-            id=request.app._id,
-            path=full_path,
-        ))
-        if not obj.is_cached():
+        if toggles.NO_CACHE_APP_FILES.enabled(domain):
+            obj = None
+        else:
+            obj = CachedObject('{id}::{path}'.format(
+                id=request.app._id,
+                path=full_path,
+            ))
+        if obj and obj.is_cached():
+            _, buffer = obj.get()
+            payload = buffer.getvalue()
+        else:
             #lazily create language profiles to avoid slowing initial build
             try:
                 payload = request.app.fetch_attachment(full_path)
@@ -260,10 +272,8 @@ def download_file(request, domain, app_id, path):
                 payload = payload.encode('utf-8')
             buffer = StringIO(payload)
             metadata = {'content_type': content_type}
-            obj.cache_put(buffer, metadata, timeout=None)
-        else:
-            _, buffer = obj.get()
-            payload = buffer.getvalue()
+            if obj:
+                obj.cache_put(buffer, metadata, timeout=None)
         if path in ['profile.xml', 'media_profile.xml']:
             payload = convert_XML_To_J2ME(payload, path, request.app.use_j2me_endpoint)
         response.write(payload)
@@ -319,7 +329,8 @@ def download_profile(request, domain, app_id):
 
     """
     if not request.app.copy_of:
-        make_async_build.delay(request.app)
+        username = request.GET.get('username', 'unknown user')
+        make_async_build.delay(request.app, username)
     return HttpResponse(
         request.app.create_profile()
     )
@@ -328,9 +339,19 @@ def download_profile(request, domain, app_id):
 @safe_download
 def download_media_profile(request, domain, app_id):
     if not request.app.copy_of:
-        make_async_build.delay(request.app)
+        username = request.GET.get('username', 'unknown user')
+        make_async_build.delay(request.app, username)
     return HttpResponse(
         request.app.create_profile(with_media=True)
+    )
+
+
+@safe_download
+def download_practice_user_restore(request, domain, app_id):
+    if not request.app.copy_of:
+        make_async_build.delay(request.app)
+    return HttpResponse(
+        request.app.create_practice_user_restore()
     )
 
 
@@ -342,7 +363,7 @@ def download_index(request, domain, app_id):
 
     """
     template = get_app_manager_template(
-        domain,
+        request.user,
         "app_manager/v1/download_index.html",
         "app_manager/v2/download_index.html",
     )
@@ -357,7 +378,6 @@ def download_index(request, domain, app_id):
                 "We were unable to get your files "
                 "because your Application has errors. "
                 "Please click <strong>Make New Version</strong> "
-                "under <strong>Deploy</strong> "
                 "for feedback on how to fix these errors."
             ),
             extra_tags='html'
@@ -376,23 +396,26 @@ def download_index(request, domain, app_id):
     })
 
 
-def validate_form_for_build(request, domain, app_id, unique_form_id, ajax=True):
+def validate_form_for_build(request, domain, app_id, form_unique_id, ajax=True):
     app = get_app(domain, app_id)
     try:
-        form = app.get_form(unique_form_id)
+        form = app.get_form(form_unique_id)
     except FormNotFoundException:
         # this can happen if you delete the form from another page
         raise Http404()
     errors = form.validate_for_build()
     lang, langs = get_langs(request, app)
 
-    if ajax and "blank form" in [error.get('type') for error in errors]:
-        response_html = ("" if toggles.APP_MANAGER_V2.enabled(domain)
+    if ajax and "blank form" in [error.get('type') for error in errors] and not form.form_type == "shadow_form":
+        response_html = ("" if toggles.APP_MANAGER_V2.enabled(request.user.username)
                          else render_to_string('app_manager/v1/partials/create_form_prompt.html'))
     else:
+        if form.form_type == "shadow_form":
+            # Don't display the blank form error if its a shadow form
+            errors = [e for e in errors if e['type'] != "blank form"]
         response_html = render_to_string(
             get_app_manager_template(
-                domain,
+                request.user,
                 'app_manager/v1/partials/build_errors.html',
                 'app_manager/v2/partials/build_errors.html',
             ), {

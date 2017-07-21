@@ -30,6 +30,7 @@ class NestableTimer(object):
 
     @property
     def duration(self):
+        """Get timer duration in seconds"""
         if self.beginning and self.end:
             return self.end - self.beginning
 
@@ -50,9 +51,13 @@ class NestableTimer(object):
             'subs': [sub.to_dict() for sub in self.subs]
         }
 
-    def to_list(self):
-        timers = [self] + list(itertools.chain(*[sub.to_list() for sub in self.subs]))
-        return timers
+    def to_list(self, exclude_root=False):
+        root = [] if exclude_root else [self]
+        return root + list(itertools.chain(*[sub.to_list() for sub in self.subs]))
+
+    @property
+    def is_leaf_node(self):
+        return not self.subs
 
     def __repr__(self):
         return "NestableTimer(name='{}', beginning={}, end={}, parent='{}')".format(
@@ -124,8 +129,8 @@ class TimingContext(object):
 
     @property
     def duration(self):
-        return self.to_dict()['duration']
+        return self.root.duration
 
-    def to_list(self):
+    def to_list(self, exclude_root=False):
         """Get the list of ``NestableTimer`` objects in hierarchy order"""
-        return self.root.to_list()
+        return self.root.to_list(exclude_root)

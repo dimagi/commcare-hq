@@ -27,6 +27,18 @@ def get_fixture_data_types_in_domain(domain):
     ))
 
 
+@quickcache(['domain', 'data_type_ids'], timeout=60 * 60, memoize_timeout=60, skip_arg='bypass_cache')
+def get_fixture_items_for_data_types(domain, data_type_ids, bypass_cache=False):
+    from corehq.apps.fixtures.models import FixtureDataItem
+    return list(FixtureDataItem.view(
+        'fixtures/data_items_by_domain_type',
+        keys=[[domain, id] for id in data_type_ids],
+        reduce=False,
+        include_docs=True,
+        descending=True
+    ))
+
+
 def get_owner_ids_by_type(domain, owner_type, data_item_id):
     from corehq.apps.fixtures.models import FixtureOwnership
     assert owner_type in FixtureOwnership.owner_type.choices, \

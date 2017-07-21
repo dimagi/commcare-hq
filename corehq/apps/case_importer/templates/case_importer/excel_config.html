@@ -4,11 +4,6 @@
 {% load i18n %}
 
 
-{% block js %}
-    {{ block.super }}
-    <script src="{% static 'style/js/main.js' %}"></script>
-{% endblock %}
-
 {% block js-inline %}{{ block.super }}
     <script>
         $(function() {

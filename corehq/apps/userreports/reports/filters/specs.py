@@ -1,5 +1,6 @@
 from dimagi.ext.jsonobject import (
     BooleanProperty,
+    IntegerProperty,
     JsonObject,
     ListProperty,
     StringProperty,
@@ -14,7 +15,7 @@ from corehq.apps.userreports.reports.filters.values import (
     DateFilterValue,
     NumericFilterValue,
     QuarterFilterValue,
-    LocationDrilldownFilterValue)
+    LocationDrilldownFilterValue, MultiFieldChoiceListFilterValue)
 from corehq.apps.userreports.specs import TypeProperty
 
 
@@ -31,16 +32,19 @@ class ReportFilter(JsonObject):
     display = DefaultProperty()
     compare_as_string = BooleanProperty(default=False)
 
+    _class_map = {
+        'quarter': QuarterFilterValue,
+        'date': DateFilterValue,
+        'numeric': NumericFilterValue,
+        'pre': PreFilterValue,
+        'choice_list': ChoiceListFilterValue,
+        'dynamic_choice_list': ChoiceListFilterValue,
+        'multi_field_dynamic_choice_list': MultiFieldChoiceListFilterValue,
+        'location_drilldown': LocationDrilldownFilterValue,
+    }
+
     def create_filter_value(self, value):
-        return {
-            'quarter': QuarterFilterValue,
-            'date': DateFilterValue,
-            'numeric': NumericFilterValue,
-            'pre': PreFilterValue,
-            'choice_list': ChoiceListFilterValue,
-            'dynamic_choice_list': ChoiceListFilterValue,
-            'location_drilldown': LocationDrilldownFilterValue,
-        }[self.type](self, value)
+        return self._class_map[self.type](self, value)
 
 
 class FilterChoice(JsonObject):
@@ -58,7 +62,11 @@ class FilterSpec(JsonObject):
     """
     type = StringProperty(
         required=True,
-        choices=['date', 'quarter', 'numeric', 'pre', 'choice_list', 'dynamic_choice_list', 'location_drilldown']
+        choices=[
+            'date', 'quarter', 'numeric', 'pre', 'choice_list', 'dynamic_choice_list',
+            'multi_field_dynamic_choice_list', 'location_drilldown',
+            'enikshay_location_hierarchy'
+        ]
     )
     # this shows up as the ID in the filter HTML.
     slug = StringProperty(required=True)
@@ -100,8 +108,16 @@ class DynamicChoiceListFilterSpec(FilterSpec):
         return []
 
 
+class MultiFieldDynamicChoiceFilterSpec(DynamicChoiceListFilterSpec):
+    type = TypeProperty('multi_field_dynamic_choice_list')
+    fields = ListProperty(default=[])
+
+
 class LocationDrilldownFilterSpec(FilterSpec):
     type = TypeProperty('location_drilldown')
+    include_descendants = BooleanProperty(default=False)
+    # default to some random high number '99'
+    max_drilldown_levels = IntegerProperty(default=99)
 
 
 class PreFilterSpec(FilterSpec):

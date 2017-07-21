@@ -1,7 +1,8 @@
 from collections import defaultdict
 from xml.etree import ElementTree
+
+from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
-from casexml.apps.phone.models import OTARestoreUser
 from corehq.apps.products.fixtures import product_fixture_generator_json
 from corehq.apps.programs.fixtures import program_fixture_generator_json
 
@@ -17,10 +18,7 @@ def item_lists_by_domain(domain):
         }
 
         for attr in data_type.item_attributes:
-            structure['@' + attr] = {
-                'name': attr,
-                'no_option': True
-            }
+            structure['@' + attr] = {'name': attr, 'no_option': True}
 
         uri = 'jr://fixture/%s:%s' % (ItemListsProvider.id, data_type.tag)
         ret.append({
@@ -29,11 +27,6 @@ def item_lists_by_domain(domain):
             'path': u"/{tag}_list/{tag}".format(tag=data_type.tag),
             'name': data_type.tag,
             'structure': structure,
-
-            # DEPRECATED PROPERTIES
-            'sourceUri': uri,
-            'defaultId': data_type.tag,
-            'initialQuery': u"instance('{tag}')/{tag}_list/{tag}".format(tag=data_type.tag),
         })
 
     products = product_fixture_generator_json(domain)
@@ -45,14 +38,14 @@ def item_lists_by_domain(domain):
     return ret
 
 
-class ItemListsProvider(object):
+class ItemListsProvider(FixtureProvider):
     id = 'item-list'
 
-    def __call__(self, restore_user, version, last_sync=None, app=None):
-        assert isinstance(restore_user, OTARestoreUser)
+    def __call__(self, restore_state):
+        restore_user = restore_state.restore_user
 
-        all_types = dict([(t._id, t) for t in FixtureDataType.by_domain(restore_user.domain)])
-        global_types = dict([(id, t) for id, t in all_types.items() if t.is_global])
+        all_types = {t._id: t for t in FixtureDataType.by_domain(restore_user.domain)}
+        global_types = {id: t for id, t in all_types.items() if t.is_global}
 
         items_by_type = defaultdict(list)
 
@@ -61,51 +54,58 @@ class ItemListsProvider(object):
             # have to do another db trip later
             item._data_type = data_type
 
-        for global_fixture in global_types.values():
-            items = list(FixtureDataItem.by_data_type(restore_user.domain, global_fixture))
-            _ = [_set_cached_type(item, global_fixture) for item in items]
-            items_by_type[global_fixture._id] = items
+        items = FixtureDataItem.by_data_types(restore_user.domain, global_types)
+        for item in items:
+            _set_cached_type(item, global_types[item.data_type_id])
+            items_by_type[item.data_type_id].append(item)
 
-        other_items = restore_user.get_fixture_data_items()
-        data_types = {}
+        if set(all_types) - set(global_types):
+            # only query ownership models if there are non-global types
+            other_items = restore_user.get_fixture_data_items()
 
-        for item in other_items:
-            if item.data_type_id in global_types:
-                continue  # was part of the global type so no need to add here
-            if item.data_type_id not in data_types:
+            for item in other_items:
+                if item.data_type_id in global_types:
+                    continue  # was part of the global type so no need to add here
                 try:
-                    data_types[item.data_type_id] = all_types[item.data_type_id]
+                    _set_cached_type(item, all_types[item.data_type_id])
                 except (AttributeError, KeyError):
                     continue
-            items_by_type[item.data_type_id].append(item)
-            _set_cached_type(item, data_types[item.data_type_id])
+                items_by_type[item.data_type_id].append(item)
 
         fixtures = []
-        all_types_to_sync = data_types.values() + global_types.values()
-        for data_type in all_types_to_sync:
-            fixtures.append(self._get_fixture_element(
-                data_type.tag,
-                restore_user.user_id,
-                sorted(items_by_type[data_type.get_id], key=lambda x: x.sort_key)
-            ))
-        for data_type_id, data_type in all_types.iteritems():
-            if data_type_id not in global_types and data_type_id not in data_types:
-                fixtures.append(self._get_fixture_element(data_type.tag, restore_user.user_id, []))
+        types_sorted_by_tag = sorted(all_types.iteritems(), key=lambda (id_, type_): type_.tag)
+        for data_type_id, data_type in types_sorted_by_tag:
+            if data_type.is_indexed:
+                fixtures.append(self._get_schema_element(data_type))
+            items = sorted(items_by_type.get(data_type_id, []), key=lambda x: x.sort_key)
+            fixtures.append(self._get_fixture_element(data_type, restore_user.user_id, items))
         return fixtures
 
-    def _get_fixture_element(self, tag, user_id, items):
-        fixture_element = ElementTree.Element(
-            'fixture',
-            attrib={
-                'id': ':'.join((self.id, tag)),
-                'user_id': user_id
-            }
-        )
-        item_list_element = ElementTree.Element('%s_list' % tag)
+    def _get_fixture_element(self, data_type, user_id, items):
+        attrib = {
+            'id': ':'.join((self.id, data_type.tag)),
+            'user_id': user_id
+        }
+        if data_type.is_indexed:
+            attrib['indexed'] = 'true'
+        fixture_element = ElementTree.Element('fixture', attrib=attrib)
+        item_list_element = ElementTree.Element('%s_list' % data_type.tag)
         fixture_element.append(item_list_element)
         for item in items:
             item_list_element.append(item.to_xml())
         return fixture_element
+
+    def _get_schema_element(self, data_type):
+        schema_element = ElementTree.Element(
+            'schema',
+            attrib={'id': ':'.join((self.id, data_type.tag))}
+        )
+        indices_element = ElementTree.SubElement(schema_element, 'indices')
+        for field in data_type.fields:
+            if field.is_indexed:
+                index_element = ElementTree.SubElement(indices_element, 'index')
+                index_element.text = field.field_name
+        return schema_element
 
 
 item_lists = ItemListsProvider()

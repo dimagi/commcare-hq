@@ -1,0 +1,100 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+
+{# Container template for adding/removing actions #}
+
+<script type="text/html" id="case-actions">
+    {% if form.errors %}
+        <div class="alert alert-block alert-danger">
+            <span class="help-block"><strong>{% trans "Error:" %}</strong></span>
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                    <span class="help-block">{{ error }}</span>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    {% endif %}
+    <div data-bind="template: {name: get_ko_template_id, foreach: actions}"></div>
+    <div class="form-group">
+        <div class="alert alert-block alert-danger" data-bind="visible: show_add_action_warning() && selected_case_action_id() !== 'select-one'">
+            <span class="help-block"><strong>{% trans "Please click Add action or clear the dropdown" %}</strong></span>
+        </div>
+        <div class="col-xs-2 col-xs-offset-1 text-right">
+            <button class="btn btn-success" data-bind="click: add_action">
+                <i class="fa fa-plus"></i>
+                {% trans "Add action for" %}
+            </button>
+        </div>
+        <div class="col-xs-3">
+            <select class="select form-control" data-bind="value: selected_case_action_id">
+                <option value="select-one">{% trans "(Select one and click Add action)" %}</option>
+                <option value="close-case-action">{% trans "Close the case" %}</option>
+                <option value="update-case-property-action">{% trans "Update case property" %}</option>
+                {% if form.is_system_admin %}
+                <option value="custom-action">{% trans "Custom action" %}</option>
+                {% endif %}
+            </select>
+        </div>
+    </div>
+</script>
+
+{# Template for the button that removes an action #}
+
+<script type="text/html" id="remove-action">
+    <div class="col-xs-1">
+        <button type="button" class="btn btn-danger" data-bind="click: $parent.remove_action"><i class="fa fa-close"></i></button>
+    </div>
+</script>
+
+{# Template for close case action #}
+{# An instance of this template is bound to an instance of the js object CloseCaseDefinition #}
+
+<script type="text/html" id="close-case-action">
+    <div class="form-group">
+        <div data-bind="template: {name: 'remove-action'}"></div>
+        <label class="control-label col-xs-2">{% trans "Close the case" %}</label>
+        <span class="help-block col-xs-8">
+            <i class="fa fa-exclamation-circle"></i>
+            {% trans "All cases matching the above criteria will be closed" %}
+        </span>
+    </div>
+</script>
+
+{# Template for update case property action #}
+{# An instance of this template is bound to an instance of the js object UpdatePropertyDefinition #}
+
+<script type="text/html" id="update-case-property-action">
+    <div class="form-group">
+        <div data-bind="template: {name: 'remove-action'}"></div>
+        <label class="control-label col-xs-2">{% trans "Set case property" %}</label>
+        <div class="controls col-xs-2">
+            <input type="text" data-bind="value: name" class="textinput form-control" required placeholder="{% trans 'case property name' %}" />
+        </div>
+        <div class="controls col-xs-2">
+            <select class="select form-control" data-bind="value: value_type" required>
+                <option value="{{ form.constants.VALUE_TYPE_EXACT }}">{% trans 'to the exact value' %}</option>
+                <option value="{{ form.constants.VALUE_TYPE_CASE_PROPERTY }}">{% trans 'to the value from other case property' %}</option>
+            </select>
+        </div>
+        <div class="controls col-xs-2">
+            <input type="text" class="textinput form-control" data-bind="value: value" required />
+        </div>
+    </div>
+</script>
+
+{# Template for update case property action #}
+{# An instance of this template is bound to an instance of the js object CustomActionDefinition #}
+
+<script type="text/html" id="custom-action">
+    <div class="form-group">
+        <div data-bind="template: {name: 'remove-action'}"></div>
+        <label class="control-label col-xs-2">{% trans "Custom action ID" %}</label>
+        <div class="controls col-xs-4">
+            <input type="text" class="textinput form-control" data-bind="value: name" required placeholder="{% trans 'custom action id' %}" />
+        </div>
+        <label class="col-xs-1 control-label">
+            <span class="label label-primary">Requires System Admin</span>
+        </label>
+    </div>
+</script>

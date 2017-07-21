@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 
 from corehq.apps.hqwebapp.tasks import send_mail_async, mail_admins_async
@@ -5,6 +7,7 @@ from corehq.util.log import get_sanitized_request_repr
 from corehq.util.global_request import get_request
 from corehq.util.soft_assert.core import SoftAssert
 
+logger = logging.getLogger('soft_asserts')
 
 def _send_message(info, backend):
     request = get_request()
@@ -16,14 +19,15 @@ def _send_message(info, backend):
                  'Value: {info.obj!r}\n'
                  'Traceback:\n{info.traceback}\n'
                  'Request:\n{request}\n'
-                 'Occurrences to date: {info.count}\n').format(
+                 'Occurrences to date: {info.count}\n'
+                 'Breadcrumbs: {info.breadcrumbs}\n').format(
                 info=info, request=request_repr)
     )
 
 
 def soft_assert(to=None, notify_admins=False,
                 fail_if_debug=False, exponential_backoff=True, skip_frames=0,
-                send_to_ops=True,):
+                send_to_ops=True, log_to_file=False, include_breadcrumbs=False):
     """
     send an email with stack trace if assertion is not True
 
@@ -42,6 +46,7 @@ def soft_assert(to=None, notify_admins=False,
       last frame in the stack trace, then pass in skip_frames=1.
       This affects both the traceback in the email as the "key" by which
       errors are grouped.
+    - log_to_file: write the message to a log file
 
     For the purposes of grouping errors into email threads,
     counting occurrences (sent in the email), and implementing exponential
@@ -78,26 +83,28 @@ def soft_assert(to=None, notify_admins=False,
         )
 
     def send_to_admins(subject, message):
+        if settings.DEBUG:
+            return
+
         mail_admins_async.delay(
             subject=subject,
             message=message,
         )
 
-    if to and notify_admins:
-        def send(info):
-            if not settings.DEBUG:
-                _send_message(info, backend=send_to_admins)
-            _send_message(info, backend=send_to_recipients)
-    elif to:
-        def send(info):
-            _send_message(info, backend=send_to_recipients)
-    elif notify_admins:
-        def send(info):
-            if not settings.DEBUG:
-                _send_message(info, backend=send_to_admins)
-    else:
+    def write_to_log_file(subject, message):
+        logger.debug(message)
+
+    if not (notify_admins or to or log_to_file):
         raise ValueError('You must call soft assert with either a '
                          'list of recipients or notify_admins=True')
+
+    def send(info):
+        if to:
+            _send_message(info, backend=send_to_recipients)
+        if notify_admins:
+            _send_message(info, backend=send_to_admins)
+        if log_to_file:
+            _send_message(info, backend=write_to_log_file)
 
     if fail_if_debug:
         debug = settings.DEBUG
@@ -109,4 +116,5 @@ def soft_assert(to=None, notify_admins=False,
         send=send,
         use_exponential_backoff=exponential_backoff,
         skip_frames=skip_frames,
+        include_breadcrumbs=include_breadcrumbs
     )

@@ -6,6 +6,7 @@ from django.test import override_settings, TestCase, RequestFactory
 from mock import MagicMock
 
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
+from custom.enikshay.const import ENIKSHAY_TIMEZONE
 from custom.enikshay.reports import HistoricalAdherenceReport
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin
 
@@ -131,7 +132,7 @@ class HistoricalAdherenceReportTests(ENikshayCaseStructureMixin, TestCase):
         self.assertEqual(report.default_datespan.startdate, date)
 
         utc_now = datetime.datetime.now(pytz.utc)
-        india_now = utc_now.astimezone(pytz.timezone("Asia/Kolkata"))
+        india_now = utc_now.astimezone(pytz.timezone(ENIKSHAY_TIMEZONE))
 
         self.assertEqual(report.default_datespan.enddate, india_now.date())
 

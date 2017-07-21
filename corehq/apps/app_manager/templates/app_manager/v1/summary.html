@@ -23,56 +23,25 @@
 {% endblock stylesheets %}
 
 {% block js %}
-    <script src="{% static 'app_manager/js/app_summary.ng.js' %}"></script>
+    <script src="{% static 'app_manager/js/summary/app_summary.ng.js' %}"></script>
+    <script src="{% static 'app_manager/js/summary/summary.js' %}"></script>
 {% endblock js %}
 
-{% block js-inline %} {{ block.super }}
-    <script>
-        (function (angular, undefined) {
-            'use strict';
-
-            var summaryApp = angular.module('summaryApp', ['ngRoute', 'summaryModule']);
-            summaryApp.config(['$httpProvider', function($httpProvider) {
-                $httpProvider.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-                $httpProvider.defaults.xsrfCookieName = 'csrftoken';
-                $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
-            }]);
-            summaryApp.config(["djangoRMIProvider", function(djangoRMIProvider) {
-                djangoRMIProvider.configure({% djng_current_rmi %});
-            }]);
-
-            summaryApp.constant('summaryConfig', {
-                staticRoot: '{{ STATIC_URL }}',
-                vellumTypes: {{ VELLUM_TYPES|JSON }},
-                formNameMap: {{ form_name_map|JSON }},
-                appLangs: {{ langs|JSON }},
-                caseDownloadURL: '{% url 'download_case_summary' domain app_id %}',
-                formDownloadURL: '{% url 'download_form_summary' domain app_id %}',
-                appDownloadURL: '{% url 'download_app_summary' domain app_id %}',
-                appSettingsURL: '{% url "release_manager" domain app_id %}',
-                appHomeURL: '{% url "view_app" domain app_id %}',
-                appName: '{{ app_name }}',
-            });
-
-            summaryApp.config(['$routeProvider', function($routeProvider) {
-                $routeProvider.
-                    when('/forms', {
-                        templateUrl: '{% url 'ng_template' domain 'form_summary_view' %}',
-                        controller: 'FormController'
-                    }).
-                    when('/cases', {
-                        templateUrl: '{% url 'ng_template' domain 'case_summary_view' %}',
-                        controller: 'CaseController'
-                    }).
-                    otherwise({
-                        redirectTo: '/forms'
-                    });
-            }]);
-        }(window.angular));
-    </script>
-{% endblock %}
-
 {% block content %}
+
+{% registerurl 'ng_template' domain '---' %}
+{% registerurl 'download_case_summary' domain app_id %}
+{% registerurl 'download_form_summary' domain app_id %}
+{% registerurl 'download_app_summary' domain app_id %}
+{% registerurl 'release_manager' domain app_id %}
+{% registerurl 'view_app' domain app_id %}
+{% initial_page_data 'djng_current_rmi' djng_current_rmi %}
+{% initial_page_data 'static_root' STATIC_URL %}
+{% initial_page_data 'vellum_types' VELLUM_TYPES %}
+{% initial_page_data 'form_name_map' form_name_map %}
+{% initial_page_data 'app_langs' langs %}
+{% initial_page_data 'app_name' app_name %}
+
 <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
     <li><a href="{{ section.url }}"><strong>{{ section.page_name }}</strong></a></li>
     {% for parent in current_page.parents %}
@@ -80,9 +49,11 @@
     {% endfor %}
     <li class="active">{{ current_page.page_name }}</li>
 </ol>
-<div class="container-fluid" ng-app="summaryApp">
+
+<div class="container-fluid" id="summary-app">
     <div class="row">
         <ng-view></ng-view>
     </div>
 </div>
+
 {% endblock content %}

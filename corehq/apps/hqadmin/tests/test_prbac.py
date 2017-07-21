@@ -5,19 +5,9 @@ from __future__ import absolute_import, print_function, unicode_literals
 from django.test import TestCase
 
 # External imports
-from django.core.management import call_command
 from django_prbac.models import Grant, Role
 
 # CCHQ imports
-from corehq.apps.accounting.models import (
-    DefaultProductPlan,
-    Feature,
-    FeatureRate,
-    SoftwarePlan,
-    SoftwarePlanVersion,
-    SoftwareProduct,
-    SoftwareProductRate,
-)
 from corehq.apps.hqadmin.management.commands import cchq_prbac_bootstrap
 
 

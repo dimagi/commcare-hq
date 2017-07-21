@@ -23,6 +23,7 @@ class OtaWebUserFixtureTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(OtaWebUserFixtureTest, cls).setUpClass()
         cls.domain = Domain.get_or_create_with_name(DOMAIN, is_active=True)
         cls.restore_user = create_restore_user(domain=DOMAIN, is_mobile_user=False)
 
@@ -30,9 +31,10 @@ class OtaWebUserFixtureTest(TestCase):
     def tearDownClass(cls):
         cls.domain.delete()
         delete_all_users()
+        super(OtaWebUserFixtureTest, cls).tearDownClass()
 
     def test_basic_fixture_generation(self):
-        fixture_xml = list(generator.get_fixtures(self.restore_user, version=V2))
+        fixture_xml = list(generator.get_fixtures(self.restore_user))
         self.assertEqual(len(fixture_xml), 1)
         self.assertEqual(fixture_xml[0].findall('./groups/group'), [])
 
@@ -46,6 +48,7 @@ class OtaFixtureTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(OtaFixtureTest, cls).setUpClass()
         cls.domain = Domain.get_or_create_with_name(DOMAIN, is_active=True)
         cls.user = CommCareUser.create(DOMAIN, 'bob', 'mechanic')
         cls.group1 = Group(domain=DOMAIN, name='group1', case_sharing=True, users=[cls.user._id])
@@ -71,6 +74,7 @@ class OtaFixtureTest(TestCase):
             item_list[1].delete()
 
         cls.domain.delete()
+        super(OtaFixtureTest, cls).tearDownClass()
 
     def _check_fixture(self, fixture_xml, has_groups=True, item_lists=None):
         fixture_xml = list(fixture_xml)
@@ -94,35 +98,24 @@ class OtaFixtureTest(TestCase):
                 expected = _get_item_list_fixture(self.user.get_id, data_type.tag, data_item)
                 check_xml_line_by_line(self, expected, item_list_xml[0])
 
-    def test_fixture_gen_v1(self):
-        fixture_xml = generator.get_fixtures(self.restore_user, version=V1)
-        self.assertEqual(list(fixture_xml), [])
-
     def test_basic_fixture_generation(self):
-        fixture_xml = generator.get_fixtures(self.restore_user, version=V2)
-        self._check_fixture(fixture_xml, item_lists=[SA_PROVINCES, FR_PROVINCES])
-
-    def test_fixtures_by_group(self):
-        fixture_xml = generator.get_fixtures(self.restore_user, version=V2, group='case')
-        self.assertEqual(list(fixture_xml), [])
-
-        fixture_xml = generator.get_fixtures(self.restore_user, version=V2, group='standalone')
+        fixture_xml = generator.get_fixtures(self.restore_user)
         self._check_fixture(fixture_xml, item_lists=[SA_PROVINCES, FR_PROVINCES])
 
     def test_fixtures_by_id(self):
-        fixture_xml = generator.get_fixture_by_id('user-groups', self.restore_user, version=V2)
+        fixture_xml = generator.get_fixture_by_id('user-groups', self.restore_user)
         self._check_fixture([fixture_xml])
 
-        fixture_xml = generator.get_fixture_by_id('item-list:sa_provinces', self.restore_user, version=V2)
+        fixture_xml = generator.get_fixture_by_id('item-list:sa_provinces', self.restore_user)
         self._check_fixture([fixture_xml], has_groups=False, item_lists=[SA_PROVINCES])
 
-        fixture_xml = generator.get_fixture_by_id('item-list:fr_provinces', self.restore_user, version=V2)
+        fixture_xml = generator.get_fixture_by_id('item-list:fr_provinces', self.restore_user)
         self._check_fixture([fixture_xml], has_groups=False, item_lists=[FR_PROVINCES])
 
-        fixture_xml = generator.get_fixture_by_id('user-locations', self.restore_user, version=V2)
+        fixture_xml = generator.get_fixture_by_id('user-locations', self.restore_user)
         self.assertIsNone(fixture_xml)
 
-        fixture_xml = generator.get_fixture_by_id('bad ID', self.restore_user, version=V2)
+        fixture_xml = generator.get_fixture_by_id('bad ID', self.restore_user)
         self.assertIsNone(fixture_xml)
 
 

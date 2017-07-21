@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect, HttpResponse
-from django.http.response import Http404
+from django.http.response import Http404, JsonResponse
 from django.shortcuts import redirect
 from django.utils.decorators import method_decorator
 from django.utils.http import urlencode
@@ -19,7 +19,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import View
 
 
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djangular.views.mixins import allow_remote_invocation
 from sqlalchemy import types, exc
 from sqlalchemy.exc import ProgrammingError
 
@@ -27,6 +27,7 @@ from corehq.apps.accounting.models import Subscription
 from corehq.apps.analytics.tasks import update_hubspot_properties
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp.tasks import send_mail_async
+from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.reports.daterange import get_simple_dateranges
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE
@@ -300,8 +301,7 @@ class ReportBuilderPaywallBase(BaseDomainView):
     @property
     @memoized
     def plan_name(self):
-        plan_version, _ = Subscription.get_subscribed_plan_by_domain(self.domain)
-        return plan_version.plan.name
+        return Subscription.get_subscribed_plan_by_domain(self.domain).plan.name
 
 
 class ReportBuilderPaywallPricing(ReportBuilderPaywallBase):
@@ -346,7 +346,7 @@ class ReportBuilderPaywallActivatingSubscription(ReportBuilderPaywallBase):
         return self.get(request, domain, *args, **kwargs)
 
 
-class ReportBuilderTypeSelect(JSONResponseMixin, ReportBuilderView):
+class ReportBuilderTypeSelect(HQJSONResponseMixin, ReportBuilderView):
     template_name = "userreports/reportbuilder/report_type_select.html"
     urlname = 'report_builder_select_type'
     page_title = ugettext_lazy('Select Report Type')
@@ -592,13 +592,14 @@ class ConfigureChartReport(ReportBuilderView):
                     'is_static': self.existing_report.is_static,
                 })
             return self._handle_exception(error_response, e)
-
+        field_names = report_form.fields.keys()
         return {
             'report': {
                 "title": self.page_name
             },
             'report_type': self.report_type,
             'form': report_form,
+            'is_group_by_required': 'group_by' in field_names or 'location' in field_names,
             'editing_existing_report': bool(self.existing_report),
             'report_column_options': [p.to_dict() for p in report_form.report_column_options.values()],
             'data_source_indicators': [p._asdict() for p in report_form.data_source_properties.values()],
@@ -905,6 +906,12 @@ class ExpressionDebuggerView(BaseUserConfigReportsView):
     page_title = ugettext_lazy("Expression Debugger")
 
 
+class DataSourceDebuggerView(BaseUserConfigReportsView):
+    urlname = 'expression_debugger'
+    template_name = 'userreports/data_source_debugger.html'
+    page_title = ugettext_lazy("Data Source Debugger")
+
+
 @login_and_domain_required
 @toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
 def evaluate_expression(request, domain):
@@ -958,6 +965,34 @@ def evaluate_expression(request, domain):
         return json_response(
             {"error": six.text_type(e)},
             status_code=500,
+        )
+
+
+@login_and_domain_required
+@toggles.USER_CONFIGURABLE_REPORTS.required_decorator()
+def evaluate_data_source(request, domain):
+    data_source_id = request.POST['data_source']
+    docs_id = request.POST['docs_id']
+    try:
+        data_source = get_datasource_config(data_source_id, domain)[0]
+        docs_id = [doc_id.strip() for doc_id in docs_id.split(',')]
+        document_store = get_document_store(domain, data_source.referenced_doc_type)
+        rows = []
+        for doc in document_store.iter_documents(docs_id):
+            for row in data_source.get_all_values(doc):
+                rows.append({i.column.database_column_name: i.value for i in row})
+        return JsonResponse(data={
+            'rows': rows,
+            'columns': [
+                column.database_column_name for column in data_source.get_columns()
+            ],
+        })
+    except DataSourceConfigurationNotFoundError:
+        return JsonResponse(
+            {"error": _("Data source with id {} not found in domain {}.").format(
+                data_source_id, domain
+            )},
+            status=404,
         )
 
 
@@ -1232,7 +1267,7 @@ class PreviewDataSourceView(BaseUserConfigReportsView):
         return {
             'data_source': config,
             'columns': q.column_descriptions,
-            'data': q[:20],
+            'data': [list(row) for row in q[:20]],
             'total_rows': q.count(),
         }
 

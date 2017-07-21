@@ -9,7 +9,6 @@ from corehq.apps.commtrack.tests.util import make_loc
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.apps.locations.models import LocationType
-from corehq.apps.locations.tests.util import delete_all_locations
 from corehq.apps.users.models import WebUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
@@ -20,7 +19,8 @@ class ImporterTest(TestCase):
 
     def setUp(self):
         super(ImporterTest, self).setUp()
-        self.domain = create_domain("importer-test").name
+        self.domain_obj = create_domain("importer-test")
+        self.domain = self.domain_obj.name
         self.default_case_type = 'importer-test-casetype'
 
         self.couch_user = WebUser.create(None, "test", "foobar")
@@ -36,8 +36,7 @@ class ImporterTest(TestCase):
 
     def tearDown(self):
         self.couch_user.delete()
-        delete_all_locations()
-        LocationType.objects.all().delete()
+        self.domain_obj.delete()
         super(ImporterTest, self).tearDown()
 
     def _config(self, col_names, search_column=None, case_type=None,

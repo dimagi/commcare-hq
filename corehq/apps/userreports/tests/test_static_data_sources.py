@@ -22,7 +22,7 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
 
     def test_get_all(self):
         with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'json')]):
-            all = list(StaticDataSourceConfiguration.all())
+            all = list(StaticDataSourceConfiguration.all(use_server_filter=False))
             self.assertEqual(2 + 3, len(all))
             example, dimagi = all[:2]
             self.assertEqual('example', example.domain)
@@ -35,7 +35,7 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
 
     def test_is_static_positive(self):
         with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'json')]):
-            example = list(StaticDataSourceConfiguration.all())[0]
+            example = list(StaticDataSourceConfiguration.all(use_server_filter=False))[0]
             self.assertTrue(example.is_static)
 
     def test_is_static_negative(self):
@@ -45,10 +45,10 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
     @run_with_all_ucr_backends
     def test_deactivate_noop(self):
         with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'json')]):
-            example = list(StaticDataSourceConfiguration.all())[0]
+            example = list(StaticDataSourceConfiguration.all(use_server_filter=False))[0]
             # since this is a SimpleTest, this should fail if the call actually hits the DB
             example.deactivate()
 
     def test_production_config(self):
-        for data_source in StaticDataSourceConfiguration.all():
+        for data_source in StaticDataSourceConfiguration.all(use_server_filter=False):
             data_source.validate()

@@ -5,21 +5,6 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'reminders/js/reminders.manage.js' %}"></script>
-    <script src="{% static 'style/js/main.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    <script>
-        var manageRemindersModel = new ManageRemindersViewModel(
-            {{ form.current_values|JSON }},
-            {{ form.relevant_choices|JSON }},
-            {{ ui_type|JSON }},
-            {{ available_languages|JSON }},
-            {{ form.initial_event|JSON }}
-        );
-        $('#manage-reminders-form').koApplyBindings(manageRemindersModel);
-        manageRemindersModel.init();
-    </script>
 {% endblock %}
 
 {% block stylesheets %}
@@ -32,6 +17,11 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'current_values' form.current_values %}
+    {% initial_page_data 'relevant_choices' form.relevant_choices %}
+    {% initial_page_data 'ui_type' ui_type %}
+    {% initial_page_data 'available_languages' available_languages %}
+    {% initial_page_data 'initial_event' form.initial_event %}
     <div id="manage-reminders-form">
         <form class="form form-horizontal"
               method="post">

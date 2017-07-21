@@ -10,7 +10,8 @@
             <a ng-click="filterList()"
                class="appnav-link-full">
               <i class="fa fa-search appnav-primary-icon"></i>
-              {% trans "View All Forms" %}</a>
+              <span>{% trans "View All Forms" %}</span>
+            </a>
         </div>
     </li>
     <li ng-repeat="module in modules" role="presentation">
@@ -20,7 +21,7 @@
                class="appnav-link-full">
               {% verbatim %}
               <i class="{{ getModuleIcon(module) }} appnav-primary-icon"></i>
-              {{ getFormModuleLabel(module) }}
+            <span>{{ getFormModuleLabel(module) }}</span>
             {% endverbatim %}
           </a>
         </div>
@@ -32,7 +33,7 @@
                      class="appnav-link-full">
                       {% verbatim %}
                       <i class="{{ getModuleFormIcon(form) }} appnav-primary-icon"></i>
-                      {{ getFormModuleLabel(form) }}
+                      <span>{{ getFormModuleLabel(form) }}</span>
                       {% endverbatim %}
                   </a>
                 </div>
@@ -89,7 +90,13 @@
                                 ng-click="showRelevance = !showRelevance"
                                 ng-class="{ 'active' : showRelevance }">
                             <i class="fa fa-code-fork" ng-class="showRelevance ? 'hq-icon' : ''"></i>
-                            &nbsp;{% trans "Display Conditions" %}
+                            &nbsp;{% trans "Display" %}
+                        </button>
+                        <button type="button" class="btn btn-default"
+                                ng-click="showConstraints = !showConstraints"
+                                ng-class="{ 'active': showConstraints }">
+                            <i class="fa fa-ban" ng-class="showConstraints ? 'hq-icon' : ''"></i>
+                            &nbsp;{% trans "Validation" %}
                         </button>
                         <button type="button" class="btn btn-default"
                                 ng-click="showComments = !showComments"
@@ -163,6 +170,11 @@
                                 <ul class="fa-ul" ng-if="question.relevant" ng-show="showRelevance">
                                     <li>
                                         <i class="fa-li fa fa-code-fork text-muted"></i> {{ question.relevant }}
+                                    </li>
+                                </ul>
+                                <ul class="fa-ul" ng-if="question.constraint" ng-show="showConstraints">
+                                    <li>
+                                        <i class="fa-li fa fa-ban text-muted"></i> {{ question.constraint }}
                                     </li>
                                 </ul>
                             </li>

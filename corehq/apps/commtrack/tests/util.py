@@ -9,7 +9,7 @@ from dimagi.utils.parsing import json_format_datetime
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.models import Location, LocationType
+from corehq.apps.locations.models import make_location, LocationType
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.models import CommCareUser
@@ -125,7 +125,7 @@ def make_loc(code, name=None, domain=TEST_DOMAIN, type=TEST_LOCATION_TYPE, paren
     name = name or code
     LocationType.objects.get_or_create(domain=domain, name=type,
                                        defaults={'administrative': False})
-    loc = Location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
+    loc = make_location(site_code=code, name=name, domain=domain, location_type=type, parent=parent)
     loc.save()
     return loc
 

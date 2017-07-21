@@ -2,10 +2,12 @@ from datetime import datetime
 
 import iso8601
 import pytz
+from couchdbkit import ResourceNotFound
 
 import xml2json
 from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
-from corehq.form_processor.models import Attachment
+from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.models import Attachment, XFormInstanceSQL
 from dimagi.ext import jsonobject
 from dimagi.utils.parsing import json_format_datetime
 
@@ -159,3 +161,101 @@ def adjust_datetimes(data, parent=None, key=None):
     # return data, just for convenience in testing
     # this is the original input, modified, not a new data structure
     return data
+
+
+def _get_form(form_id):
+    from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+    from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
+    try:
+        return FormAccessorSQL.get_form(form_id)
+    except XFormNotFound:
+        pass
+
+    try:
+        return FormAccessorCouch.get_form(form_id)
+    except ResourceNotFound:
+        pass
+
+    return None
+
+
+def reprocess_xform_error_by_id(form_id, domain=None):
+    form = _get_form(form_id)
+    if domain and form.domain != domain:
+        raise Exception('Form not found')
+    return reprocess_xform_error(form)
+
+
+def reprocess_xform_error(form):
+    """
+    Attempt to re-process an error form. This was created specifically to address
+    the issue of out of order forms and child cases (form creates child case before
+    parent case has been created).
+
+    See http://manage.dimagi.com/default.asp?250459
+    :param form_id: ID of the error form to process
+    """
+    from corehq.form_processor.interfaces.processor import FormProcessorInterface
+    from corehq.form_processor.submission_post import SubmissionPost
+    from corehq.form_processor.utils import should_use_sql_backend
+    from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL, LedgerAccessorSQL
+    from corehq.blobs.mixin import bulk_atomic_blobs
+    from couchforms.models import XFormInstance
+    from casexml.apps.case.signals import case_post_save
+    from corehq.form_processor.interfaces.processor import ProcessedForms
+    from corehq.form_processor.backends.sql.processor import FormProcessorSQL
+
+    if not form:
+        raise Exception('Form with ID {} not found'.format(form.form_id))
+
+    if not form.is_error:
+        raise Exception('Form was not an error form: {}={}'.format(form.form_id, form.doc_type))
+
+    # reset form state prior to processing
+    if should_use_sql_backend(form.domain):
+        form.state = XFormInstanceSQL.NORMAL
+    else:
+        form.doc_type = 'XFormInstance'
+
+    form.initial_processing_complete = True
+    form.problem = None
+
+    cache = FormProcessorInterface(form.domain).casedb_cache(
+        domain=form.domain, lock=True, deleted_ok=True, xforms=[form]
+    )
+    with cache as casedb:
+        case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
+
+        if case_stock_result:
+            stock_result = case_stock_result.stock_result
+            if stock_result:
+                assert stock_result.populated
+
+            cases = case_stock_result.case_models
+            if should_use_sql_backend(form.domain):
+                for case in cases:
+                    CaseAccessorSQL.save_case(case)
+
+                if stock_result:
+                    LedgerAccessorSQL.save_ledger_values(stock_result.models_to_save)
+
+                FormAccessorSQL.update_form_problem_and_state(form)
+                FormProcessorSQL._publish_changes(
+                    ProcessedForms(form, None),
+                    cases,
+                    stock_result
+                )
+            else:
+                with bulk_atomic_blobs([form] + cases):
+                    XFormInstance.save(form)  # use this save to that we don't overwrite the doc_type
+                    XFormInstance.get_db().bulk_save(cases)
+                if stock_result:
+                    stock_result.commit()
+
+            case_stock_result.stock_result.finalize()
+            case_stock_result.case_result.commit_dirtiness_flags()
+
+            for case in cases:
+                case_post_save.send(case.__class__, case=case)
+
+    return form

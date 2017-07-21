@@ -1,5 +1,3 @@
-from corehq.pillows.base import DEFAULT_META
-
 from corehq.pillows.mappings.utils import mapping_from_json
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
@@ -15,6 +13,5 @@ LEDGER_INDEX_INFO = ElasticsearchIndexInfo(
     index=LEDGER_INDEX,
     alias=LEDGER_ALIAS,
     type=LEDGER_TYPE,
-    meta=DEFAULT_META,
     mapping=LEDGER_MAPPING,
 )

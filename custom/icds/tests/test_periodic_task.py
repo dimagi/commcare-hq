@@ -1,4 +1,3 @@
-from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.tests.util import (
     LocationStructure,
@@ -23,7 +22,6 @@ TEST_DOMAIN = 'icds-indicator-periodic-task'
 
 
 @override_settings(ICDS_SMS_INDICATOR_DOMAINS=[TEST_DOMAIN])
-@patch('corehq.apps.locations.dbaccessors.UserES', UserESFake)
 @patch('custom.icds.tasks.get_user_ids_under_location')
 @patch('custom.icds.tasks.is_first_week_of_month')
 @patch('custom.icds.tasks.run_indicator.delay')
@@ -64,7 +62,6 @@ class TestIndicatorPeriodicTask(TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        UserESFake.reset_docs()
         cls.domain_obj.delete()
         super(TestIndicatorPeriodicTask, cls).tearDownClass()
 
@@ -72,14 +69,13 @@ class TestIndicatorPeriodicTask(TestCase):
     def _make_user(cls, name, location):
         user = CommCareUser.create(cls.domain, name, 'password')
         user.set_location(location)
-        UserESFake.save_doc(user._doc)
         return user
 
     def test_periodic_task_during_first_week_of_month(self, run_indicator_mock, is_first_week_of_month_mock,
             get_user_ids_under_location_mock):
         is_first_week_of_month_mock.return_value = True
         get_user_ids_under_location_mock.return_value = set([])
-        run_weekly_indicators()
+        run_weekly_indicators(phased_rollout=False)
 
         expected_calls = []
 
@@ -99,7 +95,7 @@ class TestIndicatorPeriodicTask(TestCase):
             get_user_ids_under_location_mock):
         is_first_week_of_month_mock.return_value = False
         get_user_ids_under_location_mock.return_value = set([])
-        run_weekly_indicators()
+        run_weekly_indicators(phased_rollout=False)
 
         expected_calls = []
 
@@ -127,7 +123,7 @@ class TestIndicatorPeriodicTask(TestCase):
 
         is_first_week_of_month_mock.return_value = True
         get_user_ids_under_location_mock.side_effect = get_user_ids_wrap
-        run_weekly_indicators()
+        run_weekly_indicators(phased_rollout=False)
 
         expected_calls = []
 

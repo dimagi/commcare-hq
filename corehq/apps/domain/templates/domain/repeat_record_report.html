@@ -17,7 +17,10 @@
 {% block js-inline %}{{ block.super }}
 <script>
     $(function() {
-
+        $('#report-content').on('click', '.toggle-next-pre', function (e) {
+            $(this).nextAll('pre').toggle();
+            e.preventDefault();
+        });
         var codeMirror = null;
         $('#view-record-payload-modal').on('shown.bs.modal', function(event) {
             var recordData = $(event.relatedTarget).data(),
@@ -136,8 +139,10 @@
           });
     });
 </script>
-{% endblock js-inline %} {% block modals %}{{ block.super }}
-<!-- View Repeat Record Modal -->
+{% endblock js-inline %}
+
+{% block modals %}{{ block.super }}
+<!-- "View Payload" Modal -->
 <div class="modal fade" id="view-record-payload-modal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
@@ -158,7 +163,7 @@
     </div>
 </div>
 
-<!-- Modal for repeat resend errors -->
+<!-- Modal for "Resend Payload" errors -->
 <div class="modal fade" id="payload-error-modal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">

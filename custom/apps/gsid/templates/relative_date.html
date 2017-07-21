@@ -31,6 +31,7 @@
 {% ifequal slug 'datespan'  %}
 <script type="text/javascript">
     $(function () {
+        var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
         $('#{{ css_id }}_relativedate').change(function() { 
             var diff = parseInt($(this).val());
             if (!diff || diff<=0) 

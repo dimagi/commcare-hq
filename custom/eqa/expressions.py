@@ -37,7 +37,7 @@ def get_yes_no(val):
         return 'N/A'
 
 
-@quickcache(['item'])
+@quickcache(['item', 'xmlns'])
 def get_two_last_forms(item, xmlns):
     xforms_ids = CaseAccessors(item['domain']).get_case_xform_ids(item['_id'])
     forms = FormAccessors(item['domain']).get_forms(xforms_ids)
@@ -121,7 +121,7 @@ class EQAActionItemSpec(JsonObject):
                         ]
                     )
                     application = Application.get(latest_form.app_id)
-                    form = application.get_form_by_xmlns(self.xmlns)
+                    form = application.get_forms_by_xmlns(self.xmlns)[0]
                     question_list = application.get_questions(self.xmlns)
                     questions = {x['value']: x for x in question_list}
                     return {

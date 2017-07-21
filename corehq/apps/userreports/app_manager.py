@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-from corehq.apps.app_manager.util import get_case_properties
+from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.reports.builder import (

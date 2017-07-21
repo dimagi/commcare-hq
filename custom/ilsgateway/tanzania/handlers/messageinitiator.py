@@ -103,7 +103,7 @@ class MessageInitiatior(KeywordHandler):
         elif command in ["randr_report"]:
             now = datetime.utcnow()
             self.respond(REMINDER_MONTHLY_RANDR_SUMMARY, **reports.construct_summary(
-                sql_location.couch_location,
+                sql_location,
                 SupplyPointStatusTypes.R_AND_R_FACILITY,
                 [SupplyPointStatusValues.SUBMITTED, SupplyPointStatusValues.NOT_SUBMITTED],
                 get_business_day_of_month_before(now.year, now.month, 5)
@@ -114,7 +114,7 @@ class MessageInitiatior(KeywordHandler):
             self.respond(
                 REMINDER_MONTHLY_SOH_SUMMARY,
                 **reports.construct_summary(
-                    sql_location.couch_location,
+                    sql_location,
                     SupplyPointStatusTypes.SOH_FACILITY,
                     [SupplyPointStatusValues.SUBMITTED],
                     get_business_day_of_month_before(last_month.year, last_month.month, -1)
@@ -123,7 +123,7 @@ class MessageInitiatior(KeywordHandler):
         elif command in ["delivery_report"]:
             now = datetime.utcnow()
             self.respond(REMINDER_MONTHLY_DELIVERY_SUMMARY,
-                         **reports.construct_summary(sql_location.couch_location,
+                         **reports.construct_summary(sql_location,
                                                      SupplyPointStatusTypes.DELIVERY_FACILITY,
                                                      [SupplyPointStatusValues.RECEIVED,
                                                      SupplyPointStatusValues.NOT_RECEIVED],

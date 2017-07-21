@@ -40,7 +40,7 @@ class SupplyPointDBAccessorsTest(TestCase):
     def test_get_supply_point_by_location_id(self):
         actual = self.interface.get_closed_and_open_by_location_id_and_domain(
             self.domain,
-            self.locations[0]._id
+            self.locations[0].location_id
         )
         expected = self.locations[0].linked_supply_point()
         self.assertEqual(type(actual), type(expected))

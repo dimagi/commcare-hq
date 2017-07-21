@@ -1,13 +1,13 @@
 import re
 
 
-def fast_distinct(model_cls, column):
+def fast_distinct(model_cls, column, using='default'):
     """
     Use a loose indexscan http://wiki.postgresql.org/wiki/Loose_indexscan
     to get all distinct values for a given column
 
     Functionally equivalent to
-    model_cls.distinct(column).values_list(column, flat=True)
+    model_cls.objects.using(using).distinct(column).values_list(column, flat=True)
     """
     table = _get_table_from_model(model_cls)
     _assert_field_in_model(model_cls, column)
@@ -23,17 +23,17 @@ def fast_distinct(model_cls, column):
     SELECT NULL WHERE EXISTS(SELECT * FROM {table} WHERE {column} IS NULL);
     """.format(column=_assert_super_safe(column), table=_assert_super_safe(table))
 
-    return [value for value, in _execute(command)]
+    return [value for value, in _execute(command, using=using)]
 
 
-def fast_distinct_in_domain(model_cls, column, domain):
+def fast_distinct_in_domain(model_cls, column, domain, using='default'):
     """
     Use a loose indexscan http://wiki.postgresql.org/wiki/Loose_indexscan
     to get all distinct values for a given column in a certain domain
 
     Functionally equivalent to
 
-        model_cls.objects.filter(domain=domain).values(column) \
+        model_cls.objects.using(using).filter(domain=domain).values(column) \
             .distinct().values_list(column, flat=True)
     """
     table = _get_table_from_model(model_cls)
@@ -54,7 +54,7 @@ def fast_distinct_in_domain(model_cls, column, domain):
         table=_assert_super_safe(table),
         filter_column=_assert_super_safe('domain')
     )
-    return [value for value, in _execute(command, {'filter_value': domain})]
+    return [value for value, in _execute(command, {'filter_value': domain}, using=using)]
 
 
 def _get_table_from_model(model_cls):
@@ -70,8 +70,9 @@ def _assert_super_safe(word):
     return word
 
 
-def _execute(command, params=None):
-    from django.db import connection
+def _execute(command, params=None, using='default'):
+    from django.db import connections
+    connection = connections[using]
     with connection.cursor() as cursor:
         if params is None:
             cursor.execute(command)

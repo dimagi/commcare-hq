@@ -43,7 +43,7 @@ $(function() {
             url: $('#id_url').val(),
             format: $('#id_format').val(),
             repeater_type: hqImport("hqwebapp/js/initial_page_data.js").get("repeater_type"),
-            use_basic_auth: $('#id_use_basic_auth').prop("checked"),
+            auth_type: $('#id_auth_type').val(),
             username: $('#id_username').val(),
             password: $('#id_password').val(),
         };

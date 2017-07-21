@@ -2,7 +2,7 @@ from django.test.testcases import TestCase
 from corehq.apps.accounting.tests.utils import DomainSubscriptionMixin
 from corehq.apps.accounting.models import SoftwarePlanEdition
 from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import Location, LocationType
+from corehq.apps.locations.models import make_location, LocationType
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.messages import get_message
 from corehq.apps.sms.models import SMS
@@ -45,7 +45,7 @@ class UpdateLocationKeywordTest(TestCase, DomainSubscriptionMixin):
             name='test'
         )
 
-        cls.location = Location(
+        cls.location = make_location(
             domain=cls.domain,
             name='test',
             site_code='site_code',

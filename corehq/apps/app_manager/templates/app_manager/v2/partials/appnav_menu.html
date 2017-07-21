@@ -19,7 +19,7 @@
                   {% include 'app_manager/v2/partials/module_link_secondary.html' %}
                 </div>
 
-                <ul class="appnav-menu appnav-menu-nested see {% ifequal module.id selected_module.id %}selected{% endifequal %} sortable sortable-forms {% if module.is_surveys %}appnav-surveys{% else %}appnav-caselist{% endif %}">
+                <ul class="appnav-menu appnav-menu-nested see {% ifequal module.id selected_module.id %}selected{% endifequal %} sortable sortable-forms {% if module.is_surveys %}appnav-surveys{% else %}appnav-caselist{% endif %}" data-parentvar="moduleid">
                     <li class="sort-action">
                         <form method="post"
                               action="{% url "rearrange" domain app.id 'forms' %}">
@@ -28,7 +28,7 @@
                     </li>
                     {% with nav_form as selected_form %}
                         {% for form in module.get_forms %}
-                            <li class="edit-form-li js-sorted-li{% if form.get_action_type == 'open' %} sort-disabled appnav-form-create{% else %} appnav-form-followup{% endif %}"
+                            <li class="edit-form-li js-sorted-li"
                                 data-moduleid="{{ module.id }}"
                                 data-index="{{ form.id }}"
                                 data-indexvar="formid"
@@ -59,7 +59,7 @@
                     {% csrf_token %}
                     <input id="new-module-type" type="hidden" name="module_type" />
                 </form>
-                <a href="#" class="appnav-add" id="js-add-new-item">
+                <a href="#" class="appnav-add js-add-new-item" data-slug="module">
                     <i class="new-module-icon fa fa-plus"></i>
                     {% trans "Add..." %}
                 </a>

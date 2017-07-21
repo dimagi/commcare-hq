@@ -76,6 +76,7 @@
       text-overflow: ellipsis;
       padding: 7px 10px;
       background-color: rgba(255, 255, 255, 0.4);
+      position: relative;
       &:hover {
         background-color: rgba(244, 244, 244, 0.9);
 
@@ -84,7 +85,11 @@
         }
       }
       .list-group-item-icon {
-        float: right;
+        position: absolute;
+        right: 5px;
+        top: 3px;
+        padding: 5px;
+        background-color: @cc-bg;
         visibility: hidden;
       }
     }

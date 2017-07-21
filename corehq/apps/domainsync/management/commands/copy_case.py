@@ -35,6 +35,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, sourcedb, case_id, domain, **options):
+        # FIXME broken b/c https://github.com/dimagi/commcare-hq/pull/15896
         source_couch = CouchConfig(sourcedb)
         doc_ids = [case_id]
 

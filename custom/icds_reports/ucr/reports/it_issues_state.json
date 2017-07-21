@@ -26,6 +26,16 @@
         "field": "opened_on",
         "type": "date",
         "display": "Date Opened"
+      },
+      {
+        "compare_as_string": false,
+        "required": false,
+        "datatype": "string",
+        "display": "Filter by State",
+        "field": "state_id",
+        "type": "location_drilldown",
+        "slug": "state_id",
+        "max_drilldown_levels": 1
       }
     ],
     "columns": [
@@ -72,7 +82,12 @@
         "display": "Resolved"
       }
     ],
-    "sort_expression": [],
+    "sort_expression": [
+      {
+        "field": "state_id",
+        "order": "DESC"
+      }
+    ],
     "configured_charts": []
   }
 }

@@ -7,6 +7,7 @@ from corehq.apps.app_manager.models import (
     Module,
     PreloadAction,
 )
+from corehq.apps.app_manager.models import WORKFLOW_PREVIOUS
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 DOMAIN = 'domain'
@@ -17,7 +18,7 @@ class ModuleAsChildTestBase(TestXmlMixin):
     child_module_class = None
 
     def setUp(self):
-        self.factory = AppFactory(domain=DOMAIN)
+        self.factory = AppFactory(build_version='2.9', domain=DOMAIN)
         self.module_0, _ = self.factory.new_basic_module('parent', 'gold-fish')
         self.module_1, _ = self.factory.new_module(self.child_module_class, 'child', 'guppy', parent_module=self.module_0)
 
@@ -172,6 +173,9 @@ class BasicModuleAsChildTest(ModuleAsChildTestBase, SimpleTestCase):
         self.factory.form_requires_case(m1f0, 'guppy', parent_case_type='gold-fish')
 
         self.assertXmlPartialEqual(self.get_xml('child-module-entry-datums-added-basic'), self.app.create_suite(), "./entry")
+
+        self.factory.form_workflow(m1f0, WORKFLOW_PREVIOUS)
+        self.assertXmlPartialEqual(self.get_xml('child-module-form-workflow-previous'), self.app.create_suite(), "./entry")
 
     def test_grandparent_as_child_module(self):
         """

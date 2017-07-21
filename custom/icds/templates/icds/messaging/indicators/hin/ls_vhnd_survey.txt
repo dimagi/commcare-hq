@@ -1,1 +1,3 @@
-VHND hasn't been conducted at the following AWC in the last 30 days: {{ location_names }}
+{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
+
+: {{ location_names }} निम्लिखित आँगनवाड़ी केंद्रों में पिछले तीस दिनों में ग्राम सवास्थ एवं पोषण दिवस का आयोजन नहीं किया गया हैं |

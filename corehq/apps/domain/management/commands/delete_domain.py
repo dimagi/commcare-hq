@@ -10,8 +10,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            'domain',
-            dest='domain_name',
+            'domain_name',
         )
         parser.add_argument(
             '--noinput',

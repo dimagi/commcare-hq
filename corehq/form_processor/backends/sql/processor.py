@@ -1,6 +1,7 @@
 import datetime
 import logging
 import uuid
+from contextlib2 import ExitStack
 
 import redis
 from PIL import Image
@@ -34,7 +35,7 @@ class FormProcessorSQL(object):
                 attachment_id=uuid.uuid4(),
                 content_type=attachment.content_type,
             )
-            xform_attachment.write_content(attachment.content_as_file())
+            xform_attachment.write_content(attachment.content)
             if xform_attachment.is_image:
                 try:
                     img_size = Image.open(attachment.content_as_file()).size
@@ -74,8 +75,25 @@ class FormProcessorSQL(object):
 
     @classmethod
     def save_processed_models(cls, processed_forms, cases=None, stock_result=None, publish_to_kafka=True):
-        with transaction.atomic():
-            logging.debug('Beginning atomic commit\n')
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+
+        db_names = {get_db_alias_for_partitioned_doc(processed_forms.submitted.form_id)}
+        if processed_forms.deprecated:
+            db_names |= {get_db_alias_for_partitioned_doc(processed_forms.deprecated.form_id)}
+
+        if cases:
+            db_names |= {get_db_alias_for_partitioned_doc(case.case_id) for case in cases}
+
+        if stock_result:
+            db_names |= {
+                get_db_alias_for_partitioned_doc(ledger_value.case_id)
+                for ledger_value in stock_result.models_to_save
+            }
+
+        with ExitStack() as stack:
+            for db_name in db_names:
+                stack.enter_context(transaction.atomic(db_name))
+
             # Save deprecated form first to avoid ID conflicts
             if processed_forms.deprecated:
                 FormAccessorSQL.save_deprecated_form(processed_forms.deprecated)
@@ -191,7 +209,9 @@ class FormProcessorSQL(object):
                     is_creation = True
                     case_db.set(case_id, case)
                 previous_owner = case.owner_id
-                case = FormProcessorSQL._rebuild_case_from_transactions(case, rebuild_detail, updated_xforms=xforms)
+                case, _ = FormProcessorSQL._rebuild_case_from_transactions(
+                    case, rebuild_detail, updated_xforms=xforms
+                )
                 if case:
                     touched_cases[case.case_id] = CaseUpdateMetadata(
                         case=case, is_creation=is_creation, previous_owner_id=previous_owner,
@@ -220,9 +240,11 @@ class FormProcessorSQL(object):
             case = CommCareCaseSQL(case_id=case_id, domain=domain)
             found = False
 
-        case = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
+        case, rebuild_transaction = FormProcessorSQL._rebuild_case_from_transactions(case, detail)
         if case.is_deleted and not found:
             return None
+
+        case.server_modified_on = rebuild_transaction.server_date
         CaseAccessorSQL.save_case(case)
         publish_case_saved(case)
         return case
@@ -233,6 +255,8 @@ class FormProcessorSQL(object):
         strategy = SqlCaseUpdateStrategy(case)
 
         rebuild_transaction = CaseTransaction.rebuild_transaction(case, detail)
+        if updated_xforms:
+            rebuild_transaction.server_date = updated_xforms[0].edited_on
         unarchived_form_id = None
         if detail.type == CaseTransaction.TYPE_REBUILD_FORM_ARCHIVED and not detail.archived:
             # we're rebuilding because a form was un-archived
@@ -240,7 +264,7 @@ class FormProcessorSQL(object):
         strategy.rebuild_from_transactions(
             transactions, rebuild_transaction, unarchived_form_id=unarchived_form_id
         )
-        return case
+        return case, rebuild_transaction
 
     @staticmethod
     def get_case_forms(case_id):
@@ -261,6 +285,10 @@ class FormProcessorSQL(object):
             return None, None
 
         return case, None
+
+    @staticmethod
+    def case_exists(case_id):
+        return CaseAccessorSQL.case_exists(case_id)
 
 
 def get_case_transactions(case_id, updated_xforms=None):

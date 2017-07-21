@@ -8,6 +8,7 @@ from django.conf import settings
 from django.test.utils import override_settings
 from nose.tools import nottest
 from nose.plugins.attrib import attr
+from unittest2 import skipIf, skipUnless
 
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.phone.models import SyncLog
@@ -20,8 +21,9 @@ from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, Case
 from corehq.form_processor.parsers.form import process_xform_xml
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.sql_db.config import get_sql_db_aliases_in_use
+from corehq.sql_db.models import PartitionedModel
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
-from couchforms.models import XFormInstance
+from couchforms.models import XFormInstance, all_known_formlike_doc_types
 from dimagi.utils.couch.database import safe_delete
 
 logger = logging.getLogger(__name__)
@@ -41,26 +43,14 @@ class FormProcessorTestUtils(object):
     def delete_all_cases(cls, domain=None):
         logger.debug("Deleting all Couch cases for domain %s", domain)
         assert CommCareCase.get_db().dbname.startswith('test_')
-        view_kwargs = {}
-        if domain:
-            view_kwargs = {
-                'startkey': [domain],
-                'endkey': [domain, {}],
-            }
-
-        cls._delete_all(
-            CommCareCase.get_db(),
-            'cases_by_server_date/by_server_modified_on',
-            **view_kwargs
-        )
-
+        cls._delete_all(CommCareCase.get_db(), ['CommCareCase', 'CommCareCase-Deleted'], domain)
         FormProcessorTestUtils.delete_all_sql_cases(domain)
 
-    @staticmethod
+    @classmethod
     @unit_testing_only
-    def delete_all_sql_cases(domain=None):
+    def delete_all_sql_cases(cls, domain=None):
         logger.debug("Deleting all SQL cases for domain %s", domain)
-        CaseAccessorSQL.delete_all_cases(domain)
+        cls._delete_all_sql_sharded_modesl(CommCareCaseSQL, domain)
 
     @staticmethod
     def delete_all_ledgers(domain=None):
@@ -99,48 +89,59 @@ class FormProcessorTestUtils(object):
 
     @classmethod
     @unit_testing_only
-    def delete_all_xforms(cls, domain=None, user_id=None):
+    def delete_all_xforms(cls, domain=None):
         logger.debug("Deleting all Couch xforms for domain %s", domain)
-        view = 'couchforms/all_submissions_by_domain'
-        view_kwargs = {}
-        if domain and user_id:
-            view = 'all_forms/view'
-            view_kwargs = {
-                'startkey': ['submission user', domain, user_id],
-                'endkey': ['submission user', domain, user_id, {}],
+        cls._delete_all(XFormInstance.get_db(), all_known_formlike_doc_types(), domain)
+        FormProcessorTestUtils.delete_all_sql_forms(domain)
 
-            }
-        elif domain:
-            view_kwargs = {
-                'startkey': [domain],
-                'endkey': [domain, {}]
-            }
-
-        cls._delete_all(
-            XFormInstance.get_db(),
-            view,
-            **view_kwargs
-        )
-
-        FormProcessorTestUtils.delete_all_sql_forms(domain, user_id)
-
-    @staticmethod
+    @classmethod
     @unit_testing_only
-    def delete_all_sql_forms(domain=None, user_id=None):
+    def delete_all_sql_forms(cls, domain=None):
         logger.debug("Deleting all SQL xforms for domain %s", domain)
-        FormAccessorSQL.delete_all_forms(domain, user_id)
+        cls._delete_all_sql_sharded_modesl(XFormInstanceSQL, domain)
 
     @classmethod
     @unit_testing_only
     def delete_all_sync_logs(cls):
         logger.debug("Deleting all synclogs")
-        cls._delete_all(SyncLog.get_db(), 'phone/sync_logs_by_user')
+        cls._delete_all_from_view(SyncLog.get_db(), 'phone/sync_logs_by_user')
 
     @staticmethod
     @unit_testing_only
-    def _delete_all(db, viewname, **view_kwargs):
+    def _delete_all_sql_sharded_modesl(model_class, domain=None):
+        assert issubclass(model_class, PartitionedModel)
+        from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+        dbs = get_db_aliases_for_partitioned_query()
+        for db in dbs:
+            query = model_class.objects.using(db)
+            if domain:
+                query.filter(domain=domain)
+            query.delete()
+
+    @staticmethod
+    @unit_testing_only
+    def _delete_all(db, doc_types, domain=None):
+        for doc_type in doc_types:
+            if domain:
+                view = 'by_domain_doc_type_date/view'
+                view_kwargs = {
+                    'startkey': [domain, doc_type],
+                    'endkey': [domain, doc_type, {}],
+                }
+            else:
+                view = 'all_docs/by_doc_type'
+                view_kwargs = {
+                    'startkey': [doc_type],
+                    'endkey': [doc_type, {}],
+                }
+
+            FormProcessorTestUtils._delete_all_from_view(db, view, view_kwargs)
+
+    @staticmethod
+    def _delete_all_from_view(db, view, view_kwargs=None):
+        view_kwargs = view_kwargs or {}
         deleted = set()
-        for row in db.view(viewname, reduce=False, **view_kwargs):
+        for row in db.view(view, reduce=False, **view_kwargs):
             doc_id = row['id']
             if doc_id not in deleted:
                 try:
@@ -184,20 +185,20 @@ def only_run_with_non_partitioned_database(cls):
     """
     Only runs the test with the non-partitioned database settings.
     """
-    if settings.USE_PARTITIONED_DATABASE:
-        return nottest(cls)
-
-    return cls
+    skip_if = skipIf(
+        settings.USE_PARTITIONED_DATABASE, 'Only applicable when sharding is not setup'
+    )
+    return skip_if(cls)
 
 
 def only_run_with_partitioned_database(cls):
     """
     Only runs the test with the partitioned database settings.
     """
-    if not settings.USE_PARTITIONED_DATABASE:
-        return nottest(cls)
-
-    return partitioned(cls)
+    skip_unless = skipUnless(
+        settings.USE_PARTITIONED_DATABASE, 'Only applicable if sharding is setup'
+    )
+    return skip_unless(partitioned(cls))
 
 
 def use_sql_backend(cls):
@@ -219,7 +220,8 @@ def post_xform(instance_xml, attachments=None, domain='test-domain'):
 
 
 @nottest
-def create_form_for_test(domain, case_id=None, attachments=None, save=True, state=XFormInstanceSQL.NORMAL):
+def create_form_for_test(domain, case_id=None, attachments=None, save=True, state=XFormInstanceSQL.NORMAL,
+        received_on=None, user_id='user1', edited_on=None):
     """
     Create the models directly so that these tests aren't dependent on any
     other apps. Not testing form processing here anyway.
@@ -231,8 +233,7 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True, stat
     from corehq.form_processor.utils import get_simple_form_xml
 
     form_id = uuid4().hex
-    user_id = 'user1'
-    utcnow = datetime.utcnow()
+    utcnow = received_on or datetime.utcnow()
 
     form_xml = get_simple_form_xml(form_id, case_id)
 
@@ -242,7 +243,8 @@ def create_form_for_test(domain, case_id=None, attachments=None, save=True, stat
         received_on=utcnow,
         user_id=user_id,
         domain=domain,
-        state=state
+        state=state,
+        edited_on=edited_on,
     )
 
     attachments = attachments or {}

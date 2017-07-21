@@ -17,20 +17,22 @@ from corehq.apps.api.resources import (
     v0_1,
     v0_3,
 )
-from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication
+from corehq.apps.api.resources.auth import DomainAdminAuthentication, RequirePermissionAuthentication, \
+    LoginAndDomainAuthentication
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from corehq.apps.api.resources.v0_1 import _safe_bool
 from corehq.apps.api.serializers import CommCareCaseSerializer, XFormInstanceSerializer
 from corehq.apps.api.util import get_object_or_not_exist, get_obj
-from corehq.apps.app_manager import util as app_manager_util
+from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 from corehq.apps.app_manager.dbaccessors import get_apps_in_domain
 from corehq.apps.app_manager.models import Application, RemoteApp
 from corehq.apps.cloudcare.api import ElasticCaseQuery
 from corehq.apps.groups.models import Group
-from corehq.apps.repeaters.models import Repeater
-from corehq.apps.repeaters.utils import get_all_repeater_types
+from corehq.motech.repeaters.models import Repeater
+from corehq.motech.repeaters.utils import get_all_repeater_types
 from corehq.apps.users.models import CouchUser, Permissions
 from corehq.apps.users.util import format_username
+from corehq.util.view_utils import absolute_reverse
 from couchforms.models import doc_types
 from custom.hope.models import HOPECase, CC_BIHAR_NEWBORN, CC_BIHAR_PREGNANCY
 from no_exceptions.exceptions import Http400
@@ -60,6 +62,7 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
     uiversion = fields.CharField(attribute='uiversion', blank=True, null=True)
     metadata = fields.DictField(attribute='metadata', blank=True, null=True)
     received_on = fields.CharField(attribute="received_on")
+    edited_on = fields.CharField(attribute="edited_on", null=True)
 
     app_id = fields.CharField(attribute='app_id', null=True)
     build_id = fields.CharField(attribute='build_id', null=True)
@@ -86,14 +89,18 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
         if not attachments_dict:
             return {}
 
-        def _normalize_meta(meta):
+        domain = bundle.obj.domain
+        form_id = bundle.obj._id
+
+        def _normalize_meta(name, meta):
             return {
                 'content_type': meta.content_type,
                 'length': meta.content_length,
+                'url': absolute_reverse('api_form_attachment', args=(domain, form_id, name))
             }
 
         return {
-            name: _normalize_meta(meta) for name, meta in attachments_dict.items()
+            name: _normalize_meta(name, meta) for name, meta in attachments_dict.items()
         }
 
     is_phone_submission = fields.BooleanField(readonly=True)
@@ -103,6 +110,12 @@ class XFormInstanceResource(SimpleSortableResourceMixin, HqBaseResource, DomainS
             getattr(bundle.obj, 'openrosa_headers', None)
             and bundle.obj.openrosa_headers.get('HTTP_X_OPENROSA_VERSION')
         )
+
+    edited_by_user_id = fields.CharField(readonly=True, null=True)
+
+    def dehydrate_edited_by_user_id(self, bundle):
+        if bundle.obj.edited_on:
+            return (getattr(bundle.obj, 'auth_context') or {}).get('user_id', None)
 
     def obj_get(self, bundle, **kwargs):
         instance_id = kwargs['pk']
@@ -236,6 +249,7 @@ class CommCareCaseResource(SimpleSortableResourceMixin, v0_3.CommCareCaseResourc
     date_modified = fields.CharField(attribute='modified_on', default="1900-01-01")
     server_date_modified = fields.CharField(attribute='server_modified_on', default="1900-01-01")
     server_date_opened = fields.CharField(attribute='server_opened_on', default="1900-01-01")
+    opened_by = fields.CharField(attribute='opened_by', null=True)
 
     def obj_get(self, bundle, **kwargs):
         case_id = kwargs['pk']
@@ -371,7 +385,7 @@ class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificReso
 
             dehydrated['case_type'] = module.case_type
 
-            dehydrated['case_properties'] = app_manager_util.get_case_properties(
+            dehydrated['case_properties'] = get_case_properties(
                 app, [module.case_type], defaults=['name']
             )[module.case_type]
 
@@ -417,7 +431,7 @@ class ApplicationResource(CouchResourceMixin, HqBaseResource, DomainSpecificReso
         return get_object_or_not_exist(Application, kwargs['pk'], kwargs['domain'])
 
     class Meta(CustomResourceMeta):
-        authentication = RequirePermissionAuthentication(Permissions.edit_apps)
+        authentication = LoginAndDomainAuthentication()
         object_class = Application
         list_allowed_methods = ['get']
         detail_allowed_methods = ['get']

@@ -29,6 +29,7 @@ from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
+from djangular.views.mixins import JSONResponseMixin
 
 import httpagentparser
 from couchdbkit import ResourceNotFound
@@ -54,9 +55,9 @@ from corehq.apps.domain.decorators import require_superuser, login_and_domain_re
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.dropbox.decorators import require_dropbox_session
-from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress
+from corehq.apps.dropbox.exceptions import DropboxUploadAlreadyInProgress, DropboxInvalidToken
 from corehq.apps.dropbox.models import DropboxUploadHelper
-from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN
+from corehq.apps.dropbox.views import DROPBOX_ACCESS_TOKEN, DropboxAuthInitiate
 from corehq.apps.hqadmin import service_checks as checks
 from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN_PROGRESS_FLAG
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
@@ -69,13 +70,30 @@ from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.middleware import always_allow_browser_caching
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from corehq.util.datadog.metrics import JSERROR_COUNT
-from corehq.util.datadog.utils import create_datadog_event, log_counter, sanitize_url
+from corehq.util.datadog.utils import create_datadog_event, sanitize_url
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.view_utils import reverse
 
 
 def is_deploy_in_progress():
     cache = get_redis_default_cache()
     return cache.get(DEPLOY_IN_PROGRESS_FLAG) is not None
+
+
+def format_traceback_the_way_python_does(type, exc, tb):
+    """
+    Returns a traceback that looks like the one python gives you in the shell, e.g.
+
+    Traceback (most recent call last):
+      File "<stdin>", line 2, in <module>
+    NameError: name 'name' is not defined
+    """
+
+    return u'Traceback (most recent call last):\n{}{}: {}'.format(
+        ''.join(traceback.format_tb(tb)),
+        type.__name__,
+        unicode(exc)
+    )
 
 
 def server_error(request, template_name='500.html'):
@@ -89,7 +107,7 @@ def server_error(request, template_name='500.html'):
     t = loader.get_template(template_name)
     type, exc, tb = sys.exc_info()
 
-    traceback_text = ''.join(traceback.format_tb(tb))
+    traceback_text = format_traceback_the_way_python_does(type, exc, tb)
     traceback_key = uuid.uuid4().hex
     cache.cache.set(traceback_key, traceback_text, 60*60)
 
@@ -350,11 +368,17 @@ def login(req):
     # this view, and the one below, is overridden because
     # we need to set the base template to use somewhere
     # somewhere that the login page can access it.
+
+    if settings.SERVER_ENVIRONMENT == 'icds':
+        login_url = reverse('domain_login', kwargs={'domain': 'icds-cas'})
+        return HttpResponseRedirect(login_url)
+
     req_params = req.GET if req.method == 'GET' else req.POST
     domain = req_params.get('domain', None)
     return _login(req, domain, "login_and_password/login.html")
 
 
+@location_safe
 def domain_login(req, domain, template_name="login_and_password/login.html"):
     project = Domain.get_by_name(domain)
     if not project:
@@ -378,6 +402,7 @@ class HQLoginView(LoginView):
     def get_context_data(self, **kwargs):
         context = super(HQLoginView, self).get_context_data(**kwargs)
         context.update(self.extra_context)
+        context['implement_password_obfuscation'] = settings.OBFUSCATE_PASSWORD_FOR_NIC_COMPLIANCE
         return context
 
 
@@ -444,6 +469,8 @@ def dropbox_upload(request, download_id):
                 download_id=download_id,
                 user=request.user,
             )
+        except DropboxInvalidToken:
+            return HttpResponseRedirect(reverse(DropboxAuthInitiate.slug))
         except DropboxUploadAlreadyInProgress:
             uploader = DropboxUploadHelper.objects.get(download_id=download_id)
             messages.warning(
@@ -488,14 +515,14 @@ def jserror(request):
             browser_version = parsed_agent['browser'].get('version', DATADOG_UNKNOWN)
             browser_name = parsed_agent['browser'].get('name', DATADOG_UNKNOWN)
 
-    log_counter(JSERROR_COUNT, {
-        'os': os,
-        'browser_version': browser_version,
-        'browser_name': browser_name,
-        'url': sanitize_url(request.POST.get('page', None)),
-        'file': request.POST.get('filename'),
-        'bot': bot,
-    })
+    datadog_counter(JSERROR_COUNT, tags=[
+        u'os:{}'.format(os),
+        u'browser_version:{}'.format(browser_version),
+        u'browser_name:{}'.format(browser_name),
+        u'url:{}'.format(sanitize_url(request.POST.get('page', None))),
+        u'file:{}'.format(request.POST.get('filename')),
+        u'bot:{}'.format(bot),
+    ])
 
     return HttpResponse('')
 
@@ -612,7 +639,6 @@ def bug_report(req):
                          "Please fix this ASAP (as if you wouldn't anyway)...")
         traceback_info = cache.cache.get(report['500traceback'])
         cache.cache.delete(report['500traceback'])
-        traceback_info = "Traceback of this 500: \n%s" % traceback_info
         message = "%s \n\n %s \n\n %s" % (message, extra_message, traceback_info)
 
     email = EmailMessage(
@@ -1110,7 +1136,7 @@ class MaintenanceAlertsView(BasePageView):
             'active': alert.active,
             'html': alert.html,
             'id': alert.id,
-            } for alert in MaintenanceAlert.objects.order_by('-created')[:5]]
+            } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:5]]
         }
 
     @property
@@ -1194,3 +1220,16 @@ def couch_doc_counts(request, domain):
         cls.__name__: get_doc_count_in_domain_by_class(domain, cls, start, end)
         for cls in [CommCareCase, XFormInstance]
     })
+
+
+# Use instead of djangular's base JSONResponseMixin
+# Adds djng_current_rmi to view context
+class HQJSONResponseMixin(JSONResponseMixin):
+    # Add the output of djng_current_rmi to view context, which requires having
+    # the rest of the context, specifically context['view'], available.
+    # See https://github.com/jrief/django-angular/blob/master/djng/templatetags/djng_tags.py
+    def get_context_data(self, **kwargs):
+        context = super(HQJSONResponseMixin, self).get_context_data(**kwargs)
+        from djangular.templatetags.djangular_tags import djng_current_rmi
+        context['djng_current_rmi'] = json.loads(djng_current_rmi(context))
+        return context

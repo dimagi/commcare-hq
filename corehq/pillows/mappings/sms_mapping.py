@@ -1,4 +1,3 @@
-from corehq.pillows.base import DEFAULT_META
 from corehq.pillows.core import DATE_FORMATS_ARR, DATE_FORMATS_STRING
 from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
@@ -47,6 +46,5 @@ SMS_INDEX_INFO = ElasticsearchIndexInfo(
     index=SMS_INDEX,
     alias="smslogs",
     type=SMS_TYPE,
-    meta=DEFAULT_META,
     mapping=SMS_MAPPING,
 )

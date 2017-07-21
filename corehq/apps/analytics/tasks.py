@@ -36,7 +36,8 @@ from dimagi.utils.logging import notify_exception
 from .utils import analytics_enabled_for_email
 
 _hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
-                                               '{}@{}'.format('aphilippot', 'dimagi.com')],
+                                               '{}@{}'.format('aphilippot', 'dimagi.com'),
+                                               '{}@{}'.format('colaughlin', 'dimagi.com')],
                                            send_to_ops=False)
 
 logger = logging.getLogger('analytics')
@@ -86,6 +87,20 @@ def _track_on_hubspot(webuser, properties):
                 ]}
             ),
         )
+
+
+def _track_on_hubspot_by_email(email, properties):
+    # Note: Hubspot recommends OAuth instead of api key
+    _hubspot_post(
+        url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
+            urllib.quote(email)
+        ),
+        data=json.dumps(
+            {'properties': [
+                {'property': k, 'value': v} for k, v in properties.items()
+            ]}
+        ),
+    )
 
 
 def set_analytics_opt_out(webuser, analytics_enabled):
@@ -286,6 +301,14 @@ def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
 
 
 @analytics_task()
+def track_job_candidate_on_hubspot(user_email):
+    properties = {
+        'job_candidate': True
+    }
+    _track_on_hubspot_by_email(user_email, properties=properties)
+
+
+@analytics_task()
 def track_created_new_project_space_on_hubspot(webuser, cookies, meta):
     _send_form_to_hubspot(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, webuser, cookies, meta)
 
@@ -375,7 +398,7 @@ def track_periodic_data():
     # Start by getting a list of web users mapped to their domains
     six_months_ago = date.today() - timedelta(days=180)
     users_to_domains = (UserES().web_users()
-                        .last_logged_in(gte=six_months_ago).fields(['domains', 'email', 'date_joined'])
+                        .last_logged_in(gte=six_months_ago).source(['domains', 'email', 'date_joined'])
                         .analytics_enabled()
                         .run().hits)
     # users_to_domains is a list of dicts

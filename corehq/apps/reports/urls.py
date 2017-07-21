@@ -3,6 +3,7 @@ import logging
 from django.conf.urls import include, url
 from django.core.exceptions import ImproperlyConfigured
 
+from corehq.apps.reports.standard.forms.reports import ReprocessXFormErrorView
 from corehq.apps.userreports.reports.view import (
     ConfigurableReport,
     CustomConfigurableReportDispatcher,
@@ -38,7 +39,7 @@ from .views import (
     default,
     old_saved_reports, case_forms, case_xml, rebuild_case_view, resave_case, close_case_view, undo_close_case_view,
     export_case_transactions, case_form_data, download_form, restore_edit, form_multimedia_export,
-    download_attachment, archive_form, resave_form, unarchive_form, project_health_user_details, export_data,
+    archive_form, resave_form, unarchive_form, project_health_user_details, export_data,
     export_default_or_custom_data, hq_download_saved_export, hq_deid_download_saved_export, hq_update_saved_export,
     export_report, email_report, delete_config, delete_scheduled_report, send_test_scheduled_report,
     view_scheduled_report, export_all_form_metadata, export_all_form_metadata_async, download_cases,
@@ -91,8 +92,6 @@ urlpatterns = [
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/restore_version/$', restore_edit, name='restore_edit'),
     url(r'^form_data/download/media/$',
         form_multimedia_export, name='form_multimedia_export'),
-    url(r'^form_data/(?P<instance_id>[\w\-:]+)/download-attachment/$',
-        download_attachment, name='download_attachment'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', archive_form, name='archive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', unarchive_form, name='unarchive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/rebuild/$', resave_form, name='resave_form'),
@@ -145,6 +144,8 @@ urlpatterns = [
     url(r"^export/forms/all/async/$", export_all_form_metadata_async, name="export_all_form_metadata_async"),
     url(r'^download/cases/$', download_cases, name='download_cases'),
     url(r'^download/internal/cases/$', download_cases_internal, name='download_cases_internal'),
+    url(r'^reprocess_error_form/$', ReprocessXFormErrorView.as_view(),
+        name=ReprocessXFormErrorView.urlname),
 
     url(r'^custom/', include(custom_report_urls)),
     url(r'^filters/', include(filter_urls)),

@@ -72,3 +72,114 @@
   .border-top-radius(0);
   .border-bottom-radius(0);
 }
+
+.panel-release {
+  border: none;
+  background-color: lighten(@cc-bg, 3);
+
+  &.build-latest-release {
+    .box-shadow(0 0 10px fade(@cc-brand-mid, 40));
+  }
+
+  .bootstrap-switch-handle-on.bootstrap-switch-primary {
+    background-color: @cc-brand-mid;
+  }
+  .bootstrap-switch-primary:focus {
+    border-color: @cc-brand-mid;
+  }
+  .bootstrap-switch.bootstrap-switch-mini .bootstrap-switch-handle-on,
+  .bootstrap-switch.bootstrap-switch-mini .bootstrap-switch-handle-off,
+  .bootstrap-switch.bootstrap-switch-mini .bootstrap-switch-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 800;
+  }
+}
+
+.panel-release-title {
+  margin-left: 15px;
+  margin-right: 50px;
+  padding: 15px 0 5px;
+  font-size: 12px;
+  font-weight: 400;
+  color: lighten(@cc-text, 40);
+  strong {
+    color: @cc-text;
+  }
+}
+.panel-release > .panel-heading {
+  padding: 0;
+  background-color: @cc-bg;
+
+  .release-trash-container {
+    float: right;
+
+    .release-remove {
+      color: @text-color;
+      .transition(all 500ms ease-in-out);
+      font-size: 15px;
+      padding: 11px 18px 13px;
+      display: block;
+      &:hover {
+        color: @cc-att-neg-mid;
+      }
+    }
+  }
+  .build-is-released {
+    float: right;
+    padding: 13px 0;
+  }
+}
+
+.panel-release > .panel-footer {
+  text-align: right;
+  border-top: 0;
+  background-color: transparent;
+  padding-top: 0;
+}
+
+.panel-release > .panel-body {
+  padding: 5px 15px;
+  .prefixed-icon {
+    position: absolute;
+    left: 30px;
+    padding-right: 10px;
+  }
+  .read-only {
+    min-width: 250px;
+  }
+  .ko-inline-edit {
+    margin-left: 20px;
+  }
+}
+.panel-case-actions {
+  position: relative;
+}
+.panel-case-actions .case-action-remove {
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  border: none;
+  .transition(background-color 1s);
+}
+
+.panel-case-actions {
+  background-color: lighten(@cc-dark-cool-accent-hi, 3);
+  > .panel-heading {
+    background-color: @cc-dark-cool-accent-mid;
+    color: white;
+    .text-muted {
+      color: @cc-dark-cool-accent-hi;
+    }
+  }
+  .panel-appmanager {
+    border-radius: 10px;
+    .well {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      .hq-help {
+        margin-top: 4px;
+      }
+    }
+  }
+}

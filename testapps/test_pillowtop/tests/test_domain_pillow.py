@@ -43,7 +43,7 @@ class DomainPillowTest(TestCase):
 
         # send to elasticsearch
         pillow = get_domain_kafka_to_elasticsearch_pillow()
-        pillow.process_changes(since={document_types.DOMAIN: since}, forever=False)
+        pillow.process_changes(since=since, forever=False)
         self.elasticsearch.indices.refresh(self.index_info.index)
 
         # verify there
@@ -61,7 +61,7 @@ class DomainPillowTest(TestCase):
 
         # send to elasticsearch
         pillow = get_domain_kafka_to_elasticsearch_pillow()
-        pillow.process_changes(since={document_types.DOMAIN: since}, forever=False)
+        pillow.process_changes(since=since, forever=False)
         self.elasticsearch.indices.refresh(self.index_info.index)
 
         # ensure removed from ES

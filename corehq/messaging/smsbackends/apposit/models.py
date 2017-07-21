@@ -19,6 +19,14 @@ class SQLAppositBackend(SQLSMSBackend):
         proxy = True
 
     @classmethod
+    def get_opt_in_keywords(cls):
+        return ['START']
+
+    @classmethod
+    def get_opt_out_keywords(cls):
+        return ['STOP']
+
+    @classmethod
     def get_available_extra_fields(cls):
         return [
             # the username used in basic auth on http requests

@@ -1,22 +1,4 @@
 VALUE_TAG = '#value'
-DEFAULT_META = {
-    "settings": {
-        "analysis": {
-            "analyzer": {
-                "default": {
-                    "type": "custom",
-                    "tokenizer": "whitespace",
-                    "filter": ["lowercase"]
-                },
-                "sortable_exact": {
-                    "type": "custom",
-                    "tokenizer": "keyword",
-                    "filter": ["lowercase"]
-                }
-            }
-        }
-    }
-}
 
 
 def map_types(item, mapping, override_root_keys=None):

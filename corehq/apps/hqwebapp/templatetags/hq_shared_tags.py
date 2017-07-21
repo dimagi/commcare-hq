@@ -118,14 +118,6 @@ def cachebuster(url):
     return resource_versions.get(url, "")
 
 
-@register.simple_tag()
-def new_satic(url, **kwargs):
-    # todo delete after final merge
-    if kwargs:
-        warnings.warn('static no longer accepts arguments', PendingDeprecationWarning)
-    return static(url)
-
-
 @quickcache(['couch_user.username'])
 def _get_domain_list(couch_user):
     domains = Domain.active_for_user(couch_user)
@@ -207,16 +199,16 @@ def pretty_doc_info(doc_info):
     })
 
 
-def _get_toggle(module, toggle_or_toggle_name):
-    if isinstance(toggle_or_toggle_name, basestring):
-        toggle = getattr(module, toggle_or_toggle_name)
+def _get_obj_from_name_or_instance(module, name_or_instance):
+    if isinstance(name_or_instance, basestring):
+        obj = getattr(module, name_or_instance)
     else:
-        toggle = toggle_or_toggle_name
-    return toggle
+        obj = name_or_instance
+    return obj
 
 
 def _toggle_enabled(module, request, toggle_or_toggle_name):
-    toggle = _get_toggle(module, toggle_or_toggle_name)
+    toggle = _get_obj_from_name_or_instance(module, toggle_or_toggle_name)
     return toggle.enabled_for_request(request)
 
 
@@ -224,6 +216,29 @@ def _toggle_enabled(module, request, toggle_or_toggle_name):
 def toggle_enabled(request, toggle_or_toggle_name):
     import corehq.toggles
     return _toggle_enabled(corehq.toggles, request, toggle_or_toggle_name)
+
+
+def _ui_notify_enabled(module, request, ui_notify_instance_or_name):
+    ui_notify = _get_obj_from_name_or_instance(module, ui_notify_instance_or_name)
+    return ui_notify.enabled(request)
+
+
+@register.filter
+def ui_notify_enabled(request, ui_notify_instance_or_name):
+    import corehq.apps.notifications.ui_notify
+    return _ui_notify_enabled(
+        corehq.apps.notifications.ui_notify,
+        request,
+        ui_notify_instance_or_name
+    )
+
+
+@register.filter
+def ui_notify_slug(ui_notify_instance_or_name):
+    import corehq.apps.notifications.ui_notify
+    ui_notify = _get_obj_from_name_or_instance(corehq.apps.notifications.ui_notify, ui_notify_instance_or_name)
+    return ui_notify.slug
+
 
 @register.filter
 def toggle_tag_info(request, toggle_or_toggle_name):
@@ -234,7 +249,7 @@ def toggle_tag_info(request, toggle_or_toggle_name):
     flag. """
     if not toggles.SHOW_DEV_TOGGLE_INFO.enabled_for_request(request):
         return ""
-    flag = _get_toggle(toggles, toggle_or_toggle_name)
+    flag = _get_obj_from_name_or_instance(toggles, toggle_or_toggle_name)
     tag = flag.tag
     is_enabled = flag.enabled_for_request(request)
     return mark_safe("""<div class="label label-{css_class} label-flag{css_disabled}">{tag_name}: {description}{status}</div>""".format(
@@ -253,6 +268,9 @@ def can_use_restore_as(request):
 
     if request.couch_user.is_superuser:
         return True
+
+    if toggles.LOGIN_AS_ALWAYS_OFF.enabled(request.domain):
+        return False
 
     return (
         request.couch_user.can_edit_commcare_users() and
@@ -630,6 +648,13 @@ def registerurl(parser, token):
     return AddToBlockNode(nodelist, 'js-inline')
 
 
+@register.simple_tag
+def html_attr(value):
+    if not isinstance(value, basestring):
+        value = JSON(value)
+    return escape(value)
+
+
 @register.tag
 def initial_page_data(parser, token):
     split_contents = token.split_contents()
@@ -641,12 +666,8 @@ def initial_page_data(parser, token):
 
         def render(self, context):
             resolved = value.resolve(context)
-            if isinstance(resolved, basestring):
-                resolved = json.dumps(resolved)[1:-1]
-            else:
-                resolved = JSON(resolved)
-            return ("<div data-name=\"{}\" data-value=\"{}\"></div>"
-                    .format(name, escape(resolved)))
+            return (u"<div data-name=\"{}\" data-value=\"{}\"></div>"
+                    .format(name, html_attr(resolved)))
 
     nodelist = NodeList([FakeNode()])
 

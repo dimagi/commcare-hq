@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import base64
+import hashlib
 import jsonfield
 import uuid
 from dimagi.ext.couchdbkit import *
@@ -237,6 +238,9 @@ class SMSBase(UUIDGeneratorMixin, Log):
     fri_id = models.CharField(max_length=126, null=True)
     fri_risk_profile = models.CharField(max_length=1, null=True)
 
+    # Holds any custom metadata for this SMS
+    custom_metadata = jsonfield.JSONField(null=True, default=None)
+
     class Meta:
         abstract = True
         app_label = 'sms'
@@ -465,32 +469,31 @@ class PhoneBlacklist(models.Model):
         Opts a phone number in to receive SMS.
         Returns True if the number was actually opted-in, False if not.
         """
-        try:
-            phone_obj = cls.get_by_phone_number(phone_number)
-            if phone_obj.can_opt_in:
-                phone_obj.domain = domain
-                phone_obj.send_sms = True
-                phone_obj.last_sms_opt_in_timestamp = datetime.utcnow()
-                phone_obj.save()
-                return True
-        except cls.DoesNotExist:
-            pass
-        return False
+        phone_obj = cls.get_or_create(phone_number)[0]
+        if not phone_obj.can_opt_in:
+            return False
+
+        phone_obj.domain = domain
+        phone_obj.send_sms = True
+        phone_obj.last_sms_opt_in_timestamp = datetime.utcnow()
+        phone_obj.save()
+        return True
 
     @classmethod
     def opt_out_sms(cls, phone_number, domain=None):
         """
         Opts a phone number out from receiving SMS.
-        Returns True if the number was actually opted-out, False if not.
+        Does not bother changing the state for numbers marked as excluded from the opt in workflow.
         """
         phone_obj = cls.get_or_create(phone_number)[0]
-        if phone_obj:
-            phone_obj.domain = domain
-            phone_obj.send_sms = False
-            phone_obj.last_sms_opt_out_timestamp = datetime.utcnow()
-            phone_obj.save()
-            return True
-        return False
+        if not phone_obj.can_opt_in:
+            return False
+
+        phone_obj.domain = domain
+        phone_obj.send_sms = False
+        phone_obj.last_sms_opt_out_timestamp = datetime.utcnow()
+        phone_obj.save()
+        return True
 
 
 class PhoneNumber(UUIDGeneratorMixin, models.Model):
@@ -2202,10 +2205,7 @@ class PhoneLoadBalancingMixin(object):
     is an instance of this mixin for performing various operations.)
     """
 
-    def get_load_balance_redis_key(self):
-        return 'load-balance-phones-for-backend-%s' % self.pk
-
-    def get_next_phone_number(self):
+    def get_next_phone_number(self, destination_phone_number):
         if (
             not isinstance(self.load_balancing_numbers, list) or
             len(self.load_balancing_numbers) == 0
@@ -2218,8 +2218,9 @@ class PhoneLoadBalancingMixin(object):
             # process to figure out which one is next.
             return self.load_balancing_numbers[0]
 
-        redis_key = self.get_load_balance_redis_key()
-        return load_balance(redis_key, self.load_balancing_numbers)
+        hashed_destination_phone_number = hashlib.sha1(destination_phone_number).hexdigest()
+        index = long(hashed_destination_phone_number, base=16) % len(self.load_balancing_numbers)
+        return self.load_balancing_numbers[index]
 
 
 class BackendMap(object):
@@ -2565,6 +2566,3 @@ class KeywordAction(models.Model):
             raise self.InvalidModelStateException("Expected a value for form_unique_id")
 
         super(KeywordAction, self).save(*args, **kwargs)
-
-
-from corehq.apps.sms import signals

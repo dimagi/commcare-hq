@@ -11,14 +11,18 @@ from corehq.util.soft_assert import soft_assert
 from corehq.toggles import ENABLE_LOADTEST_USERS
 from corehq.apps.domain.models import Domain
 from dimagi.ext.couchdbkit import *
+from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from django.db import models
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.couch import LooselyEqualDocumentSchema
 from dimagi.utils.couch.database import get_db
 from casexml.apps.case import const
+from casexml.apps.case.xml import V1, V2
+from casexml.apps.phone.const import RESTORE_CACHE_KEY_PREFIX
 from casexml.apps.case.sharedmodels import CommCareCaseIndex, IndexHoldingMixIn
 from casexml.apps.phone.checksum import Checksum, CaseStateHash
+from casexml.apps.phone.utils import get_restore_response_class
 import logging
 
 
@@ -86,6 +90,9 @@ class OTARestoreUser(object):
         "User's primary SQLLocation"
         return self._couch_user.get_sql_location(self.domain)
 
+    def get_role(self, domain):
+        return self._couch_user.get_role(domain)
+
     def get_sql_locations(self, domain):
         return self._couch_user.get_sql_locations(domain)
 
@@ -113,10 +120,13 @@ class OTARestoreUser(object):
     def get_ucr_filter_value(self, ucr_filter, ui_filter):
         return ucr_filter.get_filter_value(self._couch_user, ui_filter)
 
+    def get_mobile_ucr_sync_interval(self):
+        return None
+
     @memoized
     def get_locations_to_sync(self):
-        from corehq.apps.locations.fixtures import get_all_locations_to_sync
-        return get_all_locations_to_sync(self)
+        from corehq.apps.locations.fixtures import get_location_fixture_queryset
+        return get_location_fixture_queryset(self)
 
 
 class OTARestoreWebUser(OTARestoreUser):
@@ -204,6 +214,9 @@ class OTARestoreCommCareUser(OTARestoreUser):
 
         return self._couch_user.fixture_status(UserFixtureType.LOCATION)
 
+    def get_mobile_ucr_sync_interval(self):
+        return self._couch_user.mobile_ucr_sync_interval
+
 
 class CaseState(LooselyEqualDocumentSchema, IndexHoldingMixIn):
     """
@@ -251,6 +264,7 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     build_id = StringProperty()  # this is only added as of 11/2016 and only works with app-aware sync
 
     previous_log_id = StringProperty()  # previous sync log, forming a chain
+    previous_log_removed = BooleanProperty(default=False)
     duration = IntegerProperty()  # in seconds
     log_format = StringProperty()
 
@@ -270,21 +284,9 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     had_state_error = BooleanProperty(default=False)
     error_date = DateTimeProperty()
     error_hash = StringProperty()
+    cache_payload_paths = DictProperty()
 
     strict = True  # for asserts
-
-    @classmethod
-    def get(cls, doc_id):
-        doc = get_sync_log_doc(doc_id)
-        return cls.wrap(doc)
-
-    def _assert(self, conditional, msg="", case_id=None):
-        if not conditional:
-            _get_logger().warn("assertion failed: %s" % msg)
-            if self.strict:
-                raise SyncLogAssertionError(case_id, msg)
-            else:
-                self.has_assert_errors = True
 
     @classmethod
     def wrap(cls, data):
@@ -292,6 +294,10 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         if hasattr(ret, 'has_assert_errors'):
             ret.strict = False
         return ret
+
+    @property
+    def response_class(self):
+        return get_restore_response_class(self.domain)
 
     def case_count(self):
         """
@@ -319,25 +325,36 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         """
         raise NotImplementedError()
 
-    def get_payload_attachment_name(self, version):
-        return 'restore_payload_{version}.xml'.format(version=version)
+    def get_previous_log(self):
+        """
+        Get the previous sync log, if there was one.  Otherwise returns nothing.
+        """
+        if self.previous_log_removed or not self.previous_log_id:
+            return
 
-    def has_cached_payload(self, version):
-        return self.get_payload_attachment_name(version) in self._doc.get('_attachments', {})
+        if not hasattr(self, "_previous_log_ref"):
+            try:
+                self._previous_log_ref = SyncLog.get(self.previous_log_id)
+            except ResourceNotFound:
+                self._previous_log_ref = None
+        return self._previous_log_ref
 
-    def get_cached_payload(self, version, stream=False):
-        try:
-            return self.fetch_attachment(self.get_payload_attachment_name(version), stream=stream)
-        except ResourceNotFound:
-            return None
+    def _cache_key(self, version):
+        from casexml.apps.phone.restore import restore_cache_key
 
-    def set_cached_payload(self, payload, version):
-        self.put_attachment(payload, name=self.get_payload_attachment_name(version),
-                            content_type='text/xml')
+        return restore_cache_key(
+            self.domain,
+            RESTORE_CACHE_KEY_PREFIX,
+            self.user_id,
+            version=version,
+            sync_log_id=self._id,
+        )
 
     def invalidate_cached_payloads(self):
-        for name in copy(self._doc.get('_attachments', {})):
-            self.delete_attachment(name)
+        keys = [self._cache_key(version) for version in [V1, V2]]
+
+        for key in keys:
+            get_redis_default_cache().delete(key)
 
     @classmethod
     def from_other_format(cls, other_sync_log):
@@ -392,16 +409,16 @@ class SyncLog(AbstractSyncLog):
 
         return get_last_synclog_for_user(user_id)
 
+    def _assert(self, conditional, msg="", case_id=None):
+        if not conditional:
+            _get_logger().warn("assertion failed: %s" % msg)
+            if self.strict:
+                raise SyncLogAssertionError(case_id, msg)
+            else:
+                self.has_assert_errors = True
+
     def case_count(self):
         return len(self.cases_on_phone)
-
-    def get_previous_log(self):
-        """
-        Get the previous sync log, if there was one.  Otherwise returns nothing.
-        """
-        if not hasattr(self, "_previous_log_ref"):
-            self._previous_log_ref = SyncLog.get(self.previous_log_id) if self.previous_log_id else None
-        return self._previous_log_ref
 
     def phone_has_case(self, case_id):
         """
@@ -609,46 +626,40 @@ class IndexTree(DocumentSchema):
     # and the values are the referenced case IDs
     indices = SchemaDictProperty()
 
+    @property
+    @memoized
+    def reverse_indices(self):
+        return _reverse_index_map(self.indices)
+
     def __repr__(self):
         return json.dumps(self.indices, indent=2)
 
     @staticmethod
-    def get_all_dependencies(case_id, child_index_tree, extension_index_tree,
-                             cached_child_map=None, cached_extension_map=None):
+    def get_all_dependencies(case_id, child_index_tree, extension_index_tree):
         """Takes a child and extension index tree and returns returns a set of all dependencies of <case_id>
 
         Traverse each incoming index, return each touched case.
         Traverse each outgoing index in the extension tree, return each touched case
         """
-        def _recursive_call(case_id, all_cases, cached_child_map, cached_extension_map):
-            all_cases.add(case_id)
-            incoming_extension_indices = extension_index_tree.get_cases_that_directly_depend_on_case(
-                case_id,
-                cached_map=cached_extension_map
-            )
-            all_incoming_indices = itertools.chain(
-                child_index_tree.get_cases_that_directly_depend_on_case(case_id, cached_map=cached_child_map),
-                incoming_extension_indices,
-            )
-
-            for dependent_case in all_incoming_indices:
-                # incoming indices
-                if dependent_case not in all_cases:
-                    all_cases.add(dependent_case)
-                    _recursive_call(dependent_case, all_cases, cached_child_map, cached_extension_map)
-            for indexed_case in extension_index_tree.indices.get(case_id, {}).values():
-                # outgoing extension indices
-                if indexed_case not in all_cases:
-                    all_cases.add(indexed_case)
-                    _recursive_call(indexed_case, all_cases, cached_child_map, cached_extension_map)
-
         all_cases = set()
-        cached_child_map = cached_child_map or _reverse_index_map(child_index_tree.indices)
-        cached_extension_map = cached_extension_map or _reverse_index_map(extension_index_tree.indices)
-        _recursive_call(case_id, all_cases, cached_child_map, cached_extension_map)
+        cases_to_check = set([case_id])
+        while cases_to_check:
+            case_to_check = cases_to_check.pop()
+            all_cases.add(case_to_check)
+            incoming_extension_indices = extension_index_tree.get_cases_that_directly_depend_on_case(
+                case_to_check
+            )
+            incoming_child_indices = child_index_tree.get_cases_that_directly_depend_on_case(case_to_check)
+            all_incoming_indices = incoming_extension_indices | incoming_child_indices
+            new_outgoing_cases_to_check = set(extension_index_tree.indices.get(case_to_check, {}).values())
+            new_cases_to_check = (new_outgoing_cases_to_check | all_incoming_indices) - all_cases
+
+            cases_to_check |= new_cases_to_check
+
         return all_cases
 
     @staticmethod
+    @memoized
     def get_all_outgoing_cases(case_id, child_index_tree, extension_index_tree):
         """traverse all outgoing child and extension indices"""
         all_cases = set([case_id])
@@ -662,17 +673,16 @@ class IndexTree(DocumentSchema):
         return all_cases
 
     @staticmethod
-    def traverse_incoming_extensions(case_id, extension_index_tree, closed_cases, cached_map=None):
+    @memoized
+    def traverse_incoming_extensions(case_id, extension_index_tree, closed_cases):
         """traverse open incoming extensions"""
         all_cases = set([case_id])
         new_cases = set([case_id])
-        cached_map = cached_map or _reverse_index_map(extension_index_tree.indices)
         while new_cases:
             case_to_check = new_cases.pop()
             open_incoming_extension_indices = {
                 case for case in
-                extension_index_tree.get_cases_that_directly_depend_on_case(case_to_check,
-                                                                            cached_map=cached_map)
+                extension_index_tree.get_cases_that_directly_depend_on_case(case_to_check)
                 if case not in closed_cases
             }
             for incoming_case in open_incoming_extension_indices:
@@ -680,9 +690,9 @@ class IndexTree(DocumentSchema):
                 all_cases.add(incoming_case)
         return all_cases
 
-    def get_cases_that_directly_depend_on_case(self, case_id, cached_map=None):
-        cached_map = cached_map or _reverse_index_map(self.indices)
-        return cached_map.get(case_id, [])
+    @memoized
+    def get_cases_that_directly_depend_on_case(self, case_id):
+        return self.reverse_indices.get(case_id, set([]))
 
     def delete_index(self, from_case_id, index_name):
         prior_ids = self.indices.pop(from_case_id, {})
@@ -736,6 +746,14 @@ class SimplifiedSyncLog(AbstractSyncLog):
     closed_cases = SetProperty(unicode)
     extensions_checked = BooleanProperty(default=False)
 
+    _purged_cases = None
+
+    @property
+    def purged_cases(self):
+        if self._purged_cases is None:
+            self._purged_cases = set()
+        return self._purged_cases
+
     def save(self, *args, **kwargs):
         # force doc type to SyncLog to avoid changing the couch view.
         self.doc_type = "SyncLog"
@@ -757,7 +775,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
     def primary_case_ids(self):
         return self.case_ids_on_phone - self.dependent_case_ids_on_phone
 
-    def purge(self, case_id, quiet_errors=False):
+    def purge(self, case_id, xform_id=None):
         """
         This happens in 3 phases, and recursively tries to purge outgoing indices of purged cases.
         Definitions:
@@ -800,8 +818,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
         relevant = self._get_relevant_cases(case_id)
         available = self._get_available_cases(relevant)
         live = self._get_live_cases(available)
-        to_remove = relevant - live
-        self._remove_cases_purge_indices(to_remove, case_id, quiet_errors)
+        to_remove = (relevant - self.purged_cases) - live
+        self._remove_cases_purge_indices(to_remove, case_id, xform_id)
 
     def _get_relevant_cases(self, case_id):
         """
@@ -813,8 +831,6 @@ class SimplifiedSyncLog(AbstractSyncLog):
             case_id,
             child_index_tree=self.index_tree,
             extension_index_tree=self.extension_index_tree,
-            cached_child_map=_reverse_index_map(self.index_tree.indices),
-            cached_extension_map=_reverse_index_map(self.extension_index_tree.indices),
         )
         _get_logger().debug("Relevant cases of {}: {}".format(case_id, relevant))
         return relevant
@@ -825,7 +841,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         as available. Traverse incoming extension indexes which don't lead to closed
         cases, mark all touched cases as available
         """
-        incoming_extensions = _reverse_index_map(self.extension_index_tree.indices)
+        incoming_extensions = self.extension_index_tree.reverse_indices
         available = {case for case in relevant
                      if case not in self.closed_cases
                      and (not self.extension_index_tree.indices.get(case) or self.index_tree.indices.get(case))}
@@ -833,7 +849,9 @@ class SimplifiedSyncLog(AbstractSyncLog):
         while new_available:
             case_to_check = new_available.pop()
             for incoming_extension in incoming_extensions.get(case_to_check, []):
-                if incoming_extension not in self.closed_cases:
+                closed = incoming_extension in self.closed_cases
+                purged = incoming_extension in self.purged_cases
+                if not closed and not purged:
                     new_available.add(incoming_extension)
             available = available | new_available
         _get_logger().debug("Available cases: {}".format(available))
@@ -846,8 +864,8 @@ class SimplifiedSyncLog(AbstractSyncLog):
         extension indexes which don't lead to closed cases, mark all touched
         cases as available.
         """
-        incoming_extensions = _reverse_index_map(self.extension_index_tree.indices)
-        live = {case for case in available if case in self.primary_case_ids}
+        primary_case_ids = self.primary_case_ids
+        live = available & primary_case_ids
         new_live = set() | live
         checked = set()
         while new_live:
@@ -857,12 +875,12 @@ class SimplifiedSyncLog(AbstractSyncLog):
                 case_to_check,
                 self.index_tree,
                 self.extension_index_tree
-            )
+            ) - self.purged_cases
             new_live = new_live | IndexTree.traverse_incoming_extensions(
                 case_to_check,
                 self.extension_index_tree,
-                self.closed_cases, cached_map=incoming_extensions
-            )
+                frozenset(self.closed_cases),
+            ) - self.purged_cases
             new_live = new_live - checked
             live = live | new_live
 
@@ -870,55 +888,63 @@ class SimplifiedSyncLog(AbstractSyncLog):
 
         return live
 
-    def _remove_cases_purge_indices(self, all_to_remove, checked_case_id, quiet_errors):
+    def _remove_cases_purge_indices(self, all_to_remove, checked_case_id, xform_id):
         """Remove all cases marked for removal. Traverse child cases and try to purge those too."""
+
         _get_logger().debug("cases to to_remove: {}".format(all_to_remove))
         for to_remove in all_to_remove:
             indices = self.index_tree.indices.get(to_remove, {})
-            self._remove_case(to_remove, all_to_remove, checked_case_id, quiet_errors)
+            self._remove_case(to_remove, all_to_remove, checked_case_id, xform_id)
             for referenced_case in indices.values():
                 is_dependent_case = referenced_case in self.dependent_case_ids_on_phone
                 already_primed_for_removal = referenced_case in all_to_remove
                 if is_dependent_case and not already_primed_for_removal and referenced_case != checked_case_id:
-                    self.purge(referenced_case, quiet_errors)
+                    self.purge(referenced_case, xform_id)
 
-    def _remove_case(self, to_remove, all_to_remove, checked_case_id, quiet_errors):
+    def _remove_case(self, to_remove, all_to_remove, checked_case_id, xform_id):
         """Removes case from index trees, case_ids_on_phone and dependent_case_ids_on_phone if pertinent"""
         _get_logger().debug('removing: {}'.format(to_remove))
 
         deleted_indices = self.index_tree.indices.pop(to_remove, {})
         deleted_indices.update(self.extension_index_tree.indices.pop(to_remove, {}))
 
-        self._validate_case_removal(to_remove, all_to_remove, deleted_indices, checked_case_id, quiet_errors)
+        self._validate_case_removal(to_remove, all_to_remove, deleted_indices, checked_case_id, xform_id)
 
         try:
             self.case_ids_on_phone.remove(to_remove)
         except KeyError:
-            should_fail_softly = quiet_errors or _domain_has_legacy_toggle_set()
+            should_fail_softly = not xform_id or _domain_has_legacy_toggle_set()
             if should_fail_softly:
                 pass
             else:
                 # this is only a soft assert for now because of http://manage.dimagi.com/default.asp?181443
                 # we should convert back to a real Exception when we stop getting any of these
                 _assert = soft_assert(notify_admins=True, exponential_backoff=False)
-                _assert(False, 'case {} already removed from sync log {}'.format(to_remove, self._id))
+                _assert(False, 'case already remove from synclog', {
+                    'case_id': to_remove,
+                    'synclog_id': self._id,
+                    'form_id': xform_id
+                })
+        else:
+            self.purged_cases.add(to_remove)
 
         if to_remove in self.dependent_case_ids_on_phone:
             self.dependent_case_ids_on_phone.remove(to_remove)
 
     def _validate_case_removal(self, case_to_remove, all_to_remove,
-                               deleted_indices, checked_case_id, quiet_errors):
+                               deleted_indices, checked_case_id, xform_id):
         """Traverse immediate outgoing indices. Validate that these are also candidates for removal."""
         if case_to_remove == checked_case_id:
             return
 
-        for index in deleted_indices.values():
-            if not (quiet_errors or _domain_has_legacy_toggle_set()):
-                # unblocking http://manage.dimagi.com/default.asp?185850
-                _assert = soft_assert(notify_admins=True, exponential_backoff=True,
-                                      fail_if_debug=True)
-                _assert(index in (all_to_remove | set([checked_case_id])),
-                        "expected {} in {} but wasn't".format(index, all_to_remove))
+        # Logging removed temporarily: https://github.com/dimagi/commcare-hq/pull/16259#issuecomment-303176217
+        # for index in deleted_indices.values():
+        #     if xform_id and not _domain_has_legacy_toggle_set():
+        #         # unblocking http://manage.dimagi.com/default.asp?185850
+        #         _assert = soft_assert(send_to_ops=False, log_to_file=True, exponential_backoff=True,
+        #                               fail_if_debug=True, include_breadcrumbs=True)
+        #         _assert(index in (all_to_remove | set([checked_case_id])),
+        #                 "expected {} in {} but wasn't".format(index, all_to_remove))
 
     def _add_primary_case(self, case_id):
         self.case_ids_on_phone.add(case_id)
@@ -1082,7 +1108,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
         for update in non_live_updates:
             if update.case_id in self.case_ids_on_phone:
                 # try purging the case
-                self.purge(update.case_id)
+                self.purge(update.case_id, xform_id=xform.form_id)
                 if update.case_id in self.case_ids_on_phone:
                     # if unsuccessful, process the rest of the update
                     for index in update.indices_to_add:
@@ -1127,7 +1153,7 @@ class SimplifiedSyncLog(AbstractSyncLog):
             # as a result of purging the child case
             if dependent_case_id in self.dependent_case_ids_on_phone:
                 # this will be a no-op if the case cannot be purged due to dependencies
-                self.purge(dependent_case_id, quiet_errors=True)
+                self.purge(dependent_case_id)
 
     @classmethod
     def from_other_format(cls, other_sync_log):
@@ -1191,21 +1217,12 @@ def _domain_has_legacy_toggle_set():
     return LEGACY_SYNC_SUPPORT.enabled(domain) if domain else False
 
 
-def get_sync_log_doc(doc_id):
-    try:
-        return SyncLog.get_db().get(doc_id)
-    except ResourceNotFound:
-        legacy_doc = get_db(None).get(doc_id, attachments=True)
-        del legacy_doc['_rev']  # remove the rev so we can save this to the new DB
-        return legacy_doc
-
-
 def get_properly_wrapped_sync_log(doc_id):
     """
     Looks up and wraps a sync log, using the class based on the 'log_format' attribute.
     Defaults to the existing legacy SyncLog class.
     """
-    return properly_wrap_sync_log(get_sync_log_doc(doc_id))
+    return properly_wrap_sync_log(SyncLog.get_db().get(doc_id))
 
 
 def properly_wrap_sync_log(doc):

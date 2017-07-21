@@ -19,6 +19,7 @@ from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.apps.sms.util import is_contact_active
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch import release_lock, CriticalSection
@@ -137,7 +138,7 @@ def handle_outgoing(msg):
     orig_phone_number = None
 
     if use_load_balancing:
-        orig_phone_number = backend.get_next_phone_number()
+        orig_phone_number = backend.get_next_phone_number(msg.phone_number)
 
     if use_rate_limit:
         if use_load_balancing:
@@ -176,7 +177,7 @@ def handle_incoming(msg):
         handle_unsuccessful_processing_attempt(msg)
 
 
-@task(queue="sms_queue", ignore_result=True, acks_late=True)
+@no_result_task(queue="sms_queue", acks_late=True)
 def process_sms(queued_sms_pk):
     """
     queued_sms_pk - pk of a QueuedSMS entry
@@ -247,7 +248,7 @@ def process_sms(queued_sms_pk):
             process_sms.delay(queued_sms_pk)
 
 
-@task(ignore_result=True, default_retry_delay=10 * 60, max_retries=10, bind=True)
+@no_result_task(default_retry_delay=10 * 60, max_retries=10, bind=True)
 def store_billable(self, msg):
     if not isinstance(msg, SMS):
         raise Exception("Expected msg to be an SMS")
@@ -274,7 +275,7 @@ def store_billable(self, msg):
             raise
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True)
+@no_result_task(queue='background_queue', acks_late=True)
 def delete_phone_numbers_for_owners(owner_ids):
     for p in PhoneNumber.objects.filter(owner_id__in=owner_ids):
         # Clear cache and delete
@@ -286,8 +287,8 @@ def clear_case_caches(case):
     is_case_contact_active.clear(case.domain, case.case_id)
 
 
-@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
-      default_retry_delay=5 * 60, max_retries=10, bind=True)
+@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
+                default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_case_phone_number(self, case):
     try:
         clear_case_caches(case)
@@ -351,8 +352,8 @@ def _sync_case_phone_number(contact_case):
         phone_number.save()
 
 
-@task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, ignore_result=True, acks_late=True,
-      default_retry_delay=5 * 60, max_retries=10, bind=True)
+@no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
+                default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_user_phone_numbers(self, couch_user_id):
     try:
         _sync_user_phone_numbers(couch_user_id)
@@ -393,8 +394,8 @@ def _sync_user_phone_numbers(couch_user_id):
                     pass
 
 
-@task(queue='background_queue', ignore_result=True, acks_late=True,
-      default_retry_delay=5 * 60, max_retries=10, bind=True)
+@no_result_task(queue='background_queue', acks_late=True,
+                default_retry_delay=5 * 60, max_retries=10, bind=True)
 def publish_sms_change(self, sms):
     try:
         publish_sms_saved(sms)
@@ -402,7 +403,7 @@ def publish_sms_change(self, sms):
         self.retry(exc=e)
 
 
-@task(queue='background_queue')
+@no_result_task(queue='background_queue')
 def sync_phone_numbers_for_domain(domain):
     for user_id in CouchUser.ids_by_domain(domain, is_active=True):
         _sync_user_phone_numbers(user_id)

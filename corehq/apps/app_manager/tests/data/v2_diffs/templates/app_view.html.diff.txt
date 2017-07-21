@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,400 +1,115 @@
+@@ -1,206 +1,71 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -12,274 +12,32 @@
 -    {% include 'analytics/fullstory.html' %}
 -{% endblock %}
 -{% block js %}{{ block.super }}
--    <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
--    <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
--    <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
--    <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
+-    <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
 -    <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+-    <script src="{% static 'app_manager/js/settings/app_logos.js' %}"></script>
+-    <script src="{% static 'app_manager/js/settings/commcare_settings.js' %}"></script>
+-    <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
+-    <script src="{% static 'app_manager/js/supported_languages.js' %}"></script>
+-    <script src="{% static 'app_manager/js/settings/password_setter.jquery.js' %}"></script>
 -    <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
 -    <script src="{% static "jsdiff/diff.js" %}"></script>
+-
+-    <script src="{% static 'app_manager/js/app_view.js' %}"></script>
+-    {% if app.get_doc_type == "Application" %}
+-        <script src="{% static 'translations/js/translations.js' %}"></script>
+-        <script src="{% static 'app_manager/js/app_view_application.js' %}"></script>
+-    {% endif %}
+-
+-    {% if linked_apps_enabled %}
+-        <script src="{% static 'app_manager/js/settings/linked_whitelist.js' %}"></script>
+-    {% endif %}
 -
 -    {# these scripts are for releases.html, but including them there causes hard-to-reproduce problems #}
 -    <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
 -    <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
--    <script src="{% static 'app_manager/js/releases.js' %}"></script>
--    <script src="{% static 'app_manager/js/app_diff.js' %}"></script>
--    <script src="{% static 'app_manager/js/language-profiles.js' %}"></script>
--{% endblock %}
--{% block js-inline %}
--    {{ block.super }}
--    {% if app.get_doc_type == "Application" %}
--        <script src="{% static 'translations/js/translations.js' %}"></script>
--    {% endif %}
--    {% if linked_apps_enabled %}
--        <script src="{% static 'app_manager/js/linked_whitelist.js' %}"></script>
--    {% endif %}
--    {% if app %}
--    <script>
--        COMMCAREHQ.appView = {
--            settings: {
--                sections: {{ settings_layout|JSON }},
--                values: {{ settings_values|JSON }},
--                {% if request|toggle_enabled:"CUSTOM_PROPERTIES" %}
--                customProperties: {{ custom_properties|JSON }},
--                {% endif %}
--                urls: {
--                    save: '{% url "edit_commcare_settings" domain app.id %}'
--                },
--                user: {
--                    is_previewer: {{ request.couch_user.is_previewer|BOOL }}
--                },
--                permissions: {
--                    cloudcare: {{ is_cloudcare_allowed|BOOL }}
--                },
--                warning: '{% trans "This is not an allowed value for this field"|escapejs %}'
--            }
--        };
--
--        $(function () {
--            var CommcareSettings = hqImport('app_manager/js/commcaresettings.js').CommcareSettings;
--            COMMCAREHQ.appView.settings = new CommcareSettings(COMMCAREHQ.appView.settings);
--            $('#commcare-settings').koApplyBindings(COMMCAREHQ.appView.settings);
--        });
--
--        {% if not app.is_remote_app and app.get_doc_type != 'LinkedApplication' %}
--            {% if linked_apps_enabled %}
--             $(function () {
--                var domains = {{ app.linked_whitelist|JSON }};
--                var save = '{% url "update_linked_whitelist" domain app.id %}';
--                var LinkedWhitelist = hqImport('app_manager/js/linked_whitelist.js').LinkedWhitelist;
--                linkedWhitelist = new LinkedWhitelist(domains, save);
--                $('#whitelist-tab').koApplyBindings(linkedWhitelist);
--             });
--            {% endif %}
--        $(function () {
--            var multimedia_tab = (function () {
--                var self = {};
--                self.load_state = ko.observable(null);
--                self.multimedia_page_html = ko.observable('');
--                self.load_if_necessary = function () {
--                    if (!self.load_state() || self.load_state() === 'error') {
--                        self.load_state('loading');
--                        $.ajax({
--                            url: '{% url 'app_multimedia_ajax' domain app.get_id %}',
--                            success: function(content) {
--                                self.load_state('loaded');
--                                self.multimedia_page_html(content);
--                            },
--                            error: function() {
--                                alert('Oops, there was a problem loading this section. Please try again.');
--                                self.load_state('error');
--                            },
--                        });
--                    }
--                };
--                return self;
--            }());
--            $("#multimedia").koApplyBindings(multimedia_tab);
--            $('#demand-multimedia').on('shown.bs.tab', function () {
--                if (multimedia_tab.load_state() === null) {
--                    multimedia_tab.load_if_necessary();
--                }
--            });
--        });
--        {% endif %}
--
--        $(function () {
--            var state = "",
--                $main = $("#releases"),
--                $loading = $main.find(".hq-loading").remove(),
--                $loadingError = $main.find(".hq-loading-error").remove();
--
--            $('#demand-releases').on('shown.bs.tab', function () {
--                if (state === "loading" || state === "loaded") {
--                    return;
--                }
--                state = "loading";
--
--                // If the content takes a noticeable amount of time to load, show a spinner
--                var showSpinner = true;
--                _.delay(function() {
--                    if (showSpinner) {
--                        $main.html($loading.html());
--                    }
--                }, 100);
--
--                // Load the content
--                $.ajax({
--                    url: "{% url 'release_manager_ajax' domain app.get_id %}?limit={{fetchLimit}}",
--                    success: function(content) {
--                        state = "loaded";
--                        showSpinner = false;
--                        $main.html(content);
--                    },
--                    error: function() {
--                        state = "error";
--                        showSpinner = false;
--                        $main.html($loadingError.html());
--                    },
--                });
--            });
--        });
--
--    </script>
--    {% include 'hqmedia/partials/multimedia_init.html' %}
--    <script>
--        var refs = {{ refs|JSON }};
--        var media_info = {{ media_info|JSON }};
--        var image_refs = {};
--        for (var slug in refs) {
--            image_refs[slug] = new ImageReference(refs[slug]);
--            image_refs[slug].upload_controller = HQMediaUploaders[slug];
--            image_refs[slug].setObjReference(media_info[slug]);
--        }
--        function urlFromLogo(slug) {
--            return image_refs[slug].url;
--        }
--        function thumbUrlFromLogo(slug) {
--            return image_refs[slug].thumb_url;
--        }
--        function triggerUploadForLogo(slug) {
--            if(image_refs[slug]) {
--                image_refs[slug].triggerUpload();
--            }
--        }
--        function uploadCompleteForLogo(slug, response) {
--            if(image_refs[slug]) {
--                image_refs[slug].uploadComplete(null, null, response);
--            }
--        }
--        function getPathFromSlug(slug) {
--            return image_refs[slug].path;
--        }
--        function removeLogo(slug) {
--            $.post(
--                '{% url "hqmedia_remove_logo" domain app.id %}',
--                {
--                    logo_slug: slug
--                },
--                function(data, status) {
--                    if(status == 'success'){
--                        image_refs[slug].url("");
--                    }
--                }
--            );
--        }
--        function anonymousAppUrl() {
--            return '{{ app.anonymous_cloudcare_url }}';
--        }
--    </script>
--    <script>
--        $(function () {
--            var langs = {{ app.langs|JSON }};
--            var saveURL = "{% url "edit_app_langs" domain app.id %}";
--            var validate = !{{ app.is_remote_app|BOOL }};
--            var SupportedLanguages = hqImport('app_manager/js/supported-languages.js').SupportedLanguages;
--            $("#supported-languages").koApplyBindings(new SupportedLanguages({
--                langs: langs,
--                saveURL: saveURL,
--                validate: validate
--            }));
--        });
--    </script>
--    <script>
--        $("#copy-app-form form button").click(function() {
--            var $submit = $(this),
--                $form = $submit.closest("form"),
--                domain = $form.find("#id_domain").val(),
--                $modal = $("#copy-toggles");
--            {% if request.user.is_superuser %}
--                $submit.disableButton();
--                $.ajax({
--                    method: "GET",
--                    url: "{% url "toggle_diff" domain %}",
--                    data: {
--                        domain: domain,
--                    },
--                    success: function(toggles) {
--                        if (toggles.length) {
--                            var template = _.template($modal.find("script").html()),
--                                $ul = $modal.find("ul").html("");
--                            _.each(toggles, function(toggle) {
--                                $ul.append(template(toggle));
--                            });
--                            $modal.modal().one("click", ".btn-primary", function() {
--                                $(this).disableButton();
--                                var slugs = _.map($modal.find(":checked"), function(c) {
--                                    return $(c).data("slug");
--                                });
--                                $form.find("input[name='toggles']").val(slugs.join(","));
--                                $form.submit();
--                            }).one("hide.bs.modal", function() {
--                                $submit.enableButton();
--                            });
--                        } else {
--                            $form.submit();
--                        }
--                    },
--                    error: function() {
--                        // If anything goes wrong, just submit the form
--                        $form.submit();
--                    },
--                });
--            {% else %}
--                $form.submit();
--            {% endif %}
--        });
--    </script>
--    {% endif %}
--    {% if app.doc_type == "Application" %}
--        <script>
--            $(function () {
--                var $translation_ui = $("#translations_ui");
--                mk_translation_ui({
--                    translations: {{ translations|JSON }},
--                    url: "{% url "edit_app_ui_translations" domain app.id %}",
--                    suggestion_url: "{% url "get_app_ui_translations" domain %}",
--                    lang: "{{ lang }}",
--                    allow_autofill: "{{ lang }}" !== 'en',
--                    $home: $translation_ui
--                });
--            });
--        </script>
--    {% endif %}
--    <script>
--        $('#open_checker').click(function() {
--            ga_track_event('App Builder', 'Manage Multimedia');
--        });
--
--        $('#download_zip').click(function() {
--            ga_track_event('App Builder', 'Download Multimedia');
--        });
--    </script>
--    <script>
--        // Set up typeahead for domain names
--        $(function(){
--            $("#id_domain").koApplyBindings({
--                domain_names: {{ domain_names|JSON }},
--            });
--        });
--    </script>
+-    <script src="{% static 'app_manager/js/releases/releases.js' %}"></script>
+-    <script src="{% static 'app_manager/js/releases/app_diff.js' %}"></script>
+-    <script src="{% static 'app_manager/js/releases/language_profiles.js' %}"></script>
 +  {% include 'analytics/fullstory.html' %}
  {% endblock %}
  
@@ -292,96 +50,100 @@
 +{% block js %}{{  block.super }}
 +  <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
 +  <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
-+  <script src="{% static 'app_manager/js/releases.js' %}"></script>
-+  <script src="{% static 'app_manager/js/language-profiles.js' %}"></script>
++  <script src="{% static 'app_manager/js/releases/releases.js' %}"></script>
++  <script src="{% static 'app_manager/js/releases/language_profiles.js' %}"></script>
 +  <script src="{% static "jsdiff/diff.js" %}"></script>
-+  <script src="{% static 'app_manager/js/app_diff.js' %}"></script>
++  <script src="{% static 'app_manager/js/releases/app_diff.js' %}"></script>
 +  <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
-+  <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
-+  <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
++  <script src="{% static 'app_manager/js/supported_languages.js' %}"></script>
++  <script src="{% static 'app_manager/js/settings/password_setter.jquery.js' %}"></script>
++  <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
 +  <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
-+{% endblock js %}
-+
-+{% block js-inline %}
-+  {{ block.super }}
++  <script src="{% static 'app_manager/js/app_view.js' %}"></script>
 +  {% if app.get_doc_type == "Application" %}
-+    <script src="{% static 'translations/js/translations.js' %}"></script>
-+    <script>
-+      $(function () {
-+        var $translation_ui = $("#translations_ui");
-+        mk_translation_ui({
-+          translations: {{ translations|JSON }},
-+          url: "{% url "edit_app_ui_translations" domain app.id %}",
-+          suggestion_url: "{% url "get_app_ui_translations" domain %}",
-+          lang: "{{ lang }}",
-+          allow_autofill: "{{ lang }}" !== 'en',
-+          $home: $translation_ui
-+        });
-+      });
-+    </script>
-+
++      <script src="{% static 'app_manager/js/app_view_application.js' %}"></script>
++      <script src="{% static 'translations/js/translations.js' %}"></script>
 +  {% endif %}
-+  {% if app %}
-+    <script>
-+      COMMCAREHQ.appView = {
-+        settings: {
-+          sections: {{ settings_layout|JSON }},
-+          values: {{ settings_values|JSON }},
-+          urls: {
-+            save: '{% url "edit_commcare_settings" domain app.id %}'
-+          },
-+          user: {
-+            is_previewer: {{ request.couch_user.is_previewer|BOOL }}
-+          },
-+          permissions: {
-+            cloudcare: {{ is_cloudcare_allowed|BOOL }}
-+          },
-+          warning: '{% trans "This is not an allowed value for this field"|escapejs %}'
-+        }
-+      };
-+    </script>
-+  {% endif %}
-+{% endblock %}
++{% endblock js %}
 +
 +{% block pre_form_content %}
 +  <div class="appmanager-page-actions">
-+      {% if can_preview_form %}
-+        {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
-+      {% endif %}
-+      {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
-+          <a href="{% url "app_summary" domain app.id %}" class="btn btn-default">
-+              <i class="fa fa-list-alt"></i>
-+              {% trans "App Summary" %}
-+          </a>
-+      {% endif %}
++      {% include 'app_manager/v2/partials/app_summary_button.html' %}
 +  </div>
 +
-+  <div class="appmanager-edit-title">
-+    <inline-edit-v2 params="
++  <div class="appmanager-edit-title appmanager-edit-app-title">
++    <inline-edit params="
 +        value: '{{ app.name|escapejs }}',
 +        containerClass: 'h3 app-title',
 +        url: '{% url "edit_app_attr" domain app.id 'name' %}',
 +        placeholder: '{% trans "Untitled App"|escapejs %}',
-+        postSave: function(data) { return hqImport('app_manager/js/app_manager.js').updateDOM(data.update); },
++        postSave: function(data) { var appManager = hqImport('app_manager/js/app_manager.js'); appManager.updatePageTitle(data.update['.variable-app_name']); return appManager.updateDOM(data.update); },
 +        rows: 1,
 +        saveValueName: 'name',
 +        nodeName: 'input',
-+    "></inline-edit-v2>
++    "></inline-edit>
 +  </div>
 +
 +  <div class="appmanager-edit-description">
-+    <inline-edit-v2 params="
++    <inline-edit params="
 +        value: '{{ app.short_comment|escapejs }}',
 +        url: '{% url "edit_app_attr" domain app.id 'comment' %}',
 +        placeholder: '{% trans "Enter app description here"|escapejs %}',
 +        saveValueName: 'comment',
-+        containerClass: 'app-comment',
 +        cols: 50,
-+    "></inline-edit-v2>
++    "></inline-edit>
 +  </div>
  {% endblock %}
  
  {% block form-view %}
+-    {% initial_page_data 'build_profiles' app.build_profiles %}
+-    {% initial_page_data 'app_id' app.id %}
+-    {% initial_page_data 'app_view_options' app_view_options %}
+-    {% initial_page_data 'app_version' app.version %}
+-    {% initial_page_data 'domain_names' domain_names %}
+-    {% initial_page_data 'fetch_limit' fetchLimit %}
+-    {% initial_page_data 'practice_users' practice_users %}
+-    {% initial_page_data 'enable_practice_users' app.enable_practice_users %}
+-    {% initial_page_data 'is_remote_app' app.is_remote_app %}
+-    {% initial_page_data 'is_superuser' request.user.is_superuser %}
+-    {% initial_page_data 'lang' lang %}
+-    {% initial_page_data 'langs' app.langs %}
+-    {% initial_page_data 'latest_build_id' latest_build_id %}
+-    {% initial_page_data 'linked_whitelist' app.linked_whitelist %}
+-    {% initial_page_data 'media_refs' refs %}
+-    {% initial_page_data 'media_info' media_info %}
+-    {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
+-    {% initial_page_data 'sms_contacts' sms_contacts %}
+-    {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
+-    {% initial_page_data 'translations' translations %}
+-    {% initial_page_data 'uploaders' uploaders_js %}
+-    {% registerurl 'app_multimedia_ajax' domain app.get_id %}
+-    {% registerurl "edit_app_langs" domain app.id %}
+-    {% registerurl "edit_app_ui_translations" domain app.id %}
+-    {% registerurl "get_app_ui_translations" domain %}
+-    {% registerurl "hqmedia_remove_logo" domain app.id %}
+-    {% registerurl "release_manager_ajax" domain app.get_id %}
+-    {% registerurl "toggle_diff" domain %}
+-    {% registerurl "update_linked_whitelist" domain app.id %}
+-
+-    {# release page URLs #}
+-    {% registerurl "paginate_releases" domain app.id %}
+-    {% registerurl "delete_copy" domain app.id %}
+-    {% registerurl "download_jad" domain '---' %}
+-    {% registerurl "download_jar" domain '---' %}
+-    {% registerurl "odk_install" domain '---' %}
+-    {% registerurl "odk_media_install" domain '---' %}
+-    {% registerurl "download_index" domain '---' %}
+-    {% registerurl "release_build" domain app.id '---' %}
+-    {% registerurl "save_copy" domain app.id %}
+-    {% registerurl "revert_to_copy" domain app.id %}
+-    {% registerurl "current_app_version" domain app.id %}
+-    {% registerurl "hubspot_click_deploy" %}
+-    {% registerurl "download_ccz" app.domain '---' %}
+-    {% registerurl "download_multimedia_zip" app.domain '---' %}
+-    {% registerurl "project_report_dispatcher" app.domain 'application_error' %}
+-    {% registerurl "app_data_json" app.domain '---' %}
+-
 -    <div class="tab-content">
 -        <div class="tab-pane" id="releases">
 -            <!-- templates only; will be populated asynchronously -->
@@ -404,7 +166,7 @@
 -        {% include 'app_manager/v1/languages.html' %}
 -
 -        {% if app.get_doc_type == "Application" %}
--            <div class="tab-pane multimedia" id="multimedia">
+-            <div class="tab-pane multimedia" id="multimedia-tab">
 -                <div data-bind="if: load_state() === 'loading'">
 -                    <img src="{% static 'hqwebapp/images/ajax-loader.gif' %}" alt="loading indicator" />
 -                    {% trans "Loading ..." %}
@@ -421,7 +183,7 @@
 -            <div class="tabbable">
 -                <ul class="nav nav-tabs">
 -                    <li class="active"><a href="#copy-tab" data-toggle="tab">{% trans "Copy Application" %}</a></li>
--                    <li><a href="#whitelist-tab" data-toggle="tab">{% trans "Linked Project Whitelist" %}</a></li>
+-                    <li><a href="#linked-whitelist" data-toggle="tab">{% trans "Linked Project Whitelist" %}</a></li>
 -                </ul>
 -                <div class="spacer"></div>
 -                <div class="tab-content">
@@ -443,7 +205,7 @@
 -                        {% endif %}
 -            {% if linked_apps_enabled %}
 -                    </div>
--                    <div id="whitelist-tab" class="tab-pane">
+-                    <div id="linked-whitelist" class="tab-pane">
 -                    <div class="help-block">
 -                        {% blocktrans %}
 -                            Project spaces on this list are able to update linked applications

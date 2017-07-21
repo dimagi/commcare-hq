@@ -3,7 +3,6 @@ from collections import Counter
 from casexml.apps.case.models import CommCareCase
 from corehq.apps import es
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type, get_doc_ids_in_domain_by_type
-from corehq.apps.dump_reload.sql.dump import allow_form_processing_queries
 from corehq.apps.es import aggregations
 from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
@@ -106,7 +105,6 @@ def _get_couch_doc_counts(couch_db, domain, doc_types):
     return counter
 
 
-@allow_form_processing_queries()
 def _get_sql_forms_by_doc_type(domain):
     counter = Counter()
     for db_alias in get_sql_db_aliases_in_use():
@@ -120,7 +118,6 @@ def _get_sql_forms_by_doc_type(domain):
     return counter
 
 
-@allow_form_processing_queries()
 def _get_sql_cases_by_doc_type(domain):
     counter = Counter()
     for db_alias in get_sql_db_aliases_in_use():
@@ -131,7 +128,6 @@ def _get_sql_cases_by_doc_type(domain):
     return counter
 
 
-@allow_form_processing_queries()
 def get_sql_case_ids(domain, doc_type):
     sql_ids = set()
     deleted = doc_type == 'CommCareCase-Deleted'
@@ -142,7 +138,6 @@ def get_sql_case_ids(domain, doc_type):
     return sql_ids
 
 
-@allow_form_processing_queries()
 def get_sql_form_ids(domain, doc_type):
     sql_ids = set()
     state = doc_type_to_state[doc_type]

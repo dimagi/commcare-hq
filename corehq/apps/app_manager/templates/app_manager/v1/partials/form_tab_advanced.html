@@ -40,14 +40,14 @@
             </li>
             <li>
                 <a {% if not form.source %}class="disabled"{% endif %}
-                   href="{% url "get_xform_source" domain app.id module.id form.id %}?download=true">
+                   href="{% url "get_xform_source" domain app.id form.unique_id %}?download=true">
                     <i class="fa fa-arrow-down"></i>
                     {% trans "Download" %}
                 </a>
             </li>
             <li>
                 <a id="xform-source-opener" class="{% if not form.source %}disabled{% endif %}"
-                   data-href="{% url "get_xform_source" domain app.id module.id form.id %}">
+                   data-href="{% url "get_xform_source" domain app.id form.unique_id %}">
                     <i class="fa fa-search"></i>
                     {% trans "View" %}
                 </a>
@@ -93,7 +93,7 @@
         </ul>
     </fieldset>
     {% if allow_form_copy%}
-    <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
+    <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id form.unique_id %}'>
         {% csrf_token %}
         <fieldset>
             <legend>{% trans "Copy Form to a Different Module" %}</legend>

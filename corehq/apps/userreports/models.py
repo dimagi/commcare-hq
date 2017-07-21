@@ -5,22 +5,26 @@ import json
 from datetime import datetime
 
 from django.conf import settings
-from django.contrib import admin
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import ugettext as _
 
 from corehq.sql_db.connections import UCR_ENGINE_ID
-from corehq.util.quickcache import quickcache, skippable_quickcache
+from corehq.util.quickcache import quickcache
 from dimagi.ext.couchdbkit import (
     BooleanProperty,
     DateTimeProperty,
+    DecimalProperty,
+    DictProperty,
     Document,
     DocumentSchema,
+    IntegerProperty,
+    ListProperty,
     SchemaProperty,
+    SchemaListProperty,
+    StringProperty,
     StringListProperty,
 )
-from dimagi.ext.couchdbkit import StringProperty, DictProperty, ListProperty, IntegerProperty
 from dimagi.ext.jsonobject import JsonObject
 from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
@@ -56,6 +60,15 @@ from dimagi.utils.mixins import UnicodeMixIn
 from dimagi.utils.modules import to_function
 
 
+class ElasticSearchIndexSettings(DocumentSchema):
+    refresh_interval = StringProperty(default="5s")
+    number_of_shards = IntegerProperty(default=2)
+
+
+class SQLColumnIndexes(DocumentSchema):
+    column_ids = StringListProperty()
+
+
 class DataSourceBuildInformation(DocumentSchema):
     """
     A class to encapsulate meta information about the process through which
@@ -87,6 +100,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     """
     domain = StringProperty(required=True)
     engine_id = StringProperty(default=UCR_ENGINE_ID)
+    es_index_settings = SchemaProperty(ElasticSearchIndexSettings)
     backend_id = StringProperty(default=UCR_SQL_BACKEND)
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)
@@ -100,6 +114,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     is_deactivated = BooleanProperty(default=False)
     last_modified = DateTimeProperty()
     asynchronous = BooleanProperty(default=False)
+    sql_column_indexes = SchemaListProperty(SQLColumnIndexes)
 
     class Meta(object):
         # prevent JsonObject from auto-converting dates etc.
@@ -252,12 +267,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     def get_columns(self):
         return self.indicators.get_columns()
 
-    def get_items(self, document):
+    def get_items(self, document, eval_context=None):
         if self.filter(document):
             if not self.base_item_expression:
                 return [document]
             else:
-                result = self.parsed_expression(document)
+                result = self.parsed_expression(document, eval_context)
                 if result is None:
                     return []
                 elif isinstance(result, list):
@@ -267,10 +282,12 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         else:
             return []
 
-    def get_all_values(self, doc):
+    def get_all_values(self, doc, eval_context=None):
+        if not eval_context:
+            eval_context = EvaluationContext(doc)
+
         rows = []
-        eval_context = EvaluationContext(doc)
-        for item in self.get_items(doc):
+        for item in self.get_items(doc, eval_context):
             indicators = self.indicators.get_values(item, eval_context)
             rows.append(indicators)
             eval_context.increment_iteration()
@@ -327,6 +344,11 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
             self.save()
             get_indicator_adapter(self).drop_table()
 
+    def get_es_index_settings(self):
+        es_index_settings = self.es_index_settings.to_json()
+        es_index_settings.pop('doc_type')
+        return {"settings": es_index_settings}
+
 
 class ReportMeta(DocumentSchema):
     # `True` if this report was initially constructed by the report builder.
@@ -351,6 +373,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     columns = ListProperty()
     configured_charts = ListProperty()
     sort_expression = ListProperty()
+    soft_rollout = DecimalProperty(default=0)
     report_meta = SchemaProperty(ReportMeta)
 
     def __unicode__(self):
@@ -512,7 +535,7 @@ class StaticDataSourceConfiguration(JsonObject):
         return '{}{}-{}'.format(cls._datasource_id_prefix, domain, table_id)
 
     @classmethod
-    @skippable_quickcache([], skip_arg='rebuild')
+    @quickcache([], skip_arg='rebuild')
     def by_id_mapping(cls, rebuild=False):
         mapping = {}
         for wrapped, path in cls._all():
@@ -533,9 +556,10 @@ class StaticDataSourceConfiguration(JsonObject):
                 yield wrapped, path
 
     @classmethod
-    def all(cls):
+    def all(cls, use_server_filter=True):
         for wrapped, path in cls._all():
-            if (wrapped.server_environment and
+            if (use_server_filter and
+                    wrapped.server_environment and
                     settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
                 continue
 
@@ -608,7 +632,7 @@ class StaticReportConfiguration(JsonObject):
                 yield cls.wrap(json.load(f)), path
 
     @classmethod
-    @skippable_quickcache([], skip_arg='rebuild')
+    @quickcache([], skip_arg='rebuild')
     def by_id_mapping(cls, rebuild=False):
         mapping = {}
         for wrapped, path in StaticReportConfiguration._all():
@@ -710,13 +734,14 @@ class AsyncIndicator(models.Model):
     """
     doc_id = models.CharField(max_length=255, null=False, db_index=True, unique=True)
     doc_type = models.CharField(max_length=126, null=False)
-    domain = models.CharField(max_length=126, null=False)
+    domain = models.CharField(max_length=126, null=False, db_index=True)
     indicator_config_ids = ArrayField(
         models.CharField(max_length=126, null=True, blank=True),
         null=False
     )
     date_created = models.DateTimeField(auto_now_add=True, db_index=True)
     date_queued = models.DateTimeField(null=True, db_index=True)
+    unsuccessful_attempts = models.IntegerField(default=0)
 
     class Meta(object):
         ordering = ["date_created"]
@@ -724,7 +749,23 @@ class AsyncIndicator(models.Model):
     @classmethod
     def update_indicators(cls, change, config_ids):
         doc_id = change.id
+        doc_type = change.document['doc_type']
+        domain = change.document['domain']
+        config_ids = sorted(config_ids)
+
+        indicator, created = cls.objects.get_or_create(
+            doc_id=doc_id, doc_type=doc_type, domain=domain,
+            defaults={'indicator_config_ids': config_ids}
+        )
+
+        if created:
+            return indicator
+        elif set(config_ids) == indicator.indicator_config_ids:
+            return indicator
+
         with CriticalSection([get_async_indicator_modify_lock_key(doc_id)]):
+            # Add new config ids. Need to grab indicator again in case it was
+            # processed since we called get_or_create
             try:
                 indicator = cls.objects.get(doc_id=doc_id)
             except cls.DoesNotExist:
@@ -740,14 +781,11 @@ class AsyncIndicator(models.Model):
                 current_config_ids = set(indicator.indicator_config_ids)
                 config_ids = set(config_ids)
                 if config_ids - current_config_ids:
-                    new_config_ids = list(current_config_ids.union(config_ids))
+                    new_config_ids = sorted(list(current_config_ids.union(config_ids)))
                     indicator.indicator_config_ids = new_config_ids
                     indicator.save()
 
         return indicator
-
-
-admin.site.register(AsyncIndicator)
 
 
 def get_datasource_config(config_id, domain):
@@ -804,10 +842,13 @@ def get_report_configs(config_ids, domain):
         if config.domain != domain:
             raise ReportConfigurationNotFoundError
 
-    dynamic_report_configs = [
-        ReportConfiguration.wrap(doc) for doc in
-        get_docs(ReportConfiguration.get_db(), dynamic_report_config_ids)
-    ]
+    dynamic_report_configs = []
+    if dynamic_report_config_ids:
+        dynamic_report_configs = [
+            ReportConfiguration.wrap(doc) for doc in
+            get_docs(ReportConfiguration.get_db(), dynamic_report_config_ids)
+        ]
+
     if len(dynamic_report_configs) != len(dynamic_report_config_ids):
         raise ReportConfigurationNotFoundError
     for config in dynamic_report_configs:

@@ -636,40 +636,6 @@
         "outcome": []
     },
     {
-        "name": "owned_closed_open_extension",
-        "owned": [
-            "a"
-        ],
-        "extensions": [
-            [
-                "a",
-                "b"
-            ]
-        ],
-        "closed": [
-            "b"
-        ],
-        "outcome": []
-    },
-    {
-        "name": "closed_extension",
-        "owned": [
-            "a"
-        ],
-        "extensions": [
-            [
-                "e",
-                "a"
-            ]
-        ],
-        "closed": [
-            "e"
-        ],
-        "outcome": [
-            "a"
-        ]
-    },
-    {
         "name": "Broken_Extension_Chain",
         "owned": [
             "a"
@@ -790,6 +756,98 @@
         ],
         "outcome": [
             "a", "b", "c"
+        ]
+    },
+    {
+        "name": "host_of_closed_extension",
+        "owned": [
+            "a", "c"
+        ],
+        "closed": [
+            "b"
+        ],
+        "extensions": [
+            ["b", "a"],
+            ["b", "d"],
+            ["c", "b"]
+        ],
+        "outcome": [
+            "a"
+        ]
+    },
+    {
+        "name": "host_of_open_extension_with_closed_extension",
+        "owned": [
+            "a", "c"
+        ],
+        "closed": [
+            "b"
+        ],
+        "extensions": [
+            ["b", "a"],
+            ["b", "d"],
+            ["c", "b"],
+            ["d", "e"]
+        ],
+        "outcome": [
+            "a"
+        ]
+    },
+    {
+        "name": "parent_of_host_of_owned_extension_with_other_host",
+        "skip": "fails due to bad sync log before running test",
+        "owned": [
+            "d"
+        ],
+        "subcases": [
+            ["c", "e"]
+        ],
+        "extensions": [
+            ["d", "a"],
+            ["d", "c"]
+        ],
+        "outcome": [
+            "d", "a", "c", "e"
+        ]
+    },
+    {
+        "name": "closed_parent_double_index",
+        "owned": [
+            "d"
+        ],
+        "closed": [
+            "a"
+        ],
+        "subcases": [
+            ["b", "a"]
+        ],
+        "extensions": [
+            ["b", "a"],
+            ["c", "b"],
+            ["d", "b"]
+        ],
+        "outcome": [
+            "a", "b", "c", "d"
+        ]
+    },
+    {
+        "name": "unowned_child_with_closed_extension_chain",
+        "owned": [
+            "a", "e"
+        ],
+        "closed": [
+            "d"
+        ],
+        "subcases": [
+            ["a", "b"],
+            ["c", "b"]
+        ],
+        "extensions": [
+            ["d", "c"],
+            ["e", "d"]
+        ],
+        "outcome": [
+            "a", "b"
         ]
     }
 ]

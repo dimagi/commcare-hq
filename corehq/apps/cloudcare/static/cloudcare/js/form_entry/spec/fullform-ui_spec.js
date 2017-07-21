@@ -1,8 +1,14 @@
+/* eslint-env mocha */
+/* globals Form */
+
 describe('Fullform UI', function() {
     var questionJSON,
         answerSpy,
         formSpec,
         formJSON,
+        groupJSON,
+        noQuestionGroupJSON,
+        nestedGroupJSON,
         sessionData,
         spy,
         repeatJSON,
@@ -82,6 +88,46 @@ describe('Fullform UI', function() {
             "add-choice": "Add another Repeat Simple",
             "header": "Repeat Simple",
             "caption_video": null
+        };
+
+        groupJSON = {
+            "type": "sub-group",
+            "ix": "1",
+            "children": [
+                {
+                    "type": "sub-group",
+                    "ix": "1,2",
+                    "children": [
+                        {
+                            "type": "question",
+                            "ix": "2,3",
+                            "datatype": "str",
+                            "answer": null,
+                            "children": [],
+                        },
+                    ],
+                },
+            ],
+        };
+
+        noQuestionGroupJSON = {
+            "type": "sub-group",
+            "ix": "2",
+            "children": [
+                {
+                    "type": "sub-group",
+                    "ix": "2,2",
+                    "children": [],
+                },
+            ],
+        };
+
+        nestedGroupJSON = {
+            tree: [groupJSON, noQuestionGroupJSON],
+            seq_id: 1,
+            session_id: '123',
+            title: 'My title',
+            langs: ['en'],
         };
 
         formJSON = {
@@ -237,5 +283,11 @@ describe('Fullform UI', function() {
         }, question]);
 
         assert.isOk(question.serverError());
+    });
+
+    it('Should find nested questions', function() {
+        var form = new Form(nestedGroupJSON);
+        assert.isTrue(form.children()[0].hasAnyNestedQuestions());
+        assert.isFalse(form.children()[1].hasAnyNestedQuestions());
     });
 });

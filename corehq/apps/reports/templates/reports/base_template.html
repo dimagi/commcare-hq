@@ -4,45 +4,18 @@
 {% load i18n %}
 {% block js %}{{ block.super }}
     {% compress js %}
-    <script src="{% static 'hqwebapp/js/ajax_csrf_setup.js' %}"></script>
-    <script src="{% static 'style/js/main.js' %}"></script>
     <script src="{% static 'reports/js/saved_reports.js' %}"></script>
+    <script src="{% static "reports/js/base.js" %}"></script>
     {% endcompress %}
-{% endblock %}
-
-{% block reports-js-inline %}{{ block.super }}
-    <script>
-        $(function() {
-            var defaultConfig = {{ default_config|JSON }};
-            {% if report.has_datespan %}
-                defaultConfig.date_range = 'last7';
-            {% else %}
-                defaultConfig.date_range = null;
-            {% endif %}
-            defaultConfig.has_ucr_datespan = false;
-            defaultConfig.datespan_filters = [];
-            defaultConfig.datespan_slug = null;
-
-            
-            var $savedReports = $("#savedReports");
-            if ($savedReports.length) {
-                $savedReports.reportConfigEditor({
-                    filterForm: $("#reportFilters"),
-                    items: {{ report_configs|JSON }},
-                    defaultItem: defaultConfig,
-                    saveUrl: '{% url "add_report_config" domain %}'
-                });
-            }
-
-            $('#email-enabled').tooltip({
-                placement: 'right',
-                html: true,
-                title: '{% trans "You can email a saved version<br />of this report." %}'
-            });
-        });
-    </script>
 {% endblock %}
 
 {% block filter_panel %}
     {% include "reports/partials/filter_panel.html" %}
+{% endblock %}
+
+{% block additional_initial_page_data %}
+    {% initial_page_data 'default_config' default_config %}
+    {% initial_page_data 'has_datespan' report.has_datespan %}
+    {% initial_page_data 'report_configs' report_configs %}
+    {% registerurl 'add_report_config' domain %}
 {% endblock %}

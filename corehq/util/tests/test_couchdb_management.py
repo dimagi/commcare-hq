@@ -5,7 +5,21 @@ from corehq.util.exceptions import DatabaseNotFound
 
 
 class CouchConfigTest(SimpleTestCase):
-    remote_db_uri = 'https://mycouch.com/cchq'
+    remote_db_uri = 'https://mycouch.com/test_cchq'
+
+    @property
+    def _config(self):
+        return {
+            key: {
+                "COUCH_HTTPS": True,
+                'COUCH_SERVER_ROOT': 'mycouch.com',
+                'COUCH_USERNAME': '',
+                'COUCH_PASSWORD': '',
+                'COUCH_DATABASE_NAME': 'cchq{}'.format('__' + key if key else '')
+
+            }
+            for key in ['users', 'fixtures', 'meta', None]
+        }
 
     def test_default_db_uri(self):
         config = CouchConfig()
@@ -15,11 +29,11 @@ class CouchConfigTest(SimpleTestCase):
         self.assertEqual(couch_config.db_uri, settings.COUCH_DATABASE)
 
     def test_remote_db_uri(self):
-        config = CouchConfig(db_uri=self.remote_db_uri)
+        config = CouchConfig(config=self._config)
         self.assertEqual(config.db_uri, self.remote_db_uri)
 
     def test_all_db_uris_by_slug(self):
-        config = CouchConfig(db_uri=self.remote_db_uri)
+        config = CouchConfig(config=self._config)
         self.assertDictContainsSubset(
             {
                 None: self.remote_db_uri,
@@ -31,17 +45,17 @@ class CouchConfigTest(SimpleTestCase):
         )
 
     def test_get_db_for_doc_type(self):
-        config = CouchConfig(db_uri=self.remote_db_uri)
+        config = CouchConfig(config=self._config)
         self.assertEqual(config.get_db_for_doc_type('CommCareCase').uri, self.remote_db_uri)
         self.assertEqual(config.get_db_for_doc_type('CommCareUser').uri,
                          '{}__users'.format(self.remote_db_uri))
 
     def test_get_db_for_db_name(self):
-        config = CouchConfig(db_uri=self.remote_db_uri)
-        self.assertEqual(self.remote_db_uri, config.get_db_for_db_name('cchq').uri)
-        self.assertEqual('{}__users'.format(self.remote_db_uri), config.get_db_for_db_name('cchq__users').uri)
+        config = CouchConfig(config=self._config)
+        self.assertEqual(self.remote_db_uri, config.get_db_for_db_name('test_cchq').uri)
+        self.assertEqual('{}__users'.format(self.remote_db_uri), config.get_db_for_db_name('test_cchq__users').uri)
 
     def test_get_db_for_db_name_not_found(self):
-        config = CouchConfig(db_uri=self.remote_db_uri)
+        config = CouchConfig(config=self._config)
         with self.assertRaises(DatabaseNotFound):
             config.get_db_for_db_name('missing')

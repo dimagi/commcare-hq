@@ -1,7 +1,9 @@
+{# NOTE: Django assumes templates are stored with UTF-8 encoding by default. Be sure to save this template with UTF-8 encoding. #}
+
 {% if location_names and timeframe == 'week' %}
-The following AWC have not done any activity in ICDS CAS application in more than one week: {{ location_names }}.  Please follow up with them to provide assistance.
+निम्नाकित {{ location_names }}. आँगनवाड़ी केंद्रों द्वारा एक सप्ताह से आधिक समय से आई . सी.डी.यस - सी.ए.स एप्लीकेशन पर कोई कार्य नहीं ही किया हैं| कृपया उनकी सहायता हेतु आगे की कार्रवाही करे|
 {% endif %}
 
 {% if location_names and timeframe == 'month' %}
-The following AWC have not done any activity in ICDS CAS application in more than one month: {{ location_names }}.  Please follow up with them to provide assistance.
+निम्नाकित {{ location_names }}. आँगनवाड़ी केंद्रों द्वारा एक एक महीने से अधिक समय से आई . सी.डी.यस - सी.ए.स एप्लीकेशन पर कोई कार्य नहीं ही किया हैं| कृपया उनकी सहायता हेतु आगे की कार्रवाही करे|
 {% endif %}

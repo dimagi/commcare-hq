@@ -31,12 +31,30 @@ class EvaluationContext(object):
         self.iteration = iteration
         self.inserted_timestamp = datetime.utcnow()
         self.cache = {}
+        self.iteration_cache = {}
 
-    def get_cache_value(self, key):
-        return self.cache.get(key, None)
+    def exists_in_cache(self, key):
+        return key in self.cache or key in self.iteration_cache
+
+    def get_cache_value(self, key, default=None):
+        if key in self.cache:
+            return self.cache[key]
+
+        if key in self.iteration_cache:
+            return self.iteration_cache[key]
+
+        return default
 
     def set_cache_value(self, key, value):
         self.cache[key] = value
 
+    def set_iteration_cache_value(self, key, value):
+        self.iteration_cache[key] = value
+
     def increment_iteration(self):
+        self.iteration_cache = {}
         self.iteration += 1
+
+    def reset_iteration(self):
+        self.iteration_cache = {}
+        self.iteration = 0

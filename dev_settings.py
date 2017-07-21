@@ -35,7 +35,6 @@ SHELL_PLUS_POST_IMPORTS = (
     ('corehq.apps.app_manager.models', 'Application'),
     ('corehq.apps.domain.models', 'Domain'),
     ('corehq.apps.groups.models', 'Group'),
-    ('corehq.apps.locations.models', 'Location'),
     ('corehq.apps.users.models', ('CouchUser', 'WebUser', 'CommCareUser')),
     ('casexml.apps.case.models', 'CommCareCase'),
     ('corehq.form_processor.interfaces.dbaccessors', 'CaseAccessors'),
@@ -58,6 +57,16 @@ DATABASES = {
         'HOST': 'localhost',
         'PORT': '5432'
     }
+}
+
+COUCH_DATABASES = {
+    'default': {
+        'COUCH_HTTPS': False,
+        'COUCH_SERVER_ROOT': 'localhost:5984',
+        'COUCH_USERNAME': 'commcarehq',
+        'COUCH_PASSWORD': 'commcarehq',
+        'COUCH_DATABASE_NAME': 'commcarehq'
+    },
 }
 
 CACHES = {'default': {'BACKEND': 'django.core.cache.backends.dummy.DummyCache'}}

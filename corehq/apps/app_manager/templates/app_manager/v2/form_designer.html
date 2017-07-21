@@ -8,7 +8,7 @@
         {% include 'analytics/fullstory.html' %}
     {% endif %}
     {% if not vellum_debug %}
-        <link href="{% static vellum_style_path %}" type="text/css" rel="stylesheet"/>
+        <link href="{% static "app_manager/js/vellum/style.css" %}" type="text/css" rel="stylesheet"/>
     {% elif vellum_debug == "dev-min" %}
         <link href="{% static 'formdesigner/_build/style.css' %}" type="text/css" rel="stylesheet"/>
     {% endif %}
@@ -26,234 +26,32 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'moment/moment.js' %}"></script>
     <script src="{% static 'requirejs/require.js' %}"></script>
-    {% if False and not request|toggle_enabled:'VELLUM_BETA' %}
-        <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
-    {% endif %}
-    <script src="{% static 'app_manager/js/app-notifications.js' %}"></script>
+    <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
     <script src="{% static 'js/ws4redis.js' %}"></script>
+    <script src="{% static 'app_manager/js/forms/edit_form_details.js' %}"></script>
+    <script src="{% static 'app_manager/js/forms/form_designer.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     {% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
-    <script>
-        var VELLUM_OPTIONS = {
-            plugins: {{ plugins|JSON }},
-            features: {{ features|JSON }},
-            core: {
-                defaultHelpTextTemplateId:
-                  {% if form.get_action_type == 'open' %}
-                      '#fd-hq-helptext-registration'
-                  {% elif form.get_action_type == 'close' %}
-                      '#fd-hq-helptext-close'
-                  {% elif form.get_action_type == 'update' %}
-                      '#fd-hq-helptext-followup'
-                  {% else %}
-                      '#fd-hq-helptext-survey'
-                  {% endif %},
-                dataSourcesEndpoint: '{% url "get_form_data_schema" domain=domain form_unique_id=form.get_unique_id %}',
-                dataSources: [
-                    {% comment %} DEPRECATED. Use dataSourcesEndpoint {% endcomment %}
-                    {
-                        key: 'fixture',
-                        name: 'Fixtures',
-                        endpoint: '{% url 'fixture_metadata' domain=domain %}'
-                    }
-                ],
-                form: {{ form.source|JSON }},
-                formId: '{{ form.get_unique_id }}',
-                formIconClass:
-                  {% if form.get_action_type == 'open' %}
-                      "fcc fcc-app-createform"
-                  {% elif form.get_action_type == 'close' %}
-                      "fcc fcc-app-completeform"
-                  {% elif form.get_action_type == 'update' %}
-                      "fcc fcc-app-updateform"
-                  {% else %}
-                      "fa fa-file-o"
-                  {% endif %},
-                formName: "{{ form.name|trans:app.langs|escapejs }}",
-                saveType: 'patch',
-                saveUrl: '{% url "edit_form_attr" domain app.id form.get_unique_id "xform" %}',
-                patchUrl: '{% url "patch_xform" domain app.id form.get_unique_id %}',
-                allowedDataNodeReferences: [
-                    "meta/deviceID",
-                    "meta/instanceID",
-                    "meta/username",
-                    "meta/userID",
-                    "meta/timeStart",
-                    "meta/timeEnd",
-                    "meta/location"
-                ].concat({{ scheduler_data_nodes|JSON }}),
-                activityUrl: '{% url "ping" %}',
-                onFormSave: function (data) {
-                    var app_manager = hqImport('app_manager/js/app_manager.js')
-                    app_manager.updateDOM(data.update);
-                    $('.js-preview-toggle').removeAttr('disabled');
-                    {% if request.couch_user.days_since_created == 0 %}
-                        analytics.workflow('Saved the Form Builder within first 24 hours');
-                    {% endif %}
-                },
-                {% if vellum_debug == "dev" %}
-                onReady: function () {
-                    var less_error_id = "#less-error-message\\:static-style-less-hqstyle-core",
-                        less_error = $(less_error_id);
-                    if (less_error.length) {
-                        console.log("hiding less error:", less_error_id);
-                        console.log(less_error.text());
-                        less_error.hide();
-                    }
-                    {% if request.guided_tour %}
-                    form_tour_start();
-                    {% endif %}
-                    {% if request.couch_user.days_since_created == 0 %}
-                        $("#formdesigner").vellum("get").data.core.form.on("question-create", function() {
-                            analytics.workflow('Added question in Form Builder within first 24 hours');
-                        });
-                    {% endif %}
-                },
-                {% else %}
-                onReady: function() {
-                    {% if request.guided_tour %}
-                    form_tour_start();
-                    {% endif %}
-                },
-                {% endif %}
-                sessionid: {{ sessionid|JSON }},
-                externalLinks: {
-                    changeSubscription: '{% url "domain_subscription_view" domain=domain %}'
-                },
-                invalidCaseProperties: ['name'],
-            },
-            intents: {
-                templates: {{ app_callout_templates|JSON }}
-            },
-            itemset: {
-                dataSourcesFilter: function (sources) {
-                    return _.filter(sources, function (source) {
-                        return !source.uri || /^jr:\/\/fixture\//.test(source.uri);
-                    });
-                }
-            },
-            javaRosa: {
-                langs: {{ app.langs|JSON }},
-                displayLanguage: {{ lang|JSON }},
-            },
-            uploader: {
-                uploadUrls: {
-                    image: '{% url "hqmedia_uploader_image" domain app.id %}',
-                    audio: '{% url "hqmedia_uploader_audio" domain app.id %}',
-                    video: '{% url "hqmedia_uploader_video" domain app.id %}',
-                    text: '{% url "hqmedia_uploader_text" domain app.id %}',
-                },
-                objectMap: {{ multimedia_object_map|JSON }},
-                sessionid: {{ sessionid|JSON }}
-            },
-            windowManager: {
-                leftOffset: function () {
-                    return $('#hq-sidebar').outerWidth() + 2;
-                },
-                topOffset: function () {
-                    return $('#hq-navigation').outerHeight();
-                },
-                toggleFullScreenCallback: function (isFullscreen) {
-                  var $preview = $('#js-appmanager-preview');
-                  if (isFullscreen) {
-                    $preview.addClass('fullscreen');
-                  } else {
-                    $preview.removeClass('fullscreen');
-                  }
-                }
-            },
-            csrftoken: $.cookie('csrftoken')
-        };
+{% endblock %}
 
-        var CKEDITOR_BASEPATH = "{% static vellum_ckeditor_path %}";
-        
-        define("jquery", [], function () { return window.jQuery; });
-        define("jquery.bootstrap", ["jquery"], function () {});
-        define("underscore", [], function () { return window._; });
-        define("moment", [], function () { return window.moment; });
-        
-        require.config({
-            {% comment %} 
-            to use non-built files in HQ:
-                * clone Vellum into submodules/formdesigner
-                * Run make in that directory (requires node.js)
-                * set settings.VELLUM_DEBUG to "dev" or "dev-min"
-            {% endcomment %}
-            {% if not vellum_debug %}
-            baseUrl: "{% static vellum_js_path %}",
-            {% elif vellum_debug == "dev-min" %}
-            baseUrl: "{% static 'formdesigner/_build/src' %}",
-            {% else %}
-            baseUrl: "{% static 'formdesigner/src' %}",
-            {% endif %}
-            // handle very bad connections
-            waitSeconds: 60,
-            urlArgs: 'version={% cachebuster vellum_main_components_path %}{% cachebuster vellum_local_deps_path %}',
-            paths: {
-                'jquery.vellum': 'main'
-            }
-        });
+{% block title %}{{ form.name|clean_trans:langs }} - {% trans 'Edit Form' %}{% endblock %}
 
-        require(["jquery", "jquery.vellum", "moment"], function ($) {
-            $(function () {
-                $("#edit").hide();
-
-                $('#formdesigner').vellum(VELLUM_OPTIONS);
-
-                {% if notifications_enabled %}
-                var userId = '{{ request.couch_user.get_id }}';
-                var notifications = hqImport('app_manager/js/app-notifications.js');
-                // initialize redis
-                var ws4redis = WS4Redis({
-                    uri: '{{ WEBSOCKET_URI }}{{ notify_facility }}?subscribe-broadcast',
-                    receive_message: notifications.NotifyFunction(userId, $('#notify-bar')),
-                    heartbeat_msg: {{ WS4REDIS_HEARTBEAT }},
-                });
-                {% endif %}
-            });
-        });
-        analytics.workflow('Entered the Form Builder');
-        $(function () {
-            var previewApp = hqImport('app_manager/js/preview_app.js');
-
-            {% if form.requires_case or form.get_action_type == 'open' %}
-            // todo make this a more broadly used util, perhaps? actually add buttons to formplayer?
-            var _prependTemplateToSelector = function (selector, layout, attempts, callback) {
-                attempts = attempts || 0;
-                if ($(selector).length) {
-                    var $toggleParent = $(selector);
-                    $toggleParent.prepend(layout);
-                    callback();
-                } else if (attempts <= 30) {
-                    // give up appending element after waiting 30 seconds to load
-                    setTimeout(function () {
-                        _prependTemplateToSelector(selector, layout, attempts++, callback);
-                    }, 1000);
-                }
-            };
-            _prependTemplateToSelector(
-                '.fd-form-actions',
-                $('#js-fd-manage-case').html(),
-                0,
-                function () {
-                    previewApp.appendToggleTo('.fd-form-actions', $('#js-fd-app-preview-btn-template').html());
-                }
-            );
-            {% else %}
-                previewApp.appendToggleTo('.fd-form-actions', $('#js-fd-app-preview-btn-template').html());
-            {% endif %}
-
-        });
-
-    </script>
-
-    {% if can_preview_form %}
-    <script type="text/html" id="js-fd-app-preview-btn-template">
-        {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
-    </script>
-    {% endif %}
+{% block form-view %}
+    {% initial_page_data 'CKEDITOR_BASEPATH' CKEDITOR_BASEPATH|static %}
+    {% initial_page_data 'days_since_created' request.couch_user.days_since_created %}
+    {% initial_page_data 'guided_tour' request.guided_tour %}
+    {% initial_page_data 'form_name' form.name|trans:app.langs %}
+    {% initial_page_data 'form_comment' form.comment %}
+    {% initial_page_data 'form_uses_cases' form.uses_cases %}
+    {% initial_page_data 'notification_options' notification_options %}
+    {% initial_page_data 'requirejs_args' requirejs_args %}
+    {% initial_page_data 'requirejs_url' requirejs_url|static %}
+    {% initial_page_data 'vellum_debug' vellum_debug %}
+    {% initial_page_data 'vellum_options' vellum_options %}
+    {% registerurl 'edit_form_attr' app.domain app.id form.unique_id '---' %}
+    <div id="formdesigner" class="clearfix app-manager-v2 loading"></div>
 
     <script type="text/html" id="js-fd-manage-case">
       <div class="btn-group pull-right">
@@ -294,57 +92,58 @@
         </p>
     </script>
 
-{% endblock %}
-
-{% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
-
-{% block form-view %}
-    <div id="formdesigner" class="clearfix app-manager-v2"></div>
+    <script type="text/html" id="fd-hq-edit-formname-button">
+      <a href="#edit-form-name-modal" class="link-edit-form" data-toggle="modal">
+        <i class="fa fa-pencil"></i>
+      </a>
+    </script>
 {% endblock %}
 
 {% block column_style %}hq-flush-content{% endblock %}
 
-{% block footer %}{% endblock %}
+{% block modals %}{{ block.super }}
+  <div class="modal fade" id="edit-form-name-modal">
+      <div class="modal-dialog">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal">
+                      <span aria-hidden="true">&times;</span>
+                  </button>
+                  <h4 class="modal-title">{% trans "Edit Form Details" %}</h4>
+              </div>
+              <form name="update-form-data" class="form-horizontal" data-bind="submit:update">
+                  <div class="modal-body">
+                      <div class="form-group">
+                          <div class="col-sm-3">
+                              <label for="update-form-name" class="control-label">
+                                  {% trans "Form Name" %}
+                              </label>
+                          </div>
+                          <div class="col-sm-9">
+                              <input type="text" data-bind="value: name" class="form-control" />
+                          </div>
+                      </div>
+                      <div class="form-group">
+                          <div class="col-sm-3">
+                              <label for="update-form-name" class="control-label">
+                                  {% trans "Comment" %}
+                              </label>
+                          </div>
+                          <div class="col-sm-9">
+                              <textarea rows="5"
+                                        data-bind="value: comment"
+                                        class="form-control"></textarea>
+                          </div>
+                      </div>
+                  </div>
+                  <div class="modal-footer">
+                      <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
+                      <button type="submit disable-on-submit" class="btn btn-primary">{% trans "Save" %}</button>
+                  </div>
+              </form>
+          </div>
+      </div>
+</div>
+{% endblock %}
 
-{% block modals %}
-    {{ block.super }}
-    {% with slug="vellum_beta" name="New Form Builder" %}
-    {% registerurl "enable_vellum_beta" %}
-    {% if False and not request|toggle_enabled:'VELLUM_BETA' %}
-        <!-- This will appear on page load, so don't use any animation (normally controlled by .fade) -->
-        <div class="modal rollout-modal" data-slug="{{ slug }}">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    {% blocktrans %}
-                    <div class="modal-header">
-                        <h4 class="modal-title">{{ name }} Available!</h4>
-                    </div>
-                    <div class="modal-body">
-                        <p>
-                            We're about to release changes to make form builder easier to use.
-                            <a href="http://www.dimagi.com/blog/new-commcare-form-builder-improvements-released/">Check them out here.</a>
-                        </p>
-                        <p>
-                            These changes will be rolled out permanently on <strong>March 24th</strong>, but if
-                            you'd like, you can turn them on now.
-                        </p>
-                        <div class="row">
-                            <div class="col-sm-6 text-center">
-                                <button class="btn btn-lg btn-primary btn-full-width flag-enable">
-                                    Yes, turn on {{ name }}!
-                                </button>
-                            </div>
-                            <div class="col-sm-6 text-center">
-                                <button class="btn btn-lg btn-default btn-full-width flag-snooze">
-                                    No, remind me later
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    {% endblocktrans %}
-                </div>
-            </div>
-        </div>
-    {% endif %}
-    {% endwith %}
-{% endblock modals %}
+{% block footer %}{% endblock %}

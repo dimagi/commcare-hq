@@ -8,60 +8,34 @@
     <script src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
     <script src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
     <script src="{% static 'codemirror/addon/fold/brace-fold.js' %}"></script>
+    <script src="{% static 'userreports/js/base.js' %}"></script>
 {% endblock %}
 {% block stylesheets %}{{ block.super }}
     <link rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
     <link rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
-{% endblock %}
-{% block js-inline %}{{ block.super }}
-<style>
-    .CodeMirror {
-        border: 1px solid #ccc;
-        height: auto;
-        max-width: 800px;
-    }
-</style>
-<script>
-    $(function () {
-        {% if not code_mirror_off %}
-        $('.jsonwidget').each(function () {
-            var elem = this;
-            var codeMirror = CodeMirror.fromTextArea(elem, {
-                lineNumbers: true,
-                mode: {name: "javascript", json: true},
-                viewportMargin: Infinity,
-                foldGutter: true,
-                gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
-            });
-
-            var toggleLabel = $('label[for="' + this.id + '"]').click(function (e) {
-                $(codeMirror.display.wrapper).toggle();
-                setTimeout(adjustToggleAppearance, 0);
-                e.preventDefault();
-            });
-            var toggleIcon = $('<a href="#"></a>').prependTo(toggleLabel);
-            function adjustToggleAppearance() {
-                if ($(codeMirror.display.wrapper).is(':hidden')) {
-                    toggleIcon.html('<i class="icon-angle-right"></i>');
-                } else {
-                    toggleIcon.html('<i class="icon-angle-down"></i>');
-                }
-            }
-            adjustToggleAppearance();
-        });
-        {% endif %}
-    });
-</script>
+    <style>
+        .CodeMirror {
+            border: 1px solid #ccc;
+            height: auto;
+            max-width: 800px;
+        }
+    </style>
 {% endblock %}
 
 {% block page_navigation %}
+    {% initial_page_data "code_mirror_off" code_mirror_off %}
 
     <h2 class="text-hq-nav-header">{% trans "Edit Reports" %}</h2>
     <ul class="nav nav-hq-sidebar">
         {% with report as selected_report %}
         {% for report in reports %}
         <li {% if report.get_id == selected_report.get_id %} class="active"{% endif %}>
-            <a href="{% url 'edit_configurable_report' domain report.get_id %}">{{ report.title }}</a>
+            <a href="{% url 'edit_configurable_report' domain report.get_id %}">
+                {{ report.title }}
+                {% if report.is_static %}
+                    <span class="label label-default">static</span>
+                {% endif %}
+            </a>
         </li>
         {% endfor %}
         {% endwith %}
@@ -82,7 +56,12 @@
         {% with data_source as selected_data_source %}
         {% for data_source in data_sources %}
         <li{% if data_source.get_id == selected_data_source.get_id %} class="active"{% endif %}>
-            <a href="{% url 'edit_configurable_data_source' domain data_source.get_id %}">{{ data_source.display_name }}</a>
+            <a href="{% url 'edit_configurable_data_source' domain data_source.get_id %}">
+                {{ data_source.display_name }}
+                {% if data_source.is_static %}
+                    <span class="label label-default">static</span>
+                {% endif %}
+            </a>
         </li>
         {% endfor %}
         {% endwith %}
@@ -102,6 +81,12 @@
             <a href="{% url 'expression_debugger' domain %}">
                 <i class="fa fa-search"></i>
                 <span class="muted">{% trans "Expression Debugger" %}</span>
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'data_source_debugger' domain %}">
+                <i class="fa fa-search"></i>
+                <span class="muted">{% trans "Data Source Debugger" %}</span>
             </a>
         </li>
     </ul>

@@ -1,7 +1,7 @@
 import copy
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, MultiTopicCheckpointEventHandler
-from corehq.apps.change_feed.document_types import COMMCARE_USER, WEB_USER, FORM
-from corehq.apps.change_feed.topics import FORM_SQL
+from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.change_feed import topics
+from corehq.apps.groups.models import Group
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import WEIRD_USER_IDS
 from corehq.elastic import (
@@ -47,6 +47,16 @@ def transform_user_for_elasticsearch(doc_dict):
         doc['base_username'] = doc['username'].split("@")[0]
     else:
         doc['base_username'] = doc['username']
+    groups = Group.by_user(doc['_id'], wrap=False, include_names=True)
+    doc['__group_ids'] = [group['group_id'] for group in groups]
+    doc['__group_names'] = [group['name'] for group in groups]
+    doc['user_data_es'] = []
+    if 'user_data' in doc:
+        for key, value in doc['user_data'].iteritems():
+            doc['user_data_es'].append({
+                'key': key,
+                'value': value,
+            })
     return doc
 
 
@@ -73,19 +83,21 @@ class UnknownUsersProcessor(PillowProcessor):
         update_unknown_user_from_form_if_necessary(self._es, change.get_document())
 
 
-def get_unknown_users_pillow(pillow_id='unknown-users-pillow'):
+def get_unknown_users_pillow(pillow_id='unknown-users-pillow', num_processes=1, process_num=0, **kwargs):
     """
     This pillow adds users from xform submissions that come in to the User Index if they don't exist in HQ
     """
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.FORM_TOPICS)
     processor = UnknownUsersProcessor()
-    change_feed = KafkaChangeFeed(topics=[FORM, FORM_SQL], group_id='unknown-users')
+    change_feed = KafkaChangeFeed(
+        topics=topics.FORM_TOPICS, group_id='unknown-users', num_processes=num_processes, process_num=process_num
+    )
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
         change_feed=change_feed,
         processor=processor,
-        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+        change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
     )
@@ -98,21 +110,23 @@ def add_demo_user_to_user_index():
     )
 
 
-def get_user_pillow(pillow_id='UserPillow'):
+def get_user_pillow(pillow_id='UserPillow', num_processes=1, process_num=0, **kwargs):
     assert pillow_id == 'UserPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO)
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, USER_INDEX_INFO, topics.USER_TOPICS)
     user_processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=USER_INDEX_INFO,
         doc_prep_fn=transform_user_for_elasticsearch,
     )
-    change_feed = KafkaChangeFeed(topics=[COMMCARE_USER, WEB_USER], group_id='users-to-es')
+    change_feed = KafkaChangeFeed(
+        topics=topics.USER_TOPICS, group_id='users-to-es', num_processes=num_processes, process_num=process_num
+    )
     return ConstructedPillow(
         name=pillow_id,
         checkpoint=checkpoint,
         change_feed=change_feed,
         processor=user_processor,
-        change_processed_event_handler=MultiTopicCheckpointEventHandler(
+        change_processed_event_handler=KafkaCheckpointEventHandler(
             checkpoint=checkpoint, checkpoint_frequency=100, change_feed=change_feed
         ),
     )

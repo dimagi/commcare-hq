@@ -55,17 +55,17 @@ class MessageMetadata(object):
         self.ignore_opt_out = kwargs.get("ignore_opt_out", None)
         self.location_id = kwargs.get('location_id', None)
         self.messaging_subevent_id = kwargs.get('messaging_subevent_id', None)
+        self.custom_metadata = kwargs.get('custom_metadata', None)
 
 
 def add_msg_tags(msg, metadata):
     if msg and metadata:
         fields = ('workflow', 'xforms_session_couch_id', 'reminder_id', 'chat_user_id',
-                  'ignore_opt_out', 'location_id', 'messaging_subevent_id')
+                  'ignore_opt_out', 'location_id', 'messaging_subevent_id', 'custom_metadata')
         for field in fields:
             value = getattr(metadata, field)
             if value is not None:
                 setattr(msg, field, value)
-        msg.save()
 
 
 def log_sms_exception(msg):
@@ -233,7 +233,9 @@ def send_message_via_backend(msg, backend=None, orig_phone_number=None):
     except Exception:
         logging.exception("Could not clean text for sms dated '%s' in domain '%s'" % (msg.date, msg.domain))
     try:
-        if not domain_has_privilege(msg.domain, privileges.OUTBOUND_SMS):
+        # We need to send SMS when msg.domain is None to support sending to
+        # people who opt in without being tied to a domain
+        if msg.domain and not domain_has_privilege(msg.domain, privileges.OUTBOUND_SMS):
             raise Exception(
                 ("Domain '%s' does not have permission to send SMS."
                  "  Please investigate why this function was called.") % msg.domain
@@ -540,23 +542,26 @@ def process_incoming(msg):
         msg.domain = msg.domain_scope
         msg.save()
 
-    can_receive_sms = PhoneBlacklist.can_receive_sms(msg.phone_number)
     opt_in_keywords, opt_out_keywords = get_opt_keywords(msg)
     domain = v.domain if v else None
 
-    if is_opt_message(msg.text, opt_out_keywords) and can_receive_sms:
+    if is_opt_message(msg.text, opt_out_keywords):
         if PhoneBlacklist.opt_out_sms(msg.phone_number, domain=domain):
             metadata = MessageMetadata(ignore_opt_out=True)
             text = get_message(MSG_OPTED_OUT, v, context=(opt_in_keywords[0],))
             if v:
                 send_sms_to_verified_number(v, text, metadata=metadata)
+            elif msg.backend_id:
+                send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id, metadata=metadata)
             else:
                 send_sms(msg.domain, None, msg.phone_number, text, metadata=metadata)
-    elif is_opt_message(msg.text, opt_in_keywords) and not can_receive_sms:
+    elif is_opt_message(msg.text, opt_in_keywords):
         if PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain):
             text = get_message(MSG_OPTED_IN, v, context=(opt_out_keywords[0],))
             if v:
                 send_sms_to_verified_number(v, text)
+            elif msg.backend_id:
+                send_sms_with_backend(msg.domain, msg.phone_number, text, msg.backend_id)
             else:
                 send_sms(msg.domain, None, msg.phone_number, text)
     else:

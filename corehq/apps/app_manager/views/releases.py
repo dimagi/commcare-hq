@@ -7,7 +7,7 @@ from django.http import HttpResponseRedirect
 from django.views.generic import View
 from django.utils.decorators import method_decorator
 
-from corehq.apps.app_manager.util import get_app_manager_template
+from corehq.apps.app_manager.util import get_app_manager_template, get_and_assert_practice_user_in_domain
 from django_prbac.decorators import requires_privilege
 from django.contrib import messages
 from django.shortcuts import render
@@ -28,6 +28,7 @@ from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import LoginAndDomainMixin, DomainViewMixin
 from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.views import get_sms_autocomplete_context
 from corehq.apps.style.decorators import use_angular_js
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
@@ -40,12 +41,13 @@ from corehq.apps.users.models import CommCareUser
 from corehq.util.view_utils import reverse
 from corehq.apps.app_manager.decorators import (
     no_conflict_require_POST, require_can_edit_apps, require_deploy_apps)
-from corehq.apps.app_manager.exceptions import ModuleIdMissingException, ModuleNotFoundException
+from corehq.apps.app_manager.exceptions import ModuleIdMissingException, PracticeUserException
 from corehq.apps.app_manager.models import Application, SavedAppBuild
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.utils import (back_to_main, encode_if_unicode, get_langs)
 from corehq.apps.builds.models import CommCareBuildConfig
+
 
 def _get_error_counts(domain, app_id, version_numbers):
     res = (UserErrorEntry.objects
@@ -96,7 +98,7 @@ def paginate_releases(request, domain, app_id):
 @require_deploy_apps
 def releases_ajax(request, domain, app_id):
     template = get_app_manager_template(
-        domain,
+        request.user,
         "app_manager/v1/partials/releases.html",
         "app_manager/v2/partials/releases.html",
     )
@@ -120,13 +122,14 @@ def get_releases_context(request, domain, app_id):
             get_sms_autocomplete_context(request, domain)['sms_contacts']
             if can_send_sms else []
         ),
-        'build_profile_access': build_profile_access and not toggles.APP_MANAGER_V2.enabled(domain),
+        'build_profile_access': build_profile_access,
+        'application_profile_url': reverse(LanguageProfilesView.urlname, args=[domain, app_id]),
         'lastest_j2me_enabled_build': CommCareBuildConfig.latest_j2me_enabled_config().label,
         'fetchLimit': request.GET.get('limit', DEFAULT_FETCH_LIMIT),
-        'latest_build_id': get_latest_build_id(domain, app_id)
+        'latest_build_id': get_latest_build_id(domain, app_id),
     })
     if not app.is_remote_app():
-        if toggles.APP_MANAGER_V2.enabled(domain) and len(app.modules) == 0:
+        if toggles.APP_MANAGER_V2.enabled(request.user.username) and len(app.modules) == 0:
             context.update({'intro_only': True})
         # Multimedia is not supported for remote applications at this time.
         try:
@@ -140,6 +143,7 @@ def get_releases_context(request, domain, app_id):
 
 
 @login_and_domain_required
+@location_safe
 def current_app_version(request, domain, app_id):
     """
     Return current app version and the latest release
@@ -219,7 +223,7 @@ def save_copy(request, domain, app_id):
         copy['j2me_enabled'] = copy['menu_item_label'] in j2me_enabled_configs
 
     template = get_app_manager_template(
-        domain,
+        request.user,
         "app_manager/v1/partials/build_errors.html",
         "app_manager/v2/partials/build_errors.html",
     )
@@ -262,6 +266,12 @@ def revert_to_copy(request, domain, app_id):
         request,
         "Successfully reverted to version %s, now at version %s" % (copy.version, app.version)
     )
+    copy = app.make_build(
+        comment="Reverted to version %s" % copy.version,
+        user_id=request.couch_user.get_id,
+        previous_version=app.get_latest_app(released_only=False)
+    )
+    copy.save(increment_version=False)
     return back_to_main(request, domain, app_id=app_id)
 
 
@@ -295,7 +305,7 @@ def odk_install(request, domain, app_id, with_media=False):
         "profile_url": profile_url,
     }
     template = get_app_manager_template(
-        domain,
+        request.user,
         "app_manager/v1/odk_install.html",
         "app_manager/v2/odk_install.html",
     )
@@ -394,7 +404,7 @@ class AppDiffView(LoginAndDomainMixin, BasePageView, DomainViewMixin):
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
         self.template_name = get_app_manager_template(
-            self.domain,
+            request.user,
             self.template_name,
             'app_manager/v2/app_diff.html',
         )
@@ -463,7 +473,19 @@ class LanguageProfilesView(View):
                 id = profile.get('id')
                 if not id:
                     id = uuid.uuid4().hex
-                build_profiles[id] = BuildProfile(langs=profile['langs'], name=profile['name'])
+                def practice_user_id():
+                    if not app.enable_practice_users:
+                        return ''
+                    try:
+                        practice_user_id = profile.get('practice_user_id')
+                        if practice_user_id:
+                            get_and_assert_practice_user_in_domain(practice_user_id, domain)
+                        return practice_user_id
+                    except PracticeUserException:
+                        return HttpResponse(status=400)
+
+                build_profiles[id] = BuildProfile(
+                    langs=profile['langs'], name=profile['name'], practice_mobile_worker_id=practice_user_id())
         app.build_profiles = build_profiles
         app.save()
         return HttpResponse()

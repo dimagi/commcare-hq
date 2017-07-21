@@ -54,8 +54,6 @@ class Migration(migrations.Migration):
         migrator.get_migration('get_cases_by_id.sql'),
         migrator.get_migration('get_form_attachment_by_name.sql'),
         migrator.get_migration('get_form_attachments.sql'),
-        migrator.get_migration('delete_all_forms.sql', testing_only=True),
-        migrator.get_migration('delete_all_cases.sql', testing_only=True),
         migrator.get_migration('get_form_operations.sql'),
         migrator.get_migration('get_forms_by_id.sql'),
         migrator.get_migration('get_forms_by_state.sql'),
@@ -65,7 +63,5 @@ class Migration(migrations.Migration):
         migrator.get_migration('hard_delete_cases.sql'),
         migrator.get_migration('hard_delete_forms.sql'),
         migrator.get_migration('revoke_restore_case_transactions_for_form.sql'),
-        migrator.get_migration('save_case_and_related_models.sql'),
-        migrator.get_migration('save_new_form_and_related_models.sql'),
         migrator.get_migration('update_form_problem_and_state.sql'),
     ]

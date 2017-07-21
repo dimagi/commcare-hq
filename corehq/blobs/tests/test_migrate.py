@@ -15,6 +15,7 @@ from corehq.blobs.tests.util import (
     TemporaryFilesystemBlobDB, TemporaryMigratingBlobDB
 )
 from corehq.blobs.util import random_url_id
+from corehq.sql_db.models import PartitionedModel
 from corehq.util.doc_processor.couch import CouchDocumentProvider, doc_type_tuples_to_dict
 from corehq.util.test_utils import trap_extra_setup
 
@@ -478,8 +479,7 @@ class TestMigrateBackend(TestCase):
         if rex.is_sharded():
             # HACK why does it have to be so hard to use form_processor
             # even just for testing...
-            from corehq.form_processor.models import DisabledDbMixin
-            super(DisabledDbMixin, obj).save_base()
+            obj.save(using='default')
         else:
             obj.save()
 
@@ -548,20 +548,19 @@ class TestMigrateBackend(TestCase):
                 item.save()
             return item, ident
         self.sql_docs = []
-        with mod.allow_form_processing_queries():
-            for rex in (x() for x in self.sql_reindex_accessors):
-                item, ident = create_obj(rex)
-                helper = rex.blob_helper({"_obj_not_json": item})
-                db1.put(StringIO(data), ident, helper._blobdb_bucket())
-                self.sql_docs.append(item)
-                lost, lost_blob_id = create_obj(rex)
-                self.sql_docs.append(lost)
-                self.not_founds.add((
-                    rex.model_class.__name__,
-                    lost.id,
-                    lost_blob_id,
-                    rex.blob_helper({"_obj_not_json": lost})._blobdb_bucket(),
-                ))
+        for rex in (x() for x in self.sql_reindex_accessors):
+            item, ident = create_obj(rex)
+            helper = rex.blob_helper({"_obj_not_json": item})
+            db1.put(StringIO(data), ident, helper._blobdb_bucket())
+            self.sql_docs.append(item)
+            lost, lost_blob_id = create_obj(rex)
+            self.sql_docs.append(lost)
+            self.not_founds.add((
+                rex.model_class.__name__,
+                lost.id,
+                lost_blob_id,
+                rex.blob_helper({"_obj_not_json": lost})._blobdb_bucket(),
+            ))
 
         self.test_size = len(self.couch_docs) + len(self.sql_docs)
         db2 = TemporaryFilesystemBlobDB()
@@ -570,14 +569,13 @@ class TestMigrateBackend(TestCase):
         BaseMigrationTest.discard_migration_state(self.slug)
 
     def tearDown(self):
-        from corehq.form_processor.models import DisabledDbMixin
         self.db.close()
         BaseMigrationTest.discard_migration_state(self.slug)
         for doc in self.couch_docs:
             doc.get_db().delete_doc(doc._id)
         for doc in self.sql_docs:
-            if isinstance(doc, DisabledDbMixin):
-                super(DisabledDbMixin, doc).delete()
+            if isinstance(doc, PartitionedModel):
+                doc.delete(using='default')
             else:
                 doc.delete()
 

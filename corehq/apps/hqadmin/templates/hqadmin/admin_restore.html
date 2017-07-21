@@ -5,31 +5,15 @@
         <title>Restore Response</title>
 
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'bootstrap/dist/css/bootstrap.min.css' %}"/>
-        <link type="text/css" rel="stylesheet" href="{% static 'codemirror/lib/codemirror.css' %}" />
-        <link type="text/css" rel="stylesheet" href="{% static 'codemirror/addon/fold/foldgutter.css' %}"/>
         <link type="text/css" rel="stylesheet" href="{% static 'jquery-treetable/css/jquery.treetable.css' %}"/>
 
         {% compress js %}
             <script src="{% static 'jquery/dist/jquery.min.js' %}"></script>
             <script src="{% static 'bootstrap/dist/js/bootstrap.min.js' %}"></script>
             <script src="{% static 'jquery-treetable/jquery.treetable.js' %}"></script>
-            <script src="{% static 'codemirror/lib/codemirror.js' %}"></script>
-            <script src="{% static 'codemirror/mode/xml/xml.js' %}"></script>
-            <script src="{% static 'codemirror/addon/fold/foldcode.js' %}"></script>
-            <script src="{% static 'codemirror/addon/fold/foldgutter.js' %}"></script>
-            <script src="{% static 'codemirror/addon/fold/xml-fold.js' %}"></script>
             <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
             <script src="{% static 'hqadmin/js/admin_restore.js' %}"></script>
         {% endcompress %}
-
-        <style>
-            .CodeMirror {
-                height: auto;
-            }
-            .branch {
-                background-color: #f0f0f0;
-            }
-        </style>
 
     </head>
     <body>
@@ -38,13 +22,16 @@
                 <div class="col-xs-12">
                     <h3>Response Status Code: {{ status_code }}</h3>
                     <ul class="list-inline">
-                        <li><a href="https://confluence.dimagi.com/display/commcarehq/Hidden+features#Hiddenfeatures-PhoneRestore" target="_blank">Docs</a></li>
+                        <li><a href="https://help.commcarehq.org/display/commcarepublic/CommCare+Sync+Data" target="_blank">Docs</a></li>
                         <li><a href="{{request.get_full_path}}&raw=true">Raw</a></li>
                         <li><a href="{{request.get_full_path}}&overwrite_cache=true">Overwrite Cache</a></li>
                         <li><a href="?{% url_replace 'since' restore_id %}">Next Sync</a></li>
                     </ul>
                     <div>
                         Number of cases in this restore: <strong>{{num_cases}}</strong>
+                    </div>
+                    <div>
+                        Number of locations in this restore: <strong>{{num_locations}}</strong>
                     </div>
                     <div>
                         <ul class="nav nav-tabs" role="tablist">

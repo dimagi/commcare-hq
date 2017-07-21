@@ -1,9 +1,19 @@
-from collections import namedtuple
+from abc import ABCMeta, abstractmethod
+
+import six
+
 from casexml.apps.phone.models import OTARestoreUser
-from casexml.apps.case.xml import V1
+from casexml.apps.case.xml import V1, V2
 from django.conf import settings
 from dimagi.utils.modules import to_function
 import itertools
+
+
+class FixtureProvider(six.with_metaclass(ABCMeta)):
+
+    @abstractmethod
+    def __call__(self, restore_state):
+        raise NotImplementedError
 
 
 class FixtureGenerator(object):
@@ -42,20 +52,17 @@ class FixtureGenerator(object):
         if hasattr(settings, "FIXTURE_GENERATORS"):
             for group, func_paths in settings.FIXTURE_GENERATORS.items():
                 self._generator_providers[group] = filter(None, [
-                    to_function(func_path) for func_path in func_paths
+                    to_function(func_path, failhard=True) for func_path in func_paths
                 ])
 
-    def get_providers(self, user, version, group=None, fixture_id=None):
+    def get_providers(self, user, fixture_id=None, version=V2):
         if version == V1:
             return []  # V1 phones will never use or want fixtures
 
         if not isinstance(user, OTARestoreUser):
             return []
 
-        if group:
-            providers = self._generator_providers.get(group, [])
-        else:
-            providers = list(itertools.chain(*self._generator_providers.values()))
+        providers = list(itertools.chain(*self._generator_providers.values()))
 
         if fixture_id:
             full_id = fixture_id
@@ -70,25 +77,40 @@ class FixtureGenerator(object):
 
         return providers
 
-    def _get_fixtures(self, group, fixture_id, user, version, last_sync, app):
-        providers = self.get_providers(user, version, group, fixture_id)
-        return itertools.chain(*[provider(user, version, last_sync, app)
-                                 for provider in providers])
+    def _get_fixtures(self, restore_user, fixture_id=None):
+        providers = self.get_providers(restore_user, fixture_id=fixture_id)
+        return itertools.chain(*[
+            provider(_get_restore_state(restore_user))
+            for provider in providers
+        ])
 
-    def get_fixture_by_id(self, fixture_id, user, version, last_sync=None):
+    def get_fixture_by_id(self, fixture_id, restore_user):
         """
         Only get fixtures with the specified ID.
         """
-        fixtures = self._get_fixtures(None, fixture_id, user, version, last_sync, None)
+        fixtures = self._get_fixtures(restore_user, fixture_id)
         for fixture in fixtures:
             if fixture.attrib.get("id") == fixture_id:
                 return fixture
 
-    def get_fixtures(self, user, version, last_sync=None, group=None, app=None):
+    def get_fixtures(self, restore_user):
         """
         Gets all fixtures associated with an OTA restore operation
         """
-        return self._get_fixtures(group, None, user, version, last_sync, app)
+        return self._get_fixtures(restore_user)
 
 
 generator = FixtureGenerator()
+
+
+def _get_restore_state(restore_user):
+    from casexml.apps.phone.restore import RestoreState
+    from casexml.apps.phone.restore import RestoreParams
+    params = RestoreParams(version=V2)
+    return RestoreState(
+        restore_user.project,
+        restore_user,
+        params,
+        async=False,
+        overwrite_cache=False
+    )

@@ -4,19 +4,26 @@ from django.conf import settings
 from django.test.utils import override_settings
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
-from corehq.apps.change_feed.topics import get_topic_offset, get_multi_topic_offset
-
+from corehq.apps.change_feed.topics import get_multi_topic_offset
 from corehq.util.decorators import ContextDecorator
 from pillowtop import get_pillow_by_name
+from pillowtop.pillow.interface import PillowBase
 
 
 class process_pillow_changes(ContextDecorator):
     def __init__(self, pillow_name_or_instance):
-        if isinstance(pillow_name_or_instance, basestring):
-            with real_pillow_settings(), override_settings(PTOP_CHECKPOINT_DELAY_OVERRIDE=None):
-                self.pillow = get_pillow_by_name(pillow_name_or_instance, instantiate=True)
+        self.pillow_name_or_instance = pillow_name_or_instance
+        if isinstance(pillow_name_or_instance, PillowBase):
+            self._pillow = pillow_name_or_instance
         else:
-            self.pillow = pillow_name_or_instance
+            self._pillow = None
+
+    @property
+    def pillow(self):
+        if not self._pillow:
+            with real_pillow_settings(), override_settings(PTOP_CHECKPOINT_DELAY_OVERRIDE=None):
+                self._pillow = get_pillow_by_name(self.pillow_name_or_instance, instantiate=True)
+        return self._pillow
 
     def __enter__(self):
         self.offsets = self.pillow.get_change_feed().get_latest_offsets_as_checkpoint_value()

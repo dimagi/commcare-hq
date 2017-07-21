@@ -5,12 +5,11 @@
 {# For APP BUILDER PROTOTYPE use only #}
 
 {% if not form.no_vellum %}
-    <a id="edit_pen_{{ module.id }}_{{ form.id }}" href="{% url "view_form" domain app.id module.id form.id %}"
-       data-moduleid="{{ module.id }}"
-       data-formid="{{ form.id }}"
-       data-updateprop="href"
-       data-updatevalue="{% url "view_form" domain app.id 'replacewithmoduleid' 'replacewithformid' %}"
-       class="appnav-secondary appnav-settings appnav-responsive">
+    <a href="{% url "view_form" domain app.id module.id form.id %}"
+       data-category="App Builder"
+       data-action="View Form"
+       data-label="Sidebar"
+       class="appnav-secondary appnav-settings appnav-responsive track-usage-link">
         <i class="fa fa-gear appnav-show-on-hover"></i>
     </a>
 {% endif %}

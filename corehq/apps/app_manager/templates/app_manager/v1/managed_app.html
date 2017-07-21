@@ -12,6 +12,7 @@
     <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
     <script src="{% static 'app_manager/js/managed_app.js' %}"></script>
+    <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -60,7 +61,7 @@
         </li>
         {% if app.get_doc_type == 'Application' %}
         <li>
-            <a id="demand-multimedia" href="{% url "view_app" domain app.id %}multimedia/#multimedia" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Multimedia" %}: {{ app.name }}"{% endif %}>
+            <a id="demand-multimedia" href="{% url "view_app" domain app.id %}multimedia/#multimedia-tab" {% if is_app_view %}data-toggle="tab" data-pagetitle="{% trans "Multimedia" %}: {{ app.name }}"{% endif %}>
                 <i class="fa fa-photo"></i>
                 {% trans "Multimedia" %}
             </a>
@@ -89,10 +90,16 @@
             {% endif %}
         </li>
         {% endif %}
-        <li>
+        <li class="rollout-toggle-label">
             <a href="{% url "app_summary" domain app.id %}">
                 <i class="fa fa-list"></i>
                 {% trans "App Summary" %}
+            </a>
+        </li>
+        <li>
+            <a href="#" data-toggle="modal" data-target="#rollout-modal">
+                <i class="fa fa-bell-o"></i>
+                {% trans "New App Builder" %}
             </a>
         </li>
         <li class="divider"></li>
@@ -143,6 +150,10 @@
                                     <li class="edit-form-li{% ifequal form selected_form %} active{% endifequal %}" data-moduleid="{{ module.id }}" data-index="{{ form.id }}">
                                         <!--[F]-->
                                         <a id="view_form_{{ module.id }}_{{ form.id }}_sidebar"
+                                           class="track-usage-link"
+                                           data-category="App Builder"
+                                           data-action="View Form"
+                                           data-label="Sidebar"
                                            href="{% url "view_form" domain app.id module.id form.id %}">
                                             <i class="drag_handle"></i>
                                             {% if request|toggle_enabled:"SUPPORT" %}
@@ -166,7 +177,11 @@
                                         </a>
                                         {% if not form.no_vellum %}
                                             <div class="edit-form-pencil">
-                                                <a id="edit_pen_{{ module.id }}_{{ form.id }}" href="{% url "form_source" domain app.id module.id form.id %}">
+                                                <a class="track-usage-link"
+                                                   data-category="App Builder"
+                                                   data-action="Open Form"
+                                                   data-label="Edit Pen"
+                                                   href="{% url "form_source" domain app.id module.id form.id %}">
                                                     <i class="fa fa-pencil"></i>
                                                 </a>
                                             </div>
@@ -175,14 +190,36 @@
                                 {% endfor %}
                             {% endwith %}
                             <li class="sort-disabled">
-                                <form action="{% url "new_form" domain app.id module.id %}"
+                                <form id="form-to-create-new-form-for-module-{{ module.id }}" action="{% url "new_form" domain app.id module.id %}"
                                       method="post" class="hide">{% csrf_token %}
+                                    <input type="hidden" name="form_type">
                                 </form>
                                 {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
-                                <a class="submit_on_click" href="#">
-                                    <i class="fa fa-plus icon-blue"></i>
-                                    <span class="text-muted">{% trans "Form" %}</span>
-                                </a>
+                                    {% if show_shadow_forms and module.doc_type == "AdvancedModule" %}
+                                        <li class="sort-disabled dropdown">
+                                            <a href="#" data-toggle="dropdown">
+                                                <i class="new-form-icon-module-{{ module.id }} fa fa-plus icon-blue"></i>
+                                                <span class="text-muted">{% trans "Form" %}</span><span class="caret"></span>
+                                            </a>
+                                            <ul class="dropdown-menu" role="menu">
+                                                <li>
+                                                    <a href="#" class="new-form" data-type="form" data-module="{{ module.id }}">
+                                                        {% trans "New Form" %}
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a href="#" class="new-form" data-type="shadow" data-module="{{ module.id }}">
+                                                        {% trans "New Shadow Form" %}
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </li>
+                                    {% else %}
+                                        <a class="submit_on_click" href="#">
+                                            <i class="fa fa-plus icon-blue"></i>
+                                            <span class="text-muted">{% trans "Form" %}</span>
+                                        </a>
+                                    {% endif %}
                                 {% endif %}
                             </li>
                         </ul>
@@ -272,4 +309,8 @@
     {% initial_page_data 'app_subset' app_subset %}
     {% initial_page_data 'formdesigner' formdesigner %}
     {% block form-view %}{% endblock %}
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% include "hqwebapp/rollout_modal.html" %}
 {% endblock %}

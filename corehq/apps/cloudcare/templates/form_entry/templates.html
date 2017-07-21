@@ -5,7 +5,8 @@
       <div class="gr" data-bind="
         css: {
           'gr-no-children': $data.children().length === 0,
-          'gr-has-no-questions': _.all($data.children(), function(d) { return d.type !== 'question' })
+          'gr-has-no-questions': _.all($data.children(), function(d) { return d.type() !== 'question' }),
+          'gr-has-no-nested-questions': !$data.hasAnyNestedQuestions()
         }">
         <fieldset class="gr-header">
             <legend>
@@ -96,170 +97,6 @@
         </div>
       </div>
     </div>
-</script>
-
-<script type="text/html" id="instance-viewer-ko-template">
-        <div id="instance-xml-home" class="debugger" data-bind="
-            css: {
-                'debugger-minimized': isMinimized,
-                'debugger-maximized': !isMinimized(),
-                'debugger-updating': updating
-            }
-            ">
-            <!-- Tab title -->
-            <div class="debugger-tab-title" data-bind="click: toggleState">
-                <i class="fa fa-table"></i>
-                <span class="debugger-title">{% trans "Data Preview" %}</span>
-            </div>
-
-            <!-- Debugger content -->
-            <div class="debugger-container">
-                <!-- navigation tabs -->
-
-                <nav class="navbar navbar-default debugger-navbar">
-                  <div class="container-fluid">
-
-                    <div class="navbar-header">
-                      <button
-                            type="button"
-                            class="navbar-toggle collapsed"
-                            data-toggle="collapse"
-                            data-target="#debugger-navbar-collapse" aria-expanded="false">
-                        <span class="sr-only">Toggle navigation</span>
-                        <i class="fa fa-bars"></i> Menu
-                      </button>
-                    </div>
-
-                    <!-- Tab links -->
-                    <div class="collapse navbar-collapse" id="debugger-navbar-collapse">
-                      <ul class="nav navbar-nav">
-                        <li role="presentation" class="active">
-                            <a
-                                href="#debugger-form-data"
-                                aria-controls="debugger-form-data"
-                                role="tab"
-                                data-toggle="tab"
-                                data-bind="click: collapseNavbar">
-                                {% trans "Form Data" %}
-                            </a>
-                        </li>
-                        <li role="presentation">
-                            <a
-                                href="#debugger-xml-instance"
-                                aria-controls="debugger-xml-instance"
-                                role="tab"
-                                id="debugger-xml-instance-tab"
-                                data-toggle="tab"
-                                data-bind="click: collapseNavbar"
-                                >
-                                {% trans "Form XML" %}
-                            </a>
-                        </li>
-                        <li role="presentation">
-                            <a
-                                href="#debugger-evaluate"
-                                aria-controls="debugger-evaluate"
-                                role="tab"
-                                data-bind="click: collapseNavbar"
-                                data-toggle="tab">
-                                {% trans "Evaluate XPath" %}
-                            </a>
-                        </li>
-                      </ul>
-                    </div><!-- /.navbar-collapse -->
-                  </div><!-- /.container-fluid -->
-                </nav>
-
-                <!-- tab content -->
-                <div class="tab-content debugger-content">
-                    <div role="tabpanel" class="tab-pane active" id="debugger-form-data">
-                        <div data-bind="html: formattedQuestionsHtml" id="question-viewer-pretty"></div>
-                    </div>
-                    <div role="tabpanel" class="tab-pane" id="debugger-xml-instance">
-                        <div id="xml-viewer-pretty">{% trans "Answer a question to show data" %}</div>
-                    </div>
-                    <div role="tabpanel" class="tab-pane" id="debugger-evaluate">
-                        <div data-bind="template: {
-                            name: 'debugger-eval-ko-template',
-                            data: evalXPath }">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-</script>
-
-<script type="text/html" id="debugger-eval-ko-template">
-      <form class="form-horizontal" data-bind="submit: onSubmitXPath">
-          <div class="col-sm-12">
-          <div class="form-group">
-              <textarea
-                  id="xpath"
-                  class="form-control debugger-code at-who-input"
-                  name="xpath"
-                  placeholder="XPath Expression"
-                  autocomplete="off"
-                  data-bind="value: xpath, event: { mouseup: onMouseUp }" ></textarea>
-          </div>
-          </div>
-          <div class="col-sm-12">
-          <div class="form-group">
-                <input class="btn btn-success" id="evaluate-button" value="Evaluate" type="submit"/>
-                <input
-                    class="btn btn-default"
-                    value="Evaluate Selection"
-                    type="button"
-                    data-bind="css: { disabled: !selectedXPath() }, click: onClickSelectedXPath"/>
-          </div>
-          </div>
-          <div class="col-sm-12">
-              <div
-                  id="evaluate-result"
-                  type="text"
-                  data-bind="
-                      text: result,
-                      css: { 'text-danger': !success() }
-              "></div>
-          </div>
-      </form>
-      <div class="row">
-        <div class="col-sm-12">
-          <h4>{% trans "Recent Queries" %}</h4>
-        </div>
-      </div>
-      <!-- ko if: recentXPathQueries().length -->
-      <div class="table-responsive">
-        <table class="table table-striped table-hover">
-          <tbody data-bind="foreach: recentXPathQueries">
-            <tr class="query-container" data-bind="click: $parent.onClickSavedQuery">
-              <td class="col-sm-1 query-status">
-                <span><i class="fa" data-bind="
-                    css: {
-                      'fa-check': $parent.isSuccess($data),
-                      'fa-times': !$parent.isSuccess($data),
-                      'text-success': $parent.isSuccess($data),
-                      'text-danger': !$parent.isSuccess($data)
-                    }
-                    "></i></span>
-              </td>
-              <td class="col-sm-8 debugger-code">
-                <span data-bind="text: xpath"></span>
-              </td>
-              <td class="col-sm-3">
-                <span data-bind="text: output"></span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <!-- /ko -->
-      <!-- ko ifnot: recentXPathQueries().length -->
-      <div class="row">
-        <div class="col-sm-12">
-          <i>{% trans "No recent queries" %}</i>
-        </div>
-      </div>
-      <!-- /ko -->
 </script>
 
 <script type="text/html" id="question-fullform-ko-template">
@@ -455,13 +292,6 @@
             </label>
         </div>
     </div>
-    {% if request|toggle_enabled:"USE_OLD_CLOUDCARE" %}
-    <div class="help-block clear-container">
-        <button class="btn btn-default btn-xs clear" data-bind="
-            click: onClear
-        ">Clear choices</button>
-    </div>
-    {% endif %}
 </script>
 <script type="text/html" id="dropdown-entry-ko-template">
     <select class="form-control" data-bind="

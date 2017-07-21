@@ -180,6 +180,7 @@
         "datatype": "date",
         "is_primary_key": false,
         "column_id": "dob",
+        "create_index": true,
         "is_nullable": true,
         "type": "raw",
         "property_name": "dob"
@@ -201,6 +202,7 @@
         "datatype": "date",
         "is_primary_key": false,
         "column_id": "date_death",
+        "create_index": true,
         "is_nullable": true,
         "type": "raw",
         "property_name": "date_death"
@@ -2546,7 +2548,11 @@
         "property_value": null
       }
     },
+    "asynchronous": true,
     "engine_id": "icds-ucr",
-    "backend_id": "LABORATORY"
+    "backend_id": "LABORATORY",
+    "es_index_settings": {
+      "number_of_shards": 5
+    }
   }
 }

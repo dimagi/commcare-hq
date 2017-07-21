@@ -61,8 +61,9 @@
 </table>
 
 <script type="text/javascript">
-   {% if report_table and report_table.datatables %}
-       var reportTables = new HQReportDataTables({
+   $(function () {
+        {% if report_table and report_table.datatables %}
+        var reportTables = new HQReportDataTables({
             dataTableElem: '#report_table_{{ report.slug }}',
             defaultRows: {{ report_table.default_rows|default:10 }},
             startAtRowNum: {{ report_table.start_at_row|default:0 }},
@@ -71,12 +72,12 @@
             fixColsNumLeft: 2,
             fixColsWidth: 200
         });
+        var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
         if (typeof standardHQReport !== 'undefined') {
             standardHQReport.handleTabularReportCookies(reportTables);
         }
         reportTables.render();
-    {% endif %}
-   $(function () {
+        {% endif %}
        $(".header-popover").popover({
            trigger: "hover",
            placement: function (context, source) {

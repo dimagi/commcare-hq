@@ -1,11 +1,16 @@
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import datetime
 
-from casexml.apps.case.dbaccessors import get_extension_case_ids, \
-    get_indexed_case_ids, get_all_reverse_indices_info, get_open_case_ids_in_domain, \
-    get_reverse_indexed_cases
+from casexml.apps.case.dbaccessors import (
+    get_extension_case_ids,
+    get_indexed_case_ids,
+    get_all_reverse_indices_info,
+    get_open_case_ids_in_domain,
+    get_reverse_indexed_cases,
+    get_related_indices,
+)
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.case.util import get_case_xform_ids
+from casexml.apps.case.util import get_case_xform_ids, iter_cases
 from casexml.apps.stock.models import StockTransaction
 from corehq.apps.commtrack.models import StockState
 from corehq.apps.hqcase.dbaccessors import (
@@ -15,9 +20,8 @@ from corehq.apps.hqcase.dbaccessors import (
     get_case_ids_in_domain_by_owner,
     get_cases_in_domain_by_external_id,
     get_deleted_case_ids_by_owner,
-)
+    get_all_case_owner_ids)
 from corehq.apps.hqcase.utils import get_case_by_domain_hq_user_id
-from corehq.blobs.mixin import BlobMixin
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_owner_server_modified_on import \
     get_case_ids_modified_with_owner_since
 from corehq.dbaccessors.couchapps.cases_by_server_date.by_server_modified_on import \
@@ -117,13 +121,43 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return CommCareCase.get(case_id)
 
     @staticmethod
-    def get_cases(case_ids, ordered=False):
+    def get_cases(case_ids, ordered=False, prefetched_indices=None):
+        # prefetched_indices is ignored sinces cases already have them
         return [
             CommCareCase.wrap(doc) for doc in iter_docs(
                 CommCareCase.get_db(),
                 case_ids
             )
         ]
+
+    @staticmethod
+    def get_related_indices(domain, case_ids, exclude_indices):
+        return get_related_indices(domain, case_ids, exclude_indices)
+
+    @staticmethod
+    def get_closed_and_deleted_ids(domain, case_ids):
+        """Get the subset of given list of case ids that are closed or deleted
+
+        WARNING this is inefficient (better version in SQL).
+        """
+        return [(case.case_id, case.closed, case.is_deleted)
+            for case in iter_cases(case_ids)
+            if case.domain == domain and (case.closed or case.is_deleted)]
+
+    @staticmethod
+    def get_modified_case_ids(accessor, case_ids, sync_log):
+        """Get the subset of given list of case ids that have been modified
+        since sync date/log id
+
+        WARNING this is inefficient (better version in SQL).
+        """
+        return [case.case_id
+            for case in accessor.iter_cases(case_ids)
+            if not case.is_deleted and case.modified_since_sync(sync_log)]
+
+    @staticmethod
+    def case_exists(case_id):
+        return CommCareCase.get_db().doc_exist(case_id)
 
     @staticmethod
     def get_case_xform_ids(case_id):
@@ -159,7 +193,8 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_case_ids_modified_with_owner_since(domain, owner_id, reference_date)
 
     @staticmethod
-    def get_extension_case_ids(domain, case_ids):
+    def get_extension_case_ids(domain, case_ids, include_closed=True):
+        # include_closed ignored for couch
         return get_extension_case_ids(domain, case_ids)
 
     @staticmethod
@@ -204,6 +239,10 @@ class CaseAccessorCouch(AbstractCaseAccessor):
     @staticmethod
     def get_deleted_case_ids_by_owner(domain, owner_id):
         return get_deleted_case_ids_by_owner(owner_id)
+
+    @staticmethod
+    def get_case_owner_ids(domain):
+        return get_all_case_owner_ids(domain)
 
 
 class LedgerAccessorCouch(AbstractLedgerAccessor):
@@ -296,8 +335,10 @@ def _soft_undelete(db, doc_ids):
         if doc_type.endswith(DELETED_SUFFIX):
             doc['doc_type'] = doc_type[:-len(DELETED_SUFFIX)]
 
-        del doc['-deletion_id']
-        del doc['-deletion_date']
+        if '-deletion_id' in doc:
+            del doc['-deletion_id']
+        if '-deletion_date' in doc:
+            del doc['-deletion_date']
         return doc
 
     return _operate_on_docs(db, doc_ids, undelete)

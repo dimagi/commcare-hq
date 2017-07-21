@@ -47,7 +47,7 @@ class WorkflowHelper(PostProcessor):
 
                 self.create_workflow_stack(form_command, stack_frames)
 
-    def get_frame_children(self, target_form, module_only=False):
+    def get_frame_children(self, target_form, module_only=False, include_target_root=False):
         """
         For a form return the list of stack frame children that are required
         to navigate to that form.
@@ -83,6 +83,9 @@ class WorkflowHelper(PostProcessor):
             datums_list = self.root_module_datums
         else:
             datums_list = module_datums.values()  # [ [datums for f0], [datums for f1], ...]
+            root_module = target_form.get_module().root_module
+            if root_module and include_target_root:
+                datums_list = datums_list + self.get_module_datums(id_strings.menu_id(root_module)).values()
 
         common_datums = commonprefix(datums_list)
         remaining_datums = form_datums[len(common_datums):]
@@ -255,30 +258,34 @@ class EndOfFormNavigationWorkflow(object):
 
             return frame_children
 
-        stack_frames = []
-        if form.post_form_workflow == WORKFLOW_ROOT:
-            stack_frames.append(StackFrameMeta(None, [], allow_empty_frame=True))
-        elif form.post_form_workflow == WORKFLOW_MODULE:
-            frame_children = frame_children_for_module(module, include_user_selections=False)
-            stack_frames.append(StackFrameMeta(None, frame_children))
-        elif form.post_form_workflow == WORKFLOW_PARENT_MODULE:
-            root_module = module.root_module
-            frame_children = frame_children_for_module(root_module)
-            stack_frames.append(StackFrameMeta(None, frame_children))
-        elif form.post_form_workflow == WORKFLOW_PREVIOUS:
-            frame_children = self.helper.get_frame_children(form)
+        def _get_static_stack_frame(form_workflow, xpath=None):
+            if form_workflow == WORKFLOW_ROOT:
+                return StackFrameMeta(xpath, [], allow_empty_frame=True)
+            elif form_workflow == WORKFLOW_MODULE:
+                frame_children = frame_children_for_module(module, include_user_selections=False)
+                return StackFrameMeta(xpath, frame_children)
+            elif form_workflow == WORKFLOW_PARENT_MODULE:
+                root_module = module.root_module
+                frame_children = frame_children_for_module(root_module)
+                return StackFrameMeta(xpath, frame_children)
+            elif form_workflow == WORKFLOW_PREVIOUS:
+                frame_children = self.helper.get_frame_children(form, include_target_root=True)
 
-            # since we want to go the 'previous' screen we need to drop the last
-            # datum
-            last = frame_children.pop()
-            while isinstance(last, WorkflowDatumMeta) and not last.requires_selection:
-                # keep removing last element until we hit a command
-                # or a non-autoselect datum
+                # since we want to go the 'previous' screen we need to drop the last
+                # datum
                 last = frame_children.pop()
+                while isinstance(last, WorkflowDatumMeta) and not last.requires_selection:
+                    # keep removing last element until we hit a command
+                    # or a non-autoselect datum
+                    last = frame_children.pop()
 
-            stack_frames.append(StackFrameMeta(None, frame_children))
-        elif form.post_form_workflow == WORKFLOW_FORM:
+                return StackFrameMeta(xpath, frame_children)
+
+        stack_frames = []
+
+        if form.post_form_workflow == WORKFLOW_FORM:
             source_form_datums = self.helper.get_form_datums(form)
+
             for link in form.form_links:
                 target_form = self.helper.app.get_form(link.form_id)
                 target_module = target_form.get_module()
@@ -305,7 +312,25 @@ class EndOfFormNavigationWorkflow(object):
                     ]
 
                 stack_frames.append(StackFrameMeta(link.xpath, frame_children, current_session=source_form_datums))
-
+            if form.post_form_workflow_fallback:
+                # for the fallback negative all if conditions/xpath expressions and use that as the xpath for this
+                link_xpaths = [link.xpath for link in form.form_links]
+                if link_xpaths:
+                    negate_of_all_link_paths = (
+                        ' and '.join(
+                            ['not(' + link_xpath + ')' for link_xpath in link_xpaths]
+                        )
+                    )
+                    static_stack_frame_for_fallback = _get_static_stack_frame(
+                        form.post_form_workflow_fallback,
+                        negate_of_all_link_paths
+                    )
+                    if static_stack_frame_for_fallback:
+                        stack_frames.append(static_stack_frame_for_fallback)
+        else:
+            static_stack_frame = _get_static_stack_frame(form.post_form_workflow)
+            if static_stack_frame:
+                stack_frames.append(static_stack_frame)
         return stack_frames
 
     @staticmethod
@@ -422,7 +447,7 @@ class CaseListFormWorkflow(object):
         if form.form_type == 'module_form':
             [reg_action] = form.get_registration_actions(target_case_type)
             source_session_var = form.session_var_for_action(reg_action)
-        if form.form_type == 'advanced_form':
+        if form.form_type == 'advanced_form' or form.form_type == "shadow_form":
             # match case session variable
             reg_action = form.get_registration_actions(target_case_type)[0]
             source_session_var = reg_action.case_session_var
@@ -461,7 +486,7 @@ class CaseListFormWorkflow(object):
                 return form.get_module().case_type
             else:
                 return reg_action.case_type
-        elif form.form_type == 'advanced_form':
+        elif form.form_type == 'advanced_form' or form.form_type == "shadow_form":
             return form.get_registration_actions(target_module.case_type)[0].case_type
 
 

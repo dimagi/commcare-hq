@@ -6,7 +6,9 @@ PROXY_APP = 'sql_proxy_accessors'
 FORM_PROCESSOR_APP = 'form_processor'
 SQL_ACCESSORS_APP = 'sql_accessors'
 ICDS_REPORTS_APP = 'icds_reports'
+ICDS_MODEL = 'icds_model'
 SCHEDULING_PARTITIONED_APP = 'scheduling_partitioned'
+WAREHOUSE_APP = 'warehouse'
 
 
 class PartitionRouter(object):
@@ -43,6 +45,8 @@ def allow_migrate(db, app_label):
         )
     elif app_label == SQL_ACCESSORS_APP:
         return db in partition_config.get_form_processing_dbs()
+    elif app_label == WAREHOUSE_APP:
+        return hasattr(settings, "WAREHOUSE_DATABASE_ALIAS") and db == settings.WAREHOUSE_DATABASE_ALIAS
     else:
         return db == partition_config.get_main_db()
 
@@ -54,5 +58,13 @@ def db_for_read_write(model):
     app_label = model._meta.app_label
     if app_label == FORM_PROCESSOR_APP:
         return partition_config.get_proxy_db()
+    elif app_label == WAREHOUSE_APP:
+        error_msg = 'Cannot read/write to warehouse db without warehouse database defined'
+        assert hasattr(settings, "WAREHOUSE_DATABASE_ALIAS"), error_msg
+        return settings.WAREHOUSE_DATABASE_ALIAS
+    elif app_label == ICDS_MODEL:
+        assert hasattr(settings, "ICDS_UCR_TEST_DATABASE_ALIAS")
+        return settings.ICDS_UCR_TEST_DATABASE_ALIAS
+
     else:
         return partition_config.get_main_db()

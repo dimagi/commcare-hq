@@ -56,8 +56,9 @@ class BaseSMSTest(BaseAccountingTest, DomainSubscriptionMixin):
         self.account = None
         self.subscription = None
 
-    def create_account_and_subscription(self, domain_name):
-        self.setup_subscription(domain_name, SoftwarePlanEdition.ADVANCED)
+    @classmethod
+    def create_account_and_subscription(cls, domain_name):
+        cls.setup_subscription(domain_name, SoftwarePlanEdition.ADVANCED)
 
     def tearDown(self):
         self.teardown_subscription()

@@ -1,6 +1,6 @@
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
-from corehq.apps.app_manager.suite_xml.xml_models import LocaleResource, XFormResource
+from corehq.apps.app_manager.suite_xml.xml_models import LocaleResource, XFormResource, PracticeUserRestoreResource
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.util import languages_mapping
 
@@ -13,8 +13,11 @@ class FormResourceContributor(SectionContributor):
         self.build_profile_id = build_profile_id
 
     def get_section_elements(self):
+        from corehq.apps.app_manager.models import ShadowForm
         for form_stuff in self.app.get_forms(bare=False):
             form = form_stuff["form"]
+            if isinstance(form, ShadowForm):
+                continue
             path = './modules-{module.id}/forms-{form.id}.xml'.format(**form_stuff)
             if self.build_profile_id:
                 remote_path = '{path}?profile={profile}'.format(path=path, profile=self.build_profile_id)
@@ -62,3 +65,26 @@ class LocaleResourceContributor(SectionContributor):
                 unknown_lang_txt = u"Unknown Language (%s)" % lang
                 resource.descriptor = u"Translations: %s" % languages_mapping().get(lang, [unknown_lang_txt])[0]
             yield resource
+
+
+class PracticeUserRestoreContributor(SectionContributor):
+    section_name = 'practice_user_restore_resources'
+
+    def __init__(self, suite, app, modules, build_profile_id=None):
+        super(PracticeUserRestoreContributor, self).__init__(suite, app, modules)
+        self.build_profile_id = build_profile_id
+
+    def get_section_elements(self):
+        user = self.app.get_practice_user(self.build_profile_id)
+        path = "./practice_user_restore.xml"
+        if self.build_profile_id:
+            remote_path = '{path}?profile={profile}'.format(path=path, profile=self.build_profile_id)
+        else:
+            remote_path = path
+        yield PracticeUserRestoreResource(
+            id="practice-user-restore",
+            version=user.demo_restore_id,
+            local=path,
+            remote=remote_path,
+            descriptor="practice user restore"
+        )

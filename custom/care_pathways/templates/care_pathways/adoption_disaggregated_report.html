@@ -30,6 +30,7 @@
         });
 
         {% if report_table and report_table.datatables %}
+        $(function() {
             var reportTables = new HQReportDataTables({
                 dataTableElem: '#report_table_{{ report.slug }}',
                 defaultRows: {{ report_table.default_rows|default:10 }},
@@ -37,11 +38,12 @@
                 showAllRowsOption: {{ report_table.show_all_rows|JSON }},
                 defaultSort: false,
             });
+            var standardHQReport = hqImport("reports/js/standard_hq_report.js").getStandardHQReport();
             if (typeof standardHQReport !== 'undefined') {
                 standardHQReport.handleTabularReportCookies(reportTables);
             }
             reportTables.render();
-
+        });
         {% endif %}
 
         $(function() {

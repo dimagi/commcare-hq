@@ -9,7 +9,7 @@
 {% endblock stylesheets %} 
 
 {% block page_title %}
-    Build #{{ app.version }}: {{ app.name }}
+    {{ app.name }}: Build #{{ app.version }}{% if app.build_comment %}: {{ app.build_comment }}{% endif %}
 {% endblock page_title %}
 
 {% block downloads %}
@@ -52,7 +52,7 @@
 {% block modals %}
     {{ block.super }}
     {% url "download_ccz" app.domain app.id as ccz_url %}
-    {% include 'app_manager/v2/partials/download_async_modal.html' with element_id="download_ccz" %}
+    {% include 'app_manager/v2/partials/download_async_modal.html' with element_id="download_ccz" url=ccz_url %}
 {% endblock %}
 
 {% block js %}{{ block.super }}
@@ -63,7 +63,5 @@
 
 {% block js-inline %}
     {{ block.super }}
-    {% url "download_ccz" app.domain app.id as ccz_url %}
-    {% include 'app_manager/v2/partials/download_async_modal_inline.html' with element_id="download_ccz" download_url=ccz_url %}
     <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js?skin=default"></script>
 {% endblock js-inline %}

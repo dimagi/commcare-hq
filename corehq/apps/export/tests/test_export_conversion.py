@@ -28,6 +28,7 @@ from corehq.apps.export.models import (
     ExportColumn,
 )
 from corehq.apps.reports.models import HQGroupExportConfiguration
+from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.models import Domain, Application, RemoteApp, Module
 from corehq.apps.export.utils import (
     convert_saved_export_to_export_instance,
@@ -107,6 +108,7 @@ class TestIsRemoteAppConversion(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(TestIsRemoteAppConversion, cls).setUpClass()
         cls.project = Domain(name=cls.domain)
         cls.project.save()
 
@@ -131,6 +133,7 @@ class TestIsRemoteAppConversion(TestCase):
         for app in cls.apps:
             app.delete()
         cls.project.delete()
+        super(TestIsRemoteAppConversion, cls).tearDownClass()
 
     def test_form_remote_app_conversion(self):
         self.assertFalse(_is_remote_app_conversion(self.domain, self.apps[0]._id, FORM_EXPORT))
@@ -182,6 +185,49 @@ class TestConvertBase(TestCase, TestFileMixin):
                 )
 
         return instance, meta
+
+
+@mock.patch(
+    'corehq.apps.export.models.new.get_request',
+    return_value=MockRequest(domain='my-domain'),
+)
+@mock.patch(
+    'corehq.apps.export.utils._is_remote_app_conversion',
+    return_value=False,
+)
+class TestConvertMissingAppID(TestConvertBase):
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestConvertMissingAppID, cls).setUpClass()
+        factory = AppFactory(cls.domain)
+        m1, m1f1 = factory.new_basic_module('open_case', 'house')
+        m1f1.xmlns = 'missing-xmlns'
+        cls.app = factory.app
+        cls.app.save()
+
+        cls.project = create_domain(cls.domain)
+        cls.schema = FormExportDataSchema(
+            domain=cls.domain,
+            app_id='123',
+            xmlns='myxmlns',
+            group_schemas=[
+                ExportGroupSchema(
+                    path=MAIN_TABLE,
+                    items=[],
+                ),
+            ],
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.app.delete()
+        cls.project.delete()
+        super(TestConvertMissingAppID, cls).tearDownClass()
+
+    def test_convert_missing_app_id(self, _, __):
+        instance, _ = self._convert_form_export('missing_app_id')
+        self.assertIsNotNone(instance.app_id)
 
 
 @mock.patch(

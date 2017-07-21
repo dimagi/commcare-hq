@@ -8,16 +8,6 @@
     <script src="{% static 'reminders/js/reminders.broadcast.ko.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-<script>
-    $(function () {
-        var bvm = new BroadcastViewModel({{ form.current_values|JSON }});
-        $('#broadcast-form').koApplyBindings(bvm);
-        bvm.init();
-    });
-</script>
-{% endblock %}
-
 {% block stylesheets %}
     <style>
         .controls-multiple .row .form-group {
@@ -31,6 +21,7 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'current_values' form.current_values %}
     <div id="broadcast-form">
         {% crispy form %}
     </div>

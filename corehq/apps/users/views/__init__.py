@@ -19,10 +19,10 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_POST
 
 from django_otp.plugins.otp_static.models import StaticToken
-from djangular.views.mixins import allow_remote_invocation, JSONResponseMixin
+from djangular.views.mixins import allow_remote_invocation
 
 from couchdbkit.exceptions import ResourceNotFound
-from corehq.apps.users.landing_pages import ALLOWED_LANDING_PAGES
+from corehq.apps.users.landing_pages import get_allowed_landing_pages
 from corehq.util.view_utils import json_error
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.decorators.memoized import memoized
@@ -38,14 +38,15 @@ from corehq.apps.analytics.tasks import (
     track_existing_user_accepted_invite_on_hubspot,
 )
 from corehq.apps.analytics.utils import get_meta
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser, domain_admin_required)
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.es import AppES
 from corehq.apps.es.queries import search_string_query
 from corehq.apps.hqwebapp.utils import send_confirmation_email
-from corehq.apps.hqwebapp.views import BasePageView, logout
-from corehq.apps.locations.permissions import location_safe
+from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin, logout
+from corehq.apps.locations.permissions import location_safe, user_can_access_other_user
 from corehq.apps.registration.forms import AdminInvitesUserForm, WebUserInvitationForm
 from corehq.apps.registration.utils import activate_new_user
 from corehq.apps.reports.util import get_possible_reports
@@ -73,7 +74,6 @@ from corehq.apps.users.forms import (
 from corehq.apps.users.models import (CouchUser, CommCareUser, WebUser, DomainRequest,
                                       DomainRemovalRecord, UserRole, AdminUserRole, Invitation,
                                       DomainMembershipError)
-from corehq.apps.users.signals import clean_commcare_user
 from corehq.elastic import ADD_TO_ES_FILTER, es_query
 from corehq.util.couch import get_document_or_404
 from corehq import toggles
@@ -146,7 +146,6 @@ class DefaultProjectUserSettingsView(BaseUserSettingsView):
 
 
 class BaseEditUserView(BaseUserSettingsView):
-    user_update_form_class = None
 
     @use_select2
     def dispatch(self, request, *args, **kwargs):
@@ -201,24 +200,8 @@ class BaseEditUserView(BaseUserSettingsView):
             )
         )
 
-    @property
-    @memoized
     def form_user_update(self):
-        if self.user_update_form_class is None:
-            raise NotImplementedError("You must specify a form to update the user!")
-
-        if self.request.method == "POST" and self.request.POST['form_type'] == "update-user":
-            form = self.user_update_form_class(
-                data=self.request.POST, domain=self.domain, existing_user=self.editable_user)
-        else:
-            form = self.user_update_form_class(domain=self.domain, existing_user=self.editable_user)
-
-        if self.can_change_user_roles:
-            form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
-        else:
-            del form.fields['role']
-
-        return form
+        raise NotImplementedError()
 
     @property
     def main_context(self):
@@ -270,37 +253,14 @@ class BaseEditUserView(BaseUserSettingsView):
                         self.request.session['django_language'] = new_lang
                 return True
 
-    def custom_user_is_valid(self):
-        return True
-
     def post(self, request, *args, **kwargs):
         saved = False
         if self.request.POST['form_type'] == "commtrack":
             if self.commtrack_form.is_valid():
-                clean_commcare_user.send(
-                    'BaseEditUserView.commtrack',
-                    domain=self.domain,
-                    request_user=self.request.user,
-                    user=self.editable_user,
-                    forms={self.commtrack_form.__class__.__name__: self.commtrack_form}
-                )
-                if self.commtrack_form.is_valid():
-                    self.commtrack_form.save(self.editable_user)
-                    saved = True
+                self.commtrack_form.save(self.editable_user)
+                saved = True
         elif self.request.POST['form_type'] == "update-user":
-            self.form_user_update.is_valid()
-            forms = {self.form_user_update.__class__.__name__: self.form_user_update}
-            if hasattr(self, 'custom_data'):
-                self.custom_data.is_valid()
-                forms[self.custom_data.__class__.__name__] = self.custom_data
-            clean_commcare_user.send(
-                'BaseEditUserView.update_user',
-                domain=self.domain,
-                request_user=self.request.user,
-                user=self.editable_user,
-                forms=forms
-            )
-            if all([self.update_user(), self.custom_user_is_valid()]):
+            if self.update_user():
                 messages.success(self.request, _('Changes saved for user "%s"') % self.editable_user.raw_username)
                 saved = True
         if saved:
@@ -313,7 +273,22 @@ class EditWebUserView(BaseEditUserView):
     template_name = "users/edit_web_user.html"
     urlname = "user_account"
     page_title = ugettext_noop("Edit User Role")
-    user_update_form_class = UpdateUserRoleForm
+
+    @property
+    @memoized
+    def form_user_update(self):
+        if self.request.method == "POST" and self.request.POST['form_type'] == "update-user":
+            data = self.request.POST
+        else:
+            data = None
+        form = UpdateUserRoleForm(data=data, domain=self.domain, existing_user=self.editable_user)
+
+        if self.can_change_user_roles:
+            form.load_roles(current_role=self.existing_role, role_choices=self.user_role_choices)
+        else:
+            del form.fields['role']
+
+        return form
 
     @property
     def user_role_choices(self):
@@ -388,7 +363,7 @@ def get_domain_languages(domain):
     return sorted(domain_languages) or langcodes.get_all_langs_for_select()
 
 
-class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
+class ListWebUsersView(HQJSONResponseMixin, BaseUserSettingsView):
     template_name = 'users/web_users.html'
     page_title = ugettext_lazy("Web Users & Roles")
     urlname = 'web_users'
@@ -516,7 +491,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             {'id': None, 'name': _('Use Default')}
         ] + [
             {'id': page.id, 'name': _(page.name)}
-            for page in ALLOWED_LANDING_PAGES
+            for page in get_allowed_landing_pages(self.domain)
         ]
 
     @property
@@ -536,6 +511,7 @@ class ListWebUsersView(JSONResponseMixin, BaseUserSettingsView):
             'can_edit_roles': self.can_edit_roles,
             'default_role': UserRole.get_default(),
             'report_list': get_possible_reports(self.domain),
+            'web_apps_list': get_cloudcare_apps(self.domain),
             'invitations': self.invitations,
             'requests': DomainRequest.by_domain(self.domain) if self.request.couch_user.is_domain_admin else [],
             'admins': WebUser.get_admins_by_domain(self.domain),
@@ -770,7 +746,7 @@ class UserInvitationView(object):
 
     @property
     def success_msg(self):
-        return "You have been added to the %s domain" % self.domain
+        return _('You have been added to the "%s" project space.') % self.domain
 
     @property
     def redirect_to_on_success(self):
@@ -1046,12 +1022,13 @@ def add_domain_membership(request, domain, couch_user_id, domain_name):
 
 @sensitive_post_parameters('new_password1', 'new_password2')
 @login_and_domain_required
+@location_safe
 def change_password(request, domain, login_id, template="users/partial/reset_password.html"):
     # copied from auth's password_change
 
     commcare_user = CommCareUser.get_by_user_id(login_id, domain)
     json_dump = {}
-    if not commcare_user:
+    if not commcare_user or not user_can_access_other_user(domain, request.couch_user, commcare_user):
         raise Http404()
     django_user = commcare_user.get_django_user()
     if request.method == "POST":

@@ -38,7 +38,7 @@
                 </li>
 
                 <!-- Render page buttons -->
-                <% for (var i = 0; i < totalPages; i++) { %>
+                <% for (var i = pagesToShow.start; i < pagesToShow.end; i++) { %>
                     <% if (i + 1 === page) { %>
                     <li class="js-page active" data-page="<%= i + 1 %>"><a><%= i + 1 %></a></li>
                     <% } else { %>
@@ -71,7 +71,18 @@
         <h3>
             <b><%= username %></b>
             <span><%= first_name + ' ' + last_name %></span>
+            <i><small><%= location ? location.name + ' (' + location.location_type + ')' : '' %></small></i>
         </h3>
+        {% if request|toggle_enabled:"ENIKSHAY"%}
+        <div class="row">
+            <div class="col-sm-3 col-xs-6">
+              {% trans "Phone Number: " %}<%= phoneNumbers.length ? phoneNumbers[0] : '' %>
+            </div>
+            <div class="col-sm-3 col-xs-6">
+              {% trans "Agency ID: " %}<%= customFields ? customFields.id_issuer_body : '' %>
+            </div>
+        </div>
+        {% endif %}
     </td>
 </script>
 
@@ -79,22 +90,30 @@
     <table class="table module-table module-table-casedetail">
         <tbody>
             <tr>
-                <th>{% trans "First Name" %}</th>
-                <td><%= user.first_name %></td>
+                <th>{% trans "Name" %}</th>
+                <td><%= user.first_name + ' ' + user.last_name %></td>
+            </tr>
+            <% if (user.location) { %>
+            <tr>
+                <th>{% trans "Organization" %}</th>
+                <td><%= user.location.name %></td>
             </tr>
             <tr>
-                <th>{% trans "Last Name" %}</th>
-                <td><%= user.last_name %></td>
+                <th>{% trans "Organization Type" %}</th>
+                <td><%= user.location.location_type %></td>
             </tr>
+            <% } %>
             <tr>
                 <th>{% trans "Date Registered" %}</th>
                 <td><%= user.dateRegistered %></td>
             </tr>
         <% _.each(user.customFields, function(value, key) { %>
+            <% if (!key.startsWith('commcare_') && !key.startsWith('commtrack') && value) { %>
             <tr>
                 <th><%= key %></th>
                 <td><%= value %></td>
             </tr>
+            <% } %>
         <% }) %>
         </tbody>
     </table>

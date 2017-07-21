@@ -1,11 +1,11 @@
 import json
-from datetime import datetime
+from datetime import datetime, date
 from django.test import TestCase, override_settings
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from casexml.apps.case.mock import CaseStructure
-from corehq.apps.repeaters.models import RepeatRecord
-from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
+from corehq.motech.repeaters.models import RepeatRecord
+from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
 from casexml.apps.case.tests.util import delete_all_cases
 
 from custom.enikshay.tests.utils import ENikshayCaseStructureMixin, ENikshayLocationStructureMixin
@@ -18,7 +18,9 @@ from custom.enikshay.integrations.ninetyninedots.repeater_generators import (
 from custom.enikshay.case_utils import get_person_locations
 from custom.enikshay.const import (
     PRIMARY_PHONE_NUMBER,
+    OTHER_NUMBER,
     MERM_ID,
+    ENIKSHAY_ID,
     PERSON_FIRST_NAME,
     PERSON_LAST_NAME,
     TREATMENT_START_DATE,
@@ -29,6 +31,7 @@ from custom.enikshay.const import (
     WEIGHT_BAND,
     CURRENT_ADDRESS,
     TREATMENT_SUPPORTER_PHONE,
+    ENROLLED_IN_PRIVATE,
 )
 from custom.enikshay.integrations.ninetyninedots.repeaters import (
     NinetyNineDotsRegisterPatientRepeater,
@@ -124,6 +127,10 @@ class TestRegisterPatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeat
         self._create_99dots_enabled_case()
         self.assertEqual(1, len(self.repeat_records().all()))
 
+        # updating some other random properties shouldn't create a new repeat record
+        self._update_case(self.episode_id, {'some_property': "changed"})
+        self.assertEqual(1, len(self.repeat_records().all()))
+
         # set as registered, shouldn't register a new repeat record
         self._create_99dots_registered_case()
         self.assertEqual(1, len(self.repeat_records().all()))
@@ -156,8 +163,34 @@ class TestUpdatePatientRepeater(ENikshayLocationStructureMixin, ENikshayRepeater
         self._update_case(self.person_id, {PRIMARY_PHONE_NUMBER: '999999999', })
         self.assertEqual(1, len(self.repeat_records().all()))
 
+        # update a pertinent case with something that shouldn't trigger,
+        # and a non-pertinent case with a property that is in the list of triggers
+        self.factory.create_or_update_cases([
+            CaseStructure(
+                case_id=self.person_id,
+                attrs={
+                    "update": {'name': 'Elrond', },
+                }
+            ),
+            CaseStructure(
+                case_id=self.occurrence_id,
+                attrs={
+                    "update": {PRIMARY_PHONE_NUMBER: '999999999', },
+                }
+            ),
+
+        ])
+        self.assertEqual(1, len(self.repeat_records().all()))
+
         self._update_case(self.episode_id, {TREATMENT_SUPPORTER_PHONE: '999999999', })
         self.assertEqual(2, len(self.repeat_records().all()))
+
+    def test_update_owner_id(self):
+        self.create_case_structure()
+        self.assign_person_to_location(self.phi.location_id)
+        self._create_99dots_registered_case()
+        self._update_case(self.person_id, {'owner_id': self.dto.location_id})
+        self.assertEqual(1, len(self.repeat_records().all()))
 
     def test_trigger_multiple_cases(self):
         """Submitting a form with noop case blocks was throwing an exception
@@ -213,7 +246,11 @@ class TestAdherenceRepeater(ENikshayLocationStructureMixin, ENikshayRepeaterTest
         self.create_adherence_cases([datetime(2017, 2, 18)], adherence_source='enikshay')
         self.assertEqual(1, len(self.repeat_records().all()))
 
-        self.create_adherence_cases([datetime(2017, 2, 20)], adherence_source='enikshay')
+        case = self.create_adherence_cases([datetime(2017, 2, 20)], adherence_source='enikshay')
+        self.assertEqual(2, len(self.repeat_records().all()))
+
+        # Updating the case doesn't make a new repeat record
+        self._update_case(case[0].case_id, {'dots_99_error': "hello"})
         self.assertEqual(2, len(self.repeat_records().all()))
 
 
@@ -252,31 +289,54 @@ class TestPayloadGeneratorBase(ENikshayCaseStructureMixin, ENikshayLocationStruc
     def _get_actual_payload(self, casedb):
         raise NotImplementedError()
 
-    def _assert_payload_equal(self, casedb, expected_numbers):
+    def _assert_payload_equal(self, casedb, expected_numbers=False, sector=u'public'):
         person_case = casedb[self.person_id]
         episode_case = casedb[self.episode_id]
         person_case_properties = person_case.dynamic_case_properties()
         episode_case_properties = episode_case.dynamic_case_properties()
         person_locations = get_person_locations(person_case)
+        locations = {
+            u"state_code": person_locations.sto,
+            u"district_code": person_locations.dto,
+            u"tu_code": person_locations.tu,
+        }
+        if sector == 'public':
+            locations.update({
+                u"phi_code": person_locations.phi,
+            })
+        else:
+            locations.update({
+                u"he_code": person_locations.pcp,
+            })
+
+        expected_numbers = u"+91{}, +91{}, +91{}".format(
+            self.primary_phone_number.replace("0", ""),
+            self.secondary_phone_number.replace("0", ""),
+            self.other_number.replace("0", "")
+        ) if expected_numbers is False else expected_numbers
         expected_payload = {
-            "beneficiary_id": self.person_id,
-            "first_name": person_case_properties.get(PERSON_FIRST_NAME, None),
-            "last_name": person_case_properties.get(PERSON_LAST_NAME, None),
-            "state_code": person_locations.sto,
-            "district_code": person_locations.dto,
-            "tu_code": person_locations.tu,
-            "phi_code": person_locations.phi,
-            "phone_numbers": expected_numbers,
-            "merm_id": person_case_properties.get(MERM_ID, None),
-            "treatment_start_date": episode_case_properties.get(TREATMENT_START_DATE, None),
-            "treatment_supporter_name": "{} {}".format(
+            u"beneficiary_id": self.person_id,
+            u"enikshay_id": person_case_properties.get(ENIKSHAY_ID, None),
+            u"first_name": person_case_properties.get(PERSON_FIRST_NAME, None),
+            u"last_name": person_case_properties.get(PERSON_LAST_NAME, None),
+            u"phone_numbers": expected_numbers,
+            u"treatment_start_date": episode_case_properties.get(TREATMENT_START_DATE, None),
+            u"treatment_supporter_name": u"{} {}".format(
                 episode_case_properties.get(TREATMENT_SUPPORTER_FIRST_NAME, ''),
                 episode_case_properties.get(TREATMENT_SUPPORTER_LAST_NAME, ''),
             ),
-            "treatment_supporter_phone_number": "+91{}".format(self.treatment_supporter_phone[1:]),
-            "weight_band": episode_case_properties.get(WEIGHT_BAND),
-            "address": person_case_properties.get(CURRENT_ADDRESS),
+            u"treatment_supporter_phone_number": u"+91{}".format(self.treatment_supporter_phone[1:]),
+            u"weight_band": episode_case_properties.get(WEIGHT_BAND),
+            u"address": person_case_properties.get(CURRENT_ADDRESS),
+            u"sector": sector,
         }
+        if episode_case_properties.get(MERM_ID, None) is not None:
+            expected_payload.update({
+                u"merm_params": {
+                    u"IMEI": episode_case_properties.get(MERM_ID, None),
+                }
+            })
+        expected_payload.update(locations)
         actual_payload = json.loads(self._get_actual_payload(casedb))
         self.assertDictEqual(expected_payload, actual_payload)
 
@@ -288,27 +348,31 @@ class TestRegisterPatientPayloadGenerator(TestPayloadGeneratorBase):
         return RegisterPatientPayloadGenerator(None).get_payload(None, casedb[self.episode_id])
 
     def test_get_payload(self):
+        del self.episode.attrs['update']['merm_id']
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
-
-        expected_numbers = u"+91{}, +91{}".format(
-            self.primary_phone_number.replace("0", ""),
-            self.secondary_phone_number.replace("0", "")
-        )
-        self._assert_payload_equal(cases, expected_numbers)
+        self._assert_payload_equal(cases)
 
     def test_get_payload_no_numbers(self):
         self.primary_phone_number = None
         self.secondary_phone_number = None
+        self.other_number = None
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
         self._assert_payload_equal(cases, None)
 
     def test_get_payload_secondary_number_only(self):
         self.primary_phone_number = None
+        self.other_number = None
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
         self._assert_payload_equal(cases, u"+91{}".format(self.secondary_phone_number.replace("0", "")))
+
+    def test_get_payload_private_sector(self):
+        self.person.attrs['update'][ENROLLED_IN_PRIVATE] = 'true'
+        cases = self.create_case_structure()
+        cases[self.person_id] = self.assign_person_to_location(self.pcp.location_id)
+        self._assert_payload_equal(cases, sector='private')
 
     def test_handle_success(self):
         cases = self.create_case_structure()
@@ -353,9 +417,10 @@ class TestUpdatePatientPayloadGenerator(TestPayloadGeneratorBase):
     def test_get_payload(self):
         cases = self.create_case_structure()
         cases[self.person_id] = self.assign_person_to_location(self.phi.location_id)
-        expected_numbers = u"+91{}, +91{}".format(
+        expected_numbers = u"+91{}, +91{}, +91{}".format(
             self.primary_phone_number.replace("0", ""),
-            self.secondary_phone_number.replace("0", "")
+            self.secondary_phone_number.replace("0", ""),
+            self.other_number.replace("0", "")
         )
         self._assert_payload_equal(cases, expected_numbers)
 
@@ -396,9 +461,8 @@ class TestAdherencePayloadGenerator(TestPayloadGeneratorBase):
         return AdherencePayloadGenerator(None).get_payload(None, casedb['adherence'])
 
     def test_get_payload(self):
-        date = datetime(2017, 2, 20)
         cases = self.create_case_structure()
-        cases['adherence'] = self.create_adherence_cases([date])[0]
+        cases['adherence'] = self.create_adherence_cases([date(2017, 2, 20)])[0]
         expected_payload = json.dumps(
             {
                 "adherence_value": "unobserved_dose",

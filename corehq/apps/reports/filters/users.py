@@ -25,9 +25,9 @@ from .base import (
 
 class UserOrGroupFilter(BaseSingleOptionFilter):
     slug = "view_by"
-    label = ugettext_noop("View by Users or Groups")
-    default_text = ugettext_noop("Users")
-    options = [('groups', 'Groups')]
+    label = ugettext_lazy("View by Users or Groups")
+    default_text = ugettext_lazy("Users")
+    options = [('groups', ugettext_lazy('Groups'))]
 
 
 class UserTypeFilter(BaseReportFilter):
@@ -51,8 +51,8 @@ class UserTypeFilter(BaseReportFilter):
 
 class SelectMobileWorkerFilter(BaseSingleOptionFilter):
     slug = 'individual'
-    label = ugettext_noop("Select Mobile Worker")
-    default_text = ugettext_noop("All Mobile Workers")
+    label = ugettext_lazy("Select Mobile Worker")
+    default_text = ugettext_lazy("All Mobile Workers")
 
     @property
     def filter_context(self):
@@ -172,6 +172,16 @@ class EmwfUtils(object):
             return None
         else:
             raise Exception("Unexpcted id: {}".format(id_))
+
+
+class UsersUtils(EmwfUtils):
+
+    def user_tuple(self, u):
+        user = util._report_user_dict(u)
+        uid = "%s" % user['user_id']
+        name = "%s" % user['username_in_report']
+        return (uid, name)
+
 
 _UserData = namedtupledict('_UserData', (
     'users',

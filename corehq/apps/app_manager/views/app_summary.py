@@ -5,7 +5,7 @@ from collections import namedtuple
 from django.urls import reverse
 from django.http import Http404
 from django.utils.translation import ugettext_noop, ugettext_lazy as _
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djangular.views.mixins import allow_remote_invocation
 from django.views.generic import View
 from dimagi.utils.web import json_response
 
@@ -15,7 +15,7 @@ from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.app_manager.models import AdvancedForm, AdvancedModule, WORKFLOW_FORM
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.domain.views import LoginAndDomainMixin
-from corehq.apps.hqwebapp.views import BasePageView
+from corehq.apps.hqwebapp.views import BasePageView, HQJSONResponseMixin
 from corehq.apps.reports.formdetails.readable import FormQuestionResponse
 from corehq.apps.style.decorators import use_angular_js
 from couchexport.export import export_raw
@@ -23,7 +23,7 @@ from couchexport.models import Format
 from couchexport.shortcuts import export_response
 
 
-class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
+class AppSummaryView(HQJSONResponseMixin, LoginAndDomainMixin, BasePageView, ApplicationViewMixin):
     urlname = 'app_summary'
     page_title = ugettext_noop("Summary")
     template_name = 'app_manager/v1/summary.html'
@@ -31,7 +31,7 @@ class AppSummaryView(JSONResponseMixin, LoginAndDomainMixin, BasePageView, Appli
     @use_angular_js
     def dispatch(self, request, *args, **kwargs):
         self.template_name = get_app_manager_template(
-            self.domain,
+            request.user,
             self.template_name,
             'app_manager/v2/summary.html',
         )
@@ -280,6 +280,7 @@ FORM_SUMMARY_EXPORT_HEADER_NAMES = [
     "options",
     "calculate",
     "relevant",
+    "constraint",
     "required",
     "comment",
 ]
@@ -342,6 +343,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                     ),
                     calculate=question_response.calculate,
                     relevant=question_response.relevant,
+                    constraint=question_response.constraint,
                     required="true" if question_response.required else "false",
                     comment=question_response.comment,
                 )

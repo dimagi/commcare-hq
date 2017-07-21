@@ -4,7 +4,8 @@
 <div class="tab-pane" id="advanced">
     {% if allow_form_copy%}
         <div class="panel panel-appmanager">
-            <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id module.id form.id %}'>
+            <form class="form-inline" method='POST' action='{% url "copy_form" domain app.id form.unique_id %}'>
+                {% csrf_token %}
                 <div class="panel-heading">
                     <h4 class="panel-title panel-title-nolink">
                         {% trans "Copy Form" %}
@@ -42,7 +43,7 @@
                 </li>
                 <li>
                     <a {% if not form.source %}class="disabled"{% endif %}
-                       href="{% url "get_xform_source" domain app.id module.id form.id %}?download=true">
+                       href="{% url "get_xform_source" domain app.id form.unique_id %}?download=true">
                         <i class="fa fa-arrow-down"></i>
                         {% trans "Download" %}
                     </a>
@@ -50,7 +51,7 @@
                 <li>
                     <a id="xform-source-opener"
                        class="{% if not form.source %}disabled{% endif %}"
-                       data-href="{% url "get_xform_source" domain app.id module.id form.id %}">
+                       data-href="{% url "get_xform_source" domain app.id form.unique_id %}">
                         <i class="fa fa-search"></i>
                         {% trans "View" %}
                     </a>

@@ -6,7 +6,7 @@
  {% load xforms_extras %}
  {% load url_extras %}
  {% load hq_shared_tags %}
-@@ -6,28 +6,39 @@
+@@ -6,29 +6,36 @@
  {% load compress %}
  {% load djangular_tags %}
  
@@ -47,44 +47,20 @@
  
 -{% block js %}
 +{% block js %}{{ block.super }}
-     <script src="{% static 'app_manager/js/app_summary.ng.js' %}"></script>
+     <script src="{% static 'app_manager/js/summary/app_summary.ng.js' %}"></script>
+     <script src="{% static 'app_manager/js/summary/summary.js' %}"></script>
  {% endblock js %}
  
- {% block js-inline %} {{ block.super }}
-     <script>
-+        $(function () {
-+          hqLayout.utils.setIsAppbuilderResizing(true);
-+        });
-         (function (angular, undefined) {
-             'use strict';
- 
-@@ -49,7 +60,7 @@
-                 caseDownloadURL: '{% url 'download_case_summary' domain app_id %}',
-                 formDownloadURL: '{% url 'download_form_summary' domain app_id %}',
-                 appDownloadURL: '{% url 'download_app_summary' domain app_id %}',
--                appSettingsURL: '{% url "release_manager" domain app_id %}',
-+                appSettingsURL: '{% url "app_settings" domain app_id %}',
-                 appHomeURL: '{% url "view_app" domain app_id %}',
-                 appName: '{{ app_name }}',
-             });
-@@ -57,11 +68,11 @@
-             summaryApp.config(['$routeProvider', function($routeProvider) {
-                 $routeProvider.
-                     when('/forms', {
--                        templateUrl: '{% url 'ng_template' domain 'form_summary_view' %}',
-+                        templateUrl: '{% url 'ng_template' domain 'form_summary_view_v2' %}',
-                         controller: 'FormController'
-                     }).
-                     when('/cases', {
--                        templateUrl: '{% url 'ng_template' domain 'case_summary_view' %}',
-+                        templateUrl: '{% url 'ng_template' domain 'case_summary_view_v2' %}',
-                         controller: 'CaseController'
-                     }).
-                     otherwise({
-@@ -73,16 +84,7 @@
- {% endblock %}
- 
  {% block content %}
+-
+ {% registerurl 'ng_template' domain '---' %}
+ {% registerurl 'download_case_summary' domain app_id %}
+ {% registerurl 'download_form_summary' domain app_id %}
+@@ -41,19 +48,7 @@
+ {% initial_page_data 'form_name_map' form_name_map %}
+ {% initial_page_data 'app_langs' langs %}
+ {% initial_page_data 'app_name' app_name %}
+-
 -<ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
 -    <li><a href="{{ section.url }}"><strong>{{ section.page_name }}</strong></a></li>
 -    {% for parent in current_page.parents %}
@@ -92,11 +68,13 @@
 -    {% endfor %}
 -    <li class="active">{{ current_page.page_name }}</li>
 -</ol>
--<div class="container-fluid" ng-app="summaryApp">
+-
+-<div class="container-fluid" id="summary-app">
 -    <div class="row">
 -        <ng-view></ng-view>
-+    <div ng-app="summaryApp">
++    <div id="summary-app">
 +          <ng-view></ng-view>
      </div>
 -</div>
+-
  {% endblock content %}
