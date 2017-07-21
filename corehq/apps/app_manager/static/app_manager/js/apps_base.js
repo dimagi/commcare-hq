@@ -1,7 +1,7 @@
 /* globals hqLayout */
 
 $(function () {
-    var v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2');
+    var v2 = !COMMCAREHQ.toggleEnabled('APP_MANAGER_V1');
 
     $('#deleted-app-modal').modal({
         backdrop: 'static',

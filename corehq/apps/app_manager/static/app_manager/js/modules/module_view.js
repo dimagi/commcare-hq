@@ -1,7 +1,7 @@
 /*globals $, COMMCAREHQ, _, ko, django */
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data.js').get,
-        v2 = COMMCAREHQ.toggleEnabled('APP_MANAGER_V2'),
+        v2 = !COMMCAREHQ.toggleEnabled('APP_MANAGER_V1'),
         moduleBrief = initial_page_data('module_brief'),
         moduleType = moduleBrief.module_type,
         options = initial_page_data('js_options') || {};

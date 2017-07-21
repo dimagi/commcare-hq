@@ -94,9 +94,9 @@ def delete_app(request, domain, app_id):
     app.save()
     clear_app_cache(request, domain)
 
-    if toggles.APP_MANAGER_V2.enabled(request.user.username):
-        return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
-    return back_to_main(request, domain)
+    if toggles.APP_MANAGER_V1.enabled(request.user.username):
+        return back_to_main(request, domain)
+    return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
 
 
 @no_conflict_require_POST
@@ -375,7 +375,7 @@ def copy_app(request, domain):
 def app_from_template(request, domain, slug):
     meta = get_meta(request)
     track_app_from_template_on_hubspot.delay(request.couch_user, request.COOKIES, meta)
-    if tours.NEW_APP.is_enabled(request.user) and not toggles.APP_MANAGER_V2.enabled(request.user.username):
+    if tours.NEW_APP.is_enabled(request.user) and toggles.APP_MANAGER_V1.enabled(request.user.username):
         identify.delay(request.couch_user.username, {'First Template App Chosen': '%s' % slug})
     clear_app_cache(request, domain)
     template = load_app_template(slug)
@@ -480,7 +480,7 @@ def app_settings(request, domain, app_id=None):
 def view_app(request, domain, app_id=None):
     from corehq.apps.app_manager.views.view_generic import view_generic
     return view_generic(request, domain, app_id,
-                        release_manager=toggles.APP_MANAGER_V2.enabled(request.user.username))
+                        release_manager=(not toggles.APP_MANAGER_V1.enabled(request.user.username)))
 
 
 @no_conflict_require_POST
@@ -794,20 +794,20 @@ def rearrange(request, domain, app_id, key):
             to_module_id = int(request.POST['to_module_id'])
             from_module_id = int(request.POST['from_module_id'])
             try:
-                app_manager_v2 = toggles.APP_MANAGER_V2.enabled(request.user.username)
+                app_manager_v2 = not toggles.APP_MANAGER_V1.enabled(request.user.username)
                 app.rearrange_forms(to_module_id, from_module_id, i, j, app_manager_v2=app_manager_v2)
             except ConflictingCaseTypeError:
                 messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
         elif "modules" == key:
             app.rearrange_modules(i, j)
     except IncompatibleFormTypeException:
-        if toggles.APP_MANAGER_V2.enabled(request.user.username):
+        if toggles.APP_MANAGER_V1.enabled(request.user.username):
             messages.error(request, _(
-                'The form cannot be moved into the desired menu.'
+                'The form cannot be moved into the desired module.'
             ))
         else:
             messages.error(request, _(
-                'The form can not be moved into the desired module.'
+                'The form can not be moved into the desired menu.'
             ))
         return back_to_main(request, domain, app_id=app_id, module_id=module_id)
     except (RearrangeError, ModuleNotFoundException):
@@ -842,9 +842,9 @@ def drop_user_case(request, domain, app_id):
     app.save()
     messages.success(
         request,
+        _('You have successfully removed User Case Properties from this application.')
+        if toggles.APP_MANAGER_V1.enabled(request.user.username) else
         _('You have successfully removed User Properties from this application.')
-        if toggles.APP_MANAGER_V2.enabled(request.user.username) else
-        _('You have successfully removed User Case properties from this application.')
     )
     return back_to_main(request, domain, app_id=app_id)
 
