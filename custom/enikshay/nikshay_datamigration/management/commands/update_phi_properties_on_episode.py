@@ -26,9 +26,11 @@ class Command(BaseCommand):
         print len(nikshay_ids)
         nikshay_codes_to_location = get_nikshay_codes_to_location(domain)
         bad_count = 0
+        no_matching_phi = 0
 
         for i, nikshay_id in enumerate(nikshay_ids):
-            if any(nikshay_id.startswith(loc_code) for loc_code in EXCLUDED_LOC_CODES):
+            if get_nikshay_code_from_patient_detail(PatientDetail.objects.get(PregId=nikshay_id)) in EXCLUDED_LOC_CODES:
+                no_matching_phi += 1
                 continue
             try:
                 update_properties_by_nikshay_id(nikshay_id, domain, nikshay_codes_to_location, write)
@@ -40,15 +42,20 @@ class Command(BaseCommand):
                 print 'done %d of %d' % (i, len(nikshay_ids))
 
         print "bad_count = %d" % bad_count
+        print "no matching phi = %d" % no_matching_phi
 
 
-def get_phi_location_id(patient_detail, nikshay_code_to_phi):
-    nikshay_code = '%s-%s-%d-%d' % (
+def get_nikshay_code_from_patient_detail(patient_detail):
+    return '%s-%s-%d-%d' % (
         patient_detail.scode,
         patient_detail.Dtocode,
         patient_detail.Tbunitcode,
         patient_detail.PHI,
     )
+
+
+def get_phi_location_id(patient_detail, nikshay_code_to_phi):
+    nikshay_code = get_nikshay_code_from_patient_detail(patient_detail)
 
     return nikshay_code_to_phi[nikshay_code].location_id
 
