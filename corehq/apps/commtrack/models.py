@@ -82,15 +82,6 @@ class CommtrackActionConfig(DocumentSchema):
         return self.action in STOCK_ACTION_ORDER
 
 
-# todo: delete this?
-class CommtrackRequisitionConfig(DocumentSchema):
-    # placeholder class for when this becomes fancier
-    enabled = BooleanProperty(default=False)
-
-    # requisitions have their own sets of actions
-    actions = SchemaListProperty(CommtrackActionConfig)
-
-
 class ConsumptionConfig(DocumentSchema):
     min_transactions = IntegerProperty(default=2)
     min_window = IntegerProperty(default=10)
@@ -140,9 +131,6 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
     multiaction_enabled = BooleanProperty()
     multiaction_keyword_ = StringProperty()
 
-    # todo: remove?
-    requisition_config = SchemaProperty(CommtrackRequisitionConfig)
-
     # configured on Advanced Settings page
     use_auto_emergency_levels = BooleanProperty(default=False)
 
@@ -179,16 +167,10 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
 
     @property
     def all_actions(self):
-        return self.actions + (self.requisition_config.actions if self.requisitions_enabled else [])
+        return self.actions
 
     def action_by_keyword(self, keyword):
-        def _action(action, type):
-            action.type = type
-            return action
-        actions = [_action(a, 'stock') for a in self.actions]
-        if self.requisitions_enabled:
-            actions += [_action(a, 'req') for a in self.requisition_config.actions]
-        return dict((a.keyword.lower(), a) for a in actions).get(keyword.lower())
+        return dict((a.keyword.lower(), a) for a in self.actions).get(keyword.lower())
 
     def get_consumption_config(self):
         def _default_monthly_consumption(case_id, product_id):
@@ -224,10 +206,6 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
             force_consumption_case_filter=case_filter,
             sync_consumption_ledger=self.sync_consumption_fixtures
         )
-
-    @property
-    def requisitions_enabled(self):
-        return self.requisition_config.enabled
 
 
 @receiver(commcare_domain_pre_delete)

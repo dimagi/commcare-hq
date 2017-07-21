@@ -4,9 +4,7 @@ from xml.etree import ElementTree
 from casexml.apps.case.models import CommCareCase
 from corehq import toggles, feature_previews
 from corehq.apps.commtrack import const
-from corehq.apps.commtrack.const import RequisitionActions
-from corehq.apps.commtrack.models import CommtrackConfig, SupplyPointCase, CommtrackActionConfig, \
-    CommtrackRequisitionConfig
+from corehq.apps.commtrack.models import CommtrackConfig, SupplyPointCase, CommtrackActionConfig
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
@@ -129,30 +127,7 @@ def make_domain_commtrack(domain_object):
     _enable_commtrack_previews(domain_object.name)
 
 
-def get_default_requisition_config():
-    return CommtrackRequisitionConfig(
-        enabled=True,
-        actions=[
-            CommtrackActionConfig(
-                action=RequisitionActions.REQUEST,
-                keyword='req',
-                caption='Request',
-            ),
-            CommtrackActionConfig(
-                action=RequisitionActions.FULFILL,
-                keyword='fulfill',
-                caption='Fulfilled',
-            ),
-            CommtrackActionConfig(
-                action=RequisitionActions.RECEIPTS,
-                keyword='rec',
-                caption='Requisition Receipts',
-            ),
-        ],
-    )
-
-
-def due_date_weekly(dow, past_period=0): # 0 == sunday
+def due_date_weekly(dow, past_period=0):  # 0 == sunday
     """compute the next due date on a weekly schedule, where reports are
     due on 'dow' day of the week (0:sunday, 6:saturday). 'next' due date
     is the first due date that occurs today or in the future. if past_period
