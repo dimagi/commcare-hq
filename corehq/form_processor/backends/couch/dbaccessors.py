@@ -335,8 +335,10 @@ def _soft_undelete(db, doc_ids):
         if doc_type.endswith(DELETED_SUFFIX):
             doc['doc_type'] = doc_type[:-len(DELETED_SUFFIX)]
 
-        del doc['-deletion_id']
-        del doc['-deletion_date']
+        if '-deletion_id' in doc:
+            del doc['-deletion_id']
+        if '-deletion_date' in doc:
+            del doc['-deletion_date']
         return doc
 
     return _operate_on_docs(db, doc_ids, undelete)
