@@ -92,12 +92,6 @@ github3.py==1.0.0a4
 django-bulk-update==1.1.10
 csiphash==0.0.5
 json-delta==2.0
-<<<<<<< HEAD
-email_validator==1.0.1
-dnspython==1.13.0
-raven==6.0.0
-git+https://github.com/mvantellingen/python-zeep.git@46653fac2a92a99bc93d20c772cd7d797c301105
-=======
 email_validator==1.0.2
 dnspython==1.15.0
 raven==6.1.0
@@ -106,4 +100,3 @@ zeep==1.6.0
 ethiopian_date==0.1.1
 architect==0.5.6
 contextlib2==0.5.4
->>>>>>> master
