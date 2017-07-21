@@ -593,6 +593,8 @@ CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 # on its own queue.
 CELERY_REPEAT_RECORD_QUEUE = CELERY_MAIN_QUEUE
 
+ENIKSHAY_QUEUE = CELERY_MAIN_QUEUE
+
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
 CELERYD_TASK_SOFT_TIME_LIMIT = 86400 * 2  # 2 days in seconds
