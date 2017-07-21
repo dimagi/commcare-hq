@@ -105,23 +105,6 @@ class StockLevelsConfig(DocumentSchema):
     overstock_threshold = DecimalProperty(default=3)  # in months
 
 
-class OpenLMISConfig(DocumentSchema):
-    # placeholder class for when this becomes fancier
-    enabled = BooleanProperty(default=False)
-
-    url = StringProperty()
-    username = StringProperty()
-    # we store passwords in cleartext right now, but in the future may want
-    # to leverage something like oauth to manage this better
-    password = StringProperty()
-
-    using_requisitions = BooleanProperty(default=False) # whether openlmis handles our requisitions for us
-
-    @property
-    def is_configured(self):
-        return True if self.enabled and self.url and self.password and self.username else False
-
-
 class AlertConfig(DocumentSchema):
     stock_out_facilities = BooleanProperty(default=False)
     stock_out_commodities = BooleanProperty(default=False)
@@ -159,7 +142,6 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
 
     # todo: remove?
     requisition_config = SchemaProperty(CommtrackRequisitionConfig)
-    openlmis_config = SchemaProperty(OpenLMISConfig)
 
     # configured on Advanced Settings page
     use_auto_emergency_levels = BooleanProperty(default=False)
@@ -246,10 +228,6 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
     @property
     def requisitions_enabled(self):
         return self.requisition_config.enabled
-
-    @property
-    def openlmis_enabled(self):
-        return self.openlmis_config.enabled
 
 
 @receiver(commcare_domain_pre_delete)
