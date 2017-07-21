@@ -1114,8 +1114,9 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
                 "color": RED
             }
         ],
-        "top_three": top_locations[0:3],
-        "bottom_three": top_locations[-4:-1],
+        "all_locations": top_locations,
+        "top_three": top_locations[0:5],
+        "bottom_three": top_locations[-6:-1],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 
@@ -1892,8 +1893,9 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
                 "color": RED
             }
         ],
-        "top_three": top_locations[0:3],
-        "bottom_three": top_locations[-4:-1],
+        "all_locations": top_locations,
+        "top_three": top_locations[0:5],
+        "bottom_three": top_locations[-6:-1],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 
@@ -2076,8 +2078,6 @@ def get_prevalence_of_stunning_data_chart(config, loc_level):
         valid=Sum('height_eligible'),
     ).order_by('month')
 
-    locations_for_lvl = SQLLocation.objects.filter(location_type__code=loc_level).count()
-
     data = {
         'red': OrderedDict()
     }
@@ -2130,8 +2130,9 @@ def get_prevalence_of_stunning_data_chart(config, loc_level):
                 "color": RED
             }
         ],
-        "top_three": top_locations[0:3],
-        "bottom_three": top_locations[-4:-1],
+        "all_locations": top_locations,
+        "top_three": top_locations[0:5],
+        "bottom_three": top_locations[-6:-1],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 

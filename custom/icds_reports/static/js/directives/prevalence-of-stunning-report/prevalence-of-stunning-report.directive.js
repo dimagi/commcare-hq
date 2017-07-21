@@ -72,6 +72,7 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
                 vm.chartData = response.data.report_data.chart_data;
+                vm.all_locations = response.data.report_data.all_locations;
                 vm.top_three = response.data.report_data.top_three;
                 vm.bottom_three = response.data.report_data.bottom_three;
                 vm.location_type = response.data.report_data.location_type;
@@ -177,6 +178,10 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
             $location.search('selectedLocationLevel', index);
             $location.search('location_name', loc.name);
         }
+    };
+
+    vm.showNational = function () {
+        return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
     };
 }
 

@@ -74,6 +74,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
                 vm.chartData = response.data.report_data.chart_data;
                 vm.top_three = response.data.report_data.top_three;
                 vm.bottom_three = response.data.report_data.bottom_three;
+                vm.all_locations = response.data.report_data.all_locations;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
             }
@@ -177,6 +178,10 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
             $location.search('selectedLocationLevel', index);
             $location.search('location_name', loc.name);
         }
+    };
+
+    vm.showNational = function () {
+        return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
     };
 }
 
