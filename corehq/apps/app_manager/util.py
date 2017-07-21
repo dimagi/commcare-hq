@@ -35,6 +35,7 @@ from corehq.apps.app_manager.const import (
     USERCASE_ID,
     USERCASE_PREFIX)
 from corehq.apps.app_manager.xform import XForm, XFormException, parse_xml
+from corehq.apps.app_manager.models import ShadowForm
 from corehq.apps.users.models import CommCareUser
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.make_uuid import random_hex
@@ -534,7 +535,7 @@ def get_app_manager_template(user, v1, v2):
     return v1
 
 
-def get_form_data(domain, app):
+def get_form_data(domain, app, include_shadow_forms=True):
     from corehq.apps.reports.formdetails.readable import FormQuestionResponse
 
     modules = []
@@ -549,7 +550,10 @@ def get_form_data(domain, app):
             'is_surveys': module.is_surveys,
         }
 
-        for form in module.get_forms():
+        form_list = module.get_forms()
+        if not include_shadow_forms:
+            form_list = [f for f in form_list if not isinstance(f, ShadowForm)]
+        for form in form_list:
             form_meta = {
                 'id': form.unique_id,
                 'name': form.name,
