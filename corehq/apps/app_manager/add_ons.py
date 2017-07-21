@@ -1,3 +1,4 @@
+from datetime import datetime
 from django_prbac.utils import has_privilege as prbac_has_privilege
 from django.utils.translation import ugettext_lazy as _
 
@@ -6,6 +7,7 @@ from dimagi.utils.decorators.memoized import memoized
 from corehq import feature_previews, toggles
 from corehq.apps.app_manager.exceptions import AddOnNotFoundException
 from corehq.apps.app_manager.models import Module, AdvancedModule, CareplanModule, ShadowModule
+from corehq.apps.domain.models import Domain
 from corehq.privileges import LOOKUP_TABLES
 
 
@@ -55,6 +57,8 @@ def _uses_detail_format(module, column_format):
         details = [module.goal_details, module.task_details]
     return any([c.format for d in details for c in d.short.columns + d.long.columns if c.format == column_format])
 
+
+_RELEASE_DATE = datetime(2017, 7, 25)
 
 _ADD_ONS = {
     "advanced_itemsets": AddOn(
@@ -183,6 +187,12 @@ def show(slug, request, app, module=None, form=None):
     if toggles.ENABLE_ALL_ADD_ONS.enabled_for_request(request):
         return True
 
+    # Show if app has no add-ons and domain was created before add-ons were released
+    if not app.add_ons:
+        domain = Domain.get_by_name(app.domain)
+        if getattr(domain, 'date_created', datetime(2000, 1, 1)) < _RELEASE_DATE:
+            return True
+
     # Show if add-on has been enabled for app
     show = slug in app.add_ons and app.add_ons[slug]
 
@@ -234,6 +244,7 @@ def init_app(request, app):
         return
 
     previews = feature_previews.previews_dict(app.domain)
+    domain = Domain.get_by_name(app.domain)
     for slug in _ADD_ONS.keys():
         add_on = _ADD_ONS[slug]
         enable = False
@@ -241,9 +252,13 @@ def init_app(request, app):
             # Enable if it's an enabled preview
             if slug in previews:
                 enable = previews[slug]
+
             # Turn on if it's used anywhere
             enable = enable or any([add_on.used_in_module(m) for m in app.modules])
             enable = enable or any([add_on.used_in_form(f) for m in app.modules for f in m.forms])
+
+            # Turn on if this domain was created prior to add-ons release
+            enable = enable or getattr(domain, 'date_created', datetime(2000, 1, 1)) < _RELEASE_DATE
         app.add_ons[slug] = enable
 
     app.save()
