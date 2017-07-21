@@ -1254,6 +1254,13 @@ PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+ENABLE_ALL_ADD_ONS = StaticToggle(
+    'enable_all_add_ons',
+    'Enable all app manager add-ons',
+    TAG_PRODUCT_CORE,
+    [NAMESPACE_DOMAIN]
+)
+
 NO_CACHE_APP_FILES = StaticToggle(
     'no_cache_app_files',
     'Serve app files from blobdb and not from cache',

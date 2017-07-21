@@ -12,6 +12,7 @@ from django.views.decorators.http import require_GET
 from django.contrib import messages
 from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder, \
     get_per_type_defaults
+from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.media_utils import process_media_attribute, \
     handle_media_edits
 from corehq.apps.case_search.models import case_search_enabled_for_domain
@@ -976,17 +977,19 @@ def new_module(request, domain, app_id):
 
         form_id = None
         if toggles.APP_MANAGER_V2.enabled(request.user.username):
+            unstructured = add_ons.show("empty_case_lists", request, app)
             if module_type == 'case':
-                # registration form
-                register = app.new_form(module_id, _("Register"), lang)
-                register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
-                register.actions.update_case = UpdateCaseAction(
-                    condition=FormActionCondition(type='always'))
+                if not unstructured:
+                    # registration form
+                    register = app.new_form(module_id, _("Registration Form"), lang)
+                    register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
+                    register.actions.update_case = UpdateCaseAction(
+                        condition=FormActionCondition(type='always'))
 
-                # one followup form
-                followup = app.new_form(module_id, _("Followup"), lang)
-                followup.requires = "case"
-                followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
+                    # one followup form
+                    followup = app.new_form(module_id, _("Followup Form"), lang)
+                    followup.requires = "case"
+                    followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 
                 # make case type unique across app
                 app_case_types = [m.case_type for m in app.modules if m.case_type]
