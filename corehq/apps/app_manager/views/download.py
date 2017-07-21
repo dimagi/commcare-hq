@@ -22,6 +22,7 @@ from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.app_manager.tasks import make_async_build
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
+from corehq.middleware import always_allow_browser_caching
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import set_file_download
 from dimagi.utils.django.cached_object import CachedObject
@@ -206,6 +207,7 @@ class DownloadCCZ(DownloadMultimediaZip):
         super(DownloadCCZ, self).check_before_zipping()
 
 
+@always_allow_browser_caching
 @safe_download
 def download_file(request, domain, app_id, path):
     if path == "app.json":
