@@ -46,6 +46,7 @@ def update_properties_by_nikshay_id(nikshay_id, domain, nikshay_code_to_phi, wri
     assert len(episode_cases_by_nikshay_id) == 1
     episode_case = episode_cases_by_nikshay_id[0]
     if episode_case.dynamic_case_properties().get('migration_created_case') != 'true':
+        print 'skip non-migrated case %s for nikshay id %s' % (episode_case.case_id, nikshay_id)
         return
 
     patient_detail = PatientDetail.objects.get(PregId=nikshay_id)
