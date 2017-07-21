@@ -72,6 +72,11 @@ class TestCreateEnikshayCases(TestCase):
             'occupation': "occupation",
             'nikshay_id': "nikshay_id",
             'phone_number_other': "phone_number_other",
+            'disease_classification': 'disease_classification',
+            'site_choice': 'site_choice',
+            'site_detail': 'site_detail',
+            'key_population_status': 'key_population_status',
+            'key_populations': 'key_populations',
         })
         return episode
 
@@ -132,3 +137,13 @@ class TestCreateEnikshayCases(TestCase):
             'dto_name': 'DTO',
             'dto_id': self.locations['DTO'].location_id,
         }, new_person.dynamic_case_properties())
+
+        new_occurrence = accessor.get_case(person.occurrences[0].case_id)
+        self.assertDictContainsSubset({
+            'current_episode_type': 'confirmed_tb',
+            'disease_classification': 'disease_classification',
+            'site_choice': 'site_choice',
+            'site_detail': 'site_detail',
+            'key_population_status': 'key_population_status',
+            'key_populations': 'key_populations',
+        }, new_occurrence.dynamic_case_properties())
