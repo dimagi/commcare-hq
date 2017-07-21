@@ -178,7 +178,7 @@ hqDefine("app_manager/js/details/case_list_callout.js", function() {
         } else {
             _.each(_.keys(state.lookup_field_header), function(lang) {
                 if (state.lookup_field_header[lang]) {
-                    visible = state.lookup_field_header[lang] + hqImport('style/js/langcode_tag.js').LANG_DELIN + lang;
+                    visible = state.lookup_field_header[lang] + hqImport('style/js/ui-element.js').LANG_DELIN + lang;
                 }
             });
         }

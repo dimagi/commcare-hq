@@ -2,8 +2,7 @@
 
 hqDefine('style/js/ui-element.js', function () {
     'use strict';
-    var module = {},
-        langcodeTag = hqImport('style/js/langcode_tag.js');
+    var module = {};
 
     var Input = function ($elem, initialValue, getElemValue, setElemValue, setPlaceholderValue) {
         var that = this;
@@ -48,11 +47,11 @@ hqDefine('style/js/ui-element.js', function () {
             }
         },
         setVisibleValue: function (value) {
-            var translated = langcodeTag.translate_delim(value);
+            var translated = module.translate_delim(value);
             this.ui.find('.lang-text').remove();
             if (translated.lang) {
                 this.ui.css("position", "relative");
-                var langcode_button = langcodeTag.button_tag(
+                var langcode_button = module.langcode_tag_btn(
                     $('<a href="#" class="btn btn-info btn-xs lang-text" style="position: absolute; top: 6px; right: 6px;" />'),
                     translated.lang);
                 this.ui.append(langcode_button.button);
@@ -314,7 +313,7 @@ hqDefine('style/js/ui-element.js', function () {
                 this.$edit_view.find(".enum-value").val(map_val);
                 if (map_val === "" && translated_map_val !== undefined && translated_map_val !== "") {
                     this.$edit_view.find(".enum-value").attr("placeholder", translated_map_val.value);
-                    var $langcodeButton = langcodeTag.button_tag($('<a href="#" class="btn btn-info btn-xs lang-text" />'),
+                    var $langcodeButton = module.langcode_tag_btn($('<a href="#" class="btn btn-info btn-xs lang-text" />'),
                         translated_map_val.lang);
                     $langcodeButton.button.attr("style", "position: absolute; top: 6px; right: 6px;");
                     this.$edit_view.find(".enum-value").css("position", "relative").after($langcodeButton.button);
@@ -397,6 +396,24 @@ hqDefine('style/js/ui-element.js', function () {
         },
     };
 
+    var LangCodeButton = function ($elem, new_lang) {
+        this.button = $elem;
+        this.button.click(function () {
+            return false;
+        });
+        this.lang_code = new_lang;
+        this.lang(new_lang);
+    };
+    LangCodeButton.prototype = {
+        lang: function (value) {
+            if (value === undefined) {
+                return this.lang_code;
+            } else {
+                this.lang_code = value;
+                this.button.text(this.lang_code);
+            }
+        },
+    };
     module.input = function (value) {
         return new Input($('<input type="text" class="form-control"/>'), value, function ($elem) {
             return $elem.val();
@@ -448,6 +465,20 @@ hqDefine('style/js/ui-element.js', function () {
         } else {
             return obj;
         }
+    };
+
+    module.LANG_DELIN = "{{[[*LANG*]]}}";
+
+    module.langcode_tag_btn = function ($elem, new_lang) {
+        return new LangCodeButton($elem, new_lang);
+    };
+
+    module.translate_delim = function (value) {
+        var values = value.split(module.LANG_DELIN);
+        return {
+            value: values[0],
+            lang: (values.length > 1 ? values[1] : null),
+        };
     };
 
     return module;
