@@ -50,7 +50,7 @@
  <div class="tabbable">
      <ul class="nav nav-tabs">
          <li class="active"><a href="#versions-tab" data-toggle="tab">{% trans "Versions" %}</a></li>
-@@ -33,181 +74,182 @@
+@@ -33,181 +74,177 @@
                          {% endblocktrans %}
                      </small></p>
                  </div>
@@ -290,8 +290,7 @@
 +              </h4>
 +          </div>
 +          <div class="panel-body">
-+            <div class="comment-container"
-+                 data-bind="visible: is_comment_visible">
++            <div class="comment-container">
 +              <inline-edit params="
 +                  value: build_comment,
 +                  iconClass: 'fa fa-comment',
@@ -305,10 +304,6 @@
 +            </div>
 +          </div><!-- .panel-body -->
 +          <div class="panel-footer">
-+            <button class="btn btn-default"
-+                    data-bind="visible: !is_comment_visible(), click: showComment">
-+              <i class="fa fa-comment"></i> {% trans "Add Comment" %}
-+            </button>
 +            <button class="btn btn-default hide"
 +                    data-bind="
                          openModal: 'revert-build-modal-template',
@@ -398,7 +393,7 @@
      <script type="text/html" id="delete-build-modal-template">
          <div class="modal-dialog">
              <div class="modal-content">
-@@ -255,18 +297,19 @@
+@@ -255,18 +292,19 @@
          </div>
      </script>
      <script type="text/html" id="deploy-build-modal-template">
