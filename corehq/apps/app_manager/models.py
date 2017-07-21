@@ -5122,11 +5122,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 ) % ((name,) + setting_version + my_version))
 
     @property
-    def advanced_app_builder(self):
-        properties = (self.profile or {}).get('properties', {})
-        return properties.get('advanced_app_builder', 'true') == 'true'
-
-    @property
     def jad_settings(self):
         settings = {
             'JavaRosa-Admin-Password': self.admin_password,
@@ -5493,6 +5488,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
     mobile_ucr_sync_interval = IntegerProperty()
+
+    add_ons = DictProperty()
 
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
