@@ -391,13 +391,6 @@ class DateSpan(object):
         self.timezone = to_tz
 
 
-def is_business_day(day):
-    """
-    Simple method to whether something is a business day, assumes M-F working
-    days.
-    """
-    return day.weekday() < 5
-    
 def get_day_of_month(year, month, count):
     """
     For a given month get the Nth day.
