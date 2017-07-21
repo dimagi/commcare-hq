@@ -1062,7 +1062,7 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
 APP_MANAGER_V1 = StaticToggle(
     'app_manager_v1',
     'Turn OFF prototype for case management onboarding (App Manager V2)',
-    TAG_PRODUCT_PATH,
+    TAG_ONE_OFF,
     [NAMESPACE_USER]
 )
 
