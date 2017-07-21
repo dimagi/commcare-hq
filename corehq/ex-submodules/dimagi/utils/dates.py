@@ -419,27 +419,6 @@ def get_business_day_of_month(year, month, count):
         raise ValueError("No dates found in range. is there a flaw in your logic?")
     return res.date()
 
-def get_business_day_of_month_after(year, month, day):
-    """
-    For a given month get the business day of the month 
-    that falls on or after the passed in day
-    """
-    try:
-        adate = datetime.datetime(year, month, day)
-    except ValueError:
-        try:
-            adate = datetime.datetime(year, month, 30)
-        except ValueError:
-            try:
-                adate = datetime.datetime(year, month, 29)
-            except ValueError:
-                adate = datetime.datetime(year, month, 28)
-    r = rrule(MONTHLY, byweekday=(MO, TU, WE, TH, FR), 
-              dtstart=datetime.datetime(year,month, 1))
-    res = r.after(adate, inc=True)
-    if (res == None or res.month != month or res.year != year):
-        raise ValueError("No dates found in range. is there a flaw in your logic?")
-    return res.date()
 
 def get_business_day_of_month_before(year, month, day):
     """
