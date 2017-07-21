@@ -95,11 +95,6 @@ def first_of_next_month(ref_date):
     return type(ref_date)(year, month, 1)
 
 
-def secs_to_days(seconds):
-    """convert a number of seconds to days"""
-    return float(seconds) / 86400. 
-
-
 def utcnow_sans_milliseconds():
     return datetime.datetime.utcnow().replace(microsecond=0)
 
