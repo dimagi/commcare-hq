@@ -6,6 +6,7 @@ import datetime
 import logging
 from collections import namedtuple
 from dimagi.utils.chunked import chunked
+from dimagi.utils.decorators.memoized import memoized
 from django.core.management import BaseCommand
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
 from corehq.apps.locations.models import SQLLocation
@@ -63,6 +64,27 @@ class ENikshay2BMigrator(object):
         self.commit = commit
         self.accessor = CaseAccessors(self.domain)
         self.factory = CaseFactory(self.domain)
+
+    @property
+    @memoized
+    def locations(self):
+        return {loc.location_id: loc for loc in
+                self.dto.get_descendants(include_self=True).prefetch_related('location_type')}
+
+    @property
+    @memoized
+    def location_ids_by_pk(self):
+        return {loc.pk: loc.location_id for loc in self.locations.values()}
+
+    def get_ancestors_by_type(self, location):
+        """Get all direct ancestors found in self.locations"""
+        ancestors_by_type = {location.location_type.code: location}
+        loc = location
+        while loc.parent_id and loc.parent_id in self.location_ids_by_pk:
+            parent = self.locations[self.location_ids_by_pk[loc.parent_id]]
+            ancestors_by_type[parent.location_type.code] = parent
+            loc = parent
+        return ancestors_by_type
 
     def migrate(self):
         person_ids = self.get_relevant_person_case_ids()
@@ -170,17 +192,11 @@ class ENikshay2BMigrator(object):
             # TODO check if it already begins with 91 or has a certain length?
             props['contact_phone_number'] = '91' + phone_number
 
-        try:
-            # TODO pull this location stuff out
-            location = SQLLocation.objects.get(domain=self.domain, location_id=person.owner_id)
-        except SQLLocation.DoesNotExist:
-            pass
-        else:
+        location = self.locations.get(person.owner_id)
+        if location:
             if location.location_type.code == 'phi':
                 props['phi_name'] = location.name
-            ancestors_by_type = {loc.location_type.code: loc
-                                 for loc in location.get_ancestors(include_self=True)
-                                                    .prefetch_related('location_type')}
+            ancestors_by_type = self.get_ancestors_by_type(location)
             if 'tu' in ancestors_by_type:
                 props['tu_name'] = ancestors_by_type['tu'].name
                 props['tu_id'] = ancestors_by_type['tu'].location_id
