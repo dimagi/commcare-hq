@@ -231,7 +231,8 @@ def get_location_filter(location, domain, config):
     if location:
         try:
             sql_location = SQLLocation.objects.get(location_id=location, domain=domain)
-            aggregation_level = sql_location.get_ancestors(include_self=True).count() + 1
+            locations = sql_location.get_ancestors(include_self=True)
+            aggregation_level = locations.count() + 1
             if sql_location.location_type.code != LocationTypes.AWC:
                 loc_level = LocationType.objects.filter(
                     parent_type=sql_location.location_type,
@@ -239,9 +240,12 @@ def get_location_filter(location, domain, config):
                 )[0].code
             else:
                 loc_level = LocationTypes.AWC
-            location_key = '%s_id' % sql_location.location_type.code
+            for loc in locations:
+                location_key = '%s_id' % loc.location_type.code
+                config.update({
+                    location_key: loc.location_id,
+                })
             config.update({
-                location_key: sql_location.location_id,
                 'aggregation_level': aggregation_level
             })
         except SQLLocation.DoesNotExist:
@@ -1039,8 +1043,6 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
         valid=Sum('valid_in_month'),
     ).order_by('month')
 
-    locations_for_lvl = SQLLocation.objects.filter(location_type__code=loc_level).count()
-
     data = {
         'green': OrderedDict(),
         'orange': OrderedDict(),
@@ -1072,15 +1074,10 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        if underweight <= 20:
-            data['green'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
-        elif 21 <= underweight <= 35:
-            data['orange'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
-        elif underweight > 35:
-            data['red'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
+        data['orange'][date_in_miliseconds]['y'] += moderately_underweight
+        data['orange'][date_in_miliseconds]['all'] += valid
+        data['red'][date_in_miliseconds]['y'] += severely_underweight
+        data['red'][date_in_miliseconds]['all'] += valid
 
     top_locations = sorted(
         [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
@@ -1094,24 +1091,11 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
-                        'all': value['all']
-                    } for key, value in data['green'].iteritems()
-                ],
-                "key": "Between 0%-20%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": GREEN
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
+                        'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
                     } for key, value in data['orange'].iteritems()
                 ],
-                "key": "Between 11%-35%",
+                "key": "% Moderately Underweight (-2 SD)",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
@@ -1120,18 +1104,19 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
+                        'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
                     } for key, value in data['red'].iteritems()
                 ],
-                "key": "Between 36%-100%",
+                "key": "% Severely Underweight (-3 SD) ",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             }
         ],
-        "top_three": top_locations[0:3],
-        "bottom_three": top_locations[-4:-1],
+        "all_locations": top_locations,
+        "top_three": top_locations[0:5],
+        "bottom_three": top_locations[-6:-1],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 
@@ -1856,11 +1841,7 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
         valid=Sum('height_eligible'),
     ).order_by('month')
 
-    locations_for_lvl = SQLLocation.objects.filter(location_type__code=loc_level).count()
-
     data = {
-        'green': OrderedDict(),
-        'orange': OrderedDict(),
         'red': OrderedDict()
     }
 
@@ -1868,8 +1849,6 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['green'][miliseconds] = {'y': 0, 'all': 0}
-        data['orange'][miliseconds] = {'y': 0, 'all': 0}
         data['red'][miliseconds] = {'y': 0, 'all': 0}
 
     best_worst = {}
@@ -1880,24 +1859,17 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
         severe = row['severe']
         moderate = row['moderate']
 
-        underweight = ((moderate or 0) + (severe or 0)) * 100 / (valid or 1)
+        underweight = (moderate or 0) + (severe or 0)
 
         if location in best_worst:
-            best_worst[location].append(underweight)
+            best_worst[location].append(underweight / float(valid or 1))
         else:
-            best_worst[location] = [underweight]
+            best_worst[location] = [underweight / float(valid or 1)]
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        if underweight < 5:
-            data['green'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
-        elif 5 <= underweight < 7:
-            data['orange'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
-        elif underweight >= 7:
-            data['red'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
+        data['red'][date_in_miliseconds]['y'] += underweight
+        data['red'][date_in_miliseconds]['all'] += valid
 
     top_locations = sorted(
         [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
@@ -1911,44 +1883,19 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
-                        'all': value['all']
-                    } for key, value in data['green'].iteritems()
-                ],
-                "key": "Between 0%-5%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": GREEN
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
-                        'all': value['all']
-                    } for key, value in data['orange'].iteritems()
-                ],
-                "key": "Between 5%-7%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": ORANGE
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
+                        'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
                     } for key, value in data['red'].iteritems()
                 ],
-                "key": "Between 7%-100%",
+                "key": "Severe and Moderate Acute Malnutrition (SAM and MAM)",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             }
         ],
-        "top_three": top_locations[0:3],
-        "bottom_three": top_locations[-4:-1],
+        "all_locations": top_locations,
+        "top_three": top_locations[0:5],
+        "bottom_three": top_locations[-6:-1],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 
@@ -2131,11 +2078,7 @@ def get_prevalence_of_stunning_data_chart(config, loc_level):
         valid=Sum('height_eligible'),
     ).order_by('month')
 
-    locations_for_lvl = SQLLocation.objects.filter(location_type__code=loc_level).count()
-
     data = {
-        'green': OrderedDict(),
-        'orange': OrderedDict(),
         'red': OrderedDict()
     }
 
@@ -2143,8 +2086,6 @@ def get_prevalence_of_stunning_data_chart(config, loc_level):
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['green'][miliseconds] = {'y': 0, 'all': 0}
-        data['orange'][miliseconds] = {'y': 0, 'all': 0}
         data['red'][miliseconds] = {'y': 0, 'all': 0}
 
     best_worst = {}
@@ -2155,24 +2096,17 @@ def get_prevalence_of_stunning_data_chart(config, loc_level):
         severe = row['severe']
         moderate = row['moderate']
 
-        underweight = ((moderate or 0) + (severe or 0)) * 100 / (valid or 1)
+        underweight = (moderate or 0) + (severe or 0)
 
         if location in best_worst:
-            best_worst[location].append(underweight)
+            best_worst[location].append(underweight / (valid or 1))
         else:
-            best_worst[location] = [underweight]
+            best_worst[location] = [underweight / (valid or 1)]
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        if underweight < 25:
-            data['green'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
-        elif 25 <= underweight < 38:
-            data['orange'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
-        elif underweight >= 38:
-            data['red'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
+        data['red'][date_in_miliseconds]['y'] += underweight
+        data['red'][date_in_miliseconds]['all'] += valid
 
     top_locations = sorted(
         [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
@@ -2186,44 +2120,19 @@ def get_prevalence_of_stunning_data_chart(config, loc_level):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
-                        'all': value['all']
-                    } for key, value in data['green'].iteritems()
-                ],
-                "key": "Between 0%-25%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": GREEN
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
-                        'all': value['all']
-                    } for key, value in data['orange'].iteritems()
-                ],
-                "key": "Between 25%-38%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": ORANGE
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
+                        'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
                     } for key, value in data['red'].iteritems()
                 ],
-                "key": "Between 38%-100%",
+                "key": "Moderate or severely stunted growth",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             }
         ],
-        "top_three": top_locations[0:3],
-        "bottom_three": top_locations[-4:-1],
+        "all_locations": top_locations,
+        "top_three": top_locations[0:5],
+        "bottom_three": top_locations[-6:-1],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 

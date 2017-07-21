@@ -41,7 +41,7 @@ logger = get_task_logger(__name__)
 
 @periodic_task(
     run_every=crontab(hour=0, minute=0),  # every day at midnight
-    queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
+    queue=getattr(settings, 'ENIKSHAY_QUEUE', 'celery')
 )
 def enikshay_task():
     # runs adherence and voucher calculations for all domains that have

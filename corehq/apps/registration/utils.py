@@ -80,6 +80,9 @@ def request_new_domain(request, form, is_new_user=True):
             first_domain_for_user=is_new_user
         )
 
+        # Avoid projects created by dimagi.com staff members as self started
+        new_domain.internal.self_started = not current_user.is_dimagi
+
         if form.cleaned_data.get('domain_timezone'):
             new_domain.default_timezone = form.cleaned_data['domain_timezone']
 

@@ -744,13 +744,6 @@ COMMTRACK = StaticToggle(
     save_fn=_commtrackify,
 )
 
-INSTANCE_VIEWER = StaticToggle(
-    'instance_viewer',
-    'CloudCare Form Debugging Tool',
-    TAG_PRODUCT_PATH,
-    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
-)
-
 CUSTOM_INSTANCES = StaticToggle(
     'custom_instances',
     'Inject custom instance declarations',
@@ -859,13 +852,6 @@ BASIC_CHILD_MODULE = StaticToggle(
     'Basic modules can be child modules',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
-)
-
-USE_OLD_CLOUDCARE = StaticToggle(
-    'use_old_cloudcare',
-    'Use Old CloudCare',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
 )
 
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
@@ -1060,14 +1046,6 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     'Send a calendar fixture down to all users (R&D)',
     TAG_EXPERIMENTAL,
     [NAMESPACE_DOMAIN],
-)
-
-EDIT_FORMPLAYER = PredictablyRandomToggle(
-    'edit_formplayer',
-    'Edit forms on Formplayer',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=1.0,
 )
 
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
@@ -1280,5 +1258,12 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
     'enable_all_add_ons',
     'Enable all app manager add-ons',
     TAG_PRODUCT_CORE,
-    [NAMESPACE_DOMAIN],
+    [NAMESPACE_DOMAIN]
+)
+
+NO_CACHE_APP_FILES = StaticToggle(
+    'no_cache_app_files',
+    'Serve app files from blobdb and not from cache',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
 )

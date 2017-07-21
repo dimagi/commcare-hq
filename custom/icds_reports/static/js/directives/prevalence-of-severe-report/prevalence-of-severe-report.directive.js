@@ -74,6 +74,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
                 vm.chartData = response.data.report_data.chart_data;
                 vm.top_three = response.data.report_data.top_three;
                 vm.bottom_three = response.data.report_data.bottom_three;
+                vm.all_locations = response.data.report_data.all_locations;
                 vm.location_type = response.data.report_data.location_type;
                 vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
             }
@@ -143,14 +144,12 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
 
                     var findValue = function (values, date) {
                         var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
-                        return day['all'];
+                        return d3.format(".2%")(day['y']);
                     };
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>7-100% children with Severe Acute Malnutrition (SAM): <strong>" + findValue(vm.chartData[2].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>5-7% children with Severe Acute Malnutrition (SAM): <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>0-5% children with Severe Acute Malnutrition (SAM): <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p><br/>";
-                    tooltip_content += "<span>Percentage of children (6-60 months) enrolled for ICDS services with weight-for-height below -3 standard deviations of the WHO Child Growth Standards median.</span>";
+                    tooltip_content += "<p>% children with Severe Acute Malnutrition (SAM) or Moderate Acute Malnutrition (MAM): <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+                    tooltip_content += "<span>Percentage of children (6-60 months) enrolled for ICDS services with weight-for-height below -2 standard deviations (moderate acute malnutrition) or -3 standard deviations (severe acute malnutrition) of the WHO Child Growth Standards median.</span>";
 
                     return tooltip_content;
                 });
@@ -179,6 +178,10 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
             $location.search('selectedLocationLevel', index);
             $location.search('location_name', loc.name);
         }
+    };
+
+    vm.showNational = function () {
+        return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
     };
 }
 

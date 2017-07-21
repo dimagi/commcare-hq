@@ -386,10 +386,12 @@ class AwcReportsView(View):
         if location:
             try:
                 sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
-                location_key = '%s_id' % sql_location.location_type.code
-                config.update({
-                    location_key: sql_location.site_code,
-                })
+                locations = sql_location.get_ancestors(include_self=True)
+                for loc in locations:
+                    location_key = '%s_id' % loc.location_type.code
+                    config.update({
+                        location_key: loc.location_id,
+                    })
             except SQLLocation.DoesNotExist:
                 pass
 
@@ -458,10 +460,12 @@ class ExportIndicatorView(View):
         if location:
             try:
                 sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
-                location_key = '%s_id' % sql_location.location_type.code
-                config.update({
-                    location_key: sql_location.location_id,
-                })
+                locations = sql_location.get_ancestors(include_self=True)
+                for loc in locations:
+                    location_key = '%s_id' % loc.location_type.code
+                    config.update({
+                        location_key: loc.location_id,
+                    })
             except SQLLocation.DoesNotExist:
                 pass
 
