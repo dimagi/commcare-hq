@@ -23,8 +23,10 @@ class Command(BaseCommand):
         print len(nikshay_ids)
         nikshay_codes_to_location = get_nikshay_codes_to_location(domain)
 
-        for nikshay_id in nikshay_ids:
+        for i, nikshay_id in enumerate(nikshay_ids):
             update_properties_by_nikshay_id(nikshay_id, domain, nikshay_codes_to_location, write)
+            if i % 1000 == 0:
+                print 'done %d of %d' % (i, len(nikshay_ids))
 
 
 def get_phi_location_id(patient_detail, nikshay_code_to_phi):
