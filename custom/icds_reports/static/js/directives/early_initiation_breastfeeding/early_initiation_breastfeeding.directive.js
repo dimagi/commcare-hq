@@ -1,5 +1,4 @@
 /* global d3*/
-
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
 function EarlyInitiationBreastfeedingController($scope, $routeParams, $location, $filter, maternalChildService,
@@ -72,6 +71,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
                 vm.chartData = response.data.report_data.chart_data;
+                vm.all_locations = response.data.report_data.all_locations;
                 vm.top_three = response.data.report_data.top_three;
                 vm.bottom_three = response.data.report_data.bottom_three;
                 vm.location_type = response.data.report_data.location_type;
@@ -95,7 +95,6 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     };
 
     init();
-
 
     $scope.$on('filtersChange', function() {
         vm.loadData();
@@ -134,7 +133,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
             yAxis: {
                 axisLabel: '',
                 tickFormat: function(d){
-                    return d3.format(".0%")(d);
+                    return d3.format(",")(d);
                 },
                 axisLabelDistance: 20,
             },
@@ -144,14 +143,13 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
 
                     var findValue = function (values, date) {
                         var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
-                        return day['all'];
+                        return d3.format(",")(day['y']);
                     };
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>7-100% children with Severe Acute Malnutrition (SAM): <strong>" + findValue(vm.chartData[2].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>5-7% children with Severe Acute Malnutrition (SAM): <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>0-5% children with Severe Acute Malnutrition (SAM): <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p><br/>";
-                    tooltip_content += "<span>Percentage of children (6-60 months) enrolled for ICDS services with weight-for-height below -3 standard deviations of the WHO Child Growth Standards median.</span>";
+                    tooltip_content += "<p>Total Number of Children born in the given month:<strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>Total Number of Children who were put to the breast within one hour of birth:  <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+                    tooltip_content += "<span>Percentage of children who were put to the breast within one hour of birth</span>";
 
                     return tooltip_content;
                 });
@@ -165,12 +163,15 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
             $location.search('location_id', '');
             $location.search('selectedLocationLevel', -1);
             $location.search('location_name', '');
-            $location.search('location', '');
         } else {
             $location.search('location_id', loc.location_id);
             $location.search('selectedLocationLevel', index);
             $location.search('location_name', loc.name);
         }
+    };
+
+    vm.showNational = function () {
+        return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
     };
 }
 

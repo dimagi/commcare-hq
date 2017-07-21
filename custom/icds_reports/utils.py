@@ -38,6 +38,7 @@ OPERATORS = {
 RED = '#d60000'
 YELLOW = '#f2ed00'
 ORANGE = '#df7400'
+BLUE = '#006fdf'
 GREEN = '#009811'
 GREY = '#9D9D9D'
 
@@ -374,10 +375,10 @@ def get_maternal_child_data(config):
                 {
                     'label': _('% Underweight Children'),
                     'help_text': _((
-                        "Percentage of children with weight-for-age less than -2 standard deviations of "
-                        "the WHO Child Growth Standards median. Children who are moderately or severely "
-                        "underweight have a higher risk of mortality.")
-                    ),
+                        "Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age "
+                        "less than -2 standard deviations of the WHO Child Growth Standards median. Children who "
+                        "are moderately or severely underweight have a higher risk of mortality."
+                    )),
                     'percent': percent_diff(
                         'underweight',
                         this_month_data,
@@ -2307,11 +2308,8 @@ def get_newborn_with_low_birth_weight_chart(config, loc_level):
         in_month=Sum('born_in_month'),
     ).order_by('month')
 
-    locations_for_lvl = SQLLocation.objects.filter(location_type__code=loc_level).count()
-
     data = {
-        'green': OrderedDict(),
-        'orange': OrderedDict(),
+        'blue': OrderedDict(),
         'red': OrderedDict()
     }
 
@@ -2319,8 +2317,7 @@ def get_newborn_with_low_birth_weight_chart(config, loc_level):
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['green'][miliseconds] = {'y': 0, 'all': 0}
-        data['orange'][miliseconds] = {'y': 0, 'all': 0}
+        data['blue'][miliseconds] = {'y': 0, 'all': 0}
         data['red'][miliseconds] = {'y': 0, 'all': 0}
 
     best_worst = {}
@@ -2339,15 +2336,8 @@ def get_newborn_with_low_birth_weight_chart(config, loc_level):
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        if value <= 20:
-            data['green'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += value
-        elif 20 < value < 60:
-            data['orange'][date_in_miliseconds]['y'] += 1
-            data['orange'][date_in_miliseconds]['all'] += value
-        elif value >= 60:
-            data['red'][date_in_miliseconds]['y'] += 1
-            data['red'][date_in_miliseconds]['all'] += value
+        data['blue'][date_in_miliseconds]['y'] += in_month
+        data['red'][date_in_miliseconds]['y'] += low_birth
 
     top_locations = sorted(
         [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
@@ -2361,44 +2351,32 @@ def get_newborn_with_low_birth_weight_chart(config, loc_level):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
+                        'y': value['y'],
                         'all': value['all']
-                    } for key, value in data['green'].iteritems()
+                    } for key, value in data['blue'].iteritems()
                 ],
-                "key": "Between 0%-20%",
+                "key": "Total newborns",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": GREEN
+                "color": BLUE
             },
             {
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
-                        'all': value['all']
-                    } for key, value in data['orange'].iteritems()
-                ],
-                "key": "Between 20%-60%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": ORANGE
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
+                        'y': value['y'],
                         'all': value['all']
                     } for key, value in data['red'].iteritems()
                 ],
-                "key": "Between 60%-100%",
+                "key": "Low birth weight newborns",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             }
         ],
-        "top_three": top_locations[0:3],
-        "bottom_three": top_locations[-4:-1],
+        "all_locations": top_locations,
+        "top_three": top_locations[0:5],
+        "bottom_three": top_locations[-6:-1],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 
@@ -2571,12 +2549,9 @@ def get_early_initiation_breastfeeding_chart(config, loc_level):
         in_month=Sum('born_in_month'),
     ).order_by('month')
 
-    locations_for_lvl = SQLLocation.objects.filter(location_type__code=loc_level).count()
-
     data = {
         'green': OrderedDict(),
-        'orange': OrderedDict(),
-        'red': OrderedDict()
+        'blue': OrderedDict()
     }
 
     dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
@@ -2584,8 +2559,7 @@ def get_early_initiation_breastfeeding_chart(config, loc_level):
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
         data['green'][miliseconds] = {'y': 0, 'all': 0}
-        data['orange'][miliseconds] = {'y': 0, 'all': 0}
-        data['red'][miliseconds] = {'y': 0, 'all': 0}
+        data['blue'][miliseconds] = {'y': 0, 'all': 0}
 
     best_worst = {}
     for row in chart_data:
@@ -2603,15 +2577,8 @@ def get_early_initiation_breastfeeding_chart(config, loc_level):
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        if value >= 60:
-            data['green'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += value
-        elif 20 <= value < 60:
-            data['orange'][date_in_miliseconds]['y'] += 1
-            data['orange'][date_in_miliseconds]['all'] += value
-        elif value < 20:
-            data['red'][date_in_miliseconds]['y'] += 1
-            data['red'][date_in_miliseconds]['all'] += value
+        data['green'][date_in_miliseconds]['y'] += birth
+        data['blue'][date_in_miliseconds]['y'] += in_month
 
     top_locations = sorted(
         [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
@@ -2625,11 +2592,11 @@ def get_early_initiation_breastfeeding_chart(config, loc_level):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
+                        'y': value['y'],
                         'all': value['all']
                     } for key, value in data['green'].iteritems()
                 ],
-                "key": "Between 60%-100%",
+                "key": "Children breastfed within one hour of birth",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": GREEN
@@ -2638,31 +2605,19 @@ def get_early_initiation_breastfeeding_chart(config, loc_level):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
+                        'y': value['y'],
                         'all': value['all']
-                    } for key, value in data['orange'].iteritems()
+                    } for key, value in data['blue'].iteritems()
                 ],
-                "key": "Between 20%-60%",
+                "key": "Total births",
                 "strokeWidth": 2,
                 "classed": "dashed",
-                "color": ORANGE
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
-                        'all': value['all']
-                    } for key, value in data['red'].iteritems()
-                ],
-                "key": "Between 0%-20%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": RED
+                "color": BLUE
             }
         ],
-        "top_three": top_locations[0:3],
-        "bottom_three": top_locations[-4:-1],
+        "all_locations": top_locations,
+        "top_three": top_locations[0:5],
+        "bottom_three": top_locations[-6:-1],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 
