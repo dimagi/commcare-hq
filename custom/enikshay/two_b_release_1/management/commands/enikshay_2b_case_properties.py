@@ -150,14 +150,19 @@ class ENikshay2BMigrator(object):
                 yield person_case_set
 
     def migrate_person_case_set(self, person):
-        self.factory.create_or_update_cases([
-            self.migrate_person(person.person, person.occurrences, person.episodes),
-        ])
+        self.factory.create_or_update_cases(filter(None,
+            [self.migrate_person(person.person, person.occurrences, person.episodes)]
+            + [self.migrate_occurrence(occurrence, person.episodes) for occurrence in person.occurrences]
+        ))
 
-    def migrate_person(self, person, occurrences, episodes):
+    @staticmethod
+    def get_open_occurrence(occurrences):
         occurrences = [case for case in occurrences
                        if not case.closed and case.type == CASE_TYPE_OCCURRENCE]
-        occurrence = occurrences[0] if occurrences else None
+        return occurrences[0] if occurrences else None
+
+    def migrate_person(self, person, occurrences, episodes):
+        occurrence = self.get_open_occurrence(occurrences)
 
         if occurrence:
             episodes = [case for case in episodes
@@ -210,6 +215,34 @@ class ENikshay2BMigrator(object):
             attrs={
                 "create": False,
                 "owner_id": person.owner_id or '-',
+                "update": props,
+            },
+        )
+
+    def migrate_occurrence(self, occurrence, episodes):
+        episodes = [(case.opened_on, case) for case in episodes
+                    if case.type == CASE_TYPE_EPISODE
+                    and any([index.referenced_id == occurrence.case_id for index in case.indices])
+                    and case.dynamic_case_properties().get('episode_type') == "confirmed_tb"]
+        if not episodes:
+            return None
+
+        episode = max(episodes)[1]  # Most recently opened episode for the occurrence
+
+        props = {
+            'current_episode_type': episode.get_case_property('episode_type'),
+            'disease_classification': episode.get_case_property('disease_classification'),
+            'site_choice': episode.get_case_property('site_choice'),
+            'site_detail': episode.get_case_property('site_detail'),
+            'key_population_status': episode.get_case_property('key_population_status'),
+            'key_populations': episode.get_case_property('key_populations'),
+        }
+
+        return CaseStructure(
+            case_id=occurrence.case_id,
+            walk_related=False,
+            attrs={
+                "create": False,
                 "update": props,
             },
         )
