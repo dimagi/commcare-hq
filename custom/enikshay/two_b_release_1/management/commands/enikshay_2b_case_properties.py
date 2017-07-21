@@ -153,6 +153,7 @@ class ENikshay2BMigrator(object):
         self.factory.create_or_update_cases(filter(None,
             [self.migrate_person(person.person, person.occurrences, person.episodes)]
             + [self.migrate_occurrence(occurrence, person.episodes) for occurrence in person.occurrences]
+            + [self.migrate_episode(episode) for episode in person.episodes]
         ))
 
     @staticmethod
@@ -246,3 +247,47 @@ class ENikshay2BMigrator(object):
                 "update": props,
             },
         )
+
+    def migrate_episode(self, episode):
+        props = {
+            'dosage_display': episode.get_case_property('full_dosage'),
+            'dosage_summary': episode.get_case_property('full_dosage'),
+            'rft_general': 'diagnosis_dstb',
+            'diagnosis_test_type': episode.get_case_property('test_confirming_diagnosis'),
+        }
+
+        treatment_status = episode.get_case_property('treatment_status')
+        if treatment_status == 'second_line_treatment':
+            props['treatment_status'] = 'initiated_second_line_treatment'
+        elif treatment_status == 'yes_phi':
+            props['treatment_status'] = 'initiated_first_line_treatment'
+        elif treatment_status == 'yes_private':
+            props['treatment_status'] = 'initiated_outside_facility'
+
+        if treatment_status == 'yes_phi':
+            props['treatment_initiated'] = 'yes_phi'
+        elif treatment_status == 'yes_private':
+            props['treatment_initiated'] = 'yes_private'
+        elif treatment_status:
+            props['treatment_initiated'] = 'no'
+
+        if not episode.get_case_property('date_of_diagnosis'):
+            props['date_of_diagnosis'] = episode.get_case_property('date_reported')
+
+        return CaseStructure(
+            case_id=episode.case_id,
+            walk_related=False,
+            attrs={
+                "create": False,
+                "update": props,
+            },
+        )
+
+"""
+# TODO are there more than one open episodes?  Can I just say "if is open"?
+is_active
+Set the value to yes if this is the episode is the most recently opened open episode fo the occurrence
+
+diagnosis_test_type_label	Based on test_confirming_diagnosis, lookup the test_type_value in the lookup table.  Grab the title[@lang = 'en'] form lookup table
+
+"""

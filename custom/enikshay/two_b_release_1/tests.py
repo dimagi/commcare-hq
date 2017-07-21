@@ -77,6 +77,11 @@ class TestCreateEnikshayCases(TestCase):
             'site_detail': 'site_detail',
             'key_population_status': 'key_population_status',
             'key_populations': 'key_populations',
+            'treatment_status': 'second_line_treatment',
+            'date_of_diagnosis': '',
+            'date_reported': 'date_reported',
+            'full_dosage': 'full_dosage',
+            'test_confirming_diagnosis': 'test_confirming_diagnosis',
         })
         return episode
 
@@ -147,3 +152,13 @@ class TestCreateEnikshayCases(TestCase):
             'key_population_status': 'key_population_status',
             'key_populations': 'key_populations',
         }, new_occurrence.dynamic_case_properties())
+
+        new_episode = accessor.get_case(person.episodes[0].case_id)
+        self.assertDictContainsSubset({
+            'treatment_status': 'initiated_second_line_treatment',
+            'date_of_diagnosis': 'date_reported',
+            'dosage_display': 'full_dosage',
+            'dosage_summary': 'full_dosage',
+            'rft_general': 'diagnosis_dstb',
+            'diagnosis_test_type': 'test_confirming_diagnosis',
+        }, new_episode.dynamic_case_properties())
