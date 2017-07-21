@@ -8,6 +8,9 @@ from custom.enikshay.nikshay_datamigration.factory import get_nikshay_codes_to_l
 from custom.enikshay.nikshay_datamigration.models import PatientDetail
 
 
+class BadException(Exception):
+    pass
+
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
@@ -22,11 +25,21 @@ class Command(BaseCommand):
         nikshay_ids = NIKSHAY_IDS.split()
         print len(nikshay_ids)
         nikshay_codes_to_location = get_nikshay_codes_to_location(domain)
+        bad_count = 0
 
         for i, nikshay_id in enumerate(nikshay_ids):
-            update_properties_by_nikshay_id(nikshay_id, domain, nikshay_codes_to_location, write)
+            if any(nikshay_id.startswith(loc_code) for loc_code in EXCLUDED_LOC_CODES):
+                continue
+            try:
+                update_properties_by_nikshay_id(nikshay_id, domain, nikshay_codes_to_location, write)
+            except BadException as e:
+                print e.message
+                bad_count += 1
+
             if i % 1000 == 0:
                 print 'done %d of %d' % (i, len(nikshay_ids))
+
+        print "bad_count = %d" % bad_count
 
 
 def get_phi_location_id(patient_detail, nikshay_code_to_phi):
@@ -43,7 +56,11 @@ def get_phi_location_id(patient_detail, nikshay_code_to_phi):
 def update_properties_by_nikshay_id(nikshay_id, domain, nikshay_code_to_phi, write):
     case_accessor = CaseAccessors(domain)
     episode_cases_by_nikshay_id = case_accessor.get_cases_by_external_id(nikshay_id, case_type='episode')
-    assert len(episode_cases_by_nikshay_id) == 1
+    if len(episode_cases_by_nikshay_id) != 1:
+        raise BadException(
+            'BAD: nikshay_id %s has %d cases with matching external id'
+            % (nikshay_id, len(episode_cases_by_nikshay_id))
+        )
     episode_case = episode_cases_by_nikshay_id[0]
     if episode_case.dynamic_case_properties().get('migration_created_case') != 'true':
         print 'skip non-migrated case %s for nikshay id %s' % (episode_case.case_id, nikshay_id)
@@ -64,6 +81,26 @@ def update_properties_by_nikshay_id(nikshay_id, domain, nikshay_code_to_phi, wri
         else:
             print 'skip %s for %s' % (prop, nikshay_id)
 
+EXCLUDED_LOC_CODES = """
+MH-PRL-1-5
+GU-MSN-5-13
+MH-BBR-2-7
+GU-MSN-4-20
+MH-BAE-2-7
+MH-BBR-1-3
+MH-KRL-1-5
+MH-BBR-1-7
+MH-BBR-1-6
+MH-KRL-1-8
+MH-PRL-1-12
+MH-BAE-2-8
+GU-MSN-2-22
+MH-KRL-1-4
+MH-BAE-1-15
+MH-BAE-1-14
+MH-BAE-2-6
+MH-BAE-1-10
+""".split()
 
 NIKSHAY_IDS = """
 GU-MSN-01-16-0020
