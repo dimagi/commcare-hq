@@ -222,7 +222,7 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_extension_case_ids(domain, case_ids):
+    def get_extension_case_ids(domain, case_ids, include_closed):
         raise NotImplementedError
 
     @abstractmethod
@@ -345,7 +345,7 @@ class CaseAccessors(object):
 
         :returns: List of three-tuples: `(case_id, closed, deleted)`
         """
-        return self.db_accessor.get_closed_and_deleted_ids(self, case_ids)
+        return self.db_accessor.get_closed_and_deleted_ids(self.domain, case_ids)
 
     def get_modified_case_ids(self, case_ids, sync_log):
         """Get the subset of given list of case ids that have been modified
@@ -392,16 +392,16 @@ class CaseAccessors(object):
     def get_deleted_case_ids_by_owner(self, owner_id):
         return self.db_accessor.get_deleted_case_ids_by_owner(self.domain, owner_id)
 
-    def get_extension_chain(self, case_ids):
+    def get_extension_chain(self, case_ids, include_closed=True):
         assert isinstance(case_ids, list)
         get_extension_case_ids = self.db_accessor.get_extension_case_ids
 
-        incoming_extensions = set(get_extension_case_ids(self.domain, case_ids))
+        incoming_extensions = set(get_extension_case_ids(self.domain, case_ids, include_closed))
         all_extension_ids = set(incoming_extensions)
         new_extensions = set(incoming_extensions)
         while new_extensions:
             new_extensions = (
-                set(get_extension_case_ids(self.domain, list(new_extensions))) -
+                set(get_extension_case_ids(self.domain, list(new_extensions), include_closed)) -
                 all_extension_ids
             )
             all_extension_ids = all_extension_ids | new_extensions
