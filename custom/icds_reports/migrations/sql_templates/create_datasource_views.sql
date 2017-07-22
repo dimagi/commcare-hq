@@ -233,7 +233,6 @@ CREATE VIEW agg_ccs_record_monthly AS
         COALESCE("agg_ccs_record"."counsel_immediate_conception", 0) AS "counsel_immediate_conception",
         COALESCE("agg_ccs_record"."counsel_accessible_postpartum_fp", 0) AS "counsel_accessible_postpartum_fp"
     FROM "public"."awc_location_months" "awc_location_months"
-    CROSS JOIN "public"."ccs_record_categories" "ccs_record_categories"
     LEFT JOIN "public"."agg_ccs_record" "agg_ccs_record" ON (
         ("awc_location_months"."month" = "agg_ccs_record"."month") AND
         ("awc_location_months"."aggregation_level" = "agg_ccs_record"."aggregation_level") AND
@@ -346,15 +345,14 @@ CREATE VIEW agg_thr_monthly AS
         "awc_location_months"."state_site_code" AS "state_site_code",
         "awc_location_months"."aggregation_level" AS "aggregation_level",
         "awc_location_months"."month" AS "month",
-        "thr_categories"."beneficiary_type" AS "beneficiary_type",
-        "thr_categories"."caste" AS "caste",
-        "thr_categories"."disabled" AS "disabled",
-        "thr_categories"."minority" AS "minority",
-        "thr_categories"."resident" AS "resident",
+        "agg_thr_data"."beneficiary_type" AS "beneficiary_type",
+        "agg_thr_data"."caste" AS "caste",
+        "agg_thr_data"."disabled" AS "disabled",
+        "agg_thr_data"."minority" AS "minority",
+        "agg_thr_data"."resident" AS "resident",
         COALESCE("agg_thr_data"."thr_eligible", 0) AS "thr_eligible",
         COALESCE("agg_thr_data"."rations_21_plus_distributed", 0) AS "rations_21_plus_distributed"
     FROM "public"."awc_location_months" "awc_location_months"
-    CROSS JOIN "public"."thr_categories" "thr_categories"
     LEFT JOIN "public"."agg_thr_data" "agg_thr_data" ON (
         ("awc_location_months"."month" = "agg_thr_data"."month") AND
         ("awc_location_months"."aggregation_level" = "agg_thr_data"."aggregation_level") AND
@@ -362,12 +360,7 @@ CREATE VIEW agg_thr_monthly AS
         ("awc_location_months"."district_id" = "agg_thr_data"."district_id") AND
         ("awc_location_months"."block_id" = "agg_thr_data"."block_id") AND
         ("awc_location_months"."supervisor_id" = "agg_thr_data"."supervisor_id") AND
-        ("awc_location_months"."awc_id" = "agg_thr_data"."awc_id") AND
-        ("thr_categories"."beneficiary_type" = "agg_thr_data"."beneficiary_type") AND
-        ("thr_categories"."caste" = "agg_thr_data"."caste") AND
-        ("thr_categories"."disabled" = "agg_thr_data"."disabled") AND
-        ("thr_categories"."minority" = "agg_thr_data"."minority") AND
-        ("thr_categories"."resident" = "agg_thr_data"."resident")
+        ("awc_location_months"."awc_id" = "agg_thr_data"."awc_id")
     );
 
 DROP VIEW IF EXISTS daily_attendance_view CASCADE;
