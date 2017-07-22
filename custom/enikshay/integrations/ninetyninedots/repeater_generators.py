@@ -81,6 +81,9 @@ class PatientPayload(jsonobject.JsonObject):
     def create(cls, person_case, episode_case):
         person_case_properties = person_case.dynamic_case_properties()
         episode_case_properties = episode_case.dynamic_case_properties()
+        all_properties = episode_case_properties.copy()
+        all_properties.update(person_case_properties)  # items set on person trump items set on episode
+
         person_locations = get_person_locations(person_case)
         try:
             locations = dict(
@@ -118,7 +121,7 @@ class PatientPayload(jsonobject.JsonObject):
             enikshay_id=person_case_properties.get(ENIKSHAY_ID, None),
             first_name=person_case_properties.get(PERSON_FIRST_NAME, None),
             last_name=person_case_properties.get(PERSON_LAST_NAME, None),
-            phone_numbers=_get_phone_numbers(person_case_properties),
+            phone_numbers=_get_phone_numbers(all_properties),
             merm_params=merm_params if episode_case_properties.get(MERM_ID, '') != '' else None,
             treatment_start_date=episode_case_properties.get(TREATMENT_START_DATE, None),
             treatment_supporter_name=u"{} {}".format(

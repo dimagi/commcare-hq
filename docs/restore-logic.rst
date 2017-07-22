@@ -11,17 +11,17 @@ Important terms from that document that are also used in this document:
 
 A case is **available** if
 
-- it is *open* and not an *extension* case
-- it is *open* and is the *extension* of an *available* case.
+- it is **open** and not an **extension** case
+- it is **open** and is the **extension** of an **available** case.
 
 .. _live:
 
 A case is **live** if any of the following are true:
 
-- it is *owned* and *available*
-- it has a *live child*
-- it has a *live extension*
-- it is the *exension* of a *live* case
+- it is **owned** and **available**
+- it has a **live child**
+- it has a **live extension**
+- it is **open** and is the **exension** of a **live** case
 
 Dealing with shards
 -------------------

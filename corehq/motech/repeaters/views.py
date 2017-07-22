@@ -78,7 +78,9 @@ class RepeatRecordView(LoginAndDomainMixin, View):
         elif content_type == 'application/json':
             payload = json.dumps(json.loads(payload), indent=4)
         elif content_type == 'application/soap+xml':
-            payload = json.dump(payload, indent=4)
+            # we return a payload that is a dict, which is then converted to
+            # XML by the zeep library before being sent along as a SOAP request.
+            payload = json.dumps(payload, indent=4)
 
         return json_response({
             'payload': payload,

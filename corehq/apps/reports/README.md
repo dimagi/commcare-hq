@@ -1,6 +1,6 @@
 # Commcare Reporting
 
-More info available at https://commcare-hq.readthedocs.org/en/latest/reporting.html
+More info available at https://commcare-hq.readthedocs.io/reporting.html
 
 ## Custom reporting
 ### Terms:

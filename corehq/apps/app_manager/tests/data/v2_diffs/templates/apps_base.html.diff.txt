@@ -55,7 +55,7 @@
  {% endblock %}
  
  {% block js %}{{ block.super }}
-@@ -65,37 +46,19 @@
+@@ -65,38 +46,44 @@
      <script src="{% static 'style/js/ui-element.js' %}"></script>
      <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
      <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
@@ -96,9 +96,34 @@
 -<div class="appmanager-content appmanager-content-transition-all"
 +<div class="js-unhide-on-unsaved appmanager-content appmanager-content-transition-all{% if not formdesigner %} appmanager-settings-content {% endif %}"
       id="js-appmanager-body">
++    {% if request|ui_notify_enabled:"APP_BUILDER_RELEASE" and not formdesigner %}
++    <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
++         data-slug="{{ "APP_BUILDER_RELEASE"|ui_notify_slug }}"
++         role="alert">
++        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
++            <span aria-hidden="true">&times;</span>
++        </button>
++        <p class="lead">{% trans 'New App Builder Officially Released' %}</p>
++        <p>
++            {% blocktrans %}
++                After months of testing and feedback, we are happy to announce the
++                official release of the new CommCare App Builder. The previous App Builder
++                interface is now no longer available.
++            {% endblocktrans %}
++        </p>
++        <p>
++          <a class="btn btn-primary-dark"
++             target="_blank"
++             href="https://www.dimagi.com/blog/commcare-feature-update-new-app-manager/">
++            {% trans "Learn More" %}
++          </a>
++        </p>
++      </div>
++    {% endif %}
      {% if app %}
          {% if error %}
-@@ -120,7 +83,7 @@
+         <div id="error">
+@@ -120,7 +107,7 @@
                  {% endblocktrans %}
              </p>
              <br>
@@ -107,7 +132,7 @@
          </div>
      {% endif %}
  </div>
-@@ -154,3 +117,5 @@
+@@ -154,3 +141,5 @@
      </div>
      {% endif %}
  {% endblock modals %}

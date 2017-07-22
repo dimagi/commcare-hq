@@ -1481,6 +1481,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             return self.has_permission(domain, perm, data)
         return fn
 
+    def get_location_id(self, domain):
+        return getattr(self.get_domain_membership(domain), 'location_id', None)
+
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
 
@@ -1519,8 +1522,21 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         return super(CommCareUser, cls).wrap(data)
 
+    def _is_demo_user_cached_value_is_stale(self):
+        from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
+        cached_demo_users = get_practice_mode_mobile_workers.get_cached_value(self.domain)
+        if cached_demo_users is not Ellipsis:
+            cached_is_demo_user = any(user['_id'] == self._id for user in cached_demo_users)
+            if cached_is_demo_user != self.is_demo_user:
+                return True
+        return False
+
     def clear_quickcache_for_user(self):
+        from corehq.apps.users.dbaccessors.all_commcare_users import get_practice_mode_mobile_workers
         self.get_usercase_id.clear(self)
+
+        if self._is_demo_user_cached_value_is_stale():
+            get_practice_mode_mobile_workers.clear(self.domain)
         super(CommCareUser, self).clear_quickcache_for_user()
 
     def save(self, **params):
@@ -1678,6 +1694,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             deleted_forms.update(form_id_list)
 
         tag_system_forms_as_deleted.delay(self.domain, deleted_forms, deleted_cases, deletion_id, deletion_date)
+
+        from corehq.apps.app_manager.views.utils import unset_practice_mode_configured_apps
+        unset_practice_mode_configured_apps(self.domain, self.get_id)
 
         try:
             django_user = self.get_django_user()
@@ -2088,19 +2107,25 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def update_device_id_last_used(self, device_id, when=None):
         """
         Sets the last_used date for the device to be the current time
-
         Does NOT save the user object.
+
+        :returns: True if user was updated and needs to be saved
         """
         when = when or datetime.utcnow()
+
         for user_device_id_last_used in self.devices:
             if user_device_id_last_used.device_id == device_id:
-                user_device_id_last_used.last_used = when
-                break
+                if when.date() > user_device_id_last_used.last_used.date():
+                    user_device_id_last_used.last_used = when
+                    return True
+                else:
+                    return False
         else:
             self.devices.append(DeviceIdLastUsed(
                 device_id=device_id,
                 last_used=when
             ))
+            return True
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
@@ -2264,9 +2289,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         if not membership.location_id and location_ids:
             membership.location_id = location_ids[0]
         self.save()
-
-    def get_location_id(self, domain):
-        return getattr(self.get_domain_membership(domain), 'location_id', None)
 
     @memoized
     def get_sql_location(self, domain):

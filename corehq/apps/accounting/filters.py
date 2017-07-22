@@ -195,17 +195,8 @@ class DateRangeFilter(BaseReportFilter):
     END_DATE = 'enddate'
 
     @property
-    def datepicker_config(self):
-        return {
-            'changeMonth': True,
-            'changeYear': True,
-            'dateFormat': 'yy-mm-dd',
-        }
-
-    @property
     def filter_context(self):
         return {
-            'datepicker_config': self.datepicker_config,
             'datespan': self.datespan,
         }
 

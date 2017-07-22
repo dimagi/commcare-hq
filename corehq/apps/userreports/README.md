@@ -373,6 +373,7 @@ This expression returns `(doc["foo bar"]).split(' ')[0]`:
 }
 ```
 The delimiter is optional and is defaulted to a space.  It will return nothing if the string_expression is not a string, or if the index isn't a number or the indexed item doesn't exist.
+The index_expression is also optional. Without it, the expression will return the list of elements.
 
 ##### Iterator Expression
 
@@ -1699,7 +1700,7 @@ If the format string is not valid or the input is not a number then the original
 ```json
 {
     "type": "number_format",
-    "custom_type": "{0:.0f}"
+    "format_string": "{0:.0f}"
 }
 ```
 
@@ -1708,7 +1709,7 @@ If the format string is not valid or the input is not a number then the original
 ```json
 {
     "type": "number_format",
-    "custom_type": "{0:.3f}"
+    "format_string": "{0:.3f}"
 }
 ```
 

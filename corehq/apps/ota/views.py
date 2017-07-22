@@ -1,5 +1,6 @@
 from distutils.version import LooseVersion
 
+from django.conf import settings
 from django.http import JsonResponse
 from django.urls import reverse
 from django.shortcuts import redirect
@@ -27,7 +28,6 @@ from corehq.apps.domain.decorators import (
     check_domain_migration,
     login_or_digest_or_basic_or_apikey_or_token,
 )
-from corehq.util.datadog.gauges import datadog_counter, datadog_histogram
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.views import DomainViewMixin, EditMyProjectSettingsView
 from corehq.apps.es.case_search import flatten_result
@@ -37,6 +37,7 @@ from corehq.apps.ota.tasks import queue_prime_restore
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.decorators.memoized import memoized
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from django.http import HttpResponse
@@ -45,6 +46,33 @@ from soil import MultipleTaskDownload
 from .utils import (
     demo_user_restore_response, get_restore_user, is_permitted_to_restore,
     handle_401_response, update_device_id)
+
+
+RESTORE_SEGMENTS = {
+    "FixtureElementProvider": "fixtures",
+    "CasePayloadProvider": "cases",
+}
+
+
+def _get_time_bucket(duration):
+    """Get time bucket for the given duration
+
+    Bucket restore times because datadog's histogram is too limited
+
+    Basically restore frequency is not high enough to have a meaningful
+    time distribution with datadog's 10s aggregation window, especially
+    with tags. More details:
+    https://help.datadoghq.com/hc/en-us/articles/211545826
+    """
+    if duration < 5:
+        return "lt_005s"
+    if duration < 20:
+        return "lt_020s"
+    if duration < 60:
+        return "lt_060s"
+    if duration < 120:
+        return "lt_120s"
+    return "over_120s"
 
 
 @location_safe
@@ -61,17 +89,20 @@ def restore(request, domain, app_id=None):
     tags = [
         u'status_code:{}'.format(response.status_code),
     ]
-    datadog_counter('commcare.restores.count', tags=tags)
+    env = settings.SERVER_ENVIRONMENT
+    if (env, domain) in settings.RESTORE_TIMING_DOMAINS:
+        tags.append(u'domain:{}'.format(domain))
     if timing_context is not None:
         for timer in timing_context.to_list(exclude_root=True):
-            # Only record leaf nodes so we can sum to get the total
-            if timer.is_leaf_node:
-                datadog_histogram(
-                    'commcare.restores.timings',
-                    timer.duration,
-                    tags=tags + [u'segment:{}'.format(timer.name)],
+            if timer.name in RESTORE_SEGMENTS:
+                segment = RESTORE_SEGMENTS[timer.name]
+                bucket = _get_time_bucket(timer.duration)
+                datadog_counter(
+                    'commcare.restores.{}.{}'.format(segment, bucket),
+                    tags=tags,
                 )
-
+        tags.append('duration:%s' % _get_time_bucket(timing_context.duration))
+    datadog_counter('commcare.restores.count', tags=tags)
     return response
 
 
@@ -176,7 +207,6 @@ def get_restore_params(request):
         'state': request.GET.get('state'),
         'items': request.GET.get('items') == 'true',
         'as_user': request.GET.get('as'),
-        'has_data_cleanup_privelege': has_privilege(request, privileges.DATA_CLEANUP),
         'overwrite_cache': request.GET.get('overwrite_cache') == 'true',
         'openrosa_version': openrosa_version,
         'device_id': request.GET.get('device_id'),
@@ -190,7 +220,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          cache_timeout=None, overwrite_cache=False,
                          force_restore_mode=None,
                          as_user=None, device_id=None, user_id=None,
-                         has_data_cleanup_privelege=False,
                          openrosa_version=OPENROSA_DEFAULT_VERSION,
                          case_sync=None):
 
@@ -210,18 +239,15 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         domain,
         couch_user,
         as_user,
-        has_data_cleanup_privelege,
     )
     if not is_permitted:
         return HttpResponse(message, status=401), None
 
     is_demo_restore = couch_user.is_commcare_user() and couch_user.is_demo_user
-    is_enikshay = toggles.ENIKSHAY.enabled(domain)
-    if is_enikshay:
-        couch_restore_user = couch_user
-        if not is_demo_restore and as_user is not None:
-            couch_restore_user = CouchUser.get_by_username(as_user)
-        update_device_id(couch_restore_user, device_id)
+    couch_restore_user = couch_user
+    if not is_demo_restore and as_user is not None:
+        couch_restore_user = CouchUser.get_by_username(as_user)
+    update_device_id(couch_restore_user, device_id)
 
     if is_demo_restore:
         # if user is in demo-mode, return demo restore
@@ -361,4 +387,10 @@ class AdvancedPrimeRestoreCacheView(PrimeRestoreCacheView):
 @login_or_digest_or_basic_or_apikey()
 @require_GET
 def heartbeat(request, domain, id):
-    return JsonResponse({})
+    # mobile needs this. This needs to be revisited to actually work dynamically (Sravan June 7, 17)
+    for_app_id = request.GET.get('app_id', '')
+    return JsonResponse({
+        "app_id": for_app_id,
+        "latest_apk_version": {},
+        "latest_ccz_version": {}
+    })

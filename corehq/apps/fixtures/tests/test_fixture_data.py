@@ -1,6 +1,5 @@
 from xml.etree import ElementTree
 from django.test import TestCase
-from corehq.blobs import get_blob_db
 from casexml.apps.case.tests.util import check_xml_line_by_line
 from casexml.apps.phone.tests.utils import call_fixture_generator
 from corehq.apps.fixtures import fixturegenerators
@@ -8,7 +7,7 @@ from corehq.apps.fixtures.dbaccessors import delete_all_fixture_data_types, \
     get_fixture_data_types_in_domain
 from corehq.apps.fixtures.exceptions import FixtureVersionError
 from corehq.apps.fixtures.models import FixtureDataType, FixtureTypeField, \
-    FixtureDataItem, FieldList, FixtureItemField, FixtureOwnership, FIXTURE_BUCKET
+    FixtureDataItem, FieldList, FixtureItemField, FixtureOwnership
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 
@@ -100,7 +99,6 @@ class FixtureDataTest(TestCase):
         delete_all_users()
         delete_all_fixture_data_types()
         get_fixture_data_types_in_domain.clear(self.domain)
-        get_blob_db().delete(self.domain, FIXTURE_BUCKET)
         super(FixtureDataTest, self).tearDown()
 
     def test_xml(self):

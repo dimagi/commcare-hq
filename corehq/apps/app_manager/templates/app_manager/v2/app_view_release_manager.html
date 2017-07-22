@@ -14,7 +14,7 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    <script src="{% static "app_manager/js/app_view_release_manager.js" %}"></script>
+    <script src="{% static "app_manager/js/releases/app_view_release_manager.js" %}"></script>
 {% endblock js %}
 
 {% block js-inline %}{{ block.super }}
@@ -26,6 +26,8 @@
   {% initial_page_data 'application_profile_url' application_profile_url %}
   {% initial_page_data 'build_profiles' app.build_profiles %}
   {% initial_page_data 'fetch_limit' fetchLimit %}
+  {% initial_page_data 'practice_users' practice_users %}
+  {% initial_page_data 'enable_practice_users' app.enable_practice_users %}
   {% initial_page_data 'intro_only' intro_only %}
   {% initial_page_data 'langs' app.langs %}
   {% initial_page_data 'latest_build_id' latest_build_id %}

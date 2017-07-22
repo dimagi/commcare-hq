@@ -1,4 +1,5 @@
 # coding: utf-8
+import mock
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_lookup, get_custom_commcare_settings
 from corehq.apps.app_manager.models import Application
@@ -102,6 +103,15 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
         profile = self.app.create_profile()
         self._test_profile(self.app)
         self._test_custom_property(ET.fromstring(profile), 'random', 'value')
+
+    def test_heartbeat_url_toggle_off(self):
+        profile = self.app.create_profile()
+        self.assertXmlDoesNotHaveXpath(profile, "./property[@key='heartbeat-url']")
+
+    @mock.patch('corehq.toggles.PHONE_HEARTBEAT.enabled', return_value=True)
+    def test_heartbeat_url_toggle_on(self, _mock):
+        profile = self.app.create_profile()
+        self._test_custom_property(ET.fromstring(profile), 'heartbeat-url', self.app.heartbeat_url)
 
     def test_version(self):
         profile_xml = ET.fromstring(self.app.create_profile())

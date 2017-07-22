@@ -1,6 +1,6 @@
 --- 
 +++ 
-@@ -1,204 +1,77 @@
+@@ -1,206 +1,71 @@
 -{% extends "app_manager/v1/managed_app.html" %}
 +{% extends "app_manager/v2/managed_app.html" %}
  {% load xforms_extras %}
@@ -14,11 +14,11 @@
 -{% block js %}{{ block.super }}
 -    <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
 -    <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
--    <script src="{% static 'app_manager/js/app_logos.js' %}"></script>
--    <script src="{% static 'app_manager/js/commcaresettings.js' %}"></script>
+-    <script src="{% static 'app_manager/js/settings/app_logos.js' %}"></script>
+-    <script src="{% static 'app_manager/js/settings/commcare_settings.js' %}"></script>
 -    <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
--    <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
--    <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
+-    <script src="{% static 'app_manager/js/supported_languages.js' %}"></script>
+-    <script src="{% static 'app_manager/js/settings/password_setter.jquery.js' %}"></script>
 -    <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
 -    <script src="{% static "jsdiff/diff.js" %}"></script>
 -
@@ -29,15 +29,15 @@
 -    {% endif %}
 -
 -    {% if linked_apps_enabled %}
--        <script src="{% static 'app_manager/js/linked_whitelist.js' %}"></script>
+-        <script src="{% static 'app_manager/js/settings/linked_whitelist.js' %}"></script>
 -    {% endif %}
 -
 -    {# these scripts are for releases.html, but including them there causes hard-to-reproduce problems #}
 -    <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
 -    <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
--    <script src="{% static 'app_manager/js/releases.js' %}"></script>
--    <script src="{% static 'app_manager/js/app_diff.js' %}"></script>
--    <script src="{% static 'app_manager/js/language-profiles.js' %}"></script>
+-    <script src="{% static 'app_manager/js/releases/releases.js' %}"></script>
+-    <script src="{% static 'app_manager/js/releases/app_diff.js' %}"></script>
+-    <script src="{% static 'app_manager/js/releases/language_profiles.js' %}"></script>
 +  {% include 'analytics/fullstory.html' %}
  {% endblock %}
  
@@ -50,13 +50,13 @@
 +{% block js %}{{  block.super }}
 +  <script src="{% static 'app_manager/js/app_manager_utils.js' %}"></script>
 +  <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
-+  <script src="{% static 'app_manager/js/releases.js' %}"></script>
-+  <script src="{% static 'app_manager/js/language-profiles.js' %}"></script>
++  <script src="{% static 'app_manager/js/releases/releases.js' %}"></script>
++  <script src="{% static 'app_manager/js/releases/language_profiles.js' %}"></script>
 +  <script src="{% static "jsdiff/diff.js" %}"></script>
-+  <script src="{% static 'app_manager/js/app_diff.js' %}"></script>
++  <script src="{% static 'app_manager/js/releases/app_diff.js' %}"></script>
 +  <script src="{% static 'hqwebapp/js/bulk_upload_file.js' %}"></script>
-+  <script src="{% static 'app_manager/js/supported-languages.js' %}"></script>
-+  <script src="{% static 'app_manager/js/password_setter.jquery.js' %}"></script>
++  <script src="{% static 'app_manager/js/supported_languages.js' %}"></script>
++  <script src="{% static 'app_manager/js/settings/password_setter.jquery.js' %}"></script>
 +  <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
 +  <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
 +  <script src="{% static 'app_manager/js/app_view.js' %}"></script>
@@ -68,13 +68,7 @@
 +
 +{% block pre_form_content %}
 +  <div class="appmanager-page-actions">
-+      {% if can_preview_form %}
-+        {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
-+      {% endif %}
-+      <a href="{% url "app_summary" domain app.id %}" class="btn btn-default">
-+          <i class="fa fa-list-alt"></i>
-+          {% trans "App Summary" %}
-+      </a>
++      {% include 'app_manager/v2/partials/app_summary_button.html' %}
 +  </div>
 +
 +  <div class="appmanager-edit-title appmanager-edit-app-title">
@@ -108,6 +102,8 @@
 -    {% initial_page_data 'app_version' app.version %}
 -    {% initial_page_data 'domain_names' domain_names %}
 -    {% initial_page_data 'fetch_limit' fetchLimit %}
+-    {% initial_page_data 'practice_users' practice_users %}
+-    {% initial_page_data 'enable_practice_users' app.enable_practice_users %}
 -    {% initial_page_data 'is_remote_app' app.is_remote_app %}
 -    {% initial_page_data 'is_superuser' request.user.is_superuser %}
 -    {% initial_page_data 'lang' lang %}

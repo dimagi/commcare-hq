@@ -12,7 +12,7 @@ from django.template.loader import render_to_string
 from lxml import etree
 from diff_match_patch import diff_match_patch
 from django.utils.translation import ugettext as _
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
@@ -32,7 +32,6 @@ from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
-    BlankXFormError,
     ConflictingCaseTypeError,
     FormNotFoundException, XFormValidationFailed)
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
@@ -123,16 +122,13 @@ def copy_form(request, domain, app_id, form_unique_id):
     form = app.get_form(form_unique_id)
     module = form.get_module()
     to_module_id = int(request.POST['to_module_id'])
+    to_module = app.get_module(to_module_id)
     new_form = None
     try:
-        new_form = app.copy_form(module.id, form.id, to_module_id)
-    except ConflictingCaseTypeError:
-        messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
+        new_form = app.copy_form(module.id, form.id, to_module.id)
+        if module['case_type'] != to_module['case_type']:
+            messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
         app.save()
-    except BlankXFormError:
-        # don't save!
-        messages.error(request, _('We could not copy this form, because it is blank.'
-                                  'In order to copy this form, please add some questions first.'))
     except IncompatibleFormTypeException:
         # don't save!
         messages.error(request, _('This form could not be copied because it '
@@ -142,8 +138,7 @@ def copy_form(request, domain, app_id, form_unique_id):
 
     if new_form:
         return back_to_main(request, domain, app_id=app_id, form_unique_id=new_form.unique_id)
-    return back_to_main(request, domain, app_id=app_id, module_id=module.id,
-                        form_id=form.id)
+    return HttpResponseRedirect(reverse('view_form', args=[domain, app._id, module.id, form.id]))
 
 
 @no_conflict_require_POST

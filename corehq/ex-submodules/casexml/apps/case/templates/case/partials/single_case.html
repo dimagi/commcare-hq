@@ -36,6 +36,9 @@
             {% if ledgers %}
                 <li><a href="#case-ledgers" data-toggle="tab">{% trans "Ledger Sections" %}</a></li>
             {% endif %}
+            {% if repeat_records %}
+                <li><a href="#repeat-records" data-toggle="tab">{% trans "Forwarded Records" %}</a></li>
+            {% endif %}
             </ul>
 
             <div class="tab-content">
@@ -57,6 +60,12 @@
                 <div class="tab-pane" id="case-attachments">
                     {% include "case/partials/case_attachments.html" %}
                 </div> <!-- end case-attachments tab -->
+                {% endif %}
+
+                {% if repeat_records %}
+                    <div class="tab-pane" id="repeat-records">
+                        {% include "case/partials/repeat_records.html" %}
+                    </div>
                 {% endif %}
 
                 {% if ledgers %}

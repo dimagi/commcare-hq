@@ -8,10 +8,10 @@ from django.db import models
 
 from corehq.motech.dhis2.utils import (
     get_date_filter,
-    get_last_month,
+    get_previous_month,
     get_report_config,
     get_ucr_data,
-    get_last_quarter,
+    get_previous_quarter,
 )
 from corehq.motech.dhis2.const import SEND_FREQUENCY_MONTHLY, SEND_FREQUENCY_QUARTERLY, SEND_FREQUENCIES
 from corehq.util.quickcache import quickcache
@@ -109,15 +109,15 @@ class DataSetMap(Document):
                     datavalue['orgUnit'] = org_unit
         return datavalues
 
-    def get_dataset(self):
+    def get_dataset(self, send_date):
         report_config = get_report_config(self.domain, self.ucr_id)
         date_filter = get_date_filter(report_config)
 
         if self.frequency == SEND_FREQUENCY_MONTHLY:
-            date_range = get_last_month()
+            date_range = get_previous_month(send_date)
             period = date_range.startdate.strftime('%Y%m')
         elif self.frequency == SEND_FREQUENCY_QUARTERLY:
-            date_range = get_last_quarter()
+            date_range = get_previous_quarter(send_date)
             period = date_range.startdate.strftime('%Y') + 'Q' + str((date_range.startdate.month // 3) + 1)
         ucr_data = get_ucr_data(report_config, date_filter, date_range)
 

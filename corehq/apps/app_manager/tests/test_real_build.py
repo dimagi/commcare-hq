@@ -33,8 +33,9 @@ class TestRealBuild(SimpleTestCase):
             ))
 
         response.raise_for_status()
-        app = Application.wrap(response.json())
-        app.create_all_files()
+        with mock.patch.object(Application, 'enable_practice_users', return_value=False):
+            app = Application.wrap(response.json())
+            app.create_all_files()
 
     @mock.patch('corehq.apps.app_manager.models.validate_xform', lambda domain, source: None)
     def test_real_build(self):

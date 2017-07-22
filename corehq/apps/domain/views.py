@@ -74,7 +74,7 @@ from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import (
     get_change_status, get_privileges, fmt_dollar_amount,
     quantize_accounting_decimal, get_customer_cards,
-    log_accounting_error,
+    log_accounting_error, domain_has_privilege,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
@@ -2940,14 +2940,14 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
                 feature.save_fn(self.domain, new_state)
 
 
-class FeatureFlagsView(BaseAdminProjectSettingsView):
-    urlname = 'domain_feature_flags'
-    page_title = ugettext_lazy("Feature Flags")
-    template_name = 'domain/admin/feature_flags.html'
+class FlagsAndPrivilegesView(BaseAdminProjectSettingsView):
+    urlname = 'feature_flags_and_privileges'
+    page_title = ugettext_lazy("Feature Flags and Privileges")
+    template_name = 'domain/admin/flags_and_privileges.html'
 
     @method_decorator(require_superuser)
     def dispatch(self, request, *args, **kwargs):
-        return super(FeatureFlagsView, self).dispatch(request, *args, **kwargs)
+        return super(FlagsAndPrivilegesView, self).dispatch(request, *args, **kwargs)
 
     @memoized
     def enabled_flags(self):
@@ -2959,11 +2959,19 @@ class FeatureFlagsView(BaseAdminProjectSettingsView):
             key=_sort_key,
         )
 
+    def _get_privileges(self):
+        return sorted([
+            (privileges.Titles.get_name_from_privilege(privilege),
+             domain_has_privilege(self.domain, privilege))
+            for privilege in privileges.MAX_PRIVILEGES
+        ], key=lambda (name, has): (not has, name))
+
     @property
     def page_context(self):
         return {
             'flags': self.enabled_flags(),
-            'use_sql_backend': self.domain_object.use_sql_backend
+            'use_sql_backend': self.domain_object.use_sql_backend,
+            'privileges': self._get_privileges(),
         }
 
 

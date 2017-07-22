@@ -11,7 +11,8 @@ INSERT INTO {{ form_fact }} (
     edited_on,
     build_id,
     state,
-    last_modified
+    last_modified,
+    batch_id
 )
 SELECT
     form_id,
@@ -26,7 +27,8 @@ SELECT
     edited_on,
     build_id,
     state,
-    GREATEST(received_on, deleted_on, edited_on) AT TIME ZONE default_timezone
+    GREATEST(received_on, deleted_on, edited_on) AT TIME ZONE default_timezone,
+    '{{ batch_id }}'
 FROM
     {{ form_staging }} AS form_table
 JOIN {{ domain_dim }} AS domain_table ON form_table.domain = domain_table.domain

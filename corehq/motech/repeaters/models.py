@@ -432,6 +432,10 @@ class RepeatRecordAttempt(DocumentSchema):
     next_check = DateTimeProperty()
     succeeded = BooleanProperty(default=False)
 
+    @property
+    def message(self):
+        return self.success_response if self.succeeded else self.failure_reason
+
 
 class RepeatRecord(Document):
     """
@@ -600,7 +604,7 @@ class RepeatRecord(Document):
             cancelled=False,
             datetime=now,
             failure_reason=None,
-            success_response=self._format_response(response),
+            success_response=self._format_response(response) if response else None,
             next_check=None,
             succeeded=True,
         )

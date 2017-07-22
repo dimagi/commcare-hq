@@ -1,4 +1,5 @@
-import logging
+from corehq.util.view_utils import get_request
+from dimagi.utils.logging import notify_exception
 
 
 def format_angular_error(error_msg, log_error):
@@ -13,7 +14,7 @@ def format_angular_error(error_msg, log_error):
     resp = {'error': error_msg}
 
     if log_error:
-        logging.exception(error_msg)
+        notify_exception(get_request(), error_msg)
 
     return resp
 

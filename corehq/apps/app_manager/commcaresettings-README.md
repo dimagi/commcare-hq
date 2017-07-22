@@ -1,5 +1,9 @@
 (This was moved from the deprecated core-hq github wiki pages.)
 
+# Adding a new CommCare Setting
+
+A new setting can be defined in commcare-app-settings.yaml or commcare-profile-settings.yaml depending on whether the setting is HQ only or should also go to mobile xml files. The spec for setting is given in below section.
+
 # CommCare Settings Config Spec
 
 This page documents the YAML configuration found in these locations:
@@ -36,6 +40,9 @@ with each element containing the following properties:
 * `force` - Set to `true` to have the `force` attribute of the setting set when building the profile. Only applies when type='properties' (default).
 * `toggle` - If specified, the property will only be shown if the given toggle is enabled. The value should be an identifier for a toggle in `corehq/toggles.py`, e.g. "CUSTOM_APP_BASE_URL"
 * `warning` - Text displayed if the value of the setting is invalid
+*
+
+Only static setting options can be defined in settings yaml files, any app or domain specific context to render the setting on HQ Edit Application settings page can be provided in `corehq.apps.app_manager.view.apps:get_app_view_context`
 
 ## Example
 ```yaml

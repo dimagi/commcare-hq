@@ -1355,7 +1355,8 @@ class ExportDataSchema(Document):
         app_build_ids.extend(cls._get_current_app_ids_for_domain(domain, app_id))
 
         for app_doc in iter_docs(Application.get_db(), app_build_ids, chunksize=10):
-            if app_doc.get('doc_type', '') != 'Application':
+            doc_type = app_doc.get('doc_type', '')
+            if doc_type not in ('Application', 'LinkedApplication'):
                 continue
             if (not app_doc.get('has_submissions', False) and
                     app_doc.get('copy_of')):
@@ -2121,10 +2122,7 @@ class MultiMediaExportColumn(ExportColumn):
         if not value or value == MISSING_VALUE:
             return value
 
-        download_url = u'{url}?attachment={attachment}'.format(
-            url=absolute_reverse('download_attachment', args=(domain, doc_id)),
-            attachment=value,
-        )
+        download_url = absolute_reverse('api_form_attachment', args=(domain, doc_id, value))
         if transform_dates:
             download_url = u'=HYPERLINK("{}")'.format(download_url)
 

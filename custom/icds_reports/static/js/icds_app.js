@@ -8,7 +8,7 @@ function MainController($scope, $route, $routeParams, $location) {
 
 MainController.$inject = ['$scope', '$route', '$routeParams', '$location'];
 
-window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap'])
+window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'leaflet-directive'])
     .controller('MainController', MainController)
     .config(['$interpolateProvider', '$routeProvider', function($interpolateProvider, $routeProvider) {
         $interpolateProvider.startSymbol('{$');
@@ -16,7 +16,7 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
 
         $routeProvider
             .when("/", {
-                redirectTo : '/program_summary/system_usage',
+                redirectTo : '/program_summary/maternal_child',
             }).when("/program_summary/:step", {
                 template : "<system-usage></system-usage>",
             }).when("/awc_opened", {
@@ -43,11 +43,17 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             .when("/underweight_children/:step", {
                 template : "<underweight-children-report></underweight-children-report>",
             })
-            .when("/breastfeeding", {
-                template : "breastfeeding",
+            .when("/wasting", {
+                redirectTo : "/wasting/map",
             })
-            .when("/exclusive_bf", {
-                template : "exclusive_bf",
+            .when("/wasting/:step", {
+                template : "<prevalence-of-severe></prevalence-of-severe>",
+            })
+            .when("/stunning", {
+                redirectTo : "/stunning/map",
+            })
+            .when("/stunning/:step", {
+                template : "<prevalence-of-stunning></prevalence-of-stunning>",
             })
             .when("/comp_feeding", {
                 template : "comp_feeding",
@@ -56,7 +62,7 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
                 template : "health_tabular_report",
             })
             .when("/awc_reports", {
-                redirectTo : "/awc_reports/system_usage",
+                redirectTo : "/awc_reports/pse",
             })
             .when("/awc_reports/:step", {
                 template : "<awc-reports></awc-reports>",

@@ -34,7 +34,7 @@ describe('App Releases', function() {
             ajax_stub;
 
         beforeEach(function() {
-            var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain,
+            var ReleasesMain = hqImport('app_manager/js/releases/releases.js').ReleasesMain,
                 registerUrl = hqImport("hqwebapp/js/urllib.js").registerUrl;
             registerUrl("odk_install", "/a/test-domain/apps/odk/---/install/");
             registerUrl("odk_media_install", "/a/test-domain/apps/odk/---/media_install/");
@@ -87,8 +87,8 @@ describe('App Releases', function() {
     });
 
     describe('app_code', function() {
-        var ReleasesMain = hqImport('app_manager/js/releases.js').ReleasesMain;
-        var SavedApp = hqImport('app_manager/js/releases.js').SavedApp;
+        var ReleasesMain = hqImport('app_manager/js/releases/releases.js').ReleasesMain;
+        var SavedApp = hqImport('app_manager/js/releases/releases.js').SavedApp;
         var savedApp,
             releases;
         beforeEach(function() {

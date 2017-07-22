@@ -27,6 +27,7 @@ NOSE_PLUGINS = [
     # The following are not enabled by default
     'corehq.tests.noseplugins.logfile.LogFilePlugin',
     'corehq.tests.noseplugins.timing.TimingPlugin',
+    'corehq.tests.noseplugins.output.OutputPlugin',
 
     # Uncomment to debug tests. Plugins have nice hooks for inspecting state
     # before/after each test or context setup/teardown, etc.

@@ -17,6 +17,9 @@
     <property key="cur_locale" value="{{ locale }}" force="false"/>
     <property key="cc_user_domain" value="{{ cc_user_domain }}" force="true"/>
     <property key="jr_openrosa_api" value="1.0" force="true"/>
+    {% if apk_heartbeat_url %}
+    <property key="heartbeat-url" value="{{ apk_heartbeat_url }}" force="true"/>
+    {% endif %}
 
     <!-- Properties configured on CommCare HQ 1.0 -->
     {% for key, value in app_profile.properties.items %}{% if value != None %}

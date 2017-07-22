@@ -3,14 +3,16 @@ INSERT INTO {{ location_type_staging }} (
     name,
     code,
     location_type_id,
-    location_type_last_modified
+    location_type_last_modified,
+    batch_id
 )
 SELECT
     domain,
     name,
     code,
     id,
-    last_modified
+    last_modified,
+    '{{ batch_id }}'
 FROM
     {{ locationtype_table }}
 WHERE

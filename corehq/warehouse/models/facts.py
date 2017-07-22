@@ -20,10 +20,16 @@ from corehq.warehouse.utils import truncate_records_for_cls
 
 class BaseFact(models.Model, WarehouseTable):
 
+    batch = models.ForeignKey(
+        'Batch',
+        on_delete=models.PROTECT,
+    )
+
     @classmethod
-    def commit(cls, start_datetime, end_datetime):
+    def commit(cls, batch):
         with transaction.atomic(using=db_for_read_write(cls)):
-            cls.load(start_datetime, end_datetime)
+            cls.load(batch)
+        return True
 
     class Meta:
         abstract = True

@@ -1,37 +1,56 @@
 <div class="preogress-report-directive">
     <div class="row no-margin fixes-filters">
-        <div class="col-md-4">
-            <span class="breadcrump-element" ng-bind="$ctrl.label"></span>
+        <div class="col-md-5">
+            <div class="row">
+                <span class="breadcrump-element" ng-bind="$ctrl.label"></span>
+            </div>
+            <div class="row">
+                <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < -1 && $ctrl.moveToLocation('national', -1)">National </span>
+                <span class="location-breadcump" ng-click="$ctrl.getDisableIndex() < $index && $ctrl.moveToLocation(loc, $index)" ng-repeat="loc in $ctrl.selectedLocations | filter: { location_id: '!all'} track by $index">
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i> {$ loc.name $}
+                </span>
+            </div>
         </div>
-        <div class="col-md-7">
-            <filters filters="$ctrl.filters" data="$ctrl.filtersData"></filters>
+        <div class="col-md-6">
+            <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
         </div>
         <div class="col-md-1">
-            <print-report></print-report>
+            <div class="row">
+                <div class="col-md-4">
+                    <print-report></print-report>
+                </div>
+                <div class="col-md-4">
+                    <a class="black" href="#download"><i uib-popover-html="'Go to tabular report'"
+                     popover-placement="left"
+                     popover-trigger="'mouseenter'" style="padding: 3px;" class="fa fa-download fa-2x pointer"></i></a>
+                </div>
+            </div>
         </div>
     </div>
     <div ng-if="$ctrl.data === void(0)">
         <h2>No Data</h2>
     </div>
     <div class="report-content">
+        <div class="alert alert-info" ng-show="$ctrl.showWarning" style="margin-top: 30px;">
+            <strong>Info!</strong> "You are downloading data for the current calendar month. Data for this report is calculated using calendar months (for example, January 1st-January 31st). Data for this month will not be complete until the end of the month."
+        </div>
         <div class="row" ng-repeat="section in $ctrl.data">
-            <h2 ng-bind-html="section.section_title"></h2>
             <table class="table black">
                 <thead>
                     <tr>
-                        <th>Indicator</th>
-                        <th ng-repeat="month in section.months">
+                        <th class="col-md-6"><span ng-bind-html="section.section_title"></span></th>
+                        <th class="col-md-1" ng-repeat="month in section.months">
                             <span ng-bind-html="month"></span>
                         </th>
-                        <th>Average</th>
+                        <th class="col-md-1">National Average</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr ng-if="row.data" ng-repeat="row in section.rows_config">
                         <td ng-repeat="cell in row.data">
                             <span ng-if="$index === 0">{$ cell.html $}</span>
-                            <span ng-if="$index !== 0 && row.average !== void(0)">{$ cell.html | number:2 $} %</span>
-                            <span ng-if="$index !== 0 && row.average === void(0)">{$ cell.html | number:0 $}</span>
+                            <span ng-class="{'black': $ctrl.checkColor('black', $index, row.data), 'red': $ctrl.checkColor('red', $index, row.data), 'green': $ctrl.checkColor('green', $index, row.data)}" ng-if="$index !== 0 && row.average !== void(0)">{$ cell.html | number:2 $} %</span>
+                            <span ng-class="{'black': $ctrl.checkColor('black', $index, row.data), 'red': $ctrl.checkColor('red', $index, row.data), 'green': $ctrl.checkColor('green', $index, row.data)}" ng-if="$index !== 0 && row.average === void(0)">{$ cell.html | indiaNumbers $}</span>
                         </td>
                         <td>
                             <span ng-if="row.average !== void(0)">{$ $ctrl.sumValues(row.average) | number:2 $} %</span>
