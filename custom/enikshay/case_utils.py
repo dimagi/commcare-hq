@@ -340,7 +340,17 @@ def _get_private_locations(person_case):
         tu_location_nikshay_code = None
 
     try:
-        district_location = pcp_location.parent
+        district_location_id = person_case.get_case_property('current_address_district_choice')
+        district_location = SQLLocation.active_objects.get(
+            domain=person_case.domain,
+            location_id=district_location_id
+        )
+    except SQLLocation.DoesNotExist:
+        raise NikshayLocationNotFound("DTO location {} not found for person: {}".format(
+            district_location_id,
+            person_case.case_id))
+
+    try:
         city_location = district_location.parent
         state_location = city_location.parent
     except AttributeError:
