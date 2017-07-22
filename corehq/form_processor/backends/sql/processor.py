@@ -149,17 +149,16 @@ class FormProcessorSQL(object):
         return xform
 
     @classmethod
-    def xformerror_from_xform_instance(cls, instance, error_message, with_new_id=False):
+    def xformerror_from_xform_instance(cls, instance, error_message):
         instance.state = XFormInstanceSQL.ERROR
         instance.problem = error_message
 
-        if with_new_id:
-            orig_id = instance.form_id
-            cls.assign_new_id(instance)
-            instance.orig_id = orig_id
-            if instance.is_saved():
-                # clear the ID since we want to make a new doc
-                instance.id = None
+        orig_id = instance.form_id
+        cls.assign_new_id(instance)
+        instance.orig_id = orig_id
+        if instance.is_saved():
+            # clear the ID since we want to make a new doc
+            instance.id = None
 
         return instance
 

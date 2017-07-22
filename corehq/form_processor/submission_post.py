@@ -313,7 +313,7 @@ class SubmissionPost(object):
                 ) % (func, instance.form_id, type(resp).__name__, error_message))
                 errors.append(error_message)
         if errors:
-            self.interface.xformerror_from_xform_instance(instance, ", ".join(errors), with_new_id=True)
+            self.interface.xformerror_from_xform_instance(instance, ", ".join(errors))
             self.formdb.update_form_problem_and_state(instance)
         return errors
 
@@ -391,7 +391,7 @@ class SubmissionPost(object):
 def _transform_instance_to_error(interface, e, instance):
     error_message = '{}: {}'.format(
         type(e).__name__, unicode(e))
-    instance = interface.xformerror_from_xform_instance(instance, error_message, with_new_id=True)
+    instance = interface.xformerror_from_xform_instance(instance, error_message)
     logging.exception((
         u"Warning in case or stock processing "
         u"for form {}: {}."
@@ -414,7 +414,7 @@ def _notify_submission_error(interface, instance, exception, message=None):
     from corehq.util.global_request.api import get_request
     request = get_request()
     error_message = u'{}: {}'.format(type(exception).__name__, unicode(exception))
-    instance = interface.xformerror_from_xform_instance(instance, error_message, with_new_id=True)
+    instance = interface.xformerror_from_xform_instance(instance, error_message)
     domain = getattr(instance, 'domain', '---')
     message = message or u"Error in case or stock processing"
     details = {
