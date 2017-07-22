@@ -650,20 +650,9 @@ class ViewMultimediaFile(View):
             return None
 
     def get(self, request, *args, **kwargs):
-        obj = CachedObject(str(self.doc_id)
-                           + ':' + self.kwargs.get('media_type')
-                           + ':' + str(self.thumb))
-        if not obj.is_cached():
-            data, content_type = self.multimedia.get_display_file()
-            if self.thumb:
-                data = CommCareImage.get_thumbnail_data(data, self.thumb)
-            buffer = StringIO(data)
-            metadata = {'content_type': content_type}
-            obj.cache_put(buffer, metadata, timeout=None)
-        else:
-            metadata, buffer = obj.get()
-            data = buffer.getvalue()
-            content_type = metadata['content_type']
+        data, content_type = self.multimedia.get_display_file()
+        if self.thumb:
+            data = CommCareImage.get_thumbnail_data(data, self.thumb)
         return HttpResponse(data, content_type=content_type)
 
 
