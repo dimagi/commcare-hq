@@ -1,4 +1,4 @@
-/* globals hqDefine, $, eventize */
+/* globals hqDefine, $ */
 
 hqDefine('style/js/ui_elements/ui-element-langcode-button.js', function () {
     'use strict';

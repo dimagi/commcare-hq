@@ -64,7 +64,7 @@ hqDefine('style/js/ui_elements/ui-element-key-val-mapping.js', function () {
                 defaultPath: defaultIconPath,
                 inputElement: $("#" + self.cssId()),
             });
-        };
+        }
 
         this.toggleEditMode = function() {
             this.editing(!this.editing());
@@ -199,14 +199,14 @@ hqDefine('style/js/ui_elements/ui-element-key-val-mapping.js', function () {
                     key: ko.utils.unwrapObservable(item.key),
                     value: _.object(_(item.value()).map(function (value, lang) {
                         return [lang, ko.utils.unwrapObservable(value)];
-                    }))
+                    })),
                 };
             });
 
         };
     };
 
-    module.new = function (options) {
+    module.new = function (o) {
         var m = new MapList(o);
         m.edit = ko.observable(true);
         m.buttonText = o.buttonText || "Edit",
@@ -238,7 +238,7 @@ hqDefine('style/js/ui_elements/ui-element-key-val-mapping.js', function () {
                     } else {
                         m.setItems(copy.getItems());
                     }
-                }
+                },
             });
 
             var $modal = $modalDiv.find('.modal');
