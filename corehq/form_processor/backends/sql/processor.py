@@ -145,7 +145,7 @@ class FormProcessorSQL(object):
     @classmethod
     def assign_new_id(cls, xform):
         from corehq.sql_db.util import new_id_in_same_dbalias
-        if xform.is_saved()
+        if xform.is_saved():
             # avoid moving to a separate sharded db
             xform.form_id = new_id_in_same_dbalias(xform.form_id)
         else:
