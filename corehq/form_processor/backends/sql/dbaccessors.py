@@ -583,11 +583,17 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     @transaction.atomic
     def update_form_problem_and_state(form):
-        with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute(
-                'SELECT update_form_problem_and_state(%s, %s, %s)',
-                [form.form_id, form.problem, form.state]
-            )
+        from corehq.form_processor.change_publishers import publish_form_saved
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+        db_name = get_db_alias_for_partitioned_doc(form.form_id)
+        if not form.is_saved():
+            FormAccessorSQL.save_new_form(form)
+        else:
+            if form.orig_id:
+                old_db_name = get_db_alias_for_partitioned_doc(form.orign_id)
+                assert old_db_name == db_name, "this method doesn't support moving the form to new db"
+            form.save(using=db_name)
+            publish_form_saved(form)
 
     @staticmethod
     def get_deleted_form_ids_for_user(domain, user_id):

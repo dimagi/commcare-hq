@@ -320,7 +320,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
     def _get_attachment_from_db(self, attachment_name):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-        return FormAccessorSQL.get_attachment_by_name(self.form_id, attachment_name)
+        return FormAccessorSQL.get_attachment_by_name(self.orig_id or self.form_id, attachment_name)
 
     def _get_attachments_from_db(self):
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
