@@ -272,6 +272,7 @@ class BlobHelper(object):
             raise TypeError("BlobHelper requires a real _id")
 
         self._id = bucket_id
+        self.blobdb_bucket_id = bucket_id
         self.doc = doc
         self.doc_type = doc["doc_type"]
         self.database = database
