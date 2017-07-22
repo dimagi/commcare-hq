@@ -1,3 +1,4 @@
+import uuid
 from corehq.sql_db.config import partition_config
 from django.conf import settings
 from django import db
@@ -105,6 +106,20 @@ def get_db_alias_for_partitioned_doc(partition_value):
     else:
         db_name = 'default'
     return db_name
+
+
+def new_id_in_same_dbalias(partition_value):
+    """
+    Returns a new partition value that belongs to the same db alias as
+        the given partition value does
+    """
+    old_db_name = get_db_alias_for_partitioned_doc(partition_value)
+    new_db_name = None
+    while old_db_name != new_db_name:
+        # todo; guard against infinite recursion
+        new_partition_value = unicode(uuid.uuid4())
+        new_db_name = get_db_alias_for_partitioned_doc(new_partition_value)
+    return new_partition_value
 
 
 def get_db_aliases_for_partitioned_query():

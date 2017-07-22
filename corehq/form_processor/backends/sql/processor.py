@@ -144,8 +144,12 @@ class FormProcessorSQL(object):
 
     @classmethod
     def assign_new_id(cls, xform):
-        new_id = unicode(uuid.uuid4())
-        xform.form_id = new_id
+        from corehq.sql_db.util import new_id_in_same_dbalias
+        if xform.is_saved()
+            # avoid moving to a separate sharded db
+            xform.form_id = new_id_in_same_dbalias(xform.form_id)
+        else:
+            xform.form_id = unicode(uuid.uuid4())
         return xform
 
     @classmethod
