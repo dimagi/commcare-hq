@@ -1,5 +1,6 @@
 # -*- coding: utf- 8 -*-
 import json
+from collections import OrderedDict
 
 from django.utils.translation import ugettext_noop
 from django.views.generic import TemplateView
@@ -109,6 +110,13 @@ class BeneficiaryView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(BeneficiaryView, self).get_context_data(**kwargs)
         beneficiary = RCHRecord.objects.get(pk=kwargs.get('beneficiary_id'))
-        context['beneficiary_details'] = json.loads(serializers.serialize('json', [beneficiary]))[0].get('fields')
-        context['beneficiary_details'].update(beneficiary.prop_doc['details'])
+        beneficiary_details = json.loads(serializers.serialize('json', [beneficiary]))[0].get('fields')
+        # delete the details dict and include it as details in context
+        del beneficiary_details['details']
+        beneficiary_details.update(beneficiary.details)
+        ordered_beneficiary_details = OrderedDict()
+        for detail in sorted(beneficiary_details.iterkeys()):
+            ordered_beneficiary_details[detail] = beneficiary_details[detail]
+        context['beneficiary_details'] = ordered_beneficiary_details
+
         return context
