@@ -21,7 +21,7 @@ RECORDS_PER_PAGE = 200
 
 @method_decorator([toggles.DASHBOARD_ICDS_REPORT.required_decorator(), login_and_domain_required], name='dispatch')
 class BeneficariesList(TemplateView):
-    urlname = 'beneficiaries_list'
+    urlname = 'rch_cas_dashboard'
     http_method_names = ['get', 'post']
 
     # ToDo: Check how to set page title. Looks like this is not working
