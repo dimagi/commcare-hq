@@ -36,33 +36,28 @@ class BeneficariesList(TemplateView):
         dcode = self.request.GET.get('dtcode')
         if dcode:
             self.beneficiaries = self.beneficiaries.filter(district_id=dcode)
-        # To be included once mapping is available
-        # awcid = self.request.GET.get('awcid')
-        # village_id = self.request.GET.get('village_id')
-        # village_ids = [village_id]
-        # if awcid:
-        #     village_ids = village_ids + AreaMapping.fetch_village_ids_for_awcid(awcid)
-        #
-        # if village_ids:
-        #     self.mother_beneficiaries = self.mother_beneficiaries.filter(MDDS_VillageID__in=village_ids)
-        #     self.child_beneficiaries = self.child_beneficiaries.filter(MDDS_VillageID__in=village_ids)
 
+        # find corresponding village(s) for the selected awc id to search
+        # rch records by their village
+        awcid = self.request.GET.get('awcid')
         village_code = self.request.GET.get('village_code')
-        if village_code:
-            self.beneficiaries = self.beneficiaries.filter(village_id=village_code)
+        village_ids = [village_code]
+        if awcid:
+            village_ids = village_ids + AreaMapping.fetch_village_ids_for_awcid(awcid)
+        if village_ids:
+            self.beneficiaries = self.beneficiaries.filter(village_id__in=village_ids)
 
-    def get_cas_records(self, owner_id=None):
+    def get_cas_records(self, awc_ids):
         self.beneficiaries = case_es.CaseES().domain(ICDS_CAS_DOMAIN).size(RECORDS_PER_PAGE)
-        if owner_id:
-            awc_ids = list(
-                SQLLocation.objects.filter(site_code=owner_id).values_list('location_id', flat=True)
-            )
-            user_ids = user_ids_at_locations(awc_ids)
-            # ToDo: Remove owner_id from the check, added just for demo on local machine
-            user_ids = user_ids + [owner_id]
-            if user_ids:
-                self.beneficiaries = self.beneficiaries.filter(case_es.user(user_ids))
-        return self.beneficiaries.run()
+        awc_ids = list(
+            SQLLocation.objects.filter(site_code__in=awc_ids).values_list('location_id', flat=True)
+        )
+        user_ids = user_ids_at_locations(awc_ids)
+        # ToDo: Confirm that this check is correct to include both users and locations
+        user_ids = user_ids + awc_ids
+        if user_ids:
+            self.beneficiaries = self.beneficiaries.filter(case_es.user(user_ids))
+            return self.beneficiaries.run()
 
     def get_context_data(self, **kwargs):
         context = super(BeneficariesList, self).get_context_data(**kwargs)
@@ -71,10 +66,16 @@ class BeneficariesList(TemplateView):
 
         beneficiaries_in = self.request.GET.get('present_in')
         if beneficiaries_in == 'cas':
-            cas_records = self.get_cas_records(self.request.GET.get('awcid'))
-            context['beneficiaries'] = cas_records.hits
-            context['beneficiaries_total'] = cas_records.total
-            context['beneficiaries_count'] = len(cas_records.hits)
+            village_code = self.request.GET.get('village_code')
+            awc_id = self.request.GET.get('awcid')
+            awc_ids = [awc_id] + AreaMapping.fetch_awc_ids_for_village_id(village_code)
+            context['beneficiaries'] = []
+            if awc_ids:
+                cas_records = self.get_cas_records(awc_ids)
+                if cas_records:
+                    context['beneficiaries'] = cas_records.hits
+                    context['beneficiaries_total'] = cas_records.total
+                    context['beneficiaries_count'] = len(cas_records.hits)
         elif beneficiaries_in == 'both':
             self.beneficiaries = RCHRecord.objects.exclude(cas_case_id__isnull=True)
         else:

@@ -151,3 +151,7 @@ class AreaMapping(models.Model):
     @classmethod
     def fetch_village_ids_for_awcid(cls, awcid):
         return list(cls.objects.filter(awcid=awcid).values_list('village_code', flat=True).distinct().all())
+
+    @classmethod
+    def fetch_awc_ids_for_village_id(cls, village_id):
+        return list(cls.objects.filter(village_code=village_id).values_list('awcid', flat=True).distinct().all())
