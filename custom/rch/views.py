@@ -53,12 +53,13 @@ class BeneficariesList(TemplateView):
 
     def get_cas_records(self, awc_ids):
         self.beneficiaries = case_es.CaseES().domain(ICDS_CAS_DOMAIN).size(RECORDS_PER_PAGE)
-        awc_ids = list(
+        awc_loc_ids = list(
             SQLLocation.objects.filter(site_code__in=awc_ids).values_list('location_id', flat=True)
         )
-        user_ids = user_ids_at_locations(awc_ids)
+        user_ids = user_ids_at_locations(awc_loc_ids)
         # ToDo: Confirm that this check is correct to include both users and locations
-        user_ids = user_ids + awc_ids
+        # ToDo: remove awc_ids added for demo purpose
+        user_ids = user_ids + awc_loc_ids + awc_ids
         if user_ids:
             self.beneficiaries = self.beneficiaries.filter(case_es.user(user_ids))
             return self.beneficiaries.run()

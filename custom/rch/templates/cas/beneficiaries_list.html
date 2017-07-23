@@ -3,6 +3,8 @@
 {% load xforms_extras %}
 {% load i18n %}
 {% block content %}
+{% load view_tags %}
+
 <div class="row">
   <div class="col-md-12">
     <h3>{{ filter_form.form_name }}</h3>
@@ -35,7 +37,11 @@
                         <td>{{ beneficiary.name }}</td>
                         <td>{{ beneficiary.husband_name }}</td>
                         <td>{{ beneficiary.mother_name }}</td>
-                        <td>{{ beneficiary.aadhar_number }}</td>
+                        {% if beneficiary.aadhar_number %}
+                            <td>{{ beneficiary.aadhar_number|mask_aadhar_number }}</td>
+                        {% else %}
+                            <td>{% trans 'Not Present' %}</td>
+                        {% endif %}
                         <td>West Godavari</td>
                     </tr>
                 {% endfor %}
