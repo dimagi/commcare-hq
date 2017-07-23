@@ -6,21 +6,25 @@ from django.views.generic import TemplateView
 from django.core import serializers
 from django.utils.decorators import method_decorator
 
+from corehq import toggles
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.es import cases as case_es
 from corehq.apps.locations.dbaccessors import user_ids_at_locations
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.domain.decorators import require_superuser
 from custom.rch.forms import BeneficiariesFilterForm
-from custom.rch.models import RCHRecord
+from custom.rch.models import RCHRecord, AreaMapping
 
 ICDS_CAS_DOMAIN = "icds-cas"
 RECORDS_PER_PAGE = 200
 
 
+@method_decorator([toggles.DASHBOARD_ICDS_REPORT.required_decorator(), login_and_domain_required], name='dispatch')
 class BeneficariesList(TemplateView):
     urlname = 'beneficiaries_list'
     http_method_names = ['get', 'post']
 
+    # ToDo: Check how to set page title. Looks like this is not working
     page_title = ugettext_noop("RCH-CAS Beneficiary list")
     template_name = 'rch/beneficiaries_list.html'
 
