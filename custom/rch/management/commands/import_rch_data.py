@@ -36,14 +36,8 @@ class Command(BaseCommand):
                     rch_beneficiary = RCHRecord(doc_type=RCH_RECORD_TYPE_MAPPING[beneficiary_type])
 
                 rch_beneficiary.set_beneficiary_fields(record)
-                properties_doc = rch_beneficiary.prop_doc
-                try:
-                    properties_doc['properties'] = record
-                except UnicodeDecodeError:
-                    import ipdb; ipdb.set_trace()
+                rch_beneficiary.details = record
                 rch_beneficiary.dob = datetime.strptime(rch_beneficiary.dob, "%d/%m/%y")
                 if rch_beneficiary.village_id == 'NULL':
                     rch_beneficiary.village_id = 0
-                properties_doc.save()
-                rch_beneficiary.details_doc_id = properties_doc.get_id
                 rch_beneficiary.save()

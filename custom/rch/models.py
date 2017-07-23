@@ -4,6 +4,7 @@ from django.conf import settings
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
 from custom.rch.utils import fetch_beneficiaries_records, MOTHER_DATA_TYPE, CHILD_DATA_TYPE
+from jsonfield.fields import JSONField
 from dimagi.ext.couchdbkit import (
     Document,
     DictProperty,
@@ -29,7 +30,7 @@ class RCHRecord(models.Model):
     RCH_Primary_Key = None
 
     cas_case_id = models.CharField(null=True, max_length=255)
-    details_doc_id = models.CharField(max_length=255, null=True)
+    details = JSONField(default=dict)
     district_id = models.PositiveSmallIntegerField(null=True)
     state_id = models.PositiveSmallIntegerField(null=True)
     village_id = models.IntegerField(null=True)
@@ -121,19 +122,8 @@ class RCHRecord(models.Model):
                         rch_beneficiary = cls(doc_type=RCH_RECORD_TYPE_MAPPING[beneficiary_type])
 
                     rch_beneficiary.set_beneficiary_fields(dict_of_props)
-                    properties_doc = rch_beneficiary.prop_doc
-                    properties_doc['properties'] = dict_of_props
-                    properties_doc.save()
-                    rch_beneficiary.details_doc_id = properties_doc.get_id
+                    rch_beneficiary.details = dict_of_props
                     rch_beneficiary.save()
-
-    @property
-    @memoized
-    def prop_doc(self):
-        if self.details_doc_id:
-            return RCHRecordDetails.get(self.details_doc_id)
-        else:
-            return RCHRecordDetails()
 
 
 class AreaMapping(models.Model):
