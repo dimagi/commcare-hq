@@ -23,7 +23,9 @@ from xml.etree import ElementTree
 from casexml.apps.case.mock import CaseBlock
 from corehq.apps.commtrack.exceptions import (
     NoDefaultLocationException,
-    NotAUserClassError)
+    NotAUserClassError,
+    RequisitionsHaveBeenRemoved,
+)
 import re
 from corehq.form_processor.parsers.ledgers.helpers import StockTransactionHelper
 
@@ -515,6 +517,8 @@ def to_instance(data):
             *stock_blocks
         )
         return etree.tostring(root, encoding='utf-8', pretty_print=True)
+    else:
+        raise RequisitionsHaveBeenRemoved()
 
 
 def truncate(text, maxlen, ellipsis='...'):
