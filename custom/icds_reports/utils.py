@@ -22,7 +22,7 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from custom.icds_reports.const import LocationTypes
 from dimagi.utils.dates import DateSpan, rrule, MONTHLY
 
-from custom.icds_reports.models import AggDailyUsageView, AggChildHealthMonthly, AggAwcMonthly, \
+from custom.icds_reports.models import AggChildHealthMonthly, AggAwcMonthly, \
     AggCcsRecordMonthly, AggAwcDailyView, DailyAttendanceView, ChildHealthMonthlyView
 
 OPERATORS = {
@@ -259,7 +259,7 @@ def get_system_usage_data(yesterday, config):
     two_days_ago = (yesterday_date - relativedelta(days=1)).date()
 
     def get_data_for(date, filters):
-        return AggDailyUsageView.objects.filter(
+        return AggAwcDailyView.objects.filter(
             date=date, **filters
         ).values(
             'aggregation_level'
@@ -556,12 +556,12 @@ def get_cas_reach_data(yesterday, config):
         )
 
     def get_data_for_daily_usage(date, filters):
-        return AggDailyUsageView.objects.filter(
+        return AggAwcDailyView.objects.filter(
             date=date, **filters
         ).values(
             'aggregation_level'
         ).annotate(
-            awcs=Sum('awc_count'),
+            awcs=Sum('num_awcs'),
             daily_attendance=Sum('daily_attendance_open')
         )
 
@@ -932,7 +932,7 @@ def get_awc_infrastructure_data(config):
 def get_awc_opened_data(filters):
 
     def get_data_for(date):
-        return AggDailyUsageView.objects.filter(
+        return AggAwcDailyView.objects.filter(
             date=datetime(*date), aggregation_level=1
         ).values(
             'state_name'
