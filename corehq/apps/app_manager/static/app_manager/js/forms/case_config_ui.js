@@ -249,7 +249,6 @@ hqDefine('app_manager/js/forms/case_config_ui.js', function () {
 
         self.actionType.subscribe(function (value) {
             var required;
-console.log("value=" + value);
             if (value === 'open') {
                 required = ['name'];
                 if (self.case_transaction.condition.type() === 'never') {
