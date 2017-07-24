@@ -62,6 +62,7 @@ function WebFormSession(params) {
     self.formContext = params.formContext;
     self.domain = params.domain;
     self.username = params.username;
+    self.debuggerEnabled = params.debuggerEnabled;
     self.formplayerEnabled = params.formplayerEnabled;
     self.post_url = params.post_url;
     self.displayOptions = params.displayOptions;
@@ -156,36 +157,21 @@ WebFormSession.prototype.serverRequest = function (requestParams, callback, bloc
     this.numPendingRequests++;
     this.onLoading();
 
-    if (self.formplayerEnabled){
-        $.ajax({
-            type: 'POST',
-            url: url + "/" + requestParams.action,
-            data: JSON.stringify(requestParams),
-            contentType: "application/json",
-            dataType: "json",
-            crossDomain: {crossDomain: true},
-            xhrFields: {withCredentials: true},
-            success: function(resp) {
-                self.handleSuccess(resp, requestParams.action, callback);
-            },
-            error: function(resp, textStatus) {
-                self.handleFailure(resp, requestParams.action, textStatus);
-            },
-        });
-    } else {
-        $.ajax({
-            type: 'POST',
-            url: url,
-            data: JSON.stringify(requestParams),
-            dataType: "text",  // we don't use JSON because of a weird bug: http://manage.dimagi.com/default.asp?190983
-            success: function(resp) {
-                self.handleSuccess(JSON.parse(resp), requestParams.action, callback);
-            },
-            error: function(resp, textStatus) {
-                self.handleFailure(JSON.parse(resp), requestParams.action, textStatus);
-            },
-        });
-    }
+    $.ajax({
+        type: 'POST',
+        url: url + "/" + requestParams.action,
+        data: JSON.stringify(requestParams),
+        contentType: "application/json",
+        dataType: "json",
+        crossDomain: {crossDomain: true},
+        xhrFields: {withCredentials: true},
+        success: function(resp) {
+            self.handleSuccess(resp, requestParams.action, callback);
+        },
+        error: function(resp, textStatus) {
+            self.handleFailure(resp, requestParams.action, textStatus);
+        },
+    });
 };
 
 /*

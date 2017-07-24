@@ -78,6 +78,17 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/exclusive_breastfeeding/:step", {
                 template : "<exclusive-breastfeeding></exclusive-breastfeeding>",
+            .when("/low_birth", {
+                redirectTo : "/low_birth/map",
+            })
+            .when("/low_birth/:step", {
+                template : "<newborn-low-weight></newborn-low-weight>",
+            })
+            .when("/early_initiation", {
+                redirectTo : "/early_initiation/map",
+            })
+            .when("/early_initiation/:step", {
+                template : "<early-initiation-breastfeeding></early-initiation-breastfeeding>",
             });
     }]);
 

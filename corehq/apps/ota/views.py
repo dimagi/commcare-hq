@@ -207,7 +207,6 @@ def get_restore_params(request):
         'state': request.GET.get('state'),
         'items': request.GET.get('items') == 'true',
         'as_user': request.GET.get('as'),
-        'has_data_cleanup_privelege': has_privilege(request, privileges.DATA_CLEANUP),
         'overwrite_cache': request.GET.get('overwrite_cache') == 'true',
         'openrosa_version': openrosa_version,
         'device_id': request.GET.get('device_id'),
@@ -221,7 +220,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          cache_timeout=None, overwrite_cache=False,
                          force_restore_mode=None,
                          as_user=None, device_id=None, user_id=None,
-                         has_data_cleanup_privelege=False,
                          openrosa_version=OPENROSA_DEFAULT_VERSION,
                          case_sync=None):
 
@@ -241,7 +239,6 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
         domain,
         couch_user,
         as_user,
-        has_data_cleanup_privelege,
     )
     if not is_permitted:
         return HttpResponse(message, status=401), None

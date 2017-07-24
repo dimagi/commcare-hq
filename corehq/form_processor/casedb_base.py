@@ -186,3 +186,7 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
         """
         # This is only used by ledger actions currently
         self.case_update_strategy(case).apply_action_intents(primary_intent, deprecation_intent)
+
+    @abstractmethod
+    def filter_closed_extensions(self, extensions_to_close):
+        pass

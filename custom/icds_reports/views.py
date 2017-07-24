@@ -30,7 +30,10 @@ from custom.icds_reports.utils import get_maternal_child_data, get_cas_reach_dat
     get_prevalence_of_severe_data_map, get_prevalence_of_severe_data_chart, \
     get_prevalence_of_stunning_sector_data, get_prevalence_of_stunning_data_map, \
     get_prevalence_of_stunning_data_chart, get_exclusive_breastfeeding_sector_data, \
-    get_exclusive_breastfeeding_data_map, get_exclusive_breastfeeding_data_chart
+    get_exclusive_breastfeeding_data_map, get_exclusive_breastfeeding_data_chart, 
+    get_newborn_with_low_birth_weight_data, get_newborn_with_low_birth_weight_map, 
+    get_newborn_with_low_birth_weight_chart, get_early_initiation_breastfeeding_data, 
+    get_early_initiation_breastfeeding_map, get_early_initiation_breastfeeding_chart
 from . import const
 from .exceptions import TableauTokenException
 
@@ -281,7 +284,7 @@ class PrevalenceOfUndernutritionView(View):
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
-            'aggregation_level': 1l,
+            'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -521,7 +524,7 @@ class PrevalenceOfSevereView(View):
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
-            'aggregation_level': 1l,
+            'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -552,7 +555,7 @@ class PrevalenceOfStunningView(View):
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
-            'aggregation_level': 1l,
+            'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -565,6 +568,68 @@ class PrevalenceOfStunningView(View):
                 data = get_prevalence_of_stunning_data_map(config, loc_level)
         elif step == "chart":
             data = get_prevalence_of_stunning_data_chart(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class NewbornsWithLowBirthWeightView(View):
+
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        month = int(self.request.GET.get('month', now.month))
+        year = int(self.request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1l,
+        }
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        data = []
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_newborn_with_low_birth_weight_data(config, loc_level)
+            else:
+                data = get_newborn_with_low_birth_weight_map(config, loc_level)
+        elif step == "chart":
+            data = get_newborn_with_low_birth_weight_chart(config, loc_level)
+
+        return JsonResponse(data={
+            'report_data': data,
+        })
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class EarlyInitiationBreastfeeding(View):
+
+    def get(self, request, *args, **kwargs):
+        step = kwargs.get('step')
+        now = datetime.utcnow()
+        month = int(self.request.GET.get('month', now.month))
+        year = int(self.request.GET.get('year', now.year))
+        test_date = datetime(year, month, 1)
+
+        config = {
+            'month': tuple(test_date.timetuple())[:3],
+            'aggregation_level': 1,
+        }
+        location = request.GET.get('location_id', '')
+        loc_level = get_location_filter(location, self.kwargs['domain'], config)
+
+        data = []
+        if step == "map":
+            if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
+                data = get_early_initiation_breastfeeding_data(config, loc_level)
+            else:
+                data = get_early_initiation_breastfeeding_map(config, loc_level)
+        elif step == "chart":
+            data = get_early_initiation_breastfeeding_chart(config, loc_level)
 
         return JsonResponse(data={
             'report_data': data,

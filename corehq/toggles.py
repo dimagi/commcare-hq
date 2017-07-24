@@ -744,13 +744,6 @@ COMMTRACK = StaticToggle(
     save_fn=_commtrackify,
 )
 
-INSTANCE_VIEWER = StaticToggle(
-    'instance_viewer',
-    'CloudCare Form Debugging Tool',
-    TAG_PRODUCT_PATH,
-    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
-)
-
 CUSTOM_INSTANCES = StaticToggle(
     'custom_instances',
     'Inject custom instance declarations',
@@ -859,13 +852,6 @@ BASIC_CHILD_MODULE = StaticToggle(
     'Basic modules can be child modules',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
-)
-
-USE_OLD_CLOUDCARE = StaticToggle(
-    'use_old_cloudcare',
-    'Use Old CloudCare',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
 )
 
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
@@ -1062,14 +1048,6 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-EDIT_FORMPLAYER = PredictablyRandomToggle(
-    'edit_formplayer',
-    'Edit forms on Formplayer',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=1.0,
-)
-
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
     'Disable column limit in UCR',
@@ -1248,14 +1226,6 @@ MOTECH = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ENTERPRISE_OPTIMIZATIONS = StaticToggle(
-    'enterprise_optimizations',
-    'Used to enable specific optimizations for environments that only support a single domain e.g. ICDS',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
-    always_enabled={'icds-cas'}
-)
-
 DISPLAY_CONDITION_ON_TABS = StaticToggle(
     'display_condition_on_nodeset',
     'Show Display Condition on Case Detail Tabs',
@@ -1280,6 +1250,13 @@ SKIP_REMOVE_INDICES = StaticToggle(
 PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     'prevent_mobile_ucr_sync',
     'Used for ICDS emergencies when UCR sync is killing the DB',
+    TAG_ONE_OFF,
+    [NAMESPACE_DOMAIN]
+)
+
+NO_CACHE_APP_FILES = StaticToggle(
+    'no_cache_app_files',
+    'Serve app files from blobdb and not from cache',
     TAG_ONE_OFF,
     [NAMESPACE_DOMAIN]
 )

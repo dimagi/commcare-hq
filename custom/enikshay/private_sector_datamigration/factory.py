@@ -215,7 +215,6 @@ class BeneficiaryCaseFactory(object):
                     'episode_id': get_human_friendly_id(),
                     'episode_type': self.beneficiary.current_episode_type,
                     'name': self.beneficiary.episode_name,
-                    'private_sector_episode_pending_registration': 'no',
                     'transfer_in': '',
                     'treatment_options': '',
 
@@ -257,6 +256,9 @@ class BeneficiaryCaseFactory(object):
             )
             kwargs['attrs']['update']['new_retreatment'] = self._episode.new_retreatment
             kwargs['attrs']['update']['patient_type'] = self._episode.patient_type
+            kwargs['attrs']['update']['private_sector_episode_pending_registration'] = (
+                'yes' if self._episode.nikshayID is None else 'no'
+            )
             kwargs['attrs']['update']['retreatment_reason'] = self._episode.retreatment_reason
             kwargs['attrs']['update']['site'] = self._episode.site_property
             kwargs['attrs']['update']['site_choice'] = self._episode.site_choice
@@ -286,6 +288,7 @@ class BeneficiaryCaseFactory(object):
             kwargs['attrs']['update']['adherence_tracking_mechanism'] = ''
             kwargs['attrs']['update']['dots_99_enabled'] = 'false'
             kwargs['attrs']['update']['episode_pending_registration'] = 'yes'
+            kwargs['attrs']['update']['private_sector_episode_pending_registration'] = 'yes'
             kwargs['attrs']['update']['treatment_initiated'] = 'no'
 
         if self.beneficiary.creating_agency:

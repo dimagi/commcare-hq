@@ -201,20 +201,6 @@ class TestEpisodeDatasource(BaseEnikshayDatasourceTest):
 
         self.assertEqual(row.new_sputum_positive_patient_2months_ip, 1)
 
-    def test_diagnostic_test_after_end_of_ip(self):
-        query = self._get_query_object()
-        self.assertEqual(query.count(), 1)
-        row = query[0]
-
-        self.assertEqual(row.diagnostic_test_after_end_of_ip, 1)
-
-    def test_positive_diagnostic_test_after_end_of_ip(self):
-        query = self._get_query_object()
-        self.assertEqual(query.count(), 1)
-        row = query[0]
-
-        self.assertEqual(row.positive_diagnostic_test_after_end_of_ip, 1)
-
 
 @override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
 class TestEpisodeDatasourceES(TestEpisodeDatasource):
