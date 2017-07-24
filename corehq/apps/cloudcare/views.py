@@ -1,4 +1,3 @@
-import HTMLParser
 import json
 from xml.etree import ElementTree
 
@@ -17,10 +16,7 @@ from django.views.generic.base import TemplateView
 
 from couchdbkit import ResourceConflict
 
-from casexml.apps.case.models import CASE_STATUS_OPEN
 from casexml.apps.phone.fixtures import generator
-from corehq.form_processor.utils import should_use_sql_backend
-from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base, json_handler
 from touchforms.formplayer.api import DjangoAuth, get_raw_instance, sync_db
@@ -38,9 +34,7 @@ from corehq.apps.app_manager.dbaccessors import (
 )
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
-from corehq.apps.app_manager.models import Application, ApplicationBase, RemoteApp
-from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
-from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_cloudcare_session_data
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.cloudcare.api import (
@@ -452,74 +446,6 @@ def get_cases(request, domain):
                                    footprint=footprint, ids_only=ids_only,
                                    strip_history=True)
     return json_response(cases)
-
-
-@cloudcare_api
-def filter_cases(request, domain, app_id, module_id, parent_id=None):
-    app = Application.get(app_id)
-    module = app.get_module(module_id)
-    auth_cookie = request.COOKIES.get('sessionid')
-    requires_parent_cases = string_to_boolean(request.GET.get('requires_parent_cases', 'false'))
-
-    xpath = EntriesHelper.get_filter_xpath(module)
-    instances = get_instances_for_module(app, module, additional_xpaths=[xpath])
-    extra_instances = [{'id': inst.id, 'src': inst.src} for inst in instances]
-    accessor = CaseAccessors(domain)
-
-    # touchforms doesn't like this to be escaped
-    xpath = HTMLParser.HTMLParser().unescape(xpath)
-    case_type = module.case_type
-
-    if xpath or should_use_sql_backend(domain):
-        # if we need to do a custom filter, send it to touchforms for processing
-        additional_filters = {
-            "properties/case_type": case_type,
-            "footprint": True
-        }
-
-        helper = BaseSessionDataHelper(domain, request.couch_user)
-        result = helper.filter_cases(xpath, additional_filters, DjangoAuth(auth_cookie),
-                                     extra_instances=extra_instances)
-        if result.get('status', None) == 'error':
-            code = result.get('code', 500)
-            message = result.get('message', _("Something went wrong filtering your cases."))
-            if code == 500:
-                notify_exception(None, message=message)
-            return json_response(message, status_code=code)
-
-        case_ids = result.get("cases", [])
-    else:
-        # otherwise just use our built in api with the defaults
-        case_ids = [res.id for res in get_filtered_cases(
-            domain,
-            status=CASE_STATUS_OPEN,
-            case_type=case_type,
-            user_id=request.couch_user._id,
-            footprint=True,
-            ids_only=True,
-        )]
-
-    cases = accessor.get_cases(case_ids)
-
-    if parent_id:
-        cases = filter(lambda c: c.parent and c.parent.case_id == parent_id, cases)
-
-    # refilter these because we might have accidentally included footprint cases
-    # in the results from touchforms. this is a little hacky but the easiest
-    # (quick) workaround. should be revisted when we optimize the case list.
-    cases = filter(lambda c: c.type == case_type, cases)
-    cases = [c.to_api_json(lite=True) for c in cases if c]
-
-    response = {'cases': cases}
-    if requires_parent_cases:
-        # Subtract already fetched cases from parent list
-        parent_ids = set(map(lambda c: c['indices']['parent']['case_id'], cases)) - \
-            set(map(lambda c: c['case_id'], cases))
-        parents = accessor.get_cases(list(parent_ids))
-        parents = [c.to_api_json(lite=True) for c in parents]
-        response.update({'parents': parents})
-
-    return json_response(response)
 
 
 @cloudcare_api
