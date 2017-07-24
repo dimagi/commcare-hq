@@ -473,6 +473,12 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
     });
 });
 
+/**
+ * clearUserData
+ *
+ * Sends a request to formplayer to wipe out all application and user dbs for the
+ * current user. Returns the ajax promise.
+ */
 FormplayerFrontend.reqres.setHandler('clearUserData', function() {
     var user = FormplayerFrontend.request('currentUser'),
         formplayer_url = user.formplayer_url,
