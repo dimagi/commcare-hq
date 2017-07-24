@@ -194,9 +194,9 @@ class EditFormTest(TestCase, TestFileMixin):
             case_id='',
             case_type='person',
         ).as_string()
-        submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
+        new_xform, cases = submit_case_blocks(case_block, domain=self.domain, form_id=form_id)
 
-        xform = self.formdb.get_form(form_id)
+        xform = self.formdb.get_form(new_xform.form_id)
         self.assertTrue(xform.is_error)
 
         deprecated_xform = self.formdb.get_form(xform.deprecated_form_id)
