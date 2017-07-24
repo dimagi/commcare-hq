@@ -8,6 +8,7 @@ from collections import namedtuple
 from dimagi.utils.chunked import chunked
 from dimagi.utils.decorators.memoized import memoized
 from django.core.management import BaseCommand
+from casexml.apps.case.const import CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -176,6 +177,7 @@ class ENikshay2BMigrator(object):
             + [self.migrate_occurrence(occurrence, person.episodes) for occurrence in person.occurrences]
             + [self.migrate_episode(episode, person.episodes) for episode in person.episodes]
             + [self.migrate_test(test, person.person) for test in person.tests]
+            + [self.migrate_referral(referral, person.occurrences) for referral in person.referrals]
         ))
 
     @staticmethod
@@ -347,4 +349,37 @@ class ENikshay2BMigrator(object):
                 "create": False,
                 "update": props,
             },
+        )
+
+    def migrate_referral(self, referral, occurrences):
+        prop = referral.get_case_property
+        props = {
+            'referral_initiated_date': (prop('referral_date') or prop('date_of_referral')),
+            'referred_to_name': prop('referred_to_location_name'),
+            'referred_by_name': prop('referred_by'),
+            'referral_rejection_reason_other_detail': prop('reason_for_refusal_other_detail'),
+            'referral_rejection_reason': prop('reason_for_refusal'),
+            'referral_closed_date': prop('acceptance_refusal_date'),
+            'accepted_by_name': prop('phi'),
+        }
+
+        if occurrences:
+            occurrence = max([(case.opened_on, case) for case in occurrences])[1]
+            index_kwargs = {'indices': [CaseIndex(
+                occurrence,
+                identifier='host',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type=CASE_TYPE_OCCURRENCE,
+            )]}
+        else:
+            index_kwargs = {}
+
+        return CaseStructure(
+            case_id=referral.case_id,
+            walk_related=False,
+            attrs={
+                "create": False,
+                "update": props,
+            },
+            **index_kwargs
         )

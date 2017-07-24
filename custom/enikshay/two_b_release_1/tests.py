@@ -5,6 +5,7 @@ from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
+from custom.enikshay.case_utils import get_parent_of_case
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
 from custom.enikshay.tests.utils import (
     setup_enikshay_locations,
@@ -99,7 +100,16 @@ class TestCreateEnikshayCases(TestCase):
 
     def _get_referral_structure(self, person):
         case_id = person.case_id + '-referral'
-        return get_referral_case_structure(case_id, person.case_id)
+        referral = get_referral_case_structure(case_id, person.case_id)
+        referral.attrs['update'].update({
+            'referral_date': 'referral_date',
+            'referred_to_location_name': 'referred_to_location_name',
+            'reason_for_refusal_other_detail': 'reason_for_refusal_other_detail',
+            'reason_for_refusal': 'reason_for_refusal',
+            'acceptance_refusal_date': 'acceptance_refusal_date',
+            'phi': 'phi',
+        })
+        return referral
 
     def _get_trail_structure(self, referral):
         case_id = referral.case_id + '-trail'
@@ -183,3 +193,16 @@ class TestCreateEnikshayCases(TestCase):
             'rft_dstb_diagnosis': 'diagnostic_test_reason',
             'rft_dstb_followup': 'definitely_not_private_ntm',
         }, new_test.dynamic_case_properties())
+
+        new_referral = accessor.get_case(person.referrals[0].case_id)
+        self.assertDictContainsSubset({
+            'referral_initiated_date': 'referral_date',
+            'referred_to_name': 'referred_to_location_name',
+            'referred_by_name': '',
+            'referral_rejection_reason_other_detail': 'reason_for_refusal_other_detail',
+            'referral_rejection_reason': 'reason_for_refusal',
+            'referral_closed_date': 'acceptance_refusal_date',
+            'accepted_by_name': 'phi',
+        }, new_referral.dynamic_case_properties())
+        parent = get_parent_of_case(self.domain, new_referral, 'occurrence')
+        self.assertEqual(new_occurrence.case_id, parent.case_id)
