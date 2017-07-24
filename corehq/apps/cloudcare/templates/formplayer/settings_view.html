@@ -8,22 +8,6 @@
       </div>
       <table class="table module-table">
           <tbody>
-              <tr>
-                  <th>Use one question per screen</th>
-                  <td><input class="js-one-question-per-screen" type="checkbox" data-size="mini" /></td>
-              </tr>
-              <tr>
-                  <th>Set the application language</th>
-                  <td>
-                    <select class="form-control js-lang">
-                      <% _.each(langs, function(lang) { %>
-                      <option <% if (lang === displayOptions.language) { %>selected<% } %>>
-                        <%= lang %>
-                      </option>
-                      <% }) %>
-                    </select>
-                  </td>
-              </tr>
           </tbody>
       </table>
       <div class="page-footer">
@@ -32,4 +16,20 @@
           </button>
       </div>
   </div>
+</script>
+<script type="text/template" id="display-setting-template">
+    <th>Use one question per screen</th>
+    <td><input class="js-one-question-per-screen" type="checkbox" data-size="mini" /></td>
+</script>
+<script type="text/template" id="lang-setting-template">
+    <th>Set the application language</th>
+    <td>
+      <select class="form-control js-lang">
+        <% _.each(langs, function(lang) { %>
+        <option <% if (lang === currentLang) { %>selected<% } %>>
+          <%= lang %>
+        </option>
+        <% }) %>
+      </select>
+    </td>
 </script>
