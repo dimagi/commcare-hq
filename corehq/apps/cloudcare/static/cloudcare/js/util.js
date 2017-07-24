@@ -10,26 +10,6 @@ hqDefine('cloudcare/js/util.js', function () {
         showSpinner: false
     });
 
-    var getLocalizedString = function (property, language) {
-        // simple utility to localize a string based on a dict of
-        // language mappings.
-        return localize(this.get(property), language);
-    };
-
-    var localize = function(obj, language) {
-        var s = obj[language];
-        if (!s) {
-            for (var lang in obj) {
-                if (obj.hasOwnProperty(lang) && obj[lang]) {
-                    s = obj[lang];
-                    break;
-                }
-            }
-        }
-        return s || localize.NOT_FOUND;
-    };
-    localize.NOT_FOUND = '?';
-
     var getFormUrl = function(urlRoot, appId, moduleId, formId, instanceId) {
         // TODO: make this cleaner
         var url = urlRoot + "view/" + appId + "/modules-" + moduleId + "/forms-" + formId + "/context/";
@@ -162,8 +142,6 @@ hqDefine('cloudcare/js/util.js', function () {
         hideLoading();
     };
     return {
-        getLocalizedString: getLocalizedString,
-        localize: localize,
         getFormUrl: getFormUrl,
         getFormEntryUrl: getFormEntryUrl,
         getChildSelectUrl: getChildSelectUrl,
