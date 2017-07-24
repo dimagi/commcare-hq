@@ -13,7 +13,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_all_built_app_ids_and_versions, get_app
-from corehq.apps.app_manager.decorators import safe_download
+from corehq.apps.app_manager.decorators import safe_download, safe_cached_download
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
     AppManagerException, FormNotFoundException
 from corehq.apps.app_manager.util import add_odk_profile_after_build, \
@@ -60,7 +60,7 @@ def download_odk_media_profile(request, domain, app_id):
     )
 
 
-@safe_download
+@safe_cached_download
 def download_suite(request, domain, app_id):
     """
     See Application.create_suite
@@ -74,7 +74,7 @@ def download_suite(request, domain, app_id):
     )
 
 
-@safe_download
+@safe_cached_download
 def download_media_suite(request, domain, app_id):
     """
     See Application.create_media_suite
@@ -88,7 +88,7 @@ def download_media_suite(request, domain, app_id):
     )
 
 
-@safe_download
+@safe_cached_download
 def download_app_strings(request, domain, app_id, lang):
     """
     See Application.create_app_strings
@@ -99,7 +99,7 @@ def download_app_strings(request, domain, app_id, lang):
     )
 
 
-@safe_download
+@safe_cached_download
 def download_xform(request, domain, app_id, module_id, form_id):
     """
     See Application.fetch_xform
@@ -118,7 +118,7 @@ def download_xform(request, domain, app_id, module_id, form_id):
         return response
 
 
-@safe_download
+@safe_cached_download
 def download_jad(request, domain, app_id):
     """
     See ApplicationBase.create_jadjar_from_build_files
@@ -140,7 +140,7 @@ def download_jad(request, domain, app_id):
     return response
 
 
-@safe_download
+@safe_cached_download
 def download_jar(request, domain, app_id):
     """
     See ApplicationBase.create_jadjar_from_build_files
@@ -177,7 +177,7 @@ def download_test_jar(request):
     return response
 
 
-@safe_download
+@safe_cached_download
 def download_raw_jar(request, domain, app_id):
     """
     See ApplicationBase.fetch_jar
@@ -206,7 +206,7 @@ class DownloadCCZ(DownloadMultimediaZip):
         super(DownloadCCZ, self).check_before_zipping()
 
 
-@safe_download
+@safe_cached_download
 def download_file(request, domain, app_id, path):
     if path == "app.json":
         return JsonResponse(request.app.to_json())
