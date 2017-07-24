@@ -1151,7 +1151,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
 
     @staticmethod
     def save_ledger_values(ledger_values, stock_result=None):
-        if not ledger_values:
+        if not ledger_values and not (stock_result and stock_result.cases_with_deprecated_transactions):
             return
 
         try:
