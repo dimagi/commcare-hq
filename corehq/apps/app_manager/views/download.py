@@ -1,7 +1,5 @@
 import json
-import logging
 import os
-from StringIO import StringIO
 
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.contrib import messages
@@ -24,14 +22,13 @@ from corehq.apps.builds.jadjar import convert_XML_To_J2ME
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import set_file_download
-from dimagi.utils.django.cached_object import CachedObject
 from dimagi.utils.web import json_response
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
 
 
 BAD_BUILD_MESSAGE = _("Sorry: this build is invalid. Try deleting it and rebuilding. "
-                    "If error persists, please contact us at commcarehq-support@dimagi.com")
+                      "If error persists, please contact us at commcarehq-support@dimagi.com")
 
 
 @safe_download
@@ -240,40 +237,25 @@ def download_file(request, domain, app_id, path):
 
     try:
         assert request.app.copy_of
-        if toggles.NO_CACHE_APP_FILES.enabled(domain):
-            obj = None
-        else:
-            obj = CachedObject('{id}::{path}'.format(
-                id=request.app._id,
-                path=full_path,
-            ))
-        if obj and obj.is_cached():
-            _, buffer = obj.get()
-            payload = buffer.getvalue()
-        else:
-            #lazily create language profiles to avoid slowing initial build
-            try:
-                payload = request.app.fetch_attachment(full_path)
-            except ResourceNotFound:
-                if build_profile in request.app.build_profiles and build_profile_access:
-                    try:
-                        # look for file guaranteed to exist if profile is created
-                        request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile))
-                    except ResourceNotFound:
-                        request.app.create_build_files(save=True, build_profile_id=build_profile)
-                        request.app.save()
-                        payload = request.app.fetch_attachment(full_path)
-                    else:
-                        # if profile.xml is found the profile has been built and its a bad request
-                        raise
+        # lazily create language profiles to avoid slowing initial build
+        try:
+            payload = request.app.fetch_attachment(full_path)
+        except ResourceNotFound:
+            if build_profile in request.app.build_profiles and build_profile_access:
+                try:
+                    # look for file guaranteed to exist if profile is created
+                    request.app.fetch_attachment('files/{id}/profile.xml'.format(id=build_profile))
+                except ResourceNotFound:
+                    request.app.create_build_files(save=True, build_profile_id=build_profile)
+                    request.app.save()
+                    payload = request.app.fetch_attachment(full_path)
                 else:
+                    # if profile.xml is found the profile has been built and its a bad request
                     raise
-            if type(payload) is unicode:
-                payload = payload.encode('utf-8')
-            buffer = StringIO(payload)
-            metadata = {'content_type': content_type}
-            if obj:
-                obj.cache_put(buffer, metadata, timeout=None)
+            else:
+                raise
+        if type(payload) is unicode:
+            payload = payload.encode('utf-8')
         if path in ['profile.xml', 'media_profile.xml']:
             payload = convert_XML_To_J2ME(payload, path, request.app.use_j2me_endpoint)
         response.write(payload)
