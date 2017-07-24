@@ -42,5 +42,13 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                 params: params,
             });
         },
+        getExclusiveBreastfeedingData: function(step, params) {
+            var get_url = url('exclusive-breastfeeding', step);
+            return  $http({
+                method: "GET",
+                url: get_url,
+                params: params,
+            });
+        },
     };
 }]);
