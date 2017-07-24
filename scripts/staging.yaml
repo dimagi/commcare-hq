@@ -58,8 +58,6 @@ submodules:
     branches: []
   submodules/django-digest-src:
     branches: []
-  submodules/dimagi-utils-src:
-    branches: []
   submodules/django-prbac-src:
     branches: []
   corehq/apps/prelogin:
