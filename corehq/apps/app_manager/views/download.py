@@ -43,6 +43,8 @@ def download_odk_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
         make_async_build.delay(request.app, username)
+    else:
+        request._always_allow_browser_caching = True
     return HttpResponse(
         request.app.create_profile(is_odk=True),
         content_type="commcare/profile"
@@ -54,6 +56,8 @@ def download_odk_media_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
         make_async_build.delay(request.app, username)
+    else:
+        request._always_allow_browser_caching = True
     return HttpResponse(
         request.app.create_profile(is_odk=True, with_media=True),
         content_type="commcare/profile"
@@ -331,6 +335,8 @@ def download_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
         make_async_build.delay(request.app, username)
+    else:
+        request._always_allow_browser_caching = True
     return HttpResponse(
         request.app.create_profile()
     )
@@ -341,6 +347,8 @@ def download_media_profile(request, domain, app_id):
     if not request.app.copy_of:
         username = request.GET.get('username', 'unknown user')
         make_async_build.delay(request.app, username)
+    else:
+        request._always_allow_browser_caching = True
     return HttpResponse(
         request.app.create_profile(with_media=True)
     )
