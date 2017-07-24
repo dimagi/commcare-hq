@@ -10,7 +10,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
-from corehq.form_processor.utils.xform import reprocess_xform_error
+from corehq.form_processor.reprocess import reprocess_xform_error
 
 
 class ReprocessXFormErrorsTest(TestCase):
