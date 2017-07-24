@@ -22,7 +22,6 @@ import stripe
 
 from dimagi.ext.couchdbkit import DateTimeProperty, StringProperty, SafeSaveDocument, BooleanProperty
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.django.cached_object import CachedObject
 from dimagi.utils.web import get_site_domain
 
 from corehq.apps.accounting.emails import send_subscription_change_alert
@@ -2497,16 +2496,7 @@ class InvoicePdf(SafeSaveDocument):
         }
 
     def get_data(self, invoice):
-        obj = CachedObject('%s:InvoicePdf' % self._id)
-        if not obj.is_cached():
-            data = self.fetch_attachment(self.get_filename(invoice), True).read()
-            metadata = {'content_type': 'application/pdf'}
-            buff = StringIO(data)
-            obj.cache_put(buff, metadata, timeout=None)
-        else:
-            buff = obj.get()[1]
-            data = buff.getvalue()
-        return data
+        return self.fetch_attachment(self.get_filename(invoice), True).read()
 
 
 class LineItemManager(models.Manager):
