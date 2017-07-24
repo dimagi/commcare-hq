@@ -54,6 +54,12 @@ def safe_cached_download(f):
         if not latest:
             request._always_allow_browser_caching = True
 
+        # make endpoints that call the user fail hard
+        if request.user:
+            request.user = None
+        if request.GET.get('username'):
+            request.GET.pop('username')
+
         try:
             request.app = get_app(domain, app_id, latest=latest, target=target)
             return f(request, *args, **kwargs)
