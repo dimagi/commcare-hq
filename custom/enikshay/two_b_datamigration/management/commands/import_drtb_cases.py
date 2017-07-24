@@ -153,6 +153,7 @@ MEHSANA_2016_MAP = {
 # A map of column identifier to column index in the Mumbai excel sheet.
 MUMBAI_MAP = {
     "drtb_number": 3,
+    "nikshay_id": 5,
     "registration_date": 7,
     "person_name": 8,
     "sex": 9,
