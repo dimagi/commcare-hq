@@ -7,7 +7,7 @@
 {% load i18n %}
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
-    <script src="{% static 'style/js/ui-element.js' %}"></script>
+    {% include 'style/includes/ui_element_js.html' %}
     {% if strong_mobile_passwords and not hide_password_feedback %}
         <script src="{% static 'zxcvbn/dist/zxcvbn.js' %}"></script>
         <script src="{% static 'registration/js/password.js' %}"></script>

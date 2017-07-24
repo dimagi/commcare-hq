@@ -56,7 +56,7 @@
  
  {% block js %}{{ block.super }}
 @@ -65,38 +46,44 @@
-     <script src="{% static 'style/js/ui-element.js' %}"></script>
+     {% include 'style/includes/ui_element_js.html' %}
      <script src="{% static 'langcodes/js/langcodes.js' %}"></script>
      <script src="{% static 'hqwebapp/js/lib/jquery.textchange.min.js' %}"></script>
 -    {% if show_live_preview %}
