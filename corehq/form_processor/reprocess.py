@@ -113,7 +113,7 @@ def _reprocess_form(form):
 
 
 def _filter_already_processed_cases(form, cases):
-    """Remove any cases that already have a case trnasaction for this form"""
+    """Remove any cases that already have a case transaction for this form"""
     cases_by_id = {
         case.case_id: case
         for case in cases
@@ -130,7 +130,7 @@ def _filter_already_processed_cases(form, cases):
 
 
 def _filter_already_processed_ledgers(form, ledgers):
-    """Remove any cases that already have a ledger trnasaction for this form"""
+    """Remove any ledgers that already have a ledger transaction for this form"""
     ledgers_by_id = {
         ledger.ledger_reference: ledger
         for ledger in ledgers
