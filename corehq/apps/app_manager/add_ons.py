@@ -2,8 +2,6 @@ from datetime import datetime
 from django_prbac.utils import has_privilege as prbac_has_privilege
 from django.utils.translation import ugettext_lazy as _
 
-from dimagi.utils.decorators.memoized import memoized
-
 from corehq import feature_previews, toggles
 from corehq.apps.app_manager.exceptions import AddOnNotFoundException
 from corehq.apps.app_manager.models import Module, AdvancedModule, CareplanModule, ShadowModule
@@ -173,7 +171,6 @@ _LAYOUT = [
 
 # Determine whether or not UI should show a feature, based on
 # availability and whether or not it's in use.
-@memoized
 def show(slug, request, app, module=None, form=None):
     if slug not in _ADD_ONS:
         raise AddOnNotFoundException(slug)
