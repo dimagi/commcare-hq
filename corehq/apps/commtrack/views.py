@@ -198,10 +198,6 @@ class SMSSettingsView(BaseCommTrackManageView):
         return {
             'keyword': self.domain_object.commtrack_settings.multiaction_keyword,
             'actions': [self._get_action_info(a) for a in self.domain_object.commtrack_settings.actions],
-            'requisition_config': {
-                'enabled': self.domain_object.commtrack_settings.requisition_config.enabled,
-                'actions': [self._get_action_info(a) for a in self.domain_object.commtrack_settings.requisition_config.actions],
-            },
         }
 
     # FIXME
@@ -231,12 +227,9 @@ class SMSSettingsView(BaseCommTrackManageView):
                     'caption': action['caption'],
                 })
 
-        #TODO add server-side input validation here (currently validated on client)
+        # TODO add server-side input validation here (currently validated on client)
 
         self.domain_object.commtrack_settings.actions = [mk_action(a) for a in payload['actions']]
-        self.domain_object.commtrack_settings.requisition_config.enabled = payload['requisition_config']['enabled']
-        self.domain_object.commtrack_settings.requisition_config.actions = [mk_action(a) for a in payload['requisition_config']['actions']]
-
         self.domain_object.commtrack_settings.save()
 
         return self.get(request, *args, **kwargs)

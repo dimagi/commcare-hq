@@ -4,7 +4,6 @@ hqDefine('commtrack/js/sms.js', function () {
     function CommtrackSettingsViewModel(other_sms_codes) {
         this.keyword = ko.observable();
         this.actions = ko.observableArray();
-        this.requisition_config = ko.observable();
 
         this.json_payload = ko.observable();
 
@@ -23,7 +22,6 @@ hqDefine('commtrack/js/sms.js', function () {
             this.actions($.map(data.actions, function (e) {
                 return new ActionModel(e);
             }));
-            this.requisition_config(new RequisitionConfigModel(data.requisition_config));
         };
 
         var settings = this;
@@ -108,7 +106,6 @@ hqDefine('commtrack/js/sms.js', function () {
             return {
                 keyword: this.keyword(),
                 actions: $.map(this.actions(), function (e) { return e.to_json(); }),
-                requisition_config: this.requisition_config().to_json(),
             };
         };
     }

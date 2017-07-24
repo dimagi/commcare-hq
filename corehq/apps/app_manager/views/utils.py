@@ -37,7 +37,7 @@ def back_to_main(request, domain, app_id=None, module_id=None, form_id=None,
     params = {}
 
     args = [domain]
-    form_view = 'form_source' if toggles.APP_MANAGER_V2.enabled(request.user.username) else 'view_form'
+    form_view = 'view_form' if toggles.APP_MANAGER_V1.enabled(request.user.username) else 'form_source'
 
     if app_id is not None:
         args.append(app_id)

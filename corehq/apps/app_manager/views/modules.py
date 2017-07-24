@@ -966,7 +966,7 @@ def new_module(request, domain, app_id):
 
     if module_type == 'case' or module_type == 'survey':  # survey option added for V2
 
-        if toggles.APP_MANAGER_V2.enabled(request.user.username):
+        if not toggles.APP_MANAGER_V1.enabled(request.user.username):
             if module_type == 'case':
                 name = name or 'Case List'
             else:
@@ -976,7 +976,9 @@ def new_module(request, domain, app_id):
         module_id = module.id
 
         form_id = None
-        if toggles.APP_MANAGER_V2.enabled(request.user.username):
+        if toggles.APP_MANAGER_V1.enabled(request.user.username):
+            app.new_form(module_id, "Untitled Form", lang)
+        else:
             unstructured = add_ons.show("empty_case_lists", request, app)
             if module_type == 'case':
                 if not unstructured:
@@ -1000,8 +1002,6 @@ def new_module(request, domain, app_id):
             else:
                 app.new_form(module_id, _("Survey"), lang)
             form_id = 0
-        else:
-            app.new_form(module_id, "Untitled Form", lang)
 
         app.save()
         response = back_to_main(request, domain, app_id=app_id,

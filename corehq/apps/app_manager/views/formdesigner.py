@@ -192,7 +192,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'invalidCaseProperties': ['name'],
     }
 
-    if toggles.APP_MANAGER_V2.enabled(request.user.username):
+    if not toggles.APP_MANAGER_V1.enabled(request.user.username):
         if form.get_action_type() == 'open':
             core.update({
                 'defaultHelpTextTemplateId': '#fd-hq-helptext-registration',

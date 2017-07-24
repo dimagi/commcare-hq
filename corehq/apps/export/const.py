@@ -83,7 +83,7 @@ CASE_SCROLL_SIZE = 10000
 
 # When a question is missing completely from a form/case this should be the value
 MISSING_VALUE = '---'
-# When a question has been answered, but is blank, this shoudl be the value
+# When a question has been answered, but is blank, this should be the value
 EMPTY_VALUE = ''
 
 UNKNOWN_INFERRED_FROM = 'unknown'

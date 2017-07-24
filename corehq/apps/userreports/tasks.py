@@ -378,7 +378,7 @@ def _indicator_metrics(date_created=None):
         for config_id in ind['indicator_config_ids']:
             if ret.get(config_id):
                 ret[config_id]['count'] += ind['indicator_config_ids__count']
-                ret[config_id]['lag'] = max(lag, ret['config_id']['lag'])
+                ret[config_id]['lag'] = max(lag, ret[config_id]['lag'])
             else:
                 ret[config_id] = {
                     "count": count,

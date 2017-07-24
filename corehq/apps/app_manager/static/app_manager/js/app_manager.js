@@ -102,11 +102,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
         _initLangs();
         _initNewItemForm();
 
-        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
-            _initResponsiveMenus();
-            _initAddItemPopovers();
-            _initPublishStatus();
-        } else {
+        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
             // legacy JS
             $('#form-tabs').show();
             $('#forms').tab('show');
@@ -130,6 +126,10 @@ hqDefine('app_manager/js/app_manager.js', function () {
                     $(this).attr('value', val);
                 }
             });
+        } else {
+            _initResponsiveMenus();
+            _initAddItemPopovers();
+            _initPublishStatus();
         }
 
 
@@ -301,7 +301,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
                 form.submit();
             }
         });
-        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+        if (!COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
             $(document).on('click', '.js-new-form', function (e) {
                 e.preventDefault();
                 var $a = $(this),
@@ -348,7 +348,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
             }
         });
 
-        if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+        if (!COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
             $('.js-appnav-drag-module').on('mouseenter', function() {
                 $(this).closest('.js-sorted-li').addClass('appnav-highlight');
             }).on('mouseleave', function () {
@@ -418,14 +418,14 @@ hqDefine('app_manager/js/app_manager.js', function () {
                                 $form.append('<input type="hidden" name="to_module_id"   value="' + to_module_id.toString()   + '" />');
                             }
 
-                            if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
-                                // Show loading screen and disable rearranging
-                                $('#js-appmanager-body.appmanager-settings-content').addClass('hide');
-                                $sortable.find('.drag_handle').remove();
-                            } else {
+                            if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
                                 // disable sortable
                                 $sortable.find('.drag_handle').css('color', 'transparent').removeClass('drag_handle');
                                 $sortable.sortable('option', 'disabled', true);
+                            } else {
+                                // Show loading screen and disable rearranging
+                                $('#js-appmanager-body.appmanager-settings-content').addClass('hide');
+                                $sortable.find('.drag_handle').remove();
                             }
                             $form.submit();
                         }
@@ -471,7 +471,7 @@ hqDefine('app_manager/js/app_manager.js', function () {
                 });
             button.ui.appendTo($buttonHolder);
             $buttonHolder.data('button', button);
-            if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+            if (!COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
                 hqImport("app_manager/js/section_changer.js").attachToForm($form);
             }
         });
