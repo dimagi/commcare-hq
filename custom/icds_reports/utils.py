@@ -2228,7 +2228,7 @@ def get_prevalence_of_stunning_sector_data(config, loc_level):
         ]
     }
 
-  
+
 def get_newborn_with_low_birth_weight_map(config, loc_level):
 
     def get_data_for(filters):
@@ -2711,7 +2711,7 @@ def get_early_initiation_breastfeeding_data(config, loc_level):
             }
         ]
     }
- 
+
 
 def get_exclusive_breastfeeding_data_map(config, loc_level):
 
