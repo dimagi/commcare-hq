@@ -2,8 +2,6 @@ from datetime import datetime
 from django_prbac.utils import has_privilege as prbac_has_privilege
 from django.utils.translation import ugettext_lazy as _
 
-from dimagi.utils.decorators.memoized import memoized
-
 from corehq import feature_previews, toggles
 from corehq.apps.app_manager.exceptions import AddOnNotFoundException
 from corehq.apps.app_manager.models import Module, AdvancedModule, CareplanModule, ShadowModule
@@ -212,14 +210,12 @@ def show(slug, request, app, module=None, form=None):
 
 
 # Get a slug => bool dictionary signifying which add-ons to display in UI
-@memoized
 def get_dict(request, app, module=None, form=None):
     init_app(request, app)
     return {slug: show(slug, request, app, module, form) for slug in _ADD_ONS.keys()}
 
 
 # Get add-ons for display in settings UI
-@memoized
 def get_layout(request):
     all_slugs = set(_ADD_ONS.keys())
     layout_slugs = set([slug for section in _LAYOUT for slug in section['slugs']])
