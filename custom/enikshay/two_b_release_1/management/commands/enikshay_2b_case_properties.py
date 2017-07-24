@@ -332,13 +332,13 @@ class ENikshay2BMigrator(object):
 
         if test.get_case_property('follow_up_test_reason') == 'private_ntm':
             props['rft_general'] = 'diagnosis_dstb'
-            # TODO duplicate property name
             props['rft_dstb_diagnosis'] = 'private_ntm'
         else:
             props['rft_general'] = {
                 'diagnostic': 'diagnosis_dstb',
                 'diagnosis_dstb': 'diagnosis_dstb',
                 'follow_up_dstb': 'follow_up_dstb',
+                'diagnosis_drtb': 'diagnosis_drtb',
             }.get(test.get_case_property('purpose_of_testing'), "")
             props['rft_dstb_diagnosis'] = test.get_case_property('diagnostic_test_reason')
             props['rft_dstb_followup'] = test.get_case_property('follow_up_test_reason')

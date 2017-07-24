@@ -189,7 +189,6 @@ class TestCreateEnikshayCases(TestCase):
             'rft_drtb_diagnosis': 'diagnostic_drtb_test_reason',
             'dataset': 'dataset',
             'rft_general': 'diagnosis_dstb',
-            # TODO duplicate property
             'rft_dstb_diagnosis': 'diagnostic_test_reason',
             'rft_dstb_followup': 'definitely_not_private_ntm',
         }, new_test.dynamic_case_properties())
