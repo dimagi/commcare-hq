@@ -30,9 +30,9 @@ from custom.icds_reports.utils import get_maternal_child_data, get_cas_reach_dat
     get_prevalence_of_severe_data_map, get_prevalence_of_severe_data_chart, \
     get_prevalence_of_stunning_sector_data, get_prevalence_of_stunning_data_map, \
     get_prevalence_of_stunning_data_chart, get_exclusive_breastfeeding_sector_data, \
-    get_exclusive_breastfeeding_data_map, get_exclusive_breastfeeding_data_chart, 
-    get_newborn_with_low_birth_weight_data, get_newborn_with_low_birth_weight_map, 
-    get_newborn_with_low_birth_weight_chart, get_early_initiation_breastfeeding_data, 
+    get_exclusive_breastfeeding_data_map, get_exclusive_breastfeeding_data_chart, \
+    get_newborn_with_low_birth_weight_data, get_newborn_with_low_birth_weight_map, \
+    get_newborn_with_low_birth_weight_chart, get_early_initiation_breastfeeding_data, \
     get_early_initiation_breastfeeding_map, get_early_initiation_breastfeeding_chart
 from . import const
 from .exceptions import TableauTokenException

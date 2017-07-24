@@ -77,8 +77,8 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
                 redirectTo : "/exclusive_breastfeeding/map",
             })
             .when("/exclusive_breastfeeding/:step", {
-                template : "<exclusive-breastfeeding></exclusive-breastfeeding>",
-            .when("/low_birth", {
+                template: "<exclusive-breastfeeding></exclusive-breastfeeding>",
+            }).when("/low_birth", {
                 redirectTo : "/low_birth/map",
             })
             .when("/low_birth/:step", {
