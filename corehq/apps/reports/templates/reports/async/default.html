@@ -1,6 +1,6 @@
 {% load hq_shared_tags %}
 {% load i18n %}
-{% if show_time_notice %}{% include "style/partials/time_notice.html"%}{% endif %}
+{% if show_time_notice %}{% include "style/partials/time_notice.html" with hide=1 %}{% endif %}
 
 {% block reportcontent %}
     {% if report.slug %}
