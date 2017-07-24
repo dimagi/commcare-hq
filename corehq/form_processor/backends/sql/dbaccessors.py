@@ -1167,9 +1167,10 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
                 db_name = get_db_alias_for_partitioned_doc(ledger_value.case_id)
                 transactions_to_save = ledger_value.get_live_tracked_models(LedgerTransaction)
 
-                ledger_value.save(using=db_name)
-                for trans in transactions_to_save:
-                    trans.save(using=db_name)
+                with transaction.atomic(using=db_name, savepoint=False):
+                    ledger_value.save(using=db_name)
+                    for trans in transactions_to_save:
+                        trans.save(using=db_name)
 
                 ledger_value.clear_tracked_models()
         except InternalError as e:
