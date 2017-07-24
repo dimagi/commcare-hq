@@ -153,7 +153,7 @@ class ENikshay2BMigrator(object):
         self.factory.create_or_update_cases(filter(None,
             [self.migrate_person(person.person, person.occurrences, person.episodes)]
             + [self.migrate_occurrence(occurrence, person.episodes) for occurrence in person.occurrences]
-            + [self.migrate_episode(episode) for episode in person.episodes]
+            + [self.migrate_episode(episode, person.episodes) for episode in person.episodes]
         ))
 
     @staticmethod
@@ -248,8 +248,21 @@ class ENikshay2BMigrator(object):
             },
         )
 
-    def migrate_episode(self, episode):
+    def migrate_episode(self, episode, episodes):
+
+        def is_episode_of_occurrence(episode, occurrence_id):
+            return any(index.referenced_id == occurrence_id for index in episode.indices)
+
+        occurrence_ids = [index.referenced_id for index in episode.indices
+                          if index.referenced_type == CASE_TYPE_OCCURRENCE]
+        occurrence_id = occurrence_ids[0] if occurrence_ids else None
+
+        latest_episode_id = max((case.opened_on, case.case_id) for case in episodes
+                                if is_episode_of_occurrence(case, occurrence_id)
+                                and not case.closed)[1]
+
         props = {
+            'is_active': 'yes' if episode.case_id == latest_episode_id else 'no',
             'dosage_display': episode.get_case_property('full_dosage'),
             'dosage_summary': episode.get_case_property('full_dosage'),
             'rft_general': 'diagnosis_dstb',
@@ -284,10 +297,6 @@ class ENikshay2BMigrator(object):
         )
 
 """
-# TODO are there more than one open episodes?  Can I just say "if is open"?
-is_active
-Set the value to yes if this is the episode is the most recently opened open episode fo the occurrence
-
 diagnosis_test_type_label	Based on test_confirming_diagnosis, lookup the test_type_value in the lookup table.  Grab the title[@lang = 'en'] form lookup table
 
 """

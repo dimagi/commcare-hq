@@ -161,4 +161,5 @@ class TestCreateEnikshayCases(TestCase):
             'dosage_summary': 'full_dosage',
             'rft_general': 'diagnosis_dstb',
             'diagnosis_test_type': 'test_confirming_diagnosis',
+            'is_active': 'yes',
         }, new_episode.dynamic_case_properties())
