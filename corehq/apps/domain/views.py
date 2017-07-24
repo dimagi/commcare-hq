@@ -2922,8 +2922,11 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
 
     @property
     def page_context(self):
+        exclude_previews = []
+        if toggles.APP_MANAGER_V2.enabled_for_request(self.request):
+            exclude_previews = ['advanced_itemsets', 'calc_xpaths', 'conditional_enum', 'enum_image']
         return {
-            'features': self.features(),
+            'features': [f for f in self.features() if f[0].slug not in exclude_previews],
         }
 
     def post(self, request, *args, **kwargs):
