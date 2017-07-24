@@ -101,7 +101,7 @@ def demo_restore_date_created(commcare_user):
             return restore.timestamp_created
 
 
-def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privilege):
+def is_permitted_to_restore(domain, couch_user, as_user):
     """
     This function determines if the couch_user is permitted to restore
     for the domain and/or as_user
@@ -120,7 +120,6 @@ def is_permitted_to_restore(domain, couch_user, as_user, has_data_cleanup_privil
             if not as_user_obj:
                 raise RestorePermissionDenied(_(u'Invalid restore as user {}').format(as_user))
 
-            _ensure_cleanup_permission(domain, couch_user, as_user_obj, has_data_cleanup_privilege)
             _ensure_valid_restore_as_user(domain, couch_user, as_user_obj)
             _ensure_accessible_location(domain, couch_user, as_user_obj)
             _ensure_edit_data_permission(domain, couch_user)
@@ -138,14 +137,6 @@ def _restoring_as_yourself(couch_user, as_user):
 def _ensure_valid_domain(domain, couch_user):
     if not couch_user.is_member_of(domain):
         raise RestorePermissionDenied(_(u"{} was not in the domain {}").format(couch_user.username, domain))
-
-
-def _ensure_cleanup_permission(domain, couch_user, as_user, has_data_cleanup_privilege):
-    if not has_data_cleanup_privilege and not couch_user.is_superuser:
-        raise RestorePermissionDenied(_(u"{} does not have permissions to restore as {}").format(
-            couch_user.username,
-            as_user,
-        ))
 
 
 def _ensure_valid_restore_as_user(domain, couch_user, as_user_obj):

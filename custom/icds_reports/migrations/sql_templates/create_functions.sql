@@ -1144,56 +1144,26 @@ BEGIN
 		'GROUP BY owner_id) ut ' ||
 	'WHERE ut.owner_id = agg_awc.awc_id';
 
-	-- Aggregate person table (pass 1)
+	-- Aggregate person table
 	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
 		'cases_person = ut.cases_person, ' ||
-		'cases_person_all = ut.cases_person_all ' ||
-	'FROM (SELECT ' ||
-		'awc_id, ' ||
-		'sum(seeking_services) AS cases_person, ' ||
-		'sum(count) AS cases_person_all ' ||
-		'FROM ' || quote_ident(_person_tablename) || ' ' ||
-		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
-		'GROUP BY awc_id) ut ' ||
-	'WHERE ut.awc_id = agg_awc.awc_id';
-
-	-- Aggregate person table (pass 2)
-	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
-		'cases_person_has_aadhaar = ut.cases_person_has_aadhaar ' ||
-	'FROM (SELECT ' ||
-		'awc_id, ' ||
-		'sum(seeking_services) AS cases_person_has_aadhaar ' ||
-		'FROM ' || quote_ident(_person_tablename) || ' ' ||
-		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
-		    'AND aadhar_date <= '  || quote_literal(_end_date) || ' ' ||
-		'GROUP BY awc_id) ut ' ||
-	'WHERE ut.awc_id = agg_awc.awc_id';
-
-	-- Aggregate person table (pass 3)
-	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
+		'cases_person_all = ut.cases_person_all, ' ||
+		'cases_person_has_aadhaar = ut.cases_person_has_aadhaar, ' ||
 		'cases_person_adolescent_girls_11_14 = ut.cases_person_adolescent_girls_11_14, ' ||
-		'cases_person_adolescent_girls_11_14_all = ut.cases_person_adolescent_girls_11_14_all ' ||
-	'FROM (SELECT ' ||
-		'awc_id, ' ||
-		'sum(seeking_services) AS cases_person_adolescent_girls_11_14, ' ||
-		'sum(count) AS cases_person_adolescent_girls_11_14_all ' ||
-		'FROM ' || quote_ident(_person_tablename) || ' ' ||
-		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
-		    'AND ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob ' ||
-		'GROUP BY awc_id) ut ' ||
-	'WHERE ut.awc_id = agg_awc.awc_id';
-
-    -- Aggregate person table (pass 4)
-	EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
+		'cases_person_adolescent_girls_11_14_all = ut.cases_person_adolescent_girls_11_14_all, ' ||
 		'cases_person_adolescent_girls_15_18 = ut.cases_person_adolescent_girls_15_18, ' ||
 		'cases_person_adolescent_girls_15_18_all = ut.cases_person_adolescent_girls_15_18_all ' ||
 	'FROM (SELECT ' ||
 		'awc_id, ' ||
-		'sum(seeking_services) AS cases_person_adolescent_girls_15_18, ' ||
-		'sum(count) AS cases_person_adolescent_girls_15_18_all ' ||
+		'sum(seeking_services) AS cases_person, ' ||
+		'sum(count) AS cases_person_all, ' ||
+		'sum(CASE WHEN aadhar_date <= ' || quote_literal(_end_date) || ' THEN seeking_services ELSE 0 END) as cases_person_has_aadhaar, ' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_11_14, ' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all, ' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_15_18, ' ||
+		'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_15_18_all ' ||
 		'FROM ' || quote_ident(_person_tablename) || ' ' ||
 		'WHERE (opened_on <= ' || quote_literal(_end_date) || ' AND (closed_on IS NULL OR closed_on >= ' || quote_literal(_start_date) || ' )) ' ||
-		    'AND ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob ' ||
 		'GROUP BY awc_id) ut ' ||
 	'WHERE ut.awc_id = agg_awc.awc_id';
 

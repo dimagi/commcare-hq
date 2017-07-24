@@ -54,7 +54,7 @@ class Command(BaseCommand):
                     stream.close()
 
             if not console:
-                with zipfile.ZipFile(zipname, 'a') as z:
+                with zipfile.ZipFile(zipname, mode='a', allowZip64=True) as z:
                     z.write(filename, '{}.gz'.format(dumper.slug))
 
                 os.remove(filename)

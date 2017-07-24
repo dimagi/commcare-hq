@@ -844,6 +844,7 @@ class ApplicationsTab(UITab):
 
 
 class CloudcareTab(UITab):
+    title = ugettext_noop("Web Apps")
     url_prefix_formats = ('/a/{domain}/cloudcare/',)
 
     ga_tracker = GaTracker('CloudCare', 'Click Cloud-Care top-level nav')
@@ -851,17 +852,7 @@ class CloudcareTab(UITab):
     @property
     def view(self):
         from corehq.apps.cloudcare.views import FormplayerMain
-        if not toggles.USE_OLD_CLOUDCARE.enabled(self.domain):
-            return FormplayerMain.urlname
-        else:
-            return "cloudcare_default"
-
-    @property
-    def title(self):
-        if not toggles.USE_OLD_CLOUDCARE.enabled(self.domain):
-            return _("Web Apps")
-        else:
-            return _("CloudCare")
+        return FormplayerMain.urlname
 
     @property
     def _is_viewable(self):
@@ -1222,10 +1213,7 @@ class ProjectUsersTab(UITab):
             ]
 
             if self.can_view_cloudcare:
-                if not toggles.USE_OLD_CLOUDCARE.enabled(self.domain):
-                    title = _("Web Apps Permissions")
-                else:
-                    title = _("CloudCare Permissions")
+                title = _("Web Apps Permissions")
                 mobile_users_menu.append({
                     'title': title,
                     'url': reverse('cloudcare_app_settings',

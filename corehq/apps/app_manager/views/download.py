@@ -240,11 +240,17 @@ def download_file(request, domain, app_id, path):
 
     try:
         assert request.app.copy_of
-        obj = CachedObject('{id}::{path}'.format(
-            id=request.app._id,
-            path=full_path,
-        ))
-        if not obj.is_cached():
+        if toggles.NO_CACHE_APP_FILES.enabled(domain):
+            obj = None
+        else:
+            obj = CachedObject('{id}::{path}'.format(
+                id=request.app._id,
+                path=full_path,
+            ))
+        if obj and obj.is_cached():
+            _, buffer = obj.get()
+            payload = buffer.getvalue()
+        else:
             #lazily create language profiles to avoid slowing initial build
             try:
                 payload = request.app.fetch_attachment(full_path)
@@ -266,10 +272,8 @@ def download_file(request, domain, app_id, path):
                 payload = payload.encode('utf-8')
             buffer = StringIO(payload)
             metadata = {'content_type': content_type}
-            obj.cache_put(buffer, metadata, timeout=None)
-        else:
-            _, buffer = obj.get()
-            payload = buffer.getvalue()
+            if obj:
+                obj.cache_put(buffer, metadata, timeout=None)
         if path in ['profile.xml', 'media_profile.xml']:
             payload = convert_XML_To_J2ME(payload, path, request.app.use_j2me_endpoint)
         response.write(payload)

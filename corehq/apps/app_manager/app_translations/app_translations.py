@@ -12,7 +12,7 @@ from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
     ModuleNotFoundException,
     XFormException)
-from corehq.apps.app_manager.models import ReportModule
+from corehq.apps.app_manager.models import ReportModule, ShadowForm
 from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
 from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError, \
@@ -488,6 +488,19 @@ def update_form_translations(sheet, rows, missing_cols, app):
     module_index = int(mod_text.replace("module", "")) - 1
     form_index = int(form_text.replace("form", "")) - 1
     form = app.get_module(module_index).get_form(form_index)
+    if isinstance(form, ShadowForm):
+        msgs.append((
+            messages.warning,
+            u"Found a ShadowForm at module-{module_index} form-{form_index} with the name {name}."
+            u" Cannot translate ShadowForms, skipping.".format(
+                # Add one to revert back to match index in Excel sheet
+                module_index=module_index + 1,
+                form_index=form_index + 1,
+                name=form.default_name(),
+            )
+        ))
+        return msgs
+
     if form.source:
         xform = form.wrapped_xform()
     else:
