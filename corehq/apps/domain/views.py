@@ -2932,6 +2932,7 @@ class FeaturePreviewsView(BaseAdminProjectSettingsView):
     def post(self, request, *args, **kwargs):
         for feature, enabled in self.features():
             self.update_feature(feature, enabled, feature.slug in request.POST)
+        feature_previews.previews_dict.clear(self.domain)
 
         return redirect('feature_previews', domain=self.domain)
 
