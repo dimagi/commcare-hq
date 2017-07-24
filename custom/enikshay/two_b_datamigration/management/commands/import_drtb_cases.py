@@ -387,8 +387,8 @@ def get_person_case_properties(domain, column_mapping, row):
 
     properties = {
         "name": person_name,
-        "district_name": district_name,
-        "district_id": district_id,
+        "dto_name": district_name,
+        "dto_id": district_id,
         "owner_id": phi_id or "-",
         "current_episode_type": "confirmed_drtb",
         "nikshay_id": column_mapping.get_value("nikshay_id", row),
