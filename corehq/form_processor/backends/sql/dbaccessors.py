@@ -3,7 +3,6 @@ import logging
 import struct
 from abc import ABCMeta, abstractproperty
 from abc import abstractmethod
-from collections import defaultdict
 from datetime import datetime
 from itertools import groupby
 from uuid import UUID
@@ -56,7 +55,7 @@ from corehq.form_processor.utils.sql import (
 )
 from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
 from corehq.sql_db.routers import db_for_read_write
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+from corehq.sql_db.util import get_db_alias_for_partitioned_doc, split_list_by_db_partition
 from corehq.util.queries import fast_distinct_in_domain
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.chunked import chunked
@@ -402,10 +401,14 @@ class FormAccessorSQL(AbstractFormAccessor):
         if delete_attachments:
             attachments = list(FormAccessorSQL.get_attachments_for_forms(form_ids))
 
-        with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute('SELECT hard_delete_forms(%s, %s) AS deleted_count', [domain, form_ids])
-            results = fetchall_as_namedtuple(cursor)
-            deleted_count = sum([result.deleted_count for result in results])
+        db_form_ids = split_list_by_db_partition(form_ids)
+        deleted_count = 0
+        for db_name, form_ids in db_form_ids.items():
+            # cascade should delete the attachments and operations
+            _, deleted_models = XFormInstanceSQL.objects.using(db_name).filter(
+                domain=domain, form_id__in=form_ids
+            ).delete()
+            deleted_count += deleted_models.get(XFormInstanceSQL._meta.label, 0)
 
         if delete_attachments:
             attachments_to_delete = attachments
@@ -1153,11 +1156,7 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
 
         try:
             if stock_result and stock_result.cases_with_deprecated_transactions:
-                db_cases = defaultdict(list)
-                for case_id in stock_result.cases_with_deprecated_transactions:
-                    db_name = get_db_alias_for_partitioned_doc(case_id)
-                    db_cases[db_name].append(case_id)
-
+                db_cases = split_list_by_db_partition(stock_result.cases_with_deprecated_transactions)
                 for db_name, case_ids in db_cases.items():
                     LedgerTransaction.objects.using(db_name).filter(
                         case_id__in=case_ids,
