@@ -10,7 +10,7 @@ from corehq.apps.cloudcare.views import (
     LoginAsUsers,
     SingleAppLandingPageView,
     form_context, get_cases, get_apps_api, get_app_api,
-    get_fixtures, get_sessions, get_session_context, get_ledgers, render_form,
+    get_fixtures, get_ledgers, render_form,
     sync_db_api, default,
 )
 
@@ -40,8 +40,6 @@ api_urls = [
     url(r'^fixtures/(?P<user_id>[\w-]*)/$', get_fixtures, name='cloudcare_get_fixtures'),
     url(r'^fixtures/(?P<user_id>[\w-]*)/(?P<fixture_id>[:\w-]*)$', get_fixtures,
         name='cloudcare_get_fixtures'),
-    url(r'^sessions/$', get_sessions, name='cloudcare_get_sessions'),
-    url(r'^sessions/(?P<session_id>[\w-]*)/$', get_session_context, name='cloudcare_get_session_context'),
     url(r'^ledgers/$', get_ledgers, name='cloudcare_get_ledgers'),
     url(r'^render_form/$', render_form, name='cloudcare_render_form'),
     url(r'^readable_questions/$', ReadableQuestions.as_view(), name=ReadableQuestions.urlname),

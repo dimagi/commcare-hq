@@ -79,11 +79,6 @@ hqDefine('cloudcare/js/util.js', function () {
         return url;
     };
 
-    var getSessionContextUrl = function(sessionUrlRoot, session_id) {
-        // TODO: make this cleaner
-        return sessionUrlRoot + session_id;
-    };
-
     var isParentField = function(field) {
         return field ? field.startsWith('parent/') : false;
     };
@@ -175,7 +170,6 @@ hqDefine('cloudcare/js/util.js', function () {
         getFormEntryPath: getFormEntryPath,
         getSubmitUrl: getSubmitUrl,
         getCaseFilterUrl: getCaseFilterUrl,
-        getSessionContextUrl: getSessionContextUrl,
         isParentField: isParentField,
         showError: showError,
         showHTMLError: showHTMLError,
