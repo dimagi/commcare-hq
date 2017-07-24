@@ -235,6 +235,7 @@ ALL_MAPPING_DICTS = (MEHSANA_2016_MAP, MEHSANA_2017_MAP, MUMBAI_MAP)
 
 class ColumnMapping(object):
     mapping_dict = None
+    required_fields = []
 
     @classmethod
     def get_value(cls, normalized_column_name, row):
@@ -262,17 +263,40 @@ class ColumnMapping(object):
                 )
             )
 
+    @classmethod
+    def check_for_required_fields(cls, row):
+        """Raise an exception if row is missing a required field"""
+        for key in cls.required_fields:
+            val = cls.get_value(key, row)
+            if not val:
+                raise Exception("{} is required".format(key))
+
 
 class Mehsana2017ColumnMapping(ColumnMapping):
     mapping_dict = MEHSANA_2017_MAP
+    required_fields = (
+        "person_name",
+        "district_name",
+    )
 
 
 class Mehsana2016ColumnMapping(ColumnMapping):
     mapping_dict = MEHSANA_2016_MAP
+    required_fields = (
+        "person_name",
+        "district_name",
+    )
 
 
 class MumbaiColumnMapping(ColumnMapping):
     mapping_dict = MUMBAI_MAP
+    required_fields = (
+        "registration_date",
+        "person_name",
+        "district_name",
+        "phi_name",
+        # The phi must also be valid, but this is checked in the match_phi function.
+    )
     follow_up_culture_index_start = 90
     follow_up_culture_month_start = 3
 
@@ -1130,7 +1154,10 @@ def match_facility(domain, xlsx_facility_name):
 
 
 def match_phi(domain, xlsx_phi_name):
-    return match_location(domain, xlsx_phi_name, "phi")
+    location_name, location_id = match_location(domain, xlsx_phi_name, "phi")
+    if not location_id:
+        raise Exception("A valid phi is required")
+    return location_name, location_id
 
 
 def get_tu(domain, phi_id):
@@ -1185,6 +1212,7 @@ class Command(BaseCommand):
                     continue
 
                 try:
+                    column_mapping.check_for_required_fields(row)
                     case_structures = get_case_structures_from_row(
                         domain, migration_id, column_mapping, city_constants, row
                     )

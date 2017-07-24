@@ -14,6 +14,9 @@ class MockColumnMapping(ColumnMapping):
         "col1": 1,
         "col2": 2,
     }
+    required_fields = [
+        "col1",
+    ]
 
 
 class TestMappings(SimpleTestCase):
@@ -47,6 +50,18 @@ class TestMappings(SimpleTestCase):
         # Index out of range on the row
         value = MockColumnMapping.get_value("col2", row)
         self.assertEqual(value, None)
+
+    def test_required_value_missing(self):
+        row = self.get_row(["0", None, "2"])
+        # col1 is required
+        with self.assertRaises(Exception) as cm:
+            MockColumnMapping.check_for_required_fields(row)
+        self.assertEqual(cm.exception.message, "col1 is required")
+
+    def test_required_value_present(self):
+        row = self.get_row(["0", "1"])
+        # col1 is required
+        MockColumnMapping.check_for_required_fields(row)
 
     def get_row(self, values):
         workbook = Workbook()
