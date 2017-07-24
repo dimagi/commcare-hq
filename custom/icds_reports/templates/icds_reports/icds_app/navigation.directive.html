@@ -30,6 +30,9 @@
                     <li ng-class="{'active': $location.path().indexOf('/stunning') !== -1}">
                         <a href="{$ goToStep('stunning', $location.search()) $}" class="fa">{% trans "Prevalence of Stunting (Height for Age)" %}</a>
                     </li>
+                    <li ng-class="{'active': $location.path().indexOf('/exclusive-breastfeeding') !== -1}">
+                        <a href="{$ goToStep('exclusive-breastfeeding', $location.search()) $}" class="fa">{% trans "% Exclusive breastfeeding" %}</a>
+                    </li>
                 </ul>
             </li>
             <li class="nav-header" data-toggle="collapse" data-target="">

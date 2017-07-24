@@ -72,6 +72,12 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/progress_report", {
                 template : "<progress-report></progress-report>",
+            })
+            .when("/exclusive-breastfeeding", {
+                redirectTo : "/exclusive_breastfeeding/map",
+            })
+            .when("/exclusive_breastfeeding/:step", {
+                template : "<exclusive-breastfeeding></exclusive-breastfeeding>",
             });
     }]);
 
