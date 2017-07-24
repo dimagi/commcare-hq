@@ -283,7 +283,7 @@ class PrevalenceOfUndernutritionView(View):
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
-            'aggregation_level': 1l,
+            'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -523,7 +523,7 @@ class PrevalenceOfSevereView(View):
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
-            'aggregation_level': 1l,
+            'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
@@ -554,7 +554,7 @@ class PrevalenceOfStunningView(View):
 
         config = {
             'month': tuple(test_date.timetuple())[:3],
-            'aggregation_level': 1l,
+            'aggregation_level': 1,
         }
         location = request.GET.get('location_id', '')
         loc_level = get_location_filter(location, self.kwargs['domain'], config)
