@@ -3,6 +3,7 @@ import logging
 import struct
 from abc import ABCMeta, abstractproperty
 from abc import abstractmethod
+from collections import defaultdict
 from datetime import datetime
 from itertools import groupby
 from uuid import UUID
@@ -1146,28 +1147,34 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             raise LedgerValueNotFound
 
     @staticmethod
-    def save_ledger_values(ledger_values, deprecated_form=None):
+    def save_ledger_values(ledger_values, stock_result=None):
         if not ledger_values:
             return
 
-        deprecated_form_id = deprecated_form.orig_id if deprecated_form else None
+        try:
+            if stock_result and stock_result.cases_with_deprecated_transactions:
+                db_cases = defaultdict(list)
+                for case_id in stock_result.cases_with_deprecated_transactions:
+                    db_name = get_db_alias_for_partitioned_doc(case_id)
+                    db_cases[db_name].append(case_id)
 
-        for ledger_value in ledger_values:
-            transactions_to_save = ledger_value.get_live_tracked_models(LedgerTransaction)
+                for db_name, case_ids in db_cases.items():
+                    LedgerTransaction.objects.using(db_name).filter(
+                        case_id__in=case_ids,
+                        form_id=stock_result.xform.form_id
+                    ).delete()
 
-            with get_cursor(LedgerValue) as cursor:
-                try:
-                    cursor.execute(
-                        "SELECT save_ledger_values(%s, %s::{}, %s::{}[], %s)".format(
-                            LedgerValue_DB_TABLE,
-                            LedgerTransaction_DB_TABLE
-                        ),
-                        [ledger_value.case_id, ledger_value, transactions_to_save, deprecated_form_id]
-                    )
-                except InternalError as e:
-                    raise LedgerSaveError(e)
+            for ledger_value in ledger_values:
+                db_name = get_db_alias_for_partitioned_doc(ledger_value.case_id)
+                transactions_to_save = ledger_value.get_live_tracked_models(LedgerTransaction)
 
-            ledger_value.clear_tracked_models()
+                ledger_value.save(using=db_name)
+                for transaction in transactions_to_save:
+                    transaction.save(using=db_name)
+
+                ledger_value.clear_tracked_models()
+        except InternalError as e:
+            raise LedgerSaveError(e)
 
     @staticmethod
     def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):
