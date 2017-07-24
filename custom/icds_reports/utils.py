@@ -528,7 +528,7 @@ def get_maternal_child_data(config):
                     ),
                     'value': get_value(deliveries_this_month, 'institutional_delivery'),
                     'all': get_value(deliveries_this_month, 'delivered'),
-                    'format': 'percent_and_di
+                    'format': 'percent_and_div',
                     'frequency': 'month',
                     'redirect': ''
                 }
