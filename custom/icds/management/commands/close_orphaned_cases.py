@@ -37,16 +37,22 @@ class Command(BaseCommand):
                     xform, cases = bulk_update_cases(domain, case_tupes)
                     fh.write(xform.form_id + '\n')
                 except LocalSubmissionError as e:
+                    print('submission error')
+                    print(unicode(e))
+                    failed_updates.extend(related_cases)
+                except Exception as e:
+                    print('unexpected error')
                     print(unicode(e))
                     failed_updates.extend(related_cases)
             fh.write('--------Failed Cases--------------\n')
             for case_id in failed_updates:
                 fh.write(case_id)
+            print('-------------COMPLETE--------------')
 
     def _get_cases_to_process(self, domain):
-        from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-        dbs = get_db_aliases_for_partitioned_query()
-        for db in dbs:
+        # from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+        # dbs = get_db_aliases_for_partitioned_query()
+        for db in ['p8', 'p9', 'p10']:
             cases = CommCareCaseSQL.objects.using(db).filter(domain=domain, type='household', closed=True)
             for case in cases:
                 yield case.case_id
