@@ -579,66 +579,66 @@ class AggAWCMonthlyDataSource(SqlData):
     def columns(self):
         return [
             DatabaseColumn('month', SimpleColumn('month')),
-            DatabaseColumn(
-                'Number of AWCs Open In Month',
-                SumColumn('num_awcs'),
-                slug='awc_num_open'
-            ),
-            DatabaseColumn(
-                'Number of Household Registration Forms',
-                SumColumn('usage_num_hh_reg')
-            ),
-            DatabaseColumn(
-                'Number of Pregnancy Registration Forms',
-                SumColumn('usage_num_add_pregnancy')
-            ),
-            DatabaseColumn(
-                'Number of PSE Forms with Photo',
-                SumColumn('usage_num_pse_with_image')
-            ),
-            AggregateColumn(
-                'Home Visit - Number of Birth Preparedness Forms',
-                lambda x, y, z: x + y + z,
-                columns=[
-                    SumColumn('usage_num_bp_tri1'),
-                    SumColumn('usage_num_bp_tri2'),
-                    SumColumn('usage_num_bp_tri3')
-                ],
-                slug='num_bp'
-            ),
-            DatabaseColumn(
-                'Home Visit - Number of Delivery Forms',
-                SumColumn('usage_num_delivery')
-            ),
-            DatabaseColumn(
-                'Home Visit - Number of PNC Forms',
-                SumColumn('usage_num_pnc')
-            ),
-            DatabaseColumn(
-                'Home Visit - Number of EBF Forms',
-                SumColumn('usage_num_ebf')
-            ),
-            DatabaseColumn(
-                'Home Visit - Number of CF Forms',
-                SumColumn('usage_num_cf')
-            ),
-            DatabaseColumn(
-                'Number of GM forms',
-                SumColumn('usage_num_gmp')
-            ),
-            DatabaseColumn(
-                'Number of THR forms',
-                SumColumn('usage_num_thr')
-            ),
-            AggregateColumn(
-                'Number of Due List forms',
-                lambda x, y: x + y,
-                [
-                    SumColumn('usage_num_due_list_ccs'),
-                    SumColumn('usage_num_due_list_child_health')
-                ],
-                slug='due_list'
-            ),
+            # DatabaseColumn(
+            #     'Number of AWCs Open In Month',
+            #     SumColumn('num_awcs'),
+            #     slug='awc_num_open'
+            # ),
+            # DatabaseColumn(
+            #     'Number of Household Registration Forms',
+            #     SumColumn('usage_num_hh_reg')
+            # ),
+            # DatabaseColumn(
+            #     'Number of Pregnancy Registration Forms',
+            #     SumColumn('usage_num_add_pregnancy')
+            # ),
+            # DatabaseColumn(
+            #     'Number of PSE Forms with Photo',
+            #     SumColumn('usage_num_pse_with_image')
+            # ),
+            # AggregateColumn(
+            #     'Home Visit - Number of Birth Preparedness Forms',
+            #     lambda x, y, z: x + y + z,
+            #     columns=[
+            #         SumColumn('usage_num_bp_tri1'),
+            #         SumColumn('usage_num_bp_tri2'),
+            #         SumColumn('usage_num_bp_tri3')
+            #     ],
+            #     slug='num_bp'
+            # ),
+            # DatabaseColumn(
+            #     'Home Visit - Number of Delivery Forms',
+            #     SumColumn('usage_num_delivery')
+            # ),
+            # DatabaseColumn(
+            #     'Home Visit - Number of PNC Forms',
+            #     SumColumn('usage_num_pnc')
+            # ),
+            # DatabaseColumn(
+            #     'Home Visit - Number of EBF Forms',
+            #     SumColumn('usage_num_ebf')
+            # ),
+            # DatabaseColumn(
+            #     'Home Visit - Number of CF Forms',
+            #     SumColumn('usage_num_cf')
+            # ),
+            # DatabaseColumn(
+            #     'Number of GM forms',
+            #     SumColumn('usage_num_gmp')
+            # ),
+            # DatabaseColumn(
+            #     'Number of THR forms',
+            #     SumColumn('usage_num_thr')
+            # ),
+            # AggregateColumn(
+            #     'Number of Due List forms',
+            #     lambda x, y: x + y,
+            #     [
+            #         SumColumn('usage_num_due_list_ccs'),
+            #         SumColumn('usage_num_due_list_child_health')
+            #     ],
+            #     slug='due_list'
+            # ),
             DatabaseColumn(
                 'Number of Households',
                 SumColumn('cases_household'),
@@ -1758,7 +1758,7 @@ class ProgressReport(object):
                         'header': 'Total Number of Members Enrolled for Services for services at AWC',
                         'slug': 'cases_person'
                     },
-                    {'header': 'Percentage of Beneficiaries with Aadhar', 'slug': 'aadhar'},
+                    {'header': 'Percentage of Beneficiaries with Aadhar', 'slug': 'aadhar', 'format': 'percent'},
                     {'header': 'Total Pregnant women', 'slug': 'cases_ccs_pregnant_all'},
                     {'header': 'Total Pregnant Women Enrolled for services at AWC', 'slug': 'cases_ccs_pregnant'},
                     {'header': 'Total Lactating women', 'slug': 'cases_ccs_lactating_all'},
