@@ -71,8 +71,12 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
         events: {
             'click @ui.clearUserData': 'onClickClearUserData',
         },
-        onClickClearUserData: function() {
-            console.log('clearing user data...');
+        onClickClearUserData: function(e) {
+            var promise = FormplayerFrontend.request('clearUserData');
+            $(e.currentTarget).prop('disabled', true);
+            promise.done(function() {
+                $(e.currentTarget).prop('disabled', false);
+            });
         },
     });
 
