@@ -1164,7 +1164,7 @@ def clean_date(messy_date_string):
             return messy_date_string
         # TODO: Might be safer to assume a format and raise an exception if its in a different format
         # parse("") returns today, which we don't want.
-        cleaned_datetime = parse(messy_date_string)
+        cleaned_datetime = parse(messy_date_string, dayfirst=False)
         return cleaned_datetime.date()
 
 
