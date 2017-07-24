@@ -346,7 +346,7 @@ def download_media_profile(request, domain, app_id):
     )
 
 
-@safe_download
+@safe_cached_download
 def download_practice_user_restore(request, domain, app_id):
     if not request.app.copy_of:
         make_async_build.delay(request.app)
