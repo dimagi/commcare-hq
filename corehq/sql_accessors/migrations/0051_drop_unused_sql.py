@@ -16,5 +16,6 @@ class Migration(migrations.Migration):
     operations = [
         HqRunSQL("""DROP FUNCTION IF EXISTS save_ledger_values(
             TEXT, form_processor_ledgervalue, form_processor_ledgertransaction[], TEXT
-        )""")
+        )"""),
+        HqRunSQL("DROP FUNCTION IF EXISTS hard_delete_forms(TEXT, TEXT[])")
     ]
