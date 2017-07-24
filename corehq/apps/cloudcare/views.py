@@ -3,7 +3,6 @@ import json
 from xml.etree import ElementTree
 
 from django.conf import settings
-from django.contrib import messages
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import get_object_or_404
@@ -11,7 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_page
 from django.views.generic import View
 from django.views.generic.base import TemplateView
@@ -19,10 +18,8 @@ from django.views.generic.base import TemplateView
 from couchdbkit import ResourceConflict
 
 from casexml.apps.case.models import CASE_STATUS_OPEN
-from casexml.apps.case.xml import V2
 from casexml.apps.phone.fixtures import generator
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.form_processor.utils.general import use_sqlite_backend
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base, json_handler
@@ -34,11 +31,9 @@ from corehq import toggles, privileges
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
 from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
-    get_brief_apps_in_domain,
     get_latest_released_app_doc,
     get_app_ids_in_domain,
     get_current_app,
-    wrap_app,
     get_current_app_doc,
 )
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -51,7 +46,6 @@ from corehq.apps.locations.permissions import location_safe
 from corehq.apps.cloudcare.api import (
     api_closed_to_status,
     CaseAPIResult,
-    get_app_json,
     get_filtered_cases,
     get_filters_from_request_params,
     get_open_form_sessions,
@@ -79,8 +73,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.util.quickcache import quickcache
 from corehq.util.xml_utils import indent_xml
-from corehq.apps.analytics.tasks import track_clicked_preview_on_hubspot
-from corehq.apps.analytics.utils import get_meta
 
 
 @require_cloudcare_access
