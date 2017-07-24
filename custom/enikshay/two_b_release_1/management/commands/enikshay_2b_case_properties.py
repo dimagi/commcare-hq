@@ -175,6 +175,7 @@ class ENikshay2BMigrator(object):
             [self.migrate_person(person.person, person.occurrences, person.episodes)]
             + [self.migrate_occurrence(occurrence, person.episodes) for occurrence in person.occurrences]
             + [self.migrate_episode(episode, person.episodes) for episode in person.episodes]
+            + [self.migrate_test(test, person.person) for test in person.tests]
         ))
 
     @staticmethod
@@ -312,6 +313,35 @@ class ENikshay2BMigrator(object):
 
         return CaseStructure(
             case_id=episode.case_id,
+            walk_related=False,
+            attrs={
+                "create": False,
+                "update": props,
+            },
+        )
+
+    def migrate_test(self, test, person):
+        props = {
+            'is_direct_test_entry': 'no',
+            'rft_drtb_diagnosis': test.get_case_property('diagnostic_drtb_test_reason'),
+            'dataset': person.get_case_property('dataset'),
+        }
+
+        if test.get_case_property('follow_up_test_reason') == 'private_ntm':
+            props['rft_general'] = 'diagnosis_dstb'
+            # TODO duplicate property name
+            props['rft_dstb_diagnosis'] = 'private_ntm'
+        else:
+            props['rft_general'] = {
+                'diagnostic': 'diagnosis_dstb',
+                'diagnosis_dstb': 'diagnosis_dstb',
+                'follow_up_dstb': 'follow_up_dstb',
+            }.get(test.get_case_property('purpose_of_testing'), "")
+            props['rft_dstb_diagnosis'] = test.get_case_property('diagnostic_test_reason')
+            props['rft_dstb_followup'] = test.get_case_property('follow_up_test_reason')
+
+        return CaseStructure(
+            case_id=test.case_id,
             walk_related=False,
             attrs={
                 "create": False,

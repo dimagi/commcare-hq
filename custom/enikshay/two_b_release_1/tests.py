@@ -54,6 +54,7 @@ class TestCreateEnikshayCases(TestCase):
             'date_referred_out': 'date_referred_out',
             'date_by_id': 'date_by_id',
             'phone_number': '1234567890',
+            'dataset': 'dataset',
         })
         return person
 
@@ -87,7 +88,14 @@ class TestCreateEnikshayCases(TestCase):
 
     def _get_test_structure(self, occurrence):
         case_id = occurrence.case_id + '-test'
-        return get_test_case_structure(case_id, occurrence.case_id)
+        test = get_test_case_structure(case_id, occurrence.case_id)
+        test.attrs['update'].update({
+            'diagnostic_drtb_test_reason': 'diagnostic_drtb_test_reason',
+            'follow_up_test_reason': 'definitely_not_private_ntm',
+            'diagnostic_test_reason': 'diagnostic_test_reason',
+            'purpose_of_testing': 'diagnostic',
+        })
+        return test
 
     def _get_referral_structure(self, person):
         case_id = person.case_id + '-referral'
@@ -164,3 +172,14 @@ class TestCreateEnikshayCases(TestCase):
             'diagnosis_test_type_label': "Chest X-ray",
             'is_active': 'yes',
         }, new_episode.dynamic_case_properties())
+
+        new_test = accessor.get_case(person.tests[0].case_id)
+        self.assertDictContainsSubset({
+            'is_direct_test_entry': 'no',
+            'rft_drtb_diagnosis': 'diagnostic_drtb_test_reason',
+            'dataset': 'dataset',
+            'rft_general': 'diagnosis_dstb',
+            # TODO duplicate property
+            'rft_dstb_diagnosis': 'diagnostic_test_reason',
+            'rft_dstb_followup': 'definitely_not_private_ntm',
+        }, new_test.dynamic_case_properties())
