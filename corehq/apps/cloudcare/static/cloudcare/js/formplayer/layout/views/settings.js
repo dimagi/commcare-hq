@@ -64,9 +64,9 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
         },
         childViewContainer: 'tbody',
         getChildView: function(item) {
-            if (item.get('slug') === 'lang') {
+            if (item.get('slug') === Views.SettingSlugs.SET_LANG) {
                 return LangSettingView;
-            } else if (item.get('slug') === 'display') {
+            } else if (item.get('slug') === Views.SettingSlugs.SET_DISPLAY) {
                 return DisplaySettingView;
             }
         },
@@ -74,15 +74,14 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
             'click @ui.done': 'onClickDone',
         },
         template: '#settings-template',
-        initialize: function() {
-            this.collection = new Backbone.Collection([
-                new Backbone.Model({ slug: 'lang' }),
-                new Backbone.Model({ slug: 'display' }),
-            ]);
-        },
         onClickDone: function() {
             FormplayerFrontend.trigger('navigateHome');
         },
     });
+
+    Views.SettingSlugs = {
+        SET_LANG: 'lang',
+        SET_DISPLAY: 'display',
+    };
 
 });

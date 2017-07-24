@@ -32,7 +32,13 @@ FormplayerFrontend.module("Apps", function(Apps, FormplayerFrontend, Backbone, M
             FormplayerFrontend.regions.main.show(landingPageAppView);
         },
         listSettings: function() {
-            var settingsView = new FormplayerFrontend.Layout.Views.SettingsView();
+            var collection = new Backbone.Collection([
+                new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.SET_LANG }),
+                new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.SET_DISPLAY }),
+            ]);
+            var settingsView = new FormplayerFrontend.Layout.Views.SettingsView({
+                collection: collection,
+            });
             FormplayerFrontend.regions.main.show(settingsView);
         },
     };
