@@ -32,14 +32,24 @@ FormplayerFrontend.module("Apps", function(Apps, FormplayerFrontend, Backbone, M
             FormplayerFrontend.regions.main.show(landingPageAppView);
         },
         listSettings: function() {
-            var collection = new Backbone.Collection([
-                new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.SET_LANG }),
-                new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.SET_DISPLAY }),
-                new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.CLEAR_USER_DATA }),
-            ]);
-            var settingsView = new FormplayerFrontend.Layout.Views.SettingsView({
+            var currentUser = FormplayerFrontend.request('currentUser'),
+                settings = [],
+                collection,
+                settingsView;
+            if (currentUser.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
+                settings = settings.concat([
+                    new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.SET_LANG }),
+                    new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.SET_DISPLAY }),
+                ]);
+            }
+            settings.push(
+                new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.CLEAR_USER_DATA })
+            );
+            collection = new Backbone.Collection(settings);
+            settingsView = new FormplayerFrontend.Layout.Views.SettingsView({
                 collection: collection,
             });
+
             FormplayerFrontend.regions.main.show(settingsView);
         },
     };
