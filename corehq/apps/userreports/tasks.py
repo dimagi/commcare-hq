@@ -386,15 +386,3 @@ def _indicator_metrics(date_created=None):
                 }
 
     return ret
-
-
-@periodic_task(
-    run_every=crontab(minute="*/15"),
-    queue=settings.CELERY_PERIODIC_QUEUE,
-)
-def icds_async_indicators_metrics():
-    indicator_count_until_28 = _indicator_metrics(datetime(2017, 6, 28))
-
-    for config_id, metrics in indicator_count_until_28.iteritems():
-        tags = ["config_id:{}".format(config_id)]
-        datadog_gauge('commcare.async_indicator.icds_rebuild', metrics['count'], tags=tags)
