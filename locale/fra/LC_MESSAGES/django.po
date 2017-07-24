@@ -33,9 +33,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: CommCare HQ\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-07-19 18:28+0000\n"
-"PO-Revision-Date: 2017-07-19 18:11+0000\n"
-"Last-Translator: Dimagi Dev <devops@dimagi.com>\n"
+"POT-Creation-Date: 2017-07-24 15:03+0000\n"
+"PO-Revision-Date: 2017-07-24 13:51+0000\n"
+"Last-Translator: Aissetou Sawadogo <ais107@hotmail.com>\n"
 "Language-Team: French (http://www.transifex.com/dimagi/commcare-hq/language/"
 "fr/)\n"
 "Language: fr\n"
@@ -1730,7 +1730,7 @@ msgstr ""
 
 #: corehq/apps/accounting/templates/accounting/credits_tab.html:9
 #: corehq/apps/accounting/templates/accounting/subscriptions.html:18
-#: corehq/tabs/tabclasses.py:1437
+#: corehq/tabs/tabclasses.py:1425
 msgid "Subscription"
 msgstr "Souscription "
 
@@ -4425,9 +4425,9 @@ msgstr "L'identifiant de l'utilisateur"
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/mobile_report_configs.html:14
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/mobile_report_configs.html:14
 #: corehq/apps/dashboard/views.py:222
-#: corehq/apps/userreports/reports/view.py:113
-#: corehq/apps/users/landing_pages.py:26 corehq/reports.py:263
-#: corehq/tabs/tabclasses.py:42 corehq/tabs/tabclasses.py:1717
+#: corehq/apps/userreports/reports/view.py:114
+#: corehq/apps/users/landing_pages.py:23 corehq/reports.py:263
+#: corehq/tabs/tabclasses.py:42 corehq/tabs/tabclasses.py:1705
 msgid "Reports"
 msgstr "Rapports"
 
@@ -4515,43 +4515,43 @@ msgstr "Impossible de trouver le formulaire '{}'"
 
 #: corehq/apps/app_manager/static_strings.py:5
 msgid "1 Day"
-msgstr ""
+msgstr "1 jour"
 
 #: corehq/apps/app_manager/static_strings.py:6
 msgid "1 hour"
-msgstr ""
+msgstr "1 heure"
 
 #: corehq/apps/app_manager/static_strings.py:7
 msgid "1.x"
-msgstr ""
+msgstr "1.x"
 
 #: corehq/apps/app_manager/static_strings.py:9
 msgid "12 hours"
-msgstr ""
+msgstr "12 heures"
 
 #: corehq/apps/app_manager/static_strings.py:10
 msgid "15 minutes"
-msgstr ""
+msgstr "15 minutes"
 
 #: corehq/apps/app_manager/static_strings.py:11
 msgid "160"
-msgstr ""
+msgstr "160"
 
 #: corehq/apps/app_manager/static_strings.py:12
 msgid "2 hours"
-msgstr ""
+msgstr "2 heures"
 
 #: corehq/apps/app_manager/static_strings.py:13
 msgid "2.x"
-msgstr ""
+msgstr "2.x"
 
 #: corehq/apps/app_manager/static_strings.py:14
 msgid "20"
-msgstr ""
+msgstr "20"
 
 #: corehq/apps/app_manager/static_strings.py:15
 msgid "24 hours"
-msgstr ""
+msgstr "24 heures"
 
 #: corehq/apps/app_manager/static_strings.py:16
 msgid "3 Step Requisitions (Requisition -> Fulfillment -> Receipt)"
@@ -4559,11 +4559,11 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:17
 msgid "30 minutes"
-msgstr ""
+msgstr "30 minutes"
 
 #: corehq/apps/app_manager/static_strings.py:18
 msgid "4 hours"
-msgstr ""
+msgstr "4 heures"
 
 #: corehq/apps/app_manager/static_strings.py:19
 msgid "4 Step Requisitions (Requisition -> Approval -> Fulfillment -> Receipt)"
@@ -4571,31 +4571,31 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:20
 msgid "40"
-msgstr ""
+msgstr "40"
 
 #: corehq/apps/app_manager/static_strings.py:21
 msgid "5 Days"
-msgstr ""
+msgstr "5 jours"
 
 #: corehq/apps/app_manager/static_strings.py:22
 msgid "5"
-msgstr ""
+msgstr "5"
 
 #: corehq/apps/app_manager/static_strings.py:23
 msgid "6 hours"
-msgstr ""
+msgstr "6 heures"
 
 #: corehq/apps/app_manager/static_strings.py:24
 msgid "8 hours"
-msgstr ""
+msgstr "8 heures"
 
 #: corehq/apps/app_manager/static_strings.py:25
 msgid "80"
-msgstr ""
+msgstr "80"
 
 #: corehq/apps/app_manager/static_strings.py:26
 msgid "Admin Password"
-msgstr ""
+msgstr "Mot de passe administrateur"
 
 #: corehq/apps/app_manager/static_strings.py:28
 msgid ""
@@ -4604,6 +4604,11 @@ msgid ""
 "with some periodicity since the last successful check based on this "
 "property. freq-never disables the automatic check."
 msgstr ""
+"Après la connexion, l'application examinera la référence définie du profil "
+"pour l'emplacement autorisé de la version la plus récente. Ce contrôle se "
+"produira avec une certaine périodicité depuis la dernière vérification "
+"réussie basée sur cette propriété. freq-ne désactive jamais le contrôle "
+"automatique."
 
 #: corehq/apps/app_manager/static_strings.py:29
 msgid ""
@@ -4611,6 +4616,9 @@ msgid ""
 "Read more on the <a href=\"https://help.commcarehq.org/display/"
 "commcarepublic/Case+Sharing\">Help Site</a>"
 msgstr ""
+"Autoriser les utilisateurs mobiles dans le même groupe de partage  à "
+"partager les listes de dossiers. Lire la suite sur le <a href=\"https://help."
+"commcarehq.org/display/commcarepublic/Case+Sharing\">site d'aide</a>"
 
 #: corehq/apps/app_manager/static_strings.py:30
 msgid ""
@@ -4618,32 +4626,37 @@ msgid ""
 "Read more on the <a href=\"https://help.commcarehq.org/display/"
 "commcarepublic/Using+Web+Apps\">Help Site</a>"
 msgstr ""
+"Permettre aux utilisateurs mobiles d'accéder à la version Web de votre "
+"application. Lire la suite sur le <a href=\"https://help.commcarehq.org/"
+"display/commcarepublic/Using+Web+Apps\">site d'aide</a>"
 
 #: corehq/apps/app_manager/static_strings.py:31
 msgid "Allow visitors to use this application without a login."
-msgstr ""
+msgstr "Permettre aux visiteurs d'utiliser cette application sans login."
 
 #: corehq/apps/app_manager/static_strings.py:32
 msgid "Alphanumeric"
-msgstr ""
+msgstr "Alphanumérique"
 
 #: corehq/apps/app_manager/static_strings.py:33
 msgid ""
 "Amount of time previously submitted forms remain accessible in the CommCare "
 "app."
 msgstr ""
+"Période pendant laquelle les formulaires soumis antérieurement reste "
+"accessible dans l'application CommCare."
 
 #: corehq/apps/app_manager/static_strings.py:34
 msgid "Android Settings"
-msgstr ""
+msgstr "Paramètres Android"
 
 #: corehq/apps/app_manager/static_strings.py:35
 msgid "Anonymous Usage"
-msgstr ""
+msgstr "Utilisation anonyme"
 
 #: corehq/apps/app_manager/static_strings.py:36
 msgid "Any positive integer. Represents period of purging in days."
-msgstr ""
+msgstr "Tout entier positif. Représente la période de purge en jours."
 
 #: corehq/apps/app_manager/static_strings.py:37
 #: corehq/ex-submodules/phonelog/reports.py:85
@@ -4661,27 +4674,27 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:40
 msgid "Auto Update Frequency"
-msgstr ""
+msgstr "Fréquence de mise à jour automatique "
 
 #: corehq/apps/app_manager/static_strings.py:41
 msgid "Auto-Resize Images"
-msgstr ""
+msgstr "Redimensionner automatiquement les imgaes"
 
 #: corehq/apps/app_manager/static_strings.py:42
 msgid "Auto-Sync Frequency"
-msgstr ""
+msgstr "Fréquence de synchronisation automatique "
 
 #: corehq/apps/app_manager/static_strings.py:43
 msgid "Auto-login"
-msgstr ""
+msgstr "Connexion automatique"
 
 #: corehq/apps/app_manager/static_strings.py:44
 msgid "Auto-manage URLs"
-msgstr ""
+msgstr "Gestion automatique des URL"
 
 #: corehq/apps/app_manager/static_strings.py:45
 msgid "Automatic"
-msgstr ""
+msgstr "Automatique"
 
 #: corehq/apps/app_manager/static_strings.py:46
 msgid ""
@@ -4689,10 +4702,16 @@ msgid ""
 "confluence.dimagi.com/display/commcarepublic/Auto-Resize+Images+on+Android'> "
 "the instructions here</a> to determine which value to use."
 msgstr ""
+"Redimensionne automatiquement les images dans les formulaires. Suivez <a "
+"href='https://confluence.dimagi.com/display/commcarepublic/Auto-Resize+Images"
+"+on+Android'>les instructions ici</a> afin de déterminer la valeur à "
+"utiliser. "
 
 #: corehq/apps/app_manager/static_strings.py:47
 msgid "Automatically trigger a two-way sync on a regular schedule"
 msgstr ""
+"Activer automatiquement une synchronisation bilatérale selon un horaire "
+"régulier"
 
 #: corehq/apps/app_manager/static_strings.py:48
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/module_view_case_management.html:9
@@ -4717,15 +4736,20 @@ msgstr "Partage de dossiers"
 #: corehq/apps/app_manager/static_strings.py:51
 msgid "Choose an image to replace the default CommCare Home Screen logo"
 msgstr ""
+"Choisissez une image pour remplacer le logo par défaut sur le CommCare Home "
+"Screen"
 
 #: corehq/apps/app_manager/static_strings.py:52
 msgid "Choose to label the login buttons with Icons or Text"
 msgstr ""
+"Choisissez d'étiqueter les boutons de connexion avec des icônes ou du texte"
 
 #: corehq/apps/app_manager/static_strings.py:53
 msgid ""
 "Choose whether or not mobile workers can view previously submitted forms."
 msgstr ""
+"Choisissez si les utilisateurs mobiles peuvent ou non consulter les "
+"formulaires précédemment soumis."
 
 #: corehq/apps/app_manager/static_strings.py:54
 msgid ""
@@ -4735,7 +4759,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:55
 msgid "CommCare Home Screen Logo"
-msgstr ""
+msgstr "Logo du CommCare Home Screen"
 
 #: corehq/apps/app_manager/static_strings.py:56
 msgid "CommCare Sense"
@@ -4749,7 +4773,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/releases.html:56
 #: corehq/apps/hqadmin/reports.py:1249
 #: corehq/apps/reports/standard/deployments.py:75
-#: corehq/ex-submodules/phonelog/reports.py:86 corehq/tabs/tabclasses.py:1803
+#: corehq/ex-submodules/phonelog/reports.py:86 corehq/tabs/tabclasses.py:1791
 msgid "CommCare Version"
 msgstr "Version CommCare"
 
@@ -4884,7 +4908,7 @@ msgid "Fuzzy Search"
 msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:87 corehq/apps/sms/forms.py:348
-#: corehq/apps/sms/forms.py:832 corehq/tabs/tabclasses.py:1124
+#: corehq/apps/sms/forms.py:832 corehq/tabs/tabclasses.py:1115
 msgid "General Settings"
 msgstr "Paramètres généraux"
 
@@ -4904,11 +4928,11 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:91
 msgid "High Density"
-msgstr ""
+msgstr "Haute densité"
 
 #: corehq/apps/app_manager/static_strings.py:92
 msgid "Horizontal Resize"
-msgstr ""
+msgstr "Redimensionnment horizontal"
 
 #: corehq/apps/app_manager/static_strings.py:93
 msgid "How Send All Unsent functionality is presented to the user"
@@ -4928,7 +4952,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:96
 msgid "Icons"
-msgstr ""
+msgstr "Icônes"
 
 #: corehq/apps/app_manager/static_strings.py:97
 msgid ""
@@ -4947,7 +4971,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:99
 msgid "Image Compatibility on Multiple Devices"
-msgstr ""
+msgstr "39/5000Compatibilité d'image sur plusieurs appareils"
 
 #: corehq/apps/app_manager/static_strings.py:100
 msgid ""
@@ -4982,7 +5006,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:106
 msgid "Just One Day"
-msgstr ""
+msgstr "Seulement un jour"
 
 #: corehq/apps/app_manager/static_strings.py:107
 msgid ""
@@ -4999,7 +5023,7 @@ msgstr ""
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/build_profiles.html:36
 #: corehq/apps/appstore/templates/appstore/deployment_info.html:51
 #: corehq/apps/appstore/templates/appstore/project_info.html:118
-#: corehq/apps/sms/views.py:1663 corehq/tabs/tabclasses.py:1126
+#: corehq/apps/sms/views.py:1663 corehq/tabs/tabclasses.py:1117
 msgid "Languages"
 msgstr "Langues"
 
@@ -5043,7 +5067,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:118
 msgid "Low Density"
-msgstr ""
+msgstr "Faible densité"
 
 #: corehq/apps/app_manager/static_strings.py:119
 msgid "Manual"
@@ -5051,7 +5075,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:120
 msgid "Medium Density"
-msgstr ""
+msgstr "Densité moyenne"
 
 #: corehq/apps/app_manager/static_strings.py:121
 msgid "Minimum duration between updates to mobile report data (hours)."
@@ -5078,7 +5102,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:126
 msgid "Multiple Questions per Screen"
-msgstr ""
+msgstr "Multiples questions par écran"
 
 #: corehq/apps/app_manager/static_strings.py:127
 msgid "Must correspond to the password format specified below."
@@ -5096,7 +5120,7 @@ msgstr "Jamais"
 
 #: corehq/apps/app_manager/static_strings.py:130
 msgid "No (NOT RECOMMENDED)"
-msgstr ""
+msgstr "Non (pas recommandé)"
 
 #: corehq/apps/app_manager/static_strings.py:131
 msgid "No Users Mode"
@@ -5123,11 +5147,11 @@ msgstr "Non"
 
 #: corehq/apps/app_manager/static_strings.py:134
 msgid "Nokia S40 (default)"
-msgstr ""
+msgstr "Nokia S40 (par défaut)"
 
 #: corehq/apps/app_manager/static_strings.py:135
 msgid "Nokia S60"
-msgstr ""
+msgstr "Nokia S60"
 
 #: corehq/apps/app_manager/static_strings.py:136
 #: corehq/apps/appstore/templates/appstore/deployment_info.html:30
@@ -5164,11 +5188,11 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:141
 msgid "Numeric Selection"
-msgstr ""
+msgstr "Sélection numérique"
 
 #: corehq/apps/app_manager/static_strings.py:142
 msgid "Numeric"
-msgstr ""
+msgstr "Numérique"
 
 #: corehq/apps/app_manager/static_strings.py:143
 msgid "OTA Restore Tolerance"
@@ -5198,27 +5222,27 @@ msgstr "Activé"
 
 #: corehq/apps/app_manager/static_strings.py:147
 msgid "Once a Month"
-msgstr ""
+msgstr "Une fois par mois"
 
 #: corehq/apps/app_manager/static_strings.py:148
 msgid "Once a Week"
-msgstr ""
+msgstr "Une fois par semaine"
 
 #: corehq/apps/app_manager/static_strings.py:149
 msgid "One Month"
-msgstr ""
+msgstr "Un mois"
 
 #: corehq/apps/app_manager/static_strings.py:150
 msgid "One Question per Screen"
-msgstr ""
+msgstr "Une question par écran"
 
 #: corehq/apps/app_manager/static_strings.py:151
 msgid "One Week"
-msgstr ""
+msgstr "Une semaine"
 
 #: corehq/apps/app_manager/static_strings.py:152
 msgid "One Year"
-msgstr ""
+msgstr "Une année"
 
 #: corehq/apps/app_manager/static_strings.py:153
 msgid ""
@@ -5228,7 +5252,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:154
 msgid "Password Format"
-msgstr ""
+msgstr "Format du mot de passe"
 
 #: corehq/apps/app_manager/static_strings.py:155
 #: corehq/apps/app_manager/templates/app_manager/v1/partials/build_profiles.html:30
@@ -5273,7 +5297,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static_strings.py:161
 msgid "Saved Forms"
-msgstr ""
+msgstr "Formulaires enregistrés"
 
 #: corehq/apps/app_manager/static_strings.py:162
 msgid "Select the mobile worker to use as a practice user for this application"
@@ -6030,7 +6054,6 @@ msgid ""
 msgstr "Votre administrateur a verrouillé ce formulaire  "
 
 #: corehq/apps/app_manager/templates/app_manager/v1/form_view.html:163
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:8
 msgid "Preview Form"
 msgstr "Prévisualisez le formulaire"
 
@@ -6046,7 +6069,7 @@ msgstr "Prévisualisez le formulaire"
 #: corehq/apps/app_manager/templates/app_manager/v2/partials/mobile_report_configs.html:13
 #: corehq/apps/cloudcare/templates/formplayer/grid_view.html:93
 #: corehq/apps/cloudcare/templates/formplayer/settings_view.html:8
-#: corehq/apps/dashboard/views.py:289 corehq/tabs/tabclasses.py:1142
+#: corehq/apps/dashboard/views.py:289 corehq/tabs/tabclasses.py:1133
 #: submodules/touchforms-src/touchforms/formplayer/templates/formplayer/fullform-ui/templates.html:110
 msgid "Settings"
 msgstr "Paramètres"
@@ -9798,10 +9821,8 @@ msgid "Releases"
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/v2/apps_base.html:70
-#, fuzzy
-#| msgid "New App Builder"
 msgid "New App Builder Officially Released"
-msgstr "Nouveau éditeur d'application"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/v2/apps_base.html:72
 msgid ""
@@ -9815,10 +9836,8 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/v2/apps_base.html:82
-#, fuzzy
-#| msgid "Learn more"
 msgid "Learn More"
-msgstr "Lire plus"
+msgstr ""
 
 #: corehq/apps/app_manager/templates/app_manager/v2/form_designer.html:39
 #: corehq/apps/app_manager/templates/app_manager/v2/form_view.html:77
@@ -10950,27 +10969,27 @@ msgstr ""
 msgid "Untitled"
 msgstr "Sans titre"
 
-#: corehq/apps/app_manager/util.py:591
+#: corehq/apps/app_manager/util.py:595
 #, python-brace-format
 msgid ""
 "Practice User with id {id} not found, please make sure you have not deleted "
 "this user"
 msgstr ""
 
-#: corehq/apps/app_manager/util.py:596
+#: corehq/apps/app_manager/util.py:600
 #, python-brace-format
 msgid ""
 "User {username} is not a practice user, please turn on practice mode for "
 "this user"
 msgstr ""
 
-#: corehq/apps/app_manager/util.py:601
+#: corehq/apps/app_manager/util.py:605
 #, python-brace-format
 msgid ""
 "User {username} has been deleted, you can't use that user as practice user"
 msgstr ""
 
-#: corehq/apps/app_manager/util.py:606
+#: corehq/apps/app_manager/util.py:610
 #, python-brace-format
 msgid ""
 "User {username} has been deactivated, you can't use that user as practice "
@@ -11099,7 +11118,7 @@ msgstr ""
 "reconstruire. Si le problème persiste, veuillez nous contacter commcarehq-"
 "support@dimagi.com"
 
-#: corehq/apps/app_manager/views/download.py:374
+#: corehq/apps/app_manager/views/download.py:378
 msgid ""
 "We were unable to get your files because your Application has errors. Please "
 "click <strong>Make New Version</strong> for feedback on how to fix these "
@@ -11117,7 +11136,7 @@ msgstr ""
 "le form builder, donc plutôt nous vous avons redirigé au page principale du "
 "formulaire."
 
-#: corehq/apps/app_manager/views/formdesigner.py:308
+#: corehq/apps/app_manager/views/formdesigner.py:309
 msgid ""
 "There is an error in the case management of your application. Please fix the "
 "error to see case properties in this tree"
@@ -11396,7 +11415,7 @@ msgstr ""
 #: corehq/apps/appstore/templates/appstore/appstore_base.html:8
 #: corehq/apps/appstore/views.py:91 corehq/apps/domain/views.py:1803
 #: corehq/apps/style/templates/style/includes/domain_list_dropdown.html:21
-#: corehq/tabs/tabclasses.py:1488
+#: corehq/tabs/tabclasses.py:1476
 msgid "CommCare Exchange"
 msgstr "CommCare Exchange"
 
@@ -11475,7 +11494,7 @@ msgstr "Suivant"
 #: corehq/apps/reports/standard/monitoring.py:264
 #: corehq/apps/sms/templates/sms/phone_number_filter.html:29
 #: corehq/apps/toggle_ui/templates/toggle/flags.html:50
-#: corehq/apps/users/views/__init__.py:98 corehq/tabs/tabclasses.py:1151
+#: corehq/apps/users/views/__init__.py:98 corehq/tabs/tabclasses.py:1142
 msgid "Users"
 msgstr "Utilisateurs"
 
@@ -11527,8 +11546,8 @@ msgstr "Auteur"
 #: corehq/apps/appstore/templates/appstore/media_files.html:36
 #: corehq/apps/cloudcare/templates/formplayer/users.html:98
 #: corehq/apps/dashboard/views.py:260 corehq/apps/domain/forms.py:1695
-#: corehq/apps/hqadmin/reports.py:696 corehq/tabs/tabclasses.py:1320
-#: corehq/tabs/tabclasses.py:1323
+#: corehq/apps/hqadmin/reports.py:696 corehq/tabs/tabclasses.py:1308
+#: corehq/tabs/tabclasses.py:1311
 msgid "Organization"
 msgstr "Organisation"
 
@@ -11732,7 +11751,7 @@ msgid "Disagree"
 msgstr "Je n'accepte pas"
 
 #: corehq/apps/appstore/views.py:209 corehq/apps/domain/views.py:2586
-#: corehq/tabs/tabclasses.py:1378
+#: corehq/tabs/tabclasses.py:1366
 msgid "Project Information"
 msgstr "Informations sur le projet"
 
@@ -11778,7 +11797,7 @@ msgid "Editing CommCare Builds"
 msgstr "Edition des versions CommCare"
 
 #: corehq/apps/builds/templates/builds/edit_menu.html:37
-#: corehq/tabs/tabclasses.py:1215
+#: corehq/tabs/tabclasses.py:1206
 msgid "Editing"
 msgstr "Modification"
 
@@ -12496,184 +12515,8 @@ msgstr "L'application '%s' n'est pas trouvée"
 
 #: corehq/apps/cloudcare/templates/cloudcare/base.html:4
 #: corehq/apps/cloudcare/templates/cloudcare/base.html:11
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:10
-#: corehq/tabs/tabclasses.py:864
 msgid "CloudCare"
 msgstr "CloudCare"
-
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:91
-msgid "Form successfully saved"
-msgstr "Formulaire enregistré"
-
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:92
-msgid "Save failed. Details: "
-msgstr "Échec de sauvegarde. Détails: "
-
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:93
-msgid "Unknown error: "
-msgstr "Erreure inconnue:"
-
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:94
-msgid ""
-"This can happen if you loaded CloudCare from a different address than the "
-"server address"
-msgstr ""
-"Ceci peut arriver si vous avez chargé CloudCare d'une addresse autre que "
-"celle du serveur."
-
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:95
-msgid "All changes saved!"
-msgstr "Tous les changements enregistrés"
-
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:96
-msgid "Open in New Window"
-msgstr "Ouvrir dans une nouvelle fenêtre "
-
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:97
-msgid ""
-"Permanently delete this form? You will not be able to return to it later."
-msgstr ""
-"Suprimer de manière permanente? Vous n'allez pas pouvoir y retourner plus "
-"tard."
-
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:98
-msgid "Form was deleted."
-msgstr "Le formulaire a été suprimé."
-
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:99
-msgid ""
-"Error deleting form. Please try again and report an issue if this problem "
-"persists."
-msgstr ""
-"Échec dans la suppression du formulaire. Veuillez réessayer et reporter un "
-"problème si ce problème persiste.  "
-
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:100
-msgid ""
-"Unable to load the case list. If you are using a filter expression please "
-"double check the syntax and try again. Please report an issue if this "
-"problem persists."
-msgstr ""
-"Incapable de charger la liste de dossiers. Si vous utilisez un filtre, "
-"vérifiez que la syntaxe est correcte et ré-essayez. Signalez un problème si "
-"ce problème demeure."
-
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:102
-msgid ""
-"You have not submitted this form. Click ‘Stay on this Page’ to continue "
-"working on this form. If you click 'Leave this Page' any data you have "
-"entered will not be saved."
-msgstr ""
-"Vous n'avez soumis ce formulaire. Cliquez 'Rester sur cette Page' pour "
-"continuer de travailler sur ce formulaire. Si vous cliquez 'Quitter cette "
-"page', les données soumises ne seront pas enregistrées."
-
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:103
-msgid ""
-"You have not submitted this form. Click ‘Cancel’ to continue working on this "
-"form. If you click 'OK' any data you have entered will not be saved."
-msgstr ""
-"Vous n'avez soumis ce formulaire. Cliquez 'Annuler' pour continuer de "
-"travailler sur ce formulaire. Si vous cliquez 'OK', les données soumises ne "
-"seront pas enregistrées."
-
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:105
-msgid ""
-"You have not submitted this form. Click ‘Stay on this Page’ to continue "
-"working on this form. If you click 'Leave this Page' you can resume work on "
-"this form later."
-msgstr ""
-"Vous n'avez soumis ce formulaire. Cliquez 'Annuler' pour continuer de "
-"travailler sur ce formulaire. Si vous cliquez sur \"Quitter cette Page\", "
-"vous pourrez continuer de travailler sur ce formulaire plus tard."
-
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:106
-msgid ""
-"You have not submitted this form. Click ‘Cancel’ to continue working on this "
-"form. If you click 'OK' you can resume work on this form later."
-msgstr ""
-"Vous n'avez soumis ce formulaire. Clickez 'Annuler' pour continuer de "
-"travailler sur ce formulaire. Si vous clickez 'OK', vous pourrez continuer "
-"de travailler sur ce formulaire plus tard."
-
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:187
-msgid "Sync Data"
-msgstr "Synchroniser les données"
-
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:197
-msgid ""
-"\n"
-"                    You are previewing a form as a web user!\n"
-"                    Any data you submit will show up in reports as submitted "
-"by \"Unknown User\". There are a\n"
-"                    few features that rely on mobile workers and will not "
-"work properly:\n"
-"                    <ul>\n"
-"                        <li>Case sharing</li>\n"
-"                        <li>Lookup tables</li>\n"
-"                        <li>User-as-a-case</li>\n"
-"                    </ul>\n"
-"                    For the best experience please logout and login as a "
-"Mobile Worker.\n"
-"                    More information can be found at the <a href=\"https://"
-"help.commcarehq.org/display/commcarepublic/CloudCare+-+Web+Data+Entry"
-"\">CommCare Help Site</a>.\n"
-"                "
-msgstr ""
-"\n"
-"Vous visualisez ce formulaire en tant qu'utilisateur web!\n"
-"Toutes les données que vous soumettez apparaîtront dans les rapports comme "
-"soumises par un \"utilisateur inconnu\" Il y a\n"
-"quelques nouvelles fonctionnalités qui reposent sur les utilsateurs mobiles "
-"et ne marcheront pas correctement: \n"
-"<ul>\n"
-"<li>partage de dossiers</li>\n"
-"<li>tables de recherche</li>\n"
-"<li>utilisateur comme un dossier</li>\n"
-"</ul>\n"
-"Pour une meilleure expérience veuillez vous déconnecté et reconnecté comme "
-"un utilisateur mobile. \n"
-"Plus d'information sur <a href=\"https://help.commcarehq.org/display/"
-"commcarepublic/CloudCare+-+Web+Data+Entry\">CommCare Help Site</a>."
-
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:214
-msgid ""
-"\n"
-"                <p>\n"
-"                    Sorry, it doesn't look like you have any CloudCare apps\n"
-"                    available. To learn more about how to enable and use\n"
-"                    CloudCare, please check out our\n"
-"                    <a href=\"https://confluence.dimagi.com/pages/viewpage."
-"action?pageId=10224014\" target=\"_blank\">wiki documentation</a>.\n"
-"                </p>\n"
-"            "
-msgstr ""
-"\n"
-"<p>\n"
-"Désolé, il semble que vous ne disposiez d'aucune application CloudCare "
-"disponible. Pour en savoir davantage sur la manière d'activer et d'utiliser "
-"CloudCare, veuillez consulter notre <a href=\"https://confluence.dimagi.com/"
-"pages/viewpage.action?pageId=10224014\" target=\"_blank\">documentation "
-"wiki</a>.\n"
-"</p>\n"
-"                "
-
-#: corehq/apps/cloudcare/templates/cloudcare/cloudcare_home.html:223
-msgid ""
-"\n"
-"                <p>\n"
-"                    CloudCare displays the latest starred version of the\n"
-"                    application. Make sure you have enabled CloudCare and\n"
-"                    starred a version of your application.\n"
-"                </p>\n"
-"                "
-msgstr ""
-"\n"
-"<p>\n"
-"CloudCare utilise la dernière version de l'application marquée par une "
-"étoile. Assurez-vous que vouz avez activé CloudCare et que vous avez marqué "
-"une version de votre application avec une étoile.\n"
-"</p>"
 
 #: corehq/apps/cloudcare/templates/cloudcare/config.html:141
 msgid "Manage Web Apps Permissions"
@@ -12736,7 +12579,7 @@ msgid "No Web Apps applications available"
 msgstr "Aucune application web disponible"
 
 #: corehq/apps/cloudcare/templates/cloudcare/formplayer_home.html:7
-#: corehq/apps/users/landing_pages.py:25 corehq/tabs/tabclasses.py:862
+#: corehq/apps/users/landing_pages.py:22 corehq/tabs/tabclasses.py:847
 msgid "Web Apps"
 msgstr "Applications web"
 
@@ -12824,26 +12667,15 @@ msgstr "Type d'organisation"
 msgid "Date Registered"
 msgstr "Date d'inscription"
 
-#: corehq/apps/cloudcare/views.py:208
-msgid ""
-"That app is no longer valid. Try using the navigation links to select an app."
-msgstr ""
-"Cette application n'est plus valide. Tentez d'utiliser les liens de "
-"navigation pour sélectionner une application."
-
-#: corehq/apps/cloudcare/views.py:643
+#: corehq/apps/cloudcare/views.py:493
 msgid "Something went wrong filtering your cases."
 msgstr "Une erreur est survenue lors du filtrage de vos dossiers."
 
-#: corehq/apps/cloudcare/views.py:884
+#: corehq/apps/cloudcare/views.py:733
 #: corehq/apps/users/templates/users/web_users.html:595
-#: corehq/tabs/tabclasses.py:1226
+#: corehq/tabs/tabclasses.py:1216
 msgid "Web Apps Permissions"
 msgstr "Permissions pour applications web"
-
-#: corehq/apps/cloudcare/views.py:886 corehq/tabs/tabclasses.py:1228
-msgid "CloudCare Permissions"
-msgstr "Permissions CloudCare"
 
 #: corehq/apps/commtrack/forms.py:17
 msgid "Use default emergency levels"
@@ -13443,7 +13275,7 @@ msgstr "Gérer la hiérarchie géographique"
 
 #: corehq/apps/dashboard/views.py:269 corehq/apps/sms/views.py:111
 #: corehq/apps/sms/views.py:332 corehq/apps/sms/views.py:467
-#: corehq/reports.py:152 corehq/tabs/tabclasses.py:877
+#: corehq/reports.py:152 corehq/tabs/tabclasses.py:868
 msgid "Messaging"
 msgstr "Messagerie"
 
@@ -17885,9 +17717,9 @@ msgid "Sorry, you do not have access to %(feature_name)s"
 msgstr "Désolé, vous n'avez pas accès à %(feature_name)s"
 
 #: corehq/apps/domain/views.py:304 corehq/apps/locations/views.py:890
-#: corehq/apps/ota/views.py:293
+#: corehq/apps/ota/views.py:290
 #: corehq/apps/style/templates/style/includes/global_navigation_bar.html:40
-#: corehq/reports.py:378 corehq/tabs/tabclasses.py:1333
+#: corehq/reports.py:378 corehq/tabs/tabclasses.py:1321
 msgid "Project Settings"
 msgstr "Paramètres de projet"
 
@@ -18138,7 +17970,7 @@ msgstr ""
 msgid "Created a new version of your app."
 msgstr "Créé une nouvelle version de votre application."
 
-#: corehq/apps/domain/views.py:2113 corehq/tabs/tabclasses.py:1492
+#: corehq/apps/domain/views.py:2113 corehq/tabs/tabclasses.py:1480
 msgid "Multimedia Sharing"
 msgstr "Partage multimédia"
 
@@ -18146,12 +17978,12 @@ msgstr "Partage multimédia"
 msgid "Multimedia updated successfully!"
 msgstr "Fichier multimédia mis à jour avec succès !"
 
-#: corehq/apps/domain/views.py:2160 corehq/tabs/tabclasses.py:1555
+#: corehq/apps/domain/views.py:2160 corehq/tabs/tabclasses.py:1543
 #: custom/m4change/fields.py:30 custom/m4change/fields.py:37
 msgid "Case Search"
 msgstr "Recherche de dossier"
 
-#: corehq/apps/domain/views.py:2240 corehq/tabs/tabclasses.py:1560
+#: corehq/apps/domain/views.py:2240 corehq/tabs/tabclasses.py:1548
 msgid "Calendar Fixture"
 msgstr "Eléments du calendier"
 
@@ -18159,7 +17991,7 @@ msgstr "Eléments du calendier"
 msgid "Calendar configuration updated successfully"
 msgstr "Configuration du calendrier mise à jour avec succès"
 
-#: corehq/apps/domain/views.py:2266 corehq/tabs/tabclasses.py:1565
+#: corehq/apps/domain/views.py:2266 corehq/tabs/tabclasses.py:1553
 msgid "Location Fixture"
 msgstr "Elément de site"
 
@@ -18206,7 +18038,7 @@ msgstr "Annuler ou recharger la charge utile"
 msgid "Payload ID"
 msgstr "Identifiant de la charge utile"
 
-#: corehq/apps/domain/views.py:2440 corehq/tabs/tabclasses.py:1506
+#: corehq/apps/domain/views.py:2440 corehq/tabs/tabclasses.py:1494
 msgid "Data Forwarding"
 msgstr "Transfert de données"
 
@@ -18370,7 +18202,7 @@ msgstr "Utilisateurs inconnus"
 
 #: corehq/apps/export/forms.py:68 corehq/apps/export/forms.py:260
 #: corehq/apps/reports/__init__.py:13 corehq/apps/reports/models.py:81
-#: corehq/reports.py:118 corehq/tabs/tabclasses.py:1140
+#: corehq/reports.py:118 corehq/tabs/tabclasses.py:1131
 msgid "CommCare Supply"
 msgstr "CommCare Supply"
 
@@ -18570,7 +18402,7 @@ msgstr "Historique de dossier"
 msgid "Parent Cases"
 msgstr "Dossiers parents"
 
-#: corehq/apps/export/models/new.py:1079 corehq/tabs/tabclasses.py:1137
+#: corehq/apps/export/models/new.py:1079 corehq/tabs/tabclasses.py:1128
 msgid "Messages"
 msgstr "Messages"
 
@@ -20644,7 +20476,7 @@ msgstr "Retourner à la gestion des tables de recherche"
 #: corehq/apps/reports/templates/reports/project_health/user_details.html:12
 #: corehq/apps/sms/templates/sms/phone_number_filter.html:35
 #: corehq/apps/users/templates/users/edit_commcare_user.html:34
-#: corehq/apps/users/views/mobile/groups.py:146 corehq/tabs/tabclasses.py:1208
+#: corehq/apps/users/views/mobile/groups.py:146 corehq/tabs/tabclasses.py:1199
 msgid "Groups"
 msgstr "Groupes"
 
@@ -21015,7 +20847,7 @@ msgstr "Tous les domaines (SANS application de filtres. > %s projects)"
 msgid "ADMINREPORT"
 msgstr "ADMINREPORT"
 
-#: corehq/apps/hqadmin/reports.py:665 corehq/tabs/tabclasses.py:1787
+#: corehq/apps/hqadmin/reports.py:665 corehq/tabs/tabclasses.py:1775
 msgid "Project Space List"
 msgstr "Liste d'espace de projet"
 
@@ -21311,7 +21143,7 @@ msgstr "faux"
 msgid "Project Map"
 msgstr "Plan du projet"
 
-#: corehq/apps/hqadmin/reports.py:951 corehq/tabs/tabclasses.py:1793
+#: corehq/apps/hqadmin/reports.py:951 corehq/tabs/tabclasses.py:1781
 msgid "User List"
 msgstr "Liste d'utilisateurs"
 
@@ -21344,7 +21176,7 @@ msgstr "SuperUser ?"
 msgid "No Domain Data"
 msgstr "Aucune donnée de domaine"
 
-#: corehq/apps/hqadmin/reports.py:1019 corehq/tabs/tabclasses.py:1795
+#: corehq/apps/hqadmin/reports.py:1019 corehq/tabs/tabclasses.py:1783
 msgid "Application List"
 msgstr "Liste d'applications"
 
@@ -21376,7 +21208,7 @@ msgstr "Espaces de projet CommCare Supply"
 msgid "Global Device Logs Soft Asserts"
 msgstr "L'appareil global enregistre des assertions"
 
-#: corehq/apps/hqadmin/reports.py:1297 corehq/tabs/tabclasses.py:1805
+#: corehq/apps/hqadmin/reports.py:1297 corehq/tabs/tabclasses.py:1793
 msgid "Admin Phone Number Report"
 msgstr "Rapport de numéro de téléphone de l'administrateur"
 
@@ -21495,7 +21327,7 @@ msgid "Download as CSV"
 msgstr "Télécharger en mode CSV"
 
 #: corehq/apps/hqadmin/templates/hqadmin/hqadmin_base_report.html:20
-#: corehq/apps/hqadmin/views.py:127 corehq/tabs/tabclasses.py:1718
+#: corehq/apps/hqadmin/views.py:127 corehq/tabs/tabclasses.py:1706
 msgid "Admin Reports"
 msgstr "Rapports administratifs"
 
@@ -21516,7 +21348,7 @@ msgstr ""
 "ce mois"
 
 #: corehq/apps/hqadmin/templates/hqadmin/messaging_case_updates.html:5
-#: corehq/apps/hqadmin/views.py:1045 corehq/tabs/tabclasses.py:1782
+#: corehq/apps/hqadmin/views.py:1045 corehq/tabs/tabclasses.py:1770
 msgid "Reprocess Messaging Case Updates"
 msgstr "Retraiter les mises à jour de messagerie de dossiers"
 
@@ -21656,9 +21488,9 @@ msgstr "Autorisations de super-utilisateur mises à jour avec succès"
 msgid "Recent Couch Changes"
 msgstr "Changements Couch récents"
 
-#: corehq/apps/hqadmin/views.py:352 corehq/tabs/tabclasses.py:1712
-#: corehq/tabs/tabclasses.py:1719 corehq/tabs/tabclasses.py:1756
-#: corehq/tabs/tabclasses.py:1797
+#: corehq/apps/hqadmin/views.py:352 corehq/tabs/tabclasses.py:1700
+#: corehq/tabs/tabclasses.py:1707 corehq/tabs/tabclasses.py:1744
+#: corehq/tabs/tabclasses.py:1785
 msgid "System Info"
 msgstr "Infos sur le système"
 
@@ -21800,7 +21632,7 @@ msgstr "Vérificateur de référence multimédia"
 #: corehq/apps/hqmedia/templates/hqmedia/bulk_upload.html:26
 #: corehq/apps/locations/templates/locations/manage/locations.html:213
 #: corehq/apps/users/templates/users/mobile_workers.html:157
-#: corehq/tabs/tabclasses.py:1200
+#: corehq/tabs/tabclasses.py:1191
 msgid "Bulk Upload"
 msgstr "Téléversement en bloc"
 
@@ -22308,7 +22140,7 @@ msgstr "Type Erreur:"
 msgid "Stack Trace:"
 msgstr "Trace d'appels:"
 
-#: corehq/apps/hqpillow_retry/views.py:41 corehq/tabs/tabclasses.py:1770
+#: corehq/apps/hqpillow_retry/views.py:41 corehq/tabs/tabclasses.py:1758
 msgid "PillowTop Errors"
 msgstr "Erreurs \"PillowTop\""
 
@@ -23896,23 +23728,19 @@ msgstr ""
 msgid "Invalid restore as user {}"
 msgstr "Restaurer en tant qu'utilisateur invalide {}"
 
-#: corehq/apps/ota/utils.py:140 corehq/apps/ota/utils.py:153
+#: corehq/apps/ota/utils.py:139 corehq/apps/ota/utils.py:144
 msgid "{} was not in the domain {}"
 msgstr "{} n'a pas pu être trouvé dans le domaine {}"
 
-#: corehq/apps/ota/utils.py:145
-msgid "{} does not have permissions to restore as {}"
-msgstr "{} n'a pas l'autorisation de restaurer en tant que {} "
-
-#: corehq/apps/ota/utils.py:159
+#: corehq/apps/ota/utils.py:150
 msgid "Restore user {} not in allowed locations"
 msgstr "Restaurer les utilisateurs {} dans des organisations non autorisés"
 
-#: corehq/apps/ota/utils.py:166
+#: corehq/apps/ota/utils.py:157
 msgid "{} does not have permission to edit commcare users"
 msgstr "{}  n'a pas la permission de modifier des utilisateurs commcare"
 
-#: corehq/apps/ota/views.py:292
+#: corehq/apps/ota/views.py:289
 msgid "Speed up 'Sync with Server'"
 msgstr "Accélérer 'Synchronisation avec le serveur'"
 
@@ -24024,7 +23852,7 @@ msgstr "Envoyer des messages réels maintenant"
 msgid "No performance messages setup yet."
 msgstr "Aucun message de performance n'a encore été défini."
 
-#: corehq/apps/performance_sms/views.py:20 corehq/tabs/tabclasses.py:1139
+#: corehq/apps/performance_sms/views.py:20 corehq/tabs/tabclasses.py:1130
 msgid "Performance Messaging"
 msgstr "Messagerie de performance"
 
@@ -27491,7 +27319,7 @@ msgstr "Nommer le projet"
 msgid "Loading...just a second!"
 msgstr "Chargement...juste un instant!"
 
-#: corehq/apps/registration/utils.py:198
+#: corehq/apps/registration/utils.py:201
 msgid "Activate your CommCare project"
 msgstr "Activer votre projet CommCare"
 
@@ -28262,7 +28090,7 @@ msgid "One or more of the locations was not found."
 msgstr "Un ou plusieurs sites n'ont pas été trouvé(s)."
 
 #: corehq/apps/reminders/templates/reminders/broadcasts_list.html:15
-#: corehq/apps/reminders/views.py:707 corehq/tabs/tabclasses.py:1022
+#: corehq/apps/reminders/views.py:707 corehq/tabs/tabclasses.py:1013
 msgid "New Broadcast"
 msgstr "Nouvelle diffusion"
 
@@ -28435,7 +28263,7 @@ msgid "Add Parameter"
 msgstr "Ajouter un paramètre"
 
 #: corehq/apps/reminders/templates/reminders/reminders_list.html:22
-#: corehq/apps/reminders/views.py:214 corehq/tabs/tabclasses.py:923
+#: corehq/apps/reminders/views.py:214 corehq/tabs/tabclasses.py:914
 msgid "Reminders"
 msgstr "Rappels"
 
@@ -28485,15 +28313,15 @@ msgstr "Désactivation du rappel..."
 msgid "Error deleting, try again?"
 msgstr "Une erreur est survenue lors de la désactivation. Essayer à nouveau ?"
 
-#: corehq/apps/reminders/views.py:92 corehq/tabs/tabclasses.py:942
+#: corehq/apps/reminders/views.py:92 corehq/tabs/tabclasses.py:933
 msgid "Reminder Calendar"
 msgstr "Calendrier des rappels"
 
-#: corehq/apps/reminders/views.py:158 corehq/tabs/tabclasses.py:931
+#: corehq/apps/reminders/views.py:158 corehq/tabs/tabclasses.py:922
 msgid "Schedule Reminder"
 msgstr "Définir un rappel"
 
-#: corehq/apps/reminders/views.py:382 corehq/tabs/tabclasses.py:935
+#: corehq/apps/reminders/views.py:382 corehq/tabs/tabclasses.py:926
 msgid "Schedule Multi Event Reminder"
 msgstr "Définir un rappel multi-événement"
 
@@ -28528,11 +28356,11 @@ msgstr "Editez un Mot Clé Structuré"
 msgid "Edit Normal Keyword"
 msgstr "Editer un Mot Clé Normal"
 
-#: corehq/apps/reminders/views.py:815 corehq/tabs/tabclasses.py:1018
+#: corehq/apps/reminders/views.py:815 corehq/tabs/tabclasses.py:1009
 msgid "Edit Broadcast"
 msgstr "Modifier la diffusion"
 
-#: corehq/apps/reminders/views.py:871 corehq/tabs/tabclasses.py:1026
+#: corehq/apps/reminders/views.py:871 corehq/tabs/tabclasses.py:1017
 msgid "Copy Broadcast"
 msgstr "Copier la diffusion"
 
@@ -28544,7 +28372,7 @@ msgstr "Définitions de rappel"
 msgid "Broadcasts"
 msgstr "Diffusions"
 
-#: corehq/apps/reminders/views.py:1068 corehq/tabs/tabclasses.py:955
+#: corehq/apps/reminders/views.py:1068 corehq/tabs/tabclasses.py:946
 msgid "Keywords"
 msgstr "Mots-clés"
 
@@ -29999,8 +29827,8 @@ msgstr "Nombre de messages envoyés"
 msgid "Number of Phone Numbers Used"
 msgstr "Nombre de numéros de téléphone utilisés"
 
-#: corehq/apps/reports/standard/sms.py:163 corehq/tabs/tabclasses.py:1180
-#: corehq/tabs/tabclasses.py:1243
+#: corehq/apps/reports/standard/sms.py:163 corehq/tabs/tabclasses.py:1171
+#: corehq/tabs/tabclasses.py:1231
 msgid "Deleted"
 msgstr "Supprimé"
 
@@ -31537,39 +31365,39 @@ msgid ""
 "form."
 msgstr ""
 
-#: corehq/apps/reports/views.py:1861
+#: corehq/apps/reports/views.py:1860
 msgid "Form was restored from a previous version."
 msgstr "Le formulaire a été restauré d'une version précédente."
 
-#: corehq/apps/reports/views.py:1864
+#: corehq/apps/reports/views.py:1863
 msgid "Sorry, that form cannot be edited."
 msgstr "Désolé, ce formulaire ne peut pas être édité."
 
-#: corehq/apps/reports/views.py:1885
+#: corehq/apps/reports/views.py:1884
 msgid "Form was successfully archived."
 msgstr "Le formulaire a été archivé avec succès."
 
-#: corehq/apps/reports/views.py:1887
+#: corehq/apps/reports/views.py:1886
 msgid "Form was already archived."
 msgstr "Le formulaire a déjà été archivé."
 
-#: corehq/apps/reports/views.py:1889
+#: corehq/apps/reports/views.py:1888
 #, python-format
 msgid "Can't archive documents of type %s. How did you get here??"
 msgstr ""
 "Impossible d'archiver les documents de type %s. Comment êtes-vous arrivé "
 "ici ?"
 
-#: corehq/apps/reports/views.py:1894
+#: corehq/apps/reports/views.py:1893
 msgid "Undo"
 msgstr "Annuler"
 
-#: corehq/apps/reports/views.py:1912
+#: corehq/apps/reports/views.py:1911
 #, python-format
 msgid "%(case_name)s (this case)"
 msgstr "%(case_name)s (ce dossier)"
 
-#: corehq/apps/reports/views.py:1920
+#: corehq/apps/reports/views.py:1919
 msgid ""
 "Form cannot be archived as it creates cases that are updated by other "
 "forms.\n"
@@ -31579,21 +31407,21 @@ msgstr ""
 "qui sont mis à jour par d'autres formulaires.\n"
 "Tous les autres formulaires de ce dossier doivent être archivés d'abord:"
 
-#: corehq/apps/reports/views.py:1970
+#: corehq/apps/reports/views.py:1969
 msgid "Form was successfully restored."
 msgstr "Le formulaire a été restauré avec succès."
 
-#: corehq/apps/reports/views.py:1992
+#: corehq/apps/reports/views.py:1991
 msgid "Form was successfully resaved. It should reappear in reports shortly."
 msgstr ""
 "Le formulaire a été réenregistré avec succès. Il devrait réapparaître dans "
 "les rapports bientôt."
 
-#: corehq/apps/reports/views.py:2037
+#: corehq/apps/reports/views.py:2036
 msgid "We don't support this format"
 msgstr "Format non supporté"
 
-#: corehq/apps/reports/views.py:2039
+#: corehq/apps/reports/views.py:2038
 msgid ""
 "That report was not found. Please remember that download links expire after "
 "24 hours."
@@ -31703,7 +31531,6 @@ msgid "December"
 msgstr "Décembre"
 
 #: corehq/apps/settings/forms.py:41
-#: docs/_build/html/_sources/translations.txt:177
 msgid "Specify New Password"
 msgstr "Spécifiez le nouveau mot de passe"
 
@@ -32305,7 +32132,7 @@ msgid "Catch-All Gateway"
 msgstr "Passerelle Passe-partout"
 
 #: corehq/apps/sms/forms.py:939 corehq/apps/sms/views.py:591
-#: corehq/tabs/tabclasses.py:1691
+#: corehq/tabs/tabclasses.py:1679
 msgid "Default Gateways"
 msgstr "Passerelles par défaut"
 
@@ -32854,7 +32681,7 @@ msgid "(New Message)"
 msgstr "(nouveau message)"
 
 #: corehq/apps/sms/templates/sms/chat_contacts.html:34
-#: corehq/tabs/tabclasses.py:1078
+#: corehq/tabs/tabclasses.py:1069
 msgid "Chat"
 msgstr "Conversation"
 
@@ -33099,7 +32926,7 @@ msgstr "1 semaine"
 msgid "30 Days"
 msgstr "30 jours"
 
-#: corehq/apps/sms/views.py:135 corehq/tabs/tabclasses.py:987
+#: corehq/apps/sms/views.py:135 corehq/tabs/tabclasses.py:978
 msgid "Compose SMS Message"
 msgstr "Composer le message SMS"
 
@@ -33188,7 +33015,7 @@ msgid "System"
 msgstr "Système"
 
 #: corehq/apps/sms/views.py:1018 corehq/apps/sms/views.py:1388
-#: corehq/tabs/tabclasses.py:1108 corehq/tabs/tabclasses.py:1682
+#: corehq/tabs/tabclasses.py:1099 corehq/tabs/tabclasses.py:1670
 msgid "SMS Connectivity"
 msgstr "Connectivité SMS"
 
@@ -33449,7 +33276,7 @@ msgid "Manage"
 msgstr "Gérer"
 
 #: corehq/apps/style/templates/style/includes/global_navigation_bar.html:14
-#: custom/icds_reports/templates/icds_reports/dashboard.html:107
+#: custom/icds_reports/templates/icds_reports/dashboard.html:109
 #: custom/icds_reports/templates/icds_reports/tableau.html:97
 msgid "Logged in As"
 msgstr "Connecté en tant que"
@@ -33467,19 +33294,19 @@ msgid "View Domain Doc"
 msgstr "Afficher document du domaine"
 
 #: corehq/apps/style/templates/style/includes/global_navigation_bar.html:62
-#: custom/icds_reports/templates/icds_reports/dashboard.html:128
+#: custom/icds_reports/templates/icds_reports/dashboard.html:130
 #: custom/icds_reports/templates/icds_reports/tableau.html:118
 msgid "Manage Account"
 msgstr "Gérer le compte"
 
 #: corehq/apps/style/templates/style/includes/global_navigation_bar.html:66
-#: custom/icds_reports/templates/icds_reports/dashboard.html:132
+#: custom/icds_reports/templates/icds_reports/dashboard.html:134
 #: custom/icds_reports/templates/icds_reports/tableau.html:121
 msgid "My Account Settings"
 msgstr "Mes paramètres de compte"
 
 #: corehq/apps/style/templates/style/includes/global_navigation_bar.html:73
-#: custom/icds_reports/templates/icds_reports/dashboard.html:138
+#: custom/icds_reports/templates/icds_reports/dashboard.html:140
 #: custom/icds_reports/templates/icds_reports/tableau.html:127
 msgid "Sign Out"
 msgstr "Déconnexion"
@@ -34407,7 +34234,7 @@ msgstr "Site non valide"
 msgid "Unknown Date"
 msgstr "Date inconnue"
 
-#: corehq/apps/userreports/reports/view.py:270
+#: corehq/apps/userreports/reports/view.py:271
 msgid ""
 "It looks like there is a problem with your report. You may need to delete "
 "and recreate the report. If you believe you are seeing this message in "
@@ -34417,11 +34244,11 @@ msgstr ""
 "supprimer et recréer le rapport. Si vous pensez que ce message est erroné, "
 "veuillez signaler un problème."
 
-#: corehq/apps/userreports/reports/view.py:381
+#: corehq/apps/userreports/reports/view.py:382
 msgid "This report has too many columns to be displayed"
 msgstr "Ce rapport a trop de colonnes pour pouvoir être affiché"
 
-#: corehq/apps/userreports/reports/view.py:408
+#: corehq/apps/userreports/reports/view.py:409
 msgid ""
 "The database table backing your report does not exist yet. Please wait while "
 "the report is populated."
@@ -34429,7 +34256,7 @@ msgstr ""
 "La table de la base de données qui sauvegarde votre rapport n'existe pas "
 "encore. Veuillez patienter pendant que le rapport est rempli."
 
-#: corehq/apps/userreports/reports/view.py:413
+#: corehq/apps/userreports/reports/view.py:414
 msgid ""
 "The database table backing your report does not exist yet. You must rebuild "
 "the data source before viewing the report."
@@ -34438,17 +34265,17 @@ msgstr ""
 "encore. Vous devez reconstruire la source de données avant d'afficher le "
 "rapport."
 
-#: corehq/apps/userreports/reports/view.py:540
+#: corehq/apps/userreports/reports/view.py:541
 #: custom/enikshay/reports/generic.py:84
 msgid "Report Name"
 msgstr "Nom du rapport "
 
-#: corehq/apps/userreports/reports/view.py:541
+#: corehq/apps/userreports/reports/view.py:542
 #: custom/enikshay/reports/generic.py:86
 msgid "Generated On"
 msgstr "Généré le"
 
-#: corehq/apps/userreports/reports/view.py:589
+#: corehq/apps/userreports/reports/view.py:598
 #, python-brace-format
 msgid ""
 "Report export is limited to {number} rows. Please filter the data in your "
@@ -35586,15 +35413,15 @@ msgstr "Ajouter un numéro de téléphone"
 msgid "Add Number"
 msgstr "Ajouter un numéro"
 
-#: corehq/apps/users/landing_pages.py:24 corehq/tabs/tabclasses.py:215
+#: corehq/apps/users/landing_pages.py:21 corehq/tabs/tabclasses.py:215
 msgid "Dashboard"
 msgstr "Tableau de bord"
 
-#: corehq/apps/users/landing_pages.py:28
+#: corehq/apps/users/landing_pages.py:25
 msgid "Data File Downloads"
 msgstr ""
 
-#: corehq/apps/users/landing_pages.py:42
+#: corehq/apps/users/landing_pages.py:39
 msgid "No landing page found with id {}"
 msgstr "Pas de page d'accueil trouver avec cet identifiant {}"
 
@@ -37696,7 +37523,7 @@ msgstr ""
 msgid "Immediate Messages"
 msgstr ""
 
-#: corehq/messaging/scheduling/views.py:40 corehq/tabs/tabclasses.py:999
+#: corehq/messaging/scheduling/views.py:40 corehq/tabs/tabclasses.py:990
 msgid "Schedule a Message"
 msgstr ""
 
@@ -38565,15 +38392,15 @@ msgstr "Type de dossier inconnu"
 msgid "Unknown user"
 msgstr "Utilisateur inconnu"
 
-#: corehq/motech/repeaters/models.py:277 corehq/tabs/tabclasses.py:1499
+#: corehq/motech/repeaters/models.py:277 corehq/tabs/tabclasses.py:1487
 msgid "Forward Forms"
 msgstr "Transférer les formulaires"
 
-#: corehq/motech/repeaters/models.py:326 corehq/tabs/tabclasses.py:1503
+#: corehq/motech/repeaters/models.py:326 corehq/tabs/tabclasses.py:1491
 msgid "Forward Cases"
 msgstr "Transférer les dossiers"
 
-#: corehq/motech/repeaters/models.py:370 corehq/tabs/tabclasses.py:1501
+#: corehq/motech/repeaters/models.py:370 corehq/tabs/tabclasses.py:1489
 msgid "Forward Form Stubs"
 msgstr "Transférer les Form Stubs"
 
@@ -38775,7 +38602,7 @@ msgstr "Infos de projet"
 msgid "CommCare Supply Setup"
 msgstr "Configuration de CommCare Supply"
 
-#: corehq/tabs/tabclasses.py:777 corehq/tabs/tabclasses.py:1744
+#: corehq/tabs/tabclasses.py:777 corehq/tabs/tabclasses.py:1732
 #: corehq/tabs/utils.py:114
 msgid "View All"
 msgstr "Tout Afficher"
@@ -38788,47 +38615,47 @@ msgstr "Mes applications"
 msgid "New Application"
 msgstr "Nouvelle application"
 
-#: corehq/tabs/tabclasses.py:927
+#: corehq/tabs/tabclasses.py:918
 msgid "Edit Reminder"
 msgstr "Modifier le rappel"
 
-#: corehq/tabs/tabclasses.py:1014
+#: corehq/tabs/tabclasses.py:1005
 msgid "Broadcast Messages"
 msgstr "Diffuser les messages"
 
-#: corehq/tabs/tabclasses.py:1043
+#: corehq/tabs/tabclasses.py:1034
 msgid "Configure Performance Messages"
 msgstr "Configurer les messages de performance"
 
-#: corehq/tabs/tabclasses.py:1058
+#: corehq/tabs/tabclasses.py:1049
 msgid "Subscribe to SMS Reports"
 msgstr "S'inscrire aux rapports SMS"
 
-#: corehq/tabs/tabclasses.py:1072
+#: corehq/tabs/tabclasses.py:1063
 msgid "Mobile Worker Registration"
 msgstr "Inscription d'utilisateurs mobiles"
 
-#: corehq/tabs/tabclasses.py:1112 corehq/tabs/tabclasses.py:1686
+#: corehq/tabs/tabclasses.py:1103 corehq/tabs/tabclasses.py:1674
 msgid "Add Gateway"
 msgstr "Ajouter passerelle "
 
-#: corehq/tabs/tabclasses.py:1116 corehq/tabs/tabclasses.py:1688
+#: corehq/tabs/tabclasses.py:1107 corehq/tabs/tabclasses.py:1676
 msgid "Edit Gateway"
 msgstr "Modifier passerelle "
 
-#: corehq/tabs/tabclasses.py:1138
+#: corehq/tabs/tabclasses.py:1129
 msgid "Data Collection and Reminders"
 msgstr "Collecte de données et rappels"
 
-#: corehq/tabs/tabclasses.py:1141
+#: corehq/tabs/tabclasses.py:1132
 msgid "Contacts"
 msgstr "Contacts"
 
-#: corehq/tabs/tabclasses.py:1196
+#: corehq/tabs/tabclasses.py:1187
 msgid "Create and manage users for CommCare and CloudCare."
 msgstr "Créer et gérer des utilisateurs pour CommCare et CloudCare."
 
-#: corehq/tabs/tabclasses.py:1210
+#: corehq/tabs/tabclasses.py:1201
 msgid ""
 "Create and manage\n"
 "                        reporting and case sharing groups\n"
@@ -38838,146 +38665,146 @@ msgstr ""
 "les groupes de reporting et de dossier\n"
 "pour les Utilisateurs Mobiles."
 
-#: corehq/tabs/tabclasses.py:1217
+#: corehq/tabs/tabclasses.py:1208
 msgid "Membership Info"
 msgstr "Infos d'adhésion"
 
-#: corehq/tabs/tabclasses.py:1235
+#: corehq/tabs/tabclasses.py:1223
 msgid "Application Users"
 msgstr "Utilisateurs de l'application"
 
-#: corehq/tabs/tabclasses.py:1252
+#: corehq/tabs/tabclasses.py:1240
 msgid "Project Users"
 msgstr "Utilisateurs de projet"
 
-#: corehq/tabs/tabclasses.py:1256
+#: corehq/tabs/tabclasses.py:1244
 msgid ""
 "Grant other CommCare HQ users access to your project and manage user roles."
 msgstr ""
 "Accorder l'accès aux autres utilisateurs de CommCare HQ à votre projet et "
 "gérer les rôles des utilisateurs."
 
-#: corehq/tabs/tabclasses.py:1259
+#: corehq/tabs/tabclasses.py:1247
 msgid "Add Web User"
 msgstr "Ajouter un utilisateur web"
 
-#: corehq/tabs/tabclasses.py:1324
+#: corehq/tabs/tabclasses.py:1312
 msgid "No longer available"
 msgstr "Ce nom d'utilisateur n'est plus disponible"
 
-#: corehq/tabs/tabclasses.py:1381
+#: corehq/tabs/tabclasses.py:1369
 msgid "Project Administration"
 msgstr "Administration du projet"
 
-#: corehq/tabs/tabclasses.py:1385
+#: corehq/tabs/tabclasses.py:1373
 msgid "Pre-release Features"
 msgstr "Caractéristiques de préversion"
 
-#: corehq/tabs/tabclasses.py:1431
+#: corehq/tabs/tabclasses.py:1419
 msgid "Internal Subscription Management (Dimagi Only)"
 msgstr "Gestion des suscriptions internes (Dimagi uniquement)"
 
-#: corehq/tabs/tabclasses.py:1448
+#: corehq/tabs/tabclasses.py:1436
 msgid "Project Tools"
 msgstr "Outils Projet"
 
-#: corehq/tabs/tabclasses.py:1473
+#: corehq/tabs/tabclasses.py:1461
 msgid "Internal Data (Dimagi Only)"
 msgstr "Date interne (Dimagi seulement)"
 
-#: corehq/tabs/tabclasses.py:1519
+#: corehq/tabs/tabclasses.py:1507
 msgid "Data Forwarding Records"
 msgstr "Dossier de transferts de données"
 
-#: corehq/tabs/tabclasses.py:1572
+#: corehq/tabs/tabclasses.py:1560
 msgid "My Settings"
 msgstr "Mes paramètres"
 
-#: corehq/tabs/tabclasses.py:1619
+#: corehq/tabs/tabclasses.py:1607
 msgid "Manage My Settings"
 msgstr "Gérer mes paramètres"
 
-#: corehq/tabs/tabclasses.py:1623
+#: corehq/tabs/tabclasses.py:1611
 msgid "Accounting"
 msgstr "Comptabilité"
 
-#: corehq/tabs/tabclasses.py:1669 corehq/tabs/tabclasses.py:1739
+#: corehq/tabs/tabclasses.py:1657 corehq/tabs/tabclasses.py:1727
 msgid "SMS Connectivity & Billing"
 msgstr "Connectivité SMS & Facturation"
 
-#: corehq/tabs/tabclasses.py:1683
+#: corehq/tabs/tabclasses.py:1671
 msgid "Gateways"
 msgstr "Passerelles"
 
-#: corehq/tabs/tabclasses.py:1702
+#: corehq/tabs/tabclasses.py:1690
 msgid "Admin"
 msgstr "Admin"
 
-#: corehq/tabs/tabclasses.py:1713 corehq/tabs/tabclasses.py:1740
+#: corehq/tabs/tabclasses.py:1701 corehq/tabs/tabclasses.py:1728
 msgid "Feature Flags"
 msgstr "Fanions de fonctionnalité"
 
-#: corehq/tabs/tabclasses.py:1720 corehq/tabs/tabclasses.py:1789
+#: corehq/tabs/tabclasses.py:1708 corehq/tabs/tabclasses.py:1777
 msgid "Submission Map"
 msgstr "Carte de Soumissions"
 
-#: corehq/tabs/tabclasses.py:1721
+#: corehq/tabs/tabclasses.py:1709
 msgid "Management"
 msgstr "Gestion"
 
-#: corehq/tabs/tabclasses.py:1734
+#: corehq/tabs/tabclasses.py:1722
 msgid "Old SMS Billing"
 msgstr "Ancienne facturation SMS"
 
-#: corehq/tabs/tabclasses.py:1741
+#: corehq/tabs/tabclasses.py:1729
 msgid "CommCare Builds"
 msgstr "Versions CommCare"
 
-#: corehq/tabs/tabclasses.py:1743
+#: corehq/tabs/tabclasses.py:1731
 msgid "Django Admin"
 msgstr "Admin Django"
 
-#: corehq/tabs/tabclasses.py:1755 corehq/tabs/tabclasses.py:1786
+#: corehq/tabs/tabclasses.py:1743 corehq/tabs/tabclasses.py:1774
 msgid "Administrative Reports"
 msgstr "Rapports administratifs"
 
-#: corehq/tabs/tabclasses.py:1761
+#: corehq/tabs/tabclasses.py:1749
 msgid "Look up user by email"
 msgstr "Rechercher utilisateur par adresse mail"
 
-#: corehq/tabs/tabclasses.py:1773
+#: corehq/tabs/tabclasses.py:1761
 msgid "Login as another user"
 msgstr "S'identifier en tant qu'un autre utilisateur"
 
-#: corehq/tabs/tabclasses.py:1776
+#: corehq/tabs/tabclasses.py:1764
 msgid "View raw couch documents"
 msgstr "Afficher documents raw couch"
 
-#: corehq/tabs/tabclasses.py:1778
+#: corehq/tabs/tabclasses.py:1766
 msgid "Check Call Center UCR tables"
 msgstr "Vérifier tables de centre d'appels"
 
-#: corehq/tabs/tabclasses.py:1780
+#: corehq/tabs/tabclasses.py:1768
 msgid "Grant superuser privileges"
 msgstr "Accorder des privilèges de super-utilisateur"
 
-#: corehq/tabs/tabclasses.py:1791
+#: corehq/tabs/tabclasses.py:1779
 msgid "Active Project Map"
 msgstr "Carte active de projet"
 
-#: corehq/tabs/tabclasses.py:1799
+#: corehq/tabs/tabclasses.py:1787
 msgid "Download Malt table"
 msgstr "Télécharger table MALT "
 
-#: corehq/tabs/tabclasses.py:1801
+#: corehq/tabs/tabclasses.py:1789
 msgid "Download Global Impact Report"
 msgstr "Télécharger le rapport d'impact global"
 
-#: corehq/tabs/tabclasses.py:1808
+#: corehq/tabs/tabclasses.py:1796
 msgid "Administrative Operations"
 msgstr "Opérations administratives"
 
-#: corehq/tabs/tabclasses.py:1809
+#: corehq/tabs/tabclasses.py:1797
 msgid "CommCare Reports"
 msgstr "Rapports CommCare"
 
@@ -41800,8 +41627,8 @@ msgstr "3-71 mois"
 msgid "All Children (6-71 months)"
 msgstr "Tous les enfants (6-71 mois)"
 
-#: custom/icds_reports/mpr_sqldata.py:459 custom/icds_reports/utils.py:703
-#: custom/icds_reports/utils.py:1642
+#: custom/icds_reports/mpr_sqldata.py:459 custom/icds_reports/utils.py:708
+#: custom/icds_reports/utils.py:1649
 msgid "Pregnant Women"
 msgstr "Femmes enceintes"
 
@@ -41911,7 +41738,7 @@ msgid "II. Average no. of days on which any PSE activity was conducted at AWCs"
 msgstr ""
 "II.Nombre moyen de jours ou les activités PSE ont été réalisé dans les AWC."
 
-#: custom/icds_reports/templates/icds_reports/dashboard.html:92
+#: custom/icds_reports/templates/icds_reports/dashboard.html:94
 msgid "ICT-RTM of ICDS Dashboard"
 msgstr ""
 
@@ -41939,296 +41766,313 @@ msgstr ""
 msgid "Prevalence of Stunting (Height for Age)"
 msgstr ""
 
-#: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:38
+#: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:34
+#, fuzzy, python-format
+#| msgid "Newborns with low birth weight discharged - Male"
+msgid "%% Newborns with Low Birth Weight"
+msgstr "Nouveaux nés à poids faible à la naissance déchargés - Sexe masculin"
+
+#: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:37
+#, python-format
+msgid "%% Early Initiation of Breastfeeding"
+msgstr ""
+
+#: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:44
 msgid "ICDS CAS Reach"
 msgstr ""
 
-#: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:45
+#: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:51
 msgid "Demographics"
 msgstr ""
 
-#: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:52
+#: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:58
 msgid "AWC Infrastructure"
 msgstr ""
 
-#: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:60
+#: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:66
 msgid "AWC Report"
 msgstr ""
 
-#: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:66
+#: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:72
 msgid "Progress Report"
 msgstr ""
 
-#: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:72
+#: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:78
 msgid "Tabular Reports"
 msgstr ""
 
-#: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:78
+#: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:84
 msgid "MPR Block Report"
 msgstr ""
 
-#: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:84
+#: custom/icds_reports/templates/icds_reports/icds_app/navigation.directive.html:90
 msgid "ASR Block Report"
 msgstr ""
 
-#: custom/icds_reports/utils.py:277
+#: custom/icds_reports/utils.py:282
 msgid "Average number of household registration forms submitted yesterday"
 msgstr ""
 
-#: custom/icds_reports/utils.py:278
+#: custom/icds_reports/utils.py:283
 msgid ""
 "Average number of household registration forms submitted by AWWs yesterday."
 msgstr ""
 
-#: custom/icds_reports/utils.py:287
+#: custom/icds_reports/utils.py:292
 msgid "Average number of Home Visit forms submitted yesterday"
 msgstr ""
 
-#: custom/icds_reports/utils.py:299
+#: custom/icds_reports/utils.py:304
 msgid "Average number of Growth Monitoring forms submitted yesterday"
 msgstr ""
 
-#: custom/icds_reports/utils.py:300
+#: custom/icds_reports/utils.py:305
 msgid "Average number of growth monitoring forms (GMP) submitted yesterday"
 msgstr ""
 
-#: custom/icds_reports/utils.py:309
+#: custom/icds_reports/utils.py:314
 msgid "Average number of Take Home Ration forms submitted yesterday"
 msgstr ""
 
-#: custom/icds_reports/utils.py:310
+#: custom/icds_reports/utils.py:315
 msgid "Average number of Take Home Rations (THR) forms submitted yesterday"
 msgstr ""
 
-#: custom/icds_reports/utils.py:371
-msgid "% Underweight Children"
-msgstr ""
+#: custom/icds_reports/utils.py:376
+#, fuzzy
+#| msgid "% Stunting (height-for-age)"
+msgid "% Underweight Children (weight-for-age)"
+msgstr "% Retard de croissance (rapport taille-âge)"
 
-#: custom/icds_reports/utils.py:390
-msgid "% Wasting"
-msgstr ""
+#: custom/icds_reports/utils.py:395 custom/icds_reports/utils.py:1458
+msgid "% Wasting (weight-for-height)"
+msgstr "% Emaciation (rapport poids-taille)"
 
-#: custom/icds_reports/utils.py:413
-msgid "% Stunting"
-msgstr ""
+#: custom/icds_reports/utils.py:418 custom/icds_reports/utils.py:1477
+msgid "% Stunting (height-for-age)"
+msgstr "% Retard de croissance (rapport taille-âge)"
 
-#: custom/icds_reports/utils.py:432 custom/icds_reports/utils.py:1491
+#: custom/icds_reports/utils.py:437 custom/icds_reports/utils.py:1498
 msgid "% Newborns with Low Birth Weight"
 msgstr ""
 
-#: custom/icds_reports/utils.py:453 custom/icds_reports/utils.py:1505
+#: custom/icds_reports/utils.py:458 custom/icds_reports/utils.py:1512
 #, python-format
 msgid "% Early Initiation of Breastfeeding"
 msgstr ""
 
-#: custom/icds_reports/utils.py:472 custom/icds_reports/utils.py:1521
+#: custom/icds_reports/utils.py:477 custom/icds_reports/utils.py:1528
 #, python-format
 msgid "% Exclusive breastfeeding"
 msgstr ""
 
-#: custom/icds_reports/utils.py:493 custom/icds_reports/utils.py:1535
+#: custom/icds_reports/utils.py:498 custom/icds_reports/utils.py:1542
 msgid "% Children initiated appropriate complementary feeding"
 msgstr ""
 
-#: custom/icds_reports/utils.py:512
+#: custom/icds_reports/utils.py:517
 msgid "% Institutional deliveries"
 msgstr ""
 
-#: custom/icds_reports/utils.py:578
+#: custom/icds_reports/utils.py:583
 msgid "Number of AWCs Open yesterday"
 msgstr ""
 
-#: custom/icds_reports/utils.py:588
+#: custom/icds_reports/utils.py:593
 msgid "States/UTs covered"
 msgstr ""
 
-#: custom/icds_reports/utils.py:589
+#: custom/icds_reports/utils.py:594
 msgid "Total States that have launched ICDS CAS"
 msgstr ""
 
-#: custom/icds_reports/utils.py:599
+#: custom/icds_reports/utils.py:604
 msgid "Blocks covered"
 msgstr ""
 
-#: custom/icds_reports/utils.py:600
+#: custom/icds_reports/utils.py:605
 msgid "Total Blocks that have launched ICDS CAS"
 msgstr ""
 
-#: custom/icds_reports/utils.py:608
+#: custom/icds_reports/utils.py:613
 msgid "Districts covered"
-msgstr ""
+msgstr "Districts couverts"
 
-#: custom/icds_reports/utils.py:609
+#: custom/icds_reports/utils.py:614
 msgid "Total Districts that have launched ICDS CAS"
 msgstr ""
 
-#: custom/icds_reports/utils.py:619
+#: custom/icds_reports/utils.py:624
 msgid "Sectors covered"
-msgstr ""
+msgstr "Secteurs couverts"
 
-#: custom/icds_reports/utils.py:620
+#: custom/icds_reports/utils.py:625
 msgid "Total Sectors that have launched ICDS CAS"
 msgstr ""
 
-#: custom/icds_reports/utils.py:628
+#: custom/icds_reports/utils.py:633
 msgid "AWCs covered"
 msgstr ""
 
-#: custom/icds_reports/utils.py:629
+#: custom/icds_reports/utils.py:634
 msgid "Total AWCs that have launched ICDS CAS"
 msgstr ""
 
-#: custom/icds_reports/utils.py:671 custom/icds_reports/utils.py:1627
+#: custom/icds_reports/utils.py:676 custom/icds_reports/utils.py:1634
 msgid "Registered Households"
-msgstr ""
+msgstr "Ménages enregistrés"
 
-#: custom/icds_reports/utils.py:672 custom/icds_reports/utils.py:1628
+#: custom/icds_reports/utils.py:677 custom/icds_reports/utils.py:1635
 msgid "Total number of households registered"
-msgstr ""
+msgstr "Nombre total de ménages enregistrés"
 
-#: custom/icds_reports/utils.py:680
+#: custom/icds_reports/utils.py:685
 msgid "Children (0-6 years)"
-msgstr ""
+msgstr "Enfants (0 -6 ans)"
 
-#: custom/icds_reports/utils.py:681
+#: custom/icds_reports/utils.py:686
 msgid "Total number of children registered between the age of 0 - 6 years"
-msgstr ""
+msgstr "Nombre total d'enfants entre 0 - 6 ans enregistrés"
 
-#: custom/icds_reports/utils.py:691
+#: custom/icds_reports/utils.py:696
 msgid "Children (0-6 years) enrolled for ICDS services"
 msgstr ""
 
-#: custom/icds_reports/utils.py:704 custom/icds_reports/utils.py:1643
+#: custom/icds_reports/utils.py:709 custom/icds_reports/utils.py:1650
 msgid "Total number of pregnant women registered"
-msgstr ""
+msgstr "Nombre total de femmes enceintes enregistrées"
 
-#: custom/icds_reports/utils.py:713
+#: custom/icds_reports/utils.py:718
 msgid "Pregnant Women enrolled for ICDS services"
 msgstr ""
 
-#: custom/icds_reports/utils.py:714
+#: custom/icds_reports/utils.py:719
 msgid ""
 "Total number of pregnant women registered and enrolled for ICDS services"
 msgstr ""
 
-#: custom/icds_reports/utils.py:722
+#: custom/icds_reports/utils.py:727
 msgid "Lactating Women"
 msgstr ""
 
-#: custom/icds_reports/utils.py:723 custom/icds_reports/utils.py:1656
+#: custom/icds_reports/utils.py:728 custom/icds_reports/utils.py:1663
 msgid "Total number of lactating women registered"
 msgstr ""
 
-#: custom/icds_reports/utils.py:732
+#: custom/icds_reports/utils.py:737
 msgid "Lactating Women enrolled for ICDS services"
 msgstr ""
 
-#: custom/icds_reports/utils.py:733
+#: custom/icds_reports/utils.py:738
 msgid ""
 "Total number of lactating women registered and enrolled for ICDS services"
 msgstr ""
 
-#: custom/icds_reports/utils.py:741 custom/icds_reports/utils.py:1670
+#: custom/icds_reports/utils.py:746 custom/icds_reports/utils.py:1677
 msgid "Adolescent Girls (11-18 years)"
 msgstr ""
 
-#: custom/icds_reports/utils.py:742
+#: custom/icds_reports/utils.py:747
 msgid "Total number of adolescent girls (11 - 18 years) who are registered"
 msgstr ""
 
-#: custom/icds_reports/utils.py:755
+#: custom/icds_reports/utils.py:760
 msgid "Adolescent Girls (11-18 years) enrolled for ICDS services"
 msgstr ""
 
-#: custom/icds_reports/utils.py:771 custom/icds_reports/utils.py:1683
+#: custom/icds_reports/utils.py:776 custom/icds_reports/utils.py:1690
 msgid "% Adhaar seeded beneficaries"
 msgstr ""
 
-#: custom/icds_reports/utils.py:816
-msgid "Total number of AWCs with a source of clean drinking water"
+#: custom/icds_reports/utils.py:823
+msgid "% AWCs with Clean Drinking Water"
 msgstr ""
 
-#: custom/icds_reports/utils.py:817
+#: custom/icds_reports/utils.py:824
 msgid "Percentage of AWCs with a source of clean drinking water"
 msgstr ""
 
-#: custom/icds_reports/utils.py:833 custom/icds_reports/utils.py:1287
-msgid "Percentage of AWCs with a functional toilet"
+#: custom/icds_reports/utils.py:840
+msgid "% AWCs with functional toilet"
 msgstr ""
 
-#: custom/icds_reports/utils.py:848
-msgid "Total number of AWCs with access to electricity"
+#: custom/icds_reports/utils.py:855
+msgid "% AWCs with Electricity"
 msgstr ""
 
-#: custom/icds_reports/utils.py:849
+#: custom/icds_reports/utils.py:856
 msgid "Percentage of AWCs with access to electricity"
 msgstr ""
 
-#: custom/icds_reports/utils.py:857
-msgid "Total number of AWCs with a Medicine Kit"
+#: custom/icds_reports/utils.py:864
+msgid "% AWCs with Medicine Kit"
 msgstr ""
 
-#: custom/icds_reports/utils.py:858
+#: custom/icds_reports/utils.py:865
 msgid "Percentage of AWCs with a Medicine Kit"
 msgstr ""
 
-#: custom/icds_reports/utils.py:873
-msgid "Total number of AWCs with an infantometer"
+#: custom/icds_reports/utils.py:880
+msgid "% AWCs with Weighing Scale: Infants"
 msgstr ""
 
-#: custom/icds_reports/utils.py:874
-msgid "Percentage of AWCs with an Infantometer"
-msgstr ""
-
-#: custom/icds_reports/utils.py:882
-msgid "Total number of AWCs with a stadiometer"
-msgstr ""
-
-#: custom/icds_reports/utils.py:883
-msgid "Percentage of AWCs with a Stadiometer"
-msgstr ""
-
-#: custom/icds_reports/utils.py:893
-msgid "Total number of AWCs with a weighing scale"
+#: custom/icds_reports/utils.py:881
+msgid "Percentage of AWCs with weighing scale for infants"
 msgstr ""
 
 #: custom/icds_reports/utils.py:894
-msgid "Percentage of AWCs with a Weighing scale"
+msgid "% AWCs with Weighing Scale: Mother and Child"
 msgstr ""
 
-#: custom/icds_reports/utils.py:948
+#: custom/icds_reports/utils.py:895
+msgid "Percentage of AWCs with weighing scale for mother and child"
+msgstr ""
+
+#: custom/icds_reports/utils.py:910
+msgid "Total number of AWCs with an infantometer"
+msgstr ""
+
+#: custom/icds_reports/utils.py:911
+msgid "Percentage of AWCs with an Infantometer"
+msgstr ""
+
+#: custom/icds_reports/utils.py:919
+msgid "Total number of AWCs with a stadiometer"
+msgstr ""
+
+#: custom/icds_reports/utils.py:920
+msgid "Percentage of AWCs with a Stadiometer"
+msgstr ""
+
+#: custom/icds_reports/utils.py:974
 msgid "Percentage of Angwanwadi Centers that were open yesterday"
 msgstr ""
 
-#: custom/icds_reports/utils.py:1267
+#: custom/icds_reports/utils.py:1274
 msgid "AWC Days Open"
 msgstr ""
 
-#: custom/icds_reports/utils.py:1414
+#: custom/icds_reports/utils.py:1294
+msgid "Percentage of AWCs with a functional toilet"
+msgstr ""
+
+#: custom/icds_reports/utils.py:1421
 msgid "Prevalence of undernutrition (weight-for-age)"
-msgstr ""
+msgstr "Prévalence de la sous-nutrition (rapport taille-âge)"
 
-#: custom/icds_reports/utils.py:1432
+#: custom/icds_reports/utils.py:1439
 msgid "% Immunization coverage (at age 1 year)"
-msgstr ""
+msgstr "% Couverture de vaccination (à 1 an)"
 
-#: custom/icds_reports/utils.py:1451
-msgid "% Wasting (weight-for-height)"
-msgstr ""
-
-#: custom/icds_reports/utils.py:1470
-msgid "% Stunting (height-for-age)"
-msgstr ""
-
-#: custom/icds_reports/utils.py:1655
+#: custom/icds_reports/utils.py:1662
 msgid "Lactating Mothers"
-msgstr ""
+msgstr "Mères allaitantes "
 
-#: custom/icds_reports/utils.py:1671
+#: custom/icds_reports/utils.py:1678
 msgid "Total number of adolescent girls who are registered"
-msgstr ""
+msgstr "Nombre total de filles adolescentes enregistrées"
 
-#: custom/icds_reports/utils.py:1685
+#: custom/icds_reports/utils.py:1692
 msgid ""
 "Percentage of ICDS beneficiaries whose Adhaar identification has been "
 "captured"
@@ -42730,7 +42574,7 @@ msgstr "Ce Cycle de Mise en Oeuvre"
 #: custom/ilsgateway/tanzania/reports/delivery.py:158
 #, python-format
 msgid "% of total"
-msgstr ""
+msgstr "% du total"
 
 #: custom/ilsgateway/tanzania/reports/delivery.py:170
 msgid "Didn't Respond"
@@ -45512,47 +45356,6 @@ msgstr "Eta retardé"
 msgid "Delivered"
 msgstr "Délivré"
 
-#: docs/_build/html/_sources/translations.txt:132
-msgid "Welcome to CommCare HQ"
-msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
-
-#: docs/_build/html/_sources/translations.txt:141
-#, python-format
-msgid "This string will have %(value)s inside."
-msgstr "Cette chaîne aura %(value)s à l'intérieur."
-
-#: docs/_build/html/_sources/translations.txt:147
-#, python-format
-msgid ""
-"\n"
-"        That will cost $ %(amount)s.\n"
-"    "
-msgstr ""
-"\n"
-"Ceci vous coûtera $ %(amount)s."
-
-#: docs/_build/html/_sources/translations.txt:155
-#, python-format
-msgid ""
-"\n"
-"        This will have %(myvar)s inside.\n"
-"    "
-msgstr ""
-"\n"
-"Ceci aura %(myvar)s à l'interieur.\n"
-"    "
-
-#: docs/_build/html/_sources/translations.txt:167
-msgid ""
-"\n"
-"        Manage Mobile Workers <small>for CommCare Mobile and\n"
-"        CommCare HQ Reports</small>\n"
-"    "
-msgstr ""
-"\n"
-"Gérer les utilisateurs mobiles <small>pour CommCare Mobile et\n"
-"les rapports de CommCare HQ<small>"
-
 #: manage.py:83
 msgid "Enter valid JSON"
 msgstr "Saisir un JSON valide"
@@ -45666,687 +45469,321 @@ msgstr ""
 "Si vous avez des problèmes pour remplir le formulaire, veuillez signaler ce "
 "problème."
 
-#~ msgid "Turn off new app builder for now."
-#~ msgstr "Eteindre l'éditeur d'application pour le moment"
+#~ msgid "Form successfully saved"
+#~ msgstr "Formulaire enregistré"
 
-#~ msgid "Incorrect EDD"
-#~ msgstr "EDD incorrect "
+#~ msgid "Save failed. Details: "
+#~ msgstr "Échec de sauvegarde. Détails: "
 
-#~ msgid "Incorrect DOD"
-#~ msgstr "DOD incorrect"
+#~ msgid "Unknown error: "
+#~ msgstr "Erreure inconnue:"
 
-#~ msgid "Incorrect LMP date"
-#~ msgstr "Date LMP incorrecte"
+#~ msgid ""
+#~ "This can happen if you loaded CloudCare from a different address than the "
+#~ "server address"
+#~ msgstr ""
+#~ "Ceci peut arriver si vous avez chargé CloudCare d'une addresse autre que "
+#~ "celle du serveur."
 
-#~ msgid "Account number is the wrong length"
-#~ msgstr "Le numéro de compte a la mauvaise longueur"
+#~ msgid "All changes saved!"
+#~ msgstr "Tous les changements enregistrés"
 
-#~ msgid "IFSC {} incorrect"
-#~ msgstr "IFSC {} incorrect"
+#~ msgid "Open in New Window"
+#~ msgstr "Ouvrir dans une nouvelle fenêtre "
 
-#~ msgid "Pregnancy Bonus due for 2 years"
-#~ msgstr "Bonus grossesse dû pendant 2 ans"
+#~ msgid ""
+#~ "Permanently delete this form? You will not be able to return to it later."
+#~ msgstr ""
+#~ "Suprimer de manière permanente? Vous n'allez pas pouvoir y retourner plus "
+#~ "tard."
 
-#~ msgid "Pregnancy Bonus due for 3 years"
-#~ msgstr "Bonus grossesse dû pendant 3 ans"
+#~ msgid "Form was deleted."
+#~ msgstr "Le formulaire a été suprimé."
 
-#~ msgid "Serial number"
-#~ msgstr "Numéro de série"
+#~ msgid ""
+#~ "Error deleting form. Please try again and report an issue if this problem "
+#~ "persists."
+#~ msgstr ""
+#~ "Échec dans la suppression du formulaire. Veuillez réessayer et reporter "
+#~ "un problème si ce problème persiste.  "
 
-#~ msgid "List of Beneficiaries"
-#~ msgstr "Liste des bénéficiaires"
+#~ msgid ""
+#~ "Unable to load the case list. If you are using a filter expression please "
+#~ "double check the syntax and try again. Please report an issue if this "
+#~ "problem persists."
+#~ msgstr ""
+#~ "Incapable de charger la liste de dossiers. Si vous utilisez un filtre, "
+#~ "vérifiez que la syntaxe est correcte et ré-essayez. Signalez un problème "
+#~ "si ce problème demeure."
+
+#~ msgid ""
+#~ "You have not submitted this form. Click ‘Stay on this Page’ to continue "
+#~ "working on this form. If you click 'Leave this Page' any data you have "
+#~ "entered will not be saved."
+#~ msgstr ""
+#~ "Vous n'avez soumis ce formulaire. Cliquez 'Rester sur cette Page' pour "
+#~ "continuer de travailler sur ce formulaire. Si vous cliquez 'Quitter cette "
+#~ "page', les données soumises ne seront pas enregistrées."
+
+#~ msgid ""
+#~ "You have not submitted this form. Click ‘Cancel’ to continue working on "
+#~ "this form. If you click 'OK' any data you have entered will not be saved."
+#~ msgstr ""
+#~ "Vous n'avez soumis ce formulaire. Cliquez 'Annuler' pour continuer de "
+#~ "travailler sur ce formulaire. Si vous cliquez 'OK', les données soumises "
+#~ "ne seront pas enregistrées."
+
+#~ msgid ""
+#~ "You have not submitted this form. Click ‘Stay on this Page’ to continue "
+#~ "working on this form. If you click 'Leave this Page' you can resume work "
+#~ "on this form later."
+#~ msgstr ""
+#~ "Vous n'avez soumis ce formulaire. Cliquez 'Annuler' pour continuer de "
+#~ "travailler sur ce formulaire. Si vous cliquez sur \"Quitter cette Page\", "
+#~ "vous pourrez continuer de travailler sur ce formulaire plus tard."
+
+#~ msgid ""
+#~ "You have not submitted this form. Click ‘Cancel’ to continue working on "
+#~ "this form. If you click 'OK' you can resume work on this form later."
+#~ msgstr ""
+#~ "Vous n'avez soumis ce formulaire. Clickez 'Annuler' pour continuer de "
+#~ "travailler sur ce formulaire. Si vous clickez 'OK', vous pourrez "
+#~ "continuer de travailler sur ce formulaire plus tard."
+
+#~ msgid "Sync Data"
+#~ msgstr "Synchroniser les données"
+
+#~ msgid ""
+#~ "\n"
+#~ "                    You are previewing a form as a web user!\n"
+#~ "                    Any data you submit will show up in reports as "
+#~ "submitted by \"Unknown User\". There are a\n"
+#~ "                    few features that rely on mobile workers and will not "
+#~ "work properly:\n"
+#~ "                    <ul>\n"
+#~ "                        <li>Case sharing</li>\n"
+#~ "                        <li>Lookup tables</li>\n"
+#~ "                        <li>User-as-a-case</li>\n"
+#~ "                    </ul>\n"
+#~ "                    For the best experience please logout and login as a "
+#~ "Mobile Worker.\n"
+#~ "                    More information can be found at the <a href="
+#~ "\"https://help.commcarehq.org/display/commcarepublic/CloudCare+-+Web+Data"
+#~ "+Entry\">CommCare Help Site</a>.\n"
+#~ "                "
+#~ msgstr ""
+#~ "\n"
+#~ "Vous visualisez ce formulaire en tant qu'utilisateur web!\n"
+#~ "Toutes les données que vous soumettez apparaîtront dans les rapports "
+#~ "comme soumises par un \"utilisateur inconnu\" Il y a\n"
+#~ "quelques nouvelles fonctionnalités qui reposent sur les utilsateurs "
+#~ "mobiles et ne marcheront pas correctement: \n"
+#~ "<ul>\n"
+#~ "<li>partage de dossiers</li>\n"
+#~ "<li>tables de recherche</li>\n"
+#~ "<li>utilisateur comme un dossier</li>\n"
+#~ "</ul>\n"
+#~ "Pour une meilleure expérience veuillez vous déconnecté et reconnecté "
+#~ "comme un utilisateur mobile. \n"
+#~ "Plus d'information sur <a href=\"https://help.commcarehq.org/display/"
+#~ "commcarepublic/CloudCare+-+Web+Data+Entry\">CommCare Help Site</a>."
+
+#~ msgid ""
+#~ "\n"
+#~ "                <p>\n"
+#~ "                    Sorry, it doesn't look like you have any CloudCare "
+#~ "apps\n"
+#~ "                    available. To learn more about how to enable and use\n"
+#~ "                    CloudCare, please check out our\n"
+#~ "                    <a href=\"https://confluence.dimagi.com/pages/"
+#~ "viewpage.action?pageId=10224014\" target=\"_blank\">wiki documentation</"
+#~ "a>.\n"
+#~ "                </p>\n"
+#~ "            "
+#~ msgstr ""
+#~ "\n"
+#~ "<p>\n"
+#~ "Désolé, il semble que vous ne disposiez d'aucune application CloudCare "
+#~ "disponible. Pour en savoir davantage sur la manière d'activer et "
+#~ "d'utiliser CloudCare, veuillez consulter notre <a href=\"https://"
+#~ "confluence.dimagi.com/pages/viewpage.action?pageId=10224014\" target="
+#~ "\"_blank\">documentation wiki</a>.\n"
+#~ "</p>\n"
+#~ "                "
+
+#~ msgid ""
+#~ "\n"
+#~ "                <p>\n"
+#~ "                    CloudCare displays the latest starred version of the\n"
+#~ "                    application. Make sure you have enabled CloudCare "
+#~ "and\n"
+#~ "                    starred a version of your application.\n"
+#~ "                </p>\n"
+#~ "                "
+#~ msgstr ""
+#~ "\n"
+#~ "<p>\n"
+#~ "CloudCare utilise la dernière version de l'application marquée par une "
+#~ "étoile. Assurez-vous que vouz avez activé CloudCare et que vous avez "
+#~ "marqué une version de votre application avec une étoile.\n"
+#~ "</p>"
+
+#~ msgid ""
+#~ "That app is no longer valid. Try using the navigation links to select an "
+#~ "app."
+#~ msgstr ""
+#~ "Cette application n'est plus valide. Tentez d'utiliser les liens de "
+#~ "navigation pour sélectionner une application."
+
+#~ msgid "CloudCare Permissions"
+#~ msgstr "Permissions CloudCare"
+
+#~ msgid "{} does not have permissions to restore as {}"
+#~ msgstr "{} n'a pas l'autorisation de restaurer en tant que {} "
+
+#~ msgid "Welcome to CommCare HQ"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
+
+#~ msgid "This string will have %(value)s inside."
+#~ msgstr "Cette chaîne aura %(value)s à l'intérieur."
+
+#~ msgid ""
+#~ "\n"
+#~ "        That will cost $ %(amount)s.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "Ceci vous coûtera $ %(amount)s."
+
+#~ msgid ""
+#~ "\n"
+#~ "        This will have %(myvar)s inside.\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "Ceci aura %(myvar)s à l'interieur.\n"
+#~ "    "
+
+#~ msgid ""
+#~ "\n"
+#~ "        Manage Mobile Workers <small>for CommCare Mobile and\n"
+#~ "        CommCare HQ Reports</small>\n"
+#~ "    "
+#~ msgstr ""
+#~ "\n"
+#~ "Gérer les utilisateurs mobiles <small>pour CommCare Mobile et\n"
+#~ "les rapports de CommCare HQ<small>"
 
 #~ msgid "AWC Name"
-#~ msgstr "Nom AWC "
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "AWC Code"
-#~ msgstr "Code AWC"
-
-#~ msgid "Block Name"
-#~ msgstr "Nom du bloc"
-
-#~ msgid "Current status"
-#~ msgstr "Statut actuel"
-
-#~ msgid "Pregnancy Month"
-#~ msgstr "Mois de grossesse"
-
-#~ msgid "Child Age"
-#~ msgstr "Age de l'enfant"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Condition 1"
-#~ msgstr "Condition 1"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Condition 2"
-#~ msgstr "Condition 2"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Condition 3"
-#~ msgstr "Condition 3"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Condition 4"
-#~ msgstr "Condition 4"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Condition 5"
-#~ msgstr "Condition 5"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Payment amount this month (Rs.)"
-#~ msgstr "Montant du paiement de ce mois (Rs.)"
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Payment amount last month (Rs.)"
-#~ msgstr "Montant du paiement du mois dernier (Rs.)"
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Cash received last month"
-#~ msgstr "Argent liquide reçu le mois dernier"
-
-#~ msgid "Issues"
-#~ msgstr "Problèmes"
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Bank Name"
-#~ msgstr "Nom de la banque"
-
-#~ msgid "Bank Branch Name"
-#~ msgstr "Nom de la branche de la banque"
-
-#~ msgid "IFS Code"
-#~ msgstr "Code IFS"
-
-#~ msgid "Bank Account Number"
-#~ msgstr "Numéro du compte bancaire"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Village Name"
-#~ msgstr "Nom du village"
-
-#~ msgid "Number of Children"
-#~ msgstr "Nombre d'enfants"
-
-#~ msgid "Birth Preparedness Form 1"
-#~ msgstr "Formulaire de préparation à l'accouchement 1"
-
-#~ msgid "Birth Preparedness Form 2"
-#~ msgstr "Formulaire de préparation à l'accouchement 2"
-
-#~ msgid "Child Followup Form"
-#~ msgstr "Formulaire de suivi de l'enfant "
-
-#~ msgid "Bonus Payment"
-#~ msgstr "Payement bonus"
-
-#~ msgid "Amount to be paid to beneficiary"
-#~ msgstr "Montant à payer au bénéficiaire"
-
-#~ msgid "Owner ID"
-#~ msgstr "Identifiant de propriétaire"
-
-#~ msgid "VHND organised this month"
-#~ msgstr "VHND organisé ce mois"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Payment last month"
-#~ msgstr "Montant du paiement pour le mois dernier"
-
-#~ msgid "Gram Panchayat name"
-#~ msgstr "Nom du Gram Panchayat"
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Village name"
-#~ msgstr "Nom du village"
-
-#~ msgid "Dob Known"
-#~ msgstr "Date de naissance connue"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Mother's Age"
-#~ msgstr "Age de la mère"
+#~ msgstr "Outros (negativos / indeterminados) "
 
 #~ msgid "Caste tribe status"
-#~ msgstr "Statut de la tribu de la Caste"
-
-#~ msgid "Prev pregnancies"
-#~ msgstr "Grosses précédentes"
-
-#~ msgid "Prev live births"
-#~ msgstr "Naissances vivantes précédentes"
-
-#~ msgid "Sons alive"
-#~ msgstr "Fils vivants"
-
-#~ msgid "Daughters alive"
-#~ msgstr "Filles vivantes"
-
-#~ msgid "Sum children"
-#~ msgstr "Somme des enfants"
-
-#~ msgid "Contact phone number"
-#~ msgstr "Numéro de téléphone de contact "
-
-#~ msgid "Brank Branch Code"
-#~ msgstr "Code de la branche de la banque"
+#~ msgstr "Diagnóstico de Casos"
 
 #~ msgid "Lmp Date"
-#~ msgstr "Date Lmp"
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Pregnancy month"
-#~ msgstr "Mois de grossesse"
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Child 1 Age"
-#~ msgstr "Age Enfant 1"
+#~ msgstr "Crianças (2 - 59 meses)"
 
 #~ msgid "Child 1 Name"
-#~ msgstr "Nom de l'enfant 1"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Child 1 Sex"
-#~ msgstr "Sexe de l'enfant 1"
-
-#~ msgid "Child DOB"
-#~ msgstr "Enfant DOB"
+#~ msgstr "Crianças (2 - 59 meses)"
 
 #~ msgid "Child 2 Age"
-#~ msgstr "Age enfant 2"
+#~ msgstr "Crianças (2 - 59 meses)"
 
 #~ msgid "Child 2 Name"
-#~ msgstr "Nom de l'enfant 2"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Child 2 Sex"
-#~ msgstr "Sexe de l'enfant 2"
+#~ msgstr "Crianças (2 - 59 meses)"
 
 #~ msgid "Child 3 Age"
-#~ msgstr "Age enfant 3"
+#~ msgstr "Crianças (2 - 59 meses)"
 
 #~ msgid "Child 3 Name"
-#~ msgstr "Nom de l'enfant 3"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "Child 3 Sex"
-#~ msgstr "Sexe de l'enfant 3"
-
-#~ msgid "Condition 1 / pregnant woman attended VHND"
-#~ msgstr "Condition 1 / femme enceinte a assisté au VHND"
-
-#~ msgid "Condition 2 /pregnant woman's weight taken in first trimester"
-#~ msgstr "Condition 2 / poids de la femme enceinte pris au premier trimestre"
-
-#~ msgid "Condition 3/ Received 30 IFA pills"
-#~ msgstr "Condition 3 / a reçu 30 pilules IFA"
-
-#~ msgid "Condition 2 /pregnant woman's weight taken in second trimester"
-#~ msgstr "Condition 2 / poids de la femme enceinte pris au second trimestre"
-
-#~ msgid "Condition 4/mother attended VHND with child"
-#~ msgstr "Condition 4 / mère a assisté au VHND avec son enfant"
-
-#~ msgid "Condition 5/child birth registered"
-#~ msgstr "Condition 5/Naissance de l'enfant enregistrée"
-
-#~ msgid "Condition 6/ child birth weight taken"
-#~ msgstr "Condition 6/prise du poids du bébé à la naissance"
-
-#~ msgid "Condition 7 /exclusively breastfed for first 6 months"
-#~ msgstr "Condition 7 / exclusivement allaitement pendant les 6 premiers mois"
-
-#~ msgid "Condition 8 /child weight monitored this month"
-#~ msgstr "Condition 8 /prise de poids de l'enfant le premier mois"
-
-#~ msgid "Condition 9 /ORS administered if child had diarrhea"
-#~ msgstr "Condition 9 / ORS administré si l'enfant avait une diarrhée"
-
-#~ msgid "Condition 10/ Measles vaccine given before child turns 1"
-#~ msgstr ""
-#~ "Condition 10/ Vaccin contre la rougeole administré avant le premier "
-#~ "anniversaire de l'enfant"
-
-#~ msgid "Incidence Of Diarrhea"
-#~ msgstr "Incidence de la diarrhée "
-
-#~ msgid "Birth Spacing Bonus"
-#~ msgstr "Bonus d'espacement des naissances"
-
-#~ msgid "Weight This Month - Child 1"
-#~ msgstr "Poids ce mois - Enfant 1"
-
-#~ msgid "Weight This Month - Child 2"
-#~ msgstr "Poids ce mois - Enfant 2"
-
-#~ msgid "Weight This Month - Child 3"
-#~ msgstr "Poids ce mois - Enfant 3"
-
-#~ msgid "Nutritional Status This Month - Child 1"
-#~ msgstr "État nutritionnel Ce mois - Enfant 1"
-
-#~ msgid "Nutritional Status This Month - Child 2"
-#~ msgstr "État nutritionnel Ce mois - Enfant 2"
-
-#~ msgid "Nutritional Status This Month - Child 3"
-#~ msgstr "État nutritionnel Ce mois - Enfant 3"
-
-#~ msgid "Nutritional Status Bonus"
-#~ msgstr "Bonus état nutritionnel"
+#~ msgstr "Crianças (2 - 59 meses)"
 
 #~ msgid "Payment amount for the month"
-#~ msgstr "Montant du paiement pour ce mois"
-
-#~ msgid "VHND held this month?"
-#~ msgstr "VHND réalisé ce mois"
-
-#~ msgid "Opened on"
-#~ msgstr "Ouvert le"
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Closed on"
-#~ msgstr "Fermé le"
-
-#~ msgid "Close mother dup"
-#~ msgstr "Dossier mère fermé dup "
-
-#~ msgid "Close mother mo"
-#~ msgstr "Dossier mère fermé mo "
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Leave program"
-#~ msgstr "Sortir du programme"
-
-#~ msgid "Close mother dead"
-#~ msgstr "Dossier mère fermé décédée"
-
-#~ msgid "Calendar year"
-#~ msgstr "Année calendaire"
+#~ msgstr "Manejo de Casos"
 
 #~ msgid "Calendar month"
-#~ msgstr "Mois du calendrier"
-
-#~ msgid "Gram Panchayat"
-#~ msgstr "Gram Panchayat"
-
-#~ msgid "Registered Beneficiaries"
-#~ msgstr "Bénéficiaires enregistrés "
-
-#~ msgid "Beneficiaries registered with BCSP"
-#~ msgstr "Bénéficiaires enregistrés avec BCSP"
-
-#~ msgid "Registered pregnant women"
-#~ msgstr "Femmes enceintes enregistrées"
-
-#~ msgid "Pregnant women registered with BCSP"
-#~ msgstr "Les femmes enceintes enregistrées avec BCPS"
-
-#~ msgid "Registered mothers"
-#~ msgstr "Mères enregistrées"
-
-#~ msgid "Mothers registered with BCSP"
-#~ msgstr "Mères enregistrés avec BCSP"
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Registered children"
-#~ msgstr "Enfants enregistrés"
-
-#~ msgid "Children below 3 years of age registered with BCSP"
-#~ msgstr "Enfants de moins de 3 ans enregistrées avec BCPS"
-
-#~ msgid "Eligible for payment upon fulfillment of cash conditions"
-#~ msgstr "Eligible pour paiement à la suite des conditions trésorières"
-
-#~ msgid ""
-#~ "Registered beneficiaries eligilble for cash payment for the month upon "
-#~ "fulfillment of cash conditions"
-#~ msgstr ""
-#~ "Bénéficiaires enregistrés éligibles pour payement en espèce ce mois à la "
-#~ "suite de la réalisation des conditions de trésorerie"
-
-#~ msgid "Eligible for payment upon absence of services"
-#~ msgstr "Eligible pour paiement en cas d'absence de services"
-
-#~ msgid ""
-#~ "Registered beneficiaries eligilble for cash payment for the month upon "
-#~ "absence of services at VHND"
-#~ msgstr ""
-#~ "Bénéficiaires enregistrés éligibles pour payement en espèce ce mois à la "
-#~ "suite d'absence de services au VHND"
-
-#~ msgid "Eligible for payment"
-#~ msgstr "Éligible pour paiement "
-
-#~ msgid "Registered beneficiaries eligilble for cash payment for the month"
-#~ msgstr "Bénéficiaires enregistrés éligibles pour payement en espèce ce mois"
-
-#~ msgid "Total cash payment"
-#~ msgstr "Paiement total en espèce"
-
-#~ msgid "Total cash payment made to registered beneficiaries for the month"
-#~ msgstr ""
-#~ "Paiement total en espèces versé aux bénéficiaires enregistrés pour le mois"
-
-#~ msgid "Pregnant women attended VHND"
-#~ msgstr "Femmes enceintes qui ont participé au VHND"
-
-#~ msgid "Registered pregnant women who attended VHND for the month"
-#~ msgstr "Femmes enceintes enregistrées qui ont participé au VHND du mois"
-
-#~ msgid "Children attended VHND"
-#~ msgstr "Enfants qui ont participé au VHND"
-
-#~ msgid ""
-#~ "Registered children below 3 years of age who attended VHND for the month"
-#~ msgstr ""
-#~ "Enfants  enregistrés de moins de 3 ans qui ont participé au VHND du mois"
-
-#~ msgid "Beneficiaries attended VHND"
-#~ msgstr "Bénéficiaires  qui ont participé au VHND "
-
-#~ msgid "Registered beneficiaries who attended VHND for the month"
-#~ msgstr "Bénéficiaires enregistrés qui ont participé au VHND du mois"
-
-#~ msgid "Received at least 30 IFA tablets"
-#~ msgstr "A reçu au moins 30 comprimés IFA"
-
-#~ msgid ""
-#~ "Registered pregnant women (6 months pregnant) who received at least 30 "
-#~ "IFA tablets in second trimester"
-#~ msgstr ""
-#~ "Femmes enceintes enregistrées (6 mois de grossesse) qui ont reçu au moins "
-#~ "30 comprimés d'IFA au deuxième trimestre"
-
-#~ msgid "Weight monitored in second trimester"
-#~ msgstr "Suivi du poids pendant le deuxième trimestre"
-
-#~ msgid ""
-#~ "Registered pregnant women (6 months pregnant) who got their weight "
-#~ "monitored in second trimester"
-#~ msgstr ""
-#~ "Femmes enceintes enregistrées (enceinte de 6 mois) dont le poids a été "
-#~ "suivi pendant le deuxième trimestre"
-
-#~ msgid "Weight monitored in third trimester"
-#~ msgstr "Suivi du poids pendant le troisième trimestre"
-
-#~ msgid ""
-#~ "Registered pregnant women (9 months pregnant) who got their weight "
-#~ "monitored in third trimester"
-#~ msgstr ""
-#~ "Femmes enceintes enregistrées (enceinte de 9 mois) dont le poids a été "
-#~ "suivi pendant le troisième trimestre"
-
-#~ msgid "Weight monitored at birth"
-#~ msgstr "Poids pris à la naissance"
-
-#~ msgid ""
-#~ "Registered children (3 months old) whose weight was monitored at birth"
-#~ msgstr ""
-#~ "Enfants enregistrés (3 mois) dont le poids a été pris à la naissance"
-
-#~ msgid "Child birth registered"
-#~ msgstr "Naissance enregistrée"
-
-#~ msgid ""
-#~ "Registered children (6 months old) whose birth was registered in the "
-#~ "first 6 months after birth"
-#~ msgstr ""
-#~ "Enfants inscrits (6 mois) dont la naissance a été enregistrée dans les 6 "
-#~ "premiers mois après la naissance"
-
-#~ msgid "Growth monitoring when 0-3 months old"
-#~ msgstr "Surveillance de la croissance à 0-3 mois"
-
-#~ msgid ""
-#~ "Registered Children (3 months old) who have attended at least one growth "
-#~ "monitoring session between the age 0-3 months"
-#~ msgstr ""
-#~ "Enfants inscrits (3 mois) qui ont suivi au moins une séance de "
-#~ "surveillance de la croissance entre l'âge de 0-3 mois"
-
-#~ msgid "Growth Monitoring when 4-6 months old"
-#~ msgstr "Surveillance de la croissance à 4-6 mois"
-
-#~ msgid ""
-#~ "Registered Children (6 months old) who have attended at least one growth "
-#~ "monitoring session between the age 4-6 months"
-#~ msgstr ""
-#~ "Enfants inscrits (6 mois) qui ont suivi au moins une séance de "
-#~ "surveillance de la croissance entre l'âge de 4-6 mois"
-
-#~ msgid "Growth Monitoring when 7-9 months old"
-#~ msgstr "Surveillance de la croissance à 7-9 mois"
-
-#~ msgid ""
-#~ "Registered Children (9 months old) who have attended at least one growth "
-#~ "monitoring session between the age 7-9 months"
-#~ msgstr ""
-#~ "Enfants inscrits (9 mois) qui ont suivi au moins une séance de "
-#~ "surveillance de la croissance entre l'âge de 7-9 mois"
-
-#~ msgid "Growth Monitoring when 10-12 months old"
-#~ msgstr "Surveillance de la croissance à 10-12 mois"
-
-#~ msgid ""
-#~ "Registered Children (12 months old) who have attended at least one growth "
-#~ "monitoring session between the age 10-12 months"
-#~ msgstr ""
-#~ "Enfants inscrits (12 mois) qui ont suivi au moins une séance de "
-#~ "surveillance de la croissance entre l'âge de 10-12 mois"
-
-#~ msgid "Growth Monitoring when 13-15 months old"
-#~ msgstr "Surveillance de la croissance à 13-15 mois"
-
-#~ msgid ""
-#~ "Registered Children (15 months old) who have attended at least one growth "
-#~ "monitoring session between the age 13-15 months"
-#~ msgstr ""
-#~ "Enfants inscrits (15 mois) qui ont suivi au moins une séance de "
-#~ "surveillance de la croissance entre l'âge de 13-15 mois"
-
-#~ msgid "Growth Monitoring when 16-18 months old"
-#~ msgstr "Surveillance de la croissance à 16-18 mois"
-
-#~ msgid ""
-#~ "Registered Children (18 months old) who have attended at least one growth "
-#~ "monitoring session between the age 16-18 months"
-#~ msgstr ""
-#~ "Enfants inscrits (18 mois) qui ont suivi au moins une séance de "
-#~ "surveillance de la croissance entre l'âge de 16-18 mois"
-
-#~ msgid "Growth Monitoring when 19-21 months old"
-#~ msgstr "Surveillance de la croissance à 19-21 mois"
-
-#~ msgid ""
-#~ "Registered Children (21 months old) who have attended at least one growth "
-#~ "monitoring session between the age 19-21 months"
-#~ msgstr ""
-#~ "Enfants inscrits (21 mois) qui ont suivi au moins une séance de "
-#~ "surveillance de la croissance entre l'âge de 19-21 mois"
-
-#~ msgid "Growth Monitoring when 22-24 months old"
-#~ msgstr "Surveillance de la croissance à 22-24 mois"
-
-#~ msgid ""
-#~ "Registered Children (24 months old) who have attended at least one growth "
-#~ "monitoring session between the age 22-24 months"
-#~ msgstr ""
-#~ "Enfants inscrits (24 mois) qui ont suivi au moins une séance de "
-#~ "surveillance de la croissance entre l'âge de 22-24 mois"
-
-#~ msgid "Incidence of diarrhea"
-#~ msgstr "Incidence de la diarrhée "
-
-#~ msgid "Received ORS and Zinc treatment for diarrhoea"
-#~ msgstr "Traitement ORS et au Zinc reçu pour la diarrhée"
-
-#~ msgid ""
-#~ "Registered children who received ORS and Zinc treatment if he/she "
-#~ "contracts diarrhoea"
-#~ msgstr ""
-#~ "Enfants inscrits qui ont reçu un traitement ORS et au zinc s'il/elle "
-#~ "contracte de la diarrhée"
-
-#~ msgid "Exclusively breastfed for first 6 months"
-#~ msgstr "Exclusivement allaitement pendant les 6 premiers mois"
-
-#~ msgid ""
-#~ "Registered children (6 months old) who have been exclusively breastfed "
-#~ "for first 6 months"
-#~ msgstr ""
-#~ "Enfants enregistrés (de 6 mois) qui ont été exclusivement allaités "
-#~ "pendant les 6 premiers mois"
-
-#~ msgid "Received Measles vaccine"
-#~ msgstr "Vaccin contre la rougeole reçu"
-
-#~ msgid ""
-#~ "Registered children (12 months old) who have received Measles vaccine"
-#~ msgstr ""
-#~ "Enfants enregistrés (de 12 mois) qui ont reçus le vaccin contre la "
-#~ "rougeole"
-
-#~ msgid "VHND organised"
-#~ msgstr "VHND organisé "
-
-#~ msgid "Whether VHND was organised at AWC for the month"
-#~ msgstr "SI le VHND ait été organisé à l'AWC pour le mois"
-
-#~ msgid "Adult Weighing Machine Available"
-#~ msgstr "Pèse personne pour adultes disponible"
-
-#~ msgid "Whether adult weighing machine was available for the month"
-#~ msgstr ""
-#~ "Si un pèse personne pour adultes a été disponible ou pas pendant le mois"
-
-#~ msgid "Adult Weighing Machine Functional"
-#~ msgstr "Pèse personne pour adultes fonctionnel"
-
-#~ msgid "Whether adult weighing machine was functional for the month"
-#~ msgstr ""
-#~ "Si un pèse personne pour adultes a été foctionnel ou pas pendant le mois"
-
-#~ msgid "Child Weighing Machine Available"
-#~ msgstr "Pèse personne pour enfants disponible"
-
-#~ msgid "Whether child weighing machine was available for the month"
-#~ msgstr ""
-#~ "Si un pèse personne pour enfants a été disponible ou pas pendant le mois"
-
-#~ msgid "Child Weighing Machine Functional"
-#~ msgstr "Pèse personne pour enfants fonctionnel"
-
-#~ msgid "Whether child weighing machine was functional for the month"
-#~ msgstr ""
-#~ "Si un pèse personne pour enfants a été foctionnel ou pas pendant le mois"
-
-#~ msgid "ANM Present"
-#~ msgstr "ANM Présent"
-
-#~ msgid "Whether ANM present at VHND for the month"
-#~ msgstr "Si ANM présent au VHND pour le mois"
-
-#~ msgid "ASHA Present"
-#~ msgstr "ASHA Présent"
-
-#~ msgid "Whether ASHA present at VHND for the month"
-#~ msgstr "Si ASHA présent au VHND pour le mois"
-
-#~ msgid "CMG Present"
-#~ msgstr "CMG Présent"
-
-#~ msgid "Whether CMG present at VHND for the month"
-#~ msgstr "Si CMG présent au VHND pour le mois"
+#~ msgstr "Crianças (2 - 59 meses)"
 
 #~ msgid "Stock of IFA tablets"
-#~ msgstr "Stock de comprimés IFA"
-
-#~ msgid "Whether AWC has enough stock of IFA tablets for the month"
-#~ msgstr "Si AWC dispose d'un stock de comprimés IFA suffisant pour le mois"
-
-#~ msgid "Stock of ORS packets"
-#~ msgstr "Stock de paquet ORS"
-
-#~ msgid "Whether AWC has enough stock of ORS packets for the month"
-#~ msgstr "Si AWC dispose d'un stock d'ORS suffisant pour le mois"
+#~ msgstr "Balanço do Stock"
 
 #~ msgid "Stock of ZINC tablets"
-#~ msgstr "Stock de comprimés de zinc"
-
-#~ msgid "Whether AWC has enough stock of Zinc Tablets for the month"
-#~ msgstr ""
-#~ "Si AWC dispose d'un stock de comprimés de Zinc suffisant pour le mois"
-
-#~ msgid "Stock of Measles Vaccine"
-#~ msgstr "Stock de vaccins contre la rougeole"
-
-#~ msgid "Whether AWC has enough stock of measles vaccine for the month"
-#~ msgstr ""
-#~ "Si AWC dispose d'un stock vaccins contre la rougeole suffisant pour le "
-#~ "mois"
-
-#~ msgid "Eligilble for Birth Spacing bonus"
-#~ msgstr "Éligible pour bonus d'espacement des naissance "
-
-#~ msgid ""
-#~ "Registered beneficiaries eligible for birth spacing bonus for the month"
-#~ msgstr ""
-#~ "Bénéficiaires enregistrés éligibles pour le bonus d'espacement des "
-#~ "naissance ce mois"
-
-#~ msgid "Severely underweight"
-#~ msgstr "Insuffisance pondérale sévère "
-
-#~ msgid ""
-#~ "Registered children severely underweight (very low weight for age) for "
-#~ "the month"
-#~ msgstr ""
-#~ "Enfants avec insuffisance pondérale sévère (poids insuffisant pour leur "
-#~ "âge) enregistrés ce mois"
-
-#~ msgid "Underweight"
-#~ msgstr "Sous-pondération"
-
-#~ msgid "Registered children underweight (low weight for age) for the month"
-#~ msgstr ""
-#~ "Enfants avec insuffisance pondérale (poids insuffisant pour leur âge) "
-#~ "enregistrés ce mois"
-
-#~ msgid "Normal weight for age"
-#~ msgstr "Poids normal par rapport à l'âge"
-
-#~ msgid "Registered children with normal weight for age for the month"
-#~ msgstr "Enfants avec un poids normal pour leur âge enregistrés ce mois"
-
-#~ msgid "Eligilble for Nutritional status bonus"
-#~ msgstr "Éligible pour bonus état nutritionnel"
-
-#~ msgid ""
-#~ "Registered beneficiaries eligible for nutritonal status bonus for the "
-#~ "month"
-#~ msgstr ""
-#~ "Bénéficiaires enregistrés éligibles pour le bonus état nutritionnel ce "
-#~ "mois"
-
-#~ msgid "Pregnant women cases closed"
-#~ msgstr "Dossiers de femmes enceintes fermés"
+#~ msgstr "Balanço do Stock"
 
 #~ msgid "Registered pregnant women cases closed for the month"
-#~ msgstr "Dossiers de femmes enceintes enregistrés fermés pour le mois"
-
-#~ msgid "Mother cases closed"
-#~ msgstr "Dossiers mères fermés"
-
-#~ msgid "Registered mother cases closed for the month"
-#~ msgstr "Dossiers de femmes enceintes enregistrées fermés pour le mois"
-
-#~ msgid "Children cases closed"
-#~ msgstr "Dossiers enfant fermés"
-
-#~ msgid "Registered children cases closed for the month"
-#~ msgstr "Dossiers enfants enregistrés fermés pour le mois"
+#~ msgstr "Casos IRA Tratados"
 
 #~ msgid "Reporting period incomplete"
-#~ msgstr "Période de rapportage incomplète"
-
-#~ msgid "Check for multiple pregnancies"
-#~ msgstr "Vérifier les grossesses multiples"
-
-#~ msgid "Duplicate account number"
-#~ msgstr "Numéro de compte dupliqué"
+#~ msgstr "Manejo de Casos"
 
 #~ msgid "Conditions Met Report"
-#~ msgstr "Rapport de conditions remplies"
-
-#~ msgid "Total Payment"
-#~ msgstr "Paiement total"
-
-#~ msgid "Prepared and verified by:"
-#~ msgstr "Préparé et vérifié par:"
-
-#~ msgid "Approved by:"
-#~ msgstr "Approuvé par:"
+#~ msgstr "Relatorio Semanal aos Coordinadores do Distrito e os NEDs"
 
 #~ msgid "App Preview"
 #~ msgstr "Manejo de Casos"

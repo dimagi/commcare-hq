@@ -11,7 +11,7 @@ $(function () {
     });
 
     $('.btn-langcode-preprocessed').each( function () {
-        langcodeTag.button_tag($(this), $(this).text());
+        hqImport('style/js/ui-element.js').langcode_tag_btn($(this), $(this).text());
         if ($(this).hasClass('langcode-input')) {
             var $langcodeInput = $(this).parent().find("input");
             var that = this;

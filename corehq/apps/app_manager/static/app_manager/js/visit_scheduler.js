@@ -50,7 +50,7 @@ hqDefine('app_manager/js/visit_scheduler.js', function () {
         var Phase = function(id, anchor, forms){
             var self = this;
             self.id = id;
-            self.anchor = uiElement.input().val(anchor);
+            self.anchor = hqImport('style/js/ui-element.js').input().val(anchor);
             self.anchor.observableVal = ko.observable(self.anchor.val());
             self.anchor.on("change", function(){
                 self.anchor.observableVal(self.anchor.val());
