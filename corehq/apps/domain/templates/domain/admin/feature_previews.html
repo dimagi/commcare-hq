@@ -19,7 +19,7 @@
                     which you can find under the question mark in the navigation bar.
                 {% endblocktrans %}
             </p>
-            {% if request|toggle_enabled:"APP_MANAGER_V2" %}
+            {% if not request|toggle_enabled:"APP_MANAGER_V1" %}
                 <div class="alert alert-info">
                     {% blocktrans %}
                     Looking for something that used to be here?
