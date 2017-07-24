@@ -618,6 +618,12 @@ def get_lpa_test_resistance_properties(column_mapping, row):
     }
 
 
+def lpa_detected_tb(column_mapping, row):
+    rif = clean_mumbai_test_resistance_value(column_mapping.get_value("lpa_rif_result", row))
+    inha = clean_mumbai_test_resistance_value(column_mapping.get_value("lpa_inh_result", row))
+    return (rif is not None) or (inha is not None)
+
+
 def get_sl_lpa_test_resistance_properties(column_mapping, row):
     result = column_mapping.get_value("sl_lpa_result", row)
     if result is None:
@@ -718,10 +724,12 @@ def get_cbnaat_test_case_properties(domain, column_mapping, row):
         "testing_facility_id": cbnaat_lab_id,
         "test_type_label": "CBNAAT",
         "test_type_value": "cbnaat",
-        "date_tested": clean_date(column_mapping.get_value("cbnaat_sample_date", row))
+        "date_tested": clean_date(column_mapping.get_value("cbnaat_sample_date", row)),
     }
 
     properties.update(get_cbnaat_test_resistance_properties(column_mapping, row))
+    if get_cbnaat_resistance(column_mapping, row) is not None:
+        properties['result'] = "tb_detected"
     return properties
 
 
@@ -735,10 +743,11 @@ def get_lpa_test_case_properties(domain, column_mapping, row):
         "test_type_value": "fl_line_probe_assay",
         "date_tested": clean_date(column_mapping.get_value("lpa_sample_date", row)),
         "date_reported": clean_date(column_mapping.get_value("lpa_result_date", row)),
-        # TODO: Should this have a "result"?
     }
 
     properties.update(get_lpa_test_resistance_properties(column_mapping, row))
+    if lpa_detected_tb(column_mapping, row):
+        properties['result'] = "tb_detected"
     return properties
 
 
