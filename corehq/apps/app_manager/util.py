@@ -529,9 +529,9 @@ def get_app_manager_template(user, v1, v2):
     :param v2: String, template name for V2
     :return: String, either v1 or v2 depending on toggle
     """
-    if user is not None and toggles.APP_MANAGER_V2.enabled(user.username):
-        return v2
-    return v1
+    if user is not None and toggles.APP_MANAGER_V1.enabled(user.username):
+        return v1
+    return v2
 
 
 def get_form_data(domain, app, include_shadow_forms=True):
