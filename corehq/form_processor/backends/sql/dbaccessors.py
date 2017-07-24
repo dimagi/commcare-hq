@@ -541,7 +541,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             operation.form = form
 
         try:
-            with transaction.atomic(using=db_name):
+            with transaction.atomic(using=db_name, savepoint=False):
                 form.save(using=db_name)
                 for attachment in unsaved_attachments:
                     attachment.save(using=db_name)
@@ -884,7 +884,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 )
 
         try:
-            with transaction.atomic(using=db_name):
+            with transaction.atomic(using=db_name, savepoint=False):
                 case.save(using=db_name)
                 for case_transaction in transactions_to_save:
                     case_transaction.save(using=db_name)
