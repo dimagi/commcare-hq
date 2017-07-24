@@ -19,6 +19,27 @@ from custom.enikshay.const import ENROLLED_IN_PRIVATE, CASE_VERSION
 
 logger = logging.getLogger('two_b_datamigration')
 
+TEST_TO_LABEL = {
+    'microscopy-zn': "Microscopy-ZN",
+    'microscopy-fluorescent': "Microscopy-Fluorescent",
+    'other_dst_tests': "Other DST Tests",
+    'other_clinical_tests': "Other Clinical Tests",
+    'tst': "TST",
+    'igra': "IGRA",
+    'chest_x-ray': "Chest X-ray",
+    'cytopathology': "Cytopathology",
+    'histopathology': "Histopathology",
+    'cbnaat': "CBNAAT",
+    'culture': "Culture",
+    'dst': "DST",
+    'line_probe_assay': "Line Probe Assay",
+    'fl_line_probe_assay': "FL LPA",
+    'sl_line_probe_assay': "SL LPA",
+    'gene_sequencing': "Gene Sequencing",
+    'other_clinical': "Other Clinical",
+    'other_dst': "Other DST",
+}
+
 PersonCaseSet = namedtuple('PersonCaseSet', 'person occurrences episodes tests referrals trails')
 
 
@@ -261,12 +282,14 @@ class ENikshay2BMigrator(object):
                                 if is_episode_of_occurrence(case, occurrence_id)
                                 and not case.closed)[1]
 
+        test_type = episode.get_case_property('test_confirming_diagnosis')
         props = {
             'is_active': 'yes' if episode.case_id == latest_episode_id else 'no',
             'dosage_display': episode.get_case_property('full_dosage'),
             'dosage_summary': episode.get_case_property('full_dosage'),
             'rft_general': 'diagnosis_dstb',
-            'diagnosis_test_type': episode.get_case_property('test_confirming_diagnosis'),
+            'diagnosis_test_type': test_type,
+            'diagnosis_test_type_label': TEST_TO_LABEL.get(test_type, ""),
         }
 
         treatment_status = episode.get_case_property('treatment_status')
@@ -295,8 +318,3 @@ class ENikshay2BMigrator(object):
                 "update": props,
             },
         )
-
-"""
-diagnosis_test_type_label	Based on test_confirming_diagnosis, lookup the test_type_value in the lookup table.  Grab the title[@lang = 'en'] form lookup table
-
-"""

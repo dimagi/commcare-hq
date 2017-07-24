@@ -81,7 +81,7 @@ class TestCreateEnikshayCases(TestCase):
             'date_of_diagnosis': '',
             'date_reported': 'date_reported',
             'full_dosage': 'full_dosage',
-            'test_confirming_diagnosis': 'test_confirming_diagnosis',
+            'test_confirming_diagnosis': 'chest_x-ray',
         })
         return episode
 
@@ -160,6 +160,7 @@ class TestCreateEnikshayCases(TestCase):
             'dosage_display': 'full_dosage',
             'dosage_summary': 'full_dosage',
             'rft_general': 'diagnosis_dstb',
-            'diagnosis_test_type': 'test_confirming_diagnosis',
+            'diagnosis_test_type': 'chest_x-ray',
+            'diagnosis_test_type_label': "Chest X-ray",
             'is_active': 'yes',
         }, new_episode.dynamic_case_properties())
