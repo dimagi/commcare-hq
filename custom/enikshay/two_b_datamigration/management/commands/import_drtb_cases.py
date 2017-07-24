@@ -229,6 +229,31 @@ DRUG_MAP = {
     "Azi": "azi",
 }
 
+# This is a copy of part of the "resistance_drug" fixture
+ALL_DRUGS = {
+    "r": "01",
+    "h_inha": "02",
+    "h_katg": "03",
+    "s": "04",
+    "e": "05",
+    "z": "06",
+    "slid_class": "07",
+    "km": "08",
+    "cm": "09",
+    "am": "10",
+    "fq_class": "11",
+    "lfx": "12",
+    "mfx_05": "14",
+    "mfx_20": "15",
+    "eto": "16",
+    "pas": "17",
+    "lzd": "18",
+    "cfz": "19",
+    "clr": "20",
+    "azi": "21",
+    "bdq": "22",
+    "dlm": "23",
+}
 
 ALL_MAPPING_DICTS = (MEHSANA_2016_MAP, MEHSANA_2017_MAP, MUMBAI_MAP)
 
@@ -819,7 +844,22 @@ def get_drug_resistance_case_properties(column_mapping, row):
     additional_drug_case_properties = get_drug_resistances_from_individual_drug_columns(column_mapping, row)
     for drug in additional_drug_case_properties:
         resistant_drugs[drug['drug_id']] = drug
-    return resistant_drugs.values()
+    unknown_cases = generate_unknown_cases(resistant_drugs.keys())
+    return resistant_drugs.values() + unknown_cases
+
+
+def generate_unknown_cases(known_drugs):
+    unknown_drugs = set(ALL_DRUGS.keys()) - set(known_drugs)
+    return [
+        {
+            "name": drug_id,
+            "owner": "-",
+            "drug_id": drug_id,
+            "sort_order": ALL_DRUGS[drug_id],
+            "sensitivity": "unknown",
+        }
+        for drug_id in unknown_drugs
+    ]
 
 
 def get_drug_resistances_from_individual_drug_columns(column_mapping, row):
@@ -832,6 +872,7 @@ def get_drug_resistances_from_individual_drug_columns(column_mapping, row):
                 "owner_id": "-",
                 "sensitivity": convert_sensitivity(value),
                 "drug_id": drug_id,
+                "sort_order": ALL_DRUGS[drug_id],
             }
             case_properties.append(properties)
     return case_properties
@@ -877,6 +918,7 @@ def get_drug_resistances_from_mehsana_drug_resistance_list(column_mapping, row):
             "owner_id": "-",
             "sensitivity": "resistant",
             "drug_id": drug,
+            "sort_order": ALL_DRUGS[drug],
         }
         case_properties.append(properties)
     return case_properties
@@ -892,6 +934,7 @@ def get_drug_resistances_from_mumbai_cbnaat(column_mapping, row):
                 "name": "r",
                 "owner_id": "-",
                 "drug_id": "r",
+                "sort_order": ALL_DRUGS["r"],
                 "specimen_date": clean_date(column_mapping.get_value("cbnaat_sample_date", row)),
                 "result_date": column_mapping.get_value("cbnaat_result_date", row),
                 "test_type": "cbnaat",
@@ -915,6 +958,7 @@ def get_drug_resistances_from_lpa(column_mapping, row):
                 "name": drug,
                 "owner_id": "-",
                 "drug_id": drug,
+                "sort_order": ALL_DRUGS[drug],
                 "specimen_date": clean_date(column_mapping.get_value("lpa_sample_date", row)),
                 "result_date": column_mapping.get_value("lpa_result_date", row),
                 "test_type": "fl_line_probe_assay",
