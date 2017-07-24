@@ -1168,8 +1168,8 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
                 transactions_to_save = ledger_value.get_live_tracked_models(LedgerTransaction)
 
                 ledger_value.save(using=db_name)
-                for transaction in transactions_to_save:
-                    transaction.save(using=db_name)
+                for trans in transactions_to_save:
+                    trans.save(using=db_name)
 
                 ledger_value.clear_tracked_models()
         except InternalError as e:
