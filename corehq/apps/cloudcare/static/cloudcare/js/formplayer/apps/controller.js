@@ -35,6 +35,7 @@ FormplayerFrontend.module("Apps", function(Apps, FormplayerFrontend, Backbone, M
             var collection = new Backbone.Collection([
                 new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.SET_LANG }),
                 new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.SET_DISPLAY }),
+                new Backbone.Model({ slug: FormplayerFrontend.Layout.Views.SettingSlugs.CLEAR_USER_DATA }),
             ]);
             var settingsView = new FormplayerFrontend.Layout.Views.SettingsView({
                 collection: collection,

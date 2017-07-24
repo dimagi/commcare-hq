@@ -58,6 +58,24 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
         },
     });
 
+    /**
+     * Force clear user data.
+     * Available for both Web Apps and App Preview
+     */
+    var ClearUserDataView = Marionette.ItemView.extend({
+        template: '#clear-user-data-setting-template',
+        tagName: 'tr',
+        ui: {
+            clearUserData: '.js-clear-user-data',
+        },
+        events: {
+            'click @ui.clearUserData': 'onClickClearUserData',
+        },
+        onClickClearUserData: function() {
+            console.log('clearing user data...');
+        },
+    });
+
     Views.SettingsView = Marionette.CompositeView.extend({
         ui: {
             done: '.js-done',
@@ -68,6 +86,8 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
                 return LangSettingView;
             } else if (item.get('slug') === Views.SettingSlugs.SET_DISPLAY) {
                 return DisplaySettingView;
+            } else if (item.get('slug') === Views.SettingSlugs.CLEAR_USER_DATA) {
+                return ClearUserDataView;
             }
         },
         events: {
@@ -82,6 +102,7 @@ FormplayerFrontend.module("Layout.Views", function (Views, FormplayerFrontend, B
     Views.SettingSlugs = {
         SET_LANG: 'lang',
         SET_DISPLAY: 'display',
+        CLEAR_USER_DATA: 'clear-user-data',
     };
 
 });
