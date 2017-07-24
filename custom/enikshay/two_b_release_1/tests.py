@@ -206,3 +206,7 @@ class TestCreateEnikshayCases(TestCase):
         }, new_referral.dynamic_case_properties())
         parent = get_parent_of_case(self.domain, new_referral, 'occurrence')
         self.assertEqual(new_occurrence.case_id, parent.case_id)
+
+        new_trail = accessor.get_case(person.trails[0].case_id)
+        parent = get_parent_of_case(self.domain, new_trail, 'occurrence')
+        self.assertEqual(new_occurrence.case_id, parent.case_id)

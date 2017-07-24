@@ -8,7 +8,7 @@ from collections import namedtuple
 from dimagi.utils.chunked import chunked
 from dimagi.utils.decorators.memoized import memoized
 from django.core.management import BaseCommand
-from casexml.apps.case.const import CASE_INDEX_EXTENSION
+from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -178,6 +178,7 @@ class ENikshay2BMigrator(object):
             + [self.migrate_episode(episode, person.episodes) for episode in person.episodes]
             + [self.migrate_test(test, person.person) for test in person.tests]
             + [self.migrate_referral(referral, person.occurrences) for referral in person.referrals]
+            + [self.migrate_trail(trail, person.occurrences) for trail in person.trails]
         ))
 
     @staticmethod
@@ -380,6 +381,28 @@ class ENikshay2BMigrator(object):
             attrs={
                 "create": False,
                 "update": props,
+            },
+            **index_kwargs
+        )
+
+    def migrate_trail(self, trail, occurrences):
+        if occurrences:
+            occurrence = max([(case.opened_on, case) for case in occurrences])[1]
+            index_kwargs = {'indices': [CaseIndex(
+                occurrence,
+                identifier='parent',
+                relationship=CASE_INDEX_CHILD,
+                related_type=CASE_TYPE_OCCURRENCE,
+            )]}
+        else:
+            index_kwargs = {}
+
+        return CaseStructure(
+            case_id=trail.case_id,
+            walk_related=False,
+            attrs={
+                "create": False,
+                "update": {},
             },
             **index_kwargs
         )
