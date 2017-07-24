@@ -117,7 +117,7 @@ class QuestionSelect(Widget):
         final_attrs = self.build_attrs(attrs, name=name)
 
         return format_html(
-            """
+            u"""
             <input{final_attrs} value="{value}" data-bind='
                questionsSelect: {choices},
                optionsCaption: " ",
