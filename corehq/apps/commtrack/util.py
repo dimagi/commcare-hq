@@ -18,7 +18,6 @@ from unidecode import unidecode
 from django.utils.translation import ugettext as _
 import re
 
-from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.utils.general import should_use_sql_backend
 
 CaseLocationTuple = namedtuple('CaseLocationTuple', 'case location')
