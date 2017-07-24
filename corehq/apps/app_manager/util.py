@@ -529,13 +529,14 @@ def get_app_manager_template(user, v1, v2):
     :param v2: String, template name for V2
     :return: String, either v1 or v2 depending on toggle
     """
-    if user is not None and toggles.APP_MANAGER_V2.enabled(user.username):
-        return v2
-    return v1
+    if user is not None and toggles.APP_MANAGER_V1.enabled(user.username):
+        return v1
+    return v2
 
 
-def get_form_data(domain, app):
+def get_form_data(domain, app, include_shadow_forms=True):
     from corehq.apps.reports.formdetails.readable import FormQuestionResponse
+    from corehq.apps.app_manager.models import ShadowForm
 
     modules = []
     errors = []
@@ -549,7 +550,10 @@ def get_form_data(domain, app):
             'is_surveys': module.is_surveys,
         }
 
-        for form in module.get_forms():
+        form_list = module.get_forms()
+        if not include_shadow_forms:
+            form_list = [f for f in form_list if not isinstance(f, ShadowForm)]
+        for form in form_list:
             form_meta = {
                 'id': form.unique_id,
                 'name': form.name,

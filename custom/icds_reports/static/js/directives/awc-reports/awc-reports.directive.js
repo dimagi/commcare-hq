@@ -844,10 +844,10 @@ var height_for_age = {
 
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, storageService) {
+function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, storageService, userLocationId) {
     var vm = this;
     vm.data = {};
-    vm.label = "Program Summary";
+    vm.label = "AWC Report";
     vm.tooltipPlacement = "right";
     vm.step = $routeParams.step;
     vm.data = null;
@@ -900,6 +900,10 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             );
         }
     };
+
+    $scope.$on('filtersChange', function() {
+        vm.getDataForStep(vm.step);
+    });
 
     vm.getPopoverContent = function (data, type) {
         var html = '';
@@ -1097,20 +1101,27 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         beneficiary: { route: "/awc_reports/beneficiary", label: "Beneficiary List"},
     };
 
+    vm.getDisableIndex = function () {
+        var i = -1;
+        window.angular.forEach(vm.selectedLocations, function (key, value) {
+            if (key.location_id === userLocationId) {
+                i = value;
+            }
+        });
+        return i;
+    };
+
     vm.moveToLocation = function(loc, index) {
         if (loc === 'national') {
             $location.search('location_id', '');
             $location.search('selectedLocationLevel', -1);
             $location.search('location_name', '');
-            $location.search('location', '');
         } else {
             $location.search('location_id', loc.location_id);
             $location.search('selectedLocationLevel', index);
             $location.search('location_name', loc.name);
         }
     };
-
-
 
     vm.layers = {
         baselayers: {
@@ -1133,7 +1144,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getDataForStep(vm.step);
 }
 
-AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'storageService'];
+AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'storageService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive('awcReports', function() {
     return {

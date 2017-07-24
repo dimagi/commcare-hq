@@ -33,6 +33,10 @@ class CaseSaveError(Exception):
     pass
 
 
+class XFormSaveError(Exception):
+    pass
+
+
 class LedgerSaveError(Exception):
     pass
 

@@ -66,3 +66,10 @@ APP_BUILDER_PUBLISH = StaticUINotify(
     ends_on=datetime(2017, 8, 14, 20),
     only_visible_for_users_created_before=datetime(2017, 7, 14, 20),
 )
+
+
+APP_BUILDER_RELEASE = StaticUINotify(
+    'app_builder_release_jul2017',
+    ends_on=datetime(2017, 8, 14, 20),
+    only_visible_for_users_created_before=datetime(2017, 5, 16, 20),
+)

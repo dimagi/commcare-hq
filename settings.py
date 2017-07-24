@@ -346,7 +346,6 @@ HQ_APPS = (
     'mvp',
     'mvp_docs',
     'mvp_indicators',
-    'custom.opm',
     'pact',
 
     'custom.reports.mc',
@@ -419,9 +418,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'two_factor',
     'custom.apps.crs_reports',
     'custom.m4change',
-
-    # submodules with tests that run on travis
-    'dimagi.utils',
 )
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
@@ -593,6 +589,8 @@ CELERY_REMINDER_CASE_UPDATE_QUEUE = CELERY_MAIN_QUEUE
 # It's set to the main queue here and can be overridden to put it
 # on its own queue.
 CELERY_REPEAT_RECORD_QUEUE = CELERY_MAIN_QUEUE
+
+ENIKSHAY_QUEUE = CELERY_MAIN_QUEUE
 
 # Will cause a celery task to raise a SoftTimeLimitExceeded exception if
 # time limit is exceeded.
@@ -1398,8 +1396,6 @@ COUCHDB_APPS = [
     # needed to make couchdbkit happy
     ('fluff', 'fluff-bihar'),
     ('bihar', 'fluff-bihar'),
-    ('opm', 'fluff-opm'),
-    ('fluff', 'fluff-opm'),
     ('mc', 'fluff-mc'),
     ('m4change', 'm4change'),
     ('export', META_DB),
@@ -1737,7 +1733,6 @@ PILLOWTOPS = {
         },
     ],
     'fluff': [
-        'custom.opm.models.OpmUserFluffPillow',
         'custom.m4change.models.M4ChangeFormFluffPillow',
         'custom.intrahealth.models.CouvertureFluffPillow',
         'custom.intrahealth.models.IntraHealthFluffPillow',
@@ -2004,7 +1999,6 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'uth-rhd-test',
     'crs-remind',
     'succeed',
-    'opm',
 ]
 
 # Custom fully indexed domains for ReportXForm index/pillowtop --
@@ -2091,7 +2085,6 @@ DOMAIN_MODULE_MAP = {
     'mvp-mbola': 'mvp',
     'mvp-koraro': 'mvp',
     'mvp-pampaida': 'mvp',
-    'opm': 'custom.opm',
     'pact': 'pact',
 
     'ipm-senegal': 'custom.intrahealth',

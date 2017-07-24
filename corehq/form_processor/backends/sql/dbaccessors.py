@@ -17,6 +17,7 @@ from django.db.models.functions import Greatest
 from corehq.blobs import get_blob_db
 from corehq.form_processor.exceptions import (
     XFormNotFound,
+    XFormSaveError,
     CaseNotFound,
     AttachmentNotFound,
     CaseSaveError,
@@ -510,27 +511,41 @@ class FormAccessorSQL(AbstractFormAccessor):
     @staticmethod
     @transaction.atomic
     def save_new_form(form):
+        from corehq.sql_db.util import get_db_alias_for_partitioned_doc
         """
         Save a previously unsaved form
         """
+
+        db_name = get_db_alias_for_partitioned_doc(form.form_id)
         assert not form.is_saved(), 'form already saved'
         logging.debug('Saving new form: %s', form)
         unsaved_attachments = getattr(form, 'unsaved_attachments', [])
         if unsaved_attachments:
             for unsaved_attachment in unsaved_attachments:
+                if unsaved_attachment.is_saved():
+                    raise XFormSaveError(
+                        'XFormAttachmentSQL {} has already been saved'.format(unsaved_attachment.id)
+                    )
                 unsaved_attachment.form = form
 
         operations = form.get_tracked_models_to_create(XFormOperationSQL)
         for operation in operations:
+            if operation.is_saved():
+                raise XFormSaveError(
+                    'XFormOperationSQL {} has already been saved'.format(operation.id)
+                )
             operation.form = form
 
-        with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute(
-                'SELECT form_pk FROM save_new_form_and_related_models(%s, %s, %s, %s)',
-                [form.form_id, form, unsaved_attachments, operations]
-            )
-            result = fetchone_as_namedtuple(cursor)
-            form.id = result.form_pk
+        try:
+            with transaction.atomic(using=db_name):
+                form.save(using=db_name)
+                for attachment in unsaved_attachments:
+                    attachment.save(using=db_name)
+
+                for operation in operations:
+                    operation.save(using=db_name)
+        except InternalError as e:
+            raise XFormSaveError(e)
 
         try:
             del form.unsaved_attachments
@@ -855,6 +870,14 @@ class CaseAccessorSQL(AbstractCaseAccessor):
 
         attachments_to_save = case.get_tracked_models_to_create(CaseAttachmentSQL)
         attachment_ids_to_delete = [att.id for att in case.get_tracked_models_to_delete(CaseAttachmentSQL)]
+        for attachment in attachments_to_save:
+            if attachment.is_saved():
+                raise CaseSaveError(
+                    """Updating attachments is not supported.
+                    case id={}, attachment id={}""".format(
+                        case.case_id, attachment.attachment_id
+                    )
+                )
 
         try:
             with transaction.atomic(using=db_name):
@@ -873,13 +896,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 CommCareCaseIndexSQL.objects.using(db_name).filter(id__in=index_ids_to_delete).delete()
 
                 for attachment in attachments_to_save:
-                    if attachment.is_saved():
-                        raise CaseSaveError(
-                            """Updating attachments is not supported.
-                            case id={}, attachment id={}""".format(
-                                case.case_id, attachment.attachment_id
-                            )
-                        )
                     attachment.save(using=db_name)
 
                 CaseAttachmentSQL.objects.using(db_name).filter(id__in=attachment_ids_to_delete).delete()
@@ -925,14 +941,14 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             [domain, case_ids, list(exclude_indices)]))
 
     @staticmethod
-    def get_closed_and_deleted_ids(accessor, case_ids):
+    def get_closed_and_deleted_ids(domain, case_ids):
         assert isinstance(case_ids, list), case_ids
         if not case_ids:
             return []
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
                 'SELECT case_id, closed, deleted FROM get_closed_and_deleted_ids(%s, %s)',
-                [accessor.domain, case_ids]
+                [domain, case_ids]
             )
             return list(fetchall_as_namedtuple(cursor))
 
@@ -960,16 +976,24 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.case_id for result in results]
 
     @staticmethod
-    def get_extension_case_ids(domain, case_ids):
+    def get_extension_case_ids(domain, case_ids, include_closed=True):
         """
         Given a base list of case ids, get all ids of all extension cases that reference them
         """
         if not case_ids:
             return []
-        with get_cursor(CommCareCaseIndexSQL) as cursor:
-            cursor.execute('SELECT case_id FROM get_extension_case_ids(%s, %s)', [domain, list(case_ids)])
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
+
+        extension_case_ids = set()
+        for db_name in get_sql_db_aliases_in_use():
+            query = CommCareCaseIndexSQL.objects.using(db_name).filter(
+                domain=domain,
+                relationship_id=CommCareCaseIndexSQL.EXTENSION,
+                case__deleted=False,
+                referenced_id__in=case_ids)
+            if not include_closed:
+                query = query.filter(case__closed=False)
+            extension_case_ids.update(query.values_list('case_id', flat=True))
+        return list(extension_case_ids)
 
     @staticmethod
     def get_last_modified_dates(domain, case_ids):

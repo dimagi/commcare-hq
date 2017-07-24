@@ -64,7 +64,7 @@ hqDefine("app_manager/js/forms/form_view.js", function() {
         setupValidation(hqImport("hqwebapp/js/urllib.js").reverse("validate_form_for_build"));
 
         // CloudCare "Preview Form" URL
-        if (initial_page_data('allow_cloudcare') && !COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+        if (initial_page_data('allow_cloudcare') && COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
             // tag the 'preview in cloudcare' button with the right url
             // unfortunately, has to be done in javascript
             var getCloudCareUrl = function(urlRoot, appId, moduleId, formId, caseId) {

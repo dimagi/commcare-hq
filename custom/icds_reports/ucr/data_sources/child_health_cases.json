@@ -181,8 +181,7 @@
           },
           "type": "location_parent_id"
         },
-        "column_id": "supervisor_id",
-        "create_index": true
+        "column_id": "supervisor_id"
       },
       {
         "display_name": null,
@@ -1500,7 +1499,9 @@
       "number_of_shards": 5
     },
     "sql_column_indexes": [
-      {"column_ids": ["awc_id", "date_death"]}
+      {"column_ids": ["awc_id", "date_death"]},
+      {"column_ids": ["awc_id", "dob"]},
+      {"column_ids": ["supervisor_id", "dob"]}
     ]
   }
 }

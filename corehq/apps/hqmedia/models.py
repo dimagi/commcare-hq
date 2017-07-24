@@ -501,11 +501,12 @@ class ApplicationMediaReference(object):
         return self._get_name(self.form_name, lang=lang)
 
 
-def _log_media_deletion(domain, map_item, path):
-    if domain in {'icds-cas', 'icds-test'}:
+def _log_media_deletion(app, map_item, path):
+    if app.domain in {'icds-cas', 'icds-test'}:
         soft_assert(to='{}@{}'.format('skelly', 'dimagi.com'))(
             False, "path deleted from multimedia map", {
-                'domain': domain,
+                'domain': app.domain,
+                'app_id': app._id,
                 'path': path,
                 'map_item': map_item.to_json()
             }
@@ -722,7 +723,7 @@ class HQMediaMixin(Document):
             if path not in permitted_paths:
                 map_changed = True
                 map_item = self.multimedia_map[path]
-                _log_media_deletion(self.domain, map_item, path)
+                _log_media_deletion(self, map_item, path)
                 del self.multimedia_map[path]
         if map_changed:
             self.save()
@@ -770,7 +771,7 @@ class HQMediaMixin(Document):
                     yield path, media_cls.wrap(media_item)
                 else:
                     # delete media reference from multimedia map so this doesn't pop up again!
-                    _log_media_deletion(self.domain, map_item, path)
+                    _log_media_deletion(self, map_item, path)
                     del self.multimedia_map[path]
                     found_missing_mm = True
         if found_missing_mm:

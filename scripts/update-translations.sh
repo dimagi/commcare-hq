@@ -34,10 +34,10 @@ echo "Pulling translations from transifex"
 tx pull -f
 
 echo "Gathering all translation strings.  Note that this will probably take a while"
-./manage.py makemessages --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules'
+./manage.py makemessages --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules' --ignore 'bower_components'
 
 echo "Gathering javascript translation strings.  This will also probably take a while"
-./manage.py makemessages -d djangojs --all
+./manage.py makemessages -d djangojs --all --ignore 'corehq/apps/app_manager/tests/data/v2_diffs*' --ignore 'node_modules' --ignore 'bower_components' --ignore 'docs'
 
 set +e   # Temporarily disable strict mode so we can respond any failure
 echo "Compiling translation files."

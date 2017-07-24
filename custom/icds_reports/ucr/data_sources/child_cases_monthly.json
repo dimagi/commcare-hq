@@ -178,8 +178,7 @@
         "transform": {},
         "is_nullable": true,
         "type": "expression",
-        "column_id": "supervisor_id",
-        "create_index": true
+        "column_id": "supervisor_id"
       },
       {
         "display_name": null,
@@ -3460,7 +3459,8 @@
     },
     "sql_column_indexes": [
       {"column_ids": ["awc_id", "month"]},
-      {"column_ids": ["district_id", "month"]}
+      {"column_ids": ["district_id", "month"]},
+      {"column_ids": ["supervisor_id", "month"]}
     ]
   }
 }
