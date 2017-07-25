@@ -9,7 +9,8 @@ from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, Case
 from corehq.form_processor.change_publishers import publish_form_saved, publish_case_saved, publish_ledger_v2_saved
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.models import XFormInstanceSQL, CaseTransaction, LedgerTransaction
+from corehq.form_processor.models import XFormInstanceSQL, CaseTransaction, LedgerTransaction, RebuildWithReason, \
+    FormReprocessRebuild
 from corehq.form_processor.submission_post import SubmissionPost, _transform_instance_to_error
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.xform import _get_form
@@ -103,16 +104,19 @@ def _reprocess_form(form, raise_errors=True):
                 for case in cases:
                     CaseAccessorSQL.save_case(case)
 
+                for case in cases:
+                    detail = FormReprocessRebuild(form_id=form.form_id)
+                    interface.hard_rebuild_case(case.case_id, detail)
+
                 ledgers = _filter_already_processed_ledgers(form, stock_result.models_to_save)
                 LedgerAccessorSQL.save_ledger_values(ledgers)
+                for ledger in ledgers:
+                    interface.ledger_processor.hard_rebuild_ledgers(**ledger.ledger_reference._asdict())
 
                 FormAccessorSQL.update_form_problem_and_state(form)
                 publish_form_saved(form)
                 for case in cases:
-                    publish_case_saved(case)
                     case_post_save.send(case.__class__, case=case)
-                for ledger in ledgers:
-                    publish_ledger_v2_saved(ledger)
 
             else:
                 with bulk_atomic_blobs([form] + cases):
