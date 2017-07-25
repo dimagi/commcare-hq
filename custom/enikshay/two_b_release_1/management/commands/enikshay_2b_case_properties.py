@@ -136,7 +136,7 @@ class ENikshay2BMigrator(object):
             self.migrate_person_case_set(person)
 
     def get_relevant_person_case_ids(self):
-        location_owners = self.dto.get_descendants(include_self=True).location_ids()
+        location_owners = self.locations.keys()
         return self.accessor.get_open_case_ids_in_domain_by_type(CASE_TYPE_PERSON, location_owners)
 
     def get_relevant_person_case_sets(self, person_ids):
