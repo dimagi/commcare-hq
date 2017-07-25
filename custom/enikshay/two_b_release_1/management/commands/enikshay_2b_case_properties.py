@@ -14,8 +14,9 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.log import with_progress_bar
 from custom.enikshay.case_utils import (
-    CASE_TYPE_PERSON, CASE_TYPE_OCCURRENCE, CASE_TYPE_REFERRAL, CASE_TYPE_EPISODE,
-    CASE_TYPE_TEST, CASE_TYPE_TRAIL)
+    CASE_TYPE_PERSON, CASE_TYPE_OCCURRENCE, CASE_TYPE_REFERRAL,
+    CASE_TYPE_EPISODE, CASE_TYPE_TEST, CASE_TYPE_TRAIL,
+    CASE_TYPE_DRTB_HIV_REFERRAL)
 from custom.enikshay.const import ENROLLED_IN_PRIVATE, CASE_VERSION
 
 logger = logging.getLogger('two_b_datamigration')
@@ -41,7 +42,7 @@ TEST_TO_LABEL = {
     'other_dst': "Other DST",
 }
 
-PersonCaseSet = namedtuple('PersonCaseSet', 'person occurrences episodes tests referrals trails')
+PersonCaseSet = namedtuple('PersonCaseSet', 'person occurrences episodes tests referrals trails drtb_hiv')
 
 
 def confirm(msg):
@@ -141,6 +142,7 @@ class ENikshay2BMigrator(object):
                         tests=[],
                         referrals=[],
                         trails=[],
+                        drtb_hiv=[],
                     )
 
             referrals_and_occurrences_to_person = {}
@@ -365,7 +367,7 @@ class ENikshay2BMigrator(object):
         }
 
         if occurrences:
-            occurrence = max([(case.opened_on, case) for case in occurrences])[1]
+            occurrence = max((case.opened_on, case) for case in occurrences)[1]
             index_kwargs = {'indices': [CaseIndex(
                 occurrence,
                 identifier='host',
@@ -387,7 +389,7 @@ class ENikshay2BMigrator(object):
 
     def migrate_trail(self, trail, occurrences):
         if occurrences:
-            occurrence = max([(case.opened_on, case) for case in occurrences])[1]
+            occurrence = max((case.opened_on, case) for case in occurrences)[1]
             index_kwargs = {'indices': [CaseIndex(
                 occurrence,
                 identifier='parent',

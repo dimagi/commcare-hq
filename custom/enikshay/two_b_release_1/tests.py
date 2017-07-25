@@ -1,11 +1,11 @@
 from django.test import TestCase, override_settings
 
-from casexml.apps.case.const import CASE_INDEX_CHILD
+from casexml.apps.case.const import CASE_INDEX_CHILD, CASE_INDEX_EXTENSION
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
 from corehq.apps.domain.models import Domain
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
-from custom.enikshay.case_utils import get_parent_of_case
+from custom.enikshay.case_utils import get_parent_of_case, CASE_TYPE_DRTB_HIV_REFERRAL
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
 from custom.enikshay.tests.utils import (
     setup_enikshay_locations,
@@ -42,8 +42,9 @@ class TestCreateEnikshayCases(TestCase):
         test = self._get_test_structure(occurrence)
         referral = self._get_referral_structure(person)
         trail = self._get_trail_structure(referral)
+        drtb_hiv_referral = self._get_drtb_hiv_referral_structure(episode)
         return {c.case_id: c for c in self.factory.create_or_update_cases([
-            private_person, episode, test, referral, trail
+            private_person, occurrence, test, referral, episode, trail, drtb_hiv_referral,
         ])}
 
     def _get_person_structure(self, person_id, owner_id):
@@ -122,6 +123,24 @@ class TestCreateEnikshayCases(TestCase):
         )]
         return trail
 
+    def _get_drtb_hiv_referral_structure(self, episode):
+        return CaseStructure(
+            case_id=episode.case_id + '-drtb_hiv_referral',
+            attrs={
+                "case_type": CASE_TYPE_DRTB_HIV_REFERRAL,
+                "owner_id": "drtb_hiv_referral_owner",
+                "create": True,
+                "update": {},
+            },
+            indices=[CaseIndex(
+                CaseStructure(case_id=episode.case_id, attrs={"create": False}),
+                identifier='host',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type='episode',
+            )],
+            walk_related=False,
+        )
+
     def test(self):
         migrator = ENikshay2BMigrator(self.domain, self.locations['DTO'], commit=True)
         # first check some utils
@@ -135,6 +154,8 @@ class TestCreateEnikshayCases(TestCase):
         self.assertItemsEqual(['roland-deschain-occurrence-test'], [c.case_id for c in person.tests])
         self.assertItemsEqual(['roland-deschain-referral'], [c.case_id for c in person.referrals])
         self.assertItemsEqual(['roland-deschain-referral-trail'], [c.case_id for c in person.trails])
+        self.assertItemsEqual(['roland-deschain-occurrence-episode-drtb_hiv_referral'],
+                              [c.case_id for c in person.drtb_hiv])
 
         # run the actual migration
         migrator.migrate()
