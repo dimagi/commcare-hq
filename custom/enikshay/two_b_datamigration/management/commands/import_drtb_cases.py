@@ -165,6 +165,7 @@ MUMBAI_MAP = {
     "social_scheme": 16,
     "district_name": 18,
     "phi_name": 21,
+    "reason_for_testing": 23,
     "site_of_disease": 24,
     "type_of_patient": 25,  # TODO: (WAITING) Map this value to case properties
     "weight": 26,
@@ -547,6 +548,8 @@ def get_episode_case_properties(domain, column_mapping, row):
 
     properties.update(get_diagnosis_properties(column_mapping, domain, row))
 
+    properties.update(get_reason_for_test_properties(column_mapping, row))
+
     ip_to_cp_date = clean_date(column_mapping.get_value("ip_to_cp_date", row))
     if ip_to_cp_date:
         properties.update({
@@ -555,6 +558,43 @@ def get_episode_case_properties(domain, column_mapping, row):
         })
 
     return properties
+
+
+def get_reason_for_test_properties(column_mapping, row):
+    test_reason_map = {
+        # TODO: there is yellow in the mapping sheet. Was sheel waiting on these?
+        # https://docs.google.com/spreadsheets/d/1Pz-cYNvo5BkF-Sta1ol4ZzfBYIQ4kGlZ3FdJgBLe5WE/edit#gid=704385575
+        "1-Failure": (None, "extended_dst", "mdr_rr_failure"),
+        "1. Presumptive TB	diagnosis_dstb": ("presumptive_tb", None, None),
+        "2-Re-treatment case S+at 4th month": (None, "extended_dst", "4mo_culture_positive"),
+        "3-Contact of known MDR TB case": (None, None, None),
+        "4-S+ at diagnosis, re-treatment case": (None, None, None),
+        "4. Presumptive MDRTB, at diagnosis": (None, "mdr_at_diagnosis", None),
+        "5-Any Follow-up S+": (None, None, None),
+        "5. Contact of MDR/RR TB": (None, "contact_of_mdr_rr", None),
+        "6-S-at Diagnosis re-treatment case": (None, None, None),
+        "6. Follow up Sm+ve at end IP": (None, "follow_up_sm_ve_ip", None),
+        "7-HIV TB Case": (None, None, None),
+        "7. Private Referral-Presumptive MDRTB": (None, "private_referral", None),
+        "8. Discordance resolution": (None, "discordance_resolution", None),
+        "10. MDR/RR TB at diagnosis": (None, "extended_dst", "mdr_rr_diagnosis"),
+        "13. Culture reversion": (None, "extended_dst", "culture_reversion"),
+        "14. Failure of MDR/RR TB regimen": (None, "extended_dst", "mdr_rr_failure"),
+        "15. Recurrent case of second line treatment": (None, "extended_dst", "recurrent_second_line_treatment"),
+        "Private": (None, None, None),
+    }
+    value = column_mapping.get_value("reason_for_testing", row)
+    if not value:
+        return {}
+    if value not in test_reason_map:
+        raise Exception("Unexpected test reason: {}".format(value))
+    rft_dstb_diagnosis, rft_drtb_diagnosis, rft_drtb_diagnosis_ext_dst = test_reason_map[value]
+    return {
+        "rft_general": "diagnosis_drtb",
+        "rft_dstb_diagnosis": rft_dstb_diagnosis,
+        "rft_drtb_diagnosis": rft_drtb_diagnosis,
+        "rft_drtb_diagnosis_ext_dst": rft_drtb_diagnosis_ext_dst,
+    }
 
 
 def get_diagnosis_properties(column_mapping, domain, row):
