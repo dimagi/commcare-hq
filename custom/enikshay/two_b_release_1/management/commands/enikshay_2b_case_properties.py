@@ -253,7 +253,6 @@ class ENikshay2BMigrator(object):
                 'alcohol_deaddiction': episode.get_case_property('alcohol_deaddiction'),
                 'tobacco_user': episode.get_case_property('tobacco_user'),
                 'occupation': episode.get_case_property('occupation'),
-                'nikshay_id': episode.get_case_property('nikshay_id'),
                 'phone_number_other': episode.get_case_property('phone_number_other'),
             })
 
