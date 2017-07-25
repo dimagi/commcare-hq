@@ -48,7 +48,7 @@ class Command(BaseCommand):
                     )
                     CaseFactory(domain).update_case(
                         episode_case.case_id,
-                        attrs={'update': {'date_of_diagnosis': treatment_initiation_date}},
+                        **{'update': {'date_of_diagnosis': treatment_initiation_date}}
                     )
                 else:
                     logging.info('skipping because dry run: %s' % nikshay_id)
