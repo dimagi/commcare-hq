@@ -100,11 +100,6 @@ _ADD_ONS = {
         used_in_form=lambda f: bool(getattr(f, 'form_filter', False)),
         used_in_module=lambda m: bool(m.module_filter),
     ),
-    "edit_form_actions": AddOn(
-        name=_("Edit Form Actions"),
-        description=_("Choose whether each form in a case list should register, update, or close a case."),
-        help_link="https://confluence.dimagi.com/display/commcarepublic/Case+Configuration",
-    ),
     "enum_image": AddOn(
         name=feature_previews.ENUM_IMAGE.label,
         description=feature_previews.ENUM_IMAGE.description,
@@ -143,7 +138,7 @@ _LAYOUT = [
         "collapse": False,
         "name": _("Case Management"),
         "description": _("Build more complex workflows"),
-        "slugs": ["conditional_form_actions", "edit_form_actions", "empty_case_lists", "subcases"],
+        "slugs": ["conditional_form_actions", "empty_case_lists", "subcases"],
     },
     {
         "slug": "mobile",
