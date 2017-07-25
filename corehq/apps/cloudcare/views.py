@@ -19,7 +19,7 @@ from couchdbkit import ResourceConflict
 from casexml.apps.phone.fixtures import generator
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base, json_handler
-from touchforms.formplayer.api import DjangoAuth, get_raw_instance, sync_db
+from touchforms.formplayer.api import get_raw_instance
 from touchforms.formplayer.models import EntrySession
 from xml2json.lib import xml2json
 
@@ -529,21 +529,6 @@ def get_ledgers(request, domain):
         },
         default=custom_json_handler,
     )
-
-
-@cloudcare_api
-def sync_db_api(request, domain):
-    auth_cookie = request.COOKIES.get('sessionid')
-    username = request.GET.get('username')
-    try:
-        response = sync_db(username, domain, DjangoAuth(auth_cookie))
-    except Exception as e:
-        return json_response(
-            {'status': 'error', 'message': unicode(e)},
-            status_code=500
-        )
-    else:
-        return json_response(response)
 
 
 class ReadableQuestions(View):

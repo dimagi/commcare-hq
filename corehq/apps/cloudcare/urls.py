@@ -10,8 +10,7 @@ from corehq.apps.cloudcare.views import (
     LoginAsUsers,
     SingleAppLandingPageView,
     form_context, get_cases, get_apps_api, get_app_api,
-    get_fixtures, get_ledgers, render_form,
-    sync_db_api, default,
+    get_fixtures, get_ledgers, render_form, default,
 )
 
 app_urls = [
@@ -43,7 +42,6 @@ api_urls = [
     url(r'^ledgers/$', get_ledgers, name='cloudcare_get_ledgers'),
     url(r'^render_form/$', render_form, name='cloudcare_render_form'),
     url(r'^readable_questions/$', ReadableQuestions.as_view(), name=ReadableQuestions.urlname),
-    url(r'^sync_db/$', sync_db_api, name='cloudcare_sync_db'),
 ]
 
 # used in settings urls
