@@ -93,8 +93,7 @@ def _reprocess_form(form):
 
         if case_stock_result:
             stock_result = case_stock_result.stock_result
-            if stock_result:
-                assert stock_result.populated
+            assert stock_result.populated
 
             cases = case_stock_result.case_models
             if should_use_sql_backend(form.domain):
@@ -117,8 +116,7 @@ def _reprocess_form(form):
                 with bulk_atomic_blobs([form] + cases):
                     XFormInstance.save(form)  # use this save to that we don't overwrite the doc_type
                     XFormInstance.get_db().bulk_save(cases)
-                if stock_result:
-                    stock_result.commit()
+                stock_result.commit()
 
             case_stock_result.stock_result.finalize()
             case_stock_result.case_result.commit_dirtiness_flags()
