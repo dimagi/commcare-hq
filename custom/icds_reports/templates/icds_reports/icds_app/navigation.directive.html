@@ -39,6 +39,9 @@
                     <li ng-class="{'active': $location.path().indexOf('/exclusive-breastfeeding') !== -1}">
                         <a href="{$ goToStep('exclusive-breastfeeding', $location.search()) $}" class="fa">{% trans "% Exclusive breastfeeding" %}</a>
                     </li>
+                    <li ng-class="{'active': $location.path().indexOf('/children_initiated-breastfeeding') !== -1}">
+                        <a href="{$ goToStep('children_initiated', $location.search()) $}" class="fa">{% trans "% Children initiated appropriate complementary feeding" %}</a>
+                    </li>
                 </ul>
             </li>
             <li class="nav-header" data-toggle="collapse" data-target="">

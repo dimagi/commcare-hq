@@ -3,7 +3,7 @@ from django.conf.urls import url
 from custom.icds_reports.views import TableauView, DashboardView, IcdsDynamicTemplateView, ProgramSummaryView, \
     AwcOpenedView, PrevalenceOfUndernutritionView, LocationView, LocationAncestorsView, AwcReportsView, \
     ExportIndicatorView, ProgressReportView, PrevalenceOfSevereView, PrevalenceOfStunningView, \
-    ExclusiveBreastfeedingView, NewbornsWithLowBirthWeightView, EarlyInitiationBreastfeeding
+    ExclusiveBreastfeedingView, NewbornsWithLowBirthWeightView, EarlyInitiationBreastfeeding, ChildrenInitiatedView
 
 urlpatterns = [
     url(r'^tableau/(?P<workbook>\w+)/(?P<worksheet>\w+)$', TableauView.as_view(), name='icds_tableau'),
@@ -40,4 +40,8 @@ urlpatterns = [
         r'^exclusive-breastfeeding/(?P<step>[\w-]+)/',
         ExclusiveBreastfeedingView.as_view(),
         name='exclusive-breastfeeding'),
+    url(
+        r'^children_initiated/(?P<step>[\w-]+)/',
+        ChildrenInitiatedView.as_view(),
+        name='children_initiated'),
 ]

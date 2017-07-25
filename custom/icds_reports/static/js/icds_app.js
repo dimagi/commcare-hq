@@ -89,6 +89,12 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/early_initiation/:step", {
                 template : "<early-initiation-breastfeeding></early-initiation-breastfeeding>",
+            })
+            .when("/children_initiated", {
+                redirectTo : "/children_initiated/map",
+            })
+            .when("/children_initiated/:step", {
+                template : "<children-initiated></children-initiated>",
             });
     }]);
 
