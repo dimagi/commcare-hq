@@ -199,6 +199,26 @@ MUMBAI_MAP = {
     "dst_type": 62,
     # LAST
     # TODO: (WAITING) DST Drug specific columns
+    "Lfx": 63,  # Levo
+    "Eto": 64,  # Ethio
+    # "Cyclo": 65,  # TODO: (WAITING) unknown drug mapping
+    "E": 66,  # Etham
+    "Z": 67,  # PZA
+    "Km": 68,  # Kana
+    "Cm": 69,  # Capr
+    "Mfx (0.5)": 70,  # Moxi
+    "Mfx (2.0)": 71,  # High dose Moxi
+    "Cfz": 72,  # Clofa
+    "Lzd": 73,  # Line
+    # "INH": 74,  # TODO: (WAITING) unknown drug mapping
+    "H (0.1)": 75,  # High dose INH
+    "PAS": 76,  # Na-Pas
+    # "Oflox": 77,  # TODO: (WAITING) unknown drug mapping
+    # "Streptomycin": 78,  # TODO: (WAITING) unknown drug mapping
+    # "Clarithromycin": 79,  # TODO: (WAITING) unknown drug mapping
+    "R": 80,  # Rif
+    # "Amoxyclav": 81,  # TODO: (WAITING) unknown drug mapping
+    # "Amikacin": 82,  # TODO: (WAITING) unknown drug mapping
     # TODO: (WAITING) not sure how this maps
     "bdq_eligible": 89,
     "treatment_initiation_date": 90,
@@ -213,7 +233,7 @@ MUMBAI_MAP = {
 
 
 # A map of column identifier to the corresponding app drug id
-DRUG_MAP = {
+DRUG_COLUMN_TO_APP_ID_MAP = {
     "S": "s",
     "H (0.1)": "h_inha",
     "H (0.4)": "h_katg",
@@ -855,24 +875,35 @@ def get_culture_test_case_properties(domain, column_mapping, row):
 
 
 def get_dst_test_case_properties(column_mapping, row):
-    # TODO: (WAITING) Return None from this function if
-    # get_dst_test_resistance_propertie doesn't have any props
     resistance_props = get_dst_test_resistance_properties(column_mapping, row)
-    properties = {
-        "owner_id": "-",
-        "date_tested": clean_date(column_mapping.get_value("dst_sample_date", row)),
-        "date_reported": column_mapping.get_value("culture_result_date", row),
-        "dst_test_type": column_mapping.get_value("dst_type", row),
-    }
-    # TODO: (WAITING) Finish this. (waiting on drug details)
+    if resistance_props['drug_resistant_list'] or resistance_props['drug_sensitive_list']:
+        properties = {
+            "owner_id": "-",
+            "date_tested": clean_date(column_mapping.get_value("dst_sample_date", row)),
+            "date_reported": column_mapping.get_value("culture_result_date", row),
+            "dst_test_type": column_mapping.get_value("dst_type", row),
+        }
+        properties.update(resistance_props)
+        return properties
     return None
 
 
-
 def get_dst_test_resistance_properties(column_mapping, row):
-    pass
-    # TODO: (WAITING) determine how excel columns map to enikshay drug ids
+    resistant_drugs = []
+    sensitive_drugs = []
+    for drug_column_key, drug_id in DRUG_COLUMN_TO_APP_ID_MAP.iteritems():
+        value = column_mapping.get_value(drug_column_key, row)
+        if value:
+            sensitivity = convert_sensitivity(value)
+            if sensitivity == "sensitive":
+                sensitive_drugs.append(drug_id)
+            elif sensitivity == "resistant":
+                resistant_drugs.append(drug_id)
 
+    return {
+        "drug_resistant_list": " ".join(resistant_drugs),
+        "drug_sensitive_list": " ".join(sensitive_drugs),
+    }
 
 
 def get_drug_resistance_case_properties(column_mapping, row):
@@ -907,7 +938,7 @@ def generate_unknown_cases(known_drugs):
 
 def get_drug_resistances_from_individual_drug_columns(column_mapping, row):
     case_properties = []
-    for drug_column_key, drug_id in DRUG_MAP.iteritems():
+    for drug_column_key, drug_id in DRUG_COLUMN_TO_APP_ID_MAP.iteritems():
         value = column_mapping.get_value(drug_column_key, row)
         if value:
             properties = {
