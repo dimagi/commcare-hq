@@ -7,7 +7,7 @@ from sqlalchemy.schema import Index
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.userreports.exceptions import (
     ColumnNotFoundError, TableRebuildError, TableNotFoundWarning,
-)
+    MissingColumnWarning)
 from corehq.apps.userreports.sql.columns import column_to_sql
 from corehq.apps.userreports.sql.connection import get_engine_id
 from corehq.apps.userreports.util import get_table_name
@@ -139,8 +139,11 @@ class ErrorRaisingIndicatorSqlAdapter(IndicatorSqlAdapter):
             orig = getattr(exception, 'orig')
             if orig:
                 error_code = getattr(orig, 'pgcode')
-                if error_code == '42P01':  # http://www.postgresql.org/docs/9.4/static/errcodes-appendix.html
+                # http://www.postgresql.org/docs/9.4/static/errcodes-appendix.html
+                if error_code == '42P01':
                     raise TableNotFoundWarning
+                elif error_code == '42703':
+                    raise MissingColumnWarning
 
         super(ErrorRaisingIndicatorSqlAdapter, self).handle_exception(doc, exception)
 
