@@ -52,8 +52,8 @@ def safe_cached_download(f):
         target = request.GET.get('target') or None
 
         # make endpoints that call the user fail hard
-        if request.user:
-            request.user = None
+        from django.contrib.auth.models import AnonymousUser
+        request.user = AnonymousUser()
         if request.GET.get('username'):
             request.GET.pop('username')
 
