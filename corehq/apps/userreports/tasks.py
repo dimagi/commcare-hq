@@ -210,7 +210,7 @@ def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, s
 )
 def queue_async_indicators():
     start = datetime.utcnow()
-    cutoff = start + ASYNC_INDICATOR_QUEUE_TIME
+    cutoff = start + ASYNC_INDICATOR_QUEUE_TIME - timedelta(seconds=60)
     time_for_crit_section = ASYNC_INDICATOR_QUEUE_TIME.seconds - 10
 
     oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
