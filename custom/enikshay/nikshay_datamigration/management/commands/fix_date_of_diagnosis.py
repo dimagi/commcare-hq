@@ -1,3 +1,5 @@
+import logging
+
 from django.core.management import BaseCommand
 
 from casexml.apps.case.mock import CaseFactory
@@ -5,40 +7,43 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.nikshay_datamigration.models import PatientDetail
 
+logger = logging.getLogger('private_sector_datamigration')
+
 
 class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument(
+            '--save',
+            action='store_true',
+            default=False,
+        )
 
     def handle(self, domain, **options):
         for nikshay_id in DATA_DUMP_NIKSHAY_IDS:
             episode_case = CaseAccessors(domain).get_cases_by_external_id(nikshay_id, case_type='episode')
-            print episode_case.dynamic_case_properties()['date_of_diagnosis']
-
             patient_detail = PatientDetail.objects.get(PregId=nikshay_id)
-            if True:
-                treatment_initiation_date = (
-                    patient_detail.treatment_initiation_date
-                    if patient_detail.treatment_initiation_date
-                    else patient_detail.pregdate1
-                )
-                print treatment_initiation_date
-
             if (
-                False
-                and episode_case.dynamic_case_properties().get('migration_created_case') == 'true'
+                episode_case.dynamic_case_properties().get('migration_created_case') == 'true'
                 and episode_case.dynamic_case_properties()['date_of_diagnosis'] == patient_detail.pregdate1
             ):
-                treatment_initiation_date = (
-                    patient_detail.treatment_initiation_date
-                    if patient_detail.treatment_initiation_date
-                    else patient_detail.pregdate1
-                )
-                CaseFactory(domain).update_case(
-                    episode_case.case_id,
-                    attrs={'update': {'date_of_diagnosis': treatment_initiation_date}},
-                )
+                logging.info('to update: %s' % nikshay_id)
+                if options['save']:
+                    logging.info('saving %s...' % nikshay_id)
+                    treatment_initiation_date = (
+                        patient_detail.treatment_initiation_date
+                        if patient_detail.treatment_initiation_date
+                        else patient_detail.pregdate1
+                    )
+                    CaseFactory(domain).update_case(
+                        episode_case.case_id,
+                        attrs={'update': {'date_of_diagnosis': treatment_initiation_date}},
+                    )
+                else:
+                    logging.info('skipping because dry run: %s' % nikshay_id)
+            else:
+                logging.info('no update needed: %s' % nikshay_id)
 
 
 DATA_DUMP_NIKSHAY_IDS = """
