@@ -58,7 +58,7 @@ class Command(BaseCommand):
                                                                  type='household',
                                                                  closed=True).values_list('case_id', flat=True)
         for cases in chunked(hh_cases, 100):
-            related_cases = self.case_accessor.get_reverse_indexed_cases(cases)
+            related_cases = self.case_accessor.get_reverse_indexed_cases(list(cases))
             ccs_cases = self.case_accessor.get_reverse_indexed_cases([case.case_id for case in related_cases])
             orphan_cases = {case.case_id for case in related_cases if not case.closed and
                             [c for c in case.cached_indices if c.relationship == 'child']}
