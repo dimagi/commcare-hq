@@ -10,7 +10,7 @@ from corehq.apps.cloudcare.views import (
     LoginAsUsers,
     SingleAppLandingPageView,
     form_context, get_cases,
-    get_fixtures, get_ledgers, default,
+    get_fixtures, default,
 )
 
 app_urls = [
@@ -37,7 +37,6 @@ api_urls = [
     url(r'^fixtures/(?P<user_id>[\w-]*)/$', get_fixtures, name='cloudcare_get_fixtures'),
     url(r'^fixtures/(?P<user_id>[\w-]*)/(?P<fixture_id>[:\w-]*)$', get_fixtures,
         name='cloudcare_get_fixtures'),
-    url(r'^ledgers/$', get_ledgers, name='cloudcare_get_ledgers'),
     url(r'^readable_questions/$', ReadableQuestions.as_view(), name=ReadableQuestions.urlname),
 ]
 

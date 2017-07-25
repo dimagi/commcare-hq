@@ -17,7 +17,7 @@ from couchdbkit import ResourceConflict
 
 from casexml.apps.phone.fixtures import generator
 from dimagi.utils.parsing import string_to_boolean
-from dimagi.utils.web import json_response, get_url_base, json_handler
+from dimagi.utils.web import json_response, get_url_base
 from xml2json.lib import xml2json
 
 from corehq import toggles, privileges
@@ -57,8 +57,8 @@ from corehq.apps.style.decorators import (
 from corehq.apps.users.models import CouchUser, CommCareUser
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
-from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.exceptions import XFormNotFound
 
 
 @require_cloudcare_access
@@ -429,47 +429,6 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
             fixture_id, len(fixture.getchildren())
         )
         return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
-
-
-@cloudcare_api
-def get_ledgers(request, domain):
-    """
-    Returns ledgers associated with a case in the format:
-    {
-        "section_id": {
-            "product_id": amount,
-            "product_id": amount,
-            ...
-        },
-        ...
-    }
-
-    Note: this only works for the Couch backend
-    """
-    request_params = request.GET
-    case_id = request_params.get('case_id')
-    if not case_id:
-        return json_response(
-            {'message': 'You must specify a case id to make this query.'},
-            status_code=400
-        )
-    try:
-        case = CaseAccessors(domain).get_case(case_id)
-    except CaseNotFound:
-        raise Http404()
-    ledger_map = LedgerAccessors(domain).get_case_ledger_state(case.case_id)
-    def custom_json_handler(obj):
-        if hasattr(obj, 'stock_on_hand'):
-            return obj.stock_on_hand
-        return json_handler(obj)
-
-    return json_response(
-        {
-            'entity_id': case_id,
-            'ledger': ledger_map,
-        },
-        default=custom_json_handler,
-    )
 
 
 class ReadableQuestions(View):
