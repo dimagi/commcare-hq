@@ -450,7 +450,7 @@ def get_maternal_child_data(config):
                     'all': get_value(this_month_data, 'born'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': ''
+                    'redirect': 'low_birth'
                 }
             ],
             [
@@ -471,7 +471,7 @@ def get_maternal_child_data(config):
                     'all': get_value(this_month_data, 'born'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': ''
+                    'redirect': 'early_initiation'
                 },
                 {
                     'label': _('% Exclusive breastfeeding'),
@@ -490,7 +490,7 @@ def get_maternal_child_data(config):
                     'all': get_value(this_month_data, 'ebf_eli'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': ''
+                    'redirect': 'exclusive_breastfeeding'
                 }
             ],
             [
@@ -511,7 +511,7 @@ def get_maternal_child_data(config):
                     'all': get_value(this_month_data, 'cf_initiation_eli'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': ''
+                    'redirect': 'children_initiated'
                 },
                 {
                     'label': _('% Institutional deliveries'),
@@ -530,7 +530,7 @@ def get_maternal_child_data(config):
                     'all': get_value(deliveries_this_month, 'delivered'),
                     'format': 'percent_and_div',
                     'frequency': 'month',
-                    'redirect': ''
+                    'redirect': 'institutional_deliveries'
                 }
             ]
         ]
@@ -1013,19 +1013,19 @@ def get_prevalence_of_undernutrition_data_map(config, loc_level):
             'total': valid or 0,
             'normal': normal
         }
-        if value <= 20:
-            row_values.update({'fillKey': '0%-20%'})
-        elif 21 <= value <= 35:
-            row_values.update({'fillKey': '21%-35%'})
-        elif value > 35:
-            row_values.update({'fillKey': '36%-100%'})
+        if value < 20:
+            row_values.update({'fillKey': '0%-19%'})
+        elif 20 <= value < 35:
+            row_values.update({'fillKey': '20%-34%'})
+        elif value >= 35:
+            row_values.update({'fillKey': '35%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-20%': GREEN})
-    fills.update({'21%-35%': YELLOW})
-    fills.update({'36%-100%': RED})
+    fills.update({'0%-19%': GREEN})
+    fills.update({'20%-34%': YELLOW})
+    fills.update({'35%-100%': RED})
     fills.update({'defaultFill': GREY})
 
     return [
@@ -1789,6 +1789,7 @@ def get_prevalence_of_severe_data_map(config, loc_level):
             severe=Sum('wasting_severe'),
             normal=Sum('wasting_normal'),
             valid=Sum('height_eligible'),
+            total_measured=Sum('height_measured_in_month'),
         )
 
     map_data = {}
@@ -1800,15 +1801,18 @@ def get_prevalence_of_severe_data_map(config, loc_level):
         severe = row['severe']
         moderate = row['moderate']
         normal = row['normal']
+        total_measured = row['total_measured']
 
-        value = ((moderate or 0) + (severe or 0)) * 100 / (valid or 1)
+        value = ((moderate or 0) + (severe or 0)) * 100 / float(valid or 1)
         average.append(value)
         row_values = {
             'severe': severe or 0,
             'moderate': moderate or 0,
             'total': valid or 0,
-            'normal': normal
+            'normal': normal,
+            'total_measured': total_measured or 0,
         }
+
         if value < 5:
             row_values.update({'fillKey': '0%-5%'})
         elif 5 <= value < 7:
@@ -1830,7 +1834,7 @@ def get_prevalence_of_severe_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": "%.2f" % (sum(average) / (len(average) or 1)),
                 "info": _((
                     "Percentage of children between 6 - 60 months enrolled for ICDS services with "
                     "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median."
@@ -2038,7 +2042,7 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
         moderate = row['moderate']
         normal = row['normal']
 
-        value = ((moderate or 0) + (severe or 0)) * 100 / (valid or 1)
+        value = ((moderate or 0) + (severe or 0)) * 100 / float(valid or 1)
         average.append(value)
         row_values = {
             'severe': severe or 0,
@@ -2046,18 +2050,18 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
             'total': valid or 0,
             'normal': normal
         }
-        if value < 5:
-            row_values.update({'fillKey': '0%-25%'})
-        elif 5 <= value < 7:
-            row_values.update({'fillKey': '25%-38%'})
-        elif value >= 7:
+        if value < 25:
+            row_values.update({'fillKey': '0%-24%'})
+        elif 25 <= value < 38:
+            row_values.update({'fillKey': '25%-37%'})
+        elif value >= 38:
             row_values.update({'fillKey': '38%-100%'})
 
         map_data.update({name: row_values})
 
     fills = OrderedDict()
-    fills.update({'0%-25%': GREEN})
-    fills.update({'25%-38%': YELLOW})
+    fills.update({'0%-24%': GREEN})
+    fills.update({'25%-37%': YELLOW})
     fills.update({'38%-100%': RED})
     fills.update({'defaultFill': GREY})
 
@@ -2067,14 +2071,13 @@ def get_prevalence_of_stunning_data_map(config, loc_level):
             "label": "",
             "fills": fills,
             "rightLegend": {
-                "average": sum(average) / (len(average) or 1),
+                "average": "%.2f" % (sum(average) / (len(average) or 1)),
                 "info": _((
-                    "Percentage of children between 6 - 60 months enrolled for ICDS services with "
-                    "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median."
+                    "Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below "
+                    "-2Z standard deviations of the WHO Child Growth Standards median."
                     "<br/><br/>"
-                    "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
-                    "undernutrition usually as a consequence of insufficient food intake or a high "
-                    "incidence of infectious diseases."
+                    "Stunting in children is a sign of chronic undernutrition and has long lasting harmful "
+                    "consequences on the growth of a child"
                 )),
                 "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
             },
