@@ -9,7 +9,7 @@
         );
     };
 
-    $.fn.inlineTouchform = function (options) {
+    $.fn.inlineFormplayer = function (options) {
         var $target = $($(this).get(0));
         options.onerror = options.onerror || function () {};
         options.onload = options.onload || function () {};
@@ -58,7 +58,7 @@
         });
     };
 
-    $("body").on('click', '.touchforms-link', function () {
+    $("body").on('click', '.formplayer-link', function () {
         var getFormUrl = hqImport('cloudcare/js/util.js').getFormUrl;
         var getSubmitUrl = hqImport('cloudcare/js/util.js').getSubmitUrl;
         var $this = $(this),
@@ -80,7 +80,7 @@
         // can't use individual off('click') because of event delegation
         if (!$this.data('state') || ($this.data('state') === 'closed')) {
             $this.data('state', 'disabled');
-            $target.inlineTouchform({
+            $target.inlineFormplayer({
                 formUrl: formUrl,
                 submitUrl: submitUrl,
                 sessionData: sessionData,
