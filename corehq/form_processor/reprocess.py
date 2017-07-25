@@ -38,6 +38,8 @@ def pre_process_unfinished_stub(stub):
 
     _reprocess_form(form)
 
+    stub.delete()
+
 
 def reprocess_xform_error(form):
     """
