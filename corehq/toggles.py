@@ -1256,10 +1256,3 @@ ENABLE_ALL_ADD_ONS = StaticToggle(
     TAG_PRODUCT_CORE,
     [NAMESPACE_DOMAIN]
 )
-
-NO_CACHE_APP_FILES = StaticToggle(
-    'no_cache_app_files',
-    'Serve app files from blobdb and not from cache',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN]
-)
