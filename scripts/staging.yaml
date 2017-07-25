@@ -51,6 +51,7 @@ branches:
   - app-manager-labs # Jenny 6/19
   - lwyszomi-icds_dashboard_v2  # https://github.com/dimagi/commcare-hq/pull/16802
   - br/kill-old-cloucare  # Danny 7/21
+  - je/cache-build-files # j$ 7/25
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
