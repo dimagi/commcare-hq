@@ -53,9 +53,7 @@
         }
     </style>
 
-    {% if not request|toggle_enabled:"USE_OLD_CLOUDCARE"%}
-        <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
-    {% endif %}
+    <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
 
     {% include "app_manager/v2/partials/xpathValidator.html" %}
     {% include 'hqmedia/partials/multimedia_js.html' %}

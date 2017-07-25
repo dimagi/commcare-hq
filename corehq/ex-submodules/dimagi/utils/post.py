@@ -4,38 +4,8 @@ import subprocess
 import tempfile
 from subprocess import PIPE
 import requests
-from restkit import Resource, BasicAuth
 from zeep import Client, Transport
 from zeep.cache import InMemoryCache
-
-
-def post_authenticated_data(data, url, username, password):
-    """
-    Post basic authenticated data, using restkit
-    """ 
-    auth = BasicAuth(username, password)
-    r = Resource(url, filters=[auth, ])
-    return r.post(payload=data).body_string(), None
-
-
-def post_unauthenticated_data(data, url):
-    """
-    Post basic unauthenticated data, using restkit instead of the post_data
-    method.
-    """
-    r = Resource(url, filters=[])
-    return r.post(payload=data).body_string(), None
-
-
-def post_authenticated_file(filename, url, username, password):
-    """
-    Post basic authenticated file, using restkit
-    """ 
-    file = open(filename, "rb")
-    try:
-        return post_authenticated_data(file.read(), url, username, password)
-    finally:
-        file.close()
 
 
 def tmpfile(*args, **kwargs):

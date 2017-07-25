@@ -96,12 +96,7 @@ hqDefine("app_manager/js/forms/form_view.js", function() {
                 app_id = initial_page_data('app_id'),
                 module_id = initial_page_data('module_id'),
                 form_id = initial_page_data('form_id');
-            var cloudCareUrl = "";
-            if (!COMMCAREHQ.toggleEnabled('USE_OLD_CLOUDCARE')) {
-                cloudCareUrl = getFormplayerUrl(reverse("formplayer_single_app"), app_id, module_id, form_id);
-            } else {
-                cloudCareUrl = getCloudCareUrl(reverse("cloudcare_main"), app_id, module_id, form_id) + "?preview=true";
-            }
+            var cloudCareUrl = getFormplayerUrl(reverse("formplayer_single_app"), app_id, module_id, form_id);
 
             $("#cloudcare-preview-url").attr("href", cloudCareUrl);
             $('#cloudcare-preview-url').click(function() {
