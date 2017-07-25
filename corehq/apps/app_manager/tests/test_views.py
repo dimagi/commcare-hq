@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.test import TestCase
 from mock import patch
 
+from corehq.apps.app_manager.exceptions import XFormValidationError
 from corehq.apps.app_manager.tests.util import add_build
 from corehq.apps.app_manager.util import new_careplan_module
 from corehq.apps.app_manager.views import AppSummaryView
@@ -79,6 +80,7 @@ class TestViews(TestCase):
         self.app.new_form(module.id, name="Form0-0", attachment=xform_str, lang="en")
         self.app.save()
 
+        mock.side_effect = XFormValidationError('')
         response = self.client.get(reverse('app_download_file', kwargs=dict(domain=self.domain.name,
                                                                             app_id=self.app.get_id,
                                                                             path='modules-0/forms-0.xml')))
