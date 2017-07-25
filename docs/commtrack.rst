@@ -10,7 +10,7 @@ This is the life-cycle of an incoming stock report via sms.
 
 2. The parsed sms is converted to an HQ-compatible xform submission. This includes:
 
-  * stock/requisition info (i.e., just the data provided in the sms)
+  * stock info (i.e., just the data provided in the sms)
   * location to which this message applies (provided in message or associated with sending user)
   * standard HQ submission meta-data (submit time, user, etc.)
 

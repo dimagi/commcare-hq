@@ -46,7 +46,7 @@
     "version": "2.15.0",
     "build_number": null,
     "latest": true
-}, "commtrack_requisition_mode": null, "success_message": {}, "comment_from": null, "cloudcare_enabled": false, "description": null, "recipients": "", "translation_strategy": "select-known", "translations": {}, "built_on": null, "built_with": {
+}, "success_message": {}, "comment_from": null, "cloudcare_enabled": false, "description": null, "recipients": "", "translation_strategy": "select-known", "translations": {}, "built_on": null, "built_with": {
     "doc_type": "BuildRecord",
     "build_number": null,
     "signed": true,
