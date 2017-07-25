@@ -30,7 +30,9 @@ class Command(BaseCommand):
         failed_updates = []
         with open(log_file, "w") as fh:
             fh.write('--------Successful Form Ids----------\n')
+            chunk_num = 1
             for orphan_case_chunk in self._get_cases():
+                print('Currently on chunk {}'.format(chunk_num))
                 case_tupes = [(case_id, {}, True) for case_id in orphan_case_chunk]
                 try:
                     xform, cases = bulk_update_cases(self.domain, case_tupes)
@@ -43,6 +45,7 @@ class Command(BaseCommand):
                     print('unexpected error')
                     print(unicode(e))
                     failed_updates.extend(orphan_case_chunk)
+                chunk_num += 1
             fh.write('--------Failed Cases--------------\n')
             for case_id in failed_updates:
                 fh.write(case_id + '\n')
