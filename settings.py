@@ -384,6 +384,7 @@ ENIKSHAY_APPS = (
     'custom.enikshay.integrations.bets',
     'custom.enikshay.private_sector_datamigration',
     'custom.enikshay.two_b_datamigration',
+    'custom.enikshay.two_b_release_1',
 )
 
 # DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py

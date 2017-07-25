@@ -5,6 +5,7 @@ https://docs.google.com/spreadsheets/d/1GFpMht-C-0cMCQu8rfqQG9lgW9omfYi3y2nUXHR8
 import datetime
 import logging
 import uuid
+import sys
 from collections import namedtuple
 from dimagi.utils.chunked import chunked
 from dimagi.utils.decorators.memoized import memoized
@@ -79,6 +80,15 @@ class Command(BaseCommand):
         confirm("Do you want to migrate the DTO '{}', which has {} descendants?"
                 .format(dto.get_path_display(), num_descendants))
         migrator = ENikshay2BMigrator(domain, dto, commit)
+        migrator.migrate()
+        logger.info("Migrated {} person cases".format(migrator.total_persons))
+        logger.info("Migrated {} occurrence cases".format(migrator.total_occurrences))
+        logger.info("Migrated {} episode cases".format(migrator.total_episodes))
+        logger.info("Migrated {} test cases".format(migrator.total_tests))
+        logger.info("Migrated {} referral cases".format(migrator.total_referrals))
+        logger.info("Migrated {} trail cases".format(migrator.total_trails))
+        logger.info("Created {} secondary_owner cases".format(migrator.total_secondary_owners))
+        logger.info("Closed {} drtb_hiv cases".format(migrator.total_drtb_hiv))
 
 
 class ENikshay2BMigrator(object):
@@ -88,6 +98,15 @@ class ENikshay2BMigrator(object):
         self.commit = commit
         self.accessor = CaseAccessors(self.domain)
         self.factory = CaseFactory(self.domain)
+
+        self.total_persons = 0
+        self.total_occurrences = 0
+        self.total_episodes = 0
+        self.total_tests = 0
+        self.total_referrals = 0
+        self.total_trails = 0
+        self.total_secondary_owners = 0
+        self.total_drtb_hiv = 0
 
     @property
     @memoized
@@ -186,7 +205,7 @@ class ENikshay2BMigrator(object):
                 yield person_case_set
 
     def migrate_person_case_set(self, person):
-        self.factory.create_or_update_cases(filter(None,
+        changes = filter(None,
             [self.migrate_person(person.person, person.occurrences, person.episodes)]
             + [self.migrate_occurrence(occurrence, person.episodes) for occurrence in person.occurrences]
             + [self.migrate_episode(episode, person.episodes) for episode in person.episodes]
@@ -196,7 +215,9 @@ class ENikshay2BMigrator(object):
             + [self.open_secondary_owners(drtb_hiv, person.person, person.occurrences)
                for drtb_hiv in person.drtb_hiv]
             + [self.close_drtb_hiv(drtb_hiv) for drtb_hiv in person.drtb_hiv]
-        ))
+        )
+        if self.commit:
+            self.factory.create_or_update_cases(changes)
 
     @staticmethod
     def get_open_occurrence(occurrences):
@@ -205,6 +226,7 @@ class ENikshay2BMigrator(object):
         return occurrences[0] if occurrences else None
 
     def migrate_person(self, person, occurrences, episodes):
+        self.total_persons += 1
         occurrence = self.get_open_occurrence(occurrences)
 
         if occurrence:
@@ -263,6 +285,7 @@ class ENikshay2BMigrator(object):
         )
 
     def migrate_occurrence(self, occurrence, episodes):
+        self.total_occurrences += 1
         episodes = [(case.opened_on, case) for case in episodes
                     if case.type == CASE_TYPE_EPISODE
                     and any([index.referenced_id == occurrence.case_id for index in case.indices])
@@ -291,6 +314,7 @@ class ENikshay2BMigrator(object):
         )
 
     def migrate_episode(self, episode, episodes):
+        self.total_episodes += 0
 
         def is_episode_of_occurrence(episode, occurrence_id):
             return any(index.referenced_id == occurrence_id for index in episode.indices)
@@ -341,6 +365,7 @@ class ENikshay2BMigrator(object):
         )
 
     def migrate_test(self, test, person):
+        self.total_tests += 1
         props = {
             'is_direct_test_entry': 'no',
             'rft_drtb_diagnosis': test.get_case_property('diagnostic_drtb_test_reason'),
@@ -370,6 +395,7 @@ class ENikshay2BMigrator(object):
         )
 
     def migrate_referral(self, referral, occurrences):
+        self.total_referrals += 1
         prop = referral.get_case_property
         props = {
             'referral_initiated_date': (prop('referral_date') or prop('date_of_referral')),
@@ -403,6 +429,7 @@ class ENikshay2BMigrator(object):
         )
 
     def migrate_trail(self, trail, occurrences):
+        self.total_trails += 1
         if occurrences:
             occurrence = max((case.opened_on, case) for case in occurrences)[1]
             index_kwargs = {'indices': [CaseIndex(
@@ -425,6 +452,7 @@ class ENikshay2BMigrator(object):
         )
 
     def open_secondary_owners(self, drtb_hiv, person, occurrences):
+        self.total_secondary_owners += 1
         if occurrences:
             occurrence = max((case.opened_on, case) for case in occurrences)[1]
             index_kwargs = {'indices': [CaseIndex(
@@ -456,6 +484,7 @@ class ENikshay2BMigrator(object):
         )
 
     def close_drtb_hiv(self, drtb_hiv):
+        self.total_drtb_hiv += 1
         return CaseStructure(
             case_id=drtb_hiv.case_id,
             walk_related=False,
