@@ -1,6 +1,7 @@
+import csv
 import logging
-
 import datetime
+import traceback
 import uuid
 
 import re
@@ -1289,35 +1290,47 @@ class Command(BaseCommand):
 
     def handle(self, domain, excel_file_path, format, **options):
 
-        migration_id = str(datetime.datetime.now())
+        migration_id = self.generate_id()
         self.log_meta_info(migration_id, options['commit'])
         column_mapping = self.get_column_mapping(format)
         city_constants = self.get_city_constants(format)
         case_factory = CaseFactory(domain)
 
+        import_log_file_name = "drtb-import-{}.csv".format(migration_id)
+
         with open_any_workbook(excel_file_path) as workbook:
-            for i, row in enumerate(workbook.worksheets[0].iter_rows()):
-                if i == 0:
-                    # Skip the headers row
-                    continue
+            with open(import_log_file_name, "w") as import_log_file:
+                import_log_writer = csv.writer(import_log_file)
+                import_log_writer.writerow(["row", "case_ids", "exception"])
 
-                row_contains_data = any(cell.value for cell in row)
-                if not row_contains_data:
-                    continue
+                for i, row in enumerate(workbook.worksheets[0].iter_rows()):
+                    if i == 0:
+                        # Skip the headers row
+                        continue
 
-                try:
-                    column_mapping.check_for_required_fields(row)
-                    case_structures = get_case_structures_from_row(
-                        domain, migration_id, column_mapping, city_constants, row
-                    )
-                    logger.info("Creating cases for row {}. Case ids are: {}".format(
-                        i, ", ".join([x.case_id for x in case_structures])
-                    ))
-                    if options['commit']:
-                        case_factory.create_or_update_cases(case_structures)
-                except Exception as e:
-                    logger.info("Creating case structures for row {} failed".format(i))
-                    raise e
+                    row_contains_data = any(cell.value for cell in row)
+                    if not row_contains_data:
+                        continue
+
+                    try:
+                        column_mapping.check_for_required_fields(row)
+                        case_structures = get_case_structures_from_row(
+                            domain, migration_id, column_mapping, city_constants, row
+                        )
+                        import_log_writer.writerow([i, ",".join(x.case_id for x in case_structures)])
+                        logger.info("Creating cases for row {}".format(i))
+
+                        if options['commit']:
+                            case_factory.create_or_update_cases(case_structures)
+                    except Exception as e:
+                        logger.info("Creating case structures for row {} failed".format(i))
+                        exception_as_string = traceback.format_exc()
+                        import_log_writer.writerow([i, "", exception_as_string])
+
+    def generate_id(self):
+        now = datetime.datetime.now()
+        seconds_since_epoch = (now - datetime.datetime(1970, 1, 1)).total_seconds()
+        return str(seconds_since_epoch)
 
     @staticmethod
     def log_meta_info(migration_id, commit):

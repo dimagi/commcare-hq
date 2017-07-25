@@ -73,7 +73,7 @@ class TestMappings(SimpleTestCase):
         return list(wrapped_worksheet.iter_rows())[0]
 
 
-class TestCleaningFucntions(SimpleTestCase):
+class TestCleaningFunctions(SimpleTestCase):
 
     def test_clean_phone_number(self):
         good_number = "911234567890"
