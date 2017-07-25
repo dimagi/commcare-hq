@@ -154,7 +154,7 @@ def _filter_already_processed_ledgers(form, ledgers):
         db_name = get_db_alias_for_partitioned_doc(ledger.case_id)
         ledger_dbs[db_name].append(ledger.case_id)
     for db_name, case_ids in ledger_dbs.items():
-        transactions = LedgerTransaction.objects.using().filter(case_id__in=case_ids, form_id=form.form_id)
+        transactions = LedgerTransaction.objects.using(db_name).filter(case_id__in=case_ids, form_id=form.form_id)
         for trans in transactions:
             del ledgers_by_id[trans.ledger_reference]
     return ledgers_by_id.values()
