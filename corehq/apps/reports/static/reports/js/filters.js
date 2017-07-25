@@ -74,8 +74,8 @@ hqDefine("reports/js/filters.js", function() {
             dateFormat: 'yy-mm-dd',
         });
 
-        // Optional date ranges (used in accounting)
-        $(".report-filter-optional-datespan").each(function() {
+        // Optional date ranges, optional month+year (used in accounting)
+        $(".report-filter-optional").each(function() {
             $(this).koApplyBindings({
                 showFilterName: ko.observable($(this).data("showFilterName")),
             });
