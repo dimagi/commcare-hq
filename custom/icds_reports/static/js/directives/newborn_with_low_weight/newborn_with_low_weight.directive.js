@@ -52,8 +52,8 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var total = $filter('indiaNumbers')(row ? row.in_month : 0);
-        var low_birth = $filter('indiaNumbers')(row ? row.low_birth : 0);
+        var total = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
+        var low_birth = row ? $filter('indiaNumbers')(row.low_birth) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total Number of Newborns born in given month: <strong>' + total + '</strong></div><div>Number of Newborns with LBW in given month: <strong>' + low_birth + '</strong></div></ul>';
     };
 
@@ -123,7 +123,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
                 axisLabel: '',
                 showMaxMin: true,
                 tickFormat: function(d) {
-                    return d3.time.format('%m/%d/%y')(new Date(d));
+                    return d3.time.format('%b %Y')(new Date(d));
                 },
                 tickValues: function() {
                     return vm.chartTicks;
@@ -143,7 +143,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
+                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
                         return d3.format(",")(day['y']);
                     };
 
