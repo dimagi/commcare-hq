@@ -445,22 +445,13 @@ def edit_module_attr(request, domain, app_id, module_id, attr):
             module["case_type"] = case_type
 
             # rename other reference to the old case type
-            other_careplan_modules = []
             all_advanced_modules = []
             modules_with_old_case_type_exist = False
             for mod in app.modules:
-                if mod.unique_id != module_id:
-                    if isinstance(mod, CareplanModule):
-                        other_careplan_modules.append(mod)
-
                 if isinstance(mod, AdvancedModule):
                     all_advanced_modules.append(mod)
 
                 modules_with_old_case_type_exist |= mod.case_type == old_case_type
-
-            for cp_mod in other_careplan_modules:
-                if cp_mod.parent_select.module_id == module_id:
-                    cp_mod.case_type = case_type
 
             for mod in all_advanced_modules:
                 for form in mod.forms:
