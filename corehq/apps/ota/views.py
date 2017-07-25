@@ -163,17 +163,13 @@ def claim(request, domain):
     """
     as_user = request.POST.get('commcare_login_as', None)
     restore_user = get_restore_user(domain, request.couch_user, as_user)
-    cache = get_redis_default_cache()
 
     case_id = request.POST.get('case_id', None)
     if case_id is None:
         return HttpResponse('A case_id is required', status=400)
 
     try:
-        if (
-            cache.get(_claim_key(restore_user.user_id)) == case_id or
-            get_first_claim(domain, restore_user.user_id, case_id)
-        ):
+        if get_first_claim(domain, restore_user.user_id, case_id):
             return HttpResponse('You have already claimed that {}'.format(request.POST.get('case_type', 'case')),
                                 status=409)
 
@@ -182,12 +178,7 @@ def claim(request, domain):
     except CaseNotFound:
         return HttpResponse('The case "{}" you are trying to claim was not found'.format(case_id),
                             status=410)
-    cache.set(_claim_key(restore_user.user_id), case_id)
     return HttpResponse(status=200)
-
-
-def _claim_key(user_id):
-    return u'last_claimed_case_case_id-{}'.format(user_id)
 
 
 def get_restore_params(request):
