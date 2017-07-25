@@ -338,7 +338,15 @@ hqDefine('app_manager/js/app_manager', function () {
             });
         }
         function resetIndexes($sortable) {
-            if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+            if (COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
+                 var $sortables = $sortable.children.get(),
+                    i;
+                for (i in $sortables) {
+                    if ($sortables.hasOwnProperty(i)) {
+                        $($sortables[i]).data('index', i);
+                    }
+                }
+            } else {
                 var parentVar = $sortable.data('parentvar');
                 var parentValue = $sortable.closest("[data-indexVar='" + parentVar + "']").data('index');
                 _.each($sortable.find('> .js-sorted-li'), function (elem, i) {
@@ -350,14 +358,6 @@ hqDefine('app_manager/js/app_manager', function () {
                         updateRelatedTags($(elem), parentVar, parentValue);
                     }
                 });
-            } else {
-                var $sortables = $sortable.children.get(),
-                    i;
-                for (i in $sortables) {
-                    if ($sortables.hasOwnProperty(i)) {
-                        $($sortables[i]).data('index', i);
-                    }
-                }
             }
         }
         COMMCAREHQ.resetIndexes = resetIndexes;
