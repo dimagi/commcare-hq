@@ -68,15 +68,6 @@ def default(request, domain):
     return HttpResponseRedirect(reverse('formplayer_main', args=[domain]))
 
 
-@use_legacy_jquery
-def insufficient_privilege(request, domain, *args, **kwargs):
-    context = {
-        'domain': domain,
-    }
-
-    return render(request, "cloudcare/insufficient_privilege.html", context)
-
-
 @location_safe
 class FormplayerMain(View):
 
