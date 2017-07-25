@@ -14,13 +14,14 @@ from corehq.apps.app_manager.app_schemas.session_schema import get_session_schem
 
 from dimagi.utils.logging import notify_exception
 
+from corehq.apps.app_manager import add_ons
 from corehq.apps.app_manager.views.apps import get_apps_base_context
 from corehq.apps.app_manager.views.notifications import get_facility_for_form, notify_form_opened
 
 from corehq.apps.app_manager.exceptions import AppManagerException
 
 from corehq.apps.app_manager.views.utils import back_to_main, bail
-from corehq import toggles, privileges, feature_previews
+from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.const import (
     SCHEDULE_CURRENT_VISIT_NUMBER,
@@ -105,9 +106,8 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     if (_form_uses_case(module, form) and _form_is_basic(form)):
         vellum_plugins.append("databrowser")
 
-    vellum_features = toggles.toggles_dict(username=request.user.username,
-                                           domain=domain)
-    vellum_features.update(feature_previews.previews_dict(domain))
+    vellum_features = toggles.toggles_dict(username=request.user.username, domain=domain)
+    vellum_features.update({'advanced_itemsets': add_ons.show("advanced_itemsets", request, app)})
     include_fullstory = not _form_too_large(app, form)
     vellum_features.update({
         'group_in_field_list': app.enable_group_in_field_list,
