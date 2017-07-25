@@ -33,6 +33,7 @@ hqDefine('case_search/js/case_search.js', function(){
 
         self.submit = function(){
             self.results([]);
+            self.count("-");
             $.post({
                 url: window.location.href,
                 data: {q: JSON.stringify({
