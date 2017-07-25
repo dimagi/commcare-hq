@@ -75,9 +75,7 @@ class TestViews(TestCase):
         add_build(**build1)
         add_build(**build2)
 
-        with open(os.path.join(os.path.dirname(__file__), "data", "invalid_form.xml")) as f:
-            xform_str = f.read()
-        self.app.new_form(module.id, name="Form0-0", attachment=xform_str, lang="en")
+        self.app.new_form(module.id, name="Form0-0", lang="en")
         self.app.save()
 
         mock.side_effect = XFormValidationError('')
