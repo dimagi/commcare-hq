@@ -28,7 +28,7 @@ class Command(BaseCommand):
             patient_detail = PatientDetail.objects.get(PregId=nikshay_id)
             if (
                 episode_case.dynamic_case_properties().get('migration_created_case') == 'true'
-                and episode_case.dynamic_case_properties()['date_of_diagnosis'] == patient_detail.pregdate1
+                and episode_case.dynamic_case_properties()['date_of_diagnosis'] == patient_detail.pregdate1.strftime('%Y-%m-%d')
             ):
                 logging.info('to update: %s' % nikshay_id)
                 if options['save']:
