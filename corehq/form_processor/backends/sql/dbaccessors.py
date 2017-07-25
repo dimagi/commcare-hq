@@ -590,7 +590,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             FormAccessorSQL.save_new_form(form)
         else:
             if form.orig_id:
-                old_db_name = get_db_alias_for_partitioned_doc(form.orign_id)
+                old_db_name = get_db_alias_for_partitioned_doc(form.orig_id)
                 assert old_db_name == db_name, "this method doesn't support moving the form to new db"
             form.save(using=db_name)
             publish_form_saved(form)
