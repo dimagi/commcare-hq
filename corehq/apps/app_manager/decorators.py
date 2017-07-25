@@ -55,6 +55,7 @@ def safe_cached_download(f):
         from django.contrib.auth.models import AnonymousUser
         request.user = AnonymousUser()
         if request.GET.get('username'):
+            request.GET = request.GET.copy()
             request.GET.pop('username')
 
         try:
