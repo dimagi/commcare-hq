@@ -312,6 +312,11 @@ class EnikshayCaseFactory(object):
             )],
         }
 
+        if self.phi.location_type.code == 'phi':
+            phi_location_id = self.phi.location_id
+            kwargs['attrs']['update']['diagnosing_facility_id'] = phi_location_id
+            kwargs['attrs']['update']['treatment_initiating_facility_id'] = phi_location_id
+
         if self.patient_detail.disease_classification == 'extra_pulmonary':
             kwargs['attrs']['update']['site_choice'] = self.patient_detail.site_choice
         if self._outcome:

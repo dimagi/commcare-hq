@@ -12,6 +12,7 @@ var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
 var tfLoading = hqImport('cloudcare/js/util.js').tfLoading;
 var tfLoadingComplete = hqImport('cloudcare/js/util.js').tfLoadingComplete;
 var tfSyncComplete = hqImport('cloudcare/js/util.js').tfSyncComplete;
+var clearUserDataComplete = hqImport('cloudcare/js/util.js').clearUserDataComplete;
 
 FormplayerFrontend.on("before:start", function () {
     var RegionContainer = Marionette.LayoutView.extend({
@@ -470,6 +471,35 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
         $("#cloudcare-notifications").empty();
         FormplayerFrontend.trigger('navigateHome');
     });
+});
+
+/**
+ * clearUserData
+ *
+ * Sends a request to formplayer to wipe out all application and user db for the
+ * current user. Returns the ajax promise.
+ */
+FormplayerFrontend.reqres.setHandler('clearUserData', function() {
+    var user = FormplayerFrontend.request('currentUser'),
+        formplayer_url = user.formplayer_url,
+        resp,
+        options = {
+            url: formplayer_url + "/clear_user_data",
+            data: JSON.stringify({
+                domain: user.domain,
+                username: user.username,
+                restoreAs: user.restoreAs,
+            }),
+        };
+    Util.setCrossDomainAjaxOptions(options);
+    tfLoading();
+    resp = $.ajax(options);
+    resp.fail(function () {
+        tfLoadingComplete(true);
+    }).done(function(response) {
+        clearUserDataComplete(response.hasOwnProperty('exception'));
+    });
+    return resp;
 });
 
 FormplayerFrontend.on('navigateHome', function() {

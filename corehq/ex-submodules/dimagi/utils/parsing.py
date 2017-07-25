@@ -61,9 +61,3 @@ def json_format_datetime(dt):
 
 def json_format_date(date_):
     return date_.strftime(ISO_DATE_FORMAT)
-
-
-ISO_MIN = datetime(1900, 1, 1)
-
-# use: json.dumps(datetime.datetime.utcnow(), default=json_dt_handler)
-json_dt_handler = lambda obj: obj.isoformat() if isinstance(obj, datetime.datetime) else None

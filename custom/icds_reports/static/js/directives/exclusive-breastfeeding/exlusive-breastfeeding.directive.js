@@ -50,8 +50,8 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var children = $filter('indiaNumbers')(row ? row.children : 0);
-        var all = $filter('indiaNumbers')(row ? row.all : 0);
+        var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
+        var all = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total number of children between ages 0 - 6 months: <strong>' + all + '</strong></div><div>Total number of children (0-6 months) exclusively breastfed in the given month:  <strong>' + children + '</strong></div><div>Percentage of children between 0 - 6 months exclusively breastfed.</div></ul>';
     };
 
@@ -142,7 +142,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
                 axisLabel: '',
                 showMaxMin: true,
                 tickFormat: function(d) {
-                    return d3.time.format('%m/%d/%y')(new Date(d));
+                    return d3.time.format('%b %Y')(new Date(d));
                 },
                 tickValues: function() {
                     return vm.chartTicks;
@@ -162,7 +162,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
+                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
                         return d3.format(",")(day['y']);
                     };
 

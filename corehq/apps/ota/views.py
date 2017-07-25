@@ -98,8 +98,8 @@ def restore(request, domain, app_id=None):
                 segment = RESTORE_SEGMENTS[timer.name]
                 bucket = _get_time_bucket(timer.duration)
                 datadog_counter(
-                    'commcare.restores.{}.{}'.format(segment, bucket),
-                    tags=tags,
+                    'commcare.restores.{}'.format(segment),
+                    tags=tags + ['duration:%s' % bucket],
                 )
         tags.append('duration:%s' % _get_time_bucket(timing_context.duration))
     datadog_counter('commcare.restores.count', tags=tags)
