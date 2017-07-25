@@ -197,8 +197,6 @@ MUMBAI_MAP = {
     "culture_result_date": 60,
     "dst_sample_date": 61,
     "dst_type": 62,
-    # LAST
-    # TODO: (WAITING) DST Drug specific columns
     "Lfx": 63,  # Levo
     "Eto": 64,  # Ethio
     # "Cyclo": 65,  # TODO: (WAITING) unknown drug mapping
@@ -1155,7 +1153,7 @@ def clean_phone_number(value, digits):
         return None
     assert digits in (10, 12)
 
-    # TODO: (ASK) ask sheel what to do if there are two numbers
+    # TODO: (WAITING) what to do if there are two numbers?
     try:
         values = value.split("/")
         value = values[0]
@@ -1255,10 +1253,13 @@ def clean_date(messy_date_string):
     if messy_date_string:
         if isinstance(messy_date_string, datetime.date):
             return messy_date_string
-        # TODO: Might be safer to assume a format and raise an exception if its in a different format
-        # parse("") returns today, which we don't want.
-        cleaned_datetime = parse(messy_date_string, dayfirst=False)
-        return cleaned_datetime.date()
+
+        # The excel library we use should actually import dates correctly if the column format is date.
+        raise Exception("Got a date like {}".format(messy_date_string))
+
+        # I think some columns are month/day/year and some are day/month/year
+        # cleaned_datetime = parse(messy_date_string, dayfirst=False)
+        # return cleaned_datetime.date()
 
 
 def match_district(domain, xlsx_district_name):
