@@ -5,13 +5,6 @@ MAJOR_RELEASE_TO_VERSION = {
     "2": APP_V2,
 }
 
-CAREPLAN_GOAL = 'careplan_goal'
-CAREPLAN_TASK = 'careplan_task'
-CAREPLAN_CASE_NAMES = {
-    CAREPLAN_GOAL: 'Goal',
-    CAREPLAN_TASK: 'Task'
-}
-
 SCHEDULE_PHASE = 'current_schedule_phase'
 SCHEDULE_LAST_VISIT = u'last_visit_number_{}'
 SCHEDULE_LAST_VISIT_DATE = u'last_visit_date_{}'

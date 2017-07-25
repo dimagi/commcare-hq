@@ -1,5 +1,5 @@
 # coding=utf-8
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 import json
 import logging
 from lxml import etree
@@ -20,13 +20,10 @@ from corehq.apps.reports.daterange import get_simple_dateranges
 from dimagi.utils.logging import notify_exception
 
 from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs
-from corehq import toggles, feature_previews
+from corehq import toggles
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import (
-    CAREPLAN_GOAL,
-    CAREPLAN_TASK,
     USERCASE_TYPE,
-    APP_V1,
     CLAIM_DEFAULT_RELEVANT_CONDITION,
 )
 from corehq.apps.app_manager.util import (
@@ -112,8 +109,7 @@ def get_module_view_context(app, module, lang=None):
     }
     case_property_builder = _setup_case_property_builder(app)
     if isinstance(module, CareplanModule):
-        module_brief.update({'parent_select': module.parent_select})
-        context.update(_get_careplan_module_view_context(app, module, case_property_builder))
+        pass
     elif isinstance(module, AdvancedModule):
         module_brief.update({
             'auto_select_case': module.auto_select_case,
@@ -177,41 +173,6 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
             'print_media_info': print_template,
         })
     return context
-
-
-def _get_careplan_module_view_context(app, module, case_property_builder):
-    subcase_types = list(app.get_subcase_types(module.case_type))
-    return {
-        'parent_modules': _get_parent_modules(app, module,
-                                             case_property_builder,
-                                             CAREPLAN_GOAL),
-        'details': [
-            {
-                'label': gettext_lazy('Goal List'),
-                'detail_label': gettext_lazy('Goal Detail'),
-                'type': 'careplan_goal',
-                'model': 'case',
-                'properties': sorted(
-                    case_property_builder.get_properties(CAREPLAN_GOAL)),
-                'sort_elements': module.goal_details.short.sort_elements,
-                'short': module.goal_details.short,
-                'long': module.goal_details.long,
-                'subcase_types': subcase_types,
-            },
-            {
-                'label': gettext_lazy('Task List'),
-                'detail_label': gettext_lazy('Task Detail'),
-                'type': 'careplan_task',
-                'model': 'case',
-                'properties': sorted(
-                    case_property_builder.get_properties(CAREPLAN_TASK)),
-                'sort_elements': module.task_details.short.sort_elements,
-                'short': module.task_details.short,
-                'long': module.task_details.long,
-                'subcase_types': subcase_types,
-            },
-        ],
-    }
 
 
 def _get_advanced_module_view_context(app, module):
@@ -771,10 +732,6 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
 
     if detail_type == 'case':
         detail = module.case_details
-    elif detail_type == CAREPLAN_GOAL:
-        detail = module.goal_details
-    elif detail_type == CAREPLAN_TASK:
-        detail = module.task_details
     else:
         try:
             detail = getattr(module, '{0}_details'.format(detail_type))
