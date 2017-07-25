@@ -4,7 +4,6 @@ from xml.etree import ElementTree
 from django.conf import settings
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
-from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.template.loader import render_to_string
@@ -19,8 +18,6 @@ from couchdbkit import ResourceConflict
 from casexml.apps.phone.fixtures import generator
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base, json_handler
-from touchforms.formplayer.api import get_raw_instance
-from touchforms.formplayer.models import EntrySession
 from xml2json.lib import xml2json
 
 from corehq import toggles, privileges
@@ -65,7 +62,6 @@ from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.util.quickcache import quickcache
-from corehq.util.xml_utils import indent_xml
 
 
 @require_cloudcare_access
@@ -559,37 +555,6 @@ class ReadableQuestions(View):
             'form_data': rendered_readable_form,
             'form_questions': pretty_questions
         })
-
-
-@cloudcare_api
-def render_form(request, domain):
-    # get session
-    session_id = request.GET.get('session_id')
-
-    session = get_object_or_404(EntrySession, session_id=session_id)
-
-    try:
-        raw_instance = get_raw_instance(session_id, domain)
-    except Exception as e:
-        return HttpResponse(e, status=500, content_type="text/plain")
-
-    xmlns = raw_instance["xmlns"]
-    form_data_xml = raw_instance["output"]
-
-    _, form_data_json = xml2json(form_data_xml)
-    pretty_questions = readable.get_questions(domain, session.app_id, xmlns)
-
-    readable_form = readable.get_readable_form_data(form_data_json, pretty_questions)
-
-    rendered_readable_form = render_to_string(
-        'reports/form/partials/readable_form.html',
-        {'questions': readable_form}
-    )
-
-    return json_response({
-        'form_data': rendered_readable_form,
-        'instance_xml': indent_xml(form_data_xml)
-    })
 
 
 class HttpResponseConflict(HttpResponse):
