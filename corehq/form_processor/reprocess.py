@@ -1,13 +1,16 @@
 from collections import defaultdict
 
+from casexml.apps.case.exceptions import IllegalCaseId, InvalidCaseIndex, CaseValueError, PhoneDateValueError
+from casexml.apps.case.exceptions import UsesReferrals
 from casexml.apps.case.signals import case_post_save
+from corehq.apps.commtrack.exceptions import MissingProductId
 from corehq.blobs.mixin import bulk_atomic_blobs
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
 from corehq.form_processor.change_publishers import publish_form_saved, publish_case_saved, publish_ledger_v2_saved
 from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import XFormInstanceSQL, CaseTransaction, LedgerTransaction
-from corehq.form_processor.submission_post import SubmissionPost
+from corehq.form_processor.submission_post import SubmissionPost, _transform_instance_to_error
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.form_processor.utils.xform import _get_form
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
@@ -71,11 +74,20 @@ def _reprocess_form(form):
     form.initial_processing_complete = True
     form.problem = None
 
-    cache = FormProcessorInterface(form.domain).casedb_cache(
+    interface = FormProcessorInterface(form.domain)
+    cache = interface.casedb_cache(
         domain=form.domain, lock=True, deleted_ok=True, xforms=[form]
     )
     with cache as casedb:
-        case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
+        try:
+            case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
+        except (IllegalCaseId, UsesReferrals, MissingProductId,
+                PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
+            instance = _transform_instance_to_error(interface, e, form)
+            # this is usually just one document, but if an edit errored we want
+            # to save the deprecated form as well
+            interface.save_processed_models([form])
+            return form
 
         if case_stock_result:
             stock_result = case_stock_result.stock_result
