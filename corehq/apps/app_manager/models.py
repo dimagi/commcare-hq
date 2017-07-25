@@ -6234,36 +6234,6 @@ class DeleteFormRecord(DeleteRecord):
         app.save()
 
 
-class CareplanAppProperties(DocumentSchema):
-    name = StringProperty()
-    latest_release = StringProperty()
-    case_type = StringProperty()
-    goal_conf = DictProperty()
-    task_conf = DictProperty()
-
-
-class CareplanConfig(Document):
-    domain = StringProperty()
-    app_configs = SchemaDictProperty(CareplanAppProperties)
-
-    @classmethod
-    def for_domain(cls, domain):
-        res = cache_core.cached_view(
-            cls.get_db(),
-            "by_domain_doc_type_date/view",
-            key=[domain, 'CareplanConfig', None],
-            reduce=False,
-            include_docs=True,
-            wrapper=cls.wrap)
-
-        if len(res) > 0:
-            result = res[0]
-        else:
-            result = None
-
-        return result
-
-
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)
 FormBase.get_locale_id = lambda self: id_strings.form_locale(self)
