@@ -17,7 +17,7 @@ from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from couchforms.models import XFormInstance
 
 
-def pre_process_unfinished_stub(stub):
+def reprocess_unfinished_stub(stub):
     if stub.saved:
         # ignore for now
         return
