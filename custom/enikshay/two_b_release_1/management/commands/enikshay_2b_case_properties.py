@@ -342,7 +342,7 @@ class ENikshay2BMigrator(object):
         elif treatment_status == 'yes_phi':
             props['treatment_status'] = 'initiated_first_line_treatment'
         elif treatment_status == 'yes_private':
-            props['treatment_status'] = 'initiated_outside_facility'
+            props['treatment_status'] = 'initiated_outside_rntcp'
 
         if treatment_status == 'yes_phi':
             props['treatment_initiated'] = 'yes_phi'
