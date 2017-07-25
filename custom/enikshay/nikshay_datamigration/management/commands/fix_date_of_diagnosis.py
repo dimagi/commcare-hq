@@ -22,7 +22,9 @@ class Command(BaseCommand):
 
     def handle(self, domain, **options):
         for nikshay_id in DATA_DUMP_NIKSHAY_IDS:
-            episode_case = CaseAccessors(domain).get_cases_by_external_id(nikshay_id, case_type='episode')
+            episode_cases = CaseAccessors(domain).get_cases_by_external_id(nikshay_id, case_type='episode')
+            assert len(episode_cases) == 1
+            episode_case = episode_cases[0]
             patient_detail = PatientDetail.objects.get(PregId=nikshay_id)
             if (
                 episode_case.dynamic_case_properties().get('migration_created_case') == 'true'
