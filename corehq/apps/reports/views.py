@@ -2008,11 +2008,6 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
         return start, end
 
 
-def _can_view_report(domain, user, report_class):
-    return (user.has_permission(domain, Permissions.view_report)
-            or user.has_permission(domain, Permissions.view_report, data=report_class))
-
-
 @login_and_domain_required
 @require_GET
 def export_report(request, domain, export_hash, format):
@@ -2021,7 +2016,7 @@ def export_report(request, domain, export_hash, format):
     content = cache.get(export_hash)
     if content is not None:
         report_class, report_file = content
-        if not _can_view_report(domain, request.couch_user, report_class):
+        if not request.couch_user.has_permission(domain, 'view_report', data=report_class):
             raise PermissionDenied()
         if format in Format.VALID_FORMATS:
             file = ContentFile(report_file)
