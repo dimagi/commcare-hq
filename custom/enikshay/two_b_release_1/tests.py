@@ -52,6 +52,7 @@ class TestCreateEnikshayCases(TestCase):
         person = get_person_case_structure(person_id, owner_id, extra_update=person_fields)
         person.attrs['owner_id'] = owner_id
         person.attrs['update'].update({
+            'person_id': 'person_id',
             'phi_area': 'phi_area',
             'date_referred_out': 'date_referred_out',
             'date_by_id': 'date_by_id',
@@ -148,6 +149,7 @@ class TestCreateEnikshayCases(TestCase):
         person_case_sets = list(migrator.get_relevant_person_case_sets(person_case_ids))
         self.assertEqual(1, len(person_case_sets))
         person = person_case_sets[0]
+
         self.assertEqual('roland-deschain', person.person.case_id)
         self.assertItemsEqual(['roland-deschain-occurrence'], [c.case_id for c in person.occurrences])
         self.assertItemsEqual(['roland-deschain-occurrence-episode'], [c.case_id for c in person.episodes])
@@ -229,4 +231,17 @@ class TestCreateEnikshayCases(TestCase):
 
         new_trail = accessor.get_case(person.trails[0].case_id)
         parent = get_parent_of_case(self.domain, new_trail, 'occurrence')
+        self.assertEqual(new_occurrence.case_id, parent.case_id)
+
+        new_drtb_hiv = accessor.get_case(person.drtb_hiv[0].case_id)
+        self.assertTrue(new_drtb_hiv.closed)
+
+        secondary_owner_id = accessor.get_case_ids_in_domain(type='secondary_owner')[0]
+        new_secondary_owner = accessor.get_case(secondary_owner_id)
+        self.assertEqual('person_id-drtb-hiv', new_secondary_owner.name)
+        self.assertDictContainsSubset({
+            'secondary_owner_type': 'drtb-hiv',
+        }, new_secondary_owner.dynamic_case_properties())
+        self.assertEqual("drtb_hiv_referral_owner", new_secondary_owner.owner_id)
+        parent = get_parent_of_case(self.domain, new_secondary_owner, 'occurrence')
         self.assertEqual(new_occurrence.case_id, parent.case_id)

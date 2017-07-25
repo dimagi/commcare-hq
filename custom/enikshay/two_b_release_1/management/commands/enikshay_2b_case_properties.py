@@ -4,6 +4,7 @@ https://docs.google.com/spreadsheets/d/1GFpMht-C-0cMCQu8rfqQG9lgW9omfYi3y2nUXHR8
 """
 import datetime
 import logging
+import uuid
 from collections import namedtuple
 from dimagi.utils.chunked import chunked
 from dimagi.utils.decorators.memoized import memoized
@@ -16,7 +17,7 @@ from corehq.util.log import with_progress_bar
 from custom.enikshay.case_utils import (
     CASE_TYPE_PERSON, CASE_TYPE_OCCURRENCE, CASE_TYPE_REFERRAL,
     CASE_TYPE_EPISODE, CASE_TYPE_TEST, CASE_TYPE_TRAIL,
-    CASE_TYPE_DRTB_HIV_REFERRAL)
+    CASE_TYPE_DRTB_HIV_REFERRAL, CASE_TYPE_SECONDARY_OWNER)
 from custom.enikshay.const import ENROLLED_IN_PRIVATE, CASE_VERSION
 
 logger = logging.getLogger('two_b_datamigration')
@@ -161,6 +162,7 @@ class ENikshay2BMigrator(object):
             type_to_bucket = {CASE_TYPE_EPISODE: 'episodes',
                               CASE_TYPE_TEST: 'tests',
                               CASE_TYPE_TRAIL: 'trails'}
+            episodes_to_person = {}
             for case in self.accessor.get_reverse_indexed_cases(referrals_and_occurrences_to_person.keys()):
                 bucket = type_to_bucket.get(case.type, None)
                 if bucket:
@@ -168,6 +170,16 @@ class ENikshay2BMigrator(object):
                         person_id = referrals_and_occurrences_to_person.get(index.referenced_id)
                         if person_id:
                             getattr(all_persons[person_id], bucket).append(case)
+                            if case.type == CASE_TYPE_EPISODE:
+                                episodes_to_person[case.case_id] = person_id
+                            break
+
+            for case in self.accessor.get_reverse_indexed_cases(episodes_to_person.keys()):
+                if case.type == CASE_TYPE_DRTB_HIV_REFERRAL:
+                    for index in case.indices:
+                        person_id = episodes_to_person.get(index.referenced_id)
+                        if person_id:
+                            all_persons[person_id].drtb_hiv.append(case)
                             break
 
             for person_case_set in all_persons.values():
@@ -181,6 +193,9 @@ class ENikshay2BMigrator(object):
             + [self.migrate_test(test, person.person) for test in person.tests]
             + [self.migrate_referral(referral, person.occurrences) for referral in person.referrals]
             + [self.migrate_trail(trail, person.occurrences) for trail in person.trails]
+            + [self.open_secondary_owners(drtb_hiv, person.person, person.occurrences)
+               for drtb_hiv in person.drtb_hiv]
+            + [self.close_drtb_hiv(drtb_hiv) for drtb_hiv in person.drtb_hiv]
         ))
 
     @staticmethod
@@ -407,4 +422,46 @@ class ENikshay2BMigrator(object):
                 "update": {},
             },
             **index_kwargs
+        )
+
+    def open_secondary_owners(self, drtb_hiv, person, occurrences):
+        if occurrences:
+            occurrence = max((case.opened_on, case) for case in occurrences)[1]
+            index_kwargs = {'indices': [CaseIndex(
+                occurrence,
+                identifier='host',
+                relationship=CASE_INDEX_EXTENSION,
+                related_type=CASE_TYPE_OCCURRENCE,
+            )]}
+        else:
+            index_kwargs = {}
+
+        location = self.locations.get(person.owner_id)
+        props = {
+            'secondary_owner_type': 'drtb-hiv',
+            'secondary_owner_name': location.name if location else "",
+        }
+
+        return CaseStructure(
+            case_id=uuid.uuid4().hex,
+            walk_related=False,
+            attrs={
+                'create': True,
+                'case_type': CASE_TYPE_SECONDARY_OWNER,
+                'owner_id': drtb_hiv.owner_id,
+                'case_name': person.get_case_property('person_id') + "-drtb-hiv",
+                'update': props,
+            },
+            **index_kwargs
+        )
+
+    def close_drtb_hiv(self, drtb_hiv):
+        return CaseStructure(
+            case_id=drtb_hiv.case_id,
+            walk_related=False,
+            attrs={
+                "create": False,
+                "close": True,
+                "update": {},
+            },
         )
