@@ -21,10 +21,6 @@ from corehq.apps.sms.mixin import MessagingCaseContactMixin
 from corehq.blobs.mixin import DeferredBlobMixin
 from corehq.form_processor.abstract_models import AbstractCommCareCase, DEFAULT_PARENT_IDENTIFIER
 from dimagi.ext.couchdbkit import *
-from dimagi.utils.django.cached_object import (
-    CachedObject, OBJECT_ORIGINAL, OBJECT_SIZE_MAP, CachedImage, IMAGE_SIZE_ORDERING
-)
-from casexml.apps.phone.xml import get_case_element
 from casexml.apps.case.signals import case_post_save
 from casexml.apps.case import const
 from dimagi.utils.modules import to_function
