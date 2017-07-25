@@ -40,22 +40,21 @@ class TestViews(TestCase):
         cls.user.is_superuser = True
         cls.user.save()
         cls.build = add_build(version='2.7.0', build_number=20655)
-        cls.app = Application.new_app(cls.domain.name, "TestApp")
-        cls.app.build_spec = BuildSpec.from_string('2.7.0/latest')
         toggles.CUSTOM_PROPERTIES.set("domain:{domain}".format(domain=cls.domain.name), True)
 
     def setUp(self):
+        self.app = Application.new_app(self.domain.name, "TestApp")
+        self.app.build_spec = BuildSpec.from_string('2.7.0/latest')
         self.client.login(username=self.username, password=self.password)
+
+    def tearDown(self):
+        if self.app._id:
+            self.app.delete()
 
     @classmethod
     def tearDownClass(cls):
         cls.user.delete()
         cls.build.delete()
-        if cls.app:
-            try:
-                cls.app.delete()
-            except TypeError:
-                pass 
         cls.domain.delete()
         super(TestViews, cls).tearDownClass()
 
@@ -145,8 +144,14 @@ class TestViews(TestCase):
             AppSummaryView.urlname,
         ], kwargs)
 
-        self.build = self.app.make_build()
-        self.build.save()
+        build = self.app.make_build()
+        build.save()
+        content = self._json_content_from_get('current_app_version', {
+            'domain': self.domain.name,
+            'app_id': self.app.id,
+        })
+        self.assertEqual(content['currentVersion'], 1)
+        self.app.save()
         content = self._json_content_from_get('current_app_version', {
             'domain': self.domain.name,
             'app_id': self.app.id,
