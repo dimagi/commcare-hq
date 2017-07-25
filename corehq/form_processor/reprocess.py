@@ -36,7 +36,7 @@ def reprocess_unfinished_stub(stub):
         stub.delete()
         return
 
-    _reprocess_form(form)
+    _reprocess_form(form, raise_errors=False)
 
     stub.delete()
 
@@ -66,7 +66,7 @@ def reprocess_xform_error_by_id(form_id, domain=None):
     return reprocess_xform_error(form)
 
 
-def _reprocess_form(form):
+def _reprocess_form(form, raise_errors=True):
     # reset form state prior to processing
     if should_use_sql_backend(form.domain):
         form.state = XFormInstanceSQL.NORMAL
@@ -85,7 +85,9 @@ def _reprocess_form(form):
             case_stock_result = SubmissionPost.process_xforms_for_cases([form], casedb)
         except (IllegalCaseId, UsesReferrals, MissingProductId,
                 PhoneDateValueError, InvalidCaseIndex, CaseValueError) as e:
-            instance = _transform_instance_to_error(interface, e, form)
+            if raise_errors:
+                raise
+            form = _transform_instance_to_error(interface, e, form)
             # this is usually just one document, but if an edit errored we want
             # to save the deprecated form as well
             interface.save_processed_models([form])
