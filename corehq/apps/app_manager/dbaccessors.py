@@ -171,7 +171,7 @@ def get_brief_apps_in_domain(domain, include_remote=True):
     apps = [get_correct_app_class(doc).wrap(doc) for doc in docs]
     if not include_remote:
         apps = [app for app in apps if not app.is_remote_app()]
-    return apps
+    return sorted(apps, key=lambda app: app.name)
 
 
 def get_brief_app(domain, app_id):

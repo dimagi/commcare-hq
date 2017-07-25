@@ -117,6 +117,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'templated_intents': domain_has_privilege(domain, privileges.TEMPLATED_INTENTS),
         'custom_intents': domain_has_privilege(domain, privileges.CUSTOM_INTENTS),
         'rich_text': True,
+        'sorted_itemsets': app.enable_sorted_itemsets,
     })
 
     has_schedule = (
@@ -191,7 +192,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'invalidCaseProperties': ['name'],
     }
 
-    if toggles.APP_MANAGER_V2.enabled(request.user.username):
+    if not toggles.APP_MANAGER_V1.enabled(request.user.username):
         if form.get_action_type() == 'open':
             core.update({
                 'defaultHelpTextTemplateId': '#fd-hq-helptext-registration',

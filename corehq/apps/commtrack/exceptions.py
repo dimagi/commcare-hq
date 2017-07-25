@@ -28,3 +28,7 @@ class LedgerParseError(ValueError):
 
 class InvalidDate(LedgerParseError):
     pass
+
+
+class RequisitionsHaveBeenRemoved(Exception):
+    pass

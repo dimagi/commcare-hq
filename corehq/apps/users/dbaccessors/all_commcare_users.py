@@ -1,6 +1,7 @@
 from itertools import imap
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.es import UserES
+from corehq.util.quickcache import quickcache
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.couch.database import iter_docs, iter_bulk_delete
 
@@ -148,6 +149,7 @@ def get_deleted_user_by_username(cls, username):
     return cls.wrap_correctly(result['doc']) if result else None
 
 
+@quickcache(['domain'])
 def get_practice_mode_mobile_workers(domain):
     """
     Returns list of practice mode mobile workers formatted for HTML select

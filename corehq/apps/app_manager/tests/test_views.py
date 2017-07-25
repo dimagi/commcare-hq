@@ -52,7 +52,10 @@ class TestViews(TestCase):
         cls.user.delete()
         cls.build.delete()
         if cls.app:
-            cls.app.delete()
+            try:
+                cls.app.delete()
+            except TypeError:
+                pass 
         cls.domain.delete()
         super(TestViews, cls).tearDownClass()
 

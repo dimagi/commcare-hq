@@ -22,7 +22,7 @@ from corehq.apps.userreports.reports.factory import ReportFactory
 from custom.icds_reports.const import LocationTypes
 from dimagi.utils.dates import DateSpan, rrule, MONTHLY
 
-from custom.icds_reports.models import AggDailyUsageView, AggChildHealthMonthly, AggAwcMonthly, \
+from custom.icds_reports.models import AggChildHealthMonthly, AggAwcMonthly, \
     AggCcsRecordMonthly, AggAwcDailyView, DailyAttendanceView, ChildHealthMonthlyView
 
 OPERATORS = {
@@ -38,6 +38,7 @@ OPERATORS = {
 RED = '#d60000'
 YELLOW = '#f2ed00'
 ORANGE = '#df7400'
+BLUE = '#006fdf'
 GREEN = '#009811'
 GREY = '#9D9D9D'
 
@@ -231,8 +232,8 @@ def get_location_filter(location, domain, config):
     if location:
         try:
             sql_location = SQLLocation.objects.get(location_id=location, domain=domain)
-            aggregation_level = sql_location.get_ancestors(include_self=True).count() + 1
-            location_code = sql_location.site_code
+            locations = sql_location.get_ancestors(include_self=True)
+            aggregation_level = locations.count() + 1
             if sql_location.location_type.code != LocationTypes.AWC:
                 loc_level = LocationType.objects.filter(
                     parent_type=sql_location.location_type,
@@ -240,9 +241,12 @@ def get_location_filter(location, domain, config):
                 )[0].code
             else:
                 loc_level = LocationTypes.AWC
-            location_key = '%s_site_code' % sql_location.location_type.code
+            for loc in locations:
+                location_key = '%s_id' % loc.location_type.code
+                config.update({
+                    location_key: loc.location_id,
+                })
             config.update({
-                location_key: location_code,
                 'aggregation_level': aggregation_level
             })
         except SQLLocation.DoesNotExist:
@@ -255,7 +259,7 @@ def get_system_usage_data(yesterday, config):
     two_days_ago = (yesterday_date - relativedelta(days=1)).date()
 
     def get_data_for(date, filters):
-        return AggDailyUsageView.objects.filter(
+        return AggAwcDailyView.objects.filter(
             date=date, **filters
         ).values(
             'aggregation_level'
@@ -369,12 +373,12 @@ def get_maternal_child_data(config):
         'records': [
             [
                 {
-                    'label': _('% Underweight Children'),
+                    'label': _('% Underweight Children (weight-for-age)'),
                     'help_text': _((
-                        "Percentage of children with weight-for-age less than -2 standard deviations of "
-                        "the WHO Child Growth Standards median. Children who are moderately or severely "
-                        "underweight have a higher risk of mortality.")
-                    ),
+                        "Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age "
+                        "less than -2 standard deviations of the WHO Child Growth Standards median. Children who "
+                        "are moderately or severely underweight have a higher risk of mortality."
+                    )),
                     'percent': percent_diff(
                         'underweight',
                         this_month_data,
@@ -388,7 +392,7 @@ def get_maternal_child_data(config):
                     'redirect': 'underweight_children'
                 },
                 {
-                    'label': _('% Wasting'),
+                    'label': _('% Wasting (weight-for-height)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with weight-for-height below -3 standard "
                         "deviations of the WHO Child Growth Standards median. Severe Acute Malnutrition "
@@ -411,7 +415,7 @@ def get_maternal_child_data(config):
             ],
             [
                 {
-                    'label': _('% Stunting'),
+                    'label': _('% Stunting (height-for-age)'),
                     'help_text': _((
                         "Percentage of children (6-60 months) with height-for-age below -2Z standard deviations "
                         "of the WHO Child Growth Standards median. Stunting in children is a sign of chronic "
@@ -552,12 +556,12 @@ def get_cas_reach_data(yesterday, config):
         )
 
     def get_data_for_daily_usage(date, filters):
-        return AggDailyUsageView.objects.filter(
+        return AggAwcDailyView.objects.filter(
             date=date, **filters
         ).values(
             'aggregation_level'
         ).annotate(
-            awcs=Sum('awc_count'),
+            awcs=Sum('num_awcs'),
             daily_attendance=Sum('daily_attendance_open')
         )
 
@@ -799,6 +803,8 @@ def get_awc_infrastructure_data(config):
             clean_water=Sum('infra_clean_water'),
             functional_toilet=Sum('infra_functional_toilet'),
             medicine_kits=Sum('infra_medicine_kits'),
+            infant_scale=Sum('infra_baby_weighing_scale'),
+            adult_scale=Sum('infra_adult_weighing_scale'),
             awcs=Sum('num_awcs')
         )
 
@@ -814,7 +820,7 @@ def get_awc_infrastructure_data(config):
         'records': [
             [
                 {
-                    'label': _('Total number of AWCs with a source of clean drinking water'),
+                    'label': _('% AWCs with Clean Drinking Water'),
                     'help_text': _('Percentage of AWCs with a source of clean drinking water'),
                     'percent': percent_diff(
                         'clean_water',
@@ -831,7 +837,7 @@ def get_awc_infrastructure_data(config):
                     'label': _((
                         "% AWCs with Functional Toilet")
                     ),
-                    'help_text': _('Percentage of AWCs with a functional toilet'),
+                    'help_text': _('% AWCs with functional toilet'),
                     'percent': percent_diff(
                         'functional_toilet',
                         this_month_data,
@@ -846,7 +852,7 @@ def get_awc_infrastructure_data(config):
             ],
             [
                 {
-                    'label': _('Total number of AWCs with access to electricity'),
+                    'label': _('% AWCs with Electricity'),
                     'help_text': _('Percentage of AWCs with access to electricity'),
                     'percent': 0,
                     'value': 0,
@@ -855,7 +861,7 @@ def get_awc_infrastructure_data(config):
                     'frequency': 'month'
                 },
                 {
-                    'label': _('Total number of AWCs with a Medicine Kit'),
+                    'label': _('% AWCs with Medicine Kit'),
                     'help_text': _('Percentage of AWCs with a Medicine Kit'),
                     'percent': percent_diff(
                         'medicine_kits',
@@ -864,6 +870,36 @@ def get_awc_infrastructure_data(config):
                         'awcs'
                     ),
                     'value': get_value(this_month_data, 'medicine_kits'),
+                    'all': get_value(this_month_data, 'awcs'),
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
+                }
+            ],
+            [
+                {
+                    'label': _('% AWCs with Weighing Scale: Infants'),
+                    'help_text': _('Percentage of AWCs with weighing scale for infants'),
+                    'percent': percent_diff(
+                        'infant_scale',
+                        this_month_data,
+                        prev_month_data,
+                        'awcs'
+                    ),
+                    'value': get_value(this_month_data, 'infant_scale'),
+                    'all': get_value(this_month_data, 'awcs'),
+                    'format': 'percent_and_div',
+                    'frequency': 'month'
+                },
+                {
+                    'label': _('% AWCs with Weighing Scale: Mother and Child'),
+                    'help_text': _('Percentage of AWCs with weighing scale for mother and child'),
+                    'percent': percent_diff(
+                        'adult_scale',
+                        this_month_data,
+                        prev_month_data,
+                        'awcs'
+                    ),
+                    'value': get_value(this_month_data, 'adult_scale'),
                     'all': get_value(this_month_data, 'awcs'),
                     'format': 'percent_and_div',
                     'frequency': 'month'
@@ -888,17 +924,6 @@ def get_awc_infrastructure_data(config):
                     'format': 'percent_and_div',
                     'frequency': 'month'
                 }
-            ],
-            [
-                {
-                    'label': _('Total number of AWCs with a weighing scale'),
-                    'help_text': _('Percentage of AWCs with a Weighing scale'),
-                    'percent': 0,
-                    'value': 0,
-                    'all': 0,
-                    'format': 'percent_and_div',
-                    'frequency': 'month'
-                }
             ]
         ]
     }
@@ -907,7 +932,7 @@ def get_awc_infrastructure_data(config):
 def get_awc_opened_data(filters):
 
     def get_data_for(date):
-        return AggDailyUsageView.objects.filter(
+        return AggAwcDailyView.objects.filter(
             date=datetime(*date), aggregation_level=1
         ).values(
             'state_name'
@@ -1040,8 +1065,6 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
         valid=Sum('valid_in_month'),
     ).order_by('month')
 
-    locations_for_lvl = SQLLocation.objects.filter(location_type__code=loc_level).count()
-
     data = {
         'green': OrderedDict(),
         'orange': OrderedDict(),
@@ -1073,15 +1096,10 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        if underweight <= 20:
-            data['green'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
-        elif 21 <= underweight <= 35:
-            data['orange'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
-        elif underweight > 35:
-            data['red'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
+        data['orange'][date_in_miliseconds]['y'] += moderately_underweight
+        data['orange'][date_in_miliseconds]['all'] += valid
+        data['red'][date_in_miliseconds]['y'] += severely_underweight
+        data['red'][date_in_miliseconds]['all'] += valid
 
     top_locations = sorted(
         [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
@@ -1095,24 +1113,11 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
-                        'all': value['all']
-                    } for key, value in data['green'].iteritems()
-                ],
-                "key": "Between 0%-20%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": GREEN
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
+                        'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
                     } for key, value in data['orange'].iteritems()
                 ],
-                "key": "Between 11%-35%",
+                "key": "% Moderately Underweight (-2 SD)",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": ORANGE
@@ -1121,18 +1126,19 @@ def get_prevalence_of_undernutrition_data_chart(config, loc_level):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
+                        'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
                     } for key, value in data['red'].iteritems()
                 ],
-                "key": "Between 36%-100%",
+                "key": "% Severely Underweight (-3 SD) ",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             }
         ],
-        "top_three": top_locations[0:3],
-        "bottom_three": top_locations[-4:-1],
+        "all_locations": top_locations,
+        "top_three": top_locations[0:5],
+        "bottom_three": top_locations[-6:-1],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 
@@ -1701,10 +1707,10 @@ def get_awc_report_demographics(config, month):
     }
 
 
-def get_awc_report_beneficiary(awc_site_code, month, two_before):
+def get_awc_report_beneficiary(awc_id, month, two_before):
     data = ChildHealthMonthlyView.objects.filter(
         month__range=(datetime(*two_before), datetime(*month)),
-        awc_site_code="awc_site_code",
+        awc_id=awc_id,
         open_in_month=1,
         valid_in_month=1,
         age_in_months__lte=72
@@ -1857,11 +1863,7 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
         valid=Sum('height_eligible'),
     ).order_by('month')
 
-    locations_for_lvl = SQLLocation.objects.filter(location_type__code=loc_level).count()
-
     data = {
-        'green': OrderedDict(),
-        'orange': OrderedDict(),
         'red': OrderedDict()
     }
 
@@ -1869,8 +1871,6 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['green'][miliseconds] = {'y': 0, 'all': 0}
-        data['orange'][miliseconds] = {'y': 0, 'all': 0}
         data['red'][miliseconds] = {'y': 0, 'all': 0}
 
     best_worst = {}
@@ -1881,24 +1881,17 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
         severe = row['severe']
         moderate = row['moderate']
 
-        underweight = ((moderate or 0) + (severe or 0)) * 100 / (valid or 1)
+        underweight = (moderate or 0) + (severe or 0)
 
         if location in best_worst:
-            best_worst[location].append(underweight)
+            best_worst[location].append(underweight / float(valid or 1))
         else:
-            best_worst[location] = [underweight]
+            best_worst[location] = [underweight / float(valid or 1)]
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        if underweight < 5:
-            data['green'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
-        elif 5 <= underweight < 7:
-            data['orange'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
-        elif underweight >= 7:
-            data['red'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
+        data['red'][date_in_miliseconds]['y'] += underweight
+        data['red'][date_in_miliseconds]['all'] += valid
 
     top_locations = sorted(
         [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
@@ -1912,44 +1905,19 @@ def get_prevalence_of_severe_data_chart(config, loc_level):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
-                        'all': value['all']
-                    } for key, value in data['green'].iteritems()
-                ],
-                "key": "Between 0%-5%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": GREEN
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
-                        'all': value['all']
-                    } for key, value in data['orange'].iteritems()
-                ],
-                "key": "Between 5%-7%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": ORANGE
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
+                        'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
                     } for key, value in data['red'].iteritems()
                 ],
-                "key": "Between 7%-100%",
+                "key": "Severe and Moderate Acute Malnutrition (SAM and MAM)",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             }
         ],
-        "top_three": top_locations[0:3],
-        "bottom_three": top_locations[-4:-1],
+        "all_locations": top_locations,
+        "top_three": top_locations[0:5],
+        "bottom_three": top_locations[-6:-1],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 
@@ -2132,11 +2100,7 @@ def get_prevalence_of_stunning_data_chart(config, loc_level):
         valid=Sum('height_eligible'),
     ).order_by('month')
 
-    locations_for_lvl = SQLLocation.objects.filter(location_type__code=loc_level).count()
-
     data = {
-        'green': OrderedDict(),
-        'orange': OrderedDict(),
         'red': OrderedDict()
     }
 
@@ -2144,8 +2108,6 @@ def get_prevalence_of_stunning_data_chart(config, loc_level):
 
     for date in dates:
         miliseconds = int(date.strftime("%s")) * 1000
-        data['green'][miliseconds] = {'y': 0, 'all': 0}
-        data['orange'][miliseconds] = {'y': 0, 'all': 0}
         data['red'][miliseconds] = {'y': 0, 'all': 0}
 
     best_worst = {}
@@ -2156,24 +2118,17 @@ def get_prevalence_of_stunning_data_chart(config, loc_level):
         severe = row['severe']
         moderate = row['moderate']
 
-        underweight = ((moderate or 0) + (severe or 0)) * 100 / (valid or 1)
+        underweight = (moderate or 0) + (severe or 0)
 
         if location in best_worst:
-            best_worst[location].append(underweight)
+            best_worst[location].append(underweight / (valid or 1))
         else:
-            best_worst[location] = [underweight]
+            best_worst[location] = [underweight / (valid or 1)]
 
         date_in_miliseconds = int(date.strftime("%s")) * 1000
 
-        if underweight < 25:
-            data['green'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
-        elif 25 <= underweight < 38:
-            data['orange'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
-        elif underweight >= 38:
-            data['red'][date_in_miliseconds]['y'] += 1
-            data['green'][date_in_miliseconds]['all'] += underweight
+        data['red'][date_in_miliseconds]['y'] += underweight
+        data['red'][date_in_miliseconds]['all'] += valid
 
     top_locations = sorted(
         [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
@@ -2187,44 +2142,19 @@ def get_prevalence_of_stunning_data_chart(config, loc_level):
                 "values": [
                     {
                         'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
-                        'all': value['all']
-                    } for key, value in data['green'].iteritems()
-                ],
-                "key": "Between 0%-25%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": GREEN
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
-                        'all': value['all']
-                    } for key, value in data['orange'].iteritems()
-                ],
-                "key": "Between 25%-38%",
-                "strokeWidth": 2,
-                "classed": "dashed",
-                "color": ORANGE
-            },
-            {
-                "values": [
-                    {
-                        'x': key,
-                        'y': value['y'] / float(locations_for_lvl),
+                        'y': value['y'] / float(value['all'] or 1),
                         'all': value['all']
                     } for key, value in data['red'].iteritems()
                 ],
-                "key": "Between 38%-100%",
+                "key": "Moderate or severely stunted growth",
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
             }
         ],
-        "top_three": top_locations[0:3],
-        "bottom_three": top_locations[-4:-1],
+        "all_locations": top_locations,
+        "top_three": top_locations[0:5],
+        "bottom_three": top_locations[-6:-1],
         "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
     }
 
@@ -2315,6 +2245,728 @@ def get_prevalence_of_stunning_sector_data(config, loc_level):
                 "strokeWidth": 2,
                 "classed": "dashed",
                 "color": RED
+            }
+        ]
+    }
+
+
+def get_newborn_with_low_birth_weight_map(config, loc_level):
+
+    def get_data_for(filters):
+        filters['month'] = datetime(*filters['month'])
+        return AggChildHealthMonthly.objects.filter(
+            **filters
+        ).values(
+            '%s_name' % loc_level
+        ).annotate(
+            low_birth=Sum('low_birth_weight_in_month'),
+            in_month=Sum('born_in_month'),
+        )
+
+    map_data = {}
+    average = []
+    for row in get_data_for(config):
+        name = row['%s_name' % loc_level]
+
+        low_birth = row['low_birth']
+        in_month = row['in_month']
+
+        value = (low_birth or 0) * 100 / (in_month or 1)
+        average.append(value)
+        row_values = {
+            'low_birth': low_birth,
+            'in_month': in_month,
+        }
+        if value <= 20:
+            row_values.update({'fillKey': '0%-20%'})
+        elif 20 < value < 60:
+            row_values.update({'fillKey': '20%-60%'})
+        elif value >= 60:
+            row_values.update({'fillKey': '60%-100%'})
+
+        map_data.update({name: row_values})
+
+    fills = OrderedDict()
+    fills.update({'0%-20%': GREEN})
+    fills.update({'20%-60%': YELLOW})
+    fills.update({'60%-100%': RED})
+    fills.update({'defaultFill': GREY})
+
+    return [
+        {
+            "slug": "low_birth",
+            "label": "",
+            "fills": fills,
+            "rightLegend": {
+                "average": sum(average) / (len(average) or 1),
+                "info": _((
+                    "Percentage of newborns with born with birth weight less than 2500 grams."
+                    "<br/><br/>"
+                    "Newborns with Low Birth Weight are closely associated with foetal and neonatal "
+                    "mortality and morbidity, inhibited growth and cognitive development, and chronic "
+                    "diseases later in life"
+                )),
+                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+            },
+            "data": map_data,
+        }
+    ]
+
+
+def get_newborn_with_low_birth_weight_chart(config, loc_level):
+    month = datetime(*config['month'])
+    three_before = datetime(*config['month']) - relativedelta(months=3)
+
+    config['month__range'] = (three_before, month)
+    del config['month']
+
+    chart_data = AggChildHealthMonthly.objects.filter(
+        **config
+    ).values(
+        'month', '%s_name' % loc_level
+    ).annotate(
+        low_birth=Sum('low_birth_weight_in_month'),
+        in_month=Sum('born_in_month'),
+    ).order_by('month')
+
+    data = {
+        'blue': OrderedDict(),
+        'red': OrderedDict()
+    }
+
+    dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
+
+    for date in dates:
+        miliseconds = int(date.strftime("%s")) * 1000
+        data['blue'][miliseconds] = {'y': 0, 'all': 0}
+        data['red'][miliseconds] = {'y': 0, 'all': 0}
+
+    best_worst = {}
+    for row in chart_data:
+        date = row['month']
+        in_month = row['in_month']
+        location = row['%s_name' % loc_level]
+        low_birth = row['low_birth']
+
+        value = (low_birth or 0) * 100 / (in_month or 1)
+
+        if location in best_worst:
+            best_worst[location].append(value)
+        else:
+            best_worst[location] = [value]
+
+        date_in_miliseconds = int(date.strftime("%s")) * 1000
+
+        data['blue'][date_in_miliseconds]['y'] += in_month
+        data['red'][date_in_miliseconds]['y'] += low_birth
+
+    top_locations = sorted(
+        [dict(loc_name=key, percent=sum(val) / len(val)) for key, val in best_worst.iteritems()],
+        key=lambda x: x['percent'],
+        reverse=True
+    )
+
+    return {
+        "chart_data": [
+            {
+                "values": [
+                    {
+                        'x': key,
+                        'y': val['y'],
+                        'all': val['all']
+                    } for key, val in data['blue'].iteritems()
+                ],
+                "key": "Total newborns",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": BLUE
+            },
+            {
+                "values": [
+                    {
+                        'x': key,
+                        'y': val['y'],
+                        'all': val['all']
+                    } for key, val in data['red'].iteritems()
+                ],
+                "key": "Low birth weight newborns",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": RED
+            }
+        ],
+        "all_locations": top_locations,
+        "top_three": top_locations[0:5],
+        "bottom_three": top_locations[-6:-1],
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+    }
+
+
+def get_newborn_with_low_birth_weight_data(config, loc_level):
+    group_by = ['%s_name' % loc_level]
+    if loc_level == LocationTypes.SUPERVISOR:
+        config['aggregation_level'] += 1
+        group_by.append('%s_name' % LocationTypes.AWC)
+
+    config['month'] = datetime(*config['month'])
+    data = AggChildHealthMonthly.objects.filter(
+        **config
+    ).values(
+        *group_by
+    ).annotate(
+        low_birth=Sum('low_birth_weight_in_month'),
+        in_month=Sum('born_in_month'),
+    ).order_by('%s_name' % loc_level)
+
+    loc_data = {
+        'green': 0,
+        'orange': 0,
+        'red': 0
+    }
+    tmp_name = ''
+    rows_for_location = 0
+
+    chart_data = {
+        'green': [],
+        'orange': [],
+        'red': []
+    }
+
+    for row in data:
+        in_month = row['in_month']
+        name = row['%s_name' % loc_level]
+
+        if tmp_name and name != tmp_name:
+            chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
+            chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
+            chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+            rows_for_location = 0
+            loc_data = {
+                'green': 0,
+                'orange': 0,
+                'red': 0
+            }
+
+        low_birth = row['low_birth']
+
+        value = (low_birth or 0) * 100 / float(in_month or 1)
+
+        if value <= 20.0:
+            loc_data['green'] += 1
+        elif 20.0 <= value <= 60.0:
+            loc_data['orange'] += 1
+        elif value > 60.0:
+            loc_data['red'] += 1
+
+        tmp_name = name
+        rows_for_location += 1
+
+    chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
+    chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
+    chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+
+    return {
+        "chart_data": [
+            {
+                "values": chart_data['green'],
+                "key": "0%-20%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": GREEN
+            },
+            {
+                "values": chart_data['orange'],
+                "key": "20%-60%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": ORANGE
+            },
+            {
+                "values": chart_data['red'],
+                "key": "60%-100%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": RED
+            }
+        ]
+    }
+
+
+def get_early_initiation_breastfeeding_map(config, loc_level):
+
+    def get_data_for(filters):
+        filters['month'] = datetime(*filters['month'])
+        return AggChildHealthMonthly.objects.filter(
+            **filters
+        ).values(
+            '%s_name' % loc_level
+        ).annotate(
+            birth=Sum('bf_at_birth'),
+            in_month=Sum('born_in_month'),
+        )
+
+    map_data = {}
+    average = []
+    for row in get_data_for(config):
+        name = row['%s_name' % loc_level]
+
+        birth = row['birth']
+        in_month = row['in_month']
+
+        value = (birth or 0) * 100 / (in_month or 1)
+        average.append(value)
+        row_values = {
+            'birth': birth,
+            'in_month': in_month,
+        }
+        if value <= 20:
+            row_values.update({'fillKey': '0%-20%'})
+        elif 20 < value < 60:
+            row_values.update({'fillKey': '20%-60%'})
+        elif value >= 60:
+            row_values.update({'fillKey': '60%-100%'})
+
+        map_data.update({name: row_values})
+
+    fills = OrderedDict()
+    fills.update({'60%-100%': GREEN})
+    fills.update({'20%-60%': YELLOW})
+    fills.update({'0%-20%': RED})
+    fills.update({'defaultFill': GREY})
+
+    return [
+        {
+            "slug": "early_initiation",
+            "label": "",
+            "fills": fills,
+            "rightLegend": {
+                "average": sum(average) / (len(average) or 1),
+                "info": _((
+                    "Percentage of children who were put to the breast within one hour of birth."
+                    "<br/><br/>"
+                    "Early initiation of breastfeeding ensure the newborn recieves the 'first milk' rich in "
+                    "nutrients and encourages exclusive breastfeeding practic"
+                )),
+                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+            },
+            "data": map_data,
+        }
+    ]
+
+
+def get_early_initiation_breastfeeding_chart(config, loc_level):
+    month = datetime(*config['month'])
+    three_before = datetime(*config['month']) - relativedelta(months=3)
+
+    config['month__range'] = (three_before, month)
+    del config['month']
+
+    chart_data = AggChildHealthMonthly.objects.filter(
+        **config
+    ).values(
+        'month', '%s_name' % loc_level
+    ).annotate(
+        birth=Sum('bf_at_birth'),
+        in_month=Sum('born_in_month'),
+    ).order_by('month')
+
+    data = {
+        'green': OrderedDict(),
+        'blue': OrderedDict()
+    }
+
+    dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
+
+    for date in dates:
+        miliseconds = int(date.strftime("%s")) * 1000
+        data['green'][miliseconds] = {'y': 0, 'all': 0}
+        data['blue'][miliseconds] = {'y': 0, 'all': 0}
+
+    best_worst = {}
+    for row in chart_data:
+        date = row['month']
+        in_month = row['in_month']
+        location = row['%s_name' % loc_level]
+
+        birth = row['birth']
+
+        value = (birth or 0) * 100 / (in_month or 1)
+
+        if location in best_worst:
+            best_worst[location].append(value)
+        else:
+            best_worst[location] = [value]
+
+        date_in_miliseconds = int(date.strftime("%s")) * 1000
+
+        data['green'][date_in_miliseconds]['y'] += birth
+        data['blue'][date_in_miliseconds]['y'] += in_month
+
+    top_locations = sorted(
+        [dict(loc_name=key, percent=sum(val) / len(val)) for key, val in best_worst.iteritems()],
+        key=lambda x: x['percent'],
+        reverse=True
+    )
+
+    return {
+        "chart_data": [
+            {
+                "values": [
+                    {
+                        'x': key,
+                        'y': val['y'],
+                        'all': val['all']
+                    } for key, val in data['green'].iteritems()
+                ],
+                "key": "Children breastfed within one hour of birth",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": GREEN
+            },
+            {
+                "values": [
+                    {
+                        'x': key,
+                        'y': val['y'],
+                        'all': val['all']
+                    } for key, val in data['blue'].iteritems()
+                ],
+                "key": "Total births",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": BLUE
+            }
+        ],
+        "all_locations": top_locations,
+        "top_three": top_locations[0:5],
+        "bottom_three": top_locations[-6:-1],
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+    }
+
+
+def get_early_initiation_breastfeeding_data(config, loc_level):
+    group_by = ['%s_name' % loc_level]
+    if loc_level == LocationTypes.SUPERVISOR:
+        config['aggregation_level'] += 1
+        group_by.append('%s_name' % LocationTypes.AWC)
+
+    config['month'] = datetime(*config['month'])
+    data = AggChildHealthMonthly.objects.filter(
+        **config
+    ).values(
+        *group_by
+    ).annotate(
+        birth=Sum('bf_at_birth'),
+        in_month=Sum('born_in_month'),
+    ).order_by('%s_name' % loc_level)
+
+    loc_data = {
+        'green': 0,
+        'orange': 0,
+        'red': 0
+    }
+    tmp_name = ''
+    rows_for_location = 0
+
+    chart_data = {
+        'green': [],
+        'orange': [],
+        'red': []
+    }
+
+    for row in data:
+        in_month = row['in_month']
+        name = row['%s_name' % loc_level]
+
+        if tmp_name and name != tmp_name:
+            chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
+            chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
+            chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+            rows_for_location = 0
+            loc_data = {
+                'green': 0,
+                'orange': 0,
+                'red': 0
+            }
+
+        birth = row['birth']
+
+        value = (birth or 0) * 100 / float(in_month or 1)
+
+        if value >= 60.0:
+            loc_data['green'] += 1
+        elif 20.0 <= value < 60.0:
+            loc_data['orange'] += 1
+        elif value < 20.0:
+            loc_data['red'] += 1
+
+        tmp_name = name
+        rows_for_location += 1
+
+    chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
+    chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
+    chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+
+    return {
+        "chart_data": [
+            {
+                "values": chart_data['green'],
+                "key": "60%-100%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": GREEN
+            },
+            {
+                "values": chart_data['orange'],
+                "key": "20%-60%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": ORANGE
+            },
+            {
+                "values": chart_data['red'],
+                "key": "0%-20%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": RED
+            }
+        ]
+    }
+
+
+def get_exclusive_breastfeeding_data_map(config, loc_level):
+
+    def get_data_for(filters):
+        filters['month'] = datetime(*filters['month'])
+        return AggChildHealthMonthly.objects.filter(
+            **filters
+        ).values(
+            '%s_name' % loc_level
+        ).annotate(
+            in_month=Sum('ebf_in_month'),
+            eligible=Sum('ebf_eligible'),
+        )
+
+    map_data = {}
+    average = []
+    for row in get_data_for(config):
+        valid = row['eligible']
+        name = row['%s_name' % loc_level]
+
+        in_month = row['in_month']
+
+        value = (in_month or 0) * 100 / (valid or 1)
+        average.append(value)
+        row_values = {
+            'children': in_month or 0,
+            'all': valid or 0
+        }
+        if value < 20:
+            row_values.update({'fillKey': '0%-20%'})
+        elif 20 <= value < 60:
+            row_values.update({'fillKey': '20%-60%'})
+        elif value >= 60:
+            row_values.update({'fillKey': '60%-100%'})
+
+        map_data.update({name: row_values})
+
+    fills = OrderedDict()
+    fills.update({'0%-20%': RED})
+    fills.update({'20%-60%': YELLOW})
+    fills.update({'60%-100%': GREEN})
+    fills.update({'defaultFill': GREY})
+
+    return [
+        {
+            "slug": "severe",
+            "label": "",
+            "fills": fills,
+            "rightLegend": {
+                "average": sum(average) / (len(average) or 1),
+                "info": _((
+                    "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
+                    "<br/><br/>"
+                    "An infant is exclusively breastfed if they recieve only breastmilk with no additional food, "
+                    "liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"
+                )),
+                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+            },
+            "data": map_data,
+        }
+    ]
+
+
+def get_exclusive_breastfeeding_data_chart(config, loc_level):
+    month = datetime(*config['month'])
+    three_before = datetime(*config['month']) - relativedelta(months=3)
+
+    config['month__range'] = (three_before, month)
+    del config['month']
+
+    chart_data = AggChildHealthMonthly.objects.filter(
+        **config
+    ).values(
+        'month', '%s_name' % loc_level
+    ).annotate(
+        in_month=Sum('ebf_in_month'),
+        eligible=Sum('ebf_eligible'),
+    ).order_by('month')
+
+    data = {
+        'blue': OrderedDict(),
+        'green': OrderedDict()
+    }
+
+    dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
+
+    for date in dates:
+        miliseconds = int(date.strftime("%s")) * 1000
+        data['blue'][miliseconds] = {'y': 0, 'all': 0}
+        data['green'][miliseconds] = {'y': 0, 'all': 0}
+
+    best_worst = {}
+    for row in chart_data:
+        date = row['month']
+        in_month = row['in_month']
+        location = row['%s_name' % loc_level]
+        valid = row['eligible']
+
+        if location in best_worst:
+            best_worst[location].append(in_month / (valid or 1))
+        else:
+            best_worst[location] = [in_month / (valid or 1)]
+
+        date_in_miliseconds = int(date.strftime("%s")) * 1000
+
+        data['green'][date_in_miliseconds]['y'] += in_month
+        data['blue'][date_in_miliseconds]['y'] += valid
+
+    top_locations = sorted(
+        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        key=lambda x: x['percent'],
+        reverse=True
+    )
+
+    return {
+        "chart_data": [
+            {
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(value['all'] or 1),
+                        'all': value['all']
+                    } for key, value in data['green'].iteritems()
+                ],
+                "key": "Total children exclusively breastfed",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": GREEN
+            },
+            {
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(value['all'] or 1),
+                        'all': value['all']
+                    } for key, value in data['blue'].iteritems()
+                ],
+                "key": "Total children 0-6 months",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": BLUE
+            }
+        ],
+        "all_locations": top_locations,
+        "top_three": top_locations[0:5],
+        "bottom_three": top_locations[-6:-1],
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+    }
+
+
+def get_exclusive_breastfeeding_sector_data(config, loc_level):
+    group_by = ['%s_name' % loc_level]
+    if loc_level == LocationTypes.SUPERVISOR:
+        config['aggregation_level'] += 1
+        group_by.append('%s_name' % LocationTypes.AWC)
+
+    config['month'] = datetime(*config['month'])
+    data = AggChildHealthMonthly.objects.filter(
+        **config
+    ).values(
+        *group_by
+    ).annotate(
+        in_month=Sum('ebf_in_month'),
+        eligible=Sum('ebf_eligible'),
+    ).order_by('%s_name' % loc_level)
+
+    loc_data = {
+        'green': 0,
+        'orange': 0,
+        'red': 0
+    }
+    tmp_name = ''
+    rows_for_location = 0
+
+    chart_data = {
+        'green': [],
+        'orange': [],
+        'red': []
+    }
+
+    for row in data:
+        valid = row['eligible']
+        name = row['%s_name' % loc_level]
+
+        if tmp_name and name != tmp_name:
+            chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
+            chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
+            chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+            rows_for_location = 0
+            loc_data = {
+                'green': 0,
+                'orange': 0,
+                'red': 0
+            }
+        in_month = row['in_month']
+
+        value = (in_month or 0) * 100 / float(valid or 1)
+
+        if value < 20.0:
+            loc_data['red'] += 1
+        elif 20.0 <= value < 60.0:
+            loc_data['orange'] += 1
+        elif value >= 60.0:
+            loc_data['green'] += 1
+
+        tmp_name = name
+        rows_for_location += 1
+
+    chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
+    chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
+    chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+
+    return {
+        "chart_data": [
+            {
+                "values": chart_data['green'],
+                "key": "0%-20%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": RED
+            },
+            {
+                "values": chart_data['orange'],
+                "key": "20%-60%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": ORANGE
+            },
+            {
+                "values": chart_data['red'],
+                "key": "60%-100%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": GREEN
             }
         ]
     }

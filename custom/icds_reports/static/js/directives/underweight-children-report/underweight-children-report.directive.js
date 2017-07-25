@@ -66,12 +66,12 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
             vm.steps['map'].label = 'Map';
         }
 
-
         maternalChildService.getUnderweightChildrenData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
             } else if (vm.step === "chart") {
                 vm.chartData = response.data.report_data.chart_data;
+                vm.all_locations = response.data.report_data.all_locations;
                 vm.top_three = response.data.report_data.top_three;
                 vm.bottom_three = response.data.report_data.bottom_three;
                 vm.location_type = response.data.report_data.location_type;
@@ -96,18 +96,25 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
 
     init();
 
-
     $scope.$on('filtersChange', function() {
         vm.loadData();
     });
 
+    vm.getDisableIndex = function () {
+        var i = -1;
+        window.angular.forEach(vm.selectedLocations, function (key, value) {
+            if (key.location_id === userLocationId) {
+                i = value;
+            }
+        });
+        return i;
+    };
 
     vm.moveToLocation = function(loc, index) {
         if (loc === 'national') {
             $location.search('location_id', '');
             $location.search('selectedLocationLevel', -1);
             $location.search('location_name', '');
-            $location.search('location', '');
         } else {
             $location.search('location_id', loc.location_id);
             $location.search('selectedLocationLevel', index);
@@ -157,20 +164,23 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
 
                     var findValue = function (values, date) {
                         var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
-                        return day['all'];
+                        return d3.format(".2%")(day['y']);
                     };
 
                     var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
-                    tooltip_content += "<p>100 - 35% children underweight: <strong>" + findValue(vm.chartData[2].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>20 - 35% children underweight: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
-                    tooltip_content += "<p>< 20% children underweigh: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p><br/>";
-                    tooltip_content += "<span '>Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.</span>";
+                    tooltip_content += "<p>% children moderately underweight: <strong>" + findValue(vm.chartData[0].values, d.value) + "</strong></p>";
+                    tooltip_content += "<p>% children severely underweight: <strong>" + findValue(vm.chartData[1].values, d.value) + "</strong></p>";
+                    tooltip_content += "<span>Percentage of children between 0-5 years enrolled for ICDS services with weight-for-age below -2 standard deviations of the WHO Child Growth Standards median (moderately underweight) or weight-for-age below -3 standard deviations of the WHO Growth Standards median (severely underweight).</span>";
 
                     return tooltip_content;
                 });
                 return chart;
             },
         },
+    };
+
+    vm.showNational = function () {
+        return !isNaN($location.search()['selectedLocationLevel']) && parseInt($location.search()['selectedLocationLevel']) >= 0;
     };
 }
 

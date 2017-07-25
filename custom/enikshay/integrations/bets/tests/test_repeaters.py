@@ -325,8 +325,9 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             )
 
     def test_ayush_referral_payload(self):
-        self.episode.attrs['update']['created_by_user_location_id'] = self.pac.location_id
-        self.episode.attrs['update']['created_by_user_id'] = self.user.user_id
+        self.pac.user_id = self.user.user_id
+        self.pac.save()
+        self.episode.attrs['update']['registered_by'] = self.pac.location_id
         cases = self.create_case_structure()
         self.assign_person_to_location(self.pcp.location_id)
         episode = cases[self.episode_id]

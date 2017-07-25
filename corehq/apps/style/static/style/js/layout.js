@@ -106,7 +106,7 @@ hqLayout.actions = {
                 }
             }
 
-            if ($content.find("#formdesigner").length && !COMMCAREHQ.toggleEnabled('APP_MANAGER_V2')) {
+            if ($content.find("#formdesigner").length && COMMCAREHQ.toggleEnabled('APP_MANAGER_V1')) {
                 $content.css("padding-left", 0);
                 $content.css("padding-right", 0);
             }

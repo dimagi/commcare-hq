@@ -136,7 +136,7 @@ class SupplyPointStatus(models.Model):
                                    max_length=50)
     status_value = models.CharField(max_length=50,
                                     choices=((c, c) for c in SupplyPointStatusValues.CHOICES))
-    status_date = models.DateTimeField(default=datetime.utcnow)
+    status_date = models.DateTimeField(default=datetime.utcnow, db_index=True)
     location_id = models.CharField(max_length=100, db_index=True)
     external_id = models.PositiveIntegerField(null=True, db_index=True)
 
@@ -181,7 +181,7 @@ class ReportingModel(models.Model):
     """
     A model to encapsulate aggregate (data warehouse) data used by a report.
     """
-    date = models.DateTimeField()                   # viewing time period
+    date = models.DateTimeField(db_index=True)  # viewing time period
     location_id = models.CharField(max_length=100, db_index=True)
     create_date = models.DateTimeField(editable=False)
     update_date = models.DateTimeField(editable=False)

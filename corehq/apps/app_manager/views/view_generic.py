@@ -96,7 +96,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             # Soft assert but then continue rendering; template will contain a user-facing warning
             _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
             _assert(False, 'vellum_case_management=False', {'domain': domain, 'app_id': app_id})
-        if (form is not None and "usercase_preload" in form.actions
+        if (form is not None and "usercase_preload" in getattr(form, "actions", {})
                 and form.actions.usercase_preload.preload):
             _assert = soft_assert(['dmiller' + '@' + 'dimagi.com'])
             _assert(False, 'User property easy refs + old-style config = bad', {
@@ -161,12 +161,12 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
             'is_app_settings_page': not release_manager,
         })
     else:
-        if toggles.APP_MANAGER_V2.enabled(request.user.username):
-            from corehq.apps.dashboard.views import DomainDashboardView
-            return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
-        else:
+        if toggles.APP_MANAGER_V1.enabled(request.user.username):
             from corehq.apps.dashboard.views import NewUserDashboardView
             return HttpResponseRedirect(reverse(NewUserDashboardView.urlname, args=[domain]))
+        else:
+            from corehq.apps.dashboard.views import DomainDashboardView
+            return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
 
     # update multimedia context for forms and modules.
     menu_host = form or module

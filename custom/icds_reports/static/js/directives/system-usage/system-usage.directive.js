@@ -1,6 +1,6 @@
 var url = hqImport('hqwebapp/js/urllib.js').reverse;
 
-function SystemUsageController($http, $log, $routeParams, $location, storageService) {
+function SystemUsageController($http, $log, $routeParams, $location, storageService, userLocationId) {
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
@@ -30,10 +30,20 @@ function SystemUsageController($http, $log, $routeParams, $location, storageServ
     };
 
     vm.steps = {
-        "maternal_child": {"route": "/program_summary/maternal_child", "label": "Maternal & Child Nutrition", "data": null},
+        "maternal_child": {"route": "/program_summary/maternal_child", "label": "Maternal and Child Nutrition", "data": null},
         "icds_cas_reach": {"route": "/program_summary/icds_cas_reach", "label": "ICDS CAS Reach", "data": null},
         "demographics": {"route": "/program_summary/demographics", "label": "Demographics", "data": null},
         "awc_infrastructure": {"route": "/program_summary/awc_infrastructure", "label": "AWC Infrastructure", "data": null},
+    };
+
+    vm.getDisableIndex = function () {
+        var i = -1;
+        window.angular.forEach(vm.selectedLocations, function (key, value) {
+            if (key.location_id === userLocationId) {
+                i = value;
+            }
+        });
+        return i;
     };
 
     vm.moveToLocation = function(loc, index) {
@@ -41,7 +51,6 @@ function SystemUsageController($http, $log, $routeParams, $location, storageServ
             $location.search('location_id', '');
             $location.search('selectedLocationLevel', -1);
             $location.search('location_name', '');
-            $location.search('location', '');
         } else {
             $location.search('location_id', loc.location_id);
             $location.search('selectedLocationLevel', index);
@@ -52,7 +61,7 @@ function SystemUsageController($http, $log, $routeParams, $location, storageServ
     vm.getDataForStep(vm.step);
 }
 
-SystemUsageController.$inject = ['$http', '$log', '$routeParams', '$location', 'storageService'];
+SystemUsageController.$inject = ['$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId'];
 
 window.angular.module('icdsApp').directive('systemUsage', function() {
     return {

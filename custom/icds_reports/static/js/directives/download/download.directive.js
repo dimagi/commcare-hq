@@ -190,6 +190,14 @@ function DownloadController($location, locationHierarchy, locationsService, user
         locationsService.getChildren($item.location_id).then(function(data) {
             locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
         });
+        var levels = [];
+        window.angular.forEach(vm.levels, function (value) {
+            if (value.id >= selectedLocationIndex() + 1) {
+                levels.push(value);
+            }
+        });
+        vm.levels = levels;
+        vm.selectedLevel = selectedLocationIndex() + 1;
 
         vm.selectedLocations[level + 1] = ALL_OPTION.location_id;
         vm.selectedLocationId = vm.selectedLocations[selectedLocationIndex()];

@@ -2,7 +2,6 @@ from django.conf.urls import url, include
 
 from corehq.apps.cloudcare.views import (
     EditCloudcareUserPermissionsView,
-    CloudcareMain,
     ReadableQuestions,
     FormplayerMain,
     FormplayerMainPreview,
@@ -31,7 +30,6 @@ app_urls = [
         SingleAppLandingPageView.as_view(),
         name=SingleAppLandingPageView.urlname
     ),
-    url(r'^(?P<urlPath>.*)$', CloudcareMain.as_view(), name='cloudcare_main'),
 ]
 
 api_urls = [

@@ -65,7 +65,7 @@ def upload_bulk_ui_translations(request, domain, app_id):
         messages.success(request, _("UI Translations Updated!"))
 
     # In v2, languages is the default tab on the settings page
-    view_name = 'app_settings' if toggles.APP_MANAGER_V2.enabled(request.user.username) else 'app_languages'
+    view_name = 'app_languages' if toggles.APP_MANAGER_V1.enabled(request.user.username) else 'app_settings'
     return HttpResponseRedirect(reverse(view_name, args=[domain, app_id]))
 
 
@@ -101,7 +101,7 @@ def upload_bulk_app_translations(request, domain, app_id):
         msg[0](request, msg[1])
 
     # In v2, languages is the default tab on the settings page
-    view_name = 'app_settings' if toggles.APP_MANAGER_V2.enabled(request.user.username) else 'app_languages'
+    view_name = 'app_languages' if toggles.APP_MANAGER_V1.enabled(request.user.username) else 'app_settings'
     return HttpResponseRedirect(
         reverse(view_name, args=[domain, app_id])
     )

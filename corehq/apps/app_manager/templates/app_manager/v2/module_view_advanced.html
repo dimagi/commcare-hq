@@ -5,8 +5,8 @@
 
 {% block js %}{{ block.super }}
     {% if module.has_schedule or request|toggle_enabled:"VISIT_SCHEDULER" %}
-        <script src="{% static 'app_manager/js/case-config-utils.js' %}"></script>
-        <script src="{% static 'app_manager/js/visit-scheduler.js' %}"></script>
+        <script src="{% static 'app_manager/js/case_config_utils.js' %}"></script>
+        <script src="{% static 'app_manager/js/visit_scheduler.js' %}"></script>
     {% endif %}
 {% endblock %}
 
