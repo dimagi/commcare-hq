@@ -34,9 +34,10 @@ from custom.icds_reports.utils import get_maternal_child_data, get_cas_reach_dat
     get_newborn_with_low_birth_weight_data, get_newborn_with_low_birth_weight_map, \
     get_newborn_with_low_birth_weight_chart, get_early_initiation_breastfeeding_data, \
     get_early_initiation_breastfeeding_map, get_early_initiation_breastfeeding_chart, \
-    get_children_initiated_sector_data, get_children_initiated_data_map, get_children_initiated_data_chart, \
-    get_institutional_deliveries_sector_data, get_institutional_deliveries_data_map, \
-    get_institutional_deliveries_data_chart, get_immunization_coverage_sector_data, get_immunization_coverage_data_map, \
+    get_children_initiated_sector_data, get_children_initiated_data_map, \
+    get_children_initiated_data_chart, get_institutional_deliveries_sector_data, \
+    get_institutional_deliveries_data_map, get_institutional_deliveries_data_chart, \
+    get_immunization_coverage_sector_data, get_immunization_coverage_data_map, \
     get_immunization_coverage_data_chart
 from . import const
 from .exceptions import TableauTokenException
