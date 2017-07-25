@@ -39,12 +39,10 @@ from corehq.apps.cloudcare.api import (
     CaseAPIResult,
     get_filtered_cases,
     get_filters_from_request_params,
-    look_up_app_json,
 )
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_app_id_from_hash
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
-from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper
 from corehq.apps.cloudcare.const import WEB_APPS_ENVIRONMENT, PREVIEW_APP_ENVIRONMENT
@@ -401,19 +399,6 @@ def get_cases(request, domain):
                                    footprint=footprint, ids_only=ids_only,
                                    strip_history=True)
     return json_response(cases)
-
-
-@cloudcare_api
-def get_apps_api(request, domain):
-    return json_response(get_cloudcare_apps(domain))
-
-
-@cloudcare_api
-def get_app_api(request, domain, app_id):
-    try:
-        return json_response(look_up_app_json(domain, app_id))
-    except RemoteAppError:
-        raise Http404()
 
 
 @cloudcare_api
