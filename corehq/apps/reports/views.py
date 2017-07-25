@@ -2009,7 +2009,7 @@ def mk_date_range(start=None, end=None, ago=timedelta(days=7), iso=False):
 
 
 def _can_view_report(domain, user, report_class):
-    return (user.has_permission(domain, Permissions.view_reports)
+    return (user.has_permission(domain, Permissions.view_report)
             or user.has_permission(domain, Permissions.view_report, data=report_class))
 
 
