@@ -451,17 +451,18 @@ class ENikshay2BMigrator(object):
         )
 
     def open_secondary_owners(self, drtb_hiv, person, occurrences):
+        if not occurrences:
+            return None
+
         self.total_secondary_owners += 1
-        if occurrences:
-            occurrence = max((case.opened_on, case) for case in occurrences)[1]
-            index_kwargs = {'indices': [CaseIndex(
-                occurrence,
-                identifier='host',
-                relationship=CASE_INDEX_EXTENSION,
-                related_type=CASE_TYPE_OCCURRENCE,
-            )]}
-        else:
-            index_kwargs = {}
+
+        occurrence = max((case.opened_on, case) for case in occurrences)[1]
+        index_kwargs = {'indices': [CaseIndex(
+            occurrence,
+            identifier='host',
+            relationship=CASE_INDEX_EXTENSION,
+            related_type=CASE_TYPE_OCCURRENCE,
+        )]}
 
         location = self.locations.get(person.owner_id)
         props = {
