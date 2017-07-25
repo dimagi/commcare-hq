@@ -27,6 +27,10 @@ class Command(BaseCommand):
                 continue
 
             episode_cases = CaseAccessors(domain).get_cases_by_external_id(nikshay_id, case_type='episode')
+            if len(episode_cases) == 0:
+                logging.info('no episode case: %s' % nikshay_id)
+                continue
+
             assert len(episode_cases) == 1
             episode_case = episode_cases[0]
             patient_detail = PatientDetail.objects.get(PregId=nikshay_id)
