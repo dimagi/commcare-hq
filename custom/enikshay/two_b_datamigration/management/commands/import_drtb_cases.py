@@ -77,7 +77,6 @@ MEHSANA_2017_MAP = {
     "Eto": 25,
     "Clr": 26,
     "Azi": 27,
-    "treatment_initiation_center": 34,
     "treatment_status": 35,
     "drtb_number": 36,
     "treatment_initiation_date": 37,
@@ -202,11 +201,13 @@ MUMBAI_MAP = {
     # TODO: (WAITING) not sure how this maps
     "bdq_eligible": 70,
     "treatment_initiation_date": 71,
-    "treatment_initiated_by": 72,
     "drtb_type": 74,
     # TODO: (WAITING) treatment status here is different sorts of values than in the other mappings
     # "treatment_status": 75,
+    "treatment_regimen": 76,
     "ip_to_cp_date": 79,
+    "treatment_outcome": 162,
+    "date_of_treatment_outcome": 163,
 }
 
 
@@ -473,8 +474,7 @@ def get_person_case_properties(domain, column_mapping, row):
         properties['language_code'] = "hin"
 
     social_scheme = column_mapping.get_value("social_scheme", row)
-    if social_scheme:
-        raise Exception("has social scheme: {}".format(social_scheme))
+    properties["socioeconomic_status"] = clean_socioeconomic_status(social_scheme)
 
     return properties
 
@@ -496,10 +496,6 @@ def get_occurrence_case_properties(column_mapping, row):
 
 
 def get_episode_case_properties(domain, column_mapping, row):
-
-    if column_mapping.get_value("treatment_initiated_by", row):
-        raise NotImplementedError(
-            "No example data was in the original data dump, so didn't know how to handle it.")
 
     report_sending_date = column_mapping.get_value("report_sending_date", row)
     report_sending_date = clean_date(report_sending_date)
@@ -523,9 +519,6 @@ def get_episode_case_properties(domain, column_mapping, row):
         "treatment_card_completed_date": treatment_card_completed_date,
         "regimen_change_history": get_episode_regimen_change_history(
             column_mapping, row, treatment_initiation_date),
-        "treatment_initiating_facility_id": match_facility(
-            domain, column_mapping.get_value("treatment_initiation_center", row)
-        )[1],
         "pmdt_tb_number": column_mapping.get_value("drtb_number", row),
         "treatment_status_other": column_mapping.get_value("reason_for_not_initiation_on_treatment", row),
         "treatment_outcome": convert_treatment_outcome(column_mapping.get_value("treatment_outcome", row)),
@@ -533,7 +526,8 @@ def get_episode_case_properties(domain, column_mapping, row):
         "weight": column_mapping.get_value("weight", row),
         "weight_band": clean_weight_band(column_mapping.get_value("weight_band", row)),
         "height": clean_height(column_mapping.get_value("height", row)),
-        "diagnosis_test_specimen_date": clean_date(column_mapping.get_value("cbnaat_sample_date", row))
+        "diagnosis_test_specimen_date": clean_date(column_mapping.get_value("cbnaat_sample_date", row)),
+        "treatment_regimen": clean_treatment_regimen(column_mapping.get_value("treatment_regimen", row)),
     }
 
     raw_treatment_status = column_mapping.get_value("treatment_status", row)
@@ -630,8 +624,15 @@ def get_disease_site_properties(column_mapping, row):
     if not xlsx_value:
         return {}
     if xlsx_value.split()[0] in ("EP", "Extrapulmonary"):
-        return {"disease_classification": "extra_pulmonary"}
-    # TODO: (WAITING) Best guess at mapping is here:
+        return {
+            "disease_classification": "extra_pulmonary",
+            "site_choice": None,
+            "site_detail": xlsx_value,
+        }
+    return {
+        "site_detail": xlsx_value,
+    }
+    # TODO: (WAITING) waiting for EY to explain the mapping
     # https://docs.google.com/spreadsheets/d/1Pz-cYNvo5BkF-Sta1ol4ZzfBYIQ4kGlZ3FdJgBLe5WE/edit#gid=1748484835
 
 
@@ -645,6 +646,7 @@ def convert_treatment_outcome(xlsx_value):
         "DIED": "died",
         None: None
     }[xlsx_value]
+    # TODO: (WAITING) waiting on mumbai mapping values
 
 
 def get_selection_criteria_properties(column_mapping, row):
@@ -853,15 +855,14 @@ def get_culture_test_case_properties(domain, column_mapping, row):
 
 
 def get_dst_test_case_properties(column_mapping, row):
-    if column_mapping.get_value("dst_type", row):
-        raise NotImplementedError(
-            "No example data was in the original data dump, so didn't know how to handle it.")
-    # TODO: (WAITING) Return None if this doesn't have anything
+    # TODO: (WAITING) Return None from this function if
+    # get_dst_test_resistance_propertie doesn't have any props
     resistance_props = get_dst_test_resistance_properties(column_mapping, row)
     properties = {
         "owner_id": "-",
         "date_tested": clean_date(column_mapping.get_value("dst_sample_date", row)),
         "date_reported": column_mapping.get_value("culture_result_date", row),
+        "dst_test_type": column_mapping.get_value("dst_type", row),
     }
     # TODO: (WAITING) Finish this. (waiting on drug details)
     return None
@@ -1094,7 +1095,7 @@ def clean_diabetes_status(xlsx_value):
 
 def clean_weight_band(value):
     pass
-    # TODO: Finish me
+    # TODO: (WAITING) Not sure what the valid values are
 
 
 def clean_height(value):
@@ -1103,6 +1104,16 @@ def clean_height(value):
     if re.match("[0-9]*", str(value)):
         return value
     raise Exception("Invalid height: {}".format(value))
+
+
+def clean_treatment_regimen(value):
+    if value is None:
+        return None
+    return {
+        "Regimen for MDR/RR TB": "mdr_rr",
+        "Regimen for XDR TB": "xdr",
+        "Modified regimen for MDR/RR TB+ FQ/SLI resistance": "mdr_rr_fq_sli",
+    }[value]
 
 
 def clean_phone_number(value, digits):
@@ -1154,6 +1165,15 @@ def clean_hiv_status(value):
         "Negative": NON_REACTIVE,
         "Neg": NON_REACTIVE,
     }[value]
+
+
+def clean_socioeconomic_status(value):
+    if value is None:
+        return "unknown"
+    return {
+        "bpl": "bpl",
+        "apl": "apl",
+    }[value.lower()]
 
 
 def clean_result(value):
