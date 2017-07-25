@@ -62,6 +62,7 @@ def safe_cached_download(f):
             response = f(request, *args, **kwargs)
             if not latest and request.app.copy_of is not None and request.app.is_released:
                 response._always_allow_browser_caching = True
+                response._remember_domain = False
             return response
         except (AppEditingError, CaseError, ValueError) as e:
             logging.exception(e)
