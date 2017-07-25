@@ -12,7 +12,6 @@
     <script src="{% static 'hqwebapp/js/lib/history-1.7.1.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/bootstrap-tab-history-custom.js' %}"></script>
     <script src="{% static 'app_manager/js/managed_app.js' %}"></script>
-    <script src="{% static 'hqwebapp/js/rollout_modal.js' %}"></script>
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -90,16 +89,10 @@
             {% endif %}
         </li>
         {% endif %}
-        <li class="rollout-toggle-label">
+        <li>
             <a href="{% url "app_summary" domain app.id %}">
                 <i class="fa fa-list"></i>
                 {% trans "App Summary" %}
-            </a>
-        </li>
-        <li>
-            <a href="#" data-toggle="modal" data-target="#rollout-modal">
-                <i class="fa fa-bell-o"></i>
-                {% trans "New App Builder" %}
             </a>
         </li>
         <li class="divider"></li>
@@ -305,8 +298,4 @@
     {% initial_page_data 'app_subset' app_subset %}
     {% initial_page_data 'formdesigner' formdesigner %}
     {% block form-view %}{% endblock %}
-{% endblock %}
-
-{% block modals %}{{ block.super }}
-    {% include "hqwebapp/rollout_modal.html" %}
 {% endblock %}
