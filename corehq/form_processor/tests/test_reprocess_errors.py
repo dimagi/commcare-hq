@@ -15,7 +15,7 @@ from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, FormAccessorSQL
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.models import XFormInstanceSQL
-from corehq.form_processor.reprocess import reprocess_xform_error, _reprocess_form
+from corehq.form_processor.reprocess import reprocess_xform_error, reprocess_unfinished_stub
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from couchforms.models import UnfinishedSubmissionStub
 
@@ -96,19 +96,22 @@ class ReprocessXFormErrorsTestSQL(ReprocessXFormErrorsTest):
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
 class ReprocessSubmissionStubTests(TestCase):
-    @classmethod
-    def setUpClass(cls):
-        super(ReprocessSubmissionStubTests, cls).setUpClass()
-        cls.domain = uuid.uuid4().hex
-        cls.factory = CaseFactory(domain=cls.domain)
-
+    def setUp(self):
+        super(ReprocessSubmissionStubTests, self).setUp()
+        self.domain = uuid.uuid4().hex
+        self.factory = CaseFactory(domain=self.domain)
+        
+    def tearDown(self):
+        FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
+        super(ReprocessSubmissionStubTests, self).tearDown()
+        
     def test_reprocess_unfinished_submission_case_create(self):
         case_id = uuid.uuid4().hex
         transaction_patch = patch('corehq.form_processor.backends.sql.processor.transaction')
         case_save_patch = patch('corehq.form_processor.backends.sql.dbaccessors.CaseAccessorSQL.save_case', side_effect=InternalError)
         with transaction_patch, case_save_patch, self.assertRaises(InternalError):
             self.factory.create_or_update_cases([
-                CaseStructure(case_id=case_id, attrs={'case_type': 'parent', 'create': False})
+                CaseStructure(case_id=case_id, attrs={'case_type': 'parent', 'create': True})
             ])
 
         stubs = UnfinishedSubmissionStub.objects.filter(domain=self.domain, saved=False).all()
@@ -127,13 +130,43 @@ class ReprocessSubmissionStubTests(TestCase):
 
         self.assertEqual(0, len(CaseAccessorSQL.get_case_ids_in_domain(self.domain)))
 
-        _reprocess_form(FormAccessorSQL.get_form(normal_form_ids[0]))
+        reprocess_unfinished_stub(stubs[0])
         case_ids = CaseAccessorSQL.get_case_ids_in_domain(self.domain)
         self.assertEqual(1, len(case_ids))
         self.assertEqual(case_id, case_ids[0])
 
+        with self.assertRaises(UnfinishedSubmissionStub.DoesNotExist):
+            UnfinishedSubmissionStub.objects.get(pk=stubs[0].pk)
+
     def test_reprocess_unfinished_submission_case_update(self):
-        pass
+        case_id = uuid.uuid4().hex
+        self.factory.create_or_update_cases([
+            CaseStructure(case_id=case_id, attrs={'case_type': 'parent', 'create': True})
+        ])
+
+        transaction_patch = patch('corehq.form_processor.backends.sql.processor.transaction')
+        case_save_patch = patch('corehq.form_processor.backends.sql.dbaccessors.CaseAccessorSQL.save_case', side_effect=InternalError)
+        with transaction_patch, case_save_patch, self.assertRaises(InternalError):
+            self.factory.create_or_update_cases([
+                CaseStructure(case_id=case_id, attrs={'create': False})
+            ])
+
+        stubs = UnfinishedSubmissionStub.objects.filter(domain=self.domain, saved=False).all()
+        self.assertEqual(1, len(stubs))
+
+        case = CaseAccessorSQL.get_case(case_id)
+        self.assertEqual(1, len(case.transactions))
+
+        normal_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_state(self.domain, XFormInstanceSQL.NORMAL)
+        self.assertEqual(2, len(normal_form_ids))
+
+        reprocess_unfinished_stub(stubs[0])
+
+        case = CaseAccessorSQL.get_case(case_id)
+        self.assertEqual(2, len(case.transactions))
+
+        with self.assertRaises(UnfinishedSubmissionStub.DoesNotExist):
+            UnfinishedSubmissionStub.objects.get(pk=stubs[0].pk)
 
     def test_reprocess_unfinished_submission_ledger_create(self):
         pass
