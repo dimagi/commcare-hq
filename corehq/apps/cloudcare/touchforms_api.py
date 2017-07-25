@@ -3,10 +3,7 @@ from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from touchforms.formplayer.api import post_data
 import json
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
-from django.urls import reverse
 from corehq.apps.users.models import CouchUser
-from corehq import toggles
-from django.conf import settings
 
 DELEGATION_STUB_CASE_TYPE = "cc_delegation_stub"
 
