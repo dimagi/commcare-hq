@@ -10,7 +10,6 @@ from django.conf import settings
 from django.http import HttpResponse
 from django.template import RequestContext
 from django.shortcuts import render_to_response as django_r_to_r
-from django.core.paginator import Paginator, EmptyPage, InvalidPage
 import json
 from django.utils.encoding import force_unicode
 from django.utils.functional import Promise
@@ -76,75 +75,6 @@ def render_to_response(req, template_name, dictionary=None, **kwargs):
     return django_r_to_r(template_name, rs_dict, **kwargs)
 
 
-def paginated(req, query_set, per_page=20, prefix="", wrapper=None):
-
-    # since the behavior of this function depends on
-    # the GET parameters, if there is more than one
-    # paginated set per view, we'll need to prefix
-    # the parameters to differentiate them
-    prefix = ("%s-" % (prefix)) if prefix else ""
-
-    # the per_page argument to this function provides
-    # a default, but can be overridden per-request. no
-    # interface for this yet, so it's... an easter egg?
-    if (prefix + "per-page") in req.GET:
-        try:
-            per_page = int(req.GET[prefix+"per-page"])
-
-        # if it was provided, it must be valid. we don't
-        # want links containing extra useless junk like
-        # invalid GET parameters floating around
-        except ValueError:
-            raise ValueError("Invalid per-page parameter: %r" %
-                (req.GET[prefix + "per-page"]))
-
-    try:
-        page = int(req.GET.get(prefix+"page", "1"))
-        paginator = Paginator(query_set, per_page)
-        objects = paginator.page(page)
-
-    # have no mercy if the page parameter is not valid. there
-    # should be no links to an invalid page, so coercing it to
-    # assume "page=xyz" means "page=1" would just mask bugs
-    except (ValueError, EmptyPage, InvalidPage):
-        raise ValueError("Invalid Page: %r" %
-            (req.GET[prefix + "page"]))
-
-    # if a wrapper function was provided, call it for each
-    # object on the page, and replace the list with the result
-    if wrapper is not None:
-        objects.raw_object_list = objects.object_list
-        objects.object_list = list(map(wrapper, objects.object_list))
-
-    # attach the prefix (if provided; might be blank) to the
-    # objects, where it can be found by the {% paginator %} tag
-    objects.prefix = prefix
-
-    return objects
-
-
-def self_link(req, **kwargs):
-    new_kwargs = req.GET.copy()
-
-    # build a new querydict using the GET params from the
-    # current request, with those passed to this function
-    # overridden. we can't use QueryDict.update here, since
-    # it APPENDS, rather than REPLACING keys. i hate CGI :|
-    for k, v in kwargs.items():
-        new_kwargs[k] = v
-
-    # return the same path that we're currently
-    # viewing, with the updated query string
-    kwargs_enc = new_kwargs.urlencode()
-    return "%s?%s" % (req.path, kwargs_enc)
-
-def web_message(req, msg, link=None):
-    return render_to_response(req,
-        "message.html", {
-            "message": msg,
-            "link": link
-    })
-
 def parse_int(arg_keys=[], kwarg_keys=[]):
     """
     A decorator to translate coerce arguments to be ints
@@ -168,6 +98,7 @@ def parse_int(arg_keys=[], kwarg_keys=[]):
             return fn(*args, **kwargs)
         return _fn
     return _parse_int
+
 
 # http://stackoverflow.com/questions/455580/json-datetime-between-python-and-javascript
 def json_handler(obj):
@@ -215,6 +146,7 @@ def json_request(params, lenient=True, booleans_as_strings=False):
 # get_ip was stolen verbatim from auditcare.utils
 # this is not intended to be an all-knowing IP address regex
 IP_RE = re.compile('\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}')
+
 
 def get_ip(request):
     """

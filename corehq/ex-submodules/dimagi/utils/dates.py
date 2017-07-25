@@ -44,20 +44,6 @@ def force_to_datetime(val):
         raise ValueError("object must be date or datetime!")
 
 
-def safe_date_add(startdate, days, force_to_date_flag=True):
-    if not startdate:
-        return None
-    try: 
-        val = startdate + datetime.timedelta(days)
-        if force_to_date_flag:
-            return force_to_date(val)
-        else:
-            return val
-    except OverflowError as e:
-        logging.exception(str(e))
-        return None
-
-
 def months_between(start, end):
     """
     Given a start date and enddate return all months between them.
@@ -107,16 +93,6 @@ def first_of_next_month(ref_date):
     """
     year, month = add_months(ref_date.year, ref_date.month, 1)
     return type(ref_date)(year, month, 1)
-
-
-def delta_secs(td):
-    """convert a timedelta to seconds"""
-    return 86400. * td.days + td.seconds + 1.0e-6 * td.microseconds
-
-
-def secs_to_days(seconds):
-    """convert a number of seconds to days"""
-    return float(seconds) / 86400. 
 
 
 def utcnow_sans_milliseconds():
@@ -415,13 +391,6 @@ class DateSpan(object):
         self.timezone = to_tz
 
 
-def is_business_day(day):
-    """
-    Simple method to whether something is a business day, assumes M-F working
-    days.
-    """
-    return day.weekday() < 5
-    
 def get_day_of_month(year, month, count):
     """
     For a given month get the Nth day.
@@ -450,27 +419,6 @@ def get_business_day_of_month(year, month, count):
         raise ValueError("No dates found in range. is there a flaw in your logic?")
     return res.date()
 
-def get_business_day_of_month_after(year, month, day):
-    """
-    For a given month get the business day of the month 
-    that falls on or after the passed in day
-    """
-    try:
-        adate = datetime.datetime(year, month, day)
-    except ValueError:
-        try:
-            adate = datetime.datetime(year, month, 30)
-        except ValueError:
-            try:
-                adate = datetime.datetime(year, month, 29)
-            except ValueError:
-                adate = datetime.datetime(year, month, 28)
-    r = rrule(MONTHLY, byweekday=(MO, TU, WE, TH, FR), 
-              dtstart=datetime.datetime(year,month, 1))
-    res = r.after(adate, inc=True)
-    if (res == None or res.month != month or res.year != year):
-        raise ValueError("No dates found in range. is there a flaw in your logic?")
-    return res.date()
 
 def get_business_day_of_month_before(year, month, day):
     """
