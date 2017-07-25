@@ -160,54 +160,55 @@ MUMBAI_MAP = {
     "age_entered": 10,
     "address": 11,
     "phone_number": 12,
-    "initial_home_visit_date": 14,
-    "aadhaar_number": 15,
-    "social_scheme": 16,
-    "district_name": 18,
-    "phi_name": 21,
-    "reason_for_testing": 23,
-    "site_of_disease": 24,
-    "type_of_patient": 25,  # TODO: (WAITING) Map this value to case properties
-    "weight": 26,
-    "weight_band": 27,
-    "height": 28,
-    "hiv_status": 29,
-    "hiv_test_date": 30,
-    "hiv_program_id": 31,
-    "cpt_initiation_date": 32,
-    "art_initiation_date": 33,
-    "diabetes": 34,
-    "cbnaat_lab": 35,  # This is similar to testing_facility, but slightly different
-    "cbnaat_sample_date": 36,
-    "cbnaat_result": 37,
-    "cbnaat_result_date": 38,
-    "lpa_lab": 39,
-    "lpa_sample_date": 40,
-    "lpa_rif_result": 41,
-    "lpa_inh_result": 42,
-    "lpa_result_date": 43,
-    "sl_lpa_lab": 44,
-    "sl_lpa_sample_date": 45,
-    "sl_lpa_result": 46,
-    "sl_lpa_result_date": 47,
-    "culture_lab": 48,
-    "culture_sample_date": 49,
-    "culture_type": 50,
-    "culture_result": 51,
-    "culture_result_date": 52,
-    "dst_sample_date": 53,
-    "dst_type": 54,
+    "initial_home_visit_date": 18,
+    "aadhaar_number": 19,
+    "social_scheme": 20,
+    "district_name": 22,
+    "phi_name": 25,
+    "reason_for_testing": 27,
+    "site_of_disease": 28,
+    "type_of_patient": 29,  # TODO: (WAITING) Map this value to case properties
+    "weight": 30,
+    "weight_band": 31,
+    "height": 32,
+    "hiv_status": 33,
+    "hiv_test_date": 34,
+    "hiv_program_id": 35,
+    "cpt_initiation_date": 36,
+    "art_initiation_date": 37,
+    "diabetes": 38,
+    "cbnaat_lab": 39,  # This is similar to testing_facility, but slightly different
+    "cbnaat_sample_date": 41,
+    "cbnaat_result": 42,
+    "cbnaat_result_date": 43,
+    "lpa_lab": 44,
+    "lpa_sample_date": 46,
+    "lpa_rif_result": 47,
+    "lpa_inh_result": 48,
+    "lpa_result_date": 49,
+    "sl_lpa_lab": 51,
+    "sl_lpa_sample_date": 52,
+    "sl_lpa_result": 53,
+    "sl_lpa_result_date": 54,
+    "culture_lab": 55,
+    "culture_sample_date": 57,
+    "culture_type": 58,
+    "culture_result": 59,
+    "culture_result_date": 60,
+    "dst_sample_date": 61,
+    "dst_type": 62,
+    # LAST
     # TODO: (WAITING) DST Drug specific columns
     # TODO: (WAITING) not sure how this maps
-    "bdq_eligible": 70,
-    "treatment_initiation_date": 71,
-    "drtb_type": 74,
+    "bdq_eligible": 89,
+    "treatment_initiation_date": 90,
+    "drtb_type": 93,
     # TODO: (WAITING) treatment status here is different sorts of values than in the other mappings
-    # "treatment_status": 75,
-    "treatment_regimen": 76,
-    "ip_to_cp_date": 79,
-    "treatment_outcome": 162,
-    "date_of_treatment_outcome": 163,
+    # "treatment_status": 94,
+    "treatment_regimen": 95,
+    "ip_to_cp_date": 98,
+    "treatment_outcome": 181,
+    "date_of_treatment_outcome": 182,
 }
 
 
@@ -326,18 +327,12 @@ class MumbaiColumnMapping(ColumnMapping):
         "phi_name",
         # The phi must also be valid, but this is checked in the match_phi function.
     )
-    follow_up_culture_index_start = 90
+    follow_up_culture_index_start = 109
     follow_up_culture_month_start = 3
 
     @classmethod
     def get_follow_up_culture_result(cls, month, row):
-        if month == 36:
-            # For some reason the sheet jumps from 33 to 36, so just special casing it.
-            index = 152
-        else:
-            assert month >= 3 and month <= 33
-            offset = (month - 3) * 2
-            index = cls.follow_up_culture_index_start + offset
+        index = cls._get_follow_up_start_index(month)
         try:
             return row[index].value
         except IndexError:
@@ -345,17 +340,22 @@ class MumbaiColumnMapping(ColumnMapping):
 
     @classmethod
     def get_follow_up_culture_date(cls, month, row):
-        if month == 36:
-            # For some reason the sheet jumps from 33 to 36, so just special casing it.
-            index = 153
-        else:
-            assert month >= 3 and month <= 33
-            offset = ((month - 3) * 2) + 1
-            index = cls.follow_up_culture_index_start + offset
+        index = cls._get_follow_up_start_index(month) + 1
         try:
             return row[index].value
         except IndexError:
             return None
+
+    @classmethod
+    def _get_follow_up_start_index(cls, month):
+        if month == 36:
+            # For some reason the sheet jumps from 33 to 36, so just special casing it.
+            index = 171
+        else:
+            assert month >= 3 and month <= 33
+            offset = (month - 3) * 2
+            index = cls.follow_up_culture_index_start + offset
+        return index
 
 
 class MumbaiConstants(object):
