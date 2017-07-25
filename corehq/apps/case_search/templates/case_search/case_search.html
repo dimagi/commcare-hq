@@ -35,6 +35,10 @@
                                     {% trans "Owner ID:" %}
                                     <input name="type" type="text" placeholder="Owner ID (optional)" data-bind="value: owner_id"/>
                                 </label>
+                                <label>
+                                    {% trans "Include Closed:" %}
+                                    <input name="type" type="checkbox" data-bind="checked: includeClosed"/>
+                                </label>
                             </div>
                         </div>
                         <div class="panel panel-default">

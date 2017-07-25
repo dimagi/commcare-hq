@@ -159,6 +159,18 @@ hqDefine('cloudcare/js/util.js', function () {
         }
     };
 
+    var clearUserDataComplete = function(isError) {
+        hideLoading();
+        if (isError) {
+            showError(
+                gettext('Could not clear user data. Please report an issue if this persists.'),
+                $('#cloudcare-notifications')
+            );
+        } else {
+            showSuccess(gettext('User data successfully cleared.'), $('#cloudcare-notifications'), 5000);
+        }
+    };
+
     var hideLoading = function (selector) {
         NProgress.done();
     };
@@ -181,6 +193,7 @@ hqDefine('cloudcare/js/util.js', function () {
         showHTMLError: showHTMLError,
         showSuccess: showSuccess,
         showLoading: showLoading,
+        clearUserDataComplete: clearUserDataComplete,
         tfLoading: tfLoading,
         tfLoadingComplete: tfLoadingComplete,
         tfSyncComplete: tfSyncComplete,

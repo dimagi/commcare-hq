@@ -9,7 +9,6 @@ if not settings.configured:
 from mock import MagicMock, NonCallableMock, patch
 from unittest2 import TestCase
 
-from dimagi.utils.create_unique_filter import create_unique_filter
 from dimagi.utils.decorators.memoized import memoized
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.loosechange import AssocArray
@@ -18,10 +17,6 @@ from dimagi.utils.couch.sync_docs import sync_design_docs, copy_designs
 
 
 class DimagiUtilsTestCase(TestCase):
-    def test_create_unique_filter(self):
-        l = [{'id': 'a'}, {'id': 'b'}, {'id': 'a'}, {'id': 'c'}, {'id': 'b'}]
-        self.assertEquals(list(filter(create_unique_filter(lambda x: x['id']), l)), [{'id': 'a'}, {'id': 'b'}, {'id': 'c'}])
-        self.assertEquals(list(filter(create_unique_filter(lambda x: id(x)), l)), [{'id': 'a'}, {'id': 'b'}, {'id': 'a'}, {'id': 'c'}, {'id': 'b'}])
 
     def test_memoized_function(self):
         @memoized
