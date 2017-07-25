@@ -22,6 +22,10 @@ class Command(BaseCommand):
 
     def handle(self, domain, **options):
         for nikshay_id in DATA_DUMP_NIKSHAY_IDS:
+            if nikshay_id in SKIPPING_NIKSHAY_IDS:
+                logging.info('skipping Nikshay ID: %s' % nikshay_id)
+                continue
+
             episode_cases = CaseAccessors(domain).get_cases_by_external_id(nikshay_id, case_type='episode')
             assert len(episode_cases) == 1
             episode_case = episode_cases[0]
@@ -47,6 +51,8 @@ class Command(BaseCommand):
             else:
                 logging.info('no update needed: %s' % nikshay_id)
 
+SKIPPING_NIKSHAY_IDS = """
+""".split()
 
 DATA_DUMP_NIKSHAY_IDS = """
 GU-MSN-01-16-0020
