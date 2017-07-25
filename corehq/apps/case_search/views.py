@@ -42,8 +42,11 @@ class CaseSearchView(DomainViewMixin, TemplateView):
         owner_id = query.get('owner_id')
         search_params = query.get('parameters', [])
         query_addition = query.get("customQueryAddition", None)
+        include_closed = query.get("includeClosed", False)
         search = CaseSearchES()
-        search = search.domain(self.domain).is_closed(False).size(CASE_SEARCH_MAX_RESULTS)
+        search = search.domain(self.domain).size(CASE_SEARCH_MAX_RESULTS)
+        if not include_closed:
+            search = search.is_closed(False)
         if case_type:
             search = search.case_type(case_type)
         if owner_id:
