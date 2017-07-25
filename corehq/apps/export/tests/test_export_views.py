@@ -94,7 +94,7 @@ class DataFileDownloadDetailTest(ViewTestCase):
             'domain': self.domain, 'pk': self.data_file.pk, 'filename': 'foo.txt'
         })
         try:
-            resp = self.client.get(data_file_url)
+            self.client.get(data_file_url)
         except TypeError as err:
             self.fail('Getting a data file raised a TypeError: {}'.format(err))
 
