@@ -394,37 +394,7 @@ def form_context(request, domain, app_id, module_id, form_id):
 cloudcare_api = login_or_digest_ex(allow_cc_users=True)
 
 
-def get_cases_vary_on(request, domain):
-    request_params = request.GET
-
-    return [
-        request.couch_user.get_id
-        if request.couch_user.is_commcare_user() else request_params.get('user_id', ''),
-        request_params.get('ids_only', 'false'),
-        request_params.get('case_id', ''),
-        request_params.get('footprint', 'false'),
-        request_params.get('closed', 'false'),
-        json.dumps(get_filters_from_request_params(request_params)),
-        domain,
-    ]
-
-
-def get_cases_skip_arg(request, domain):
-    """
-    When this function returns True, quickcache will not go to the cache for the result. By default,
-    if neither of these params are passed into the function, nothing will be cached. Cache will always be
-    skipped if ids_only is false.
-
-    The caching is mainly a hack for touchforms to respond more quickly. Touchforms makes repeated requests to
-    get the list of case_ids associated with a user.
-    """
-    request_params = request.GET
-    return (not string_to_boolean(request_params.get('use_cache', 'false')) or
-        not string_to_boolean(request_params.get('ids_only', 'false')))
-
-
 @cloudcare_api
-@quickcache(get_cases_vary_on, get_cases_skip_arg, timeout=240 * 60)
 def get_cases(request, domain):
     request_params = request.GET
 
