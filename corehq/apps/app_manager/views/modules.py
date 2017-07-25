@@ -42,7 +42,6 @@ from dimagi.utils.web import json_response, json_request
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.models import (
     AdvancedModule,
-    CareplanModule,
     CaseSearch,
     CaseSearchProperty,
     DeleteModuleRecord,
@@ -67,13 +66,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_module_template(user, module):
-    if isinstance(module, CareplanModule):
-        return get_app_manager_template(
-            user,
-            "app_manager/v1/module_view_careplan.html",
-            "app_manager/v2/module_view_careplan.html",
-        )
-    elif isinstance(module, AdvancedModule):
+    if isinstance(module, AdvancedModule):
         return get_app_manager_template(
             user,
             "app_manager/v1/module_view_advanced.html",
@@ -108,9 +101,7 @@ def get_module_view_context(app, module, lang=None):
         'unique_id': module.unique_id,
     }
     case_property_builder = _setup_case_property_builder(app)
-    if isinstance(module, CareplanModule):
-        pass
-    elif isinstance(module, AdvancedModule):
+    if isinstance(module, AdvancedModule):
         module_brief.update({
             'auto_select_case': module.auto_select_case,
             'has_schedule': module.has_schedule,

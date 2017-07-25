@@ -2245,8 +2245,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
             doc_type = data['doc_type']
             if doc_type == 'Module':
                 return Module.wrap(data)
-            elif doc_type == 'CareplanModule':
-                return CareplanModule.wrap(data)
             elif doc_type == 'AdvancedModule':
                 return AdvancedModule.wrap(data)
             elif doc_type == 'ReportModule':
@@ -3579,11 +3577,6 @@ class AdvancedModule(ModuleBase):
                 list(self.get_schedule_phases())[id].change_anchor(new_anchor)
             except IndexError:
                 pass  # That phase wasn't found, so we can't change it's anchor. Ignore it
-
-
-class CareplanModule(ModuleBase):
-    """Deprecated"""
-    module_type = 'careplan'
 
 
 class ReportAppFilter(DocumentSchema):
@@ -5198,6 +5191,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @classmethod
     def wrap(cls, data):
         data.pop('commtrack_enabled', None)  # Remove me after migrating apps
+        data['modules'] = [module for module in data.get('modules', [])
+                           if module.get('doc_type') != 'CareplanModule']
         self = super(Application, cls).wrap(data)
 
         # make sure all form versions are None on working copies

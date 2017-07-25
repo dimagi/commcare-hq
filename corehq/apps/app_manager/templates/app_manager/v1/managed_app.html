@@ -187,7 +187,7 @@
                                       method="post" class="hide">{% csrf_token %}
                                     <input type="hidden" name="form_type">
                                 </form>
-                                {% if module.doc_type != 'CareplanModule' and module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
+                                {% if module.doc_type != 'ReportModule' and module.doc_type != 'ShadowModule' %}
                                     {% if show_shadow_forms and module.doc_type == "AdvancedModule" %}
                                         <li class="sort-disabled dropdown">
                                             <a href="#" data-toggle="dropdown">

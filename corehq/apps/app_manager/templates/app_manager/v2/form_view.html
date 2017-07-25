@@ -208,11 +208,6 @@
                         {% if module.doc_type == 'AdvancedModule' %}
                             {% initial_page_data 'schedule_options' schedule_options %}
                             {% include 'app_manager/v2/partials/case_config_advanced.html' %}
-                        {% elif module.doc_type == 'CareplanModule' %}
-                            {% blocktrans %}
-                            This is a Careplan module, and Careplan modules are no longer supported.
-                            If you think this is an error, please contact support.
-                            {% endblocktrans %}
                         {% else %}
                             {% include 'app_manager/v2/partials/case_config.html' %}
                         {% endif %}
