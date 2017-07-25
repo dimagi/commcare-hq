@@ -17,7 +17,6 @@ from corehq.apps.app_manager.models import (
     CaseIndex)
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.tests.util import TestXmlMixin
-from corehq.apps.app_manager.util import new_careplan_module
 from corehq.apps.app_manager.xform import XForm
 from mock import patch
 
@@ -215,38 +214,6 @@ class GPSFormPrepTest(SimpleTestCase, TestXmlMixin):
         self.app.auto_gps_capture = True
         self.assertXmlEqual(self.app.get_module(0).get_form(1).render_xform(),
                             self.get_xml('gps_no_question_auto'))
-
-
-class FormPreparationCareplanTest(SimpleTestCase, TestXmlMixin):
-    file_path = 'data', 'form_preparation_careplan'
-
-    def setUp(self):
-        self.app = Application.new_app('domain', 'New App')
-        self.app.version = 3
-        self.module = self.app.add_module(Module.new_module('New Module', lang='en'))
-        self.form = self.app.new_form(0, 'New Form', lang='en')
-        self.module.case_type = 'test_case_type'
-        self.form.source = self.get_xml('original_form', override_path=('data',))
-        self.form.actions.open_case = OpenCaseAction(name_path="/data/question1", external_id=None)
-        self.form.actions.open_case.condition.type = 'always'
-
-        self.careplan_module = new_careplan_module(self.app, None, None, self.module)
-
-    def test_create_goal(self):
-        form = self.careplan_module.get_form_by_type(CAREPLAN_GOAL, 'create')
-        self.assertXmlEqual(form.render_xform(), self.get_xml('create_goal'))
-
-    def test_update_goal(self):
-        form = self.careplan_module.get_form_by_type(CAREPLAN_GOAL, 'update')
-        self.assertXmlEqual(form.render_xform(), self.get_xml('update_goal'))
-
-    def test_create_task(self):
-        form = self.careplan_module.get_form_by_type(CAREPLAN_TASK, 'create')
-        self.assertXmlEqual(form.render_xform(), self.get_xml('create_task'))
-
-    def test_update_task(self):
-        form = self.careplan_module.get_form_by_type(CAREPLAN_TASK, 'update')
-        self.assertXmlEqual(form.render_xform(), self.get_xml('update_task'))
 
 
 class FormPreparationV2TestAdvanced(SimpleTestCase, TestXmlMixin):

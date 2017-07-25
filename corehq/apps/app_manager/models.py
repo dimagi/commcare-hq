@@ -4987,10 +4987,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         return self.name if len(self.name) <= 12 else '%s..' % self.name[:10]
 
     @property
-    def has_careplan_module(self):
-        return False
-
-    @property
     def url_base(self):
         custom_base_url = getattr(self, 'custom_base_url', None)
         return custom_base_url or get_url_base()
@@ -6244,10 +6240,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if setting is not None:
                 return setting
         return yaml_setting.get("default")
-
-    @property
-    def has_careplan_module(self):
-        return any((module for module in self.modules if isinstance(module, CareplanModule)))
 
     @quickcache(['self._id', 'self.version'])
     def get_case_metadata(self):

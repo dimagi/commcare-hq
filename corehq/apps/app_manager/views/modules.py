@@ -1018,22 +1018,6 @@ def new_module(request, domain, app_id):
         return back_to_main(request, domain, app_id=app_id)
 
 
-def _new_careplan_module(request, domain, app, name, lang):
-    from corehq.apps.app_manager.util import new_careplan_module
-    target_module_index = request.POST.get('target_module_id')
-    target_module = app.get_module(target_module_index)
-    if not target_module.case_type:
-        name = target_module.name[lang]
-        messages.error(request, _("Please set the case type for the target module '{name}'.".format(name=name)))
-        return back_to_main(request, domain, app_id=app.id)
-    module = new_careplan_module(app, name, lang, target_module)
-    app.save()
-    response = back_to_main(request, domain, app_id=app.id, module_id=module.id)
-    response.set_cookie('suppress_build_errors', 'yes')
-    messages.info(request, _('Caution: Care Plan modules are a labs feature'))
-    return response
-
-
 def _save_case_list_lookup_params(short, case_list_lookup, lang):
     short.lookup_enabled = case_list_lookup.get("lookup_enabled", short.lookup_enabled)
     short.lookup_autolaunch = case_list_lookup.get("lookup_autolaunch", short.lookup_autolaunch)
@@ -1058,13 +1042,6 @@ def view_module(request, domain, app_id, module_id):
 FN = 'fn'
 VALIDATIONS = 'validations'
 MODULE_TYPE_MAP = {
-    'careplan': {
-        FN: _new_careplan_module,
-        VALIDATIONS: [
-            (lambda app: app.has_careplan_module,
-             _('This application already has a Careplan module'))
-        ]
-    },
     'advanced': {
         FN: _new_advanced_module,
         VALIDATIONS: []

@@ -117,13 +117,6 @@ def REPORTS(project):
         supply_reports = _filter_reports(report_set, supply_reports)
         reports.insert(0, (ugettext_lazy("CommCare Supply"), supply_reports))
 
-    if project.has_careplan:
-        from corehq.apps.app_manager.models import CareplanConfig
-        config = CareplanConfig.for_domain(project.name)
-        if config:
-            cp_reports = tuple(make_careplan_reports(config))
-            reports.insert(0, (ugettext_lazy("Care Plans"), cp_reports))
-
     reports = list(_get_report_builder_reports(project)) + reports
 
     from corehq.apps.accounting.utils import domain_has_privilege

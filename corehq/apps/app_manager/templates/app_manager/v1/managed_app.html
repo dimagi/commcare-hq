@@ -231,7 +231,7 @@
                           method="post" class="hide">{% csrf_token %}
                     <input id="new-module-type" type="hidden" name="module_type" />
                 </form>
-                {% if show_care_plan or show_advanced or show_report_modules or show_shadow_modules %}
+                {% if show_advanced or show_report_modules or show_shadow_modules %}
                     <li class="sort-disabled dropdown">
                         <a href="#" data-toggle="dropdown">
                             <i class="new-module-icon fa fa-plus icon-blue"></i>
@@ -239,9 +239,6 @@
                         </a>
                         <ul class="dropdown-menu" role="menu">
                             <li><a href="#" class="new-module" data-type="case">{% trans "New Case Module" %}</a></li>
-                            {% if show_care_plan %}
-                            <li><a data-toggle="modal" href="#careplan-module-modal">{% trans "New Care Plan Module" %}</a></li>
-                            {% endif %}
                             {% if show_advanced %}
                             <li>
                                 <a href="#" class="new-module" data-type="advanced">
@@ -265,7 +262,6 @@
                             {% endif %}
                         </ul>
                     </li>
-                    {% include "app_manager/v1/partials/new_careplan_module.html" %}
                 {% else %}
                 <li class="sort-disabled">
                     <a href="#" class="new-module" data-type="case">
