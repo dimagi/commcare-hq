@@ -58,5 +58,13 @@ window.angular.module('icdsApp').factory('maternalChildService', ['$http', funct
                 params: params,
             });
         },
+        getInstitutionalDeliveriesData: function(step, params) {
+            var get_url = url('institutional_deliveries', step);
+            return  $http({
+                method: "GET",
+                url: get_url,
+                params: params,
+            });
+        },
     };
 }]);

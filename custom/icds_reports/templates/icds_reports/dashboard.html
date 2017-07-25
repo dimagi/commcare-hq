@@ -78,6 +78,7 @@
         <script type="text/javascript" src="{% static 'js/directives/print/print.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/exclusive-breastfeeding/exlusive-breastfeeding.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/children-initiated/children-initiated.directive.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/directives/institutional-deliveries/institutional-deliveries.directive.js' %}"></script>
 </head>
 <body>
 <div id="app">
@@ -165,6 +166,7 @@
                     {% registerurl 'progress_report' domain %}
                     {% registerurl 'exclusive-breastfeeding' domain '---' %}
                     {% registerurl 'children_initiated' domain '---' %}
+                    {% registerurl 'institutional_deliveries' domain '---' %}
                     <div class="ng-view"></div>
                 </div>
             </div>

@@ -95,6 +95,12 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/children_initiated/:step", {
                 template : "<children-initiated></children-initiated>",
+            })
+            .when("/institutional_deliveries", {
+                redirectTo : "/institutional_deliveries/map",
+            })
+            .when("/institutional_deliveries/:step", {
+                template : "<institutional-deliveries></institutional-deliveries>",
             });
     }]);
 
