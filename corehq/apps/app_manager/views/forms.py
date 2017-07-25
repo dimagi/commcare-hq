@@ -207,27 +207,6 @@ def edit_form_actions(request, domain, app_id, form_unique_id):
     return json_response(response_json)
 
 
-@no_conflict_require_POST
-@require_can_edit_apps
-def edit_careplan_form_actions(request, domain, app_id, form_unique_id):
-    app = get_app(domain, app_id)
-    form = app.get_form(form_unique_id)
-    transaction = json.loads(request.POST.get('transaction'))
-
-    for question in transaction['fixedQuestions']:
-        setattr(form, question['name'], question['path'])
-
-    def to_dict(properties):
-        return dict((p['key'], p['path']) for p in properties)
-
-    form.custom_case_updates = to_dict(transaction['case_properties'])
-    form.case_preload = to_dict(transaction['case_preload'])
-
-    response_json = {}
-    app.save(response_json)
-    return json_response(response_json)
-
-
 @csrf_exempt
 @api_domain_view
 def edit_form_attr_api(request, domain, app_id, form_unique_id, attr):
@@ -638,19 +617,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             for candidate_form in candidate_module.get_forms()
         ]
 
-    if isinstance(form, CareplanForm):
-        case_config_options.update({
-            'case_preload': [
-                {'key': key, 'path': path} for key, path in form.case_preload.items()
-            ],
-            'customCaseUpdates': [
-                {'key': key, 'path': path} for key, path in form.custom_case_updates.items()
-            ],
-            'fixedQuestions': form.get_fixed_questions(),
-            'mode': form.mode,
-            'save_url': reverse("edit_careplan_form_actions", args=[app.domain, app.id, form.unique_id]),
-        })
-    elif isinstance(form, AdvancedForm):
+    if isinstance(form, AdvancedForm):
         def commtrack_programs():
             if app.commtrack_enabled:
                 programs = Program.by_domain(app.domain)
