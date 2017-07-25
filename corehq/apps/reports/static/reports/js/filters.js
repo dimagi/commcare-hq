@@ -74,6 +74,13 @@ hqDefine("reports/js/filters.js", function() {
             dateFormat: 'yy-mm-dd',
         });
 
+        // Optional date ranges (used in accounting)
+        $(".report-filter-optional-datespan").each(function() {
+            $(this).koApplyBindings({
+                showFilterName: ko.observable($(this).data("showFilterName")),
+            });
+        });
+
         // Submission type (Raw Forms, Errors, & Duplicates)
         $('.report-filter-button-group').each(function() {
             linkButtonGroup(this);
