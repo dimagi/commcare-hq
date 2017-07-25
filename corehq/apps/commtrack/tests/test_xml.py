@@ -1,4 +1,6 @@
 from decimal import Decimal
+
+from django.db.models import Q
 from django.test import TestCase
 from django.test.utils import override_settings
 from lxml import etree
@@ -18,6 +20,7 @@ from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors, FormAc
 from corehq.form_processor.models import LedgerTransaction
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.form_processor.utils.general import should_use_sql_backend
+from corehq.sql_db.util import run_query_across_partitioned_databases
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from casexml.apps.stock import const as stockconst
 from casexml.apps.stock.models import StockReport, StockTransaction
@@ -256,6 +259,9 @@ class CommTrackSubmissionTest(XMLTest):
         else:
             self.assertEqual(expected_qty, latest_trans.quantity)
 
+    def _get_all_ledger_transactions(self, q_):
+        return list(run_query_across_partitioned_databases(LedgerTransaction, q_))
+
 
 class CommTrackBalanceTransferTest(CommTrackSubmissionTest):
 
@@ -471,7 +477,7 @@ class BugSubmissionsTest(CommTrackSubmissionTest):
         """
         def _assert_no_stock_transactions():
             if should_use_sql_backend(self.domain):
-                self.assertEqual(0, LedgerTransaction.objects.using('default').count())
+                self.assertEqual(0, len(self._get_all_ledger_transactions(Q())))
             else:
                 self.assertEqual(0, StockTransaction.objects.count())
 
@@ -607,9 +613,10 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         second_form_id = self.submit_xml_form(balance_submission(final_amounts))
 
         ledger_accessors = LedgerAccessors(self.domain.name)
+
         def _assert_initial_state():
             if should_use_sql_backend(self.domain):
-                self.assertEqual(3, LedgerTransaction.objects.using('default').filter(form_id=second_form_id).count())
+                self.assertEqual(3, len(self._get_all_ledger_transactions(Q(form_id=second_form_id))))
             else:
                 self.assertEqual(1, StockReport.objects.filter(form_id=second_form_id).count())
                 # 6 = 3 stockonhand and 3 inferred consumption txns
@@ -633,7 +640,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
             form.archive()
 
         if should_use_sql_backend(self.domain):
-            self.assertEqual(0, LedgerTransaction.objects.using('default').filter(form_id=second_form_id).count())
+            self.assertEqual(0, len(self._get_all_ledger_transactions(Q(form_id=second_form_id))))
         else:
             self.assertEqual(0, StockReport.objects.filter(form_id=second_form_id).count())
             self.assertEqual(0, StockTransaction.objects.filter(report__form_id=second_form_id).count())
@@ -663,7 +670,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         # check that we made stuff
         def _assert_initial_state():
             if should_use_sql_backend(self.domain):
-                self.assertEqual(3, LedgerTransaction.objects.using('default').filter(form_id=form_id).count())
+                self.assertEqual(3, len(self._get_all_ledger_transactions(Q(form_id=form_id))))
             else:
                 self.assertEqual(1, StockReport.objects.filter(form_id=form_id).count())
                 self.assertEqual(3, StockTransaction.objects.filter(report__form_id=form_id).count())
@@ -680,7 +687,7 @@ class CommTrackArchiveSubmissionTest(CommTrackSubmissionTest):
         form.archive()
         self.assertEqual(0, len(ledger_accessors.get_ledger_values_for_case(self.sp.case_id)))
         if should_use_sql_backend(self.domain):
-            self.assertEqual(0, LedgerTransaction.objects.using('default').filter(form_id=form_id).count())
+            self.assertEqual(0, len(self._get_all_ledger_transactions(Q(form_id=form_id))))
         else:
             self.assertEqual(0, StockReport.objects.filter(form_id=form_id).count())
             self.assertEqual(0, StockTransaction.objects.filter(report__form_id=form_id).count())
