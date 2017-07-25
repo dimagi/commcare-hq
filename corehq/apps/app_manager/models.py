@@ -5480,7 +5480,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     translation_strategy = StringProperty(default='select-known',
                                           choices=app_strings.CHOICES.keys())
-    commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
     date_created = DateTimeProperty()
     created_from_template = StringProperty()

@@ -1,9 +1,7 @@
-import HTMLParser
 import json
 from xml.etree import ElementTree
 
 from django.conf import settings
-from django.contrib import messages
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
 from django.shortcuts import get_object_or_404
@@ -11,19 +9,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_page
 from django.views.generic import View
 from django.views.generic.base import TemplateView
 
 from couchdbkit import ResourceConflict
 
-from casexml.apps.case.models import CASE_STATUS_OPEN
-from casexml.apps.case.xml import V2
 from casexml.apps.phone.fixtures import generator
-from corehq.form_processor.utils import should_use_sql_backend
-from corehq.form_processor.utils.general import use_sqlite_backend
-from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base, json_handler
 from touchforms.formplayer.api import DjangoAuth, get_raw_instance, sync_db
@@ -34,24 +27,19 @@ from corehq import toggles, privileges
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
 from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
-    get_brief_apps_in_domain,
     get_latest_released_app_doc,
     get_app_ids_in_domain,
     get_current_app,
-    wrap_app,
     get_current_app_doc,
 )
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
-from corehq.apps.app_manager.models import Application, ApplicationBase, RemoteApp
-from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
-from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_cloudcare_session_data
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.cloudcare.api import (
     api_closed_to_status,
     CaseAPIResult,
-    get_app_json,
     get_filtered_cases,
     get_filters_from_request_params,
     get_open_form_sessions,
@@ -79,8 +67,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAcce
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.util.quickcache import quickcache
 from corehq.util.xml_utils import indent_xml
-from corehq.apps.analytics.tasks import track_clicked_preview_on_hubspot
-from corehq.apps.analytics.utils import get_meta
 
 
 @require_cloudcare_access
@@ -463,74 +449,6 @@ def get_cases(request, domain):
 
 
 @cloudcare_api
-def filter_cases(request, domain, app_id, module_id, parent_id=None):
-    app = Application.get(app_id)
-    module = app.get_module(module_id)
-    auth_cookie = request.COOKIES.get('sessionid')
-    requires_parent_cases = string_to_boolean(request.GET.get('requires_parent_cases', 'false'))
-
-    xpath = EntriesHelper.get_filter_xpath(module)
-    instances = get_instances_for_module(app, module, additional_xpaths=[xpath])
-    extra_instances = [{'id': inst.id, 'src': inst.src} for inst in instances]
-    accessor = CaseAccessors(domain)
-
-    # touchforms doesn't like this to be escaped
-    xpath = HTMLParser.HTMLParser().unescape(xpath)
-    case_type = module.case_type
-
-    if xpath or should_use_sql_backend(domain):
-        # if we need to do a custom filter, send it to touchforms for processing
-        additional_filters = {
-            "properties/case_type": case_type,
-            "footprint": True
-        }
-
-        helper = BaseSessionDataHelper(domain, request.couch_user)
-        result = helper.filter_cases(xpath, additional_filters, DjangoAuth(auth_cookie),
-                                     extra_instances=extra_instances)
-        if result.get('status', None) == 'error':
-            code = result.get('code', 500)
-            message = result.get('message', _("Something went wrong filtering your cases."))
-            if code == 500:
-                notify_exception(None, message=message)
-            return json_response(message, status_code=code)
-
-        case_ids = result.get("cases", [])
-    else:
-        # otherwise just use our built in api with the defaults
-        case_ids = [res.id for res in get_filtered_cases(
-            domain,
-            status=CASE_STATUS_OPEN,
-            case_type=case_type,
-            user_id=request.couch_user._id,
-            footprint=True,
-            ids_only=True,
-        )]
-
-    cases = accessor.get_cases(case_ids)
-
-    if parent_id:
-        cases = filter(lambda c: c.parent and c.parent.case_id == parent_id, cases)
-
-    # refilter these because we might have accidentally included footprint cases
-    # in the results from touchforms. this is a little hacky but the easiest
-    # (quick) workaround. should be revisted when we optimize the case list.
-    cases = filter(lambda c: c.type == case_type, cases)
-    cases = [c.to_api_json(lite=True) for c in cases if c]
-
-    response = {'cases': cases}
-    if requires_parent_cases:
-        # Subtract already fetched cases from parent list
-        parent_ids = set(map(lambda c: c['indices']['parent']['case_id'], cases)) - \
-            set(map(lambda c: c['case_id'], cases))
-        parents = accessor.get_cases(list(parent_ids))
-        parents = [c.to_api_json(lite=True) for c in parents]
-        response.update({'parents': parents})
-
-    return json_response(response)
-
-
-@cloudcare_api
 def get_apps_api(request, domain):
     return json_response(get_cloudcare_apps(domain))
 
@@ -571,36 +489,6 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
             fixture_id, len(fixture.getchildren())
         )
         return HttpResponse(ElementTree.tostring(fixture.getchildren()[0]), content_type="text/xml")
-
-
-@cloudcare_api
-def get_sessions(request, domain):
-    # is it ok to pull user from the request? other api calls seem to have an explicit 'user' param
-    skip = request.GET.get('skip') or 0
-    limit = request.GET.get('limit') or 10
-    return json_response(get_open_form_sessions(request.user, skip=skip, limit=limit))
-
-
-@cloudcare_api
-def get_session_context(request, domain, session_id):
-    # NOTE: although this view does not appeared to be called from anywhere it is, and cannot be deleted.
-    # The javascript routing in cloudcare depends on it, though constructs it manually in a hardcoded way.
-    # see getSessionContextUrl in cloudcare/util.js
-    # Adding 'cloudcare_get_session_context' to this comment so that the url name passes a grep test
-    try:
-        session = EntrySession.objects.get(session_id=session_id)
-    except EntrySession.DoesNotExist:
-        session = None
-    if request.method == 'DELETE':
-        if session:
-            session.delete()
-        return json_response({'status': 'success'})
-    else:
-        helper = BaseSessionDataHelper(domain, request.couch_user)
-        return json_response(helper.get_full_context({
-            'session_id': session_id,
-            'app_id': session.app_id if session else None
-        }))
 
 
 @cloudcare_api

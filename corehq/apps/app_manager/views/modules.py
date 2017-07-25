@@ -34,7 +34,6 @@ from corehq.apps.app_manager.util import (
     is_valid_case_type,
     is_usercase_in_use,
     prefix_usercase_properties,
-    commtrack_ledger_sections,
     module_offers_search,
     module_case_hierarchy_has_circular_reference, get_app_manager_template)
 from corehq.apps.fixtures.models import FixtureDataType
@@ -397,7 +396,7 @@ def _get_module_details_context(app, module, case_property_builder, case_type_):
                 'detail_label': gettext_lazy('Product Detail'),
                 'type': 'product',
                 'model': 'product',
-                'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
+                'properties': ['name'],
                 'sort_elements': module.product_details.short.sort_elements,
                 'short': module.product_details.short,
                 'subcase_types': subcase_types,

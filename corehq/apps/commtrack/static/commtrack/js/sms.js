@@ -151,37 +151,6 @@ hqDefine('commtrack/js/sms.js', function () {
         };
     }
 
-    function RequisitionConfigModel(data) {
-        // TODO: sort out possibly removing this redundant declaration in js
-        this.action_types = [
-            {label: 'Request', value: 'request'},
-            {label: 'Approval', value: 'approval'},
-            {label: 'Pack', value: 'pack'},
-            {label: 'Receipts (Requisition)', value: 'requisition-receipts'}
-        ];
-
-        this.enabled = ko.observable(data.enabled);
-        this.actions = ko.observableArray($.map(data.actions, function (item) {
-            return new ActionModel(item);
-        }));
-
-        var that = this;
-        this.remove_action = function (action) {
-            that.actions.remove(action);
-        };
-
-        this.new_action = function () {
-            that.actions.push(new ActionModel({}));
-        };
-
-        this.to_json = function () {
-            return {
-                enabled: this.enabled(),
-                actions: $.map(this.actions(), function (e) { return e.to_json(); })
-            };
-        };
-    }
-
     function initCommtrackSettingsView($element, settings, other_sms_codes) {
         var model = new CommtrackSettingsViewModel(other_sms_codes);
         $element.submit(function () {
