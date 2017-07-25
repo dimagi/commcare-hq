@@ -101,6 +101,12 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/institutional_deliveries/:step", {
                 template : "<institutional-deliveries></institutional-deliveries>",
+            })
+            .when("/immunization_coverage", {
+                redirectTo : "/immunization_coverage/map",
+            })
+            .when("/immunization_coverage/:step", {
+                template : "<immunization-coverage></immunization-coverage>",
             });
     }]);
 

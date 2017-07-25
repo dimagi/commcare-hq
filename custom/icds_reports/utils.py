@@ -3444,3 +3444,239 @@ def get_institutional_deliveries_sector_data(config, loc_level):
             }
         ]
     }
+
+
+def get_immunization_coverage_data_map(config, loc_level):
+
+    def get_data_for(filters):
+        filters['month'] = datetime(*filters['month'])
+        return AggChildHealthMonthly.objects.filter(
+            **filters
+        ).values(
+            '%s_name' % loc_level
+        ).annotate(
+            in_month=Sum('fully_immunized_on_time') + Sum('fully_immunized_late'),
+            eligible=Sum('fully_immunized_eligible'),
+        )
+
+    map_data = {}
+    average = []
+    for row in get_data_for(config):
+        valid = row['eligible']
+        name = row['%s_name' % loc_level]
+
+        in_month = row['in_month']
+
+        value = (in_month or 0) * 100 / (valid or 1)
+        average.append(value)
+        row_values = {
+            'children': in_month or 0,
+            'all': valid or 0
+        }
+        if value < 20:
+            row_values.update({'fillKey': '0%-20%'})
+        elif 20 <= value < 60:
+            row_values.update({'fillKey': '20%-60%'})
+        elif value >= 60:
+            row_values.update({'fillKey': '60%-100%'})
+
+        map_data.update({name: row_values})
+
+    fills = OrderedDict()
+    fills.update({'0%-20%': RED})
+    fills.update({'20%-60%': YELLOW})
+    fills.update({'60%-100%': GREEN})
+    fills.update({'defaultFill': GREY})
+
+    return [
+        {
+            "slug": "institutional_deliveries",
+            "label": "",
+            "fills": fills,
+            "rightLegend": {
+                "average": sum(average) / (len(average) or 1),
+                "info": _((
+                    "Percentage of children 1 year+ who have recieved complete immunization as per National "
+                    "Immunization Schedule of India required by age 1."
+                )),
+                "last_modify": datetime.utcnow().strftime("%d/%m/%Y"),
+            },
+            "data": map_data,
+        }
+    ]
+
+
+def get_immunization_coverage_data_chart(config, loc_level):
+    month = datetime(*config['month'])
+    three_before = datetime(*config['month']) - relativedelta(months=3)
+
+    config['month__range'] = (three_before, month)
+    del config['month']
+
+    chart_data = AggChildHealthMonthly.objects.filter(
+        **config
+    ).values(
+        'month', '%s_name' % loc_level
+    ).annotate(
+        in_month=Sum('fully_immunized_on_time') + Sum('fully_immunized_late'),
+        eligible=Sum('fully_immunized_eligible'),
+    ).order_by('month')
+
+    data = {
+        'blue': OrderedDict(),
+        'green': OrderedDict()
+    }
+
+    dates = [dt for dt in rrule(MONTHLY, dtstart=three_before, until=month)]
+
+    for date in dates:
+        miliseconds = int(date.strftime("%s")) * 1000
+        data['blue'][miliseconds] = {'y': 0, 'all': 0}
+        data['green'][miliseconds] = {'y': 0, 'all': 0}
+
+    best_worst = {}
+    for row in chart_data:
+        date = row['month']
+        in_month = row['in_month']
+        location = row['%s_name' % loc_level]
+        valid = row['eligible']
+
+        if location in best_worst:
+            best_worst[location].append(in_month / (valid or 1))
+        else:
+            best_worst[location] = [in_month / (valid or 1)]
+
+        date_in_miliseconds = int(date.strftime("%s")) * 1000
+
+        data['green'][date_in_miliseconds]['y'] += in_month
+        data['blue'][date_in_miliseconds]['y'] += valid
+
+    top_locations = sorted(
+        [dict(loc_name=key, percent=sum(value) / len(value)) for key, value in best_worst.iteritems()],
+        key=lambda x: x['percent'],
+        reverse=True
+    )
+
+    return {
+        "chart_data": [
+            {
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(value['all'] or 1),
+                        'all': value['all']
+                    } for key, value in data['green'].iteritems()
+                ],
+                "key": "Children received complete immunizations by 1 year",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": GREEN
+            },
+            {
+                "values": [
+                    {
+                        'x': key,
+                        'y': value['y'] / float(value['all'] or 1),
+                        'all': value['all']
+                    } for key, value in data['blue'].iteritems()
+                ],
+                "key": "Total ICDS child beneficiaries >1 year",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": BLUE
+            }
+        ],
+        "all_locations": top_locations,
+        "top_three": top_locations[0:5],
+        "bottom_three": top_locations[-6:-1],
+        "location_type": loc_level.title() if loc_level != LocationTypes.SUPERVISOR else 'State'
+    }
+
+
+def get_immunization_coverage_sector_data(config, loc_level):
+    group_by = ['%s_name' % loc_level]
+    if loc_level == LocationTypes.SUPERVISOR:
+        config['aggregation_level'] += 1
+        group_by.append('%s_name' % LocationTypes.AWC)
+
+    config['month'] = datetime(*config['month'])
+    data = AggChildHealthMonthly.objects.filter(
+        **config
+    ).values(
+        *group_by
+    ).annotate(
+        in_month=Sum('fully_immunized_on_time') + Sum('fully_immunized_late'),
+        eligible=Sum('fully_immunized_eligible'),
+    ).order_by('%s_name' % loc_level)
+
+    loc_data = {
+        'green': 0,
+        'orange': 0,
+        'red': 0
+    }
+    tmp_name = ''
+    rows_for_location = 0
+
+    chart_data = {
+        'green': [],
+        'orange': [],
+        'red': []
+    }
+
+    for row in data:
+        valid = row['eligible']
+        name = row['%s_name' % loc_level]
+
+        if tmp_name and name != tmp_name:
+            chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
+            chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
+            chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+            rows_for_location = 0
+            loc_data = {
+                'green': 0,
+                'orange': 0,
+                'red': 0
+            }
+        in_month = row['in_month']
+
+        value = (in_month or 0) * 100 / float(valid or 1)
+
+        if value < 20.0:
+            loc_data['red'] += 1
+        elif 20.0 <= value < 60.0:
+            loc_data['orange'] += 1
+        elif value >= 60.0:
+            loc_data['green'] += 1
+
+        tmp_name = name
+        rows_for_location += 1
+
+    chart_data['green'].append([tmp_name, (loc_data['green'] / float(rows_for_location or 1))])
+    chart_data['orange'].append([tmp_name, (loc_data['orange'] / float(rows_for_location or 1))])
+    chart_data['red'].append([tmp_name, (loc_data['red'] / float(rows_for_location or 1))])
+
+    return {
+        "chart_data": [
+            {
+                "values": chart_data['green'],
+                "key": "0%-20%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": RED
+            },
+            {
+                "values": chart_data['orange'],
+                "key": "20%-60%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": ORANGE
+            },
+            {
+                "values": chart_data['red'],
+                "key": "60%-100%",
+                "strokeWidth": 2,
+                "classed": "dashed",
+                "color": GREEN
+            }
+        ]
+    }

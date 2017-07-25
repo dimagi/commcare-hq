@@ -45,6 +45,9 @@
                     <li ng-class="{'active': $location.path().indexOf('/institutional_deliveries') !== -1}">
                         <a href="{$ goToStep('institutional_deliveries', $location.search()) $}" class="fa">{% trans "% Institutional deliveries" %}</a>
                     </li>
+                    <li ng-class="{'active': $location.path().indexOf('/immunization_coverage') !== -1}">
+                        <a href="{$ goToStep('immunization_coverage', $location.search()) $}" class="fa">{% trans "% Immunization coverage (at age 1 year)s" %}</a>
+                    </li>
                 </ul>
             </li>
             <li class="nav-header" data-toggle="collapse" data-target="">
