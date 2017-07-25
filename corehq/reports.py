@@ -62,7 +62,6 @@ from custom.openclinica.reports import OdmExportReport
 
 def REPORTS(project):
     from corehq.apps.reports.standard.cases.basic import CaseListReport
-    from corehq.apps.reports.standard.cases.careplan import make_careplan_reports
 
     report_set = None
     if project.report_whitelist:
