@@ -166,6 +166,7 @@ class ReprocessSubmissionStubTests(TestCase):
 
         form_ids.append(stubs[0].xform_id)
 
+        # submit second form with case update
         form_ids.append(submit_case_blocks(
             CaseBlock(case_id=case_id, update={'prop': 'b'}).as_string(),
             self.domain
@@ -178,6 +179,7 @@ class ReprocessSubmissionStubTests(TestCase):
         reprocess_unfinished_stub(stubs[0])
 
         case = CaseAccessorSQL.get_case(case_id)
+        self.assertEqual('b', case.get_case_property('prop'))  # should be property value from most recent form
         self.assertEqual(4, len(case.transactions))
         self.assertEqual(form_ids + [None], [trans.form_id for trans in case.transactions])
 

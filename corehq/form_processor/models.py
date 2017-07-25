@@ -1318,7 +1318,7 @@ class FormReprocessRebuild(CaseTransactionDetail):
     form_id = StringProperty()
 
 
-class LedgerValue(PartitionedModel, models.Model, TrackRelatedChanges):
+class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedChanges):
     """
     Represents the current state of a ledger. Supercedes StockState
     """

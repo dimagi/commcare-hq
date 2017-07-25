@@ -101,22 +101,29 @@ def _reprocess_form(form, raise_errors=True):
             cases = case_stock_result.case_models
             if should_use_sql_backend(form.domain):
                 cases = _filter_already_processed_cases(form, cases)
+                cases_updated = {case.case_id for case in cases if case.is_saved()}
                 for case in cases:
                     CaseAccessorSQL.save_case(case)
 
-                for case in cases:
-                    detail = FormReprocessRebuild(form_id=form.form_id)
-                    interface.hard_rebuild_case(case.case_id, detail)
-
                 ledgers = _filter_already_processed_ledgers(form, stock_result.models_to_save)
+                ledgers_updated = {ledger.ledger_reference for ledger in ledgers if ledger.is_saved()}
                 LedgerAccessorSQL.save_ledger_values(ledgers)
-                for ledger in ledgers:
-                    interface.ledger_processor.hard_rebuild_ledgers(**ledger.ledger_reference._asdict())
 
                 FormAccessorSQL.update_form_problem_and_state(form)
                 publish_form_saved(form)
+
+                # rebuild cases and ledgers that were affected
                 for case in cases:
+                    if case.case_id in cases_updated:
+                        # only rebuild cases that were updated
+                        detail = FormReprocessRebuild(form_id=form.form_id)
+                        interface.hard_rebuild_case(case.case_id, detail)
                     case_post_save.send(case.__class__, case=case)
+
+                for ledger in ledgers:
+                    if ledger.ledger_reference in ledgers_updated:
+                        # only rebuild upated ledgers
+                        interface.ledger_processor.hard_rebuild_ledgers(**ledger.ledger_reference._asdict())
 
             else:
                 with bulk_atomic_blobs([form] + cases):
