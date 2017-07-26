@@ -1796,13 +1796,13 @@ BEGIN
 		'sum(cases_person), ' ||
 		'sum(cases_person_all), ' ||
 		'sum(cases_person_has_aadhaar), ' ||
-		'sum(cases_child_health), ' ||
+		'avg(cases_child_health), ' ||
 		'sum(cases_child_health_all), ' ||
 		'sum(cases_ccs_pregnant), ' ||
 		'sum(cases_ccs_pregnant_all), ' ||
-		'sum(cases_ccs_lactating), ' ||
+		'avg(cases_ccs_lactating), ' ||
 		'sum(cases_ccs_lactating_all), ' ||
-		'sum(cases_person_adolescent_girls_11_14), ' ||
+		'avg(cases_person_adolescent_girls_11_14), ' ||
 		'sum(cases_person_adolescent_girls_15_18), ' ||
 		'sum(cases_person_adolescent_girls_11_14_all), ' ||
 		'sum(cases_person_adolescent_girls_15_18_all), ' ||
