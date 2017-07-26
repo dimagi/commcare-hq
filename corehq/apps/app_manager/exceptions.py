@@ -23,6 +23,10 @@ class IncompatibleFormTypeException(AppManagerException):
     pass
 
 
+class AddOnNotFoundException(AppManagerException, IndexError):
+    pass
+
+
 class AppEditingError(AppManagerException):
     pass
 
