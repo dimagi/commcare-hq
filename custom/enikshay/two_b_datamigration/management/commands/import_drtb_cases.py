@@ -17,6 +17,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.util.workbook_reading import open_any_workbook
 from custom.enikshay.case_utils import CASE_TYPE_PERSON, CASE_TYPE_OCCURRENCE, CASE_TYPE_EPISODE, CASE_TYPE_TEST, \
     CASE_TYPE_DRUG_RESISTANCE, CASE_TYPE_SECONDARY_OWNER
+from dimagi.utils.decorators.memoized import memoized
 
 logger = logging.getLogger('two_b_datamigration')
 
@@ -1263,10 +1264,9 @@ def clean_date(messy_date_string):
 
 
 def match_district(domain, xlsx_district_name):
-    # TODO: Consider filtering by location type
-    return match_location(domain, xlsx_district_name)
+    return match_location(domain, xlsx_district_name, "dto")
 
-
+@memoized
 def match_location(domain, xlsx_name, location_type=None):
     """
     Given location name taken from the spreadsheet, return the name and id of the matching location in HQ.
