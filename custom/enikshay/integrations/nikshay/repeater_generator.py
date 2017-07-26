@@ -15,6 +15,8 @@ from custom.enikshay.const import (
     TREATMENT_START_DATE,
     TREATMENT_OUTCOME,
     TREATMENT_OUTCOME_DATE,
+    DSTB_EPISODE_TYPE,
+    NEW_2B_APP_PERSON_CASE_VERSION,
 )
 from custom.enikshay.case_utils import (
     get_person_case_from_episode,
@@ -86,6 +88,12 @@ class BaseNikshayPayloadGenerator(BasePayloadGenerator):
             "IP_FROM": server_ip,
         }
 
+    def use_new_2b_app_structure(self, person_case, episode_case):
+        return (
+            episode_case.dynamic_case_properties().get('episode_type') == DSTB_EPISODE_TYPE and
+            person_case.dynamic_case_properties().get('case_version') == NEW_2B_APP_PERSON_CASE_VERSION
+        )
+
 
 class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
     deprecated_format_names = ('case_json',)
@@ -97,7 +105,9 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
         person_case = get_person_case_from_episode(episode_case.domain, episode_case.get_id)
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case_properties = person_case.dynamic_case_properties()
-
+        occurence_case = None
+        if self.use_new_2b_app_structure(person_case, episode_case):
+            occurence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.get_id)
         properties_dict = self._base_properties(repeat_record)
         properties_dict.update({
             "dotcenter": "NA",
@@ -108,7 +118,10 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
             properties_dict.update(_get_person_case_properties(person_case, person_case_properties))
         except NikshayLocationNotFound as e:
             _save_error_message(person_case.domain, person_case.case_id, e)
-        properties_dict.update(_get_episode_case_properties(episode_case_properties))
+        properties_dict.update(_get_episode_case_properties(
+            episode_case_properties, occurence_case, person_case, self.use_new_2b_app_structure(
+                person_case, episode_case
+            )))
         return json.dumps(properties_dict)
 
     def handle_success(self, response, payload_doc, repeat_record):
@@ -492,7 +505,7 @@ def _get_person_case_properties(person_case, person_case_properties):
     return person_properties
 
 
-def _get_episode_case_properties(episode_case_properties):
+def _get_episode_case_properties(episode_case_properties, occurence_case, person_case, use_new_2b_structure):
     """
     :return: Example : {'dateofInitiation': '2016-12-01', 'pregdate': '2016-12-01', 'dotdesignation': u'tbhv_to',
     'ptbyr': '2016', 'dotpType': '7', 'dotmob': u'1234567890', 'dotname': u'asdfasdf', 'Ptype': '1',
@@ -500,7 +513,11 @@ def _get_episode_case_properties(episode_case_properties):
     """
     episode_properties = {}
 
-    episode_site_choice = episode_case_properties.get('site_choice', None)
+    if use_new_2b_structure:
+        occurence_case_properties = occurence_case.dynamic_case_properties()
+        episode_site_choice = occurence_case_properties.get('site_choice')
+    else:
+        episode_site_choice = episode_case_properties.get('site_choice')
     if episode_site_choice:
         site_detail = episode_site.get(episode_site_choice, 'others')
         episode_properties["sitedetail"] = site_detail
@@ -512,15 +529,23 @@ def _get_episode_case_properties(episode_case_properties):
         episode_date = datetime.date.today()
 
     episode_year = episode_date.year
+
+    if use_new_2b_structure:
+        patient_occupation = person_case.dynamic_case_properties().get('occupation', 'other')
+        occurence_case_properties = occurence_case.dynamic_case_properties()
+        episode_disease_classification = occurence_case_properties.get('disease_classification', '')
+    else:
+        patient_occupation = episode_case_properties.get('occupation', 'other')
+        episode_disease_classification = episode_case_properties.get('disease_classification', '')
     episode_properties.update({
         "poccupation": occupation.get(
-            episode_case_properties.get('occupation', 'other'),
+            patient_occupation,
             occupation['other']
         ),
         "pregdate": str(episode_date),
         "ptbyr": str(episode_year),
         "disease_classification": disease_classification.get(
-            episode_case_properties.get('disease_classification', ''),
+            episode_disease_classification,
             ''
         ),
         "dcpulmunory": dcpulmonory.get(episode_case_properties.get('disease_classification', ''), "N"),
