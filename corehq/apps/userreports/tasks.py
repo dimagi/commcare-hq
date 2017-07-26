@@ -210,7 +210,7 @@ def run_queue_async_indicators_task():
     queue_async_indicators.delay()
 
 
-@serial_task('queue-async-indicators', timeout=10 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
+@serial_task('queue-async-indicators', timeout=30 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
 def queue_async_indicators():
     oldest_indicator = AsyncIndicator.objects.order_by('date_queued').first()
     if oldest_indicator and oldest_indicator.date_queued:
