@@ -1,4 +1,6 @@
 import calendar
+import hashlib
+import json
 from corehq.messaging.scheduling.exceptions import InvalidMonthlyScheduleConfiguration
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast
 from corehq.messaging.scheduling import util
@@ -14,6 +16,22 @@ class TimedSchedule(Schedule):
 
     schedule_length = models.IntegerField()
     total_iterations = models.IntegerField()
+
+    @property
+    @memoized
+    def memoized_schedule_revision(self):
+        """
+        The schedule revision is a hash of all information pertaining to
+        scheduling. Information unrelated to scheduling, such as the content
+        being sent at each event, is excluded. This is mainly used to determine
+        when a TimedScheduleInstance should recalculate its schedule.
+        """
+        schedule_info = json.dumps([
+            self.schedule_length,
+            self.total_iterations,
+            [[e.day, e.time.strftime('%H:%M:%S')] for e in self.memoized_events],
+        ])
+        return hashlib.md5(schedule_info).hexdigest()
 
     @property
     @memoized
