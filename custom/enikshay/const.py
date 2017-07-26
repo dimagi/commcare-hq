@@ -169,3 +169,5 @@ AGENCY_USER_FIELDS = [
 AGENCY_LOCATION_FIELDS = [
     ('private_sector_org_id', "Private Sector Org ID", []),
 ]
+
+DSTB_EPISODE_TYPE = "confirmed_tb"
