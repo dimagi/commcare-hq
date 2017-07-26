@@ -1393,6 +1393,18 @@ class SplitStringExpressionTest(SimpleTestCase):
             })
             self.assertEqual(expected, split_string_expression({"string_property": string_value}))
 
+    def test_split_string_delimiter_without_index(self):
+        split_string_expression = ExpressionFactory.from_spec({
+            "type": "split_string",
+            "string_expression": {
+                "type": "property_name",
+                "property_name": "string_property"
+            },
+            "delimiter": ","
+        })
+        self.assertListEqual(['a', 'b', 'c'], split_string_expression({"string_property": 'a,b,c'}))
+
+
 
 class TestCoalesceExpression(SimpleTestCase):
 

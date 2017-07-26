@@ -674,7 +674,7 @@ class GenericFilterFormExportDownloadForm(BaseFilterExportDownloadForm):
         super(GenericFilterFormExportDownloadForm, self).__init__(domain_object, *args, **kwargs)
 
         self.fields['date_range'].help_text = _(
-            "The timezone for this export is %(timezone)s."
+            "Filters forms by date received. The timezone for this export is %(timezone)s."
         ) % {
             'timezone': self.timezone,
         }

@@ -1,26 +1,11 @@
 {% extends report_base|default:"reports/async/default.html" %}
 {% load report_tags %}
+{% load hq_shared_tags %}
 
 {% block reportcontent %}
     {% if report_partial %}{% include report_partial %}{% endif %}
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        $(function() {
-            $('.export-action-download').click(function() {
-                var $modalBody = $("#export-download-status .modal-body");
-                $modalBody.text("Fetching...");
-                console.log($(this).data("formname"));
-                $("#export-download-status .modal-header h3 span").text($(this).data("formname"));
-                console.log("Going to...");
-                console.log($(this).data('dlocation'));
-                $.getJSON($(this).data('dlocation'), function(d) {
-                    console.log("supposedly things should have worked");
-                    console.log(d.download_url);
-                    $modalBody.empty().load(d.download_url);
-                });
-            });
-        });
-    </script>
+{% block js %}{{ block.super }}
+    <script src="{% static "reports/js/export_action_download.js" %}"></script>
 {% endblock %}

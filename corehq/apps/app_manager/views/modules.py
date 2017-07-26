@@ -33,7 +33,6 @@ from corehq.apps.app_manager.util import (
     is_valid_case_type,
     is_usercase_in_use,
     prefix_usercase_properties,
-    commtrack_ledger_sections,
     module_offers_search,
     module_case_hierarchy_has_circular_reference, get_app_manager_template)
 from corehq.apps.fixtures.models import FixtureDataType
@@ -218,7 +217,7 @@ def _get_careplan_module_view_context(app, module, case_property_builder):
 def _get_advanced_module_view_context(app, module):
     case_type = module.case_type
     return {
-        'case_list_form_not_allowed_reason': _case_list_form_not_allowed_reason(module),
+        'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': True,
         'schedule_phases': [
             {
@@ -233,16 +232,9 @@ def _get_advanced_module_view_context(app, module):
 
 
 def _get_basic_module_view_context(app, module, case_property_builder):
-    case_type = module.case_type
-    # http://manage.dimagi.com/default.asp?178635
-    allow_with_parent_select = app.build_version >= '2.23' or not module.parent_select.active
-    allow_case_list_form = _case_list_form_not_allowed_reason(
-        module,
-        AllowWithReason(allow_with_parent_select, AllowWithReason.PARENT_SELECT_ACTIVE)
-    )
     return {
-        'parent_modules': _get_parent_modules(app, module, case_property_builder, case_type),
-        'case_list_form_not_allowed_reason': allow_case_list_form,
+        'parent_modules': _get_parent_modules(app, module, case_property_builder, module.case_type),
+        'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': (
             toggles.BASIC_CHILD_MODULE.enabled(app.domain)
         ),
@@ -366,7 +358,6 @@ def _case_list_form_options(app, module, case_type_, lang=None):
         for mod in app.get_modules() if module.unique_id != mod.unique_id
         for form in mod.get_forms() if form.is_registration_form(case_type_)
     ]
-    options['disabled'] = gettext_lazy("Don't Show")
     langs = None if lang is None else [lang]
     options.update({f.unique_id: trans(f.name, langs) for f in forms})
 
@@ -404,7 +395,7 @@ def _get_module_details_context(app, module, case_property_builder, case_type_):
                 'detail_label': gettext_lazy('Product Detail'),
                 'type': 'product',
                 'model': 'product',
-                'properties': ['name'] + commtrack_ledger_sections(app.commtrack_requisition_mode),
+                'properties': ['name'],
                 'sort_elements': module.product_details.short.sort_elements,
                 'short': module.product_details.short,
                 'subcase_types': subcase_types,
@@ -416,37 +407,18 @@ def _get_module_details_context(app, module, case_property_builder, case_type_):
     return details
 
 
-def _case_list_form_not_allowed_reason(module, allow=None):
-    reason = None
-    if allow and not allow.allow:
-        reason = allow
-    elif not module.all_forms_require_a_case():
-        reason = AllowWithReason(False, AllowWithReason.ALL_FORMS_REQUIRE_CASE)
-    elif module.put_in_root:
-        reason = AllowWithReason(False, AllowWithReason.MODULE_IN_ROOT)
-    else:
-        reason = AllowWithReason(True, '')
-    if reason:
-        return {
-            'allow': reason.allow,
-            'message': reason.message,
-        }
-    return None
-
-
-class AllowWithReason(namedtuple('AllowWithReason', 'allow reason')):
-    ALL_FORMS_REQUIRE_CASE = 1
-    MODULE_IN_ROOT = 2
-    PARENT_SELECT_ACTIVE = 3
-
-    @property
-    def message(self):
-        if self.reason == self.ALL_FORMS_REQUIRE_CASE:
-            return gettext_lazy('Not all forms in the case list update a case.')
-        elif self.reason == self.MODULE_IN_ROOT:
-            return gettext_lazy("'Menu Mode' is not configured as 'Display menu and then forms'")
-        elif self.reason == self.PARENT_SELECT_ACTIVE:
-            return gettext_lazy("'Parent Selection' is configured.")
+def _case_list_form_not_allowed_reasons(module):
+    reasons = []
+    if module.put_in_root:
+        reasons.append(_("'Menu Mode' is not configured as 'Display menu and then forms'"))
+    if not module.all_forms_require_a_case():
+        reasons.append(_("all forms in this case list must update a case, "
+                         "which means that registration forms must go in a different case list"))
+    if isinstance(module, Module):
+        app = module.get_app()
+        if app.build_version < '2.23' and module.parent_select.active:
+            reasons.append(_("'Parent Selection' is configured"))
+    return reasons
 
 
 @no_conflict_require_POST
@@ -783,7 +755,9 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
     persistent_case_context_xml = params.get('persistentCaseContextXML', None)
     use_case_tiles = params.get('useCaseTiles', None)
     persist_tile_on_forms = params.get("persistTileOnForms", None)
+    persistent_case_tile_from_module = params.get("persistentCaseTileFromModule", None)
     pull_down_tile = params.get("enableTilePullDown", None)
+    sort_nodeset_columns = params.get("sortNodesetColumns", None)
     print_template = params.get('printTemplate', None)
     case_list_lookup = params.get("case_list_lookup", None)
     search_properties = params.get("search_properties")
@@ -817,6 +791,8 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
             detail.short.use_case_tiles = use_case_tiles
         if persist_tile_on_forms is not None:
             detail.short.persist_tile_on_forms = persist_tile_on_forms
+        if persistent_case_tile_from_module is not None:
+            detail.short.persistent_case_tile_from_module = persistent_case_tile_from_module
         if pull_down_tile is not None:
             detail.short.pull_down_tile = pull_down_tile
         if case_list_lookup is not None:
@@ -852,6 +828,9 @@ def edit_module_detail_screens(request, domain, app_id, module_id):
                 "There was an issue with your custom variables: {}".format(error.message)
             )
         detail.long.custom_variables = custom_variables['long']
+
+    if sort_nodeset_columns is not None:
+        detail.long.sort_nodeset_columns = sort_nodeset_columns
 
     if sort_elements is not None:
         detail.short.sort_elements = []
@@ -985,7 +964,7 @@ def new_module(request, domain, app_id):
 
     if module_type == 'case' or module_type == 'survey':  # survey option added for V2
 
-        if toggles.APP_MANAGER_V2.enabled(request.user.username):
+        if not toggles.APP_MANAGER_V1.enabled(request.user.username):
             if module_type == 'case':
                 name = name or 'Case List'
             else:
@@ -995,16 +974,18 @@ def new_module(request, domain, app_id):
         module_id = module.id
 
         form_id = None
-        if toggles.APP_MANAGER_V2.enabled(request.user.username):
+        if toggles.APP_MANAGER_V1.enabled(request.user.username):
+            app.new_form(module_id, "Untitled Form", lang)
+        else:
             if module_type == 'case':
                 # registration form
-                register = app.new_form(module_id, "Register", lang)
+                register = app.new_form(module_id, _("Register"), lang)
                 register.actions.open_case = OpenCaseAction(condition=FormActionCondition(type='always'))
                 register.actions.update_case = UpdateCaseAction(
                     condition=FormActionCondition(type='always'))
 
                 # one followup form
-                followup = app.new_form(module_id, "Followup", lang)
+                followup = app.new_form(module_id, _("Followup"), lang)
                 followup.requires = "case"
                 followup.actions.update_case = UpdateCaseAction(condition=FormActionCondition(type='always'))
 
@@ -1015,10 +996,8 @@ def new_module(request, domain, app_id):
                 else:
                     module.case_type = 'case'
             else:
-                app.new_form(module_id, "Survey", lang)
+                app.new_form(module_id, _("Survey"), lang)
             form_id = 0
-        else:
-            app.new_form(module_id, "Untitled Form", lang)
 
         app.save()
         response = back_to_main(request, domain, app_id=app_id,

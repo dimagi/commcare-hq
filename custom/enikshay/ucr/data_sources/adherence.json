@@ -1,12 +1,14 @@
 {
     "domains": [
-        "enikshay"
+        "enikshay",
+        "enikshay-reports-qa"
     ],
     "server_environment": [
       "softlayer"
     ],
     "config": {
         "referenced_doc_type": "CommCareCase",
+        "asynchronous": true,
         "backend_id": "ES",
         "description": "",
         "base_item_expression": {
@@ -118,6 +120,21 @@
                     "datatype": null,
                     "type": "property_name",
                     "property_name": "adherence_source"
+                }
+            },
+            {
+                "display_name": "adherence_report_source",
+                "transform": {
+                },
+                "datatype": "string",
+                "type": "expression",
+                "column_id": "adherence_report_source",
+                "is_primary_key": false,
+                "is_nullable": true,
+                "expression": {
+                    "datatype": null,
+                    "type": "property_name",
+                    "property_name": "adherence_report_source"
                 }
             },
             {

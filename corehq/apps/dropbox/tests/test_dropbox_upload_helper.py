@@ -1,3 +1,4 @@
+from mock import patch, MagicMock
 from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
@@ -6,10 +7,12 @@ from ..models import DropboxUploadHelper
 from ..exceptions import DropboxUploadAlreadyInProgress
 
 
+@patch('corehq.apps.dropbox.models.DropboxUploadHelper._ensure_valid_token', MagicMock())
 class DropboxUploadHelperTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(DropboxUploadHelperTest, cls).setUpClass()
         cls.domain = create_domain('adomain')
         cls.user = WebUser.create('adomain', 'ben', '***')
 
@@ -17,6 +20,7 @@ class DropboxUploadHelperTest(TestCase):
     def tearDownClass(cls):
         cls.user.delete()
         cls.domain.delete()
+        super(DropboxUploadHelperTest, cls).tearDownClass()
 
     def test_successful_creation(self):
         kwargs = {

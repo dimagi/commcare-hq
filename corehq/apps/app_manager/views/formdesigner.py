@@ -48,6 +48,7 @@ from corehq.apps.hqwebapp.templatetags.hq_shared_tags import cachebuster
 from corehq.apps.tour import tours
 from corehq.apps.analytics import ab_tests
 from corehq.apps.domain.models import Domain
+from corehq.util.context_processors import websockets_override
 
 
 logger = logging.getLogger(__name__)
@@ -116,6 +117,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'templated_intents': domain_has_privilege(domain, privileges.TEMPLATED_INTENTS),
         'custom_intents': domain_has_privilege(domain, privileges.CUSTOM_INTENTS),
         'rich_text': True,
+        'sorted_itemsets': app.enable_sorted_itemsets,
     })
 
     has_schedule = (
@@ -143,8 +145,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'nav_form': form,
         'formdesigner': True,
         'include_fullstory': include_fullstory,
-        'notifications_enabled': request.user.is_superuser,
-        'notify_facility': get_facility_for_form(domain, app_id, form.unique_id),
     })
     notify_form_opened(domain, request.couch_user, app_id, form.unique_id)
 
@@ -192,7 +192,7 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'invalidCaseProperties': ['name'],
     }
 
-    if toggles.APP_MANAGER_V2.enabled(request.user.username):
+    if not toggles.APP_MANAGER_V1.enabled(request.user.username):
         if form.get_action_type() == 'open':
             core.update({
                 'defaultHelpTextTemplateId': '#fd-hq-helptext-registration',
@@ -241,12 +241,25 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
         'CKEDITOR_BASEPATH': "app_manager/js/vellum/lib/ckeditor/",
     })
 
+    if request.user.is_superuser:
+        notification_options = websockets_override(request)
+        if notification_options['WS4REDIS_HEARTBEAT'] in ['null', 'undefined']:
+            notification_options['WS4REDIS_HEARTBEAT'] = None
+        notification_options.update({
+            'notify_facility': get_facility_for_form(domain, app_id, form.unique_id),
+            'user_id': request.couch_user.get_id,
+        })
+        context.update({'notification_options': notification_options})
+
     if not settings.VELLUM_DEBUG:
         context.update({'requirejs_url': "app_manager/js/vellum/src"})
     elif settings.VELLUM_DEBUG == "dev-min":
         context.update({'requirejs_url': "formdesigner/_build/src"})
     else:
         context.update({'requirejs_url': "formdesigner/src"})
+
+    context['current_app_version_url'] = reverse('current_app_version', args=[domain, app_id])
+
     context.update({
         'requirejs_args': 'version={}{}'.format(
             cachebuster("app_manager/js/vellum/src/main-components.js"),

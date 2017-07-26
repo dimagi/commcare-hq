@@ -93,6 +93,7 @@ def _get_web_user_template_info(user):
         'name': user.username,
         'first_name': user.first_name,
         'last_name': user.last_name,
+        'phone_number': user.default_phone_number or '',
     }
 
 
@@ -101,6 +102,7 @@ def _get_mobile_user_template_info(user):
         'name': user.raw_username,
         'first_name': user.first_name,
         'last_name': user.last_name,
+        'phone_number': user.default_phone_number or '',
     }
 
 
@@ -140,6 +142,12 @@ def _add_parent_case_to_template_params(case, result):
     parent_case = case.parent
     if parent_case:
         result['case']['parent'] = _get_obj_template_info(parent_case)
+
+
+def _add_host_case_to_template_params(case, result):
+    host_case = case.host
+    if host_case:
+        result['case']['host'] = _get_obj_template_info(host_case)
 
 
 def _add_owner_to_template_params(case, result):
@@ -189,6 +197,7 @@ def get_message_template_params(case=None):
     if case:
         _add_case_to_template_params(case, result)
         _add_parent_case_to_template_params(case, result)
+        _add_host_case_to_template_params(case, result)
         _add_owner_to_template_params(case, result)
         _add_modified_by_to_template_params(case, result)
     return result

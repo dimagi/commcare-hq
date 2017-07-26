@@ -4,7 +4,6 @@ hqDefine('commtrack/js/sms.js', function () {
     function CommtrackSettingsViewModel(other_sms_codes) {
         this.keyword = ko.observable();
         this.actions = ko.observableArray();
-        this.requisition_config = ko.observable();
 
         this.json_payload = ko.observable();
 
@@ -23,7 +22,6 @@ hqDefine('commtrack/js/sms.js', function () {
             this.actions($.map(data.actions, function (e) {
                 return new ActionModel(e);
             }));
-            this.requisition_config(new RequisitionConfigModel(data.requisition_config));
         };
 
         var settings = this;
@@ -108,7 +106,6 @@ hqDefine('commtrack/js/sms.js', function () {
             return {
                 keyword: this.keyword(),
                 actions: $.map(this.actions(), function (e) { return e.to_json(); }),
-                requisition_config: this.requisition_config().to_json(),
             };
         };
     }
@@ -150,37 +147,6 @@ hqDefine('commtrack/js/sms.js', function () {
                 caption: this.caption(),
                 type: this.type(),
                 name: this.name
-            };
-        };
-    }
-
-    function RequisitionConfigModel(data) {
-        // TODO: sort out possibly removing this redundant declaration in js
-        this.action_types = [
-            {label: 'Request', value: 'request'},
-            {label: 'Approval', value: 'approval'},
-            {label: 'Pack', value: 'pack'},
-            {label: 'Receipts (Requisition)', value: 'requisition-receipts'}
-        ];
-
-        this.enabled = ko.observable(data.enabled);
-        this.actions = ko.observableArray($.map(data.actions, function (item) {
-            return new ActionModel(item);
-        }));
-
-        var that = this;
-        this.remove_action = function (action) {
-            that.actions.remove(action);
-        };
-
-        this.new_action = function () {
-            that.actions.push(new ActionModel({}));
-        };
-
-        this.to_json = function () {
-            return {
-                enabled: this.enabled(),
-                actions: $.map(this.actions(), function (e) { return e.to_json(); })
             };
         };
     }

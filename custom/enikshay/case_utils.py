@@ -4,7 +4,7 @@ from django.utils.dateparse import parse_datetime
 from dateutil.parser import parse
 
 from corehq.apps.locations.models import SQLLocation
-
+from corehq.util.decorators import hqnottest
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.util import post_case_blocks
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -28,6 +28,8 @@ CASE_TYPE_TEST = "test"
 CASE_TYPE_PRESCRIPTION = "prescription"
 CASE_TYPE_VOUCHER = "voucher"
 CASE_TYPE_PRESCRIPTION = "prescription"
+CASE_TYPE_DRUG_RESISTANCE = "drug_resistance"
+CASE_TYPE_SECONDARY_OWNER = "secondary_owner"
 
 
 def get_all_parents_of_case(domain, case_id):
@@ -174,9 +176,8 @@ def get_open_episode_case_from_person(domain, person_case_id):
 
 
 def get_open_referral_case_from_person(domain, person_case_id):
-    episode = get_open_episode_case_from_person(domain, person_case_id)
     case_accessor = CaseAccessors(domain)
-    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([episode.case_id])
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
     open_referral_cases = [
         case for case in reverse_indexed_cases
         if not case.closed and case.type == CASE_TYPE_REFERRAL
@@ -192,16 +193,21 @@ def get_open_referral_case_from_person(domain, person_case_id):
 
 
 def get_latest_trail_case_from_person(domain, person_case_id):
-    episode = get_open_episode_case_from_person(domain, person_case_id)
     case_accessor = CaseAccessors(domain)
-    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([episode.case_id])
+    reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([person_case_id])
     trail_cases = [
         case for case in reverse_indexed_cases
         if case.type == CASE_TYPE_TRAIL
     ]
-    trail_cases.sort(key=lambda c: c.opened_on)
-    if trail_cases:
-        return trail_cases[-1]
+    trails_with_server_opened_on = []
+    for trail in trail_cases:
+        server_opened_on = trail.actions[0].server_date
+        trails_with_server_opened_on.append((server_opened_on, trail))
+
+    trails_with_server_opened_on.sort()
+    if trails_with_server_opened_on:
+        # Return the latest trail case
+        return trails_with_server_opened_on[-1][1]
     else:
         return None
 
@@ -215,11 +221,31 @@ def get_episode_case_from_adherence(domain, adherence_case_id):
     return get_parent_of_case(domain, adherence_case_id, CASE_TYPE_EPISODE)
 
 
+@hqnottest
 def get_occurrence_case_from_test(domain, test_case_id):
     """
         Gets the first open occurrence case for a test
         """
     return get_parent_of_case(domain, test_case_id, CASE_TYPE_OCCURRENCE)
+
+
+@hqnottest
+def get_private_diagnostic_test_cases_from_episode(domain, episode_case_id):
+    """Returns all test cases for a particular episode
+    """
+    occurrence_case = get_occurrence_case_from_episode(domain, episode_case_id)
+    case_accessor = CaseAccessors(domain)
+    indexed_cases = case_accessor.get_reverse_indexed_cases([occurrence_case.case_id])
+    open_test_cases = [
+        case for case in indexed_cases
+        if not case.closed
+        and case.type == CASE_TYPE_TEST
+        and case.get_case_property('purpose_of_test') == 'diagnostic'
+        and case.get_case_property('date_reported') is not None
+        and case.get_case_property('date_reported') != ''
+        and case.get_case_property('enrolled_in_private') == 'true'
+    ]
+    return sorted(open_test_cases, key=lambda c: c.get_case_property('date_reported'))
 
 
 def get_adherence_cases_between_dates(domain, person_case_id, start_date, end_date):
@@ -255,6 +281,7 @@ def get_person_locations(person_case):
     """
     public locations hierarchy
     sto -> cto -> dto -> tu -> phi
+
     private locations hierarchy
     sto-> cto -> dto -> pcp
     """
@@ -329,6 +356,7 @@ def _get_private_locations(person_case):
         raise NikshayCodeNotFound("Nikshay codes not found: {}".format(e))
 
 
+@hqnottest
 def get_lab_referral_from_test(domain, test_case_id):
     case_accessor = CaseAccessors(domain)
     reverse_indexed_cases = case_accessor.get_reverse_indexed_cases([test_case_id])
@@ -443,3 +471,7 @@ def get_fulfilled_prescription_vouchers_from_episode(domain, episode_case_id):
         if (voucher.get_case_property("voucher_type") == CASE_TYPE_PRESCRIPTION
             and voucher.get_case_property("state") == "fulfilled")
     ]
+
+
+def get_prescription_from_voucher(domain, voucher_id):
+    return get_parent_of_case(domain, voucher_id, CASE_TYPE_PRESCRIPTION)

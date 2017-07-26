@@ -24,7 +24,7 @@ from corehq.apps.receiverwrapper.util import (
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.submission_post import SubmissionPost
 from corehq.form_processor.utils import convert_xform_to_json, should_use_sql_backend
-from corehq.util.datadog.gauges import datadog_gauge, datadog_counter
+from corehq.util.datadog.gauges import datadog_histogram, datadog_counter
 from corehq.util.datadog.metrics import MULTIMEDIA_SUBMISSION_ERROR_COUNT
 from corehq.util.timer import TimingContext
 import couchforms
@@ -121,12 +121,12 @@ def _record_metrics(base_tags, submission_type, response, result=None, timer=Non
         'status_code:{}'.format(response.status_code)
     ])
     if response.status_code == 201 and timer and result:
-        datadog_gauge('commcare.xform_submissions.timings', timer.duration, tags=base_tags)
+        datadog_histogram('commcare.xform_submissions.timings', timer.duration, tags=base_tags)
         # normalize over number of items (form or case) saved
         normalized_time = timer.duration / (1 + len(result.cases))
-        datadog_gauge('commcare.xform_submissions.normalized_timings', normalized_time, tags=base_tags)
-        datadog_counter('commcare.xform_submissions.case_count', len(result.cases), tags=base_tags)
-        datadog_counter('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=base_tags)
+        datadog_histogram('commcare.xform_submissions.normalized_timings', normalized_time, tags=base_tags)
+        datadog_histogram('commcare.xform_submissions.case_count', len(result.cases), tags=base_tags)
+        datadog_histogram('commcare.xform_submissions.ledger_count', len(result.ledgers), tags=base_tags)
 
 
 @csrf_exempt

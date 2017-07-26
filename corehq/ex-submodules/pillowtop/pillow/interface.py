@@ -3,8 +3,7 @@ from datetime import datetime
 
 import sys
 
-from corehq.util.soft_assert import soft_assert
-from corehq.util.datadog.gauges import datadog_counter, datadog_gauge
+from corehq.util.datadog.gauges import datadog_counter, datadog_gauge, datadog_histogram
 from corehq.util.timer import TimingContext
 from dimagi.utils.logging import notify_exception
 from kafka.common import TopicAndPartition
@@ -18,6 +17,8 @@ def _topic_for_ddog(topic):
     # can be a string for couch pillows, but otherwise is topic, partition
     if isinstance(topic, TopicAndPartition):
         return 'topic:{}-{}'.format(topic.topic, topic.partition)
+    elif isinstance(topic, tuple) and len(topic) == 2:
+        return 'topic:{}-{}'.format(topic[0], topic[1])
     else:
         return 'topic:{}'.format(topic)
 
@@ -219,7 +220,7 @@ class PillowBase(object):
             ])
 
             if timer:
-                datadog_gauge('commcare.change_feed.processing_time', timer.duration, tags=tags)
+                datadog_histogram('commcare.change_feed.processing_time', timer.duration, tags=tags)
 
 
 class ChangeEventHandler(object):
@@ -291,7 +292,7 @@ def handle_pillow_error(pillow, change, exception):
         error_id = error.id
 
     pillow_logging.exception(
-        "[%s] Error on change: %s, %s. Logged as: %s" % (
+        u"[%s] Error on change: %s, %s. Logged as: %s" % (
             pillow.get_name(),
             change['id'],
             exception,

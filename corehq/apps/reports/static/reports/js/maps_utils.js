@@ -11,7 +11,7 @@ function setMapHeight(map, animate) {
     } else {
         height -= 0.5 * $('.datatable thead').height();
     }
-    height = Math.max(height, MIN_HEIGHT);
+    height = Math.max(height, 300);
     if (animate) {
         $map.animate({height: height}, null, null, function() {
             map.invalidateSize();

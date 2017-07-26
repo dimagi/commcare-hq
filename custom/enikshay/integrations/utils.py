@@ -85,12 +85,16 @@ def case_properties_changed(case, case_properties):
     if last_case_action.is_case_create:
         return False
 
-    update_actions = [update.get_update_action() for update in get_case_updates(last_case_action.form)]
+    update_actions = [
+        update.get_update_action() for update in get_case_updates(last_case_action.form)
+        if update.id == case.case_id
+    ]
     property_changed = any(
         action for action in update_actions
         if isinstance(action, CaseUpdateAction)
-        and any(
-            case_property in action.dynamic_properties for case_property in case_properties
+        and (
+            any(case_property in action.dynamic_properties for case_property in case_properties)
+            or ("owner_id" in case_properties and action.owner_id)
         )
     )
     return property_changed

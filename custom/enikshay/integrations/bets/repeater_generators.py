@@ -6,14 +6,15 @@ from datetime import datetime, date
 import pytz
 from pytz import timezone
 
+from django.core.serializers.json import DjangoJSONEncoder
+from corehq.util.soft_assert import soft_assert
 from corehq.apps.locations.models import SQLLocation
-from corehq.apps.repeaters.exceptions import RequestConnectionError
-from corehq.apps.repeaters.repeater_generators import (
+from corehq.motech.repeaters.exceptions import RequestConnectionError
+from corehq.motech.repeaters.repeater_generators import (
     BasePayloadGenerator, LocationPayloadGenerator, UserPayloadGenerator)
 from custom.enikshay.case_utils import update_case, get_person_case_from_episode
 from custom.enikshay.const import (
     DATE_FULFILLED,
-    VOUCHER_ID,
     FULFILLED_BY_ID,
     FULFILLED_BY_LOCATION_ID,
     AMOUNT_APPROVED,
@@ -59,7 +60,7 @@ class BETSPayload(jsonobject.JsonObject):
         try:
             return SQLLocation.objects.get(location_id=location_id)
         except SQLLocation.DoesNotExist:
-            msg = "Location with id {location_id} not found.".format(location_id)
+            msg = "Location with id {location_id} not found.".format(location_id=location_id)
             if field_name and related_case_type and related_case_id:
                 msg += " This is the {field_name} for {related_case_type} with id: {related_case_id}".format(
                     field_name=field_name,
@@ -83,11 +84,15 @@ class IncentivePayload(BETSPayload):
             related_case_id=person_case.case_id
         )
 
+        treatment_outcome_date = episode_case_properties.get(TREATMENT_OUTCOME_DATE, None)
+        if treatment_outcome_date is None:
+            treatment_outcome_date = datetime.utcnow().strftime("%Y-%m-%d")
+
         return cls(
             EventID=TREATMENT_180_EVENT,
-            EventOccurDate=episode_case_properties.get(TREATMENT_OUTCOME_DATE),
+            EventOccurDate=treatment_outcome_date,
             BeneficiaryUUID=episode_case_properties.get(LAST_VOUCHER_CREATED_BY_ID),
-            BeneficiaryType="patient",
+            BeneficiaryType="mbbs",
             EpisodeID=episode_case.case_id,
             Location=person_case.owner_id,
             DTOLocation=_get_district_location(pcp_location),
@@ -170,19 +175,22 @@ class IncentivePayload(BETSPayload):
         episode_case_properties = episode_case.dynamic_case_properties()
 
         location = cls._get_location(
-            episode_case_properties.get("created_by_user_location_id"),
-            field_name="created_by_user_location_id",
+            episode_case_properties.get("registered_by"),
+            field_name="registered_by",
             related_case_type="episode",
             related_case_id=episode_case.case_id,
         )
+        if not location.user_id:
+            raise NikshayLocationNotFound(
+                "Location {} does not have a virtual location user".format(location.location_id))
 
         return cls(
             EventID=AYUSH_REFERRAL_EVENT,
             EventOccurDate=cls._india_now(),
-            BeneficiaryUUID=episode_case_properties.get("created_by_user_id"),
+            BeneficiaryUUID=location.user_id,
             BeneficiaryType='ayush_other',
             EpisodeID=episode_case.case_id,
-            Location=episode_case_properties.get("created_by_user_location_id"),
+            Location=episode_case_properties.get("registered_by"),
             DTOLocation=_get_district_location(location),
         )
 
@@ -215,7 +223,7 @@ class VoucherPayload(BETSPayload):
         return cls(
             EventID=event_id,
             EventOccurDate=voucher_case_properties.get(DATE_FULFILLED),
-            VoucherID=voucher_case_properties.get(VOUCHER_ID),
+            VoucherID=voucher_case.case_id,
             BeneficiaryUUID=fulfilled_by_id,
             BeneficiaryType=LOCATION_TYPE_MAP[location.location_type.code],
             Location=fulfilled_by_location_id,
@@ -246,33 +254,28 @@ class BETSBasePayloadGenerator(BasePayloadGenerator):
             })
 
     def handle_success(self, response, case, repeat_record):
-        if response.status_code == 201:
-            update_case(
-                case.domain,
-                case.case_id,
-                {
-                    self.event_property_name: "sent",
-                    "bets_{}_error".format(self.event_id): ""
-                }
-            )
+        update_case(
+            case.domain,
+            case.case_id,
+            {
+                self.event_property_name: "sent",
+                "bets_{}_error".format(self.event_id): ""
+            }
+        )
 
     def handle_failure(self, response, case, repeat_record):
-        if 400 <= response.status_code <= 500:
-            update_case(
-                case.domain,
-                case.case_id,
-                {
-                    self.event_property_name: (
-                        "error"
-                        if case.dynamic_case_properties().get(self.event_property_name) != 'sent'
-                        else 'sent'
-                    ),
-                    "bets_{}_error".format(self.event_id): "{}: {}".format(
-                        response.status_code,
-                        response.json().get('error')
-                    ),
-                }
-            )
+        update_case(
+            case.domain,
+            case.case_id,
+            {
+                self.event_property_name: (
+                    "error"
+                    if case.dynamic_case_properties().get(self.event_property_name) != 'sent'
+                    else 'sent'
+                ),
+                "bets_{}_error".format(self.event_id): unicode(response.json()),
+            }
+        )
 
 
 class BaseBETSVoucherPayloadGenerator(BETSBasePayloadGenerator):
@@ -329,58 +332,58 @@ class BETSDrugRefillPayloadGenerator(IncentivePayloadGenerator):
     event_id = DRUG_REFILL_EVENT
 
     @staticmethod
-    def _get_prescription_threshold_to_send(episode_case_properties):
+    def _get_prescription_threshold_to_send(episode_case):
         from custom.enikshay.integrations.bets.repeaters import BETSDrugRefillRepeater
         thresholds_to_send = [
             n for n in TOTAL_DAY_THRESHOLDS
             if BETSDrugRefillRepeater.prescription_total_days_threshold_in_trigger_state(
-                episode_case_properties, n
+                episode_case.dynamic_case_properties(), n
             )
         ]
-        assert len(thresholds_to_send) == 1, \
-            "Repeater should not have allowed to forward if there were more or less than one threshold to trigger"
 
-        return thresholds_to_send[0]
+        _assert = soft_assert('{}@{}.com'.format('frener', 'dimagi'))
+        message = ("Repeater should not have allowed to forward if there were more or less than"
+                   "one threshold to trigger. Episode case: {}".format(episode_case.case_id))
+        _assert(len(thresholds_to_send) == 1, message)
+
+        try:
+            return thresholds_to_send[0]
+        except IndexError:
+            return 0
 
     def get_payload(self, repeat_record, episode_case):
-        episode_case_properties = episode_case.dynamic_case_properties()
-        n = self._get_prescription_threshold_to_send(episode_case_properties)
+        n = self._get_prescription_threshold_to_send(episode_case)
         return json.dumps(IncentivePayload.create_drug_refill_payload(episode_case, n).payload_json())
 
     def get_event_property_name(self, episode_case):
-        n = self._get_prescription_threshold_to_send(episode_case.dynamic_case_properties())
+        n = self._get_prescription_threshold_to_send(episode_case)
         return "event_{}_{}".format(self.event_id, n)
 
     def handle_success(self, response, case, repeat_record):
-        if response.status_code == 201:
-            event_property_name = self.get_event_property_name(case)
-            update_case(
-                case.domain,
-                case.case_id,
-                {
-                    event_property_name: "sent",
-                    "{}_sent_date".format(event_property_name): str(date.today()),
-                    "bets_{}_error".format(self.event_id): "",
-                }
-            )
+        event_property_name = self.get_event_property_name(case)
+        update_case(
+            case.domain,
+            case.case_id,
+            {
+                event_property_name: "sent",
+                "{}_sent_date".format(event_property_name): str(date.today()),
+                "bets_{}_error".format(self.event_id): "",
+            }
+        )
 
     def handle_failure(self, response, case, repeat_record):
-        if 400 <= response.status_code <= 500:
-            update_case(
-                case.domain,
-                case.case_id,
-                {
-                    self.get_event_property_name(case): (
-                        "error"
-                        if case.dynamic_case_properties().get(self.get_event_property_name(case)) != 'sent'
-                        else 'sent'
-                    ),
-                    "bets_{}_error".format(self.event_id): "{}: {}".format(
-                        response.status_code,
-                        response.json().get('error')
-                    ),
-                }
-            )
+        update_case(
+            case.domain,
+            case.case_id,
+            {
+                self.get_event_property_name(case): (
+                    "error"
+                    if case.dynamic_case_properties().get(self.get_event_property_name(case)) != 'sent'
+                    else 'sent'
+                ),
+                "bets_{}_error".format(self.event_id): unicode(response.json()),
+            }
+        )
 
 
 class BETSSuccessfulTreatmentPayloadGenerator(IncentivePayloadGenerator):
@@ -408,19 +411,92 @@ class BETSAYUSHReferralPayloadGenerator(IncentivePayloadGenerator):
 
 
 class BETSUserPayloadGenerator(UserPayloadGenerator):
+    # Not all of these are used, but the endpoint will fail without them
+    user_data_fields = [
+        "secondary_pincode", "address_line_1", "use_new_ids",
+        "pcc_pharmacy_affiliation", "plc_lab_collection_center_name",
+        "commcare_project", "pcp_professional_org_membership", "pincode",
+        "id_issuer_body", "agency_status", "secondary_date_of_birth",
+        "tb_corner", "pcc_pharmacy_name", "id_device_number",
+        "secondary_gender", "plc_tb_tests", "landline_no", "id_issuer_number",
+        "secondary_landline_no", "plc_lab_or_collection_center",
+        "secondary_first_name", "commcare_primary_case_sharing_id",
+        "pcp_qualification", "pac_qualification", "secondary_unique_id_type",
+        "email", "commcare_location_id", "issuing_authority",
+        "pcc_tb_drugs_in_stock", "secondary_mobile_no_2",
+        "secondary_mobile_no_1", "secondary_middle_name", "plc_accredidation",
+        "mobile_no_2", "commcare_location_ids", "mobile_no_1", "is_test",
+        "secondary_email", "id_device_body", "secondary_unique_id_Number",
+        "plc_hf_if_nikshay", "usertype", "user_level", "gender",
+        "secondary_address_line_1", "secondary_last_name",
+        "secondary_address_line_2", "address_line_2", "registration_number",
+        "nikshay_id",
+    ]
 
     def get_payload(self, repeat_record, user):
-        from corehq.apps.api.resources.v0_5 import CommCareUserResource
-        resource = CommCareUserResource(api_name='v0.5')
-        bundle = resource.build_bundle(obj=user)
-        user_json = resource.full_dehydrate(bundle).data
         location = user.get_sql_location(repeat_record.domain)
-        user_json['dtoLocation'] = _get_district_location(location)
-        user_json['privateSectorOrgId'] = location.metadata['private_sector_org_id']
-        return json.dumps(user_json)
+        user_json = {
+            "username": user.username,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "default_phone_number": user.default_phone_number,
+            "id": user._id,
+            "phone_numbers": user.phone_numbers,
+            "email": user.email,
+            "dtoLocation": _get_district_location(location),
+            "privateSectorOrgId": location.metadata['private_sector_org_id'],
+            "resource_uri": "",
+        }
+        user_json['user_data'] = {
+            field: user.user_data.get(field, "")
+            for field in self.user_data_fields
+        }
+        return json.dumps(user_json, cls=DjangoJSONEncoder)
 
 
 class BETSLocationPayloadGenerator(LocationPayloadGenerator):
 
     def get_payload(self, repeat_record, location):
         return json.dumps(get_bets_location_json(location))
+
+
+class BETSBeneficiaryPayloadGenerator(BasePayloadGenerator):
+    case_properties = [
+        "age", "age_entered", "case_name", "case_type", "current_address",
+        "current_address_block_taluka_mandal",
+        "current_address_district_choice", "current_address_first_line",
+        "current_address_postal_code", "current_address_state_choice",
+        "current_address_village_town_city", "current_address_ward",
+        "current_episode_type", "dataset", "date_opened", "dob", "dob_known",
+        "enrolled_in_private", "external_id", "facility_assigned_to",
+        "first_name", "husband_father_name", "id_original_beneficiary_count",
+        "id_original_device_number", "id_original_issuer_number",
+        "language_preference", "last_name", "other_id_type", "owner_id",
+        "person_id", "phi", "phone_number", "send_alerts", "sex", "tu_choice",
+    ]
+
+    @property
+    def content_type(self):
+        return 'application/json'
+
+    def get_payload(self, repeat_record, person_case):
+        case_json = {
+            "case_id": person_case.case_id,
+            "closed": person_case.closed,
+            "date_closed": person_case.closed_on,
+            "date_modified": person_case.modified_on,
+            "domain": person_case.domain,
+            "id": person_case.case_id,
+            "indices": {},
+            "resource_uri": "",
+            "server_date_modified": person_case.server_modified_on,
+            "server_date_opened": person_case.opened_on,
+            "user_id": person_case.modified_by,
+            "xform_ids": [],
+        }
+        case_properties = person_case.dynamic_case_properties()
+        case_json["properties"] = {
+            prop: case_properties.get(prop, "")
+            for prop in self.case_properties
+        }
+        return json.dumps(case_json, cls=DjangoJSONEncoder)

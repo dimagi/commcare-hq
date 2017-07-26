@@ -61,6 +61,7 @@ domain_specific = [
     url(r'^indicators/mvp/', include('mvp.urls')),
     url(r'^indicators/', include('corehq.apps.indicators.urls')),
     url(r'^reports/', include('corehq.apps.reports.urls')),
+    url(r'^messaging/', include('corehq.messaging.scheduling.urls')),
     url(r'^data/', include('corehq.apps.data_interfaces.urls')),
     url(r'^data_dictionary/', include('corehq.apps.data_dictionary.urls')),
     url(r'^', include(hqwebapp_domain_specific)),
@@ -81,6 +82,7 @@ domain_specific = [
     url(r'^', include('custom.icds.urls')),
     url(r'^', include('custom.icds_reports.urls')),
     url(r'^', include('custom.enikshay.urls')),
+    url(r'^openmrs/', include('corehq.motech.openmrs.urls')),
     url(r'^_base_template/$', login_and_domain_required(
         lambda request, domain: render(request, 'style/base.html', {'domain': domain})
     )),
@@ -163,9 +165,8 @@ if settings.ENABLE_PRELOGIN_SITE:
 if settings.DEBUG:
     try:
         from debug_toolbar import urls as debug_toolbar_urls
-        urlconf_module, app_name, namespace = debug_toolbar_urls
         urlpatterns += [
-            url(r'^__debug__/', include((urlconf_module, app_name), namespace=namespace)),
+            url(r'^__debug__/', include(debug_toolbar_urls)),
         ]
     except ImportError:
         pass

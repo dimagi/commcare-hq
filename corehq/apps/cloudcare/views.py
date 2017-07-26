@@ -1,60 +1,44 @@
-import HTMLParser
 import json
 from xml.etree import ElementTree
 
 from django.conf import settings
-from django.contrib import messages
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponse, HttpResponseBadRequest, Http404
-from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _
 from django.views.decorators.cache import cache_page
 from django.views.generic import View
 from django.views.generic.base import TemplateView
 
 from couchdbkit import ResourceConflict
 
-from casexml.apps.case.models import CASE_STATUS_OPEN
-from casexml.apps.case.xml import V2
 from casexml.apps.phone.fixtures import generator
-from corehq.form_processor.utils import should_use_sql_backend
-from corehq.form_processor.utils.general import use_sqlite_backend
-from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_boolean
 from dimagi.utils.web import json_response, get_url_base, json_handler
-from touchforms.formplayer.api import DjangoAuth, get_raw_instance, sync_db
-from touchforms.formplayer.models import EntrySession
 from xml2json.lib import xml2json
 
 from corehq import toggles, privileges
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
 from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
-    get_brief_apps_in_domain,
     get_latest_released_app_doc,
     get_app_ids_in_domain,
     get_current_app,
-    wrap_app,
     get_current_app_doc,
 )
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException, ModuleNotFoundException
-from corehq.apps.app_manager.models import Application, ApplicationBase, RemoteApp
-from corehq.apps.app_manager.suite_xml.sections.details import get_instances_for_module
-from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.util import get_cloudcare_session_data
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.cloudcare.api import (
     api_closed_to_status,
     CaseAPIResult,
-    get_app_json,
     get_filtered_cases,
     get_filters_from_request_params,
-    get_open_form_sessions,
     look_up_app_json,
 )
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_app_id_from_hash
@@ -62,7 +46,7 @@ from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.exceptions import RemoteAppError
 from corehq.apps.cloudcare.models import ApplicationAccess
-from corehq.apps.cloudcare.touchforms_api import BaseSessionDataHelper, CaseSessionDataHelper
+from corehq.apps.cloudcare.touchforms_api import CaseSessionDataHelper
 from corehq.apps.cloudcare.const import WEB_APPS_ENVIRONMENT, PREVIEW_APP_ENVIRONMENT
 from corehq.apps.domain.decorators import login_and_domain_required, login_or_digest_ex, domain_admin_required
 from corehq.apps.groups.models import Group
@@ -78,14 +62,11 @@ from corehq.apps.users.views import BaseUserSettingsView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
 from corehq.util.quickcache import quickcache
-from corehq.util.xml_utils import indent_xml
-from corehq.apps.analytics.tasks import track_clicked_preview_on_hubspot
-from corehq.apps.analytics.utils import get_meta
 
 
 @require_cloudcare_access
 def default(request, domain):
-    return HttpResponseRedirect(reverse('cloudcare_main', args=[domain, '']))
+    return HttpResponseRedirect(reverse('formplayer_main', args=[domain]))
 
 
 @use_legacy_jquery
@@ -95,152 +76,6 @@ def insufficient_privilege(request, domain, *args, **kwargs):
     }
 
     return render(request, "cloudcare/insufficient_privilege.html", context)
-
-
-class CloudcareMain(View):
-
-    @use_datatables
-    @use_legacy_jquery
-    @use_jquery_ui
-    @method_decorator(require_cloudcare_access)
-    @method_decorator(requires_privilege_for_commcare_user(privileges.CLOUDCARE))
-    def dispatch(self, request, *args, **kwargs):
-        return super(CloudcareMain, self).dispatch(request, *args, **kwargs)
-
-    def get(self, request, domain, urlPath):
-        try:
-            preview = string_to_boolean(request.GET.get("preview", "false"))
-        except ValueError:
-            # this is typically only set at all if it's intended to be true so this
-            # is a reasonable default for "something went wrong"
-            preview = True
-
-        app_access = ApplicationAccess.get_by_domain(domain)
-        accessor = CaseAccessors(domain)
-
-        if not preview:
-            apps = get_cloudcare_apps(domain)
-            if request.project.use_cloudcare_releases:
-
-                if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
-                        toggles.CLOUDCARE_LATEST_BUILD.enabled(request.couch_user.username)):
-                    get_cloudcare_app = get_latest_build_doc
-                else:
-                    get_cloudcare_app = get_latest_released_app_doc
-
-                apps = map(
-                    lambda app: get_cloudcare_app(domain, app['_id']),
-                    apps,
-                )
-                apps = filter(None, apps)
-                apps = map(wrap_app, apps)
-
-                # convert to json
-                apps = [get_app_json(app) for app in apps]
-            else:
-                # legacy functionality - use the latest build regardless of stars
-                apps = [get_latest_build_doc(domain, app['_id']) for app in apps]
-                apps = [get_app_json(ApplicationBase.wrap(app)) for app in apps if app]
-
-        else:
-            # big TODO: write a new apps view for Formplayer, can likely cut most out now
-            if not toggles.USE_OLD_CLOUDCARE.enabled(domain):
-                apps = get_cloudcare_apps(domain)
-            else:
-                apps = get_brief_apps_in_domain(domain)
-            apps = [get_app_json(app) for app in apps if app and (
-                isinstance(app, RemoteApp) or app.application_version == V2)]
-            meta = get_meta(request)
-            track_clicked_preview_on_hubspot(request.couch_user, request.COOKIES, meta)
-
-        # trim out empty apps
-        apps = filter(lambda app: app, apps)
-        apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
-
-        def _default_lang():
-            if apps:
-                # unfortunately we have to go back to the DB to find this
-                return Application.get(apps[0]["_id"]).default_language
-            else:
-                return "en"
-
-        # default language to user's preference, followed by
-        # first app's default, followed by english
-        language = request.couch_user.language or _default_lang()
-
-        def _url_context():
-            # given a url path, returns potentially the app, parent, and case, if
-            # they're selected. the front end optimizes with these to avoid excess
-            # server calls
-
-            # there's an annoying dependency between this logic and backbone's
-            # url routing that seems hard to solve well. this needs to be synced
-            # with apps.js if anything changes
-
-            # for apps anything with "view/app/" works
-
-            # for cases it will be:
-            # "view/:app/:module/:form/case/:case/"
-
-            # if there are parent cases, it will be:
-            # "view/:app/:module/:form/parent/:parent/case/:case/
-
-            # could use regex here but this is actually simpler with the potential
-            # absence of a trailing slash
-            split = urlPath.split('/')
-            app_id = split[1] if len(split) >= 2 else None
-
-            if len(split) >= 5 and split[4] == "parent":
-                parent_id = split[5]
-                case_id = split[7] if len(split) >= 7 else None
-            else:
-                parent_id = None
-                case_id = split[5] if len(split) >= 6 else None
-
-            app = None
-            if app_id:
-                if app_id in [a['_id'] for a in apps]:
-                    app = look_up_app_json(domain, app_id)
-                else:
-                    messages.info(request, _("That app is no longer valid. Try using the "
-                                             "navigation links to select an app."))
-            if app is None and len(apps) == 1:
-                app = look_up_app_json(domain, apps[0]['_id'])
-
-            def _get_case(domain, case_id):
-                case = accessor.get_case(case_id)
-                assert case.domain == domain, "case %s not in %s" % (case_id, domain)
-                return case.to_api_json()
-
-            case = _get_case(domain, case_id) if case_id else None
-            if parent_id is None and case is not None:
-                parent_id = case.get('indices', {}).get('parent', {}).get('case_id', None)
-            parent = _get_case(domain, parent_id) if parent_id else None
-
-            return {
-                "app": app,
-                "case": case,
-                "parent": parent
-            }
-
-        context = {
-            "domain": domain,
-            "language": language,
-            "apps": apps,
-            "apps_raw": apps,
-            "preview": preview,
-            "maps_api_key": settings.GMAPS_API_KEY,
-            "sessions_enabled": request.couch_user.is_commcare_user(),
-            "use_cloudcare_releases": request.project.use_cloudcare_releases,
-            "username": request.user.username,
-            "formplayer_url": settings.FORMPLAYER_URL,
-            'use_sqlite_backend': use_sqlite_backend(domain),
-        }
-        context.update(_url_context())
-        if not toggles.USE_OLD_CLOUDCARE.enabled(domain):
-            return render(request, "cloudcare/formplayer_home.html", context)
-        else:
-            return render(request, "cloudcare/cloudcare_home.html", context)
 
 
 @location_safe
@@ -276,6 +111,9 @@ class FormplayerMain(View):
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
         apps = filter(lambda app: app_access.user_can_access_app(request.couch_user, app), apps)
+        role = request.couch_user.get_role(domain)
+        if role:
+            apps = [app for app in apps if role.permissions.view_web_app(app)]
         apps = sorted(apps, key=lambda app: app['name'])
 
         def _default_lang():
@@ -298,6 +136,7 @@ class FormplayerMain(View):
             "single_app_mode": False,
             "home_url": reverse(self.urlname, args=[domain]),
             "environment": WEB_APPS_ENVIRONMENT,
+            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -335,6 +174,10 @@ class FormplayerPreviewSingleApp(View):
         if not app_access.user_can_access_app(request.couch_user, app):
             raise Http404()
 
+        role = request.couch_user.get_role(domain)
+        if role and not role.permissions.view_web_app(app):
+            raise Http404()
+
         def _default_lang():
             try:
                 return app['langs'][0]
@@ -355,6 +198,7 @@ class FormplayerPreviewSingleApp(View):
             "single_app_mode": True,
             "home_url": reverse(self.urlname, args=[domain, app_id]),
             "environment": WEB_APPS_ENVIRONMENT,
+            'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
         }
         return render(request, "cloudcare/formplayer_home.html", context)
 
@@ -453,7 +297,11 @@ class LoginAsUsers(View):
     def _user_query(self, search_string, page, limit):
         user_data_fields = []
         if toggles.ENIKSHAY.enabled(self.domain):
-            user_data_fields = ['id_issuer_number']
+            user_data_fields = [
+                'id_issuer_number',
+                'id_issuer_body',
+                'agency_id_legacy',
+            ]
         return login_as_user_query(
             self.domain,
             self.couch_user,
@@ -596,74 +444,6 @@ def get_cases(request, domain):
 
 
 @cloudcare_api
-def filter_cases(request, domain, app_id, module_id, parent_id=None):
-    app = Application.get(app_id)
-    module = app.get_module(module_id)
-    auth_cookie = request.COOKIES.get('sessionid')
-    requires_parent_cases = string_to_boolean(request.GET.get('requires_parent_cases', 'false'))
-
-    xpath = EntriesHelper.get_filter_xpath(module)
-    instances = get_instances_for_module(app, module, additional_xpaths=[xpath])
-    extra_instances = [{'id': inst.id, 'src': inst.src} for inst in instances]
-    accessor = CaseAccessors(domain)
-
-    # touchforms doesn't like this to be escaped
-    xpath = HTMLParser.HTMLParser().unescape(xpath)
-    case_type = module.case_type
-
-    if xpath or should_use_sql_backend(domain):
-        # if we need to do a custom filter, send it to touchforms for processing
-        additional_filters = {
-            "properties/case_type": case_type,
-            "footprint": True
-        }
-
-        helper = BaseSessionDataHelper(domain, request.couch_user)
-        result = helper.filter_cases(xpath, additional_filters, DjangoAuth(auth_cookie),
-                                     extra_instances=extra_instances)
-        if result.get('status', None) == 'error':
-            code = result.get('code', 500)
-            message = result.get('message', _("Something went wrong filtering your cases."))
-            if code == 500:
-                notify_exception(None, message=message)
-            return json_response(message, status_code=code)
-
-        case_ids = result.get("cases", [])
-    else:
-        # otherwise just use our built in api with the defaults
-        case_ids = [res.id for res in get_filtered_cases(
-            domain,
-            status=CASE_STATUS_OPEN,
-            case_type=case_type,
-            user_id=request.couch_user._id,
-            footprint=True,
-            ids_only=True,
-        )]
-
-    cases = accessor.get_cases(case_ids)
-
-    if parent_id:
-        cases = filter(lambda c: c.parent and c.parent.case_id == parent_id, cases)
-
-    # refilter these because we might have accidentally included footprint cases
-    # in the results from touchforms. this is a little hacky but the easiest
-    # (quick) workaround. should be revisted when we optimize the case list.
-    cases = filter(lambda c: c.type == case_type, cases)
-    cases = [c.to_api_json(lite=True) for c in cases if c]
-
-    response = {'cases': cases}
-    if requires_parent_cases:
-        # Subtract already fetched cases from parent list
-        parent_ids = set(map(lambda c: c['indices']['parent']['case_id'], cases)) - \
-            set(map(lambda c: c['case_id'], cases))
-        parents = accessor.get_cases(list(parent_ids))
-        parents = [c.to_api_json(lite=True) for c in parents]
-        response.update({'parents': parents})
-
-    return json_response(response)
-
-
-@cloudcare_api
 def get_apps_api(request, domain):
     return json_response(get_cloudcare_apps(domain))
 
@@ -707,36 +487,6 @@ def get_fixtures(request, domain, user_id, fixture_id=None):
 
 
 @cloudcare_api
-def get_sessions(request, domain):
-    # is it ok to pull user from the request? other api calls seem to have an explicit 'user' param
-    skip = request.GET.get('skip') or 0
-    limit = request.GET.get('limit') or 10
-    return json_response(get_open_form_sessions(request.user, skip=skip, limit=limit))
-
-
-@cloudcare_api
-def get_session_context(request, domain, session_id):
-    # NOTE: although this view does not appeared to be called from anywhere it is, and cannot be deleted.
-    # The javascript routing in cloudcare depends on it, though constructs it manually in a hardcoded way.
-    # see getSessionContextUrl in cloudcare/util.js
-    # Adding 'cloudcare_get_session_context' to this comment so that the url name passes a grep test
-    try:
-        session = EntrySession.objects.get(session_id=session_id)
-    except EntrySession.DoesNotExist:
-        session = None
-    if request.method == 'DELETE':
-        if session:
-            session.delete()
-        return json_response({'status': 'success'})
-    else:
-        helper = BaseSessionDataHelper(domain, request.couch_user)
-        return json_response(helper.get_full_context({
-            'session_id': session_id,
-            'app_id': session.app_id if session else None
-        }))
-
-
-@cloudcare_api
 def get_ledgers(request, domain):
     """
     Returns ledgers associated with a case in the format:
@@ -777,21 +527,6 @@ def get_ledgers(request, domain):
     )
 
 
-@cloudcare_api
-def sync_db_api(request, domain):
-    auth_cookie = request.COOKIES.get('sessionid')
-    username = request.GET.get('username')
-    try:
-        response = sync_db(username, domain, DjangoAuth(auth_cookie))
-    except Exception as e:
-        return json_response(
-            {'status': 'error', 'message': unicode(e)},
-            status_code=500
-        )
-    else:
-        return json_response(response)
-
-
 class ReadableQuestions(View):
 
     urlname = 'readable_questions'
@@ -822,37 +557,6 @@ class ReadableQuestions(View):
         })
 
 
-@cloudcare_api
-def render_form(request, domain):
-    # get session
-    session_id = request.GET.get('session_id')
-
-    session = get_object_or_404(EntrySession, session_id=session_id)
-
-    try:
-        raw_instance = get_raw_instance(session_id, domain)
-    except Exception as e:
-        return HttpResponse(e, status=500, content_type="text/plain")
-
-    xmlns = raw_instance["xmlns"]
-    form_data_xml = raw_instance["output"]
-
-    _, form_data_json = xml2json(form_data_xml)
-    pretty_questions = readable.get_questions(domain, session.app_id, xmlns)
-
-    readable_form = readable.get_readable_form_data(form_data_json, pretty_questions)
-
-    rendered_readable_form = render_to_string(
-        'reports/form/partials/readable_form.html',
-        {'questions': readable_form}
-    )
-
-    return json_response({
-        'form_data': rendered_readable_form,
-        'instance_xml': indent_xml(form_data_xml)
-    })
-
-
 class HttpResponseConflict(HttpResponse):
     status_code = 409
 
@@ -863,10 +567,7 @@ class EditCloudcareUserPermissionsView(BaseUserSettingsView):
 
     @property
     def page_title(self):
-        if not toggles.USE_OLD_CLOUDCARE.enabled(self.domain):
-            return _("Web Apps Permissions")
-        else:
-            return _("CloudCare Permissions")
+        return _("Web Apps Permissions")
 
     @method_decorator(domain_admin_required)
     @method_decorator(requires_privilege_with_fallback(privileges.CLOUDCARE))

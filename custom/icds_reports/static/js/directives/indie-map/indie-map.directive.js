@@ -103,7 +103,7 @@ function IndieMapController($scope, $compile, $location, storageService) {
         };
         vm.updateMap = function (geography) {
             $location.search('location_name', geography.id);
-            storageService.set($location.search());
+            storageService.setKey('search', $location.search());
             $scope.$apply();
         };
 
@@ -135,14 +135,15 @@ function IndieMapController($scope, $compile, $location, storageService) {
             _.extend(vm.mapPlugins, {
                 customTable: function () {
                     if (this.options.rightLegend !== null) {
+                        var loc_name = $location.search()['location_name'] || "National";
                         var html = [
                             '<table style="width: 250px;">',
                             '<td style="border-right: 1px solid black; padding-right: 10px; padding-bottom: 10px; font-size: 2em;"><i class="fa fa-line-chart" aria-hidden="true"></i></td>',
-                            '<td style="padding-left: 10px; padding-bottom: 10px;">Average: ' + this.options.rightLegend['average'] + '%</td>',
+                            '<td style="padding-left: 10px; padding-bottom: 10px;">' + loc_name + ' average: ' + this.options.rightLegend['average'] + '%</td>',
                             '<tr/>',
                             '<tr>',
-                            '<td style="border-right: 1px solid black; font-size: 2em;"><i class="fa fa-info" aria-hidden="true"></td>',
-                            '<td style="padding-left: 10px;">' + this.options.rightLegend['info'] + '</td>',
+                            '<td style="border-right: 1px solid black; padding-bottom: 10px; font-size: 2em;"><i class="fa fa-info" aria-hidden="true"></td>',
+                            '<td style="padding-left: 10px; padding-bottom: 10px;">' + this.options.rightLegend['info'] + '</td>',
                             '<tr/>',
                             '<tr>',
                             '<td style="border-right: 1px solid black; font-size: 2em;"><i class="fa fa-clock-o" aria-hidden="true"></td>',

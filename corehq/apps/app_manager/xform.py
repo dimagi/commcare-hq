@@ -5,7 +5,6 @@ import logging
 import itertools
 from django.utils.translation import ugettext_lazy as _
 
-import formtranslate.api
 from casexml.apps.case.xml import V2_NAMESPACE
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from corehq.apps import nimbus_api
@@ -16,7 +15,6 @@ from corehq.apps.app_manager.const import (
 from lxml import etree as ET
 
 from corehq.apps.nimbus_api.exceptions import NimbusAPIException
-from corehq.toggles import FORMTRANSLATE_FORM_VALIDATION
 from corehq.util.view_utils import get_request
 from dimagi.utils.decorators.memoized import memoized
 from .xpath import CaseIDXPath, session_var, CaseTypeXpath, QualifiedScheduleFormXPath
@@ -564,13 +562,10 @@ def validate_xform(domain, source):
         source = source.encode("utf-8")
     # normalize and strip comments
     source = ET.tostring(parse_xml(source))
-    if FORMTRANSLATE_FORM_VALIDATION.enabled(domain):
-        validation_results = formtranslate.api.validate(source)
-    else:
-        try:
-            validation_results = nimbus_api.validate_form(source)
-        except NimbusAPIException:
-            raise XFormValidationFailed("Unable to validate form")
+    try:
+        validation_results = nimbus_api.validate_form(source)
+    except NimbusAPIException:
+        raise XFormValidationFailed("Unable to validate form")
 
     if not validation_results.success:
         raise XFormValidationError(
@@ -579,6 +574,8 @@ def validate_xform(domain, source):
         )
 
 
+ControlNode = collections.namedtuple('ControlNode', ['node', 'path', 'repeat', 'group', 'items',
+                                     'is_leaf', 'data_type', 'relevant', 'required', 'constraint'])
 class XForm(WrappedNode):
     """
     A bunch of utility functions for doing certain specific
@@ -954,14 +951,17 @@ class XForm(WrappedNode):
         control_nodes = self.get_control_nodes()
         leaf_data_nodes = self.get_leaf_data_nodes()
 
-        for node, path, repeat, group, items, is_leaf, data_type, relevant, required in control_nodes:
+        for cnode in control_nodes:
+            node = cnode.node
+            path = cnode.path
             excluded_paths.add(path)
-            if not is_leaf and not include_groups:
+            if not cnode.is_leaf and not include_groups:
                 continue
 
             if node.tag_name == 'trigger' and not include_triggers:
                 continue
 
+            repeat = cnode.repeat
             if repeat is not None:
                 repeat_contexts.add(repeat)
 
@@ -970,19 +970,20 @@ class XForm(WrappedNode):
                 "tag": node.tag_name,
                 "value": path,
                 "repeat": repeat,
-                "group": group,
-                "type": data_type,
-                "relevant": relevant,
-                "required": required == "true()",
+                "group": cnode.group,
+                "type": cnode.data_type,
+                "relevant": cnode.relevant,
+                "required": cnode.required == "true()",
+                "constraint": cnode.constraint,
                 "comment": self._get_comment(leaf_data_nodes, path),
                 "hashtagValue": self.hashtag_path(path),
             }
             if include_translations:
                 question["translations"] = self.get_label_translations(node, langs)
 
-            if items is not None:
+            if cnode.items is not None:
                 options = []
-                for item in items:
+                for item in cnode.items:
                     translation = self.get_label_text(item, langs)
                     try:
                         value = item.findtext('{f}value').strip()
@@ -1017,12 +1018,14 @@ class XForm(WrappedNode):
                     "type": "DataBindOnly",
                     "calculate": bind.attrib.get('calculate') if hasattr(bind, 'attrib') else None,
                     "relevant": bind.attrib.get('relevant') if hasattr(bind, 'attrib') else None,
+                    "constraint": bind.attrib.get('constraint') if hasattr(bind, 'attrib') else None,
+                    "comment": self._get_comment(leaf_data_nodes, path),
                 }
 
                 # Include meta information about the stock entry
                 if data_node.tag_name == 'entry':
                     parent = next(data_node.xml.iterancestors())
-                    if parent:
+                    if len(parent):
                         is_stock_element = any(map(
                             lambda namespace: namespace == COMMTRACK_REPORT_XMLNS,
                             parent.nsmap.values()
@@ -1070,6 +1073,7 @@ class XForm(WrappedNode):
                     data_type = infer_vellum_type(node, bind)
                     relevant = bind.attrib.get('relevant') if bind else None
                     required = bind.attrib.get('required') if bind else None
+                    constraint = bind.attrib.get('constraint') if bind else None
                     skip = False
 
                     if tag == "group":
@@ -1102,9 +1106,18 @@ class XForm(WrappedNode):
                             items = node.findall('{f}item')
 
                     if not skip:
-                        control_nodes.append((node, path, repeat_context,
-                                              group_context, items, is_leaf,
-                                              data_type, relevant, required))
+                        control_nodes.append(ControlNode(
+                            node=node,
+                            path=path,
+                            repeat=repeat_context,
+                            group=group_context,
+                            items=items,
+                            is_leaf=is_leaf,
+                            data_type=data_type,
+                            relevant=relevant,
+                            required=required,
+                            constraint=constraint
+                        ))
                     if recursive_kwargs:
                         for_each_control_node(**recursive_kwargs)
 

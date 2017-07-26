@@ -82,15 +82,6 @@ class CommtrackActionConfig(DocumentSchema):
         return self.action in STOCK_ACTION_ORDER
 
 
-# todo: delete this?
-class CommtrackRequisitionConfig(DocumentSchema):
-    # placeholder class for when this becomes fancier
-    enabled = BooleanProperty(default=False)
-
-    # requisitions have their own sets of actions
-    actions = SchemaListProperty(CommtrackActionConfig)
-
-
 class ConsumptionConfig(DocumentSchema):
     min_transactions = IntegerProperty(default=2)
     min_window = IntegerProperty(default=10)
@@ -103,23 +94,6 @@ class StockLevelsConfig(DocumentSchema):
     emergency_level = DecimalProperty(default=0.5)  # in months
     understock_threshold = DecimalProperty(default=1.5)  # in months
     overstock_threshold = DecimalProperty(default=3)  # in months
-
-
-class OpenLMISConfig(DocumentSchema):
-    # placeholder class for when this becomes fancier
-    enabled = BooleanProperty(default=False)
-
-    url = StringProperty()
-    username = StringProperty()
-    # we store passwords in cleartext right now, but in the future may want
-    # to leverage something like oauth to manage this better
-    password = StringProperty()
-
-    using_requisitions = BooleanProperty(default=False) # whether openlmis handles our requisitions for us
-
-    @property
-    def is_configured(self):
-        return True if self.enabled and self.url and self.password and self.username else False
 
 
 class AlertConfig(DocumentSchema):
@@ -157,10 +131,6 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
     multiaction_enabled = BooleanProperty()
     multiaction_keyword_ = StringProperty()
 
-    # todo: remove?
-    requisition_config = SchemaProperty(CommtrackRequisitionConfig)
-    openlmis_config = SchemaProperty(OpenLMISConfig)
-
     # configured on Advanced Settings page
     use_auto_emergency_levels = BooleanProperty(default=False)
 
@@ -197,16 +167,10 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
 
     @property
     def all_actions(self):
-        return self.actions + (self.requisition_config.actions if self.requisitions_enabled else [])
+        return self.actions
 
     def action_by_keyword(self, keyword):
-        def _action(action, type):
-            action.type = type
-            return action
-        actions = [_action(a, 'stock') for a in self.actions]
-        if self.requisitions_enabled:
-            actions += [_action(a, 'req') for a in self.requisition_config.actions]
-        return dict((a.keyword.lower(), a) for a in actions).get(keyword.lower())
+        return dict((a.keyword.lower(), a) for a in self.actions).get(keyword.lower())
 
     def get_consumption_config(self):
         def _default_monthly_consumption(case_id, product_id):
@@ -242,14 +206,6 @@ class CommtrackConfig(QuickCachedDocumentMixin, Document):
             force_consumption_case_filter=case_filter,
             sync_consumption_ledger=self.sync_consumption_fixtures
         )
-
-    @property
-    def requisitions_enabled(self):
-        return self.requisition_config.enabled
-
-    @property
-    def openlmis_enabled(self):
-        return self.openlmis_config.enabled
 
 
 @receiver(commcare_domain_pre_delete)
@@ -459,11 +415,10 @@ class StockExportColumn(ComplexExportColumn):
         return values
 
 
-def _make_location_admininstrative(location):
+def close_supply_point_case(location):
     supply_point_id = location.supply_point_id
     if supply_point_id:
         close_case(supply_point_id, location.domain, const.COMMTRACK_USERNAME)
-    location.supply_point_id = None  # this will be saved soon anyways
 
 
 def _reopen_or_create_supply_point(location):
@@ -484,18 +439,20 @@ def _reopen_or_create_supply_point(location):
         return SupplyInterface.create_from_location(location.domain, location)
 
 
-def sync_supply_point(location):
-    # Called on location.save()
-    domain = Domain.get_by_name(location.domain)
-    if not domain.commtrack_enabled:
+def sync_supply_point(location, is_deletion=False):
+    """Called on location save() or delete().  Updates the supply_point_id if appropriate"""
+    domain_obj = Domain.get_by_name(location.domain)
+    if not domain_obj.commtrack_enabled:
         return None
 
-    if location.location_type.administrative:
-        _make_location_admininstrative(location)
-        return None
+    if location.location_type.administrative or is_deletion:
+        close_supply_point_case(location)
+        location.supply_point_id = None
+    elif location.is_archived:
+        close_supply_point_case(location)
     else:
         updated_supply_point = _reopen_or_create_supply_point(location)
-        return updated_supply_point.case_id
+        location.supply_point_id = updated_supply_point.case_id
 
 
 @receiver(post_save, sender=StockState)

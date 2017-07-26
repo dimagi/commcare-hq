@@ -33,6 +33,7 @@ class DBAccessorsTest(TestCase):
 
     @classmethod
     def setUpClass(cls):
+        super(DBAccessorsTest, cls).setUpClass()
         cls.domain = 'lalksdjflakjsdf'
         cases = [
             CommCareCase(domain=cls.domain, type='type1', name='Alice', user_id='XXX',
@@ -51,6 +52,7 @@ class DBAccessorsTest(TestCase):
     def tearDownClass(cls):
         CommCareCase.get_db().bulk_delete(cls.cases)
         XFormInstance.get_db().bulk_delete(cls.forms)
+        super(DBAccessorsTest, cls).tearDownClass()
 
     def test_get_number_of_cases_in_domain__type(self):
         self.assertEqual(

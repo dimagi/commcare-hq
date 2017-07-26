@@ -6,6 +6,10 @@
 {% block head %}{{ block.super }}
     {% include 'analytics/fullstory.html' %}
 {% endblock %}
+
+
+{% block title %}{{ module.name|clean_trans:langs }} - {% trans 'Module Settings' %}{% endblock %}
+
 {% block stylesheets %}{{ block.super }}
     <style>
         /* Prevent help icons from disturbing horizontal alignment of table headers */
@@ -17,13 +21,13 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'hqwebapp/js/guidGenerator.js' %}"></script>
     <script src="{% static 'hqwebapp/js/key-value-mapping.js' %}"></script>
-    <script src="{% static 'app_manager/js/graph-config.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/graph_config.js' %}"></script>
     {% if request|toggle_enabled:"CASE_DETAIL_PRINT" %}
         <script src="{% static "hqmedia/js/hqmediauploaders.js" %}"></script>
         <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
     {% endif %}
-    <script src="{% static 'app_manager/js/module-view.js' %}"></script>
-    <script src="{% static 'app_manager/js/case_list_setting.js' %}"></script>
+    <script src="{% static 'app_manager/js/modules/module_view.js' %}"></script>
+    <script src="{% static 'app_manager/js/modules/case_list_setting.js' %}"></script>
     {% include "app_manager/v2/partials/xpathValidator.html" %}
 {% endblock %}
 {% block js-inline %}{{ block.super }}
@@ -31,9 +35,11 @@
     <script src="{% static 'app_manager/js/nav_menu_media_common.js' %}"></script>
     <script src="{% static 'app_manager/js/app_manager_media.js' %}"></script>
     <script src="{% static 'app_manager/js/nav_menu_media.js' %}"></script>
-    <script src="{% static 'app_manager/js/case_detail_print.js' %}"></script>
-    <script src="{% static 'app_manager/js/detail-screen-config.js' %}"></script>
-    <script src="{% static 'app_manager/js/shadow-module-settings.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/case_detail_print.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/case_claim.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/case_list_callout.js' %}"></script>
+    <script src="{% static 'app_manager/js/details/screen_config.js' %}"></script>
+    <script src="{% static 'app_manager/js/modules/shadow_module_settings.js' %}"></script>
 
     {% include 'style/partials/key_value_mapping.html' %}
     {% include 'app_manager/v2/partials/graph_configuration_modal.html' %}
@@ -50,7 +56,7 @@
   {% initial_page_data 'js_options' js_options %}
   {% initial_page_data 'multimedia_object_map' multimedia.object_map %}
   {% initial_page_data 'case_list_form_options' case_list_form_options %}
-  {% initial_page_data 'case_list_form_not_allowed_reason' case_list_form_not_allowed_reason  %}
+  {% initial_page_data 'case_list_form_not_allowed_reasons' case_list_form_not_allowed_reasons %}
   {% initial_page_data 'multimedia_upload_managers' multimedia.upload_managers_js %}
   {% initial_page_data 'nav_menu_media_specifics' nav_menu_media_specifics %}
   {% initial_page_data 'parent_modules' parent_modules %}

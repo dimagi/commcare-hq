@@ -64,6 +64,8 @@ ZAPIER_INTEGRATION = 'zapier_integration'
 
 LOGIN_AS = 'login_as'
 
+PRACTICE_MOBILE_WORKERS = 'practice_mobile_workers'
+
 MAX_PRIVILEGES = [
     LOOKUP_TABLES,
     API_ACCESS,
@@ -98,7 +100,8 @@ MAX_PRIVILEGES = [
     EXCEL_DASHBOARD,
     DAILY_SAVED_EXPORT,
     ZAPIER_INTEGRATION,
-    LOGIN_AS
+    LOGIN_AS,
+    PRACTICE_MOBILE_WORKERS,
 ]
 
 # These are special privileges related to their own rates in a SoftwarePlanVersion
@@ -145,5 +148,6 @@ class Titles(object):
             EXCEL_DASHBOARD: _('Excel Dashboard'),
             DAILY_SAVED_EXPORT: _('Daily saved export'),
             ZAPIER_INTEGRATION: _('Zapier Integration'),
-            LOGIN_AS: _('Login As for App Preview')
+            LOGIN_AS: _('Login As for App Preview'),
+            PRACTICE_MOBILE_WORKERS: _('Practice mode for mobile workers'),
         }.get(privilege, privilege)

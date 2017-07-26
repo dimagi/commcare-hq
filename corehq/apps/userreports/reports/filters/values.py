@@ -174,7 +174,7 @@ class NumericFilterValue(FilterValue):
             return None
 
         filter_class = self.operators_to_filters[self.value['operator']].es
-        return filter_class(self.filter.field, self.filter.value)
+        return filter_class(self.filter.field, self.value['operand'])
 
 
 class BasicBetweenFilter(BasicFilter):
@@ -296,7 +296,7 @@ class PreFilterValue(FilterValue):
 
 class ChoiceListFilterValue(FilterValue):
 
-    ALLOWED_TYPES = ('choice_list', 'dynamic_choice_list')
+    ALLOWED_TYPES = ('choice_list', 'dynamic_choice_list', 'multi_field_dynamic_choice_list')
 
     def __init__(self, filter, value):
         assert filter.type in self.ALLOWED_TYPES

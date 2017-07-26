@@ -1,20 +1,7 @@
 {
     "domains": [
-        "enikshay-test",
-        "enikshay-test-test",
         "enikshay",
-        "enikshay-test-2",
-        "enikshay-test-3",
-        "enikshay-nikshay-migration-test",
-        "enikshay-domain-copy-test",
-        "enikshay-aks-audit",
-        "np-migration-3",
-        "enikshay-uatbc-migration-test-1",
-        "enikshay-uatbc-migration-test-2",
-        "enikshay-uatbc-migration-test-3",
-        "enikshay-uatbc-migration-test-4",
-        "enikshay-uatbc-migration-test-5",
-        "enikshay-uatbc-migration-test-6",
+        "enikshay-reports-qa",
         "sheel-enikshay"
     ],
     "server_environment": [
@@ -43,16 +30,21 @@
             {
                 "compare_as_string": false,
                 "datatype": "string",
-                "type": "dynamic_choice_list",
-                "slug": "village",
+                "fields": [
+                    "person_owner_id",
+                    "treatment_initiating_facility_id",
+                    "secondary_owner_owner_id"
+                ],
+                "display": "Location",
                 "field": "person_owner_id",
                 "choice_provider": {
                     "include_descendants": true,
                     "type": "location",
-                    "show_full_path": true,
-                    "order_by_hierarchy": true
+                    "order_by_hierarchy": true,
+                    "show_full_path": true
                 },
-                "display": "Location"
+                "type": "multi_field_dynamic_choice_list",
+                "slug": "village"
             },
             {
                 "pre_value": 1,
@@ -186,10 +178,21 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "cdst_lab",
+                "field": "site_of_disease",
                 "calculate_total": false,
                 "type": "field",
-                "display": "C-DST Lab"
+                "display": "Site of Disease"
+            },
+            {
+                "sortable": false,
+                "description": null,
+                "format": "default",
+                "transform": {},
+                "aggregation": "simple",
+                "field": "patient_type_private_app",
+                "calculate_total": false,
+                "type": "field",
+                "display": "Type (New, Recurrent, TALFU, Failure, Other)"
             },
             {
                 "sortable": false,
@@ -208,54 +211,10 @@
                 "format": "default",
                 "transform": {},
                 "aggregation": "simple",
-                "field": "site_of_disease",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Site of Disease (P/EP)"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "patient_type",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Type (New, Recurrent, TALFU, Failure, Other)"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "diagnosis_test_type",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Type (LJ, LC, LPA, CBNAAT)"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "diagnosis_test_result_date",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Date of DST"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
                 "field": "r_drug",
                 "calculate_total": false,
                 "type": "field",
-                "display": "DST details - Result - R"
+                "display": "R"
             },
             {
                 "sortable": false,
@@ -795,17 +754,6 @@
                 "calculate_total": false,
                 "type": "field",
                 "display": "Final Treatment Outcome"
-            },
-            {
-                "sortable": false,
-                "description": null,
-                "format": "default",
-                "transform": {},
-                "aggregation": "simple",
-                "field": "post_treatment_follow_up",
-                "calculate_total": false,
-                "type": "field",
-                "display": "Post Treatment Follow up"
             },
             {
                 "sortable": false,

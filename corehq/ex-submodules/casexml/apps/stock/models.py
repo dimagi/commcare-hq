@@ -47,7 +47,7 @@ class StockTransaction(models.Model, ConsumptionMixin):
 
     section_id = models.CharField(max_length=100, db_index=True)
 
-    # for now, a supply point or requisition case
+    # for now, a supply point
     case_id = models.CharField(max_length=100, db_index=True)
     product_id = models.CharField(max_length=100, db_index=True)
 

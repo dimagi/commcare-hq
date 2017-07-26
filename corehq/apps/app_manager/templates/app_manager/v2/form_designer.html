@@ -26,29 +26,17 @@
 {% block js %}{{ block.super }}
     <script src="{% static 'moment/moment.js' %}"></script>
     <script src="{% static 'requirejs/require.js' %}"></script>
-    <script src="{% static 'app_manager/js/app-notifications.js' %}"></script>
+    <script src="{% static 'app_manager/js/forms/app_notifications.js' %}"></script>
     <script src="{% static 'js/ws4redis.js' %}"></script>
-    <script src="{% static 'app_manager/js/edit_form_details.js' %}"></script>
-    <script src="{% static 'app_manager/js/form_designer.js' %}"></script>
+    <script src="{% static 'app_manager/js/forms/edit_form_details.js' %}"></script>
+    <script src="{% static 'app_manager/js/forms/form_designer.js' %}"></script>
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
     {% if request.guided_tour %}{% include request.guided_tour.template %}{% endif %}
-    <script>
-        {% if notifications_enabled %}
-            var userId = '{{ request.couch_user.get_id }}';
-            var notifications = hqImport('app_manager/js/app-notifications.js');
-            // initialize redis
-            var ws4redis = WS4Redis({
-                uri: '{{ WEBSOCKET_URI }}{{ notify_facility }}?subscribe-broadcast',
-                receive_message: notifications.NotifyFunction(userId, $('#notify-bar')),
-                heartbeat_msg: {{ WS4REDIS_HEARTBEAT }},
-            });
-        {% endif %}
-    </script>
 {% endblock %}
 
-{% block title %}{{ form.name|clean_trans:langs }}{% endblock %}
+{% block title %}{{ form.name|clean_trans:langs }} - {% trans 'Edit Form' %}{% endblock %}
 
 {% block form-view %}
     {% initial_page_data 'CKEDITOR_BASEPATH' CKEDITOR_BASEPATH|static %}
@@ -57,18 +45,13 @@
     {% initial_page_data 'form_name' form.name|trans:app.langs %}
     {% initial_page_data 'form_comment' form.comment %}
     {% initial_page_data 'form_uses_cases' form.uses_cases %}
+    {% initial_page_data 'notification_options' notification_options %}
     {% initial_page_data 'requirejs_args' requirejs_args %}
     {% initial_page_data 'requirejs_url' requirejs_url|static %}
     {% initial_page_data 'vellum_debug' vellum_debug %}
     {% initial_page_data 'vellum_options' vellum_options %}
     {% registerurl 'edit_form_attr' app.domain app.id form.unique_id '---' %}
     <div id="formdesigner" class="clearfix app-manager-v2 loading"></div>
-
-    {% if can_preview_form %}
-    <script type="text/html" id="js-fd-app-preview-btn-template">
-        {% include 'app_manager/v2/partials/app_preview_toggle.html' %}
-    </script>
-    {% endif %}
 
     <script type="text/html" id="js-fd-manage-case">
       <div class="btn-group pull-right">
@@ -155,7 +138,7 @@
                   </div>
                   <div class="modal-footer">
                       <a href="#" data-dismiss="modal" class="btn btn-default">{% trans "Cancel" %}</a>
-                      <button type="submit" class="btn btn-primary">{% trans "Save" %}</button>
+                      <button type="submit disable-on-submit" class="btn btn-primary">{% trans "Save" %}</button>
                   </div>
               </form>
           </div>

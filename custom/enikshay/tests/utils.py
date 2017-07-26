@@ -2,6 +2,7 @@
 
 from datetime import datetime
 import uuid
+from nose.tools import nottest
 
 from corehq.apps.domain.models import Domain
 from casexml.apps.case.mock import CaseFactory, CaseStructure, CaseIndex
@@ -26,6 +27,8 @@ from custom.enikshay.const import (
     TREATMENT_SUPPORTER_LAST_NAME,
     TREATMENT_SUPPORTER_PHONE,
     WEIGHT_BAND,
+    ENROLLED_IN_PRIVATE,
+    OTHER_NUMBER,
 )
 from corehq.apps.users.models import CommCareUser
 
@@ -37,7 +40,6 @@ def get_person_case_structure(case_id, user_id, extra_update=None):
         PERSON_FIRST_NAME: u"Peregrine",
         PERSON_LAST_NAME: u"เՇร ค Շгคק",
         'aadhaar_number': "499118665246",
-        MERM_ID: "123456789",
         'dob': "1987-08-15",
         'age': '20',
         'sex': 'male',
@@ -99,6 +101,7 @@ def get_episode_case_structure(case_id, indexed_occurrence_case, extra_update=No
         TREATMENT_START_DATE: "2015-03-03",
         TREATMENT_SUPPORTER_FIRST_NAME: u"𝔊𝔞𝔫𝔡𝔞𝔩𝔣",
         TREATMENT_SUPPORTER_LAST_NAME: u"𝔗𝔥𝔢 𝔊𝔯𝔢𝔶",
+        MERM_ID: "123456789",
         'treatment_initiation_status': 'F',
         'dst_status': 'pending',
         'basis_of_diagnosis': 'clinical_other',
@@ -147,7 +150,7 @@ def get_adherence_case_structure(case_id, indexed_episode_id, adherence_date, ex
     )
 
 
-def get_referral_case_structure(case_id, indexed_episode_id, extra_update=None):
+def get_referral_case_structure(case_id, indexed_person_id, extra_update=None):
     extra_update = extra_update or {}
     return CaseStructure(
         case_id=case_id,
@@ -157,13 +160,14 @@ def get_referral_case_structure(case_id, indexed_episode_id, extra_update=None):
             "update": extra_update
         },
         indices=[CaseIndex(
-            CaseStructure(case_id=indexed_episode_id, attrs={"create": False}),
+            CaseStructure(case_id=indexed_person_id, attrs={"create": False}),
             identifier='host',
             relationship=CASE_INDEX_EXTENSION,
             related_type='episode',
         )],
         walk_related=False,
     )
+
 
 def get_prescription_case_structure(case_id, indexed_episode_id, extra_update=None):
     extra_update = extra_update or {}
@@ -208,10 +212,34 @@ def get_voucher_case_structure(case_id, indexed_prescription_id, extra_update=No
         indices=[CaseIndex(
             CaseStructure(case_id=indexed_prescription_id, attrs={"create": False}),
             identifier='prescription_of_voucher',
-            relationship=CASE_INDEX_CHILD,
+            relationship=CASE_INDEX_EXTENSION,
             related_type='prescription',
         )],
         walk_related=False,  # TODO I'm not sure what this should be
+    )
+
+
+@nottest
+def get_test_case_structure(case_id, indexed_occurrence_id, extra_update=None):
+    extra_update = extra_update or {}
+    update = dict(
+        date_reported=datetime(2016, 8, 6).date(),
+    )
+    update.update(extra_update)
+    return CaseStructure(
+        case_id=case_id,
+        attrs={
+            "case_type": "test",
+            "create": True,
+            "update": update
+        },
+        indices=[CaseIndex(
+            CaseStructure(case_id=indexed_occurrence_id, attrs={"create": False}),
+            identifier='host',
+            relationship=CASE_INDEX_EXTENSION,
+            related_type='occurrence',
+        )],
+        walk_related=False,
     )
 
 
@@ -221,10 +249,12 @@ class ENikshayCaseStructureMixin(object):
         delete_all_users()
         self.domain = getattr(self, 'domain', 'fake-domain-from-mixin')
         self.factory = CaseFactory(domain=self.domain)
+        self.username = "jon-snow@user"
+        self.password = "123"
         self.user = CommCareUser.create(
             self.domain,
-            "jon-snow@user",
-            "123",
+            username=self.username,
+            password=self.password,
         )
         self.person_id = u"person"
         self.occurrence_id = u"occurrence"
@@ -236,6 +266,7 @@ class ENikshayCaseStructureMixin(object):
         self.primary_phone_number = "0123456789"
         self.secondary_phone_number = "0999999999"
         self.treatment_supporter_phone = "066000666"
+        self.other_number = "0123456666"
         self._episode = None
         self._person = None
 
@@ -252,6 +283,7 @@ class ENikshayCaseStructureMixin(object):
                 extra_update={
                     PRIMARY_PHONE_NUMBER: self.primary_phone_number,
                     BACKUP_PHONE_NUMBER: self.secondary_phone_number,
+                    ENROLLED_IN_PRIVATE: 'false',
                 }
             )
         return self._person
@@ -270,6 +302,7 @@ class ENikshayCaseStructureMixin(object):
                 self.episode_id,
                 self.occurrence,
                 extra_update={
+                    OTHER_NUMBER: self.other_number,
                     TREATMENT_SUPPORTER_PHONE: self.treatment_supporter_phone,
                     WEIGHT_BAND: "adult_55-69"
                 }
@@ -348,9 +381,9 @@ class ENikshayCaseStructureMixin(object):
             })
         ])
 
-    def create_prescription_case(self):
+    def create_prescription_case(self, extra_update=None):
         return self.factory.create_or_update_case(
-            get_prescription_case_structure(uuid.uuid4().hex, self.episode_id)
+            get_prescription_case_structure(uuid.uuid4().hex, self.episode_id, extra_update)
         )[0]
 
     def create_voucher_case(self, prescription_id, extra_update=None):
@@ -360,8 +393,14 @@ class ENikshayCaseStructureMixin(object):
 
     def create_referral_case(self, case_id):
         return self.factory.create_or_update_cases([
-            get_referral_case_structure(case_id, self.episode_id)
+            get_referral_case_structure(case_id, self.person_id)
         ])
+
+    @nottest
+    def create_test_case(self, occurrence_id, extra_update=None):
+        return self.factory.create_or_update_case(
+            get_test_case_structure(uuid.uuid4().hex, occurrence_id, extra_update)
+        )[0]
 
 
 class ENikshayLocationStructureMixin(object):
@@ -371,15 +410,22 @@ class ENikshayLocationStructureMixin(object):
         self.project.save()
         _, locations = setup_enikshay_locations(self.domain)
         self.locations = locations
+
+        self.ctd = locations['CTD']
+
         self.sto = locations['STO']
         self.sto.metadata = {
             'nikshay_code': 'MH',
+            'is_test': 'no',
         }
         self.sto.save()
+
+        self.cto = locations['CTO']
 
         self.dto = locations['DTO']
         self.dto.metadata = {
             'nikshay_code': 'ABD',
+            'is_test': 'no',
         }
         self.dto.save()
 
@@ -389,6 +435,7 @@ class ENikshayLocationStructureMixin(object):
         self.tu = locations['TU']
         self.tu.metadata = {
             'nikshay_code': '1',
+            'is_test': 'no',
         }
         self.tu.save()
 

@@ -34,7 +34,7 @@ from dimagi.utils.couch.database import (
 )
 from dimagi.utils.decorators.memoized import memoized
 from corehq.apps.hqwebapp.tasks import send_html_email_async
-from dimagi.utils.html import format_html
+from django.utils.html import format_html
 from dimagi.utils.logging import log_signal_errors
 from dimagi.utils.next_available_name import next_available_name
 from dimagi.utils.web import get_url_base
@@ -375,6 +375,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     # seconds between sending mobile UCRs to users. Can be overridden per user
     default_mobile_ucr_sync_interval = IntegerProperty()
+
+    uses_new_reminders = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):

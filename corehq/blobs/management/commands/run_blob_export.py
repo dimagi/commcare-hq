@@ -21,9 +21,9 @@ class Command(BaseCommand):
     Example: ./manage.py run_blob_export [options] export_domain_apps domain
     """
     help = USAGE
-    args = '<domain>'
 
     def add_arguments(self, parser):
+        parser.add_argument('domain')
         parser.add_argument('-e', '--exporter', dest='exporters', action='append', default=[],
                             help='Exporter slug to run '
                                  '(use multiple --slug to run multiple exporters or --all to run them all).')

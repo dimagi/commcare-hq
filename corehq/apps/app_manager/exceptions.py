@@ -43,10 +43,6 @@ class XFormException(AppManagerException):
     pass
 
 
-class BlankXFormError(XFormException):
-    pass
-
-
 class CaseError(XFormException):
     pass
 
@@ -153,3 +149,10 @@ class CaseXPathValidationError(XPathValidationError):
 
 class UserCaseXPathValidationError(XPathValidationError):
     pass
+
+
+class PracticeUserException(AppManagerException):
+    """ For errors related to misconfiguration of app.practice_mobile_worker_id """
+    def __init__(self, *args, **kwargs):
+        self.build_profile_id = kwargs.pop('build_profile_id', None)
+        super(PracticeUserException, self).__init__(*args, **kwargs)

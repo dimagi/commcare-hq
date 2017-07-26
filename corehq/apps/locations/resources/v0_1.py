@@ -105,6 +105,7 @@ class LocationResource(HqBaseResource):
         object_class = SQLLocation
         resource_name = 'location'
         limit = 0
+        max_limit = 10000
 
 
 @location_safe

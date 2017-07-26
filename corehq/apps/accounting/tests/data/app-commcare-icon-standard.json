@@ -1191,7 +1191,6 @@
    ],
    "created_from_template": "survey",
    "attribution_notes": null,
-   "commtrack_requisition_mode": null,
    "translation_strategy": "select-known",
    "show_user_registration": false
 }

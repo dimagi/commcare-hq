@@ -10,73 +10,16 @@
 {% block page_content_classes %}col-xs-12 col-sm-9 col-lg-10{% endblock %}
 
 {% block js %}{{ block.super }}
-    {% block reports-js %}
     {% compress js %}
     <script src="{% static 'reports/js/config.dataTables.bootstrap.js' %}"></script>
     <script src="{% static 'hqwebapp/js/lib/jquery.history.js' %}"></script>
     <script src="{% static 'reports/js/datepicker.js' %}"></script>
     <script src="{% static 'reports/js/reports.config.js' %}"></script>
     <script src="{% static 'reports/js/reports.util.js' %}"></script>
+    <script src="{% static 'reports/js/filters.js' %}"></script>
     <script src="{% static 'reports/js/reports.async.js' %}"></script>
     <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
-
     {% endcompress %}
-    {% endblock %}
-{% endblock %}
-
-{% block js-inline %}{{ block.super }}
-    <script>
-        $(function () {
-          $('[data-toggle="offcanvas"]').click(function () {
-            $('.row-offcanvas').toggleClass('active')
-          });
-        });
-    </script>
-{% block reports-js-inline %}
-    <script>
-        var standardHQReport = new HQReport({
-            domain: '{{ domain }}',
-            urlRoot: '{{ report.url_root }}',
-            slug: {{ report.slug|JSON }},
-            subReportSlug: {{ report.sub_slug|JSON }},
-            type: {{ report.type|JSON }},
-            filterSet: {{ report.filter_set|JSON }},
-            needsFilters: {{ report.needs_filters|JSON }},
-            isExportable: {{ report.is_exportable|JSON }},
-            isExportAll: {{ report.is_export_all|JSON }},
-            isEmailable: {{ report.is_emailable|JSON }},
-            emailDefaultSubject: {{ report.title|JSON }},
-            emailSuccessMessage: "{% trans 'Report successfully emailed' %}",
-            emailErrorMessage: "{% trans 'An error occurred emailing your report. Please try again.' %}",
-
-            {% if request.datespan %}
-                datespan: {
-                    startdate: '{{ datespan.startdate|date:"Y-m-d" }}',
-                    enddate: '{{ datespan.enddate|date:"Y-m-d" }}'
-                },
-            {% endif %}
-        });
-        standardHQReport.init();
-
-        {% if report.slug and report.is_async %}
-            var asyncHQReport = new HQAsyncReport({
-                standardReport: standardHQReport,
-            });
-            asyncHQReport.init();
-        {% endif %}
-
-        $('.js-report-description-popover').popover({
-            placement: 'right',
-            trigger: 'hover'
-        });
-    </script>
-
-    <script>
-        $('#apply-btn').on('click', function() {
-            $('.hq-generic-report').trigger('apply-click');
-        });
-    </script>
-{% endblock %}
 {% endblock %}
 
 {% block stylesheets %}
@@ -121,6 +64,11 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'js_options' report.js_options %}
+    {% if request.datespan %}
+        {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
+        {% initial_page_data 'enddate' datespan.enddate|date:"Y-m-d" %}
+    {% endif %}
     {% block filter_panel %}
         {% include "reports/standard/partials/filter_panel.html" %}
     {% endblock %}

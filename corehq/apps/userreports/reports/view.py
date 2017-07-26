@@ -75,6 +75,7 @@ from no_exceptions.exceptions import Http403
 from corehq.apps.reports.datatables import DataTablesHeader
 
 UCR_EXPORT_TO_EXCEL_ROW_LIMIT = 5000
+ENTERPRISE_UCR_EXPORT_TO_EXCEL_ROW_LIMIT = 50000
 
 
 def get_filter_values(filters, request_dict, user=None):
@@ -104,7 +105,7 @@ def query_dict_to_dict(query_dict, domain):
     :param domain:
     :return: a dict
     """
-    request_dict = json_request(query_dict)
+    request_dict = json_request(query_dict, booleans_as_strings=True)
     request_dict['domain'] = domain
     return request_dict
 
@@ -563,11 +564,19 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
 
     @property
     @memoized
+    def excel_export_limit(self):
+        if settings.ENTERPRISE_MODE or self.domain == 'enikshay':
+            return ENTERPRISE_UCR_EXPORT_TO_EXCEL_ROW_LIMIT
+
+        return UCR_EXPORT_TO_EXCEL_ROW_LIMIT
+
+    @property
+    @memoized
     def export_too_large(self):
         data = self.data_source
         data.set_filter_values(self.filter_values)
         total_rows = data.get_total_records()
-        return total_rows > UCR_EXPORT_TO_EXCEL_ROW_LIMIT
+        return total_rows > self.excel_export_limit
 
     @property
     @memoized
@@ -589,7 +598,7 @@ class ConfigurableReport(JSONResponseMixin, BaseDomainView):
                     "Report export is limited to {number} rows. "
                     "Please filter the data in your report to "
                     "{number} or fewer rows before exporting"
-                ).format(number=UCR_EXPORT_TO_EXCEL_ROW_LIMIT),
+                ).format(number=self.excel_export_limit),
             })
         return self.render_json_response({
             "export_allowed": True,

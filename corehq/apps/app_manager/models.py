@@ -120,14 +120,14 @@ from corehq.apps.app_manager.util import (
     xpath_references_case,
     xpath_references_user_case,
     module_case_hierarchy_has_circular_reference,
-    get_correct_app_class
+    get_correct_app_class,
+    get_and_assert_practice_user_in_domain,
 )
 from corehq.apps.app_manager.xform import XForm, parse_xml as _parse_xml, \
     validate_xform
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from .exceptions import (
     AppEditingError,
-    BlankXFormError,
     ConflictingCaseTypeError,
     FormNotFoundException,
     IncompatibleFormTypeException,
@@ -143,7 +143,9 @@ from .exceptions import (
     ScheduleError,
     CaseXPathValidationError,
     UserCaseXPathValidationError,
-    XFormValidationFailed)
+    XFormValidationFailed,
+    PracticeUserException,
+)
 from corehq.apps.reports.daterange import get_daterange_start_end_dates, get_simple_dateranges
 from jsonpath_rw import jsonpath, parse
 
@@ -987,6 +989,7 @@ class FormBase(DocumentSchema):
     def validate_form(self):
         vc = self.validation_cache
         if vc is None:
+            # todo: now that we don't use formtranslate, does this still apply?
             # formtranslate requires all attributes to be valid xpaths, but
             # vellum namespaced attributes aren't
             form = self.wrapped_xform()
@@ -1026,7 +1029,7 @@ class FormBase(DocumentSchema):
         }
 
         xml_valid = False
-        if self.source == '':
+        if self.source == '' and self.form_type != 'shadow_form':
             errors.append(dict(type="blank form", **meta))
         else:
             try:
@@ -1050,7 +1053,7 @@ class FormBase(DocumentSchema):
             errors.append(error)
 
         if not errors:
-            if len(questions) == 0:
+            if len(questions) == 0 and self.form_type != 'shadow_form':
                 errors.append(dict(type="blank form", **meta))
             else:
                 try:
@@ -1931,6 +1934,7 @@ class DetailTab(IndexedSchema):
     # iterates through sub-nodes of an entity rather than a single entity
     has_nodeset = BooleanProperty(default=False)
     nodeset = StringProperty()
+    relevant = StringProperty()
 
 
 class DetailColumn(IndexedSchema):
@@ -2030,6 +2034,10 @@ class DetailColumn(IndexedSchema):
                     item.value[lang] = interpolate_media_path(path)
         return to_ret
 
+    @property
+    def invisible(self):
+        return self.format == 'invisible'
+
 
 class SortElement(IndexedSchema):
     field = StringProperty()
@@ -2085,6 +2093,7 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     get_tabs = IndexedSchema.Getter('tabs')
 
     sort_elements = SchemaListProperty(SortElement)
+    sort_nodeset_columns = BooleanProperty()
     filter = StringProperty()
 
     # If True, a small tile will display the case name after selection.
@@ -2100,6 +2109,8 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     custom_xml = StringProperty()
 
     persist_tile_on_forms = BooleanProperty()
+    # use case tile context persisted over forms from another module
+    persistent_case_tile_from_module = StringProperty()
     # If True, the in form tile can be pulled down to reveal all the case details.
     pull_down_tile = BooleanProperty()
 
@@ -2128,6 +2139,13 @@ class Detail(IndexedSchema, CaseListLookupMixin):
     def rename_lang(self, old_lang, new_lang):
         for column in self.columns:
             column.rename_lang(old_lang, new_lang)
+
+    def sort_nodeset_columns_for_detail(self):
+        return (
+            self.display == "long" and
+            self.sort_nodeset_columns and
+            any(tab for tab in self.get_tabs() if tab.has_nodeset)
+        )
 
 
 class CaseList(IndexedSchema, NavMenuItemMediaMixin):
@@ -3010,7 +3028,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 class ShadowForm(AdvancedForm):
     form_type = 'shadow_form'
     # The unqiue id of the form we are shadowing
-    shadow_parent_form_id = StringProperty(required=False, default=None)
+    shadow_parent_form_id = FormIdProperty("modules[*].forms[*].shadow_parent_form_id")
 
     # form actions to be merged with the parent actions
     extra_actions = SchemaProperty(AdvancedFormActions)
@@ -4732,9 +4750,10 @@ def absolute_url_property(method):
 class BuildProfile(DocumentSchema):
     name = StringProperty()
     langs = StringListProperty()
+    practice_mobile_worker_id = StringProperty()
 
     def __eq__(self, other):
-        return self.langs == other.langs
+        return self.langs == other.langs and self.practice_mobile_worker_id == other.practice_mobile_worker_id
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -4833,6 +4852,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         assert self.application_version == APP_V2
 
     build_profiles = SchemaDictProperty(BuildProfile)
+    practice_mobile_worker_id = StringProperty()
 
     # each language is a key and the value is a list of multimedia referenced in that language
     media_language_map = SchemaDictProperty(MediaList)
@@ -4933,8 +4953,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         errors = []
         if hasattr(self, 'profile'):
             password_format = self.profile.get('properties', {}).get('password_format', 'n')
-            message = ('Your app requires {0} passwords '
-                       'but the admin password is not {0}')
+            message = _(
+                'Your app requires {0} passwords but the admin password is not '
+                '{0}. To resolve, go to app settings, Advanced Settings, Java '
+                'Phone General Settings, and reset the Admin Password to '
+                'something that is {0}'
+            )
 
             if password_format == 'n' and self.admin_password_charset in 'ax':
                 errors.append({'type': 'password_format',
@@ -4984,6 +5008,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     @absolute_url_property
     def key_server_url(self):
         return reverse('key_server_url', args=[self.domain])
+
+    @absolute_url_property
+    def heartbeat_url(self):
+        return reverse('phone_heartbeat', args=[self.domain, self.get_id])
 
     @absolute_url_property
     def ota_restore_url(self):
@@ -5167,6 +5195,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         try:
             self.validate_fixtures()
             self.validate_intents()
+            self.validate_practice_users()
             self.create_all_files()
         except CaseXPathValidationError as cve:
             errors.append({
@@ -5179,6 +5208,12 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
                 'type': 'invalid user property xpath reference',
                 'module': ucve.module,
                 'form': ucve.form,
+            })
+        except PracticeUserException as pue:
+            errors.append({
+                'type': 'practice user config error',
+                'message': unicode(pue),
+                'build_profile_id': pue.build_profile_id,
             })
         except (AppEditingError, XFormValidationError, XFormException,
                 PermissionDenied, SuiteValidationError) as e:
@@ -5399,7 +5434,7 @@ def validate_property(property):
 
 def validate_detail_screen_field(field):
     # If you change here, also change here:
-    # corehq/apps/app_manager/static/app_manager/js/detail-screen-config.js
+    # corehq/apps/app_manager/static/app_manager/js/details/screen_config.js
     field_re = r'^([a-zA-Z][\w_-]*:)*([a-zA-Z][\w_-]*/)*#?[a-zA-Z][\w_-]*$'
     if not re.match(field_re, field):
         raise ValueError("Invalid Sort Field")
@@ -5450,7 +5485,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     translation_strategy = StringProperty(default='select-known',
                                           choices=app_strings.CHOICES.keys())
-    commtrack_requisition_mode = StringProperty(choices=CT_REQUISITION_MODES)
     auto_gps_capture = BooleanProperty(default=False)
     date_created = DateTimeProperty()
     created_from_template = StringProperty()
@@ -5689,6 +5723,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if toggles.CUSTOM_PROPERTIES.enabled(self.domain) and "custom_properties" in self__profile:
             app_profile['custom_properties'].update(self__profile['custom_properties'])
 
+        if toggles.PHONE_HEARTBEAT.enabled(self.domain):
+            apk_heartbeat_url = self.heartbeat_url
+        else:
+            apk_heartbeat_url = None
         locale = self.get_build_langs(build_profile_id)[0]
         return render_to_string(template, {
             'is_odk': is_odk,
@@ -5701,7 +5739,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'name': self.name,
             'descriptor': u"Profile File",
             'build_profile_id': build_profile_id,
-            'locale': locale
+            'locale': locale,
+            'apk_heartbeat_url': apk_heartbeat_url,
         }).encode('utf-8')
 
     @property
@@ -5721,6 +5760,73 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def create_media_suite(self, build_profile_id=None):
         return MediaSuiteGenerator(self, build_profile_id).generate_suite()
 
+    @memoized
+    def get_practice_user_id(self, build_profile_id=None):
+        # returns app or build profile specific practice_mobile_worker_id
+        if build_profile_id:
+            build_spec = self.build_profiles[build_profile_id]
+            return build_spec.practice_mobile_worker_id
+        else:
+            return self.practice_mobile_worker_id
+
+    @property
+    @memoized
+    def enable_practice_users(self):
+        return (
+            self.supports_practice_users and
+            domain_has_privilege(self.domain, privileges.PRACTICE_MOBILE_WORKERS)
+        )
+
+    @memoized
+    def get_practice_user(self, build_profile_id=None):
+        """
+        kwargs:
+            build_profile_id: id of a particular build profile to get the practice user for
+                If it's None, practice user of the default app is returned
+
+        Returns:
+            App or build profile specific practice user and validates that the user is
+                a practice mode user and that user belongs to app.domain
+
+        This is memoized to avoid refetching user when validating app, creating build files and
+            generating suite file.
+        """
+        practice_user_id = self.get_practice_user_id(build_profile_id=build_profile_id)
+        if practice_user_id:
+            return get_and_assert_practice_user_in_domain(practice_user_id, self.domain)
+        else:
+            return None
+
+    def create_practice_user_restore(self, build_profile_id=None):
+        """
+        Returns:
+            Returns restore xml as a string for the practice user of app or
+                app profile specfied by build_profile_id
+            Raises a PracticeUserException if the user is not practice user
+        """
+        from corehq.apps.ota.models import DemoUserRestore
+        if not self.enable_practice_users:
+            return None
+        user = self.get_practice_user(build_profile_id)
+        if user:
+            user_restore = DemoUserRestore.objects.get(id=user.demo_restore_id)
+            return user_restore.get_restore_as_string()
+        else:
+            return None
+
+    def validate_practice_users(self):
+        # validate practice_mobile_worker of app and all app profiles
+        # raises PracticeUserException in case of misconfiguration
+        if not self.enable_practice_users:
+            return
+        self.get_practice_user()
+        try:
+            for build_profile_id in self.build_profiles:
+                self.get_practice_user(build_profile_id)
+        except PracticeUserException as e:
+            e.build_profile_id = build_profile_id
+            raise e
+
     @classmethod
     def get_form_filename(cls, type=None, form=None, module=None):
         return 'modules-%s/forms-%s.xml' % (module.id, form.id)
@@ -5737,6 +5843,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             '{}suite.xml'.format(prefix): self.create_suite(build_profile_id),
             '{}media_suite.xml'.format(prefix): self.create_media_suite(build_profile_id),
         }
+
+        practice_user_restore = self.create_practice_user_restore(build_profile_id)
+        if practice_user_restore:
+            files.update({
+                '{}practice_user_restore.xml'.format(prefix): practice_user_restore
+            })
 
         langs_for_build = self.get_build_langs(build_profile_id)
         for lang in ['default'] + langs_for_build:
@@ -5898,9 +6010,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         try:
             form = from_module.forms.pop(j)
             if app_manager_v2:
-                if not to_module.is_surveys and i == 0:
-                    # first form is the reg form
-                    i = 1
                 if from_module.is_surveys != to_module.is_surveys:
                     if from_module.is_surveys:
                         form.requires = "case"
@@ -5914,6 +6023,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         except IndexError:
             raise RearrangeError()
         if to_module.case_type != from_module.case_type and not app_manager_v2:
+            # TODO: deprecate this exception when removing APP_MANAGER_V2 flag
             raise ConflictingCaseTypeError()
 
     def scrub_source(self, source):
@@ -5922,8 +6032,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     def copy_form(self, module_id, form_id, to_module_id):
         """
         The case type of the two modules conflict,
-        ConflictingCaseTypeError is raised,
-        but the copying (confusingly) goes through anyway.
+        copying (confusingly) is still allowed.
         This is intentional.
 
         """
@@ -5933,12 +6042,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return self._copy_form(from_module, form, to_module, rename=True)
 
     def _copy_form(self, from_module, form, to_module, *args, **kwargs):
-        if not form.source:
-            raise BlankXFormError()
-
-        if from_module['case_type'] != to_module['case_type']:
-            raise ConflictingCaseTypeError()
-
         copy_source = deepcopy(form.to_json())
         if 'unique_id' in copy_source:
             del copy_source['unique_id']
@@ -5950,6 +6053,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
         save_xform(self, copy_form, form.source)
+
         return copy_form
 
     @cached_property

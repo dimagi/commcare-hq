@@ -84,7 +84,7 @@ class AppSummaryView(HQJSONResponseMixin, LoginAndDomainMixin, BasePageView, App
 
     @allow_remote_invocation
     def get_form_data(self, in_data):
-        modules, errors = get_form_data(self.domain, self.app)
+        modules, errors = get_form_data(self.domain, self.app, include_shadow_forms=False)
         return {
             'response': modules,
             'errors': errors,
@@ -97,7 +97,7 @@ class AppDataView(View, LoginAndDomainMixin, ApplicationViewMixin):
     urlname = 'app_data_json'
 
     def get(self, request, *args, **kwargs):
-        modules, errors = get_form_data(self.domain, self.app)
+        modules, errors = get_form_data(self.domain, self.app, include_shadow_forms=False)
         return json_response({
             'response': {
                 'form_data': {
@@ -280,6 +280,7 @@ FORM_SUMMARY_EXPORT_HEADER_NAMES = [
     "options",
     "calculate",
     "relevant",
+    "constraint",
     "required",
     "comment",
 ]
@@ -342,6 +343,7 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                     ),
                     calculate=question_response.calculate,
                     relevant=question_response.relevant,
+                    constraint=question_response.constraint,
                     required="true" if question_response.required else "false",
                     comment=question_response.comment,
                 )

@@ -12,6 +12,7 @@ var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
 var tfLoading = hqImport('cloudcare/js/util.js').tfLoading;
 var tfLoadingComplete = hqImport('cloudcare/js/util.js').tfLoadingComplete;
 var tfSyncComplete = hqImport('cloudcare/js/util.js').tfSyncComplete;
+var clearUserDataComplete = hqImport('cloudcare/js/util.js').clearUserDataComplete;
 
 FormplayerFrontend.on("before:start", function () {
     var RegionContainer = Marionette.LayoutView.extend({
@@ -179,6 +180,7 @@ FormplayerFrontend.on("start", function (options) {
     user.formplayer_url = options.formplayer_url;
     user.debuggerEnabled = options.debuggerEnabled;
     user.environment = options.environment;
+    user.useLiveQuery = options.useLiveQuery;
     user.restoreAs = FormplayerFrontend.request('restoreAsUser', user.domain, user.username);
 
     savedDisplayOptions = _.pick(
@@ -231,6 +233,31 @@ FormplayerFrontend.on("start", function (options) {
             false
         );
     }
+});
+
+FormplayerFrontend.on('configureDebugger', function(menuSessionId) {
+    var CloudCareDebugger = hqImport('cloudcare/js/debugger/debugger.js').CloudCareDebuggerMenu,
+        TabIDs = hqImport('cloudcare/js/debugger/debugger.js').TabIDs,
+        user = FormplayerFrontend.request('currentUser'),
+        cloudCareDebugger,
+        $debug = $('#cloudcare-debugger');
+
+    if (!$debug.length)
+        return;
+
+    $debug.html('');
+    cloudCareDebugger = new CloudCareDebugger({
+        baseUrl: user.formplayer_url,
+        menuSessionId: menuSessionId,
+        username: user.username,
+        restoreAs: user.restoreAs,
+        domain: user.domain,
+        tabs: [
+            TabIDs.EVAL_XPATH,
+        ],
+    });
+    ko.cleanNode($debug[0]);
+    $debug.koApplyBindings(cloudCareDebugger);
 });
 
 FormplayerFrontend.reqres.setHandler('getCurrentApp', function() {
@@ -317,6 +344,7 @@ FormplayerFrontend.on("sync", function () {
             "username": username,
             "domain": domain,
             "restoreAs": user.restoreAs,
+            "useLiveQuery": user.useLiveQuery,
         },
         options;
 
@@ -443,6 +471,35 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
         $("#cloudcare-notifications").empty();
         FormplayerFrontend.trigger('navigateHome');
     });
+});
+
+/**
+ * clearUserData
+ *
+ * Sends a request to formplayer to wipe out all application and user db for the
+ * current user. Returns the ajax promise.
+ */
+FormplayerFrontend.reqres.setHandler('clearUserData', function() {
+    var user = FormplayerFrontend.request('currentUser'),
+        formplayer_url = user.formplayer_url,
+        resp,
+        options = {
+            url: formplayer_url + "/clear_user_data",
+            data: JSON.stringify({
+                domain: user.domain,
+                username: user.username,
+                restoreAs: user.restoreAs,
+            }),
+        };
+    Util.setCrossDomainAjaxOptions(options);
+    tfLoading();
+    resp = $.ajax(options);
+    resp.fail(function () {
+        tfLoadingComplete(true);
+    }).done(function(response) {
+        clearUserDataComplete(response.hasOwnProperty('exception'));
+    });
+    return resp;
 });
 
 FormplayerFrontend.on('navigateHome', function() {

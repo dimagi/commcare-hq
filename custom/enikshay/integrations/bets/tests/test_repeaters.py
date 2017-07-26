@@ -6,8 +6,8 @@ from django.test import override_settings, TestCase
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
-from corehq.apps.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
-from corehq.apps.repeaters.models import RepeatRecord
+from corehq.motech.repeaters.dbaccessors import delete_all_repeat_records, delete_all_repeaters
+from corehq.motech.repeaters.models import RepeatRecord
 from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
@@ -49,6 +49,82 @@ from custom.enikshay.integrations.ninetyninedots.tests.test_repeaters import ENi
 from custom.enikshay.tests.utils import (
     ENikshayLocationStructureMixin, get_person_case_structure, setup_enikshay_locations)
 from custom.enikshay.case_utils import update_case
+
+
+@override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+class TestBetsResponseHandling(ENikshayLocationStructureMixin, ENikshayRepeaterTestBase):
+    def setUp(self):
+        super(TestBetsResponseHandling, self).setUp()
+        user = CommCareUser.create(
+            self.domain,
+            "davos.shipwright@stannis.gov",
+            "123",
+        )
+        self.repeater = BETSUserRepeater(
+            domain=self.domain,
+            url='super-cool-url',
+        )
+        self.repeater.save()
+        self.repeat_record = RepeatRecord(
+            repeater_id=self.repeater.get_id,
+            payload_id=user.user_id,
+            next_check=datetime.utcnow(),
+        )
+
+    def test_success(self):
+        mock_response_json = {
+            "meta": {
+                "failCount": "0",
+                "successCount": "1",
+                "totalCount": "1",
+            },
+            "response": [
+                {
+                    "status": "Success",
+                    "failureDescription": ""
+                }
+            ]
+        }
+        mock_response = mock.MagicMock()
+        mock_response.status_code = 200
+        mock_response.json = mock.MagicMock(return_value=mock_response_json)
+
+        attempt = self.repeater.handle_response(mock_response, self.repeat_record)
+        self.assertTrue(attempt.succeeded)
+
+    def test_failure(self):
+        mock_response_json = {
+            "meta": {
+                "failCount": "1",
+                "successCount": "1",
+                "totalCount": "2",
+            },
+            "response": [
+                {
+                    "status": "Success",
+                    "failureDescription": ""
+                },
+                {
+                    "status": "Partial",
+                    "failureDescription": "yo"
+                }
+            ]
+        }
+        mock_response = mock.MagicMock()
+        mock_response.status_code = 200
+        mock_response.json = mock.MagicMock(return_value=mock_response_json)
+
+        attempt = self.repeater.handle_response(mock_response, self.repeat_record)
+        self.assertTrue(attempt.failure_reason)
+
+    def test_failure_2(self):
+        mock_response_json = {"status": "Failed", "code": "400"}
+        mock_response = mock.MagicMock()
+        mock_response.status_code = 200
+        mock_response.json = mock.MagicMock(return_value=mock_response_json)
+
+        attempt = self.repeater.handle_response(mock_response, self.repeat_record)
+        self.assertTrue(attempt.failure_reason)
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -102,7 +178,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
         voucher = self.create_voucher_case(
             prescription.case_id, {
                 "voucher_type": "prescription",
-                "fulfilled_by_id": self.user.user_id,
+                "voucher_fulfilled_by_id": self.user.user_id,
                 "voucher_fulfilled_by_location_id": self.pcc.location_id,
                 "date_fulfilled": "2017-08-15",
                 "voucher_id": "ABC-DEF-1123",
@@ -117,7 +193,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"BeneficiaryType": u"chemist",
             u"Location": self.pcc.location_id,
             u"DTOLocation": self.dto.location_id,
-            u"VoucherID": voucher.get_case_property('voucher_id'),
+            u"VoucherID": voucher.case_id,
             u"Amount": u'10.0',
             u"InvestigationType": None,
         }]}
@@ -134,7 +210,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
         voucher = self.create_voucher_case(
             prescription.case_id, {
                 "voucher_type": "test",
-                "fulfilled_by_id": self.user.user_id,
+                "voucher_fulfilled_by_id": self.user.user_id,
                 "voucher_fulfilled_by_location_id": self.plc.location_id,
                 "date_fulfilled": "2017-08-15",
                 "voucher_id": "ABC-DEF-1123",
@@ -150,7 +226,7 @@ class TestVoucherPayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestBas
             u"BeneficiaryType": u"lab",
             u"Location": self.plc.location_id,
             u"DTOLocation": self.dto.location_id,
-            u"VoucherID": voucher.get_case_property('voucher_id'),
+            u"VoucherID": voucher.case_id,
             u"Amount": u'10.0',
             u"InvestigationType": u"xray",
         }]}
@@ -174,7 +250,7 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             u"EventID": unicode(TREATMENT_180_EVENT),
             u"EventOccurDate": u"2017-08-15",
             u"BeneficiaryUUID": self.user.user_id,
-            u"BeneficiaryType": u"patient",
+            u"BeneficiaryType": u"mbbs",
             u"Location": self.pcp.location_id,
             u"DTOLocation": self.dto.location_id,
             u"EpisodeID": self.episode_id,
@@ -249,8 +325,9 @@ class TestIncentivePayload(ENikshayLocationStructureMixin, ENikshayRepeaterTestB
             )
 
     def test_ayush_referral_payload(self):
-        self.episode.attrs['update']['created_by_user_location_id'] = self.pac.location_id
-        self.episode.attrs['update']['created_by_user_id'] = self.user.user_id
+        self.pac.user_id = self.user.user_id
+        self.pac.save()
+        self.episode.attrs['update']['registered_by'] = self.pac.location_id
         cases = self.create_case_structure()
         self.assign_person_to_location(self.pcp.location_id)
         episode = cases[self.episode_id]
@@ -349,7 +426,7 @@ class BETSDrugRefillRepeaterTest(ENikshayLocationStructureMixin, ENikshayRepeate
         self.assertEqual(2, len(self.repeat_records().all()))
         self.assertEqual(
             BETSDrugRefillPayloadGenerator._get_prescription_threshold_to_send(
-                CaseAccessors(case.domain).get_case(case.case_id).dynamic_case_properties()
+                CaseAccessors(case.domain).get_case(case.case_id)
             ),
             60
         )
@@ -378,7 +455,7 @@ class BETSSuccessfulTreatmentRepeaterTest(ENikshayLocationStructureMixin, ENiksh
         self.repeater.white_listed_case_types = ['episode']
         self.repeater.save()
 
-    def test_trigger(self):
+    def test_treatment_outcome_trigger(self):
         # Create case that doesn't meet trigger
         cases = self.create_case_structure()
         self.assign_person_to_location(self.pcp.location_id)
@@ -387,7 +464,7 @@ class BETSSuccessfulTreatmentRepeaterTest(ENikshayLocationStructureMixin, ENiksh
             self.episode_id,
             {
                 'treatment_outcome': 'not_evaluated',
-                'prescription_total_days': 200,
+                'prescription_total_days': 100,
                 ENROLLED_IN_PRIVATE: "true",
             },
         )
@@ -396,6 +473,33 @@ class BETSSuccessfulTreatmentRepeaterTest(ENikshayLocationStructureMixin, ENiksh
 
         # Meet trigger
         update_case(self.domain, case.case_id, {"treatment_outcome": "cured"})
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+        # Make sure same case doesn't trigger event again
+        payload_generator = BETSSuccessfulTreatmentPayloadGenerator(None)
+        payload_generator.handle_success(MockResponse(201, {"success": "hooray"}), case, None)
+        update_case(self.domain, case.case_id, {"foo": "bar"})
+        self.assertEqual(1, len(self.repeat_records().all()))
+
+    def test_prescription_total_days_trigger(self):
+        # Create case that doesn't meet trigger
+        cases = self.create_case_structure()
+        self.assign_person_to_location(self.pcp.location_id)
+        update_case(
+            self.domain,
+            self.episode_id,
+            {
+                'treatment_outcome': 'not_evaluated',
+                'prescription_total_days': 100,
+                'treatment_options': 'fdc',
+                ENROLLED_IN_PRIVATE: "true",
+            },
+        )
+        case = cases[self.episode_id]
+        self.assertEqual(0, len(self.repeat_records().all()))
+
+        # Meet trigger
+        update_case(self.domain, case.case_id, {"prescription_total_days": "169"})
         self.assertEqual(1, len(self.repeat_records().all()))
 
         # Make sure same case doesn't trigger event again

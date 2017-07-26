@@ -373,6 +373,7 @@ This expression returns `(doc["foo bar"]).split(' ')[0]`:
 }
 ```
 The delimiter is optional and is defaulted to a space.  It will return nothing if the string_expression is not a string, or if the index isn't a number or the indexed item doesn't exist.
+The index_expression is also optional. Without it, the expression will return the list of elements.
 
 ##### Iterator Expression
 
@@ -1699,7 +1700,7 @@ If the format string is not valid or the input is not a number then the original
 ```json
 {
     "type": "number_format",
-    "custom_type": "{0:.0f}"
+    "format_string": "{0:.0f}"
 }
 ```
 
@@ -1708,7 +1709,7 @@ If the format string is not valid or the input is not a number then the original
 ```json
 {
     "type": "number_format",
-    "custom_type": "{0:.3f}"
+    "format_string": "{0:.3f}"
 }
 ```
 
@@ -2005,8 +2006,39 @@ Following are some custom expressions that are currently available.
 
 You can find examples of these in [practical examples](examples/examples.md).
 
-## Inspecting database tables
+## Scaling UCR
 
+### Profiling data sources
+
+You can use `./manage.py profile_data_source <domain> <data source id> <doc id>`
+to profile a datasource on a particular doc. It will give you information such
+as functions that take the longest and number of database queries it initiates.
+
+### Faster Reporting
+
+If reports are slow, then you can add `create_index` to the data source to any
+columns that have filters applied to them.
+
+### Asynchronous Indicators
+
+If you have an expensive data source and the changes come in faster than the
+pillow can process them, you can specify `asynchronous: true` in the data source.
+This flag puts the document id in an intermediary table when a change happens
+which is later processed by a celery queue. If multiple changes are submitted
+before this can be processed, a new entry is not created, so it will be processed
+once. This moves the bottle neck from kafka/pillows to celery.
+
+The main benefit of this is that documents will be processed only once even if many
+changes come in at a time. This makes this approach ideal datasources that don't
+require 'live' data or where the source documents change very frequently.
+
+It is also possible achieve greater parallelization than is
+currently available via pillows since multiple Celery workers can process
+the changes.
+
+A diagram of this workflow can be found [here](examples/async_indicator.png)
+
+## Inspecting database tables
 
 The easiest way to inspect the database tables is to use the sql command line utility.
 This can be done by runnning `./manage.py dbshell` or using `psql`.

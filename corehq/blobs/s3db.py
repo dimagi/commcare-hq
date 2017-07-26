@@ -2,6 +2,7 @@ from __future__ import absolute_import
 import os
 import weakref
 from contextlib import contextmanager
+from io import UnsupportedOperation
 
 from corehq.blobs import BlobInfo, DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName, NotFound
@@ -163,14 +164,22 @@ def get_content_md5(content):
 
 
 def get_file_size(fileobj):
-    if not hasattr(fileobj, 'fileno'):
-        pos = fileobj.tell()
+
+    def tell_end(fileobj_):
+        pos = fileobj_.tell()
         try:
-            fileobj.seek(0, os.SEEK_END)
-            return fileobj.tell()
+            fileobj_.seek(0, os.SEEK_END)
+            return fileobj_.tell()
         finally:
-            fileobj.seek(pos)
-    return os.fstat(fileobj.fileno()).st_size
+            fileobj_.seek(pos)
+
+    if not hasattr(fileobj, 'fileno'):
+        return tell_end(fileobj)
+    try:
+        fileno = fileobj.fileno()
+    except UnsupportedOperation:
+        return tell_end(fileobj)
+    return os.fstat(fileno).st_size
 
 
 @contextmanager

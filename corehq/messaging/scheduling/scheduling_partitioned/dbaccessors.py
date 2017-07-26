@@ -14,7 +14,7 @@ def _validate_class(obj, cls):
     :param cls: A type or tuple of types to check the type of obj against
     """
     if not isinstance(obj, cls):
-        raise ValueError("Expected an instance of %s" % str(cls))
+        raise TypeError("Expected an instance of %s" % str(cls))
 
 
 def _validate_uuid(value):
@@ -28,7 +28,8 @@ def get_alert_schedule_instance(schedule_instance_id):
     return get_object_from_partitioned_database(
         AlertScheduleInstance,
         schedule_instance_id,
-        'schedule_instance_id'
+        'schedule_instance_id',
+        schedule_instance_id
     )
 
 
@@ -39,7 +40,8 @@ def get_timed_schedule_instance(schedule_instance_id):
     return get_object_from_partitioned_database(
         TimedScheduleInstance,
         schedule_instance_id,
-        'schedule_instance_id'
+        'schedule_instance_id',
+        schedule_instance_id
     )
 
 
@@ -75,30 +77,58 @@ def delete_timed_schedule_instance(instance):
     delete_object_from_partitioned_database(instance, instance.schedule_instance_id)
 
 
-def _get_active_schedule_instance_ids(cls, start_timestamp, end_timestamp):
+def get_active_schedule_instance_ids(cls, due_before, due_after=None):
+    from corehq.messaging.scheduling.scheduling_partitioned.models import (
+        AlertScheduleInstance,
+        TimedScheduleInstance,
+    )
+
+    if cls not in (AlertScheduleInstance, TimedScheduleInstance):
+        raise TypeError("Expected AlertScheduleInstance or TimedScheduleInstance")
+
     active_filter = Q(
         active=True,
-        next_event_due__gt=start_timestamp,
-        next_event_due__lte=end_timestamp,
+        next_event_due__lte=due_before,
     )
-    for schedule_instance_id in run_query_across_partitioned_databases(
+
+    if due_after:
+        if due_before <= due_after:
+            raise ValueError("Expected due_before > due_after")
+        active_filter = active_filter & Q(next_event_due__gt=due_after)
+
+    for domain, schedule_instance_id, next_event_due in run_query_across_partitioned_databases(
         cls,
         active_filter,
-        values=['schedule_instance_id']
+        values=['domain', 'schedule_instance_id', 'next_event_due']
     ):
-        yield schedule_instance_id
+        yield domain, schedule_instance_id, next_event_due
 
 
-def get_active_alert_schedule_instance_ids(start_timestamp, end_timestamp):
-    from corehq.messaging.scheduling.scheduling_partitioned.models import AlertScheduleInstance
+def get_active_case_schedule_instance_ids(cls, due_before, due_after=None):
+    from corehq.messaging.scheduling.scheduling_partitioned.models import (
+        CaseAlertScheduleInstance,
+        CaseTimedScheduleInstance,
+    )
 
-    return _get_active_schedule_instance_ids(AlertScheduleInstance, start_timestamp, end_timestamp)
+    if cls not in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
+        raise TypeError("Expected CaseAlertScheduleInstance or CaseTimedScheduleInstance")
 
+    active_filter = Q(
+        active=True,
+        next_event_due__lte=due_before,
+    )
 
-def get_active_timed_schedule_instance_ids(start_timestamp, end_timestamp):
-    from corehq.messaging.scheduling.scheduling_partitioned.models import TimedScheduleInstance
+    if due_after:
+        if due_before <= due_after:
+            raise ValueError("Expected due_before > due_after")
+        active_filter = active_filter & Q(next_event_due__gt=due_after)
 
-    return _get_active_schedule_instance_ids(TimedScheduleInstance, start_timestamp, end_timestamp)
+    for domain, case_id, schedule_instance_id, next_event_due in run_query_across_partitioned_databases(
+        cls,
+        active_filter,
+        values=['domain', 'case_id', 'schedule_instance_id', 'next_event_due']
+    ):
+        yield (domain, case_id, schedule_instance_id, next_event_due)
 
 
 def get_alert_schedule_instances_for_schedule(schedule):
@@ -155,6 +185,24 @@ def get_case_timed_schedule_instances_for_schedule(case_id, schedule):
 
     _validate_class(schedule, TimedSchedule)
     return get_case_timed_schedule_instances_for_schedule_id(case_id, schedule.schedule_id)
+
+
+def get_case_schedule_instance(cls, case_id, schedule_instance_id):
+    from corehq.messaging.scheduling.scheduling_partitioned.models import (
+        CaseAlertScheduleInstance,
+        CaseTimedScheduleInstance,
+    )
+
+    if cls not in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
+        raise TypeError("Expected CaseAlertScheduleInstance or CaseTimedScheduleInstance")
+
+    _validate_uuid(schedule_instance_id)
+    return get_object_from_partitioned_database(
+        cls,
+        case_id,
+        'schedule_instance_id',
+        schedule_instance_id
+    )
 
 
 def save_case_schedule_instance(instance):

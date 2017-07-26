@@ -171,7 +171,18 @@ def get_brief_apps_in_domain(domain, include_remote=True):
     apps = [get_correct_app_class(doc).wrap(doc) for doc in docs]
     if not include_remote:
         apps = [app for app in apps if not app.is_remote_app()]
-    return apps
+    return sorted(apps, key=lambda app: app.name)
+
+
+def get_brief_app(domain, app_id):
+    from .models import Application
+    from corehq.apps.app_manager.util import get_correct_app_class
+    result = Application.get_db().view(
+        'app_manager/applications_brief',
+        key=[domain, app_id],
+    ).one(except_all=True)
+    doc = result['value']
+    return get_correct_app_class(doc).wrap(doc)
 
 
 def get_app_ids_in_domain(domain):
@@ -181,6 +192,15 @@ def get_app_ids_in_domain(domain):
         startkey=[domain, None],
         endkey=[domain, None, {}]
     )]
+
+
+def get_apps_by_id(domain, app_ids):
+    from .models import Application
+    from corehq.apps.app_manager.util import get_correct_app_class
+    if isinstance(app_ids, basestring):
+        app_ids = [app_ids]
+    docs = iter_docs(Application.get_db(), app_ids)
+    return [get_correct_app_class(doc).wrap(doc) for doc in docs]
 
 
 def get_built_app_ids(domain):
@@ -360,7 +380,7 @@ def get_case_types_from_apps(domain):
          .is_build(False)
          .size(0)
          .terms_aggregation('modules.case_type.exact', 'case_types'))
-    return set(q.run().aggregations.case_types.keys)
+    return set(q.run().aggregations.case_types.keys) - {''}
 
 
 def get_case_sharing_apps_in_domain(domain, exclude_app_id=None):

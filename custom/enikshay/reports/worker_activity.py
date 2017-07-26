@@ -1,5 +1,7 @@
+from django.core.exceptions import PermissionDenied
 from corehq.apps.es import UserES
 from corehq.apps.es.users import mobile_users
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.analytics.esaccessors import get_submission_counts_by_user
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.reports.filters.dates import DatespanFilter
@@ -8,12 +10,14 @@ from corehq.apps.reports.standard.monitoring import WorkerActivityReport
 from corehq.apps.reports.util import get_simplified_users
 from custom.enikshay.reports.filters import EnikshayLocationFilter
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ugettext_lazy
 
 from dimagi.utils.decorators.memoized import memoized
 
 
+@location_safe
 class EnikshayWorkerActivityReport(WorkerActivityReport, CustomProjectReport):
+    name = ugettext_lazy('Worker Form Activity')
     slug = 'enikshay_worker_activity_report'
     num_avg_intervals = 4
     ajax_pagination = True
@@ -22,6 +26,10 @@ class EnikshayWorkerActivityReport(WorkerActivityReport, CustomProjectReport):
     @property
     def fields(self):
         return DatespanFilter, EnikshayLocationFilter
+
+    @property
+    def view_by_groups(self):
+        return False
 
     @property
     def headers(self):
@@ -42,6 +50,10 @@ class EnikshayWorkerActivityReport(WorkerActivityReport, CustomProjectReport):
         locations_id = self.locations_id
         if locations_id:
             user_query = user_query.location(locations_id)
+        elif not self.request.couch_user.has_permission(self.domain, 'access_all_locations'):
+            # EnikshayLocationFilter.get_value should always return a
+            # location_id for restricted users
+            raise PermissionDenied()
         return user_query
 
     @property

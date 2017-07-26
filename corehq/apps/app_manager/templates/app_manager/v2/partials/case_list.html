@@ -1,5 +1,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
+{% load app_manager_extras %}
 {% load xforms_extras %}
 
 {% include 'app_manager/v2/partials/case_list_missing_warning.html' %}
@@ -69,10 +70,43 @@
                     {% trans "Use this case list tile persistently in forms" %}
                 </label>
             </div>
-            <div class="checkbox" data-bind="visible: persistTileOnForms()">
+        </div>
+
+        {{ request|toggle_tag_info:"CASE_LIST_TILE" }}
+        {% if request|toggle_enabled:'CASE_LIST_TILE' %}
+            {% with app|get_available_modules_for_case_tile_configuration:module as available_modules %}
+            {% if available_modules %}
+            <div class="row">
+                <div class="col-sm-6">
+                    <label>
+                        {% trans "Use persistent case tile from menu" %}
+                    </label>
+                    <div>
+                        <select name='persistent_case_tile_from_module' class='form-control' data-bind="value: persistentCaseTileFromModule">
+                            <option value>
+                                {% trans "Select Menu" %}
+                            </option>
+                            {% for other_mod in available_modules %}
+                                <option value={{ other_mod.unique_id }}>{{ other_mod.name|html_trans:langs }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endwith %}
+        {% endif %}
+
+        <div data-bind="visible: useCaseTiles() == 'yes' || persistentCaseTileFromModule() || COMMCAREHQ.toggleEnabled('CASE_LIST_CUSTOM_XML')">
+            <div class="checkbox" data-bind="visible: persistTileOnForms() || persistentCaseTileFromModule">
                 <label>
                     <input type="checkbox" data-bind="checked: enableTilePullDown">
-                    {% trans "Embed case details in case tile pull-down" %}
+                    <span data-bind="visible: persistTileOnForms() && !persistentCaseTileFromModule()">
+                        {% trans "Embed case details in case tile pull-down" %}
+                    </span>
+                    <span data-bind="visible: persistentCaseTileFromModule()">
+                        {% trans "Embed case details in case tile pull-down from the menu" %}
+                    </span>
                 </label>
             </div>
         </div>
@@ -160,7 +194,7 @@
                                 <div data-bind="jqueryElement: textField.ui"></div>
                                 <div data-bind="visible: showWarning">
                                     <span class="help-block" data-bind="
-                                        text: hqImport('app_manager/js/detail-screen-config.js').DetailScreenConfig.field_format_warning_message
+                                        text: hqImport('app_manager/js/details/screen_config.js').DetailScreenConfig.field_format_warning_message
                                     "></span>
                                 </div>
                             </td>
@@ -249,32 +283,34 @@
 {% endif %}
 
 {% if detail.parent_select %}
-<div class="panel panel-appmanager" data-bind="with: parentSelect, DetailScreenConfig_notifyShortScreenOnChange: $root">
-    <div class="panel-heading">
-        <h4 class="panel-title panel-title-nolink">
-            {% trans "Parent Child Selection" %}
-        </h4>
-    </div>
-    <div data-bind="visible: moduleOptions().length" class="form-horizontal panel-body">
-        <div class="form-group">
-            <label class="control-label col-sm-2">
-                {% trans "Select Parent First" %}
-            </label>
-            <div class="col-sm-4 checkbox">
-                <label>
-                    <input type="checkbox" data-bind="checked: active"/>
+<div data-bind="with: parentSelect, DetailScreenConfig_notifyShortScreenOnChange: $root">
+    <div class="panel panel-appmanager" data-bind="visible: moduleOptions().length">
+        <div class="panel-heading">
+            <h4 class="panel-title panel-title-nolink">
+                {% trans "Parent Child Selection" %}
+            </h4>
+        </div>
+        <div class="form-horizontal panel-body">
+            <div class="form-group">
+                <label class="control-label col-sm-2">
+                    {% trans "Select Parent First" %}
                 </label>
+                <div class="col-sm-4 checkbox">
+                    <label>
+                        <input type="checkbox" data-bind="checked: active"/>
+                    </label>
+                </div>
             </div>
-        </div>
-        <div class="form-group" data-bind="visible: active">
-            <label class="control-label col-sm-2">
-                {% trans "Use Case List from" %}
-            </label>
-            <div class="col-sm-4">
-                <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
+            <div class="form-group" data-bind="visible: active">
+                <label class="control-label col-sm-2">
+                    {% trans "Use Case List from" %}
+                </label>
+                <div class="col-sm-4">
+                    <select class="form-control" data-bind="optstr: moduleOptions, value: moduleId"></select>
+                </div>
             </div>
+            <div class="spacer"></div>
         </div>
-        <div class="spacer"></div>
     </div>
 </div>
 {% endif %}

@@ -12,7 +12,7 @@ django-braces==1.8.1
 django-celery==3.2.1
 django-crispy-forms==1.6.1
 jsonfield==1.0.3
-dropbox==7.1.1
+dropbox==7.3.1
 defusedxml==0.4.1
 diff-match-patch==20120106
 django-tastypie==0.13.3
@@ -94,8 +94,9 @@ csiphash==0.0.5
 json-delta==2.0
 email_validator==1.0.2
 dnspython==1.15.0
-raven==6.0.0
+raven==6.1.0
 quickcache==0.0.1
 zeep==1.6.0
-django_fsm==2.5.0
 ethiopian_date==0.1.1
+architect==0.5.6
+contextlib2==0.5.4
