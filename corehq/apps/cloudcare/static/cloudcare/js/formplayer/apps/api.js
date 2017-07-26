@@ -16,7 +16,7 @@ FormplayerFrontend.module("Apps", function (Apps, FormplayerFrontend, Backbone) 
         getAppEntities: function () {
             var restoreAs = FormplayerFrontend.request('currentUser').restoreAs;
             var appsPromise = appsPromiseByRestoreAs[FormplayerFrontend.request('currentUser').restoreAs];
-            if (!appsPromise || appsPromise.state() == 'rejected') {
+            if (!appsPromise || appsPromise.state() === 'rejected') {
                 appsPromise = appsPromiseByRestoreAs[restoreAs] = $.getJSON('?option=apps');
             }
             return appsPromise.pipe(function (apps) {
