@@ -446,7 +446,7 @@ def get_case_structure(case_type, properties, migration_identifier, host=None):
             identifier='host',
             relationship=CASE_INDEX_EXTENSION,
             related_type=host.attrs['case_type'],
-        )],
+        )]
     return CaseStructure(**kwargs)
 
 
@@ -1345,7 +1345,7 @@ def match_phi(domain, xlsx_phi_name):
 def get_tu(domain, phi_id):
     if not phi_id:
         return None, None
-    phi = SQLLocation.get(domain=domain, location_id=phi_id)
+    phi = SQLLocation.active_objects.get(domain=domain, location_id=phi_id)
     return phi.parent.name, phi.parent.location_id
 
 
