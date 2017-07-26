@@ -149,7 +149,7 @@ def overwrite_app(app, master_build, report_map=None):
             else:
                 raise AppEditingError('Report map not passed to overwrite_app')
     wrapped_app.copy_attachments(master_build)
-    enable_usercase_if_necessary(wrapped_app, wrapped_app.domain)
+    enable_usercase_if_necessary(wrapped_app)
     wrapped_app.save(increment_version=False)
 
 

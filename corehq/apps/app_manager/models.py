@@ -6502,15 +6502,15 @@ def import_app(app_id_or_source, domain, source_properties=None, validate_source
                 m.save()
 
     if not app.is_remote_app():
-        enable_usercase_if_necessary(app, domain)
+        enable_usercase_if_necessary(app)
 
     return app
 
 
-def enable_usercase_if_necessary(app, domain):
+def enable_usercase_if_necessary(app):
     if any(module.uses_usercase() for module in app.get_modules()):
         from corehq.apps.app_manager.util import enable_usercase
-        enable_usercase(domain)
+        enable_usercase(app.domain)
 
 
 class DeleteApplicationRecord(DeleteRecord):
