@@ -67,10 +67,6 @@ submodules:
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
     branches: []
   deployment/commcare-hq-deploy:
-    branches: 
-      - je/git-gc-background
-      - je/better-supervisor
-      - je/fix-migrations-check
-      - je/add-gossip-for-staging
+    branches: []
   submodules/commcare-translations:
     branches: []
