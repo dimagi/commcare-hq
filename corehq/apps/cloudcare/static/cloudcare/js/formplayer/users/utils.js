@@ -12,7 +12,8 @@ FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone,
         logInAsUser: function(restoreAsUsername) {
             var currentUser = FormplayerFrontend.request('currentUser');
             currentUser.restoreAs = restoreAsUsername;
-            window.localStorage.setItem(
+
+            $.cookie(
                 Utils.Users.restoreAsKey(
                     currentUser.domain,
                     currentUser.username
@@ -21,7 +22,7 @@ FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone,
             );
         },
         restoreAsKey: function(domain, username) {
-            return domain + ':' + username;
+            return 'restoreAs:' + domain + ':' + username;
         },
         /**
          * getRestoreAsUser
@@ -32,9 +33,7 @@ FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone,
          * Returns the restore as user from localstorage or null if it doesn't exist
          */
         getRestoreAsUser: function(domain, username) {
-            return window.localStorage.getItem(
-                Utils.Users.restoreAsKey(domain, username)
-            ) || null;
+            return $.cookie(Utils.Users.restoreAsKey(domain, username)) || null;
         },
 
         /**
@@ -46,10 +45,7 @@ FormplayerFrontend.module("Utils", function(Utils, FormplayerFrontend, Backbone,
          * Clears the restore as user from localstorage with an empty string
          */
         clearRestoreAsUser: function(domain, username) {
-            return window.localStorage.setItem(
-                Utils.Users.restoreAsKey(domain, username),
-                ''
-            );
+            return $.removeCookie(Utils.Users.restoreAsKey(domain, username));
         },
     };
 });
