@@ -212,6 +212,7 @@ class TestCreateEnikshayCases(TestCase):
             'rft_general': 'diagnosis_dstb',
             'rft_dstb_diagnosis': 'diagnostic_test_reason',
             'rft_dstb_followup': 'definitely_not_private_ntm',
+            'episode_case_id': 'roland-deschain-occurrence-episode',
         }, new_test.dynamic_case_properties())
 
         new_referral = accessor.get_case(person.referrals[0].case_id)

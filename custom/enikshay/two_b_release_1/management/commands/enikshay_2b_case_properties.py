@@ -214,7 +214,7 @@ class ENikshay2BMigrator(object):
             [self.migrate_person(person.person, person.occurrences, person.episodes)]
             + [self.migrate_occurrence(occurrence, person.episodes) for occurrence in person.occurrences]
             + [self.migrate_episode(episode, person.episodes) for episode in person.episodes]
-            + [self.migrate_test(test, person.person) for test in person.tests]
+            + [self.migrate_test(test, person.person, person.episodes) for test in person.tests]
             + [self.migrate_referral(referral, person.latest_occurrence) for referral in person.referrals]
             + [self.migrate_trail(trail, person.latest_occurrence) for trail in person.trails]
             + [self.open_secondary_owners(drtb_hiv, person.person, person.occurrences)
@@ -317,20 +317,21 @@ class ENikshay2BMigrator(object):
             },
         )
 
-    def migrate_episode(self, episode, episodes):
-        self.total_episodes += 0
-
+    @staticmethod
+    def _get_last_episode_id(indices, episodes):
         def is_episode_of_occurrence(episode, occurrence_id):
             return any(index.referenced_id == occurrence_id for index in episode.indices)
 
-        occurrence_ids = [index.referenced_id for index in episode.indices
+        occurrence_ids = [index.referenced_id for index in indices
                           if index.referenced_type == CASE_TYPE_OCCURRENCE]
         occurrence_id = occurrence_ids[0] if occurrence_ids else None
+        return max((case.opened_on, case.case_id) for case in episodes
+                   if is_episode_of_occurrence(case, occurrence_id) and not case.closed)[1]
 
-        latest_episode_id = max((case.opened_on, case.case_id) for case in episodes
-                                if is_episode_of_occurrence(case, occurrence_id)
-                                and not case.closed)[1]
+    def migrate_episode(self, episode, episodes):
+        self.total_episodes += 0
 
+        latest_episode_id = self._get_last_episode_id(episode.indices, episodes)
         test_type = episode.get_case_property('test_confirming_diagnosis')
         props = {
             'is_active': 'yes' if episode.case_id == latest_episode_id else 'no',
@@ -368,12 +369,13 @@ class ENikshay2BMigrator(object):
             },
         )
 
-    def migrate_test(self, test, person):
+    def migrate_test(self, test, person, episodes):
         self.total_tests += 1
         props = {
             'is_direct_test_entry': 'no',
             'rft_drtb_diagnosis': test.get_case_property('diagnostic_drtb_test_reason'),
             'dataset': person.get_case_property('dataset'),
+            'episode_case_id': self._get_last_episode_id(test.indices, episodes),
         }
 
         if test.get_case_property('follow_up_test_reason') == 'private_ntm':
