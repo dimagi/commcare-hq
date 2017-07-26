@@ -587,7 +587,7 @@ class FormAccessorSQL(AbstractFormAccessor):
 
     @staticmethod
     @transaction.atomic
-    def update_form_problem_and_state(form):
+    def update_form(form):
         from corehq.form_processor.change_publishers import publish_form_saved
         from corehq.sql_db.util import get_db_alias_for_partitioned_doc
         db_name = get_db_alias_for_partitioned_doc(form.form_id)

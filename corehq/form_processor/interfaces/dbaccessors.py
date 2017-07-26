@@ -81,7 +81,7 @@ class AbstractFormAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def update_form_problem_and_state(form):
+    def update_form(form):
         raise NotImplementedError
 
     @abstractmethod
@@ -149,8 +149,8 @@ class FormAccessors(object):
     def save_new_form(self, form):
         self.db_accessor.save_new_form(form)
 
-    def update_form_problem_and_state(self, form):
-        self.db_accessor.update_form_problem_and_state(form)
+    def update_form(self, form):
+        self.db_accessor.update_form(form)
 
     def get_deleted_form_ids_for_user(self, user_id):
         return self.db_accessor.get_deleted_form_ids_for_user(self.domain, user_id)

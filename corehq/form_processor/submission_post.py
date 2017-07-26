@@ -314,7 +314,7 @@ class SubmissionPost(object):
                 errors.append(error_message)
         if errors:
             self.interface.xformerror_from_xform_instance(instance, ", ".join(errors))
-            self.formdb.update_form_problem_and_state(instance)
+            self.formdb.update_form(instance)
         return errors
 
     def _set_response_headers(self, response, form_id):

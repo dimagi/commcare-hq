@@ -326,7 +326,7 @@ class FormAccessorTestsSQL(TestCase):
 
         self._validate_deprecation(existing_form, new_form)
 
-    def test_update_form_problem_and_state(self):
+    def test_update_form(self):
         form = create_form_for_test(DOMAIN)
         self.assertEqual(XFormInstanceSQL.NORMAL, form.state)
 
@@ -334,7 +334,7 @@ class FormAccessorTestsSQL(TestCase):
         form.state = XFormInstanceSQL.ERROR
         form.problem = problem
         form.domain = 'new domain'
-        FormAccessorSQL.update_form_problem_and_state(form)
+        FormAccessorSQL.update_form(form)
 
         saved_form = FormAccessorSQL.get_form(form.form_id)
         self.assertEqual(XFormInstanceSQL.ERROR, saved_form.state)

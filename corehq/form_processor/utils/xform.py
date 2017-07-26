@@ -239,7 +239,7 @@ def reprocess_xform_error(form):
                 if stock_result:
                     LedgerAccessorSQL.save_ledger_values(stock_result.models_to_save)
 
-                FormAccessorSQL.update_form_problem_and_state(form)
+                FormAccessorSQL.update_form(form)
                 FormProcessorSQL._publish_changes(
                     ProcessedForms(form, None),
                     cases,
