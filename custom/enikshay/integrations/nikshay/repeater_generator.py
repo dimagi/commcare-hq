@@ -106,7 +106,8 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
         episode_case_properties = episode_case.dynamic_case_properties()
         person_case_properties = person_case.dynamic_case_properties()
         occurence_case = None
-        if self.use_new_2b_app_structure(person_case, episode_case):
+        use_new_2b_app_structure = self.use_new_2b_app_structure(person_case, episode_case)
+        if use_new_2b_app_structure:
             occurence_case = get_occurrence_case_from_episode(episode_case.domain, episode_case.get_id)
         properties_dict = self._base_properties(repeat_record)
         properties_dict.update({
@@ -119,9 +120,7 @@ class NikshayRegisterPatientPayloadGenerator(BaseNikshayPayloadGenerator):
         except NikshayLocationNotFound as e:
             _save_error_message(person_case.domain, person_case.case_id, e)
         properties_dict.update(_get_episode_case_properties(
-            episode_case_properties, occurence_case, person_case, self.use_new_2b_app_structure(
-                person_case, episode_case
-            )))
+            episode_case_properties, occurence_case, person_case, use_new_2b_app_structure))
         return json.dumps(properties_dict)
 
     def handle_success(self, response, payload_doc, repeat_record):
@@ -256,10 +255,11 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
 
         test_case_properties = test_case.dynamic_case_properties()
         episode_case_properties = episode_case.dynamic_case_properties()
+        use_new_2b_app_structure = self.use_new_2b_app_structure(person_case, episode_case)
 
         interval_id, lab_serial_number, result_grade, dmc_code = self._get_mandatory_fields(
             test_case, test_case_properties, occurence_case,
-            self.use_new_2b_app_structure(person_case, episode_case)
+            use_new_2b_app_structure
         )
 
         test_reported_on = _format_date_or_null_date(test_case_properties, 'date_reported')
