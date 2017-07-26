@@ -219,15 +219,15 @@ MUMBAI_MAP = {
     # "Amoxyclav": 81,  # TODO: (WAITING) unknown drug mapping
     # "Amikacin": 82,  # TODO: (WAITING) unknown drug mapping
     # TODO: (WAITING) not sure how this maps
-    "bdq_eligible": 89,
-    "treatment_initiation_date": 90,
-    "drtb_type": 93,
+    "bdq_eligible": 88,
+    "treatment_initiation_date": 89,
+    "drtb_type": 90,
     # TODO: (WAITING) treatment status here is different sorts of values than in the other mappings
-    # "treatment_status": 94,
-    "treatment_regimen": 95,
-    "ip_to_cp_date": 98,
-    "treatment_outcome": 181,
-    "date_of_treatment_outcome": 182,
+    # "treatment_status": 93,
+    "treatment_regimen": 94,
+    "ip_to_cp_date": 97,
+    "treatment_outcome": 180,
+    "date_of_treatment_outcome": 181,
 }
 
 
@@ -346,7 +346,7 @@ class MumbaiColumnMapping(ColumnMapping):
         "phi_name",
         # The phi must also be valid, but this is checked in the match_phi function.
     )
-    follow_up_culture_index_start = 109
+    follow_up_culture_index_start = 108
     follow_up_culture_month_start = 3
 
     @classmethod
@@ -369,7 +369,7 @@ class MumbaiColumnMapping(ColumnMapping):
     def _get_follow_up_start_index(cls, month):
         if month == 36:
             # For some reason the sheet jumps from 33 to 36, so just special casing it.
-            index = 171
+            index = 170
         else:
             assert month >= 3 and month <= 33
             offset = (month - 3) * 2
