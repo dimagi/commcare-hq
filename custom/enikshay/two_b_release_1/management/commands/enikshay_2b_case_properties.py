@@ -14,6 +14,7 @@ from django.core.management import BaseCommand
 from casexml.apps.case.const import CASE_INDEX_EXTENSION, CASE_INDEX_CHILD
 from casexml.apps.case.mock import CaseStructure, CaseIndex, CaseFactory
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.sms.util import strip_plus
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.log import with_progress_bar
 from custom.enikshay.case_utils import (
@@ -264,8 +265,11 @@ class ENikshay2BMigrator(object):
 
         phone_number = person.get_case_property('phone_number')
         if phone_number:
-            phone_number_object = phonenumbers.parse(phone_number, "IN")
-            props['contact_phone_number'] = phonenumbers.format_number(phone_number_object, phonenumbers.PhoneNumberFormat.E164)
+            props['contact_phone_number'] = strip_plus(
+                phonenumbers.format_number(
+                    phonenumbers.parse(phone_number, "IN"),
+                    phonenumbers.PhoneNumberFormat.E164)
+            )
 
         location = self.locations.get(person.owner_id)
         if location:

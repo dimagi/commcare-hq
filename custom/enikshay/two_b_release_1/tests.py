@@ -168,7 +168,7 @@ class TestCreateEnikshayCases(TestCase):
             'area': 'phi_area',
             'referred_outside_enikshay_date': 'date_referred_out',
             'referred_outside_enikshay_by_id': 'date_by_id',
-            'contact_phone_number': '+911234567890',
+            'contact_phone_number': '911234567890',
             'current_episode_type': "confirmed_tb",
             'alcohol_history': "alcohol_history",
             'alcohol_deaddiction': "alcohol_deaddiction",
