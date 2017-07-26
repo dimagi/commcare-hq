@@ -11,7 +11,7 @@ var showHTMLError = hqImport('cloudcare/js/util.js').showHTMLError;
 var showSuccess = hqImport('cloudcare/js/util.js').showSuccess;
 var formplayerLoading = hqImport('cloudcare/js/util.js').formplayerLoading;
 var formplayerLoadingComplete = hqImport('cloudcare/js/util.js').formplayerLoadingComplete;
-var tfSyncComplete = hqImport('cloudcare/js/util.js').tfSyncComplete;
+var formplayerSyncComplete = hqImport('cloudcare/js/util.js').formplayerSyncComplete;
 var clearUserDataComplete = hqImport('cloudcare/js/util.js').clearUserDataComplete;
 
 FormplayerFrontend.on("before:start", function () {
@@ -357,7 +357,7 @@ FormplayerFrontend.on("sync", function () {
             }, gettext('Waiting for server progress'));
         } else {
             FormplayerFrontend.trigger('clearProgress');
-            tfSyncComplete(response.responseJSON.status === 'error');
+            formplayerSyncComplete(response.responseJSON.status === 'error');
         }
     };
     options = {

@@ -86,7 +86,7 @@ hqDefine('cloudcare/js/util.js', function () {
         }
     };
 
-    var tfSyncComplete = function (isError) {
+    var formplayerSyncComplete = function (isError) {
         hideLoading();
         if (isError) {
             showError(
@@ -126,7 +126,7 @@ hqDefine('cloudcare/js/util.js', function () {
         clearUserDataComplete: clearUserDataComplete,
         formplayerLoading: formplayerLoading,
         formplayerLoadingComplete: formplayerLoadingComplete,
-        tfSyncComplete: tfSyncComplete,
+        formplayerSyncComplete: formplayerSyncComplete,
         hideLoading: hideLoading,
         hideLoadingCallback: hideLoadingCallback
     };
