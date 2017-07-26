@@ -84,6 +84,8 @@ class BeneficariesList(TemplateView):
                     context['beneficiaries_count'] = len(cas_records.hits)
         elif beneficiaries_in == 'both':
             self.beneficiaries = RCHRecord.objects.exclude(cas_case_id__isnull=True)
+            context['beneficiaries_total'] = self.beneficiaries.count()
+            context['beneficiaries'] = self.beneficiaries.order_by()[:RECORDS_PER_PAGE]
         else:
             self.get_rch_records()
             context['beneficiaries_total'] = self.beneficiaries.count()
