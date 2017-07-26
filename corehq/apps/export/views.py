@@ -2128,9 +2128,7 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
 
             except ResourceNotFound:
                 raise Http404()
-            except Exception as e:
-                _soft_assert = soft_assert('{}@{}'.format('brudolph', 'dimagi.com'))
-                _soft_assert(False, 'Failed to convert export {}. {}'.format(self.export_id, e))
+            except Exception:
                 messages.error(
                     request,
                     mark_safe(

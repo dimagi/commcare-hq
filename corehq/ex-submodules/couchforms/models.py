@@ -239,15 +239,6 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
                 else:
                     raise
 
-    def xpath(self, path):
-        """
-        Evaluates an xpath expression like: path/to/node and returns the value
-        of that element, or None if there is no value.
-        """
-        _soft_assert = soft_assert(to='{}@{}'.format('brudolph', 'dimagi.com'))
-        _soft_assert(False, "Reference to xpath instead of get_data")
-        return safe_index(self, path.split("/"))
-
     def get_data(self, path):
         """
         Evaluates an xpath expression like: path/to/node and returns the value
