@@ -44,15 +44,17 @@ def make_form_data_source_filter(xmlns):
     }
 
 
-def make_case_property_indicator(property_name, column_id=None):
+def make_case_property_indicator(property_name, column_id=None, datatype=None):
     """
     Return a data source indicator configuration (a dict) for the given case
     property.
     """
+    datatype = datatype or DEFAULT_CASE_PROPERTY_DATATYPES.get(property_name, "string")
+
     return {
         "type": "expression",
         "column_id": column_id or property_name,
-        "datatype": DEFAULT_CASE_PROPERTY_DATATYPES.get(property_name, "string"),
+        "datatype": datatype,
         "display_name": property_name,
         "expression": {
             "type": "property_name",
@@ -158,13 +160,12 @@ def make_owner_name_indicator(column_id):
     return _make_user_group_or_location_indicator("owner_id", column_id)
 
 
-def make_form_question_indicator(question, column_id=None, root_doc=False):
+def make_form_question_indicator(question, column_id=None, data_type=None, root_doc=False):
     """
     Return a data source indicator configuration (a dict) for the given form
     question.
     """
     path = question['value'].split('/')
-    data_type = question['type']
     expression = {
         "type": "property_path",
         'property_path': ['form'] + path[2:],
@@ -175,7 +176,7 @@ def make_form_question_indicator(question, column_id=None, root_doc=False):
         "type": "expression",
         "column_id": column_id or question['value'],
         "display_name": path[-1],
-        "datatype": get_form_indicator_data_type(data_type),
+        "datatype": data_type or get_form_indicator_data_type(question['type']),
         "expression": expression
     }
 
