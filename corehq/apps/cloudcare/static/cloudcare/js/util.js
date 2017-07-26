@@ -19,16 +19,6 @@ hqDefine('cloudcare/js/util.js', function () {
         return url;
     };
 
-    var getFormEntryPath = function(appId, moduleId, formId, caseId) {
-        // TODO: make this cleaner
-        var url = "view/" + appId + "/" + moduleId + "/" + formId;
-        if (caseId) {
-            url = url + '/case/' + caseId;
-        }
-        url += "/enter/";
-        return url;
-    };
-
     var getSubmitUrl = function (urlRoot, appId) {
         // deprecated but still called from "touchforms-inline"
         // which is used to fill out forms from within case details view
@@ -145,7 +135,6 @@ hqDefine('cloudcare/js/util.js', function () {
     };
     return {
         getFormUrl: getFormUrl,
-        getFormEntryPath: getFormEntryPath,
         getSubmitUrl: getSubmitUrl,
         getCaseFilterUrl: getCaseFilterUrl,
         isParentField: isParentField,
