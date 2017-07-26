@@ -114,9 +114,6 @@ hqDefine('cloudcare/js/util.js', function () {
         NProgress.done();
     };
 
-    var hideLoadingCallback = function () {
-        hideLoading();
-    };
     return {
         getFormUrl: getFormUrl,
         getSubmitUrl: getSubmitUrl,
@@ -127,7 +124,5 @@ hqDefine('cloudcare/js/util.js', function () {
         formplayerLoading: formplayerLoading,
         formplayerLoadingComplete: formplayerLoadingComplete,
         formplayerSyncComplete: formplayerSyncComplete,
-        hideLoading: hideLoading,
-        hideLoadingCallback: hideLoadingCallback
     };
 });
