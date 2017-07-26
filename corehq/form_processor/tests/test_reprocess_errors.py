@@ -124,12 +124,14 @@ class ReprocessSubmissionStubTests(TestCase):
         # form that was saved before case error raised
         normal_form_ids = FormAccessorSQL.get_form_ids_in_domain_by_state(self.domain, XFormInstanceSQL.NORMAL)
         self.assertEqual(1, len(normal_form_ids))
+        self.assertEqual(stubs[0].xform_id, normal_form_ids[0])
 
         # shows error form (duplicate of form that was saved before case error)
         # this is saved becuase the saving was assumed to be atomic so if there was any error it's assumed
         # the form didn't get saved
+        # we don't really care about this form in this test
         error_forms = FormAccessorSQL.get_forms_by_type(self.domain, 'XFormError', 10)
-        self.assertEqual(1, len(error_forms))  # we don't really care about this form in this test
+        self.assertEqual(1, len(error_forms))
         self.assertEqual(error_forms[0].orig_id, normal_form_ids[0])
 
         self.assertEqual(0, len(CaseAccessorSQL.get_case_ids_in_domain(self.domain)))
