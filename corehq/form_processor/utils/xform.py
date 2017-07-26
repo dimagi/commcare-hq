@@ -2,11 +2,9 @@ from datetime import datetime
 
 import iso8601
 import pytz
-from couchdbkit import ResourceNotFound
 
 import xml2json
 from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
-from corehq.form_processor.exceptions import XFormNotFound
 from corehq.form_processor.models import Attachment
 from dimagi.ext import jsonobject
 from dimagi.utils.parsing import json_format_datetime
@@ -161,19 +159,3 @@ def adjust_datetimes(data, parent=None, key=None):
     # return data, just for convenience in testing
     # this is the original input, modified, not a new data structure
     return data
-
-
-def _get_form(form_id):
-    from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
-    from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
-    try:
-        return FormAccessorSQL.get_form(form_id)
-    except XFormNotFound:
-        pass
-
-    try:
-        return FormAccessorCouch.get_form(form_id)
-    except ResourceNotFound:
-        pass
-
-    return None

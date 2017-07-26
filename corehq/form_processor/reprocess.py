@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+from couchdbkit import ResourceNotFound
+
 from casexml.apps.case.exceptions import IllegalCaseId, InvalidCaseIndex, CaseValueError, PhoneDateValueError
 from casexml.apps.case.exceptions import UsesReferrals
 from casexml.apps.case.signals import case_post_save
@@ -12,7 +14,6 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import XFormInstanceSQL, CaseTransaction, LedgerTransaction, FormReprocessRebuild
 from corehq.form_processor.submission_post import SubmissionPost, _transform_instance_to_error
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.form_processor.utils.xform import _get_form
 from corehq.sql_db.util import get_db_alias_for_partitioned_doc
 from couchforms.models import XFormInstance
 
@@ -168,3 +169,19 @@ def _filter_already_processed_ledgers(form, ledgers):
         for trans in transactions:
             del ledgers_by_id[trans.ledger_reference]
     return ledgers_by_id.values()
+
+
+def _get_form(form_id):
+    from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+    from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
+    try:
+        return FormAccessorSQL.get_form(form_id)
+    except XFormNotFound:
+        pass
+
+    try:
+        return FormAccessorCouch.get_form(form_id)
+    except ResourceNotFound:
+        pass
+
+    return None
