@@ -3,7 +3,7 @@ import logging
 from django.core.management import BaseCommand
 
 from corehq.apps.locations.models import SQLLocation
-from custom.enikshay.private_sector_datamigration.models import UserDetail
+from custom.enikshay.private_sector_datamigration.models.jul13 import UserDetail_Jul13
 
 logger = logging.getLogger('private_sector_datamigration')
 
@@ -22,7 +22,7 @@ class Command(BaseCommand):
             logging.info('processing location %s' % location_id)
             agency_id = loc.metadata.get('private_sector_agency_id')
             if agency_id:
-                user_detail = UserDetail.objects.get(agencyId=int(agency_id), isPrimary=True)
+                user_detail = UserDetail_Jul13.objects.get(agencyId=int(agency_id), isPrimary=True)
                 uatbc_tu_id = user_detail.tuId or ''
                 loc.metadata['uatbc_tu_id'] = uatbc_tu_id
                 loc.save()
