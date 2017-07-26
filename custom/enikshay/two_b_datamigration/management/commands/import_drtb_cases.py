@@ -962,6 +962,8 @@ def get_drug_resistances_from_individual_drug_columns(column_mapping, row):
 
 def convert_sensitivity(sensitivity_value):
     return {
+        "Sensitive": "sensitive",
+        "Resistant": "resistant",
         "S": "sensitive",
         "R": "resistant",
         "Conta": "unknown",
@@ -1199,10 +1201,14 @@ def clean_hiv_status(value):
         return REACTIVE
     return {
         # TODO: (WAITING) Have we mapped pos/neg to reactive/non-reactive correctly?
+        "Pos (on ART)": REACTIVE,
+        "Pos (not on ART)": REACTIVE,
         "Pos": REACTIVE,
         "Positive": REACTIVE,
         "Negative": NON_REACTIVE,
         "Neg": NON_REACTIVE,
+        "NEg": NON_REACTIVE,
+        "?": None,
     }[value]
 
 
@@ -1218,6 +1224,8 @@ def clean_socioeconomic_status(value):
 def clean_result(value):
     return {
         None: NO_RESULT,
+        "Sample rejected": NO_RESULT,
+        "Result awaited": NO_RESULT,
         "conta": NO_RESULT,
         "Conta": NO_RESULT,
         "CONTA": NO_RESULT,
@@ -1263,6 +1271,8 @@ def clean_date(messy_date_string):
     if messy_date_string:
         if isinstance(messy_date_string, datetime.date):
             return messy_date_string
+        if messy_date_string == "?":
+            return None
 
         # The excel library we use should actually import dates correctly if the column format is date.
         raise Exception("Got a date like {}".format(messy_date_string))
