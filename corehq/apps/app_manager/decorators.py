@@ -33,8 +33,43 @@ def safe_download(f):
         except (AppEditingError, CaseError, ValueError) as e:
             logging.exception(e)
             messages.error(request, "Problem downloading file: %s" % e)
-            return HttpResponseRedirect(reverse("view_app", args=[domain,app_id]))
+            return HttpResponseRedirect(reverse("view_app", args=[domain, app_id]))
     return _safe_download
+
+
+def safe_cached_download(f):
+    """
+    Same as safe_download, but makes it possible for the browser to cache.
+
+    If latest is passed to this endpoint it cannot be cached. This should not
+    be used on any view that uses information from the user.
+    """
+    @wraps(f)
+    def _safe_cached_download(request, *args, **kwargs):
+        domain = args[0] if len(args) > 0 else kwargs["domain"]
+        app_id = args[1] if len(args) > 1 else kwargs["app_id"]
+        latest = True if request.GET.get('latest') == 'true' else False
+        target = request.GET.get('target') or None
+
+        # make endpoints that call the user fail hard
+        from django.contrib.auth.models import AnonymousUser
+        request.user = AnonymousUser()
+        if request.GET.get('username'):
+            request.GET = request.GET.copy()
+            request.GET.pop('username')
+
+        try:
+            request.app = get_app(domain, app_id, latest=latest, target=target)
+            response = f(request, *args, **kwargs)
+            if not latest and request.app.copy_of is not None and request.app.is_released:
+                response._always_allow_browser_caching = True
+                response._remember_domain = False
+            return response
+        except (AppEditingError, CaseError, ValueError) as e:
+            logging.exception(e)
+            messages.error(request, "Problem downloading file: %s" % e)
+            return HttpResponseRedirect(reverse("view_app", args=[domain, app_id]))
+    return _safe_cached_download
 
 
 def no_conflict_require_POST(f):
@@ -50,6 +85,7 @@ def no_conflict_require_POST(f):
         except ResourceConflict:
             return HttpResponse(status=409)
     return _no_conflict
+
 
 require_can_edit_apps = require_permission(Permissions.edit_apps)
 require_deploy_apps = login_and_domain_required  # todo: can fix this when it is better supported

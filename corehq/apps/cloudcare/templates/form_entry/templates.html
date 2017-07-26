@@ -292,13 +292,6 @@
             </label>
         </div>
     </div>
-    {% if request|toggle_enabled:"USE_OLD_CLOUDCARE" %}
-    <div class="help-block clear-container">
-        <button class="btn btn-default btn-xs clear" data-bind="
-            click: onClear
-        ">Clear choices</button>
-    </div>
-    {% endif %}
 </script>
 <script type="text/html" id="dropdown-entry-ko-template">
     <select class="form-control" data-bind="

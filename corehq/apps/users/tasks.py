@@ -16,7 +16,7 @@ from corehq.form_processor.models import UserArchivedRebuild
 from corehq.util.log import SensitiveErrorMail
 from couchforms.exceptions import UnexpectedDeletedXForm
 from corehq.apps.domain.models import Domain
-from dimagi.utils.html import format_html
+from django.utils.html import format_html
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 from casexml.apps.case.xform import get_case_ids_from_form

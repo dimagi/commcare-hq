@@ -53,7 +53,7 @@ class StaticToggle(object):
     def __init__(self, slug, label, tag, namespaces=None, help_link=None,
                  description=None, save_fn=None, always_enabled=None,
                  always_disabled=None, enabled_for_new_domains_after=None,
-                 enabled_for_new_users_after=None, force_enable=None):
+                 enabled_for_new_users_after=None):
         self.slug = slug
         self.label = label
         self.tag = tag
@@ -67,15 +67,12 @@ class StaticToggle(object):
         self.always_disabled = always_disabled or set()
         self.enabled_for_new_domains_after = enabled_for_new_domains_after
         self.enabled_for_new_users_after = enabled_for_new_users_after
-        self.force_enable = force_enable
         if namespaces:
             self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         else:
             self.namespaces = [None]
 
     def enabled(self, item, namespace=Ellipsis):
-        if self.force_enable:
-            return True
         if item in self.always_enabled:
             return True
         elif item in self.always_disabled:
@@ -744,13 +741,6 @@ COMMTRACK = StaticToggle(
     save_fn=_commtrackify,
 )
 
-INSTANCE_VIEWER = StaticToggle(
-    'instance_viewer',
-    'CloudCare Form Debugging Tool',
-    TAG_PRODUCT_PATH,
-    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
-)
-
 CUSTOM_INSTANCES = StaticToggle(
     'custom_instances',
     'Inject custom instance declarations',
@@ -859,13 +849,6 @@ BASIC_CHILD_MODULE = StaticToggle(
     'Basic modules can be child modules',
     TAG_PRODUCT_PATH,
     [NAMESPACE_DOMAIN]
-)
-
-USE_OLD_CLOUDCARE = StaticToggle(
-    'use_old_cloudcare',
-    'Use Old CloudCare',
-    TAG_ONE_OFF,
-    [NAMESPACE_DOMAIN],
 )
 
 FORMPLAYER_USE_LIVEQUERY = StaticToggle(
@@ -1062,14 +1045,6 @@ CUSTOM_CALENDAR_FIXTURE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-EDIT_FORMPLAYER = PredictablyRandomToggle(
-    'edit_formplayer',
-    'Edit forms on Formplayer',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_DOMAIN, NAMESPACE_USER],
-    randomness=1.0,
-)
-
 DISABLE_COLUMN_LIMIT_IN_UCR = StaticToggle(
     'disable_column_limit_in_ucr',
     'Disable column limit in UCR',
@@ -1084,12 +1059,11 @@ CLOUDCARE_LATEST_BUILD = StaticToggle(
     [NAMESPACE_DOMAIN, NAMESPACE_USER]
 )
 
-APP_MANAGER_V2 = StaticToggle(
-    'app_manager_v2',
-    'Prototype for case management onboarding (App Manager V2)',
-    TAG_PRODUCT_PATH,
-    [NAMESPACE_USER],
-    force_enable=True
+APP_MANAGER_V1 = StaticToggle(
+    'app_manager_v1',
+    'Turn OFF prototype for case management onboarding (App Manager V2)',
+    TAG_ONE_OFF,
+    [NAMESPACE_USER]
 )
 
 USER_TESTING_SIMPLIFY = StaticToggle(

@@ -28,7 +28,7 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
     vm.filters = [];
 
     vm.rightLegend = {
-        info: 'Percentage of children between 6 - 60 months enrolled for ICDS services with weight-for-height below -3 standard deviations of the WHO Child Growth Standards median.',
+        info: 'Percentage of children (6-60 months) enrolled for ICDS services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median.',
     };
 
     vm.message = storageService.getKey('message') || false;
@@ -53,18 +53,20 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
     }, true);
 
     vm.templatePopup = function(loc, row) {
-        var total = $filter('indiaNumbers')(row ? row.total : 0);
-        var sever = $filter('indiaNumbers')(row ? row.severe : 0);
-        var moderate = $filter('indiaNumbers')(row ? row.moderate : 0);
-        var normal = $filter('indiaNumbers')(row ? row.normal : 0);
+        var total = row ? $filter('indiaNumbers')(row.total) : 'N/A';
+        var sever = row ? $filter('indiaNumbers')(row.severe) : 'N/A';
+        var moderate = row ? $filter('indiaNumbers')(row.moderate) : 'N/A';
+        var normal = row ? $filter('indiaNumbers')(row.normal) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important;"><p>' + loc.properties.name + '</p><p>' + vm.rightLegend.info + '</p>' + '<div>Total Children weighed in given month: <strong>' + total + '</strong></div><div>Severely Acute Malnutrition: <strong>' + sever + '</strong></div><div>Moderately Acute Malnutrition: <strong>' + moderate +'</strong></div><div>Normal: <strong>' + normal + '</strong></div></ul>';
     };
 
     vm.loadData = function () {
         if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
             vm.mode = 'sector';
+            vm.steps['map'].label = 'Sector';
         } else {
             vm.mode = 'map';
+            vm.steps['map'].label = 'Map';
         }
 
         maternalChildService.getPrevalenceOfStunningData(vm.step, vm.filtersData).then(function(response) {
@@ -123,7 +125,7 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
                 axisLabel: '',
                 showMaxMin: true,
                 tickFormat: function(d) {
-                    return d3.time.format('%m/%d/%y')(new Date(d));
+                    return d3.time.format('%b %Y')(new Date(d));
                 },
                 tickValues: function() {
                     return vm.chartTicks;
@@ -143,7 +145,7 @@ function PrevalenceOfStunningReportController($scope, $routeParams, $location, $
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num['x'])) === date;});
+                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
                         return d3.format(".2%")(day['y']);
                     };
 

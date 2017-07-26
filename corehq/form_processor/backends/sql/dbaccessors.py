@@ -55,7 +55,7 @@ from corehq.form_processor.utils.sql import (
 )
 from corehq.sql_db.config import get_sql_db_aliases_in_use, partition_config
 from corehq.sql_db.routers import db_for_read_write
-from corehq.sql_db.util import get_db_alias_for_partitioned_doc
+from corehq.sql_db.util import get_db_alias_for_partitioned_doc, split_list_by_db_partition
 from corehq.util.queries import fast_distinct_in_domain
 from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.chunked import chunked
@@ -401,10 +401,14 @@ class FormAccessorSQL(AbstractFormAccessor):
         if delete_attachments:
             attachments = list(FormAccessorSQL.get_attachments_for_forms(form_ids))
 
-        with get_cursor(XFormInstanceSQL) as cursor:
-            cursor.execute('SELECT hard_delete_forms(%s, %s) AS deleted_count', [domain, form_ids])
-            results = fetchall_as_namedtuple(cursor)
-            deleted_count = sum([result.deleted_count for result in results])
+        db_form_ids = split_list_by_db_partition(form_ids)
+        deleted_count = 0
+        for db_name, form_ids in db_form_ids.items():
+            # cascade should delete the attachments and operations
+            _, deleted_models = XFormInstanceSQL.objects.using(db_name).filter(
+                domain=domain, form_id__in=form_ids
+            ).delete()
+            deleted_count += deleted_models.get(XFormInstanceSQL._meta.label, 0)
 
         if delete_attachments:
             attachments_to_delete = attachments
@@ -502,8 +506,9 @@ class FormAccessorSQL(AbstractFormAccessor):
     @transaction.atomic
     def _archive_unarchive_form(form, user_id, archive):
         from casexml.apps.case.xform import get_case_ids_from_form
+        from corehq.form_processor.parsers.ledgers.form import get_case_ids_from_stock_transactions
         form_id = form.form_id
-        case_ids = list(get_case_ids_from_form(form))
+        case_ids = list(get_case_ids_from_form(form) | get_case_ids_from_stock_transactions(form))
         with get_cursor(XFormInstanceSQL) as cursor:
             cursor.execute('SELECT archive_unarchive_form(%s, %s, %s)', [form_id, user_id, archive])
             cursor.execute('SELECT revoke_restore_case_transactions_for_form(%s, %s, %s)', [case_ids, form_id, archive])
@@ -537,7 +542,7 @@ class FormAccessorSQL(AbstractFormAccessor):
             operation.form = form
 
         try:
-            with transaction.atomic(using=db_name):
+            with transaction.atomic(using=db_name, savepoint=False):
                 form.save(using=db_name)
                 for attachment in unsaved_attachments:
                     attachment.save(using=db_name)
@@ -886,7 +891,7 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                 )
 
         try:
-            with transaction.atomic(using=db_name):
+            with transaction.atomic(using=db_name, savepoint=False):
                 case.save(using=db_name)
                 for case_transaction in transactions_to_save:
                     case_transaction.save(using=db_name)
@@ -947,14 +952,14 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             [domain, case_ids, list(exclude_indices)]))
 
     @staticmethod
-    def get_closed_and_deleted_ids(accessor, case_ids):
+    def get_closed_and_deleted_ids(domain, case_ids):
         assert isinstance(case_ids, list), case_ids
         if not case_ids:
             return []
         with get_cursor(CommCareCaseSQL) as cursor:
             cursor.execute(
                 'SELECT case_id, closed, deleted FROM get_closed_and_deleted_ids(%s, %s)',
-                [accessor.domain, case_ids]
+                [domain, case_ids]
             )
             return list(fetchall_as_namedtuple(cursor))
 
@@ -982,16 +987,24 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return [result.case_id for result in results]
 
     @staticmethod
-    def get_extension_case_ids(domain, case_ids):
+    def get_extension_case_ids(domain, case_ids, include_closed=True):
         """
         Given a base list of case ids, get all ids of all extension cases that reference them
         """
         if not case_ids:
             return []
-        with get_cursor(CommCareCaseIndexSQL) as cursor:
-            cursor.execute('SELECT case_id FROM get_extension_case_ids(%s, %s)', [domain, list(case_ids)])
-            results = fetchall_as_namedtuple(cursor)
-            return [result.case_id for result in results]
+
+        extension_case_ids = set()
+        for db_name in get_sql_db_aliases_in_use():
+            query = CommCareCaseIndexSQL.objects.using(db_name).filter(
+                domain=domain,
+                relationship_id=CommCareCaseIndexSQL.EXTENSION,
+                case__deleted=False,
+                referenced_id__in=case_ids)
+            if not include_closed:
+                query = query.filter(case__closed=False)
+            extension_case_ids.update(query.values_list('case_id', flat=True))
+        return list(extension_case_ids)
 
     @staticmethod
     def get_last_modified_dates(domain, case_ids):
@@ -1144,28 +1157,31 @@ class LedgerAccessorSQL(AbstractLedgerAccessor):
             raise LedgerValueNotFound
 
     @staticmethod
-    def save_ledger_values(ledger_values, deprecated_form=None):
-        if not ledger_values:
+    def save_ledger_values(ledger_values, stock_result=None):
+        if not ledger_values and not (stock_result and stock_result.cases_with_deprecated_transactions):
             return
 
-        deprecated_form_id = deprecated_form.orig_id if deprecated_form else None
+        try:
+            if stock_result and stock_result.cases_with_deprecated_transactions:
+                db_cases = split_list_by_db_partition(stock_result.cases_with_deprecated_transactions)
+                for db_name, case_ids in db_cases.items():
+                    LedgerTransaction.objects.using(db_name).filter(
+                        case_id__in=case_ids,
+                        form_id=stock_result.xform.form_id
+                    ).delete()
 
-        for ledger_value in ledger_values:
-            transactions_to_save = ledger_value.get_live_tracked_models(LedgerTransaction)
+            for ledger_value in ledger_values:
+                db_name = get_db_alias_for_partitioned_doc(ledger_value.case_id)
+                transactions_to_save = ledger_value.get_live_tracked_models(LedgerTransaction)
 
-            with get_cursor(LedgerValue) as cursor:
-                try:
-                    cursor.execute(
-                        "SELECT save_ledger_values(%s, %s::{}, %s::{}[], %s)".format(
-                            LedgerValue_DB_TABLE,
-                            LedgerTransaction_DB_TABLE
-                        ),
-                        [ledger_value.case_id, ledger_value, transactions_to_save, deprecated_form_id]
-                    )
-                except InternalError as e:
-                    raise LedgerSaveError(e)
+                with transaction.atomic(using=db_name, savepoint=False):
+                    ledger_value.save(using=db_name)
+                    for trans in transactions_to_save:
+                        trans.save(using=db_name)
 
-            ledger_value.clear_tracked_models()
+                ledger_value.clear_tracked_models()
+        except InternalError as e:
+            raise LedgerSaveError(e)
 
     @staticmethod
     def get_ledger_transactions_for_case(case_id, section_id=None, entry_id=None):

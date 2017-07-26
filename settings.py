@@ -418,9 +418,6 @@ APPS_TO_EXCLUDE_FROM_TESTS = (
     'two_factor',
     'custom.apps.crs_reports',
     'custom.m4change',
-
-    # submodules with tests that run on travis
-    'dimagi.utils',
 )
 
 INSTALLED_APPS = DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
@@ -2144,6 +2141,7 @@ CASEXML_FORCE_DOMAIN_CHECK = True
 
 RESTORE_TIMING_DOMAINS = {
     # ("env", "domain"),
+    ("production", "malawi-fp-study"),
     ("production", "rec"),
     ("softlayer", "enikshay"),
 }

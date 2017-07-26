@@ -7,6 +7,7 @@ hqDefine('case_search/js/case_search.js', function(){
         self.type = ko.observable();
         self.owner_id = ko.observable();
         self.customQueryAddition = ko.observable();
+        self.includeClosed = ko.observable(false);
         self.results = ko.observableArray();
         self.count = ko.observable();
         self.case_data_url = case_data_url;
@@ -33,13 +34,16 @@ hqDefine('case_search/js/case_search.js', function(){
 
         self.submit = function(){
             self.results([]);
+            self.count("-");
             $.post({
                 url: window.location.href,
                 data: {q: JSON.stringify({
                     type: self.type(),
                     owner_id: self.owner_id(),
                     parameters: self.parameters(),
-                    customQueryAddition: self.customQueryAddition()}
+                    customQueryAddition: self.customQueryAddition(),
+                    includeClosed: self.includeClosed(),
+                }
                 )},
                 success: function(data){
                     self.results(data.values);

@@ -5,7 +5,7 @@ from corehq.util.datadog.gauges import datadog_counter
 
 RATE_LIMITED_EXCEPTIONS = {
     'botocore.vendored.requests.packages.urllib3.exceptions.ProtocolError': 'riak',
-    'botocore.vendored.requests.ReadTimeout': 'riak',
+    'botocore.vendored.requests.exceptions.ReadTimeout': 'riak',
     'botocore.exceptions.ClientError': 'riak',
     'OperationalError': 'postgres',  # could be psycopg2._psycopg or django.db.utils
     'socket.error': 'rabbitmq',

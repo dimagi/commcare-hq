@@ -27,7 +27,7 @@ from soil import DownloadBase
 from corehq import toggles
 from corehq.middleware import always_allow_browser_caching
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.app_manager.decorators import safe_download
+from corehq.apps.app_manager.decorators import safe_cached_download
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache, BulkMultimediaStatusCacheNfs
 from corehq.apps.hqmedia.controller import (
@@ -42,7 +42,6 @@ from corehq.apps.hqmedia.tasks import process_bulk_upload_zip, build_application
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from dimagi.utils.decorators.memoized import memoized
-from dimagi.utils.django.cached_object import CachedObject
 from soil.util import expose_cached_download
 from django.utils.translation import ugettext as _
 from django_prbac.decorators import requires_privilege_raise404
@@ -573,7 +572,7 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
         )
         return download.get_start_response()
 
-    @method_decorator(safe_download)
+    @method_decorator(safe_cached_download)
     def dispatch(self, request, *args, **kwargs):
         return super(DownloadMultimediaZip, self).dispatch(request, *args, **kwargs)
 
@@ -650,20 +649,9 @@ class ViewMultimediaFile(View):
             return None
 
     def get(self, request, *args, **kwargs):
-        obj = CachedObject(str(self.doc_id)
-                           + ':' + self.kwargs.get('media_type')
-                           + ':' + str(self.thumb))
-        if not obj.is_cached():
-            data, content_type = self.multimedia.get_display_file()
-            if self.thumb:
-                data = CommCareImage.get_thumbnail_data(data, self.thumb)
-            buffer = StringIO(data)
-            metadata = {'content_type': content_type}
-            obj.cache_put(buffer, metadata, timeout=None)
-        else:
-            metadata, buffer = obj.get()
-            data = buffer.getvalue()
-            content_type = metadata['content_type']
+        data, content_type = self.multimedia.get_display_file()
+        if self.thumb:
+            data = CommCareImage.get_thumbnail_data(data, self.thumb)
         return HttpResponse(data, content_type=content_type)
 
 

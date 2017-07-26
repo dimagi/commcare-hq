@@ -53,9 +53,7 @@
         }
     </style>
 
-    {% if not request|toggle_enabled:"USE_OLD_CLOUDCARE"%}
-        <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
-    {% endif %}
+    <script src="{% static 'cloudcare/js/formplayer/utils/util.js' %}"></script>
 
     {% include "app_manager/v1/partials/xpathValidator.html" %}
     {% include 'hqmedia/partials/multimedia_js.html' %}
@@ -111,7 +109,6 @@
     {% initial_page_data 'allow_cloudcare' allow_cloudcare %}
     {% initial_page_data 'can_preview_form' can_preview_form %}
     {% initial_page_data 'user_age_in_days' request.couch_user.days_since_created %}
-    {% registerurl "cloudcare_main" domain '' %}
     {% registerurl "formplayer_single_app" domain app.id %}
 
     <div id="build_errors"></div>

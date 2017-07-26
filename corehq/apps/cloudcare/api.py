@@ -2,7 +2,6 @@ from datetime import datetime
 import json
 import urllib
 
-from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
@@ -15,7 +14,6 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.parsing import json_format_date
-from touchforms.formplayer.models import EntrySession
 
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
@@ -358,31 +356,5 @@ def get_cloudcare_app(domain, app_name):
         raise ResourceNotFound(_("Not found application by name: %s") % app_name)
 
 
-def get_open_form_sessions(user, skip=0, limit=10):
-    def session_to_json(sess):
-        return {
-            'id': sess.session_id,
-            'app_id': sess.app_id,
-            'name': sess.session_name,
-            'display': u'{name} ({when})'.format(name=sess.session_name, when=naturaltime(sess.last_activity_date)),
-            'created_date': sess.created_date.strftime(CLOUDCARE_API_DATETIME_FORMAT),
-            'last_activity_date': sess.last_activity_date.strftime(CLOUDCARE_API_DATETIME_FORMAT),
-        }
-    return [session_to_json(sess) for sess in EntrySession.objects.filter(
-        last_activity_date__isnull=False,
-        user=user,
-    ).order_by('-last_activity_date')[skip:limit]]
-
-
 def get_cloudcare_form_url(domain, app_build_id=None, module_id=None, form_id=None, case_id=None):
-    url_root = reverse("cloudcare_main", args=[domain, ""])
-    url = url_root
-    if app_build_id != None:
-        url = url + "view/" + str(app_build_id)
-        if module_id != None:
-            url = url + "/" + str(module_id)
-            if form_id != None:
-                url = url + "/" + str(form_id)
-                if case_id != None:
-                    url = url + "/case/" + str(case_id)
-    return url
+    return reverse("formplayer_main", args=[domain])

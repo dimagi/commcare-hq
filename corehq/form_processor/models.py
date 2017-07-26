@@ -1328,7 +1328,7 @@ class LedgerValue(PartitionedModel, models.Model, TrackRelatedChanges):
     entry_id = models.CharField(max_length=100, default=None)
     section_id = models.CharField(max_length=100, default=None)
     balance = models.IntegerField(default=0)
-    last_modified = models.DateTimeField(auto_now=True, db_index=True)
+    last_modified = models.DateTimeField(db_index=True)
     last_modified_form_id = models.CharField(max_length=100, null=True, default=None)
     daily_consumption = models.DecimalField(max_digits=20, decimal_places=5, null=True)
 

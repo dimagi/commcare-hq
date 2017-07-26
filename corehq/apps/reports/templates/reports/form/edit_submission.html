@@ -38,7 +38,7 @@
 {% endblock %}
 
 {% block js-inline %}{{ block.super }}
-    {% include 'cloudcare/includes/touchforms-inline.html' %}
+    {% include 'cloudcare/includes/formplayer-inline.html' %}
 {% endblock %}
 
 {% block head %}{{ block.super }}
@@ -50,7 +50,7 @@
         var username = "{{ username }}";
         var edit_formplayer = {{ edit_formplayer|JSON }};
         var restoreAs = edit_context.sessionData.username;
-        $('#edit-container').inlineTouchform({
+        $('#edit-container').inlineFormplayer({
             formUrl: edit_context.formUrl,
             submitUrl: edit_context.submitUrl,
             sessionData: edit_context.sessionData,
