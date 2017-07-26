@@ -45,9 +45,6 @@ from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.analytics.tasks import track_entered_form_builder_on_hubspot
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import cachebuster
-from corehq.apps.tour import tours
-from corehq.apps.analytics import ab_tests
-from corehq.apps.domain.models import Domain
 from corehq.util.context_processors import websockets_override
 
 
@@ -148,7 +145,6 @@ def form_designer(request, domain, app_id, module_id=None, form_id=None):
     })
     notify_form_opened(domain, request.couch_user, app_id, form.unique_id)
 
-    domain_obj = Domain.get_by_name(domain)
     context.update({
         'show_live_preview': should_show_preview_app(
             request,
