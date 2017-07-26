@@ -311,8 +311,8 @@ class NikshayFollowupPayloadGenerator(BaseNikshayPayloadGenerator):
             testing_purpose = test_case_properties.get('rft_general')
             follow_up_test_reason = test_case_properties.get('rft_dstb_followup')
         else:
-            testing_purpose = test_case_properties.get('rft_general')
-            follow_up_test_reason = test_case_properties.get('rft_dstb_followup')
+            testing_purpose = test_case_properties.get('purpose_of_testing')
+            follow_up_test_reason = test_case_properties.get('follow_up_test_reason')
         if testing_purpose in ['diagnostic', 'diagnosis_dstb', 'diagnosis_drtb']:
             interval_id = 0
         else:
